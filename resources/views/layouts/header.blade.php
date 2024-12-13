@@ -53,63 +53,37 @@
                                 <span class="visually-hidden">unread messages</span>
                             </span>
                             <span class="badge badge-super rounded-pill bg-danger p-1">
-                                19<span class="visually-hidden">unread messages</span>
+                                {{ auth()->user()->notifications()->unread()->count() }}
+                                <span class="visually-hidden">unread messages</span>
                             </span>
                         </span>
                     </button>
-
-                    <!-- Notification dropdown menu -->
                     <div class="dropdown-menu dropdown-menu-end w-md-300px">
                         <div class="border-bottom px-3 py-2 mb-3">
                             <h5>Notifications</h5>
                         </div>
-
                         <div class="list-group list-group-borderless">
-
-                            <!-- List item -->
-                            <div class="list-group-item list-group-item-action d-flex align-items-center mb-3">
-                                <div class="flex-shrink-0 me-3">
-                                    <i class="demo-psi-data-settings text-danger fs-2"></i>
-                                </div>
-                                <div class="flex-grow-1">
-                                    <a href="#" class="h6 fw-normal d-block mb-0 stretched-link text-decoration-none">Your
-                                        storage is full</a>
-                                    <small class="text-body-secondary">Local
-                                        storage is nearly
-                                        full.</small>
-                                </div>
-                            </div>
-
-                            <!-- List item -->
-                            <div class="list-group-item list-group-item-action d-flex align-items-center mb-3">
-                                <div class="flex-shrink-0 me-3">
-                                    <i class="demo-psi-pen-5 text-info fs-2"></i>
-                                </div>
-                                <div class="flex-grow-1">
-                                    <a href="#" class="h6 fw-normal d-block mb-0 stretched-link text-decoration-none">Writing
-                                        a New Article</a>
-                                    <small class="text-body-secondary">Wrote
-                                        a news article for the John
-                                        Mike</small>
-                                </div>
-                            </div>
-
-                            <!-- List item -->
-                            <div class="list-group-item list-group-item-action d-flex align-items-start mb-3">
-                                <div class="flex-shrink-0 me-3">
-                                    <i class="demo-psi-speech-bubble-3 text-success fs-2"></i>
-                                </div>
-                                <div class="flex-grow-1">
-                                    <div class="d-flex justify-content-between align-items-start">
-                                        <a href="#" class="h6 fw-normal mb-0 stretched-link text-decoration-none">Comment
-                                            sorting</a>
-                                        <span class="badge bg-info rounded ms-auto">NEW</span>
+                            @foreach (@auth()->user()->notifications()->limit(5)->latest()->get() as $item)
+                                @php
+                                    $data = json_decode($item['data'], 1);
+                                @endphp
+                                <div class="list-group-item list-group-item-action d-flex align-items-start mb-3">
+                                    <div class="flex-shrink-0 me-3">
+                                        <i class="demo-psi-speech-bubble-3 text-success fs-2"></i>
                                     </div>
-                                    <small class="text-body-secondary">You
-                                        have 1,256 unsorted
-                                        comments.</small>
+                                    <div class="flex-grow-1">
+                                        <div class="d-flex justify-content-between align-items-start">
+                                            <a href="#" class="h6 fw-normal mb-0 stretched-link text-decoration-none">{{ $data['title'] }}</a>
+                                            @if (!$item['read_at'])
+                                                <span class="badge bg-info rounded ms-auto">NEW</span>
+                                            @endif
+                                        </div>
+                                        <small class="text-body-secondary">{{ $data['message'] }}</small>
+                                        <small class="text-body-primary"><a target="_blank" href="{{ url($data['file_path']) }}">Please Click To Download</a> </small>
+                                    </div>
                                 </div>
-                            </div>
+                            @endforeach
+
                             <div class="text-center mb-2">
                                 <a href="#" class="btn-link text-primary icon-link icon-link-hover">
                                     Show all Notifications

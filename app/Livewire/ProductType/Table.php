@@ -3,14 +3,20 @@
 namespace App\Livewire\ProductType;
 
 use App\Actions\ProductType\DeleteAction;
+use App\Exports\ProductTypeExport;
 use App\Models\ProductType;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use Livewire\Component;
 use Livewire\WithPagination;
+use Maatwebsite\Excel\Facades\Excel;
+use App\Jobs\Export\ExportProductTypesJob;
 
 class Table extends Component
 {
     use WithPagination;
+
+    public $exportLink = '';
 
     public $search = '';
 
@@ -19,6 +25,11 @@ class Table extends Component
     public $selected = [];
 
     public $selectAll = false;
+
+    public $sortField = 'id';
+    public $sortDirection = 'desc';
+
+    protected $queryString = ['sortField', 'sortDirection'];
 
     protected $paginationTheme = 'bootstrap';
 
@@ -42,6 +53,8 @@ class Table extends Component
                 $this->resetPage();
             }
             $this->selected = [];
+
+            $this->selectAll = false;
             $this->dispatch('RefreshProductTypeTable');
         } catch (\Exception $e) {
             DB::rollback();
@@ -62,16 +75,41 @@ class Table extends Component
     public function updatedSelectAll($value)
     {
         if ($value) {
-            $this->selected = ProductType::pluck('id')->toArray();
+            $this->selected = ProductType::latest()->limit(2000)->pluck('id')->toArray();
         } else {
             $this->selected = [];
         }
     }
 
+    public function export()
+    {
+        $count  = ProductType::count();
+        if ($count > 2000) {
+            ExportProductTypesJob::dispatch(auth()->user());
+            $this->dispatch('success', ['message' => 'You will get your file in your mailbox.']);
+        } else {
+            $exportFileName = 'product_types_' . now()->timestamp . '.xlsx';
+            return Excel::download(new ProductTypeExport, $exportFileName);
+        }
+    }
+    public function sortBy($field)
+    {
+        if ($this->sortField === $field) {
+            $this->sortDirection = $this->sortDirection === 'asc' ? 'desc' : 'asc';
+        } else {
+            $this->sortField = $field;
+            $this->sortDirection = 'desc';
+        }
+    }
+
     public function render()
     {
+        $data = ProductType::orderBy($this->sortField, $this->sortDirection)
+            ->where('name', 'like', '%' . $this->search . '%')
+            ->latest()
+            ->paginate($this->limit);
         return view('livewire.product-type.table', [
-            'data' => ProductType::where('name', 'like', '%' . $this->search . '%')->latest()->paginate($this->limit),
+            'data' => $data,
         ]);
     }
 }

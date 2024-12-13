@@ -11,7 +11,7 @@
                     <i class="demo-pli-printer fs-5"></i>
                 </button>
                 <div class="btn-group">
-                    <button class="btn btn-icon btn-outline-light"><i class="demo-pli-file-excel fs-5"></i></button>
+                    <button class="btn btn-icon btn-outline-light" wire:click="export()"><i class="demo-pli-file-excel fs-5"></i></button>
                     <button class="btn btn-icon btn-outline-light" wire:click="delete()"><i class="demo-pli-recycling fs-5"></i></button>
                 </div>
             </div>
@@ -37,16 +37,48 @@
                 </div>
             </div>
         </div>
+        <div class="row">
+            @if ($exportLink)
+                <div class="mt-3">
+                    <a href="{{ $exportLink }}" target="_blank" class="btn btn-success">Download Export {{ $exportLink }}</a>
+                </div>
+            @endif
+        </div>
     </div>
     <div class="card-body">
         <div class="table-responsive">
             <table class="table table-striped">
                 <thead>
                     <tr>
-                        <th>
-                            <input type="checkbox" wire:model.live="selectAll" /> #
+                        <th width="20%">
+                            <input type="checkbox" wire:model.live="selectAll" />
+                            <a href="#" wire:click.prevent="sortBy('id')">
+                                ID
+                                @if ($sortField === 'id')
+                                    <span>
+                                        @if ($sortDirection === 'asc')
+                                            &uarr;
+                                        @else
+                                            &darr;
+                                        @endif
+                                    </span>
+                                @endif
+                            </a>
                         </th>
-                        <th>Name</th>
+                        <th width="75%">
+                            <a href="#" wire:click.prevent="sortBy('name')">
+                                Name
+                                @if ($sortField === 'name')
+                                    <span>
+                                        @if ($sortDirection === 'asc')
+                                            &uarr;
+                                        @else
+                                            &darr;
+                                        @endif
+                                    </span>
+                                @endif
+                            </a>
+                        </th>
                         <th>Action</th>
                     </tr>
                 </thead>

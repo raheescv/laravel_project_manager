@@ -13,6 +13,8 @@ class ProductTypeSeeder extends Seeder
         DB::table('product_types')->truncate();
         ProductType::factory()->create(['name' => 'Product Type 1']);
         ProductType::factory()->create(['name' => 'Product Type 2']);
-        ProductType::factory(100)->create();
+        for ($i = 0; $i < 1; $i++) {
+            ProductType::factory(2000)->create();
+        }
     }
 }

@@ -52,7 +52,7 @@ class Page extends Component
     protected function rules()
     {
         return [
-            'product_types.name' => ['required', 'unique:product_types,name,'.$this->table_id],
+            'product_types.name' => ['required', 'unique:product_types,name,' . $this->table_id],
         ];
     }
 
@@ -78,7 +78,7 @@ class Page extends Component
                 $this->dispatch('ToggleProductTypeModal');
             }
             $this->dispatch('RefreshProductTypeTable');
-            $this->mount();
+            $this->mount($this->table_id);
         } catch (\Throwable $e) {
             $this->dispatch('error', ['message' => $e->getMessage()]);
         }
