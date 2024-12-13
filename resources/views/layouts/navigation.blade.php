@@ -3,7 +3,7 @@
         <div class="mainnav__top-content scrollable-content pb-5">
             <div id="_dm-mainnavProfile" class="mainnav__widget my-3 hv-outline-parent">
                 <div class="mininav-toggle text-center py-2">
-                    <img class="mainnav__avatar img-md rounded-circle hv-oc" src="./assets/img/profile-photos/1.png" alt="Profile Picture">
+                    <img class="mainnav__avatar img-md rounded-circle hv-oc" src="{{ asset('assets/img/profile-photos/1.png') }}" alt="Profile Picture">
                 </div>
 
                 <div class="mininav-content collapse d-mn-max">
@@ -47,7 +47,7 @@
                         <ul class="mininav-content nav collapse">
                             <li data-popper-arrow class="arrow"></li>
                             <li class="nav-item">
-                                <a href="./ui-elements-buttons.html" class="nav-link">Buttons</a>
+                                <a href="{{ route('product_type::index') }}" class="nav-link">Product Type</a>
                             </li>
                         </ul>
                     </li>

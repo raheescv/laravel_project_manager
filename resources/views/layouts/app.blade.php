@@ -17,6 +17,7 @@
     <link rel="icon" type="image/png" sizes="32x32" href="{{ asset('favicon-32x32.png') }}">
     <link rel="icon" type="image/png" sizes="16x16" href="{{ asset('favicon-16x16.png') }}">
     <link rel="manifest" href="./site.webmanifest">
+    @livewireStyles
 </head>
 
 <body class="out-quart">
@@ -463,6 +464,7 @@
     <script src="{{ asset('assets/js/demo-purpose-only.js') }}"></script>
     <script src="{{ asset('assets/vendors/chart.js/chart.umd.min.js') }}"></script>
     <script src="{{ asset('assets/pages/dashboard-1.js') }}"></script>
+    @livewireScripts
 </body>
 
 </html>

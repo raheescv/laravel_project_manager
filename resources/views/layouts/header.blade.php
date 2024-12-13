@@ -13,7 +13,6 @@
         <div class="header__content">
             <!-- Content Header - Left Side: -->
             <div class="header__content-start">
-
                 <!-- Navigation Toggler -->
                 <button type="button" class="nav-toggler header__btn btn btn-icon btn-sm" aria-label="Nav Toggler">
                     <i class="demo-psi-list-view"></i>
@@ -44,21 +43,13 @@
 
             <!-- Content Header - Right Side: -->
             <div class="header__content-end">
-
-                <!-- Mega Dropdown -->
                 <div class="dropdown">
-
-                    <!-- Toggler -->
                     <button class="header__btn btn btn-icon btn-sm" type="button" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-label="Megamenu dropdown" aria-expanded="false">
                         <i class="demo-psi-layout-grid"></i>
                     </button>
-
-                    <!-- Mega Dropdown Menu -->
                     <div class="dropdown-menu dropdown-menu-end p-3 mega-dropdown">
                         <div class="row">
                             <div class="col-md-12">
-
-                                <!-- Pages List Group -->
                                 <div class="list-group list-group-borderless">
                                     <div class="list-group-item d-flex align-items-center border-bottom mb-2">
                                         <div class="flex-shrink-0 me-2">
@@ -66,15 +57,14 @@
                                         </div>
                                         <h5 class="flex-grow-1 m-0">Settings</h5>
                                     </div>
-                                    <a href="#" class="list-group-item list-group-item-action">Profile</a>
+                                    <a href="{{ route('product_type::index') }}" class="list-group-item list-group-item-action">Product</a>
+                                    <a href="{{ route('product_type::index') }}" class="list-group-item list-group-item-action">Product Type</a>
                                 </div>
 
                             </div>
                         </div>
                     </div>
                 </div>
-                <!-- End - Mega Dropdown -->
-
                 <div class="dropdown">
                     <button class="header__btn btn btn-icon btn-sm" type="button" data-bs-toggle="dropdown" aria-label="Notification dropdown" aria-expanded="false">
                         <span class="d-block position-relative">
@@ -140,33 +130,6 @@
                                         comments.</small>
                                 </div>
                             </div>
-
-                            <!-- List item -->
-                            <div class="list-group-item list-group-item-action d-flex align-items-start mb-3">
-                                <div class="flex-shrink-0 me-3">
-                                    <img class="img-xs rounded-circle" src="./assets/img/profile-photos/7.png" alt="Profile Picture" loading="lazy">
-                                </div>
-                                <div class="flex-grow-1">
-                                    <a href="#" class="h6 fw-normal d-block mb-0 stretched-link text-decoration-none">Lucy
-                                        Sent you a message</a>
-                                    <small class="text-body-secondary">30
-                                        minutes ago</small>
-                                </div>
-                            </div>
-
-                            <!-- List item -->
-                            <div class="list-group-item list-group-item-action d-flex align-items-start mb-3">
-                                <div class="flex-shrink-0 me-3">
-                                    <img class="img-xs rounded-circle" src="./assets/img/profile-photos/3.png" alt="Profile Picture" loading="lazy">
-                                </div>
-                                <div class="flex-grow-1">
-                                    <a href="#" class="h6 fw-normal d-block mb-0 stretched-link text-decoration-none">Jackson
-                                        Sent you a message</a>
-                                    <small class="text-body-secondary">1
-                                        hours ago</small>
-                                </div>
-                            </div>
-
                             <div class="text-center mb-2">
                                 <a href="#" class="btn-link text-primary icon-link icon-link-hover">
                                     Show all Notifications
