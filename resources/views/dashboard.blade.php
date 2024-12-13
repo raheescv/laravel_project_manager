@@ -315,4 +315,8 @@
 
         </div>
     </div>
+    @push('scripts')
+        <script src="{{ asset('assets/vendors/chart.js/chart.umd.min.js') }}"></script>
+        <script src="{{ asset('assets/pages/dashboard-1.js') }}"></script>
+    @endpush
 </x-app-layout>

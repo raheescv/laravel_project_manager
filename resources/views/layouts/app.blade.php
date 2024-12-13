@@ -16,8 +16,15 @@
     <link rel="apple-touch-icon" sizes="180x180" href="{{ asset('apple-touch-icon.png') }}">
     <link rel="icon" type="image/png" sizes="32x32" href="{{ asset('favicon-32x32.png') }}">
     <link rel="icon" type="image/png" sizes="16x16" href="{{ asset('favicon-16x16.png') }}">
-    <link rel="manifest" href="./site.webmanifest">
+    {{-- <link rel="manifest" href="{{ asset('site.webmanifest') }}"> --}}
+    <link rel="stylesheet" href="{{ asset('assets/vendors/toaster/toastr.min.css') }}">
     @livewireStyles
+    <style>
+        .pointer {
+            cursor: pointer;
+        }
+    </style>
+    <script src="{{ asset('assets/js/jquery-3.7.1.min.js') }}"></script>
 </head>
 
 <body class="out-quart">
@@ -462,9 +469,67 @@
     <script src="{{ asset('assets/vendors/bootstrap/bootstrap.min.js') }}"></script>
     <script src="{{ asset('assets/js/nifty.js') }}"></script>
     <script src="{{ asset('assets/js/demo-purpose-only.js') }}"></script>
-    <script src="{{ asset('assets/vendors/chart.js/chart.umd.min.js') }}"></script>
-    <script src="{{ asset('assets/pages/dashboard-1.js') }}"></script>
+    <script src="{{ asset('assets/vendors/toaster/toastr.min.js') }}"></script>
     @livewireScripts
+    @stack('scripts')
+    <script>
+        toastr.options = {
+            "closeButton": true,
+            "progressBar": true,
+            "positionClass": "toast-top-right",
+            "timeOut": "5000"
+        };
+        @if (session('success'))
+            toastr.success("{{ session('success') }}");
+        @elseif (session('error'))
+            toastr.error("{{ session('error') }}");
+        @elseif (session('info'))
+            toastr.info("{{ session('info') }}");
+        @elseif (session('warning'))
+            toastr.warning("{{ session('warning') }}");
+        @endif
+    </script>
+
+    <script type="text/javascript">
+        $(document).ready(function() {
+            window.addEventListener('success', event => {
+                if (typeof(event.detail[0].title) != "undefined" && typeof(event.detail[0].message) != "undefined") {
+                    toastr.info(event.detail[0].message, event.detail[0].title);
+                    return false;
+                }
+                if (typeof(event.detail[0].title) != "undefined") {
+                    toastr.info(event.detail[0].title);
+                    return false;
+                }
+                if (typeof(event.detail[0].message) != "undefined") {
+                    toastr.info(event.detail[0].message);
+                    return false;
+                }
+            });
+            window.addEventListener('warning', event => {
+                if (typeof(event.detail[0].title) != "undefined" && typeof(event.detail[0].message) != "undefined") {
+                    toastr.warning(event.detail[0].message, event.detail[0].title);
+                    return false;
+                }
+                if (typeof(event.detail[0].title) != "undefined") {
+                    toastr.warning(event.detail[0].title);
+                    return false;
+                }
+                if (typeof(event.detail[0].message) != "undefined") {
+                    toastr.warning(event.detail[0].message);
+                    return false;
+                }
+            });
+            window.addEventListener('error', event => {
+                if (event.detail[0]) {
+                    toastr.error(event.detail[0].message)
+                }
+                if (event.error) {
+                    toastr.error(event.error.message)
+                }
+            });
+        });
+    </script>
 </body>
 
 </html>
