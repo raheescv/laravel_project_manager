@@ -1,0 +1,26 @@
+<?php
+
+namespace App\Jobs\ProductType;
+
+use App\Imports\ProductTypeImport;
+use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Foundation\Bus\Dispatchable;
+use Illuminate\Queue\InteractsWithQueue;
+use Illuminate\Queue\SerializesModels;
+use Maatwebsite\Excel\Facades\Excel;
+
+class ImportProductTypesJob implements ShouldQueue
+{
+    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+
+    public function __construct(protected $user_id, protected $filePath) {}
+
+    public function handle()
+    {
+        $file = storage_path('app/public/'.$this->filePath);
+        $totalRows = Excel::toCollection(null, $file)->first()->count();
+        Excel::import(new ProductTypeImport($this->user_id, $totalRows), $file);
+        unlink($file);
+    }
+}

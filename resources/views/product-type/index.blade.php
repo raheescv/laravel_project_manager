@@ -20,5 +20,6 @@
             </div>
         </div>
     </div>
-    <x-product-type-modal />
+    <x-product-type.product-type-modal />
+    <x-product-type.product-type-import-modal />
 </x-app-layout>

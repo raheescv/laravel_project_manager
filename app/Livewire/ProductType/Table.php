@@ -4,13 +4,12 @@ namespace App\Livewire\ProductType;
 
 use App\Actions\ProductType\DeleteAction;
 use App\Exports\ProductTypeExport;
+use App\Jobs\Export\ExportProductTypesJob;
 use App\Models\ProductType;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Storage;
 use Livewire\Component;
 use Livewire\WithPagination;
 use Maatwebsite\Excel\Facades\Excel;
-use App\Jobs\Export\ExportProductTypesJob;
 
 class Table extends Component
 {
@@ -27,6 +26,7 @@ class Table extends Component
     public $selectAll = false;
 
     public $sortField = 'id';
+
     public $sortDirection = 'desc';
 
     protected $queryString = ['sortField', 'sortDirection'];
@@ -83,15 +83,17 @@ class Table extends Component
 
     public function export()
     {
-        $count  = ProductType::count();
+        $count = ProductType::count();
         if ($count > 2000) {
             ExportProductTypesJob::dispatch(auth()->user());
             $this->dispatch('success', ['message' => 'You will get your file in your mailbox.']);
         } else {
-            $exportFileName = 'product_types_' . now()->timestamp . '.xlsx';
+            $exportFileName = 'product_types_'.now()->timestamp.'.xlsx';
+
             return Excel::download(new ProductTypeExport, $exportFileName);
         }
     }
+
     public function sortBy($field)
     {
         if ($this->sortField === $field) {
@@ -105,9 +107,10 @@ class Table extends Component
     public function render()
     {
         $data = ProductType::orderBy($this->sortField, $this->sortDirection)
-            ->where('name', 'like', '%' . $this->search . '%')
+            ->where('name', 'like', '%'.$this->search.'%')
             ->latest()
             ->paginate($this->limit);
+
         return view('livewire.product-type.table', [
             'data' => $data,
         ]);

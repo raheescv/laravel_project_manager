@@ -27,7 +27,9 @@
                     <input type="text" wire:model.live="search" placeholder="Search..." class="form-control" autocomplete="off">
                 </div>
                 <div class="btn-group">
-                    <button class="btn btn-icon btn-outline-light"><i class="demo-pli-download-from-cloud fs-5"></i></button>
+                    <button class="btn btn-icon btn-outline-light" data-bs-toggle="modal" data-bs-target="#ProductTypeImportModal">
+                        <i class="demo-pli-download-from-cloud fs-5"></i>
+                    </button>
                     <button class="btn btn-icon btn-outline-light dropdown-toggle dropdown-toggle-split" data-bs-toggle="dropdown" aria-expanded="false">
                         <span class="visually-hidden">Toggle Dropdown</span>
                     </button>

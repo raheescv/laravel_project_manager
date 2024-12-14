@@ -2,6 +2,7 @@
 
 return [
     App\Providers\AppServiceProvider::class,
-    Spatie\Html\HtmlServiceProvider::class,
+    App\Providers\HorizonServiceProvider::class,
     Maatwebsite\Excel\ExcelServiceProvider::class,
+    Spatie\Html\HtmlServiceProvider::class,
 ];

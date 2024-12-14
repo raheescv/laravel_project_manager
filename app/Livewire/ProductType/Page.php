@@ -52,7 +52,7 @@ class Page extends Component
     protected function rules()
     {
         return [
-            'product_types.name' => ['required', 'unique:product_types,name,' . $this->table_id],
+            'product_types.name' => ['required', 'unique:product_types,name,'.$this->table_id],
         ];
     }
 

@@ -2,16 +2,15 @@
 
 namespace App\Jobs\Export;
 
-use App\Exports\ProductTypesExport;
-use Maatwebsite\Excel\Facades\Excel;
-use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Queue\InteractsWithQueue;
-use Illuminate\Queue\SerializesModels;
-use Illuminate\Foundation\Bus\Dispatchable;
+use App\Exports\ProductTypeExport;
 use App\Models\User;
 use App\Notifications\ExportCompleted;
-use App\Exports\ProductTypeExport;
+use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Foundation\Bus\Dispatchable;
+use Illuminate\Queue\InteractsWithQueue;
+use Illuminate\Queue\SerializesModels;
+use Maatwebsite\Excel\Facades\Excel;
 
 class ExportProductTypesJob implements ShouldQueue
 {
@@ -26,7 +25,7 @@ class ExportProductTypesJob implements ShouldQueue
 
     public function handle()
     {
-        $exportFileName = 'exports/product_types_' . now()->timestamp . '.xlsx';
+        $exportFileName = 'exports/product_types_'.now()->timestamp.'.xlsx';
         Excel::store(new ProductTypeExport, $exportFileName, 'public');
         $this->user->notify(new ExportCompleted('ProductType', $exportFileName));
     }
