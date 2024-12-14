@@ -7,12 +7,10 @@
                     <span class="vr"></span>
                     Add New
                 </button>
-                <button class="btn btn-icon btn-outline-light">
-                    <i class="demo-pli-printer fs-5"></i>
-                </button>
                 <div class="btn-group">
                     <button class="btn btn-icon btn-outline-light" wire:click="export()"><i class="demo-pli-file-excel fs-5"></i></button>
-                    <button class="btn btn-icon btn-outline-light" wire:click="delete()"><i class="demo-pli-recycling fs-5"></i></button>
+                    <button class="btn btn-icon btn-outline-light" wire:click="delete()" wire:confirm="Are you sure you want to delete the selected items?"><i
+                            class="demo-pli-recycling fs-5"></i></button>
                 </div>
             </div>
             <div class="col-md-6 d-flex gap-1 align-items-center justify-content-md-end mb-3">
