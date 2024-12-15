@@ -53,7 +53,7 @@
                                 <span class="visually-hidden">unread messages</span>
                             </span>
                             <span class="badge badge-super rounded-pill bg-danger p-1">
-                                {{ auth()->user()->notifications()->unread()->count() }}
+                                {{ auth()->user()->unreadNotifications()->count() }}
                                 <span class="visually-hidden">unread messages</span>
                             </span>
                         </span>
@@ -63,23 +63,20 @@
                             <h5>Notifications</h5>
                         </div>
                         <div class="list-group list-group-borderless">
-                            @foreach (@auth()->user()->notifications()->limit(5)->latest()->get() as $item)
-                                @php
-                                    $data = json_decode($item['data'], 1);
-                                @endphp
+                            @foreach (auth()->user()->unreadNotifications()->limit(5)->get() as $item)
                                 <div class="list-group-item list-group-item-action d-flex align-items-start mb-3">
                                     <div class="flex-shrink-0 me-3">
                                         <i class="demo-psi-speech-bubble-3 text-success fs-2"></i>
                                     </div>
                                     <div class="flex-grow-1">
                                         <div class="d-flex justify-content-between align-items-start">
-                                            <a href="#" class="h6 fw-normal mb-0 stretched-link text-decoration-none">{{ $data['title'] }}</a>
+                                            <a href="#" class="h6 fw-normal mb-0 stretched-link text-decoration-none">{{ $item['data']['title'] }}</a>
                                             @if (!$item['read_at'])
                                                 <span class="badge bg-info rounded ms-auto">NEW</span>
                                             @endif
                                         </div>
-                                        <small class="text-body-secondary">{{ $data['message'] }}</small>
-                                        <small class="text-body-primary"><a target="_blank" href="{{ url($data['file_path']) }}">Please Click To Download</a> </small>
+                                        <small class="text-body-secondary">{{ $item['data']['message'] }}</small>
+                                        <small class="text-body-primary"><a target="_blank" href="{{ url($item['data']['file_path']) }}">Please Click To Download</a> </small>
                                     </div>
                                 </div>
                             @endforeach
