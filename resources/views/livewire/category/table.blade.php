@@ -2,7 +2,7 @@
     <div class="card-header -4 mb-3">
         <div class="row">
             <div class="col-md-6 d-flex gap-1 align-items-center mb-3">
-                <button class="btn btn-primary hstack gap-2 align-self-center" id="ProductTypeAdd">
+                <button class="btn btn-primary hstack gap-2 align-self-center" id="CategoryAdd">
                     <i class="demo-psi-add fs-5"></i>
                     <span class="vr"></span>
                     Add New
@@ -25,7 +25,7 @@
                     <input type="text" wire:model.live="search" placeholder="Search..." class="form-control" autocomplete="off">
                 </div>
                 <div class="btn-group">
-                    <button class="btn btn-icon btn-outline-light" data-bs-toggle="modal" data-bs-target="#ProductTypeImportModal">
+                    <button class="btn btn-icon btn-outline-light" data-bs-toggle="modal" data-bs-target="#CategoryImportModal">
                         <i class="demo-pli-download-from-cloud fs-5"></i>
                     </button>
                     <button class="btn btn-icon btn-outline-light dropdown-toggle dropdown-toggle-split" data-bs-toggle="dropdown" aria-expanded="false">
@@ -102,15 +102,15 @@
         <script>
             $(document).ready(function() {
                 $(document).on('click', '.edit', function() {
-                    Livewire.dispatch("ProductType-Page-Update-Component", {
+                    Livewire.dispatch("Category-Page-Update-Component", {
                         id: $(this).data('id')
                     });
                 });
-                $('#ProductTypeAdd').click(function() {
-                    Livewire.dispatch("ProductType-Page-Create-Component");
+                $('#CategoryAdd').click(function() {
+                    Livewire.dispatch("Category-Page-Create-Component");
                 });
-                window.addEventListener('RefreshProductTypeTable', event => {
-                    Livewire.dispatch("ProductType-Refresh-Component");
+                window.addEventListener('RefreshCategoryTable', event => {
+                    Livewire.dispatch("Category-Refresh-Component");
                 });
             });
         </script>

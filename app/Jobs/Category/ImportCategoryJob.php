@@ -1,8 +1,8 @@
 <?php
 
-namespace App\Jobs\ProductType;
+namespace App\Jobs\Category;
 
-use App\Imports\ProductTypeImport;
+use App\Imports\CategoryImport;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -10,7 +10,7 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Maatwebsite\Excel\Facades\Excel;
 
-class ImportProductTypesJob implements ShouldQueue
+class ImportCategoryJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
@@ -18,9 +18,9 @@ class ImportProductTypesJob implements ShouldQueue
 
     public function handle()
     {
-        $file = storage_path('app/public/'.$this->filePath);
-        $totalRows = Excel::toCollection(null, $file)->first()->count();
-        Excel::import(new ProductTypeImport($this->user_id, $totalRows), $file);
+        $file = storage_path('app/public/' . $this->filePath);
+        $totalRows = Excel::toCollection(null, $file)->first()->count() - 1;
+        Excel::import(new CategoryImport($this->user_id, $totalRows), $file);
         unlink($file);
     }
 }

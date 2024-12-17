@@ -1,8 +1,8 @@
 <?php
 
-namespace App\Actions\ProductType;
+namespace App\Actions\Category;
 
-use App\Models\ProductType;
+use App\Models\Category;
 use Illuminate\Support\Facades\Validator;
 
 class CreateAction
@@ -10,13 +10,13 @@ class CreateAction
     public function execute($data)
     {
         try {
-            $validator = Validator::make($data, ProductType::rules());
+            $validator = Validator::make($data, Category::rules());
             if ($validator->fails()) {
                 throw new \Exception($validator->errors()->first());
             }
-            $model = ProductType::create($data);
+            $model = Category::create($data);
             $return['success'] = true;
-            $return['message'] = 'Successfully Created ProductType';
+            $return['message'] = 'Successfully Created Category';
             $return['data'] = $model;
         } catch (\Throwable $th) {
             $return['success'] = false;

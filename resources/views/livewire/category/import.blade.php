@@ -1,6 +1,6 @@
 <div>
     <div class="modal-header">
-        <h1 class="modal-title fs-5" id="ProductTypeModalLabel">Product Type Modal</h1>
+        <h1 class="modal-title fs-5" id="CategoryModalLabel">Category Modal</h1>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
     </div>
     <form wire:submit="save">
@@ -49,11 +49,11 @@
             });
             const channel = pusher.subscribe('file-import-channel-{{ auth()->id() }}');
             channel.bind('file-import-event-{{ auth()->id() }}', function(data) {
-                if (data.type === 'ProductType') {
+                if (data.type === 'Category') {
                     const progressBar = document.getElementById('progress-bar');
                     progressBar.style.width = `${data.progress}%`;
                     progressBar.setAttribute('aria-valuenow', data.progress);
-                    $('#progress-bar').text(data.progress);
+                    $('#progress-bar').text(Math.round(data.progress, 2));
                     if (data.progress === 100) {
                         alert('Import completed!');
                         window.location.reload();

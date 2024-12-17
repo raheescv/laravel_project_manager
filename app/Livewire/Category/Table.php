@@ -1,11 +1,11 @@
 <?php
 
-namespace App\Livewire\ProductType;
+namespace App\Livewire\Category;
 
-use App\Actions\ProductType\DeleteAction;
-use App\Exports\ProductTypeExport;
-use App\Jobs\Export\ExportProductTypesJob;
-use App\Models\ProductType;
+use App\Actions\Category\DeleteAction;
+use App\Exports\CategoryExport;
+use App\Jobs\Export\ExportCategoryJob;
+use App\Models\Category;
 use Illuminate\Support\Facades\DB;
 use Livewire\Component;
 use Livewire\WithPagination;
@@ -34,7 +34,7 @@ class Table extends Component
     protected $paginationTheme = 'bootstrap';
 
     protected $listeners = [
-        'ProductType-Refresh-Component' => '$refresh',
+        'Category-Refresh-Component' => '$refresh',
     ];
 
     public function delete()
@@ -47,7 +47,7 @@ class Table extends Component
                     throw new \Exception($response['message'], 1);
                 }
             }
-            $this->dispatch('success', ['message' => 'Successfully Deleted '.count($this->selected).' items']);
+            $this->dispatch('success', ['message' => 'Successfully Deleted ' . count($this->selected) . ' items']);
             DB::commit();
             if (count($this->selected) > 10) {
                 $this->resetPage();
@@ -55,7 +55,7 @@ class Table extends Component
             $this->selected = [];
 
             $this->selectAll = false;
-            $this->dispatch('RefreshProductTypeTable');
+            $this->dispatch('RefreshCategoryTable');
         } catch (\Exception $e) {
             DB::rollback();
             $this->dispatch('error', ['message' => $e->getMessage()]);
@@ -75,7 +75,7 @@ class Table extends Component
     public function updatedSelectAll($value)
     {
         if ($value) {
-            $this->selected = ProductType::latest()->limit(2000)->pluck('id')->toArray();
+            $this->selected = Category::latest()->limit(2000)->pluck('id')->toArray();
         } else {
             $this->selected = [];
         }
@@ -83,14 +83,14 @@ class Table extends Component
 
     public function export()
     {
-        $count = ProductType::count();
+        $count = Category::count();
         if ($count > 2000) {
-            ExportProductTypesJob::dispatch(auth()->user());
+            ExportCategoryJob::dispatch(auth()->user());
             $this->dispatch('success', ['message' => 'You will get your file in your mailbox.']);
         } else {
-            $exportFileName = 'product_types_'.now()->timestamp.'.xlsx';
+            $exportFileName = 'category_' . now()->timestamp . '.xlsx';
 
-            return Excel::download(new ProductTypeExport, $exportFileName);
+            return Excel::download(new CategoryExport, $exportFileName);
         }
     }
 
@@ -106,12 +106,12 @@ class Table extends Component
 
     public function render()
     {
-        $data = ProductType::orderBy($this->sortField, $this->sortDirection)
-            ->where('name', 'like', '%'.$this->search.'%')
+        $data = Category::orderBy($this->sortField, $this->sortDirection)
+            ->where('name', 'like', '%' . $this->search . '%')
             ->latest()
             ->paginate($this->limit);
 
-        return view('livewire.product-type.table', [
+        return view('livewire.category.table', [
             'data' => $data,
         ]);
     }

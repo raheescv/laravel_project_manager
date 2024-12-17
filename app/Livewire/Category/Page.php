@@ -1,34 +1,34 @@
 <?php
 
-namespace App\Livewire\ProductType;
+namespace App\Livewire\Category;
 
-use App\Actions\ProductType\CreateAction;
-use App\Actions\ProductType\UpdateAction;
-use App\Models\ProductType;
+use App\Actions\Category\CreateAction;
+use App\Actions\Category\UpdateAction;
+use App\Models\Category;
 use Faker\Factory;
 use Livewire\Component;
 
 class Page extends Component
 {
     protected $listeners = [
-        'ProductType-Page-Create-Component' => 'create',
-        'ProductType-Page-Update-Component' => 'edit',
+        'Category-Page-Create-Component' => 'create',
+        'Category-Page-Update-Component' => 'edit',
     ];
 
-    public $product_types;
+    public $categories;
 
     public $table_id;
 
     public function create()
     {
         $this->mount();
-        $this->dispatch('ToggleProductTypeModal');
+        $this->dispatch('ToggleCategoryModal');
     }
 
     public function edit($id)
     {
         $this->mount($id);
-        $this->dispatch('ToggleProductTypeModal');
+        $this->dispatch('ToggleCategoryModal');
     }
 
     public function mount($table_id = null)
@@ -40,25 +40,25 @@ class Page extends Component
             if (! app()->isProduction()) {
                 $name = $faker->name;
             }
-            $this->product_types = [
+            $this->categories = [
                 'name' => $name,
             ];
         } else {
-            $productType = ProductType::find($this->table_id);
-            $this->product_types = $productType->toArray();
+            $category = Category::find($this->table_id);
+            $this->categories = $category->toArray();
         }
     }
 
     protected function rules()
     {
         return [
-            'product_types.name' => ['required', 'unique:product_types,name,'.$this->table_id],
+            'categories.name' => ['required', 'unique:categories,name,' . $this->table_id],
         ];
     }
 
     protected $messages = [
-        'product_types.name.required' => 'The name field is required',
-        'product_types.name.unique' => 'The name is already Registered',
+        'categories.name.required' => 'The name field is required',
+        'categories.name.unique' => 'The name is already Registered',
     ];
 
     public function save($close = false)
@@ -66,19 +66,21 @@ class Page extends Component
         $this->validate();
         try {
             if (! $this->table_id) {
-                $response = (new CreateAction)->execute($this->product_types);
+                $response = (new CreateAction)->execute($this->categories);
             } else {
-                $response = (new UpdateAction)->execute($this->product_types, $this->table_id);
+                $response = (new UpdateAction)->execute($this->categories, $this->table_id);
             }
             if (! $response['success']) {
                 throw new \Exception($response['message'], 1);
             }
             $this->dispatch('success', ['message' => $response['message']]);
-            if (! $close) {
-                $this->dispatch('ToggleProductTypeModal');
-            }
-            $this->dispatch('RefreshProductTypeTable');
             $this->mount($this->table_id);
+            if (! $close) {
+                $this->dispatch('ToggleCategoryModal');
+            } else {
+                $this->mount();
+            }
+            $this->dispatch('RefreshCategoryTable');
         } catch (\Throwable $e) {
             $this->dispatch('error', ['message' => $e->getMessage()]);
         }
@@ -86,6 +88,6 @@ class Page extends Component
 
     public function render()
     {
-        return view('livewire.product-type.page');
+        return view('livewire.category.page');
     }
 }

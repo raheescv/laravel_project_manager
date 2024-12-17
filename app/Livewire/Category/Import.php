@@ -1,8 +1,8 @@
 <?php
 
-namespace App\Livewire\ProductType;
+namespace App\Livewire\Category;
 
-use App\Jobs\ProductType\ImportProductTypesJob;
+use App\Jobs\Category\ImportCategoryJob;
 use Livewire\Component;
 use Livewire\WithFileUploads;
 
@@ -27,11 +27,11 @@ class Import extends Component
             'file' => 'required|file|mimes:csv,xlsx|max:10240',
         ]);
         $filePath = $this->file->store('imports', 'public');
-        ImportProductTypesJob::dispatch(auth()->id(), $filePath);
+        ImportCategoryJob::dispatch(auth()->id(), $filePath);
     }
 
     public function render()
     {
-        return view('livewire.product-type.import');
+        return view('livewire.category.import');
     }
 }
