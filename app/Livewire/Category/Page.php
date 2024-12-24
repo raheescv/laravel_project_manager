@@ -52,7 +52,7 @@ class Page extends Component
     protected function rules()
     {
         return [
-            'categories.name' => ['required', 'unique:categories,name,' . $this->table_id],
+            'categories.name' => ['required', 'unique:categories,name,'.$this->table_id],
         ];
     }
 

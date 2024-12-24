@@ -18,7 +18,7 @@ class ImportCategoryJob implements ShouldQueue
 
     public function handle()
     {
-        $file = storage_path('app/public/' . $this->filePath);
+        $file = storage_path('app/public/'.$this->filePath);
         $totalRows = Excel::toCollection(null, $file)->first()->count() - 1;
         Excel::import(new CategoryImport($this->user_id, $totalRows), $file);
         unlink($file);
