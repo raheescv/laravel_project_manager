@@ -25,6 +25,7 @@
         }
     </style>
     <script src="{{ asset('assets/js/jquery-3.7.1.min.js') }}"></script>
+    @stack('styles')
 </head>
 
 <body class="out-quart">
