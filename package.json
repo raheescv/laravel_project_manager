@@ -19,6 +19,8 @@
         "vite": "^6.0"
     },
     "dependencies": {
-        "toastr": "^2.1.4"
+        "qrcode-terminal": "^0.12.0",
+        "toastr": "^2.1.4",
+        "whatsapp-web.js": "^1.26.0"
     }
 }

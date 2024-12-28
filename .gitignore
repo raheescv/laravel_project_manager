@@ -22,3 +22,5 @@ yarn-error.log
 /.vscode
 /.zed
 template
+/public/node/.wwebjs_cache
+/public/node/node_modules
