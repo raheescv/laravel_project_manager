@@ -28,13 +28,17 @@ class Page extends Component
     public $range_from;
 
     public $range_to;
+
     public $rsi_value;
 
     public $quoteData = [];
 
     public $depthData = [];
+
     public $marketStatusData = [];
+
     public $ordersData = [];
+
     public $positionData = [];
 
     public $historyData = [];
@@ -156,7 +160,6 @@ class Page extends Component
         info($this->ordersData);
     }
 
-
     public function getMarketDepth()
     {
         $this->depthData = [];
@@ -240,7 +243,7 @@ class Page extends Component
     {
         $payload = [
             'grant_type' => 'authorization_code',
-            'appIdHash' => hash('sha256', $this->client_id . ':' . $this->secret_id),
+            'appIdHash' => hash('sha256', $this->client_id.':'.$this->secret_id),
             'code' => config('constants.fyers.auth_code'),
         ];
         $response = Http::post("$this->fyers_link/api/v3/validate-authcode", $payload);
@@ -257,7 +260,7 @@ class Page extends Component
     public function calculateRSI($data, $period = 14)
     {
         info($data);
-        $closingPrices = array_map(fn($entry) => end($entry['y']), $data);
+        $closingPrices = array_map(fn ($entry) => end($entry['y']), $data);
 
         // Step 2: Calculate price changes
         $priceChanges = [];
@@ -266,8 +269,8 @@ class Page extends Component
         }
 
         // Step 3: Separate gains and losses
-        $gains = array_map(fn($change) => $change > 0 ? $change : 0, $priceChanges);
-        $losses = array_map(fn($change) => $change < 0 ? abs($change) : 0, $priceChanges);
+        $gains = array_map(fn ($change) => $change > 0 ? $change : 0, $priceChanges);
+        $losses = array_map(fn ($change) => $change < 0 ? abs($change) : 0, $priceChanges);
 
         // Step 4: Calculate initial average gain and loss
         $avgGain = array_sum(array_slice($gains, 0, $period)) / $period;

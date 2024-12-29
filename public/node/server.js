@@ -1,28 +1,84 @@
 const express = require('express');
 const { Client, MessageMedia } = require('whatsapp-web.js');
-const qrcode = require('qrcode-terminal');
 const cors = require('cors');
 const bodyParser = require('body-parser');
-const path = require('path');
 const fs = require('fs');
+const qrCode = require('qrcode');
 
 const app = express();
 app.use(cors());
 app.use(bodyParser.json());
 
-const client = new Client();
+let latestQrCode = null;
 
-// Generate QR code for WhatsApp login
-client.on('qr', (qr) => {
-    console.log('QR Code received, scan it with WhatsApp:');
-    qrcode.generate(qr, { small: true });
-});
-client.on('ready', () => {
-    console.log('WhatsApp client is ready!');
-});
-client.initialize();
+function initializeClient() {
+    client = new Client();
 
-// Endpoint to send a message
+    client.on('qr', (qr) => {
+        console.log('QR Code received, scan it with WhatsApp:');
+        qrCode.toDataURL(qr, (err, url) => {
+            if (err) {
+                console.error('Error generating QR code:', err);
+                return;
+            }
+            latestQrCode = url;
+            console.log('QR Code sent to WebSocket clients.');
+        });
+    });
+
+    client.on('ready', () => {
+        console.log('WhatsApp client is ready!');
+    });
+
+    client.on('disconnected', (reason) => {
+        console.log('Disconnecting the WhatsApp client...');
+        client.destroy().then(() => {
+            console.log('WhatsApp client disconnected successfully.');
+        }).catch((error) => {
+            console.error('Error while disconnecting the client:', error);
+        });
+    });
+
+    client.initialize();
+}
+
+initializeClient();
+
+app.get('/get-qr', (req, res) => {
+    if (latestQrCode) {
+        res.json({ success: true, qr: latestQrCode });
+    } else {
+        res.status(404).json({ success: false, message: 'QR code not available' });
+    }
+});
+
+app.get('/check-status', (req, res) => {
+    if (client.info) {
+        res.json({ success: true, message: 'Client is ready' });
+    } else {
+        res.json({ success: false, message: 'Client is not ready. Please wait or re connect or check for issues.' });
+    }
+});
+
+app.post('/disconnect', async (req, res) => {
+    console.log('Disconnecting the WhatsApp client...');
+    try {
+        console.log('Disconnecting the client...');
+        await client.logout();
+        console.log('Successfully logged out. The session is terminated.');
+        await client.destroy();
+        console.log('Client disconnected successfully.');
+
+        console.log('Reconnecting the client...');
+        initializeClient();
+
+        res.json({ success: true, message: 'Client reconnected successfully.' });
+    } catch (error) {
+        console.error('Error during reconnection:', error);
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
 app.post('/send-message', async (req, res) => {
     try {
         const { number, message, filePath } = req.body;
@@ -47,7 +103,7 @@ app.post('/send-message', async (req, res) => {
         }
         res.status(200).json({ success: true, message: 'Message sent', response });
     } catch (error) {
-        res.status(500).json({ success: false, error: error.message });
+        res.status(500).json({ success: false, message: error.message });
     }
 });
 

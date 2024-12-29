@@ -10,13 +10,14 @@ use Illuminate\Support\Facades\DB;
 use Livewire\Component;
 use Livewire\WithPagination;
 use Maatwebsite\Excel\Facades\Excel;
-use Illuminate\Support\Facades\Http;
 
 class Table extends Component
 {
     use WithPagination;
 
     public $exportLink = '';
+
+    public $whatsappQr = '';
 
     public $search = '';
 
@@ -48,7 +49,7 @@ class Table extends Component
                     throw new \Exception($response['message'], 1);
                 }
             }
-            $this->dispatch('success', ['message' => 'Successfully Deleted ' . count($this->selected) . ' items']);
+            $this->dispatch('success', ['message' => 'Successfully Deleted '.count($this->selected).' items']);
             DB::commit();
             if (count($this->selected) > 10) {
                 $this->resetPage();
@@ -89,8 +90,7 @@ class Table extends Component
             // ExportProductJob::dispatch(auth()->user());
             $this->dispatch('success', ['message' => 'You will get your file in your mailbox.']);
         } else {
-            $exportFileName = 'category_' . now()->timestamp . '.xlsx';
-
+            $exportFileName = 'category_'.now()->timestamp.'.xlsx';
             // return Excel::download(new ProductExport, $exportFileName);
         }
     }
@@ -107,19 +107,8 @@ class Table extends Component
 
     public function render()
     {
-        $number = '+919633155669';
-        $message = 'your pdf pls find it in your message';
-        $filePath = public_path('node/sample.pdf');
-        $response = Http::post('http://localhost:3002/send-message', [
-            'number' => $number,
-            'message' => $message,
-            'filePath' => $filePath,
-        ]);
-        // $response = $response->json();
-        // dd($response);
-
         $data = Product::orderBy($this->sortField, $this->sortDirection)
-            ->where('name', 'like', '%' . $this->search . '%')
+            ->where('name', 'like', '%'.$this->search.'%')
             ->latest()
             ->paginate($this->limit);
 

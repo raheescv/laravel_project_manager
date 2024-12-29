@@ -8,11 +8,11 @@ if (! function_exists('writeToEnv')) {
         $path = base_path('.env');
         if (File::exists($path)) {
             $envContents = File::get($path);
-            $keyPattern = '/^' . preg_quote($key) . '=.*/m';
+            $keyPattern = '/^'.preg_quote($key).'=.*/m';
             if (preg_match($keyPattern, $envContents)) {
-                $envContents = preg_replace($keyPattern, $key . '=' . $value, $envContents);
+                $envContents = preg_replace($keyPattern, $key.'='.$value, $envContents);
             } else {
-                $envContents .= PHP_EOL . $key . '=' . $value;
+                $envContents .= PHP_EOL.$key.'='.$value;
             }
             File::put($path, $envContents);
 
@@ -51,14 +51,15 @@ if (! function_exists('orderStatus')) {
     function orderStatus($key)
     {
         $statues = [
-            1 => "Canceled",
-            2 => "Traded / Filled",
-            3 => "(Not used currently)",
-            4 => "Transit",
-            5 => "Rejected",
-            6 => "Pending",
-            7 => "Expired",
+            1 => 'Canceled',
+            2 => 'Traded / Filled',
+            3 => '(Not used currently)',
+            4 => 'Transit',
+            5 => 'Rejected',
+            6 => 'Pending',
+            7 => 'Expired',
         ];
+
         return $statues[$key];
     }
 }
@@ -67,11 +68,12 @@ if (! function_exists('orderSegments')) {
     function orderSegments($key)
     {
         $statues = [
-            10 => "E (Equity)",
-            11 => "D (F&O)",
-            12 => "C (Currency)",
-            20 => "M (Commodity)",
+            10 => 'E (Equity)',
+            11 => 'D (F&O)',
+            12 => 'C (Currency)',
+            20 => 'M (Commodity)',
         ];
+
         return $statues[$key];
     }
 }
@@ -80,11 +82,12 @@ if (! function_exists('orderTypes')) {
     function orderTypes($key)
     {
         $statues = [
-            1 => "Limit Order",
-            2 => "Market Order",
-            3 => "Stop Order (SL-M)",
-            4 => "Stoplimit Order (SL-L)",
+            1 => 'Limit Order',
+            2 => 'Market Order',
+            3 => 'Stop Order (SL-M)',
+            4 => 'Stoplimit Order (SL-L)',
         ];
+
         return $statues[$key];
     }
 }
