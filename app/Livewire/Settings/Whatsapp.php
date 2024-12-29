@@ -70,6 +70,7 @@ class Whatsapp extends Component
             $this->dispatch('error', ['message' => 'Client is not connected']);
             return false;
         }
+        $filePath = public_path('node/sample.pdf');
         $response = Http::post("$this->link/send-message", [
             'number' => $this->number,
             'message' => $this->message,

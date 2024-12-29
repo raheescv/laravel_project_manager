@@ -20,12 +20,9 @@
                         </div>
                     </div>
                 @else
-                    <div class="card-body">
-                        <div class="col-md-12 d-flex gap-1 align-items-center mb-3">
-                            <button class="btn btn-danger" wire:click="disconnect">
-                                Disconnect
-                            </button>
-                        </div>
+                    <div class="card-body text-center">
+                        <h5 class="card-title text-center">Logout from the current session</h5>
+                        <button tabindex="0" class="btn btn-lg btn-danger" wire:click="disconnect">Terminate Session</button>
                     </div>
                 @endif
             </div>
