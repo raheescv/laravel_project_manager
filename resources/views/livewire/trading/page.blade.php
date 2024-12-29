@@ -276,7 +276,7 @@
                     </div>
                 </div>
             </div>
-            <div id="tabsPosition" class="tab-pane fade active show" role="tabpanel" wire:poll>
+            <div id="tabsPosition" class="tab-pane fade active show" role="tabpanel">
                 <h5>Position</h5>
                 <div class="row">
                     <div class="col-md-11">
