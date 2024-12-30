@@ -38,7 +38,7 @@
                                         <h5 class="flex-grow-1 m-0">Settings</h5>
                                     </div>
                                     <a href="{{ route('product::index') }}" class="list-group-item list-group-item-action">Product</a>
-                                    <a href="{{ route('category::index') }}" class="list-group-item list-group-item-action">Category</a>
+                                    <a href="{{ route('settings::category::index') }}" class="list-group-item list-group-item-action">Category</a>
                                     <a href="{{ route('settings::index') }}" class="list-group-item list-group-item-action">Settings</a>
                                 </div>
 

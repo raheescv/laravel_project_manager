@@ -48,7 +48,7 @@
                         <ul class="mininav-content nav collapse">
                             <li data-popper-arrow class="arrow"></li>
                             <li class="nav-item">
-                                <a href="{{ route('category::index') }}" class="nav-link">Category</a>
+                                <a href="{{ route('settings::category::index') }}" class="nav-link">Category</a>
                             </li>
                         </ul>
                     </li>

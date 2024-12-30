@@ -1,6 +1,6 @@
 <script type="text/javascript">
     $(document).ready(function() {
-        url = "{{ route('category::list') }}";
+        url = "{{ route('settings::category::list') }}";
         $('.select2-category_id-list').each(function() {
             new TomSelect(this, {
                 plugins: ['clear_button', 'remove_button'],
