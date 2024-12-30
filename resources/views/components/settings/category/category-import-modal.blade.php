@@ -1,7 +1,7 @@
 <div class="modal" id="CategoryImportModal" tabindex="-1">
     <div class="modal-dialog">
         <div class="modal-content">
-            @livewire('category.import')
+            @livewire('settings.category.import')
         </div>
     </div>
 </div>

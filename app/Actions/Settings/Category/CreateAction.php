@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Actions\Category;
+namespace App\Actions\Settings\Category;
 
 use App\Models\Category;
 
@@ -11,6 +11,7 @@ class CreateAction
     public function execute($data)
     {
         try {
+            $data['name'] = trim($data['name']);
             $this->data = $data;
             $this->parentCreate();
             validationHelper(Category::rules(), $this->data);

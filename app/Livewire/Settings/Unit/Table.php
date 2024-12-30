@@ -1,25 +1,18 @@
 <?php
 
-namespace App\Livewire\Category;
+namespace App\Livewire\Settings\Unit;
 
-use App\Actions\Category\DeleteAction;
-use App\Exports\CategoryExport;
-use App\Jobs\Export\ExportCategoryJob;
-use App\Models\Category;
+use App\Actions\Settings\Unit\DeleteAction;
+use App\Models\Unit;
 use Illuminate\Support\Facades\DB;
 use Livewire\Component;
 use Livewire\WithPagination;
-use Maatwebsite\Excel\Facades\Excel;
 
 class Table extends Component
 {
     use WithPagination;
 
-    public $exportLink = '';
-
     public $search = '';
-
-    public $parent_id = null;
 
     public $limit = 10;
 
@@ -36,7 +29,7 @@ class Table extends Component
     protected $paginationTheme = 'bootstrap';
 
     protected $listeners = [
-        'Category-Refresh-Component' => '$refresh',
+        'Unit-Refresh-Component' => '$refresh',
     ];
 
     public function delete()
@@ -49,7 +42,7 @@ class Table extends Component
                     throw new \Exception($response['message'], 1);
                 }
             }
-            $this->dispatch('success', ['message' => 'Successfully Deleted '.count($this->selected).' items']);
+            $this->dispatch('success', ['message' => 'Successfully Deleted ' . count($this->selected) . ' items']);
             DB::commit();
             if (count($this->selected) > 10) {
                 $this->resetPage();
@@ -57,7 +50,7 @@ class Table extends Component
             $this->selected = [];
 
             $this->selectAll = false;
-            $this->dispatch('RefreshCategoryTable');
+            $this->dispatch('RefreshUnitTable');
         } catch (\Exception $e) {
             DB::rollback();
             $this->dispatch('error', ['message' => $e->getMessage()]);
@@ -74,22 +67,9 @@ class Table extends Component
     public function updatedSelectAll($value)
     {
         if ($value) {
-            $this->selected = Category::latest()->limit(2000)->pluck('id')->toArray();
+            $this->selected = Unit::latest()->limit(2000)->pluck('id')->toArray();
         } else {
             $this->selected = [];
-        }
-    }
-
-    public function export()
-    {
-        $count = Category::count();
-        if ($count > 2000) {
-            ExportCategoryJob::dispatch(auth()->user());
-            $this->dispatch('success', ['message' => 'You will get your file in your mailbox.']);
-        } else {
-            $exportFileName = 'category_'.now()->timestamp.'.xlsx';
-
-            return Excel::download(new CategoryExport, $exportFileName);
         }
     }
 
@@ -105,17 +85,14 @@ class Table extends Component
 
     public function render()
     {
-        $data = Category::orderBy($this->sortField, $this->sortDirection)
+        $data = Unit::orderBy($this->sortField, $this->sortDirection)
             ->when($this->search ?? '', function ($query, $value) {
                 $query->where('name', 'like', "%{$value}%");
-            })
-            ->when($this->parent_id ?? '', function ($query, $value) {
-                $query->where('parent_id', $value);
             })
             ->latest()
             ->paginate($this->limit);
 
-        return view('livewire.category.table', [
+        return view('livewire.settings.unit.table', [
             'data' => $data,
         ]);
     }

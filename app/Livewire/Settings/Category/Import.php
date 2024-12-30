@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Livewire\Category;
+namespace App\Livewire\Settings\Category;
 
 use App\Jobs\Category\ImportCategoryJob;
 use Livewire\Component;
@@ -32,6 +32,6 @@ class Import extends Component
 
     public function render()
     {
-        return view('livewire.category.import');
+        return view('livewire.settings.category.import');
     }
 }

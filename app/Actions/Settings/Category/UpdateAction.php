@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Actions\Category;
+namespace App\Actions\Settings\Category;
 
 use App\Models\Category;
 
@@ -11,6 +11,7 @@ class UpdateAction
     public function execute($data, $id)
     {
         try {
+            $data['name'] = trim($data['name']);
             $this->data = $data;
             $model = Category::find($id);
             if (! $model) {

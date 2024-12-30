@@ -39,6 +39,7 @@
                                     </div>
                                     <a href="{{ route('product::index') }}" class="list-group-item list-group-item-action">Product</a>
                                     <a href="{{ route('settings::category::index') }}" class="list-group-item list-group-item-action">Category</a>
+                                    <a href="{{ route('settings::unit::index') }}" class="list-group-item list-group-item-action">Unit</a>
                                     <a href="{{ route('settings::index') }}" class="list-group-item list-group-item-action">Settings</a>
                                 </div>
 

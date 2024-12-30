@@ -1,9 +1,9 @@
 <?php
 
-namespace App\Livewire\Category;
+namespace App\Livewire\Settings\Category;
 
-use App\Actions\Category\CreateAction;
-use App\Actions\Category\UpdateAction;
+use App\Actions\Settings\Category\CreateAction;
+use App\Actions\Settings\Category\UpdateAction;
 use App\Models\Category;
 use Faker\Factory;
 use Livewire\Component;
@@ -56,7 +56,7 @@ class Page extends Component
     protected function rules()
     {
         return [
-            'categories.name' => ['required', 'unique:categories,name,'.$this->table_id],
+            'categories.name' => ['required', 'unique:categories,name,' . $this->table_id],
         ];
     }
 
@@ -71,13 +71,13 @@ class Page extends Component
         try {
             if (! $this->table_id) {
                 $response = (new CreateAction)->execute($this->categories);
-                $this->categories['id'] = $response['data']['id'];
             } else {
                 $response = (new UpdateAction)->execute($this->categories, $this->table_id);
             }
             if (! $response['success']) {
                 throw new \Exception($response['message'], 1);
             }
+            $this->categories['id'] = $response['data']['id'];
             $parent_id = $response['data']['parent_id'];
             $this->dispatch('success', ['message' => $response['message']]);
             $this->mount($this->table_id);
@@ -95,6 +95,6 @@ class Page extends Component
 
     public function render()
     {
-        return view('livewire.category.page');
+        return view('livewire.settings.category.page');
     }
 }

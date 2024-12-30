@@ -1,7 +1,7 @@
 <div class="modal" id="CategoryModal" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
-            @livewire('category.page')
+            @livewire('settings.category.page')
         </div>
     </div>
 </div>
