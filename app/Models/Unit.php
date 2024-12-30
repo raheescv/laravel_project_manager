@@ -15,8 +15,8 @@ class Unit extends Model
     public static function rules($id = 0, $merge = [])
     {
         return array_merge([
-            'name' => ['required', 'max:10', Rule::unique(self::class, 'name')->ignore($id)],
-            'code' => ['required', 'max:10', Rule::unique(self::class, 'code')->ignore($id)],
+            'name' => ['required', 'max:20', Rule::unique(self::class, 'name')->ignore($id)],
+            'code' => ['required', 'max:20', Rule::unique(self::class, 'code')->ignore($id)],
         ], $merge);
     }
 

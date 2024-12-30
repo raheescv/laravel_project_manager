@@ -39,7 +39,7 @@ class Page extends Component
             $name = '';
             $code = '';
             if (! app()->isProduction()) {
-                $name = $faker->text(10);
+                $name = $faker->text(20);
                 $code = $faker->hexcolor;
             }
             $this->units = [
@@ -55,18 +55,18 @@ class Page extends Component
     protected function rules()
     {
         return [
-            'units.name' => ['required', 'max:10', 'unique:units,name,'.$this->table_id],
-            'units.code' => ['required', 'max:10', 'unique:units,code,'.$this->table_id],
+            'units.name' => ['required', 'max:20', 'unique:units,name,' . $this->table_id],
+            'units.code' => ['required', 'max:20', 'unique:units,code,' . $this->table_id],
         ];
     }
 
     protected $messages = [
         'units.name.required' => 'The name field is required',
         'units.name.unique' => 'The name is already Registered',
-        'units.name.max' => 'The name field must not be greater than 10 characters.',
+        'units.name.max' => 'The name field must not be greater than 20 characters.',
         'units.code.required' => 'The code field is required',
         'units.code.unique' => 'The code is already Registered',
-        'units.code.max' => 'The code field must not be greater than 10 characters.',
+        'units.code.max' => 'The code field must not be greater than 20 characters.',
     ];
 
     public function save($close = false)
