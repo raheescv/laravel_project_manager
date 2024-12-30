@@ -19,6 +19,8 @@ class Table extends Component
 
     public $search = '';
 
+    public $parent_id = null;
+
     public $limit = 10;
 
     public $selected = [];
@@ -62,14 +64,11 @@ class Table extends Component
         }
     }
 
-    public function updatingSearch()
+    public function updated($key, $value)
     {
-        $this->resetPage();
-    }
-
-    public function updatingLimit()
-    {
-        $this->resetPage();
+        if (! in_array($key, ['SelectAll']) && ! preg_match('/^selected\..*/', $key)) {
+            $this->resetPage();
+        }
     }
 
     public function updatedSelectAll($value)
@@ -107,7 +106,12 @@ class Table extends Component
     public function render()
     {
         $data = Category::orderBy($this->sortField, $this->sortDirection)
-            ->where('name', 'like', '%'.$this->search.'%')
+            ->when($this->search ?? '', function ($query, $value) {
+                $query->where('name', 'like', "%{$value}%");
+            })
+            ->when($this->parent_id ?? '', function ($query, $value) {
+                $query->where('parent_id', $value);
+            })
             ->latest()
             ->paginate($this->limit);
 

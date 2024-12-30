@@ -3,18 +3,18 @@
 namespace App\Actions\Category;
 
 use App\Models\Category;
-use Illuminate\Support\Facades\Validator;
 
 class CreateAction
 {
+    public $data;
+
     public function execute($data)
     {
         try {
-            $validator = Validator::make($data, Category::rules());
-            if ($validator->fails()) {
-                throw new \Exception($validator->errors()->first());
-            }
-            $model = Category::create($data);
+            $this->data = $data;
+            $this->parentCreate();
+            validationHelper(Category::rules(), $this->data);
+            $model = Category::create($this->data);
             $return['success'] = true;
             $return['message'] = 'Successfully Created Category';
             $return['data'] = $model;
@@ -24,5 +24,13 @@ class CreateAction
         }
 
         return $return;
+    }
+
+    private function parentCreate()
+    {
+        if (str_contains($this->data['parent_id'], 'add ')) {
+            $parent = str_replace('add ', '', $this->data['parent_id']);
+            $this->data['parent_id'] = Category::parentCreate($parent);
+        }
     }
 }

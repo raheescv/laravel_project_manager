@@ -17,6 +17,7 @@
     <link rel="icon" type="image/png" sizes="32x32" href="{{ asset('favicon-32x32.png') }}">
     <link rel="icon" type="image/png" sizes="16x16" href="{{ asset('favicon-16x16.png') }}">
     {{-- <link rel="manifest" href="{{ asset('site.webmanifest') }}"> --}}
+    <link rel="stylesheet" href="{{ asset('assets/vendors/tom-select/tom-select.min.css') }}">
     <link rel="stylesheet" href="{{ asset('assets/vendors/toaster/toastr.min.css') }}">
     @livewireStyles
     <style>
@@ -471,6 +472,8 @@
     <script src="{{ asset('assets/js/nifty.js') }}"></script>
     <script src="{{ asset('assets/js/demo-purpose-only.js') }}"></script>
     <script src="{{ asset('assets/vendors/toaster/toastr.min.js') }}"></script>
+    <script src="{{ asset('assets/vendors/tom-select/tom-select.min.js') }}"></script>
+
     @livewireScripts
     @stack('scripts')
     <script>

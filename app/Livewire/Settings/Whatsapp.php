@@ -12,7 +12,9 @@ class Whatsapp extends Component
     public $link;
 
     public $number;
+
     public $isConnected = false;
+
     public $message = null;
 
     public function mount()
@@ -49,7 +51,6 @@ class Whatsapp extends Component
         }
     }
 
-
     public function disconnect()
     {
         $response = Http::post("$this->link/disconnect");
@@ -68,6 +69,7 @@ class Whatsapp extends Component
         $this->checkClientStatus();
         if (! $this->isConnected) {
             $this->dispatch('error', ['message' => 'Client is not connected']);
+
             return false;
         }
         $filePath = public_path('node/sample.pdf');

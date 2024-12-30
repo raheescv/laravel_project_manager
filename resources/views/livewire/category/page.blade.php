@@ -18,6 +18,14 @@
             </div>
             <div class="row">
                 <div class="col-md-12">
+                    <div class="form-group" wire:ignore>
+                        <h4> <label for="parent_id">Parent</label> </h4>
+                        {{ html()->select('parent_id', [])->value('')->class('select2-category_id')->placeholder('Please Select Parent If any')->id('modal_parent_id') }}
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-12">
                     <div class="form-group">
                         <h4> <label for="name">Name</label> </h4>
                         {{ html()->input('name')->value('')->class('form-control')->attribute('wire:model', 'categories.name') }}
@@ -31,4 +39,28 @@
             <button type="submit" class="btn btn-primary">Save</button>
         </div>
     </form>
+    @push('scripts')
+        <script>
+            $(document).ready(function() {
+                $('#modal_parent_id').on('change', function(e) {
+                    const value = $(this).val() || null;
+                    @this.set('categories.parent_id', value);
+                });
+                window.addEventListener('SelectDropDownValues', event => {
+                    @this.set('categories.parent_id', @this.categories['parent_id']);
+                    var tomSelectInstance = document.querySelector('#modal_parent_id').tomselect;
+                    if (@this.categories['parent_id']) {
+                        preselectedData = {
+                            id: @this.categories['parent_id'],
+                            name: @this.categories['parent']['name'],
+                        };
+                        tomSelectInstance.addOption(preselectedData);
+                        tomSelectInstance.addItem(preselectedData.id);
+                    } else {
+                        tomSelectInstance.clear();
+                    }
+                });
+            });
+        </script>
+    @endpush
 </div>

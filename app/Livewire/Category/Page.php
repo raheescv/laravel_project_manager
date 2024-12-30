@@ -17,6 +17,8 @@ class Page extends Component
 
     public $categories;
 
+    public $parents;
+
     public $table_id;
 
     public function create()
@@ -41,18 +43,20 @@ class Page extends Component
                 $name = $faker->name;
             }
             $this->categories = [
+                'parent_id' => null,
                 'name' => $name,
             ];
         } else {
-            $category = Category::find($this->table_id);
+            $category = Category::with('parent')->find($this->table_id);
             $this->categories = $category->toArray();
+            $this->dispatch('SelectDropDownValues');
         }
     }
 
     protected function rules()
     {
         return [
-            'categories.name' => ['required', 'unique:categories,name,'.$this->table_id],
+            'categories.name' => ['required', 'unique:categories,name,' . $this->table_id],
         ];
     }
 
@@ -67,12 +71,14 @@ class Page extends Component
         try {
             if (! $this->table_id) {
                 $response = (new CreateAction)->execute($this->categories);
+                $this->categories['id'] = $response['data']['id'];
             } else {
                 $response = (new UpdateAction)->execute($this->categories, $this->table_id);
             }
             if (! $response['success']) {
                 throw new \Exception($response['message'], 1);
             }
+            $parent_id = $response['data']['parent_id'];
             $this->dispatch('success', ['message' => $response['message']]);
             $this->mount($this->table_id);
             if (! $close) {
@@ -80,6 +86,7 @@ class Page extends Component
             } else {
                 $this->mount();
             }
+            $this->categories['parent_id'] = $parent_id;
             $this->dispatch('RefreshCategoryTable');
         } catch (\Throwable $e) {
             $this->dispatch('error', ['message' => $e->getMessage()]);

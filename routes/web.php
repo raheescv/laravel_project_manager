@@ -17,6 +17,7 @@ Route::middleware('auth')->group(function () {
     Route::name('category::')->prefix('category')
         ->controller(CategoryController::class)->group(function () {
             Route::get('', 'index')->name('index');
+            Route::get('list', 'get')->name('list');
         });
     Route::name('product::')->prefix('product')
         ->controller(ProductController::class)->group(function () {

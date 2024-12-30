@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Validator;
 
 if (! function_exists('writeToEnv')) {
     function writeToEnv($key, $value)
@@ -89,5 +90,15 @@ if (! function_exists('orderTypes')) {
         ];
 
         return $statues[$key];
+    }
+}
+
+if (! function_exists('validationHelper')) {
+    function validationHelper($rules, $data)
+    {
+        $validator = Validator::make($data, $rules);
+        if ($validator->fails()) {
+            throw new \Exception($validator->errors()->first());
+        }
     }
 }

@@ -3,22 +3,22 @@
 namespace App\Actions\Category;
 
 use App\Models\Category;
-use Illuminate\Support\Facades\Validator;
 
 class UpdateAction
 {
+    public $data;
+
     public function execute($data, $id)
     {
         try {
+            $this->data = $data;
             $model = Category::find($id);
             if (! $model) {
                 throw new \Exception("Resource not found with the specified ID: $id.", 1);
             }
-            $validator = Validator::make($data, Category::rules($id));
-            if ($validator->fails()) {
-                throw new \Exception($validator->errors()->first());
-            }
-            $model->update($data);
+            $this->parentCreate();
+            validationHelper(Category::rules($id), $this->data);
+            $model->update($this->data);
             $return['success'] = true;
             $return['message'] = 'Successfully Update Category';
             $return['data'] = $model;
@@ -28,5 +28,13 @@ class UpdateAction
         }
 
         return $return;
+    }
+
+    private function parentCreate()
+    {
+        if (str_contains($this->data['parent_id'], 'add ')) {
+            $parent = str_replace('add ', '', $this->data['parent_id']);
+            $this->data['parent_id'] = Category::parentCreate($parent);
+        }
     }
 }

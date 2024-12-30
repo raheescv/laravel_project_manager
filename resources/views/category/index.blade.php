@@ -22,4 +22,7 @@
     </div>
     <x-category.category-modal />
     <x-category.category-import-modal />
+    @push('scripts')
+        @include('components.select2.categorySelect2')
+    @endpush
 </x-app-layout>
