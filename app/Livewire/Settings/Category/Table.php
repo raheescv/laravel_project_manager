@@ -49,7 +49,7 @@ class Table extends Component
                     throw new \Exception($response['message'], 1);
                 }
             }
-            $this->dispatch('success', ['message' => 'Successfully Deleted ' . count($this->selected) . ' items']);
+            $this->dispatch('success', ['message' => 'Successfully Deleted '.count($this->selected).' items']);
             DB::commit();
             if (count($this->selected) > 10) {
                 $this->resetPage();
@@ -87,7 +87,7 @@ class Table extends Component
             ExportCategoryJob::dispatch(auth()->user());
             $this->dispatch('success', ['message' => 'You will get your file in your mailbox.']);
         } else {
-            $exportFileName = 'category_' . now()->timestamp . '.xlsx';
+            $exportFileName = 'category_'.now()->timestamp.'.xlsx';
 
             return Excel::download(new CategoryExport, $exportFileName);
         }

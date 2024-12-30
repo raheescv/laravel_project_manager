@@ -55,8 +55,8 @@ class Page extends Component
     protected function rules()
     {
         return [
-            'units.name' => ['required', 'max:10', 'unique:units,name,' . $this->table_id],
-            'units.code' => ['required', 'max:10', 'unique:units,code,' . $this->table_id],
+            'units.name' => ['required', 'max:10', 'unique:units,name,'.$this->table_id],
+            'units.code' => ['required', 'max:10', 'unique:units,code,'.$this->table_id],
         ];
     }
 
