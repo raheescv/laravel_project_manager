@@ -24,6 +24,10 @@
         .pointer {
             cursor: pointer;
         }
+
+        .number {
+            text-align: right;
+        }
     </style>
     <script src="{{ asset('assets/js/jquery-3.7.1.min.js') }}"></script>
     @stack('styles')
@@ -474,6 +478,31 @@
     <script src="{{ asset('assets/vendors/toaster/toastr.min.js') }}"></script>
     <script src="{{ asset('assets/vendors/tom-select/tom-select.min.js') }}"></script>
 
+    <script>
+        var eventHandler = function(name) {
+            return function() {
+                console.log(name, arguments);
+            };
+        };
+        $('.tomSelect').each(function() {
+            new TomSelect(this, {
+                // onChange: eventHandler('onChange'),
+                // onItemAdd: eventHandler('onItemAdd'),
+                // onItemRemove: eventHandler('onItemRemove'),
+                // onOptionAdd: eventHandler('onOptionAdd'),
+                // onOptionRemove: eventHandler('onOptionRemove'),
+                // onDropdownOpen: eventHandler('onDropdownOpen'),
+                // onDropdownClose: eventHandler('onDropdownClose'),
+                // onFocus: eventHandler('onFocus'),
+                // onBlur: eventHandler('onBlur'),
+                // onInitialize: eventHandler('onInitialize'),
+                sortField: {
+                    field: "text",
+                    direction: "asc"
+                }
+            });
+        });
+    </script>
     @livewireScripts
     @stack('scripts')
     <script>

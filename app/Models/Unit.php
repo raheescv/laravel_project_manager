@@ -24,8 +24,7 @@ class Unit extends Model
     {
         $self = self::orderBy('name');
         $self = $self->when($request['query'] ?? '', function ($query, $value) {
-            $query->where('name', 'like', "%{$value}%")
-                ->orWhere('code', 'like', "%{$value}%");
+            $query->where('name', 'like', "%{$value}%"); //->orWhere('code', 'like', "%{$value}%");
         });
         $self = $self->limit(10);
         $self = $self->get(['name', 'code', 'id'])->toArray();

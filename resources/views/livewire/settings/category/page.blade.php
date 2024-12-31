@@ -20,7 +20,7 @@
                 <div class="col-md-12">
                     <div class="form-group" wire:ignore>
                         <h4> <label for="parent_id">Parent</label> </h4>
-                        {{ html()->select('parent_id', [])->value('')->class('select2-category_id')->placeholder('Please Select Parent If any')->id('modal_parent_id') }}
+                        {{ html()->select('parent_id', [])->value('')->class('select-category_id')->placeholder('Please Select Parent If any')->id('modal_parent_id') }}
                     </div>
                 </div>
             </div>

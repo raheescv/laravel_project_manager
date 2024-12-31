@@ -49,7 +49,7 @@
         <div class="row">
             <div class="col-md-4" wire:ignore>
                 <h4> <label for="parent_id">Parent</label> </h4>
-                {{ html()->select('parent_id', [])->value('')->class('select2-category_id-list')->id('parent_id')->placeholder('All') }}
+                {{ html()->select('parent_id', [])->value('')->class('select-category_id-list')->id('parent_id')->placeholder('All') }}
             </div>
         </div>
     </div>

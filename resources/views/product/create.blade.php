@@ -19,4 +19,11 @@
             @livewire('product.page')
         </div>
     </div>
+    <x-settings.unit.unit-modal />
+    <x-settings.category.category-modal />
+    <x-settings.department.department-modal />
+    @push('scripts')
+        @include('components.select.departmentSelect')
+        @include('components.select.categorySelect')
+    @endpush
 </x-app-layout>

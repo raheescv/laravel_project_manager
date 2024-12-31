@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Actions\Settings\Category\CreateAction;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Validation\Rule;
@@ -38,12 +39,32 @@ class Category extends Model
     {
         $self = self::orderBy('name');
         $self = $self->when($request['query'] ?? '', function ($query, $value) {
-            $query->where('name', 'like', "%{$value}%");
+            $query->where('name', 'like', '%' . trim($value) . '%');
+        });
+        $self = $self->when($request['is_parent'] ?? false, function ($query, $value) {
+            $query->whereNull('parent_id');
+        });
+        $self = $self->when($request['parent_id'] ?? '', function ($query, $value) {
+            $query->where('parent_id', $value);
         });
         $self = $self->limit(10);
         $self = $self->get(['name', 'id'])->toArray();
         $return['items'] = $self;
 
         return $return;
+    }
+    public static function selfCreate($data)
+    {
+        $name = $data['name'];
+        $existing = Category::firstWhere('name', $name);
+        if (! $existing) {
+            $response = (new CreateAction)->execute($data);
+            if (! $response['success']) {
+                throw new \Exception($response['message']);
+            }
+            return  $response['data']['id'];
+        } else {
+            return  $existing['id'];
+        }
     }
 }

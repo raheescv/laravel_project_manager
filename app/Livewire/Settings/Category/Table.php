@@ -107,7 +107,7 @@ class Table extends Component
     {
         $data = Category::orderBy($this->sortField, $this->sortDirection)
             ->when($this->search ?? '', function ($query, $value) {
-                $query->where('name', 'like', "%{$value}%");
+                $query->where('name', 'like', '%'.trim($value).'%');
             })
             ->when($this->parent_id ?? '', function ($query, $value) {
                 $query->where('parent_id', $value);

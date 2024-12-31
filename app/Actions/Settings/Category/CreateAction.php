@@ -29,9 +29,11 @@ class CreateAction
 
     private function parentCreate()
     {
-        if (str_contains($this->data['parent_id'], 'add ')) {
-            $parent = str_replace('add ', '', $this->data['parent_id']);
-            $this->data['parent_id'] = Category::parentCreate($parent);
+        if (isset($this->data['parent_id'])) {
+            if (str_contains($this->data['parent_id'], 'add ')) {
+                $parent = str_replace('add ', '', $this->data['parent_id']);
+                $this->data['parent_id'] = Category::parentCreate($parent);
+            }
         }
     }
 }

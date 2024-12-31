@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Actions\Settings\Department\CreateAction;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Validation\Rule;
@@ -32,5 +33,20 @@ class Department extends Model
         $return['items'] = $self;
 
         return $return;
+    }
+
+    public static function selfCreate($name)
+    {
+        $existing = Department::firstWhere('name', $name);
+        if (! $existing) {
+            $response = (new CreateAction)->execute(['name' => $name]);
+            if (! $response['success']) {
+                throw new \Exception($response['message']);
+            }
+
+            return $response['data']['id'];
+        } else {
+            return $existing['id'];
+        }
     }
 }
