@@ -9,13 +9,8 @@ class ProductController extends Controller
         return view('product.index');
     }
 
-    public function create()
+    public function page($id = null)
     {
-        return view('product.create');
-    }
-
-    public function edit($id)
-    {
-        return view('product.edit');
+        return view('product.page', compact('id'));
     }
 }

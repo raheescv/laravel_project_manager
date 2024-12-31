@@ -10,14 +10,21 @@ use Faker\Factory;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 use Livewire\Component;
+use Spatie\LivewireFilepond\WithFilePond;
+use App\Actions\Product\DeleteAction;
+use App\Actions\Product\DeleteImageAction;
 
 class Page extends Component
 {
+    use WithFilePond;
+
     public $table_id;
 
     public $selectedTab = 'Attributes';
 
     public $products;
+
+    public $images = [];
 
     public $departments;
 
@@ -57,12 +64,13 @@ class Page extends Component
                 'sub_category_id' => null,
                 'department_id' => null,
                 'department' => ['id' => 1, 'name' => 'Food'],
-                'subCategory' => [],
-                'mainCategory' => [],
+                'sub_category' => [],
+                'main_category' => [],
+                'images' => [],
             ];
         } else {
-            $department = Product::with('department', 'subCategory', 'mainCategory')->find($this->table_id);
-            $this->products = $department->toArray();
+            $product = Product::with('department', 'subCategory', 'mainCategory', 'images')->find($this->table_id);
+            $this->products = $product->toArray();
         }
         if ($dropdown) {
             $this->dispatch('SelectDropDownValues', $this->products);
@@ -80,6 +88,7 @@ class Page extends Component
             'products.sub_category_id' => ['required'],
             'products.cost' => ['required'],
             'products.mrp' => ['required'],
+            'images.*' => 'mimes:jpg,jpeg,png,gif,bmp,webp,svg|max:3100',
         ];
     }
 
@@ -96,13 +105,18 @@ class Page extends Component
         'products.sub_category_id' => 'The sub category field is required.',
         'products.cost' => 'The cost field is required.',
         'products.mrp' => 'The mrp field is required.',
+        'images.mimetypes' => 'The images field must be a file of type: image.',
+        'images.*.max' => 'The images field must not be greater than 3100 KB',
     ];
+
+    public function updated($key, $value) {}
 
     public function save()
     {
         $this->validate();
         try {
             DB::beginTransaction();
+            $this->products['images'] = $this->images;
             if (! $this->table_id) {
                 $selected['mainCategory'] = [
                     'id' => $this->products['main_category_id'],
@@ -126,13 +140,13 @@ class Page extends Component
             $this->dispatch('success', ['message' => $response['message']]);
 
             $this->mount($this->table_id, $dropdown = false);
-
-            $this->products['department_id'] = $selected['department']['id'];
-            $this->products['main_category_id'] = $selected['mainCategory']['id'];
-            $this->products['sub_category_id'] = $selected['subCategory']['id'];
-
+            if (! $this->table_id) {
+                $this->products['department_id'] = $selected['department']['id'];
+                $this->products['main_category_id'] = $selected['mainCategory']['id'];
+                $this->products['sub_category_id'] = $selected['subCategory']['id'];
+            }
             $this->dispatch('SelectDropDownValues', $this->products);
-            $this->dispatch('ResetThePage');
+            $this->dispatch('filepond-reset-images');
             DB::commit();
         } catch (\Throwable $e) {
             DB::rollback();
@@ -143,6 +157,21 @@ class Page extends Component
     public function tabSelect($key)
     {
         $this->selectedTab = $key;
+    }
+
+    public function deleteImage($id)
+    {
+        try {
+            $response = (new DeleteImageAction)->execute($id);
+            if (! $response['success']) {
+                throw new \Exception($response['message'], 1);
+            }
+            $this->mount($this->table_id);
+            $this->dispatch('success', ['message' => 'Deleted Successfully']);
+        } catch (\Exception $e) {
+            DB::rollback();
+            $this->dispatch('error', ['message' => $e->getMessage()]);
+        }
     }
 
     public function render()

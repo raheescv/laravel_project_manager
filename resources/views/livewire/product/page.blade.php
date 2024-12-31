@@ -1,7 +1,6 @@
 <div>
     <form wire:submit="save">
         <div class="row">
-
             <div class="col-md-6 mb-3">
                 <div class="card h-100">
                     <div class="card-body">
@@ -13,7 +12,7 @@
                                 <div class="d-flex align-items-center pt-1 mb-2">
                                     <label class="form-check-label flex-fill" style="text-align: right">Selling Product</label>
                                     <div class="form-check form-switch">
-                                        {{ html()->checkbox('is_selling')->value('')->class('form-check-input ms-0')->required(true)->attribute('wire:model', 'products.is_selling') }}
+                                        {{ html()->checkbox('is_selling')->value('')->class('form-check-input ms-0')->attribute('wire:model', 'products.is_selling') }}
                                     </div>
                                 </div>
                             </div>
@@ -137,14 +136,7 @@
                                 </div>
                             </div>
                             <div class="col-md-12">
-                                <div action="#" id="_dm-dropzoneSimple" class="dropzone bg-light text-center rounded p-1 dz-clickable">
-                                    <div class="dz-message m-0">
-                                        <div class="p-3 text-body-secondary text-opacity-25">
-                                            <i class="demo-psi-upload-to-cloud display-2"></i>
-                                        </div>
-                                        <h4>Drop files to upload</h4>
-                                    </div>
-                                </div>
+                                <x-filepond::upload wire:model="images" multiple max-files="5" />
                             </div>
                         </div>
                     </div>
@@ -178,6 +170,11 @@
                                                 <li class="nav-item" role="presentation">
                                                     <button class="nav-link @if ($selectedTab == 'Uom') active show @endif" data-bs-toggle="tab" wire:click="tabSelect('Uom')"
                                                         data-bs-target="#tabUom" type="button" role="tab" aria-controls="profile" aria-selected="false" tabindex="-1">Unit of Measures
+                                                    </button>
+                                                </li>
+                                                <li class="nav-item" role="presentation">
+                                                    <button class="nav-link @if ($selectedTab == 'Images') active show @endif" data-bs-toggle="tab" wire:click="tabSelect('Images')"
+                                                        data-bs-target="#tabImages" type="button" role="tab" aria-controls="profile" aria-selected="false" tabindex="-1">Images
                                                     </button>
                                                 </li>
                                             </ul>
@@ -305,6 +302,19 @@
                                                         </div>
                                                     </div>
                                                 </div>
+                                                <div id="tabImages" class="tab-pane fade @if ($selectedTab == 'Images') active show @endif" role="tabpanel">
+                                                    <div class="col-12">
+                                                        <div class="row g-1 mb-3">
+                                                            @foreach ($products['images'] as $item)
+                                                                <div class="col-4 position-relative">
+                                                                    <img class="img-fluid rounded" src="{{ $item['path'] }}" alt="thumbs" loading="lazy">
+                                                                    <i class="demo-psi-trash fs-5 me-2 pointer position-absolute top-0 end-0 m-2"
+                                                                        wire:confirm="Are you sure you want to delete this image?" wire:click="deleteImage('{{ $item['id'] }}')"></i>
+                                                                </div>
+                                                            @endforeach
+                                                        </div>
+                                                    </div>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
@@ -317,6 +327,7 @@
         </div>
     </form>
     @push('scripts')
+        @filepondScripts
         <script>
             $(document).ready(function() {
                 $('#unit_id').on('change', function(e) {
@@ -365,10 +376,10 @@
 
                 var tomSelectInstance = document.querySelector('#main_category_id').tomselect;
                 if (product['main_category_id']) {
-                    if (product['mainCategory']) {
+                    if (product['main_category']) {
                         preselectedData = {
-                            id: product['mainCategory']['id'],
-                            name: product['mainCategory']['name'],
+                            id: product['main_category']['id'],
+                            name: product['main_category']['name'],
                         };
                         tomSelectInstance.addOption(preselectedData);
                     }
@@ -379,10 +390,10 @@
 
                 var tomSelectInstance = document.querySelector('#sub_category_id').tomselect;
                 if (product['sub_category_id']) {
-                    if (product['subCategory']) {
+                    if (product['sub_category']) {
                         preselectedData = {
-                            id: product['subCategory']['id'],
-                            name: product['subCategory']['name'],
+                            id: product['sub_category']['id'],
+                            name: product['sub_category']['name'],
                         };
                         tomSelectInstance.addOption(preselectedData);
                     }

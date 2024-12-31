@@ -59,4 +59,24 @@ class Product extends Model
             'mrp' => ['required'],
         ], $merge);
     }
+
+    public function images()
+    {
+        return $this->hasMany(ProductImage::class);
+    }
+
+    public function department()
+    {
+        return $this->belongsTo(Department::class);
+    }
+
+    public function mainCategory()
+    {
+        return $this->belongsTo(Category::class, 'main_category_id');
+    }
+
+    public function subCategory()
+    {
+        return $this->belongsTo(Category::class, 'sub_category_id');
+    }
 }

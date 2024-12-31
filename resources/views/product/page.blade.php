@@ -16,7 +16,7 @@
     </div>
     <div class="content__boxed">
         <div class="content__wrap">
-            @livewire('product.page')
+            @livewire('product.page', ['table_id' => $id ?? ''])
         </div>
     </div>
     <x-settings.unit.unit-modal />

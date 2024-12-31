@@ -16,7 +16,7 @@ Route::middleware('auth')->group(function () {
     Route::name('product::')->prefix('product')
         ->controller(ProductController::class)->group(function () {
             Route::get('', 'index')->name('index');
-            Route::get('create', 'create')->name('create');
-            Route::get('edit/{id}', 'edit')->name('edit');
+            Route::get('create', 'page')->name('create');
+            Route::get('edit/{id}', 'page')->name('edit');
         });
 });

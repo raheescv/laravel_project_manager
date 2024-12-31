@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 
 if (! function_exists('writeToEnv')) {
@@ -100,5 +101,22 @@ if (! function_exists('validationHelper')) {
         if ($validator->fails()) {
             throw new \Exception($validator->errors()->first());
         }
+    }
+}
+if (! function_exists('fileUpload')) {
+    function fileUpload($file, $path)
+    {
+        $fileName = time().'.'.$file->extension();
+        $disk = Storage::disk('public');
+        if (! File::exists($path)) {
+            File::makeDirectory($path, $mode = 777, true, true);
+        }
+        $disk->putFileAs($path, $file, $fileName);
+        $uploaded_path = $disk->url($path.$fileName);
+
+        return [
+            'file_name' => $fileName,
+            'uploaded_path' => $uploaded_path,
+        ];
     }
 }

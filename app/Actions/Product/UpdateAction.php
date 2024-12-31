@@ -37,6 +37,18 @@ class UpdateAction
             validationHelper(Product::rules($id), $data);
 
             $model->update($data);
+            if ($data['images']) {
+                foreach ($data['images'] as $file) {
+                    $imageData = [
+                        'name' => $file->getClientOriginalName(),
+                        'size' => $file->getSize(),
+                        'type' => $file->getClientOriginalExtension(),
+                        'path' => url($file->store('products/'.$model->id, 'public')),
+                    ];
+                    $model->images()->create($imageData);
+                }
+            }
+
             $return['success'] = true;
             $return['message'] = 'Successfully Update Product';
             $return['data'] = $model;
