@@ -2,9 +2,9 @@
 
 namespace App\Actions\Product;
 
-use App\Models\Product;
 use App\Models\Category;
 use App\Models\Department;
+use App\Models\Product;
 
 class UpdateAction
 {

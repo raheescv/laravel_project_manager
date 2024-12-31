@@ -15,7 +15,8 @@ class Page extends Component
 {
     public $table_id;
 
-    public $selectedTab = "Attributes";
+    public $selectedTab = 'Attributes';
+
     public $products;
 
     public $departments;
@@ -138,10 +139,12 @@ class Page extends Component
             $this->dispatch('error', ['message' => $e->getMessage()]);
         }
     }
+
     public function tabSelect($key)
     {
         $this->selectedTab = $key;
     }
+
     public function render()
     {
         $units = Unit::pluck('name', 'id')->toArray();

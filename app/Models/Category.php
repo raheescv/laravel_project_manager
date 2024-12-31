@@ -39,7 +39,7 @@ class Category extends Model
     {
         $self = self::orderBy('name');
         $self = $self->when($request['query'] ?? '', function ($query, $value) {
-            $query->where('name', 'like', '%' . trim($value) . '%');
+            $query->where('name', 'like', '%'.trim($value).'%');
         });
         $self = $self->when($request['is_parent'] ?? false, function ($query, $value) {
             $query->whereNull('parent_id');
@@ -53,6 +53,7 @@ class Category extends Model
 
         return $return;
     }
+
     public static function selfCreate($data)
     {
         $name = $data['name'];
@@ -62,9 +63,10 @@ class Category extends Model
             if (! $response['success']) {
                 throw new \Exception($response['message']);
             }
-            return  $response['data']['id'];
+
+            return $response['data']['id'];
         } else {
-            return  $existing['id'];
+            return $existing['id'];
         }
     }
 }
