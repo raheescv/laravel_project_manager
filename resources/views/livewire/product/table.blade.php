@@ -45,15 +45,35 @@
             @endif
         </div>
     </div>
+    <div class="card-header">
+        <div class="row">
+            <div class="col-md-3" wire:ignore>
+                <h4> <label for="department_id">Department</label> </h4>
+                {{ html()->select('department_id', [])->value('')->class('select-department_id-list')->id('department_id')->placeholder('All') }}
+            </div>
+            <div class="col-md-3" wire:ignore>
+                <h4> <label for="main_category_id">Main Category</label> </h4>
+                {{ html()->select('main_category_id', [])->value('')->class('select-category_id-list')->id('main_category_id')->placeholder('All') }}
+            </div>
+            <div class="col-md-3" wire:ignore>
+                <h4> <label for="sub_category_id">Sub Category</label> </h4>
+                {{ html()->select('sub_category_id', [])->value('')->class('select-category_id-list')->id('sub_category_id')->placeholder('All') }}
+            </div>
+            <div class="col-md-3" wire:ignore>
+                <h4> <label for="unit_id">Unit</label> </h4>
+                {{ html()->select('unit_id', [])->value('')->class('select-unit_id-list')->id('unit_id')->placeholder('All') }}
+            </div>
+        </div>
+    </div>
     <div class="card-body">
         <div class="table-responsive">
-            <table class="table table-striped">
+            <table class="table table-striped align-middle table-sm">
                 <thead>
-                    <tr>
-                        <th width="20%">
+                    <tr class="text-capitalize">
+                        <th>
                             <input type="checkbox" wire:model.live="selectAll" />
                             <a href="#" wire:click.prevent="sortBy('id')">
-                                ID
+                                #
                                 @if ($sortField === 'id')
                                     <span>
                                         @if ($sortDirection === 'asc')
@@ -65,7 +85,77 @@
                                 @endif
                             </a>
                         </th>
-                        <th width="75%">
+                        <th>
+                            <a href="#" wire:click.prevent="sortBy('department_id')">
+                                Department
+                                @if ($sortField === 'department_id')
+                                    <span>
+                                        @if ($sortDirection === 'asc')
+                                            &uarr;
+                                        @else
+                                            &darr;
+                                        @endif
+                                    </span>
+                                @endif
+                            </a>
+                        </th>
+                        <th>
+                            <a href="#" wire:click.prevent="sortBy('main_category_id')">
+                                Main Category
+                                @if ($sortField === 'main_category_id')
+                                    <span>
+                                        @if ($sortDirection === 'asc')
+                                            &uarr;
+                                        @else
+                                            &darr;
+                                        @endif
+                                    </span>
+                                @endif
+                            </a>
+                        </th>
+                        <th>
+                            <a href="#" wire:click.prevent="sortBy('sub_category_id')">
+                                Sub Category
+                                @if ($sortField === 'sub_category_id')
+                                    <span>
+                                        @if ($sortDirection === 'asc')
+                                            &uarr;
+                                        @else
+                                            &darr;
+                                        @endif
+                                    </span>
+                                @endif
+                            </a>
+                        </th>
+                        <th>
+                            <a href="#" wire:click.prevent="sortBy('unit_id')">
+                                Unit
+                                @if ($sortField === 'unit_id')
+                                    <span>
+                                        @if ($sortDirection === 'asc')
+                                            &uarr;
+                                        @else
+                                            &darr;
+                                        @endif
+                                    </span>
+                                @endif
+                            </a>
+                        </th>
+                        <th>
+                            <a href="#" wire:click.prevent="sortBy('code')">
+                                Code
+                                @if ($sortField === 'code')
+                                    <span>
+                                        @if ($sortDirection === 'asc')
+                                            &uarr;
+                                        @else
+                                            &darr;
+                                        @endif
+                                    </span>
+                                @endif
+                            </a>
+                        </th>
+                        <th>
                             <a href="#" wire:click.prevent="sortBy('name')">
                                 Name
                                 @if ($sortField === 'name')
@@ -79,7 +169,49 @@
                                 @endif
                             </a>
                         </th>
-                        <th>Action</th>
+                        <th class="text-end">
+                            <a href="#" wire:click.prevent="sortBy('name_arabic')">
+                                Name Arabic
+                                @if ($sortField === 'name_arabic')
+                                    <span>
+                                        @if ($sortDirection === 'asc')
+                                            &uarr;
+                                        @else
+                                            &darr;
+                                        @endif
+                                    </span>
+                                @endif
+                            </a>
+                        </th>
+                        <th class="text-end">
+                            <a href="#" wire:click.prevent="sortBy('cost')">
+                                cost
+                                @if ($sortField === 'cost')
+                                    <span>
+                                        @if ($sortDirection === 'asc')
+                                            &uarr;
+                                        @else
+                                            &darr;
+                                        @endif
+                                    </span>
+                                @endif
+                            </a>
+                        </th>
+                        <th class="text-end">
+                            <a href="#" wire:click.prevent="sortBy('mrp')">
+                                MRP
+                                @if ($sortField === 'mrp')
+                                    <span>
+                                        @if ($sortDirection === 'asc')
+                                            &uarr;
+                                        @else
+                                            &darr;
+                                        @endif
+                                    </span>
+                                @endif
+                            </a>
+                        </th>
+                        <th class="text-end">Action</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -89,8 +221,16 @@
                                 <input type="checkbox" value="{{ $item->id }}" wire:model.live="selected" />
                                 {{ $item->id }}
                             </td>
+                            <td>{{ $item->department?->name }}</td>
+                            <td>{{ $item->mainCategory?->name }}</td>
+                            <td>{{ $item->subCategory?->name }}</td>
+                            <td>{{ $item->unit?->name }}</td>
+                            <td>{{ $item->code }}</td>
                             <td>{{ $item->name }}</td>
-                            <td> <a href="{{ route('product::edit', $item->id) }}"><i class="demo-psi-pencil fs-5 me-2 pointer"></i> </a> </td>
+                            <td dir="rtl">{{ $item->name_arabic }}</td>
+                            <td class="text-end">{{ currency($item->cost) }}</td>
+                            <td class="text-end">{{ currency($item->mrp) }}</td>
+                            <td class="text-end"> <a href="{{ route('product::edit', $item->id) }}"><i class="demo-psi-pencil fs-5 me-2 pointer"></i> </a> </td>
                         </tr>
                     @endforeach
                 </tbody>
@@ -99,5 +239,25 @@
         {{ $data->links() }}
     </div>
     @push('scripts')
+        <script>
+            $(document).ready(function() {
+                $('#unit_id').on('change', function(e) {
+                    const value = $(this).val() || null;
+                    @this.set('unit_id', value);
+                });
+                $('#department_id').on('change', function(e) {
+                    const value = $(this).val() || null;
+                    @this.set('department_id', value);
+                });
+                $('#main_category_id').on('change', function(e) {
+                    const value = $(this).val() || null;
+                    @this.set('main_category_id', value);
+                });
+                $('#sub_category_id').on('change', function(e) {
+                    const value = $(this).val() || null;
+                    @this.set('sub_category_id', value);
+                });
+            });
+        </script>
     @endpush
 </div>

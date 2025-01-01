@@ -28,6 +28,12 @@
         .number {
             text-align: right;
         }
+
+        table thead th a {
+            text-decoration: none;
+            color: black;
+            /* Set text color to black */
+        }
     </style>
     <script src="{{ asset('assets/js/jquery-3.7.1.min.js') }}"></script>
     @stack('styles')

@@ -80,6 +80,37 @@ if (! function_exists('orderSegments')) {
     }
 }
 
+if (! function_exists('systemDate')) {
+    function systemDate($value)
+    {
+        if ($value) {
+            return date('d-m-Y', strtotime($value));
+        } else {
+            return $value;
+        }
+    }
+}
+
+if (! function_exists('systemDateTime')) {
+    function systemDateTime($value)
+    {
+        if ($value) {
+            return date('d-m-Y h:i:s A', strtotime($value));
+        } else {
+            return $value;
+        }
+    }
+}
+if (! function_exists('currency')) {
+    function currency($value, $decimal_count = 2)
+    {
+        if (is_numeric($value)) {
+            return number_format($value, $decimal_count);
+        } else {
+            return number_format(0, $decimal_count);
+        }
+    }
+}
 if (! function_exists('orderTypes')) {
     function orderTypes($key)
     {

@@ -21,6 +21,14 @@ class Table extends Component
 
     public $search = '';
 
+    public $department_id = '';
+
+    public $main_category_id = '';
+
+    public $sub_category_id = '';
+
+    public $unit_id = '';
+
     public $limit = 10;
 
     public $selected = [];
@@ -86,12 +94,13 @@ class Table extends Component
     public function export()
     {
         $count = Product::count();
-        if ($count > 2000) {
-            // ExportProductJob::dispatch(auth()->user());
+        if ($count > 200) {
+            ExportProductJob::dispatch(auth()->user());
             $this->dispatch('success', ['message' => 'You will get your file in your mailbox.']);
         } else {
-            $exportFileName = 'category_'.now()->timestamp.'.xlsx';
-            // return Excel::download(new ProductExport, $exportFileName);
+            $exportFileName = 'product_'.now()->timestamp.'.xlsx';
+
+            return Excel::download(new ProductExport, $exportFileName);
         }
     }
 
@@ -108,7 +117,21 @@ class Table extends Component
     public function render()
     {
         $data = Product::orderBy($this->sortField, $this->sortDirection)
-            ->where('name', 'like', '%'.$this->search.'%')
+            ->when($this->search ?? '', function ($query, $value) {
+                $query->where('name', 'like', '%'.trim($value).'%');
+            })
+            ->when($this->department_id ?? '', function ($query, $value) {
+                $query->where('department_id', $value);
+            })
+            ->when($this->main_category_id ?? '', function ($query, $value) {
+                $query->where('main_category_id', $value);
+            })
+            ->when($this->sub_category_id ?? '', function ($query, $value) {
+                $query->where('sub_category_id', $value);
+            })
+            ->when($this->unit_id ?? '', function ($query, $value) {
+                $query->where('unit_id', $value);
+            })
             ->latest()
             ->paginate($this->limit);
 

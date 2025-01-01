@@ -68,9 +68,18 @@
                         <div class="list-group list-group-borderless">
                             @foreach (auth()->user()->unreadNotifications()->limit(5)->get() as $item)
                                 <div class="list-group-item list-group-item-action d-flex align-items-start mb-3">
-                                    <div class="flex-shrink-0 me-3">
-                                        <i class="demo-psi-speech-bubble-3 text-success fs-2"></i>
-                                    </div>
+                                    @switch($item['type'])
+                                        @case('App\Notifications\ImportErrorsNotification')
+                                            <div class="flex-shrink-0 me-3">
+                                                <i class="demo-psi-speech-bubble-3 text-danger fs-2"></i>
+                                            </div>
+                                        @break
+
+                                        @default
+                                            <div class="flex-shrink-0 me-3">
+                                                <i class="demo-psi-speech-bubble-3 text-success fs-2"></i>
+                                            </div>
+                                    @endswitch
                                     <div class="flex-grow-1">
                                         <div class="d-flex justify-content-between align-items-start">
                                             <a href="#" class="h6 fw-normal mb-0 stretched-link text-decoration-none">{{ $item['data']['title'] }}</a>
@@ -79,7 +88,9 @@
                                             @endif
                                         </div>
                                         <small class="text-body-secondary">{{ $item['data']['message'] }}</small>
-                                        <small class="text-body-primary"><a target="_blank" href="{{ url($item['data']['file_path']) }}">Please Click To Download</a> </small>
+                                        @if ($item['type'] == 'App\Notifications\ExportCompleted')
+                                            <small class="text-body-primary"><a target="_blank" href="{{ url($item['data']['file_path']) }}">Please Click To Download</a> </small>
+                                        @endif
                                     </div>
                                 </div>
                             @endforeach
@@ -120,18 +131,14 @@
 
                         <div class="row">
                             <div class="col-md-7">
-
                                 <!-- Simple widget and reports -->
                                 <div class="list-group list-group-borderless mb-3">
                                     <div class="list-group-item text-center border-bottom mb-3">
                                         <p class="h1 display-1 text-primary fw-semibold">17</p>
-                                        <p class="h6 mb-0"><i class="demo-pli-basket-coins fs-3 me-2"></i>
-                                            New orders</p>
-                                        <small class="text-body-secondary">You
-                                            have new orders</small>
+                                        <p class="h6 mb-0"><i class="demo-pli-basket-coins fs-3 me-2"></i> New orders</p>
+                                        <small class="text-body-secondary">You have new orders</small>
                                     </div>
                                 </div>
-
                             </div>
                             <div class="col-md-5">
 

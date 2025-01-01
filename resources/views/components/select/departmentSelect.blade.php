@@ -19,6 +19,9 @@
                         callback();
                     });
             },
+            onFocus: function() {
+                this.load('');
+            },
             render: {
                 option: function(item, escape) {
                     return `<div> ${ escape(item.name) } </div>`;

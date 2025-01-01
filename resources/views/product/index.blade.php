@@ -20,4 +20,10 @@
             </div>
         </div>
     </div>
+    <x-product.product-import-modal />
+    @push('scripts')
+        @include('components.select.departmentSelect')
+        @include('components.select.categorySelect')
+        @include('components.select.unitSelect')
+    @endpush
 </x-app-layout>
