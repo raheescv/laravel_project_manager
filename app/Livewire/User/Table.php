@@ -4,9 +4,12 @@ namespace App\Livewire\User;
 
 use App\Models\User;
 use Livewire\Component;
+use Livewire\WithPagination;
 
 class Table extends Component
 {
+    use WithPagination;
+
     public $search = '';
 
     public $limit = 10;
@@ -17,7 +20,16 @@ class Table extends Component
 
     public $sortDirection = 'desc';
 
-    public function mount() {}
+    protected $listeners = [
+        'User-Refresh-Component' => '$refresh',
+    ];
+
+    protected $paginationTheme = 'bootstrap';
+
+    public function updated($key, $value)
+    {
+        $this->resetPage();
+    }
 
     public function updatedFilter()
     {

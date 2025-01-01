@@ -8,11 +8,10 @@
                     <li class="breadcrumb-item active" aria-current="page">Users</li>
                 </ol>
             </nav>
-            <h1 class="page-title mb-0 mt-2">Users 2</h1>
+            <h1 class="page-title mb-0 mt-2">Users</h1>
             <p class="lead">
                 This page contains users information
             </p>
-
             <!-- Search form -->
             <div class="col-md-8 offset-md-2 mb-3">
                 <div class="searchbox input-group">
@@ -26,11 +25,19 @@
             </div>
             <!-- END : Search form -->
             <div class="d-md-flex align-items-baseline mt-3">
-                <button type="button" class="btn btn-info hstack gap-2 mb-3">
+                <button type="button" class="btn btn-info hstack gap-2 mb-3" id="UserAdd">
                     <i class="demo-psi-add fs-4"></i>
                     <span class="vr"></span>
                     Add new
                 </button>
+                <div class="d-flex align-items-center gap-1 text-nowrap ms-auto mb-3">
+                    <span class="d-none d-md-inline-block me-2">Page : </span>
+                    <select class="d-inline-block w-auto form-select" wire:model.live="limit">
+                        <option value="10" selected="">10</option>
+                        <option value="100" selected="">100</option>
+                        <option value="500" selected="">500</option>
+                    </select>
+                </div>
                 <div class="d-flex align-items-center gap-1 text-nowrap ms-auto mb-3">
                     <span class="d-none d-md-inline-block me-2">Sort by : </span>
                     <select class="d-inline-block w-auto form-select" wire:model.live="filter">
@@ -58,6 +65,9 @@
                                         <a href="#" class="h5 stretched-link btn-link">{{ $item['name'] }}</a>
                                         <p class="text-body-secondary m-0">Marketing manager</p>
                                     </div>
+                                    <a href="" class="btn btn-sm btn-hover btn-outline-light">
+                                        <i class="d-block demo-pli-pen-5 fs-3 mb-2"></i> Edit
+                                    </a>
                                 </div>
                                 <div class="mt-3 pt-2 text-center border-top">
                                     <div class="d-flex justify-content-center gap-3">
@@ -67,17 +77,26 @@
                                         <a href="#" class="btn btn-sm btn-hover btn-outline-light">
                                             <i class="d-block demo-pli-mail fs-3 mb-2"></i> {{ $item['email'] }}
                                         </a>
-                                        <a href="#" class="btn btn-sm btn-hover btn-outline-light">
-                                            <i class="d-block demo-pli-pen-5 fs-3 mb-2"></i> Edit
-                                        </a>
                                     </div>
                                 </div>
                             </div>
                         </div>
                     </div>
                 @endforeach
-
             </div>
+            {{ $data->links() }}
         </div>
     </div>
+    @push('scripts')
+        <script>
+            $(document).ready(function() {
+                $('#UserAdd').click(function() {
+                    Livewire.dispatch("User-Page-Create-Component");
+                });
+                window.addEventListener('RefreshUserTable', event => {
+                    Livewire.dispatch("User-Refresh-Component");
+                });
+            });
+        </script>
+    @endpush
 </div>
