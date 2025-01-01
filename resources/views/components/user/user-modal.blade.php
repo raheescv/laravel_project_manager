@@ -1,7 +1,7 @@
 <div class="modal" id="UserModal" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
-            @livewire('user.page')
+            @livewire('user.page', ['table_id' => $id ?? ''])
         </div>
     </div>
 </div>

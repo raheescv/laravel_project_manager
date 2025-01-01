@@ -18,6 +18,7 @@ class User extends Authenticatable
         'mobile',
         'password',
         'is_whatsapp_enabled',
+        'is_active',
     ];
 
     protected $hidden = [

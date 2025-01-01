@@ -59,15 +59,12 @@
                             <div class="card-body hv-outline-parent">
                                 <div class="d-flex align-items-center position-relative pb-3">
                                     <div class="flex-shrink-0">
-                                        <img class="hv-oc img-md rounded-circle" src="./assets/img/profile-photos/3.png" alt="Profile Picture" loading="lazy">
+                                        <img class="hv-oc img-md rounded-circle" src="{{ asset('assets/img/profile-photos/3.png') }}" alt="Profile Picture" loading="lazy">
                                     </div>
                                     <div class="flex-grow-1 ms-3">
-                                        <a href="#" class="h5 stretched-link btn-link">{{ $item['name'] }}</a>
-                                        <p class="text-body-secondary m-0">Marketing manager</p>
+                                        <a href="{{ route('users::view', $item['id']) }}" class="h5 stretched-link btn-link">{{ $item['name'] }}</a>
+                                        <p class="text-body-secondary m-0">Marketing managers</p>
                                     </div>
-                                    <a href="" class="btn btn-sm btn-hover btn-outline-light">
-                                        <i class="d-block demo-pli-pen-5 fs-3 mb-2"></i> Edit
-                                    </a>
                                 </div>
                                 <div class="mt-3 pt-2 text-center border-top">
                                     <div class="d-flex justify-content-center gap-3">

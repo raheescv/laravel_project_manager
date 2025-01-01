@@ -19,6 +19,7 @@ Route::middleware('auth')->group(function () {
     Route::name('users::')->prefix('users')
         ->controller(UserController::class)->group(function () {
             Route::get('', 'index')->name('index');
+            Route::get('view/{id}', 'get')->name('view');
         });
 
     Route::name('product::')->prefix('product')
