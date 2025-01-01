@@ -33,8 +33,13 @@
                 {{ html()->select('type', $types)->value('')->class('form-control')->placeholder('All')->attribute('wire:model.live', 'type') }}
             </div>
             <div class="col-md-3">
-                <h4> <label for="unread_only">Unread Only</label> </h4>
-                {{ html()->checkbox('unread_only')->value('')->placeholder('All')->attribute('wire:model.live', 'unread_only') }}
+                <br> <br>
+                <div class="form-check mb-4">
+                    <label for="unread_only" class="form-check-label">
+                        {{ html()->checkbox('unread_only')->value('')->class('form-check-input')->placeholder('All')->attribute('wire:model.live', 'unread_only') }}
+                        Unread Only
+                    </label>
+                </div>
             </div>
         </div>
     </div>

@@ -1,5 +1,5 @@
 <div>
-    <div class="card-header -4 mb-3">
+    <div class="card-header">
         <div class="row">
             <div class="col-md-6 d-flex gap-1 align-items-center mb-3">
                 <a class="btn btn-primary hstack gap-2 align-self-center" href="{{ route('product::create') }}">
@@ -37,31 +37,36 @@
                 </div>
             </div>
         </div>
-        <div class="row">
-            @if ($exportLink)
-                <div class="mt-3">
-                    <a href="{{ $exportLink }}" target="_blank" class="btn btn-success">Download Export {{ $exportLink }}</a>
+        <hr>
+        <div class="col-lg-12">
+            <div class="row">
+                <div class="col-md-3" wire:ignore>
+                    <h4> <label for="department_id">Department</label> </h4>
+                    {{ html()->select('department_id', [])->value('')->class('select-department_id-list')->id('department_id')->placeholder('All') }}
                 </div>
-            @endif
-        </div>
-    </div>
-    <div class="card-header">
-        <div class="row">
-            <div class="col-md-3" wire:ignore>
-                <h4> <label for="department_id">Department</label> </h4>
-                {{ html()->select('department_id', [])->value('')->class('select-department_id-list')->id('department_id')->placeholder('All') }}
+                <div class="col-md-3" wire:ignore>
+                    <h4> <label for="main_category_id">Main Category</label> </h4>
+                    {{ html()->select('main_category_id', [])->value('')->class('select-category_id-list')->id('main_category_id')->placeholder('All') }}
+                </div>
+                <div class="col-md-3" wire:ignore>
+                    <h4> <label for="sub_category_id">Sub Category</label> </h4>
+                    {{ html()->select('sub_category_id', [])->value('')->class('select-category_id-list')->id('sub_category_id')->placeholder('All') }}
+                </div>
+                <div class="col-md-3" wire:ignore>
+                    <h4> <label for="unit_id">Unit</label> </h4>
+                    {{ html()->select('unit_id', [])->value('')->class('select-unit_id-list')->id('unit_id')->placeholder('All') }}
+                </div>
             </div>
-            <div class="col-md-3" wire:ignore>
-                <h4> <label for="main_category_id">Main Category</label> </h4>
-                {{ html()->select('main_category_id', [])->value('')->class('select-category_id-list')->id('main_category_id')->placeholder('All') }}
-            </div>
-            <div class="col-md-3" wire:ignore>
-                <h4> <label for="sub_category_id">Sub Category</label> </h4>
-                {{ html()->select('sub_category_id', [])->value('')->class('select-category_id-list')->id('sub_category_id')->placeholder('All') }}
-            </div>
-            <div class="col-md-3" wire:ignore>
-                <h4> <label for="unit_id">Unit</label> </h4>
-                {{ html()->select('unit_id', [])->value('')->class('select-unit_id-list')->id('unit_id')->placeholder('All') }}
+            <div class="row">
+                <div class="col-md-3">
+                    <br> <br>
+                    <div class="form-check mb-4">
+                        <label for="is_selling" class="form-check-label">
+                            {{ html()->checkbox('is_selling', [])->value('')->class('form-check-input')->attribute('wire:model.live', 'is_selling') }}
+                            is Selling
+                        </label>
+                    </div>
+                </div>
             </div>
         </div>
     </div>

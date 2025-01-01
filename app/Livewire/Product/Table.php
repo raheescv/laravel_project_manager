@@ -27,6 +27,8 @@ class Table extends Component
 
     public $sub_category_id = '';
 
+    public $is_selling = '';
+
     public $unit_id = '';
 
     public $limit = 10;
@@ -57,7 +59,7 @@ class Table extends Component
                     throw new \Exception($response['message'], 1);
                 }
             }
-            $this->dispatch('success', ['message' => 'Successfully Deleted '.count($this->selected).' items']);
+            $this->dispatch('success', ['message' => 'Successfully Deleted ' . count($this->selected) . ' items']);
             DB::commit();
             if (count($this->selected) > 10) {
                 $this->resetPage();
@@ -95,7 +97,7 @@ class Table extends Component
             ExportProductJob::dispatch(auth()->user());
             $this->dispatch('success', ['message' => 'You will get your file in your mailbox.']);
         } else {
-            $exportFileName = 'product_'.now()->timestamp.'.xlsx';
+            $exportFileName = 'product_' . now()->timestamp . '.xlsx';
 
             return Excel::download(new ProductExport, $exportFileName);
         }
@@ -134,6 +136,9 @@ class Table extends Component
             })
             ->when($this->unit_id ?? '', function ($query, $value) {
                 $query->where('unit_id', $value);
+            })
+            ->when($this->is_selling ?? '', function ($query, $value) {
+                $query->where('is_selling', $value);
             })
             ->latest()
             ->paginate($this->limit);
