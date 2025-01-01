@@ -87,7 +87,7 @@ class ProductExport implements FromQuery, WithHeadings, WithMapping
             $row->location,
             $row->reorder_level,
             $row->plu,
-            systemDate($row->created_at),
+            systemDateTime($row->created_at),
         ];
     }
 }
