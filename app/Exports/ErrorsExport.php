@@ -9,9 +9,12 @@ class ErrorsExport implements FromArray, WithHeadings
 {
     protected $data;
 
+    protected $headings;
+
     public function __construct(array $data)
     {
         $this->data = $data;
+        $this->headings = array_shift($data);
     }
 
     public function array(): array
@@ -21,6 +24,6 @@ class ErrorsExport implements FromArray, WithHeadings
 
     public function headings(): array
     {
-        return ['Title', 'Result'];
+        return $this->headings;
     }
 }

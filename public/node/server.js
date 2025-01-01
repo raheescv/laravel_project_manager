@@ -75,12 +75,15 @@ app.post('/disconnect', async (req, res) => {
         res.json({ success: true, message: 'Client reconnected successfully.' });
     } catch (error) {
         console.error('Error during reconnection:', error);
-        res.status(500).json({ success: false, error: error.message });
+        res.status(500).json({ success: false, message: error.message });
     }
 });
 
 app.post('/send-message', async (req, res) => {
     try {
+        if (!client.info) {
+            throw new Error("Client is not connected");
+        }
         const { number, message, filePath } = req.body;
         if (!message && !filePath) {
             throw new Error("message or media is required to send a message");
@@ -107,7 +110,7 @@ app.post('/send-message', async (req, res) => {
     }
 });
 
-const PORT = 3002;
+const PORT = 3004;
 app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
 });

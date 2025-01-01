@@ -30,7 +30,8 @@ class CreateAction
             }
 
             validationHelper(Product::rules(), $data);
-
+            $data['created_by'] = auth()->id();
+            $data['updated_by'] = auth()->id();
             $model = Product::create($data);
 
             if ($data['images']) {

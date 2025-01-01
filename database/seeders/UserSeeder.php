@@ -10,7 +10,8 @@ class UserSeeder extends Seeder
 {
     public function run(): void
     {
-        User::factory()->create(['name' => 'Admin', 'email' => 'admin@astra.com', 'password' => Hash::make('asdasd')]);
-        User::factory()->create(['name' => 'Rahees', 'email' => 'rahees@astra.com', 'password' => Hash::make('asdasd')]);
+        User::factory()->create(['name' => 'System', 'email' => 'system@astra.com', 'mobile' => '+919633155669', 'password' => Hash::make('asdasd'), 'is_locked' => 1]);
+        User::factory()->create(['name' => 'Admin', 'email' => 'admin@astra.com', 'mobile' => '+919633155669', 'password' => Hash::make('asdasd'), 'is_locked' => 1]);
+        User::factory()->create(['name' => 'Rahees', 'email' => 'rahees@astra.com', 'mobile' => '+919633155669', 'password' => Hash::make('asdasd')]);
     }
 }

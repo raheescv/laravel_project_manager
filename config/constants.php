@@ -1,6 +1,7 @@
 <?php
 
 return [
+    'whatsapp_server_url' => env('WHATSAPP_SERVER_URL'),
     'fyers' => [
         'link' => env('FYERS_FYERS_LINK'),
         'client_id' => env('FYERS_CLIENT_ID'),

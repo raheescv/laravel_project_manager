@@ -75,14 +75,4 @@
         </div>
         {{ $data->links() }}
     </div>
-    @push('scripts')
-        <script>
-            $(document).ready(function() {
-                $('#user_id').on('change', function(e) {
-                    const value = $(this).val() || null;
-                    @this.set('user_id', value);
-                });
-            });
-        </script>
-    @endpush
 </div>

@@ -6,9 +6,12 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Validation\Rule;
+use OwenIt\Auditing\Auditable;
+use OwenIt\Auditing\Contracts\Auditable as AuditableContracts;
 
-class Product extends Model
+class Product extends Model implements AuditableContracts
 {
+    use Auditable;
     use HasFactory;
     use SoftDeletes;
 
@@ -44,13 +47,15 @@ class Product extends Model
         'location',
         'reorder_level',
         'plu',
+        'created_by',
+        'updated_by',
     ];
 
     public static function rules($id = 0, $merge = [])
     {
         return array_merge([
             'name' => ['required', Rule::unique(self::class, 'name')->whereNull('deleted_at')->ignore($id)],
-            'code' => ['required', Rule::unique(self::class, 'code')->whereNull('deleted_at')->ignore($id)],
+            'code' => ['required'],
             'unit_id' => ['required'],
             'department_id' => ['required'],
             'main_category_id' => ['required'],

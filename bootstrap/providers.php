@@ -5,4 +5,6 @@ return [
     App\Providers\HorizonServiceProvider::class,
     Maatwebsite\Excel\ExcelServiceProvider::class,
     Spatie\Html\HtmlServiceProvider::class,
+    OwenIt\Auditing\AuditingServiceProvider::class,
+    App\Providers\WhatsappProvider::class,
 ];

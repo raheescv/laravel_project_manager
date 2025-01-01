@@ -79,6 +79,9 @@ class Page extends Component
             ];
         } else {
             $product = Product::with('department', 'subCategory', 'mainCategory', 'images', 'unit', 'units.subUnit')->find($this->table_id);
+            if (! $product) {
+                return redirect()->route('product::index');
+            }
             $this->products = $product->toArray();
         }
         if ($dropdownValues) {

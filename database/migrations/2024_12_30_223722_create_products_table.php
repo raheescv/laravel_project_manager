@@ -11,7 +11,7 @@ return new class extends Migration
         Schema::create('products', function (Blueprint $table) {
             $table->id();
             $table->string('name')->unique();
-            $table->string('code')->unique();
+            $table->string('code');
             $table->string('name_arabic')->nullable();
             $table->string('thumbnail')->nullable();
 
@@ -41,6 +41,9 @@ return new class extends Migration
             $table->string('location')->nullable();
             $table->string('reorder_level')->nullable();
             $table->string('plu')->nullable();
+
+            $table->unsignedBigInteger('created_by');
+            $table->unsignedBigInteger('updated_by');
 
             $table->softDeletes();
             $table->timestamps();

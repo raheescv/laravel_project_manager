@@ -27,6 +27,7 @@ class ProductImport implements ToCollection, WithBatchInserts, WithChunkReading,
         foreach ($rows as $value) {
             try {
                 $data = $value->toArray();
+                $value['is_selling'] = $value['is_selling'] ?? true;
                 $data['is_selling'] = in_array($value['is_selling'], ['Yes', true]) ? true : false;
 
                 $unit = Unit::firstOrCreate(['name' => $data['unit'], 'code' => $data['unit']]);
@@ -47,16 +48,22 @@ class ProductImport implements ToCollection, WithBatchInserts, WithChunkReading,
                 $sub_category_id = Category::selfCreate($subCategoryData);
                 $data['sub_category_id'] = $sub_category_id;
 
-                $nameExists = Product::firstWhere('name', $data['name']);
-                $codeExists = Product::firstWhere('code', $data['code']);
-                if (! $nameExists && ! $codeExists) {
-                    Product::create($data);
+                $data['created_by'] = $this->user_id;
+                $data['updated_by'] = $this->user_id;
+
+                $exists = Product::firstWhere('name', $data['name']);
+                if (! $exists) {
+                    $trashedExists = Product::withTrashed()->firstWhere('name', $data['name']);
+                    if ($trashedExists) {
+                        $trashedExists->restore();
+                        $trashedExists->update($data);
+                    } else {
+                        Product::create($data);
+                    }
                 }
             } catch (\Throwable $th) {
-                $this->errors[] = [
-                    'name' => $data['name'] ?? '',
-                    'message' => $th->getMessage(),
-                ];
+                $data['message'] = $th->getMessage();
+                $this->errors[] = $data;
             }
         }
         $this->processedRows += count($rows);

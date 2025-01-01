@@ -36,6 +36,7 @@ class UpdateAction
 
             validationHelper(Product::rules($id), $data);
 
+            $data['updated_by'] = auth()->id();
             $model->update($data);
             if ($data['images']) {
                 foreach ($data['images'] as $file) {

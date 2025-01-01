@@ -2,7 +2,7 @@
 
 namespace App\Livewire\Settings;
 
-use Illuminate\Support\Facades\Http;
+use App\Helpers\Facades\WhatsappHelper;
 use Livewire\Component;
 
 class Whatsapp extends Component
@@ -19,7 +19,6 @@ class Whatsapp extends Component
 
     public function mount()
     {
-        $this->link = 'http://localhost:3002';
         $this->number = '+919633155669';
         $this->message = 'This is a sample message from ASTRA Group';
         $this->checkClientStatus();
@@ -27,10 +26,9 @@ class Whatsapp extends Component
 
     public function getWhatsappQr()
     {
-        $response = Http::get("$this->link/get-qr");
-        $response = $response->json();
+        $response = WhatsappHelper::getCall('get-qr');
         if (! $response['success']) {
-            $this->dispatch('error', ['message' => 'QR Returned Successfully']);
+            $this->dispatch('error', ['message' => 'QR not returned']);
 
             return false;
         }
@@ -39,9 +37,7 @@ class Whatsapp extends Component
 
     public function checkClientStatus()
     {
-        $response = Http::get("$this->link/check-status");
-        $response = $response->json();
-        // dd($response);
+        $response = WhatsappHelper::getCall('check-status');
         if (! $response['success']) {
             $this->dispatch('error', ['message' => $response['message']]);
             $this->isConnected = false;
@@ -53,8 +49,7 @@ class Whatsapp extends Component
 
     public function disconnect()
     {
-        $response = Http::post("$this->link/disconnect");
-        $response = $response->json();
+        $response = WhatsappHelper::postCall('disconnect');
         if (! $response['success']) {
             $this->isConnected = true;
             $this->dispatch('error', ['message' => $response['message']]);
@@ -66,19 +61,12 @@ class Whatsapp extends Component
 
     public function sendSampleSms()
     {
-        $this->checkClientStatus();
-        if (! $this->isConnected) {
-            $this->dispatch('error', ['message' => 'Client is not connected']);
-
-            return false;
-        }
-        $filePath = public_path('node/sample.pdf');
-        $response = Http::post("$this->link/send-message", [
+        $data = [
             'number' => $this->number,
             'message' => $this->message,
-            'filePath' => $filePath ?? '',
-        ]);
-        $response = $response->json();
+            'filePath' => public_path('node/sample.pdf'),
+        ];
+        $response = WhatsappHelper::send($data);
         if (! $response['success']) {
             $this->dispatch('error', ['message' => $response['message']]);
         } else {
