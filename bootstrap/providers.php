@@ -7,4 +7,5 @@ return [
     Spatie\Html\HtmlServiceProvider::class,
     OwenIt\Auditing\AuditingServiceProvider::class,
     App\Providers\WhatsappProvider::class,
+    Spatie\Permission\PermissionServiceProvider::class,
 ];

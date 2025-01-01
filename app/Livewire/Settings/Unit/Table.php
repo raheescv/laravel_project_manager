@@ -24,8 +24,6 @@ class Table extends Component
 
     public $sortDirection = 'desc';
 
-    protected $queryString = ['sortField', 'sortDirection'];
-
     protected $paginationTheme = 'bootstrap';
 
     protected $listeners = [

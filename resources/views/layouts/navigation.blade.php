@@ -5,7 +5,6 @@
                 <div class="mininav-toggle text-center py-2">
                     <img class="mainnav__avatar img-md rounded-circle hv-oc" src="{{ asset('assets/img/profile-photos/1.png') }}" alt="Profile Picture">
                 </div>
-
                 <div class="mininav-content collapse d-mn-max">
                     <span data-popper-arrow class="arrow"></span>
                     <div class="d-grid">
@@ -16,11 +15,11 @@
                             <small class="text-body-secondary">Administrator</small>
                         </button>
                         <div id="usernav" class="nav flex-column collapse">
-                            <a href="{{ route('profile.edit') }}" class="nav-link">
+                            <a href="#" class="nav-link">
                                 <i class="demo-pli-male fs-5 me-2"></i>
                                 <span class="ms-1">Profile</span>
                             </a>
-                            <a href="{{ route('profile.edit') }}" class="nav-link">
+                            <a href="#" class="nav-link">
                                 <i class="demo-pli-gear fs-5 me-2"></i>
                                 <span class="ms-1">Settings</span>
                             </a>
@@ -39,23 +38,21 @@
                 </li>
             </ul>
             <div class="mainnav__categoriy py-3">
-                <h6 class="mainnav__caption mt-0 fw-bold">Pages</h6>
                 <ul class="mainnav__menu nav flex-column">
                     <li class="nav-item has-sub">
-                        <a href="#" class="mininav-toggle nav-link collapsed"><i class="demo-pli-boot-2 fs-5 me-2"></i>
-                            <span class="nav-label ms-1">Ui Elements</span>
+                        <a href="#" class="mininav-toggle nav-link {{ request()->is(['users']) ? 'active' : '' }}"><i class="demo-pli-split-vertical-2 fs-5 me-2"></i>
+                            <span class="nav-label ms-1">Users</span>
                         </a>
                         <ul class="mininav-content nav collapse">
                             <li data-popper-arrow class="arrow"></li>
                             <li class="nav-item">
-                                <a href="{{ route('settings::category::index') }}" class="nav-link">Category</a>
+                                <a href="{{ route('users::index') }}" class="nav-link {{ request()->is(['users']) ? 'active' : '' }}">List</a>
                             </li>
                         </ul>
                     </li>
                 </ul>
             </div>
         </div>
-        <!-- End - Navigation menu -->
         <div class="mainnav__bottom-content border-top pb-2">
             <ul id="mainnav" class="mainnav__menu nav flex-column">
                 <li class="nav-item has-sub">
@@ -68,15 +65,10 @@
                         <li class="nav-item">
                             <form method="POST" action="{{ route('logout') }}">
                                 @csrf
-
-                                <x-dropdown-link :href="route('logout')" onclick="event.preventDefault();
-                                                    this.closest('form').submit();">
+                                <x-dropdown-link :href="route('logout')" onclick="event.preventDefault(); this.closest('form').submit();">
                                     {{ __('Log Out') }}
                                 </x-dropdown-link>
                             </form>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link disabled" href="#" tabindex="-1" aria-disabled="true">Lock screen</a>
                         </li>
                     </ul>
                 </li>
