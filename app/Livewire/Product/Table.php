@@ -115,7 +115,13 @@ class Table extends Component
     {
         $data = Product::orderBy($this->sortField, $this->sortDirection)
             ->when($this->search ?? '', function ($query, $value) {
-                $query->where('name', 'like', '%'.trim($value).'%');
+                $query->where(function ($q) use ($value) {
+                    $q->where('name', 'like', "%{$value}%")
+                        ->orWhere('name_arabic', 'like', "%{$value}%")
+                        ->orWhere('code', 'like', "%{$value}%")
+                        ->orWhere('cost', 'like', "%{$value}%")
+                        ->orWhere('mrp', 'like', "%{$value}%");
+                });
             })
             ->when($this->department_id ?? '', function ($query, $value) {
                 $query->where('department_id', $value);

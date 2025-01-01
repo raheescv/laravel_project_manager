@@ -94,30 +94,22 @@
                                     </div>
                                 </div>
                             @endforeach
-
                             <div class="text-center mb-2">
-                                <a href="#" class="btn-link text-primary icon-link icon-link-hover">
+                                <a href="{{ route('notification::index') }}" class="btn-link text-primary icon-link icon-link-hover">
                                     Show all Notifications
                                     <i class="bi demo-psi-arrow-out-right"></i>
                                 </a>
                             </div>
-
                         </div>
                     </div>
                 </div>
-                <!-- End - Notification dropdown -->
-
                 <!-- User dropdown -->
                 <div class="dropdown">
-
                     <!-- Toggler -->
                     <button class="header__btn btn btn-icon btn-sm" type="button" data-bs-toggle="dropdown" aria-label="User dropdown" aria-expanded="false">
                         <i class="demo-psi-male"></i>
                     </button>
-
-                    <!-- User dropdown menu -->
                     <div class="dropdown-menu dropdown-menu-end w-md-450px">
-
                         <!-- User dropdown header -->
                         <div class="d-flex align-items-center border-bottom px-3 py-2">
                             <div class="flex-shrink-0">
@@ -128,7 +120,6 @@
                                 <span class="text-body-secondary fst-italic">{{ auth()->user()->email }}</span>
                             </div>
                         </div>
-
                         <div class="row">
                             <div class="col-md-7">
                                 <!-- Simple widget and reports -->
