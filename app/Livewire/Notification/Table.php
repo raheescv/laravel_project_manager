@@ -14,6 +14,8 @@ class Table extends Component
 
     public $type = '';
 
+    public $unread_only = true;
+
     public $start_date = '';
 
     public $end_date = '';
@@ -50,6 +52,9 @@ class Table extends Component
             ->latest()
             ->when($this->type ?? '', function ($query, $value) {
                 $query->where('type', $value);
+            })
+            ->when($this->unread_only ?? '', function ($query, $value) {
+                $query->whereNull('read_at');
             })
             ->when($this->search ?? '', function ($query, $value) {
                 $query->where('data', 'LIKE', '%'.$value.'%');

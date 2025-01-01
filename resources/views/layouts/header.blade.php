@@ -88,9 +88,6 @@
                                             @endif
                                         </div>
                                         <small class="text-body-secondary">{{ $item['data']['message'] }}</small>
-                                        @if ($item['type'] == 'App\Notifications\ExportCompleted')
-                                            <small class="text-body-primary"><a target="_blank" href="{{ url($item['data']['file_path']) }}">Please Click To Download</a> </small>
-                                        @endif
                                     </div>
                                 </div>
                             @endforeach

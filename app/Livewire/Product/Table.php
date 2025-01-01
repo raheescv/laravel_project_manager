@@ -91,7 +91,7 @@ class Table extends Component
     public function export()
     {
         $count = Product::count();
-        if ($count > 200) {
+        if ($count > 2000) {
             ExportProductJob::dispatch(auth()->user());
             $this->dispatch('success', ['message' => 'You will get your file in your mailbox.']);
         } else {
