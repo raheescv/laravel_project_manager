@@ -41,7 +41,9 @@
             load: function(query, callback) {
                 var url = "{{ route('settings::category::list') }}";
                 url += '?query=' + encodeURIComponent(query);
-                url += '&parent_id=' + $('#main_category_id').val();
+                if (typeof $('#main_category_id').val() != 'undefined') {
+                    url += '&parent_id=' + $('#main_category_id').val();
+                }
                 fetch(url).then(response => response.json()).then(json => {
                     callback(json.items);
                 }).catch(() => {

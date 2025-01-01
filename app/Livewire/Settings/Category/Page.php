@@ -49,8 +49,8 @@ class Page extends Component
         } else {
             $category = Category::with('parent')->find($this->table_id);
             $this->categories = $category->toArray();
-            $this->dispatch('SelectDropDownValues');
         }
+        $this->dispatch('SelectDropDownValues');
     }
 
     protected function rules()

@@ -40,19 +40,21 @@ class Units extends Component
     {
         $this->product_id = $product_id;
         $product = Product::find($this->product_id);
-        $this->table_id = $table_id;
-        $this->units = Unit::pluck('name', 'id')->toArray();
-        if (! $this->table_id) {
-            $this->product_units = [
-                'product_id' => $product->id,
-                'product' => ['unit' => ['name' => $product->unit->name]],
-                'sub_unit_id' => '',
-                'conversion_factor' => '',
-                'barcode' => '',
-            ];
-        } else {
-            $product_units = ProductUnit::with('product:id,unit_id', 'product.unit:id,name')->find($this->table_id);
-            $this->product_units = $product_units->toArray();
+        if ($product) {
+            $this->table_id = $table_id;
+            $this->units = Unit::pluck('name', 'id')->toArray();
+            if (! $this->table_id) {
+                $this->product_units = [
+                    'product_id' => $product->id,
+                    'product' => ['unit' => ['name' => $product->unit->name]],
+                    'sub_unit_id' => '',
+                    'conversion_factor' => '',
+                    'barcode' => '',
+                ];
+            } else {
+                $product_units = ProductUnit::with('product:id,unit_id', 'product.unit:id,name')->find($this->table_id);
+                $this->product_units = $product_units->toArray();
+            }
         }
     }
 

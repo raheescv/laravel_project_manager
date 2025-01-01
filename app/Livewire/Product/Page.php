@@ -120,7 +120,7 @@ class Page extends Component
 
     public function updated($key, $value) {}
 
-    public function save()
+    public function save($edit = false)
     {
         $this->validate();
         try {
@@ -147,7 +147,10 @@ class Page extends Component
                 throw new \Exception($response['message'], 1);
             }
             $this->dispatch('success', ['message' => $response['message']]);
-
+            DB::commit();
+            if ($edit) {
+                return redirect()->route('product::edit', $response['data']['id']);
+            }
             $this->mount($this->table_id, $dropdownValues = false);
             if (! $this->table_id) {
                 $this->products['department_id'] = $selected['department']['id'];
@@ -156,7 +159,6 @@ class Page extends Component
             }
             $this->dispatch('SelectDropDownValues', $this->products);
             $this->dispatch('filepond-reset-images');
-            DB::commit();
         } catch (\Throwable $e) {
             DB::rollback();
             $this->dispatch('error', ['message' => $e->getMessage()]);

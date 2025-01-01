@@ -73,7 +73,13 @@
                 <div class="card h-100">
                     <div class="card-header">
                         <div class="col-12" style="padding-top:10px;">
-                            <button type="submit" class="btn btn-success" style="float: right;margin-right:5px; ">Save</button>
+                            @if (!isset($products['id']))
+                                <button type="submit" class="btn btn-success" style="float: right;margin-right:5px; ">Save & Create New</button>
+                                <button type="button" wire:click="save(1)" class="btn btn-primary" style="float: right;margin-right:5px; ">Save & Edit</button>
+                            @else
+                                <a class="btn btn-info" href="{{ route('product::create') }}" style="float: right;margin-right:5px; ">Create</a>
+                                <button type="submit" class="btn btn-success" style="float: right;margin-right:5px; ">Save </button>
+                            @endif
                         </div>
                         <div class="row">
                             <div class="col-md-12">
@@ -169,11 +175,13 @@
                                                         data-bs-target="#tabStock" type="button" role="tab" aria-controls="profile" aria-selected="false" tabindex="-1">Stock details
                                                     </button>
                                                 </li>
-                                                <li class="nav-item" role="presentation">
-                                                    <button class="nav-link @if ($selectedTab == 'Uom') active show @endif" data-bs-toggle="tab" wire:click="tabSelect('Uom')"
-                                                        data-bs-target="#tabUom" type="button" role="tab" aria-controls="profile" aria-selected="false" tabindex="-1">Unit of Measures
-                                                    </button>
-                                                </li>
+                                                @if (isset($products['id']))
+                                                    <li class="nav-item" role="presentation">
+                                                        <button class="nav-link @if ($selectedTab == 'Uom') active show @endif" data-bs-toggle="tab" wire:click="tabSelect('Uom')"
+                                                            data-bs-target="#tabUom" type="button" role="tab" aria-controls="profile" aria-selected="false" tabindex="-1">Unit of Measures
+                                                        </button>
+                                                    </li>
+                                                @endif
                                                 <li class="nav-item" role="presentation">
                                                     <button class="nav-link @if ($selectedTab == 'Images') active show @endif" data-bs-toggle="tab" wire:click="tabSelect('Images')"
                                                         data-bs-target="#tabImages" type="button" role="tab" aria-controls="profile" aria-selected="false" tabindex="-1">Images
@@ -235,51 +243,53 @@
                                                         </div>
                                                     </div>
                                                 </div>
-                                                <div id="tabUom" class="tab-pane fade @if ($selectedTab == 'Uom') active show @endif" role="tabpanel">
-                                                    <div class="row g-2">
-                                                        <h5 class="card-title ">Unit of Measures * </h5>
+                                                @if (isset($products['id']))
+                                                    <div id="tabUom" class="tab-pane fade @if ($selectedTab == 'Uom') active show @endif" role="tabpanel">
+                                                        <div class="row g-2">
+                                                            <h5 class="card-title ">Unit of Measures * </h5>
 
-                                                        <div class="col-md-1">
-                                                            <div class="mt-4 d-flex flex-wrap justify-content-center gap-2">
-                                                                <button type="button" id="ProductUnitAdd" class="btn btn-primary hstack gap-2 align-self-center">
-                                                                    <i class="demo-psi-add fs-5"></i>
-                                                                    <span class="vr"></span>
-                                                                    Add
-                                                                </button>
+                                                            <div class="col-md-1">
+                                                                <div class="mt-4 d-flex flex-wrap justify-content-center gap-2">
+                                                                    <button type="button" id="ProductUnitAdd" class="btn btn-primary hstack gap-2 align-self-center">
+                                                                        <i class="demo-psi-add fs-5"></i>
+                                                                        <span class="vr"></span>
+                                                                        Add
+                                                                    </button>
+                                                                </div>
                                                             </div>
                                                         </div>
-                                                    </div>
-                                                    <div class="card mb-3">
-                                                        <div class="card-body">
-                                                            <div class="table-responsive">
-                                                                <table class="table table-striped">
-                                                                    <thead>
-                                                                        <tr>
-                                                                            <th>Convert To (1 ({{ $products['unit']['name'] }}) base unit = ? Sub unit)</th>
-                                                                            <th class="text-end">Conversion Factor</th>
-                                                                            <th>Barcode </th>
-                                                                            <th>Action</th>
-                                                                        </tr>
-                                                                    </thead>
-                                                                    <tbody>
-                                                                        @foreach ($products['units'] as $item)
+                                                        <div class="card mb-3">
+                                                            <div class="card-body">
+                                                                <div class="table-responsive">
+                                                                    <table class="table table-striped">
+                                                                        <thead>
                                                                             <tr>
-                                                                                <td>{{ $item['sub_unit']['name'] }}</td>
-                                                                                <td class="text-end">{{ $item['conversion_factor'] }}</td>
-                                                                                <td>{{ $item['barcode'] }}</td>
-                                                                                <td>
-                                                                                    <i table_id="{{ $item['id'] }}" class="demo-psi-pencil fs-5 me-2 pointer product_unit_edit"></i>
-                                                                                    <i wire:confirm="Are You sure?" wire:click="unitDelete({{ $item['id'] }})"
-                                                                                        class="demo-psi-trash fs-5 me-2 pointer delete"></i>
-                                                                                </td>
+                                                                                <th>Convert To (1 ({{ $products['unit']['name'] }}) base unit = ? Sub unit)</th>
+                                                                                <th class="text-end">Conversion Factor</th>
+                                                                                <th>Barcode </th>
+                                                                                <th>Action</th>
                                                                             </tr>
-                                                                        @endforeach
-                                                                    </tbody>
-                                                                </table>
+                                                                        </thead>
+                                                                        <tbody>
+                                                                            @foreach ($products['units'] as $item)
+                                                                                <tr>
+                                                                                    <td>{{ $item['sub_unit']['name'] }}</td>
+                                                                                    <td class="text-end">{{ $item['conversion_factor'] }}</td>
+                                                                                    <td>{{ $item['barcode'] }}</td>
+                                                                                    <td>
+                                                                                        <i table_id="{{ $item['id'] }}" class="demo-psi-pencil fs-5 me-2 pointer product_unit_edit"></i>
+                                                                                        <i wire:confirm="Are You sure?" wire:click="unitDelete({{ $item['id'] }})"
+                                                                                            class="demo-psi-trash fs-5 me-2 pointer delete"></i>
+                                                                                    </td>
+                                                                                </tr>
+                                                                            @endforeach
+                                                                        </tbody>
+                                                                    </table>
+                                                                </div>
                                                             </div>
                                                         </div>
                                                     </div>
-                                                </div>
+                                                @endif
                                                 <div id="tabImages" class="tab-pane fade @if ($selectedTab == 'Images') active show @endif" role="tabpanel">
                                                     <div class="col-12">
                                                         <div class="row g-1 mb-3">
