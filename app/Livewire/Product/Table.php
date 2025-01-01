@@ -72,14 +72,11 @@ class Table extends Component
         }
     }
 
-    public function updatingSearch()
+    public function updated($key, $value)
     {
-        $this->resetPage();
-    }
-
-    public function updatingLimit()
-    {
-        $this->resetPage();
+        if (! in_array($key, ['SelectAll']) && ! preg_match('/^selected\..*/', $key)) {
+            $this->resetPage();
+        }
     }
 
     public function updatedSelectAll($value)

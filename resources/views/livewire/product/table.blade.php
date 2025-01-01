@@ -74,15 +74,13 @@
                             <input type="checkbox" wire:model.live="selectAll" />
                             <a href="#" wire:click.prevent="sortBy('id')">
                                 #
-                                @if ($sortField === 'id')
-                                    <span>
+                                @if ($sortField === 'id') <span>
                                         @if ($sortDirection === 'asc')
                                             &uarr;
                                         @else
                                             &darr;
                                         @endif
-                                    </span>
-                                @endif
+                                    </span> @endif
                             </a>
                         </th>
                         <th>

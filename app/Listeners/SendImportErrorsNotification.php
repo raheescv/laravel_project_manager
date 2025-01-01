@@ -15,7 +15,7 @@ class SendImportErrorsNotification
     {
         $user = User::find($event->userId);
 
-        $file_path = 'exports/product_errors-' . now()->timestamp . '.xlsx';
+        $file_path = 'exports/product_errors-'.now()->timestamp.'.xlsx';
         Excel::store(new ErrorsExport($event->errors), $file_path, 'public');
 
         Notification::send($user, new ImportErrorsNotification($event->entity, $file_path, $event->errors));

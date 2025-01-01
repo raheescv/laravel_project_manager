@@ -9,12 +9,15 @@ use Illuminate\Notifications\Notification;
 class ImportErrorsNotification extends Notification
 {
     use Queueable;
+
     public $title;
+
     public $message;
+
     public function __construct(private $entity, private $filePath, private $errors)
     {
         $this->title = "Action Required: Errors in Your {$this->entity} Import";
-        $this->message = "The import process for {$this->entity} has completed with the following errors: " . count($this->errors);
+        $this->message = "The import process for {$this->entity} has completed with the following errors: ".count($this->errors);
     }
 
     public function via($notifiable)

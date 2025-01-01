@@ -3,7 +3,6 @@
 namespace App\Exports;
 
 use Maatwebsite\Excel\Concerns\FromArray;
-
 use Maatwebsite\Excel\Concerns\WithHeadings;
 
 class ErrorsExport implements FromArray, WithHeadings
