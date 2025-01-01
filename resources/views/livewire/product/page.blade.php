@@ -6,7 +6,7 @@
                     <div class="card-body">
                         <div class="row">
                             <div class="col-md-6 mb-3">
-                                <h5 class="card-title">UID: #</h5>
+                                <h5 class="card-title">UID: {{ $products['id'] ?? '' }}</h5>
                             </div>
                             <div class="col-md-6 mb-3">
                                 <div class="d-flex align-items-center pt-1 mb-2">

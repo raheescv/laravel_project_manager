@@ -24,7 +24,7 @@ class Page extends Component
 
     public $table_id;
 
-    public $selectedTab = 'Uom';
+    public $selectedTab = 'Attributes';
 
     public $products;
 
