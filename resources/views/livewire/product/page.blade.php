@@ -12,7 +12,7 @@
                                 <div class="d-flex align-items-center pt-1 mb-2">
                                     <label class="form-check-label flex-fill" style="text-align: right">Selling Product</label>
                                     <div class="form-check form-switch">
-                                        {{ html()->checkbox('is_selling')->value('')->class('form-check-input ms-0')->attribute('wire:model', 'products.is_selling') }}
+                                        {{ html()->checkbox('is_selling')->value('')->class('form-check-input ms-0')->checked($products['is_selling'])->attribute('wire:model', 'products.is_selling') }}
                                     </div>
                                 </div>
                             </div>
@@ -136,7 +136,9 @@
                                 </div>
                             </div>
                             <div class="col-md-12">
-                                <x-filepond::upload wire:model="images" multiple max-files="5" />
+                                <div class="row g-1 mb-3">
+                                    <x-filepond::upload wire:model="images" multiple max-files="5" />
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -235,31 +237,11 @@
                                                 </div>
                                                 <div id="tabUom" class="tab-pane fade @if ($selectedTab == 'Uom') active show @endif" role="tabpanel">
                                                     <div class="row g-2">
-                                                        <h5 class="card-title ">Unit of Measures</h5>
-                                                        <div class="col-md-2">
-                                                            <label for="name" class="form-label">Convert From</label>
-                                                            <input id="_dm-inputCity" type="text" class="form-control">
-                                                        </div>
-                                                        <div class="col-md-2">
-                                                            <label for="name" class="form-label">Convert To <span style="font-size:8px ">(1 base unit = ? Sub
-                                                                    unit)</span></label>
-                                                            <input id="_dm-inputCity" type="text" class="form-control">
-                                                        </div>
-                                                        <div class="col-md-2">
-                                                            <label for="name" class="form-label">Convertion Value</label>
-                                                            <input id="_dm-inputCity" type="text" class="form-control">
-                                                        </div>
-                                                        <div class="col-md-2">
-                                                            <label for="name" class="form-label">Selling Price Without Tax</label>
-                                                            <input id="_dm-inputCity" type="text" class="form-control">
-                                                        </div>
-                                                        <div class="col-md-2">
-                                                            <label for="name" class="form-label">Barcode </label>
-                                                            <input id="_dm-inputCity" type="text" class="form-control">
-                                                        </div>
-                                                        <div class="col-md-2">
+                                                        <h5 class="card-title ">Unit of Measures * </h5>
+
+                                                        <div class="col-md-1">
                                                             <div class="mt-4 d-flex flex-wrap justify-content-center gap-2">
-                                                                <button class="btn btn-primary hstack gap-2 align-self-center">
+                                                                <button type="button" id="ProductUnitAdd" class="btn btn-primary hstack gap-2 align-self-center">
                                                                     <i class="demo-psi-add fs-5"></i>
                                                                     <span class="vr"></span>
                                                                     Add
@@ -269,33 +251,29 @@
                                                     </div>
                                                     <div class="card mb-3">
                                                         <div class="card-body">
-                                                            <div class="table-responsove">
+                                                            <div class="table-responsive">
                                                                 <table class="table table-striped">
                                                                     <thead>
                                                                         <tr>
-                                                                            <th>Convert From</th>
-                                                                            <th>Convert To (1 base unit = ? Sub unit)</th>
-                                                                            <th>Convertion Value</th>
+                                                                            <th>Convert To (1 ({{ $products['unit']['name'] }}) base unit = ? Sub unit)</th>
+                                                                            <th class="text-end">Conversion Factor</th>
                                                                             <th>Barcode </th>
-                                                                            <th>&nbsp;</th>
+                                                                            <th>Action</th>
                                                                         </tr>
                                                                     </thead>
                                                                     <tbody>
-                                                                        <tr>
-                                                                            <td><a class="btn-link" href="#"> Order #53431</a></td>
-                                                                            <td>Steve N. Horton</td>
-                                                                            <td><span class="text-body"> May 22, 2024</span></td>
-                                                                            <td>$45.00</td>
-                                                                            <td>
-                                                                                5454571
-                                                                            </td>
-                                                                            <td><button type="button" class="btn btn-icon btn-info">
-                                                                                    <i class="ti-pencil-alt fs-5"></i>
-                                                                                </button> <button type="button" class="btn btn-icon btn-success">
-                                                                                    <i class="demo-psi-recycling icon-lg fs-5"></i>
-                                                                                </button>
-                                                                            </td>
-                                                                        </tr>
+                                                                        @foreach ($products['units'] as $item)
+                                                                            <tr>
+                                                                                <td>{{ $item['sub_unit']['name'] }}</td>
+                                                                                <td class="text-end">{{ $item['conversion_factor'] }}</td>
+                                                                                <td>{{ $item['barcode'] }}</td>
+                                                                                <td>
+                                                                                    <i table_id="{{ $item['id'] }}" class="demo-psi-pencil fs-5 me-2 pointer product_unit_edit"></i>
+                                                                                    <i wire:confirm="Are You sure?" wire:click="unitDelete({{ $item['id'] }})"
+                                                                                        class="demo-psi-trash fs-5 me-2 pointer delete"></i>
+                                                                                </td>
+                                                                            </tr>
+                                                                        @endforeach
                                                                     </tbody>
                                                                 </table>
                                                             </div>
@@ -307,7 +285,7 @@
                                                         <div class="row g-1 mb-3">
                                                             @foreach ($products['images'] as $item)
                                                                 <div class="col-4 position-relative">
-                                                                    <img class="img-fluid rounded" src="{{ $item['path'] }}" alt="thumbs" loading="lazy">
+                                                                    <img class="img-fluid rounded" width="100%" height="10%" src="{{ $item['path'] }}" alt="thumbs" loading="lazy">
                                                                     <i class="demo-psi-trash fs-5 me-2 pointer position-absolute top-0 end-0 m-2"
                                                                         wire:confirm="Are you sure you want to delete this image?" wire:click="deleteImage('{{ $item['id'] }}')"></i>
                                                                 </div>
@@ -402,6 +380,15 @@
                     tomSelectInstance.clear();
                 }
                 $('#name').select();
+            });
+
+            $('#ProductUnitAdd').click(function() {
+                Livewire.dispatch("Product-Units-Create-Component");
+            });
+            $(document).on('click', '.product_unit_edit', function() {
+                Livewire.dispatch("Product-Units-Update-Component", {
+                    id: $(this).attr('table_id')
+                });
             });
         </script>
     @endpush

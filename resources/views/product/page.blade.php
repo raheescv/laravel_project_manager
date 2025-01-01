@@ -16,12 +16,14 @@
     </div>
     <div class="content__boxed">
         <div class="content__wrap">
-            @livewire('product.page', ['table_id' => $id ?? ''])
+            @livewire('product.page', ['table_id' => $id])
         </div>
     </div>
     <x-settings.unit.unit-modal />
     <x-settings.category.category-modal />
     <x-settings.department.department-modal />
+    @component('components.product.units-modal', ['product_id' => $id])
+    @endcomponent
     @push('scripts')
         @include('components.select.departmentSelect')
         @include('components.select.categorySelect')

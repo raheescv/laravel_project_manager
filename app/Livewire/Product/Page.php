@@ -3,6 +3,8 @@
 namespace App\Livewire\Product;
 
 use App\Actions\Product\CreateAction;
+use App\Actions\Product\DeleteImageAction;
+use App\Actions\Product\ProductUnit\DeleteAction as UnitDeleteAction;
 use App\Actions\Product\UpdateAction;
 use App\Models\Product;
 use App\Models\Unit;
@@ -11,16 +13,18 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 use Livewire\Component;
 use Spatie\LivewireFilepond\WithFilePond;
-use App\Actions\Product\DeleteAction;
-use App\Actions\Product\DeleteImageAction;
 
 class Page extends Component
 {
     use WithFilePond;
 
+    protected $listeners = [
+        'Product-Refresh-Component' => 'refresh',
+    ];
+
     public $table_id;
 
-    public $selectedTab = 'Attributes';
+    public $selectedTab = 'Uom';
 
     public $products;
 
@@ -28,7 +32,12 @@ class Page extends Component
 
     public $departments;
 
-    public function mount($table_id = null, $dropdown = true)
+    public function refresh()
+    {
+        $this->mount($this->table_id, $dropdownValues = false);
+    }
+
+    public function mount($table_id = null, $dropdownValues = true)
     {
         $this->table_id = $table_id;
         $this->departments = [];
@@ -69,10 +78,10 @@ class Page extends Component
                 'images' => [],
             ];
         } else {
-            $product = Product::with('department', 'subCategory', 'mainCategory', 'images')->find($this->table_id);
+            $product = Product::with('department', 'subCategory', 'mainCategory', 'images', 'unit', 'units.subUnit')->find($this->table_id);
             $this->products = $product->toArray();
         }
-        if ($dropdown) {
+        if ($dropdownValues) {
             $this->dispatch('SelectDropDownValues', $this->products);
         }
     }
@@ -139,7 +148,7 @@ class Page extends Component
             }
             $this->dispatch('success', ['message' => $response['message']]);
 
-            $this->mount($this->table_id, $dropdown = false);
+            $this->mount($this->table_id, $dropdownValues = false);
             if (! $this->table_id) {
                 $this->products['department_id'] = $selected['department']['id'];
                 $this->products['main_category_id'] = $selected['mainCategory']['id'];
@@ -170,6 +179,20 @@ class Page extends Component
             $this->dispatch('success', ['message' => 'Deleted Successfully']);
         } catch (\Exception $e) {
             DB::rollback();
+            $this->dispatch('error', ['message' => $e->getMessage()]);
+        }
+    }
+
+    public function unitDelete($id)
+    {
+        try {
+            $response = (new UnitDeleteAction)->execute($id);
+            if (! $response['success']) {
+                throw new \Exception($response['message'], 1);
+            }
+            $this->dispatch('success', ['message' => $response['message']]);
+            $this->mount($this->table_id);
+        } catch (\Exception $e) {
             $this->dispatch('error', ['message' => $e->getMessage()]);
         }
     }
