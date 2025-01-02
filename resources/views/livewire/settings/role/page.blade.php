@@ -1,6 +1,6 @@
 <div>
     <div class="modal-header">
-        <h1 class="modal-title fs-5">Unit Modal</h1>
+        <h1 class="modal-title fs-5">Role Modal</h1>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
     </div>
     <form wire:submit="save">
@@ -17,16 +17,10 @@
                 </div>
             </div>
             <div class="row">
-                <div class="col-md-4">
-                    <div class="form-group">
-                        <h4> <label for="code">Code</label> </h4>
-                        {{ html()->input('code')->value('')->class('form-control')->required(true)->attribute('wire:model', 'units.code') }}
-                    </div>
-                </div>
-                <div class="col-md-8">
+                <div class="col-md-12">
                     <div class="form-group">
                         <h4> <label for="name">Name</label> </h4>
-                        {{ html()->input('name')->value('')->class('form-control')->required(true)->attribute('wire:model', 'units.name') }}
+                        {{ html()->input('name')->value('')->class('form-control')->required(true)->attribute('wire:model', 'roles.name') }}
                     </div>
                 </div>
             </div>

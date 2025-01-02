@@ -48,7 +48,8 @@
                                 <table class="table table-striped align-middle table-sm">
                                     <thead>
                                         <tr>
-                                            <td>{{ html()->checkbox('is_whatsapp_enabled')->value('')->checked($user->is_whatsapp_enabled)->class('form-check-input')->attribute('wire:click', 'enabledWhatsapp') }}
+                                            <td>
+                                                {{ html()->checkbox('is_whatsapp_enabled')->value('')->checked($user->is_whatsapp_enabled)->class('form-check-input')->attribute('wire:click', 'enabledWhatsapp') }}
                                             </td>
                                             <td> <label for="is_whatsapp_enabled" class="">Enable Whatsapp Notification</label> </td>
                                         </tr>
