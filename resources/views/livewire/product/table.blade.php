@@ -66,7 +66,7 @@
                     <div class="form-check mb-4">
                         <label for="is_selling" class="form-check-label">
                             {{ html()->checkbox('is_selling', [])->value('')->class('form-check-input')->attribute('wire:model.live', 'is_selling') }}
-                            is Selling
+                            Is Selling
                         </label>
                     </div>
                 </div>

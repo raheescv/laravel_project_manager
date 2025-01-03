@@ -13,8 +13,6 @@ class UpdateAction
             if (! $model) {
                 throw new \Exception("Resource not found with the specified ID: $id.", 1);
             }
-
-            $data['name'] = trim($data['name']);
             validationHelper(Unit::rules($id), $data);
             $model->update($data);
 

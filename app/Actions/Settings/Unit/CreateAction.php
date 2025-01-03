@@ -9,7 +9,6 @@ class CreateAction
     public function execute($data)
     {
         try {
-            $data['name'] = trim($data['name']);
             validationHelper(Unit::rules(), $data);
             $model = Unit::create($data);
             $return['success'] = true;

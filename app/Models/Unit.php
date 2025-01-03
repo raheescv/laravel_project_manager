@@ -20,6 +20,16 @@ class Unit extends Model
         ], $merge);
     }
 
+    public function setNameAttribute($value)
+    {
+        $this->attributes['name'] = trim($value);
+    }
+
+    public function setCodeAttribute($value)
+    {
+        $this->attributes['code'] = trim($value);
+    }
+
     public function getDropDownList($request)
     {
         $self = self::orderBy('name');
