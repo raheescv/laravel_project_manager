@@ -40,6 +40,9 @@
                                     @can('product.view')
                                         <a href="{{ route('product::index') }}" class="list-group-item list-group-item-action">Product</a>
                                     @endcan
+                                    @can('branch.view')
+                                        <a href="{{ route('settings::branch::index') }}" class="list-group-item list-group-item-action">Branch</a>
+                                    @endcan
                                     @can('category.view')
                                         <a href="{{ route('settings::category::index') }}" class="list-group-item list-group-item-action">Category</a>
                                     @endcan

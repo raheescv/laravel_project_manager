@@ -1,34 +1,34 @@
 <?php
 
-namespace App\Livewire\Settings\Unit;
+namespace App\Livewire\Settings\Branch;
 
-use App\Actions\Settings\Unit\CreateAction;
-use App\Actions\Settings\Unit\UpdateAction;
-use App\Models\Unit;
+use App\Actions\Settings\Branch\CreateAction;
+use App\Actions\Settings\Branch\UpdateAction;
+use App\Models\Branch;
 use Faker\Factory;
 use Livewire\Component;
 
 class Page extends Component
 {
     protected $listeners = [
-        'Unit-Page-Create-Component' => 'create',
-        'Unit-Page-Update-Component' => 'edit',
+        'Branch-Page-Create-Component' => 'create',
+        'Branch-Page-Update-Component' => 'edit',
     ];
 
-    public $units;
+    public $branches;
 
     public $table_id;
 
     public function create()
     {
         $this->mount();
-        $this->dispatch('ToggleUnitModal');
+        $this->dispatch('ToggleBranchModal');
     }
 
     public function edit($id)
     {
         $this->mount($id);
-        $this->dispatch('ToggleUnitModal');
+        $this->dispatch('ToggleBranchModal');
     }
 
     public function mount($table_id = null)
@@ -42,31 +42,30 @@ class Page extends Component
                 $name = $faker->text(20);
                 $code = $faker->hexcolor;
             }
-            $this->units = [
+            $this->branches = [
                 'code' => $code,
                 'name' => $name,
+                'location' => '',
             ];
         } else {
-            $unit = Unit::find($this->table_id);
-            $this->units = $unit->toArray();
+            $branch = Branch::find($this->table_id);
+            $this->branches = $branch->toArray();
         }
     }
 
     protected function rules()
     {
         return [
-            'units.name' => ['required', 'max:20', 'unique:units,name,' . $this->table_id],
-            'units.code' => ['required', 'max:20', 'unique:units,code,' . $this->table_id],
+            'branches.name' => ['required', 'unique:branches,name,' . $this->table_id],
+            'branches.code' => ['required', 'unique:branches,code,' . $this->table_id],
         ];
     }
 
     protected $messages = [
-        'units.name.required' => 'The name field is required',
-        'units.name.unique' => 'The name is already Registered',
-        'units.name.max' => 'The name field must not be greater than 20 characters.',
-        'units.code.required' => 'The code field is required',
-        'units.code.unique' => 'The code is already Registered',
-        'units.code.max' => 'The code field must not be greater than 20 characters.',
+        'branches.name.required' => 'The name field is required',
+        'branches.name.unique' => 'The name is already Registered',
+        'branches.code.required' => 'The code field is required',
+        'branches.code.unique' => 'The code is already Registered',
     ];
 
     public function save($close = false)
@@ -74,9 +73,9 @@ class Page extends Component
         $this->validate();
         try {
             if (! $this->table_id) {
-                $response = (new CreateAction)->execute($this->units);
+                $response = (new CreateAction)->execute($this->branches);
             } else {
-                $response = (new UpdateAction)->execute($this->units, $this->table_id);
+                $response = (new UpdateAction)->execute($this->branches, $this->table_id);
             }
             if (! $response['success']) {
                 throw new \Exception($response['message'], 1);
@@ -84,11 +83,11 @@ class Page extends Component
             $this->dispatch('success', ['message' => $response['message']]);
             $this->mount($this->table_id);
             if (! $close) {
-                $this->dispatch('ToggleUnitModal');
+                $this->dispatch('ToggleBranchModal');
             } else {
                 $this->mount();
             }
-            $this->dispatch('RefreshUnitTable');
+            $this->dispatch('RefreshBranchTable');
         } catch (\Throwable $e) {
             $this->dispatch('error', ['message' => $e->getMessage()]);
         }
@@ -96,6 +95,6 @@ class Page extends Component
 
     public function render()
     {
-        return view('livewire.settings.unit.page');
+        return view('livewire.settings.branch.page');
     }
 }

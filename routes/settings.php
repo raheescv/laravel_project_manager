@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\RoleController;
+use App\Http\Controllers\Settings\BranchController;
 use App\Http\Controllers\Settings\CategoryController;
 use App\Http\Controllers\Settings\DepartmentController;
 use App\Http\Controllers\Settings\UnitController;
@@ -17,6 +18,9 @@ Route::middleware('auth')->group(function () {
         Route::name('unit::')->prefix('unit')->controller(UnitController::class)->group(function () {
             Route::get('', 'index')->name('index')->can('unit.view');
             Route::get('list', 'get')->name('list');
+        });
+        Route::name('branch::')->prefix('branch')->controller(BranchController::class)->group(function () {
+            Route::get('', 'index')->name('index')->can('branch.view');
         });
         Route::name('department::')->prefix('department')->controller(DepartmentController::class)->group(function () {
             Route::get('', 'index')->name('index')->can('department.view');
