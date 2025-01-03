@@ -18,15 +18,15 @@ Route::middleware('auth')->group(function () {
 
     Route::name('users::')->prefix('users')
         ->controller(UserController::class)->group(function () {
-            Route::get('', 'index')->name('index');
-            Route::get('view/{id}', 'get')->name('view');
+            Route::get('', 'index')->name('index')->can('user.view');
+            Route::get('view/{id}', 'get')->name('view')->can('user.edit');
         });
 
     Route::name('product::')->prefix('product')
         ->controller(ProductController::class)->group(function () {
-            Route::get('', 'index')->name('index');
-            Route::get('create', 'page')->name('create');
-            Route::get('edit/{id}', 'page')->name('edit');
+            Route::get('', 'index')->name('index')->can('product.view');
+            Route::get('create', 'page')->name('create')->can('product.create');
+            Route::get('edit/{id}', 'page')->name('edit')->can('product.edit');
         });
     Route::name('notification::')->prefix('notification')
         ->controller(NotificationController::class)->group(function () {

@@ -2,16 +2,22 @@
     <div class="card-header">
         <div class="row">
             <div class="col-md-6 d-flex gap-1 align-items-center mb-3">
-                <a class="btn btn-primary hstack gap-2 align-self-center" href="{{ route('product::create') }}">
-                    <i class="demo-psi-add fs-5"></i>
-                    <span class="vr"></span>
-                    Add New
-                </a>
+                @can('product.create')
+                    <a class="btn btn-primary hstack gap-2 align-self-center" href="{{ route('product::create') }}">
+                        <i class="demo-psi-add fs-5"></i>
+                        <span class="vr"></span>
+                        Add New
+                    </a>
+                @endcan
                 <div class="btn-group">
-                    <button class="btn btn-icon btn-outline-light" title="To export the items as excel" wire:click="export()"><i class="demo-pli-file-excel fs-5"></i></button>
-                    <button class="btn btn-icon btn-outline-light" title="To delete the selected items" wire:click="delete()" wire:confirm="Are you sure you want to delete the selected items?">
-                        <i class="demo-pli-recycling fs-5"></i>
-                    </button>
+                    @can('product.export')
+                        <button class="btn btn-icon btn-outline-light" title="To export the items as excel" wire:click="export()"><i class="demo-pli-file-excel fs-5"></i></button>
+                    @endcan
+                    @can('product.delete')
+                        <button class="btn btn-icon btn-outline-light" title="To delete the selected items" wire:click="delete()" wire:confirm="Are you sure you want to delete the selected items?">
+                            <i class="demo-pli-recycling fs-5"></i>
+                        </button>
+                    @endcan
                 </div>
             </div>
             <div class="col-md-6 d-flex gap-1 align-items-center justify-content-md-end mb-3">
@@ -26,9 +32,11 @@
                     <input type="text" wire:model.live="search" autofocus placeholder="Search..." class="form-control" autocomplete="off">
                 </div>
                 <div class="btn-group">
-                    <button class="btn btn-icon btn-outline-light" data-bs-toggle="modal" data-bs-target="#ProductImportModal">
-                        <i class="demo-pli-download-from-cloud fs-5"></i>
-                    </button>
+                    @can('product.import')
+                        <button class="btn btn-icon btn-outline-light" data-bs-toggle="modal" data-bs-target="#ProductImportModal">
+                            <i class="demo-pli-download-from-cloud fs-5"></i>
+                        </button>
+                    @endcan
                 </div>
             </div>
         </div>
@@ -228,7 +236,11 @@
                             <td dir="rtl">{{ $item->name_arabic }}</td>
                             <td class="text-end">{{ currency($item->cost) }}</td>
                             <td class="text-end">{{ currency($item->mrp) }}</td>
-                            <td class="text-end"> <a href="{{ route('product::edit', $item->id) }}"><i class="demo-psi-pencil fs-5 me-2 pointer"></i> </a> </td>
+                            <td class="text-end">
+                                @can('product.edit')
+                                    <a href="{{ route('product::edit', $item->id) }}"><i class="demo-psi-pencil fs-5 me-2 pointer"></i> </a>
+                                @endcan
+                            </td>
                         </tr>
                     @endforeach
                 </tbody>

@@ -134,6 +134,13 @@ if (! function_exists('validationHelper')) {
         }
     }
 }
+
+if (! function_exists('getUserRoles')) {
+    function getUserRoles($user)
+    {
+        return implode(',', $user->getRoleNames()->toArray());
+    }
+}
 if (! function_exists('fileUpload')) {
     function fileUpload($file, $path)
     {

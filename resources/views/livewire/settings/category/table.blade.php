@@ -2,15 +2,22 @@
     <div class="card-header -4 mb-3">
         <div class="row">
             <div class="col-md-6 d-flex gap-1 align-items-center mb-3">
-                <button class="btn btn-primary hstack gap-2 align-self-center" id="CategoryAdd">
-                    <i class="demo-psi-add fs-5"></i>
-                    <span class="vr"></span>
-                    Add New
-                </button>
-                <div class="btn-group">
-                    <button class="btn btn-icon btn-outline-light" wire:click="export()"><i class="demo-pli-file-excel fs-5"></i></button>
-                    <button class="btn btn-icon btn-outline-light" wire:click="delete()" wire:confirm="Are you sure you want to delete the selected items?"><i class="demo-pli-recycling fs-5"></i>
+                @can('category.create')
+                    <button class="btn btn-primary hstack gap-2 align-self-center" id="CategoryAdd">
+                        <i class="demo-psi-add fs-5"></i>
+                        <span class="vr"></span>
+                        Add New
                     </button>
+                @endcan
+                <div class="btn-group">
+                    @can('category.export')
+                        <button class="btn btn-icon btn-outline-light" wire:click="export()"><i class="demo-pli-file-excel fs-5"></i></button>
+                    @endcan
+                    @can('category.delete')
+                        <button class="btn btn-icon btn-outline-light" wire:click="delete()" wire:confirm="Are you sure you want to delete the selected items?">
+                            <i class="demo-pli-recycling fs-5"></i>
+                        </button>
+                    @endcan
                 </div>
             </div>
             <div class="col-md-6 d-flex gap-1 align-items-center justify-content-md-end mb-3">
@@ -25,15 +32,11 @@
                     <input type="text" wire:model.live="search" autofocus placeholder="Search..." class="form-control" autocomplete="off">
                 </div>
                 <div class="btn-group">
-                    <button class="btn btn-icon btn-outline-light" data-bs-toggle="modal" data-bs-target="#CategoryImportModal">
-                        <i class="demo-pli-download-from-cloud fs-5"></i>
-                    </button>
-                    <button class="btn btn-icon btn-outline-light dropdown-toggle dropdown-toggle-split" data-bs-toggle="dropdown" aria-expanded="false">
-                        <span class="visually-hidden">Toggle Dropdown</span>
-                    </button>
-                    <ul class="dropdown-menu dropdown-menu-end">
-                        <li><a class="dropdown-item" href="#">Action</a></li>
-                    </ul>
+                    @can('category.import')
+                        <button class="btn btn-icon btn-outline-light" data-bs-toggle="modal" data-bs-target="#CategoryImportModal">
+                            <i class="demo-pli-download-from-cloud fs-5"></i>
+                        </button>
+                    @endcan
                 </div>
             </div>
         </div>
@@ -113,7 +116,11 @@
                             </td>
                             <td>{{ $item->parent?->name }}</td>
                             <td>{{ $item->name }}</td>
-                            <td> <i table_id="{{ $item->id }}" class="demo-psi-pencil fs-5 me-2 pointer edit"></i> </td>
+                            <td>
+                                @can('category.edit')
+                                    <i table_id="{{ $item->id }}" class="demo-psi-pencil fs-5 me-2 pointer edit"></i>
+                                @endcan
+                            </td>
                         </tr>
                     @endforeach
                 </tbody>

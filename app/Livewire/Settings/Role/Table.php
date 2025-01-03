@@ -35,8 +35,11 @@ class Table extends Component
     public function delete()
     {
         try {
-            DB::beginTransaction();
+            @DB::beginTransaction();
             foreach ($this->selected as $id) {
+                if ($id == 1) {
+                    throw new \Exception('You cant delete Super Admin role', 1);
+                }
                 $response = (new DeleteAction)->execute($id);
                 if (! $response['success']) {
                     throw new \Exception($response['message'], 1);

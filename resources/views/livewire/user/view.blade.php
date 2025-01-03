@@ -1,5 +1,13 @@
 <div>
     <div class="content__header content__boxed rounded-0">
+        <div class="content__wrap">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{{ route('dashboard') }}">Home</a></li>
+                    <li class="breadcrumb-item"><a href="{{ route('users::index') }}">Users</a></li>
+                </ol>
+            </nav>
+        </div>
         <div class="content__wrap d-md-flex align-items-start hv-outline-parent hv-outline-inherit">
             <figure class="m-0">
                 <div class="d-inline-flex align-items-center position-relative pt-xl-3 mb-3">
@@ -8,7 +16,7 @@
                     </div>
                     <div class="flex-grow-1 ms-4">
                         <a href="#" class="h3 btn-link text-body-emphasis">{{ $user->name }}</a>
-                        <p class="m-0">Marketing manager</p>
+                        <p class="m-0">{{ getUserRoles($user) }}</p>
                     </div>
                 </div>
             </figure>
@@ -31,17 +39,26 @@
                     </div>
                     <h5 class="mt-5">Roles</h5>
                     <div class="d-flex flex-wrap gap-2">
-                        <a href="#" class="btn btn-xs btn-outline-light text-nowrap">PHP Programming</a>
-                        <a href="#" class="btn btn-xs btn-outline-light text-nowrap">Marketing</a>
-                        <a href="#" class="btn btn-xs btn-outline-light text-nowrap">Graphic Desig</a>
-                        <a href="#" class="btn btn-xs btn-outline-light text-nowrap">Sketch</a>
-                        <a href="#" class="btn btn-xs btn-outline-light text-nowrap">Photography</a>
-                        <a href="#" class="btn btn-xs btn-outline-light text-nowrap">HTML</a>
-                        <a href="#" class="btn btn-xs btn-outline-light text-nowrap">CSS</a>
+                        @foreach ($role_names as $item)
+                            <a href="#" class="btn btn-xs btn-outline-light text-nowrap">{{ $item }}</a>
+                        @endforeach
                     </div>
                 </div>
                 <div class="vr d-none"></div>
                 <div class="flex-fill">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5>Roles</h5>
+                        </div>
+                        <div class="card-body">
+                            <h6 class="mb-3">Assign User Roles</h6>
+                            <div class="input-group mb-3" wire:ignore>
+                                {{ html()->select('role_id', $roles)->value($role_names)->class('tomSelect')->multiple(true)->attribute('width', '100%')->attribute('wire:model', 'role_names') }}
+                                <button class="btn btn-info" type="button" wire:click="saveRoles" id="button-addon2">Save</button>
+                            </div>
+                        </div>
+                    </div>
+                    <br>
                     <div class="card">
                         <div class="card-header">
                             <h5>Whatsapp Settings</h5>

@@ -502,6 +502,7 @@
                 // onFocus: eventHandler('onFocus'),
                 // onBlur: eventHandler('onBlur'),
                 // onInitialize: eventHandler('onInitialize'),
+                plugins: ['remove_button'],
                 sortField: {
                     field: "text",
                     direction: "asc"

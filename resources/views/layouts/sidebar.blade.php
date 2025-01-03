@@ -75,7 +75,7 @@
 
                     <div class="list-group-item list-group-item-action d-flex align-items-start mb-2">
                         <div class="flex-shrink-0 me-3">
-                            <img class="img-xs rounded-circle" src="./assets/img/profile-photos/4.png" alt="Profile Picture" loading="lazy">
+                            <img class="img-xs rounded-circle" src="{{ asset('assets/img/profile-photos/4.png') }}" alt="Profile Picture" loading="lazy">
                         </div>
                         <div class="flex-grow-1 ">
                             <a href="#" class="h6 d-block mb-0 stretched-link text-decoration-none">Jack

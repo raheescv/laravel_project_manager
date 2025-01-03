@@ -37,10 +37,18 @@
                                         </div>
                                         <h5 class="flex-grow-1 m-0">Settings</h5>
                                     </div>
-                                    <a href="{{ route('product::index') }}" class="list-group-item list-group-item-action">Product</a>
-                                    <a href="{{ route('settings::category::index') }}" class="list-group-item list-group-item-action">Category</a>
-                                    <a href="{{ route('settings::unit::index') }}" class="list-group-item list-group-item-action">Unit</a>
-                                    <a href="{{ route('settings::department::index') }}" class="list-group-item list-group-item-action">Department</a>
+                                    @can('product.view')
+                                        <a href="{{ route('product::index') }}" class="list-group-item list-group-item-action">Product</a>
+                                    @endcan
+                                    @can('category.view')
+                                        <a href="{{ route('settings::category::index') }}" class="list-group-item list-group-item-action">Category</a>
+                                    @endcan
+                                    @can('unit.view')
+                                        <a href="{{ route('settings::unit::index') }}" class="list-group-item list-group-item-action">Unit</a>
+                                    @endcan
+                                    @can('department.view')
+                                        <a href="{{ route('settings::department::index') }}" class="list-group-item list-group-item-action">Department</a>
+                                    @endcan
                                     <a href="{{ route('settings::index') }}" class="list-group-item list-group-item-action">Settings</a>
                                 </div>
 
@@ -110,7 +118,7 @@
                         <!-- User dropdown header -->
                         <div class="d-flex align-items-center border-bottom px-3 py-2">
                             <div class="flex-shrink-0">
-                                <img class="img-sm rounded-circle" src="./assets/img/profile-photos/4.png" alt="Profile Picture" loading="lazy">
+                                <img class="img-sm rounded-circle" src="{{ asset('assets/img/profile-photos/4.png') }}" alt="Profile Picture" loading="lazy">
                             </div>
                             <div class="flex-grow-1 ms-3">
                                 <h5 class="mb-0">{{ auth()->user()->name }}</h5>

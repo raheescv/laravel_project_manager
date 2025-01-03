@@ -90,7 +90,7 @@ class Permissions extends Component
     {
         try {
             if ($this->role['id'] == 1) {
-                throw new \Exception("You Cant Edit Super Admin Privileges", 1);
+                throw new \Exception('You cant edit Super Admin privileges', 1);
             }
             $this->role->syncPermissions([]);
             $this->selected = array_keys(array_filter($this->selected));
@@ -107,7 +107,7 @@ class Permissions extends Component
     {
         $list = Permission::when($this->search ?? '', function ($query, $value) {
             $value = trim($value);
-            $query->where('name', 'LIKE', '%' . $value . '%');
+            $query->where('name', 'LIKE', '%'.$value.'%');
         })->pluck('name', 'id');
         $this->permissions = [];
         foreach ($list as $key => $name) {

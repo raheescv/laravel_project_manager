@@ -2,15 +2,19 @@
     <div class="card-header -4 mb-3">
         <div class="row">
             <div class="col-md-6 d-flex gap-1 align-items-center mb-3">
-                <button class="btn btn-primary hstack gap-2 align-self-center" id="DepartmentAdd">
-                    <i class="demo-psi-add fs-5"></i>
-                    <span class="vr"></span>
-                    Add New
-                </button>
-                <div class="btn-group">
-                    <button class="btn btn-icon btn-outline-light" wire:click="delete()" wire:confirm="Are you sure you want to delete the selected items?"><i class="demo-pli-recycling fs-5"></i>
+                @can('department.create')
+                    <button class="btn btn-primary hstack gap-2 align-self-center" id="DepartmentAdd">
+                        <i class="demo-psi-add fs-5"></i>
+                        <span class="vr"></span>
+                        Add New
                     </button>
-                </div>
+                @endcan
+                @can('department.delete')
+                    <div class="btn-group">
+                        <button class="btn btn-icon btn-outline-light" wire:click="delete()" wire:confirm="Are you sure you want to delete the selected items?"><i class="demo-pli-recycling fs-5"></i>
+                        </button>
+                    </div>
+                @endcan
             </div>
             <div class="col-md-6 d-flex gap-1 align-items-center justify-content-md-end mb-3">
                 <div class="form-group">
@@ -71,7 +75,11 @@
                                 {{ $item->id }}
                             </td>
                             <td>{{ $item->name }}</td>
-                            <td> <i table_id="{{ $item->id }}" class="demo-psi-pencil fs-5 me-2 pointer edit"></i> </td>
+                            <td>
+                                @can('department.edit')
+                                    <i table_id="{{ $item->id }}" class="demo-psi-pencil fs-5 me-2 pointer edit"></i>
+                                @endcan
+                            </td>
                         </tr>
                     @endforeach
                 </tbody>

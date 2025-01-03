@@ -75,7 +75,9 @@
                         <div class="col-12" style="padding-top:10px;">
                             @if (!isset($products['id']))
                                 <button type="submit" class="btn btn-success" style="float: right;margin-right:5px; ">Save & Create New</button>
-                                <button type="button" wire:click="save(1)" class="btn btn-primary" style="float: right;margin-right:5px; ">Save & Edit</button>
+                                @can('product.edit')
+                                    <button type="button" wire:click="save(1)" class="btn btn-primary" style="float: right;margin-right:5px; ">Save & Edit</button>
+                                @endcan
                             @else
                                 <a class="btn btn-info" href="{{ route('product::create') }}" style="float: right;margin-right:5px; ">Create</a>
                                 <button type="submit" class="btn btn-success" style="float: right;margin-right:5px; ">Save </button>

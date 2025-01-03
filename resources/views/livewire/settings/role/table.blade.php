@@ -73,7 +73,11 @@
                             </td>
                             <td>{{ $item->name }}</td>
                             <td> <a href="{{ route('settings::roles::permission', $item->id) }}"><i class="demo-psi-list-view fs-5 me-2"></i></a> </td>
-                            <td> <i table_id="{{ $item->id }}" class="demo-psi-pencil fs-5 me-2 pointer edit"></i> </td>
+                            <td>
+                                @can('role.edit')
+                                    <i table_id="{{ $item->id }}" class="demo-psi-pencil fs-5 me-2 pointer edit"></i>
+                                @endcan
+                            </td>
                         </tr>
                     @endforeach
                 </tbody>

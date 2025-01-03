@@ -12,14 +12,14 @@
                             <span class="dropdown-toggle d-flex justify-content-center align-items-center">
                                 <h5 class="mb-0 me-3">{{ auth()->user()->name }}</h5>
                             </span>
-                            <small class="text-body-secondary">Administrator</small>
+                            <small class="text-body-secondary">{{ getUserRoles(auth()->user()) }}</small>
                         </button>
                         <div id="usernav" class="nav flex-column collapse">
                             <a href="#" class="nav-link">
                                 <i class="demo-pli-male fs-5 me-2"></i>
                                 <span class="ms-1">Profile</span>
                             </a>
-                            <a href="#" class="nav-link">
+                            <a href="{{ route('settings::index') }}" class="nav-link">
                                 <i class="demo-pli-gear fs-5 me-2"></i>
                                 <span class="ms-1">Settings</span>
                             </a>
@@ -39,20 +39,26 @@
             </ul>
             <div class="mainnav__categoriy py-3">
                 <ul class="mainnav__menu nav flex-column">
-                    <li class="nav-item has-sub">
-                        <a href="#" class="mininav-toggle nav-link {{ request()->is(['users', 'settings/roles']) ? 'active' : '' }}"><i class="demo-pli-split-vertical-2 fs-5 me-2"></i>
-                            <span class="nav-label ms-1">Users</span>
-                        </a>
-                        <ul class="mininav-content nav collapse">
-                            <li data-popper-arrow class="arrow"></li>
-                            <li class="nav-item">
-                                <a href="{{ route('users::index') }}" class="nav-link {{ request()->is(['users']) ? 'active' : '' }}">List</a>
-                            </li>
-                            <li class="nav-item">
-                                <a href="{{ route('settings::roles::index') }}" class="nav-link {{ request()->is(['settings/roles']) ? 'active' : '' }}">Roles</a>
-                            </li>
-                        </ul>
-                    </li>
+                    @if (auth()->user()->can('user.view') || auth()->user()->can('role.view'))
+                        <li class="nav-item has-sub">
+                            <a href="#" class="mininav-toggle nav-link {{ request()->is(['users', 'settings/roles']) ? 'active' : '' }}"><i class="demo-pli-split-vertical-2 fs-5 me-2"></i>
+                                <span class="nav-label ms-1">Users</span>
+                            </a>
+                            <ul class="mininav-content nav collapse">
+                                <li data-popper-arrow class="arrow"></li>
+                                @can('user.view')
+                                    <li class="nav-item">
+                                        <a href="{{ route('users::index') }}" class="nav-link {{ request()->is(['users']) ? 'active' : '' }}">List</a>
+                                    </li>
+                                @endcan
+                                @can('role.view')
+                                    <li class="nav-item">
+                                        <a href="{{ route('settings::roles::index') }}" class="nav-link {{ request()->is(['settings/roles']) ? 'active' : '' }}">Roles</a>
+                                    </li>
+                                @endcan
+                            </ul>
+                        </li>
+                    @endif
                 </ul>
             </div>
         </div>
