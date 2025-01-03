@@ -89,22 +89,25 @@ class Permissions extends Component
     public function save()
     {
         try {
+            if ($this->role['id'] == 1) {
+                throw new \Exception("You Cant Edit Super Admin Privileges", 1);
+            }
             $this->role->syncPermissions([]);
             $this->selected = array_keys(array_filter($this->selected));
             $permissions = Permission::whereIn('id', $this->selected)->get();
             $this->role->syncPermissions($permissions);
             $this->dispatch('success', ['message' => 'roles Permission Updated Successfully']);
-            $this->mount($this->role_id);
         } catch (\Throwable $th) {
             $this->dispatch('error', ['message' => $th->getMessage()]);
         }
+        $this->mount($this->role_id);
     }
 
     public function render()
     {
         $list = Permission::when($this->search ?? '', function ($query, $value) {
             $value = trim($value);
-            $query->where('name', 'LIKE', '%'.$value.'%');
+            $query->where('name', 'LIKE', '%' . $value . '%');
         })->pluck('name', 'id');
         $this->permissions = [];
         foreach ($list as $key => $name) {
