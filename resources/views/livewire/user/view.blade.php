@@ -43,27 +43,36 @@
                 <div class="vr d-none"></div>
                 <div class="flex-fill">
                     <div class="card">
+                        <div class="card-header">
+                            <h5>Whatsapp Settings</h5>
+                        </div>
                         <div class="card-body">
-                            <div class="row mb-3">
-                                <table class="table table-striped align-middle table-sm">
-                                    <thead>
-                                        <tr>
-                                            <td>
-                                                {{ html()->checkbox('is_whatsapp_enabled')->value('')->checked($user->is_whatsapp_enabled)->class('form-check-input')->attribute('wire:click', 'enabledWhatsapp') }}
-                                            </td>
-                                            <td> <label for="is_whatsapp_enabled" class="">Enable Whatsapp Notification</label> </td>
-                                        </tr>
-                                        <tr>
-                                            <td>{{ html()->checkbox('is_active')->value('')->checked($user->is_active)->class('form-check-input')->attribute('wire:click', 'activeUser') }} </td>
-                                            <td> <label for="is_active" class="">User Active</label> </td>
-                                        </tr>
-                                    </thead>
-                                </table>
-                                <div class="col-sm-10">
-
+                            <h6 class="mb-3">Setup Whatsapp Notification</h6>
+                            <div class="d-flex align-items-center justify-content-between mb-1">
+                                <div>
+                                    <p class="text-muted mb-0">Enable Whatsapp Notification</p>
+                                </div>
+                                <div class="form-check form-switch p-0">
+                                    {{ html()->checkbox('is_whatsapp_enabled')->value('')->checked($user->is_whatsapp_enabled)->class('m-0 form-check-input h5 position-relative')->attribute('wire:click', 'enabledWhatsapp') }}
                                 </div>
                             </div>
-
+                        </div>
+                    </div>
+                    <br>
+                    <div class="card">
+                        <div class="card-header">
+                            <h5>User Settings</h5>
+                        </div>
+                        <div class="card-body">
+                            <h6 class="mb-3">Manage User Status</h6>
+                            <div class="d-flex align-items-center justify-content-between mb-1">
+                                <div>
+                                    <p class="text-muted mb-0">User Status</p>
+                                </div>
+                                <div class="form-check form-switch p-0">
+                                    {{ html()->checkbox('is_active')->value('')->checked($user->is_active)->class('m-0 form-check-input h5 position-relative')->attribute('wire:click', 'activeUser') }}
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>

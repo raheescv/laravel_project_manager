@@ -60,6 +60,7 @@
                                 @endif
                             </a>
                         </th>
+                        <th width="10%">Permission</th>
                         <th width="10%">Action</th>
                     </tr>
                 </thead>
@@ -71,6 +72,7 @@
                                 {{ $item->id }}
                             </td>
                             <td>{{ $item->name }}</td>
+                            <td> <a href="{{ route('settings::roles::permission', $item->id) }}"><i class="demo-psi-list-view fs-5 me-2"></i></a> </td>
                             <td> <i table_id="{{ $item->id }}" class="demo-psi-pencil fs-5 me-2 pointer edit"></i> </td>
                         </tr>
                     @endforeach

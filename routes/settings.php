@@ -1,11 +1,11 @@
 <?php
 
+use App\Http\Controllers\RoleController;
 use App\Http\Controllers\Settings\CategoryController;
 use App\Http\Controllers\Settings\DepartmentController;
 use App\Http\Controllers\Settings\UnitController;
 use App\Http\Controllers\SettingsController;
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\RoleController;
 
 Route::middleware('auth')->group(function () {
     Route::name('settings::')->prefix('settings')
@@ -26,6 +26,7 @@ Route::middleware('auth')->group(function () {
             Route::name('roles::')->prefix('roles')
                 ->controller(RoleController::class)->group(function () {
                     Route::get('', 'index')->name('index');
+                    Route::get('{id}/permissions', 'permissions')->name('permission');
                 });
         });
 });

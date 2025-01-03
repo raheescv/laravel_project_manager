@@ -5,7 +5,6 @@ namespace App\Livewire\Settings\Role;
 use App\Actions\Settings\Role\CreateAction;
 use App\Actions\Settings\Role\UpdateAction;
 use Faker\Factory;
-use Illuminate\Validation\Rule;
 use Livewire\Component;
 use Spatie\Permission\Models\Role;
 
@@ -49,6 +48,7 @@ class Page extends Component
             $this->roles = $role->toArray();
         }
     }
+
     public function save($close = false)
     {
         try {

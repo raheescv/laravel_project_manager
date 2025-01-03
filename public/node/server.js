@@ -1,5 +1,5 @@
 const express = require('express');
-const { Client, MessageMedia } = require('whatsapp-web.js');
+const { Client, MessageMedia, LocalAuth } = require('whatsapp-web.js');
 const cors = require('cors');
 const bodyParser = require('body-parser');
 const fs = require('fs');
@@ -12,7 +12,11 @@ app.use(bodyParser.json());
 let latestQrCode = null;
 
 function initializeClient() {
-    client = new Client();
+    client = new Client({
+        authStrategy: new LocalAuth({
+            clientId: 'whatsapp-client',
+        }),
+    });
 
     client.on('qr', (qr) => {
         console.log('QR Code received, scan it with WhatsApp:');

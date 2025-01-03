@@ -10,4 +10,9 @@ class RoleController extends Controller
     {
         return view('settings.role.index');
     }
+
+    public function permissions($id)
+    {
+        return view('settings.role.permissions', compact('id'));
+    }
 }
