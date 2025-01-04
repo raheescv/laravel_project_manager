@@ -66,13 +66,7 @@
                             <a href="#" wire:click.prevent="sortBy('id')">
                                 ID
                                 @if ($sortField === 'id')
-                                    <span>
-                                        @if ($sortDirection === 'asc')
-                                            &uarr;
-                                        @else
-                                            &darr;
-                                        @endif
-                                    </span>
+                                    {!! sortDirection($sortDirection) !!}
                                 @endif
                             </a>
                         </th>
@@ -80,13 +74,7 @@
                             <a href="#" wire:click.prevent="sortBy('parent_id')">
                                 Parent
                                 @if ($sortField === 'parent_id')
-                                    <span>
-                                        @if ($sortDirection === 'asc')
-                                            &uarr;
-                                        @else
-                                            &darr;
-                                        @endif
-                                    </span>
+                                    {!! sortDirection($sortDirection) !!}
                                 @endif
                             </a>
                         </th>
@@ -94,13 +82,7 @@
                             <a href="#" wire:click.prevent="sortBy('name')">
                                 Name
                                 @if ($sortField === 'name')
-                                    <span>
-                                        @if ($sortDirection === 'asc')
-                                            &uarr;
-                                        @else
-                                            &darr;
-                                        @endif
-                                    </span>
+                                    {!! sortDirection($sortDirection) !!}
                                 @endif
                             </a>
                         </th>

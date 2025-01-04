@@ -82,26 +82,16 @@
                             <input type="checkbox" wire:model.live="selectAll" />
                             <a href="#" wire:click.prevent="sortBy('id')">
                                 #
-                                @if ($sortField === 'id') <span>
-                                        @if ($sortDirection === 'asc')
-                                            &uarr;
-                                        @else
-                                            &darr;
-                                        @endif
-                                    </span> @endif
+                                @if ($sortField === 'id')
+                                    {!! sortDirection($sortDirection) !!}
+                                @endif
                             </a>
                         </th>
                         <th>
                             <a href="#" wire:click.prevent="sortBy('department_id')">
                                 Department
                                 @if ($sortField === 'department_id')
-                                    <span>
-                                        @if ($sortDirection === 'asc')
-                                            &uarr;
-                                        @else
-                                            &darr;
-                                        @endif
-                                    </span>
+                                    {!! sortDirection($sortDirection) !!}
                                 @endif
                             </a>
                         </th>
@@ -109,13 +99,7 @@
                             <a href="#" wire:click.prevent="sortBy('main_category_id')">
                                 Main Category
                                 @if ($sortField === 'main_category_id')
-                                    <span>
-                                        @if ($sortDirection === 'asc')
-                                            &uarr;
-                                        @else
-                                            &darr;
-                                        @endif
-                                    </span>
+                                    {!! sortDirection($sortDirection) !!}
                                 @endif
                             </a>
                         </th>
@@ -123,13 +107,7 @@
                             <a href="#" wire:click.prevent="sortBy('sub_category_id')">
                                 Sub Category
                                 @if ($sortField === 'sub_category_id')
-                                    <span>
-                                        @if ($sortDirection === 'asc')
-                                            &uarr;
-                                        @else
-                                            &darr;
-                                        @endif
-                                    </span>
+                                    {!! sortDirection($sortDirection) !!}
                                 @endif
                             </a>
                         </th>
@@ -137,13 +115,7 @@
                             <a href="#" wire:click.prevent="sortBy('unit_id')">
                                 Unit
                                 @if ($sortField === 'unit_id')
-                                    <span>
-                                        @if ($sortDirection === 'asc')
-                                            &uarr;
-                                        @else
-                                            &darr;
-                                        @endif
-                                    </span>
+                                    {!! sortDirection($sortDirection) !!}
                                 @endif
                             </a>
                         </th>
@@ -151,13 +123,7 @@
                             <a href="#" wire:click.prevent="sortBy('code')">
                                 Code
                                 @if ($sortField === 'code')
-                                    <span>
-                                        @if ($sortDirection === 'asc')
-                                            &uarr;
-                                        @else
-                                            &darr;
-                                        @endif
-                                    </span>
+                                    {!! sortDirection($sortDirection) !!}
                                 @endif
                             </a>
                         </th>
@@ -165,13 +131,7 @@
                             <a href="#" wire:click.prevent="sortBy('name')">
                                 Name
                                 @if ($sortField === 'name')
-                                    <span>
-                                        @if ($sortDirection === 'asc')
-                                            &uarr;
-                                        @else
-                                            &darr;
-                                        @endif
-                                    </span>
+                                    {!! sortDirection($sortDirection) !!}
                                 @endif
                             </a>
                         </th>
@@ -179,13 +139,7 @@
                             <a href="#" wire:click.prevent="sortBy('name_arabic')">
                                 Name Arabic
                                 @if ($sortField === 'name_arabic')
-                                    <span>
-                                        @if ($sortDirection === 'asc')
-                                            &uarr;
-                                        @else
-                                            &darr;
-                                        @endif
-                                    </span>
+                                    {!! sortDirection($sortDirection) !!}
                                 @endif
                             </a>
                         </th>
@@ -193,13 +147,7 @@
                             <a href="#" wire:click.prevent="sortBy('barcode')">
                                 Barcode
                                 @if ($sortField === 'barcode')
-                                    <span>
-                                        @if ($sortDirection === 'asc')
-                                            &uarr;
-                                        @else
-                                            &darr;
-                                        @endif
-                                    </span>
+                                    {!! sortDirection($sortDirection) !!}
                                 @endif
                             </a>
                         </th>
@@ -207,13 +155,7 @@
                             <a href="#" wire:click.prevent="sortBy('cost')">
                                 cost
                                 @if ($sortField === 'cost')
-                                    <span>
-                                        @if ($sortDirection === 'asc')
-                                            &uarr;
-                                        @else
-                                            &darr;
-                                        @endif
-                                    </span>
+                                    {!! sortDirection($sortDirection) !!}
                                 @endif
                             </a>
                         </th>
@@ -221,13 +163,7 @@
                             <a href="#" wire:click.prevent="sortBy('mrp')">
                                 MRP
                                 @if ($sortField === 'mrp')
-                                    <span>
-                                        @if ($sortDirection === 'asc')
-                                            &uarr;
-                                        @else
-                                            &darr;
-                                        @endif
-                                    </span>
+                                    {!! sortDirection($sortDirection) !!}
                                 @endif
                             </a>
                         </th>
