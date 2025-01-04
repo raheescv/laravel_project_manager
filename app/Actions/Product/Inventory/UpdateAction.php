@@ -2,6 +2,7 @@
 
 namespace App\Actions\Product\Inventory;
 
+use App\Events\InventoryActionOccurred;
 use App\Models\Inventory;
 
 class UpdateAction
@@ -14,7 +15,10 @@ class UpdateAction
                 throw new \Exception("Resource not found with the specified ID: $id.", 1);
             }
             validationHelper(Inventory::rules($id), $data);
+            $oldModel = clone $model;
             $model->update($data);
+
+            event(new InventoryActionOccurred('update', $model, $oldModel));
 
             $return['success'] = true;
             $return['message'] = 'Successfully Update Inventory';

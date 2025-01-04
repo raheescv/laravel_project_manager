@@ -49,6 +49,11 @@ class Inventory extends Model implements AuditableContracts
         return $this->belongsTo(Branch::class);
     }
 
+    public function updatedUser()
+    {
+        return $this->belongsTo(User::class, 'updated_by');
+    }
+
     public static function selfCreateByProduct($product, $user_id, $current_branch = 1)
     {
         $barcode_type = cache('barcode_type', '');

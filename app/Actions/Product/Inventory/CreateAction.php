@@ -2,6 +2,7 @@
 
 namespace App\Actions\Product\Inventory;
 
+use App\Events\InventoryActionOccurred;
 use App\Models\Inventory;
 
 class CreateAction
@@ -14,6 +15,7 @@ class CreateAction
                 'product_id' => $data['product_id'],
                 'branch_id' => $data['branch_id'],
             ], $data);
+            event(new InventoryActionOccurred('create', $model));
 
             $return['success'] = true;
             $return['message'] = 'Successfully Created Inventory';

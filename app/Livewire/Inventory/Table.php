@@ -13,8 +13,6 @@ class Table extends Component
 {
     use WithPagination;
 
-    public $exportLink = '';
-
     public $search = '';
 
     public $department_id = '';

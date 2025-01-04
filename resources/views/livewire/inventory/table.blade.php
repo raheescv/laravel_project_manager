@@ -49,7 +49,7 @@
                     {{ html()->select('product_id', [])->value('')->class('select-product_id-list')->id('product_id')->placeholder('Product') }}
                 </div>
             </div>
-            <div class="row ">
+            <div class="row">
                 <div class="col-md-3 p-2" wire:ignore>
                     {{ html()->select('branch_id', [])->value('')->class('select-branch_id-list')->id('branch_id')->placeholder('Branch') }}
                 </div>
@@ -157,7 +157,6 @@
                                 @endif
                             </a>
                         </th>
-                        <th class="text-end">Action</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -171,21 +170,20 @@
                             <td>{{ $item->unit_name }}</td>
                             <td>{{ $item->code }}</td>
                             <td>
-                                {{ $item->name }}
-                                <br>
-                                <span style="text-align: right; display: block;" dir="rtl">
-                                    {{ $item->name_arabic }}
-                                </span>
+                                <a href="{{ route('inventory::product::view', $item->product_id) }}">
+                                    {{ $item->name }}
+                                    @if ($item->name_arabic)
+                                        <br>
+                                        <span style="text-align: right; display: block;" dir="rtl">
+                                            {{ $item->name_arabic }}
+                                        </span>
+                                    @endif
+                                </a>
                             </td>
                             <td class="text-end">{{ $item->quantity }}</td>
                             <td class="text-end">{{ currency($item->cost) }}</td>
                             <td>{{ $item->barcode }}</td>
                             <td>{{ $item->batch }}</td>
-                            <td class="text-end">
-                                @can('inventory.view')
-                                    <a href="{{ route('inventory::product::view', $item->product_id) }}"><i class="demo-psi-pencil fs-5 me-2 pointer"></i> </a>
-                                @endcan
-                            </td>
                         </tr>
                     @endforeach
                 </tbody>
