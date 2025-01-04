@@ -56,8 +56,8 @@ class Page extends Component
     protected function rules()
     {
         return [
-            'branches.name' => ['required', 'unique:branches,name,' . $this->table_id],
-            'branches.code' => ['required', 'unique:branches,code,' . $this->table_id],
+            'branches.name' => ['required', 'unique:branches,name,'.$this->table_id],
+            'branches.code' => ['required', 'unique:branches,code,'.$this->table_id],
         ];
     }
 

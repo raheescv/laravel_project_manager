@@ -4,6 +4,7 @@ namespace App\Actions\Product;
 
 use App\Models\Category;
 use App\Models\Department;
+use App\Models\Inventory;
 use App\Models\Product;
 
 class CreateAction
@@ -30,9 +31,14 @@ class CreateAction
             }
 
             validationHelper(Product::rules(), $data);
-            $data['created_by'] = auth()->id();
-            $data['updated_by'] = auth()->id();
+            $user_id = $data['created_by'] = $data['updated_by'] = auth()->id();
+
             $model = Product::create($data);
+
+            $model['quantity'] = 0;
+            if ('inventory') {
+                Inventory::selfCreateByProduct($model, $user_id);
+            }
 
             if ($data['images']) {
                 foreach ($data['images'] as $file) {

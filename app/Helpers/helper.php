@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\Inventory;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
@@ -155,6 +156,41 @@ if (! function_exists('fileUpload')) {
         return [
             'file_name' => $fileName,
             'uploaded_path' => $uploaded_path,
+        ];
+    }
+}
+
+if (! function_exists('generateBarcode')) {
+    function generateBarcode()
+    {
+        $i = 0;
+        do {
+            $barcode = '9900' + Inventory::count() + $i;
+            $i++;
+            $exists = Inventory::where('barcode', $barcode)->exists();
+        } while ($exists);
+
+        return $barcode;
+    }
+}
+
+if (! function_exists('sortDirection')) {
+    function sortDirection($direction)
+    {
+        if ($direction === 'asc') {
+            return '&uarr;';
+        } else {
+            return '&darr;';
+        }
+    }
+}
+
+if (! function_exists('barcodeTypes')) {
+    function barcodeTypes()
+    {
+        return [
+            'product_wise' => 'Product Wise',
+            'system_generation' => 'System Generation',
         ];
     }
 }

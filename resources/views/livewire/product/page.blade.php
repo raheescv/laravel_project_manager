@@ -59,6 +59,12 @@
                                     <label for="tax" class="form-label">Tax</label>
                                 </div>
                             </div>
+                            @if ($barcode_type == 'product_wise')
+                                <div class="col-md-12">
+                                    <label for="barcode">Barcode</label>
+                                    {{ html()->input('barcode')->value('')->class('form-control')->placeholder('Enter a unique barcode here')->required(true)->attribute('wire:model', 'products.barcode') }}
+                                </div>
+                            @endif
                             <div class="col-md-12">
                                 <div class="form-floating">
                                     {{ html()->textarea('description')->value('')->class('form-control')->placeholder('Leave a comment here')->id('description')->attribute('wire:model', 'products.description') }}

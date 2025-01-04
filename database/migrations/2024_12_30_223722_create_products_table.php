@@ -29,6 +29,7 @@ return new class extends Migration
             $table->float('cost', 8, 2)->default(0);
             $table->float('mrp', 8, 2)->default(0);
 
+            $table->string('barcode')->nullable();
             $table->string('pattern')->nullable();
             $table->string('color')->nullable();
             $table->string('size')->nullable();

@@ -30,4 +30,17 @@ class Branch extends Model
     {
         $this->attributes['code'] = trim($value);
     }
+
+    public function getDropDownList($request)
+    {
+        $self = self::orderBy('name');
+        $self = $self->when($request['query'] ?? '', function ($query, $value) {
+            $query->where('name', 'like', "%{$value}%");
+        });
+        $self = $self->limit(10);
+        $self = $self->get(['name', 'id'])->toArray();
+        $return['items'] = $self;
+
+        return $return;
+    }
 }

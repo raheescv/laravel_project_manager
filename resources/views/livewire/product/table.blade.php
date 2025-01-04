@@ -189,6 +189,20 @@
                                 @endif
                             </a>
                         </th>
+                        <th>
+                            <a href="#" wire:click.prevent="sortBy('barcode')">
+                                Barcode
+                                @if ($sortField === 'barcode')
+                                    <span>
+                                        @if ($sortDirection === 'asc')
+                                            &uarr;
+                                        @else
+                                            &darr;
+                                        @endif
+                                    </span>
+                                @endif
+                            </a>
+                        </th>
                         <th class="text-end">
                             <a href="#" wire:click.prevent="sortBy('cost')">
                                 cost
@@ -234,6 +248,7 @@
                             <td>{{ $item->code }}</td>
                             <td>{{ $item->name }}</td>
                             <td dir="rtl">{{ $item->name_arabic }}</td>
+                            <td>{{ $item->barcode }}</td>
                             <td class="text-end">{{ currency($item->cost) }}</td>
                             <td class="text-end">{{ currency($item->mrp) }}</td>
                             <td class="text-end">

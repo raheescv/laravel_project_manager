@@ -9,6 +9,6 @@ class ConfigurationSeeder extends Seeder
 {
     public function run(): void
     {
-        Configuration::firstOrCreate(['key' => 'Category', 'value' => '123123']);
+        Configuration::firstOrCreate(['key' => 'barcode_type', 'value' => 'product_wise']);
     }
 }

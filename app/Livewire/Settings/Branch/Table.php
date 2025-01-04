@@ -35,6 +35,9 @@ class Table extends Component
         try {
             DB::beginTransaction();
             foreach ($this->selected as $id) {
+                if ($id == 1) {
+                    throw new \Exception('Cant Delete The Main Branch', 1);
+                }
                 $response = (new DeleteAction)->execute($id);
                 if (! $response['success']) {
                     throw new \Exception($response['message'], 1);

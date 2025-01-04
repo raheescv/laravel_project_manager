@@ -16,6 +16,8 @@ class DeleteAction
             if (! $model->delete()) {
                 throw new \Exception('Oops! Something went wrong while deleting the Product. Please try again.', 1);
             }
+            $model->inventories()->delete();
+
             $return['success'] = true;
             $return['message'] = 'Successfully Update Product';
             $return['data'] = $model;

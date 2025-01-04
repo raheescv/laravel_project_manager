@@ -17,8 +17,6 @@ class Table extends Component
 
     public $exportLink = '';
 
-    public $whatsappQr = '';
-
     public $search = '';
 
     public $department_id = '';
@@ -123,6 +121,7 @@ class Table extends Component
                         ->orWhere('name_arabic', 'like', "%{$value}%")
                         ->orWhere('code', 'like', "%{$value}%")
                         ->orWhere('cost', 'like', "%{$value}%")
+                        ->orWhere('barcode', 'like', "%{$value}%")
                         ->orWhere('mrp', 'like', "%{$value}%");
                 });
             })

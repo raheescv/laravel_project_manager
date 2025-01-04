@@ -38,6 +38,7 @@ class UpdateAction
 
             $data['updated_by'] = auth()->id();
             $model->update($data);
+
             if ($data['images']) {
                 foreach ($data['images'] as $file) {
                     $imageData = [

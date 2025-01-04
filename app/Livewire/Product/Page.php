@@ -6,6 +6,7 @@ use App\Actions\Product\CreateAction;
 use App\Actions\Product\DeleteImageAction;
 use App\Actions\Product\ProductUnit\DeleteAction as UnitDeleteAction;
 use App\Actions\Product\UpdateAction;
+use App\Models\Configuration;
 use App\Models\Product;
 use App\Models\Unit;
 use Faker\Factory;
@@ -21,6 +22,8 @@ class Page extends Component
     protected $listeners = [
         'Product-Refresh-Component' => 'refresh',
     ];
+
+    public $barcode_type;
 
     public $table_id;
 
@@ -39,19 +42,23 @@ class Page extends Component
 
     public function mount($table_id = null, $dropdownValues = true)
     {
+        $this->barcode_type = Configuration::firstWhere('key', 'barcode_type')?->value('value');
         $this->table_id = $table_id;
         $this->departments = [];
         if (! $this->table_id) {
             $faker = Factory::create();
             $name = '';
             $code = '';
+            $barcode = '';
             if (! app()->isProduction()) {
                 $name = $faker->name;
                 $code = $faker->hexcolor;
+                $barcode = $faker->hexcolor;
             }
             $this->products = [
                 'code' => $code,
                 'name' => $name,
+                'barcode' => $barcode,
                 'is_selling' => true,
                 'hsn_code' => '',
                 'tax' => 5,
@@ -91,7 +98,7 @@ class Page extends Component
 
     protected function rules()
     {
-        return [
+        $rules = [
             'products.name' => ['required', Rule::unique(Product::class, 'name')->whereNull('deleted_at')->ignore($this->table_id)],
             'products.code' => ['required', Rule::unique(Product::class, 'code')->whereNull('deleted_at')->ignore($this->table_id)],
             'products.unit_id' => ['required'],
@@ -102,6 +109,11 @@ class Page extends Component
             'products.mrp' => ['required'],
             'images.*' => 'mimes:jpg,jpeg,png,gif,bmp,webp,svg|max:3100',
         ];
+        if ($this->barcode_type == 'product_wise') {
+            $rules['products.barcode'] = ['required', Rule::unique(Product::class, 'barcode')->whereNull('deleted_at')->ignore($this->table_id)];
+        }
+
+        return $rules;
     }
 
     protected $messages = [
@@ -119,6 +131,8 @@ class Page extends Component
         'products.mrp' => 'The mrp field is required.',
         'images.mimetypes' => 'The images field must be a file of type: image.',
         'images.*.max' => 'The images field must not be greater than 3100 KB',
+        'products.barcode.required' => 'The barcode field is required',
+        'products.barcode.unique' => 'The barcode has already been taken',
     ];
 
     public function updated($key, $value) {}

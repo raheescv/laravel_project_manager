@@ -38,6 +38,7 @@ class ProductExport implements FromQuery, WithHeadings, WithMapping
             'Cost',
             'MRP',
 
+            'Barcode',
             'Pattern',
             'Color',
             'Size',
@@ -76,6 +77,7 @@ class ProductExport implements FromQuery, WithHeadings, WithMapping
             $row->is_selling ? 'Yes' : 'No',
             $row->cost,
             $row->mrp,
+            $row->barcode,
             $row->pattern,
             $row->color,
             $row->size,
