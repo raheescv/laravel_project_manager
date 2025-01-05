@@ -79,6 +79,14 @@
                                 @endif
                             </a>
                         </th>
+                        <th>
+                            <a href="#" wire:click.prevent="sortBy('model')">
+                                Model
+                                @if ($sortField === 'model')
+                                    {!! sortDirection($sortDirection) !!}
+                                @endif
+                            </a>
+                        </th>
                         <th class="text-end">
                             Action
                         </th>
@@ -93,6 +101,7 @@
                             </td>
                             <td>{{ ucFirst($item->account_type) }}</td>
                             <td>{{ $item->name }}</td>
+                            <td>{{ ucFirst($item->model) }}</td>
                             <td class="text-end">
                                 @can('account.edit')
                                     <i table_id="{{ $item->id }}" class="demo-psi-pencil fs-5 me-2 pointer edit"></i>

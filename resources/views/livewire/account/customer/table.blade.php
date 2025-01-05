@@ -2,7 +2,7 @@
     <div class="card-header">
         <div class="row">
             <div class="col-md-6 d-flex gap-1 align-items-center mb-3">
-                @can('account.create')
+                @can('customer.create')
                     <button class="btn btn-primary hstack gap-2 align-self-center" id="CustomerAdd">
                         <i class="demo-psi-add fs-5"></i>
                         <span class="vr"></span>
@@ -10,10 +10,10 @@
                     </button>
                 @endcan
                 <div class="btn-group">
-                    @can('account.export')
+                    @can('customer.export')
                         <button class="btn btn-icon btn-outline-light" title="To export the items as excel" wire:click="export()"><i class="demo-pli-file-excel fs-5"></i></button>
                     @endcan
-                    @can('account.delete')
+                    @can('customer.delete')
                         <button class="btn btn-icon btn-outline-light" title="To delete the selected items" wire:click="delete()" wire:confirm="Are you sure you want to delete the selected items?">
                             <i class="demo-pli-recycling fs-5"></i>
                         </button>
@@ -32,7 +32,7 @@
                     <input type="text" wire:model.live="search" autofocus placeholder="Search..." class="form-control" autocomplete="off">
                 </div>
                 <div class="btn-group">
-                    @can('account.import')
+                    @can('customer.import')
                         <button class="btn btn-icon btn-outline-light" data-bs-toggle="modal" data-bs-target="#CustomerImportModal">
                             <i class="demo-pli-download-from-cloud fs-5"></i>
                         </button>
@@ -93,7 +93,7 @@
                             <td>{{ $item->mobile }}</td>
                             <td>{{ $item->email }}</td>
                             <td class="text-end">
-                                @can('account.edit')
+                                @can('customer.edit')
                                     <i table_id="{{ $item->id }}" class="demo-psi-pencil fs-5 me-2 pointer edit"></i>
                                 @endcan
                             </td>
