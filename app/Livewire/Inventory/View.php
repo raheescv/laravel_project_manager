@@ -12,6 +12,7 @@ class View extends Component
     public $product;
 
     public $search = '';
+
     public $log_search = '';
 
     public $product_id = '';

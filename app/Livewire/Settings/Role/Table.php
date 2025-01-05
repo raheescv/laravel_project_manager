@@ -36,6 +36,9 @@ class Table extends Component
     {
         try {
             @DB::beginTransaction();
+            if (! count($this->selected)) {
+                throw new \Exception('Please select any item to delete.', 1);
+            }
             foreach ($this->selected as $id) {
                 if ($id == 1) {
                     throw new \Exception('You cant delete Super Admin role', 1);

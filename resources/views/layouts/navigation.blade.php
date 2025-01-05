@@ -39,6 +39,21 @@
             </ul>
             <div class="mainnav__categoriy py-3">
                 <ul class="mainnav__menu nav flex-column">
+                    @if (auth()->user()->can('sale.view'))
+                        <li class="nav-item has-sub">
+                            <a href="#" class="mininav-toggle nav-link {{ request()->is(['sale']) ? 'active' : '' }}"><i class="demo-pli-split-vertical-2 fs-5 me-2"></i>
+                                <span class="nav-label ms-1">Sale</span>
+                            </a>
+                            <ul class="mininav-content nav collapse">
+                                <li data-popper-arrow class="arrow"></li>
+                                @can('sale.view')
+                                    <li class="nav-item">
+                                        <a href="{{ route('sale::index') }}" class="nav-link {{ request()->is(['sale']) ? 'active' : '' }}">List</a>
+                                    </li>
+                                @endcan
+                            </ul>
+                        </li>
+                    @endif
                     @if (auth()->user()->can('inventory.view'))
                         <li class="nav-item has-sub">
                             <a href="#" class="mininav-toggle nav-link {{ request()->is(['inventory']) ? 'active' : '' }}"><i class="demo-pli-split-vertical-2 fs-5 me-2"></i>
@@ -49,6 +64,21 @@
                                 @can('inventory.view')
                                     <li class="nav-item">
                                         <a href="{{ route('inventory::index') }}" class="nav-link {{ request()->is(['inventory']) ? 'active' : '' }}">List</a>
+                                    </li>
+                                @endcan
+                            </ul>
+                        </li>
+                    @endif
+                    @if (auth()->user()->can('account.view'))
+                        <li class="nav-item has-sub">
+                            <a href="#" class="mininav-toggle nav-link {{ request()->is(['account']) ? 'active' : '' }}"><i class="demo-pli-split-vertical-2 fs-5 me-2"></i>
+                                <span class="nav-label ms-1">Account</span>
+                            </a>
+                            <ul class="mininav-content nav collapse">
+                                <li data-popper-arrow class="arrow"></li>
+                                @can('account.view')
+                                    <li class="nav-item">
+                                        <a href="{{ route('account::index') }}" class="nav-link {{ request()->is(['account']) ? 'active' : '' }}">Chart Of Account</a>
                                     </li>
                                 @endcan
                             </ul>

@@ -148,7 +148,7 @@
                                         <td class="text-end">{{ currency($item->cost) }}</td>
                                         <td class="text-end">{{ $item->quantity }}</td>
                                         <td class="text-end">
-                                            @can('product.edit')
+                                            @can('inventory.edit')
                                                 <i table_id="{{ $item->id }}" class="demo-psi-pencil fs-5 me-2 pointer edit"></i>
                                             @endcan
                                         </td>

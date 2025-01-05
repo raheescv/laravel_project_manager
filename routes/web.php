@@ -1,11 +1,13 @@
 <?php
 
+use App\Http\Controllers\AccountController;
 use App\Http\Controllers\AuditController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\InventoryController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\SaleController;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
 
@@ -29,6 +31,11 @@ Route::middleware('auth')->group(function () {
         Route::get('list', 'get')->name('list');
     });
 
+    Route::name('account::')->prefix('account')->controller(AccountController::class)->group(function () {
+        Route::get('', 'index')->name('index')->can('product.view');
+        Route::get('list', 'get')->name('list');
+    });
+
     Route::name('inventory::')->prefix('inventory')->controller(InventoryController::class)->group(function () {
         Route::get('', 'index')->name('index')->can('inventory.view');
         Route::name('product::')->prefix('product')->group(function () {
@@ -40,5 +47,12 @@ Route::middleware('auth')->group(function () {
     });
     Route::name('audit::')->prefix('audit')->controller(AuditController::class)->group(function () {
         Route::get('{modal}/{id}', 'index')->name('index');
+    });
+
+    Route::name('sale::')->prefix('sale')->controller(SaleController::class)->group(function () {
+        Route::get('', 'index')->name('index')->can('sale.view');
+        Route::get('create', 'page')->name('create')->can('sale.create');
+        Route::get('edit/{id}', 'page')->name('edit')->can('sale.edit');
+        Route::get('view/{id}', 'get')->name('view')->can('sale.view');
     });
 });

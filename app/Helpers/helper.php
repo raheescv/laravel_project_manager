@@ -194,3 +194,15 @@ if (! function_exists('barcodeTypes')) {
         ];
     }
 }
+if (! function_exists('accountTypes')) {
+    function accountTypes()
+    {
+        return [
+            'asset' => 'Asset',
+            'liability' => 'Liability',
+            'income' => 'Income',
+            'expense' => 'Expense',
+            'equity' => 'Equity',
+        ];
+    }
+}

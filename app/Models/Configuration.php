@@ -4,9 +4,13 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Validation\Rule;
+use OwenIt\Auditing\Auditable;
+use OwenIt\Auditing\Contracts\Auditable as AuditableContracts;
 
-class Configuration extends Model
+class Configuration extends Model implements AuditableContracts
 {
+    use Auditable;
+
     protected $fillable = [
         'key',
         'value',
