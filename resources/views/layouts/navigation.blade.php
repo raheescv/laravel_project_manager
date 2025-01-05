@@ -71,7 +71,7 @@
                     @endif
                     @if (auth()->user()->can('account.view'))
                         <li class="nav-item has-sub">
-                            <a href="#" class="mininav-toggle nav-link {{ request()->is(['account']) ? 'active' : '' }}"><i class="demo-pli-split-vertical-2 fs-5 me-2"></i>
+                            <a href="#" class="mininav-toggle nav-link {{ request()->is(['account', 'account/customer']) ? 'active' : '' }}"><i class="demo-pli-split-vertical-2 fs-5 me-2"></i>
                                 <span class="nav-label ms-1">Account</span>
                             </a>
                             <ul class="mininav-content nav collapse">
@@ -79,6 +79,11 @@
                                 @can('account.view')
                                     <li class="nav-item">
                                         <a href="{{ route('account::index') }}" class="nav-link {{ request()->is(['account']) ? 'active' : '' }}">Chart Of Account</a>
+                                    </li>
+                                @endcan
+                                @can('customer.view')
+                                    <li class="nav-item">
+                                        <a href="{{ route('account::customer::index') }}" class="nav-link {{ request()->is(['account/customer']) ? 'active' : '' }}">Customers</a>
                                     </li>
                                 @endcan
                             </ul>

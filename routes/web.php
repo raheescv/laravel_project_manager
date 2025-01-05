@@ -32,8 +32,11 @@ Route::middleware('auth')->group(function () {
     });
 
     Route::name('account::')->prefix('account')->controller(AccountController::class)->group(function () {
-        Route::get('', 'index')->name('index')->can('product.view');
+        Route::get('', 'index')->name('index')->can('account.view');
         Route::get('list', 'get')->name('list');
+        Route::name('customer::')->prefix('customer')->group(function () {
+            Route::get('', 'customer')->name('index')->can('customer.view');
+        });
     });
 
     Route::name('inventory::')->prefix('inventory')->controller(InventoryController::class)->group(function () {

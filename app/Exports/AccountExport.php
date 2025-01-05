@@ -12,9 +12,17 @@ class AccountExport implements FromQuery, WithHeadings, WithMapping
 {
     use Exportable;
 
+    public function __construct(public array $filters = []) {}
     public function query()
     {
-        return Account::query();
+        $query = Account::query()
+            ->when($this->filters['account_type'] ?? '', function ($query, $value) {
+                $query->where('account_type', $value);
+            })
+            ->when($this->filters['model'] ?? '', function ($query, $value) {
+                $query->where('model', $value);
+            });
+        return $query;
     }
 
     public function headings(): array

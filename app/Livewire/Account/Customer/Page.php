@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Livewire\Account;
+namespace App\Livewire\Account\Customer;
 
 use App\Actions\Account\CreateAction;
 use App\Actions\Account\UpdateAction;
@@ -11,8 +11,8 @@ use Livewire\Component;
 class Page extends Component
 {
     protected $listeners = [
-        'Account-Page-Create-Component' => 'create',
-        'Account-Page-Update-Component' => 'edit',
+        'Customer-Page-Create-Component' => 'create',
+        'Customer-Page-Update-Component' => 'edit',
     ];
 
     public $accounts;
@@ -24,13 +24,13 @@ class Page extends Component
     public function create()
     {
         $this->mount();
-        $this->dispatch('ToggleAccountModal');
+        $this->dispatch('ToggleCustomerModal');
     }
 
     public function edit($id)
     {
         $this->mount($id);
-        $this->dispatch('ToggleAccountModal');
+        $this->dispatch('ToggleCustomerModal');
     }
 
     public function mount($table_id = null)
@@ -39,14 +39,19 @@ class Page extends Component
         if (! $this->table_id) {
             $faker = Factory::create();
             $name = '';
-            $account_type = '';
+            $account_type = 'asset';
+            $mobile = '';
             if (! app()->isProduction()) {
                 $name = $faker->name;
-                $account_type = array_rand(accountTypes());
+                $mobile = rand(90000000, 99999999);
+                $email = $faker->email;
             }
             $this->accounts = [
                 'account_type' => $account_type,
                 'name' => $name,
+                'mobile' => $mobile,
+                'email' => $email,
+                'model' => 'customer',
             ];
         } else {
             $account = Account::find($this->table_id);
@@ -59,15 +64,20 @@ class Page extends Component
     {
         return [
             'accounts.name' => ['required', 'max:100'],
-            'accounts.account_type' => ['required'],
+            'accounts.email' => ['email', 'max:50'],
+            'accounts.mobile' => ['required', 'max:15'],
         ];
     }
 
     protected $messages = [
         'accounts.name.required' => 'The name field is required',
         'accounts.name.max' => 'The name field must not be greater than 100 characters',
-        'accounts.account_type.required' => 'The account type field is required',
+        'accounts.mobile.required' => 'The mobile field is required',
+        'accounts.mobile.max' => 'The name field must not be greater than 15 characters',
+        'accounts.email.max' => 'The name field must not be greater than 50 characters',
+        'accounts.email.email' => 'The email field must be a valid email address.',
     ];
+
     public function save($close = false)
     {
         $this->validate();
@@ -84,12 +94,12 @@ class Page extends Component
             $this->dispatch('success', ['message' => $response['message']]);
             $this->mount($this->table_id);
             if (! $close) {
-                $this->dispatch('ToggleAccountModal');
+                $this->dispatch('ToggleCustomerModal');
             } else {
                 $this->mount();
             }
             $this->accounts['account_type'] = $account_type;
-            $this->dispatch('RefreshAccountTable');
+            $this->dispatch('RefreshCustomerTable');
         } catch (\Throwable $e) {
             $this->dispatch('error', ['message' => $e->getMessage()]);
         }
@@ -97,6 +107,6 @@ class Page extends Component
 
     public function render()
     {
-        return view('livewire.account.page');
+        return view('livewire.account.customer.page');
     }
 }
