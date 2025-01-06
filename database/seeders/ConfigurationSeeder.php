@@ -10,5 +10,7 @@ class ConfigurationSeeder extends Seeder
     public function run(): void
     {
         Configuration::firstOrCreate(['key' => 'barcode_type', 'value' => 'product_wise']);
+        $payment_methods = [1, 2];
+        Configuration::updateOrCreate(['key' => 'payment_methods'], ['value' => json_encode($payment_methods)]);
     }
 }

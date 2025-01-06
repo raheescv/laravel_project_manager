@@ -68,6 +68,7 @@ class Page extends Component
         'accounts.name.max' => 'The name field must not be greater than 100 characters',
         'accounts.account_type.required' => 'The account type field is required',
     ];
+
     public function save($close = false)
     {
         $this->validate();

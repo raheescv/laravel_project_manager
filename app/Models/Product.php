@@ -106,19 +106,6 @@ class Product extends Model implements AuditableContracts
         return $this->hasMany(Inventory::class);
     }
 
-    public function getDropDownList($request)
-    {
-        $self = self::orderBy('name');
-        $self = $self->when($request['query'] ?? '', function ($query, $value) {
-            $query->where('name', 'like', "%{$value}%"); //->orWhere('code', 'like', "%{$value}%");
-        });
-        $self = $self->limit(10);
-        $self = $self->get(['name', 'id'])->toArray();
-        $return['items'] = $self;
-
-        return $return;
-    }
-
     public static function constructData($data, $user_id)
     {
         $value['is_selling'] = $value['is_selling'] ?? true;
@@ -146,5 +133,25 @@ class Product extends Model implements AuditableContracts
         $data['updated_by'] = $user_id;
 
         return $data;
+    }
+
+    public function getDropDownList($request)
+    {
+        $self = self::orderBy('name');
+        $self = $self->when($request['query'] ?? '', function ($query, $value) {
+            $query->where(function ($q) use ($value) {
+                $value = trim($value);
+                $q->where('name', 'like', "%{$value}%")
+                    ->where('code', 'like', "%{$value}%")
+                    ->where('barcode', 'like', "%{$value}%")
+                    ->orWhere('color', 'like', "%{$value}%")
+                    ->orWhere('size', 'like', "%{$value}%");
+            });
+        });
+        $self = $self->limit(10);
+        $self = $self->get(['name', 'barcode', 'size', 'mrp', 'cost', 'id'])->toArray();
+        $return['items'] = $self;
+
+        return $return;
     }
 }

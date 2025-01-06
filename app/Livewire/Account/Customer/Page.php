@@ -21,9 +21,12 @@ class Page extends Component
 
     public $table_id;
 
-    public function create()
+    public function create($name = null)
     {
         $this->mount();
+        if ($name) {
+            $this->accounts['name'] = $name;
+        }
         $this->dispatch('ToggleCustomerModal');
     }
 
@@ -100,6 +103,7 @@ class Page extends Component
             }
             $this->accounts['account_type'] = $account_type;
             $this->dispatch('RefreshCustomerTable');
+            $this->dispatch('AddToCustomerSelectBox', $response['data']);
         } catch (\Throwable $e) {
             $this->dispatch('error', ['message' => $e->getMessage()]);
         }

@@ -20,7 +20,7 @@
                 <div class="col-md-12">
                     <div class="form-group" wire:ignore>
                         <h4> <label for="parent_id">Parent</label> </h4>
-                        {{ html()->select('parent_id', [])->value('')->class('select-category_id-parent')->placeholder('Please Select Parent If any')->id('modal_parent_id') }}
+                        {{ html()->select('parent_id', [])->value('')->class('select-category_id')->placeholder('Please Select Parent If any')->id('modal_parent_id') }}
                     </div>
                 </div>
             </div>
@@ -35,7 +35,7 @@
         </div>
         <div class="modal-footer">
             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-            <button type="button" wire:click="save(1)" class="btn btn-success">Save & Add New</button>
+            <button type="button" wire:click="save('completed')" class="btn btn-success">Save & Add New</button>
             <button type="submit" class="btn btn-primary">Save</button>
         </div>
     </form>

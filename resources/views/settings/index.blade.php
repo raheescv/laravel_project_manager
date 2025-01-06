@@ -58,4 +58,7 @@
             </div>
         </div>
     </div>
+    @push('scripts')
+        @include('components.select.accountSelect')
+    @endpush
 </x-app-layout>

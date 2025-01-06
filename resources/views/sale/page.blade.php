@@ -4,28 +4,30 @@
             <nav aria-label="breadcrumb">
                 <ol class="breadcrumb">
                     <li class="breadcrumb-item"><a href="{{ route('dashboard') }}">Home</a></li>
-                    <li class="breadcrumb-item"><a href="{{ route('product::index') }}">Product</a></li>
+                    <li class="breadcrumb-item"><a href="{{ route('sale::index') }}">Sale</a></li>
                     <li class="breadcrumb-item active" aria-current="page">Page</li>
                 </ol>
             </nav>
-            <h1 class="page-title mb-0 mt-2">Product</h1>
+            <h1 class="page-title mb-0 mt-2">Sale</h1>
             <p class="lead">
-                A product Form
+                A sale Form
             </p>
         </div>
     </div>
     <div class="content__boxed">
         <div class="content__wrap">
-            @livewire('product.page', ['table_id' => $id])
+            @livewire('sale.page', ['table_id' => $id])
         </div>
     </div>
-    <x-settings.unit.unit-modal />
-    <x-settings.category.category-modal />
-    <x-settings.department.department-modal />
-    @component('components.product.units-modal', ['product_id' => $id])
-    @endcomponent
+    <x-account.customer-modal />
     @push('scripts')
-        @include('components.select.departmentSelect')
-        @include('components.select.categorySelect')
+        @include('components.select.customerSelect')
+        @include('components.select.productSelect')
+        @include('components.select.paymentMethodSelect')
+        <script>
+            $(document).ready(function() {
+                // $('#root').attr('class', 'root tm--expanded-hd mn--sticky mn--min');
+            })
+        </script>
     @endpush
 </x-app-layout>

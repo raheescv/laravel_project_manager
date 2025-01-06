@@ -4,7 +4,7 @@
             persist: false,
             valueField: 'id',
             nameField: 'name',
-            searchField: ['name', 'id'],
+            searchField: ['name', 'barcode', 'size', 'color', 'id'],
             load: function(query, callback) {
                 var url = "{{ route('product::list') }}";
                 fetch(url + '?query=' + encodeURIComponent(query))
@@ -23,7 +23,22 @@
             },
             render: {
                 option: function(item, escape) {
-                    return `<div> ${ escape(item.name) } </div>`;
+                    return `
+                        <div class="dropdown-item d-flex align-items-center">
+                            <div class="item-icon">
+                                <img src="${escape(item.image || '{{ asset('assets/img/profile-photos/1.png') }}')}" width="50%" alt="${escape(item.name)}" class="item-image">
+                            </div>
+                            <div class="item-content">
+                                <div class="item-name">${escape(item.name)}</div>
+                                <div class="item-details">
+                                    <span><strong>MRP:</strong> ${escape(item.mrp)}</span>
+                                    <span><strong>Barcode:</strong> ${escape(item.barcode)}</span>
+                                    ${item.size ? `<span><strong>Size:</strong> ${escape(item.size)}</span>`:''}
+                                    ${item.colo ? `<span><strong>Size:</strong> ${escape(item.colo)}</span>`:''}
+                                </div>
+                            </div>
+                        </div>
+                    `;
                 },
                 item: function(item, escape) {
                     return `<div>${ escape(item.name) }</div>`;

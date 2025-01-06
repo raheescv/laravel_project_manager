@@ -42,4 +42,31 @@ class Account extends Model implements AuditableContracts
             ],
         ], $merge);
     }
+
+    public function getDropDownList($request)
+    {
+        $self = self::orderBy('name');
+        $self = $self->when($request['query'] ?? '', function ($query, $value) {
+            $query->where(function ($q) use ($value) {
+                $value = trim($value);
+                $q->where('accounts.name', 'like', "%{$value}%")
+                    ->orWhere('accounts.mobile', 'like', "%{$value}%")
+                    ->orWhere('accounts.email', 'like', "%{$value}%");
+            });
+        });
+        $self = $self->when($request['account_type'] ?? '', function ($query, $value) {
+            $query->where('account_type', $value);
+        });
+        $self = $self->when($request['is_payment_method'] ?? '', function ($query, $value) {
+            $query->whereIn('id', cache('payment_methods', []));
+        });
+        $self = $self->when($request['model'] ?? '', function ($query, $value) {
+            $query->where('model', $value);
+        });
+        $self = $self->limit(10);
+        $self = $self->get(['name', 'mobile', 'id'])->toArray();
+        $return['items'] = $self;
+
+        return $return;
+    }
 }

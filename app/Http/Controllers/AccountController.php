@@ -2,6 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Account;
+use Illuminate\Http\Request;
+
 class AccountController extends Controller
 {
     public function index()
@@ -12,5 +15,12 @@ class AccountController extends Controller
     public function customer()
     {
         return view('accounts.customer');
+    }
+
+    public function get(Request $request)
+    {
+        $list = (new Account)->getDropDownList($request->all());
+
+        return response()->json($list);
     }
 }

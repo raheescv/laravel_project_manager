@@ -32,7 +32,13 @@
         table thead th a {
             text-decoration: none;
             color: black;
-            /* Set text color to black */
+        }
+
+        .input-xs {
+            padding: 1px 0px;
+            font-size: 0.75rem;
+            line-height: 1.5;
+            height: 1.5rem;
         }
     </style>
     <script src="{{ asset('assets/js/jquery-3.7.1.min.js') }}"></script>
@@ -483,6 +489,7 @@
     <script src="{{ asset('assets/js/demo-purpose-only.js') }}"></script>
     <script src="{{ asset('assets/vendors/toaster/toastr.min.js') }}"></script>
     <script src="{{ asset('assets/vendors/tom-select/tom-select.min.js') }}"></script>
+    <script src="{{ asset('assets/vendors/sweetalert/sweetalert2.js') }}"></script>
 
     <script>
         var eventHandler = function(name) {
@@ -519,6 +526,9 @@
             "positionClass": "toast-top-right",
             "timeOut": "5000"
         };
+        $(document).on('focus', '.select_on_focus', function() {
+            $(this).select();
+        });
         @if (session('success'))
             toastr.success("{{ session('success') }}");
         @elseif (session('error'))

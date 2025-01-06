@@ -15,7 +15,7 @@ class Page extends Component
         'Branch-Page-Update-Component' => 'edit',
     ];
 
-    public $inventories;
+    public $branches;
 
     public $table_id;
 
@@ -36,30 +36,36 @@ class Page extends Component
         $this->table_id = $table_id;
         if (! $this->table_id) {
             $faker = Factory::create();
-            $this->inventories = [
+            $name = '';
+            $code = '';
+            if (! app()->isProduction()) {
+                $name = $faker->name;
+                $code = $faker->hexcolor;
+            }
+            $this->branches = [
                 'code' => $code,
                 'name' => $name,
                 'location' => '',
             ];
         } else {
             $branch = Branch::find($this->table_id);
-            $this->inventories = $branch->toArray();
+            $this->branches = $branch->toArray();
         }
     }
 
     protected function rules()
     {
         return [
-            'inventories.name' => ['required', 'unique:inventories,name,'.$this->table_id],
-            'inventories.code' => ['required', 'unique:inventories,code,'.$this->table_id],
+            'branches.name' => ['required', 'unique:branches,name,'.$this->table_id],
+            'branches.code' => ['required', 'unique:branches,code,'.$this->table_id],
         ];
     }
 
     protected $messages = [
-        'inventories.name.required' => 'The name field is required',
-        'inventories.name.unique' => 'The name is already Registered',
-        'inventories.code.required' => 'The code field is required',
-        'inventories.code.unique' => 'The code is already Registered',
+        'branches.name.required' => 'The name field is required',
+        'branches.name.unique' => 'The name is already Registered',
+        'branches.code.required' => 'The code field is required',
+        'branches.code.unique' => 'The code is already Registered',
     ];
 
     public function save($close = false)
@@ -67,9 +73,9 @@ class Page extends Component
         $this->validate();
         try {
             if (! $this->table_id) {
-                $response = (new CreateAction)->execute($this->inventories);
+                $response = (new CreateAction)->execute($this->branches);
             } else {
-                $response = (new UpdateAction)->execute($this->inventories, $this->table_id);
+                $response = (new UpdateAction)->execute($this->branches, $this->table_id);
             }
             if (! $response['success']) {
                 throw new \Exception($response['message'], 1);

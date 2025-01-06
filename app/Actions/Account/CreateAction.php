@@ -10,13 +10,13 @@ class CreateAction
     {
         try {
             $data['mobile'] = $data['mobile'] ?? null;
-            $name = $data['account_type'] . '-' . $data['name'] . '-' . $data['mobile'];
+            $name = $data['account_type'].'-'.$data['name'].'-'.$data['mobile'];
             $existing = Account::where('account_type', $data['account_type'])
                 ->where('name', $data['name'])
                 ->where('mobile', $data['mobile'])
                 ->exists();
             if ($existing) {
-                throw new \Exception($name . ' Already Exists', 1);
+                throw new \Exception($name.' Already Exists', 1);
             }
             validationHelper(Account::rules(), $data);
             $model = Account::create($data);

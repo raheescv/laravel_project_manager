@@ -6,6 +6,7 @@ use App\Models\Branch;
 use App\Models\Configuration;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -17,16 +18,26 @@ class AppServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
-        Cache::remember('branches', now()->addYear(), function () {
-            info('branches remember');
+        if (Schema::hasTable('branches')) {
+            Cache::remember('branches', now()->addYear(), function () {
+                info('branches remember');
 
-            return Branch::select('id', 'name')->get();
-        });
-        Cache::remember('barcode_type', now()->addYear(), function () {
-            info('configuration remember');
+                return Branch::select('id', 'name')->get();
+            });
+        }
+        if (Schema::hasTable('configurations')) {
+            Cache::remember('barcode_type', now()->addYear(), function () {
+                info('configuration remember');
 
-            return Configuration::firstWhere('key', 'barcode_type')?->value('value');
-        });
+                return Configuration::where('key', 'barcode_type')->value('value');
+            });
+            Cache::remember('payment_methods', now()->addYear(), function () {
+                info('payment_methods remember');
+                $list = Configuration::where('key', 'payment_methods')->value('value');
+
+                return json_decode($list, 1);
+            });
+        }
         // Gate::after(function ($user, $ability) {
         //     return $user->hasRole('Super Admin') || $user->hasPermissionTo($ability);
         // });

@@ -16,14 +16,12 @@
     <div class="content__boxed">
         <div class="content__wrap">
             <div class="card mb-3">
-                @livewire('product.table')
+                @livewire('sale.table')
             </div>
         </div>
     </div>
-    <x-product.product-import-modal />
     @push('scripts')
-        @include('components.select.departmentSelect')
-        @include('components.select.categorySelect')
-        @include('components.select.unitSelect')
+        @include('components.select.customerSelect')
+        @include('components.select.branchSelect')
     @endpush
 </x-app-layout>

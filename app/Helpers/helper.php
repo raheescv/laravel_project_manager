@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\Inventory;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
@@ -204,5 +205,32 @@ if (! function_exists('accountTypes')) {
             'expense' => 'Expense',
             'equity' => 'Equity',
         ];
+    }
+}
+
+if (! function_exists('saleStatuses')) {
+    function saleStatuses()
+    {
+        return [
+            'draft' => 'Draft',
+            'completed' => 'Completed',
+            'cancelled' => 'Cancelled',
+        ];
+    }
+}
+if (! function_exists('getNextSaleInvoiceNo')) {
+    function getNextSaleInvoiceNo()
+    {
+        $prefix = 'INV-';
+        $year = now()->format('Y');
+        $lastInvoice = DB::table('sales')->whereYear('created_at', $year)->max('invoice_no');
+        $lastSequence = $lastInvoice ? (int) str_replace($prefix.$year.'-', '', $lastInvoice) : 0;
+        do {
+            $newSequence = $lastSequence + 1;
+            $invoice = $prefix.$year.'-'.str_pad($newSequence, 5, '0', STR_PAD_LEFT);
+            $exists = DB::table('sales')->where('invoice_no', $invoice)->exists();
+        } while ($exists);
+
+        return $invoice;
     }
 }

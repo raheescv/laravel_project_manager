@@ -42,7 +42,7 @@ class Page extends Component
 
     public function mount($table_id = null, $dropdownValues = true)
     {
-        $this->barcode_type = Configuration::firstWhere('key', 'barcode_type')?->value('value');
+        $this->barcode_type = Configuration::where('key', 'barcode_type')->value('value');
         $this->table_id = $table_id;
         $this->departments = [];
         if (! $this->table_id) {

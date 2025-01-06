@@ -1,13 +1,15 @@
 <script type="text/javascript">
-    $('.select-branch_id-list').each(function() {
+    $('.select-payment_method_id-list').each(function() {
         new TomSelect(this, {
             persist: false,
             valueField: 'id',
             nameField: 'name',
             searchField: ['name', 'id'],
             load: function(query, callback) {
-                var url = "{{ route('settings::branch::list') }}";
-                fetch(url + '?query=' + encodeURIComponent(query))
+                var url = "{{ route('account::list') }}";
+                url += '?query=' + encodeURIComponent(query);
+                url += '&is_payment_method=1';
+                fetch(url)
                     .then(response => {
                         if (!response.ok) throw new Error('Network response was not ok');
                         return response.json();

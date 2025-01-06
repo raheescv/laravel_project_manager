@@ -9,7 +9,7 @@ return [
     'product' => ['create', 'view', 'edit', 'delete', 'import', 'export'],
     'inventory' => ['view', 'edit', 'delete', 'import', 'export'],
     'category' => ['create', 'view', 'edit', 'delete', 'import', 'export'],
-    'sale' => ['create', 'view', 'edit', 'delete'],
+    'sale' => ['create', 'view', 'edit', 'delete', 'export', 'cancel'],
     'unit' => ['create', 'view', 'edit', 'delete'],
     'department' => ['create', 'view', 'edit', 'delete'],
     'whatsapp' => ['integration'],
