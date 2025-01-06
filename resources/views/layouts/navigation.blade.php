@@ -62,14 +62,15 @@
                     @endif
                     @if (auth()->user()->can('inventory.view'))
                         <li class="nav-item has-sub">
-                            <a href="#" class="mininav-toggle nav-link {{ request()->is(['inventory']) ? 'active' : '' }}"><i class="demo-pli-split-vertical-2 fs-5 me-2"></i>
+                            <a href="#" class="mininav-toggle nav-link {{ request()->is(['inventory', 'inventory/product/*']) ? 'active' : '' }}"><i
+                                    class="demo-pli-split-vertical-2 fs-5 me-2"></i>
                                 <span class="nav-label ms-1">Inventory</span>
                             </a>
                             <ul class="mininav-content nav collapse">
                                 <li data-popper-arrow class="arrow"></li>
                                 @can('inventory.view')
                                     <li class="nav-item">
-                                        <a href="{{ route('inventory::index') }}" class="nav-link {{ request()->is(['inventory']) ? 'active' : '' }}">List</a>
+                                        <a href="{{ route('inventory::index') }}" class="nav-link {{ request()->is(['inventory', 'inventory/product/*']) ? 'active' : '' }}">List</a>
                                     </li>
                                 @endcan
                             </ul>
@@ -97,7 +98,8 @@
                     @endif
                     @if (auth()->user()->can('user.view') || auth()->user()->can('role.view'))
                         <li class="nav-item has-sub">
-                            <a href="#" class="mininav-toggle nav-link {{ request()->is(['users', 'settings/roles']) ? 'active' : '' }}"><i class="demo-pli-split-vertical-2 fs-5 me-2"></i>
+                            <a href="#" class="mininav-toggle nav-link {{ request()->is(['users', 'settings/roles', 'settings/roles/*']) ? 'active' : '' }}"><i
+                                    class="demo-pli-split-vertical-2 fs-5 me-2"></i>
                                 <span class="nav-label ms-1">Users</span>
                             </a>
                             <ul class="mininav-content nav collapse">
@@ -109,7 +111,7 @@
                                 @endcan
                                 @can('role.view')
                                     <li class="nav-item">
-                                        <a href="{{ route('settings::roles::index') }}" class="nav-link {{ request()->is(['settings/roles']) ? 'active' : '' }}">Roles</a>
+                                        <a href="{{ route('settings::roles::index') }}" class="nav-link {{ request()->is(['settings/roles', 'settings/roles/*']) ? 'active' : '' }}">Roles</a>
                                     </li>
                                 @endcan
                             </ul>
