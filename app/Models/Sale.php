@@ -90,4 +90,9 @@ class Sale extends Model implements AuditableContracts
     {
         return $this->hasMany(SalePayment::class);
     }
+
+    public function journal()
+    {
+        return $this->hasOne(Journal::class, 'model_id')->where('model', 'Sale');
+    }
 }

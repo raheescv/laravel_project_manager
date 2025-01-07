@@ -2,6 +2,7 @@
 
 namespace App\Actions\Sale;
 
+use App\Actions\Journal\DeleteAction;
 use App\Actions\Sale\Item\CreateAction as ItemCreateAction;
 use App\Actions\Sale\Item\UpdateAction as ItemUpdateAction;
 use App\Actions\Sale\Payment\CreateAction as PaymentCreateAction;
@@ -62,8 +63,23 @@ class UpdateAction
                     if (! $response['success']) {
                         throw new \Exception($response['message'], 1);
                     }
+                    $model->refresh();
+                    $response = (new JournalEntryAction)->execute($model, $user_id);
+                    if (! $response['success']) {
+                        throw new \Exception($response['message'], 1);
+                    }
                 }
             } else {
+                $response = (new StockUpdateAction)->execute($model, $user_id, false);
+                if (! $response['success']) {
+                    throw new \Exception($response['message'], 1);
+                }
+                if ($model->journal) {
+                    $response = (new DeleteAction)->execute($model->journal->id, $user_id);
+                    if (! $response['success']) {
+                        throw new \Exception($response['message'], 1);
+                    }
+                }
             }
 
             $return['success'] = true;

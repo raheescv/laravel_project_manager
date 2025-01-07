@@ -30,4 +30,9 @@ class Journal extends Model implements AuditableContracts
             'created_by' => ['required'],
         ], $merge);
     }
+
+    public function entries()
+    {
+        return $this->hasMany(JournalEntry::class);
+    }
 }

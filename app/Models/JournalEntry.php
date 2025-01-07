@@ -32,4 +32,14 @@ class JournalEntry extends Model implements AuditableContracts
             'created_by' => ['required'],
         ], $merge);
     }
+
+    public function journal()
+    {
+        return $this->belongsTo(Journal::class);
+    }
+
+    public function account()
+    {
+        return $this->belongsTo(Account::class);
+    }
 }

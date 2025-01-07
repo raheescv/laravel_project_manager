@@ -1,21 +1,26 @@
 <?php
 
-namespace App\Actions\Account;
+namespace App\Actions\Journal;
 
-use App\Models\Account;
+use App\Models\Journal;
 
 class DeleteAction
 {
-    public function execute($id)
+    public function execute($id, $user_id)
     {
         try {
-            $model = Account::find($id);
+            $model = Journal::find($id);
             if (! $model) {
                 throw new \Exception("Resource not found with the specified ID: $id.", 1);
             }
+            $model->entries()->update(['deleted_by' => $user_id]);
+            $model->entries()->delete();
+
+            $model->update(['deleted_by' => $user_id]);
             if (! $model->delete()) {
                 throw new \Exception('Oops! Something went wrong while deleting the Account. Please try again.', 1);
             }
+
             $return['success'] = true;
             $return['message'] = 'Successfully Update Account';
             $return['data'] = $model;

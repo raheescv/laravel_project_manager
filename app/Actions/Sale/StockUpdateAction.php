@@ -7,7 +7,7 @@ use App\Models\Inventory;
 
 class StockUpdateAction
 {
-    public function execute($sale, $user_id)
+    public function execute($sale, $user_id, $is_sale = true)
     {
         try {
             foreach ($sale->items as $value) {
@@ -17,9 +17,13 @@ class StockUpdateAction
                     throw new \Exception('inventory not found', 1);
                 }
                 $inventory = $inventory->toArray();
-
-                $inventory['quantity'] -= $value->quantity;
-                $inventory['remarks'] = 'Sale:'.$sale->invoice_no;
+                if ($is_sale) {
+                    $inventory['quantity'] -= $value->quantity;
+                    $inventory['remarks'] = 'Sale:'.$sale->invoice_no;
+                } else {
+                    $inventory['quantity'] += $value->quantity;
+                    $inventory['remarks'] = 'Sale Cancelled:'.$sale->invoice_no;
+                }
                 $inventory['model'] = 'Sale';
                 $inventory['model_id'] = $sale->id;
                 $inventory['updated_by'] = $user_id;
