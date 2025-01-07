@@ -6,18 +6,33 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
     {
         Schema::create('users', function (Blueprint $table) {
             $table->id();
+            $table->enum('type', ['user', 'employee'])->default('user');
             $table->string('name');
+            $table->string('code')->nullable();
             $table->string('email')->unique();
             $table->string('mobile')->nullable();
+
+            $table->boolean('is_admin')->default(0);
+            $table->unsignedBigInteger('default_branch_id')->nullable();
+
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
+            $table->string('pin')->nullable();
+
+            $table->date('dob')->nullable();
+            $table->date('doj')->nullable();
+
+            $table->string('place')->nullable();
+            $table->string('nationality')->nullable();
+
+            $table->decimal('allowance', 10, 2)->nullable();
+            $table->decimal('salary', 10, 2)->nullable();
+            $table->decimal('hra', 10, 2)->nullable();
+
             $table->boolean('is_locked')->default(0);
             $table->boolean('is_active')->default(1);
             $table->boolean('is_whatsapp_enabled')->default(0);

@@ -21,7 +21,11 @@
                 </div>
             </figure>
             <div class="d-inline-flex justify-content-end pt-xl-5 gap-2 ms-auto">
-                <button class="btn btn-light text-nowrap" id="UserEdit">Edit Profile</button>
+                @if ($user->type == 'user')
+                    <button class="btn btn-light text-nowrap" id="UserEdit">Edit</button>
+                @else
+                    <button class="btn btn-light text-nowrap" id="EmployeeEdit">Edit</button>
+                @endif
             </div>
         </div>
     </div>
@@ -35,6 +39,16 @@
                             <li class="mb-2"><i class="demo-psi-map-marker-2 fs-5 me-3"></i>{{ $user->name }}</li>
                             <li class="mb-2"><i class="demo-psi-mail fs-5 me-3"></i>{{ $user->email }}</li>
                             <li class="mb-2"><i class="demo-psi-old-telephone fs-5 me-3"></i>{{ $user->mobile }}</li>
+                            @if ($user->type == 'employee')
+                                <li class="mb-2"><i class="demo-psi-map-marker-2 fs-5 me-3"></i>Code : {{ $user->code }}</li>
+                                <li class="mb-2"><i class="demo-psi-map-marker-2 fs-5 me-3"></i>Place : {{ $user->place }}</li>
+                                <li class="mb-2"><i class="demo-psi-old-telephone fs-5 me-3"></i>Nationality: {{ $user->nationality }}</li>
+                                <li class="mb-2"><i class="demo-psi-old-telephone fs-5 me-3"></i>DOB: {{ systemDate($user->dob) }}</li>
+                                <li class="mb-2"><i class="demo-psi-old-telephone fs-5 me-3"></i>DOJ: {{ systemDate($user->doj) }}</li>
+                                <li class="mb-2"><i class="demo-psi-old-telephone fs-5 me-3"></i>Allowance : {{ currency($user->allowance) }}</li>
+                                <li class="mb-2"><i class="demo-psi-old-telephone fs-5 me-3"></i>Salary : {{ currency($user->salary) }}</li>
+                                <li class="mb-2"><i class="demo-psi-old-telephone fs-5 me-3"></i>Hra : {{ currency($user->hra) }}</li>
+                            @endif
                         </ul>
                     </div>
                     <h5 class="mt-5">Roles</h5>
@@ -67,7 +81,7 @@
                             <h6 class="mb-3">Setup Whatsapp Notification</h6>
                             <div class="d-flex align-items-center justify-content-between mb-1">
                                 <div>
-                                    <p class="text-muted mb-0">Enable Whatsapp Notification</p>
+                                    <p class="text-muted mb-0">Enable Whatsapp Notification : {{ $user->is_whatsapp_enabled ? 'Yes' : 'No' }}</p>
                                 </div>
                                 <div class="form-check form-switch p-0">
                                     {{ html()->checkbox('is_whatsapp_enabled')->value('')->checked($user->is_whatsapp_enabled)->class('m-0 form-check-input h5 position-relative')->attribute('wire:click', 'enabledWhatsapp') }}
@@ -84,7 +98,7 @@
                             <h6 class="mb-3">Manage User Status</h6>
                             <div class="d-flex align-items-center justify-content-between mb-1">
                                 <div>
-                                    <p class="text-muted mb-0">User Status</p>
+                                    <p class="text-muted mb-0">User Status : {{ $user->is_active ? 'Active' : 'Disabled' }}</p>
                                 </div>
                                 <div class="form-check form-switch p-0">
                                     {{ html()->checkbox('is_active')->value('')->checked($user->is_active)->class('m-0 form-check-input h5 position-relative')->attribute('wire:click', 'activeUser') }}
@@ -101,6 +115,11 @@
             $(document).ready(function() {
                 $('#UserEdit').click(function() {
                     Livewire.dispatch("User-Page-Update-Component", {
+                        id: "{{ $user->id }}"
+                    });
+                });
+                $('#EmployeeEdit').click(function() {
+                    Livewire.dispatch("Employee-Page-Update-Component", {
                         id: "{{ $user->id }}"
                     });
                 });

@@ -96,9 +96,25 @@
                             </ul>
                         </li>
                     @endif
+                    @if (auth()->user()->can('employee.view'))
+                        <li class="nav-item has-sub">
+                            <a href="#" class="mininav-toggle nav-link {{ request()->is(['users/employee', 'users/employee/view/*']) ? 'active' : '' }}"><i
+                                    class="demo-pli-split-vertical-2 fs-5 me-2"></i>
+                                <span class="nav-label ms-1">Employees</span>
+                            </a>
+                            <ul class="mininav-content nav collapse">
+                                <li data-popper-arrow class="arrow"></li>
+                                @can('employee.view')
+                                    <li class="nav-item">
+                                        <a href="{{ route('users::employee::index') }}" class="nav-link {{ request()->is(['users/employee', 'users/employee/view/*']) ? 'active' : '' }}">List</a>
+                                    </li>
+                                @endcan
+                            </ul>
+                        </li>
+                    @endif
                     @if (auth()->user()->can('user.view') || auth()->user()->can('role.view'))
                         <li class="nav-item has-sub">
-                            <a href="#" class="mininav-toggle nav-link {{ request()->is(['users', 'settings/roles', 'settings/roles/*']) ? 'active' : '' }}"><i
+                            <a href="#" class="mininav-toggle nav-link {{ request()->is(['users', 'users/view/*', 'settings/roles', 'settings/roles/*']) ? 'active' : '' }}"><i
                                     class="demo-pli-split-vertical-2 fs-5 me-2"></i>
                                 <span class="nav-label ms-1">Users</span>
                             </a>
@@ -106,7 +122,7 @@
                                 <li data-popper-arrow class="arrow"></li>
                                 @can('user.view')
                                     <li class="nav-item">
-                                        <a href="{{ route('users::index') }}" class="nav-link {{ request()->is(['users']) ? 'active' : '' }}">List</a>
+                                        <a href="{{ route('users::index') }}" class="nav-link {{ request()->is(['users', 'users/view/*']) ? 'active' : '' }}">List</a>
                                     </li>
                                 @endcan
                                 @can('role.view')

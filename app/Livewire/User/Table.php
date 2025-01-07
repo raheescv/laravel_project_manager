@@ -63,6 +63,7 @@ class Table extends Component
                 $query->where('name', 'like', "%{$value}%");
             })
             ->latest()
+            ->where('type', 'user')
             ->paginate($this->limit);
 
         return view('livewire.user.table', compact('data'));

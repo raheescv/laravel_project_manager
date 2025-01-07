@@ -21,7 +21,12 @@ Route::middleware('auth')->group(function () {
 
     Route::name('users::')->prefix('users')->controller(UserController::class)->group(function () {
         Route::get('', 'index')->name('index')->can('user.view');
-        Route::get('view/{id}', 'get')->name('view')->can('user.edit');
+        Route::get('view/{id}', 'view')->name('view')->can('user.edit');
+        Route::get('list', 'get')->name('list');
+        Route::name('employee::')->prefix('employee')->group(function () {
+            Route::get('', 'employee')->name('index')->can('employee.view');
+            Route::get('view/{id}', 'view')->name('view')->can('employee.edit');
+        });
     });
 
     Route::name('product::')->prefix('product')->controller(ProductController::class)->group(function () {

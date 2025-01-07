@@ -2,7 +2,7 @@
 
 namespace App\Jobs\Export;
 
-use App\Exports\ProductExport;
+use App\Exports\UserExport;
 use App\Models\User;
 use App\Notifications\ExportCompleted;
 use Illuminate\Bus\Queueable;
@@ -12,7 +12,7 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Maatwebsite\Excel\Facades\Excel;
 
-class ExportProductJob implements ShouldQueue
+class ExportUserJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
@@ -26,7 +26,7 @@ class ExportProductJob implements ShouldQueue
     public function handle()
     {
         $exportFileName = 'exports/User_'.now()->timestamp.'.xlsx';
-        Excel::store(new ProductExport, $exportFileName, 'public');
-        $this->user->notify(new ExportCompleted('Product', $exportFileName));
+        Excel::store(new UserExport, $exportFileName, 'public');
+        $this->user->notify(new ExportCompleted('User', $exportFileName));
     }
 }

@@ -15,8 +15,6 @@ class Table extends Component
 {
     use WithPagination;
 
-    public $exportLink = '';
-
     public $search = '';
 
     public $parent_id = null;
@@ -30,8 +28,6 @@ class Table extends Component
     public $sortField = 'id';
 
     public $sortDirection = 'desc';
-
-    protected $queryString = ['sortField', 'sortDirection'];
 
     protected $paginationTheme = 'bootstrap';
 

@@ -1,12 +1,15 @@
 <?php
 
-namespace App\Livewire\Settings\Role;
+namespace App\Livewire\User\Employee;
 
-use App\Actions\Settings\Role\DeleteAction;
+use App\Actions\User\DeleteAction;
+use App\Exports\UserExport;
+use App\Jobs\Export\ExportUserJob;
+use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use Livewire\Component;
 use Livewire\WithPagination;
-use Spatie\Permission\Models\Role;
+use Maatwebsite\Excel\Facades\Excel;
 
 class Table extends Component
 {
@@ -27,19 +30,19 @@ class Table extends Component
     protected $paginationTheme = 'bootstrap';
 
     protected $listeners = [
-        'Role-Refresh-Component' => '$refresh',
+        'Employee-Refresh-Component' => '$refresh',
     ];
 
     public function delete()
     {
         try {
-            @DB::beginTransaction();
+            DB::beginTransaction();
             if (! count($this->selected)) {
                 throw new \Exception('Please select any item to delete.', 1);
             }
             foreach ($this->selected as $id) {
                 if ($id == 1) {
-                    throw new \Exception('You cant delete Super Admin role', 1);
+                    throw new \Exception('Cant Delete The Main Employee', 1);
                 }
                 $response = (new DeleteAction)->execute($id);
                 if (! $response['success']) {
@@ -54,7 +57,7 @@ class Table extends Component
             $this->selected = [];
 
             $this->selectAll = false;
-            $this->dispatch('RefreshRoleTable');
+            $this->dispatch('RefreshEmployeeTable');
         } catch (\Exception $e) {
             DB::rollback();
             $this->dispatch('error', ['message' => $e->getMessage()]);
@@ -71,9 +74,22 @@ class Table extends Component
     public function updatedSelectAll($value)
     {
         if ($value) {
-            $this->selected = Role::latest()->limit(2000)->pluck('id')->toArray();
+            $this->selected = User::employee()->latest()->limit(2000)->pluck('id')->toArray();
         } else {
             $this->selected = [];
+        }
+    }
+
+    public function export()
+    {
+        $count = User::employee()->count();
+        if ($count > 2000) {
+            ExportUserJob::dispatch(auth()->user());
+            $this->dispatch('success', ['message' => 'You will get your file in your mailbox.']);
+        } else {
+            $exportFileName = 'Employee_'.now()->timestamp.'.xlsx';
+
+            return Excel::download(new UserExport, $exportFileName);
         }
     }
 
@@ -89,14 +105,23 @@ class Table extends Component
 
     public function render()
     {
-        $data = Role::orderBy($this->sortField, $this->sortDirection)
+        $data = User::orderBy($this->sortField, $this->sortDirection)
             ->when($this->search ?? '', function ($query, $value) {
-                $query->where('name', 'like', "%{$value}%");
+                $query->where(function ($q) use ($value) {
+                    $value = trim($value);
+                    $q->where('name', 'like', "%{$value}%")
+                        ->orWhere('code', 'like', "%{$value}%")
+                        ->orWhere('email', 'like', "%{$value}%")
+                        ->orWhere('mobile', 'like', "%{$value}%")
+                        ->orWhere('place', 'like', "%{$value}%")
+                        ->orWhere('nationality', 'like', "%{$value}%");
+                });
             })
+            ->employee()
             ->latest()
             ->paginate($this->limit);
 
-        return view('livewire.settings.role.table', [
+        return view('livewire.user.employee.table', [
             'data' => $data,
         ]);
     }
