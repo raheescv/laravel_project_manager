@@ -55,7 +55,7 @@
                             </ul>
                         </li>
                     @endif
-                    @if (auth()->user()->can('sale.view'))
+                    @if (auth()->user()->can('sale.view') || auth()->user()->can('report.sale item'))
                         <li class="nav-item has-sub">
                             <a href="#" class="mininav-toggle nav-link {{ request()->is(['sale', 'sale/create', 'sale/edit/*', 'report/sale_item']) ? 'active' : '' }}"><i
                                     class="demo-pli-split-vertical-2 fs-5 me-2"></i>
@@ -83,7 +83,8 @@
                     @endif
                     @if (auth()->user()->can('account.view'))
                         <li class="nav-item has-sub">
-                            <a href="#" class="mininav-toggle nav-link {{ request()->is(['account', 'account/customer']) ? 'active' : '' }}"><i class="demo-pli-split-vertical-2 fs-5 me-2"></i>
+                            <a href="#" class="mininav-toggle nav-link {{ request()->is(['account', 'account/customer', 'report/day_book']) ? 'active' : '' }}"><i
+                                    class="demo-pli-split-vertical-2 fs-5 me-2"></i>
                                 <span class="nav-label ms-1">Account</span>
                             </a>
                             <ul class="mininav-content nav collapse">
@@ -96,6 +97,11 @@
                                 @can('customer.view')
                                     <li class="nav-item">
                                         <a href="{{ route('account::customer::index') }}" class="nav-link {{ request()->is(['account/customer']) ? 'active' : '' }}">Customers</a>
+                                    </li>
+                                @endcan
+                                @can('report.day book')
+                                    <li class="nav-item">
+                                        <a href="{{ route('report::day_book') }}" class="nav-link {{ request()->is(['report/day_book']) ? 'active' : '' }}">Day Book</a>
                                     </li>
                                 @endcan
                             </ul>

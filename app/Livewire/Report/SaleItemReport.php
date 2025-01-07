@@ -3,6 +3,7 @@
 namespace App\Livewire\Report;
 
 use App\Exports\SaleItemReportExport;
+use App\Jobs\Export\ExportSaleItemReportJob;
 use App\Models\SaleItem;
 use Livewire\Component;
 use Livewire\WithPagination;
@@ -62,18 +63,19 @@ class SaleItemReport extends Component
             })
             ->completed()
             ->count();
+
+        $filter = [
+            'from_date' => $this->from_date,
+            'to_date' => $this->to_date,
+            'branch_id' => $this->branch_id,
+            'employee_id' => $this->employee_id,
+            'product_id' => $this->product_id,
+        ];
         if ($count > 2000) {
-            ExportSaleItemReportJob::dispatch(auth()->user());
+            ExportSaleItemReportJob::dispatch(auth()->user(), $filter);
             $this->dispatch('success', ['message' => 'You will get your file in your mailbox.']);
         } else {
             $exportFileName = 'SaleItemReport_'.now()->timestamp.'.xlsx';
-            $filter = [
-                'from_date' => $this->from_date,
-                'to_date' => $this->to_date,
-                'branch_id' => $this->branch_id,
-                'employee_id' => $this->employee_id,
-                'product_id' => $this->product_id,
-            ];
 
             return Excel::download(new SaleItemReportExport($filter), $exportFileName);
         }
