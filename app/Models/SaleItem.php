@@ -21,7 +21,6 @@ class SaleItem extends Model implements AuditableContracts
         'quantity',
         'discount',
         'tax',
-        'tax',
         'created_by',
         'updated_by',
         'deleted_by',
@@ -41,6 +40,11 @@ class SaleItem extends Model implements AuditableContracts
         ], $merge);
     }
 
+    public function scopeCompleted($query)
+    {
+        return $query->where('status', 'completed');
+    }
+
     public function inventory()
     {
         return $this->belongsTo(Inventory::class);
@@ -49,6 +53,11 @@ class SaleItem extends Model implements AuditableContracts
     public function product()
     {
         return $this->belongsTo(Product::class);
+    }
+
+    public function sale()
+    {
+        return $this->belongsTo(Sale::class);
     }
 
     public function employee()

@@ -14,4 +14,5 @@ return [
     'unit' => ['create', 'view', 'edit', 'delete'],
     'department' => ['create', 'view', 'edit', 'delete'],
     'whatsapp' => ['integration'],
+    'report' => ['sale item'],
 ];

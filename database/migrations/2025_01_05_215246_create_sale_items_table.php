@@ -31,8 +31,13 @@ return new class extends Migration
             $table->unsignedBigInteger('created_by')->references('id')->on('users');
             $table->unsignedBigInteger('updated_by')->references('id')->on('users');
             $table->unsignedBigInteger('deleted_by')->nullable()->references('id')->on('users');
+
             $table->softDeletes();
             $table->timestamps();
+
+            $table->index('product_id');
+            $table->index('employee_id');
+            $table->index('sale_id');
         });
     }
 

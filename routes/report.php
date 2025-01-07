@@ -1,0 +1,11 @@
+<?php
+
+use App\Http\Controllers\ReportController;
+use Illuminate\Support\Facades\Route;
+
+Route::middleware('auth')->group(function () {
+    Route::name('report::')->prefix('report')
+        ->controller(ReportController::class)->group(function () {
+            Route::get('sale_item', 'sale_item')->name('sale_item');
+        });
+});
