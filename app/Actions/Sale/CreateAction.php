@@ -35,6 +35,13 @@ class CreateAction
                 }
             }
 
+            if ($model['status'] == 'completed') {
+                $response = (new StockUpdateAction)->execute($model, $user_id);
+                if (! $response['success']) {
+                    throw new \Exception($response['message'], 1);
+                }
+            }
+
             $return['success'] = true;
             $return['message'] = 'Successfully Created Sale';
             $return['data'] = $model;

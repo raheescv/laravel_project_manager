@@ -42,7 +42,8 @@ Route::middleware('auth')->group(function () {
     Route::name('inventory::')->prefix('inventory')->controller(InventoryController::class)->group(function () {
         Route::get('', 'index')->name('index')->can('inventory.view');
         Route::name('product::')->prefix('product')->group(function () {
-            Route::get('{id}', 'view')->name('view')->can('inventory.view');
+            Route::get('view/{id}', 'view')->name('view')->can('inventory.view');
+            Route::get('list', 'get')->name('list');
         });
     });
     Route::name('notification::')->prefix('notification')->controller(NotificationController::class)->group(function () {

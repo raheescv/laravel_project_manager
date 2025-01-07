@@ -5,7 +5,7 @@ namespace App\Livewire\Sale;
 use App\Actions\Sale\CreateAction;
 use App\Actions\Sale\UpdateAction;
 use App\Models\Account;
-use App\Models\Product;
+use App\Models\Inventory;
 use App\Models\Sale;
 use Illuminate\Support\Facades\DB;
 use Livewire\Component;
@@ -16,7 +16,7 @@ class Page extends Component
 
     public $accounts;
 
-    public $product_id;
+    public $inventory_id;
 
     public $send_to_whatsapp;
 
@@ -44,7 +44,7 @@ class Page extends Component
         ];
 
         if ($this->table_id) {
-            $sales = Sale::with('account:id,name', 'branch:id,name', 'items.product:id,name', 'payments.paymentMethod:id,name')->find($this->table_id);
+            $sales = Sale::with('account:id,name', 'branch:id,name', 'items.product:id,name', 'createdUser:id,name', 'updatedUser:id,name', 'cancelledUser:id,name', 'payments.paymentMethod:id,name')->find($this->table_id);
             if (! $sales) {
                 return redirect()->route('sale::index');
             }
@@ -55,6 +55,7 @@ class Page extends Component
                 return [
                     $item['product_id'] => [
                         'id' => $item['id'],
+                        'inventory_id' => $item['inventory_id'],
                         'product_id' => $item['product_id'],
                         'name' => $item['name'],
                         'unit_price' => $item['unit_price'],
@@ -119,12 +120,12 @@ class Page extends Component
         }
     }
 
-    public function updatedProductId()
+    public function updatedInventoryId()
     {
-        $product = Product::find($this->product_id);
-        if ($product) {
-            $this->addToCart($product);
-            $this->cartCalculator($this->product_id);
+        $inventory = Inventory::find($this->inventory_id);
+        if ($inventory) {
+            $this->addToCart($inventory);
+            $this->cartCalculator($inventory->product_id);
             $this->dispatch('OpenProductBox');
         }
     }
@@ -172,22 +173,24 @@ class Page extends Component
         $this->payment['amount'] = round($this->sales['balance'], 2);
     }
 
-    public function addToCart($product)
+    public function addToCart($inventory)
     {
+        $product_id = $inventory->product_id;
         $single = [
-            'product_id' => $product->id,
-            'name' => $product->name,
-            'unit_price' => $product->mrp,
+            'inventory_id' => $inventory->id,
+            'product_id' => $product_id,
+            'name' => $inventory->product->name,
+            'unit_price' => $inventory->product->mrp,
             'discount' => 0,
             'quantity' => 1,
             'tax' => 0,
         ];
-        if (isset($this->items[$product->id])) {
-            $this->items[$product->id]['quantity'] += 1;
+        if (isset($this->items[$product_id])) {
+            $this->items[$product_id]['quantity'] += 1;
         } else {
-            $this->items[$product->id] = $single;
+            $this->items[$product_id] = $single;
         }
-        $this->singleCartCalculator($product->id);
+        $this->singleCartCalculator($product_id);
         $this->mainCalculator();
     }
 
@@ -260,6 +263,7 @@ class Page extends Component
     {
         $this->validate();
         try {
+            $oldStatus = $this->sales['status'];
             DB::beginTransaction();
             $this->sales['status'] = $type;
             $this->sales['items'] = $this->items;
@@ -281,6 +285,7 @@ class Page extends Component
         } catch (\Throwable $th) {
             DB::rollback();
             $this->dispatch('error', ['message' => $th->getMessage()]);
+            $this->sales['status'] = $oldStatus;
         }
     }
 

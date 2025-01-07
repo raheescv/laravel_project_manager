@@ -23,9 +23,9 @@ class Table extends Component
 
     public $product_id = '';
 
-    public $branch_id = '';
+    public $non_zero = true;
 
-    public $is_selling = '';
+    public $branch_id = '';
 
     public $unit_id = '';
 
@@ -112,6 +112,9 @@ class Table extends Component
             })
             ->when($this->unit_id ?? '', function ($query, $value) {
                 $query->where('unit_id', $value);
+            })
+            ->when($this->non_zero ?? false, function ($query, $value) {
+                $query->where('quantity', '!=', 0);
             })
             ->when($this->branch_id ?? '', function ($query, $value) {
                 $query->where('branch_id', $value);

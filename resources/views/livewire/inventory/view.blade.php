@@ -262,7 +262,24 @@
                                         <td class="text-end">{{ $item->quantity_in }}</td>
                                         <td class="text-end">{{ $item->quantity_out }}</td>
                                         <td class="text-end">{{ $item->balance }}</td>
-                                        <td>{{ $item->remarks }}</td>
+                                        <td>
+                                            @php
+                                                switch ($item->model) {
+                                                    case 'Sale':
+                                                        $href = route('sale::edit', $item->model_id);
+                                                        break;
+
+                                                    default:
+                                                        $href = '';
+                                                        break;
+                                                }
+                                            @endphp
+                                            @if ($href)
+                                                <a href="{{ $href }}">{{ $item->remarks }}</a>
+                                            @else
+                                                {{ $item->remarks }}
+                                            @endif
+                                        </td>
                                     </tr>
                                 @endforeach
                             </tbody>

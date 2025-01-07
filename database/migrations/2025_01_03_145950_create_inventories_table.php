@@ -18,6 +18,8 @@ return new class extends Migration
 
             $table->float('cost', 8, 2)->default(0);
 
+            $table->string('model', 30)->nullable();
+            $table->unsignedBigInteger('model_id')->nullable();
             $table->string('remarks')->nullable();
 
             $table->unsignedBigInteger('created_by');

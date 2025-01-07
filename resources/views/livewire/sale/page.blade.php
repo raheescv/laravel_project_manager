@@ -5,10 +5,20 @@
                 <form wire:submit="submit">
                     <div class="row">
                         <div class="col-md-3">
-                            <div class="row" wire:ignore>
-                                <label for="account_id">Customer</label>
-                                {{ html()->select('account_id', $accounts)->value($sales['account_id'])->class('select-customer_id')->id('account_id')->placeholder('Select Customer') }}
-                            </div>
+                            @if ($sales['status'] == 'draft')
+                                <div class="row">
+                                    <div wire:ignore>
+                                        <label for="account_id">Customer</label>
+                                        {{ html()->select('account_id', $accounts)->value($sales['account_id'])->class('select-customer_id')->id('account_id')->placeholder('Select Customer') }}
+                                    </div>
+                                </div>
+                            @else
+                                <div class="row">
+                                    <label for="account_id">Customer</label>
+                                    {{ html()->input('account_name')->class('form-control')->disabled(true)->attribute('wire:model', 'sales.account.name') }}
+                                </div>
+                            @endif
+
                             <div class="row my-2">
                                 <div class="table-responsive">
                                     <table class="table table-striped align-middle table-sm">
@@ -23,27 +33,47 @@
                         <div class="col-md-3">
                             @if ($sales['account_id'] == 3)
                                 <label for="customer_name">Customer Name</label>
-                                {{ html()->input('customer_name', [])->value('')->class('form-control')->placeholder('Enter Customer Name')->id('customer_name')->attribute('wire:model', 'sales.customer_name') }}
+                                @if ($sales['status'] == 'draft')
+                                    {{ html()->input('customer_name')->value('')->class('form-control')->placeholder('Enter Customer Name')->id('customer_name')->attribute('wire:model', 'sales.customer_name') }}
+                                @else
+                                    {{ html()->input('customer_name')->value('')->class('form-control')->disabled(true)->id('customer_name')->attribute('wire:model', 'sales.customer_name') }}
+                                @endif
                             @endif
                         </div>
                         <div class="col-md-2">
                             @if ($sales['account_id'] == 3)
                                 <label for="customer_mobile">Customer Mobile</label>
-                                {{ html()->input('customer_mobile', [])->value('')->class('form-control')->placeholder('Enter Customer Mobile')->attribute('wire:model', 'sales.customer_mobile') }}
+                                @if ($sales['status'] == 'draft')
+                                    {{ html()->input('customer_mobile')->value('')->class('form-control')->placeholder('Enter Customer Mobile')->attribute('wire:model', 'sales.customer_mobile') }}
+                                @else
+                                    {{ html()->input('customer_mobile')->value('')->class('form-control')->disabled(true)->attribute('wire:model', 'sales.customer_mobile') }}
+                                @endif
                             @endif
                         </div>
                         <div class="col-md-2">
                             <label for="reference_no">Reference No</label>
-                            {{ html()->input('reference_no', [])->value('')->class('form-control')->placeholder('Enter Reference No')->attribute('wire:model', 'sales.reference_no') }}
+                            @if ($sales['status'] == 'draft')
+                                {{ html()->input('reference_no')->value('')->class('form-control')->placeholder('Enter Reference No')->attribute('wire:model', 'sales.reference_no') }}
+                            @else
+                                {{ html()->input('reference_no')->value('')->class('form-control')->disabled(true)->attribute('wire:model', 'sales.reference_no') }}
+                            @endif
                         </div>
                         <div class="col-md-2">
                             <div class="row">
                                 <label for="date">Date</label>
-                                {{ html()->date('date')->value('')->class('form-control')->attribute('wire:model', 'sales.date') }}
+                                @if ($sales['status'] == 'draft')
+                                    {{ html()->date('date')->value('')->class('form-control')->attribute('wire:model', 'sales.date') }}
+                                @else
+                                    {{ html()->date('date')->value('')->class('form-control')->disabled(true)->attribute('wire:model', 'sales.date') }}
+                                @endif
                             </div>
-                            <div class="row">
+                            <div class="row my-2">
                                 <label for="date">Due Date</label>
-                                {{ html()->date('due_date')->value('')->class('form-control')->attribute('wire:model', 'sales.due_date') }}
+                                @if ($sales['status'] == 'draft')
+                                    {{ html()->date('due_date')->value('')->class('form-control')->attribute('wire:model', 'sales.due_date') }}
+                                @else
+                                    {{ html()->date('due_date')->value('')->class('form-control')->disabled(true)->attribute('wire:model', 'sales.due_date') }}
+                                @endif
                             </div>
                         </div>
                     </div>
@@ -55,7 +85,7 @@
                                     @if ($sales['status'] == 'draft')
                                         <div class="col-md-8 offset-md-2 mb-3">
                                             <div class="searchbox input-group" wire:ignore>
-                                                {{ html()->select('product_id', [])->value('')->class('select-product_id-list')->id('product_id')->attribute('style', 'width:100%')->placeholder('Select Product') }}
+                                                {{ html()->select('inventory_id', [])->value('')->class('select-inventory-product_id-list')->id('inventory_id')->attribute('style', 'width:100%')->placeholder('Select Product') }}
                                             </div>
                                         </div>
                                     @endif
@@ -182,7 +212,11 @@
                                                 <div class="row g-1">
                                                     <div class="col-md-12">
                                                         <label for="address" class="form-label">Address</label>
-                                                        {{ html()->textarea('address')->value('')->class('form-control')->rows(3)->attribute('wire:model.live', 'sales.address') }}
+                                                        @if ($sales['status'] == 'draft')
+                                                            {{ html()->textarea('address')->value('')->class('form-control')->rows(3)->attribute('wire:model.live', 'sales.address') }}
+                                                        @else
+                                                            {{ html()->textarea('address')->value('')->class('form-control')->rows(3)->disabled(true)->attribute('wire:model.live', 'sales.address') }}
+                                                        @endif
                                                     </div>
                                                 </div>
                                             </div>
@@ -259,33 +293,56 @@
                                         </div>
                                         <div class="col-12">
                                             <div class="d-flex">
-                                                <ul class="list-group list-group-borderless ms-auto">
-                                                    <li class="list-group-item d-flex justify-content-between align-items-center py-2">
-                                                        <div class="me-5 mb-0 h5">Total Paid:</div>
-                                                        <span class=" fw-semibold" style="color:#1EB706;">{{ currency($sales['paid']) }}</span>
-                                                    </li>
-                                                    <li class="list-group-item d-flex justify-content-between align-items-center py-2">
-                                                        <div class="me-5 mb-0 h5">Balance: </div>
-                                                        <span class="text-danger fw-semibold">{{ currency($sales['balance']) }}</span>
-                                                    </li>
-                                                    @if ($sales['status'] == 'draft')
+                                                <div class="left-section w-50 me-3">
+                                                    <table class="table table-sm table-bordered table-striped">
+                                                        <thead>
+                                                            @isset($sales['created_user']['name'])
+                                                                <tr>
+                                                                    <td>Created By: <b>{{ $sales['created_user']['name'] }}</b> </td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td>Updated By: <b>{{ $sales['updated_user']['name'] }}</b> </td>
+                                                                </tr>
+                                                            @endisset
+                                                            @isset($sales['cancelled_user']['name'])
+                                                                <tr>
+                                                                    <td>Cancelled By: <b>{{ $sales['cancelled_user']['name'] ?? '' }}</b> </td>
+                                                                </tr>
+                                                            @endisset
+                                                        </thead>
+                                                    </table>
+                                                </div>
+                                                <div class="right-section w-50">
+                                                    <ul class="list-group list-group-borderless">
                                                         <li class="list-group-item d-flex justify-content-between align-items-center py-2">
-                                                            <div class="form-check">
-                                                                <label for="send_to_whatsapp" class="form-check-label">
-                                                                    {{ html()->checkbox('send_to_whatsapp', [])->value('')->class('form-check-input')->attribute('wire:model.live', 'send_to_whatsapp') }}
-                                                                    Send Invoice To Whatsapp
-                                                                </label>
-                                                            </div>
+                                                            <div class="me-5 mb-0 h5">Total Paid:</div>
+                                                            <span class="fw-semibold" style="color:#1EB706;">{{ currency($sales['paid']) }}</span>
                                                         </li>
-                                                    @endif
+                                                        <li class="list-group-item d-flex justify-content-between align-items-center py-2">
+                                                            <div class="me-5 mb-0 h5">Balance:</div>
+                                                            <span class="text-danger fw-semibold">{{ currency($sales['balance']) }}</span>
+                                                        </li>
+                                                        @if ($sales['status'] == 'draft')
+                                                            <li class="list-group-item d-flex justify-content-between align-items-center py-2">
+                                                                <div class="form-check">
+                                                                    <label for="send_to_whatsapp" class="form-check-label">
+                                                                        {{ html()->checkbox('send_to_whatsapp')->value('')->class('form-check-input')->attribute('wire:model.live', 'send_to_whatsapp') }}
+                                                                        Send Invoice To Whatsapp
+                                                                    </label>
+                                                                </div>
+                                                            </li>
+                                                        @endif
+                                                    </ul>
+
                                                     <hr>
+
                                                     <div class="d-flex justify-content-end gap-2 my-4 d-print-none">
                                                         @if ($sales['status'] == 'draft')
-                                                            <button type="button" wire:click='save("draft")' class="btn btn-primary"> Draft </button>
-                                                            <button type="submit" wire:confirm="Are you sure to submit this?" class="btn btn-success">Submit & Print </button>
+                                                            <button type="button" wire:click='save("draft")' class="btn btn-primary">Draft</button>
+                                                            <button type="submit" wire:confirm="Are you sure to submit this?" class="btn btn-success">Submit & Print</button>
                                                         @else
                                                             @if ($sales['status'] != 'cancelled')
-                                                                <button type="button" class="btn btn-success"> Print </button>
+                                                                <button type="button" class="btn btn-success">Print</button>
                                                                 @can('sale.cancel')
                                                                     <button type="button" wire:click='save("cancelled")' wire:confirm="Are you sure to cancel this?" class="btn btn-danger btn-sm">
                                                                         Cancel
@@ -294,7 +351,7 @@
                                                             @endif
                                                         @endif
                                                     </div>
-                                                </ul>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
@@ -348,7 +405,7 @@
         </script>
         <script>
             $(document).ready(function() {
-                document.querySelector('#product_id').tomselect.open();
+                document.querySelector('#inventory_id').tomselect.open();
 
                 $('#account_id').on('change', function(e) {
                     const value = $(this).val() || null;
@@ -356,12 +413,12 @@
                     if (value == 3) {
                         $('#customer_name').select();
                     } else {
-                        document.querySelector('#product_id').tomselect.open();
+                        document.querySelector('#inventory_id').tomselect.open();
                     }
                 });
-                $('#product_id').on('change', function(e) {
+                $('#inventory_id').on('change', function(e) {
                     const value = $(this).val() || null;
-                    @this.set('product_id', value);
+                    @this.set('inventory_id', value);
                 });
                 $('#payment_method_id').on('change', function(e) {
                     const value = $(this).val() || null;
@@ -369,8 +426,8 @@
                     $('#payment').select();
                 });
                 window.addEventListener('OpenProductBox', event => {
-                    @this.set('product_id', null);
-                    document.querySelector('#product_id').tomselect.open();
+                    @this.set('inventory_id', null);
+                    document.querySelector('#inventory_id').tomselect.open();
                 });
                 window.addEventListener('ResetSelectBox', event => {
                     var tomSelectInstance = document.querySelector('#account_id').tomselect;
@@ -379,9 +436,9 @@
                     var tomSelectInstance = document.querySelector('#payment_method_id').tomselect;
                     tomSelectInstance.addItem("{{ $payment['payment_method_id'] }}");
 
-                    var tomSelectInstance = document.querySelector('#product_id').tomselect;
+                    var tomSelectInstance = document.querySelector('#inventory_id').tomselect;
                     tomSelectInstance.clear();
-                    document.querySelector('#product_id').tomselect.open();
+                    document.querySelector('#inventory_id').tomselect.open();
                 });
                 window.addEventListener('AddToCustomerSelectBox', event => {
                     var data = event.detail[0];

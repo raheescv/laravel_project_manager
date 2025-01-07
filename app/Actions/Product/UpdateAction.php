@@ -8,7 +8,7 @@ use App\Models\Product;
 
 class UpdateAction
 {
-    public function execute($data, $id)
+    public function execute($data, $id, $user_id)
     {
         try {
             $model = Product::find($id);
@@ -36,7 +36,7 @@ class UpdateAction
 
             validationHelper(Product::rules($id), $data);
 
-            $data['updated_by'] = auth()->id();
+            $data['updated_by'] = $user_id;
             $model->update($data);
 
             if ($data['images']) {

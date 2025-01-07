@@ -18,7 +18,7 @@ class UpdateAction
                 throw new \Exception("Resource not found with the specified ID: $sale_id.", 1);
             }
 
-            if ($data['status'] == 'cancel') {
+            if ($data['status'] == 'cancelled') {
                 $data['cancelled_by'] = $user_id;
             } else {
                 $data['updated_by'] = $user_id;
@@ -57,6 +57,12 @@ class UpdateAction
                     }
                 }
 
+                if ($model['status'] == 'completed') {
+                    $response = (new StockUpdateAction)->execute($model, $user_id);
+                    if (! $response['success']) {
+                        throw new \Exception($response['message'], 1);
+                    }
+                }
             } else {
             }
 

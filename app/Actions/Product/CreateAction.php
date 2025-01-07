@@ -9,7 +9,7 @@ use App\Models\Product;
 
 class CreateAction
 {
-    public function execute($data)
+    public function execute($data, $user_id)
     {
         try {
             if (str_contains($data['department_id'], 'add ')) {
@@ -29,9 +29,8 @@ class CreateAction
                 $departmentData['name'] = $name;
                 $data['sub_category_id'] = Category::selfCreate($departmentData);
             }
-
             validationHelper(Product::rules(), $data);
-            $user_id = $data['created_by'] = $data['updated_by'] = auth()->id();
+            $user_id = $data['created_by'] = $data['updated_by'] = $user_id;
 
             $model = Product::create($data);
 
@@ -40,7 +39,7 @@ class CreateAction
                 Inventory::selfCreateByProduct($model, $user_id);
             }
 
-            if ($data['images']) {
+            if (isset($data['images'])) {
                 foreach ($data['images'] as $file) {
                     $imageData = [
                         'name' => $file->getClientOriginalName(),

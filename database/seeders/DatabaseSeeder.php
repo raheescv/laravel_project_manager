@@ -17,8 +17,12 @@ class DatabaseSeeder extends Seeder
         $this->call(ConfigurationSeeder::class);
         $this->call(BranchSeeder::class);
         $this->call(UnitSeeder::class);
-        $this->call(DepartmentSeeder::class);
         $this->call(UserSeeder::class);
+
+        if (! app()->isProduction()) {
+            $this->call(DepartmentSeeder::class);
+            $this->call(ProductSeeder::class);
+        }
         DB::statement('SET FOREIGN_KEY_CHECKS=1;');
     }
 }

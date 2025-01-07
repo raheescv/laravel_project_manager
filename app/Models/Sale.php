@@ -42,7 +42,6 @@ class Sale extends Model implements AuditableContracts
         'created_by',
         'updated_by',
         'cancelled_by',
-        'cancelled_by',
         'deleted_by',
     ];
 
@@ -69,6 +68,16 @@ class Sale extends Model implements AuditableContracts
     public function createdUser()
     {
         return $this->belongsTo(User::class, 'created_by');
+    }
+
+    public function updatedUser()
+    {
+        return $this->belongsTo(User::class, 'updated_by');
+    }
+
+    public function cancelledUser()
+    {
+        return $this->belongsTo(User::class, 'cancelled_by');
     }
 
     public function items()

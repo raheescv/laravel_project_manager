@@ -156,9 +156,9 @@ class Page extends Component
                     'id' => $this->products['department_id'],
                     'name' => $this->products['department_id'],
                 ];
-                $response = (new CreateAction)->execute($this->products);
+                $response = (new CreateAction)->execute($this->products, auth()->id());
             } else {
-                $response = (new UpdateAction)->execute($this->products, $this->table_id);
+                $response = (new UpdateAction)->execute($this->products, $this->table_id, auth()->id());
             }
             if (! $response['success']) {
                 throw new \Exception($response['message'], 1);

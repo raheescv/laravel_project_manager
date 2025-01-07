@@ -39,7 +39,11 @@ class LogInventoryAction
                 'barcode' => $newInventory->barcode,
                 'batch' => $newInventory->batch,
                 'cost' => $newInventory->cost,
+
                 'remarks' => $newInventory->remarks,
+                'model' => $newInventory->model,
+                'model_id' => $newInventory->model_id,
+
                 'user_id' => $newInventory->updated_by,
                 'user_name' => $newInventory->updatedUser?->name,
             ];

@@ -20,6 +20,8 @@ class Inventory extends Model implements AuditableContracts
         'barcode',
         'batch',
         'cost',
+        'model',
+        'model_id',
         'remarks',
         'created_by',
         'updated_by',
@@ -72,11 +74,8 @@ class Inventory extends Model implements AuditableContracts
                 case 'product_wise':
                     $data['barcode'] = $product->barcode;
                     break;
-                default:
-                    $data['barcode'] = generateBarcode();
-                    break;
             }
-            if (! $data['barcode']) {
+            if (! isset($data['barcode'])) {
                 $data['barcode'] = generateBarcode();
             }
             $data['batch'] = 'General';
@@ -86,5 +85,38 @@ class Inventory extends Model implements AuditableContracts
                 throw new \Exception($response['message'], 1);
             }
         }
+    }
+
+    public function getDropDownList($request)
+    {
+        $self = self::orderBy('products.name');
+        $self = $self->join('products', 'inventories.product_id', '=', 'products.id');
+        $self = $self->when($request['query'] ?? '', function ($query, $value) {
+            $query->where(function ($q) use ($value) {
+                $value = trim($value);
+                $q->where('products.name', 'like', "%{$value}%")
+                    ->orWhere('products.name_arabic', 'like', "%{$value}%")
+                    ->orWhere('products.code', 'like', "%{$value}%")
+                    ->orWhere('products.size', 'like', "%{$value}%")
+                    ->orWhere('products.color', 'like', "%{$value}%")
+                    ->orWhere('inventories.batch', 'like', "%{$value}%")
+                    ->orWhere('inventories.cost', 'like', "%{$value}%")
+                    ->orWhere('inventories.barcode', 'like', "%{$value}%");
+            });
+        });
+        $self = $self->limit(10);
+        $self = $self->get([
+            'inventories.id',
+            'inventories.product_id',
+            'inventories.barcode',
+            'inventories.batch',
+            'inventories.quantity',
+            'products.name',
+            'products.size',
+            'products.mrp',
+        ])->toArray();
+        $return['items'] = $self;
+
+        return $return;
     }
 }

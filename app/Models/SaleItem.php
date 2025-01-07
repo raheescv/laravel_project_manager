@@ -14,6 +14,7 @@ class SaleItem extends Model implements AuditableContracts
 
     protected $fillable = [
         'sale_id',
+        'inventory_id',
         'product_id',
         'unit_price',
         'quantity',
@@ -29,6 +30,7 @@ class SaleItem extends Model implements AuditableContracts
     {
         return array_merge([
             'sale_id' => ['required'],
+            'inventory_id' => ['required'],
             'product_id' => ['required'],
             'unit_price' => ['required'],
             'quantity' => ['required'],

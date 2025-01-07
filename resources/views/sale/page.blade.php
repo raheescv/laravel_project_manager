@@ -22,7 +22,7 @@
     <x-account.customer-modal />
     @push('scripts')
         @include('components.select.customerSelect')
-        @include('components.select.productSelect')
+        @include('components.select.inventoryProductSelect')
         @include('components.select.paymentMethodSelect')
         <script>
             $(document).ready(function() {

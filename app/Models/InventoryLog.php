@@ -15,7 +15,11 @@ class InventoryLog extends Model
         'barcode',
         'batch',
         'cost',
+
+        'model',
+        'model_id',
         'remarks',
+
         'user_id',
         'user_name',
     ];
