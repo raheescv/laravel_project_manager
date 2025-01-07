@@ -75,4 +75,26 @@ class User extends Authenticatable
     {
         return $query->where('type', 'user');
     }
+
+    public function getDropDownList($request)
+    {
+        $self = self::orderBy('name');
+        $self = $self->when($request['query'] ?? '', function ($query, $value) {
+            $query->where(function ($q) use ($value) {
+                $value = trim($value);
+                $q->where('name', 'like', "%{$value}%")
+                    ->orWhere('code', 'like', "%{$value}%")
+                    ->orWhere('mobile', 'like', "%{$value}%")
+                    ->orWhere('email', 'like', "%{$value}%");
+            });
+        });
+        $self = $self->when($request['type'] ?? '', function ($query, $value) {
+            $query->where('type', $value);
+        });
+        $self = $self->limit(10);
+        $self = $self->get(['name', 'email', 'mobile', 'id'])->toArray();
+        $return['items'] = $self;
+
+        return $return;
+    }
 }

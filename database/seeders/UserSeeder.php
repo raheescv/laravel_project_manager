@@ -13,6 +13,7 @@ class UserSeeder extends Seeder
         User::factory()->create(['name' => 'System', 'email' => 'system@astra.com', 'mobile' => '+919633155669', 'password' => Hash::make('asdasd'), 'is_locked' => 1]);
         User::factory()->create(['name' => 'Admin', 'email' => 'admin@astra.com', 'mobile' => '+919633155669', 'password' => Hash::make('asdasd'), 'is_locked' => 1]);
         User::factory()->create(['name' => 'Rahees', 'email' => 'rahees@astra.com', 'mobile' => '+919633155669', 'password' => Hash::make('asdasd')]);
+        User::factory()->create(['name' => 'Employee', 'email' => 'employee@astra.com', 'type' => 'employee', 'mobile' => '+919633155669', 'password' => Hash::make('asdasd')]);
         $list = User::get();
         foreach ($list as $key => $user) {
             // $user->assignRole('Super Admin');

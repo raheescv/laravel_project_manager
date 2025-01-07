@@ -28,7 +28,7 @@
                     return `<div> ${escape(item.name || item.text || '')}${item.mobile ? `@${escape(item.mobile)}` : ''} </div>`;
                 },
                 item: function(item, escape) {
-                    return `<div>${ escape(item.name) }</div>`;
+                    return `<div>${escape(item.name || item.text || '')}</div>`;
                 },
             },
         });

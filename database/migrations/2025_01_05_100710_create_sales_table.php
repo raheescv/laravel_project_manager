@@ -21,18 +21,18 @@ return new class extends Migration
 
             $table->string('reference_no')->nullable();
 
-            $table->decimal('gross_amount', 12, 2)->default(0);
-            $table->decimal('item_discount', 12, 2)->default(0);
-            $table->decimal('tax_amount', 12, 2)->default(0);
+            $table->decimal('gross_amount', 16, 2)->default(0);
+            $table->decimal('item_discount', 16, 2)->default(0);
+            $table->decimal('tax_amount', 16, 2)->default(0);
 
-            $table->decimal('total', 12, 2)->default(0);
+            $table->decimal('total', 16, 2)->default(0);
 
-            $table->decimal('other_discount', 12, 2)->default(0);
-            $table->decimal('freight', 12, 2)->default(0);
+            $table->decimal('other_discount', 16, 2)->default(0);
+            $table->decimal('freight', 16, 2)->default(0);
 
-            $table->decimal('grand_total', 12, 2)->storedAs('total - other_discount + freight');
-            $table->decimal('paid', 12, 2)->default(0);
-            $table->decimal('balance', 12, 2)->storedAs('grand_total - paid');
+            $table->decimal('grand_total', 16, 2)->storedAs('total - other_discount + freight');
+            $table->decimal('paid', 16, 2)->default(0);
+            $table->decimal('balance', 16, 2)->storedAs('grand_total - paid');
 
             $table->text('address')->nullable();
 

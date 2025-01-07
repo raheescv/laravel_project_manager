@@ -83,9 +83,16 @@
                                 <div class="card-body">
                                     <h5 class="card-title">ITEM INFO </h5>
                                     @if ($sales['status'] == 'draft')
-                                        <div class="col-md-8 offset-md-2 mb-3">
-                                            <div class="searchbox input-group" wire:ignore>
-                                                {{ html()->select('inventory_id', [])->value('')->class('select-inventory-product_id-list')->id('inventory_id')->attribute('style', 'width:100%')->placeholder('Select Product') }}
+                                        <div class="row mb-3">
+                                            <div class="col-md-4">
+                                                <div class="searchbox input-group" wire:ignore>
+                                                    {{ html()->select('employee_id', [])->value('')->class('select-employee_id-list')->id('employee_id')->attribute('style', 'width:100%')->placeholder('Select Employee') }}
+                                                </div>
+                                            </div>
+                                            <div class="col-md-8">
+                                                <div class="searchbox input-group" wire:ignore>
+                                                    {{ html()->select('inventory_id', [])->value('')->class('select-inventory-product_id-list')->id('inventory_id')->attribute('style', 'width:100%')->placeholder('Select Product') }}
+                                                </div>
                                             </div>
                                         </div>
                                     @endif
@@ -106,37 +113,56 @@
                                                 </tr>
                                             </thead>
                                             <tbody>
-                                                @foreach ($items as $product_id => $item)
+                                                @php
+                                                    $result = [];
+                                                    foreach ($items as $key => $value) {
+                                                        [$parent, $sub] = explode('-', $key);
+                                                        if (!isset($result[$parent])) {
+                                                            $result[$parent] = [];
+                                                        }
+                                                        $result[$parent][$sub] = $value;
+                                                    }
+                                                    $data = $result;
+                                                @endphp
+                                                @foreach ($data as $employee_id => $groupedItems)
                                                     <tr>
-                                                        <td>{{ $loop->iteration }}</td>
-                                                        <td>{{ $item['name'] }}</td>
-                                                        @if ($sales['status'] == 'draft')
-                                                            <td>
-                                                                {{ html()->number('unit_price')->value($item['unit_price'])->class('input-xs number select_on_focus')->attribute('style', 'width:100%')->attribute('wire:model.live', 'items.' . $product_id . '.unit_price') }}
-                                                            </td>
-                                                            <td>
-                                                                {{ html()->number('quantity')->value($item['quantity'])->attribute('min', 1)->class('input-xs number select_on_focus')->attribute('style', 'width:100%')->attribute('wire:model.live', 'items.' . $product_id . '.quantity') }}
-                                                            </td>
-                                                            <td>
-                                                                {{ html()->number('discount')->value($item['discount'])->class('input-xs number select_on_focus')->attribute('style', 'width:100%')->attribute('wire:model.live', 'items.' . $product_id . '.discount') }}
-                                                            </td>
-                                                            <td>
-                                                                {{ html()->number('tax')->value($item['tax'])->attribute('max', '50')->class('input-xs number select_on_focus')->attribute('style', 'width:100%')->attribute('wire:model.live', 'items.' . $product_id . '.tax') }}
-                                                            </td>
-                                                            <td class="text-end"> {{ currency($item['total']) }} </td>
-                                                        @else
-                                                            <td class="text-end">{{ currency($item['unit_price']) }}</td>
-                                                            <td class="text-end">{{ currency($item['quantity']) }}</td>
-                                                            <td class="text-end">{{ currency($item['discount']) }}</td>
-                                                            <td class="text-end">{{ currency($item['tax']) }}</td>
-                                                            <td class="text-end"> {{ currency($item['total']) }} </td>
-                                                        @endif
-                                                        @if ($sales['status'] == 'draft')
-                                                            <td>
-                                                                <i wire:click="removeItem('{{ $product_id }}')" wire:confirm="Are your sure?" class="demo-pli-recycling fs-5 me-2 pointer"></i>
-                                                            </td>
-                                                        @endif
+                                                        @php
+                                                            $first = array_values($groupedItems)[0];
+                                                        @endphp
+                                                        <th colspan="8">{{ $first['employee_name'] }}</th>
                                                     </tr>
+                                                    @foreach ($groupedItems as $item)
+                                                        <tr>
+                                                            <td>{{ $loop->iteration }}</td>
+                                                            <td>{{ $item['name'] }}</td>
+                                                            @if ($sales['status'] == 'draft')
+                                                                <td>
+                                                                    {{ html()->number('unit_price')->value($item['unit_price'])->class('input-xs number select_on_focus')->attribute('style', 'width:100%')->attribute('wire:model.live', 'items.' . $item['key'] . '.unit_price') }}
+                                                                </td>
+                                                                <td>
+                                                                    {{ html()->number('quantity')->value($item['quantity'])->attribute('min', 1)->class('input-xs number select_on_focus')->attribute('style', 'width:100%')->attribute('wire:model.live', 'items.' . $item['key'] . '.quantity') }}
+                                                                </td>
+                                                                <td>
+                                                                    {{ html()->number('discount')->value($item['discount'])->class('input-xs number select_on_focus')->attribute('style', 'width:100%')->attribute('wire:model.live', 'items.' . $item['key'] . '.discount') }}
+                                                                </td>
+                                                                <td>
+                                                                    {{ html()->number('tax')->value($item['tax'])->attribute('max', '50')->class('input-xs number select_on_focus')->attribute('style', 'width:100%')->attribute('wire:model.live', 'items.' . $item['key'] . '.tax') }}
+                                                                </td>
+                                                                <td class="text-end"> {{ currency($item['total']) }} </td>
+                                                            @else
+                                                                <td class="text-end">{{ currency($item['unit_price']) }}</td>
+                                                                <td class="text-end">{{ currency($item['quantity']) }}</td>
+                                                                <td class="text-end">{{ currency($item['discount']) }}</td>
+                                                                <td class="text-end">{{ currency($item['tax']) }}</td>
+                                                                <td class="text-end"> {{ currency($item['total']) }} </td>
+                                                            @endif
+                                                            @if ($sales['status'] == 'draft')
+                                                                <td>
+                                                                    <i wire:click="removeItem('{{ $item['key'] }}')" wire:confirm="Are your sure?" class="demo-pli-recycling fs-5 me-2 pointer"></i>
+                                                                </td>
+                                                            @endif
+                                                        </tr>
+                                                    @endforeach
                                                 @endforeach
                                             </tbody>
                                             <tfoot>
@@ -405,7 +431,7 @@
         </script>
         <script>
             $(document).ready(function() {
-                document.querySelector('#inventory_id').tomselect.open();
+                document.querySelector('#employee_id').tomselect.open();
 
                 $('#account_id').on('change', function(e) {
                     const value = $(this).val() || null;
@@ -413,12 +439,17 @@
                     if (value == 3) {
                         $('#customer_name').select();
                     } else {
-                        document.querySelector('#inventory_id').tomselect.open();
+                        document.querySelector('#employee_id').tomselect.open();
                     }
                 });
                 $('#inventory_id').on('change', function(e) {
                     const value = $(this).val() || null;
                     @this.set('inventory_id', value);
+                });
+                $('#employee_id').on('change', function(e) {
+                    const value = $(this).val() || null;
+                    @this.set('employee_id', value);
+                    document.querySelector('#inventory_id').tomselect.open();
                 });
                 $('#payment_method_id').on('change', function(e) {
                     const value = $(this).val() || null;

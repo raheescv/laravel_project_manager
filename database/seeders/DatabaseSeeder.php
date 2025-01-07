@@ -3,6 +3,7 @@
 namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
 
 class DatabaseSeeder extends Seeder
@@ -18,6 +19,9 @@ class DatabaseSeeder extends Seeder
         $this->call(BranchSeeder::class);
         $this->call(UnitSeeder::class);
         $this->call(UserSeeder::class);
+
+        Artisan::call('optimize');
+        Artisan::call('config:cache');
 
         if (! app()->isProduction()) {
             $this->call(DepartmentSeeder::class);

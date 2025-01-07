@@ -23,10 +23,10 @@
             },
             render: {
                 option: function(item, escape) {
-                    return `<div> ${ escape(item.name) } </div>`;
+                    return `<div>${escape(item.name || item.text || '')}</div>`;
                 },
                 item: function(item, escape) {
-                    return `<div>${ escape(item.name) }</div>`;
+                    return `<div>${escape(item.name || item.text || '')}</div>`;
                 },
             },
         });
@@ -51,10 +51,10 @@
             },
             render: {
                 option: function(item, escape) {
-                    return `<div> ${ escape(item.name) } </div>`;
+                    return `<div>${escape(item.name || item.text || '')}</div>`;
                 },
                 item: function(item, escape) {
-                    return `<div>${ escape(item.name) }</div>`;
+                    return `<div>${escape(item.name || item.text || '')}</div>`;
                 },
             },
             create: function(input, callback) {

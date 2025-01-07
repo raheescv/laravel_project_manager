@@ -41,7 +41,7 @@
                     `;
                 },
                 item: function(item, escape) {
-                    return `<div>${ escape(item.name) }</div>`;
+                    return `<div>${escape(item.name || item.text || '')}</div>`;
                 },
             },
         });

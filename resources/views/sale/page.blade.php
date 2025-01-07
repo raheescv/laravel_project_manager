@@ -22,6 +22,7 @@
     <x-account.customer-modal />
     @push('scripts')
         @include('components.select.customerSelect')
+        @include('components.select.employeeSelect')
         @include('components.select.inventoryProductSelect')
         @include('components.select.paymentMethodSelect')
         <script>

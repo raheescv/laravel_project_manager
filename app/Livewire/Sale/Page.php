@@ -7,6 +7,7 @@ use App\Actions\Sale\UpdateAction;
 use App\Models\Account;
 use App\Models\Inventory;
 use App\Models\Sale;
+use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use Livewire\Component;
 
@@ -17,6 +18,10 @@ class Page extends Component
     public $accounts;
 
     public $inventory_id;
+
+    public $employee_id;
+
+    public $employee;
 
     public $send_to_whatsapp;
 
@@ -44,7 +49,7 @@ class Page extends Component
         ];
 
         if ($this->table_id) {
-            $sales = Sale::with('account:id,name', 'branch:id,name', 'items.product:id,name', 'createdUser:id,name', 'updatedUser:id,name', 'cancelledUser:id,name', 'payments.paymentMethod:id,name')->find($this->table_id);
+            $sales = Sale::with('account:id,name', 'branch:id,name', 'items.product:id,name', 'items.employee:id,name', 'createdUser:id,name', 'updatedUser:id,name', 'cancelledUser:id,name', 'payments.paymentMethod:id,name')->find($this->table_id);
             if (! $sales) {
                 return redirect()->route('sale::index');
             }
@@ -52,12 +57,17 @@ class Page extends Component
             $this->accounts = Account::where('id', $this->sales['account_id'])->pluck('name', 'id')->toArray();
 
             $this->items = $sales->items->mapWithKeys(function ($item) {
+                $key = $item['employee_id'].'-'.$item['inventory_id'];
+
                 return [
-                    $item['product_id'] => [
+                    $key => [
                         'id' => $item['id'],
+                        'key' => $key,
+                        'employee_id' => $item['employee_id'],
                         'inventory_id' => $item['inventory_id'],
                         'product_id' => $item['product_id'],
                         'name' => $item['name'],
+                        'employee_name' => $item['employee_name'],
                         'unit_price' => $item['unit_price'],
                         'quantity' => $item['quantity'],
                         'gross_amount' => $item['gross_amount'],
@@ -123,33 +133,41 @@ class Page extends Component
     public function updatedInventoryId()
     {
         $inventory = Inventory::find($this->inventory_id);
+        $this->employee = User::find($this->employee_id);
+        if (! $this->employee) {
+            $this->dispatch('error', ['message' => 'Please select any Employee']);
+
+            return false;
+        }
         if ($inventory) {
             $this->addToCart($inventory);
-            $this->cartCalculator($inventory->product_id);
+            $this->cartCalculator($this->employee_id.'-'.$inventory->id);
             $this->dispatch('OpenProductBox');
         }
     }
 
-    public function cartCalculator($product_id = null)
+    public function cartCalculator($key = null)
     {
-        if (! $product_id) {
-            foreach ($this->items as $key => $value) {
-                $this->singleCartCalculator($value['product_id']);
-            }
+        if ($key) {
+            $this->singleCartCalculator($key);
         } else {
-            $this->singleCartCalculator($product_id);
+            foreach ($this->items as $value) {
+                $key = $value['employee_id'].'-'.$value['inventory_id'];
+                $this->singleCartCalculator($key);
+            }
         }
     }
 
-    public function singleCartCalculator($product_id)
+    public function singleCartCalculator($key)
     {
-        $gross_amount = $this->items[$product_id]['unit_price'] * $this->items[$product_id]['quantity'];
-        $net_amount = $gross_amount - $this->items[$product_id]['discount'];
-        $tax_amount = $net_amount * $this->items[$product_id]['tax'] / 100;
-        $this->items[$product_id]['gross_amount'] = round($gross_amount, 2);
-        $this->items[$product_id]['net_amount'] = round($net_amount, 2);
-        $this->items[$product_id]['tax_amount'] = round($tax_amount, 2);
-        $this->items[$product_id]['total'] = round($net_amount + $tax_amount, 2);
+        $gross_amount = $this->items[$key]['unit_price'] * $this->items[$key]['quantity'];
+        $net_amount = $gross_amount - $this->items[$key]['discount'];
+        $tax_amount = $net_amount * $this->items[$key]['tax'] / 100;
+
+        $this->items[$key]['gross_amount'] = round($gross_amount, 2);
+        $this->items[$key]['net_amount'] = round($net_amount, 2);
+        $this->items[$key]['tax_amount'] = round($tax_amount, 2);
+        $this->items[$key]['total'] = round($net_amount + $tax_amount, 2);
     }
 
     public function mainCalculator()
@@ -175,9 +193,13 @@ class Page extends Component
 
     public function addToCart($inventory)
     {
+        $key = $this->employee_id.'-'.$inventory->id;
         $product_id = $inventory->product_id;
         $single = [
+            'key' => $key,
             'inventory_id' => $inventory->id,
+            'employee_id' => $this->employee_id,
+            'employee_name' => $this->employee->name,
             'product_id' => $product_id,
             'name' => $inventory->product->name,
             'unit_price' => $inventory->product->mrp,
@@ -185,12 +207,12 @@ class Page extends Component
             'quantity' => 1,
             'tax' => 0,
         ];
-        if (isset($this->items[$product_id])) {
-            $this->items[$product_id]['quantity'] += 1;
+        if (isset($this->items[$key])) {
+            $this->items[$key]['quantity'] += 1;
         } else {
-            $this->items[$product_id] = $single;
+            $this->items[$key] = $single;
         }
-        $this->singleCartCalculator($product_id);
+        $this->singleCartCalculator($key);
         $this->mainCalculator();
     }
 
@@ -268,11 +290,11 @@ class Page extends Component
             $this->sales['status'] = $type;
             $this->sales['items'] = $this->items;
             $this->sales['payments'] = $this->payments;
-
+            $user_id = auth()->id();
             if (! $this->table_id) {
-                $response = (new CreateAction)->execute($this->sales, auth()->id());
+                $response = (new CreateAction)->execute($this->sales, $user_id);
             } else {
-                $response = (new UpdateAction)->execute($this->sales, $this->table_id, auth()->id());
+                $response = (new UpdateAction)->execute($this->sales, $this->table_id, $user_id);
             }
             if (! $response['success']) {
                 throw new \Exception($response['message'], 1);

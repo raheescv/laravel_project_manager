@@ -14,6 +14,7 @@ class SaleItem extends Model implements AuditableContracts
 
     protected $fillable = [
         'sale_id',
+        'employee_id',
         'inventory_id',
         'product_id',
         'unit_price',
@@ -30,6 +31,7 @@ class SaleItem extends Model implements AuditableContracts
     {
         return array_merge([
             'sale_id' => ['required'],
+            'employee_id' => ['required'],
             'inventory_id' => ['required'],
             'product_id' => ['required'],
             'unit_price' => ['required'],
@@ -44,8 +46,18 @@ class SaleItem extends Model implements AuditableContracts
         return $this->belongsTo(Product::class);
     }
 
+    public function employee()
+    {
+        return $this->belongsTo(User::class, 'employee_id');
+    }
+
     public function getNameAttribute()
     {
         return $this->product?->name;
+    }
+
+    public function getEmployeeNameAttribute()
+    {
+        return $this->employee?->name;
     }
 }
