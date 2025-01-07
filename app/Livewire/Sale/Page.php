@@ -19,9 +19,11 @@ class Page extends Component
 
     public $inventory_id;
 
+    public $employee;
+
     public $employee_id;
 
-    public $employee;
+    public $employees = [];
 
     public $send_to_whatsapp;
 
@@ -42,6 +44,11 @@ class Page extends Component
         $this->table_id = $table_id;
 
         $this->paymentMethods = Account::where('id', $this->default_payment_method_id)->pluck('name', 'id')->toArray();
+
+        if (User::employee()->count() == 1) {
+            $this->employees = User::employee()->pluck('name', 'id')->toArray();
+            $this->employee_id = User::employee()->first(['id'])->id;
+        }
         $this->payment = [
             'payment_method_id' => $this->default_payment_method_id,
             'amount' => 0,

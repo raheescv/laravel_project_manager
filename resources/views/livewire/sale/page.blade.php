@@ -86,7 +86,7 @@
                                         <div class="row mb-3">
                                             <div class="col-md-4">
                                                 <div class="searchbox input-group" wire:ignore>
-                                                    {{ html()->select('employee_id', [])->value('')->class('select-employee_id-list')->id('employee_id')->attribute('style', 'width:100%')->placeholder('Select Employee') }}
+                                                    {{ html()->select('employee_id', $employees)->value($employee_id)->class('select-employee_id-list')->id('employee_id')->attribute('style', 'width:100%')->placeholder('Select Employee') }}
                                                 </div>
                                             </div>
                                             <div class="col-md-8">
@@ -431,15 +431,23 @@
         </script>
         <script>
             $(document).ready(function() {
-                document.querySelector('#employee_id').tomselect.open();
-
+                let employee_id = "{{ $employee_id }}";
+                if (employee_id) {
+                    document.querySelector('#inventory_id').tomselect.open();
+                } else {
+                    document.querySelector('#employee_id').tomselect.open();
+                }
                 $('#account_id').on('change', function(e) {
                     const value = $(this).val() || null;
                     @this.set('sales.account_id', value);
                     if (value == 3) {
                         $('#customer_name').select();
                     } else {
-                        document.querySelector('#employee_id').tomselect.open();
+                        if (employee_id) {
+                            document.querySelector('#inventory_id').tomselect.open();
+                        } else {
+                            document.querySelector('#employee_id').tomselect.open();
+                        }
                     }
                 });
                 $('#inventory_id').on('change', function(e) {
