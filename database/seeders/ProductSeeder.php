@@ -14,7 +14,7 @@ class ProductSeeder extends Seeder
         DB::table('products')->truncate();
         $data = [];
         $faker = Factory::create();
-        for ($i = 0; $i < 2; $i++) {
+        for ($i = 0; $i < 100; $i++) {
             $data[] = [
                 'name' => $faker->name,
                 'department_id' => 'add '.$faker->name,
