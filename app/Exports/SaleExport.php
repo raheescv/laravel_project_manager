@@ -59,7 +59,12 @@ class SaleExport implements FromQuery, WithColumnFormatting, WithEvents, WithHea
             'Paid',
             'Balance',
             'Status',
-            'Created',
+            'Created By',
+            'Created At',
+            'Updated By',
+            'Updated At',
+            'Cancelled By',
+            'Cancelled At',
         ];
     }
 
@@ -87,7 +92,12 @@ class SaleExport implements FromQuery, WithColumnFormatting, WithEvents, WithHea
             $row->paid,
             $row->balance,
             ucfirst($row->status),
+            $row->createdUser?->name,
             systemDateTime($row->created_at),
+            $row->updatedUser?->name,
+            systemDateTime($row->updated_at),
+            $row->cancelledUser?->name,
+            systemDateTime($row->cancelled_at),
         ];
     }
 

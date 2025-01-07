@@ -130,11 +130,11 @@ class Table extends Component
                 $query->whereDate('date', '<=', date('Y-m-d', strtotime($value)));
             })
             ->count();
-        if ($count > 1) {
+        if ($count > 2000) {
             ExportSaleJob::dispatch(auth()->user());
             $this->dispatch('success', ['message' => 'You will get your file in your mailbox.']);
         } else {
-            $exportFileName = 'sale_'.now()->timestamp.'.xlsx';
+            $exportFileName = 'Sale_'.now()->timestamp.'.xlsx';
 
             return Excel::download(new SaleExport, $exportFileName);
         }
