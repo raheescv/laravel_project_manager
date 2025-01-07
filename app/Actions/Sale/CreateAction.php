@@ -40,6 +40,11 @@ class CreateAction
                 if (! $response['success']) {
                     throw new \Exception($response['message'], 1);
                 }
+                $model->refresh();
+                $response = (new JournalEntryAction)->execute($model, $user_id);
+                if (! $response['success']) {
+                    throw new \Exception($response['message'], 1);
+                }
             }
 
             $return['success'] = true;

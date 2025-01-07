@@ -5,6 +5,7 @@ namespace App\Livewire\Sale;
 use App\Actions\Sale\DeleteAction;
 use App\Exports\SaleExport;
 use App\Jobs\Export\ExportSaleJob;
+use App\Models\Configuration;
 use App\Models\Sale;
 use Illuminate\Support\Facades\DB;
 use Livewire\Component;
@@ -20,6 +21,8 @@ class Table extends Component
     public $branch_id = '';
 
     public $customer_id = '';
+
+    public $default_status = '';
 
     public $from_date = '';
 
@@ -47,6 +50,8 @@ class Table extends Component
     {
         $this->from_date = date('Y-m-d');
         $this->to_date = date('Y-m-d');
+        $this->status = Configuration::where('key', 'default_status')->value('value');
+
     }
 
     public function delete()

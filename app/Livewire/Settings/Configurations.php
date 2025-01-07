@@ -17,7 +17,7 @@ class Configurations extends Component
 
     public function mount()
     {
-        $this->barcode_type = Configuration::first('key', 'barcode_type')->value('value');
+        $this->barcode_type = Configuration::where('key', 'barcode_type')->value('value');
         $this->payment_methods = Configuration::where('key', 'payment_methods')->value('value');
         $this->payment_methods = json_decode($this->payment_methods, 1);
         $this->paymentMethods = [];
@@ -31,6 +31,7 @@ class Configurations extends Component
         Configuration::updateOrCreate(['key' => 'barcode_type'], ['value' => $this->barcode_type]);
         Configuration::updateOrCreate(['key' => 'payment_methods'], ['value' => json_encode($this->payment_methods)]);
         Cache::forget('payment_methods');
+        $this->dispatch('success', ['message' => 'Updated Successfully']);
     }
 
     public function render()

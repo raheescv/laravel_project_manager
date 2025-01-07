@@ -61,133 +61,23 @@
                     <tr class="text-capitalize">
                         <th>
                             <input type="checkbox" wire:model.live="selectAll" />
-                            <a href="#" wire:click.prevent="sortBy('id')">
-                                #
-                                @if ($sortField === 'id')
-                                    {!! sortDirection($sortDirection) !!}
-                                @endif
-                            </a>
+                            <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="id" label="#" />
                         </th>
-                        <th>
-                            <a href="#" wire:click.prevent="sortBy('date')">
-                                Date
-                                @if ($sortField === 'date')
-                                    {!! sortDirection($sortDirection) !!}
-                                @endif
-                            </a>
-                        </th>
-                        <th>
-                            <a href="#" wire:click.prevent="sortBy('invoice_no')">
-                                Invoice No
-                                @if ($sortField === 'invoice_no')
-                                    {!! sortDirection($sortDirection) !!}
-                                @endif
-                            </a>
-                        </th>
-                        <th>
-                            <a href="#" wire:click.prevent="sortBy('reference_no')">
-                                Reference No
-                                @if ($sortField === 'reference_no')
-                                    {!! sortDirection($sortDirection) !!}
-                                @endif
-                            </a>
-                        </th>
-                        <th>
-                            <a href="#" wire:click.prevent="sortBy('branch_id')">
-                                Branch
-                                @if ($sortField === 'branch_id')
-                                    {!! sortDirection($sortDirection) !!}
-                                @endif
-                            </a>
-                        </th>
-                        <th>
-                            <a href="#" wire:click.prevent="sortBy('accounts.name')">
-                                Customer
-                                @if ($sortField === 'accounts.name')
-                                    {!! sortDirection($sortDirection) !!}
-                                @endif
-                            </a>
-                        </th>
-                        <th class="text-end">
-                            <a href="#" wire:click.prevent="sortBy('gross_amount')">
-                                Gross Amount
-                                @if ($sortField === 'gross_amount')
-                                    {!! sortDirection($sortDirection) !!}
-                                @endif
-                            </a>
-                        </th>
-                        <th class="text-end">
-                            <a href="#" wire:click.prevent="sortBy('item_discount')">
-                                Item Discount
-                                @if ($sortField === 'item_discount')
-                                    {!! sortDirection($sortDirection) !!}
-                                @endif
-                            </a>
-                        </th>
-                        <th class="text-end">
-                            <a href="#" wire:click.prevent="sortBy('tax_amount')">
-                                Tax Amount
-                                @if ($sortField === 'tax_amount')
-                                    {!! sortDirection($sortDirection) !!}
-                                @endif
-                            </a>
-                        </th>
-                        <th class="text-end">
-                            <a href="#" wire:click.prevent="sortBy('total')">
-                                Total
-                                @if ($sortField === 'total')
-                                    {!! sortDirection($sortDirection) !!}
-                                @endif
-                            </a>
-                        </th>
-                        <th class="text-end">
-                            <a href="#" wire:click.prevent="sortBy('other_discount')">
-                                Other Discount
-                                @if ($sortField === 'other_discount')
-                                    {!! sortDirection($sortDirection) !!}
-                                @endif
-                            </a>
-                        </th>
-                        <th class="text-end">
-                            <a href="#" wire:click.prevent="sortBy('freight')">
-                                freight
-                                @if ($sortField === 'freight')
-                                    {!! sortDirection($sortDirection) !!}
-                                @endif
-                            </a>
-                        </th>
-                        <th class="text-end">
-                            <a href="#" wire:click.prevent="sortBy('grand_total')">
-                                Grand Total
-                                @if ($sortField === 'grand_total')
-                                    {!! sortDirection($sortDirection) !!}
-                                @endif
-                            </a>
-                        </th>
-                        <th class="text-end">
-                            <a href="#" wire:click.prevent="sortBy('paid')">
-                                Paid
-                                @if ($sortField === 'paid')
-                                    {!! sortDirection($sortDirection) !!}
-                                @endif
-                            </a>
-                        </th>
-                        <th class="text-end">
-                            <a href="#" wire:click.prevent="sortBy('balance')">
-                                Balance
-                                @if ($sortField === 'balance')
-                                    {!! sortDirection($sortDirection) !!}
-                                @endif
-                            </a>
-                        </th>
-                        <th>
-                            <a href="#" wire:click.prevent="sortBy('status')">
-                                Status
-                                @if ($sortField === 'status')
-                                    {!! sortDirection($sortDirection) !!}
-                                @endif
-                            </a>
-                        </th>
+                        <th> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="date" label="date" /> </th>
+                        <th> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="invoice_no" label="invoice no" /> </th>
+                        <th> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="reference_no" label="reference no" /> </th>
+                        <th> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="branch_id" label="branch" /> </th>
+                        <th> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="accounts.name" label="Customer" /> </th>
+                        <th class="text-end"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="gross_amount" label="Gross Amount" /> </th>
+                        <th class="text-end"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="item_discount" label="item discount" /> </th>
+                        <th class="text-end"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="tax_amount" label="tax amount" /> </th>
+                        <th class="text-end"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="total" label="total" /> </th>
+                        <th class="text-end"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="other_discount" label="other discount" /> </th>
+                        <th class="text-end"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="freight" label="freight" /> </th>
+                        <th class="text-end"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="grand_total" label="grand total" /> </th>
+                        <th class="text-end"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="paid" label="paid" /> </th>
+                        <th class="text-end"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="balance" label="balance" /> </th>
+                        <th> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="status" label="status" /> </th>
                     </tr>
                 </thead>
                 <tbody>

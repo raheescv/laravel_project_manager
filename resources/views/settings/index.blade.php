@@ -26,6 +26,12 @@
                                 </button>
                             </li>
                             <li class="nav-item" role="presentation">
+                                <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabsSaleSettings" type="button" role="tab" aria-controls="profile" aria-selected="false"
+                                    tabindex="-1">
+                                    Sale Settings
+                                </button>
+                            </li>
+                            <li class="nav-item" role="presentation">
                                 <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabsTheme" type="button" role="tab" aria-controls="profile" aria-selected="false" tabindex="-1">
                                     Theme
                                 </button>
@@ -42,6 +48,10 @@
                             <div id="tabsConfiguration" class="tab-pane fade active show" role="tabpanel">
                                 <h5>Configuration</h5>
                                 @livewire('settings.configurations')
+                            </div>
+                            <div id="tabsSaleSettings" class="tab-pane fade" role="tabpanel">
+                                <h5>Sale Settings</h5>
+                                @livewire('settings.sale-configuration')
                             </div>
                             <div id="tabsTheme" class="tab-pane fade" role="tabpanel">
                                 <h5>Theme tab</h5>

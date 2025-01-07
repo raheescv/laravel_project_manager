@@ -282,7 +282,7 @@
                                                             </div>
                                                         </th>
                                                         <th>
-                                                            {{ html()->number('amount')->value('')->class('form-control number select_on_focus')->id('payment')->attribute('wire:model.live', 'payment.amount') }}
+                                                            {{ html()->number('amount')->value('')->class('form-control number select_on_focus')->attribute('step', 'any')->id('payment')->attribute('wire:model.live', 'payment.amount') }}
                                                         </th>
                                                         <th>
                                                             <button type="button" wire:click="addPayment" class="btn btn-primary hstack gap-2 align-self-center">

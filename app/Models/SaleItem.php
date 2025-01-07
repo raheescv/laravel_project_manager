@@ -41,6 +41,11 @@ class SaleItem extends Model implements AuditableContracts
         ], $merge);
     }
 
+    public function inventory()
+    {
+        return $this->belongsTo(Inventory::class);
+    }
+
     public function product()
     {
         return $this->belongsTo(Product::class);

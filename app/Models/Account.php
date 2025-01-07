@@ -19,6 +19,7 @@ class Account extends Model implements AuditableContracts
         'mobile',
         'model',
         'email',
+        'description',
     ];
 
     public static function rules($id = 0, $merge = [])

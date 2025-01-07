@@ -11,6 +11,7 @@ return new class extends Migration
         Schema::create('sales', function (Blueprint $table) {
             $table->id();
             $table->string('invoice_no')->unique();
+            $table->string('reference_no')->nullable();
             $table->unsignedBigInteger('branch_id')->references('id')->on('branches');
             $table->unsignedBigInteger('account_id')->references('id')->on('accounts');
             $table->date('date');
@@ -18,8 +19,6 @@ return new class extends Migration
 
             $table->string('customer_name')->nullable();
             $table->string('customer_mobile', 15)->nullable();
-
-            $table->string('reference_no')->nullable();
 
             $table->decimal('gross_amount', 16, 2)->default(0);
             $table->decimal('item_discount', 16, 2)->default(0);

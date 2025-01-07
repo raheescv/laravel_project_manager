@@ -23,8 +23,8 @@ class ProductSeeder extends Seeder
                 'code' => $faker->hexcolor,
                 'barcode' => $faker->hexcolor,
                 'unit_id' => 1,
-                'cost' => 1,
-                'mrp' => 1,
+                'cost' => rand(99, 999),
+                'mrp' => rand(999, 9999),
                 'created_by' => 1,
                 'updated_by' => 1,
             ];

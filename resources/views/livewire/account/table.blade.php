@@ -80,6 +80,14 @@
                             </a>
                         </th>
                         <th>
+                            <a href="#" wire:click.prevent="sortBy('description')">
+                                description
+                                @if ($sortField === 'description')
+                                    {!! sortDirection($sortDirection) !!}
+                                @endif
+                            </a>
+                        </th>
+                        <th>
                             <a href="#" wire:click.prevent="sortBy('model')">
                                 Model
                                 @if ($sortField === 'model')
@@ -101,6 +109,7 @@
                             </td>
                             <td>{{ ucFirst($item->account_type) }}</td>
                             <td>{{ $item->name }}</td>
+                            <td>{{ $item->description }}</td>
                             <td>{{ ucFirst($item->model) }}</td>
                             <td class="text-end">
                                 @can('account.edit')

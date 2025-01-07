@@ -33,6 +33,7 @@ class AccountExport implements FromQuery, WithHeadings, WithMapping
             '#',
             'Account Type',
             'Name',
+            'description',
         ];
     }
 
@@ -47,6 +48,7 @@ class AccountExport implements FromQuery, WithHeadings, WithMapping
             $row->id,
             $row->account_type,
             $row->name,
+            $row->description,
         ];
     }
 }

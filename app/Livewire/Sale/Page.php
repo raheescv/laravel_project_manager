@@ -75,6 +75,7 @@ class Page extends Component
                         'product_id' => $item['product_id'],
                         'name' => $item['name'],
                         'employee_name' => $item['employee_name'],
+                        'tax_amount' => $item['tax_amount'],
                         'unit_price' => $item['unit_price'],
                         'quantity' => $item['quantity'],
                         'gross_amount' => $item['gross_amount'],
@@ -97,8 +98,10 @@ class Page extends Component
                 'date' => date('Y-m-d'),
                 'due_date' => date('Y-m-d'),
                 'account_id' => 3,
+
                 'gross_amount' => 0,
                 'total_quantity' => 0,
+                'item_discount' => 0,
                 'tax_amount' => 0,
 
                 'total' => 0,
@@ -184,6 +187,7 @@ class Page extends Component
 
         $this->sales['gross_amount'] = round($items->sum('gross_amount'), 2);
         $this->sales['total_quantity'] = round($items->sum('quantity'), 2);
+        $this->sales['item_discount'] = round($items->sum('discount'), 2);
         $this->sales['tax_amount'] = round($items->sum('tax_amount'), 2);
 
         $this->sales['total'] = round($items->sum('total'), 2);

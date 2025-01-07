@@ -15,6 +15,8 @@ class Sale extends Model implements AuditableContracts
 
     protected $fillable = [
         'invoice_no',
+        'reference_no',
+
         'branch_id',
         'account_id',
         'date',
@@ -22,7 +24,6 @@ class Sale extends Model implements AuditableContracts
 
         'customer_name',
         'customer_mobile',
-        'reference_no',
 
         'gross_amount',
         'item_discount',
