@@ -40,13 +40,6 @@
                 </div>
             </div>
         </div>
-        <div class="row">
-            @if ($exportLink)
-                <div class="mt-3">
-                    <a href="{{ $exportLink }}" target="_blank" class="btn btn-success">Download Export {{ $exportLink }}</a>
-                </div>
-            @endif
-        </div>
     </div>
     <div class="card-header">
         <div class="row">
