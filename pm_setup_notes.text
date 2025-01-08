@@ -1,0 +1,4 @@
+pm2 start server.js --name whatsapp-server --env production
+pm2 save
+pm2 startup
+pm2 logs whatsapp-server

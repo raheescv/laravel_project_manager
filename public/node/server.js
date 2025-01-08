@@ -16,6 +16,10 @@ function initializeClient() {
         authStrategy: new LocalAuth({
             clientId: 'whatsapp-client',
         }),
+        puppeteer: {
+            headless: true,
+            args: ['--no-sandbox', '--disable-setuid-sandbox'],
+        },
     });
 
     client.on('qr', (qr) => {
