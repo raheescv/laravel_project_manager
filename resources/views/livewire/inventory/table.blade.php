@@ -58,7 +58,7 @@
                     <div class="form-check mb-4">
                         <label for="non_zero" class="form-check-label">
                             {{ html()->checkbox('non_zero', [])->value('')->class('form-check-input')->attribute('wire:model.live', 'non_zero') }}
-                            No Zero Only
+                            Non Zero Only
                         </label>
                     </div>
                 </div>
