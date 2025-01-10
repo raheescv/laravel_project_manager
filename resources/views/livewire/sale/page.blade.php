@@ -368,10 +368,15 @@
                                                             <button type="submit" wire:confirm="Are you sure to submit this?" class="btn btn-success">Submit & Print</button>
                                                         @else
                                                             @if ($sales['status'] != 'cancelled')
-                                                                <button type="button" class="btn btn-success">Print</button>
+                                                                <a target="_blank" href="{{ route('print::sale::invoice', $sales['id']) }}" type="button" class="btn btn-success">Print</a>
                                                                 @can('sale.cancel')
                                                                     <button type="button" wire:click='save("cancelled")' wire:confirm="Are you sure to cancel this?" class="btn btn-danger btn-sm">
                                                                         Cancel
+                                                                    </button>
+                                                                @endcan
+                                                                @can('sale.cancel')
+                                                                    <button type="button" wire:click='sendToWhatsapp' class="btn btn-info btn-sm">
+                                                                        Whatsapp
                                                                     </button>
                                                                 @endcan
                                                             @endif

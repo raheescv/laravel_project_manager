@@ -15,7 +15,7 @@
                     </select>
                 </div>
                 <div class="form-group">
-                    {{-- <input type="text" wire:model.live="search" autofocus placeholder="Search..." class="form-control" autocomplete="off"> --}}
+                    <input type="text" wire:model.live="search" autofocus placeholder="Search..." class="form-control" autocomplete="off">
                 </div>
             </div>
         </div>

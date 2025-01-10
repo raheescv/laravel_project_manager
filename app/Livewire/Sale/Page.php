@@ -4,6 +4,8 @@ namespace App\Livewire\Sale;
 
 use App\Actions\Sale\CreateAction;
 use App\Actions\Sale\UpdateAction;
+use App\Helpers\Facades\SaleHelper;
+use App\Helpers\Facades\WhatsappHelper;
 use App\Models\Account;
 use App\Models\Inventory;
 use App\Models\Sale;
@@ -98,6 +100,8 @@ class Page extends Component
                 'date' => date('Y-m-d'),
                 'due_date' => date('Y-m-d'),
                 'account_id' => 3,
+                'customer_name' => '',
+                'customer_mobile' => '+919633155669',
 
                 'gross_amount' => 0,
                 'total_quantity' => 0,
@@ -298,10 +302,13 @@ class Page extends Component
         try {
             $oldStatus = $this->sales['status'];
             DB::beginTransaction();
+
             $this->sales['status'] = $type;
             $this->sales['items'] = $this->items;
             $this->sales['payments'] = $this->payments;
+
             $user_id = auth()->id();
+
             if (! $this->table_id) {
                 $response = (new CreateAction)->execute($this->sales, $user_id);
             } else {
@@ -311,8 +318,14 @@ class Page extends Component
                 throw new \Exception($response['message'], 1);
             }
 
+            $table_id = $response['data']['id'];
             $this->mount($this->table_id);
+
             DB::commit();
+            if ($this->send_to_whatsapp) {
+                $this->sendToWhatsapp($table_id);
+            }
+
             $this->dispatch('ResetSelectBox');
             $this->dispatch('success', ['message' => $response['message']]);
         } catch (\Throwable $th) {
@@ -320,6 +333,38 @@ class Page extends Component
             $this->dispatch('error', ['message' => $th->getMessage()]);
             $this->sales['status'] = $oldStatus;
         }
+    }
+
+    public function sendToWhatsapp($table_id = null)
+    {
+        if (! $table_id) {
+            $table_id = $this->table_id;
+        }
+        $sale = Sale::find($table_id);
+        if ($sale['customer_mobile']) {
+            $number = $sale['customer_mobile'];
+        } else {
+            $number = $sale->account->mobile;
+        }
+        $imageContent = SaleHelper::saleInvoice($table_id, 'thermal');
+        $image_path = SaleHelper::convertHtmlToImage($imageContent, $sale->invoice_no);
+        if (! $number) {
+            $this->dispatch('error', ['message' => 'Invalid Number']);
+
+            goto skip;
+        }
+        $data = [
+            'number' => $number,
+            'message' => 'Please Check Your Invoice : '.currency($sale->grand_total),
+            'filePath' => $image_path,
+        ];
+        $response = WhatsappHelper::send($data);
+        if (! $response['success']) {
+            $this->dispatch('error', ['message' => $response['message']]);
+        } else {
+            $this->dispatch('success', ['message' => $response['message']]);
+        }
+        skip :
     }
 
     public function render()

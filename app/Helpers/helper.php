@@ -218,6 +218,16 @@ if (! function_exists('saleStatuses')) {
         ];
     }
 }
+
+if (! function_exists('thermalPrinterStyle')) {
+    function thermalPrinterStyle()
+    {
+        return [
+            'with_arabic' => 'With Arabic',
+            'english_only' => 'English Only',
+        ];
+    }
+}
 if (! function_exists('getNextSaleInvoiceNo')) {
     function getNextSaleInvoiceNo()
     {
