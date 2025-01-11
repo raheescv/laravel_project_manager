@@ -232,13 +232,13 @@
             <tbody>
                 @foreach ($sale->items as $item)
                     <tr>
-                        <td colspan="4" class="text-left">{{ $item->product->name }}</td>
+                        <td colspan="4" class="text-left"><b>{{ $item->product->name }}</b></td>
                     </tr>
                     <tr>
-                        <td class="text-right">{{ $loop->iteration }}</td>
-                        <td class="text-right">{{ currency($item->unit_price) }}</td>
-                        <td class="text-right">{{ round($item->quantity, 3) }}</td>
-                        <td class="text-right">{{ currency($item->total) }}</td>
+                        <td class="text-right"> <b>{{ $loop->iteration }}</b> </td>
+                        <td class="text-right"> <b>{{ currency($item->unit_price) }}</b> </td>
+                        <td class="text-right"> <b>{{ round($item->quantity, 3) }}</b> </td>
+                        <td class="text-right"> <b>{{ currency($item->total) }}</b> </td>
                     </tr>
                 @endforeach
             </tbody>
@@ -252,7 +252,7 @@
                     <td class="text-left"><b>Total Qty</b></td>
                     <td class="text-right"><b>{{ round($sale->items()->sum('quantity'), 3) }}</b></td>
                     @if ($thermal_printer_style == 'with_arabic')
-                        <td class="text-right">{{ __('lang.total_quantity', [], 'ar') }}</td>
+                        <td class="text-right"> <b>{{ __('lang.total_quantity', [], 'ar') }}</b> </td>
                     @endif
                 </tr>
             @endif
@@ -261,14 +261,14 @@
                     <td class="text-left"><b>Net Value</b></td>
                     <td class="text-right"><b>{{ $sale->total }}</b></td>
                     @if ($thermal_printer_style == 'with_arabic')
-                        <td class="text-right">{{ __('lang.net_value', [], 'ar') }}</td>
+                        <td class="text-right"> <b>{{ __('lang.net_value', [], 'ar') }}</b> </td>
                     @endif
                 </tr>
                 <tr>
                     <td class="text-left"><b>Discount</b></td>
                     <td class="text-right"><b>{{ $sale->other_discount + $sale->item_discount }}</b></td>
                     @if ($thermal_printer_style == 'with_arabic')
-                        <td class="text-right">{{ __('lang.discount', [], 'ar') }}</td>
+                        <td class="text-right"> <b>{{ __('lang.discount', [], 'ar') }}</b> </td>
                     @endif
                 </tr>
             @endif
@@ -276,14 +276,14 @@
                 <td class="text-left"><b>Total</b></td>
                 <td class="text-right"><b>{{ $sale->grand_total }}</b></td>
                 @if ($thermal_printer_style == 'with_arabic')
-                    <td class="text-right">{{ __('lang.total', [], 'ar') }}</td>
+                    <td class="text-right"> <b>{{ __('lang.total', [], 'ar') }}</b> </td>
                 @endif
             </tr>
             <tr>
                 <td class="text-left"><b>Paid</b></td>
                 <td class="text-right"><b>{{ $sale->paid }}</b></td>
                 @if ($thermal_printer_style == 'with_arabic')
-                    <td class="text-right">{{ __('lang.paid', [], 'ar') }}</td>
+                    <td class="text-right"> <b>{{ __('lang.paid', [], 'ar') }}</b> </td>
                 @endif
             </tr>
             @if ($sale->balance)
@@ -291,32 +291,34 @@
                     <td class="text-left"><b>Balance</b></td>
                     <td class="text-right"><b>{{ $sale->balance }}</b></td>
                     @if ($thermal_printer_style == 'with_arabic')
-                        <td class="text-right">{{ __('lang.balance', [], 'ar') }}</td>
+                        <td class="text-right"> <b>{{ __('lang.balance', [], 'ar') }}</b> </td>
                     @endif
                 </tr>
             @endif
         </table>
         <div class="barcode">
             <img src="data:image/png;base64,{{ DNS1D::getBarcodePNG($barcode_string, 'C128') }}" alt="barcode" />
-            <p>{{ $barcode_string }}</p>
+            <p> <b>{{ $barcode_string }}</b> </p>
         </div>
         <div class="footer">
             <div>
-                <span class="text-left">Served By</span> : {{ $sale->createdUser->name }}
+                <span class="text-left"> <b>Served By</b> </span> : <b>{{ $sale->createdUser->name }}</b>
                 @if ($thermal_printer_style == 'with_arabic')
                     <span class="text-right">
-                        :{{ __('lang.served_by', [], 'ar') }}
+                        <b>:{{ __('lang.served_by', [], 'ar') }}</b>
                     </span>
                 @endif
             </div>
             <div>
-                <?= date('D d-M-Y h:i A', strtotime($sale->updated_at)) ?></b>
+                <b><?= date('D d-M-Y h:i A', strtotime($sale->updated_at)) ?></b></b>
             </div>
         </div>
         <div class="footer">
-            <p>{{ $thermal_printer_footer_english }}</p>
+            <p> <b>{{ $thermal_printer_footer_english }}</b> </p>
             @if ($thermal_printer_style == 'with_arabic')
-                <p dir="rtl">{{ $thermal_printer_footer_arabic }}</p>
+                <b>
+                    <p dir="rtl">{{ $thermal_printer_footer_arabic }}</p>
+                </b>
             @endif
         </div>
     </div>
