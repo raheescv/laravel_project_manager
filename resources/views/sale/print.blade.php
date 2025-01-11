@@ -12,12 +12,13 @@
     <style>
         body {
             font-family: "Courier New", Courier, monospace;
-            line-height: 1.1;
+            line-height: 1.2;
             font-size: 12px;
             margin: 0 auto;
             width: 80mm;
-            background-color: #f9f9f9;
-            padding: 10px;
+            background-color: #fff;
+            padding: 15px;
+            color: #000;
         }
 
         @page {
@@ -27,26 +28,31 @@
 
         .receipt-container {
             background-color: #fff;
-            padding: 10px;
             border-radius: 5px;
             box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            padding: 1px;
         }
 
         h1,
+        h2,
         h3 {
-            margin: 0;
+            margin: 5px 0;
             text-align: center;
+            font-size: 14px;
+            font-weight: bold;
         }
 
         .divider {
-            border-bottom: 1px dashed #ddd;
-            margin: 10px 0;
+            border-top: 1px dashed #000;
+            margin: 5px 0;
         }
 
         .table {
             width: 100%;
             border-collapse: collapse;
             margin-bottom: 10px;
+            font-size: 12px;
         }
 
         .nowrap {
@@ -55,13 +61,15 @@
 
         .table th,
         .table td {
-            border: 1px solid #ddd;
-            padding: 5px;
+            border: 1px solid #0e0d0d;
+            padding: 3px;
             text-align: center;
         }
 
         .table th {
             background-color: #f0f0f0;
+            font-size: 12px;
+            font-weight: bold;
         }
 
         .text-left {
@@ -73,7 +81,7 @@
         }
 
         .text-center {
-            text-align: center;
+            text-align: center !important;
         }
 
         .bold {
@@ -82,17 +90,13 @@
 
         .barcode {
             text-align: center;
-            margin: 10px 0;
-        }
-
-        .barcode img {
-            width: 80%;
+            margin: 5px 0;
         }
 
         .footer {
             text-align: center;
             font-size: 10px;
-            margin-top: 10px;
+            margin-top: 5px;
         }
 
         @media print {
@@ -106,6 +110,11 @@
             .receipt-container {
                 border: none;
                 box-shadow: none;
+            }
+
+            body {
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
             }
 
             .no-print {
@@ -135,30 +144,21 @@
             <table class="table">
                 <tr>
                     <td class="text-left"><b>Invoice No</b> <br></td>
+                    <td colspan="2" class="text-left"><b>{{ $sale->invoice_no }}</b></td>
                     <td class="nowrap text-right"> <b>{{ __('lang.invoice_no', [], 'ar') }}</b> </td>
                 </tr>
+            </table>
+            <table class="table">
                 <tr>
-                    <td colspan="2" class="text-center"><b>{{ $sale->invoice_no }}</b></td>
+                    <td class="nowrap text-left" width="28%"><b>Date</b></td>
+                    <td colspan="2" class="text-left"><b>{{ systemDate($sale->date) }}</b></td>
+                    <td class="nowrap text-right"> <b>{{ __('lang.date', [], 'ar') }}</b> </td>
                 </tr>
             </table>
             <table class="table">
                 <tr>
-                    <td class="nowrap text-left"><b>Invoice Date</b></td>
-                    <td class="nowrap text-right"> <b>{{ __('lang.invoice_date', [], 'ar') }}</b> </td>
-                </tr>
-                <tr>
-                    <td colspan="2" class="text-center"><b>{{ systemDate($sale->date) }}</b></td>
-                </tr>
-            </table>
-            <table class="table">
-                <tr>
-                    <td class="nowrap text-left"><b>Customer Name</b></td>
-                    <td class="nowrap text-right">
-                        <b>{{ __('lang.customer_name', [], 'ar') }}</b>
-                    </td>
-                </tr>
-                <tr>
-                    <td colspan="2" class="text-center">
+                    <td class="nowrap text-left" width="28%"><b>Customer</b></td>
+                    <td colspan="2" class="text-left">
                         <b>
                             @if ($sale->customer_name)
                                 {{ ucFirst($sale->customer_name) }}
@@ -166,6 +166,9 @@
                                 {{ ucFirst($sale->account?->name) }}
                             @endif
                         </b>
+                    </td>
+                    <td class="nowrap text-right">
+                        <b>{{ __('lang.customer', [], 'ar') }}</b>
                     </td>
                 </tr>
             </table>
@@ -188,11 +191,11 @@
                     <td class="text-left"><b>{{ $sale->invoice_no }}</b></td>
                 </tr>
                 <tr>
-                    <td class="nowrap text-left"><b>Invoice Date</b></td>
+                    <td class="nowrap text-left"><b>Date</b></td>
                     <td class="text-left"><b>{{ systemDate($sale->date) }}</b></td>
                 </tr>
                 <tr>
-                    <td class="nowrap text-left"><b>Customer Name</b></td>
+                    <td class="nowrap text-left"><b>Customer</b></td>
                     <td class="text-left">
                         <b>
                             @if ($sale->customer_name)
@@ -215,9 +218,9 @@
                 @if ($thermal_printer_style == 'with_arabic')
                     <tr>
                         <th>#</th>
-                        <th> Price <br> {{ __('lang.price', [], 'ar') }} </th>
-                        <th> Qty <br> {{ __('lang.quantity', [], 'ar') }} </th>
-                        <th> Amount <br> {{ __('lang.amount', [], 'ar') }} </th>
+                        <th class="text-right"> Price <br> {{ __('lang.price', [], 'ar') }} </th>
+                        <th class="text-right"> Qty <br> {{ __('lang.quantity', [], 'ar') }} </th>
+                        <th class="text-right"> Amount <br> {{ __('lang.amount', [], 'ar') }} </th>
                     </tr>
                 @endif
                 @if ($thermal_printer_style == 'english_only')
@@ -234,6 +237,11 @@
                     <tr>
                         <td colspan="4" class="text-left"><b>{{ $item->product->name }}</b></td>
                     </tr>
+                    @if ($item->product->name_arabic)
+                        <tr>
+                            <td colspan="4" class="text-left"><b>{{ $item->product->name_arabic }}</b></td>
+                        </tr>
+                    @endif
                     <tr>
                         <td class="text-right"> <b>{{ $loop->iteration }}</b> </td>
                         <td class="text-right"> <b>{{ currency($item->unit_price) }}</b> </td>
@@ -252,46 +260,46 @@
                     <td class="text-left"><b>Total Qty</b></td>
                     <td class="text-right"><b>{{ round($sale->items()->sum('quantity'), 3) }}</b></td>
                     @if ($thermal_printer_style == 'with_arabic')
-                        <td class="text-right"> <b>{{ __('lang.total_quantity', [], 'ar') }}</b> </td>
+                        <td width="39%" class="text-right"> <b>{{ __('lang.total_quantity', [], 'ar') }}</b> </td>
                     @endif
                 </tr>
             @endif
             @if ($enable_discount_in_print == 'yes')
                 <tr>
-                    <td class="text-left"><b>Net Value</b></td>
-                    <td class="text-right"><b>{{ $sale->total }}</b></td>
+                    <td class="text-left" width="39%"><b>Net Value</b></td>
+                    <td class="text-right"><b>{{ currency($sale->total) }}</b></td>
                     @if ($thermal_printer_style == 'with_arabic')
-                        <td class="text-right"> <b>{{ __('lang.net_value', [], 'ar') }}</b> </td>
+                        <td width="39%" class="text-right"> <b>{{ __('lang.net_value', [], 'ar') }}</b> </td>
                     @endif
                 </tr>
                 <tr>
-                    <td class="text-left"><b>Discount</b></td>
-                    <td class="text-right"><b>{{ $sale->other_discount + $sale->item_discount }}</b></td>
+                    <td class="text-left" width="39%"><b>Discount</b></td>
+                    <td class="text-right"><b>{{ currency($sale->other_discount + $sale->item_discount) }}</b></td>
                     @if ($thermal_printer_style == 'with_arabic')
-                        <td class="text-right"> <b>{{ __('lang.discount', [], 'ar') }}</b> </td>
+                        <td width="39%" class="text-right"> <b>{{ __('lang.discount', [], 'ar') }}</b> </td>
                     @endif
                 </tr>
             @endif
             <tr>
-                <td class="text-left"><b>Total</b></td>
+                <td class="text-left" width="39%"><b>Total</b></td>
                 <td class="text-right"><b>{{ $sale->grand_total }}</b></td>
                 @if ($thermal_printer_style == 'with_arabic')
-                    <td class="text-right"> <b>{{ __('lang.total', [], 'ar') }}</b> </td>
+                    <td width="39%" class="text-right"> <b>{{ __('lang.total', [], 'ar') }}</b> </td>
                 @endif
             </tr>
             <tr>
-                <td class="text-left"><b>Paid</b></td>
-                <td class="text-right"><b>{{ $sale->paid }}</b></td>
+                <td class="text-left" width="39%"><b>Paid</b></td>
+                <td class="text-right"><b>{{ currency($sale->paid) }}</b></td>
                 @if ($thermal_printer_style == 'with_arabic')
-                    <td class="text-right"> <b>{{ __('lang.paid', [], 'ar') }}</b> </td>
+                    <td width="39%" class="text-right"> <b>{{ __('lang.paid', [], 'ar') }}</b> </td>
                 @endif
             </tr>
             @if ($sale->balance)
                 <tr>
-                    <td class="text-left"><b>Balance</b></td>
-                    <td class="text-right"><b>{{ $sale->balance }}</b></td>
+                    <td class="text-left" width="39%"><b>Balance</b></td>
+                    <td class="text-right"><b>{{ currency($sale->balance) }}</b></td>
                     @if ($thermal_printer_style == 'with_arabic')
-                        <td class="text-right"> <b>{{ __('lang.balance', [], 'ar') }}</b> </td>
+                        <td width="39%" class="text-right"> <b>{{ __('lang.balance', [], 'ar') }}</b> </td>
                     @endif
                 </tr>
             @endif
