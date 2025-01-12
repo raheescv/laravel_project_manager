@@ -20,6 +20,7 @@
             </div>
         </div>
     </div>
+    <x-sale.column-visibility-canvas />
     @push('scripts')
         @include('components.select.customerSelect')
         @include('components.select.branchSelect')

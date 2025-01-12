@@ -24,6 +24,16 @@
                 <div class="form-group">
                     <input type="text" wire:model.live="search" autofocus placeholder="Search..." class="form-control" autocomplete="off">
                 </div>
+                <div class="dropdown">
+                    <button class="btn btn-icon btn-outline-light" data-bs-toggle="dropdown" aria-expanded="true">
+                        <i class="demo-pli-dot-horizontal fs-5"></i>
+                        <span class="visually-hidden">Toggle Dropdown</span>
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end" style="position: absolute; inset: auto 0px 0px auto; margin: 0px; transform: translate3d(-0.5px, -40px, 0px);"
+                        data-popper-placement="top-end">
+                        <li><a class="dropdown-item" data-bs-toggle="offcanvas" data-bs-target="#saleColumnVisibility" aria-controls="saleColumnVisibility">Column Visibility</a></li>
+                    </ul>
+                </div>
             </div>
         </div>
         <hr>
@@ -65,19 +75,45 @@
                         </th>
                         <th> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="date" label="date" /> </th>
                         <th> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="invoice_no" label="invoice no" /> </th>
-                        <th> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="reference_no" label="reference no" /> </th>
-                        <th> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="branch_id" label="branch" /> </th>
-                        <th> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="accounts.name" label="Customer" /> </th>
-                        <th class="text-end"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="gross_amount" label="Gross Amount" /> </th>
-                        <th class="text-end"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="item_discount" label="item discount" /> </th>
-                        <th class="text-end"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="tax_amount" label="tax amount" /> </th>
-                        <th class="text-end"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="total" label="total" /> </th>
-                        <th class="text-end"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="other_discount" label="other discount" /> </th>
-                        <th class="text-end"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="freight" label="freight" /> </th>
-                        <th class="text-end"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="grand_total" label="grand total" /> </th>
-                        <th class="text-end"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="paid" label="paid" /> </th>
-                        <th class="text-end"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="balance" label="balance" /> </th>
-                        <th> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="status" label="status" /> </th>
+                        @if ($sale_visible_column['reference_no'])
+                            <th> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="reference_no" label="reference no" /> </th>
+                        @endif
+                        @if ($sale_visible_column['branch_id'])
+                            <th> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="branch_id" label="branch" /> </th>
+                        @endif
+                        @if ($sale_visible_column['customer'])
+                            <th> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="accounts.name" label="Customer" /> </th>
+                        @endif
+                        @if ($sale_visible_column['gross_amount'])
+                            <th class="text-end"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="gross_amount" label="Gross Amount" /> </th>
+                        @endif
+                        @if ($sale_visible_column['item_discount'])
+                            <th class="text-end"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="item_discount" label="item discount" /> </th>
+                        @endif
+                        @if ($sale_visible_column['tax_amount'])
+                            <th class="text-end"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="tax_amount" label="tax amount" /> </th>
+                        @endif
+                        @if ($sale_visible_column['total'])
+                            <th class="text-end"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="total" label="total" /> </th>
+                        @endif
+                        @if ($sale_visible_column['other_discount'])
+                            <th class="text-end"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="other_discount" label="other discount" /> </th>
+                        @endif
+                        @if ($sale_visible_column['freight'])
+                            <th class="text-end"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="freight" label="freight" /> </th>
+                        @endif
+                        @if ($sale_visible_column['grand_total'])
+                            <th class="text-end"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="grand_total" label="grand total" /> </th>
+                        @endif
+                        @if ($sale_visible_column['paid'])
+                            <th class="text-end"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="paid" label="paid" /> </th>
+                        @endif
+                        @if ($sale_visible_column['balance'])
+                            <th class="text-end"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="balance" label="balance" /> </th>
+                        @endif
+                        @if ($sale_visible_column['status'])
+                            <th> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="status" label="status" /> </th>
+                        @endif
                     </tr>
                 </thead>
                 <tbody>
@@ -89,34 +125,89 @@
                             </td>
                             <td>{{ systemDate($item->date) }}</td>
                             <td><a href="{{ route('sale::edit', $item->id) }}">{{ $item->invoice_no }} </a></td>
-                            <td>{{ $item->reference_no }}</td>
-                            <td>{{ $item->branch?->name }}</td>
-                            <td>{{ $item->name }}</td>
-                            <td class="text-end">{{ currency($item->gross_amount) }}</td>
-                            <td class="text-end">{{ currency($item->item_discount) }}</td>
-                            <td class="text-end">{{ currency($item->tax_amount) }}</td>
-                            <td class="text-end">{{ currency($item->total) }}</td>
-                            <td class="text-end">{{ currency($item->other_discount) }}</td>
-                            <td class="text-end">{{ currency($item->freight) }}</td>
-                            <td class="text-end">{{ currency($item->grand_total) }}</td>
-                            <td class="text-end">{{ currency($item->paid) }}</td>
-                            <td class="text-end">{{ currency($item->balance) }}</td>
-                            <td>{{ ucFirst($item->status) }}</td>
+                            @if ($sale_visible_column['reference_no'])
+                                <td>{{ $item->reference_no }}</td>
+                            @endif
+                            @if ($sale_visible_column['branch_id'])
+                                <td>{{ $item->branch?->name }}</td>
+                            @endif
+                            @if ($sale_visible_column['customer'])
+                                <td>{{ $item->name }}</td>
+                            @endif
+                            @if ($sale_visible_column['gross_amount'])
+                                <td class="text-end">{{ currency($item->gross_amount) }}</td>
+                            @endif
+                            @if ($sale_visible_column['item_discount'])
+                                <td class="text-end">{{ currency($item->item_discount) }}</td>
+                            @endif
+                            @if ($sale_visible_column['tax_amount'])
+                                <td class="text-end">{{ currency($item->tax_amount) }}</td>
+                            @endif
+                            @if ($sale_visible_column['total'])
+                                <td class="text-end">{{ currency($item->total) }}</td>
+                            @endif
+                            @if ($sale_visible_column['other_discount'])
+                                <td class="text-end">{{ currency($item->other_discount) }}</td>
+                            @endif
+                            @if ($sale_visible_column['freight'])
+                                <td class="text-end">{{ currency($item->freight) }}</td>
+                            @endif
+                            @if ($sale_visible_column['grand_total'])
+                                <td class="text-end">{{ currency($item->grand_total) }}</td>
+                            @endif
+                            @if ($sale_visible_column['paid'])
+                                <td class="text-end">{{ currency($item->paid) }}</td>
+                            @endif
+                            @if ($sale_visible_column['balance'])
+                                <td class="text-end">{{ currency($item->balance) }}</td>
+                            @endif
+                            @if ($sale_visible_column['status'])
+                                <td>{{ ucFirst($item->status) }}</td>
+                            @endif
                         </tr>
                     @endforeach
                 </tbody>
                 <tfoot>
                     <tr>
-                        <th colspan="6">Total</th>
-                        <th class="text-end">{{ currency($total['gross_amount']) }}</th>
-                        <th class="text-end">{{ currency($total['item_discount']) }}</th>
-                        <th class="text-end">{{ currency($total['tax_amount']) }}</th>
-                        <th class="text-end">{{ currency($total['total']) }}</th>
-                        <th class="text-end">{{ currency($total['other_discount']) }}</th>
-                        <th class="text-end">{{ currency($total['freight']) }}</th>
-                        <th class="text-end">{{ currency($total['grand_total']) }}</th>
-                        <th class="text-end">{{ currency($total['paid']) }}</th>
-                        <th class="text-end">{{ currency($total['balance']) }}</th>
+                        <th></th>
+                        <th></th>
+                        <th></th>
+                        @if ($sale_visible_column['reference_no'])
+                            <th></th>
+                        @endif
+                        @if ($sale_visible_column['branch_id'])
+                            <th></th>
+                        @endif
+                        @if ($sale_visible_column['customer'])
+                            <th></th>
+                        @endif
+                        @if ($sale_visible_column['gross_amount'])
+                            <th class="text-end">{{ currency($total['gross_amount']) }}</th>
+                        @endif
+                        @if ($sale_visible_column['item_discount'])
+                            <th class="text-end">{{ currency($total['item_discount']) }}</th>
+                        @endif
+                        @if ($sale_visible_column['tax_amount'])
+                            <th class="text-end">{{ currency($total['tax_amount']) }}</th>
+                        @endif
+                        @if ($sale_visible_column['total'])
+                            <th class="text-end">{{ currency($total['total']) }}</th>
+                        @endif
+                        @if ($sale_visible_column['other_discount'])
+                            <th class="text-end">{{ currency($total['other_discount']) }}</th>
+                        @endif
+                        @if ($sale_visible_column['freight'])
+                            <th class="text-end">{{ currency($total['freight']) }}</th>
+                        @endif
+                        @if ($sale_visible_column['grand_total'])
+                            <th class="text-end">{{ currency($total['grand_total']) }}</th>
+                        @endif
+                        @if ($sale_visible_column['paid'])
+                            <th class="text-end">{{ currency($total['paid']) }}</th>
+                        @endif
+                        @if ($sale_visible_column['balance'])
+                            <th class="text-end">{{ currency($total['balance']) }}</th>
+                        @endif
                     </tr>
                 </tfoot>
             </table>

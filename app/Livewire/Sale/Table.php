@@ -34,6 +34,8 @@ class Table extends Component
 
     public $selected = [];
 
+    public $sale_visible_column = [];
+
     public $selectAll = false;
 
     public $sortField = 'sales.id';
@@ -48,10 +50,10 @@ class Table extends Component
 
     public function mount()
     {
+        $this->sale_visible_column = json_decode(Configuration::where('key', 'sale_visible_column')->value('value'), true);
         $this->from_date = date('Y-m-d');
         $this->to_date = date('Y-m-d');
         $this->status = Configuration::where('key', 'default_status')->value('value');
-
     }
 
     public function delete()

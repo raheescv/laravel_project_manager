@@ -326,6 +326,7 @@ class Page extends Component
                 $this->sendToWhatsapp($table_id);
             }
 
+            $this->dispatch('print-invoice', ['link' => route('print::sale::invoice', $response['data']['id'])]);
             $this->dispatch('ResetSelectBox');
             $this->dispatch('success', ['message' => $response['message']]);
         } catch (\Throwable $th) {

@@ -19,5 +19,21 @@ class ConfigurationSeeder extends Seeder
         Configuration::updateOrCreate(['key' => 'enable_discount_in_print'], ['value' => 'yes']);
         Configuration::updateOrCreate(['key' => 'enable_total_quantity_in_print'], ['value' => 'yes']);
         Configuration::updateOrCreate(['key' => 'enable_logo_in_print'], ['value' => 'yes']);
+        $saleVisibleColumns = [
+            'reference_no' => true,
+            'branch_id' => false,
+            'customer' => true,
+            'gross_amount' => false,
+            'item_discount' => false,
+            'tax_amount' => false,
+            'total' => false,
+            'other_discount' => false,
+            'freight' => false,
+            'grand_total' => true,
+            'paid' => true,
+            'balance' => true,
+            'status' => false,
+        ];
+        Configuration::updateOrCreate(['key' => 'sale_visible_column'], ['value' => json_encode($saleVisibleColumns)]);
     }
 }
