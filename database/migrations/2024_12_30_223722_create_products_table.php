@@ -10,6 +10,7 @@ return new class extends Migration
     {
         Schema::create('products', function (Blueprint $table) {
             $table->id();
+            $table->enum('type', ['product', 'service'])->default('product');
             $table->string('name')->unique();
             $table->string('code');
             $table->string('name_arabic')->nullable();
@@ -29,6 +30,8 @@ return new class extends Migration
             $table->float('cost', 8, 2)->default(0);
             $table->float('mrp', 8, 2)->default(0);
 
+            $table->integer('time')->default(0)->nullable();
+
             $table->string('barcode')->nullable();
             $table->string('pattern')->nullable();
             $table->string('color')->nullable();
@@ -42,6 +45,8 @@ return new class extends Migration
             $table->string('location')->nullable();
             $table->string('reorder_level')->nullable();
             $table->string('plu')->nullable();
+
+            $table->enum('status', ['active', 'disabled'])->default('active');
 
             $table->unsignedBigInteger('created_by');
             $table->unsignedBigInteger('updated_by');

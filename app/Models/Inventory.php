@@ -114,6 +114,7 @@ class Inventory extends Model implements AuditableContracts
             'products.name',
             'products.size',
             'products.mrp',
+            'products.type',
         ])->toArray();
         $return['items'] = $self;
 

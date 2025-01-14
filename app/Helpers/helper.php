@@ -219,6 +219,16 @@ if (! function_exists('saleStatuses')) {
     }
 }
 
+if (! function_exists('activeOrDisabled')) {
+    function activeOrDisabled()
+    {
+        return [
+            'active' => 'Active',
+            'disabled' => 'Disabled',
+        ];
+    }
+}
+
 if (! function_exists('thermalPrinterStyle')) {
     function thermalPrinterStyle()
     {

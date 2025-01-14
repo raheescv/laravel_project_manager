@@ -23,24 +23,31 @@
             },
             render: {
                 option: function(item, escape) {
-                    return `
+                    var option = `
                         <div class="dropdown-item d-flex align-items-center">
                             <div class="item-icon">
                                 <img src="${escape(item.image || '{{ asset('assets/img/profile-photos/1.png') }}')}" width="50%" alt="${escape(item.name)}" class="item-image">
                             </div>
                             <div class="item-content">
-                                <div class="item-name">${escape(item.name)}</div>
-                                <div class="item-details">
+                                <div class="item-name">${escape(item.name)}</div>`;
+                    if (item.type == 'product') {
+                        option += ` <div class="item-details">
                                     <span><strong>MRP:</strong> ${escape(item.mrp)}</span>
                                     <span><strong>Barcode:</strong> ${escape(item.barcode)}</span>
-                                    <span><strong>Quantity:</strong> ${escape(item.quantity)}</span>
                                     ${item.size ? `<span><strong>Size:</strong> ${escape(item.size)}</span>`:''}
                                     ${item.color ? `<span><strong>Size:</strong> ${escape(item.color)}</span>`:''}
                                     ${item.batch ? `<span><strong>Size:</strong> ${escape(item.batch)}</span>`:''}
-                                </div>
+                                </div>`;
+                    } else {
+                        option += ` <div class="item-details">
+                                    <span><strong>Price:</strong> ${escape(item.mrp)}</span>
+                                </div>`;
+                    }
+                    option += `
                             </div>
                         </div>
                     `;
+                    return option;
                 },
                 item: function(item, escape) {
                     return `<div>${escape(item.name || item.text || '')}</div>`;

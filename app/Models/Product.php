@@ -16,6 +16,7 @@ class Product extends Model implements AuditableContracts
     use SoftDeletes;
 
     protected $fillable = [
+        'type',
         'code',
         'name',
         'name_arabic',
@@ -35,6 +36,8 @@ class Product extends Model implements AuditableContracts
         'cost',
         'mrp',
 
+        'time',
+
         'barcode',
         'pattern',
         'color',
@@ -48,6 +51,9 @@ class Product extends Model implements AuditableContracts
         'location',
         'reorder_level',
         'plu',
+
+        'status',
+
         'created_by',
         'updated_by',
     ];
@@ -64,6 +70,16 @@ class Product extends Model implements AuditableContracts
             'cost' => ['required'],
             'mrp' => ['required'],
         ], $merge);
+    }
+
+    public function scopeService($query)
+    {
+        return $query->where('type', 'service');
+    }
+
+    public function scopeProduct($query)
+    {
+        return $query->where('type', 'product');
     }
 
     public function setNameAttribute($value)
@@ -110,7 +126,7 @@ class Product extends Model implements AuditableContracts
     {
         $value['is_selling'] = $value['is_selling'] ?? true;
         $data['is_selling'] = in_array($value['is_selling'], ['Yes', true]) ? true : false;
-
+        $data['unit'] = $data['unit'] ?? 'Nos';
         $unit = Unit::firstOrCreate(['name' => $data['unit'], 'code' => $data['unit']]);
         $data['unit_id'] = $unit->id;
         $department_id = Department::selfCreate($data['department']);
@@ -149,7 +165,7 @@ class Product extends Model implements AuditableContracts
             });
         });
         $self = $self->limit(10);
-        $self = $self->get(['name', 'barcode', 'size', 'mrp', 'cost', 'id'])->toArray();
+        $self = $self->get(['name', 'barcode', 'size', 'mrp', 'cost', 'id', 'type'])->toArray();
         $return['items'] = $self;
 
         return $return;

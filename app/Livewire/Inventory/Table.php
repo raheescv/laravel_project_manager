@@ -120,6 +120,7 @@ class Table extends Component
             ->when($this->product_id ?? '', function ($query, $value) {
                 $query->where('product_id', $value);
             })
+            ->where('products.type', 'product')
             ->latest('inventories.created_at')
             ->select(
                 'inventories.id',

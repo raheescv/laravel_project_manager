@@ -8,6 +8,7 @@ use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\SaleController;
+use App\Http\Controllers\ServiceController;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
 
@@ -33,6 +34,13 @@ Route::middleware('auth')->group(function () {
         Route::get('', 'index')->name('index')->can('product.view');
         Route::get('create', 'page')->name('create')->can('product.create');
         Route::get('edit/{id}', 'page')->name('edit')->can('product.edit');
+        Route::get('list', 'get')->name('list');
+    });
+
+    Route::name('service::')->prefix('service')->controller(ServiceController::class)->group(function () {
+        Route::get('', 'index')->name('index')->can('service.view');
+        Route::get('create', 'page')->name('create')->can('service.create');
+        Route::get('edit/{id}', 'page')->name('edit')->can('service.edit');
         Route::get('list', 'get')->name('list');
     });
 

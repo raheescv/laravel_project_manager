@@ -16,6 +16,7 @@ class ProductSeeder extends Seeder
         $faker = Factory::create();
         for ($i = 0; $i < 100; $i++) {
             $data[] = [
+                'type' => 'product',
                 'name' => $faker->name,
                 'department_id' => 'add '.$faker->name,
                 'main_category_id' => 'add '.$faker->name,

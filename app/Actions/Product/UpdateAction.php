@@ -34,6 +34,10 @@ class UpdateAction
                 $data['sub_category_id'] = Category::selfCreate($departmentData);
             }
 
+            if ($data['type'] == 'service') {
+                $data['cost'] = $data['mrp'];
+            }
+
             validationHelper(Product::rules($id), $data);
 
             $data['updated_by'] = $user_id;

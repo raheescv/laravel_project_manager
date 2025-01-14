@@ -5,16 +5,16 @@ namespace App\Http\Controllers;
 use App\Models\Product;
 use Illuminate\Http\Request;
 
-class ProductController extends Controller
+class ServiceController extends Controller
 {
     public function index()
     {
-        return view('product.index');
+        return view('service.index');
     }
 
     public function page($id = null)
     {
-        $type = 'product';
+        $type = 'service';
 
         return view('product.page', compact('type', 'id'));
     }

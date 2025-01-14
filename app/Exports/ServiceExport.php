@@ -8,7 +8,7 @@ use Maatwebsite\Excel\Concerns\FromQuery;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithMapping;
 
-class ProductExport implements FromQuery, WithHeadings, WithMapping
+class ServiceExport implements FromQuery, WithHeadings, WithMapping
 {
     use Exportable;
 
@@ -16,8 +16,8 @@ class ProductExport implements FromQuery, WithHeadings, WithMapping
 
     public function query()
     {
-        $query = Product::with('unit', 'department', 'mainCategory', 'subCategory')
-            ->product()
+        $query = Product::with('department', 'mainCategory', 'subCategory')
+            ->service()
             ->when($this->department_id ?? '', function ($query, $value) {
                 $query->where('department_id', $value);
             })
@@ -27,14 +27,8 @@ class ProductExport implements FromQuery, WithHeadings, WithMapping
             ->when($this->sub_category_id ?? '', function ($query, $value) {
                 $query->where('sub_category_id', $value);
             })
-            ->when($this->unit_id ?? '', function ($query, $value) {
-                $query->where('unit_id', $value);
-            })
             ->when($this->status ?? '', function ($query, $value) {
                 $query->where('status', $value);
-            })
-            ->when($this->is_selling ?? '', function ($query, $value) {
-                $query->where('is_selling', $value);
             });
 
         return $query;
@@ -48,33 +42,13 @@ class ProductExport implements FromQuery, WithHeadings, WithMapping
             'Code',
             'Name',
             'Name Arabic',
-            'Unit',
             'Department',
             'Main Category',
             'Sub Category',
-
-            'Hsn Code',
-            'Tax',
-
             'Description',
-            'Is Selling',
-
-            'Cost',
-            'MRP',
-
-            'Barcode',
-            'Pattern',
-            'Color',
-            'Size',
-            'Model',
-            'Brand',
-            'Part No',
-
-            'Min Stock',
-            'Max Stock',
-            'Location',
-            'Reorder Level',
-            'Plu',
+            'Price',
+            'Time',
+            'Status',
             'Created At',
         ];
     }
@@ -91,28 +65,13 @@ class ProductExport implements FromQuery, WithHeadings, WithMapping
             $row->code,
             $row->name,
             $row->name_arabic,
-            $row->unit?->id,
             $row->department?->name,
             $row->mainCategory?->name,
             $row->subCategory?->name,
-            $row->hsn_code,
-            $row->tax,
             $row->description,
-            $row->is_selling ? 'Yes' : 'No',
-            $row->cost,
             $row->mrp,
-            $row->barcode,
-            $row->pattern,
-            $row->color,
-            $row->size,
-            $row->model,
-            $row->brand,
-            $row->part_no,
-            $row->min_stock,
-            $row->max_stock,
-            $row->location,
-            $row->reorder_level,
-            $row->plu,
+            $row->time,
+            $row->status,
             systemDateTime($row->created_at),
         ];
     }

@@ -29,11 +29,21 @@ class CreateAction
                 $departmentData['name'] = $name;
                 $data['sub_category_id'] = Category::selfCreate($departmentData);
             }
+
+            if ($data['type'] == 'service') {
+                $data['cost'] = $data['mrp'];
+            }
+
             validationHelper(Product::rules(), $data);
             $user_id = $data['created_by'] = $data['updated_by'] = $user_id;
-
-            $model = Product::create($data);
-
+            $trashedExists = Product::withTrashed()->firstWhere('name', $data['name']);
+            if ($trashedExists) {
+                $trashedExists->restore();
+                $trashedExists->update($data);
+                $model = $trashedExists;
+            } else {
+                $model = Product::create($data);
+            }
             $model['quantity'] = 0;
             if ('inventory') {
                 Inventory::selfCreateByProduct($model, $user_id);

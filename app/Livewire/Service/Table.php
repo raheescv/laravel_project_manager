@@ -1,10 +1,10 @@
 <?php
 
-namespace App\Livewire\Product;
+namespace App\Livewire\Service;
 
 use App\Actions\Product\DeleteAction;
-use App\Exports\ProductExport;
-use App\Jobs\Export\ExportProductJob;
+use App\Exports\ServiceExport;
+use App\Jobs\Export\ExportServiceJob;
 use App\Models\Product;
 use Illuminate\Support\Facades\DB;
 use Livewire\Component;
@@ -23,10 +23,6 @@ class Table extends Component
 
     public $sub_category_id = '';
 
-    public $is_selling = '';
-
-    public $unit_id = '';
-
     public $status = '';
 
     public $limit = 10;
@@ -42,7 +38,7 @@ class Table extends Component
     protected $paginationTheme = 'bootstrap';
 
     protected $listeners = [
-        'Product-Refresh-Component' => '$refresh',
+        'Service-Refresh-Component' => '$refresh',
     ];
 
     public function delete()
@@ -66,7 +62,7 @@ class Table extends Component
             $this->selected = [];
 
             $this->selectAll = false;
-            $this->dispatch('RefreshProductTable');
+            $this->dispatch('RefreshServiceTable');
         } catch (\Exception $e) {
             DB::rollback();
             $this->dispatch('error', ['message' => $e->getMessage()]);
@@ -83,7 +79,7 @@ class Table extends Component
     public function updatedSelectAll($value)
     {
         if ($value) {
-            $this->selected = Product::product()->latest()->limit(2000)->pluck('id')->toArray();
+            $this->selected = Product::service()->latest()->limit(2000)->pluck('id')->toArray();
         } else {
             $this->selected = [];
         }
@@ -92,22 +88,20 @@ class Table extends Component
     public function export()
     {
         $filter = [
-            'type' => 'product',
+            'type' => 'service',
             'department_id' => $this->department_id,
             'main_category_id' => $this->main_category_id,
             'sub_category_id' => $this->sub_category_id,
-            'is_selling' => $this->is_selling,
-            'unit_id' => $this->unit_id,
             'status' => $this->status,
         ];
         $count = Product::service()->count();
         if ($count > 2000) {
-            ExportProductJob::dispatch(auth()->user(), $filter);
+            ExportServiceJob::dispatch(auth()->user(), $filter);
             $this->dispatch('success', ['message' => 'You will get your file in your mailbox.']);
         } else {
-            $exportFileName = 'Product_'.now()->timestamp.'.xlsx';
+            $exportFileName = 'Service_'.now()->timestamp.'.xlsx';
 
-            return Excel::download(new ProductExport($filter), $exportFileName);
+            return Excel::download(new ServiceExport($filter), $exportFileName);
         }
     }
 
@@ -144,20 +138,14 @@ class Table extends Component
             ->when($this->sub_category_id ?? '', function ($query, $value) {
                 $query->where('sub_category_id', $value);
             })
-            ->when($this->unit_id ?? '', function ($query, $value) {
-                $query->where('unit_id', $value);
-            })
             ->when($this->status ?? '', function ($query, $value) {
                 $query->where('status', $value);
             })
-            ->when($this->is_selling ?? '', function ($query, $value) {
-                $query->where('is_selling', $value);
-            })
-            ->product()
+            ->service()
             ->latest()
             ->paginate($this->limit);
 
-        return view('livewire.product.table', [
+        return view('livewire.service.table', [
             'data' => $data,
         ]);
     }

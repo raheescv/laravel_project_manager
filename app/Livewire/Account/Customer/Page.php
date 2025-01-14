@@ -44,6 +44,7 @@ class Page extends Component
             $name = '';
             $account_type = 'asset';
             $mobile = '';
+            $email = '';
             if (! app()->isProduction()) {
                 $name = $faker->name;
                 $mobile = rand(90000000, 99999999);

@@ -59,6 +59,10 @@
                     <h4> <label for="unit_id">Unit</label> </h4>
                     {{ html()->select('unit_id', [])->value('')->class('select-unit_id-list')->id('unit_id')->placeholder('All') }}
                 </div>
+                <div class="col-md-4">
+                    <label for="status" class="form-label">Status *</label>
+                    {{ html()->select('status', activeOrDisabled())->value('')->class('form-control')->placeholder('Select Status')->id('status')->attribute('wire:model.live', 'status') }}
+                </div>
             </div>
             <div class="row">
                 <div class="col-md-3">

@@ -23,9 +23,11 @@ class Page extends Component
         'Product-Refresh-Component' => 'refresh',
     ];
 
-    public $barcode_type;
+    public $type;
 
     public $table_id;
+
+    public $barcode_type;
 
     public $selectedTab = 'Attributes';
 
@@ -37,33 +39,39 @@ class Page extends Component
 
     public function refresh()
     {
-        $this->mount($this->table_id, $dropdownValues = false);
+        $this->mount($this->type, $this->table_id, $dropdownValues = false);
     }
 
-    public function mount($table_id = null, $dropdownValues = true)
+    public function mount($type = 'product', $table_id = null, $dropdownValues = true)
     {
         $this->barcode_type = Configuration::where('key', 'barcode_type')->value('value');
         $this->table_id = $table_id;
+        $this->type = $type;
         $this->departments = [];
         if (! $this->table_id) {
             $faker = Factory::create();
             $name = '';
             $code = '';
             $barcode = '';
+            $mrp = 0;
+            $cost = 0;
             if (! app()->isProduction()) {
                 $name = $faker->name;
                 $code = $faker->hexcolor;
                 $barcode = $faker->hexcolor;
+                $cost = rand(100, 900);
+                $mrp = rand(1000, 9000);
             }
             $this->products = [
+                'type' => $this->type,
                 'code' => $code,
                 'name' => $name,
                 'barcode' => $barcode,
                 'is_selling' => true,
                 'hsn_code' => '',
                 'tax' => 5,
-                'cost' => rand(100, 900),
-                'mrp' => rand(1000, 9000),
+                'cost' => $cost,
+                'mrp' => $mrp,
                 'pattern' => '',
                 'color' => '',
                 'size' => '',
@@ -79,6 +87,7 @@ class Page extends Component
                 'main_category_id' => null,
                 'sub_category_id' => null,
                 'department_id' => null,
+                'status' => 'active',
                 'department' => ['id' => 1, 'name' => 'Food'],
                 'sub_category' => [],
                 'main_category' => [],
@@ -90,6 +99,10 @@ class Page extends Component
                 return redirect()->route('product::index');
             }
             $this->products = $product->toArray();
+            $this->type = $product->type;
+        }
+        if ($this->type == 'service') {
+            $this->selectedTab = 'Images';
         }
         if ($dropdownValues) {
             $this->dispatch('SelectDropDownValues', $this->products);
@@ -109,8 +122,10 @@ class Page extends Component
             'products.mrp' => ['required'],
             'images.*' => 'mimes:jpg,jpeg,png,gif,bmp,webp,svg|max:3100',
         ];
-        if ($this->barcode_type == 'product_wise') {
-            $rules['products.barcode'] = ['required', Rule::unique(Product::class, 'barcode')->whereNull('deleted_at')->ignore($this->table_id)];
+        if ($this->type == 'product') {
+            if ($this->barcode_type == 'product_wise') {
+                $rules['products.barcode'] = ['required', Rule::unique(Product::class, 'barcode')->whereNull('deleted_at')->ignore($this->table_id)];
+            }
         }
 
         return $rules;
@@ -166,9 +181,13 @@ class Page extends Component
             $this->dispatch('success', ['message' => $response['message']]);
             DB::commit();
             if ($edit) {
-                return redirect()->route('product::edit', $response['data']['id']);
+                if ($this->type == 'product') {
+                    return redirect()->route('product::edit', $response['data']['id']);
+                } else {
+                    return redirect()->route('service::edit', $response['data']['id']);
+                }
             }
-            $this->mount($this->table_id, $dropdownValues = false);
+            $this->mount($this->type, $this->table_id, $dropdownValues = false);
             if (! $this->table_id) {
                 $this->products['department_id'] = $selected['department']['id'];
                 $this->products['main_category_id'] = $selected['mainCategory']['id'];
@@ -194,7 +213,7 @@ class Page extends Component
             if (! $response['success']) {
                 throw new \Exception($response['message'], 1);
             }
-            $this->mount($this->table_id);
+            $this->mount($this->type, $this->table_id);
             $this->dispatch('success', ['message' => 'Deleted Successfully']);
         } catch (\Exception $e) {
             DB::rollback();
@@ -210,7 +229,7 @@ class Page extends Component
                 throw new \Exception($response['message'], 1);
             }
             $this->dispatch('success', ['message' => $response['message']]);
-            $this->mount($this->table_id);
+            $this->mount($this->type, $this->table_id);
         } catch (\Exception $e) {
             $this->dispatch('error', ['message' => $e->getMessage()]);
         }
