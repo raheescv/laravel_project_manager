@@ -28,6 +28,11 @@ class Category extends Model
         return $this->belongsTo(Category::class, 'parent_id');
     }
 
+    public function products()
+    {
+        return $this->hasMany(Product::class, 'main_category_id');
+    }
+
     public static function parentCreate($parent)
     {
         $model = self::firstOrCreate(['name' => $parent]);

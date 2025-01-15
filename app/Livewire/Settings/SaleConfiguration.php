@@ -21,6 +21,8 @@ class SaleConfiguration extends Component
 
     public $enable_logo_in_print;
 
+    public $sale_type;
+
     public function mount()
     {
         $this->default_status = Configuration::where('key', 'default_status')->value('value');
@@ -30,6 +32,7 @@ class SaleConfiguration extends Component
         $this->enable_discount_in_print = Configuration::where('key', 'enable_discount_in_print')->value('value');
         $this->enable_total_quantity_in_print = Configuration::where('key', 'enable_total_quantity_in_print')->value('value');
         $this->enable_logo_in_print = Configuration::where('key', 'enable_logo_in_print')->value('value');
+        $this->sale_type = Configuration::where('key', 'sale_type')->value('value');
     }
 
     public function save()
@@ -41,6 +44,7 @@ class SaleConfiguration extends Component
         Configuration::updateOrCreate(['key' => 'enable_discount_in_print'], ['value' => $this->enable_discount_in_print]);
         Configuration::updateOrCreate(['key' => 'enable_total_quantity_in_print'], ['value' => $this->enable_total_quantity_in_print]);
         Configuration::updateOrCreate(['key' => 'enable_logo_in_print'], ['value' => $this->enable_logo_in_print]);
+        Configuration::updateOrCreate(['key' => 'sale_type'], ['value' => $this->sale_type]);
         $this->dispatch('success', ['message' => 'Updated Successfully']);
     }
 

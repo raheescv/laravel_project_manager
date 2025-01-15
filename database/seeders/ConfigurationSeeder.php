@@ -19,6 +19,8 @@ class ConfigurationSeeder extends Seeder
         Configuration::updateOrCreate(['key' => 'enable_discount_in_print'], ['value' => 'yes']);
         Configuration::updateOrCreate(['key' => 'enable_total_quantity_in_print'], ['value' => 'yes']);
         Configuration::updateOrCreate(['key' => 'enable_logo_in_print'], ['value' => 'yes']);
+        Configuration::updateOrCreate(['key' => 'sale_type'], ['value' => 'version_1']);
+        Configuration::updateOrCreate(['key' => 'sale_type'], ['value' => 'pos']);
         $saleVisibleColumns = [
             'reference_no' => true,
             'branch_id' => false,

@@ -20,11 +20,21 @@
         </div>
     </div>
     <x-account.customer-modal />
+    @push('styles')
+    @endpush
     @push('scripts')
         @include('components.select.customerSelect')
         @include('components.select.employeeSelect')
         @include('components.select.inventoryProductSelect')
         @include('components.select.paymentMethodSelect')
+
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                window.addEventListener('print-invoice', function(event) {
+                    window.open(event.detail[0].link);
+                });
+            });
+        </script>
         <script>
             $(document).ready(function() {
                 // $('#root').attr('class', 'root tm--expanded-hd mn--sticky mn--min');

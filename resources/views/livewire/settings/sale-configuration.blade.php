@@ -4,6 +4,12 @@
             <div class="card-body">
                 <div class="row">
                     <div class="col-md-6">
+                        <label class="text-capitalize" for="sale_type">Sale Type</label>
+                        {{ html()->select('sale_type', saleTypes())->value('')->class('form-control')->placeholder('Select Any')->attribute('wire:model', 'sale_type') }}
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-6">
                         <label class="text-capitalize" for="default_status">Default Status</label>
                         {{ html()->select('default_status', saleStatuses())->value('')->class('form-control')->placeholder('Select Any')->attribute('wire:model', 'default_status') }}
                     </div>

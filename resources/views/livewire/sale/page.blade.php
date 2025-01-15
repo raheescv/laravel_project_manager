@@ -432,9 +432,6 @@
                         }
                     });
                 });
-                window.addEventListener('print-invoice', function(event) {
-                    window.open(event.detail[0].link);
-                });
             });
         </script>
         <script>

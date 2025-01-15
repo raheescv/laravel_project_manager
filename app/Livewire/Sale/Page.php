@@ -7,7 +7,10 @@ use App\Actions\Sale\UpdateAction;
 use App\Helpers\Facades\SaleHelper;
 use App\Helpers\Facades\WhatsappHelper;
 use App\Models\Account;
+use App\Models\Category;
+use App\Models\Configuration;
 use App\Models\Inventory;
+use App\Models\Product;
 use App\Models\Sale;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
@@ -15,6 +18,10 @@ use Livewire\Component;
 
 class Page extends Component
 {
+    public $product_key;
+
+    public $category_key;
+
     public $table_id;
 
     public $accounts;
@@ -136,10 +143,6 @@ class Page extends Component
             $this->mainCalculator();
         }
         if (in_array($key, ['sales.other_discount', 'sales.freight'])) {
-            if (! is_numeric($value)) {
-                $index = explode('.', $key);
-                $this->sales[$index[1]] = 0;
-            }
             $this->mainCalculator();
         }
     }
@@ -206,6 +209,16 @@ class Page extends Component
         $this->payment['amount'] = round($this->sales['balance'], 2);
     }
 
+    public function selectItem($id)
+    {
+        $inventory = Inventory::find($id);
+        $this->employee = User::first();
+        $this->employee_id = $this->employee->id;
+        $this->addToCart($inventory);
+        $this->cartCalculator($this->employee_id.'-'.$inventory->id);
+        // $this->dispatch('OpenProductBox');
+    }
+
     public function addToCart($inventory)
     {
         $key = $this->employee_id.'-'.$inventory->id;
@@ -213,6 +226,7 @@ class Page extends Component
         $single = [
             'key' => $key,
             'inventory_id' => $inventory->id,
+            'barcode' => $inventory->barcode,
             'employee_id' => $this->employee_id,
             'employee_name' => $this->employee->name,
             'product_id' => $product_id,
@@ -222,6 +236,7 @@ class Page extends Component
             'quantity' => 1,
             'tax' => 0,
         ];
+
         if (isset($this->items[$key])) {
             $this->items[$key]['quantity'] += 1;
         } else {
@@ -234,6 +249,12 @@ class Page extends Component
     public function removeItem($index)
     {
         unset($this->items[$index]);
+        $this->mainCalculator();
+    }
+
+    public function deleteAllItems()
+    {
+        $this->items = [];
         $this->mainCalculator();
     }
 
@@ -302,7 +323,9 @@ class Page extends Component
         try {
             $oldStatus = $this->sales['status'];
             DB::beginTransaction();
-
+            if (! count($this->items)) {
+                throw new \Exception('Please add any item', 1);
+            }
             $this->sales['status'] = $type;
             $this->sales['items'] = $this->items;
             $this->sales['payments'] = $this->payments;
@@ -317,7 +340,6 @@ class Page extends Component
             if (! $response['success']) {
                 throw new \Exception($response['message'], 1);
             }
-
             $table_id = $response['data']['id'];
             $this->mount($this->table_id);
 
@@ -370,6 +392,26 @@ class Page extends Component
 
     public function render()
     {
-        return view('livewire.sale.page');
+        $sale_type = Configuration::where('key', 'sale_type')->value('value');
+        switch ($sale_type) {
+            case 'pos':
+                $categories = Category::query()
+                    ->when($this->category_key, function ($query, $value) {
+                        $query->where('name', 'LIKE', '%'.$value.'%');
+                    })
+                    ->whereNull('parent_id')
+                    ->orderBy('name')
+                    ->get();
+                $products = Product::query()
+                    ->when($this->product_key, function ($query, $value) {
+                        $query->where('name', 'LIKE', '%'.$value.'%');
+                    })
+                    ->isSelling()
+                    ->get();
+
+                return view('livewire.sale.pos', compact('categories', 'products'));
+            default:
+                return view('livewire.sale.page');
+        }
     }
 }

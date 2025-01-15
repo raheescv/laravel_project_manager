@@ -219,6 +219,15 @@ if (! function_exists('saleStatuses')) {
     }
 }
 
+if (! function_exists('saleTypes')) {
+    function saleTypes()
+    {
+        return [
+            'version_1' => 'Version 1',
+            'pos' => 'POS',
+        ];
+    }
+}
 if (! function_exists('activeOrDisabled')) {
     function activeOrDisabled()
     {
