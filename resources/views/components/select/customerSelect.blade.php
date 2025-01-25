@@ -38,7 +38,7 @@
             persist: false,
             valueField: 'id',
             nameField: 'name',
-            searchField: ['name', 'id'],
+            searchField: ['name', 'mobile', 'email', 'id'],
             load: function(query, callback) {
                 var url = "{{ route('account::list') }}";
                 url += '?query=' + encodeURIComponent(query);

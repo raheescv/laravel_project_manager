@@ -10,8 +10,8 @@ return new class extends Migration
     {
         Schema::create('inventory_logs', function (Blueprint $table) {
             $table->id();
-            $table->unsignedBigInteger('branch_id');
-            $table->unsignedBigInteger('product_id');
+            $table->unsignedBigInteger('branch_id')->index();
+            $table->unsignedBigInteger('product_id')->index();
             $table->double('quantity_in', 8, 3);
             $table->double('quantity_out', 8, 3);
             $table->double('balance', 8, 3);
@@ -21,7 +21,7 @@ return new class extends Migration
             $table->float('cost', 8, 2)->default(0);
 
             $table->string('model', 30)->nullable();
-            $table->unsignedBigInteger('model_id')->nullable();
+            $table->unsignedBigInteger('model_id')->index()->nullable();
             $table->string('remarks')->nullable();
 
             $table->unsignedBigInteger('user_id');

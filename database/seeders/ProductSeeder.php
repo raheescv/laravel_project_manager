@@ -11,7 +11,7 @@ class ProductSeeder extends Seeder
 {
     public function run(): void
     {
-        DB::table('products')->truncate();
+        // DB::table('products')->truncate();
         $data = [];
         $faker = Factory::create();
         for ($i = 0; $i < 100; $i++) {

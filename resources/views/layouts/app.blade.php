@@ -10,6 +10,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;700&family=Ubuntu:wght@400;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{{ asset('assets/css/bootstrap.min.css') }}">
+    <link rel="stylesheet" href="{{ asset('assets/vendors/font-awesome/font-awesome.min.css') }}">
     <link rel="stylesheet" href="{{ asset('assets/css/nifty.min.css') }}">
     <link rel="stylesheet" href="{{ asset('assets/css/demo-purpose/demo-icons.min.css') }}">
     <link rel="stylesheet" href="{{ asset('assets/css/demo-purpose/demo-settings.min.css') }}">
@@ -140,14 +141,14 @@
                     </div>
 
                     <!-- OPTION : Additional Offcanvas -->
-                    <h6 class="mt-4 mb-2 py-1">Additional Offcanvas</h6>
-                    <p>Select the offcanvas placement.</p>
-                    <div class="text-nowrap">
-                        <button type="button" class="_dm-offcanvasBtn btn btn-sm btn-primary" value="offcanvas-top">Top</button>
-                        <button type="button" class="_dm-offcanvasBtn btn btn-sm btn-primary" value="offcanvas-end">Right</button>
-                        <button type="button" class="_dm-offcanvasBtn btn btn-sm btn-primary" value="offcanvas-bottom">Btm</button>
-                        <button type="button" class="_dm-offcanvasBtn btn btn-sm btn-primary" value="offcanvas-start">Left</button>
-                    </div>
+                    {{-- <h6 class="mt-4 mb-2 py-1">Additional Offcanvas</h6> --}}
+                    {{-- <p>Select the offcanvas placement.</p> --}}
+                    {{-- <div class="text-nowrap"> --}}
+                    {{-- <button type="button" class="_dm-offcanvasBtn btn btn-sm btn-primary" value="offcanvas-top">Top</button> --}}
+                    {{-- <button type="button" class="_dm-offcanvasBtn btn btn-sm btn-primary" value="offcanvas-end">Right</button> --}}
+                    {{-- <button type="button" class="_dm-offcanvasBtn btn btn-sm btn-primary" value="offcanvas-bottom">Btm</button> --}}
+                    {{-- <button type="button" class="_dm-offcanvasBtn btn btn-sm btn-primary" value="offcanvas-start">Left</button> --}}
+                    {{-- </div> --}}
 
                 </div>
                 <div class="col-lg-3 p-4 bg-body">
@@ -579,6 +580,9 @@
                 }
             });
         });
+    </script>
+    <script>
+        // $("#root").setClass("root mn--max tm--expanded-hd");
     </script>
 </body>
 

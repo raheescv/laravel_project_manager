@@ -180,7 +180,7 @@
                     </td>
                 </tr>
                 <tr>
-                    <td colspan="2" class="text-center"><b>Cash</b></td>
+                    <td colspan="2" class="text-center"><b>{{ $payments }}</b></td>
                 </tr>
             </table>
         @endif

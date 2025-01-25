@@ -38,7 +38,7 @@ return new class extends Migration
             $table->enum('status', array_keys(saleStatuses()))->default('completed');
 
             $table->unsignedBigInteger('created_by')->references('id')->on('users');
-            $table->unsignedBigInteger('updated_by')->references('id')->on('users');
+            $table->unsignedBigInteger('updated_by')->nullable()->references('id')->on('users');
             $table->unsignedBigInteger('cancelled_by')->nullable()->references('id')->on('users');
             $table->unsignedBigInteger('deleted_by')->nullable()->references('id')->on('users');
 

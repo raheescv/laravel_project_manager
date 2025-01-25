@@ -1,25 +1,28 @@
 <x-app-layout>
-    <div class="content__header content__boxed overlapping">
-        <div class="content__wrap">
-            <nav aria-label="breadcrumb">
-                <ol class="breadcrumb">
-                    <li class="breadcrumb-item"><a href="{{ route('dashboard') }}">Home</a></li>
-                    <li class="breadcrumb-item"><a href="{{ route('sale::index') }}">Sale</a></li>
-                    <li class="breadcrumb-item active" aria-current="page">Page</li>
-                </ol>
-            </nav>
-            <h1 class="page-title mb-0 mt-2">Sale</h1>
-            <p class="lead">
-                A sale Form
-            </p>
+    @if (cache('sale_type') != 'pos')
+        <div class="content__header content__boxed overlapping">
+            <div class="content__wrap">
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="{{ route('dashboard') }}">Home</a></li>
+                        <li class="breadcrumb-item"><a href="{{ route('sale::index') }}">Sale</a></li>
+                        <li class="breadcrumb-item active" aria-current="page">Page</li>
+                    </ol>
+                </nav>
+            </div>
         </div>
-    </div>
+    @endif
     <div class="content__boxed">
         <div class="content__wrap">
             @livewire('sale.page', ['table_id' => $id])
         </div>
     </div>
     <x-account.customer-modal />
+    @if (cache('sale_type') == 'pos')
+        <x-sale.custom-payment-modal />
+        <x-sale.edit-item-modal />
+        <x-sale.view-items-modal />
+    @endif
     @push('styles')
     @endpush
     @push('scripts')
@@ -31,13 +34,28 @@
         <script>
             document.addEventListener('DOMContentLoaded', function() {
                 window.addEventListener('print-invoice', function(event) {
-                    window.open(event.detail[0].link);
+                    Swal.fire({
+                        title: "<strong>Submitted successfully",
+                        icon: "success",
+                        html: `Do you want to Print Receipt for the this Order`,
+                        showCloseButton: true,
+                        showCancelButton: true,
+                        focusConfirm: false,
+                        confirmButtonText: ` Print Receipt `,
+                        cancelButtonText: ` Next Order `,
+                        cancelButtonAriaLabel: "Thumbs down"
+                    }).then((result) => {
+                        console.log(result);
+                        if (result.isConfirmed) {
+                            window.open(event.detail[0].link);
+                        }
+                    });
                 });
             });
         </script>
         <script>
             $(document).ready(function() {
-                // $('#root').attr('class', 'root tm--expanded-hd mn--sticky mn--min');
+                $('#root').attr('class', 'root mn--push');
             })
         </script>
     @endpush

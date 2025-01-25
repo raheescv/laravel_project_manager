@@ -37,6 +37,11 @@ class AppServiceProvider extends ServiceProvider
 
                 return json_decode($list, 1);
             });
+            Cache::remember('sale_type', now()->addYear(), function () {
+                info('sale_type remember');
+
+                return Configuration::where('key', 'sale_type')->value('value');
+            });
         }
         // Gate::after(function ($user, $ability) {
         //     return $user->hasRole('Super Admin') || $user->hasPermissionTo($ability);

@@ -15,18 +15,24 @@ class Page extends Component
         'Customer-Page-Update-Component' => 'edit',
     ];
 
+    public $existingCustomers = [];
+
     public $accounts;
 
     public $parents;
 
     public $table_id;
 
-    public function create($name = null)
+    public function create($name = null, $mobile = null)
     {
         $this->mount();
         if ($name) {
             $this->accounts['name'] = $name;
         }
+        if ($mobile) {
+            $this->accounts['mobile'] = $mobile;
+        }
+        $this->getCustomerByMobile();
         $this->dispatch('ToggleCustomerModal');
     }
 
@@ -64,6 +70,18 @@ class Page extends Component
         $this->dispatch('SelectDropDownValues', $this->accounts);
     }
 
+    public function updated($key, $value)
+    {
+        if ($key == 'accounts.mobile') {
+            $this->getCustomerByMobile();
+        }
+    }
+
+    public function getCustomerByMobile()
+    {
+        $this->existingCustomers = Account::where('mobile', $this->accounts['mobile'])->get();
+    }
+
     protected function rules()
     {
         return [
@@ -81,6 +99,13 @@ class Page extends Component
         'accounts.email.max' => 'The name field must not be greater than 50 characters',
         'accounts.email.email' => 'The email field must be a valid email address.',
     ];
+
+    public function selectCustomer($id)
+    {
+        $customer = Account::find($id);
+        $this->dispatch('AddToCustomerSelectBox', $customer);
+        $this->dispatch('ToggleCustomerModal');
+    }
 
     public function save($close = false)
     {

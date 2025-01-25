@@ -65,7 +65,7 @@ class Account extends Model implements AuditableContracts
             $query->where('model', $value);
         });
         $self = $self->limit(10);
-        $self = $self->get(['name', 'mobile', 'id'])->toArray();
+        $self = $self->get(['name', 'mobile', 'email', 'id'])->toArray();
         $return['items'] = $self;
 
         return $return;

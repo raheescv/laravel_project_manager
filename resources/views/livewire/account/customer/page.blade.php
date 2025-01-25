@@ -16,10 +16,10 @@
                     @endif
                 </div>
             </div>
-            <div class="row">
+            <div class="row mb-2">
                 <div class="col-md-12">
                     <div class="form-group">
-                        <h4> <label for="name">Name</label> </h4>
+                        <b><label for="name" class="text-capitalize">name</label></b>
                         {{ html()->input('name')->value('')->class('form-control')->attribute('wire:model', 'accounts.name') }}
                     </div>
                 </div>
@@ -27,13 +27,13 @@
             <div class="row">
                 <div class="col-md-6">
                     <div class="form-group">
-                        <h4> <label for="mobile">Mobile</label> </h4>
-                        {{ html()->input('mobile')->value('')->class('form-control')->attribute('wire:model', 'accounts.mobile') }}
+                        <b><label for="mobile" class="text-capitalize">mobile</label></b>
+                        {{ html()->input('mobile')->value('')->class('form-control')->attribute('wire:model.live', 'accounts.mobile') }}
                     </div>
                 </div>
                 <div class="col-md-6">
                     <div class="form-group">
-                        <h4> <label for="email">Email</label> </h4>
+                        <b><label for="email" class="text-capitalize">email</label></b>
                         {{ html()->email('email')->value('')->class('form-control')->attribute('wire:model', 'accounts.email') }}
                     </div>
                 </div>
@@ -44,6 +44,29 @@
             <button type="button" wire:click="save(1)" class="btn btn-success">Save & Add New</button>
             <button type="submit" class="btn btn-primary">Save</button>
         </div>
+        @if (count($existingCustomers))
+            <div class="modal-footer d-flex justify-content-between align-items-center">
+                <h3>Existing Customer</h3>
+                <table class="table table-striped align-middle table-sm">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Mobile</th>
+                            <th>Email</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach ($existingCustomers as $item)
+                            <tr wire:click="selectCustomer('{{ $item->id }}')" class="pointer">
+                                <td>{{ $item['name'] }}</td>
+                                <td>{{ $item['mobile'] }}</td>
+                                <td>{{ $item['email'] }}</td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
+        @endif
     </form>
     @push('scripts')
         <script>

@@ -8,7 +8,6 @@ use App\Helpers\Facades\SaleHelper;
 use App\Helpers\Facades\WhatsappHelper;
 use App\Models\Account;
 use App\Models\Category;
-use App\Models\Configuration;
 use App\Models\Inventory;
 use App\Models\Product;
 use App\Models\Sale;
@@ -18,7 +17,17 @@ use Livewire\Component;
 
 class Page extends Component
 {
+    protected $listeners = [
+        'Sale-Custom-Payment-Confirmed' => 'collectPayments',
+        'Sale-Edited-Item-Component' => 'editedItem',
+        'Sale-Edited-Items-Component' => 'editedItems',
+    ];
+
+    public $barcode_key;
+
     public $product_key;
+
+    public $category_id;
 
     public $category_key;
 
@@ -44,6 +53,8 @@ class Page extends Component
 
     public $paymentMethods = [];
 
+    public $payment_method_name;
+
     public $sales = [];
 
     public $default_payment_method_id = 1;
@@ -51,15 +62,16 @@ class Page extends Component
     public function mount($table_id = null)
     {
         $this->table_id = $table_id;
-
         $this->paymentMethods = Account::where('id', $this->default_payment_method_id)->pluck('name', 'id')->toArray();
 
         if (User::employee()->count() == 1) {
             $this->employees = User::employee()->pluck('name', 'id')->toArray();
             $this->employee_id = User::employee()->first(['id'])->id;
         }
+        $this->payment_method_name = '';
         $this->payment = [
             'payment_method_id' => $this->default_payment_method_id,
+            'payment_method_name' => '',
             'amount' => 0,
             'name' => null,
         ];
@@ -142,8 +154,29 @@ class Page extends Component
             $this->cartCalculator($index);
             $this->mainCalculator();
         }
-        if (in_array($key, ['sales.other_discount', 'sales.freight'])) {
+        if (in_array($key, ['sales.other_discount'])) {
+            if (str_ends_with($value, '%')) {
+                $percentage = rtrim($value, '%');
+                $value = round($this->sales['total'] / 100 * $percentage, 2);
+                if ($value > $this->sales['total']) {
+                    $value = $percentage;
+                }
+                $this->sales['other_discount'] = $value;
+            }
+            if (! is_numeric($value)) {
+                $this->sales['other_discount'] = 0;
+            }
             $this->mainCalculator();
+        }
+        if (in_array($key, ['sales.freight'])) {
+            if (! is_numeric($value)) {
+                $this->sales['freight'] = 0;
+            }
+            $this->mainCalculator();
+        }
+        if ($key == 'barcode_key') {
+            $this->getProductByBarcode($value);
+            $this->barcode_key = '';
         }
     }
 
@@ -161,6 +194,37 @@ class Page extends Component
             $this->cartCalculator($this->employee_id.'-'.$inventory->id);
             $this->dispatch('OpenProductBox');
         }
+    }
+
+    public function modifyQuantity($key, $action)
+    {
+        if ($action == 'plus') {
+            $this->items[$key]['quantity'] += 1;
+        } else {
+            if ($this->items[$key]['quantity'] > 1) {
+                $this->items[$key]['quantity'] -= 1;
+            } else {
+                $this->dispatch('error', ['message' => "Can't remove quantity any further"]);
+            }
+        }
+        $this->singleCartCalculator($key);
+        $this->mainCalculator();
+    }
+
+    public function getProductByBarcode($value)
+    {
+        $inventory = Inventory::firstWhere('barcode', $value);
+        if (! $inventory) {
+            // $this->dispatch('error', ['message' => 'No Match Found']);
+
+            return false;
+        }
+        $this->selectItem($inventory->id);
+    }
+
+    public function categorySelect($id)
+    {
+        $this->category_id = $id;
     }
 
     public function cartCalculator($key = null)
@@ -191,7 +255,6 @@ class Page extends Component
     {
         $items = collect($this->items);
         $payments = collect($this->payments);
-
         $this->sales['gross_amount'] = round($items->sum('gross_amount'), 2);
         $this->sales['total_quantity'] = round($items->sum('quantity'), 2);
         $this->sales['item_discount'] = round($items->sum('discount'), 2);
@@ -244,6 +307,7 @@ class Page extends Component
         }
         $this->singleCartCalculator($key);
         $this->mainCalculator();
+        // $this->dispatch('success', ['message' => 'item added successfully']);
     }
 
     public function removeItem($index)
@@ -264,6 +328,59 @@ class Page extends Component
         $this->mainCalculator();
     }
 
+    public function viewItems()
+    {
+        $this->dispatch('Sale-View-Items-Component', $this->sales['status'], $this->items);
+    }
+
+    public function editItem($index)
+    {
+        $this->dispatch('Sale-Edit-Item-Component', $index, $this->items[$index]);
+    }
+
+    public function editedItem($id, $item)
+    {
+        $this->items[$id] = $item;
+        $this->mainCalculator();
+    }
+
+    public function editedItems($items)
+    {
+        $this->items = $items;
+        $this->mainCalculator();
+    }
+
+    public function selectPaymentMethod($method)
+    {
+        $this->payment_method_name = $method;
+        if ($method == 'custom') {
+            $this->dispatch('Sale-Custom-Payment-Modify', $this->sales, $this->payments);
+
+            return false;
+        }
+        $account = Account::firstWhere('name', $method);
+        if (! $account) {
+            $this->dispatch('error', ['message' => 'The selected method has not been assigned to an account head']);
+
+            return false;
+        }
+        $this->payment['payment_method_id'] = $account->id;
+        $this->payments = [];
+        $single = [
+            'amount' => $this->sales['grand_total'],
+            'payment_method_id' => $this->payment['payment_method_id'],
+            'name' => $account->name,
+        ];
+        $this->payments[] = $single;
+        $this->mainCalculator();
+    }
+
+    public function collectPayments($sales, $payments)
+    {
+        $this->payments = $payments;
+        $this->sales = $sales;
+    }
+
     public function addPayment()
     {
         if (! $this->payment['amount']) {
@@ -281,6 +398,7 @@ class Page extends Component
 
             return false;
         }
+
         $account = Account::find($this->payment['payment_method_id']);
         $single = [
             'amount' => $this->payment['amount'],
@@ -310,9 +428,20 @@ class Page extends Component
 
             return false;
         }
+        $payment_methods = collect($this->payments)->pluck('name')->toArray();
+        $payment_methods = implode(',', $payment_methods);
+        if ($this->sales['account_id'] == 3) {
+            $customer = $this->sales['customer_name'].'@'.$this->sales['customer_mobile'];
+        } else {
+            $account = Account::find($this->sales['account_id']);
+            $customer = $account->name.'@'.$account->mobile;
+        }
+
         $this->dispatch('show-confirmation', [
+            'customer' => $customer,
             'grand_total' => currency($this->sales['grand_total']),
             'paid' => currency($this->sales['paid']),
+            'payment_methods' => $payment_methods,
             'balance' => currency($this->sales['balance']),
         ]);
     }
@@ -347,8 +476,9 @@ class Page extends Component
             if ($this->send_to_whatsapp) {
                 $this->sendToWhatsapp($table_id);
             }
-
-            $this->dispatch('print-invoice', ['link' => route('print::sale::invoice', $response['data']['id'])]);
+            if ($type == 'completed') {
+                $this->dispatch('print-invoice', ['link' => route('print::sale::invoice', $response['data']['id'])]);
+            }
             $this->dispatch('ResetSelectBox');
             $this->dispatch('success', ['message' => $response['message']]);
         } catch (\Throwable $th) {
@@ -392,26 +522,32 @@ class Page extends Component
 
     public function render()
     {
-        $sale_type = Configuration::where('key', 'sale_type')->value('value');
-        switch ($sale_type) {
-            case 'pos':
-                $categories = Category::query()
-                    ->when($this->category_key, function ($query, $value) {
-                        $query->where('name', 'LIKE', '%'.$value.'%');
-                    })
-                    ->whereNull('parent_id')
-                    ->orderBy('name')
-                    ->get();
-                $products = Product::query()
-                    ->when($this->product_key, function ($query, $value) {
-                        $query->where('name', 'LIKE', '%'.$value.'%');
-                    })
-                    ->isSelling()
-                    ->get();
+        if (! $this->table_id) {
+            switch (cache('sale_type')) {
+                case 'pos':
+                    $categories = Category::withCount('products')
+                        ->when($this->category_key, function ($query, $value) {
+                            $query->where('name', 'LIKE', '%'.$value.'%');
+                        })
+                        ->whereNull('parent_id')
+                        ->orderBy('name')
+                        ->get();
+                    $products = Product::query()
+                        ->when($this->product_key, function ($query, $value) {
+                            $query->where('name', 'LIKE', '%'.$value.'%');
+                        })
+                        ->when($this->category_id, function ($query, $value) {
+                            $query->where('main_category_id', $value);
+                        })
+                        ->isSelling()
+                        ->get();
 
-                return view('livewire.sale.pos', compact('categories', 'products'));
-            default:
-                return view('livewire.sale.page');
+                    return view('livewire.sale.pos', compact('categories', 'products'));
+                default:
+                    return view('livewire.sale.page');
+            }
+        } else {
+            return view('livewire.sale.page');
         }
     }
 }

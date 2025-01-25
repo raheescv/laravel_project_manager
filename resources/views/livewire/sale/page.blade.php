@@ -105,7 +105,7 @@
                                                     <th class="text-end">Unit Price</th>
                                                     <th class="text-end">Quantity</th>
                                                     <th class="text-end">Discount</th>
-                                                    <th class="text-end">Tax</th>
+                                                    <th class="text-end">Tax %</th>
                                                     <th class="text-end">Total</th>
                                                     @if ($sales['status'] == 'draft')
                                                         <th>Action </th>
@@ -206,7 +206,8 @@
                                                                 </tr>
                                                                 <tr>
                                                                     <th>Other Discount</th>
-                                                                    <th>{{ html()->number('other_discount')->value('')->class('form-control number select_on_focus')->attribute('wire:model.live', 'sales.other_discount') }}
+                                                                    <th>
+                                                                        {{ html()->number('other_discount')->value('')->class('form-control number select_on_focus')->attribute('wire:model.live', 'sales.other_discount') }}
                                                                     </th>
                                                                 </tr>
                                                                 <tr>
@@ -327,7 +328,7 @@
                                                                     <td>Created By: <b>{{ $sales['created_user']['name'] }}</b> </td>
                                                                 </tr>
                                                                 <tr>
-                                                                    <td>Updated By: <b>{{ $sales['updated_user']['name'] }}</b> </td>
+                                                                    <td>Updated By: <b>{{ $sales['updated_user']['name'] ?? '' }}</b> </td>
                                                                 </tr>
                                                             @endisset
                                                             @isset($sales['cancelled_user']['name'])
@@ -399,24 +400,29 @@
             document.addEventListener('DOMContentLoaded', function() {
                 window.addEventListener('show-confirmation', function(event) {
                     const data = event.detail[0];
-                    const grand_total = data.grand_total;
-                    const paid = data.paid;
-                    const balance = data.balance;
                     const message = `
-                        <table class="table table-bordered table-striped">
-                            <tr>
-                                <th class="text-start"><strong>Grand Total</strong></td>
-                                <td class="text-end">${grand_total}</td>
-                            </tr>
-                            <tr>
-                                <th class="text-start"><strong>Paid</strong></td>
-                                <td class="text-end">${paid}</td>
-                            </tr>
-                            <tr>
-                                <th class="text-start"><strong>Balance</strong></td>
-                                <td class="text-end">${balance}</td>
-                            </tr>
-                        </table>
+                    <table class="table table-bordered table-striped">
+                        <tr>
+                            <th colspan="2" class="text-center">${data.customer}</th>
+                        </tr>
+                        <tr>
+                        <tr>
+                            <th class="text-start"><strong>Grand Total</strong></td>
+                            <td class="text-end">${data.grand_total}</td>
+                        </tr>
+                        <tr>
+                            <th class="text-start"><strong>Payment Methods</strong></td>
+                            <td class="text-end">${data.payment_methods}</td>
+                        </tr>
+                        <tr>
+                            <th class="text-start"><strong>Paid</strong></td>
+                            <td class="text-end">${data.paid}</td>
+                        </tr>
+                        <tr>
+                            <th class="text-start"><strong>Balance</strong></td>
+                            <td class="text-end">${data.balance}</td>
+                        </tr>
+                    </table>
                     `;
                     Swal.fire({
                         title: 'Are you sure?',

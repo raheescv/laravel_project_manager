@@ -12,7 +12,7 @@ class CreateAction
     {
         try {
             $data['branch_id'] = session('branch_id', 1);
-            $data['created_by'] = $data['updated_by'] = $user_id;
+            $data['created_by'] = $user_id;
             $data['invoice_no'] = getNextSaleInvoiceNo();
 
             validationHelper(Sale::rules(), $data);
