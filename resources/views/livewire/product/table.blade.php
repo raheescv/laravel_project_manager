@@ -59,15 +59,12 @@
                     <h4> <label for="unit_id">Unit</label> </h4>
                     {{ html()->select('unit_id', [])->value('')->class('select-unit_id-list')->id('unit_id')->placeholder('All') }}
                 </div>
-                <div class="col-md-4">
+                <div class="col-md-3" wire:ignore>
                     <label for="status" class="form-label">Status *</label>
-                    {{ html()->select('status', activeOrDisabled())->value('')->class('form-control')->placeholder('Select Status')->id('status')->attribute('wire:model.live', 'status') }}
+                    {{ html()->select('status', activeOrDisabled())->value('')->class('tomSelect')->placeholder('Select Status')->id('status')->attribute('wire:model.live', 'status') }}
                 </div>
-            </div>
-            <div class="row">
                 <div class="col-md-3">
-                    <br> <br>
-                    <div class="form-check mb-4">
+                    <div class="form-check mb-4"> <br> <br>
                         <label for="is_selling" class="form-check-label">
                             {{ html()->checkbox('is_selling', [])->value('')->class('form-check-input')->attribute('wire:model.live', 'is_selling') }}
                             Is Selling
@@ -171,7 +168,6 @@
                                 @endif
                             </a>
                         </th>
-                        <th class="text-end">Action</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -186,16 +182,11 @@
                             <td>{{ $item->subCategory?->name }}</td>
                             <td>{{ $item->unit?->name }}</td>
                             <td>{{ $item->code }}</td>
-                            <td>{{ $item->name }}</td>
+                            <td> <a href="{{ route('product::edit', $item->id) }}">{{ $item->name }} </a> </td>
                             <td dir="rtl">{{ $item->name_arabic }}</td>
                             <td>{{ $item->barcode }}</td>
                             <td class="text-end">{{ currency($item->cost) }}</td>
                             <td class="text-end">{{ currency($item->mrp) }}</td>
-                            <td class="text-end">
-                                @can('product.edit')
-                                    <a href="{{ route('product::edit', $item->id) }}"><i class="demo-psi-pencil fs-5 me-2 pointer"></i> </a>
-                                @endcan
-                            </td>
                         </tr>
                     @endforeach
                 </tbody>
@@ -221,6 +212,10 @@
                 $('#sub_category_id').on('change', function(e) {
                     const value = $(this).val() || null;
                     @this.set('sub_category_id', value);
+                });
+                $('#status').on('change', function(e) {
+                    const value = $(this).val() || null;
+                    @this.set('status', value);
                 });
             });
         </script>

@@ -33,7 +33,7 @@ Route::middleware('auth')->group(function () {
     Route::name('product::')->prefix('product')->controller(ProductController::class)->group(function () {
         Route::get('', 'index')->name('index')->can('product.view');
         Route::get('create', 'page')->name('create')->can('product.create');
-        Route::get('edit/{id}', 'page')->name('edit')->can('product.edit');
+        Route::get('edit/{id}', 'page')->name('edit')->can('product.view');
         Route::get('list', 'get')->name('list');
     });
 
