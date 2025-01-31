@@ -13,9 +13,6 @@ let latestQrCode = null;
 
 function initializeClient() {
     client = new Client({
-        authStrategy: new LocalAuth({
-            clientId: 'whatsapp-client',
-        }),
         puppeteer: {
             headless: true,
             args: ['--no-sandbox', '--disable-setuid-sandbox'],

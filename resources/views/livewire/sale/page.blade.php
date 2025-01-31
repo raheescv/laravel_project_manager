@@ -140,7 +140,7 @@
                                                                     {{ html()->number('unit_price')->value($item['unit_price'])->class('input-xs number select_on_focus')->attribute('style', 'width:100%')->attribute('wire:model.live', 'items.' . $item['key'] . '.unit_price') }}
                                                                 </td>
                                                                 <td>
-                                                                    {{ html()->number('quantity')->value($item['quantity'])->attribute('min', 1)->class('input-xs number select_on_focus')->attribute('style', 'width:100%')->attribute('wire:model.live', 'items.' . $item['key'] . '.quantity') }}
+                                                                    {{ html()->number('quantity')->value($item['quantity'])->attribute('min', 1)->class('input-xs number select_on_focus')->attribute('style', 'width:100%')->attribute('step', 'any')->attribute('wire:model.live', 'items.' . $item['key'] . '.quantity') }}
                                                                 </td>
                                                                 <td>
                                                                     {{ html()->number('discount')->value($item['discount'])->class('input-xs number select_on_focus')->attribute('style', 'width:100%')->attribute('wire:model.live', 'items.' . $item['key'] . '.discount') }}

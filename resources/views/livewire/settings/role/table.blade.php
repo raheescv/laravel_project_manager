@@ -2,16 +2,20 @@
     <div class="card-header -4 mb-3">
         <div class="row">
             <div class="col-md-6 d-flex gap-1 align-items-center mb-3">
-                <button class="btn btn-primary hstack gap-2 align-self-center" id="RoleAdd">
-                    <i class="demo-psi-add fs-5"></i>
-                    <span class="vr"></span>
-                    Add New
-                </button>
-                <div class="btn-group">
-                    <button class="btn btn-icon btn-outline-light" wire:click="delete()" wire:confirm="Are you sure you want to delete the selected items?"><i class="demo-pli-recycling fs-5"></i>
+                @can('role.create')
+                    <button class="btn btn-primary hstack gap-2 align-self-center" id="RoleAdd">
+                        <i class="demo-psi-add fs-5"></i>
+                        <span class="vr"></span>
+                        Add New
                     </button>
+                @endcan
+                @can('role.delete')
+                    <div class="btn-group">
+                        <button class="btn btn-icon btn-outline-light" wire:click="delete()" wire:confirm="Are you sure you want to delete the selected items?"><i class="demo-pli-recycling fs-5"></i>
+                        </button>
+                    </div>
                 </div>
-            </div>
+            @endcan
             <div class="col-md-6 d-flex gap-1 align-items-center justify-content-md-end mb-3">
                 <div class="form-group">
                     <select wire:model.live="limit" class="form-control">

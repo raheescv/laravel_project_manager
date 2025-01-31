@@ -3,6 +3,7 @@
 namespace App\Livewire\Settings;
 
 use App\Models\Configuration;
+use Illuminate\Support\Facades\Artisan;
 use Livewire\Component;
 
 class SaleConfiguration extends Component
@@ -46,6 +47,7 @@ class SaleConfiguration extends Component
         Configuration::updateOrCreate(['key' => 'enable_logo_in_print'], ['value' => $this->enable_logo_in_print]);
         Configuration::updateOrCreate(['key' => 'sale_type'], ['value' => $this->sale_type]);
         $this->dispatch('success', ['message' => 'Updated Successfully']);
+        Artisan::call('optimize:clear');
     }
 
     public function render()
