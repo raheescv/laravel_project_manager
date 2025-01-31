@@ -275,7 +275,13 @@ class Page extends Component
     public function selectItem($id)
     {
         $inventory = Inventory::find($id);
-        $this->employee = User::first();
+        if (! $this->employee_id) {
+            $this->dispatch('error', ['message' => 'please select your employee first']);
+            $this->dispatch('OpenEmployeeDropBox');
+
+            return false;
+        }
+        $this->employee = User::find($this->employee_id);
         $this->employee_id = $this->employee->id;
         $this->addToCart($inventory);
         $this->cartCalculator($this->employee_id.'-'.$inventory->id);

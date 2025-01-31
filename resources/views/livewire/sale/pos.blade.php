@@ -21,6 +21,12 @@
                             <div class="pos-categories tabs_wrapper">
                                 <div class="pos-products">
                                     <div class="d-flex align-items-center justify-content-between mb-3">
+                                        <h5 class="mb-0">Employee</h5>
+                                        <div class="input-group w-75" wire:ignore>
+                                            {{ html()->select('employee_id', $employees ?? [])->value($employee_id ?? '')->class('select-employee_id-list')->id('employee_id')->attribute('style', 'width:100%')->placeholder('Select Employee') }}
+                                        </div>
+                                    </div>
+                                    <div class="d-flex align-items-center justify-content-between mb-3">
                                         <h5 class="mb-0">Products</h5>
                                         <div class="input-group w-75">
                                             <input type="search" style="padding: 5px !important" class="form-control form-control-sm w-25" wire:model.live="barcode_key" placeholder="Scan Barcode">
@@ -247,6 +253,18 @@
             window.addEventListener('AddToCustomerSelectBox', event => {
                 var data = event.detail[0];
                 @this.set('sales.account_id', data['id']);
+            });
+        </script>
+        <script>
+            $(document).ready(function() {
+                document.querySelector('#employee_id').tomselect.open();
+                $('#employee_id').on('change', function(e) {
+                    const value = $(this).val() || null;
+                    @this.set('employee_id', value);
+                });
+                window.addEventListener('OpenEmployeeDropBox', event => {
+                    document.querySelector('#employee_id').tomselect.open();
+                });
             });
         </script>
     @endpush
