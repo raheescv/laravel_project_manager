@@ -35,7 +35,9 @@ return new class extends Migration
             $table->softDeletes();
             $table->timestamps();
 
+            $table->index('inventory_id');
             $table->index('product_id');
+            $table->index(['product_id', 'employee_id'], 'product_id_employee_id_index');
             $table->index('employee_id');
             $table->index('sale_id');
         });
