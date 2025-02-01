@@ -118,6 +118,7 @@ class Page extends Component
             $this->sales = [
                 'date' => date('Y-m-d'),
                 'due_date' => date('Y-m-d'),
+                'sale_type' => 'normal',
                 'account_id' => 3,
                 'customer_name' => '',
                 'customer_mobile' => '+919633155669',
@@ -177,6 +178,9 @@ class Page extends Component
         if ($key == 'barcode_key') {
             $this->getProductByBarcode($value);
             $this->barcode_key = '';
+        }
+        if ($key == 'sales.sale_type') {
+            $this->resetItemsBasedOnType();
         }
     }
 
@@ -288,6 +292,16 @@ class Page extends Component
         // $this->dispatch('OpenProductBox');
     }
 
+    public function resetItemsBasedOnType()
+    {
+        foreach ($this->items as $key => $item) {
+            $product = Product::find($item['product_id']);
+            $this->items[$key]['unit_price'] = $product->saleTypePrice($this->sales['sale_type']);
+            $this->singleCartCalculator($key);
+        }
+        $this->mainCalculator();
+    }
+
     public function addToCart($inventory)
     {
         $key = $this->employee_id.'-'.$inventory->id;
@@ -300,7 +314,7 @@ class Page extends Component
             'employee_name' => $this->employee->name,
             'product_id' => $product_id,
             'name' => $inventory->product->name,
-            'unit_price' => $inventory->product->mrp,
+            'unit_price' => $inventory->product->saleTypePrice($this->sales['sale_type']),
             'discount' => 0,
             'quantity' => 1,
             'tax' => 0,
@@ -538,14 +552,21 @@ class Page extends Component
                         ->whereNull('parent_id')
                         ->orderBy('name')
                         ->get();
-                    $products = Product::query()
+                    $products = Inventory::with('product')->join('products', 'product_id', 'products.id')
                         ->when($this->product_key, function ($query, $value) {
-                            $query->where('name', 'LIKE', '%'.$value.'%');
+                            $query->where('products.name', 'LIKE', '%'.$value.'%');
                         })
                         ->when($this->category_id, function ($query, $value) {
-                            $query->where('main_category_id', $value);
+                            $query->where('products.main_category_id', $value);
                         })
-                        ->isSelling()
+                        ->where('products.is_selling', true)
+                        ->select(
+                            'products.name',
+                            'products.mrp'
+                        )
+                        ->addSelect('inventories.quantity')
+                        ->addSelect('inventories.product_id')
+                        ->addSelect('inventories.id')
                         ->get();
 
                     return view('livewire.sale.pos', compact('categories', 'products'));

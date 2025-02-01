@@ -21,13 +21,17 @@
                             <div class="pos-categories tabs_wrapper">
                                 <div class="pos-products">
                                     <div class="d-flex align-items-center justify-content-between mb-3">
-                                        <h5 class="mb-0">Employee</h5>
-                                        <div class="input-group w-75" wire:ignore>
+                                        <div style="width:70% !important" wire:ignore>
+                                            <b>Employee</b>
                                             {{ html()->select('employee_id', $employees ?? [])->value($employee_id ?? '')->class('select-employee_id-list')->id('employee_id')->attribute('style', 'width:100%')->placeholder('Select Employee') }}
+                                        </div>
+                                        <div style="width:29% !important">
+                                            <b>Sale Type</b>
+                                            {{ html()->select('sale_type', priceTypes())->class('form-control')->id('sale_type')->attribute('wire:model.live', 'sales.sale_type')->attribute('style', 'width:100%')->placeholder('Select Sale Type') }}
                                         </div>
                                     </div>
                                     <div class="d-flex align-items-center justify-content-between mb-3">
-                                        <h5 class="mb-0">Products</h5>
+                                        <b>Products</b>
                                         <div class="input-group w-75">
                                             <input type="search" style="padding: 5px !important" class="form-control form-control-sm w-25" wire:model.live="barcode_key" placeholder="Scan Barcode">
                                             <input type="search" style="padding: 5px !important" class="form-control form-control-sm w-75" wire:model.live="product_key" placeholder="Search Products">
@@ -36,17 +40,17 @@
                                     <div class="tabs_container" style="height: 80vh; overflow: auto;  overflow-x: hidden; padding-right: 10px;">
                                         <div class="tab_content active" data-tab="all">
                                             <div class="row">
-                                                @foreach ($products as $product)
-                                                    <div class="col-sm-2 col-md-6 col-lg-3 col-xl-3" wire:click="selectItem({{ $product->id }})">
+                                                @foreach ($products as $item)
+                                                    <div class="col-sm-2 col-md-6 col-lg-3 col-xl-3" wire:click="selectItem({{ $item->id }})">
                                                         <div class="product-info default-cover card">
                                                             <a href="#" class="img-bg">
                                                                 <img src="{{ asset('assets/img/products/pos-product-01.png') }}" alt="Products">
                                                                 <span><i class="ti-check btn_t"></i></span>
                                                             </a>
-                                                            <h6 class="product-name"><a href="#">{{ $product->name }}</a></h6>
+                                                            <h6 class="product-name"><a href="#">{{ $item->name }}</a></h6>
                                                             <div class="d-flex align-items-center justify-content-between price">
-                                                                <span>30 Pcs</span>
-                                                                <span class="span_bt">{{ currency($product->mrp) }}</span>
+                                                                <span>{{ $item->quantity }}</span>
+                                                                <span class="span_bt">{{ currency($item->product->saleTypePrice($sales['sale_type'])) }}</span>
                                                             </div>
                                                         </div>
                                                     </div>
@@ -72,10 +76,10 @@
                                         <h6 class="d-flex align-items-center mb-0">
                                             Product Added <span class="count">{{ $total_quantity }}</span>
                                             &nbsp;
-                                            <i class="fa fa-eye d-flex align-items-center pointer" wire:click="viewItems()">
-                                                &nbsp; View all
-                                            </i>
                                         </h6>
+                                        <i class="fa fa-eye d-flex align-items-center pointer" wire:click="viewItems()">
+                                            &nbsp; View all
+                                        </i>
                                         @if ($total_quantity)
                                             <i class="fa fa-close d-flex align-items-center text-danger pointer" wire:confirm="Are you sure to delete this?" wire:click="deleteAllItems()">
                                                 &nbsp; Clear all
@@ -118,7 +122,7 @@
                                                     <b>Customer Mobile</b>
                                                     <div class="input-group mb-3">
                                                         {{ html()->text('customer_mobile')->value('')->class('form-control select_on_focus')->style('padding:5px')->attribute('wire:model', 'sales.customer_mobile')->id('customer_mobile')->placeholder('Mobile No') }}
-                                                        &nbsp;&nbsp;<i class="fa fa-2x fa-user-plus" id="addCustomer"></i>
+                                                        &nbsp;&nbsp;<i class="fa fa-2x fa-user-plus pointer" id="addCustomer"></i>
                                                     </div>
                                                 </div>
                                             </div>

@@ -17,6 +17,8 @@ return new class extends Migration
             $table->date('date');
             $table->date('due_date')->nullable();
 
+            $table->enum('sale_type', priceTypes())->default('normal');
+
             $table->string('customer_name')->nullable();
             $table->string('customer_mobile', 15)->nullable();
 

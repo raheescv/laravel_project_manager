@@ -66,7 +66,6 @@ class Product extends Model implements AuditableContracts
             'unit_id' => ['required'],
             'department_id' => ['required'],
             'main_category_id' => ['required'],
-            'sub_category_id' => ['required'],
             'cost' => ['required'],
             'mrp' => ['required'],
         ], $merge);
@@ -132,7 +131,7 @@ class Product extends Model implements AuditableContracts
         $value['is_selling'] = $value['is_selling'] ?? true;
         $data['is_selling'] = in_array($value['is_selling'], ['Yes', true]) ? true : false;
         $data['unit'] = $data['unit'] ?? 'Nos';
-        $unit = Unit::firstOrCreate(['name' => $data['unit'], 'code' => $data['unit']]);
+        $unit = Unit::firstOrCreate(['name' => $data['unit']], ['code' => $data['unit']]);
         $data['unit_id'] = $unit->id;
         $department_id = Department::selfCreate($data['department']);
         $data['department_id'] = $department_id;
@@ -174,5 +173,45 @@ class Product extends Model implements AuditableContracts
         $return['items'] = $self;
 
         return $return;
+    }
+
+    public function prices()
+    {
+        return $this->hasMany(ProductPrice::class, 'product_id');
+    }
+
+    public function saleTypePrice($type)
+    {
+        $mrp = $this->mrp;
+        switch ($type) {
+            case 'home_service':
+                $amount = $this->home_service_price;
+                $mrp = $amount != 0 ? $amount : $mrp;
+                break;
+            case 'offer':
+                $amount = $this->offer_price;
+                $mrp = $amount != 0 ? $amount : $mrp;
+                break;
+            default:
+                $mrp = $this->mrp;
+                break;
+        }
+
+        return $mrp;
+    }
+
+    public function normalPrice()
+    {
+        return $this->prices()->normal()->latest()->first();
+    }
+
+    public function getHomeServicePriceAttribute()
+    {
+        return $this->prices()->homeService()->latest()->value('amount');
+    }
+
+    public function getOfferPriceAttribute()
+    {
+        return $this->prices()->offer()->latest()->value('amount');
     }
 }

@@ -19,7 +19,7 @@ return new class extends Migration
             $table->unsignedBigInteger('unit_id');
             $table->unsignedBigInteger('department_id');
             $table->unsignedBigInteger('main_category_id');
-            $table->unsignedBigInteger('sub_category_id');
+            $table->unsignedBigInteger('sub_category_id')->nullable();
 
             $table->string('hsn_code')->nullable();
             $table->integer('tax')->default(0)->nullable();

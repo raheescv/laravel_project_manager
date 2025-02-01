@@ -26,8 +26,12 @@
     <x-settings.unit.unit-modal />
     <x-settings.category.category-modal />
     <x-settings.department.department-modal />
-    @component('components.product.units-modal', ['product_id' => $id])
-    @endcomponent
+    @if ($id)
+        @component('components.product.units-modal', ['product_id' => $id])
+        @endcomponent
+        @component('components.product.prices-modal', ['product_id' => $id])
+        @endcomponent
+    @endif
     @push('scripts')
         @include('components.select.departmentSelect')
         @include('components.select.categorySelect')

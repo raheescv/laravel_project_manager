@@ -4,6 +4,7 @@ namespace App\Livewire\Product;
 
 use App\Actions\Product\CreateAction;
 use App\Actions\Product\DeleteImageAction;
+use App\Actions\Product\ProductPrice\DeleteAction as PriceDeleteAction;
 use App\Actions\Product\ProductUnit\DeleteAction as UnitDeleteAction;
 use App\Actions\Product\UpdateAction;
 use App\Models\Configuration;
@@ -29,7 +30,7 @@ class Page extends Component
 
     public $barcode_type;
 
-    public $selectedTab = 'Attributes';
+    public $selectedTab = 'Prices';
 
     public $products;
 
@@ -94,15 +95,12 @@ class Page extends Component
                 'images' => [],
             ];
         } else {
-            $product = Product::with('department', 'subCategory', 'mainCategory', 'images', 'unit', 'units.subUnit')->find($this->table_id);
+            $product = Product::with('department', 'subCategory', 'mainCategory', 'images', 'unit', 'units.subUnit', 'prices')->find($this->table_id);
             if (! $product) {
                 return redirect()->route('product::index');
             }
             $this->products = $product->toArray();
             $this->type = $product->type;
-        }
-        if ($this->type == 'service') {
-            $this->selectedTab = 'Images';
         }
         if ($dropdownValues) {
             $this->dispatch('SelectDropDownValues', $this->products);
@@ -117,7 +115,6 @@ class Page extends Component
             'products.unit_id' => ['required'],
             'products.department_id' => ['required'],
             'products.main_category_id' => ['required'],
-            'products.sub_category_id' => ['required'],
             'products.cost' => ['required'],
             'products.mrp' => ['required'],
             'images.*' => 'mimes:jpg,jpeg,png,gif,bmp,webp,svg|max:3100',
@@ -149,8 +146,6 @@ class Page extends Component
         'products.barcode.required' => 'The barcode field is required',
         'products.barcode.unique' => 'The barcode has already been taken',
     ];
-
-    public function updated($key, $value) {}
 
     public function save($edit = false)
     {
@@ -225,6 +220,20 @@ class Page extends Component
     {
         try {
             $response = (new UnitDeleteAction)->execute($id);
+            if (! $response['success']) {
+                throw new \Exception($response['message'], 1);
+            }
+            $this->dispatch('success', ['message' => $response['message']]);
+            $this->mount($this->type, $this->table_id);
+        } catch (\Exception $e) {
+            $this->dispatch('error', ['message' => $e->getMessage()]);
+        }
+    }
+
+    public function priceDelete($id)
+    {
+        try {
+            $response = (new PriceDeleteAction)->execute($id);
             if (! $response['success']) {
                 throw new \Exception($response['message'], 1);
             }

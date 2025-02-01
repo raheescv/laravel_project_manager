@@ -228,6 +228,17 @@ if (! function_exists('saleTypes')) {
         ];
     }
 }
+
+if (! function_exists('priceTypes')) {
+    function priceTypes()
+    {
+        return [
+            'normal' => 'Normal',
+            'home_service' => 'Home Service',
+            'offer' => 'Offer',
+        ];
+    }
+}
 if (! function_exists('activeOrDisabled')) {
     function activeOrDisabled()
     {
@@ -252,9 +263,9 @@ if (! function_exists('getNextSaleInvoiceNo')) {
     {
         $prefix = 'INV-';
         $year = now()->format('Y');
-        $lastInvoice = DB::table('sales')->whereYear('created_at', $year)->max('invoice_no');
-        $lastSequence = $lastInvoice ? (int) str_replace($prefix.$year.'-', '', $lastInvoice) : 0;
         do {
+            $lastInvoice = DB::table('sales')->whereYear('created_at', $year)->max('invoice_no');
+            $lastSequence = $lastInvoice ? (int) str_replace($prefix.$year.'-', '', $lastInvoice) : 0;
             $newSequence = $lastSequence + 1;
             $invoice = $prefix.$year.'-'.str_pad($newSequence, 5, '0', STR_PAD_LEFT);
             $exists = DB::table('sales')->where('invoice_no', $invoice)->exists();

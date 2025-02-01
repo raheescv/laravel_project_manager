@@ -6,7 +6,7 @@
                     <div class="card-body">
                         <div class="row">
                             <div class="col-md-6 mb-3">
-                                <h5 class="card-title">UID: {{ $products['id'] ?? '' }}</h5>
+                                <h5 class="card-title">UID: {{ $table_id ?? '' }}</h5>
                             </div>
                             @if ($type == 'product')
                                 <div class="col-md-6 mb-3">
@@ -46,7 +46,7 @@
                                 {{ html()->select('main_category_id', [])->value('')->class('select-category_id-parent')->placeholder('Select Main Category')->id('main_category_id') }}
                             </div>
                             <div class="col-md-4" wire:ignore>
-                                <label for="sub_category_id" class="form-label">Sub Category *</label>
+                                <label for="sub_category_id" class="form-label">Sub Category</label>
                                 {{ html()->select('sub_category_id', [])->value('')->class('select-category_id')->placeholder('Select Sub Category')->id('sub_category_id') }}
                             </div>
                             <div class="col-md-4" wire:ignore @if ($type == 'service') hidden @endif>
@@ -93,7 +93,7 @@
                 <div class="card h-100">
                     <div class="card-header">
                         <div class="col-12" style="padding-top:10px;">
-                            @if (!isset($products['id']))
+                            @if (!isset($table_id))
                                 <button type="submit" class="btn  btn-sm btn-success" style="float: right;margin-right:5px; ">Save & Create New</button>
                                 <button type="button" wire:click="save(1)" class="btn  btn-sm btn-primary" style="float: right;margin-right:5px; ">Save & Edit</button>
                             @else
@@ -211,6 +211,14 @@
                                     <div class="col-md-12 mb-3">
                                         <div class="tab-base">
                                             <ul class="nav nav-tabs justify-content-end" role="tablist">
+                                                @if (isset($table_id))
+                                                    <li class="nav-item" role="presentation">
+                                                        <button class="nav-link @if ($selectedTab == 'Prices') active show @endif" data-bs-toggle="tab" wire:click="tabSelect('Prices')"
+                                                            data-bs-target="#tabPrices" type="button" role="tab" aria-controls="profile" aria-selected="false" tabindex="-1">
+                                                            Prices
+                                                        </button>
+                                                    </li>
+                                                @endif
                                                 @if ($type == 'product')
                                                     <li class="nav-item" role="presentation">
                                                         <button class="nav-link @if ($selectedTab == 'Attributes') active @endif" data-bs-toggle="tab" wire:click="tabSelect('Attributes')"
@@ -226,11 +234,11 @@
                                                     </li>
                                                 @endif
                                                 @if ($type == 'product')
-                                                    @if (isset($products['id']))
+                                                    @if (isset($table_id))
                                                         <li class="nav-item" role="presentation">
                                                             <button class="nav-link @if ($selectedTab == 'Uom') active show @endif" data-bs-toggle="tab" wire:click="tabSelect('Uom')"
-                                                                data-bs-target="#tabUom" type="button" role="tab" aria-controls="profile" aria-selected="false" tabindex="-1">Unit of
-                                                                Measures
+                                                                data-bs-target="#tabUom" type="button" role="tab" aria-controls="profile" aria-selected="false" tabindex="-1">
+                                                                Unit of Measures
                                                             </button>
                                                         </li>
                                                     @endif
@@ -242,6 +250,56 @@
                                                 </li>
                                             </ul>
                                             <div class="tab-content">
+                                                @if (isset($table_id))
+                                                    <div id="tabPrices" class="tab-pane fade @if ($selectedTab == 'Prices') active show @endif" role="tabpanel">
+                                                        <div class="row g-2">
+                                                            <h5 class="card-title ">Prices </h5>
+                                                            <div class="col-md-1">
+                                                                <div class="d-flex flex-wrap justify-content-center">
+                                                                    <button type="button" id="ProductPriceAdd" class="btn btn-primary hstack gap-2 align-self-center">
+                                                                        <i class="demo-psi-add fs-5"></i>
+                                                                        <span class="vr"></span>
+                                                                        Add
+                                                                    </button>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                        <div class="card mb-3">
+                                                            <div class="card-body">
+                                                                <div class="table-responsive">
+                                                                    <table class="table table-striped">
+                                                                        <thead>
+                                                                            <tr>
+                                                                                <th>Type</th>
+                                                                                <th>Start Date</th>
+                                                                                <th>End Date</th>
+                                                                                <th class="text-end">Amount</th>
+                                                                                <th>Status</th>
+                                                                                <th>Action</th>
+                                                                            </tr>
+                                                                        </thead>
+                                                                        <tbody>
+                                                                            @foreach ($products['prices'] as $item)
+                                                                                <tr>
+                                                                                    <td>{{ priceTypes()[$item['price_type']] }}</td>
+                                                                                    <td>{{ systemDate($item['start_date']) }}</td>
+                                                                                    <td>{{ systemDate($item['end_date']) }}</td>
+                                                                                    <td class="text-end">{{ currency($item['amount']) }}</td>
+                                                                                    <td>{{ ucFirst($item['status']) }}</td>
+                                                                                    <td>
+                                                                                        <i table_id="{{ $item['id'] }}" class="demo-psi-pencil fs-5 me-2 pointer product_price_edit"></i>
+                                                                                        <i wire:confirm="Are You sure?" wire:click="priceDelete({{ $item['id'] }})"
+                                                                                            class="demo-psi-trash fs-5 me-2 pointer delete"></i>
+                                                                                    </td>
+                                                                                </tr>
+                                                                            @endforeach
+                                                                        </tbody>
+                                                                    </table>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                @endif
                                                 @if ($type == 'product')
                                                     <div id="tabAttributes" class="tab-pane fade @if ($selectedTab == 'Attributes') active show @endif" role="tabpanel">
                                                         <div class="row g-3 ">
@@ -301,13 +359,12 @@
                                                     </div>
                                                 @endif
                                                 @if ($type == 'product')
-                                                    @if (isset($products['id']))
+                                                    @if (isset($table_id))
                                                         <div id="tabUom" class="tab-pane fade @if ($selectedTab == 'Uom') active show @endif" role="tabpanel">
                                                             <div class="row g-2">
-                                                                <h5 class="card-title ">Unit of Measures * </h5>
-
+                                                                <h5 class="card-title ">Unit of Measures </h5>
                                                                 <div class="col-md-1">
-                                                                    <div class="mt-4 d-flex flex-wrap justify-content-center gap-2">
+                                                                    <div class="mt-4 d-flex flex-wrap justify-content-center">
                                                                         <button type="button" id="ProductUnitAdd" class="btn btn-primary hstack gap-2 align-self-center">
                                                                             <i class="demo-psi-add fs-5"></i>
                                                                             <span class="vr"></span>
@@ -457,6 +514,15 @@
             });
             $(document).on('click', '.product_unit_edit', function() {
                 Livewire.dispatch("Product-Units-Update-Component", {
+                    id: $(this).attr('table_id')
+                });
+            });
+
+            $('#ProductPriceAdd').click(function() {
+                Livewire.dispatch("Product-Prices-Create-Component");
+            });
+            $(document).on('click', '.product_price_edit', function() {
+                Livewire.dispatch("Product-Prices-Update-Component", {
                     id: $(this).attr('table_id')
                 });
             });
