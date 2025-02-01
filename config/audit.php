@@ -179,8 +179,8 @@ return [
     */
 
     'queue' => [
-        'enable' => false,
-        'connection' => 'sync',
+        'enable' => true,
+        'connection' => 'database',
         'queue' => 'default',
         'delay' => 0,
     ],
