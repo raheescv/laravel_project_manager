@@ -27,7 +27,7 @@
                                         </div>
                                         <div style="width:29% !important">
                                             <b>Sale Type</b>
-                                            {{ html()->select('sale_type', priceTypes())->class('form-control')->id('sale_type')->attribute('wire:model.live', 'sales.sale_type')->attribute('style', 'width:100%')->placeholder('Select Sale Type') }}
+                                            {{ html()->select('sale_type', priceTypes())->class('form-control')->id('sale_type')->attribute('wire:model.live', 'sales.sale_type')->required(true)->placeholder('Select Sale Type') }}
                                         </div>
                                     </div>
                                     <div class="d-flex align-items-center justify-content-between mb-3">

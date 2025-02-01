@@ -33,6 +33,8 @@ class Page extends Component
 
     public $table_id;
 
+    public $account_balance;
+
     public $accounts;
 
     public $inventory_id;
@@ -141,6 +143,7 @@ class Page extends Component
                 'status' => 'draft',
             ];
         }
+        $this->getCustomerDetails();
         $this->dispatch('SelectDropDownValues', $this->sales);
     }
 
@@ -182,6 +185,15 @@ class Page extends Component
         if ($key == 'sales.sale_type') {
             $this->resetItemsBasedOnType();
         }
+        if ($key == 'sales.account_id') {
+            $this->getCustomerDetails();
+        }
+    }
+
+    public function getCustomerDetails()
+    {
+        $account = Account::find($this->sales['account_id']);
+        $this->account_balance = $account->ledger()->latest('id')->value('balance');
     }
 
     public function updatedInventoryId()
@@ -296,7 +308,18 @@ class Page extends Component
     {
         foreach ($this->items as $key => $item) {
             $product = Product::find($item['product_id']);
-            $this->items[$key]['unit_price'] = $product->saleTypePrice($this->sales['sale_type']);
+
+            $saleTypePrice = $product->saleTypePrice($this->sales['sale_type']);
+            $discount = $product->mrp - $saleTypePrice;
+
+            $this->items[$key]['discount'] = 0;
+            if ($discount > 0) {
+                $this->items[$key]['unit_price'] = $product->mrp;
+                $this->items[$key]['discount'] = $discount;
+            } else {
+                $this->items[$key]['unit_price'] = $saleTypePrice;
+            }
+
             $this->singleCartCalculator($key);
         }
         $this->mainCalculator();
@@ -306,6 +329,7 @@ class Page extends Component
     {
         $key = $this->employee_id.'-'.$inventory->id;
         $product_id = $inventory->product_id;
+        $product = $inventory->product;
         $single = [
             'key' => $key,
             'inventory_id' => $inventory->id,
@@ -313,12 +337,21 @@ class Page extends Component
             'employee_id' => $this->employee_id,
             'employee_name' => $this->employee->name,
             'product_id' => $product_id,
-            'name' => $inventory->product->name,
-            'unit_price' => $inventory->product->saleTypePrice($this->sales['sale_type']),
+            'name' => $product->name,
+            'unit_price' => $product->mrp,
             'discount' => 0,
             'quantity' => 1,
             'tax' => 0,
         ];
+        $saleTypePrice = $product->saleTypePrice($this->sales['sale_type']);
+        $discount = $product->mrp - $saleTypePrice;
+
+        if ($discount > 0) {
+            $single['unit_price'] = $product->mrp;
+            $single['discount'] = $discount;
+        } else {
+            $single['unit_price'] = $saleTypePrice;
+        }
 
         if (isset($this->items[$key])) {
             $this->items[$key]['quantity'] += 1;
@@ -434,6 +467,7 @@ class Page extends Component
     protected $rules = [
         'sales.account_id' => ['required'],
         'sales.date' => ['required'],
+        'sales.sale_type' => ['required'],
     ];
 
     protected $messages = [

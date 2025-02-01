@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Models\Views\Ledger;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Validation\Rule;
@@ -69,5 +70,10 @@ class Account extends Model implements AuditableContracts
         $return['items'] = $self;
 
         return $return;
+    }
+
+    public function ledger()
+    {
+        return $this->hasMany(Ledger::class, 'account_id');
     }
 }

@@ -52,6 +52,7 @@ class Sale extends Model implements AuditableContracts
             'invoice_no' => ['required', Rule::unique(self::class, 'invoice_no')->ignore($id)],
             'branch_id' => ['required'],
             'account_id' => ['required'],
+            'sale_type' => ['required'],
             'date' => ['required'],
         ], $merge);
     }

@@ -18,13 +18,12 @@
                                     {{ html()->input('account_name')->class('form-control')->disabled(true)->attribute('wire:model', 'sales.account.name') }}
                                 </div>
                             @endif
-
                             <div class="row my-2">
                                 <div class="table-responsive">
                                     <table class="table table-striped align-middle table-sm">
                                         <tr>
-                                            <th>Balance</th>
-                                            <th class="text-end">0</th>
+                                            <th>Balance {{ $sales['account_id'] }}</th>
+                                            <th class="text-end">{{ currency($account_balance ?? 0) }}</th>
                                         </tr>
                                     </table>
                                 </div>
@@ -57,6 +56,10 @@
                             @else
                                 {{ html()->input('reference_no')->value('')->class('form-control')->disabled(true)->attribute('wire:model', 'sales.reference_no') }}
                             @endif
+                            <div class="row my-2 p-1">
+                                <label for="sale_type">Sale Type</label>
+                                {{ html()->select('sale_type', priceTypes())->class('form-control')->id('sale_type')->attribute('wire:model.live', 'sales.sale_type')->required(true)->placeholder('Select Sale Type') }}
+                            </div>
                         </div>
                         <div class="col-md-2">
                             <div class="row">
