@@ -4,6 +4,7 @@ namespace App\Imports;
 
 use App\Events\FileImportCompleted;
 use App\Events\FileImportProgress;
+use App\Models\Inventory;
 use App\Models\Product;
 use Illuminate\Support\Collection;
 use Maatwebsite\Excel\Concerns\ToCollection;
@@ -23,8 +24,15 @@ class ServiceImport implements ToCollection, WithBatchInserts, WithChunkReading,
     {
         foreach ($rows as $value) {
             try {
+                if (! $value['name']) {
+                    continue;
+                }
                 $data = Product::constructData($value->toArray(), $this->user_id);
+                $data['mrp'] = $value['price'] ?? 0;
+                $data['code'] = $data['code'] ?? rand(999, 9999);
+                $data['status'] = $data['status'] ?? 'active';
                 $data['type'] = 'service';
+                $data['cost'] = $value['price'];
                 $exists = Product::firstWhere('name', $data['name']);
                 if (! $exists) {
                     $trashedExists = Product::withTrashed()->firstWhere('name', $data['name']);
@@ -35,6 +43,7 @@ class ServiceImport implements ToCollection, WithBatchInserts, WithChunkReading,
                     } else {
                         $model = Product::create($data);
                     }
+                    Inventory::selfCreateByProduct($model, $this->user_id);
                 }
             } catch (\Throwable $th) {
                 $data['message'] = $th->getMessage();

@@ -142,12 +142,14 @@ class Product extends Model implements AuditableContracts
         $main_category_id = Category::selfCreate($mainCategoryData);
         $data['main_category_id'] = $main_category_id;
 
-        $subCategoryData = [
-            'parent_id' => $data['main_category_id'],
-            'name' => $data['sub_category'],
-        ];
-        $sub_category_id = Category::selfCreate($subCategoryData);
-        $data['sub_category_id'] = $sub_category_id;
+        if ($data['sub_category']) {
+            $subCategoryData = [
+                'parent_id' => $data['main_category_id'],
+                'name' => $data['sub_category'],
+            ];
+            $sub_category_id = Category::selfCreate($subCategoryData);
+            $data['sub_category_id'] = $sub_category_id;
+        }
 
         $data['created_by'] = $user_id;
         $data['updated_by'] = $user_id;
