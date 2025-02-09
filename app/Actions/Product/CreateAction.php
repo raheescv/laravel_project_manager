@@ -55,10 +55,12 @@ class CreateAction
                         'name' => $file->getClientOriginalName(),
                         'size' => $file->getSize(),
                         'type' => $file->getClientOriginalExtension(),
-                        'path' => url($file->store('products/'.$model->id, 'public')),
+                        'path' => url('storage/'.$file->store('products/'.$model->id, 'public')),
                     ];
                     $model->images()->create($imageData);
                 }
+                $path = $model->images()?->first()?->path;
+                $model->update(['thumbnail' => $path]);
             }
             $return['success'] = true;
             $return['message'] = 'Successfully Created Product';

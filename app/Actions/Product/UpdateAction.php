@@ -49,14 +49,14 @@ class UpdateAction
                         'name' => $file->getClientOriginalName(),
                         'size' => $file->getSize(),
                         'type' => $file->getClientOriginalExtension(),
-                        'path' => url($file->store('products/'.$model->id, 'public')),
+                        'path' => url('storage/'.$file->store('products/'.$model->id, 'public')),
                     ];
                     $model->images()->create($imageData);
                 }
-            }
-            if (! $model->thumbnail) {
-                $path = $model->images()?->first()?->path;
-                $model->update(['thumbnail' => $path]);
+                if (! $model->thumbnail) {
+                    $path = $model->images()?->first()?->path;
+                    $model->update(['thumbnail' => $path]);
+                }
             }
 
             $return['success'] = true;

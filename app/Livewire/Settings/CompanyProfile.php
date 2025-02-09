@@ -12,6 +12,7 @@ class CompanyProfile extends Component
     use WithFilePond;
 
     public $logo;
+
     public $uploaded_logo;
 
     public function mount()
@@ -40,7 +41,7 @@ class CompanyProfile extends Component
             if (! $this->logo) {
                 throw new \Exception('Please wait for the loading to complete', 1);
             }
-            $logo = url($this->logo->store('company_image', 'public'));
+            $logo = url('storage/'.$this->logo->store('company_image', 'public'));
             Configuration::updateOrCreate(['key' => 'logo'], ['value' => $logo]);
             Cache::forget('logo');
             $this->dispatch('success', ['message' => 'Updated Successfully']);
