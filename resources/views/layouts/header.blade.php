@@ -155,7 +155,7 @@
                                         <i class="demo-pli-male fs-5 me-2"></i>
                                         Profile
                                     </a>
-                                    <a href="#" class="list-group-item list-group-item-action">
+                                    <a href="{{ route('settings::index') }}" class="list-group-item list-group-item-action">
                                         <i class="demo-pli-gear fs-5 me-2"></i>
                                         Settings
                                     </a>
