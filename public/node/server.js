@@ -5,6 +5,8 @@ const bodyParser = require('body-parser');
 const fs = require('fs');
 const qrCode = require('qrcode');
 
+require('dotenv').config({ path: '../../.env' });
+
 const app = express();
 app.use(cors());
 app.use(bodyParser.json());
@@ -115,7 +117,8 @@ app.post('/send-message', async (req, res) => {
     }
 });
 
-const PORT = 3004;
+const PORT = process.env.WHATSAPP_PORT || 3000;
+
 app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
 });
