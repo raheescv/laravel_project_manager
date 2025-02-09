@@ -599,11 +599,15 @@ class Page extends Component
 
     public function render()
     {
-        switch (cache('sale_type')) {
-            case 'pos':
-                return view('livewire.sale.pos');
-            default:
-                return view('livewire.sale.page');
+        if($this->sales['status']=='completed'){
+            return view('livewire.sale.page');
+        } else {
+            switch (cache('sale_type')) {
+                case 'pos':
+                    return view('livewire.sale.pos');
+                default:
+                    return view('livewire.sale.page');
+            }
         }
     }
 }
