@@ -4,7 +4,7 @@
         <div class="header__brand">
             <div class="brand-wrap">
                 <a href="{{ route('dashboard') }}" class="brand-img stretched-link">
-                    <img src="{{ asset('assets/img/logo.svg') }}" alt="Nifty Logo" class="Nifty logo" width="16" height="16">
+                    <img src="{{ cache('logo') }}" alt="Nifty Logo" class="Nifty logo" width="16" height="16">
                 </a>
                 <div class="brand-title">{{ config('app.name', 'Astra') }}</div>
             </div>

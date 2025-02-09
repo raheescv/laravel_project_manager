@@ -20,7 +20,7 @@
                     <div class="tab-base">
                         <ul class="nav nav-tabs" role="tablist">
                             <li class="nav-item" role="presentation">
-                                <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tabsConfiguration" type="button" role="tab" aria-controls="profile" aria-selected="false"
+                                <button class="nav-link " data-bs-toggle="tab" data-bs-target="#tabsConfiguration" type="button" role="tab" aria-controls="profile" aria-selected="false"
                                     tabindex="-1">
                                     Configuration
                                 </button>
@@ -29,6 +29,12 @@
                                 <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabsSaleSettings" type="button" role="tab" aria-controls="profile" aria-selected="false"
                                     tabindex="-1">
                                     Sale Settings
+                                </button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tabsCompanyProfile" type="button" role="tab" aria-controls="profile" aria-selected="false"
+                                    tabindex="-1">
+                                    Company Profile
                                 </button>
                             </li>
                             <li class="nav-item" role="presentation">
@@ -45,20 +51,24 @@
                             @endcan
                         </ul>
                         <div class="tab-content">
-                            <div id="tabsConfiguration" class="tab-pane fade active show" role="tabpanel">
+                            <div id="tabsConfiguration" class="tab-pane" role="tabpanel">
                                 <h5>Configuration</h5>
                                 @livewire('settings.configurations')
                             </div>
-                            <div id="tabsSaleSettings" class="tab-pane fade" role="tabpanel">
+                            <div id="tabsSaleSettings" class="tab-pane" role="tabpanel">
                                 <h5>Sale Settings</h5>
                                 @livewire('settings.sale-configuration')
                             </div>
-                            <div id="tabsTheme" class="tab-pane fade" role="tabpanel">
+                            <div id="tabsCompanyProfile" class="tab-pane fade active show" role="tabpanel">
+                                <h5>Company Profile</h5>
+                                @livewire('settings.company-profile')
+                            </div>
+                            <div id="tabsTheme" class="tab-pane" role="tabpanel">
                                 <h5>Theme tab</h5>
                                 <p class="mb-0">Far far away, behind the word mountains,</p>
                             </div>
                             @can('whatsapp.integration')
-                                <div id="tabsWhatsapp" class="tab-pane fade " role="tabpanel">
+                                <div id="tabsWhatsapp" class="tab-pane" role="tabpanel">
                                     @livewire('settings.whatsapp')
                                 </div>
                             @endcan

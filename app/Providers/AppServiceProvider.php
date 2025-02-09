@@ -42,6 +42,11 @@ class AppServiceProvider extends ServiceProvider
 
                 return Configuration::where('key', 'sale_type')->value('value');
             });
+            Cache::remember('logo', now()->addYear(), function () {
+                info('logo remember');
+
+                return Configuration::where('key', 'logo')->value('value');
+            });
         }
         // Gate::after(function ($user, $ability) {
         //     return $user->hasRole('Super Admin') || $user->hasPermissionTo($ability);
