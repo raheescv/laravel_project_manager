@@ -32,6 +32,8 @@ class Page extends Component
 
     public $selectedTab = 'Prices';
 
+    public $product;
+
     public $products;
 
     public $images = [];
@@ -95,12 +97,12 @@ class Page extends Component
                 'images' => [],
             ];
         } else {
-            $product = Product::with('department', 'subCategory', 'mainCategory', 'images', 'unit', 'units.subUnit', 'prices')->find($this->table_id);
-            if (! $product) {
+            $this->product = Product::with('department', 'subCategory', 'mainCategory', 'images', 'unit', 'units.subUnit', 'prices')->find($this->table_id);
+            if (! $this->product) {
                 return redirect()->route('product::index');
             }
-            $this->products = $product->toArray();
-            $this->type = $product->type;
+            $this->products = $this->product->toArray();
+            $this->type = $this->product->type;
         }
         if ($dropdownValues) {
             $this->dispatch('SelectDropDownValues', $this->products);
@@ -204,12 +206,25 @@ class Page extends Component
     public function deleteImage($id)
     {
         try {
+            DB::beginTransaction();
             $response = (new DeleteImageAction)->execute($id);
             if (! $response['success']) {
                 throw new \Exception($response['message'], 1);
             }
             $this->mount($this->type, $this->table_id);
             $this->dispatch('success', ['message' => 'Deleted Successfully']);
+            DB::commit();
+        } catch (\Exception $e) {
+            DB::rollback();
+            $this->dispatch('error', ['message' => $e->getMessage()]);
+        }
+    }
+
+    public function defaultImage($path)
+    {
+        try {
+            $this->product->update(['thumbnail' => $path]);
+            $this->dispatch('success', ['message' => 'Thumbnail Updated Successfully']);
         } catch (\Exception $e) {
             DB::rollback();
             $this->dispatch('error', ['message' => $e->getMessage()]);

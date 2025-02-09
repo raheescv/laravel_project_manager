@@ -19,6 +19,9 @@ class DeleteImageAction
             if (Storage::disk('public')->exists($relativePath)) {
                 Storage::disk('public')->delete($relativePath);
             }
+            if ($model->product->thumbnail == $model->path) {
+                $model->product->update(['thumbnail' => null]);
+            }
             if (! $model->delete()) {
                 throw new \Exception('Oops! Something went wrong while deleting the ProductImage. Please try again.', 1);
             }

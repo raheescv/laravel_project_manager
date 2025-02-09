@@ -595,6 +595,7 @@ class Page extends Component
                         })
                         ->where('products.is_selling', true)
                         ->select(
+                            'products.thumbnail',
                             'products.name',
                             'products.mrp'
                         )

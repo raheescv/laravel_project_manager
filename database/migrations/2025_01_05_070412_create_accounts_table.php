@@ -20,7 +20,7 @@ return new class extends Migration
             $table->string('model', 30)->nullable();
 
             $table->string('email', 50)->nullable();
-            
+
             $table->string('description')->nullable();
 
             $table->softDeletes();

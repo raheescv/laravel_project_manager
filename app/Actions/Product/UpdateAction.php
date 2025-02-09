@@ -54,6 +54,10 @@ class UpdateAction
                     $model->images()->create($imageData);
                 }
             }
+            if (! $model->thumbnail) {
+                $path = $model->images()?->first()?->path;
+                $model->update(['thumbnail' => $path]);
+            }
 
             $return['success'] = true;
             $return['message'] = 'Successfully Update Product';

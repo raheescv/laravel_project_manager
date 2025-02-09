@@ -22,4 +22,9 @@ class ProductImage extends Model
             'name' => ['required'],
         ], $merge);
     }
+
+    public function product()
+    {
+        return $this->belongsTo(Product::class);
+    }
 }

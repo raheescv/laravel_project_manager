@@ -410,10 +410,12 @@
                                                     <div class="col-12">
                                                         <div class="row g-1 mb-3">
                                                             @foreach ($products['images'] as $item)
-                                                                <div class="col-4 position-relative">
-                                                                    <img class="img-fluid rounded" width="100%" height="10%" src="{{ $item['path'] }}" alt="thumbs" loading="lazy">
+                                                                <div class="col-4 position-relative pointer">
+                                                                    <img class="img-fluid rounded" width="100%" height="10%" src="{{ $item['path'] }}" alt="thumbs" loading="lazy"
+                                                                        wire:confirm="Are you sure you want this as the default image?" wire:click="defaultImage('{{ $item['path'] }}')">
                                                                     <i class="demo-psi-trash fs-5 me-2 pointer position-absolute top-0 end-0 m-2"
-                                                                        wire:confirm="Are you sure you want to delete this image?" wire:click="deleteImage('{{ $item['id'] }}')"></i>
+                                                                        wire:confirm="Are you sure you want to delete this image?" wire:click="deleteImage('{{ $item['id'] }}')">
+                                                                    </i>
                                                                 </div>
                                                             @endforeach
                                                         </div>
