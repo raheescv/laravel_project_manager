@@ -123,7 +123,7 @@ class Page extends Component
                 'sale_type' => 'normal',
                 'account_id' => 3,
                 'customer_name' => '',
-                'customer_mobile' => '+919633155669',
+                'customer_mobile' => '',
 
                 'gross_amount' => 0,
                 'total_quantity' => 0,
@@ -142,6 +142,9 @@ class Page extends Component
                 'address' => null,
                 'status' => 'draft',
             ];
+            if (! app()->isProduction()) {
+                $this->sales['customer_mobile'] = '+919633155669';
+            }
         }
         $this->getCustomerDetails();
         $this->dispatch('SelectDropDownValues', $this->sales);
