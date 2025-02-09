@@ -605,6 +605,7 @@ class Page extends Component
                         ->addSelect('inventories.quantity')
                         ->addSelect('inventories.product_id')
                         ->addSelect('inventories.id')
+                        ->orderBy('products.name')
                         ->get();
 
                     return view('livewire.sale.pos', compact('categories', 'products'));
