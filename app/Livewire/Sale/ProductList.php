@@ -51,8 +51,9 @@ class ProductList extends Component
 
     public function selectItem($id)
     {
-        $this->dispatch('Sale-selectItem-Component',$id);
+        $this->dispatch('Sale-selectItem-Component', $id);
     }
+
     public function render()
     {
         return view('livewire.sale.product-list');

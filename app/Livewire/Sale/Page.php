@@ -3,6 +3,7 @@
 namespace App\Livewire\Sale;
 
 use App\Actions\Sale\CreateAction;
+use App\Actions\Sale\Payment\DeleteAction;
 use App\Actions\Sale\UpdateAction;
 use App\Helpers\Facades\SaleHelper;
 use App\Helpers\Facades\WhatsappHelper;
@@ -61,6 +62,8 @@ class Page extends Component
 
     public $payment_method_name;
 
+    public $sale;
+
     public $sales = [];
 
     public $default_payment_method_id = 1;
@@ -83,13 +86,13 @@ class Page extends Component
         ];
 
         if ($this->table_id) {
-            $sales = Sale::with('account:id,name', 'branch:id,name', 'items.product:id,name', 'items.employee:id,name', 'createdUser:id,name', 'updatedUser:id,name', 'cancelledUser:id,name', 'payments.paymentMethod:id,name')->find($this->table_id);
-            if (! $sales) {
+            $this->sale = Sale::with('account:id,name', 'branch:id,name', 'items.product:id,name', 'items.employee:id,name', 'createdUser:id,name', 'updatedUser:id,name', 'cancelledUser:id,name', 'payments.paymentMethod:id,name')->find($this->table_id);
+            if (! $this->sale) {
                 return redirect()->route('sale::index');
             }
-            $this->sales = $sales->toArray();
+            $this->sales = $this->sale->toArray();
             $this->accounts = Account::where('id', $this->sales['account_id'])->pluck('name', 'id')->toArray();
-            $this->items = $sales->items->mapWithKeys(function ($item) {
+            $this->items = $this->sale->items->mapWithKeys(function ($item) {
                 $key = $item['employee_id'].'-'.$item['inventory_id'];
 
                 return [
@@ -113,7 +116,7 @@ class Page extends Component
                 ];
             })->toArray();
 
-            $this->payments = $sales->payments->map->only(['id', 'amount', 'date', 'payment_method_id', 'created_by', 'name'])->toArray();
+            $this->payments = $this->sale->payments->map->only(['id', 'amount', 'date', 'payment_method_id', 'created_by', 'name'])->toArray();
             $this->mainCalculator();
 
         } else {
@@ -401,8 +404,20 @@ class Page extends Component
 
     public function removePayment($index)
     {
-        unset($this->payments[$index]);
-        $this->mainCalculator();
+        try {
+            $id = $this->payments[$index]['id'] ?? '';
+            if ($id) {
+                $response = (new DeleteAction)->execute($id);
+                if (! $response['success']) {
+                    throw new \Exception($response['message'], 1);
+                }
+            }
+            unset($this->payments[$index]);
+            $this->mainCalculator();
+            $this->dispatch('success', ['message' => 'Payment removed successfully']);
+        } catch (\Throwable $th) {
+            $this->dispatch('error', ['message' => $th->getMessage()]);
+        }
     }
 
     public function viewItems()
@@ -442,6 +457,10 @@ class Page extends Component
             return false;
         }
         $this->payment['payment_method_id'] = $account->id;
+
+        if ($this->table_id) {
+            $this->sale->payments()->delete();
+        }
         $this->payments = [];
         $single = [
             'amount' => $this->sales['grand_total'],
@@ -599,7 +618,7 @@ class Page extends Component
 
     public function render()
     {
-        if($this->sales['status']=='completed'){
+        if ($this->sales['status'] == 'completed') {
             return view('livewire.sale.page');
         } else {
             switch (cache('sale_type')) {

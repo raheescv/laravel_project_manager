@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Sale;
 
+use App\Actions\Sale\Payment\DeleteAction;
 use App\Models\Account;
 use Livewire\Component;
 
@@ -81,8 +82,20 @@ class CustomPayment extends Component
 
     public function removePayment($index)
     {
-        unset($this->payments[$index]);
-        $this->mainCalculator();
+        try {
+            $id = $this->payments[$index]['id'] ?? '';
+            if ($id) {
+                $response = (new DeleteAction)->execute($id);
+                if (! $response['success']) {
+                    throw new \Exception($response['message'], 1);
+                }
+            }
+            unset($this->payments[$index]);
+            $this->mainCalculator();
+            $this->dispatch('success', ['message' => 'Payment removed successfully']);
+        } catch (\Throwable $th) {
+            $this->dispatch('error', ['message' => $th->getMessage()]);
+        }
     }
 
     public function mainCalculator()
