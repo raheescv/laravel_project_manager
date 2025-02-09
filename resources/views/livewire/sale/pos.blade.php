@@ -7,7 +7,7 @@
             <div class="content pos-design p-0">
                 <form wire:submit="submit">
                     <div class="row align-items-start pos-wrapper">
-                        <div class="col-md-12 col-lg-2" style="height: 90vh; overflow: auto;  overflow-x: hidden;">
+                        <div class="col-md-12 col-lg-2" style="height: 90vh; overflow: auto;  overflow-x: hidden;" wire:ignore>
                             <button type="button" class="side-button @if ($category_id == '') active @endif" wire:click="categorySelect('')">
                                 All
                             </button>
@@ -54,7 +54,7 @@
                                                             </div>
                                                         </div>
                                                     </div>
-                                                @endforeach 
+                                                @endforeach
                                             </div>
                                         </div>
                                     </div>

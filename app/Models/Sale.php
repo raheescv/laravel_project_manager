@@ -16,6 +16,7 @@ class Sale extends Model implements AuditableContracts
     protected $fillable = [
         'invoice_no',
         'reference_no',
+        'sale_type',
 
         'branch_id',
         'account_id',

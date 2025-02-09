@@ -45,7 +45,7 @@ class AppServiceProvider extends ServiceProvider
             Cache::remember('logo', now()->addYear(), function () {
                 info('logo remember');
 
-                return Configuration::where('key', 'logo')->value('value');
+                return Configuration::where('key', 'logo')->value('value') ?? asset('assets/img/logo.svg');
             });
         }
         // Gate::after(function ($user, $ability) {

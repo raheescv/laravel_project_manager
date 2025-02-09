@@ -23,6 +23,10 @@ class Page extends Component
         'Sale-Edited-Items-Component' => 'editedItems',
     ];
 
+    public $categories;
+
+    public $products;
+
     public $barcode_key;
 
     public $product_key;
@@ -85,7 +89,6 @@ class Page extends Component
             }
             $this->sales = $sales->toArray();
             $this->accounts = Account::where('id', $this->sales['account_id'])->pluck('name', 'id')->toArray();
-
             $this->items = $sales->items->mapWithKeys(function ($item) {
                 $key = $item['employee_id'].'-'.$item['inventory_id'];
 
@@ -100,7 +103,7 @@ class Page extends Component
                         'employee_name' => $item['employee_name'],
                         'tax_amount' => $item['tax_amount'],
                         'unit_price' => $item['unit_price'],
-                        'quantity' => $item['quantity'],
+                        'quantity' => round($item['quantity'], 3),
                         'gross_amount' => $item['gross_amount'],
                         'discount' => $item['discount'],
                         'tax' => $item['tax'],
@@ -148,6 +151,42 @@ class Page extends Component
         }
         $this->getCustomerDetails();
         $this->dispatch('SelectDropDownValues', $this->sales);
+        $this->getCategories();
+        $this->getProducts();
+    }
+
+    public function getCategories()
+    {
+        $this->categories = Category::withCount('products')
+            ->when($this->category_key, function ($query, $value) {
+                $query->where('name', 'LIKE', '%'.$value.'%');
+            })
+            ->whereNull('parent_id')
+            ->orderBy('name')
+            ->get();
+    }
+
+    public function getProducts()
+    {
+        info(1);
+        $this->products = Inventory::with('product')->join('products', 'product_id', 'products.id')
+            ->when($this->product_key, function ($query, $value) {
+                $query->where('products.name', 'LIKE', '%'.$value.'%');
+            })
+            ->when($this->category_id, function ($query, $value) {
+                $query->where('products.main_category_id', $value);
+            })
+            ->where('products.is_selling', true)
+            ->select(
+                'products.thumbnail',
+                'products.name',
+                'products.mrp'
+            )
+            ->addSelect('inventories.quantity')
+            ->addSelect('inventories.product_id')
+            ->addSelect('inventories.id')
+            ->orderBy('products.name')
+            ->get();
     }
 
     public function updated($key, $value)
@@ -190,6 +229,9 @@ class Page extends Component
         }
         if ($key == 'sales.account_id') {
             $this->getCustomerDetails();
+        }
+        if (in_array($key, ['product_key'])) {
+            $this->getProducts();
         }
     }
 
@@ -244,6 +286,7 @@ class Page extends Component
     public function categorySelect($id)
     {
         $this->category_id = $id;
+        $this->getProducts();
     }
 
     public function cartCalculator($key = null)
@@ -517,7 +560,6 @@ class Page extends Component
             $this->sales['payments'] = $this->payments;
 
             $user_id = auth()->id();
-
             if (! $this->table_id) {
                 $response = (new CreateAction)->execute($this->sales, $user_id);
             } else {
@@ -579,41 +621,11 @@ class Page extends Component
 
     public function render()
     {
-        if (! $this->table_id) {
-            switch (cache('sale_type')) {
-                case 'pos':
-                    $categories = Category::withCount('products')
-                        ->when($this->category_key, function ($query, $value) {
-                            $query->where('name', 'LIKE', '%'.$value.'%');
-                        })
-                        ->whereNull('parent_id')
-                        ->orderBy('name')
-                        ->get();
-                    $products = Inventory::with('product')->join('products', 'product_id', 'products.id')
-                        ->when($this->product_key, function ($query, $value) {
-                            $query->where('products.name', 'LIKE', '%'.$value.'%');
-                        })
-                        ->when($this->category_id, function ($query, $value) {
-                            $query->where('products.main_category_id', $value);
-                        })
-                        ->where('products.is_selling', true)
-                        ->select(
-                            'products.thumbnail',
-                            'products.name',
-                            'products.mrp'
-                        )
-                        ->addSelect('inventories.quantity')
-                        ->addSelect('inventories.product_id')
-                        ->addSelect('inventories.id')
-                        ->orderBy('products.name')
-                        ->get();
-
-                    return view('livewire.sale.pos', compact('categories', 'products'));
-                default:
-                    return view('livewire.sale.page');
-            }
-        } else {
-            return view('livewire.sale.page');
+        switch (cache('sale_type')) {
+            case 'pos':
+                return view('livewire.sale.pos');
+            default:
+                return view('livewire.sale.page');
         }
     }
 }
