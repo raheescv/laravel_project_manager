@@ -168,8 +168,7 @@ class Page extends Component
 
     public function getProducts()
     {
-        info(1);
-        $this->products = Inventory::with('product')->join('products', 'product_id', 'products.id')
+        $this->products = Inventory::join('products', 'product_id', 'products.id')
             ->when($this->product_key, function ($query, $value) {
                 $query->where('products.name', 'LIKE', '%'.$value.'%');
             })
@@ -177,16 +176,21 @@ class Page extends Component
                 $query->where('products.main_category_id', $value);
             })
             ->where('products.is_selling', true)
-            ->select(
-                'products.thumbnail',
-                'products.name',
-                'products.mrp'
-            )
-            ->addSelect('inventories.quantity')
-            ->addSelect('inventories.product_id')
-            ->addSelect('inventories.id')
             ->orderBy('products.name')
-            ->get();
+            ->select(
+                'inventories.id',
+                'inventories.product_id',
+                'inventories.quantity',
+                'products.name',
+                'products.mrp',
+                'products.thumbnail',
+            )
+            ->get()
+            ->map(function ($item) {
+                $item['mrp'] = $item->product->saleTypePrice($this->sales['sale_type']);
+                return $item;
+            })
+            ->toArray();
     }
 
     public function updated($key, $value)
@@ -226,6 +230,7 @@ class Page extends Component
         }
         if ($key == 'sales.sale_type') {
             $this->resetItemsBasedOnType();
+            $this->getProducts();
         }
         if ($key == 'sales.account_id') {
             $this->getCustomerDetails();
