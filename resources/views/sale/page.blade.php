@@ -49,6 +49,11 @@
                         if (result.isConfirmed) {
                             window.open(event.detail[0].link);
                         }
+                        if (result.isDismissed) {
+                            @if ($id)
+                                window.location.href = "{{ route('sale::create') }}";
+                            @endif
+                        }
                     });
                 });
             });
