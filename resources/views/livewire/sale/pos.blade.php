@@ -7,13 +7,13 @@
             <div class="content pos-design p-0">
                 <form wire:submit="submit">
                     <div class="row align-items-start pos-wrapper">
-                        <div class="col-md-12 col-lg-2" style="height: 90vh; overflow: auto;  overflow-x: hidden;" wire:ignore>
+                        <div class="col-md-12 col-lg-2" style="height: 90vh; overflow: auto;  overflow-x: hidden;">
                             <button type="button" class="side-button @if ($category_id == '') active @endif" wire:click="categorySelect('')">
                                 All
                             </button>
                             @foreach ($categories as $item)
-                                <button type="button" class="side-button @if ($item->id == $category_id) active @endif" wire:click="categorySelect({{ $item->id }})">
-                                    {{ $item->name }}({{ $item['products_count'] }})
+                                <button type="button" class="side-button @if ($item['id'] == $category_id) active @endif" wire:click="categorySelect({{ $item['id'] }})">
+                                    {{ $item['name'] }}({{ $item['products_count'] }})
                                 </button>
                             @endforeach
                         </div>
@@ -39,23 +39,7 @@
                                     </div>
                                     <div class="tabs_container" style="height: 80vh; overflow: auto;  overflow-x: hidden; padding-right: 10px;">
                                         <div class="tab_content active" data-tab="all">
-                                            <div class="row">
-                                                @foreach ($products as $item)
-                                                    <div class="col-sm-2 col-md-6 col-lg-3 col-xl-3" wire:click="selectItem({{ $item['id'] }})">
-                                                        <div class="product-info default-cover card">
-                                                            <a href="#" class="img-bg">
-                                                                <img src="{{ $item['thumbnail'] ?? cache('logo') }}" width="100%" height="100%" alt="Products">
-                                                                <span><i class="ti-check btn_t"></i></span>
-                                                            </a>
-                                                            <h6 class="product-name"><a href="#">{{ $item['name'] }}</a></h6>
-                                                            <div class="d-flex align-items-center justify-content-between price">
-                                                                <span>{{ $item['quantity'] }}</span>
-                                                                <span class="span_bt">{{ currency($item['mrp']) }}</span>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                @endforeach
-                                            </div>
+                                            <livewire:sale.product-list :sale_type="$sales['sale_type']" :category_id="$category_id" :product_key="$product_key" />
                                         </div>
                                     </div>
                                 </div>

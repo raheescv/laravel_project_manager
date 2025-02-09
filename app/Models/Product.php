@@ -184,22 +184,11 @@ class Product extends Model implements AuditableContracts
 
     public function saleTypePrice($type)
     {
-        $mrp = $this->mrp;
-        switch ($type) {
-            case 'home_service':
-                $amount = $this->home_service_price;
-                $mrp = $amount != 0 ? $amount : $mrp;
-                break;
-            case 'offer':
-                $amount = $this->offer_price;
-                $mrp = $amount != 0 ? $amount : $mrp;
-                break;
-            default:
-                $mrp = $this->mrp;
-                break;
-        }
-
-        return $mrp;
+        return match ($type) {
+            'home_service' => $this->home_service_price ?: $this->mrp,
+            'offer' => $this->offer_price ?: $this->mrp,
+            default => $this->mrp,
+        };
     }
 
     public function normalPrice()

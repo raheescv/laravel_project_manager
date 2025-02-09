@@ -20,7 +20,7 @@ class Page extends Component
     protected $listeners = [
         'Sale-Custom-Payment-Confirmed' => 'collectPayments',
         'Sale-Edited-Item-Component' => 'editedItem',
-        'Sale-Edited-Items-Component' => 'editedItems',
+        'Sale-selectItem-Component' => 'selectItem',
     ];
 
     public $categories;
@@ -152,7 +152,6 @@ class Page extends Component
         $this->getCustomerDetails();
         $this->dispatch('SelectDropDownValues', $this->sales);
         $this->getCategories();
-        $this->getProducts();
     }
 
     public function getCategories()
@@ -163,33 +162,7 @@ class Page extends Component
             })
             ->whereNull('parent_id')
             ->orderBy('name')
-            ->get();
-    }
-
-    public function getProducts()
-    {
-        $this->products = Inventory::join('products', 'product_id', 'products.id')
-            ->when($this->product_key, function ($query, $value) {
-                $query->where('products.name', 'LIKE', '%'.$value.'%');
-            })
-            ->when($this->category_id, function ($query, $value) {
-                $query->where('products.main_category_id', $value);
-            })
-            ->where('products.is_selling', true)
-            ->orderBy('products.name')
-            ->select(
-                'inventories.id',
-                'inventories.product_id',
-                'inventories.quantity',
-                'products.name',
-                'products.mrp',
-                'products.thumbnail',
-            )
             ->get()
-            ->map(function ($item) {
-                $item['mrp'] = $item->product->saleTypePrice($this->sales['sale_type']);
-                return $item;
-            })
             ->toArray();
     }
 
@@ -230,13 +203,13 @@ class Page extends Component
         }
         if ($key == 'sales.sale_type') {
             $this->resetItemsBasedOnType();
-            $this->getProducts();
+            $this->dispatch('Sale-getProducts-Component', $this->sales['sale_type'], $this->category_id, $this->product_key);
         }
         if ($key == 'sales.account_id') {
             $this->getCustomerDetails();
         }
         if (in_array($key, ['product_key'])) {
-            $this->getProducts();
+            $this->dispatch('Sale-getProducts-Component', $this->sales['sale_type'], $this->category_id, $this->product_key);
         }
     }
 
@@ -291,7 +264,7 @@ class Page extends Component
     public function categorySelect($id)
     {
         $this->category_id = $id;
-        $this->getProducts();
+        $this->dispatch('Sale-getProducts-Component', $this->sales['sale_type'], $this->category_id, $this->product_key);
     }
 
     public function cartCalculator($key = null)
