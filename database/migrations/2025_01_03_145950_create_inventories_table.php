@@ -22,6 +22,8 @@ return new class extends Migration
             $table->unsignedBigInteger('model_id')->nullable();
             $table->string('remarks')->nullable();
 
+            $table->decimal('total', 16, 2)->storedAs('(cost * quantity)');
+
             $table->unsignedBigInteger('created_by');
             $table->unsignedBigInteger('updated_by');
 

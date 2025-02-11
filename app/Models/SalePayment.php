@@ -34,6 +34,16 @@ class SalePayment extends Model implements AuditableContracts
         ], $merge);
     }
 
+    public function scopeToday($query)
+    {
+        return $query->where('date', date('Y-m-d'));
+    }
+
+    public function scopeLast7Days($query)
+    {
+        return $query->whereBetween('date', [date('Y-m-d', strtotime('-7 days')), date('Y-m-d')]);
+    }
+
     public function paymentMethod()
     {
         return $this->belongsTo(Account::class, 'payment_method_id');

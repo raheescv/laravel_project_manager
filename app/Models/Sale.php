@@ -58,6 +58,21 @@ class Sale extends Model implements AuditableContracts
         ], $merge);
     }
 
+    public function scopeToday($query)
+    {
+        return $query->where('date', date('Y-m-d'));
+    }
+
+    public function scopeLast7Days($query)
+    {
+        return $query->whereBetween('date', [date('Y-m-d', strtotime('-7 days')), date('Y-m-d')]);
+    }
+
+    public function scopeLast30Days($query)
+    {
+        return $query->whereBetween('date', [date('Y-m-d', strtotime('-30 days')), date('Y-m-d')]);
+    }
+
     public function branch()
     {
         return $this->belongsTo(Branch::class);
