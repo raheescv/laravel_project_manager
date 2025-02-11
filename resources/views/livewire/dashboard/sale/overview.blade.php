@@ -58,7 +58,7 @@
                         <span class>{{ $item['amount'] }}</span>
                     </div>
                     <div class="progress progress-md">
-                        <div class="progress-bar {{ $colors[rand(1, count($paymentData))] }}" role="progressbar" style="width: {{ $item['percentage'] }}%" aria-label="Incoming Progress"
+                        <div class="progress-bar {{ $colors[rand(1, count($paymentData) - 1)] }}" role="progressbar" style="width: {{ $item['percentage'] }}%" aria-label="Incoming Progress"
                             aria-valuenow="{{ $item['percentage'] }}" aria-valuemin="0" aria-valuemax="100">
                         </div>
                     </div>
