@@ -17,12 +17,12 @@ return new class extends Migration
             $table->string('batch');
 
             $table->float('cost', 8, 2)->default(0);
+            $table->decimal('total', 16, 2)->storedAs('(cost * quantity)');
 
             $table->string('model', 30)->nullable();
             $table->unsignedBigInteger('model_id')->nullable();
             $table->string('remarks')->nullable();
 
-            $table->decimal('total', 16, 2)->storedAs('(cost * quantity)');
 
             $table->unsignedBigInteger('created_by');
             $table->unsignedBigInteger('updated_by');
