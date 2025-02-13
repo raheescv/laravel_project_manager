@@ -18,7 +18,7 @@ class UpdateAction
             $existing = Account::where('account_type', $data['account_type'])
                 ->where('name', $data['name'])
                 ->where('mobile', $data['mobile'])
-                ->ignore($id)
+                ->whereNot('id', $id)
                 ->exists();
             if ($existing) {
                 throw new \Exception($name.' Already Exists', 1);

@@ -62,6 +62,7 @@
                         <th class="text-end"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="net_amount" label="net amount" /> </th>
                         <th class="text-end"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="tax_amount" label="tax amount" /> </th>
                         <th class="text-end"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="total" label="total" /> </th>
+                        <th class="text-end"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="effective_total" label="effective total" /> </th>
                     </tr>
                 </thead>
                 <tbody>
@@ -69,16 +70,17 @@
                         <tr>
                             <td>{{ $item->id }}</td>
                             <td>{{ systemDate($item->date) }}</td>
-                            <td>{{ $item->invoice_no }}</td>
+                            <td> <a href="{{ route('sale::edit', $item->sale_id) }}">{{ $item->invoice_no }}</a> </td>
                             <td>{{ $item->employee?->name }}</td>
                             <td>{{ $item->product?->name }}</td>
-                            <td class="text-end">{{ $item->unit_price }}</td>
-                            <td class="text-end">{{ $item->quantity }}</td>
-                            <td class="text-end">{{ $item->gross_amount }}</td>
-                            <td class="text-end">{{ $item->discount }}</td>
-                            <td class="text-end">{{ $item->net_amount }}</td>
-                            <td class="text-end">{{ $item->tax_amount }}</td>
-                            <td class="text-end">{{ $item->total }}</td>
+                            <td class="text-end">{{ currency($item->unit_price) }}</td>
+                            <td class="text-end">{{ currency($item->quantity) }}</td>
+                            <td class="text-end">{{ currency($item->gross_amount) }}</td>
+                            <td class="text-end">{{ currency($item->discount) }}</td>
+                            <td class="text-end">{{ currency($item->net_amount) }}</td>
+                            <td class="text-end">{{ currency($item->tax_amount) }}</td>
+                            <td class="text-end">{{ currency($item->total) }}</td>
+                            <td class="text-end">{{ currency($item->effective_total) }}</td>
                         </tr>
                     @endforeach
                 </tbody>
@@ -90,6 +92,7 @@
                         <th class="text-end">{{ currency($total['net_amount']) }}</th>
                         <th class="text-end">{{ currency($total['tax_amount']) }}</th>
                         <th class="text-end">{{ currency($total['total']) }}</th>
+                        <th class="text-end">{{ currency($total['effective_total']) }}</th>
                     </tr>
                 </tfoot>
             </table>

@@ -100,7 +100,7 @@
                                             <div class="row">
                                                 <div class="col-md-4">
                                                     <b>Discount</b>
-                                                    {{ html()->text('other_discount')->value('')->class('form-control number select_on_focus')->style('padding:5px')->attribute('wire:model.live.debounce.100ms', 'sales.other_discount') }}
+                                                    {{ html()->text('other_discount')->value('')->class('form-control number select_on_focus')->style('padding:5px')->attribute('wire:model.lazy', 'sales.other_discount') }}
                                                 </div>
                                                 <div class="col-md-8">
                                                     <b>Customer Mobile</b>

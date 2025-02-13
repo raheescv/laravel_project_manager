@@ -14,6 +14,9 @@ class DeleteAction
                 throw new \Exception("Resource not found with the specified ID: $id.", 1);
             }
 
+            if ($model->status == 'completed') {
+                throw new \Exception('Completed sale cant be deleted', 1);
+            }
             $model->items()->update(['deleted_by' => $user_id]);
             $model->items()->delete();
 

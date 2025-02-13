@@ -244,9 +244,21 @@
                     @endif
                     <tr>
                         <td class="text-right"> <b>{{ $loop->iteration }}</b> </td>
-                        <td class="text-right"> <b>{{ currency($item->unit_price) }}</b> </td>
+                        @if ($enable_discount_in_print == 'yes')
+                            <td class="text-right"> <b>{{ currency($item->unit_price) }}</b> </td>
+                        @else
+                            @php
+                                $difference = $item->total - $item->effective_total;
+                                $unit_price = round($item->unit_price - $difference / $item->quantity, 2);
+                            @endphp
+                            <td class="text-right"> <b>{{ currency($unit_price) }}</b> </td>
+                        @endif
                         <td class="text-right"> <b>{{ round($item->quantity, 3) }}</b> </td>
-                        <td class="text-right"> <b>{{ currency($item->total) }}</b> </td>
+                        @if ($enable_discount_in_print == 'yes')
+                            <td class="text-right"> <b>{{ currency($item->total) }}</b> </td>
+                        @else
+                            <td class="text-right"> <b>{{ currency($item->effective_total) }}</b> </td>
+                        @endif
                     </tr>
                 @endforeach
             </tbody>
@@ -282,7 +294,7 @@
             @endif
             <tr>
                 <td class="text-left" width="39%"><b>Total</b></td>
-                <td class="text-right"><b>{{ $sale->grand_total }}</b></td>
+                <td class="text-right"><b>{{ currency($sale->grand_total) }}</b></td>
                 @if ($thermal_printer_style == 'with_arabic')
                     <td width="39%" class="text-right"> <b>{{ __('lang.total', [], 'ar') }}</b> </td>
                 @endif

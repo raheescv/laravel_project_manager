@@ -3,7 +3,8 @@
 namespace App\Livewire\Sale;
 
 use App\Actions\Sale\CreateAction;
-use App\Actions\Sale\Payment\DeleteAction;
+use App\Actions\Sale\Item\DeleteAction as ItemDeleteAction;
+use App\Actions\Sale\Payment\DeleteAction as PaymentDeleteAction;
 use App\Actions\Sale\UpdateAction;
 use App\Helpers\Facades\SaleHelper;
 use App\Helpers\Facades\WhatsappHelper;
@@ -111,11 +112,11 @@ class Page extends Component
                         'discount' => $item['discount'],
                         'tax' => $item['tax'],
                         'total' => $item['total'],
+                        'effective_total' => $item['effective_total'],
                         'created_by' => $item['created_by'],
                     ],
                 ];
             })->toArray();
-
             $this->payments = $this->sale->payments->map->only(['id', 'amount', 'date', 'payment_method_id', 'created_by', 'name'])->toArray();
             $this->mainCalculator();
 
@@ -192,6 +193,7 @@ class Page extends Component
             if (! is_numeric($value)) {
                 $this->sales['other_discount'] = 0;
             }
+            $this->cartCalculator();
             $this->mainCalculator();
         }
         if (in_array($key, ['sales.freight'])) {
@@ -291,7 +293,14 @@ class Page extends Component
         $this->items[$key]['gross_amount'] = round($gross_amount, 2);
         $this->items[$key]['net_amount'] = round($net_amount, 2);
         $this->items[$key]['tax_amount'] = round($tax_amount, 2);
-        $this->items[$key]['total'] = round($net_amount + $tax_amount, 2);
+        $total = round($net_amount + $tax_amount, 2);
+        $this->items[$key]['total'] = $total;
+        if ($this->sales['other_discount'] && $this->sales['total']) {
+            $discount_percentage = ($this->sales['other_discount'] / $this->sales['total']) * 100;
+            $this->items[$key]['effective_total'] = round($total - ($discount_percentage * $total) / 100, 3);
+        } else {
+            $this->items[$key]['effective_total'] = $total;
+        }
     }
 
     public function mainCalculator()
@@ -392,14 +401,40 @@ class Page extends Component
 
     public function removeItem($index)
     {
-        unset($this->items[$index]);
-        $this->mainCalculator();
+        try {
+            $id = $this->items[$index]['id'] ?? '';
+            if ($id) {
+                $response = (new ItemDeleteAction)->execute($id);
+                if (! $response['success']) {
+                    throw new \Exception($response['message'], 1);
+                }
+            }
+            unset($this->items[$index]);
+            $this->mainCalculator();
+            $this->dispatch('success', ['message' => 'item removed successfully']);
+        } catch (\Throwable $th) {
+            $this->dispatch('error', ['message' => $th->getMessage()]);
+        }
     }
 
     public function deleteAllItems()
     {
-        $this->items = [];
-        $this->mainCalculator();
+        try {
+            foreach ($this->items as $value) {
+                $id = $value['id'] ?? '';
+                if ($id) {
+                    $response = (new ItemDeleteAction)->execute($id);
+                    if (! $response['success']) {
+                        throw new \Exception($response['message'], 1);
+                    }
+                }
+            }
+            $this->items = [];
+            $this->mainCalculator();
+            $this->dispatch('success', ['message' => 'items removed successfully']);
+        } catch (\Throwable $th) {
+            $this->dispatch('error', ['message' => $th->getMessage()]);
+        }
     }
 
     public function removePayment($index)
@@ -407,7 +442,7 @@ class Page extends Component
         try {
             $id = $this->payments[$index]['id'] ?? '';
             if ($id) {
-                $response = (new DeleteAction)->execute($id);
+                $response = (new PaymentDeleteAction)->execute($id);
                 if (! $response['success']) {
                     throw new \Exception($response['message'], 1);
                 }

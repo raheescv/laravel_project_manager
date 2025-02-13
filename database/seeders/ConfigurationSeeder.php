@@ -37,5 +37,21 @@ class ConfigurationSeeder extends Seeder
             'status' => false,
         ];
         Configuration::updateOrCreate(['key' => 'sale_visible_column'], ['value' => json_encode($saleVisibleColumns)]);
+
+        $purchaseVisibleColumns = [
+            'branch_id' => false,
+            'vendor' => true,
+            'gross_amount' => false,
+            'item_discount' => false,
+            'tax_amount' => false,
+            'total' => false,
+            'other_discount' => false,
+            'freight' => false,
+            'grand_total' => true,
+            'paid' => true,
+            'balance' => true,
+            'status' => false,
+        ];
+        Configuration::updateOrCreate(['key' => 'purchase_visible_column'], ['value' => json_encode($purchaseVisibleColumns)]);
     }
 }

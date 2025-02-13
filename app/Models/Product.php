@@ -170,6 +170,9 @@ class Product extends Model implements AuditableContracts
                     ->orWhere('size', 'like', "%{$value}%");
             });
         });
+        $self = $self->when($request['type'] ?? '', function ($query, $value) {
+            $query->where('type', $value);
+        });
         $self = $self->limit(10);
         $self = $self->get(['name', 'barcode', 'size', 'mrp', 'cost', 'id', 'type'])->toArray();
         $return['items'] = $self;

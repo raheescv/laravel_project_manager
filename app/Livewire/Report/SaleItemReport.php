@@ -61,7 +61,7 @@ class SaleItemReport extends Component
             ->when($this->product_id ?? '', function ($query, $value) {
                 $query->where('product_id', $value);
             })
-            ->completed()
+            ->where('sales.status', 'completed')
             ->count();
 
         $filter = [
@@ -98,7 +98,7 @@ class SaleItemReport extends Component
 
     public function render()
     {
-        $data = SaleItem::with('sale:id,date,invoice_no,branch_id', 'employee:id,name', 'product:id,name')->orderBy($this->sortField, $this->sortDirection)
+        $data = SaleItem::with('sale:id,date,invoice_no,branch_id,other_discount,total', 'employee:id,name', 'product:id,name')->orderBy($this->sortField, $this->sortDirection)
             ->join('sales', 'sales.id', '=', 'sale_items.sale_id')
             ->when($this->search, function ($query, $value) {
                 $query->where(function ($q) use ($value) {
@@ -124,7 +124,7 @@ class SaleItemReport extends Component
             ->when($this->product_id ?? '', function ($query, $value) {
                 $query->where('product_id', $value);
             })
-            ->completed()
+            ->where('sales.status', 'completed')
             ->latest('sale_items.id')
             ->select(
                 'sale_items.*',
@@ -139,6 +139,7 @@ class SaleItemReport extends Component
         $total['net_amount'] = $totalRow->sum('sale_items.net_amount');
         $total['tax_amount'] = $totalRow->sum('sale_items.tax_amount');
         $total['total'] = $totalRow->sum('sale_items.total');
+        $total['effective_total'] = $totalRow->get()->sum('effective_total');
 
         return view('livewire.report.sale-item-report', [
             'total' => $total,

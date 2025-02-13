@@ -48,37 +48,11 @@
                     <tr class="text-capitalize">
                         <th>
                             <input type="checkbox" wire:model.live="selectAll" />
-                            <a href="#" wire:click.prevent="sortBy('id')">
-                                #
-                                @if ($sortField === 'id')
-                                    {!! sortDirection($sortDirection) !!}
-                                @endif
-                            </a>
+                            <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="id" label="id" />
                         </th>
-                        <th>
-                            <a href="#" wire:click.prevent="sortBy('name')">
-                                Name
-                                @if ($sortField === 'name')
-                                    {!! sortDirection($sortDirection) !!}
-                                @endif
-                            </a>
-                        </th>
-                        <th>
-                            <a href="#" wire:click.prevent="sortBy('mobile')">
-                                Mobile
-                                @if ($sortField === 'mobile')
-                                    {!! sortDirection($sortDirection) !!}
-                                @endif
-                            </a>
-                        </th>
-                        <th>
-                            <a href="#" wire:click.prevent="sortBy('email')">
-                                Email
-                                @if ($sortField === 'email')
-                                    {!! sortDirection($sortDirection) !!}
-                                @endif
-                            </a>
-                        </th>
+                        <th> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="name" label="name" /> </th>
+                        <th> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="mobile" label="mobile" /> </th>
+                        <th> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="email" label="email" /> </th>
                         <th class="text-end"> Action </th>
                     </tr>
                 </thead>

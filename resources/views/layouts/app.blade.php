@@ -572,10 +572,10 @@
                 }
             });
             window.addEventListener('error', event => {
-                if (event.detail[0]) {
+                if (typeof(event.detail) != "undefined") {
                     toastr.error(event.detail[0].message)
                 }
-                if (event.error) {
+                if (typeof(event.error) != "undefined") {
                     toastr.error(event.error.message)
                 }
             });

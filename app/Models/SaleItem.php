@@ -40,11 +40,6 @@ class SaleItem extends Model implements AuditableContracts
         ], $merge);
     }
 
-    public function scopeCompleted($query)
-    {
-        return $query->where('status', 'completed');
-    }
-
     public function inventory()
     {
         return $this->belongsTo(Inventory::class);
@@ -73,5 +68,16 @@ class SaleItem extends Model implements AuditableContracts
     public function getEmployeeNameAttribute()
     {
         return $this->employee?->name;
+    }
+
+    public function getEffectiveTotalAttribute()
+    {
+        if ($this->sale->other_discount) {
+            $discount_percentage = ($this->sale->other_discount / $this->sale->total) * 100;
+
+            return round($this->total - ($discount_percentage * $this->total) / 100, 3);
+        } else {
+            return $this->total;
+        }
     }
 }

@@ -36,7 +36,7 @@ class SaleItemReportExport implements FromQuery, WithColumnFormatting, WithEvent
             ->when($this->filters['product_id'] ?? '', function ($query, $value) {
                 $query->where('product_id', $value);
             })
-            ->completed()
+            ->where('sales.status', 'completed')
             ->select(
                 'sale_items.id',
                 'sale_items.employee_id',

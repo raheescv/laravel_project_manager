@@ -219,6 +219,17 @@ if (! function_exists('saleStatuses')) {
     }
 }
 
+if (! function_exists('purchaseStatuses')) {
+    function purchaseStatuses()
+    {
+        return [
+            'draft' => 'Draft',
+            'completed' => 'Completed',
+            'cancelled' => 'Cancelled',
+        ];
+    }
+}
+
 if (! function_exists('saleTypes')) {
     function saleTypes()
     {

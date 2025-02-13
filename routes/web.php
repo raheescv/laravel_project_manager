@@ -7,6 +7,7 @@ use App\Http\Controllers\InventoryController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\PurchaseController;
 use App\Http\Controllers\SaleController;
 use App\Http\Controllers\ServiceController;
 use App\Http\Controllers\UserController;
@@ -50,6 +51,9 @@ Route::middleware('auth')->group(function () {
         Route::name('customer::')->prefix('customer')->group(function () {
             Route::get('', 'customer')->name('index')->can('customer.view');
         });
+        Route::name('vendor::')->prefix('vendor')->group(function () {
+            Route::get('', 'vendor')->name('index')->can('vendor.view');
+        });
     });
 
     Route::name('inventory::')->prefix('inventory')->controller(InventoryController::class)->group(function () {
@@ -71,5 +75,12 @@ Route::middleware('auth')->group(function () {
         Route::get('create', 'page')->name('create')->can('sale.create');
         Route::get('edit/{id}', 'page')->name('edit')->can('sale.edit');
         Route::get('view/{id}', 'get')->name('view')->can('sale.view');
+    });
+
+    Route::name('purchase::')->prefix('purchase')->controller(PurchaseController::class)->group(function () {
+        Route::get('', 'index')->name('index')->can('purchase.view');
+        Route::get('create', 'page')->name('create')->can('purchase.create');
+        Route::get('edit/{id}', 'page')->name('edit')->can('purchase.edit');
+        Route::get('view/{id}', 'get')->name('view')->can('purchase.view');
     });
 });

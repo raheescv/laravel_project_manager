@@ -81,9 +81,35 @@
                             </ul>
                         </li>
                     @endif
+                    @if (auth()->user()->can('purchase.view') || auth()->user()->can('report.purchase item'))
+                        <li class="nav-item has-sub">
+                            <a href="#" class="mininav-toggle nav-link {{ request()->is(['purchase', 'purchase/create', 'purchase/edit/*', 'report/purchase_item']) ? 'active' : '' }}"><i
+                                    class="demo-pli-split-vertical-2 fs-5 me-2"></i>
+                                <span class="nav-label ms-1">Purchase</span>
+                            </a>
+                            <ul class="mininav-content nav collapse">
+                                <li data-popper-arrow class="arrow"></li>
+                                @can('purchase.create')
+                                    <li class="nav-item">
+                                        <a href="{{ route('purchase::create') }}" class="nav-link {{ request()->is(['purchase/create']) ? 'active' : '' }}">Create</a>
+                                    </li>
+                                @endcan
+                                @can('purchase.view')
+                                    <li class="nav-item">
+                                        <a href="{{ route('purchase::index') }}" class="nav-link {{ request()->is(['purchase', 'purchase/edit/*']) ? 'active' : '' }}">List</a>
+                                    </li>
+                                @endcan
+                                @can('report.purchase item')
+                                    <li class="nav-item">
+                                        <a href="{{ route('report::purchase_item') }}" class="nav-link {{ request()->is(['report/purchase_item']) ? 'active' : '' }}">Item Wise Report</a>
+                                    </li>
+                                @endcan
+                            </ul>
+                        </li>
+                    @endif
                     @if (auth()->user()->can('account.view'))
                         <li class="nav-item has-sub">
-                            <a href="#" class="mininav-toggle nav-link {{ request()->is(['account', 'account/customer', 'report/day_book']) ? 'active' : '' }}"><i
+                            <a href="#" class="mininav-toggle nav-link {{ request()->is(['account', 'account/customer', 'account/vendor', 'report/day_book']) ? 'active' : '' }}"><i
                                     class="demo-pli-split-vertical-2 fs-5 me-2"></i>
                                 <span class="nav-label ms-1">Account</span>
                             </a>
@@ -97,6 +123,11 @@
                                 @can('customer.view')
                                     <li class="nav-item">
                                         <a href="{{ route('account::customer::index') }}" class="nav-link {{ request()->is(['account/customer']) ? 'active' : '' }}">Customers</a>
+                                    </li>
+                                @endcan
+                                @can('vendor.view')
+                                    <li class="nav-item">
+                                        <a href="{{ route('account::vendor::index') }}" class="nav-link {{ request()->is(['account/vendor']) ? 'active' : '' }}">Vendors</a>
                                     </li>
                                 @endcan
                                 @can('report.day book')

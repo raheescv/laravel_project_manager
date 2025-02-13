@@ -22,7 +22,7 @@
                                 <div class="table-responsive">
                                     <table class="table table-striped align-middle table-sm">
                                         <tr>
-                                            <th>Balance {{ $sales['account_id'] }}</th>
+                                            <th>Balance</th>
                                             <th class="text-end">{{ currency($account_balance ?? 0) }}</th>
                                         </tr>
                                     </table>
@@ -110,6 +110,9 @@
                                                     <th class="text-end">Discount</th>
                                                     <th class="text-end">Tax %</th>
                                                     <th class="text-end">Total</th>
+                                                    @if ($sales['other_discount'] > 0)
+                                                        <th class="text-end">Effective Total</th>
+                                                    @endif
                                                     @if ($sales['status'] == 'draft')
                                                         <th>Action </th>
                                                     @endif
@@ -151,13 +154,15 @@
                                                                 <td>
                                                                     {{ html()->number('tax')->value($item['tax'])->attribute('max', '50')->class('input-xs number select_on_focus')->attribute('style', 'width:100%')->attribute('wire:model.live', 'items.' . $item['key'] . '.tax') }}
                                                                 </td>
-                                                                <td class="text-end"> {{ currency($item['total']) }} </td>
                                                             @else
                                                                 <td class="text-end">{{ currency($item['unit_price']) }}</td>
                                                                 <td class="text-end">{{ currency($item['quantity']) }}</td>
                                                                 <td class="text-end">{{ currency($item['discount']) }}</td>
                                                                 <td class="text-end">{{ currency($item['tax']) }}</td>
-                                                                <td class="text-end"> {{ currency($item['total']) }} </td>
+                                                            @endif
+                                                            <td class="text-end"> {{ currency($item['total']) }} </td>
+                                                            @if ($sales['other_discount'] > 0)
+                                                                <td class="text-end"> {{ currency($item['effective_total']) }} </td>
                                                             @endif
                                                             @if ($sales['status'] == 'draft')
                                                                 <td>
@@ -178,6 +183,9 @@
                                                     <th class="text-end"><b>{{ currency($items->sum('discount')) }}</b></th>
                                                     <th class="text-end"><b>{{ currency($items->sum('tax_amount')) }}</b></th>
                                                     <th class="text-end"><b>{{ currency($items->sum('total')) }}</b></th>
+                                                    @if ($sales['other_discount'] > 0)
+                                                        <th class="text-end"><b>{{ currency($items->sum('effective_total')) }}</b></th>
+                                                    @endif
                                                 </tr>
                                             </tfoot>
                                         </table>
@@ -210,12 +218,12 @@
                                                                 <tr>
                                                                     <th>Other Discount</th>
                                                                     <th>
-                                                                        {{ html()->number('other_discount')->value('')->class('form-control number select_on_focus')->attribute('wire:model.live', 'sales.other_discount') }}
+                                                                        {{ html()->number('other_discount')->value('')->class('form-control number select_on_focus')->attribute('wire:model.lazy', 'sales.other_discount') }}
                                                                     </th>
                                                                 </tr>
                                                                 <tr>
                                                                     <th>Freight</th>
-                                                                    <th>{{ html()->number('freight')->value('')->class('form-control number select_on_focus')->attribute('wire:model.live', 'sales.freight') }}
+                                                                    <th>{{ html()->number('freight')->value('')->class('form-control number select_on_focus')->attribute('wire:model.lazy', 'sales.freight') }}
                                                                     </th>
                                                                 </tr>
                                                             @else
@@ -446,11 +454,14 @@
         <script>
             $(document).ready(function() {
                 let employee_id = "{{ $employee_id }}";
-                if (employee_id) {
-                    document.querySelector('#inventory_id').tomselect.open();
-                } else {
-                    document.querySelector('#employee_id').tomselect.open();
-                }
+                @if ($sales['status'] == 'draft')
+                    // to open the dropdown by on load
+                    if (employee_id) {
+                        document.querySelector('#inventory_id').tomselect.open();
+                    } else {
+                        document.querySelector('#employee_id').tomselect.open();
+                    }
+                @endif
                 $('#account_id').on('change', function(e) {
                     const value = $(this).val() || null;
                     @this.set('sales.account_id', value);
