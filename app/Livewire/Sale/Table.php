@@ -169,6 +169,7 @@ class Table extends Component
                         ->orWhere('sales.item_discount', 'like', "%{$value}%")
                         ->orWhere('sales.tax_amount', 'like', "%{$value}%")
                         ->orWhere('sales.total', 'like', "%{$value}%")
+                        ->orWhere('sales.grand_total', 'like', "%{$value}%")
                         ->orWhere('sales.other_discount', 'like', "%{$value}%")
                         ->orWhere('sales.freight', 'like', "%{$value}%")
                         ->orWhere('sales.paid', 'like', "%{$value}%")

@@ -31,10 +31,11 @@
                                         </div>
                                     </div>
                                     <div class="d-flex align-items-center justify-content-between mb-3">
-                                        <b>Products</b>
-                                        <div class="input-group w-75">
+                                        <div class="input-group">
                                             <input type="search" style="padding: 5px !important" class="form-control form-control-sm w-25" wire:model.live="barcode_key" placeholder="Scan Barcode">
-                                            <input type="search" style="padding: 5px !important" class="form-control form-control-sm w-75" wire:model.live="product_key" placeholder="Search Products">
+                                            <input type="search" style="padding: 5px !important" class="form-control form-control-sm w-50" wire:model.live="product_key"
+                                                placeholder="Search Products/Service">
+                                            <button type="button" class="btn btn-sm btn-info w-25" id="viewDraftedSales">View Draft</button>
                                         </div>
                                     </div>
                                     <div class="tabs_container" style="height: 80vh; overflow: auto;  overflow-x: hidden; padding-right: 10px;">
@@ -61,10 +62,10 @@
                                             Product Added <span class="count">{{ $total_quantity }}</span>
                                             &nbsp;
                                         </h6>
-                                        <i class="fa fa-eye d-flex align-items-center pointer" wire:click="viewItems()">
-                                            &nbsp; View all
-                                        </i>
                                         @if ($total_quantity)
+                                            <i class="fa fa-eye d-flex align-items-center pointer" wire:click="viewItems()">
+                                                &nbsp; View all
+                                            </i>
                                             <i class="fa fa-close d-flex align-items-center text-danger pointer" wire:confirm="Are you sure to delete this?" wire:click="deleteAllItems()">
                                                 &nbsp; Clear all
                                             </i>
@@ -241,6 +242,9 @@
             window.addEventListener('AddToCustomerSelectBox', event => {
                 var data = event.detail[0];
                 @this.set('sales.account_id', data['id']);
+            });
+            $('#viewDraftedSales').click(function() {
+                Livewire.dispatch("Sale-View-DraftTable-Component");
             });
         </script>
         <script>

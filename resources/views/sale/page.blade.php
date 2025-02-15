@@ -22,6 +22,7 @@
         <x-sale.custom-payment-modal />
         <x-sale.edit-item-modal />
         <x-sale.view-items-modal />
+        <x-sale.draft-table-modal />
     @endif
     @push('styles')
     @endpush
