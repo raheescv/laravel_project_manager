@@ -143,6 +143,8 @@ class JournalEntryAction
                     'credit' => 0,
                     'created_by' => $user_id,
                     'remarks' => $remarks,
+                    'model' => 'SalePayment',
+                    'model_id' => $value->id,
                 ];
                 $entries[] = [
                     'account_id' => $sale->account_id,
@@ -150,6 +152,8 @@ class JournalEntryAction
                     'credit' => $value->amount,
                     'created_by' => $user_id,
                     'remarks' => $remarks,
+                    'model' => 'SalePayment',
+                    'model_id' => $value->id,
                 ];
             }
 

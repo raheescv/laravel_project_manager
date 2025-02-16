@@ -15,6 +15,7 @@ class Journal extends Model implements AuditableContracts
     protected $fillable = [
         'date',
         'description',
+        'remarks',
         'reference_number',
         'model',
         'model_id',

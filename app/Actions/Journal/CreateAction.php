@@ -15,7 +15,10 @@ class CreateAction
             $entries = [];
             foreach ($data['entries'] as $value) {
                 $single = $value;
+                $single['model'] = $single['model'] ?? null;
+                $single['model_id'] = $single['model_id'] ?? null;
                 $single['journal_id'] = $model->id;
+                $single['created_at'] = now();
                 $entries[] = $single;
             }
             if ($entries) {

@@ -8,7 +8,9 @@
                 </a>
                 <h6 class="product-name"><a href="#">{{ $item['name'] }}</a></h6>
                 <div class="d-flex align-items-center justify-content-between price">
-                    <span>{{ $item['quantity'] }}</span>
+                    @if ($item['type'] == 'product')
+                        <span>{{ $item['quantity'] }}</span>
+                    @endif
                     <span class="span_bt">{{ currency($item['mrp']) }}</span>
                 </div>
             </div>

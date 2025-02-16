@@ -12,6 +12,7 @@ return new class extends Migration
             $table->id();
             $table->date('date');
             $table->string('description');
+            $table->string('remarks')->nullable();
             $table->string('reference_number', 50)->nullable();
 
             $table->string('model', 50)->nullable();

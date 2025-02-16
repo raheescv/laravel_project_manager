@@ -15,6 +15,10 @@ return new class extends Migration
             $table->decimal('debit', 16, 2)->default(0);
             $table->decimal('credit', 16, 2)->default(0);
             $table->text('remarks')->nullable();
+
+            $table->string('model', 50)->nullable();
+            $table->unsignedBigInteger('model_id')->nullable();
+
             $table->unsignedBigInteger('created_by')->references('id')->on('users');
             $table->unsignedBigInteger('deleted_by')->nullable()->references('id')->on('users');
             $table->softDeletes();

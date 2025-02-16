@@ -98,16 +98,16 @@
                                                         <td>{{ $item['name'] }}</td>
                                                         @if ($purchases['status'] == 'draft')
                                                             <td>
-                                                                {{ html()->number('unit_price')->value($item['unit_price'])->class('input-xs number select_on_focus')->attribute('style', 'width:100%')->attribute('wire:model.live', 'items.' . $item['key'] . '.unit_price') }}
+                                                                {{ html()->number('unit_price')->value($item['unit_price'])->class('input-xs number select_on_focus transparent_border_input')->attribute('style', 'width:100%')->attribute('wire:model.live', 'items.' . $item['key'] . '.unit_price') }}
                                                             </td>
                                                             <td>
-                                                                {{ html()->number('quantity')->value($item['quantity'])->attribute('min', 1)->class('input-xs number select_on_focus')->attribute('style', 'width:100%')->attribute('step', 'any')->attribute('wire:model.live', 'items.' . $item['key'] . '.quantity') }}
+                                                                {{ html()->number('quantity')->value($item['quantity'])->attribute('min', 1)->class('input-xs number select_on_focus transparent_border_input')->attribute('style', 'width:100%')->attribute('step', 'any')->attribute('wire:model.live', 'items.' . $item['key'] . '.quantity') }}
                                                             </td>
                                                             <td>
-                                                                {{ html()->number('discount')->value($item['discount'])->class('input-xs number select_on_focus')->attribute('style', 'width:100%')->attribute('wire:model.live', 'items.' . $item['key'] . '.discount') }}
+                                                                {{ html()->number('discount')->value($item['discount'])->class('input-xs number select_on_focus transparent_border_input')->attribute('style', 'width:100%')->attribute('wire:model.live', 'items.' . $item['key'] . '.discount') }}
                                                             </td>
                                                             <td>
-                                                                {{ html()->number('tax')->value($item['tax'])->attribute('max', '50')->class('input-xs number select_on_focus')->attribute('style', 'width:100%')->attribute('wire:model.live', 'items.' . $item['key'] . '.tax') }}
+                                                                {{ html()->number('tax')->value($item['tax'])->attribute('max', '50')->class('input-xs number select_on_focus transparent_border_input')->attribute('style', 'width:100%')->attribute('wire:model.live', 'items.' . $item['key'] . '.tax') }}
                                                             </td>
                                                             <td class="text-end"> {{ currency($item['total']) }} </td>
                                                         @else

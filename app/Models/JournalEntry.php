@@ -18,6 +18,8 @@ class JournalEntry extends Model implements AuditableContracts
         'debit',
         'credit',
         'remarks',
+        'model',
+        'model_id',
         'created_by',
         'deleted_by',
     ];

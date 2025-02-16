@@ -40,6 +40,7 @@ class ProductList extends Component
                 return [
                     'id' => $item->id,
                     'product_id' => $item->product_id,
+                    'type' => $item->product->type,
                     'quantity' => $item->quantity,
                     'name' => $item->product->name,
                     'mrp' => $item->product->saleTypePrice($sale_type),

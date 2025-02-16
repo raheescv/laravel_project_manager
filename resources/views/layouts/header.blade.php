@@ -23,6 +23,8 @@
 
             <!-- Content Header - Right Side: -->
             <div class="header__content-end">
+                <i class="fa fa-2x fa-arrows" aria-hidden="true" id="btnFullscreen"></i>
+                <div class="vr mx-1 d-none d-md-block"></div>
                 <div class="dropdown">
                     <button class="header__btn btn btn-icon btn-sm" type="button" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-label="Megamenu dropdown" aria-expanded="false">
                         <i class="demo-psi-layout-grid"></i>
@@ -57,7 +59,6 @@
                                     @endcan
                                     <a href="{{ route('settings::index') }}" class="list-group-item list-group-item-action">Settings</a>
                                 </div>
-
                             </div>
                         </div>
                     </div>

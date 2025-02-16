@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Models\Views\Ledger;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Validation\Rule;
@@ -116,5 +117,15 @@ class Sale extends Model implements AuditableContracts
     public function journal()
     {
         return $this->hasOne(Journal::class, 'model_id')->where('model', 'Sale');
+    }
+
+    public function journals()
+    {
+        return $this->hasMany(Journal::class, 'model_id')->where('model', 'Sale');
+    }
+
+    public function ledgers()
+    {
+        return $this->hasMany(Ledger::class, 'model_id')->where('model', 'Sale');
     }
 }

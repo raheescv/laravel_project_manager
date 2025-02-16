@@ -59,7 +59,16 @@
                             <td>{{ $item->id }}</td>
                             <td>{{ systemDate($item->date) }}</td>
                             <td>{{ $item->account_name }}</td>
-                            <td>{{ $item->description }}</td>
+                            <td>
+                                @switch($item->model)
+                                    @case('Sale')
+                                        <a href="{{ route('sale::edit', $item->model_id) }}">{{ $item->description }}</a>
+                                    @break
+
+                                    @default
+                                        {{ $item->description }}
+                                @endswitch
+                            </td>
                             <td>{{ $item->reference_number }}</td>
                             <td>{{ $item->remarks }}</td>
                             <td class="text-end">{{ $item->debit }}</td>
