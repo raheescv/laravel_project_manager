@@ -34,5 +34,12 @@ return [
             'channel' => env('SLACK_BOT_USER_DEFAULT_CHANNEL'),
         ],
     ],
-
+    'fyers' => [
+        'url' => env('FYERS_FYERS_URL'),
+        'client_id' => env('FYERS_CLIENT_ID'),
+        'secret_id' => env('FYERS_SECRET_ID'),
+        'access_token' => env('FYERS_ACCESS_TOKEN'),
+        'refresh_token' => env('FYERS_REFRESH_TOKEN'),
+        'auth_code' => env('FYERS_AUTH_CODE'),
+    ],
 ];

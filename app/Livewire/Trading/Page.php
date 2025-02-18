@@ -7,13 +7,13 @@ use Livewire\Component;
 
 class Page extends Component
 {
-    public $fyers_link;
+    public $fyersUrl;
 
     public $secret_id;
 
-    public $client_id;
+    public $clientId;
 
-    public $access_token;
+    public $accessToken;
 
     public $refresh_token;
 
@@ -49,16 +49,15 @@ class Page extends Component
 
     public function mount()
     {
-        $this->fyers_link = config('constants.fyers.link');
-        $this->client_id = config('constants.fyers.client_id');
-        $this->secret_id = config('constants.fyers.secret_id');
-        $this->access_token = config('constants.fyers.access_token');
-        $this->refresh_token = config('constants.fyers.refresh_token');
+        $this->fyersUrl = config('services.fyers.url');
+        $this->clientId = config('services.fyers.client_id');
+        $this->secret_id = config('services.fyers.secret_id');
+        $this->accessToken = config('services.fyers.access_token');
+        $this->refresh_token = config('services.fyers.refresh_token');
         $this->range_from = date('Y-m-d', strtotime('-14 day'));
         $this->range_to = date('Y-m-d');
-        $this->refresh_token = config('constants.fyers.refresh_token');
         $this->headers = [
-            'Authorization' => "$this->client_id:$this->access_token",
+            'Authorization' => "$this->clientId:$this->accessToken",
             'Accept' => 'application/json',
         ];
         $this->symbol = 'NSE:NIFTY50-INDEX';
@@ -71,7 +70,7 @@ class Page extends Component
 
     public function profile()
     {
-        $link = "$this->fyers_link/api/v3/profile";
+        $link = "$this->fyersUrl/api/v3/profile";
         $response = Http::withHeaders($this->headers)->get($link);
         $response = $response->json();
         if ($response['code'] != 200) {
@@ -84,7 +83,7 @@ class Page extends Component
 
     public function funds()
     {
-        $link = "$this->fyers_link/api/v3/funds";
+        $link = "$this->fyersUrl/api/v3/funds";
         $response = Http::withHeaders($this->headers)->get($link);
         $response = $response->json();
         if ($response['code'] != 200) {
@@ -98,7 +97,7 @@ class Page extends Component
     public function getQuotes()
     {
         $this->quoteData = [];
-        $link = "$this->fyers_link/data/quotes/?symbols=$this->symbol";
+        $link = "$this->fyersUrl/data/quotes/?symbols=$this->symbol";
         $response = Http::withHeaders($this->headers)->get($link);
         $response = $response->json();
         if ($response['code'] != 200) {
@@ -118,7 +117,7 @@ class Page extends Component
     public function getPosition()
     {
         $this->positionData = [];
-        $link = "$this->fyers_link/api/v3/positions?side=1";
+        $link = "$this->fyersUrl/api/v3/positions?side=1";
         $response = Http::withHeaders($this->headers)->get($link);
         $response = $response->json();
         if ($response['code'] != 200) {
@@ -132,7 +131,7 @@ class Page extends Component
     public function getMarketStatus()
     {
         $this->marketStatusData = [];
-        $link = "$this->fyers_link/data/marketStatus";
+        $link = "$this->fyersUrl/data/marketStatus";
         $response = Http::withHeaders($this->headers)->get($link);
         $response = $response->json();
         if ($response['code'] != 200) {
@@ -147,7 +146,7 @@ class Page extends Component
     public function getOrders()
     {
         $this->ordersData = [];
-        $link = "$this->fyers_link/api/v3/orders";
+        $link = "$this->fyersUrl/api/v3/orders";
         $response = Http::withHeaders($this->headers)->get($link);
         $response = $response->json();
         if ($response['code'] != 200) {
@@ -157,13 +156,12 @@ class Page extends Component
         }
         $response = $response['orderBook'];
         $this->ordersData = $response;
-        info($this->ordersData);
     }
 
     public function getMarketDepth()
     {
         $this->depthData = [];
-        $link = "$this->fyers_link/data/depth?symbol=$this->symbol&ohlcv_flag=1";
+        $link = "$this->fyersUrl/data/depth?symbol=$this->symbol&ohlcv_flag=1";
         $response = Http::withHeaders($this->headers)->get($link);
         $response = $response->json();
         if ($response['s'] != 'ok') {
@@ -178,7 +176,7 @@ class Page extends Component
     public function getHistory()
     {
         $this->historyData = [];
-        $link = "$this->fyers_link/data/history?";
+        $link = "$this->fyersUrl/data/history?";
         $link .= "symbol=$this->symbol&";
         $link .= "resolution=$this->resolution&";
         $link .= 'date_format=1&';
@@ -234,7 +232,7 @@ class Page extends Component
         $redirect_uri = route('webhook::fyers');
         $response_type = 'code';
         $state = 'sample_state';
-        $link = "$this->fyers_link/api/v3/generate-authcode?client_id=$this->client_id&redirect_uri=$redirect_uri&response_type=$response_type&state=$state";
+        $link = "$this->fyersUrl/api/v3/generate-authcode?client_id=$this->clientId&redirect_uri=$redirect_uri&response_type=$response_type&state=$state";
 
         return $this->redirect($link);
     }
@@ -243,10 +241,10 @@ class Page extends Component
     {
         $payload = [
             'grant_type' => 'authorization_code',
-            'appIdHash' => hash('sha256', $this->client_id.':'.$this->secret_id),
-            'code' => config('constants.fyers.auth_code'),
+            'appIdHash' => hash('sha256', $this->clientId.':'.$this->secret_id),
+            'code' => config('services.fyers.auth_code'),
         ];
-        $response = Http::post("$this->fyers_link/api/v3/validate-authcode", $payload);
+        $response = Http::post("$this->fyersUrl/api/v3/validate-authcode", $payload);
         $response = $response->json();
         if ($response['code'] == '200') {
             writeToEnv('FYERS_ACCESS_TOKEN', $response['access_token']);
@@ -259,7 +257,6 @@ class Page extends Component
 
     public function calculateRSI($data, $period = 14)
     {
-        info($data);
         $closingPrices = array_map(fn ($entry) => end($entry['y']), $data);
 
         // Step 2: Calculate price changes
@@ -287,7 +284,6 @@ class Page extends Component
             $rsi = $avgLoss == 0 ? 100 : 100 - (100 / (1 + $rs));
             $rsiValues[] = $rsi;
         }
-        info($rsiValues);
         $this->rsi_value = $rsi;
     }
 
