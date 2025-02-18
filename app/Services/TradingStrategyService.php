@@ -4,7 +4,7 @@ namespace App\Services;
 
 class TradingStrategyService
 {
-    public function calculateSMA($prices, $period)
+    private function calculateSMA($prices, $period)
     {
         if (count($prices) < $period) {
             return null;
@@ -13,22 +13,23 @@ class TradingStrategyService
         return array_sum(array_slice($prices, -$period)) / $period;
     }
 
-    public function calculateEMA($prices, $period)
+    private function calculateEMA(array $prices, $period)
     {
         if (count($prices) < $period) {
             return null;
         }
-        $k = 2 / ($period + 1);
-        $ema = $prices[0];
+
+        $multiplier = 2 / ($period + 1);
+        $ema = $prices[0]; // Start with first price as initial EMA
 
         foreach ($prices as $price) {
-            $ema = ($price * $k) + ($ema * (1 - $k));
+            $ema = ($price - $ema) * $multiplier + $ema;
         }
 
         return round($ema, 2);
     }
 
-    public function calculateRSI($prices, $period = 14)
+    private function calculateRSI($prices, $period = 14)
     {
         if (count($prices) < $period + 1) {
             return null;
@@ -55,16 +56,30 @@ class TradingStrategyService
         return round(100 - (100 / (1 + $rs)), 2);
     }
 
+    private function findSupportResistance(array $prices)
+    {
+        $support = min($prices);
+        $resistance = max($prices);
+
+        return [$support, $resistance];
+    }
+
     public function generateTradeSignal($prices)
     {
-        $sma9 = $this->calculateSMA($prices, 9);
-        $ema9 = $this->calculateEMA($prices, 9);
-        $rsi14 = $this->calculateRSI($prices, 14);
-        $lastPrice = end($prices);
+        $sma5 = $this->calculateSMA($prices, 5);
+        $sma20 = $this->calculateSMA($prices, 20);
 
-        if ($ema9 > $sma9 && $rsi14 < 30) {
+        $ema5 = $this->calculateEMA($prices, 5);
+        $ema20 = $this->calculateEMA($prices, 20);
+        $rsi = $this->calculateRSI($prices);
+
+        [$support, $resistance] = $this->findSupportResistance($prices);
+
+        $price = end($prices);
+
+        if ($rsi < 30 && $price <= $support && $ema5 > $ema20 && $sma5 > $sma20) {
             return 'BUY';
-        } elseif ($ema9 < $sma9 && $rsi14 > 70) {
+        } elseif ($rsi > 70 && $price >= $resistance && $ema5 < $ema20 && $sma5 < $sma20) {
             return 'SELL';
         }
 
