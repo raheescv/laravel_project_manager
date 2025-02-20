@@ -43,10 +43,12 @@ class FyersService
 
     public function placeOrder($symbol, $type, $qty)
     {
+        $i = 0;
+        buy:
         $orderData = [
             'symbol' => "{$symbol}",
             'qty' => $qty,
-            'type' => $type, // 1=Market, 2=Limit, 3=SL, 4=SLM
+            'type' => 2, // 1 => Limit Order 2 => Market Order 3 => Stop Order (SL-M) 4 => Stop limit Order (SL-L)
             'side' => $type === 'BUY' ? 1 : -1, // 1 for Buy, -1 for Sell
             'productType' => 'INTRADAY',
             'limitPrice' => 0, // 0 for Market orders
@@ -58,9 +60,22 @@ class FyersService
             'stopLoss' => 0,
             'takeProfit' => 0,
         ];
+        info('orderData');
+        info($orderData);
+
         $response = $this->http->post($this->apiUrl.'/api/v3/orders/sync', $orderData);
+        $response = $response->json();
+        info($response);
         if ($response['s'] != 'ok') {
             if ($response['message']) {
+                if ($i == 0) {
+                    if (str_contains($response['message'], ' not a multiple of minimum lot size ')) {
+                        $explode = explode(' not a multiple of minimum lot size ', $response['message']);
+                        $qty = $explode[1] ?? 10;
+                        $i++;
+                        goto buy;
+                    }
+                }
                 throw new Exception($response['message'], 1);
             } else {
                 throw new Exception($response['s'], 1);

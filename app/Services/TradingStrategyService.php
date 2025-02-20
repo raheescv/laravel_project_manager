@@ -76,10 +76,9 @@ class TradingStrategyService
         [$support, $resistance] = $this->findSupportResistance($prices);
 
         $price = end($prices);
-
-        if ($rsi < 30 && $price <= $support && $ema5 > $ema20 && $sma5 > $sma20) {
+        if ($rsi < 50 && $price <= $support && $ema5 > $ema20 && $sma5 > $sma20) {
             return 'BUY';
-        } elseif ($rsi > 70 && $price >= $resistance && $ema5 < $ema20 && $sma5 < $sma20) {
+        } elseif ($rsi > 50 && $price >= $resistance && $ema5 < $ema20 && $sma5 < $sma20) {
             return 'SELL';
         }
 

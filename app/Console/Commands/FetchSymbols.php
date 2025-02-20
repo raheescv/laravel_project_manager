@@ -15,9 +15,9 @@ class FetchSymbols extends Command
     public function handle()
     {
         $urls = [
-            'NSE_EQ' => 'https://public.fyers.in/sym_details/NSE_EQ.csv',
+            // 'NSE_EQ' => 'https://public.fyers.in/sym_details/NSE_EQ.csv',
             'NSE_FO' => 'https://public.fyers.in/sym_details/NSE_FO.csv',
-            'BSE_EQ' => 'https://public.fyers.in/sym_details/BSE_EQ.csv',
+            // 'BSE_EQ' => 'https://public.fyers.in/sym_details/BSE_EQ.csv',
         ];
 
         foreach ($urls as $market => $url) {
