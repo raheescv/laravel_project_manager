@@ -47,6 +47,8 @@ class Page extends Component
 
     public $seriesDataLinear = [];
 
+    public $activeTab = 'Position';
+
     public function mount()
     {
         $this->fyersUrl = config('services.fyers.url');
@@ -66,6 +68,11 @@ class Page extends Component
         $this->funds();
         $this->getHistory();
         $this->getOrders();
+    }
+
+    public function tabSelect($tab)
+    {
+        $this->activeTab = $tab;
     }
 
     public function profile()
@@ -154,7 +161,7 @@ class Page extends Component
 
             return false;
         }
-        $response = $response['orderBook'];
+        $response = collect($response['orderBook'])->where('status', '!=', 5);
         $this->ordersData = $response;
     }
 

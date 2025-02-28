@@ -17,50 +17,57 @@
             <div class="toolbar-end">
                 <ul class="nav nav-tabs card-header-tabs" role="tablist">
                     <li class="nav-item" role="presentation">
-                        <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabsQuotes" type="button" tabindex="-1">
+                        <button class="nav-link @if ($activeTab == 'Quotes') active @endif" data-bs-toggle="tab" data-bs-target="#tabsQuotes" wire:click="tabSelect('Quotes')" type="button"
+                            tabindex="-1">
                             Quotes
                         </button>
                     </li>
                     <li class="nav-item" role="presentation">
-                        <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabsMarketDepth" type="button" tabindex="-1">
+                        <button class="nav-link @if ($activeTab == 'MarketDepth') active @endif" data-bs-toggle="tab" data-bs-target="#tabsMarketDepth" wire:click="tabSelect('MarketDepth')"
+                            type="button" tabindex="-1">
                             Market Depth
                         </button>
                     </li>
                     <li class="nav-item" role="presentation">
-                        <button class="nav-link" data-bs-toggle="tab" data-bs-target="#getMarketStatus" type="button" tabindex="-1">
+                        <button class="nav-link @if ($activeTab == 'MarketStatus') active @endif" data-bs-toggle="tab" data-bs-target="#tabsMarketStatus" wire:click="tabSelect('MarketStatus')"
+                            type="button" tabindex="-1">
                             Market Status
                         </button>
                     </li>
                     <li class="nav-item" role="presentation">
-                        <button class="nav-link" data-bs-toggle="tab" data-bs-target="#getOrders" type="button" tabindex="-1">
+                        <button class="nav-link @if ($activeTab == 'GetOrders') active @endif" data-bs-toggle="tab" data-bs-target="#tabsGetOrders" wire:click="tabSelect('GetOrders')" type="button"
+                            tabindex="-1">
                             Orders
                         </button>
                     </li>
                     <li class="nav-item" role="presentation">
-                        <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tabsPosition" type="button" tabindex="-1">
-                            Position
-                        </button>
-                    </li>
-                    <li class="nav-item" role="presentation">
-                        <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabsHistory" type="button" tabindex="-1">
+                        <button class="nav-link @if ($activeTab == 'History') active @endif" data-bs-toggle="tab" data-bs-target="#tabsHistory" wire:click="tabSelect('History')" type="button"
+                            tabindex="-1">
                             History
                         </button>
                     </li>
                     <li class="nav-item" role="presentation">
-                        <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabProfile" type="button">
+                        <button class="nav-link @if ($activeTab == 'Profile') active @endif" data-bs-toggle="tab" data-bs-target="#tabsProfile" wire:click="tabSelect('Profile')" type="button">
                             Profile
                         </button>
                     </li>
                     <li class="nav-item" role="presentation">
-                        <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabsFunds" type="button" tabindex="-1">
+                        <button class="nav-link @if ($activeTab == 'Funds') active @endif" data-bs-toggle="tab" data-bs-target="#tabsFunds" wire:click="tabSelect('Funds')" type="button"
+                            tabindex="-1">
                             Funds
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link @if ($activeTab == 'Position') active @endif" data-bs-toggle="tab" data-bs-target="#tabsPosition" wire:click="tabSelect('Position')" type="button"
+                            tabindex="-1">
+                            Position
                         </button>
                     </li>
                 </ul>
             </div>
         </div>
         <div class="card-body tab-content">
-            <div id="tabProfile" class="tab-pane fade" role="tabpanel">
+            <div id="tabsProfile" class="tab-pane fade @if ($activeTab == 'Profile') active show @endif" role="tabpanel">
                 <h5>Profile</h5>
                 <table class="table table-striped table-sm table-bordered text-capitalize">
                     <tr>
@@ -79,7 +86,7 @@
                     @endif
                 </table>
             </div>
-            <div id="tabsFunds" class="tab-pane fade" role="tabpanel">
+            <div id="tabsFunds" class="tab-pane fade @if ($activeTab == 'Funds') active show @endif" role="tabpanel">
                 <h5>Funds</h5>
                 <table class="table table-striped table-sm table-bordered text-capitalize">
                     <thead>
@@ -102,7 +109,7 @@
                     </tbody>
                 </table>
             </div>
-            <div id="tabsQuotes" class="tab-pane fade" role="tabpanel">
+            <div id="tabsQuotes" class="tab-pane fade @if ($activeTab == 'Quotes') active show @endif" role="tabpanel">
                 <h5>Quotes</h5>
                 <div class="input-group mb-3">
                     <input type="text" class="form-control" wire:model="symbol" placeholder="Enter Your Symbols : NSE:SBIN-EQ">
@@ -123,7 +130,7 @@
                     @endforeach
                 </table>
             </div>
-            <div id="tabsMarketDepth" class="tab-pane fade" role="tabpanel">
+            <div id="tabsMarketDepth" class="tab-pane fade @if ($activeTab == 'MarketDepth') active show @endif" role="tabpanel">
                 <h5>Market Depth</h5>
                 <div class="input-group mb-3">
                     <input type="text" class="form-control" wire:model="symbol" placeholder="Enter Your Symbols : NSE:SBIN-EQ">
@@ -167,7 +174,7 @@
                     @endforeach
                 </table>
             </div>
-            <div id="getMarketStatus" class="tab-pane fade" role="tabpanel">
+            <div id="tabsMarketStatus" class="tab-pane fade @if ($activeTab == 'MarketStatus') active show @endif" role="tabpanel">
                 <h5>Market Depth</h5>
                 <div class="input-group mb-3">
                     <input type="text" class="form-control" wire:model="symbol" placeholder="Enter Your Symbols : NSE:SBIN-EQ">
@@ -190,7 +197,7 @@
                     </tbody>
                 </table>
             </div>
-            <div id="getOrders" class="tab-pane fade" role="tabpanel">
+            <div id="tabsGetOrders" class="tab-pane fade @if ($activeTab == 'GetOrders') active show @endif" role="tabpanel">
                 <h5>Orders</h5>
                 <div class="input-group mb-3">
                     <button class="btn btn-info" type="button" wire:click="getOrders" id="button-addon2">Get</button>
@@ -231,7 +238,7 @@
                     </tbody>
                 </table>
             </div>
-            <div id="tabsHistory" class="tab-pane fade" role="tabpanel">
+            <div id="tabsHistory" class="tab-pane fade @if ($activeTab == 'History') active show @endif" role="tabpanel">
                 <h5>History</h5>
                 <div class="row">
                     <div class="col-md-3">
@@ -276,7 +283,7 @@
                     </div>
                 </div>
             </div>
-            <div id="tabsPosition" class="tab-pane fade active show" role="tabpanel">
+            <div id="tabsPosition" class="tab-pane fade @if ($activeTab == 'Position') active show @endif" role="tabpanel">
                 <h5>Position</h5>
                 <div class="row">
                     <div class="col-md-11">

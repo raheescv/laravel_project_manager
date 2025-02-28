@@ -6,6 +6,7 @@ use App\Services\FyersService;
 use App\Services\TradingStrategyService;
 use Exception;
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 
 class IntraDayTrade extends Command
@@ -27,6 +28,7 @@ class IntraDayTrade extends Command
 
     public function handle()
     {
+        $no_data_symbols = cache('no_data_symbols', []);
         $symbol = $this->argument('symbol');
         $qty = $this->argument('qty', 10);
         try {
@@ -48,8 +50,16 @@ class IntraDayTrade extends Command
 
         } catch (Exception $e) {
             $this->error('Error: '.$e->getMessage());
+            if (str_contains($e->getMessage(), 'RED')) {
+                $no_data_symbols[] = $symbol;
+                Cache::put('no_data_symbols', $no_data_symbols, now()->addYear());
+            }
             if ($e->getMessage() != 'no_data') {
                 Log::error('Error: '.$symbol.' '.$e->getMessage());
+            } else {
+                $no_data_symbols[] = $symbol;
+                Cache::put('no_data_symbols', $no_data_symbols, now()->addYear());
+                info('no_data_symbols count : '.count($no_data_symbols));
             }
         }
     }

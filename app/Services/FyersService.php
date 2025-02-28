@@ -22,11 +22,12 @@ class FyersService
         $this->clientId = config('services.fyers.client_id');
         $this->accessToken = config('services.fyers.access_token');
         $this->apiUrl = config('services.fyers.url');
-        $this->headers = ['Authorization' => "Bearer {$this->accessToken}"];
-        $this->http = Http::withHeaders([
+        $this->headers = [
             'Authorization' => "$this->clientId:$this->accessToken",
             'Accept' => 'application/json',
-        ]);
+        ];
+        $this->http = Http::withHeaders($this->headers);
+
     }
 
     public function fetchStockData($symbol)
@@ -47,7 +48,7 @@ class FyersService
         buy:
         $orderData = [
             'symbol' => "{$symbol}",
-            'qty' => $qty,
+            'qty' => intval($qty),
             'type' => 2, // 1 => Limit Order 2 => Market Order 3 => Stop Order (SL-M) 4 => Stop limit Order (SL-L)
             'side' => $type === 'BUY' ? 1 : -1, // 1 for Buy, -1 for Sell
             'productType' => 'INTRADAY',
@@ -56,16 +57,11 @@ class FyersService
             'disclosedQty' => 0,
             'validity' => 'DAY',
             'offlineOrder' => false,
-            // 'limitPrice' => 7.9,
             'stopLoss' => 0,
             'takeProfit' => 0,
         ];
-        info('orderData');
-        info($orderData);
-
         $response = $this->http->post($this->apiUrl.'/api/v3/orders/sync', $orderData);
         $response = $response->json();
-        info($response);
         if ($response['s'] != 'ok') {
             if ($response['message']) {
                 if ($i == 0) {
