@@ -327,7 +327,6 @@
                                     <th>buyVal</th>
                                     <th>netAvg</th>
                                     <th width="10%">pl</th>
-                                    <th width="10%">status</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -339,10 +338,15 @@
                                         <th>{{ $item['buyVal'] }}</th>
                                         <th>{{ $item['netAvg'] }}</th>
                                         <th>{{ $item['pl'] }}</th>
-                                        <th>{{ $item['pl'] }}</th>
                                     </tr>
                                 @endforeach
                             </tbody>
+                            <tfoot>
+                                <tr>
+                                    <th colspan="5">Total</th>
+                                    <th> {{ collect($positionData['netPositions'] ?? [])->sum('pl') }} </th>
+                                </tr>
+                            </tfoot>
                         </table>
                     </div>
                 </div>

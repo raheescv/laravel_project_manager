@@ -156,6 +156,6 @@ class TradingStrategyService
             // info($result);
         }
 
-        return $signal;
+        return [$signal, $currentPrice];
     }
 }

@@ -23,7 +23,6 @@ return new class extends Migration
             $table->unsignedBigInteger('model_id')->nullable();
             $table->string('remarks')->nullable();
 
-
             $table->unsignedBigInteger('created_by');
             $table->unsignedBigInteger('updated_by');
 

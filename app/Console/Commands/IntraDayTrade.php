@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Models\TradingOrder;
 use App\Services\FyersService;
 use App\Services\TradingStrategyService;
 use Exception;
@@ -34,10 +35,22 @@ class IntraDayTrade extends Command
         try {
             $data = $this->fyersService->fetchHistoricalData($symbol, 5, 5);
             $prices = array_map(fn ($candle) => $candle[4], $data['candles'] ?? []);
-            $signal = $this->tradingStrategyService->generateTradeSignal($prices);
+            [$signal,$currentPrice] = $this->tradingStrategyService->generateTradeSignal($prices);
             if ($signal === 'BUY') {
                 $order = $this->fyersService->placeOrder($symbol, 'BUY', $qty);
                 $this->info('BUY Order Placed: '.json_encode($order));
+
+                $tradingOrderData = [
+                    'symbol' => $symbol,
+                    'type' => 'BUY',
+                    'price' => $currentPrice,
+                    'quantity' => $qty,
+                    'stop_loss' => $currentPrice * 0.98, // Example: 2% SL
+                    'take_profit' => $currentPrice * 2,
+                    'status' => 'OPEN',
+                ];
+                TradingOrder::create($tradingOrderData);
+
             } elseif ($signal === 'SELL') {
                 $order = $this->fyersService->placeOrder($symbol, 'SELL', $qty);
                 $this->info('SELL Order Placed: '.json_encode($order));

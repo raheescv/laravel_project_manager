@@ -45,3 +45,5 @@ foreach ($list as $key => $value) {
 // foreach ($list as $key => $value) {
 //     Schedule::command('trade:intra-day '.$value['exchange_symbol'].' 30')->everyFiveMinutes();
 // }
+
+Schedule::command('app:intra-day-selling')->everyMinute();
