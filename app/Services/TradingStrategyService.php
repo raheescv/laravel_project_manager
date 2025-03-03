@@ -106,24 +106,24 @@ class TradingStrategyService
         $confidence = 0.0;
         $details = [];
 
-        // Buy Conditions
-        if ($rsi !== null && $rsi < 30 && // Oversold
-            $currentPrice <= $support && // At or below support
-            $ema5 > $ema20 && $sma5 > $sma20 && // Bullish trend
-            $crossover === 'UP') { // Recent bullish crossover
-            $signal = 'BUY';
-            $confidence = 0.9; // High confidence
-            $details[] = 'Oversold RSI, price at support, bullish EMA/SMA crossover';
-        }
-
         // Sell Conditions
         if ($rsi !== null && $rsi > 70 && // Overbought
-            $currentPrice >= $resistance && // At or above resistance
-            $ema5 < $ema20 && $sma5 < $sma20 && // Bearish trend
-            $crossover === 'DOWN') { // Recent bearish crossover
+        $currentPrice >= $resistance && // At or above resistance
+        $ema5 < $ema20 && $sma5 < $sma20 && // Bearish trend
+        $crossover === 'DOWN') { // Recent bearish crossover
             $signal = 'SELL';
             $confidence = 0.9;
             $details[] = 'Overbought RSI, price at resistance, bearish EMA/SMA crossover';
+        }
+
+        // Buy Conditions
+        if ($rsi !== null && $rsi < 30 && // Oversold
+        $currentPrice <= $support && // At or below support
+        $ema5 > $ema20 && $sma5 > $sma20 && // Bullish trend
+        $crossover === 'UP') { // Recent bullish crossover
+            $signal = 'BUY';
+            $confidence = 0.9;
+            $details[] = 'Oversold RSI, price at support, bullish EMA/SMA crossover';
         }
 
         // Adjust confidence for weaker signals
