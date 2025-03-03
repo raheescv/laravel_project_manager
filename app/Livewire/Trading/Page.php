@@ -132,6 +132,7 @@ class Page extends Component
 
             return false;
         }
+        $response['netPositions'] = collect($response['netPositions'])->sortByDesc('fyToken');
         $this->positionData = $response;
     }
 
