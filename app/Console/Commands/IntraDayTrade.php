@@ -52,8 +52,8 @@ class IntraDayTrade extends Command
                 TradingOrder::create($tradingOrderData);
 
             } elseif ($signal === 'SELL') {
-                // $order = $this->fyersService->placeOrder($symbol, 'SELL', $qty);
-                // $this->info('SELL Order Placed: '.json_encode($order));
+                $order = $this->fyersService->placeOrder($symbol, 'SELL', $qty);
+                $this->info('SELL Order Placed: '.json_encode($order));
             } else {
                 $this->info("No Trade Signal for $symbol");
             }
@@ -72,7 +72,7 @@ class IntraDayTrade extends Command
             } else {
                 $no_data_symbols[] = $symbol;
                 Cache::put('no_data_symbols', $no_data_symbols, now()->addYear());
-                info('no_data_symbols count : '.count($no_data_symbols));
+                // info('no_data_symbols count : '.count($no_data_symbols));
             }
         }
     }

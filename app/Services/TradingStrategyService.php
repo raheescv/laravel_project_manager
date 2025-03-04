@@ -87,13 +87,15 @@ class TradingStrategyService
 
     public function generateTradeSignal(array $prices)
     {
+        $currentPrice = end($prices);
         if (count($prices) < 20) { // Minimum data for reliable signals
-            return 'HOLD';
+            return ['HOLD', $currentPrice];
 
             return ['signal' => 'HOLD', 'confidence' => 0.0, 'details' => 'Insufficient data'];
         }
-
-        $currentPrice = end($prices);
+        if ($currentPrice > 600) {
+            return ['HOLD', $currentPrice];
+        }
         $sma5 = $this->calculateSMA($prices, 5);
         $sma20 = $this->calculateSMA($prices, 20);
         $ema5 = $this->calculateEMA($prices, 5);

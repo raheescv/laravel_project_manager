@@ -30,16 +30,17 @@ class IntraDaySelling extends Command
 
             $currentPrice = end($prices);
             if ($currentPrice >= $order->take_profit || $currentPrice <= $order->stop_loss) {
+                $symbol = $order->symbol;
                 TradingOrder::create([
-                    'symbol' => $order->symbol,
+                    'symbol' => $symbol,
                     'type' => 'SELL',
                     'price' => $currentPrice,
                     'quantity' => $order->quantity,
                     'status' => 'OPEN',
                 ]);
-                $order = $this->fyersService->placeOrder($order->symbol, 'SELL', $order->quantity);
                 $order->update(['status' => 'CLOSED']);
-                info("Sell order placed for {$order->symbol} at price {$currentPrice}");
+                $response = $this->fyersService->placeOrder($symbol, 'SELL', $order->quantity);
+                info("Sell order placed for {$symbol} at price {$currentPrice}".json_encode($response));
             }
         }
     }

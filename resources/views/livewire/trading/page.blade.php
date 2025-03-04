@@ -329,7 +329,7 @@
                                     <th width="10%">pl</th>
                                 </tr>
                             </thead>
-                            <tbody>
+                            <tbody wire:poll.1000s="getPosition">
                                 @foreach ($positionData['netPositions'] ?? [] as $item)
                                     <tr>
                                         <th>{{ $item['symbol'] }}</th>
