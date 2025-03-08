@@ -7,13 +7,13 @@ use Illuminate\Support\Facades\Http;
 
 class FyersService
 {
-    protected $clientId;
+    protected string $clientId;
 
-    protected $accessToken;
+    protected string $accessToken;
 
-    public $headers;
+    public array $headers;
 
-    protected $apiUrl;
+    protected string $apiUrl;
 
     public $http;
 

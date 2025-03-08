@@ -50,7 +50,6 @@ return [
     'SpaService' => 'SpaService',
     'SpaServiceGroup' => 'SpaServiceGroup',
     'Message' => 'Message',
-    'Customer' => 'Customer',
     'Start_Time' => 'Start Time',
     'End_Time' => 'End Time',
     'Action' => 'Action',
@@ -138,11 +137,10 @@ return [
     'userTypes' => 'UserTypes',
     'reminders' => 'Reminders',
     'calender_view' => 'Calender View',
-    'Appointment' => 'Appointment',
     'tasks' => 'Tasks',
     'Employeecalendar' => 'Employee Calendar',
     'InHouseInventory' => 'In House Inventory',
-    //home page
+    // home page
     'stock' => 'Stock',
     'total_stock' => 'Total Stock',
     'no_of_services' => 'No of Services',
@@ -161,7 +159,7 @@ return [
     'sales_daily_wise' => 'Sales Daily Wise',
     'sale_vs_saleReturn_chart' => 'Sale Vs SaleReturn Chart',
     'income_vs_expense_chart' => 'Income Vs Expense Chart',
-    //navbar
+    // navbar
     'product' => 'Product',
     'brand' => 'Brand',
     'category' => 'Category',
@@ -217,7 +215,6 @@ return [
     'Discount' => 'Discount',
     // Purchases List
     'Outstanding' => 'Outstanding',
-    'Paid' => 'Paid',
     'Total_Purchase' => 'Total Purchase',
     // Purchases List
     'Received' => 'Received',
@@ -265,7 +262,6 @@ return [
     'Bill' => 'Bill',
     'Bills' => 'Bills',
     'Service Group' => 'Service Group',
-    'Attestation' => 'Attestation',
     'Service Attestation' => 'Service Attestation',
     'Payment' => 'Payment',
     'Dress' => 'Dress',
@@ -334,7 +330,6 @@ return [
     'New Enquiry' => 'New Enquiry',
     'Enquiry' => 'Enquiry',
     'completed_tasks' => 'Completed tasks',
-    'pending_tasks' => 'Pending Tasks',
     'kanban_board' => 'Kanban Board',
     'in_progress_tasks' => 'In Progress Tasks',
     'in_review_tasks' => 'In Review Tasks',

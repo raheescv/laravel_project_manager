@@ -81,7 +81,7 @@ class SaleHelper
         }, $vals);
         // adds the values
         $sum = array_sum($mp);
-        //gets the mod
+        // gets the mod
         $md = $sum % 10;
         // checks how much for 10
         if ($md != 0) {

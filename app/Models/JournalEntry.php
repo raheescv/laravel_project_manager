@@ -30,7 +30,6 @@ class JournalEntry extends Model implements AuditableContracts
             'journal_id' => ['required'],
             'account_id' => ['required'],
             'debit' => ['required'],
-            'debit' => ['required'],
             'created_by' => ['required'],
         ], $merge);
     }

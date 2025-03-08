@@ -22,7 +22,7 @@ class SalePayment extends Model implements AuditableContracts
         'deleted_by',
     ];
 
-    public static function rules($id = 0, $merge = [])
+    public static function rules($id = 0, $merge = []): array
     {
         return array_merge([
             'sale_id' => ['required'],

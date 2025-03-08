@@ -81,7 +81,7 @@ return [
     'tasks' => 'مهام',
     'Employeecalendar' => 'Employee Calendar',
     'InHouseInventory' => 'In House Inventory',
-    //home page
+    // home page
     'stock' => 'مخزون',
     'total_stock' => 'إجمالي المخزون',
     'no_of_services' => 'عدد الخدمات',
@@ -100,7 +100,7 @@ return [
     'sales_daily_wise' => 'مبيعات يومية حكيمة',
     'sale_vs_saleReturn_chart' => 'مخطط إرجاع المبيعات مقابل المبيعات',
     'income_vs_expense_chart' => 'مخطط الدخل مقابل المصروفات',
-    //navbar
+    // navbar
     'product' => 'المنتج',
     'brand' => 'الماركة',
     'category' => 'الفئة',
