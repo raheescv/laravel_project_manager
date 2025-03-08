@@ -74,9 +74,9 @@ class Page extends Component
         $this->validate();
         try {
             if (! $this->table_id) {
-                $response = (new CreateAction)->execute($this->units);
+                $response = (new CreateAction())->execute($this->units);
             } else {
-                $response = (new UpdateAction)->execute($this->units, $this->table_id);
+                $response = (new UpdateAction())->execute($this->units, $this->table_id);
             }
             if (! $response['success']) {
                 throw new \Exception($response['message'], 1);

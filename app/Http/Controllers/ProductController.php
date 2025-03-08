@@ -21,7 +21,7 @@ class ProductController extends Controller
 
     public function get(Request $request)
     {
-        $list = (new Product)->getDropDownList($request->all());
+        $list = (new Product())->getDropDownList($request->all());
 
         return response()->json($list);
     }

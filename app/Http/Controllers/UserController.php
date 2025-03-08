@@ -25,7 +25,7 @@ class UserController extends Controller
 
     public function get(Request $request)
     {
-        $list = (new User)->getDropDownList($request->all());
+        $list = (new User())->getDropDownList($request->all());
 
         return response()->json($list);
     }

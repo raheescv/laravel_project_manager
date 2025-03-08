@@ -26,7 +26,7 @@ class ExportCategoryJob implements ShouldQueue
     public function handle()
     {
         $exportFileName = 'exports/category_'.now()->timestamp.'.xlsx';
-        Excel::store(new CategoryExport, $exportFileName, 'public');
+        Excel::store(new CategoryExport(), $exportFileName, 'public');
         $this->user->notify(new ExportCompleted('Category', $exportFileName));
     }
 }

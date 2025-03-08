@@ -257,7 +257,7 @@ class Page extends Component
         try {
             $id = $this->items[$index]['id'] ?? '';
             if ($id) {
-                $response = (new ItemDeleteAction)->execute($id);
+                $response = (new ItemDeleteAction())->execute($id);
                 if (! $response['success']) {
                     throw new \Exception($response['message'], 1);
                 }
@@ -275,7 +275,7 @@ class Page extends Component
         try {
             $id = $this->payments[$index]['id'] ?? '';
             if ($id) {
-                $response = (new PaymentDeleteAction)->execute($id);
+                $response = (new PaymentDeleteAction())->execute($id);
                 if (! $response['success']) {
                     throw new \Exception($response['message'], 1);
                 }
@@ -376,9 +376,9 @@ class Page extends Component
 
             $user_id = auth()->id();
             if (! $this->table_id) {
-                $response = (new CreateAction)->execute($this->purchases, $user_id);
+                $response = (new CreateAction())->execute($this->purchases, $user_id);
             } else {
-                $response = (new UpdateAction)->execute($this->purchases, $this->table_id, $user_id);
+                $response = (new UpdateAction())->execute($this->purchases, $this->table_id, $user_id);
             }
             if (! $response['success']) {
                 throw new \Exception($response['message'], 1);

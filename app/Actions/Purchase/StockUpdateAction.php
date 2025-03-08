@@ -31,7 +31,7 @@ class StockUpdateAction
                 $inventory['model_id'] = $purchase->id;
                 $inventory['updated_by'] = $user_id;
 
-                $response = (new UpdateAction)->execute($inventory, $inventory['id']);
+                $response = (new UpdateAction())->execute($inventory, $inventory['id']);
                 if (! $response['success']) {
                     throw new \Exception($response['message'], 1);
                 }

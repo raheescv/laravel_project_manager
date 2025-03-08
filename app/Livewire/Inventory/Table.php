@@ -54,7 +54,7 @@ class Table extends Component
         } else {
             $exportFileName = 'inventory_'.now()->timestamp.'.xlsx';
 
-            return Excel::download(new ProductExport, $exportFileName);
+            return Excel::download(new ProductExport(), $exportFileName);
         }
     }
 

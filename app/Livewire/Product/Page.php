@@ -168,9 +168,9 @@ class Page extends Component
                     'id' => $this->products['department_id'],
                     'name' => $this->products['department_id'],
                 ];
-                $response = (new CreateAction)->execute($this->products, auth()->id());
+                $response = (new CreateAction())->execute($this->products, auth()->id());
             } else {
-                $response = (new UpdateAction)->execute($this->products, $this->table_id, auth()->id());
+                $response = (new UpdateAction())->execute($this->products, $this->table_id, auth()->id());
             }
             if (! $response['success']) {
                 throw new \Exception($response['message'], 1);
@@ -207,7 +207,7 @@ class Page extends Component
     {
         try {
             DB::beginTransaction();
-            $response = (new DeleteImageAction)->execute($id);
+            $response = (new DeleteImageAction())->execute($id);
             if (! $response['success']) {
                 throw new \Exception($response['message'], 1);
             }
@@ -234,7 +234,7 @@ class Page extends Component
     public function unitDelete($id)
     {
         try {
-            $response = (new UnitDeleteAction)->execute($id);
+            $response = (new UnitDeleteAction())->execute($id);
             if (! $response['success']) {
                 throw new \Exception($response['message'], 1);
             }
@@ -248,7 +248,7 @@ class Page extends Component
     public function priceDelete($id)
     {
         try {
-            $response = (new PriceDeleteAction)->execute($id);
+            $response = (new PriceDeleteAction())->execute($id);
             if (! $response['success']) {
                 throw new \Exception($response['message'], 1);
             }

@@ -10,7 +10,7 @@ class SaleProvider extends ServiceProvider
     public function register()
     {
         App::bind('sale.helper', function () {
-            return new \App\Helpers\SaleHelper;
+            return new \App\Helpers\SaleHelper();
         });
     }
 

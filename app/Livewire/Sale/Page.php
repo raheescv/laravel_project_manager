@@ -404,7 +404,7 @@ class Page extends Component
         try {
             $id = $this->items[$index]['id'] ?? '';
             if ($id) {
-                $response = (new ItemDeleteAction)->execute($id);
+                $response = (new ItemDeleteAction())->execute($id);
                 if (! $response['success']) {
                     throw new \Exception($response['message'], 1);
                 }
@@ -423,7 +423,7 @@ class Page extends Component
             foreach ($this->items as $value) {
                 $id = $value['id'] ?? '';
                 if ($id) {
-                    $response = (new ItemDeleteAction)->execute($id);
+                    $response = (new ItemDeleteAction())->execute($id);
                     if (! $response['success']) {
                         throw new \Exception($response['message'], 1);
                     }
@@ -442,7 +442,7 @@ class Page extends Component
         try {
             $id = $this->payments[$index]['id'] ?? '';
             if ($id) {
-                $response = (new PaymentDeleteAction)->execute($id);
+                $response = (new PaymentDeleteAction())->execute($id);
                 if (! $response['success']) {
                     throw new \Exception($response['message'], 1);
                 }
@@ -593,9 +593,9 @@ class Page extends Component
 
             $user_id = auth()->id();
             if (! $this->table_id) {
-                $response = (new CreateAction)->execute($this->sales, $user_id);
+                $response = (new CreateAction())->execute($this->sales, $user_id);
             } else {
-                $response = (new UpdateAction)->execute($this->sales, $this->table_id, $user_id);
+                $response = (new UpdateAction())->execute($this->sales, $this->table_id, $user_id);
             }
             if (! $response['success']) {
                 throw new \Exception($response['message'], 1);

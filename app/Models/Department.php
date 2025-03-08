@@ -39,7 +39,7 @@ class Department extends Model
     {
         $existing = Department::firstWhere('name', $name);
         if (! $existing) {
-            $response = (new CreateAction)->execute(['name' => $name]);
+            $response = (new CreateAction())->execute(['name' => $name]);
             if (! $response['success']) {
                 throw new \Exception($response['message']);
             }

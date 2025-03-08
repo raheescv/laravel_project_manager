@@ -155,7 +155,7 @@ class JournalEntryAction
 
             $data['entries'] = $entries;
 
-            $response = (new CreateAction)->execute($data);
+            $response = (new CreateAction())->execute($data);
             if (! $response['success']) {
                 throw new \Exception($response['message'], 1);
             }

@@ -78,9 +78,9 @@ class Prices extends Component
         $this->validate();
         try {
             if (! $this->table_id) {
-                $response = (new CreateAction)->execute($this->product_prices);
+                $response = (new CreateAction())->execute($this->product_prices);
             } else {
-                $response = (new UpdateAction)->execute($this->product_prices, $this->table_id);
+                $response = (new UpdateAction())->execute($this->product_prices, $this->table_id);
             }
             if (! $response['success']) {
                 throw new \Exception($response['message'], 1);

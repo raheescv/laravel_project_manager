@@ -33,9 +33,9 @@ class UpdateAction
                     $value['purchase_id'] = $purchase_id;
 
                     if (isset($value['id'])) {
-                        $response = (new ItemUpdateAction)->execute($value, $value['id'], $user_id);
+                        $response = (new ItemUpdateAction())->execute($value, $value['id'], $user_id);
                     } else {
-                        $response = (new ItemCreateAction)->execute($value, $user_id);
+                        $response = (new ItemCreateAction())->execute($value, $user_id);
                     }
 
                     if (! $response['success']) {
@@ -47,10 +47,10 @@ class UpdateAction
                     $value['purchase_id'] = $purchase_id;
 
                     if (isset($value['id'])) {
-                        $response = (new PaymentUpdateAction)->execute($value, $value['id'], $user_id);
+                        $response = (new PaymentUpdateAction())->execute($value, $value['id'], $user_id);
                     } else {
                         $value['date'] = $model->date;
-                        $response = (new PaymentCreateAction)->execute($value, $user_id);
+                        $response = (new PaymentCreateAction())->execute($value, $user_id);
                     }
 
                     if (! $response['success']) {
@@ -59,23 +59,23 @@ class UpdateAction
                 }
 
                 if ($model['status'] == 'completed') {
-                    $response = (new StockUpdateAction)->execute($model, $user_id);
+                    $response = (new StockUpdateAction())->execute($model, $user_id);
                     if (! $response['success']) {
                         throw new \Exception($response['message'], 1);
                     }
                     $model->refresh();
-                    $response = (new JournalEntryAction)->execute($model, $user_id);
+                    $response = (new JournalEntryAction())->execute($model, $user_id);
                     if (! $response['success']) {
                         throw new \Exception($response['message'], 1);
                     }
                 }
             } else {
-                $response = (new StockUpdateAction)->execute($model, $user_id, false);
+                $response = (new StockUpdateAction())->execute($model, $user_id, false);
                 if (! $response['success']) {
                     throw new \Exception($response['message'], 1);
                 }
                 if ($model->journal) {
-                    $response = (new DeleteAction)->execute($model->journal->id, $user_id);
+                    $response = (new DeleteAction())->execute($model->journal->id, $user_id);
                     if (! $response['success']) {
                         throw new \Exception($response['message'], 1);
                     }

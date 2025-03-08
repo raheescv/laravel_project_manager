@@ -26,7 +26,7 @@ class ExportPurchaseJob implements ShouldQueue
     public function handle()
     {
         $exportFileName = 'exports/Purchase_'.now()->timestamp.'.xlsx';
-        Excel::store(new PurchaseExport, $exportFileName, 'public');
+        Excel::store(new PurchaseExport(), $exportFileName, 'public');
         $this->user->notify(new ExportCompleted('Purchase', $exportFileName));
     }
 }

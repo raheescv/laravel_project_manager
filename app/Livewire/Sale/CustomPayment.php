@@ -85,7 +85,7 @@ class CustomPayment extends Component
         try {
             $id = $this->payments[$index]['id'] ?? '';
             if ($id) {
-                $response = (new DeleteAction)->execute($id);
+                $response = (new DeleteAction())->execute($id);
                 if (! $response['success']) {
                     throw new \Exception($response['message'], 1);
                 }

@@ -44,7 +44,7 @@ class Table extends Component
                 if ($id == 1) {
                     throw new \Exception('Cant Delete The Main Employee', 1);
                 }
-                $response = (new DeleteAction)->execute($id);
+                $response = (new DeleteAction())->execute($id);
                 if (! $response['success']) {
                     throw new \Exception($response['message'], 1);
                 }
@@ -89,7 +89,7 @@ class Table extends Component
         } else {
             $exportFileName = 'Employee_'.now()->timestamp.'.xlsx';
 
-            return Excel::download(new UserExport, $exportFileName);
+            return Excel::download(new UserExport(), $exportFileName);
         }
     }
 

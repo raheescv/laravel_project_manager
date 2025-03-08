@@ -53,7 +53,7 @@ class ReceiptAction
                     'date' => $paymentData['date'],
                     'amount' => $data['payment'],
                 ];
-                $salePaymentResponse = (new SalePaymentCreateAction)->execute($salePaymentData, $user_id);
+                $salePaymentResponse = (new SalePaymentCreateAction())->execute($salePaymentData, $user_id);
                 $sale_payment_id = $salePaymentResponse['data']['id'];
                 $remarks = $paymentMethod['name'].' payment made by '.$name;
                 $entries[] = [
@@ -76,7 +76,7 @@ class ReceiptAction
                 ];
             }
             $journalData['entries'] = $entries;
-            $response = (new JournalCreateAction)->execute($journalData);
+            $response = (new JournalCreateAction())->execute($journalData);
             if (! $response['success']) {
                 throw new \Exception($response['message'], 1);
             }

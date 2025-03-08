@@ -16,9 +16,9 @@ class CreateAction
 
             validationHelper(Purchase::rules(), $data);
             $model = Purchase::create($data);
-            foreach ($data['items'] as $key => $value) {
+            foreach ($data['items'] as $value) {
                 $value['purchase_id'] = $model->id;
-                $response = (new ItemCreateAction)->execute($value, $user_id);
+                $response = (new ItemCreateAction())->execute($value, $user_id);
                 if (! $response['success']) {
                     throw new \Exception($response['message'], 1);
                 }
@@ -26,18 +26,18 @@ class CreateAction
             foreach ($data['payments'] as $value) {
                 $value['purchase_id'] = $model->id;
                 $value['date'] = $model->date;
-                $response = (new PaymentCreateAction)->execute($value, $user_id);
+                $response = (new PaymentCreateAction())->execute($value, $user_id);
                 if (! $response['success']) {
                     throw new \Exception($response['message'], 1);
                 }
             }
             if ($model['status'] == 'completed') {
-                $response = (new StockUpdateAction)->execute($model, $user_id);
+                $response = (new StockUpdateAction())->execute($model, $user_id);
                 if (! $response['success']) {
                     throw new \Exception($response['message'], 1);
                 }
                 $model->refresh();
-                $response = (new JournalEntryAction)->execute($model, $user_id);
+                $response = (new JournalEntryAction())->execute($model, $user_id);
                 if (! $response['success']) {
                     throw new \Exception($response['message'], 1);
                 }

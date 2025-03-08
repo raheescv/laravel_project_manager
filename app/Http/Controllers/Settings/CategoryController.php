@@ -15,7 +15,7 @@ class CategoryController extends Controller
 
     public function get(Request $request)
     {
-        $list = (new Category)->getDropDownList($request->all());
+        $list = (new Category())->getDropDownList($request->all());
 
         return response()->json($list);
     }

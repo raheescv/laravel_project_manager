@@ -80,7 +80,7 @@ class Inventory extends Model implements AuditableContracts
             }
             $data['batch'] = 'General';
             $data['created_by'] = $data['updated_by'] = $user_id;
-            $response = (new InventoryCreateAction)->execute($data);
+            $response = (new InventoryCreateAction())->execute($data);
             if (! $response['success']) {
                 throw new \Exception($response['message'], 1);
             }

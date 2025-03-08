@@ -15,7 +15,7 @@ class BranchController extends Controller
 
     public function get(Request $request)
     {
-        $list = (new Branch)->getDropDownList($request->all());
+        $list = (new Branch())->getDropDownList($request->all());
 
         return response()->json($list);
     }

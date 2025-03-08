@@ -27,7 +27,7 @@ class ImportErrorsNotification extends Notification
 
     public function toMail($notifiable)
     {
-        return (new MailMessage)
+        return (new MailMessage())
             ->subject($this->title)
             ->line($this->message)
             ->action('Download Your Result', url($this->filePath));

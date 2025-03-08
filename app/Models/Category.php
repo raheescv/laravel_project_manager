@@ -64,7 +64,7 @@ class Category extends Model
         $name = $data['name'];
         $existing = Category::firstWhere('name', $name);
         if (! $existing) {
-            $response = (new CreateAction)->execute($data);
+            $response = (new CreateAction())->execute($data);
             if (! $response['success']) {
                 throw new \Exception($response['message']);
             }

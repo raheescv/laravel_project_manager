@@ -31,7 +31,7 @@ class ProductSeeder extends Seeder
             ];
         }
         foreach ($data as $value) {
-            $response = (new CreateAction)->execute($value, 1);
+            $response = (new CreateAction())->execute($value, 1);
             if (! $response['success']) {
                 throw new \Exception($response['message'], 1);
             }

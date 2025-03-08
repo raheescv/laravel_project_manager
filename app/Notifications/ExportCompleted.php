@@ -19,7 +19,7 @@ class ExportCompleted extends Notification
 
     public function toMail($notifiable)
     {
-        return (new MailMessage)
+        return (new MailMessage())
             ->line('Your '.$this->title.' export is complete!')
             ->action('Download Your Export', url($this->filePath));
     }

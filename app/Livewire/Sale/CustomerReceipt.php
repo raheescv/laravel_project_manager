@@ -208,7 +208,7 @@ class CustomerReceipt extends Component
             }
             foreach ($customer_sales as $sale_id => $value) {
                 if ($value['payment'] || $value['discount']) {
-                    $response = (new ReceiptAction)->execute($this->customer_id, $this->name, $sale_id, $value, $this->payment, auth()->id());
+                    $response = (new ReceiptAction())->execute($this->customer_id, $this->name, $sale_id, $value, $this->payment, auth()->id());
                     if (! $response['success']) {
                         throw new \Exception($response['message'], 1);
                     }

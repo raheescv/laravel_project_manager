@@ -22,7 +22,7 @@ class InventoryController extends Controller
 
     public function get(Request $request)
     {
-        $list = (new Inventory)->getDropDownList($request->all());
+        $list = (new Inventory())->getDropDownList($request->all());
 
         return response()->json($list);
     }

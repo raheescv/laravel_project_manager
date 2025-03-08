@@ -41,7 +41,7 @@ class Table extends Component
                 if ($id == 1) {
                     throw new \Exception('Cant Delete The Main Branch', 1);
                 }
-                $response = (new DeleteAction)->execute($id);
+                $response = (new DeleteAction())->execute($id);
                 if (! $response['success']) {
                     throw new \Exception($response['message'], 1);
                 }

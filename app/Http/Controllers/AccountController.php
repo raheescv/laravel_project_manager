@@ -24,7 +24,7 @@ class AccountController extends Controller
 
     public function get(Request $request)
     {
-        $list = (new Account)->getDropDownList($request->all());
+        $list = (new Account())->getDropDownList($request->all());
 
         return response()->json($list);
     }

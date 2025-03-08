@@ -60,7 +60,7 @@ class Page extends Component
     {
         $this->validate();
         try {
-            $response = (new UpdateAction)->execute($this->inventories, $this->table_id);
+            $response = (new UpdateAction())->execute($this->inventories, $this->table_id);
             if (! $response['success']) {
                 throw new \Exception($response['message'], 1);
             }

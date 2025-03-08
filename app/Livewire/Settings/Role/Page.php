@@ -53,9 +53,9 @@ class Page extends Component
     {
         try {
             if (! $this->table_id) {
-                $response = (new CreateAction)->execute($this->roles);
+                $response = (new CreateAction())->execute($this->roles);
             } else {
-                $response = (new UpdateAction)->execute($this->roles, $this->table_id);
+                $response = (new UpdateAction())->execute($this->roles, $this->table_id);
             }
             if (! $response['success']) {
                 throw new \Exception($response['message'], 1);

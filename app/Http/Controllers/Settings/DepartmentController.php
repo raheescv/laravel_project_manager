@@ -15,7 +15,7 @@ class DepartmentController extends Controller
 
     public function get(Request $request)
     {
-        $list = (new Department)->getDropDownList($request->all());
+        $list = (new Department())->getDropDownList($request->all());
 
         return response()->json($list);
     }
