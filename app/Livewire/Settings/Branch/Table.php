@@ -91,7 +91,7 @@ class Table extends Component
     {
         $data = Branch::orderBy($this->sortField, $this->sortDirection)
             ->when($this->search ?? '', function ($query, $value) {
-                $query->where(function ($q) use ($value) {
+                return $query->where(function ($q) use ($value): void {
                     $value = trim($value);
                     $q->where('name', 'like', "%{$value}%")
                         ->orWhere('code', 'like', "%{$value}%")

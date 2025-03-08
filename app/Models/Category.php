@@ -44,13 +44,13 @@ class Category extends Model
     {
         $self = self::orderBy('name');
         $self = $self->when($request['query'] ?? '', function ($query, $value) {
-            $query->where('name', 'like', '%'.trim($value).'%');
+            return $query->where('name', 'like', '%'.trim($value).'%');
         });
         $self = $self->when($request['is_parent'] ?? false, function ($query, $value) {
-            $query->whereNull('parent_id');
+            return $query->whereNull('parent_id');
         });
         $self = $self->when($request['parent_id'] ?? '', function ($query, $value) {
-            $query->where('parent_id', $value);
+            return $query->where('parent_id', $value);
         });
         $self = $self->limit(10);
         $self = $self->get(['name', 'id'])->toArray();

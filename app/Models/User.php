@@ -80,7 +80,7 @@ class User extends Authenticatable
     {
         $self = self::orderBy('name');
         $self = $self->when($request['query'] ?? '', function ($query, $value) {
-            $query->where(function ($q) use ($value) {
+            return $query->where(function ($q) use ($value): void {
                 $value = trim($value);
                 $q->where('name', 'like', "%{$value}%")
                     ->orWhere('code', 'like', "%{$value}%")
@@ -89,7 +89,7 @@ class User extends Authenticatable
             });
         });
         $self = $self->when($request['type'] ?? '', function ($query, $value) {
-            $query->where('type', $value);
+            return $query->where('type', $value);
         });
         $self = $self->limit(10);
         $self = $self->get(['name', 'email', 'mobile', 'id'])->toArray();

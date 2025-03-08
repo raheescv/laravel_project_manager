@@ -25,7 +25,7 @@ class DraftTable extends Component
     {
         $lists = Sale::join('accounts', 'accounts.id', '=', 'sales.account_id')
             ->when($this->search ?? '', function ($query, $value) {
-                $query->where(function ($q) use ($value) {
+                return $query->where(function ($q) use ($value): void {
                     $value = trim($value);
                     $q->where('sales.invoice_no', 'like', "%{$value}%")
                         ->orWhere('sales.date', 'like', "%{$value}%")

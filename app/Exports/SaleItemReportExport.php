@@ -22,19 +22,19 @@ class SaleItemReportExport implements FromQuery, WithColumnFormatting, WithEvent
     {
         $query = SaleItem::join('sales', 'sales.id', '=', 'sale_items.sale_id')
             ->when($this->filters['from_date'] ?? '', function ($query, $value) {
-                $query->where('date', '>=', date('Y-m-d', strtotime($value)));
+                return $query->where('date', '>=', date('Y-m-d', strtotime($value)));
             })
             ->when($this->filters['to_date'] ?? '', function ($query, $value) {
-                $query->where('date', '<=', date('Y-m-d', strtotime($value)));
+                return $query->where('date', '<=', date('Y-m-d', strtotime($value)));
             })
             ->when($this->filters['branch_id'] ?? '', function ($query, $value) {
-                $query->where('branch_id', $value);
+                return $query->where('branch_id', $value);
             })
             ->when($this->filters['employee_id'] ?? '', function ($query, $value) {
-                $query->where('employee_id', $value);
+                return $query->where('employee_id', $value);
             })
             ->when($this->filters['product_id'] ?? '', function ($query, $value) {
-                $query->where('product_id', $value);
+                return $query->where('product_id', $value);
             })
             ->where('sales.status', 'completed')
             ->select(
@@ -110,7 +110,7 @@ class SaleItemReportExport implements FromQuery, WithColumnFormatting, WithEvent
     public function registerEvents(): array
     {
         return [
-            AfterSheet::class => function (AfterSheet $event) {
+            AfterSheet::class => function (AfterSheet $event): void {
                 $sheet = $event->sheet->getDelegate();
 
                 $totalRows = $sheet->getHighestRow() + 1;

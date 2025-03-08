@@ -92,9 +92,10 @@ class Inventory extends Model implements AuditableContracts
         $self = self::orderBy('products.name');
         $self = $self->join('products', 'inventories.product_id', '=', 'products.id');
         $self = $self->when($request['query'] ?? '', function ($query, $value) {
-            $query->where(function ($q) use ($value) {
+            return $query->where(function ($q) use ($value) {
                 $value = trim($value);
-                $q->where('products.name', 'like', "%{$value}%")
+
+                return $q->where('products.name', 'like', "%{$value}%")
                     ->orWhere('products.name_arabic', 'like', "%{$value}%")
                     ->orWhere('products.code', 'like', "%{$value}%")
                     ->orWhere('products.size', 'like', "%{$value}%")

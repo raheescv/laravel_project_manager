@@ -178,7 +178,7 @@
                         <div class="col-md-12 col-lg-4 ps-0">
                             @if ($this->getErrorBag()->count())
                                 <ol>
-                                    <?php foreach ($this->getErrorBag()->toArray() as $key => $value): ?>
+                                    <?php foreach ($this->getErrorBag()->toArray() as $value): ?>
                                     <li style="color:red">* {{ $value[0] }}</li>
                                     <?php endforeach; ?>
                                 </ol>

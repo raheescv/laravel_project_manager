@@ -22,16 +22,16 @@ class DayBookReportExport implements FromQuery, WithColumnFormatting, WithEvents
     {
         $query = Ledger::select('id', 'date', 'account_name', 'description', 'reference_number', 'remarks', 'debit', 'credit', 'balance')
             ->when($this->filters['from_date'] ?? '', function ($query, $value) {
-                $query->where('date', '>=', date('Y-m-d', strtotime($value)));
+                return $query->where('date', '>=', date('Y-m-d', strtotime($value)));
             })
             ->when($this->filters['to_date'] ?? '', function ($query, $value) {
-                $query->where('date', '<=', date('Y-m-d', strtotime($value)));
+                return $query->where('date', '<=', date('Y-m-d', strtotime($value)));
             })
             ->when($this->filters['branch_id'] ?? '', function ($query, $value) {
-                $query->where('branch_id', $value);
+                return $query->where('branch_id', $value);
             })
             ->when($this->filters['account_id'] ?? '', function ($query, $value) {
-                $query->where('account_id', $value);
+                return $query->where('account_id', $value);
             });
 
         return $query;
@@ -83,7 +83,7 @@ class DayBookReportExport implements FromQuery, WithColumnFormatting, WithEvents
     public function registerEvents(): array
     {
         return [
-            AfterSheet::class => function (AfterSheet $event) {
+            AfterSheet::class => function (AfterSheet $event): void {
                 $sheet = $event->sheet->getDelegate();
 
                 $totalRows = $sheet->getHighestRow() + 1;

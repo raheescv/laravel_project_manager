@@ -47,19 +47,19 @@ class SaleItemReport extends Component
     {
         $count = SaleItem::join('sales', 'sales.id', '=', 'sale_items.sale_id')
             ->when($this->from_date ?? '', function ($query, $value) {
-                $query->where('date', '>=', date('Y-m-d', strtotime($value)));
+                return $query->where('date', '>=', date('Y-m-d', strtotime($value)));
             })
             ->when($this->to_date ?? '', function ($query, $value) {
-                $query->where('date', '<=', date('Y-m-d', strtotime($value)));
+                return $query->where('date', '<=', date('Y-m-d', strtotime($value)));
             })
             ->when($this->branch_id ?? '', function ($query, $value) {
-                $query->where('branch_id', $value);
+                return $query->where('branch_id', $value);
             })
             ->when($this->employee_id ?? '', function ($query, $value) {
-                $query->where('employee_id', $value);
+                return $query->where('employee_id', $value);
             })
             ->when($this->product_id ?? '', function ($query, $value) {
-                $query->where('product_id', $value);
+                return $query->where('product_id', $value);
             })
             ->where('sales.status', 'completed')
             ->count();
@@ -101,7 +101,7 @@ class SaleItemReport extends Component
         $data = SaleItem::with('sale:id,date,invoice_no,branch_id,other_discount,total', 'employee:id,name', 'product:id,name')->orderBy($this->sortField, $this->sortDirection)
             ->join('sales', 'sales.id', '=', 'sale_items.sale_id')
             ->when($this->search, function ($query, $value) {
-                $query->where(function ($q) use ($value) {
+                return $query->where(function ($q) use ($value): void {
                     $value = trim($value);
                     $q->where('sale_items.unit_price', 'like', "%{$value}%")
                         ->orWhere('sale_items.quantity', 'like', "%{$value}%")
@@ -110,19 +110,19 @@ class SaleItemReport extends Component
                 });
             })
             ->when($this->from_date ?? '', function ($query, $value) {
-                $query->where('date', '>=', date('Y-m-d', strtotime($value)));
+                return $query->where('date', '>=', date('Y-m-d', strtotime($value)));
             })
             ->when($this->to_date ?? '', function ($query, $value) {
-                $query->where('date', '<=', date('Y-m-d', strtotime($value)));
+                return $query->where('date', '<=', date('Y-m-d', strtotime($value)));
             })
             ->when($this->branch_id ?? '', function ($query, $value) {
-                $query->where('branch_id', $value);
+                return $query->where('branch_id', $value);
             })
             ->when($this->employee_id ?? '', function ($query, $value) {
-                $query->where('employee_id', $value);
+                return $query->where('employee_id', $value);
             })
             ->when($this->product_id ?? '', function ($query, $value) {
-                $query->where('product_id', $value);
+                return $query->where('product_id', $value);
             })
             ->where('sales.status', 'completed')
             ->latest('sale_items.id')

@@ -91,7 +91,7 @@ class Table extends Component
     {
         $data = Role::orderBy($this->sortField, $this->sortDirection)
             ->when($this->search ?? '', function ($query, $value) {
-                $query->where('name', 'like', "%{$value}%");
+                return $query->where('name', 'like', "%{$value}%");
             })
             ->latest()
             ->paginate($this->limit);

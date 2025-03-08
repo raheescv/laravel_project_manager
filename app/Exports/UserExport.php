@@ -18,7 +18,7 @@ class UserExport implements FromQuery, WithHeadings, WithMapping
     {
         $query = User::query()
             ->when($this->filters['type'] ?? '', function ($query, $value) {
-                $query->where('type', $value);
+                return $query->where('type', $value);
             });
 
         return $query;

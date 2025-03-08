@@ -64,7 +64,7 @@ class Table extends Component
                 throw new \Exception('Please select any item to delete.', 1);
             }
             foreach ($this->selected as $id) {
-                $response = (new DeleteAction)->execute($id, auth()->id());
+                $response = (new DeleteAction())->execute($id, auth()->id());
                 if (! $response['success']) {
                     throw new \Exception($response['message'], 1);
                 }
@@ -96,19 +96,19 @@ class Table extends Component
         if ($value) {
             $this->selected = Purchase::latest()
                 ->when($this->branch_id ?? '', function ($query, $value) {
-                    $query->where('branch_id', $value);
+                    return $query->where('branch_id', $value);
                 })
                 ->when($this->vendor_id ?? '', function ($query, $value) {
-                    $query->where('account_id', $value);
+                    return $query->where('account_id', $value);
                 })
                 ->when($this->status ?? '', function ($query, $value) {
-                    $query->where('status', $value);
+                    return $query->where('status', $value);
                 })
                 ->when($this->from_date ?? '', function ($query, $value) {
-                    $query->whereDate('date', '>=', date('Y-m-d', strtotime($value)));
+                    return $query->whereDate('date', '>=', date('Y-m-d', strtotime($value)));
                 })
                 ->when($this->to_date ?? '', function ($query, $value) {
-                    $query->whereDate('date', '<=', date('Y-m-d', strtotime($value)));
+                    return $query->whereDate('date', '<=', date('Y-m-d', strtotime($value)));
                 })
                 ->limit(2000)
                 ->pluck('id')
@@ -122,19 +122,19 @@ class Table extends Component
     {
         $count = Purchase::query()
             ->when($this->branch_id ?? '', function ($query, $value) {
-                $query->where('branch_id', $value);
+                return $query->where('branch_id', $value);
             })
             ->when($this->vendor_id ?? '', function ($query, $value) {
-                $query->where('account_id', $value);
+                return $query->where('account_id', $value);
             })
             ->when($this->status ?? '', function ($query, $value) {
-                $query->where('status', $value);
+                return $query->where('status', $value);
             })
             ->when($this->from_date ?? '', function ($query, $value) {
-                $query->whereDate('date', '>=', date('Y-m-d', strtotime($value)));
+                return $query->whereDate('date', '>=', date('Y-m-d', strtotime($value)));
             })
             ->when($this->to_date ?? '', function ($query, $value) {
-                $query->whereDate('date', '<=', date('Y-m-d', strtotime($value)));
+                return $query->whereDate('date', '<=', date('Y-m-d', strtotime($value)));
             })
             ->count();
         if ($count > 2000) {
@@ -143,7 +143,7 @@ class Table extends Component
         } else {
             $exportFileName = 'Purchase_'.now()->timestamp.'.xlsx';
 
-            return Excel::download(new PurchaseExport, $exportFileName);
+            return Excel::download(new PurchaseExport(), $exportFileName);
         }
     }
 
@@ -162,9 +162,10 @@ class Table extends Component
         $data = Purchase::with('branch')->orderBy($this->sortField, $this->sortDirection)
             ->join('accounts', 'accounts.id', '=', 'purchases.account_id')
             ->when($this->search ?? '', function ($query, $value) {
-                $query->where(function ($q) use ($value) {
+                return $query->where(function ($q) use ($value) {
                     $value = trim($value);
-                    $q->where('purchases.invoice_no', 'like', "%{$value}%")
+
+                    return $q->where('purchases.invoice_no', 'like', "%{$value}%")
                         ->orWhere('purchases.gross_amount', 'like', "%{$value}%")
                         ->orWhere('purchases.item_discount', 'like', "%{$value}%")
                         ->orWhere('purchases.tax_amount', 'like', "%{$value}%")
@@ -176,19 +177,19 @@ class Table extends Component
                 });
             })
             ->when($this->branch_id ?? '', function ($query, $value) {
-                $query->where('branch_id', $value);
+                return $query->where('branch_id', $value);
             })
             ->when($this->vendor_id ?? '', function ($query, $value) {
-                $query->where('account_id', $value);
+                return $query->where('account_id', $value);
             })
             ->when($this->status ?? '', function ($query, $value) {
-                $query->where('status', $value);
+                return $query->where('status', $value);
             })
             ->when($this->from_date ?? '', function ($query, $value) {
-                $query->whereDate('date', '>=', date('Y-m-d', strtotime($value)));
+                return $query->whereDate('date', '>=', date('Y-m-d', strtotime($value)));
             })
             ->when($this->to_date ?? '', function ($query, $value) {
-                $query->whereDate('date', '<=', date('Y-m-d', strtotime($value)));
+                return $query->whereDate('date', '<=', date('Y-m-d', strtotime($value)));
             })
             ->select(
                 'purchases.*',

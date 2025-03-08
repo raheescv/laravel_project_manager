@@ -22,19 +22,19 @@ class PurchaseExport implements FromQuery, WithColumnFormatting, WithEvents, Wit
     {
         $query = Purchase::query()
             ->when($this->filter['branch_id'] ?? '', function ($query, $value) {
-                $query->where('branch_id', $value);
+                return $query->where('branch_id', $value);
             })
             ->when($this->filter['vendor_id'] ?? '', function ($query, $value) {
-                $query->where('account_id', $value);
+                return $query->where('account_id', $value);
             })
             ->when($this->filter['status'] ?? '', function ($query, $value) {
-                $query->where('status', $value);
+                return $query->where('status', $value);
             })
             ->when($this->filter['from_date'] ?? '', function ($query, $value) {
-                $query->whereDate('date', '>=', date('Y-m-d', strtotime($value)));
+                return $query->whereDate('date', '>=', date('Y-m-d', strtotime($value)));
             })
             ->when($this->filter['to_date'] ?? '', function ($query, $value) {
-                $query->whereDate('date', '<=', date('Y-m-d', strtotime($value)));
+                return $query->whereDate('date', '<=', date('Y-m-d', strtotime($value)));
             });
 
         return $query;
@@ -117,7 +117,7 @@ class PurchaseExport implements FromQuery, WithColumnFormatting, WithEvents, Wit
     public function registerEvents(): array
     {
         return [
-            AfterSheet::class => function (AfterSheet $event) {
+            AfterSheet::class => function (AfterSheet $event): void {
                 $sheet = $event->sheet->getDelegate();
 
                 $totalRows = $sheet->getHighestRow() + 1;

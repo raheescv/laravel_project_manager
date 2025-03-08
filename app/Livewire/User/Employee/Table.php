@@ -107,9 +107,10 @@ class Table extends Component
     {
         $data = User::orderBy($this->sortField, $this->sortDirection)
             ->when($this->search ?? '', function ($query, $value) {
-                $query->where(function ($q) use ($value) {
+                return $query->where(function ($q) use ($value) {
                     $value = trim($value);
-                    $q->where('name', 'like', "%{$value}%")
+
+                    return $q->where('name', 'like', "%{$value}%")
                         ->orWhere('code', 'like', "%{$value}%")
                         ->orWhere('email', 'like', "%{$value}%")
                         ->orWhere('mobile', 'like', "%{$value}%")

@@ -22,16 +22,16 @@ class PurchaseItemReportExport implements FromQuery, WithColumnFormatting, WithE
     {
         $query = PurchaseItem::join('purchases', 'purchases.id', '=', 'purchase_items.purchase_id')
             ->when($this->filters['from_date'] ?? '', function ($query, $value) {
-                $query->where('date', '>=', date('Y-m-d', strtotime($value)));
+                return $query->where('date', '>=', date('Y-m-d', strtotime($value)));
             })
             ->when($this->filters['to_date'] ?? '', function ($query, $value) {
-                $query->where('date', '<=', date('Y-m-d', strtotime($value)));
+                return $query->where('date', '<=', date('Y-m-d', strtotime($value)));
             })
             ->when($this->filters['branch_id'] ?? '', function ($query, $value) {
-                $query->where('branch_id', $value);
+                return $query->where('branch_id', $value);
             })
             ->when($this->filters['product_id'] ?? '', function ($query, $value) {
-                $query->where('product_id', $value);
+                return $query->where('product_id', $value);
             })
             ->where('purchases.status', 'completed')
             ->select(
@@ -104,7 +104,7 @@ class PurchaseItemReportExport implements FromQuery, WithColumnFormatting, WithE
     public function registerEvents(): array
     {
         return [
-            AfterSheet::class => function (AfterSheet $event) {
+            AfterSheet::class => function (AfterSheet $event): void {
                 $sheet = $event->sheet->getDelegate();
 
                 $totalRows = $sheet->getHighestRow() + 1;

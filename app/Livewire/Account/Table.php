@@ -104,7 +104,7 @@ class Table extends Component
     {
         $data = Account::orderBy($this->sortField, $this->sortDirection)
             ->when($this->search, function ($query, $value) {
-                $query->where(function ($q) use ($value) {
+                return $query->where(function ($q) use ($value): void {
                     $value = trim($value);
                     $q->where('accounts.name', 'like', "%{$value}%")
                         ->orWhere('accounts.mobile', 'like', "%{$value}%")
@@ -113,10 +113,10 @@ class Table extends Component
                 });
             })
             ->when($this->account_type ?? '', function ($query, $value) {
-                $query->where('account_type', $value);
+                return $query->where('account_type', $value);
             })
             ->when($this->model ?? '', function ($query, $value) {
-                $query->where('model', $value);
+                return $query->where('model', $value);
             })
             ->latest()
             ->paginate($this->limit);

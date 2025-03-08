@@ -65,7 +65,7 @@ class Receipts extends Component
         $data = Sale::orderBy($this->sortField, $this->sortDirection)
             ->join('accounts', 'accounts.id', '=', 'sales.account_id')
             ->when($this->search ?? '', function ($query, $value) {
-                $query->where(function ($q) use ($value) {
+                return $query->where(function ($q) use ($value): void {
                     $value = trim($value);
                     $q->where('sales.grand_total', 'like', "%{$value}%")
                         ->orWhere('sales.invoice_no', 'like', "%{$value}%")
@@ -73,16 +73,16 @@ class Receipts extends Component
                 });
             })
             ->when($this->branch_id ?? '', function ($query, $value) {
-                $query->where('branch_id', $value);
+                return $query->where('branch_id', $value);
             })
             ->when($this->customer_id ?? '', function ($query, $value) {
-                $query->where('account_id', $value);
+                return $query->where('account_id', $value);
             })
             ->when($this->from_date ?? '', function ($query, $value) {
-                $query->whereDate('date', '>=', date('Y-m-d', strtotime($value)));
+                return $query->whereDate('date', '>=', date('Y-m-d', strtotime($value)));
             })
             ->when($this->to_date ?? '', function ($query, $value) {
-                $query->whereDate('date', '<=', date('Y-m-d', strtotime($value)));
+                return $query->whereDate('date', '<=', date('Y-m-d', strtotime($value)));
             })
             ->where('balance', '>', 0);
         $totalRow = clone $data;

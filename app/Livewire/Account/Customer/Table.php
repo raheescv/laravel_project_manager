@@ -106,7 +106,7 @@ class Table extends Component
     {
         $data = Account::orderBy($this->sortField, $this->sortDirection)
             ->when($this->search, function ($query, $value) {
-                $query->where(function ($q) use ($value) {
+                return $query->where(function ($q) use ($value): void {
                     $value = trim($value);
                     $q->where('accounts.name', 'like', "%{$value}%")
                         ->orWhere('accounts.mobile', 'like', "%{$value}%")

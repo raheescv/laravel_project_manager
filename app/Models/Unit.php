@@ -34,7 +34,7 @@ class Unit extends Model
     {
         $self = self::orderBy('name');
         $self = $self->when($request['query'] ?? '', function ($query, $value) {
-            $query->where(function ($q) use ($value) {
+            return $query->where(function ($q) use ($value): void {
                 $value = trim($value);
                 $q->where('name', 'like', "%{$value}%")
                     ->orWhere('code', 'like', "%{$value}%");

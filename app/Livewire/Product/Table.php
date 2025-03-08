@@ -125,7 +125,7 @@ class Table extends Component
     {
         $data = Product::orderBy($this->sortField, $this->sortDirection)
             ->when($this->search ?? '', function ($query, $value) {
-                $query->where(function ($q) use ($value) {
+                return $query->where(function ($q) use ($value): void {
                     $value = trim($value);
                     $q->where('name', 'like', "%{$value}%")
                         ->orWhere('name_arabic', 'like', "%{$value}%")
@@ -136,22 +136,22 @@ class Table extends Component
                 });
             })
             ->when($this->department_id ?? '', function ($query, $value) {
-                $query->where('department_id', $value);
+                return $query->where('department_id', $value);
             })
             ->when($this->main_category_id ?? '', function ($query, $value) {
-                $query->where('main_category_id', $value);
+                return $query->where('main_category_id', $value);
             })
             ->when($this->sub_category_id ?? '', function ($query, $value) {
-                $query->where('sub_category_id', $value);
+                return $query->where('sub_category_id', $value);
             })
             ->when($this->unit_id ?? '', function ($query, $value) {
-                $query->where('unit_id', $value);
+                return $query->where('unit_id', $value);
             })
             ->when($this->status ?? '', function ($query, $value) {
-                $query->where('status', $value);
+                return $query->where('status', $value);
             })
             ->when($this->is_selling ?? '', function ($query, $value) {
-                $query->where('is_selling', $value);
+                return $query->where('is_selling', $value);
             })
             ->product()
             ->latest()

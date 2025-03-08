@@ -19,16 +19,16 @@ class ServiceExport implements FromQuery, WithHeadings, WithMapping
         $query = Product::with('department', 'mainCategory', 'subCategory')
             ->service()
             ->when($this->department_id ?? '', function ($query, $value) {
-                $query->where('department_id', $value);
+                return $query->where('department_id', $value);
             })
             ->when($this->main_category_id ?? '', function ($query, $value) {
-                $query->where('main_category_id', $value);
+                return $query->where('main_category_id', $value);
             })
             ->when($this->sub_category_id ?? '', function ($query, $value) {
-                $query->where('sub_category_id', $value);
+                return $query->where('sub_category_id', $value);
             })
             ->when($this->status ?? '', function ($query, $value) {
-                $query->where('status', $value);
+                return $query->where('status', $value);
             });
 
         return $query;

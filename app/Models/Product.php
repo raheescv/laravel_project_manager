@@ -161,9 +161,10 @@ class Product extends Model implements AuditableContracts
     {
         $self = self::orderBy('name');
         $self = $self->when($request['query'] ?? '', function ($query, $value) {
-            $query->where(function ($q) use ($value) {
+            return $query->where(function ($q) use ($value) {
                 $value = trim($value);
-                $q->where('name', 'like', "%{$value}%")
+
+                return $q->where('name', 'like', "%{$value}%")
                     ->orWhere('code', 'like', "%{$value}%")
                     ->orWhere('barcode', 'like', "%{$value}%")
                     ->orWhere('color', 'like', "%{$value}%")
@@ -171,7 +172,7 @@ class Product extends Model implements AuditableContracts
             });
         });
         $self = $self->when($request['type'] ?? '', function ($query, $value) {
-            $query->where('type', $value);
+            return $query->where('type', $value);
         });
         $self = $self->limit(10);
         $self = $self->get(['name', 'barcode', 'size', 'mrp', 'cost', 'id', 'type'])->toArray();

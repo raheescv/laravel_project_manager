@@ -42,20 +42,20 @@ class DayBookReport extends Component
     public function export()
     {
         $count = Ledger::when($this->search, function ($query, $value) {
-            $query->where(function ($q) use ($value) {
+            return $query->where(function ($q) use ($value): void {
                 $value = trim($value);
                 $q->where('description', 'like', "%{$value}%")
                     ->orWhere('reference_number', 'like', "%{$value}%")
                     ->orWhere('remarks', 'like', "%{$value}%");
             });
         })->when($this->from_date ?? '', function ($query, $value) {
-            $query->where('date', '>=', date('Y-m-d', strtotime($value)));
+            return $query->where('date', '>=', date('Y-m-d', strtotime($value)));
         })->when($this->to_date ?? '', function ($query, $value) {
-            $query->where('date', '<=', date('Y-m-d', strtotime($value)));
+            return $query->where('date', '<=', date('Y-m-d', strtotime($value)));
         })->when($this->branch_id ?? '', function ($query, $value) {
-            $query->where('branch_id', $value);
+            return $query->where('branch_id', $value);
         })->when($this->account_id ?? '', function ($query, $value) {
-            $query->where('account_id', $value);
+            return $query->where('account_id', $value);
         })->count();
 
         $filter = [
@@ -93,24 +93,25 @@ class DayBookReport extends Component
     {
         $data = Ledger::select('id', 'date', 'account_name', 'description', 'reference_number', 'model', 'model_id', 'remarks', 'debit', 'credit', 'balance')
             ->when($this->search, function ($query, $value) {
-                $query->where(function ($q) use ($value) {
+                return $query->where(function ($q) use ($value) {
                     $value = trim($value);
-                    $q->where('description', 'like', "%{$value}%")
+
+                    return $q->where('description', 'like', "%{$value}%")
                         ->orWhere('reference_number', 'like', "%{$value}%")
                         ->orWhere('remarks', 'like', "%{$value}%");
                 });
             })
             ->when($this->from_date ?? '', function ($query, $value) {
-                $query->where('date', '>=', date('Y-m-d', strtotime($value)));
+                return $query->where('date', '>=', date('Y-m-d', strtotime($value)));
             })
             ->when($this->to_date ?? '', function ($query, $value) {
-                $query->where('date', '<=', date('Y-m-d', strtotime($value)));
+                return $query->where('date', '<=', date('Y-m-d', strtotime($value)));
             })
             ->when($this->branch_id ?? '', function ($query, $value) {
-                $query->where('branch_id', $value);
+                return $query->where('branch_id', $value);
             })
             ->when($this->account_id ?? '', function ($query, $value) {
-                $query->where('account_id', $value);
+                return $query->where('account_id', $value);
             });
         $totalRow = clone $data;
         $data = $data->paginate($this->limit);

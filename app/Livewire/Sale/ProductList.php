@@ -28,10 +28,10 @@ class ProductList extends Component
     {
         $this->products = Inventory::join('products', 'product_id', 'products.id')
             ->when($product_key, function ($query, $value) {
-                $query->where('products.name', 'LIKE', '%'.$value.'%');
+                return $query->where('products.name', 'LIKE', '%'.$value.'%');
             })
             ->when($category_id, function ($query, $value) {
-                $query->where('products.main_category_id', $value);
+                return $query->where('products.main_category_id', $value);
             })
             ->where('products.is_selling', true)
             ->orderBy('products.name')

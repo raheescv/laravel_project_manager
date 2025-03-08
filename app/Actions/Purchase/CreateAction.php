@@ -23,7 +23,7 @@ class CreateAction
                     throw new \Exception($response['message'], 1);
                 }
             }
-            foreach ($data['payments'] as $key => $value) {
+            foreach ($data['payments'] as $value) {
                 $value['purchase_id'] = $model->id;
                 $value['date'] = $model->date;
                 $response = (new PaymentCreateAction)->execute($value, $user_id);

@@ -96,19 +96,19 @@ class Table extends Component
         if ($value) {
             $this->selected = Sale::latest()
                 ->when($this->branch_id ?? '', function ($query, $value) {
-                    $query->where('branch_id', $value);
+                    return $query->where('branch_id', $value);
                 })
                 ->when($this->customer_id ?? '', function ($query, $value) {
-                    $query->where('account_id', $value);
+                    return $query->where('account_id', $value);
                 })
                 ->when($this->status ?? '', function ($query, $value) {
-                    $query->where('status', $value);
+                    return $query->where('status', $value);
                 })
                 ->when($this->from_date ?? '', function ($query, $value) {
-                    $query->whereDate('date', '>=', date('Y-m-d', strtotime($value)));
+                    return $query->whereDate('date', '>=', date('Y-m-d', strtotime($value)));
                 })
                 ->when($this->to_date ?? '', function ($query, $value) {
-                    $query->whereDate('date', '<=', date('Y-m-d', strtotime($value)));
+                    return $query->whereDate('date', '<=', date('Y-m-d', strtotime($value)));
                 })
                 ->limit(2000)
                 ->pluck('id')
@@ -122,19 +122,19 @@ class Table extends Component
     {
         $count = Sale::query()
             ->when($this->branch_id ?? '', function ($query, $value) {
-                $query->where('branch_id', $value);
+                return $query->where('branch_id', $value);
             })
             ->when($this->customer_id ?? '', function ($query, $value) {
-                $query->where('account_id', $value);
+                return $query->where('account_id', $value);
             })
             ->when($this->status ?? '', function ($query, $value) {
-                $query->where('status', $value);
+                return $query->where('status', $value);
             })
             ->when($this->from_date ?? '', function ($query, $value) {
-                $query->whereDate('date', '>=', date('Y-m-d', strtotime($value)));
+                return $query->whereDate('date', '>=', date('Y-m-d', strtotime($value)));
             })
             ->when($this->to_date ?? '', function ($query, $value) {
-                $query->whereDate('date', '<=', date('Y-m-d', strtotime($value)));
+                return $query->whereDate('date', '<=', date('Y-m-d', strtotime($value)));
             })
             ->count();
         if ($count > 2000) {
@@ -162,7 +162,7 @@ class Table extends Component
         $data = Sale::with('branch')->orderBy($this->sortField, $this->sortDirection)
             ->join('accounts', 'accounts.id', '=', 'sales.account_id')
             ->when($this->search ?? '', function ($query, $value) {
-                $query->where(function ($q) use ($value) {
+                return $query->where(function ($q) use ($value): void {
                     $value = trim($value);
                     $q->where('sales.invoice_no', 'like', "%{$value}%")
                         ->orWhere('sales.gross_amount', 'like', "%{$value}%")
@@ -177,19 +177,19 @@ class Table extends Component
                 });
             })
             ->when($this->branch_id ?? '', function ($query, $value) {
-                $query->where('branch_id', $value);
+                return $query->where('branch_id', $value);
             })
             ->when($this->customer_id ?? '', function ($query, $value) {
-                $query->where('account_id', $value);
+                return $query->where('account_id', $value);
             })
             ->when($this->status ?? '', function ($query, $value) {
-                $query->where('status', $value);
+                return $query->where('status', $value);
             })
             ->when($this->from_date ?? '', function ($query, $value) {
-                $query->whereDate('date', '>=', date('Y-m-d', strtotime($value)));
+                return $query->whereDate('date', '>=', date('Y-m-d', strtotime($value)));
             })
             ->when($this->to_date ?? '', function ($query, $value) {
-                $query->whereDate('date', '<=', date('Y-m-d', strtotime($value)));
+                return $query->whereDate('date', '<=', date('Y-m-d', strtotime($value)));
             })
             ->select(
                 'sales.*',

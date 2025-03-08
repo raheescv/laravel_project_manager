@@ -49,7 +49,7 @@ class Account extends Model implements AuditableContracts
     {
         $self = self::orderBy('name');
         $self = $self->when($request['query'] ?? '', function ($query, $value) {
-            $query->where(function ($q) use ($value) {
+            return $query->where(function ($q) use ($value): void {
                 $value = trim($value);
                 $q->where('accounts.name', 'like', "%{$value}%")
                     ->orWhere('accounts.mobile', 'like', "%{$value}%")
@@ -57,13 +57,13 @@ class Account extends Model implements AuditableContracts
             });
         });
         $self = $self->when($request['account_type'] ?? '', function ($query, $value) {
-            $query->where('account_type', $value);
+            return $query->where('account_type', $value);
         });
         $self = $self->when($request['is_payment_method'] ?? '', function ($query, $value) {
-            $query->whereIn('id', cache('payment_methods', []));
+            return $query->whereIn('id', cache('payment_methods', []));
         });
         $self = $self->when($request['model'] ?? '', function ($query, $value) {
-            $query->where('model', $value);
+            return $query->where('model', $value);
         });
         $self = $self->limit(10);
         $self = $self->get(['name', 'mobile', 'email', 'id'])->toArray();

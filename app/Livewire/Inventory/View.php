@@ -47,7 +47,7 @@ class View extends Component
     {
         $data = Inventory::join('branches', 'inventories.branch_id', '=', 'branches.id')
             ->when($this->search, function ($query, $value) {
-                $query->where(function ($q) use ($value) {
+                return $query->where(function ($q) use ($value): void {
                     $value = trim($value);
                     $q->where('inventories.barcode', 'like', "%{$value}%")
                         ->orWhere('inventories.batch', 'like', "%{$value}%")
@@ -57,7 +57,7 @@ class View extends Component
                 });
             })
             ->when($this->branch_id ?? '', function ($query, $value) {
-                $query->where('branch_id', $value);
+                return $query->where('branch_id', $value);
             })
             ->where('product_id', $this->product_id)
             ->latest('inventories.created_at')
@@ -72,13 +72,13 @@ class View extends Component
             ->get();
         $logs = InventoryLog::with('branch')->orderBy($this->sortField, $this->sortDirection)
             ->when($this->log_search, function ($query, $value) {
-                $query->where(function ($q) use ($value) {
+                return $query->where(function ($q) use ($value): void {
                     $value = trim($value);
                     $q->where('inventory_logs.remarks', 'like', "%{$value}%");
                 });
             })
             ->when($this->branch_id ?? '', function ($query, $value) {
-                $query->where('branch_id', $value);
+                return $query->where('branch_id', $value);
             })
             ->where('product_id', $this->product_id)
             ->latest()

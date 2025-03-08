@@ -162,7 +162,7 @@ class Page extends Component
     {
         $this->categories = Category::withCount('products')
             ->when($this->category_key, function ($query, $value) {
-                $query->where('name', 'LIKE', '%'.$value.'%');
+                return $query->where('name', 'LIKE', '%'.$value.'%');
             })
             ->whereNull('parent_id')
             ->orderBy('name')

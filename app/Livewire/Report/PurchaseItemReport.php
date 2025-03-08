@@ -45,16 +45,16 @@ class PurchaseItemReport extends Component
     {
         $count = PurchaseItem::join('purchases', 'purchases.id', '=', 'purchase_items.purchase_id')
             ->when($this->from_date ?? '', function ($query, $value) {
-                $query->where('date', '>=', date('Y-m-d', strtotime($value)));
+                return $query->where('date', '>=', date('Y-m-d', strtotime($value)));
             })
             ->when($this->to_date ?? '', function ($query, $value) {
-                $query->where('date', '<=', date('Y-m-d', strtotime($value)));
+                return $query->where('date', '<=', date('Y-m-d', strtotime($value)));
             })
             ->when($this->branch_id ?? '', function ($query, $value) {
-                $query->where('branch_id', $value);
+                return $query->where('branch_id', $value);
             })
             ->when($this->product_id ?? '', function ($query, $value) {
-                $query->where('product_id', $value);
+                return $query->where('product_id', $value);
             })
             ->where('purchases.status', 'completed')
             ->count();
@@ -95,7 +95,7 @@ class PurchaseItemReport extends Component
         $data = PurchaseItem::with('purchase:id,date,invoice_no,branch_id', 'product:id,name')->orderBy($this->sortField, $this->sortDirection)
             ->join('purchases', 'purchases.id', '=', 'purchase_items.purchase_id')
             ->when($this->search, function ($query, $value) {
-                $query->where(function ($q) use ($value) {
+                return $query->where(function ($q) use ($value): void {
                     $value = trim($value);
                     $q->where('purchase_items.unit_price', 'like', "%{$value}%")
                         ->orWhere('purchase_items.quantity', 'like', "%{$value}%")
@@ -104,16 +104,16 @@ class PurchaseItemReport extends Component
                 });
             })
             ->when($this->from_date ?? '', function ($query, $value) {
-                $query->where('date', '>=', date('Y-m-d', strtotime($value)));
+                return $query->where('date', '>=', date('Y-m-d', strtotime($value)));
             })
             ->when($this->to_date ?? '', function ($query, $value) {
-                $query->where('date', '<=', date('Y-m-d', strtotime($value)));
+                return $query->where('date', '<=', date('Y-m-d', strtotime($value)));
             })
             ->when($this->branch_id ?? '', function ($query, $value) {
-                $query->where('branch_id', $value);
+                return $query->where('branch_id', $value);
             })
             ->when($this->product_id ?? '', function ($query, $value) {
-                $query->where('product_id', $value);
+                return $query->where('product_id', $value);
             })
             ->where('purchases.status', 'completed')
             ->latest('purchase_items.id')

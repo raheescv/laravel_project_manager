@@ -5,7 +5,7 @@ use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Schedule;
 use Illuminate\Support\Facades\Storage;
 
-Artisan::command('inspire', function () {
+Artisan::command('inspire', function (): void {
     $this->comment(Inspiring::quote());
 })->purpose('Display an inspiring quote')->hourly();
 
@@ -30,7 +30,7 @@ $list = collect($csvArray)
 
 // info('list count : '.count($list));
 
-foreach ($list as $key => $value) {
+foreach ($list as $value) {
     $no_data_symbols = cache('no_data_symbols', []);
     if (! in_array($value['exchange_symbol'], $no_data_symbols)) {
         Schedule::command('trade:intra-day '.$value['exchange_symbol'].' 75')->everyFiveMinutes();

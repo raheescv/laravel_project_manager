@@ -60,7 +60,7 @@ class Table extends Component
     {
         $data = User::orderBy($this->sortField, $this->sortDirection)
             ->when($this->search ?? '', function ($query, $value) {
-                $query->where('name', 'like', "%{$value}%");
+                return $query->where('name', 'like', "%{$value}%");
             })
             ->latest()
             ->where('type', 'user')

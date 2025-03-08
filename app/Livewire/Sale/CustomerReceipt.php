@@ -64,17 +64,17 @@ class CustomerReceipt extends Component
         if ($this->customer_id) {
             $data = Sale::where('balance', '>', 0)
                 ->when($this->search ?? '', function ($query, $value) {
-                    $query->where(function ($q) use ($value) {
+                    return $query->where(function ($q) use ($value): void {
                         $value = trim($value);
                         $q->where('sales.grand_total', 'like', "%{$value}%")
                             ->orWhere('sales.invoice_no', 'like', "%{$value}%");
                     });
                 })
                 ->when($this->branch_id ?? '', function ($query, $value) {
-                    $query->where('branch_id', $value);
+                    return $query->where('branch_id', $value);
                 })
                 ->when($this->customer_id ?? '', function ($query, $value) {
-                    $query->where('account_id', $value);
+                    return $query->where('account_id', $value);
                 })
                 ->select(
                     'sales.id',

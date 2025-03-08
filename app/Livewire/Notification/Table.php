@@ -51,19 +51,19 @@ class Table extends Component
         $data = $user->notifications()
             ->latest()
             ->when($this->type ?? '', function ($query, $value) {
-                $query->where('type', $value);
+                return $query->where('type', $value);
             })
             ->when($this->unread_only ?? '', function ($query, $value) {
-                $query->whereNull('read_at');
+                return $query->whereNull('read_at');
             })
             ->when($this->search ?? '', function ($query, $value) {
-                $query->where('data', 'LIKE', '%'.$value.'%');
+                return $query->where('data', 'LIKE', '%'.$value.'%');
             })
             ->when($this->start_date ?? '', function ($query, $value) {
-                $query->where('created_at', '>=', $value);
+                return $query->where('created_at', '>=', $value);
             })
             ->when($this->end_date ?? '', function ($query, $value) {
-                $query->where('created_at', '<=', date('Y-m-d 23:59:59', strtotime($value)));
+                return $query->where('created_at', '<=', date('Y-m-d 23:59:59', strtotime($value)));
             })
             ->paginate($this->limit);
         $types = Notification::pluck('type', 'type')->toArray();

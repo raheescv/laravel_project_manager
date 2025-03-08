@@ -107,7 +107,8 @@ class Permissions extends Component
     {
         $list = Permission::when($this->search ?? '', function ($query, $value) {
             $value = trim($value);
-            $query->where('name', 'LIKE', '%'.$value.'%');
+
+            return $query->where('name', 'LIKE', '%'.$value.'%');
         })->pluck('name', 'id');
         $this->permissions = [];
         foreach ($list as $key => $name) {

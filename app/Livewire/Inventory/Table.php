@@ -83,7 +83,7 @@ class Table extends Component
             ->join('categories as main_categories', 'products.main_category_id', '=', 'main_categories.id')
             ->join('categories as sub_categories', 'products.sub_category_id', '=', 'sub_categories.id')
             ->when($this->search, function ($query, $value) {
-                $query->where(function ($q) use ($value) {
+                return $query->where(function ($q) use ($value): void {
                     $value = trim($value);
                     $q->where('products.name', 'like', "%{$value}%")
                         ->orWhere('products.name_arabic', 'like', "%{$value}%")
@@ -100,25 +100,25 @@ class Table extends Component
                 });
             })
             ->when($this->department_id ?? '', function ($query, $value) {
-                $query->where('department_id', $value);
+                return $query->where('department_id', $value);
             })
             ->when($this->main_category_id ?? '', function ($query, $value) {
-                $query->where('main_category_id', $value);
+                return $query->where('main_category_id', $value);
             })
             ->when($this->sub_category_id ?? '', function ($query, $value) {
-                $query->where('sub_category_id', $value);
+                return $query->where('sub_category_id', $value);
             })
             ->when($this->unit_id ?? '', function ($query, $value) {
-                $query->where('unit_id', $value);
+                return $query->where('unit_id', $value);
             })
             ->when($this->non_zero ?? false, function ($query, $value) {
-                $query->where('quantity', '!=', 0);
+                return $query->where('quantity', '!=', 0);
             })
             ->when($this->branch_id ?? '', function ($query, $value) {
-                $query->where('branch_id', $value);
+                return $query->where('branch_id', $value);
             })
             ->when($this->product_id ?? '', function ($query, $value) {
-                $query->where('product_id', $value);
+                return $query->where('product_id', $value);
             })
             ->where('products.type', 'product')
             ->latest('inventories.created_at')

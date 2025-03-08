@@ -5,7 +5,7 @@
                 <h3 class="m-t-none m-b"> {{ $name ?? '' }} : Sales Receipt Form</h3>
                 @if ($this->getErrorBag()->count())
                     <ol>
-                        <?php foreach ($this->getErrorBag()->toArray() as $key => $value): ?>
+                        <?php foreach ($this->getErrorBag()->toArray() as $value): ?>
                         <li style="color:red">* {{ $value[0] }}</li>
                         <?php endforeach; ?>
                     </ol>

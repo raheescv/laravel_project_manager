@@ -26,7 +26,7 @@ class CreateAction
                 }
             }
 
-            foreach ($data['payments'] as $key => $value) {
+            foreach ($data['payments'] as $value) {
                 $value['sale_id'] = $model->id;
                 $value['date'] = $model->date;
                 $response = (new PaymentCreateAction)->execute($value, $user_id);
