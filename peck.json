@@ -1,0 +1,16 @@
+{
+    "preset": "laravel",
+    "ignore": {
+        "words": [
+            "php",
+            "fyers",
+            "ema",
+            "sma",
+            "whatsapp",
+            "dropdown",
+            "intra",
+            "barcode"
+        ],
+        "paths": []
+    }
+}
