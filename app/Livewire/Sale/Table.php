@@ -7,6 +7,7 @@ use App\Exports\SaleExport;
 use App\Jobs\Export\ExportSaleJob;
 use App\Models\Configuration;
 use App\Models\Sale;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Livewire\Component;
 use Livewire\WithPagination;
@@ -64,7 +65,7 @@ class Table extends Component
                 throw new \Exception('Please select any item to delete.', 1);
             }
             foreach ($this->selected as $id) {
-                $response = (new DeleteAction())->execute($id, auth()->id());
+                $response = (new DeleteAction())->execute($id, Auth::id());
                 if (! $response['success']) {
                     throw new \Exception($response['message'], 1);
                 }
@@ -138,7 +139,7 @@ class Table extends Component
             })
             ->count();
         if ($count > 2000) {
-            ExportSaleJob::dispatch(auth()->user());
+            ExportSaleJob::dispatch(Auth::user());
             $this->dispatch('success', ['message' => 'You will get your file in your mailbox.']);
         } else {
             $exportFileName = 'Sale_'.now()->timestamp.'.xlsx';
