@@ -9,5 +9,6 @@ Route::middleware('auth')->group(function (): void {
         Route::get('create', 'page')->name('create')->can('purchase.create');
         Route::get('edit/{id}', 'page')->name('edit')->can('purchase.edit');
         Route::get('view/{id}', 'get')->name('view')->can('purchase.view');
+        Route::get('payments', 'payments')->name('payments')->can('purchase.payments');
     });
 });

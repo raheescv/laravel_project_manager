@@ -344,7 +344,7 @@
                                                             @endisset
                                                             @isset($sales['cancelled_user']['name'])
                                                                 <tr>
-                                                                    <td>Cancelled By: <b>{{ $sales['cancelled_user']['name'] ?? '' }}</b> </td>
+                                                                    <th>Cancelled By: <b>{{ $sales['cancelled_user']['name'] ?? '' }}</b> </th>
                                                                 </tr>
                                                             @endisset
                                                         </thead>

@@ -19,24 +19,12 @@ class JournalEntryAction
             $data['created_by'] = $user_id;
 
             $items = $purchase->items()->with('product')->get();
-            $totalCost = $items->map(function ($item) {
-                $item->total_cost = $item->product->cost * $item->quantity;
-
-                return $item;
-            })->sum('total_cost');
 
             $items = $purchase->payments;
 
             $entries = [];
             if ($purchase->gross_amount > 0) {
-                $remarks = 'Purchase to '.$purchase->account->name;
-                $entries[] = [
-                    'account_id' => DB::table('accounts')->where('name', 'Purchase')->value('id'),
-                    'debit' => $purchase->gross_amount,
-                    'credit' => 0,
-                    'created_by' => $user_id,
-                    'remarks' => $remarks,
-                ];
+                $remarks = 'Purchase from '.$purchase->account->name;
                 $entries[] = [
                     'account_id' => $purchase->account_id,
                     'debit' => 0,
@@ -44,20 +32,9 @@ class JournalEntryAction
                     'created_by' => $user_id,
                     'remarks' => $remarks,
                 ];
-            }
-
-            if ($totalCost > 0) {
-                $remarks = 'Cost of goods sold (Inventory transfer)';
-                $entries[] = [
-                    'account_id' => DB::table('accounts')->where('name', 'Cost of Goods Sold')->value('id'),
-                    'debit' => 0,
-                    'credit' => $totalCost,
-                    'created_by' => $user_id,
-                    'remarks' => $remarks,
-                ];
                 $entries[] = [
                     'account_id' => DB::table('accounts')->where('name', 'Inventory')->value('id'),
-                    'debit' => $totalCost,
+                    'debit' => $purchase->gross_amount,
                     'credit' => 0,
                     'created_by' => $user_id,
                     'remarks' => $remarks,
@@ -83,7 +60,7 @@ class JournalEntryAction
             }
 
             if ($purchase->item_discount > 0) {
-                $remarks = 'Discount provided on individual product on  purchase';
+                $remarks = 'Discount granted on individual product on  purchase';
                 $entries[] = [
                     'account_id' => DB::table('accounts')->where('name', 'Discount')->value('id'),
                     'debit' => 0,
@@ -100,7 +77,7 @@ class JournalEntryAction
                 ];
             }
             if ($purchase->other_discount > 0) {
-                $remarks = 'Additional Discount provided on purchase';
+                $remarks = 'Additional Discount granted on purchase';
                 $entries[] = [
                     'account_id' => DB::table('accounts')->where('name', 'Discount')->value('id'),
                     'debit' => 0,
@@ -118,7 +95,7 @@ class JournalEntryAction
             }
 
             if ($purchase->freight > 0) {
-                $remarks = 'Freight Charge provided on purchase';
+                $remarks = 'Freight charge on purchased goods';
                 $entries[] = [
                     'account_id' => DB::table('accounts')->where('name', 'Freight')->value('id'),
                     'debit' => $purchase->freight,

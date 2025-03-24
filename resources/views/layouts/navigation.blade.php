@@ -88,7 +88,8 @@
                     @endif
                     @if (auth()->user()->can('purchase.view') || auth()->user()->can('report.purchase item'))
                         <li class="nav-item has-sub">
-                            <a href="#" class="mininav-toggle nav-link {{ request()->is(['purchase', 'purchase/create', 'purchase/edit/*', 'report/purchase_item']) ? 'active' : '' }}"><i
+                            <a href="#"
+                                class="mininav-toggle nav-link {{ request()->is(['purchase', 'purchase/create', 'purchase/edit/*', 'report/purchase_item', 'purchase/payments']) ? 'active' : '' }}"><i
                                     class="demo-pli-split-vertical-2 fs-5 me-2"></i>
                                 <span class="nav-label ms-1">Purchase</span>
                             </a>
@@ -107,6 +108,11 @@
                                 @can('report.purchase item')
                                     <li class="nav-item">
                                         <a href="{{ route('report::purchase_item') }}" class="nav-link {{ request()->is(['report/purchase_item']) ? 'active' : '' }}">Item Wise Report</a>
+                                    </li>
+                                @endcan
+                                @can('purchase.payments')
+                                    <li class="nav-item">
+                                        <a href="{{ route('purchase::payments') }}" class="nav-link {{ request()->is(['purchase/payments']) ? 'active' : '' }}">payments</a>
                                     </li>
                                 @endcan
                             </ul>

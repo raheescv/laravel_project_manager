@@ -13,4 +13,9 @@ class PurchaseController extends Controller
     {
         return view('purchase.page', compact('id'));
     }
+
+    public function payments()
+    {
+        return view('purchase.payments');
+    }
 }
