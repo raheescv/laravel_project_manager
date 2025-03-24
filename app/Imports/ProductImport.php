@@ -36,8 +36,8 @@ class ProductImport implements ToCollection, WithBatchInserts, WithChunkReading,
                         $model = Product::create($data);
                     }
 
-                    $model['quantity'] = $value['stock'] ?? 0;
-                    Inventory::selfCreateByProduct($model, $this->user_id);
+                    $quantity = $value['stock'] ?? 0;
+                    Inventory::selfCreateByProduct($model, $this->user_id, $quantity);
                 }
             } catch (\Throwable $th) {
                 $data['message'] = $th->getMessage();

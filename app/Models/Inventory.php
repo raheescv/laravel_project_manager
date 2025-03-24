@@ -56,7 +56,7 @@ class Inventory extends Model implements AuditableContracts
         return $this->belongsTo(User::class, 'updated_by');
     }
 
-    public static function selfCreateByProduct($product, $user_id, $current_branch = 1)
+    public static function selfCreateByProduct($product, $user_id, $quantity = 0, $current_branch = 1)
     {
         $barcode_type = cache('barcode_type', '');
         $branches = cache('branches', []);
@@ -65,7 +65,7 @@ class Inventory extends Model implements AuditableContracts
             $data['cost'] = $product->cost;
             $data['branch_id'] = $branch->id;
             if ($current_branch == $data['branch_id']) {
-                $data['quantity'] = $product['quantity'] ?? 0;
+                $data['quantity'] = $quantity;
             } else {
                 $data['quantity'] = 0;
             }

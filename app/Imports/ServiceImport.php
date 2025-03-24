@@ -43,7 +43,7 @@ class ServiceImport implements ToCollection, WithBatchInserts, WithChunkReading,
                     } else {
                         $model = Product::create($data);
                     }
-                    Inventory::selfCreateByProduct($model, $this->user_id);
+                    Inventory::selfCreateByProduct($model, $this->user_id, $quantity = 0);
                 }
             } catch (\Throwable $th) {
                 $data['message'] = $th->getMessage();

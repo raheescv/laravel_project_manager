@@ -1,0 +1,2 @@
+cd public/node
+node server.js

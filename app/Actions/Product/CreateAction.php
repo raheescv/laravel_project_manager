@@ -44,11 +44,9 @@ class CreateAction
             } else {
                 $model = Product::create($data);
             }
-            $model['quantity'] = 0;
             if ('inventory') {
-                Inventory::selfCreateByProduct($model, $user_id);
+                Inventory::selfCreateByProduct($model, $user_id, $quantity = 0);
             }
-
             if (isset($data['images'])) {
                 foreach ($data['images'] as $file) {
                     $imageData = [
