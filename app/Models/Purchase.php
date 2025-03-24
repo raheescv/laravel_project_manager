@@ -82,4 +82,9 @@ class Purchase extends Model implements AuditableContracts
     {
         return $this->hasOne(Journal::class, 'model_id')->where('model', 'Purchase');
     }
+
+    public function journals()
+    {
+        return $this->hasMany(Journal::class, 'model_id')->where('model', 'Purchase');
+    }
 }

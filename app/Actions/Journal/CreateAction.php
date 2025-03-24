@@ -10,6 +10,7 @@ class CreateAction
     public function execute($data)
     {
         try {
+            $data['branch_id'] = session('branch_id');
             validationHelper(Journal::rules(), $data);
             $model = Journal::create($data);
             $entries = [];

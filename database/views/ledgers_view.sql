@@ -4,6 +4,7 @@ SELECT
     a.id AS account_id,
     a.name AS account_name,
     j.date,
+    j.branch_id,
     j.description,
     j.reference_number,
     j.model,

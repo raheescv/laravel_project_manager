@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Events\BranchUpdated;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -55,6 +56,27 @@ class User extends Authenticatable
             'name' => ['required'],
             'email' => ['required', Rule::unique(self::class, 'email')->ignore($id)],
         ], $merge);
+    }
+
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::updating(function ($user) {
+            if ($user->isDirty('default_branch_id')) {
+                event(new BranchUpdated($user, $user->default_branch_id));
+            }
+        });
+    }
+
+    public function branches()
+    {
+        return $this->hasMany(UserHasBranch::class, 'user_id');
+    }
+
+    public function branch()
+    {
+        return $this->belongsTo(Branch::class, 'default_branch_id');
     }
 
     protected function casts(): array

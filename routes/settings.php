@@ -25,6 +25,7 @@ Route::middleware('auth')->group(function (): void {
         Route::name('branch::')->prefix('branch')->controller(BranchController::class)->group(function (): void {
             Route::get('', 'index')->name('index')->can('branch.view');
             Route::get('list', 'get')->name('list');
+            Route::get('assigned-list', 'fetch')->name('assigned-list');
         });
         Route::name('department::')->prefix('department')->controller(DepartmentController::class)->group(function (): void {
             Route::get('', 'index')->name('index')->can('department.view');

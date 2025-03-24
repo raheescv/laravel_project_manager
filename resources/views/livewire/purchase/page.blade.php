@@ -409,15 +409,17 @@
                     document.querySelector('#product_id').tomselect.open();
                 });
                 window.addEventListener('ResetSelectBox', event => {
-                    var tomSelectInstance = document.querySelector('#account_id').tomselect;
-                    tomSelectInstance.addItem("{{ $purchases['account_id'] }}");
+                    if (event.detail[0]['type'] != 'cancelled') {
+                        var tomSelectInstance = document.querySelector('#account_id').tomselect;
+                        tomSelectInstance.addItem("{{ $purchases['account_id'] }}");
 
-                    var tomSelectInstance = document.querySelector('#payment_method_id').tomselect;
-                    tomSelectInstance.addItem("{{ $payment['payment_method_id'] }}");
+                        var tomSelectInstance = document.querySelector('#payment_method_id').tomselect;
+                        tomSelectInstance.addItem("{{ $payment['payment_method_id'] }}");
 
-                    var tomSelectInstance = document.querySelector('#product_id').tomselect;
-                    tomSelectInstance.clear();
-                    document.querySelector('#product_id').tomselect.open();
+                        var tomSelectInstance = document.querySelector('#product_id').tomselect;
+                        tomSelectInstance.clear();
+                        document.querySelector('#product_id').tomselect.open();
+                    }
                 });
                 window.addEventListener('AddToVendorSelectBox', event => {
                     var data = event.detail[0];

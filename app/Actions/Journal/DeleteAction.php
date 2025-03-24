@@ -22,8 +22,8 @@ class DeleteAction
             }
 
             $return['success'] = true;
-            $return['message'] = 'Successfully Update Account';
-            $return['data'] = $model;
+            $return['message'] = 'Successfully Deleted Account';
+            $return['data'] = [];
         } catch (\Throwable $th) {
             $return['success'] = false;
             $return['message'] = $th->getMessage();

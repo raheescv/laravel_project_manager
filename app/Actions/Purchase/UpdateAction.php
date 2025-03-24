@@ -74,8 +74,8 @@ class UpdateAction
                 if (! $response['success']) {
                     throw new \Exception($response['message'], 1);
                 }
-                if ($model->journal) {
-                    $response = (new DeleteAction())->execute($model->journal->id, $user_id);
+                foreach ($model->journals as $journal) {
+                    $response = (new DeleteAction())->execute($journal->id, $user_id);
                     if (! $response['success']) {
                         throw new \Exception($response['message'], 1);
                     }

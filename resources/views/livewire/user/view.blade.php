@@ -75,6 +75,36 @@
                     <br>
                     <div class="card">
                         <div class="card-header">
+                            <h5>Branches</h5>
+                        </div>
+                        <div class="card-body">
+                            <h6 class="mb-3">Assign User Branches</h6>
+                            <div class="row">
+                                <div class="col-md-10">
+                                    <div class="input-group" wire:ignore>
+                                        <div class="form-group mb-lg parent-container">
+                                            <label>Branches</label>
+                                            {{ html()->select('branch_id', $branches)->value($branch_ids)->class('tomSelect')->multiple(true)->attribute('wire:model', 'branch_ids') }}
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-2"> <br>
+                                    <button class="btn btn-info" type="button" wire:click="saveBranches" id="button-addon2">Save</button>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-4" wire:ignore>
+                                    <div class="form-group mb-lg">
+                                        <label>Default Branch</label>
+                                        {{ html()->select('default_branch_id', $default_branch)->value($default_branch_id)->class('select-assigned-branch_id-list')->attribute('width', '100%')->attribute('wire:model', 'default_branch_id') }}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <br>
+                    <div class="card">
+                        <div class="card-header">
                             <h5>Whatsapp Settings</h5>
                         </div>
                         <div class="card-body">

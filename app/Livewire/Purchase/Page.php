@@ -9,6 +9,7 @@ use App\Actions\Purchase\UpdateAction;
 use App\Models\Account;
 use App\Models\Product;
 use App\Models\Purchase;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Livewire\Component;
 
@@ -374,7 +375,7 @@ class Page extends Component
             $this->purchases['items'] = $this->items;
             $this->purchases['payments'] = $this->payments;
 
-            $user_id = auth()->id();
+            $user_id = Auth::id();
             if (! $this->table_id) {
                 $response = (new CreateAction())->execute($this->purchases, $user_id);
             } else {
@@ -387,7 +388,7 @@ class Page extends Component
             $this->mount($this->table_id);
             $this->purchases['account_id'] = $account_id;
             DB::commit();
-            $this->dispatch('ResetSelectBox');
+            $this->dispatch('ResetSelectBox', ['type' => $type]);
             $this->dispatch('success', ['message' => $response['message']]);
         } catch (\Throwable $th) {
             DB::rollback();

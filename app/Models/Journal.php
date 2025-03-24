@@ -13,6 +13,7 @@ class Journal extends Model implements AuditableContracts
     use SoftDeletes;
 
     protected $fillable = [
+        'branch_id',
         'date',
         'description',
         'remarks',
@@ -26,6 +27,7 @@ class Journal extends Model implements AuditableContracts
     public static function rules($id = 0, $merge = [])
     {
         return array_merge([
+            'branch_id' => ['required'],
             'date' => ['required'],
             'description' => ['required'],
             'created_by' => ['required'],

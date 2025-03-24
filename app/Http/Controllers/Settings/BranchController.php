@@ -19,4 +19,11 @@ class BranchController extends Controller
 
         return response()->json($list);
     }
+
+    public function fetch(Request $request)
+    {
+        $list = (new Branch())->getAssignedBranchDropDownList($request->all());
+
+        return response()->json($list);
+    }
 }
