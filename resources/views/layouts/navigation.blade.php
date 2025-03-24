@@ -112,7 +112,7 @@
                                 @endcan
                                 @can('purchase.payments')
                                     <li class="nav-item">
-                                        <a href="{{ route('purchase::payments') }}" class="nav-link {{ request()->is(['purchase/payments']) ? 'active' : '' }}">payments</a>
+                                        <a href="{{ route('purchase::payments') }}" class="nav-link {{ request()->is(['purchase/payments']) ? 'active' : '' }}">Payments</a>
                                     </li>
                                 @endcan
                             </ul>
