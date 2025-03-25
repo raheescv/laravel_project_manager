@@ -74,7 +74,7 @@ class Page extends Component
         $this->table_id = $table_id;
         $this->paymentMethods = Account::where('id', $this->default_payment_method_id)->pluck('name', 'id')->toArray();
 
-        if (User::employee()->count() == 1) {
+        if (User::employee()->count() > 0) {
             $this->employees = User::employee()->pluck('name', 'id')->toArray();
             $this->employee_id = User::employee()->first(['id'])->id;
         }

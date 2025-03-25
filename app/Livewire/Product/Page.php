@@ -54,8 +54,8 @@ class Page extends Component
         if (! $this->table_id) {
             $faker = Factory::create();
             $name = '';
-            $code = '';
-            $barcode = '';
+            $code = time();
+            $barcode = null;
             $mrp = 0;
             $cost = 0;
             if (! app()->isProduction()) {

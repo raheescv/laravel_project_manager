@@ -4,7 +4,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Customer Invoice
+    <title>
+        Customer Invoice
         @if ($thermal_printer_style == 'with_arabic')
             | فاتورة العميل
         @endif
@@ -128,8 +129,7 @@
     <div class="receipt-container">
         <h1>
             @if ($enable_logo_in_print == 'yes')
-                <img src="#" alt="Logo" style="width: 50px; height: auto;">
-                Store Name
+                <img src="{{ cache('logo') }}" alt="Logo" style="width: 50%;">
             @endif
         </h1>
         @if ($thermal_printer_style == 'with_arabic')
