@@ -33,7 +33,7 @@ class Page extends Component
 
     public $product_key;
 
-    public $category_id;
+    public $category_id = 'favorite';
 
     public $category_key;
 
@@ -71,6 +71,7 @@ class Page extends Component
 
     public function mount($table_id = null)
     {
+        $this->category_id = 'favorite';
         $this->table_id = $table_id;
         $this->paymentMethods = Account::where('id', $this->default_payment_method_id)->pluck('name', 'id')->toArray();
 
@@ -164,7 +165,6 @@ class Page extends Component
             ->when($this->category_key, function ($query, $value) {
                 return $query->where('name', 'LIKE', '%'.$value.'%');
             })
-            ->whereNull('parent_id')
             ->orderBy('name')
             ->get()
             ->toArray();

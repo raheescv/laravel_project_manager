@@ -15,6 +15,11 @@
     color: #000;
 }
 
+.side-button.favorite {
+    background: #29c770;
+    color: #000;
+}
+
 .side-button:hover {
     background: #ffdd0e;
     color: #000

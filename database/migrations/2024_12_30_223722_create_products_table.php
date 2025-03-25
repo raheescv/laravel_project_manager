@@ -26,6 +26,7 @@ return new class() extends Migration
 
             $table->text('description')->nullable();
             $table->boolean('is_selling')->default(true);
+            $table->boolean('is_favorite')->default(1);
 
             $table->float('cost', 8, 2)->default(0);
             $table->float('mrp', 8, 2)->default(0);

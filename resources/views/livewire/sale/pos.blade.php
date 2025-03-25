@@ -8,6 +8,9 @@
                 <form wire:submit="submit">
                     <div class="row align-items-start pos-wrapper">
                         <div class="col-md-12 col-lg-2" style="height: 90vh; overflow: auto;  overflow-x: hidden;">
+                            <button type="button" class="side-button @if ($category_id == 'favorite') favorite @endif" wire:click="categorySelect('favorite')">
+                                Favorite
+                            </button>
                             <button type="button" class="side-button @if ($category_id == '') active @endif" wire:click="categorySelect('')">
                                 All
                             </button>

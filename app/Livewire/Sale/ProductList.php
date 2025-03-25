@@ -21,16 +21,21 @@ class ProductList extends Component
 
     public function mount()
     {
-        $this->getProducts();
+        $this->getProducts($this->sale_type, $this->category_id);
     }
 
     public function getProducts($sale_type = 'normal', $category_id = null, $product_key = null)
     {
+        info($category_id);
         $this->products = Inventory::join('products', 'product_id', 'products.id')
             ->when($product_key, function ($query, $value) {
                 return $query->where('products.name', 'LIKE', '%'.$value.'%');
             })
             ->when($category_id, function ($query, $value) {
+                if ($value == 'favorite') {
+                    return $query->where('products.is_favorite', true);
+                }
+
                 return $query->where('products.main_category_id', $value);
             })
             ->where('products.is_selling', true)

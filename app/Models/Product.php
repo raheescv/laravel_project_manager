@@ -32,6 +32,7 @@ class Product extends Model implements AuditableContracts
 
         'description',
         'is_selling',
+        'is_favorite',
 
         'cost',
         'mrp',
@@ -74,6 +75,11 @@ class Product extends Model implements AuditableContracts
     public function scopeService($query)
     {
         return $query->where('type', 'service');
+    }
+
+    public function scopeFavorite($query)
+    {
+        return $query->where('is_favorite', true);
     }
 
     public function scopeProduct($query)

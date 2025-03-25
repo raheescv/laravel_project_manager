@@ -71,6 +71,7 @@ class Page extends Component
                 'name' => $name,
                 'barcode' => $barcode,
                 'is_selling' => true,
+                'is_favorite' => false,
                 'hsn_code' => '',
                 'tax' => 5,
                 'cost' => $cost,

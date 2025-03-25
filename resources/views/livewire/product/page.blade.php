@@ -18,6 +18,16 @@
                                     </div>
                                 </div>
                             @endif
+                            @if ($type == 'service')
+                                <div class="col-md-6 mb-3">
+                                    <div class="d-flex align-items-center pt-1 mb-2">
+                                        <label class="form-check-label flex-fill" style="text-align: right">Favorite</label>
+                                        <div class="form-check form-switch">
+                                            {{ html()->checkbox('is_favorite')->value('')->class('form-check-input ms-0')->checked($products['is_favorite'])->attribute('wire:model', 'products.is_favorite') }}
+                                        </div>
+                                    </div>
+                                </div>
+                            @endif
                         </div>
                         <div class="row g-3">
                             <div class="col-md-4">
