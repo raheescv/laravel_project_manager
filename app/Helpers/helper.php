@@ -272,14 +272,19 @@ if (! function_exists('thermalPrinterStyle')) {
 if (! function_exists('getNextSaleInvoiceNo')) {
     function getNextSaleInvoiceNo()
     {
+        $branch_code = session('branch_code');
         $prefix = 'INV-';
-        $year = now()->format('Y');
+        if ($branch_code) {
+            $prefix .= $branch_code.'-';
+        }
+        $year = now()->format('y');
         do {
-            $lastInvoice = DB::table('sales')->whereYear('created_at', $year)->max('invoice_no');
+            $branch_id = session('branch_id');
+            $lastInvoice = DB::table('sales')->where('branch_id', $branch_id)->whereYear('created_at', $year)->max('invoice_no');
             $lastSequence = $lastInvoice ? (int) str_replace($prefix.$year.'-', '', $lastInvoice) : 0;
             $newSequence = $lastSequence + 1;
-            $invoice = $prefix.$year.'-'.str_pad($newSequence, 5, '0', STR_PAD_LEFT);
-            $exists = DB::table('sales')->where('invoice_no', $invoice)->exists();
+            $invoice = $prefix.$year.'-'.str_pad($newSequence, 4, '0', STR_PAD_LEFT);
+            $exists = DB::table('sales')->where('branch_id', $branch_id)->where('invoice_no', $invoice)->exists();
         } while ($exists);
 
         return $invoice;

@@ -11,7 +11,7 @@ class CreateAction
     public function execute($data, $user_id)
     {
         try {
-            $data['branch_id'] = session('branch_id', 1);
+            $data['branch_id'] = session('branch_id');
             $data['created_by'] = $user_id;
 
             validationHelper(Purchase::rules(), $data);

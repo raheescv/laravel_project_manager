@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Models\Models\Views\Ledger;
+use App\Models\Scopes\AssignedBranchScope;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Validation\Rule;
@@ -57,6 +58,11 @@ class Sale extends Model implements AuditableContracts
             'sale_type' => ['required'],
             'date' => ['required'],
         ], $merge);
+    }
+
+    protected static function booted()
+    {
+        static::addGlobalScope(new AssignedBranchScope());
     }
 
     public function scopeDraft($query)

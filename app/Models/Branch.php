@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
 
 class Branch extends Model
@@ -34,8 +35,12 @@ class Branch extends Model
 
     public function getAssignedBranchDropDownList($request)
     {
+        $user = User::find($request['user_id'] ?? Auth::id());
         $self = self::orderBy('name');
-        $assigned_ids = auth()->user()->branches->pluck('branch_id', 'branch_id')->toArray();
+        $assigned_ids = [];
+        if ($user) {
+            $assigned_ids = $user->branches->pluck('branch_id', 'branch_id')->toArray();
+        }
         $self = $self->whereIn('id', $assigned_ids);
         $self = $self->when($request['query'] ?? '', function ($query, $value) {
             return $query->where('name', 'like', "%{$value}%");

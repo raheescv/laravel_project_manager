@@ -169,7 +169,7 @@
                     <div class="row">
                         <div class="col-lg-6">
                             <div wire:ignore>
-                                {{ html()->select('branch_id', [])->value('')->class('select-branch_id-list')->id('branch_id')->placeholder('Branch') }}
+                                {{ html()->select('branch_id', [auth()->user()->default_branch_id => auth()->user()->branch?->name])->value(auth()->user()->default_branch_id)->class('select-assigned-branch_id-list')->id('branch_id')->placeholder('All') }}
                             </div>
                         </div>
                         <div class="col-lg-6">

@@ -38,8 +38,12 @@
             nameField: 'name',
             searchField: ['name', 'id'],
             load: function(query, callback) {
+                var user_id = "{{ $id ?? null }}";
                 var url = "{{ route('settings::branch::assigned-list') }}";
-                fetch(url + '?query=' + encodeURIComponent(query))
+                url += '?query=' + encodeURIComponent(query);
+                url += '&user_id=' + user_id;
+
+                fetch(url)
                     .then(response => {
                         if (!response.ok) throw new Error('Network response was not ok');
                         return response.json();

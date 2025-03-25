@@ -64,7 +64,7 @@ class User extends Authenticatable
 
         static::updating(function ($user) {
             if ($user->isDirty('default_branch_id')) {
-                event(new BranchUpdated($user, $user->default_branch_id));
+                // event(new BranchUpdated($user, $user->default_branch_id));
             }
         });
     }

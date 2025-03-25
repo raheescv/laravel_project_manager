@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Scopes\AssignedBranchScope;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use OwenIt\Auditing\Auditable;
@@ -41,6 +42,11 @@ class Purchase extends Model implements AuditableContracts
             'date' => ['required'],
             'invoice_no' => ['required'],
         ], $merge);
+    }
+
+    protected static function booted()
+    {
+        static::addGlobalScope(new AssignedBranchScope());
     }
 
     public function branch()

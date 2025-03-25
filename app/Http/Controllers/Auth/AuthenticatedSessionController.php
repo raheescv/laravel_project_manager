@@ -37,6 +37,7 @@ class AuthenticatedSessionController extends Controller
             ]);
         }
         session(['branch_id' => $user->default_branch_id]);
+        session(['branch_code' => $user->branch?->code]);
         $request->session()->regenerate();
 
         return redirect()->intended(route('dashboard', absolute: false));

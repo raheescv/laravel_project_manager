@@ -5,6 +5,6 @@
     <x-user.user-modal :id="$id" />
     <x-user.employee-modal :id="$id" />
     @push('scripts')
-        @include('components.select.branchSelect')
+        <x-select.branchSelect :id="$id" />
     @endpush
 </x-app-layout>
