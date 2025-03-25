@@ -36,7 +36,7 @@ class AuthenticatedSessionController extends Controller
                 'email' => 'The provided credentials do not match our records or the account is inactive.',
             ]);
         }
-        Session::put('branch_id', $user->default_branch_id);
+        session(['branch_id' => $user->default_branch_id]);
         $request->session()->regenerate();
 
         return redirect()->intended(route('dashboard', absolute: false));
