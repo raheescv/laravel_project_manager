@@ -5,6 +5,7 @@ namespace App\Livewire\Report;
 use App\Exports\PurchaseItemReportExport;
 use App\Jobs\Export\ExportPurchaseItemReportJob;
 use App\Models\PurchaseItem;
+use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
 use Livewire\WithPagination;
 use Maatwebsite\Excel\Facades\Excel;
@@ -115,6 +116,7 @@ class PurchaseItemReport extends Component
             ->when($this->product_id ?? '', function ($query, $value) {
                 return $query->where('product_id', $value);
             })
+            ->whereIn('purchases.branch_id', Auth::user()->branches->pluck('branch_id')->toArray())
             ->where('purchases.status', 'completed')
             ->latest('purchase_items.id')
             ->select(

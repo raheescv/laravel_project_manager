@@ -5,6 +5,7 @@ namespace App\Livewire\Report;
 use App\Exports\SaleItemReportExport;
 use App\Jobs\Export\ExportSaleItemReportJob;
 use App\Models\SaleItem;
+use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
 use Livewire\WithPagination;
 use Maatwebsite\Excel\Facades\Excel;
@@ -124,6 +125,7 @@ class SaleItemReport extends Component
             ->when($this->product_id ?? '', function ($query, $value) {
                 return $query->where('product_id', $value);
             })
+            ->whereIn('sales.branch_id', Auth::user()->branches->pluck('branch_id')->toArray())
             ->where('sales.status', 'completed')
             ->latest('sale_items.id')
             ->select(

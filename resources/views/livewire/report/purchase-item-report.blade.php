@@ -46,9 +46,9 @@
             <table class="table table-striped align-middle table-sm">
                 <thead>
                     <tr class="text-capitalize">
-                        <th> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="sale_items.id" label="id" /> </th>
-                        <th> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="sales.date" label="date" /> </th>
-                        <th> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="sales.invoice_no" label="invoice no" /> </th>
+                        <th> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="purchase_items.id" label="id" /> </th>
+                        <th> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="purchases.date" label="date" /> </th>
+                        <th> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="purchases.invoice_no" label="invoice no" /> </th>
                         <th> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="product_id" label="product" /> </th>
                         <th class="text-end"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="unit_price" label="unit price" /> </th>
                         <th class="text-end"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="quantity" label="quantity" /> </th>
