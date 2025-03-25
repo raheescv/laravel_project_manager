@@ -1,6 +1,6 @@
 <div>
     @push('styles')
-        <link rel="stylesheet" href="{{ asset('assets/pos/pos.css') }}">
+        <link rel="stylesheet" href="{{ asset('assets/pos/pos.css?v=2') }}">
     @endpush
     <div class="main-wrapper">
         <div class="page-wrapper pos-pg-wrapper ms-0">
