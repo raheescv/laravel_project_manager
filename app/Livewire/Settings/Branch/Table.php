@@ -95,6 +95,7 @@ class Table extends Component
                     $value = trim($value);
                     $q->where('name', 'like', "%{$value}%")
                         ->orWhere('code', 'like', "%{$value}%")
+                        ->orWhere('mobile', 'like', "%{$value}%")
                         ->orWhere('location', 'like', "%{$value}%");
                 });
             })

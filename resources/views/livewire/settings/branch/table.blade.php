@@ -35,39 +35,14 @@
             <table class="table table-striped">
                 <thead>
                     <tr>
-                        <th width="20%">
+                        <th>
                             <input type="checkbox" wire:model.live="selectAll" />
-                            <a href="#" wire:click.prevent="sortBy('id')">
-                                ID
-                                @if ($sortField === 'id')
-                                    {!! sortDirection($sortDirection) !!}
-                                @endif
-                            </a>
+                            <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="id" label="ID" />
                         </th>
-                        <th>
-                            <a href="#" wire:click.prevent="sortBy('code')">
-                                Code
-                                @if ($sortField === 'code')
-                                    {!! sortDirection($sortDirection) !!}
-                                @endif
-                            </a>
-                        </th>
-                        <th>
-                            <a href="#" wire:click.prevent="sortBy('name')">
-                                Name
-                                @if ($sortField === 'name')
-                                    {!! sortDirection($sortDirection) !!}
-                                @endif
-                            </a>
-                        </th>
-                        <th>
-                            <a href="#" wire:click.prevent="sortBy('location')">
-                                Location
-                                @if ($sortField === 'location')
-                                    {!! sortDirection($sortDirection) !!}
-                                @endif
-                            </a>
-                        </th>
+                        <th> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="code" label="code" /> </th>
+                        <th> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="name" label="name" /> </th>
+                        <th> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="location" label="location" /> </th>
+                        <th> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="mobile" label="mobile" /> </th>
                         <th width="10%">Action</th>
                     </tr>
                 </thead>
@@ -81,6 +56,7 @@
                             <td>{{ $item->code }}</td>
                             <td>{{ $item->name }}</td>
                             <td>{{ $item->location }}</td>
+                            <td>{{ $item->mobile }}</td>
                             <td>
                                 @can('branch.edit')
                                     <i table_id="{{ $item->id }}" class="demo-psi-pencil fs-5 me-2 pointer edit"></i>

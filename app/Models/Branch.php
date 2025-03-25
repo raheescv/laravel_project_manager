@@ -11,6 +11,7 @@ class Branch extends Model
         'name',
         'code',
         'location',
+        'mobile',
     ];
 
     public static function rules($id = 0, $merge = [])

@@ -38,6 +38,14 @@
                     </div>
                 </div>
             </div>
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="form-group">
+                        <h4> <label for="code">Mobile</label> </h4>
+                        {{ html()->input('mobile')->value('')->class('form-control')->attribute('wire:model', 'branches.mobile') }}
+                    </div>
+                </div>
+            </div>
         </div>
         <div class="modal-footer">
             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>

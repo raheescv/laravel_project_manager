@@ -133,7 +133,13 @@
             @endif
         </h1>
         <h3 class="divider">
-            {{ cache('mobile') }}
+            {{ $sale->branch?->name }}
+        </h3>
+        <h3 class="divider">
+            {{ $sale->branch?->location }}
+        </h3>
+        <h3 class="divider">
+            {{ $sale->branch?->mobile }}
         </h3>
         @if ($thermal_printer_style == 'with_arabic')
             {{-- <h1> اسم المتجر </h1> Store Name --}}
@@ -152,6 +158,7 @@
                     <td class="nowrap text-right"> <b>{{ __('lang.invoice_no', [], 'ar') }}</b> </td>
                 </tr>
             </table>
+
             <table class="table">
                 <tr>
                     <td class="nowrap text-left" width="28%"><b>Date</b></td>
