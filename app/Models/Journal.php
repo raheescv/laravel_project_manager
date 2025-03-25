@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Scopes\AssignedBranchScope;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use OwenIt\Auditing\Auditable;
@@ -32,6 +33,11 @@ class Journal extends Model implements AuditableContracts
             'description' => ['required'],
             'created_by' => ['required'],
         ], $merge);
+    }
+
+    protected static function booted()
+    {
+        static::addGlobalScope(new AssignedBranchScope());
     }
 
     public function entries()
