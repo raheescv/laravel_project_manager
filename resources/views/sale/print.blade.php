@@ -133,9 +133,6 @@
             @endif
         </h1>
         <h3 class="divider">
-            {{ $sale->branch?->name }}
-        </h3>
-        <h3 class="divider">
             {{ $sale->branch?->location }}
         </h3>
         <h3 class="divider">

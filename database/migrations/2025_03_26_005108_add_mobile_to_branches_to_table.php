@@ -10,7 +10,7 @@ return new class() extends Migration
     {
         Schema::table('branches', function (Blueprint $table) {
             if (! Schema::hasColumn('branches', 'mobile')) {
-                $table->string('mobile', 15)->nullable()->after('location');
+                $table->string('mobile')->nullable()->after('location');
             }
         });
     }
