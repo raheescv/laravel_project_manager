@@ -8,6 +8,7 @@ use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Session;
 use Illuminate\View\View;
 
 class AuthenticatedSessionController extends Controller
@@ -35,7 +36,7 @@ class AuthenticatedSessionController extends Controller
                 'email' => 'The provided credentials do not match our records or the account is inactive.',
             ]);
         }
-
+        Session::put('branch_id', $user->default_branch_id);
         $request->session()->regenerate();
 
         return redirect()->intended(route('dashboard', absolute: false));
