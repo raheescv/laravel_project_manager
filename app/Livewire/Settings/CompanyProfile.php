@@ -11,6 +11,8 @@ class CompanyProfile extends Component
 {
     use WithFilePond;
 
+    public $mobile;
+
     public $logo;
 
     public $uploaded_logo;
@@ -18,6 +20,7 @@ class CompanyProfile extends Component
     public function mount()
     {
         $this->uploaded_logo = Configuration::where('key', 'logo')->value('value');
+        $this->mobile = Configuration::where('key', 'mobile')->value('value');
     }
 
     protected function rules()
@@ -38,12 +41,14 @@ class CompanyProfile extends Component
     {
         $this->validate();
         try {
-            if (! $this->logo) {
-                throw new \Exception('Please wait for the loading to complete', 1);
+            if ($this->logo) {
+                // throw new \Exception('Please wait for the loading to complete', 1);
+                $logo = url('storage/'.$this->logo->store('company_image', 'public'));
+                Configuration::updateOrCreate(['key' => 'logo'], ['value' => $logo]);
+                Cache::forget('logo');
             }
-            $logo = url('storage/'.$this->logo->store('company_image', 'public'));
-            Configuration::updateOrCreate(['key' => 'logo'], ['value' => $logo]);
-            Cache::forget('logo');
+            Configuration::updateOrCreate(['key' => 'mobile'], ['value' => $this->mobile]);
+            Cache::forget('mobile');
             $this->dispatch('success', ['message' => 'Updated Successfully']);
             $this->dispatch('filepond-reset-images');
         } catch (\Throwable $e) {

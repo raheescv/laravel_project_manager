@@ -47,6 +47,11 @@ class AppServiceProvider extends ServiceProvider
 
                 return Configuration::where('key', 'logo')->value('value') ?? asset('assets/img/logo.svg');
             });
+            Cache::remember('mobile', now()->addYear(), function () {
+                info('mobile remember');
+
+                return Configuration::where('key', 'mobile')->value('value');
+            });
         }
         // Gate::after(function ($user, $ability) {
         //     return $user->hasRole('Super Admin') || $user->hasPermissionTo($ability);

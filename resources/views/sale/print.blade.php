@@ -129,13 +129,17 @@
     <div class="receipt-container">
         <h1>
             @if ($enable_logo_in_print == 'yes')
-                <img src="{{ cache('logo') }}" alt="Logo" style="width: 50%;">
+                <img src="{{ cache('logo') }}" alt="Logo" style="width: 100%;">
             @endif
         </h1>
+        <h3 class="divider">
+            {{ cache('mobile') }}
+        </h3>
         @if ($thermal_printer_style == 'with_arabic')
-            <h1> اسم المتجر </h1>
+            {{-- <h1> اسم المتجر </h1> Store Name --}}
         @endif
-        <h3 class="divider">Invoice
+        <h3 class="divider">
+            Invoice
             @if ($thermal_printer_style == 'with_arabic')
                 | {{ __('lang.invoice', [], 'ar') }}
             @endif
