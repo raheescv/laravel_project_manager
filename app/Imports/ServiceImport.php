@@ -38,6 +38,7 @@ class ServiceImport implements ToCollection, WithBatchInserts, WithChunkReading,
                 $data['cost'] = $value['price'];
                 $home_service = $value['home_service'] ?? 0;
                 $exists = Product::firstWhere('name', $data['name']);
+                $model = $exists;
                 if (! $exists) {
                     $trashedExists = Product::withTrashed()->firstWhere('name', $data['name']);
                     if ($trashedExists) {
@@ -47,23 +48,23 @@ class ServiceImport implements ToCollection, WithBatchInserts, WithChunkReading,
                     } else {
                         $model = Product::create($data);
                     }
-                    if ($home_service) {
-                        $priceCheck = ProductPrice::where('product_id', $model->id)->where('price_type', 'home_service')->first();
-                        $priceData = [
-                            'product_id' => $model->id,
-                            'price_type' => 'home_service',
-                            'amount' => $home_service,
-                        ];
-                        if ($priceCheck) {
-                            $response = (new UpdateAction())->execute($priceData, $priceCheck->id);
-                        } else {
-                            $response = (new CreateAction())->execute($priceData);
-                        }
-                        if (! $response['success']) {
-                            throw new \Exception($response['message'], 1);
-                        }
-                    }
                     Inventory::selfCreateByProduct($model, $this->user_id, $quantity = 0);
+                }
+                if ($home_service) {
+                    $priceCheck = ProductPrice::where('product_id', $model->id)->where('price_type', 'home_service')->first();
+                    $priceData = [
+                        'product_id' => $model->id,
+                        'price_type' => 'home_service',
+                        'amount' => $home_service,
+                    ];
+                    if ($priceCheck) {
+                        $response = (new UpdateAction())->execute($priceData, $priceCheck->id);
+                    } else {
+                        $response = (new CreateAction())->execute($priceData);
+                    }
+                    if (! $response['success']) {
+                        throw new \Exception($response['message'], 1);
+                    }
                 }
             } catch (\Throwable $th) {
                 $data['message'] = $th->getMessage();
