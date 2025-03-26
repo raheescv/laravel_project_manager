@@ -2,10 +2,13 @@
 
 namespace App\Imports;
 
+use App\Actions\Product\ProductPrice\CreateAction;
+use App\Actions\Product\ProductPrice\UpdateAction;
 use App\Events\FileImportCompleted;
 use App\Events\FileImportProgress;
 use App\Models\Inventory;
 use App\Models\Product;
+use App\Models\ProductPrice;
 use Illuminate\Support\Collection;
 use Maatwebsite\Excel\Concerns\ToCollection;
 use Maatwebsite\Excel\Concerns\WithBatchInserts;
@@ -33,6 +36,7 @@ class ServiceImport implements ToCollection, WithBatchInserts, WithChunkReading,
                 $data['status'] = $data['status'] ?? 'active';
                 $data['type'] = 'service';
                 $data['cost'] = $value['price'];
+                $home_service = $value['home_service'] ?? 0;
                 $exists = Product::firstWhere('name', $data['name']);
                 if (! $exists) {
                     $trashedExists = Product::withTrashed()->firstWhere('name', $data['name']);
@@ -42,6 +46,22 @@ class ServiceImport implements ToCollection, WithBatchInserts, WithChunkReading,
                         $model = $trashedExists;
                     } else {
                         $model = Product::create($data);
+                    }
+                    if ($home_service) {
+                        $priceCheck = ProductPrice::where('product_id', $model->id)->where('price_type', 'home_service')->first();
+                        $priceData = [
+                            'product_id' => $model->id,
+                            'price_type' => 'home_service',
+                            'amount' => $home_service,
+                        ];
+                        if ($priceCheck) {
+                            $response = (new UpdateAction())->execute($priceData, $priceCheck->id);
+                        } else {
+                            $response = (new CreateAction())->execute($priceData);
+                        }
+                        if (! $response['success']) {
+                            throw new \Exception($response['message'], 1);
+                        }
                     }
                     Inventory::selfCreateByProduct($model, $this->user_id, $quantity = 0);
                 }
