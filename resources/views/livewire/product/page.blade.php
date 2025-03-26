@@ -107,12 +107,21 @@
                                 <button type="submit" class="btn  btn-sm btn-success" style="float: right;margin-right:5px; ">Save & Create New</button>
                                 <button type="button" wire:click="save(1)" class="btn  btn-sm btn-primary" style="float: right;margin-right:5px; ">Save & Edit</button>
                             @else
-                                @can('product.create')
-                                    <a class="btn btn-sm btn-info" href="{{ route('product::create') }}" style="float: right;margin-right:5px; ">Create New</a>
-                                @endcan
-                                @can('product.edit')
-                                    <button type="submit" class="btn btn-success" style="float: right;margin-right:5px; ">Save </button>
-                                @endcan
+                                @if ($type == 'product')
+                                    @can('product.create')
+                                        <a class="btn btn-sm btn-info" href="{{ route('product::create') }}" style="float: right;margin-right:5px; ">Create New</a>
+                                    @endcan
+                                    @can('product.edit')
+                                        <button type="submit" class="btn btn-sm btn-success" style="float: right;margin-right:5px; ">Save </button>
+                                    @endcan
+                                @else
+                                    @can('service.create')
+                                        <a class="btn btn-sm btn-info" href="{{ route('service::create') }}" style="float: right;margin-right:5px; ">Create New</a>
+                                    @endcan
+                                    @can('service.edit')
+                                        <button type="submit" class="btn btn-sm btn-success" style="float: right;margin-right:5px; ">Save </button>
+                                    @endcan
+                                @endif
                             @endif
                         </div>
                         <div class="row">
