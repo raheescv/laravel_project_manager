@@ -10,9 +10,11 @@
                     <div class="d-grid">
                         <button class="mainnav-widget-toggle d-block btn border-0 p-2" data-bs-toggle="collapse" data-bs-target="#usernav" aria-expanded="false" aria-controls="usernav">
                             <span class="dropdown-toggle d-flex justify-content-center align-items-center">
-                                <h5 class="mb-0 me-3">{{ auth()->user()->name }}</h5>
+                                <h5 class="mb-0 me-3">{{ auth()->user()->name }} </h5>
                             </span>
                             <small class="text-body-secondary">{{ getUserRoles(auth()->user()) }}</small>
+                            <p><small class="text-body-secondary">{{ auth()->user()->branch?->name }}</small></p>
+
                         </button>
                         <div id="usernav" class="nav flex-column collapse">
                             <a href="#" class="nav-link">

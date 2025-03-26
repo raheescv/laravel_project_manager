@@ -32,7 +32,7 @@ class Overview extends Component
 
         $totalAmount = $todayPayment + $credit;
         foreach ($paymentData as $key => $item) {
-            $paymentData[$key]['percentage'] = round(($item['amount'] / $totalAmount) * 100, 2);
+            $paymentData[$key]['percentage'] = $totalAmount ? round(($item['amount'] / $totalAmount) * 100, 2) : 0;
         }
 
         $data = Sale::last30Days()
