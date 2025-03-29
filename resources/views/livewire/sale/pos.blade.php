@@ -102,16 +102,28 @@
                                     <div class="row">
                                         <div class="col-12 col-sm-12">
                                             <div class="row">
-                                                <div class="col-md-4">
-                                                    <b>Discount</b>
-                                                    {{ html()->text('other_discount')->value('')->class('form-control number select_on_focus')->style('padding:5px')->attribute('wire:model.lazy', 'sales.other_discount') }}
+                                                <div class="col-md-6">
+                                                    <b>Customer <span class="pull-right"> <i class="fa fa-eye"></i> </span></b>
+                                                    <div class="input-group mb-3">
+                                                        <div wire:ignore class="parent-container">
+                                                            {{ html()->select('account_id', $accounts)->value($sales['account_id'])->class('select-customer_id')->id('account_id')->placeholder('Select Customer') }}
+                                                        </div>
+                                                    </div>
                                                 </div>
-                                                <div class="col-md-8">
+                                                <div class="col-md-6">
                                                     <b>Customer Mobile</b>
                                                     <div class="input-group mb-3">
                                                         {{ html()->text('customer_mobile')->value('')->class('form-control select_on_focus')->style('padding:5px')->attribute('wire:model', 'sales.customer_mobile')->id('customer_mobile')->placeholder('Mobile No') }}
                                                         &nbsp;&nbsp;<i class="fa fa-2x fa-user-plus pointer" id="addCustomer"></i>
                                                     </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-12 col-sm-12 mb-3">
+                                            <div class="row">
+                                                <div class="col-md-12">
+                                                    <b>Discount</b>
+                                                    {{ html()->text('other_discount')->value('')->class('form-control number select_on_focus')->style('padding:5px')->attribute('wire:model.lazy', 'sales.other_discount') }}
                                                 </div>
                                             </div>
                                         </div>
