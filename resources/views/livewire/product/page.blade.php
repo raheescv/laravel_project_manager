@@ -18,16 +18,6 @@
                                     </div>
                                 </div>
                             @endif
-                            @if ($type == 'service')
-                                <div class="col-md-6 mb-3">
-                                    <div class="d-flex align-items-center pt-1 mb-2">
-                                        <label class="form-check-label flex-fill" style="text-align: right">Favorite</label>
-                                        <div class="form-check form-switch">
-                                            {{ html()->checkbox('is_favorite')->value('')->class('form-check-input ms-0')->checked($products['is_favorite'])->attribute('wire:model', 'products.is_favorite') }}
-                                        </div>
-                                    </div>
-                                </div>
-                            @endif
                         </div>
                         <div class="row g-3">
                             <div class="col-md-4">
@@ -103,26 +93,42 @@
                 <div class="card h-100">
                     <div class="card-header">
                         <div class="col-12" style="padding-top:10px;">
-                            @if (!isset($table_id))
-                                <button type="submit" class="btn  btn-sm btn-success" style="float: right;margin-right:5px; ">Save & Create New</button>
-                                <button type="button" wire:click="save(1)" class="btn  btn-sm btn-primary" style="float: right;margin-right:5px; ">Save & Edit</button>
-                            @else
-                                @if ($type == 'product')
-                                    @can('product.create')
-                                        <a class="btn btn-sm btn-info" href="{{ route('product::create') }}" style="float: right;margin-right:5px; ">Create New</a>
-                                    @endcan
-                                    @can('product.edit')
-                                        <button type="submit" class="btn btn-sm btn-success" style="float: right;margin-right:5px; ">Save </button>
-                                    @endcan
-                                @else
-                                    @can('service.create')
-                                        <a class="btn btn-sm btn-info" href="{{ route('service::create') }}" style="float: right;margin-right:5px; ">Create New</a>
-                                    @endcan
-                                    @can('service.edit')
-                                        <button type="submit" class="btn btn-sm btn-success" style="float: right;margin-right:5px; ">Save </button>
-                                    @endcan
-                                @endif
-                            @endif
+                            <div class="row">
+                                <div class="col-md-2 mb-3">
+                                    <div class="d-flex align-items-center pt-1 mb-2">
+                                        <label class="form-check-label flex-fill" style="text-align: right">Favorite</label>
+                                        <div class="form-check form-switch">
+                                            {{ html()->checkbox('is_favorite')->value('')->class('form-check-input ms-0')->checked($products['is_favorite'])->attribute('wire:model', 'products.is_favorite') }}
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <div class="d-flex align-items-center pt-1 mb-2">
+                                        @if (!isset($table_id))
+                                            <button type="submit" class="btn  btn-sm btn-success" style="float: right;margin-right:5px; ">Save & Create New</button>
+                                            <button type="button" wire:click="save(1)" class="btn  btn-sm btn-primary" style="float: right;margin-right:5px; ">Save & Edit</button>
+                                        @else
+                                            @if ($type == 'product')
+                                                @can('product.create')
+                                                    <a class="btn btn-sm btn-info" href="{{ route('product::create') }}" style="float: right;margin-right:5px; ">Create New</a>
+                                                @endcan
+                                                @can('product.edit')
+                                                    <button type="submit" class="btn btn-sm btn-success" style="float: right;margin-right:5px; ">Save </button>
+                                                @endcan
+                                            @else
+                                                @can('service.create')
+                                                    <a class="btn btn-sm btn-info" href="{{ route('service::create') }}" style="float: right;margin-right:5px; ">Create New</a>
+                                                @endcan
+                                                @can('service.edit')
+                                                    <button type="submit" class="btn btn-sm btn-success" style="float: right;margin-right:5px; ">Save </button>
+                                                @endcan
+                                            @endif
+                                        @endif
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                         <div class="row">
                             <div class="col-md-12">

@@ -4,6 +4,14 @@
     </div>
     <form wire:submit="submit">
         <div class="modal-body">
+            <div class="row mb-2">
+                <div class="col-md-12">
+                    <div class="form-group" wire:ignore>
+                        <b><label for="unit_price" class="text-capitalize text-end">Employee</label></b>
+                        {{ html()->select('employee_id', [])->value('')->class('select-employee_id-list')->id('edit_employee_id')->attribute('style', 'width:100%')->placeholder('Select Employee') }}
+                    </div>
+                </div>
+            </div>
             @if ($item)
                 <div class="row mb-2">
                     <div class="col-md-6">
@@ -48,4 +56,20 @@
             <button type="submit" class="btn btn-primary">Submit</button>
         </div>
     </form>
+    @push('scripts')
+        <script>
+            $(document).ready(function() {
+                $('#edit_employee_id').on('change', function(e) {
+                    const value = $(this).val() || null;
+                    @this.set('item.employee_id', value);
+                });
+                window.addEventListener('SelectEmployeeFromDropDown', event => {
+                    preselectedData = event.detail[0];
+                    var tomSelectInstance = document.querySelector('#edit_employee_id').tomselect;
+                    tomSelectInstance.addOption(preselectedData);
+                    tomSelectInstance.addItem(preselectedData.id);
+                });
+            });
+        </script>
+    @endpush
 </div>

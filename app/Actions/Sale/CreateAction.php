@@ -25,7 +25,6 @@ class CreateAction
                     throw new \Exception($response['message'], 1);
                 }
             }
-
             foreach ($data['payments'] as $value) {
                 $value['sale_id'] = $model->id;
                 $value['date'] = $model->date;

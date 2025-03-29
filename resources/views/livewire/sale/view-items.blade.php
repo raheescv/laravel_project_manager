@@ -37,8 +37,8 @@
                                 <th colspan="8">{{ $first['employee_name'] }}</th>
                             </tr>
                             @foreach ($groupedItems as $item)
-                                @if ($status == 'draft')
-                                    <tr>
+                                <tr>
+                                    @if ($status == 'draft')
                                         <td>{{ $loop->iteration }}</td>
                                         <td>{{ $item['name'] }}</td>
                                         <td>
@@ -60,12 +60,12 @@
                                         <td class="text-end">{{ currency($item['discount']) }}</td>
                                         <td class="text-end">{{ currency($item['tax']) }}</td>
                                         <td class="text-end"> {{ currency($item['total']) }} </td>
-                                @endif
-                                @if ($status == 'draft')
-                                    <td>
-                                        <i wire:click="removeItem('{{ $item['key'] }}')" wire:confirm="Are your sure?" class="demo-pli-recycling fs-5 me-2 pointer"></i>
-                                    </td>
-                                @endif
+                                    @endif
+                                    @if ($status == 'draft')
+                                        <td>
+                                            <i wire:click="removeItem('{{ $item['key'] }}')" wire:confirm="Are your sure?" class="demo-pli-recycling fs-5 me-2 pointer"></i>
+                                        </td>
+                                    @endif
                                 </tr>
                             @endforeach
                         @endforeach

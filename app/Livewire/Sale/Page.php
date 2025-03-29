@@ -14,6 +14,7 @@ use App\Models\Inventory;
 use App\Models\Product;
 use App\Models\Sale;
 use App\Models\User;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Livewire\Component;
 
@@ -467,6 +468,14 @@ class Page extends Component
 
     public function editedItem($id, $item)
     {
+        $oldId = $id;
+        $newId = $item['employee_id'].'-'.implode('-', array_slice(explode('-', $id), 1));
+        if ($newId != $oldId) {
+            unset($this->items[$oldId]);
+            $item['employee_name'] = User::find($item['employee_id'])->name;
+            $item['key'] = $newId;
+            $id = $newId;
+        }
         $this->items[$id] = $item;
         $this->mainCalculator();
     }
@@ -591,7 +600,7 @@ class Page extends Component
             $this->sales['items'] = $this->items;
             $this->sales['payments'] = $this->payments;
 
-            $user_id = auth()->id();
+            $user_id = Auth::id();
             if (! $this->table_id) {
                 $response = (new CreateAction())->execute($this->sales, $user_id);
             } else {

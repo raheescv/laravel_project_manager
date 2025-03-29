@@ -58,6 +58,7 @@ class ProductExport implements FromQuery, WithHeadings, WithMapping
 
             'Description',
             'Is Selling',
+            'Is Favorite',
 
             'Cost',
             'MRP',
@@ -91,7 +92,7 @@ class ProductExport implements FromQuery, WithHeadings, WithMapping
             $row->code,
             $row->name,
             $row->name_arabic,
-            $row->unit?->id,
+            $row->unit?->name,
             $row->department?->name,
             $row->mainCategory?->name,
             $row->subCategory?->name,
@@ -99,6 +100,7 @@ class ProductExport implements FromQuery, WithHeadings, WithMapping
             $row->tax,
             $row->description,
             $row->is_selling ? 'Yes' : 'No',
+            $row->is_favorite ? 'Yes' : 'No',
             $row->cost,
             $row->mrp,
             $row->barcode,

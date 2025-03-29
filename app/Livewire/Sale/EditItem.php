@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Sale;
 
+use App\Models\User;
 use Livewire\Component;
 
 class EditItem extends Component
@@ -18,6 +19,10 @@ class EditItem extends Component
     {
         $this->index = $index;
         $this->item = $item;
+        if ($item) {
+            $employee = User::find($item['employee_id']);
+            $this->dispatch('SelectEmployeeFromDropDown', ['name' => $employee->name, 'id' => $employee->id]);
+        }
     }
 
     public function open($index, $item)
