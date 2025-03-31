@@ -662,7 +662,7 @@ class Page extends Component
 
     public function render()
     {
-        if ($this->sales['status'] == 'completed') {
+        if (in_array($this->sales['status'], ['completed', 'cancelled'])) {
             return view('livewire.sale.page');
         } else {
             switch (cache('sale_type')) {
