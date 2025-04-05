@@ -129,7 +129,8 @@
                             </div>
                             <div class="flex-grow-1 ms-3">
                                 <h5 class="mb-0">{{ auth()->user()->name }}</h5>
-                                <span class="text-body-secondary fst-italic">{{ auth()->user()->email }}</span>
+                                <span class="text-body-secondary fst-italic">{{ auth()->user()->email }}</span> <br>
+                                <span class="text-body-secondary fst-italic">{{ getUserRoles(auth()->user()) }}</span>
                             </div>
                         </div>
                         <div class="row">
@@ -147,11 +148,6 @@
 
                                 <!-- User menu link -->
                                 <div class="list-group list-group-borderless h-100 py-3">
-                                    <a href="#" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
-                                        <span><i class="demo-pli-mail fs-5 me-2"></i>
-                                            Messages</span>
-                                        <span class="badge bg-danger rounded-pill">14</span>
-                                    </a>
                                     <a href="#" class="list-group-item list-group-item-action">
                                         <i class="demo-pli-male fs-5 me-2"></i>
                                         Profile
