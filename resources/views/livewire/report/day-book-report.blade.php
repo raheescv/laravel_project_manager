@@ -62,7 +62,7 @@
                             <td>
                                 @switch($item->model)
                                     @case('Sale')
-                                        <a href="{{ route('sale::edit', $item->model_id) }}">{{ $item->description }}</a>
+                                        <a href="{{ route('sale::view', $item->model_id) }}">{{ $item->description }}</a>
                                     @break
 
                                     @default

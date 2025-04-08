@@ -70,7 +70,7 @@
                         <tr>
                             <td>{{ $item->id }}</td>
                             <td>{{ systemDate($item->date) }}</td>
-                            <td> <a href="{{ route('sale::edit', $item->sale_id) }}">{{ $item->invoice_no }}</a> </td>
+                            <td> <a href="{{ route('sale::view', $item->sale_id) }}">{{ $item->invoice_no }}</a> </td>
                             <td>{{ $item->employee?->name }}</td>
                             <td>{{ $item->product?->name }}</td>
                             <td class="text-end">{{ currency($item->unit_price) }}</td>

@@ -12,7 +12,7 @@ return [
     'service' => ['create', 'view', 'edit', 'delete', 'import', 'export'],
     'inventory' => ['view', 'edit', 'delete', 'import', 'export'],
     'category' => ['create', 'view', 'edit', 'delete', 'import', 'export'],
-    'sale' => ['create', 'view', 'edit', 'delete', 'cancel', 'export', 'receipts'],
+    'sale' => ['create', 'view', 'edit', 'delete', 'cancel', 'export', 'receipts', 'view journal entries'],
     'purchase' => ['create', 'view', 'edit', 'delete', 'cancel', 'export', 'payments'],
     'unit' => ['create', 'view', 'edit', 'delete'],
     'department' => ['create', 'view', 'edit', 'delete'],

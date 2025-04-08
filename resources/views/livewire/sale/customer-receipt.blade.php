@@ -75,7 +75,7 @@
                                                 <input type="checkbox" wire:model="customer_sales.{{ $item->id }}.selected" wire:change="selectAction({{ $item->id }})"
                                                     value="{{ $item->id }}">
                                             </td>
-                                            <td class="text-end"> <a href="{{ route('sale::edit', $item->id) }}">{{ $item->invoice_no }}</a> </td>
+                                            <td class="text-end"> <a href="{{ route('sale::view', $item->id) }}">{{ $item->invoice_no }}</a> </td>
                                             <td class="text-end">{{ currency($item->total) }}</td>
                                             <td class="text-end">{{ currency($item->other_discount) }}</td>
                                             <td class="text-end">{{ currency($item->grand_total) }}</td>

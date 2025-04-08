@@ -163,6 +163,7 @@ class Page extends Component
     public function getCategories()
     {
         $this->categories = Category::withCount('products')
+            ->having('products_count', '>', 0)
             ->when($this->category_key, function ($query, $value) {
                 return $query->where('name', 'LIKE', '%'.$value.'%');
             })
@@ -662,15 +663,11 @@ class Page extends Component
 
     public function render()
     {
-        if (in_array($this->sales['status'], ['completed', 'cancelled'])) {
-            return view('livewire.sale.page');
-        } else {
-            switch (cache('sale_type')) {
-                case 'pos':
-                    return view('livewire.sale.pos');
-                default:
-                    return view('livewire.sale.page');
-            }
+        switch (cache('sale_type')) {
+            case 'pos':
+                return view('livewire.sale.pos');
+            default:
+                return view('livewire.sale.page');
         }
     }
 }

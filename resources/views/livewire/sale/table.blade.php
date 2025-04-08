@@ -124,7 +124,13 @@
                                 {{ $item->id }}
                             </td>
                             <td>{{ systemDate($item->date) }}</td>
-                            <td><a href="{{ route('sale::edit', $item->id) }}">{{ $item->invoice_no }} </a></td>
+                            <td>
+                                @if (in_array($item->status, ['completed', 'cancelled']))
+                                    <a href="{{ route('sale::view', $item->id) }}">{{ $item->invoice_no }} </a>
+                                @else
+                                    <a href="{{ route('sale::edit', $item->id) }}">{{ $item->invoice_no }} </a>
+                                @endif
+                            </td>
                             @if ($sale_visible_column['reference_no'])
                                 <td>{{ $item->reference_no }}</td>
                             @endif

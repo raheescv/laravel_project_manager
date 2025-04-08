@@ -59,7 +59,8 @@
                     @endif
                     @if (auth()->user()->can('sale.view') || auth()->user()->can('report.sale item'))
                         <li class="nav-item has-sub">
-                            <a href="#" class="mininav-toggle nav-link {{ request()->is(['sale', 'sale/create', 'sale/edit/*', 'report/sale_item', 'sale/receipts']) ? 'active' : '' }}"><i
+                            <a href="#"
+                                class="mininav-toggle nav-link {{ request()->is(['sale', 'sale/create', 'sale/edit/*', 'sale/view/*', 'report/sale_item', 'sale/receipts']) ? 'active' : '' }}"><i
                                     class="demo-pli-split-vertical-2 fs-5 me-2"></i>
                                 <span class="nav-label ms-1">Sale</span>
                             </a>
@@ -72,7 +73,7 @@
                                 @endcan
                                 @can('sale.view')
                                     <li class="nav-item">
-                                        <a href="{{ route('sale::index') }}" class="nav-link {{ request()->is(['sale', 'sale/edit/*']) ? 'active' : '' }}">List</a>
+                                        <a href="{{ route('sale::index') }}" class="nav-link {{ request()->is(['sale', 'sale/edit/*', 'sale/view/*']) ? 'active' : '' }}">List</a>
                                     </li>
                                 @endcan
                                 @can('report.sale item')

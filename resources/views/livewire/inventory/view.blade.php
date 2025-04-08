@@ -184,71 +184,15 @@
                         <table class="table table-striped align-middle text-capitalize table-sm">
                             <thead>
                                 <tr class="text-capitalize">
-                                    <th>
-                                        <a href="#" wire:click.prevent="sortBy('id')">
-                                            #
-                                            @if ($sortField === 'id')
-                                                {!! sortDirection($sortDirection) !!}
-                                            @endif
-                                        </a>
-                                    </th>
-                                    <th>
-                                        <a href="#" wire:click.prevent="sortBy('branches.name')">
-                                            Branch
-                                            @if ($sortField === 'branches.name')
-                                                {!! sortDirection($sortDirection) !!}
-                                            @endif
-                                        </a>
-                                    </th>
-                                    <th>
-                                        <a href="#" wire:click.prevent="sortBy('barcode')">
-                                            Barcode
-                                            @if ($sortField === 'barcode')
-                                                {!! sortDirection($sortDirection) !!}
-                                            @endif
-                                        </a>
-                                    </th>
-                                    <th>
-                                        <a href="#" wire:click.prevent="sortBy('batch')">
-                                            batch
-                                            @if ($sortField === 'batch')
-                                                {!! sortDirection($sortDirection) !!}
-                                            @endif
-                                        </a>
-                                    </th>
-                                    <th class="text-end">
-                                        <a href="#" wire:click.prevent="sortBy('cost')">
-                                            cost
-                                            @if ($sortField === 'cost')
-                                                {!! sortDirection($sortDirection) !!}
-                                            @endif
-                                        </a>
-                                    </th>
-                                    <th class="text-end">
-                                        <a href="#" wire:click.prevent="sortBy('quantity_in')">
-                                            In
-                                            @if ($sortField === 'quantity_in')
-                                                {!! sortDirection($sortDirection) !!}
-                                            @endif
-                                        </a>
-                                    </th>
-                                    <th class="text-end">
-                                        <a href="#" wire:click.prevent="sortBy('quantity_out')">
-                                            Out
-                                            @if ($sortField === 'quantity_out')
-                                                {!! sortDirection($sortDirection) !!}
-                                            @endif
-                                        </a>
-                                    </th>
-                                    <th class="text-end">
-                                        <a href="#" wire:click.prevent="sortBy('balance')">
-                                            Balance
-                                            @if ($sortField === 'balance')
-                                                {!! sortDirection($sortDirection) !!}
-                                            @endif
-                                        </a>
-                                    </th>
-                                    <th width="30%">Remarks</th>
+                                    <th width="5%"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="id" label="#" /> </th>
+                                    <th> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="branch_id" label="Branch" /> </th>
+                                    <th> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="barcode" label="barcode" /> </th>
+                                    <th> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="batch" label="batch" /> </th>
+                                    <th class="text-end"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="cost" label="cost" /> </th>
+                                    <th class="text-end"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="quantity_in" label="In" /> </th>
+                                    <th class="text-end"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="quantity_out" label="out" /> </th>
+                                    <th class="text-end"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="balance" label="balance" /> </th>
+                                    <th width="40%"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="remarks" label="remarks" /> </th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -266,9 +210,8 @@
                                             @php
                                                 switch ($item->model) {
                                                     case 'Sale':
-                                                        $href = route('sale::edit', $item->model_id);
+                                                        $href = route('sale::view', $item->model_id);
                                                         break;
-
                                                     default:
                                                         $href = '';
                                                         break;

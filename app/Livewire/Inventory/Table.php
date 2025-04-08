@@ -5,6 +5,7 @@ namespace App\Livewire\Inventory;
 use App\Exports\ProductExport;
 use App\Jobs\Export\ExportProductJob;
 use App\Models\Inventory;
+use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
 use Livewire\WithPagination;
 use Maatwebsite\Excel\Facades\Excel;
@@ -49,7 +50,7 @@ class Table extends Component
     {
         $count = Inventory::count();
         if ($count > 2000) {
-            ExportProductJob::dispatch(auth()->user());
+            ExportProductJob::dispatch(Auth::user());
             $this->dispatch('success', ['message' => 'You will get your file in your mailbox.']);
         } else {
             $exportFileName = 'inventory_'.now()->timestamp.'.xlsx';

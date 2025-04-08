@@ -6,9 +6,12 @@ use App\Models\Inventory;
 use App\Models\InventoryLog;
 use App\Models\Product;
 use Livewire\Component;
+use Livewire\WithPagination;
 
 class View extends Component
 {
+    use WithPagination;
+
     public $product;
 
     public $search = '';
@@ -22,6 +25,8 @@ class View extends Component
     public $sortField = 'inventory_logs.id';
 
     public $sortDirection = 'desc';
+
+    protected $paginationTheme = 'bootstrap';
 
     protected $listeners = [
         'Inventory-Refresh-Component' => '$refresh',

@@ -25,6 +25,13 @@ class UpdateAction
                 $data['updated_by'] = $user_id;
             }
 
+            // if it is edit after complete
+            $oldStatus = $model->status;
+            if ($oldStatus == 'completed') {
+                $this->journalDelete($model, $user_id);
+                $this->stockReversal($model, $user_id);
+            }
+
             validationHelper(Sale::rules($sale_id), $data);
             $model->update($data);
             if ($data['status'] != 'cancelled') {
@@ -70,14 +77,16 @@ class UpdateAction
                     }
                 }
             } else {
-                $response = (new StockUpdateAction())->execute($model, $user_id, false);
+                $response = (new StockUpdateAction())->execute($model, $user_id, 'cancel');
                 if (! $response['success']) {
                     throw new \Exception($response['message'], 1);
                 }
-                if ($model->journal) {
-                    $response = (new DeleteAction())->execute($model->journal->id, $user_id);
-                    if (! $response['success']) {
-                        throw new \Exception($response['message'], 1);
+                if ($model->journals) {
+                    foreach ($model->journals as $journal) {
+                        $response = (new DeleteAction())->execute($journal->id, $user_id);
+                        if (! $response['success']) {
+                            throw new \Exception($response['message'], 1);
+                        }
                     }
                 }
             }
@@ -91,5 +100,22 @@ class UpdateAction
         }
 
         return $return;
+    }
+
+    private function journalDelete($model, $user_id)
+    {
+        $model->journals()->each(function ($journal) use ($user_id) {
+            $journal->entries()->update(['deleted_by' => $user_id]);
+            $journal->entries()->delete();
+            $journal->delete();
+        });
+    }
+
+    private function stockReversal($model, $user_id)
+    {
+        $response = (new StockUpdateAction())->execute($model, $user_id, 'sale_reversal');
+        if (! $response['success']) {
+            throw new \Exception($response['message'], 1);
+        }
     }
 }

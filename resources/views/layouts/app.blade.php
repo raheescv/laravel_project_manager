@@ -51,6 +51,10 @@
         .parent-container {
             width: 100%;
         }
+
+        .item-icon {
+            width: 10%
+        }
     </style>
     <script src="{{ asset('assets/js/jquery-3.7.1.min.js') }}"></script>
     @stack('styles')

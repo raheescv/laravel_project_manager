@@ -7,22 +7,28 @@ use App\Models\Inventory;
 
 class StockUpdateAction
 {
-    public function execute($sale, $user_id, $is_sale = true)
+    public function execute($sale, $user_id, $sale_type = 'sale')
     {
         try {
             foreach ($sale->items as $value) {
-
                 $inventory = Inventory::find($value->inventory_id);
                 if (! $inventory) {
                     throw new \Exception('inventory not found', 1);
                 }
                 $inventory = $inventory->toArray();
-                if ($is_sale) {
-                    $inventory['quantity'] -= $value->quantity;
-                    $inventory['remarks'] = 'Sale:'.$sale->invoice_no;
-                } else {
-                    $inventory['quantity'] += $value->quantity;
-                    $inventory['remarks'] = 'Sale Cancelled:'.$sale->invoice_no;
+                switch ($sale_type) {
+                    case 'sale':
+                        $inventory['quantity'] -= $value->quantity;
+                        $inventory['remarks'] = 'Sale:'.$sale->invoice_no;
+                        break;
+                    case 'cancel':
+                        $inventory['quantity'] += $value->quantity;
+                        $inventory['remarks'] = 'Sale Cancelled:'.$sale->invoice_no;
+                        break;
+                    case 'sale_reversal':
+                        $inventory['quantity'] += $value->quantity;
+                        $inventory['remarks'] = 'Sale Adjustment Reversal:'.$sale->invoice_no;
+                        break;
                 }
                 $inventory['model'] = 'Sale';
                 $inventory['model_id'] = $sale->id;
@@ -32,7 +38,6 @@ class StockUpdateAction
                 if (! $response['success']) {
                     throw new \Exception($response['message'], 1);
                 }
-
             }
             $return['success'] = true;
             $return['message'] = 'Successfully Updated Inventory';

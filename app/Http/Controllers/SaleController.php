@@ -14,6 +14,11 @@ class SaleController extends Controller
         return view('sale.page', compact('id'));
     }
 
+    public function view($id)
+    {
+        return view('sale.view', compact('id'));
+    }
+
     public function receipts()
     {
         return view('sale.receipts');
