@@ -18,6 +18,7 @@
         </div>
     </div>
     <x-account.customer-modal />
+    <x-account.customer-view-modal />
     @if (cache('sale_type') == 'pos')
         <x-sale.custom-payment-modal />
         <x-sale.edit-item-modal />

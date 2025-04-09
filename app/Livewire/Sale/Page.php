@@ -208,6 +208,9 @@ class Page extends Component
             }
             $this->cartCalculator();
             $this->mainCalculator();
+            if (in_array($this->payment_method_name, ['cash', 'card'])) {
+                $this->selectPaymentMethod($this->payment_method_name);
+            }
         }
         if (in_array($key, ['sales.freight'])) {
             if (! is_numeric($value)) {
@@ -614,7 +617,9 @@ class Page extends Component
             $this->sales['status'] = $type;
             $this->sales['items'] = $this->items;
             $this->sales['payments'] = $this->payments;
-
+            if ($this->sales['balance'] < 0) {
+                throw new \Exception('Please check the payment', 1);
+            }
             $user_id = Auth::id();
             if (! $this->table_id) {
                 $response = (new CreateAction())->execute($this->sales, $user_id);
@@ -626,7 +631,6 @@ class Page extends Component
             }
             $table_id = $response['data']['id'];
             $this->mount($this->table_id);
-
             DB::commit();
             if ($this->send_to_whatsapp) {
                 $this->sendToWhatsapp($table_id);

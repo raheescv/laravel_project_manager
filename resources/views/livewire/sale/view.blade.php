@@ -194,7 +194,7 @@
                                 Cancel
                             </button>
                         @endcan
-                        @can('sale.edit')
+                        @can('sale.edit completed')
                             <a href="{{ route('sale::edit', $sales['id']) }}" type="button" class="btn btn-primary">Edit</a>
                         @endcan
                         @can('sale.cancel')

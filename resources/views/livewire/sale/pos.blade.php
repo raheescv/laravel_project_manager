@@ -103,7 +103,7 @@
                                         <div class="col-12 col-sm-12">
                                             <div class="row">
                                                 <div class="col-md-6">
-                                                    <b>Customer <span class="pull-right"> <i class="fa fa-eye"></i> </span></b>
+                                                    <b>Customer <span class="pull-right"> <i id="viewCustomer" class="fa pointer fa-eye"></i> </span></b>
                                                     <div class="input-group mb-3">
                                                         <div wire:ignore class="parent-container">
                                                             {{ html()->select('account_id', $accounts)->value($sales['account_id'])->class('select-customer_id')->id('account_id')->placeholder('Select Customer') }}
@@ -259,6 +259,11 @@
                     'mobile': $('#customer_mobile').val()
                 });
             });
+            $('#viewCustomer').click(function() {
+                Livewire.dispatch("Customer-View-Component", {
+                    'account_id': $('#account_id').val()
+                });
+            });
             window.addEventListener('AddToCustomerSelectBox', event => {
                 var data = event.detail[0];
                 @this.set('sales.account_id', data['id']);
@@ -273,6 +278,10 @@
                 $('#employee_id').on('change', function(e) {
                     const value = $(this).val() || null;
                     @this.set('employee_id', value);
+                });
+                $('#account_id').on('change', function(e) {
+                    const value = $(this).val() || null;
+                    @this.set('sales.account_id', value);
                 });
                 window.addEventListener('OpenEmployeeDropBox', event => {
                     document.querySelector('#employee_id').tomselect.open();
