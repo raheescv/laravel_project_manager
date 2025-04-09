@@ -126,7 +126,7 @@
                 <!-- END : Invoice table -->
                 <div class="row">
                     <div class="col-12 col-md-5 mb-3 mb-md-0">
-                        <h5 class="card-title">Payment</h5>
+                        <h5 class="card-title">Payments</h5>
                         <div class="table-responsive">
                             <table class="table table-striped align-left table-sm w-100">
                                 <thead>
