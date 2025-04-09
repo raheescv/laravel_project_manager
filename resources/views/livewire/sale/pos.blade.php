@@ -77,7 +77,7 @@
                                     <div class="product-wrap">
                                         @foreach ($items as $item)
                                             <div class="product-list d-flex align-items-center justify-content-between @if ($loop->index % 2 != 0) bg-custom-gray @endif">
-                                                <div class="d-flex align-items-center product-info" data-bs-toggle="modal" data-bs-target="#products">
+                                                <div class="d-flex align-items-center product-info">
                                                     <div class="info">
                                                         <h6> {{ $item['name'] }} </h6>
                                                         <p>{{ currency($item['total']) }}</p>
@@ -239,12 +239,17 @@
                         html: message,
                         icon: 'warning',
                         showCancelButton: true,
-                        confirmButtonColor: '#3085d6',
+                        showDenyButton: true,
+                        denyButtonText: `Save & New`,
+                        confirmButtonText: "Save & Print",
+                        confirmButtonColor: '#24447f',
                         cancelButtonColor: '#d33',
-                        confirmButtonText: 'Yes, submit it!'
+                        denyButtonColor: '#0db7f0',
                     }).then((result) => {
                         if (result.isConfirmed) {
-                            @this.call('save');
+                            @this.call('save', 'completed', true);
+                        } else if (result.isDenied) {
+                            @this.call('save', 'completed', false);
                         }
                     });
                 });

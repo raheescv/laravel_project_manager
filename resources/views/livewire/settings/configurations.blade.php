@@ -14,6 +14,12 @@
                         {{ html()->select('payment_methods', $paymentMethods)->value($payment_methods)->class('select-account_id-list')->id('payment_methods')->multiple()->placeholder('Select Any')->attribute('wire:model', 'payment_methods') }}
                     </div>
                 </div>
+                <div class="row mt-4">
+                    <div class="col-md-12" wire:ignore>
+                        <label for="default_payment_method_id">Default Payment Methods</label>
+                        {{ html()->select('default_payment_method_id', $paymentMethods)->value($default_payment_method_id)->class('select-account_id-list')->id('default_payment_method_id')->placeholder('Select Any')->attribute('wire:model', 'default_payment_method_id') }}
+                    </div>
+                </div>
             </div>
             <div class="card-footer"> <br>
                 <button type="submit" class="btn btn-primary">Save</button>
@@ -26,6 +32,10 @@
                 $('#payment_methods').on('change', function(e) {
                     const value = $(this).val() || null;
                     @this.set('payment_methods', value);
+                });
+                $('#default_payment_method_id').on('change', function(e) {
+                    const value = $(this).val() || null;
+                    @this.set('default_payment_method_id', value);
                 });
                 window.addEventListener('SelectPaymentMethodDropDownValues', event => {
                     list = event.detail[0];

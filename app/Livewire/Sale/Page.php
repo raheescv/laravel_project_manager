@@ -10,6 +10,7 @@ use App\Helpers\Facades\SaleHelper;
 use App\Helpers\Facades\WhatsappHelper;
 use App\Models\Account;
 use App\Models\Category;
+use App\Models\Configuration;
 use App\Models\Inventory;
 use App\Models\Product;
 use App\Models\Sale;
@@ -80,10 +81,11 @@ class Page extends Component
             $this->employees = User::employee()->pluck('name', 'id')->toArray();
             $this->employee_id = User::employee()->first(['id'])->id;
         }
-        $this->payment_method_name = '';
+        $this->default_payment_method_id = Configuration::where('key', 'default_payment_method_id')->value('value') ?? 1;
+        $this->payment_method_name = strtolower(Account::find($this->default_payment_method_id)->name);
         $this->payment = [
             'payment_method_id' => $this->default_payment_method_id,
-            'payment_method_name' => '',
+            'payment_method_name' => $this->payment_method_name,
             'amount' => 0,
             'name' => null,
         ];
@@ -120,6 +122,15 @@ class Page extends Component
                 ];
             })->toArray();
             $this->payments = $this->sale->payments->map->only(['id', 'amount', 'date', 'payment_method_id', 'created_by', 'name'])->toArray();
+            if (count($this->payments) > 1) {
+                $this->payment_method_name = 'custom';
+            }
+            if (count($this->payments) == 1) {
+                $this->payment_method_name = strtolower($this->payments[0]['name']);
+                if (! in_array($this->payment_method_name, ['cash', 'card'])) {
+                    $this->payment_method_name = 'custom';
+                }
+            }
             $this->mainCalculator();
 
         } else {
@@ -588,7 +599,7 @@ class Page extends Component
         ]);
     }
 
-    public function save($type = 'completed')
+    public function save($type = 'completed', $print = true)
     {
         $this->validate();
         try {
@@ -618,7 +629,7 @@ class Page extends Component
                 $this->sendToWhatsapp($table_id);
             }
             if ($type == 'completed') {
-                $this->dispatch('print-invoice', ['link' => route('print::sale::invoice', $response['data']['id'])]);
+                $this->dispatch('print-invoice', ['link' => route('print::sale::invoice', $response['data']['id']), 'print' => $print]);
             }
             $this->dispatch('ResetSelectBox');
             $this->dispatch('success', ['message' => $response['message']]);

@@ -13,12 +13,15 @@ class Configurations extends Component
 
     public $payment_methods;
 
+    public $default_payment_method_id;
+
     public $paymentMethods;
 
     public function mount()
     {
         $this->barcode_type = Configuration::where('key', 'barcode_type')->value('value');
         $this->payment_methods = Configuration::where('key', 'payment_methods')->value('value');
+        $this->default_payment_method_id = Configuration::where('key', 'default_payment_method_id')->value('value') ?? 1;
         $this->payment_methods = json_decode($this->payment_methods, 1);
         $this->paymentMethods = [];
         if ($this->payment_methods) {
@@ -28,6 +31,7 @@ class Configurations extends Component
 
     public function save()
     {
+        Configuration::updateOrCreate(['key' => 'default_payment_method_id'], ['value' => $this->default_payment_method_id]);
         Configuration::updateOrCreate(['key' => 'barcode_type'], ['value' => $this->barcode_type]);
         Configuration::updateOrCreate(['key' => 'payment_methods'], ['value' => json_encode($this->payment_methods)]);
         Cache::forget('payment_methods');

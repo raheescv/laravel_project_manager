@@ -35,27 +35,13 @@
         <script>
             document.addEventListener('DOMContentLoaded', function() {
                 window.addEventListener('print-invoice', function(event) {
-                    Swal.fire({
-                        title: "<strong>Submitted successfully",
-                        icon: "success",
-                        html: `Do you want to Print Receipt for the this Order`,
-                        showCloseButton: true,
-                        showCancelButton: true,
-                        focusConfirm: false,
-                        confirmButtonText: ` Print Receipt `,
-                        cancelButtonText: ` Next Order `,
-                        cancelButtonAriaLabel: "Thumbs down"
-                    }).then((result) => {
-                        console.log(result);
-                        if (result.isConfirmed) {
-                            window.open(event.detail[0].link);
-                        }
-                        if (result.isDismissed) {
-                            @if ($id)
-                                window.location.href = "{{ route('sale::create') }}";
-                            @endif
-                        }
-                    });
+                    if (event.detail[0].print) {
+                        window.open(event.detail[0].link);
+                    } else {
+                        @if ($id)
+                            window.location.href = "{{ route('sale::create') }}";
+                        @endif
+                    }
                 });
             });
         </script>

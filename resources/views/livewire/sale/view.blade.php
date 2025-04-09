@@ -54,7 +54,8 @@
                 <!-- END : Invoice info -->
 
                 <!-- Invoice table -->
-                <div class="table-responsive mt-4">
+                <h5 class="card-title">Items</h5>
+                <div class="table-responsive">
                     <table class="table table-striped table-sm align-middle">
                         <thead>
                             <tr class="bg-primary">
@@ -125,22 +126,25 @@
                 <!-- END : Invoice table -->
                 <div class="row">
                     <div class="col-12 col-md-5 mb-3 mb-md-0">
-                        <table class="table table-striped align-left table-sm w-100">
-                            <thead>
-                                <tr class="bg-primary">
-                                    <th class="text-white">Payment Method</th>
-                                    <th class="text-white text-end">Amount</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @foreach ($payments as $key => $item)
-                                    <tr>
-                                        <td>{{ $item['name'] }}</td>
-                                        <td class="text-end">{{ currency($item['amount']) }}</td>
+                        <h5 class="card-title">Payment</h5>
+                        <div class="table-responsive">
+                            <table class="table table-striped align-left table-sm w-100">
+                                <thead>
+                                    <tr class="bg-primary">
+                                        <th class="text-white">Payment Method</th>
+                                        <th class="text-white text-end">Amount</th>
                                     </tr>
-                                @endforeach
-                            </tbody>
-                        </table>
+                                </thead>
+                                <tbody>
+                                    @foreach ($payments as $key => $item)
+                                        <tr>
+                                            <td>{{ $item['name'] }}</td>
+                                            <td class="text-end">{{ currency($item['amount']) }}</td>
+                                        </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                     <div class="col-12 offset-md-3 col-md-4">
                         <ul class="list-group list-group-borderless">
