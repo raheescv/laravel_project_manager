@@ -39,7 +39,7 @@ class CustomPayment extends Component
         $this->payment = [
             'payment_method_id' => $this->default_payment_method_id,
             'payment_method_name' => '',
-            'amount' => $sales['grand_total'],
+            'amount' => $sales['balance'],
             'name' => null,
         ];
     }

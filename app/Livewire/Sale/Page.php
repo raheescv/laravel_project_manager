@@ -350,6 +350,9 @@ class Page extends Component
         $this->employee_id = $this->employee->id;
         $this->addToCart($inventory);
         $this->cartCalculator($this->employee_id.'-'.$inventory->id);
+        if (in_array($this->payment_method_name, ['cash', 'card'])) {
+            $this->selectPaymentMethod($this->payment_method_name);
+        }
         // $this->dispatch('OpenProductBox');
     }
 
