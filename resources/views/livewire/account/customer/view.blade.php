@@ -105,10 +105,13 @@
                                             </div>
                                             <div class="flex-grow-1 ms-4">
                                                 <h5 class="h2 mb-0">{{ currency($total_sales?->balance) }}</h5>
-                                                <p class="text-white text-opacity-75 mb-0">Balance</p>
+                                                <p class="text-white text-opacity-75 mb-0">Outstanding</p>
                                             </div>
                                         </div>
                                         <div class="progress progress-md mb-2">
+                                            @php
+                                                $percentage = $total_sales?->grand_total ? round(($total_sales?->balance / $total_sales?->grand_total) * 100) : 0;
+                                            @endphp
                                             <div class="progress-bar bg-white" role="progressbar" style="width: {{ $percentage }}%;" aria-valuenow="{{ $percentage }}" aria-valuemin="0"
                                                 aria-valuemax="100">
                                             </div>
