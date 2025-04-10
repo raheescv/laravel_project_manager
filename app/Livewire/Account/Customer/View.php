@@ -5,6 +5,7 @@ namespace App\Livewire\Account\Customer;
 use App\Models\Account;
 use App\Models\Sale;
 use App\Models\SaleItem;
+use Illuminate\Support\Facades\DB;
 use Livewire\Component;
 
 class View extends Component
@@ -19,12 +20,15 @@ class View extends Component
 
     public $sale_items;
 
+    public $rahees;
+
     public $item_count;
 
     public $accounts;
 
     public function view($account_id)
     {
+        $this->total_sales = [];
         $this->mount($account_id);
         $this->dispatch('ToggleCustomerViewModal');
     }
@@ -32,12 +36,11 @@ class View extends Component
     public function mount($account_id = null)
     {
         if ($account_id) {
-            $account = Account::find($account_id);
-            $this->accounts = $account->toArray();
-            $this->total_sales = Sale::where('account_id', $account_id)->groupBy('account_id')
-                ->selectRaw('sum(grand_total) as grand_total')
-                ->selectRaw('sum(paid) as paid')
-                ->selectRaw('sum(balance) as balance')
+            $this->accounts = Account::find($account_id)->toArray();
+            $this->total_sales = DB::table('sales')
+                ->where('account_id', $account_id)
+                ->selectRaw('account_id, SUM(grand_total) AS grand_total, SUM(paid) AS paid, SUM(balance) AS balance')
+                ->groupBy('account_id')
                 ->first();
             $this->sales = Sale::where('account_id', $account_id)
                 ->limit(20)

@@ -5,21 +5,33 @@
     </div>
     <div class="modal-body">
         <div class="row mb-2">
-            <div class="table-responsive">
-                <table class="table table-striped align-middle table-sm table-bordered">
-                    <tr>
-                        <th>Name</th>
-                        <td>{{ $accounts['name'] ?? '' }}</td>
-                    </tr>
-                    <tr>
-                        <th>Mobile</th>
-                        <td>{{ $accounts['mobile'] ?? '' }}</td>
-                    </tr>
-                    <tr>
-                        <th>Email</th>
-                        <td>{{ $accounts['email'] ?? '' }}</td>
-                    </tr>
-                </table>
+            <div class="col-md-6">
+                <div class="d-flex align-items-center position-relative hv-grow-parent hv-outline-parent">
+                    <div class="flex-shrink-0">
+                        <img class="hv-gc hv-oc img-lg rounded-circle" src="{{ asset('assets/img/profile-photos/1.png') }}" alt="Profile Picture" loading="lazy">
+                    </div>
+                    <div class="flex-grow-1 ms-3">
+                        <a href="#" class="d-block stretched-link h5 link-offset-2-hover text-decoration-none link-underline-hover mb-0">
+                            {{ $accounts['name'] ?? '' }}
+                        </a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="d-flex align-items-center position-relative hv-grow-parent hv-outline-parent">
+                    <div class="flex-grow-1 ms-3">
+                        <ul class="list-group list-group-borderless">
+                            <li class="list-group-item d-flex justify-content-between align-items-center py-2">
+                                <div class="me-5 mb-0 h5">Mobile</div>
+                                <span class="ms-auto h5 mb-0">{{ $accounts['mobile'] ?? '' }}</span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between align-items-center py-2">
+                                <div class="me-5 mb-0 h5">Email</div>
+                                <span class="ms-auto h5 mb-0">{{ $accounts['email'] ?? '' }}</span>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
             </div>
         </div>
         <div class="row">
@@ -40,40 +52,71 @@
                 </ul>
                 <div class="tab-content">
                     <div id="tab-Sales" class="tab-pane fade active show" role="tabpanel" aria-labelledby="home-tab">
-                        @if ($total_sales)
-                            <div class="row">
-                                <div class="col-md-4">
-                                    <div class="card text-bg-info mb-3 mb-xl-3">
-                                        <div class="card-body py-3 d-flex align-items-stretch">
-                                            <div class="flex-grow-1 ms-3">
-                                                <h5 class="h2 mb-0">{{ currency($total_sales['grand_total']) }}</h5>
-                                                <p class="mb-0">Total Sale</p>
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="card bg-info text-white mb-3 mb-xl-3">
+                                    <div class="card-body py-3">
+                                        <div class="d-flex align-items-center mb-3">
+                                            <div class="flex-shrink-0">
+                                                <i class="d-flex align-items-center justify-content-center demo-pli-add-cart display-5"></i>
+                                            </div>
+                                            <div class="flex-grow-1 ms-4">
+                                                <h5 class="h2 mb-0">{{ currency($total_sales?->grand_total) }}</h5>
+                                                <p class="text-white text-opacity-75 mb-0">Total Sale</p>
                                             </div>
                                         </div>
-                                    </div>
-                                </div>
-                                <div class="col-md-4">
-                                    <div class="card text-bg-success mb-3 mb-xl-3">
-                                        <div class="card-body py-3 d-flex align-items-stretch">
-                                            <div class="flex-grow-1 ms-3">
-                                                <h5 class="h2 mb-0">{{ currency($total_sales['paid']) }}</h5>
-                                                <p class="mb-0">Paid</p>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="col-md-4">
-                                    <div class="card text-bg-warning mb-3 mb-xl-3">
-                                        <div class="card-body py-3 d-flex align-items-stretch">
-                                            <div class="flex-grow-1 ms-3">
-                                                <h5 class="h2 mb-0">{{ currency($total_sales['balance']) }}</h5>
-                                                <p class="mb-0">Balance</p>
+                                        @php
+                                            $percentage = $total_sales?->grand_total ? round(($total_sales?->paid / $total_sales?->grand_total) * 100) : 0;
+                                        @endphp
+                                        <div class="progress progress-md mb-2">
+                                            <div class="progress-bar bg-white" role="progressbar" style="width: {{ $percentage }}%;" aria-valuenow="{{ $percentage }}" aria-valuemin="0"
+                                                aria-valuemax="100">
                                             </div>
                                         </div>
                                     </div>
                                 </div>
                             </div>
-                        @endif
+                            <div class="col-md-4">
+                                <div class="card bg-success text-white mb-3 mb-xl-3">
+                                    <div class="card-body py-3">
+                                        <div class="d-flex align-items-center mb-3">
+                                            <div class="flex-shrink-0">
+                                                <i class="d-flex align-items-center justify-content-center pli-money-2 display-5"></i>
+                                            </div>
+                                            <div class="flex-grow-1 ms-4">
+                                                <h5 class="h2 mb-0">{{ currency($total_sales?->paid) }}</h5>
+                                                <p class="text-white text-opacity-75 mb-0">Paid</p>
+                                            </div>
+                                        </div>
+                                        <div class="progress progress-md mb-2">
+                                            <div class="progress-bar bg-white" role="progressbar" style="width: {{ $percentage }}%;" aria-valuenow="{{ $percentage }}" aria-valuemin="0"
+                                                aria-valuemax="100">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="card bg-warning text-white mb-3 mb-xl-3">
+                                    <div class="card-body py-3">
+                                        <div class="d-flex align-items-center mb-3">
+                                            <div class="flex-shrink-0">
+                                                <i class="d-flex align-items-center justify-content-center pli-money display-5"></i>
+                                            </div>
+                                            <div class="flex-grow-1 ms-4">
+                                                <h5 class="h2 mb-0">{{ currency($total_sales?->balance) }}</h5>
+                                                <p class="text-white text-opacity-75 mb-0">Balance</p>
+                                            </div>
+                                        </div>
+                                        <div class="progress progress-md mb-2">
+                                            <div class="progress-bar bg-white" role="progressbar" style="width: {{ $percentage }}%;" aria-valuenow="{{ $percentage }}" aria-valuemin="0"
+                                                aria-valuemax="100">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                         <p>Last 20 Sales List</p>
                         <table class="table table-striped table-sm table-bordered">
                             <thead>
