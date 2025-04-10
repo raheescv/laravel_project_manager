@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Sale;
 
+use App\Actions\Sale\Item\DeleteAction;
 use Livewire\Component;
 
 class ViewItems extends Component
@@ -66,6 +67,24 @@ class ViewItems extends Component
     {
         $this->dispatch('Sale-Edited-Items-Component', $this->items);
         $this->dispatch('ToggleViewItemsModal');
+    }
+
+    public function removeItem($index)
+    {
+        try {
+            $id = $this->items[$index]['id'] ?? '';
+            if ($id) {
+                $response = (new DeleteAction())->execute($id);
+                if (! $response['success']) {
+                    throw new \Exception($response['message'], 1);
+                }
+            }
+            unset($this->items[$index]);
+            $this->dispatch('Sale-Delete-Sync-Items-Component', $index);
+            $this->dispatch('success', ['message' => 'item removed successfully']);
+        } catch (\Throwable $th) {
+            $this->dispatch('error', ['message' => $th->getMessage()]);
+        }
     }
 
     public function render()

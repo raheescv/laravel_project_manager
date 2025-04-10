@@ -23,8 +23,10 @@ class Page extends Component
 {
     protected $listeners = [
         'Sale-Custom-Payment-Confirmed' => 'collectPayments',
+        'Sale-Edited-Items-Component' => 'editedItems',
         'Sale-Edited-Item-Component' => 'editedItem',
         'Sale-selectItem-Component' => 'selectItem',
+        'Sale-Delete-Sync-Items-Component' => 'removeSyncItemFromViewItem',
     ];
 
     public $categories;
@@ -416,6 +418,12 @@ class Page extends Component
         $this->singleCartCalculator($key);
         $this->mainCalculator();
         // $this->dispatch('success', ['message' => 'item added successfully']);
+    }
+
+    public function removeSyncItemFromViewItem($index)
+    {
+        unset($this->items[$index]);
+        $this->mainCalculator();
     }
 
     public function removeItem($index)

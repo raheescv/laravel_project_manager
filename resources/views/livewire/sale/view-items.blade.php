@@ -12,9 +12,7 @@
                             <th class="text-end">Discount</th>
                             <th class="text-end">Tax %</th>
                             <th class="text-end">Total</th>
-                            @if ($status == 'draft')
-                                <th>Action </th>
-                            @endif
+                            <th>Action </th>
                         </tr>
                     </thead>
                     <tbody>
@@ -38,34 +36,24 @@
                             </tr>
                             @foreach ($groupedItems as $item)
                                 <tr>
-                                    @if ($status == 'draft')
-                                        <td>{{ $loop->iteration }}</td>
-                                        <td>{{ $item['name'] }}</td>
-                                        <td>
-                                            {{ html()->number('unit_price')->value($item['unit_price'])->class('input-xs number select_on_focus transparent_border_input')->attribute('style', 'width:100%')->attribute('wire:model.live', 'items.' . $item['key'] . '.unit_price') }}
-                                        </td>
-                                        <td>
-                                            {{ html()->number('quantity')->value($item['quantity'])->attribute('min', 1)->class('input-xs number select_on_focus transparent_border_input')->attribute('style', 'width:100%')->attribute('wire:model.live', 'items.' . $item['key'] . '.quantity') }}
-                                        </td>
-                                        <td>
-                                            {{ html()->number('discount')->value($item['discount'])->class('input-xs number select_on_focus transparent_border_input')->attribute('style', 'width:100%')->attribute('wire:model.live', 'items.' . $item['key'] . '.discount') }}
-                                        </td>
-                                        <td>
-                                            {{ html()->number('tax')->value($item['tax'])->attribute('max', '50')->class('input-xs number select_on_focus transparent_border_input')->attribute('style', 'width:100%')->attribute('wire:model.live', 'items.' . $item['key'] . '.tax') }}
-                                        </td>
-                                        <td class="text-end"> {{ currency($item['total']) }} </td>
-                                    @else
-                                        <td class="text-end">{{ currency($item['unit_price']) }}</td>
-                                        <td class="text-end">{{ currency($item['quantity']) }}</td>
-                                        <td class="text-end">{{ currency($item['discount']) }}</td>
-                                        <td class="text-end">{{ currency($item['tax']) }}</td>
-                                        <td class="text-end"> {{ currency($item['total']) }} </td>
-                                    @endif
-                                    @if ($status == 'draft')
-                                        <td>
-                                            <i wire:click="removeItem('{{ $item['key'] }}')" wire:confirm="Are your sure?" class="demo-pli-recycling fs-5 me-2 pointer"></i>
-                                        </td>
-                                    @endif
+                                    <td>{{ $loop->iteration }}</td>
+                                    <td>{{ $item['name'] }}</td>
+                                    <td>
+                                        {{ html()->number('unit_price')->value($item['unit_price'])->class('input-xs number select_on_focus transparent_border_input')->attribute('style', 'width:100%')->attribute('wire:model.live', 'items.' . $item['key'] . '.unit_price') }}
+                                    </td>
+                                    <td>
+                                        {{ html()->number('quantity')->value($item['quantity'])->attribute('min', 1)->class('input-xs number select_on_focus transparent_border_input')->attribute('style', 'width:100%')->attribute('wire:model.live', 'items.' . $item['key'] . '.quantity') }}
+                                    </td>
+                                    <td>
+                                        {{ html()->number('discount')->value($item['discount'])->class('input-xs number select_on_focus transparent_border_input')->attribute('style', 'width:100%')->attribute('wire:model.live', 'items.' . $item['key'] . '.discount') }}
+                                    </td>
+                                    <td>
+                                        {{ html()->number('tax')->value($item['tax'])->attribute('max', '50')->class('input-xs number select_on_focus transparent_border_input')->attribute('style', 'width:100%')->attribute('wire:model.live', 'items.' . $item['key'] . '.tax') }}
+                                    </td>
+                                    <td class="text-end"> {{ currency($item['total']) }} </td>
+                                    <td>
+                                        <i wire:click="removeItem('{{ $item['key'] }}')" wire:confirm="Are your sure?" class="demo-pli-recycling fs-5 me-2 pointer"></i>
+                                    </td>
                                 </tr>
                             @endforeach
                         @endforeach
