@@ -43,7 +43,11 @@
                 var url = "{{ route('account::list') }}";
                 url += '?query=' + encodeURIComponent(query);
                 url += '&model=customer';
-                fetch(url)
+                fetch(url, {
+                        headers: {
+                            'Cache-Control': 'no-cache',
+                        }
+                    })
                     .then(response => {
                         if (!response.ok) throw new Error('Network response was not ok');
                         return response.json();
