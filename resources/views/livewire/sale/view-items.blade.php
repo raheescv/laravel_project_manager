@@ -35,7 +35,7 @@
                                 <th colspan="8">{{ $first['employee_name'] }}</th>
                             </tr>
                             @foreach ($groupedItems as $item)
-                                <tr>
+                                <tr wire:key="item-{{ $item['key'] }}">
                                     <td>{{ $loop->iteration }}</td>
                                     <td>{{ $item['name'] }}</td>
                                     <td>
