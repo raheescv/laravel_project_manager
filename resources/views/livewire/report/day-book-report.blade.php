@@ -65,6 +65,10 @@
                                         <a href="{{ route('sale::view', $item->model_id) }}">{{ $item->description }}</a>
                                     @break
 
+                                    @case('SaleReturn')
+                                        <a href="{{ route('sale_return::view', $item->model_id) }}">{{ $item->description }}</a>
+                                    @break
+
                                     @default
                                         {{ $item->description }}
                                 @endswitch

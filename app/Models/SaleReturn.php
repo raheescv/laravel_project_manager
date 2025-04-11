@@ -6,56 +6,39 @@ use App\Models\Models\Views\Ledger;
 use App\Models\Scopes\AssignedBranchScope;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use Illuminate\Validation\Rule;
 use OwenIt\Auditing\Auditable;
 use OwenIt\Auditing\Contracts\Auditable as AuditableContracts;
 
-class Sale extends Model implements AuditableContracts
+class SaleReturn extends Model implements AuditableContracts
 {
     use Auditable;
     use SoftDeletes;
 
     protected $fillable = [
-        'invoice_no',
         'reference_no',
-        'sale_type',
-
         'branch_id',
         'account_id',
         'date',
-        'due_date',
-
-        'customer_name',
-        'customer_mobile',
-
         'gross_amount',
         'item_discount',
         'tax_amount',
-
         'total',
-
         'other_discount',
-        'freight',
 
         'paid',
 
-        'address',
-
+        'description',
         'status',
-
         'created_by',
         'updated_by',
-        'cancelled_by',
         'deleted_by',
     ];
 
     public static function rules($id = 0, $merge = [])
     {
         return array_merge([
-            'invoice_no' => ['required', Rule::unique(self::class, 'invoice_no')->ignore($id)],
             'branch_id' => ['required'],
             'account_id' => ['required'],
-            'sale_type' => ['required'],
             'date' => ['required'],
         ], $merge);
     }
@@ -105,58 +88,23 @@ class Sale extends Model implements AuditableContracts
         return $this->belongsTo(User::class, 'updated_by');
     }
 
-    public function cancelledUser()
-    {
-        return $this->belongsTo(User::class, 'cancelled_by');
-    }
-
     public function items()
     {
-        return $this->hasMany(SaleItem::class);
-    }
-
-    public function payments()
-    {
-        return $this->hasMany(SalePayment::class);
+        return $this->hasMany(SaleReturnItem::class);
     }
 
     public function journal()
     {
-        return $this->hasOne(Journal::class, 'model_id')->where('model', 'Sale');
+        return $this->hasOne(Journal::class, 'model_id')->where('model', 'SaleReturn');
     }
 
     public function journals()
     {
-        return $this->hasMany(Journal::class, 'model_id')->where('model', 'Sale');
+        return $this->hasMany(Journal::class, 'model_id')->where('model', 'SaleReturn');
     }
 
     public function ledgers()
     {
-        return $this->hasMany(Ledger::class, 'model_id')->where('model', 'Sale');
-    }
-
-    public function getDropDownList($request)
-    {
-        $self = self::orderBy('invoice_no');
-        $self = $self->when($request['query'] ?? '', function ($query, $value) {
-            return $query->where(function ($q) use ($value): void {
-                $value = trim($value);
-                $q->where('sales.invoice_no', 'like', "%{$value}%")
-                    ->orWhere('sales.reference_no', 'like', "%{$value}%");
-            });
-        });
-        $self = $self->when($request['account_id'] ?? '', function ($query, $value) {
-            return $query->where('account_id', $value);
-        });
-        $self = $self->limit(10);
-        $self = $self->get(['invoice_no', 'reference_no', 'id'])->toArray();
-        array_unshift($self, [
-            'invoice_no' => 'General',
-            'reference_no' => null,
-            'id' => 0,
-        ]);
-        $return['items'] = $self;
-
-        return $return;
+        return $this->hasMany(Ledger::class, 'model_id')->where('model', 'SaleReturn');
     }
 }

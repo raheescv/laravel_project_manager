@@ -218,6 +218,15 @@ if (! function_exists('saleStatuses')) {
         ];
     }
 }
+if (! function_exists('saleReturnStatuses')) {
+    function saleReturnStatuses()
+    {
+        return [
+            'draft' => 'Draft',
+            'completed' => 'Completed',
+        ];
+    }
+}
 
 if (! function_exists('purchaseStatuses')) {
     function purchaseStatuses()

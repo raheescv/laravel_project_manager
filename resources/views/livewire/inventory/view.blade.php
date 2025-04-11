@@ -212,6 +212,9 @@
                                                     case 'Sale':
                                                         $href = route('sale::view', $item->model_id);
                                                         break;
+                                                    case 'SaleReturn':
+                                                        $href = route('sale_return::view', $item->model_id);
+                                                        break;
                                                     default:
                                                         $href = '';
                                                         break;

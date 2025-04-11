@@ -38,6 +38,20 @@ class ConfigurationSeeder extends Seeder
         ];
         Configuration::updateOrCreate(['key' => 'sale_visible_column'], ['value' => json_encode($saleVisibleColumns)]);
 
+        $saleReturnVisibleColumns = [
+            'reference_no' => true,
+            'branch_id' => false,
+            'customer' => true,
+            'gross_amount' => true,
+            'item_discount' => false,
+            'tax_amount' => false,
+            'total' => false,
+            'other_discount' => true,
+            'grand_total' => true,
+            'status' => false,
+        ];
+        Configuration::updateOrCreate(['key' => 'sale_return_visible_column'], ['value' => json_encode($saleReturnVisibleColumns)]);
+
         $purchaseVisibleColumns = [
             'branch_id' => false,
             'vendor' => true,
