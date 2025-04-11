@@ -8,6 +8,8 @@ use App\Actions\Sale\Item\UpdateAction as ItemUpdateAction;
 use App\Actions\Sale\Payment\CreateAction as PaymentCreateAction;
 use App\Actions\Sale\Payment\UpdateAction as PaymentUpdateAction;
 use App\Models\Sale;
+use Exception;
+use Illuminate\Support\Facades\Auth;
 
 class UpdateAction
 {
@@ -16,7 +18,7 @@ class UpdateAction
         try {
             $model = Sale::find($sale_id);
             if (! $model) {
-                throw new \Exception("Resource not found with the specified ID: $sale_id.", 1);
+                throw new Exception("Resource not found with the specified ID: $sale_id.", 1);
             }
 
             if ($data['status'] == 'cancelled') {
@@ -28,8 +30,17 @@ class UpdateAction
             // if it is edit after complete
             $oldStatus = $model->status;
             if ($oldStatus == 'completed') {
-                $this->journalDelete($model, $user_id);
-                $this->stockReversal($model, $user_id);
+                if (! Auth::user()->can('sale.edit completed')) {
+                    throw new Exception("You don't have permission to edit it.", 1);
+                }
+                $response = (new JournalDeleteAction())->execute($model, $user_id);
+                if (! $response['success']) {
+                    throw new Exception($response['message'], 1);
+                }
+                $response = (new StockUpdateAction())->execute($model, $user_id, 'sale_reversal');
+                if (! $response['success']) {
+                    throw new Exception($response['message'], 1);
+                }
             }
 
             validationHelper(Sale::rules($sale_id), $data);
@@ -46,7 +57,7 @@ class UpdateAction
                     }
 
                     if (! $response['success']) {
-                        throw new \Exception($response['message'], 1);
+                        throw new Exception($response['message'], 1);
                     }
                 }
 
@@ -61,31 +72,31 @@ class UpdateAction
                     }
 
                     if (! $response['success']) {
-                        throw new \Exception($response['message'], 1);
+                        throw new Exception($response['message'], 1);
                     }
                 }
 
                 if ($model['status'] == 'completed') {
                     $response = (new StockUpdateAction())->execute($model, $user_id);
                     if (! $response['success']) {
-                        throw new \Exception($response['message'], 1);
+                        throw new Exception($response['message'], 1);
                     }
                     $model->refresh();
                     $response = (new JournalEntryAction())->execute($model, $user_id);
                     if (! $response['success']) {
-                        throw new \Exception($response['message'], 1);
+                        throw new Exception($response['message'], 1);
                     }
                 }
             } else {
                 $response = (new StockUpdateAction())->execute($model, $user_id, 'cancel');
                 if (! $response['success']) {
-                    throw new \Exception($response['message'], 1);
+                    throw new Exception($response['message'], 1);
                 }
                 if ($model->journals) {
                     foreach ($model->journals as $journal) {
                         $response = (new DeleteAction())->execute($journal->id, $user_id);
                         if (! $response['success']) {
-                            throw new \Exception($response['message'], 1);
+                            throw new Exception($response['message'], 1);
                         }
                     }
                 }
@@ -100,22 +111,5 @@ class UpdateAction
         }
 
         return $return;
-    }
-
-    private function journalDelete($model, $user_id)
-    {
-        $model->journals()->each(function ($journal) use ($user_id) {
-            $journal->entries()->update(['deleted_by' => $user_id]);
-            $journal->entries()->delete();
-            $journal->delete();
-        });
-    }
-
-    private function stockReversal($model, $user_id)
-    {
-        $response = (new StockUpdateAction())->execute($model, $user_id, 'sale_reversal');
-        if (! $response['success']) {
-            throw new \Exception($response['message'], 1);
-        }
     }
 }

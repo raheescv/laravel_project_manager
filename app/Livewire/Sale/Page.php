@@ -15,6 +15,7 @@ use App\Models\Inventory;
 use App\Models\Product;
 use App\Models\Sale;
 use App\Models\User;
+use Exception;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Livewire\Component;
@@ -433,7 +434,7 @@ class Page extends Component
             if ($id) {
                 $response = (new ItemDeleteAction())->execute($id);
                 if (! $response['success']) {
-                    throw new \Exception($response['message'], 1);
+                    throw new Exception($response['message'], 1);
                 }
             }
             unset($this->items[$index]);
@@ -452,7 +453,7 @@ class Page extends Component
                 if ($id) {
                     $response = (new ItemDeleteAction())->execute($id);
                     if (! $response['success']) {
-                        throw new \Exception($response['message'], 1);
+                        throw new Exception($response['message'], 1);
                     }
                 }
             }
@@ -471,7 +472,7 @@ class Page extends Component
             if ($id) {
                 $response = (new PaymentDeleteAction())->execute($id);
                 if (! $response['success']) {
-                    throw new \Exception($response['message'], 1);
+                    throw new Exception($response['message'], 1);
                 }
             }
             unset($this->payments[$index]);
@@ -620,13 +621,13 @@ class Page extends Component
             $oldStatus = $this->sales['status'];
             DB::beginTransaction();
             if (! count($this->items)) {
-                throw new \Exception('Please add any item', 1);
+                throw new Exception('Please add any item', 1);
             }
             $this->sales['status'] = $type;
             $this->sales['items'] = $this->items;
             $this->sales['payments'] = $this->payments;
             if ($this->sales['balance'] < 0) {
-                throw new \Exception('Please check the payment', 1);
+                throw new Exception('Please check the payment', 1);
             }
             $user_id = Auth::id();
             if (! $this->table_id) {
@@ -635,7 +636,7 @@ class Page extends Component
                 $response = (new UpdateAction())->execute($this->sales, $this->table_id, $user_id);
             }
             if (! $response['success']) {
-                throw new \Exception($response['message'], 1);
+                throw new Exception($response['message'], 1);
             }
             $table_id = $response['data']['id'];
             $this->mount($this->table_id);
