@@ -28,7 +28,7 @@
                 </div>
                 <div class="col-md-2">
                     <label for="to_date">To Date</label>
-                    {{ html()->date('to_date')->value('')->class('form-control')->id('from_date')->attribute('wire:model.live', 'from_date') }}
+                    {{ html()->date('to_date')->value('')->class('form-control')->id('to_date')->attribute('wire:model.live', 'to_date') }}
                 </div>
                 <div class="col-md-2" wire:ignore>
                     <label for="branch_id">Branch</label>
@@ -105,6 +105,10 @@
                 $('#product_id').on('change', function(e) {
                     const value = $(this).val() || null;
                     @this.set('product_id', value);
+                });
+                $('#branch_id').on('change', function(e) {
+                    const value = $(this).val() || null;
+                    @this.set('branch_id', value);
                 });
                 $('#employee_id').on('change', function(e) {
                     const value = $(this).val() || null;
