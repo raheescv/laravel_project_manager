@@ -97,7 +97,7 @@
                                         <td class="text-end">{{ currency($item['unit_price']) }}</td>
                                         <td class="text-end">{{ currency($item['quantity']) }}</td>
                                         <td class="text-end">{{ currency($item['discount']) }}</td>
-                                        <td class="text-end">{{ currency($item['tax']) }}</td>
+                                        <td class="text-end">{{ currency($item['tax_amount']) }} ({{ round($item['tax'], 2) }}%)</td>
                                         <td class="text-end"> {{ currency($item['total']) }} </td>
                                         @if ($sales['other_discount'] > 0)
                                             <td class="text-end"> {{ currency($item['effective_total']) }} </td>
