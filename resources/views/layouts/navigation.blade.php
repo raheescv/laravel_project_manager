@@ -224,6 +224,21 @@
                             </ul>
                         </li>
                     @endif
+                    @if (auth()->user()->can('log.inventory'))
+                        <li class="nav-item has-sub">
+                            <a href="#" class="mininav-toggle nav-link {{ request()->is(['log/inventory']) ? 'active' : '' }}"><i class="demo-pli-split-vertical-2 fs-5 me-2"></i>
+                                <span class="nav-label ms-1">Log</span>
+                            </a>
+                            <ul class="mininav-content nav collapse">
+                                <li data-popper-arrow class="arrow"></li>
+                                @can('employee.view')
+                                    <li class="nav-item">
+                                        <a href="{{ route('log::inventory') }}" class="nav-link {{ request()->is(['log/inventory']) ? 'active' : '' }}">Inventory</a>
+                                    </li>
+                                @endcan
+                            </ul>
+                        </li>
+                    @endif
                 </ul>
             </div>
         </div>

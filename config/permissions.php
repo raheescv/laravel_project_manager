@@ -19,4 +19,5 @@ return [
     'department' => ['create', 'view', 'edit', 'delete'],
     'whatsapp' => ['integration'],
     'report' => ['sale item', 'sale return item', 'day book', 'purchase item'],
+    'log' => ['inventory'],
 ];

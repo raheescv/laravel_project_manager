@@ -1,9 +1,15 @@
 <?php
 
+use App\Http\Controllers\LogController;
 use App\Http\Controllers\ReportController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware('auth')->group(function (): void {
+    Route::name('log::')->prefix('log')
+        ->controller(LogController::class)->group(function (): void {
+            Route::get('inventory', 'inventory')->name('inventory')->can('log.inventory');
+        });
+
     Route::name('report::')->prefix('report')
         ->controller(ReportController::class)->group(function (): void {
             Route::get('sale_item', 'sale_item')->name('sale_item');
