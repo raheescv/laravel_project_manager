@@ -36,7 +36,7 @@ class Inventory extends Component
     {
         $this->from_date = date('Y-m-1');
         $this->to_date = date('Y-m-d');
-        // $this->branch_id = session('branch_id');
+        $this->branch_id = session('branch_id');
 
     }
 
