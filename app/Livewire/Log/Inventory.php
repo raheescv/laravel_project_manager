@@ -34,7 +34,7 @@ class Inventory extends Component
 
     public function mount()
     {
-        $this->from_date = date('Y-m-1');
+        $this->from_date = date('Y-m-d');
         $this->to_date = date('Y-m-d');
         $this->branch_id = session('branch_id');
 
