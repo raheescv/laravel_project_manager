@@ -5,6 +5,8 @@ namespace App\Actions\SaleReturn;
 use App\Actions\Journal\DeleteAction;
 use App\Actions\SaleReturn\Item\CreateAction as ItemCreateAction;
 use App\Actions\SaleReturn\Item\UpdateAction as ItemUpdateAction;
+use App\Actions\SaleReturn\Payment\CreateAction as PaymentCreateAction;
+use App\Actions\SaleReturn\Payment\UpdateAction as PaymentUpdateAction;
 use App\Models\SaleReturn;
 use Exception;
 use Illuminate\Support\Facades\Auth;
@@ -55,6 +57,20 @@ class UpdateAction
                     }
                 }
 
+                foreach ($data['payments'] as $value) {
+                    $value['sale_return_id'] = $saleReturnId;
+
+                    if (isset($value['id'])) {
+                        $response = (new PaymentUpdateAction())->execute($value, $value['id'], $user_id);
+                    } else {
+                        $value['date'] = $model->date;
+                        $response = (new PaymentCreateAction())->execute($value, $user_id);
+                    }
+
+                    if (! $response['success']) {
+                        throw new Exception($response['message'], 1);
+                    }
+                }
                 if ($model['status'] == 'completed') {
                     $response = (new StockUpdateAction())->execute($model, $user_id);
                     if (! $response['success']) {

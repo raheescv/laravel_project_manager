@@ -7,13 +7,13 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use OwenIt\Auditing\Auditable;
 use OwenIt\Auditing\Contracts\Auditable as AuditableContracts;
 
-class SalePayment extends Model implements AuditableContracts
+class SaleReturnPayment extends Model implements AuditableContracts
 {
     use Auditable;
     use SoftDeletes;
 
     protected $fillable = [
-        'sale_id',
+        'sale_return_id',
         'payment_method_id',
         'date',
         'amount',
@@ -25,7 +25,7 @@ class SalePayment extends Model implements AuditableContracts
     public static function rules($id = 0, $merge = []): array
     {
         return array_merge([
-            'sale_id' => ['required'],
+            'sale_return_id' => ['required'],
             'payment_method_id' => ['required'],
             'date' => ['required', 'date'],
             'amount' => ['required', 'numeric'],
@@ -44,9 +44,9 @@ class SalePayment extends Model implements AuditableContracts
         return $query->whereBetween('date', [date('Y-m-d', strtotime('-7 days')), date('Y-m-d')]);
     }
 
-    public function sale()
+    public function saleReturn()
     {
-        return $this->belongsTo(Sale::class);
+        return $this->belongsTo(SaleReturn::class);
     }
 
     public function paymentMethod()

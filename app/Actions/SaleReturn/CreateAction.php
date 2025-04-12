@@ -3,6 +3,7 @@
 namespace App\Actions\SaleReturn;
 
 use App\Actions\SaleReturn\Item\CreateAction as ItemCreateAction;
+use App\Actions\SaleReturn\Payment\CreateAction as PaymentCreateAction;
 use App\Models\SaleReturn;
 
 class CreateAction
@@ -20,6 +21,14 @@ class CreateAction
             foreach ($data['items'] as $value) {
                 $value['sale_return_id'] = $model->id;
                 $response = (new ItemCreateAction())->execute($value, $user_id);
+                if (! $response['success']) {
+                    throw new \Exception($response['message'], 1);
+                }
+            }
+            foreach ($data['payments'] as $value) {
+                $value['sale_return_id'] = $model->id;
+                $value['date'] = $model->date;
+                $response = (new PaymentCreateAction())->execute($value, $user_id);
                 if (! $response['success']) {
                     throw new \Exception($response['message'], 1);
                 }

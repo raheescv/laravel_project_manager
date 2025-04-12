@@ -4,8 +4,10 @@ namespace App\Livewire\SaleReturn;
 
 use App\Actions\SaleReturn\CreateAction;
 use App\Actions\SaleReturn\Item\DeleteAction as ItemDeleteAction;
+use App\Actions\SaleReturn\Payment\DeleteAction as PaymentDeleteAction;
 use App\Actions\SaleReturn\UpdateAction;
 use App\Models\Account;
+use App\Models\Configuration;
 use App\Models\Inventory;
 use App\Models\SaleItem;
 use App\Models\SaleReturn;
@@ -17,6 +19,7 @@ use Livewire\Component;
 class Page extends Component
 {
     protected $listeners = [
+        'SaleReturn-Custom-Payment-Confirmed' => 'collectPayments',
         'SaleReturn-Edited-Items-Component' => 'editedItems',
         'SaleReturn-Edited-Item-Component' => 'editedItem',
         'SaleReturn-selectItem-Component' => 'selectItem',
@@ -35,16 +38,35 @@ class Page extends Component
 
     public $items = [];
 
+    public $payment = [];
+
+    public $payments = [];
+
+    public $paymentMethods = [];
+
+    public $payment_method_name;
+
     public $sale_return;
 
     public $sale_returns = [];
 
+    public $default_payment_method_id = 1;
+
     public function mount($table_id = null)
     {
         $this->table_id = $table_id;
+        $this->paymentMethods = Account::where('id', $this->default_payment_method_id)->pluck('name', 'id')->toArray();
+        $this->default_payment_method_id = Configuration::where('key', 'default_payment_method_id')->value('value') ?? 1;
+        $this->payment_method_name = strtolower(Account::find($this->default_payment_method_id)->name);
+        $this->payment = [
+            'payment_method_id' => $this->default_payment_method_id,
+            'payment_method_name' => $this->payment_method_name,
+            'amount' => 0,
+            'name' => null,
+        ];
 
         if ($this->table_id) {
-            $this->sale_return = SaleReturn::with('account:id,name', 'branch:id,name', 'items.product:id,name', 'createdUser:id,name', 'updatedUser:id,name')->find($this->table_id);
+            $this->sale_return = SaleReturn::with('account:id,name', 'branch:id,name', 'items.product:id,name', 'createdUser:id,name', 'updatedUser:id,name', 'payments.paymentMethod:id,name')->find($this->table_id);
             if (! $this->sale_return) {
                 return redirect()->route('sale_return::index');
             }
@@ -72,11 +94,22 @@ class Page extends Component
                     ],
                 ];
             })->toArray();
+            $this->payments = $this->sale_return->payments->map->only(['id', 'amount', 'date', 'payment_method_id', 'created_by', 'name'])->toArray();
+            if (count($this->payments) > 1) {
+                $this->payment_method_name = 'custom';
+            }
+            if (count($this->payments) == 1) {
+                $this->payment_method_name = strtolower($this->payments[0]['name']);
+                if (! in_array($this->payment_method_name, ['cash', 'card'])) {
+                    $this->payment_method_name = 'custom';
+                }
+            }
             $this->mainCalculator();
 
         } else {
             $this->accounts = Account::where('id', 3)->pluck('name', 'id')->toArray();
             $this->items = [];
+            $this->payments = [];
             $this->sale_returns = [
                 'date' => date('Y-m-d'),
                 'account_id' => 3,
@@ -123,6 +156,9 @@ class Page extends Component
             }
             $this->cartCalculator();
             $this->mainCalculator();
+            if (in_array($this->payment_method_name, ['cash', 'card'])) {
+                $this->selectPaymentMethod($this->payment_method_name);
+            }
         }
         if (in_array($key, ['product_key', 'sale_id'])) {
             $this->dispatch('SaleReturn-getProducts-Component', $this->sale_id, $this->product_key);
@@ -178,6 +214,7 @@ class Page extends Component
     public function mainCalculator()
     {
         $items = collect($this->items);
+        $payments = collect($this->payments);
         $this->sale_returns['gross_amount'] = round($items->sum('gross_amount'), 2);
         $this->sale_returns['total_quantity'] = round($items->sum('quantity'), 2);
         $this->sale_returns['item_discount'] = round($items->sum('discount'), 2);
@@ -188,6 +225,10 @@ class Page extends Component
         $this->sale_returns['grand_total'] = $this->sale_returns['total'];
         $this->sale_returns['grand_total'] -= $this->sale_returns['other_discount'];
         $this->sale_returns['grand_total'] = round($this->sale_returns['grand_total'], 2);
+
+        $this->sale_returns['paid'] = round($payments->sum('amount'), 2);
+        $this->sale_returns['balance'] = round($this->sale_returns['grand_total'] - $this->sale_returns['paid'], 2);
+        $this->payment['amount'] = round($this->sale_returns['balance'], 2);
     }
 
     public function selectItem($inventory_id, $sale_item_id = null)
@@ -196,6 +237,9 @@ class Page extends Component
         $saleItem = SaleItem::find($sale_item_id);
         $this->addToCart($inventory, $saleItem);
         $this->cartCalculator($inventory_id);
+        if (in_array($this->payment_method_name, ['cash', 'card'])) {
+            $this->selectPaymentMethod($this->payment_method_name);
+        }
     }
 
     public function addToCart($inventory, $saleItem)
@@ -296,6 +340,89 @@ class Page extends Component
         $this->mainCalculator();
     }
 
+    public function selectPaymentMethod($method)
+    {
+        $this->payment_method_name = $method;
+        if ($method == 'custom') {
+            $this->dispatch('SaleReturn-Custom-Payment-Modify', $this->sale_returns, $this->payments);
+
+            return false;
+        }
+        $account = Account::firstWhere('name', $method);
+        if (! $account) {
+            $this->dispatch('error', ['message' => 'The selected method has not been assigned to an account head']);
+
+            return false;
+        }
+        $this->payment['payment_method_id'] = $account->id;
+
+        if ($this->table_id) {
+            $this->sale_return->payments()->delete();
+        }
+        $this->payments = [];
+        $single = [
+            'amount' => $this->sale_returns['grand_total'],
+            'payment_method_id' => $this->payment['payment_method_id'],
+            'name' => $account->name,
+        ];
+        $this->payments[] = $single;
+        $this->mainCalculator();
+    }
+
+    public function collectPayments($sale_returns, $payments)
+    {
+        $this->payments = $payments;
+        $this->sale_returns = $sale_returns;
+    }
+
+    public function addPayment()
+    {
+        if (! $this->payment['amount']) {
+            $this->dispatch('error', ['message' => 'Please select any amount']);
+
+            return false;
+        }
+        if (! $this->payment['payment_method_id']) {
+            $this->dispatch('error', ['message' => 'Please select any payment method to add']);
+
+            return false;
+        }
+        if ($this->payment['amount'] > $this->sale_returns['balance']) {
+            $this->dispatch('error', ['message' => "You can't pay more than the net total amount"]);
+
+            return false;
+        }
+
+        $account = Account::find($this->payment['payment_method_id']);
+        $single = [
+            'amount' => $this->payment['amount'],
+            'payment_method_id' => $this->payment['payment_method_id'],
+            'name' => $account->name,
+        ];
+        $this->payments[] = $single;
+
+        $this->payment['amount'] = 0;
+        $this->mainCalculator();
+    }
+
+    public function removePayment($index)
+    {
+        try {
+            $id = $this->payments[$index]['id'] ?? '';
+            if ($id) {
+                $response = (new PaymentDeleteAction())->execute($id);
+                if (! $response['success']) {
+                    throw new Exception($response['message'], 1);
+                }
+            }
+            unset($this->payments[$index]);
+            $this->mainCalculator();
+            $this->dispatch('success', ['message' => 'Payment removed successfully']);
+        } catch (\Throwable $th) {
+            $this->dispatch('error', ['message' => $th->getMessage()]);
+        }
+    }
+
     protected $rules = [
         'sale_returns.account_id' => ['required'],
         'sale_returns.date' => ['required'],
@@ -313,11 +440,16 @@ class Page extends Component
 
             return false;
         }
+        $payment_methods = collect($this->payments)->pluck('name')->toArray();
+        $payment_methods = implode(',', $payment_methods);
         $account = Account::find($this->sale_returns['account_id']);
         $customer = $account->name.'@'.$account->mobile;
         $this->dispatch('show-confirmation', [
             'customer' => $customer,
             'grand_total' => currency($this->sale_returns['grand_total']),
+            'paid' => currency($this->sale_returns['paid']),
+            'payment_methods' => $payment_methods,
+            'balance' => currency($this->sale_returns['balance']),
         ]);
     }
 
@@ -332,6 +464,10 @@ class Page extends Component
             }
             $this->sale_returns['status'] = $type;
             $this->sale_returns['items'] = $this->items;
+            $this->sale_returns['payments'] = $this->payments;
+            if ($this->sale_returns['balance'] < 0) {
+                throw new Exception('Please check the payment', 1);
+            }
             $user_id = Auth::id();
             if (! $this->table_id) {
                 $response = (new CreateAction())->execute($this->sale_returns, $user_id);
@@ -345,6 +481,9 @@ class Page extends Component
             DB::commit();
             $this->dispatch('ResetSelectBox');
             $this->dispatch('success', ['message' => $response['message']]);
+            if ($oldStatus == 'completed') {
+                return redirect(route('sale_return::view', $this->table_id));
+            }
         } catch (\Throwable $th) {
             DB::rollback();
             $this->dispatch('error', ['message' => $th->getMessage()]);

@@ -3,11 +3,12 @@
 namespace App\Actions\SaleReturn;
 
 use App\Actions\Journal\CreateAction;
+use App\Models\SaleReturn;
 use Illuminate\Support\Facades\DB;
 
 class JournalEntryAction
 {
-    public function execute($model, $user_id)
+    public function execute(SaleReturn $model, $user_id)
     {
         try {
             $data['date'] = $model->date;
@@ -23,6 +24,8 @@ class JournalEntryAction
 
                 return $item;
             })->sum('total_cost');
+
+            $items = $model->payments;
 
             $entries = [];
             if ($model->gross_amount > 0) {
@@ -97,7 +100,7 @@ class JournalEntryAction
                 ];
             }
             if ($model->other_discount > 0) {
-                $remarks = 'Additional Discount provided on sale return';
+                $remarks = SaleReturn::ADDITIONAL_DISCOUNT_DESCRIPTION;
                 $entries[] = [
                     'account_id' => DB::table('accounts')->where('name', 'Discount')->value('id'),
                     'debit' => 0,
@@ -111,6 +114,28 @@ class JournalEntryAction
                     'credit' => 0,
                     'created_by' => $user_id,
                     'remarks' => $remarks,
+                ];
+            }
+
+            foreach ($items as $value) {
+                $remarks = $value->paymentMethod->name.' payment made by '.$model->account->name;
+                $entries[] = [
+                    'account_id' => $value->payment_method_id,
+                    'debit' => 0,
+                    'credit' => $value->amount,
+                    'created_by' => $user_id,
+                    'remarks' => $remarks,
+                    'model' => 'SaleReturnPayment',
+                    'model_id' => $value->id,
+                ];
+                $entries[] = [
+                    'account_id' => $model->account_id,
+                    'debit' => $value->amount,
+                    'credit' => 0,
+                    'created_by' => $user_id,
+                    'remarks' => $remarks,
+                    'model' => 'SaleReturnPayment',
+                    'model_id' => $value->id,
                 ];
             }
 

@@ -3,34 +3,34 @@
 namespace App\Actions\SaleReturn;
 
 use App\Actions\Journal\CreateAction as JournalCreateAction;
-use App\Actions\SaleReturn\Payment\CreateAction as SalePaymentCreateAction;
-use App\Events\SaleUpdatedEvent;
+use App\Actions\SaleReturn\Payment\CreateAction as SaleReturnPaymentCreateAction;
+use App\Events\SaleReturnUpdatedEvent;
 use App\Models\Account;
 use App\Models\SaleReturn;
 use Illuminate\Support\Facades\DB;
 
-class ReceiptAction
+class PaymentAction
 {
-    public function execute($account_id, $name, $sale_id, $data, $paymentData, $user_id)
+    public function execute($account_id, $name, $model_id, $data, $paymentData, $user_id)
     {
         try {
             $paymentMethod = Account::find($paymentData['payment_method_id']);
             $payment = $data['payment'];
             $discount = $data['discount'];
-            $sale = SaleReturn::find($sale_id);
+            $model = SaleReturn::find($model_id);
 
             $journalData['date'] = $paymentData['date'];
             $journalData['created_by'] = $user_id;
-            $journalData['description'] = 'Sale:'.$sale->invoice_no;
+            $journalData['description'] = 'SaleReturn:'.$model->id;
             $journalData['remarks'] = $paymentData['remarks'];
-            $journalData['reference_no'] = $sale->reference_no;
-            $journalData['model'] = 'Sale';
-            $journalData['model_id'] = $sale_id;
+            $journalData['reference_no'] = $model->reference_no;
+            $journalData['model'] = 'SaleReturn';
+            $journalData['model_id'] = $model_id;
 
             $entries = [];
 
             if ($discount > 0) {
-                $remarks = 'Additional Discount provided on sale';
+                $remarks = SaleReturn::ADDITIONAL_DISCOUNT_DESCRIPTION;
                 $entries[] = [
                     'account_id' => DB::table('accounts')->where('name', 'Discount')->value('id'),
                     'debit' => $discount,
@@ -48,30 +48,30 @@ class ReceiptAction
             }
             if ($payment) {
                 $salePaymentData = [
-                    'sale_id' => $sale_id,
+                    'sale_return_id' => $model_id,
                     'payment_method_id' => $paymentData['payment_method_id'],
                     'date' => $paymentData['date'],
                     'amount' => $data['payment'],
                 ];
-                $salePaymentResponse = (new SalePaymentCreateAction())->execute($salePaymentData, $user_id);
+                $salePaymentResponse = (new SaleReturnPaymentCreateAction())->execute($salePaymentData, $user_id);
                 $sale_payment_id = $salePaymentResponse['data']['id'];
                 $remarks = $paymentMethod['name'].' payment made by '.$name;
                 $entries[] = [
                     'account_id' => $paymentData['payment_method_id'],
-                    'debit' => $payment,
-                    'credit' => 0,
-                    'created_by' => $user_id,
-                    'remarks' => $remarks,
-                    'model' => 'SalePayment',
-                    'model_id' => $sale_payment_id,
-                ];
-                $entries[] = [
-                    'account_id' => $account_id,
                     'debit' => 0,
                     'credit' => $payment,
                     'created_by' => $user_id,
                     'remarks' => $remarks,
-                    'model' => 'SalePayment',
+                    'model' => 'SaleReturnPayment',
+                    'model_id' => $sale_payment_id,
+                ];
+                $entries[] = [
+                    'account_id' => $account_id,
+                    'debit' => $payment,
+                    'credit' => 0,
+                    'created_by' => $user_id,
+                    'remarks' => $remarks,
+                    'model' => 'SaleReturnPayment',
                     'model_id' => $sale_payment_id,
                 ];
             }
@@ -82,11 +82,11 @@ class ReceiptAction
             }
 
             if ($payment) {
-                event(new SaleUpdatedEvent('payment', $sale));
+                event(new SaleReturnUpdatedEvent('payment', $model));
             }
 
             if ($discount) {
-                event(new SaleUpdatedEvent('discount', $sale));
+                event(new SaleReturnUpdatedEvent('discount', $model));
             }
 
             $return['success'] = true;

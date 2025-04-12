@@ -14,6 +14,8 @@ class SaleReturn extends Model implements AuditableContracts
     use Auditable;
     use SoftDeletes;
 
+    const ADDITIONAL_DISCOUNT_DESCRIPTION = 'Additional Discount Provided on Sales Return';
+
     protected $fillable = [
         'reference_no',
         'branch_id',
@@ -91,6 +93,11 @@ class SaleReturn extends Model implements AuditableContracts
     public function items()
     {
         return $this->hasMany(SaleReturnItem::class);
+    }
+
+    public function payments()
+    {
+        return $this->hasMany(SaleReturnPayment::class);
     }
 
     public function journal()

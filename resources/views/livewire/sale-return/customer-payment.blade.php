@@ -2,7 +2,7 @@
     <form wire:submit.prevent="save">
         <div class="modal-content modal-lg">
             <div class="modal-header">
-                <h3 class="m-t-none m-b"> {{ $name ?? '' }} : Sales Receipt Form</h3>
+                <h3 class="m-t-none m-b"> {{ $name ?? '' }} : Sales Return Payment Form</h3>
                 @if ($this->getErrorBag()->count())
                     <ol>
                         <?php foreach ($this->getErrorBag()->toArray() as $value): ?>
@@ -55,7 +55,7 @@
                                             <input type="checkbox" wire:model.live="checkAll">
                                             <span class="pull-right">ID</span>
                                         </th>
-                                        <th>Invoice No</th>
+                                        <th>Reference No</th>
                                         <th class="text-right">Sale Amount</th>
                                         <th class="text-right">Discount</th>
                                         <th class="text-right">Grand Total</th>
@@ -69,13 +69,13 @@
                                     @foreach ($data as $item)
                                         <tr wire:key="item-{{ $item->id }}">
                                             @php
-                                                $customerPayment = $customer_sales[$item->id];
+                                                $customerPayment = $customer_sale_returns[$item->id];
                                             @endphp
                                             <td class="text-end">
-                                                <input type="checkbox" wire:model="customer_sales.{{ $item->id }}.selected" wire:change="selectAction({{ $item->id }})"
+                                                <input type="checkbox" wire:model="customer_sale_returns.{{ $item->id }}.selected" wire:change="selectAction({{ $item->id }})"
                                                     value="{{ $item->id }}">
                                             </td>
-                                            <td class="text-end"> <a href="{{ route('sale::view', $item->id) }}">{{ $item->invoice_no }}</a> </td>
+                                            <td class="text-end"> <a href="{{ route('sale_return::view', $item->id) }}">{{ $item->reference_no }}</a> </td>
                                             <td class="text-end">{{ currency($item->total) }}</td>
                                             <td class="text-end">{{ currency($item->other_discount) }}</td>
                                             <td class="text-end">{{ currency($item->grand_total) }}</td>
@@ -83,15 +83,15 @@
                                             <td class="text-end">{{ currency($item->balance) }}</td>
                                             @php
                                                 $disabled = '';
-                                                if (!$customer_sales[$item->id]['selected']) {
+                                                if (!$customer_sale_returns[$item->id]['selected']) {
                                                     $disabled = 'disabled';
                                                 }
                                             @endphp
                                             <td>
-                                                {{ html()->number('discount')->value(0)->class('input-xs number select_on_focus')->attribute('step', 'any')->attribute('style', 'width:100%')->attribute('max', $item['balance'] - $customerPayment['payment'])->attribute($disabled)->attribute('wire:model.live', 'customer_sales.' . $item['id'] . '.discount') }}
+                                                {{ html()->number('discount')->value(0)->class('input-xs number select_on_focus')->attribute('step', 'any')->attribute('style', 'width:100%')->attribute('max', $item['balance'] - $customerPayment['payment'])->attribute($disabled)->attribute('wire:model.live', 'customer_sale_returns.' . $item['id'] . '.discount') }}
                                             </td>
                                             <td>
-                                                {{ html()->number('payment')->value($item['payment'])->class('input-xs number select_on_focus')->attribute('step', 'any')->attribute('style', 'width:100%')->attribute('max', $item['balance'] - $customerPayment['discount'])->attribute($disabled)->attribute('wire:model.live', 'customer_sales.' . $item['id'] . '.payment') }}
+                                                {{ html()->number('payment')->value($item['payment'])->class('input-xs number select_on_focus')->attribute('step', 'any')->attribute('style', 'width:100%')->attribute('max', $item['balance'] - $customerPayment['discount'])->attribute($disabled)->attribute('wire:model.live', 'customer_sale_returns.' . $item['id'] . '.payment') }}
                                             </td>
                                         </tr>
                                     @endforeach
@@ -105,8 +105,8 @@
                                         <th class="text-end">{{ currency($total['grand_total']) }}</th>
                                         <th class="text-end">{{ currency($total['paid']) }}</th>
                                         <th class="text-end">{{ currency($total['balance']) }}</th>
-                                        <th class="text-end">{{ currency(array_sum(array_column($customer_sales, 'discount'))) }}</th>
-                                        <th class="text-end">{{ currency(array_sum(array_column($customer_sales, 'payment'))) }}</th>
+                                        <th class="text-end">{{ currency(array_sum(array_column($customer_sale_returns, 'discount'))) }}</th>
+                                        <th class="text-end">{{ currency(array_sum(array_column($customer_sale_returns, 'payment'))) }}</th>
                                     </tr>
                                 </tfoot>
                             </table>

@@ -2,7 +2,7 @@
     <div class="card shadow-lg">
         <div class="card-body">
             <div class="text-center">
-                <h1 class="h3">Total payable amount: {{ currency($sales['grand_total'] ?? '') }}</h1>
+                <h1 class="h3">Total payable amount: {{ currency($sale_returns['grand_total'] ?? '') }}</h1>
             </div>
             <div class="row">
                 <table class="table table-striped align-middle table-sm">
@@ -42,11 +42,11 @@
                     <ul class="list-group list-group-borderless">
                         <li class="list-group-item d-flex justify-content-between align-items-center py-2">
                             <div class="me-5 mb-0 h5">Total Paid:</div>
-                            <span class="fw-semibold" style="color:#1EB706;">{{ currency($sales['paid']) }}</span>
+                            <span class="fw-semibold" style="color:#1EB706;">{{ currency($sale_returns['paid']) }}</span>
                         </li>
                         <li class="list-group-item d-flex justify-content-between align-items-center py-2">
                             <div class="me-5 mb-0 h5">Balance:</div>
-                            <span class="text-danger fw-semibold">{{ currency($sales['balance']) }}</span>
+                            <span class="text-danger fw-semibold">{{ currency($sale_returns['balance']) }}</span>
                         </li>
                     </ul>
                 </div>

@@ -15,6 +15,8 @@ class Sale extends Model implements AuditableContracts
     use Auditable;
     use SoftDeletes;
 
+    const ADDITIONAL_DISCOUNT_DESCRIPTION = 'Additional Discount Provided on Sales';
+
     protected $fillable = [
         'invoice_no',
         'reference_no',

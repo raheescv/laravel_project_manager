@@ -59,6 +59,7 @@ class ProductList extends Component
                     'products.thumbnail',
                 )
                 ->selectRaw('NULL as sale_item_id')
+                ->limit(20)
                 ->get();
         }
         $this->products = $products->map(function ($item) {

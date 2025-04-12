@@ -9,5 +9,5 @@ class SaleUpdatedEvent
 {
     use SerializesModels;
 
-    public function __construct(public string $action, public Sale $sale) {}
+    public function __construct(public string $action, public Sale $model) {}
 }

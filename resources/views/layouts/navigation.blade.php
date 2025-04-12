@@ -116,7 +116,7 @@
                                 @endcan
                                 @can('sale_return.payments')
                                     <li class="nav-item">
-                                        {{-- <a href="{{ route('sale_return::payments') }}" class="nav-link {{ request()->is(['sale/receipts']) ? 'active' : '' }}">Payments</a> --}}
+                                        <a href="{{ route('sale_return::payments') }}" class="nav-link {{ request()->is(['sale/receipts']) ? 'active' : '' }}">Payments</a>
                                     </li>
                                 @endcan
                             </ul>

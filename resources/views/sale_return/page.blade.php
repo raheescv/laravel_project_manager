@@ -19,10 +19,12 @@
     <x-account.customer-view-modal />
     <x-sale-return.edit-item-modal />
     <x-sale-return.view-items-modal />
+    <x-sale-return.custom-payment-modal />
     @push('scripts')
         @include('components.select.customerSelect')
         @include('components.select.inventoryProductSelect')
         @include('components.select.customerSaleSelect')
+        @include('components.select.paymentMethodSelect')
         <script>
             document.addEventListener('DOMContentLoaded', function() {
                 window.addEventListener('print-invoice', function(event) {

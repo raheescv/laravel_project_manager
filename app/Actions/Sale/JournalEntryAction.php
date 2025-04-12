@@ -3,11 +3,12 @@
 namespace App\Actions\Sale;
 
 use App\Actions\Journal\CreateAction;
+use App\Models\Sale;
 use Illuminate\Support\Facades\DB;
 
 class JournalEntryAction
 {
-    public function execute($sale, $user_id)
+    public function execute(Sale $sale, $user_id)
     {
         try {
 
@@ -100,7 +101,7 @@ class JournalEntryAction
                 ];
             }
             if ($sale->other_discount > 0) {
-                $remarks = 'Additional Discount provided on sale';
+                $remarks = Sale::ADDITIONAL_DISCOUNT_DESCRIPTION;
                 $entries[] = [
                     'account_id' => DB::table('accounts')->where('name', 'Discount')->value('id'),
                     'debit' => $sale->other_discount,

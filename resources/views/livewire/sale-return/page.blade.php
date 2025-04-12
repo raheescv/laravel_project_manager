@@ -127,6 +127,42 @@
                                         </table>
                                     </div>
                                 </div>
+                                <div class="block-section payment-method">
+                                    {{-- <h6 class="d-flex justify-content-between align-items-center">
+                                        <span>Payment Method</span>
+                                        <label for="send_to_whatsapp" class="form-check-label text-end">
+                                            {{ html()->checkbox('send_to_whatsapp')->value('')->class('form-check-input')->attribute('wire:model.live', 'send_to_whatsapp') }}
+                                            Send Invoice To Whatsapp
+                                        </label>
+                                    </h6> --}}
+
+                                    <div class="row d-flex align-items-center justify-content-center methods">
+                                        <div class="col-md-6 col-lg-4 item">
+                                            <div class="default-cover">
+                                                <a href="#" class="@if ($payment_method_name == 'cash') active @endif" wire:click="selectPaymentMethod('cash')">
+                                                    <img src="{{ asset('assets/img/cash-pay.svg') }}" alt="Payment Method">
+                                                    <span> Cash </span>
+                                                </a>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6 col-lg-4 item">
+                                            <div class="default-cover">
+                                                <a href="#" class="@if ($payment_method_name == 'card') active @endif" wire:click="selectPaymentMethod('card')">
+                                                    <img src="{{ asset('assets/img/card-pay.svg') }}" alt="Payment Method">
+                                                    <span> Debit Card </span>
+                                                </a>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6 col-lg-4 item">
+                                            <div class="default-cover">
+                                                <a href="#" class="@if ($payment_method_name == 'custom') active @endif" wire:click="selectPaymentMethod('custom')">
+                                                    <img src="{{ asset('assets/img/custom-pay.svg') }}" alt="Payment Method">
+                                                    <span>Custom Pay</span>
+                                                </a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
                                 <div class="btn-row d-sm-flex align-items-center justify-content-between">
                                     <button type="submit" wire:confirm="Are you sure to submit this?" class="btn btn-success btn-icon flex-fill">Submit</button>
                                 </div>
@@ -161,6 +197,18 @@
                         <tr>
                             <th class="text-start"><strong>Grand Total</strong></td>
                             <td class="text-end">${data.grand_total}</td>
+                        </tr>
+                        <tr>
+                            <th class="text-start"><strong>Payment Methods</strong></td>
+                            <td class="text-end">${data.payment_methods}</td>
+                        </tr>
+                        <tr>
+                            <th class="text-start"><strong>Paid</strong></td>
+                            <td class="text-end">${data.paid}</td>
+                        </tr>
+                        <tr>
+                            <th class="text-start"><strong>Balance</strong></td>
+                            <td class="text-end">${data.balance}</td>
                         </tr>
                     </table>
                     `;

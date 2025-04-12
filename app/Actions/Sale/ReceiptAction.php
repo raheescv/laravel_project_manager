@@ -30,7 +30,7 @@ class ReceiptAction
             $entries = [];
 
             if ($discount > 0) {
-                $remarks = 'Additional Discount provided on sale';
+                $remarks = Sale::ADDITIONAL_DISCOUNT_DESCRIPTION;
                 $entries[] = [
                     'account_id' => DB::table('accounts')->where('name', 'Discount')->value('id'),
                     'debit' => $discount,
@@ -84,7 +84,6 @@ class ReceiptAction
             if ($payment) {
                 event(new SaleUpdatedEvent('payment', $sale));
             }
-
             if ($discount) {
                 event(new SaleUpdatedEvent('discount', $sale));
             }
