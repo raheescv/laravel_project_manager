@@ -177,8 +177,8 @@
                                                     <td>{{ systemDate($journal->date) }}</td>
                                                     <td>{{ $entry->account?->name }}</td>
                                                     <td>{{ $entry->remarks }}</td>
-                                                    <td class="text-end">{{ currency($entry->credit) }}</td>
                                                     <td class="text-end">{{ currency($entry->debit) }}</td>
+                                                    <td class="text-end">{{ currency($entry->credit) }}</td>
                                                 </tr>
                                             @endforeach
                                         @endforeach
