@@ -49,6 +49,7 @@ class ProductList extends Component
                     return $query->where('products.name', 'LIKE', '%'.$value.'%');
                 })
                 ->where('products.is_selling', true)
+                ->where('inventories.branch_id', session('branch_id'))
                 ->orderBy('products.name')
                 ->select(
                     'inventories.id as inventory_id',

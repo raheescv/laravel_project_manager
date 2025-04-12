@@ -37,6 +37,7 @@ class ProductList extends Component
 
                 return $query->where('products.main_category_id', $value);
             })
+            ->where('inventories.branch_id', session('branch_id'))
             ->where('products.is_selling', true)
             ->orderBy('products.name')
             ->select(
