@@ -46,7 +46,8 @@
             <table class="table table-striped table-sm">
                 <thead>
                     <tr class="text-capitalize">
-                        <th> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="inventories.created_at" label="Date" /> </th>
+                        <th> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="inventory_logs.id" label="#" /> </th>
+                        <th> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="inventory_logs.created_at" label="Date" /> </th>
                         <th> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="branch_id" label="Branch" /> </th>
                         <th>Department</th>
                         <th>Main Category</th>
@@ -63,6 +64,7 @@
                 <tbody>
                     @foreach ($data as $item)
                         <tr>
+                            <td>{{ $item->id }}</td>
                             <td>{{ systemDateTime($item->created_at) }}</td>
                             <td>{{ $item->branch?->name }}</td>
                             <td>{{ $item->product?->department?->name }}</td>

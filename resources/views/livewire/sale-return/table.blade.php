@@ -3,10 +3,10 @@
         <div class="row">
             <div class="col-md-6 d-flex gap-1 align-items-center mb-3">
                 <div class="btn-group">
-                    @can('sale_return.export')
+                    @can('sales return.export')
                         <button class="btn btn-icon btn-outline-light" title="To export the items as excel" wire:click="export()"><i class="demo-pli-file-excel fs-5"></i></button>
                     @endcan
-                    @can('sale_return.delete')
+                    @can('sales return.delete')
                         <button class="btn btn-icon btn-outline-light" title="To delete the selected items" wire:click="delete()" wire:confirm="Are you sure you want to delete the selected items?">
                             <i class="demo-pli-recycling fs-5"></i>
                         </button>

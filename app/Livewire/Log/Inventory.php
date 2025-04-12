@@ -121,10 +121,10 @@ class Inventory extends Component
                 });
             })
             ->when($this->from_date ?? '', function ($query, $value) {
-                return $query->where('inventory_logs.created_at', '>=', date('Y-m-d H:i:s', strtotime($value)));
+                return $query->where('inventory_logs.created_at', '>=', date('Y-m-d 00:00:00', strtotime($value)));
             })
             ->when($this->to_date ?? '', function ($query, $value) {
-                return $query->where('inventory_logs.created_at', '<=', date('Y-m-d H:i:s', strtotime($value)));
+                return $query->where('inventory_logs.created_at', '<=', date('Y-m-d 23:59:59', strtotime($value)));
             })
             ->when($this->branch_id ?? '', function ($query, $value) {
                 return $query->where('branch_id', $value);
@@ -133,6 +133,7 @@ class Inventory extends Component
                 return $query->where('product_id', $value);
             })
             ->select(
+                'inventory_logs.id',
                 'inventory_logs.barcode',
                 'inventory_logs.batch',
                 'inventory_logs.branch_id',

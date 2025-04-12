@@ -11,6 +11,7 @@ use App\Models\Configuration;
 use App\Models\Product;
 use App\Models\Unit;
 use Faker\Factory;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 use Livewire\Component;
@@ -169,9 +170,9 @@ class Page extends Component
                     'id' => $this->products['department_id'],
                     'name' => $this->products['department_id'],
                 ];
-                $response = (new CreateAction())->execute($this->products, auth()->id());
+                $response = (new CreateAction())->execute($this->products, Auth::id());
             } else {
-                $response = (new UpdateAction())->execute($this->products, $this->table_id, auth()->id());
+                $response = (new UpdateAction())->execute($this->products, $this->table_id, Auth::id());
             }
             if (! $response['success']) {
                 throw new \Exception($response['message'], 1);

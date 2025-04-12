@@ -81,93 +81,18 @@
                     <tr class="text-capitalize">
                         <th>
                             <input type="checkbox" wire:model.live="selectAll" />
-                            <a href="#" wire:click.prevent="sortBy('id')">
-                                #
-                                @if ($sortField === 'id')
-                                    {!! sortDirection($sortDirection) !!}
-                                @endif
-                            </a>
+                            <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="id" label="id" />
                         </th>
-                        <th>
-                            <a href="#" wire:click.prevent="sortBy('department_id')">
-                                Department
-                                @if ($sortField === 'department_id')
-                                    {!! sortDirection($sortDirection) !!}
-                                @endif
-                            </a>
-                        </th>
-                        <th>
-                            <a href="#" wire:click.prevent="sortBy('main_category_id')">
-                                Main Category
-                                @if ($sortField === 'main_category_id')
-                                    {!! sortDirection($sortDirection) !!}
-                                @endif
-                            </a>
-                        </th>
-                        <th>
-                            <a href="#" wire:click.prevent="sortBy('sub_category_id')">
-                                Sub Category
-                                @if ($sortField === 'sub_category_id')
-                                    {!! sortDirection($sortDirection) !!}
-                                @endif
-                            </a>
-                        </th>
-                        <th>
-                            <a href="#" wire:click.prevent="sortBy('unit_id')">
-                                Unit
-                                @if ($sortField === 'unit_id')
-                                    {!! sortDirection($sortDirection) !!}
-                                @endif
-                            </a>
-                        </th>
-                        <th>
-                            <a href="#" wire:click.prevent="sortBy('code')">
-                                Code
-                                @if ($sortField === 'code')
-                                    {!! sortDirection($sortDirection) !!}
-                                @endif
-                            </a>
-                        </th>
-                        <th>
-                            <a href="#" wire:click.prevent="sortBy('name')">
-                                Name
-                                @if ($sortField === 'name')
-                                    {!! sortDirection($sortDirection) !!}
-                                @endif
-                            </a>
-                        </th>
-                        <th class="text-end">
-                            <a href="#" wire:click.prevent="sortBy('name_arabic')">
-                                Name Arabic
-                                @if ($sortField === 'name_arabic')
-                                    {!! sortDirection($sortDirection) !!}
-                                @endif
-                            </a>
-                        </th>
-                        <th>
-                            <a href="#" wire:click.prevent="sortBy('barcode')">
-                                Barcode
-                                @if ($sortField === 'barcode')
-                                    {!! sortDirection($sortDirection) !!}
-                                @endif
-                            </a>
-                        </th>
-                        <th class="text-end">
-                            <a href="#" wire:click.prevent="sortBy('cost')">
-                                cost
-                                @if ($sortField === 'cost')
-                                    {!! sortDirection($sortDirection) !!}
-                                @endif
-                            </a>
-                        </th>
-                        <th class="text-end">
-                            <a href="#" wire:click.prevent="sortBy('mrp')">
-                                MRP
-                                @if ($sortField === 'mrp')
-                                    {!! sortDirection($sortDirection) !!}
-                                @endif
-                            </a>
-                        </th>
+                        <th> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="department_id" label="Department" /> </th>
+                        <th> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="main_category_id" label="Main Category" /> </th>
+                        <th> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="sub_category_id" label="Sub Category" /> </th>
+                        <th> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="unit_id" label="unit" /> </th>
+                        <th> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="code" label="code" /> </th>
+                        <th> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="name" label="name" /> </th>
+                        <th> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="name_arabic" label="name arabic" /> </th>
+                        <th> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="barcode" label="barcode" /> </th>
+                        <th> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="cost" label="cost" /> </th>
+                        <th> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="mrp" label="mrp" /> </th>
                     </tr>
                 </thead>
                 <tbody>

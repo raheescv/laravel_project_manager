@@ -351,3 +351,14 @@ if (! function_exists('TableView')) {
         echo '</table>';
     }
 }
+
+if (! function_exists('pendingCompletedStatuses')) {
+    function pendingCompletedStatuses()
+    {
+        return [
+            'pending' => 'pending',
+            'completed' => 'completed',
+            'cancelled' => 'cancelled',
+        ];
+    }
+}

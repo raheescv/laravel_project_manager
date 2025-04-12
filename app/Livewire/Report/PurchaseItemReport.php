@@ -67,7 +67,7 @@ class PurchaseItemReport extends Component
             'product_id' => $this->product_id,
         ];
         if ($count > 2000) {
-            ExportPurchaseItemReportJob::dispatch(auth()->user(), $filter);
+            ExportPurchaseItemReportJob::dispatch(Auth::user(), $filter);
             $this->dispatch('success', ['message' => 'You will get your file in your mailbox.']);
         } else {
             $exportFileName = 'PurchaseItemReport_'.now()->timestamp.'.xlsx';

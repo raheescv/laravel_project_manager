@@ -62,6 +62,11 @@ class Inventory extends Model implements AuditableContracts
         return $this->belongsTo(User::class, 'updated_by');
     }
 
+    public function scopeCurrentBranch($query)
+    {
+        return $query->where('inventories.branch_id', session('branch_id'));
+    }
+
     public static function selfCreateByProduct($product, $user_id, $quantity = 0, $current_branch = 1)
     {
         $barcode_type = cache('barcode_type', '');
@@ -110,6 +115,12 @@ class Inventory extends Model implements AuditableContracts
                     ->orWhere('inventories.cost', 'like', "%{$value}%")
                     ->orWhere('inventories.barcode', 'like', "%{$value}%");
             });
+        });
+        $self = $self->when($request['type'] ?? '', function ($query, $value) {
+            return $query->where('products.type', $value);
+        });
+        $self = $self->when($request['branch_id'] ?? '', function ($query, $value) {
+            return $query->where('inventories.branch_id', $value);
         });
         $self = $self->limit(10);
         $self = $self->get([

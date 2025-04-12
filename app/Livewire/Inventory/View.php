@@ -35,6 +35,7 @@ class View extends Component
     public function mount($product_id)
     {
         $this->product_id = $product_id;
+        $this->branch_id = session('branch_id');
         $this->product = Product::find($this->product_id);
     }
 
@@ -61,9 +62,9 @@ class View extends Component
                         ->orWhere('branches.name', 'like', "%{$value}%");
                 });
             })
-            ->when($this->branch_id ?? '', function ($query, $value) {
-                return $query->where('branch_id', $value);
-            })
+            // ->when($this->branch_id ?? '', function ($query, $value) {
+            //     return $query->where('branch_id', $value);
+            // })
             ->where('product_id', $this->product_id)
             ->latest('inventories.created_at')
             ->select(

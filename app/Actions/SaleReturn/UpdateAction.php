@@ -26,7 +26,7 @@ class UpdateAction
             // if it is edit after complete
             $oldStatus = $model->status;
             if ($oldStatus == 'completed') {
-                if (! Auth::user()->can('sale_return.edit completed')) {
+                if (! Auth::user()->can('sales return.edit completed')) {
                     throw new Exception("You don't have permission to edit it.", 1);
                 }
                 $response = (new JournalDeleteAction())->execute($model, $user_id);

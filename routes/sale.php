@@ -14,10 +14,10 @@ Route::middleware('auth')->group(function (): void {
         Route::get('receipts', 'receipts')->name('receipts')->can('sale.receipts');
     });
     Route::name('sale_return::')->prefix('sale_return')->controller(SaleReturnController::class)->group(function (): void {
-        Route::get('', 'index')->name('index')->can('sale_return.view');
-        Route::get('create', 'page')->name('create')->can('sale_return.create');
-        Route::get('edit/{id}', 'page')->name('edit')->can('sale_return.edit');
-        Route::get('view/{id}', 'view')->name('view')->can('sale_return.view');
-        Route::get('payments', 'payments')->name('payments')->can('sale_return.payments');
+        Route::get('', 'index')->name('index')->can('sales return.view');
+        Route::get('create', 'page')->name('create')->can('sales return.create');
+        Route::get('edit/{id}', 'page')->name('edit')->can('sales return.edit');
+        Route::get('view/{id}', 'view')->name('view')->can('sales return.view');
+        Route::get('payments', 'payments')->name('payments')->can('sales return.payments');
     });
 });

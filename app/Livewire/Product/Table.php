@@ -6,6 +6,7 @@ use App\Actions\Product\DeleteAction;
 use App\Exports\ProductExport;
 use App\Jobs\Export\ExportProductJob;
 use App\Models\Product;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Livewire\Component;
 use Livewire\WithPagination;
@@ -102,7 +103,7 @@ class Table extends Component
         ];
         $count = Product::service()->count();
         if ($count > 2000) {
-            ExportProductJob::dispatch(auth()->user(), $filter);
+            ExportProductJob::dispatch(Auth::user(), $filter);
             $this->dispatch('success', ['message' => 'You will get your file in your mailbox.']);
         } else {
             $exportFileName = 'Product_'.now()->timestamp.'.xlsx';

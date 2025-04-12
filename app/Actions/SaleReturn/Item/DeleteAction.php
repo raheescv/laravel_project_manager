@@ -17,7 +17,7 @@ class DeleteAction
                 throw new Exception("Resource not found with the specified ID: $id.", 1);
             }
             if ($model->saleReturn->status == 'completed') {
-                if (! Auth::user()->can('sale_return.edit completed')) {
+                if (! Auth::user()->can('sales return.edit completed')) {
                     throw new Exception("You don't have permission to delete it.", 1);
                 }
                 (new StockUpdateAction())->singleItemDelete($model, $model->saleReturn, 'delete_item', Auth::id());

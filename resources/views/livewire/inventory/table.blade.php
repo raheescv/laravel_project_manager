@@ -46,7 +46,7 @@
             </div>
             <div class="row">
                 <div class="col-md-3 p-2" wire:ignore>
-                    {{ html()->select('branch_id', [auth()->user()->default_branch_id => auth()->user()->branch?->name])->value(auth()->user()->default_branch_id)->class('select-assigned-branch_id-list')->id('branch_id')->placeholder('All') }}
+                    {{ html()->select('branch_id', [auth()->user()->default_branch_id => auth()->user()->branch?->name])->value(auth()->user()->default_branch_id)->class('select-assigned-branch_id-list')->id('branch_id')->placeholder('Branch') }}
                 </div>
                 <div class="col-md-3">
                     <br>

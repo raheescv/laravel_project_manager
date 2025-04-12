@@ -123,15 +123,15 @@
 
                 <div class="d-flex justify-content-end gap-2 my-4 d-print-none">
                     @if ($sale_returns['status'] != 'cancelled')
-                        @can('sale_return.cancel')
+                        @can('sales return.cancel')
                             <button type="button" wire:click='save("cancelled")' wire:confirm="Are you sure to cancel this?" class="btn btn-danger btn-sm">
                                 Cancel
                             </button>
                         @endcan
-                        @can('sale_return.edit completed')
+                        @can('sales return.edit completed')
                             <a href="{{ route('sale_return::edit', $sale_returns['id']) }}" type="button" class="btn btn-primary">Edit</a>
                         @endcan
-                        @can('sale_return.cancel')
+                        @can('sales return.cancel')
                             <button type="button" wire:click='sendToWhatsapp' class="btn btn-info btn-sm">
                                 Whatsapp
                             </button>
@@ -150,7 +150,7 @@
             </div>
         </div>
     </div>
-    @can('sale_return.view journal entries')
+    @can('sales return.view journal entries')
         @if (count($sale_return->journals))
             <div class="row mb-3">
                 <div class="col-md-12 mb-3">
