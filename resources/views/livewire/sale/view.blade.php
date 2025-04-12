@@ -5,7 +5,7 @@
                 <!-- Invoice info -->
                 <div class="d-md-flex">
                     <address class="mb-4 mb-md-0">
-                        <h5 class="mb-2">{{ $sale->account?->name }}</h5>
+                        <h5 class="mb-2"> <a href="{{ route('account::customer::view', $sale->account_id) }}">{{ $sale->account?->name }}</a> </h5>
                         @if ($sale->customer_name)
                             <b>Customer Name :</b> {{ $sale->customer_name }} <br>
                         @endif
@@ -216,45 +216,105 @@
             </div>
         </div>
     </div>
-    @can('sale.view journal entries')
-        @if (count($sale->journals))
-            <div class="row mb-3">
-                <div class="col-md-12 mb-3">
-                    <div class="card h-100">
-                        <div class="card-body">
-                            <h5 class="card-title">Journal Entries </h5>
-                            <div class="table-responsive">
-                                <table class="table table-striped align-middle table-sm table-bordered">
-                                    <thead>
-                                        <tr class="bg-primary">
-                                            <th class="text-white text-end">SL No</th>
-                                            <th class="text-white">Date</th>
-                                            <th class="text-white">Account Name</th>
-                                            <th class="text-white">Description</th>
-                                            <th class="text-white text-end">Debit</th>
-                                            <th class="text-white text-end">Credit</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        @foreach ($sale->journals as $journal)
-                                            @foreach ($journal->entries as $entry)
-                                                <tr>
-                                                    <td class="text-end">{{ $entry->id }}</td>
-                                                    <td>{{ systemDate($journal->date) }}</td>
-                                                    <td>{{ $entry->account?->name }}</td>
-                                                    <td>{{ $entry->remarks }}</td>
-                                                    <td class="text-end">{{ currency($entry->credit) }}</td>
-                                                    <td class="text-end">{{ currency($entry->debit) }}</td>
-                                                </tr>
-                                            @endforeach
+    <div class="tab-base">
+        <ul class="nav nav-underline nav-component border-bottom" role="tablist">
+            @can('sale.view journal entries')
+                @if (count($sale->journals))
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link px-3 active" data-bs-toggle="tab" data-bs-target="#tab-journal-entries" type="button" role="tab" aria-controls="contact" aria-selected="false"
+                            tabindex="-1">
+                            Journal Entries
+                        </button>
+                    </li>
+                @endif
+            @endcan
+            @if (count($sale_return_items))
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link px-3" data-bs-toggle="tab" data-bs-target="#tab-sale-return-items" type="button" role="tab" aria-controls="contact" aria-selected="false"
+                        tabindex="-1">
+                        Sale Return Items
+                    </button>
+                </li>
+            @endif
+        </ul>
+        <div class="tab-content">
+            @can('sale.view journal entries')
+                @if (count($sale->journals))
+                    <div id="tab-journal-entries" class="tab-pane fade active show" role="tabpanel" aria-labelledby="contact-tab">
+                        <div class="table-responsive">
+                            <table class="table table-striped align-middle table-sm table-bordered">
+                                <thead>
+                                    <tr class="bg-primary">
+                                        <th class="text-white text-end">SL No</th>
+                                        <th class="text-white">Date</th>
+                                        <th class="text-white">Account Name</th>
+                                        <th class="text-white">Description</th>
+                                        <th class="text-white text-end">Debit</th>
+                                        <th class="text-white text-end">Credit</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach ($sale->journals as $journal)
+                                        @foreach ($journal->entries as $entry)
+                                            <tr>
+                                                <td class="text-end">{{ $entry->id }}</td>
+                                                <td>{{ systemDate($journal->date) }}</td>
+                                                <td>{{ $entry->account?->name }}</td>
+                                                <td>{{ $entry->remarks }}</td>
+                                                <td class="text-end">{{ currency($entry->credit) }}</td>
+                                                <td class="text-end">{{ currency($entry->debit) }}</td>
+                                            </tr>
                                         @endforeach
-                                    </tbody>
-                                </table>
-                            </div>
+                                    @endforeach
+                                </tbody>
+                            </table>
                         </div>
                     </div>
+                @endif
+            @endcan
+            <div id="tab-sale-return-items" class="tab-pane fade" role="tabpanel" aria-labelledby="contact-tab">
+                <div class="table-responsive">
+                    <table class="table table-striped align-middle table-sm table-bordered">
+                        <thead>
+                            <tr class="bg-primary">
+                                <th class="text-white text-end">SL No</th>
+                                <th class="text-white" width="20%">Product/Service</th>
+                                <th class="text-white text-end">Unit Price</th>
+                                <th class="text-white text-end">Quantity</th>
+                                <th class="text-white text-end">Discount</th>
+                                <th class="text-white text-end">Tax %</th>
+                                <th class="text-white text-end">Total</th>
+                                <th class="text-white text-end">Effective Total</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach ($sale_return_items as $item)
+                                <tr>
+                                    <td class="text-end">{{ $loop->iteration }}</td>
+                                    <td> <a href="{{ route('inventory::product::view', $item['product_id']) }}">{{ $item['name'] }}</a> </td>
+                                    <td class="text-end">{{ currency($item['unit_price']) }}</td>
+                                    <td class="text-end">{{ currency($item['quantity']) }}</td>
+                                    <td class="text-end">{{ currency($item['discount']) }}</td>
+                                    <td class="text-end">{{ currency($item['tax_amount']) }} ({{ round($item['tax'], 2) }}%)</td>
+                                    <td class="text-end"> {{ currency($item['total']) }} </td>
+                                    <td class="text-end"> {{ currency($item['effective_total']) }} </td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                        <tfoot>
+                            <tr>
+                                <th colspan="3" class="text-end">Total</th>
+                                <th class="text-end"><b>{{ currency($sale_return_items->sum('quantity')) }}</b></th>
+                                <th class="text-end"><b>{{ currency($sale_return_items->sum('discount')) }}</b></th>
+                                <th class="text-end"><b>{{ currency($sale_return_items->sum('tax_amount')) }}</b></th>
+                                <th class="text-end"><b>{{ currency($sale_return_items->sum('total')) }}</b></th>
+                                <th class="text-end"><b>{{ currency($sale_return_items->sum('effective_total')) }}</b></th>
+                            </tr>
+                        </tfoot>
+                    </table>
                 </div>
             </div>
-        @endif
-    @endcan
+        </div>
+    </div>
+
 </div>

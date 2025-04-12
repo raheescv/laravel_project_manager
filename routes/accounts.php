@@ -9,6 +9,7 @@ Route::middleware('auth')->group(function (): void {
         Route::get('list', 'get')->name('list');
         Route::name('customer::')->prefix('customer')->group(function (): void {
             Route::get('', 'customer')->name('index')->can('customer.view');
+            Route::get('view/{id}', 'customer')->name('view')->can('customer.view');
         });
         Route::name('vendor::')->prefix('vendor')->group(function (): void {
             Route::get('', 'vendor')->name('index')->can('vendor.view');

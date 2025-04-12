@@ -6,6 +6,7 @@ use App\Actions\Sale\UpdateAction;
 use App\Helpers\Facades\SaleHelper;
 use App\Helpers\Facades\WhatsappHelper;
 use App\Models\Sale;
+use App\Models\SaleReturnItem;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Livewire\Component;
@@ -15,6 +16,8 @@ class View extends Component
     public $table_id;
 
     public $items = [];
+
+    public $sale_return_items = [];
 
     public $payments = [];
 
@@ -31,8 +34,10 @@ class View extends Component
                 return redirect()->route('sale::index');
             }
             $this->sales = $this->sale->toArray();
-            $this->items = $this->sale->items->mapWithKeys(function ($item) {
+            $item_ids = [];
+            $this->items = $this->sale->items->mapWithKeys(function ($item) use (&$item_ids) {
                 $key = $item['employee_id'].'-'.$item['inventory_id'];
+                $item_ids[] = $item['id'];
 
                 return [
                     $key => [
@@ -55,6 +60,7 @@ class View extends Component
                     ],
                 ];
             })->toArray();
+            $this->sale_return_items = SaleReturnItem::with('saleReturn:id,other_discount,total', 'product:id,name')->whereIn('sale_item_id', $item_ids)->get();
             $this->payments = $this->sale->payments->map->only(['id', 'amount', 'date', 'payment_method_id', 'created_by', 'name'])->toArray();
         }
     }

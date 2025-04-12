@@ -12,9 +12,13 @@ class AccountController extends Controller
         return view('accounts.index');
     }
 
-    public function customer()
+    public function customer($id = null)
     {
-        return view('accounts.customer');
+        if ($id) {
+            return view('accounts.customer_details', compact('id'));
+        } else {
+            return view('accounts.customer');
+        }
     }
 
     public function vendor()

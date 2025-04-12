@@ -63,7 +63,7 @@
                                 <input type="checkbox" value="{{ $item->id }}" wire:model.live="selected" />
                                 {{ $item->id }}
                             </td>
-                            <td>{{ $item->name }}</td>
+                            <td><a href="{{ route('account::customer::view', $item->id) }}">{{ $item->name }}</a> </td>
                             <td>{{ $item->mobile }}</td>
                             <td>{{ $item->email }}</td>
                             <td class="text-end">

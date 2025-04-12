@@ -5,6 +5,7 @@ namespace App\Livewire\Account\Customer;
 use App\Models\Account;
 use App\Models\Sale;
 use App\Models\SaleItem;
+use App\Models\SaleReturn;
 use Illuminate\Support\Facades\DB;
 use Livewire\Component;
 
@@ -18,9 +19,11 @@ class View extends Component
 
     public $sales;
 
-    public $sale_items;
+    public $total_sale_returns;
 
-    public $rahees;
+    public $sale_returns;
+
+    public $sale_items;
 
     public $item_count;
 
@@ -46,6 +49,17 @@ class View extends Component
                 ->limit(20)
                 ->latest()
                 ->get(['id', 'date', 'invoice_no', 'grand_total', 'paid', 'balance']);
+
+            $this->total_sale_returns = DB::table('sale_returns')
+                ->where('account_id', $account_id)
+                ->selectRaw('account_id, SUM(grand_total) AS grand_total, SUM(paid) AS paid, SUM(balance) AS balance')
+                ->groupBy('account_id')
+                ->first();
+            $this->sale_returns = SaleReturn::where('account_id', $account_id)
+                ->limit(20)
+                ->latest()
+                ->get(['id', 'date', 'reference_no', 'grand_total', 'paid', 'balance']);
+
             $this->item_count = SaleItem::groupBy('product_id')
                 ->whereHas('sale', function ($query) use ($account_id) {
                     return $query->where('sales.account_id', $account_id);
