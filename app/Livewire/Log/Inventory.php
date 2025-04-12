@@ -104,7 +104,7 @@ class Inventory extends Component
 
     public function render()
     {
-        $data = InventoryLog::with('branch:id,name', 'product:id,name,department_id,main_category_id,sub_category_id', 'product.department:id,name', 'product.subCategory:id,name', 'product.mainCategory:id,name')
+        $data = InventoryLog::with('branch:id,name', 'product:id,name,department_id,main_category_id,sub_category_id', 'product.department:id,name', 'product.mainCategory:id,name')
             ->orderBy($this->sortField, $this->sortDirection)
             ->when($this->search, function ($query, $value) {
                 return $query->where(function ($q) use ($value) {

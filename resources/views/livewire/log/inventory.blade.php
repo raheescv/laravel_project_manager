@@ -50,7 +50,6 @@
                         <th> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="branch_id" label="Branch" /> </th>
                         <th>Department</th>
                         <th>Main Category</th>
-                        <th>Sub Category</th>
                         <th> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="product_id" label="Product" /> </th>
                         <th> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="barcode" label="barcode" /> </th>
                         <th> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="batch" label="batch" /> </th>
@@ -68,7 +67,6 @@
                             <td>{{ $item->branch?->name }}</td>
                             <td>{{ $item->product?->department?->name }}</td>
                             <td>{{ $item->product?->mainCategory?->name }}</td>
-                            <td>{{ $item->product?->subCategory?->name }}</td>
                             <td> <a href="{{ route('inventory::product::view', $item->product_id) }}">{{ $item->product?->name }}</a> </td>
                             <td>{{ $item->barcode }}</td>
                             <td>{{ $item->batch }}</td>
