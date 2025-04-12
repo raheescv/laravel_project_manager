@@ -47,17 +47,17 @@
                 <thead>
                     <tr class="text-capitalize">
                         <th> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="created_at" label="Date" /> </th>
-                        <th> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="branch.name" label="Branch" /> </th>
+                        <th> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="branch_id" label="Branch" /> </th>
                         <th>Department</th>
                         <th>Main Category</th>
                         <th>Sub Category</th>
-                        <th> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="product.name" label="Product" /> </th>
+                        <th> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="product_id" label="Product" /> </th>
                         <th> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="barcode" label="barcode" /> </th>
                         <th> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="batch" label="batch" /> </th>
                         <th class="text-end"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="quantity_in" label="In" /> </th>
                         <th class="text-end"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="quantity_out" label="out" /> </th>
                         <th class="text-end"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="balance" label="balance" /> </th>
-                        <th> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="remarks" label="remarks" /> </th>
+                        <th width="20%"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="remarks" label="remarks" /> </th>
                         <th> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="user_name" label="User" /> </th>
                     </tr>
                 </thead>
