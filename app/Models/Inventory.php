@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Actions\Product\Inventory\CreateAction as InventoryCreateAction;
+use App\Models\Scopes\AssignedBranchScope;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use OwenIt\Auditing\Auditable;
@@ -39,6 +40,11 @@ class Inventory extends Model implements AuditableContracts
             'created_by' => ['required'],
             'updated_by' => ['required'],
         ], $merge);
+    }
+
+    protected static function booted()
+    {
+        static::addGlobalScope(new AssignedBranchScope());
     }
 
     public function product()

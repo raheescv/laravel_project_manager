@@ -92,7 +92,7 @@
                     @if (auth()->user()->can('sale_return.view') || auth()->user()->can('report.sale return item'))
                         <li class="nav-item has-sub">
                             <a href="#"
-                                class="mininav-toggle nav-link {{ request()->is(['sale_return', 'sale_return/create', 'sale_return/edit/*', 'sale_return/view/*', 'report/sale_return_item', 'sale/payments']) ? 'active' : '' }}">
+                                class="mininav-toggle nav-link {{ request()->is(['sale_return', 'sale_return/create', 'sale_return/edit/*', 'sale_return/view/*', 'report/sale_return_item', 'sale_return/payments']) ? 'active' : '' }}">
                                 <i class="demo-pli-split-vertical-2 fs-5 me-2"></i>
                                 <span class="nav-label ms-1">Sale Return</span>
                             </a>
