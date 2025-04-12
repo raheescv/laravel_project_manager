@@ -46,11 +46,11 @@
             <table class="table table-striped table-sm">
                 <thead>
                     <tr class="text-capitalize">
-                        <th> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="created_at" label="Date" /> </th>
+                        <th> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="inventories.created_at" label="Date" /> </th>
                         <th> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="branch_id" label="Branch" /> </th>
                         <th>Department</th>
                         <th>Main Category</th>
-                        <th> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="product_id" label="Product" /> </th>
+                        <th> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="products.name" label="Product" /> </th>
                         <th> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="barcode" label="barcode" /> </th>
                         <th> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="batch" label="batch" /> </th>
                         <th class="text-end"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="quantity_in" label="In" /> </th>

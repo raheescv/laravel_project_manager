@@ -105,12 +105,14 @@ class Inventory extends Component
     public function render()
     {
         $data = InventoryLog::with('branch:id,name', 'product:id,name,department_id,main_category_id,sub_category_id', 'product.department:id,name', 'product.mainCategory:id,name')
+            ->join('products', 'inventory_logs.product_id', '=', 'products.id')
             ->orderBy($this->sortField, $this->sortDirection)
             ->when($this->search, function ($query, $value) {
                 return $query->where(function ($q) use ($value) {
                     $value = trim($value);
                     $q->where('batch', 'like', "%{$value}%")
-                        ->orWhere('barcode', 'like', "%{$value}%")
+                        ->orWhere('products.name', 'like', "%{$value}%")
+                        ->orWhere('inventory_logs.barcode', 'like', "%{$value}%")
                         ->orWhere('remarks', 'like', "%{$value}%")
                         ->orWhere('quantity_in', 'like', "%{$value}%")
                         ->orWhere('quantity_out', 'like', "%{$value}%")
@@ -119,10 +121,10 @@ class Inventory extends Component
                 });
             })
             ->when($this->from_date ?? '', function ($query, $value) {
-                return $query->where('created_at', '>=', date('Y-m-d H:i:s', strtotime($value)));
+                return $query->where('inventory_logs.created_at', '>=', date('Y-m-d H:i:s', strtotime($value)));
             })
             ->when($this->to_date ?? '', function ($query, $value) {
-                return $query->where('created_at', '<=', date('Y-m-d H:i:s', strtotime($value)));
+                return $query->where('inventory_logs.created_at', '<=', date('Y-m-d H:i:s', strtotime($value)));
             })
             ->when($this->branch_id ?? '', function ($query, $value) {
                 return $query->where('branch_id', $value);
@@ -130,6 +132,19 @@ class Inventory extends Component
             ->when($this->product_id ?? '', function ($query, $value) {
                 return $query->where('product_id', $value);
             })
+            ->select(
+                'inventory_logs.barcode',
+                'inventory_logs.batch',
+                'inventory_logs.branch_id',
+                'inventory_logs.product_id',
+                'inventory_logs.quantity_in',
+                'inventory_logs.quantity_out',
+                'inventory_logs.balance',
+                'inventory_logs.remarks',
+                'inventory_logs.user_name',
+                'inventory_logs.created_at',
+            )
+            ->where('products.type', 'product')
             ->latest();
         $data = $data->paginate($this->limit);
 
