@@ -31,7 +31,7 @@ class JournalEntryAction
             if ($model->gross_amount > 0) {
                 $remarks = 'SaleReturn to '.$model->account->name;
                 $entries[] = [
-                    'account_id' => DB::table('accounts')->where('name', 'Sale')->value('id'),
+                    'account_id' => DB::table('accounts')->where('name', 'Sales Returns')->value('id'),
                     'debit' => $model->gross_amount,
                     'credit' => 0,
                     'created_by' => $user_id,
