@@ -10,7 +10,7 @@ class UpdateAction
     public function execute($data, $id)
     {
         try {
-            $model = Inventory::find($id);
+            $model = Inventory::withoutGlobalScopes()->find($id);
             if (! $model) {
                 throw new \Exception("Resource not found with the specified ID: $id.", 1);
             }
