@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>Stock Transfer Form</title>
+    <title>Inventory Transfer Form</title>
     <link rel="stylesheet" href="{{ asset('assets/css/bootstrap.min.css') }}">
     <script src="{{ asset('assets/js/signature_pdf.js') }}"></script>
     <style>
@@ -67,7 +67,7 @@
 <body>
     <div class="transfer-card">
         <div class="text-center mb-4">
-            <div class="form-heading">Stock Transfer</div>
+            <div class="form-heading">Inventory Transfer</div>
             <div class="form-subtitle">Internal Inventory Movement Record</div>
         </div>
         <!-- Transfer Details Table -->

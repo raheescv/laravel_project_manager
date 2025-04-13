@@ -34,7 +34,7 @@ class InventoryTransferController extends Controller
 
         return response($pdf)
             ->header('Content-Type', 'application/pdf')
-            ->header('Content-Disposition', 'inline; filename="inventory-transfer.pdf"');
+            ->header('Content-Disposition', 'inline; filename="inventory-transfer-'.time().'.pdf"');
 
     }
 }
