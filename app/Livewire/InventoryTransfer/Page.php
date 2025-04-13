@@ -192,8 +192,11 @@ class Page extends Component
     {
         $this->validate();
         try {
-            $this->inventory_transfers['status'] = $status;
             DB::beginTransaction();
+            if (count($this->items) == 0) {
+                throw new Exception('Please add any item to transfer', 1);
+            }
+            $this->inventory_transfers['status'] = $status;
             $this->inventory_transfers['items'] = $this->items;
             if (! $this->table_id) {
                 $response = (new CreateAction())->execute($this->inventory_transfers, Auth::id());
