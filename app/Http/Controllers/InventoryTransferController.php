@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\InventoryTransfer;
+use Spatie\Browsershot\Browsershot;
 
 class InventoryTransferController extends Controller
 {
@@ -23,8 +24,17 @@ class InventoryTransferController extends Controller
 
     public function print($id)
     {
-        $model = InventoryTransfer::find($id);
+        $model = InventoryTransfer::findOrFail($id);
+        $html = view('inventory-transfer.print', compact('model', 'id'));
+        if (! $model->signature) {
+            return $html;
+        }
+        $html = $html->render();
+        $pdf = Browsershot::html($html)->transparentBackground()->pdf();
 
-        return view('inventory-transfer.print', compact('model'));
+        return response($pdf)
+            ->header('Content-Type', 'application/pdf')
+            ->header('Content-Disposition', 'inline; filename="inventory-transfer.pdf"');
+
     }
 }

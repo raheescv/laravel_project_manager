@@ -19,6 +19,7 @@ return new class() extends Migration
             $table->unsignedBigInteger('created_by')->references('id')->on('users');
             $table->unsignedBigInteger('approved_by')->nullable()->references('id')->on('users');
             $table->timestamp('approved_at')->nullable();
+            $table->text('signature')->nullable();
             $table->unsignedBigInteger('updated_by')->references('id')->on('users');
             $table->timestamps();
         });

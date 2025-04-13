@@ -20,6 +20,7 @@ class InventoryTransfer extends Model implements AuditableContracts
         'created_by',
         'approved_by',
         'approved_at',
+        'signature',
         'updated_by',
     ];
 

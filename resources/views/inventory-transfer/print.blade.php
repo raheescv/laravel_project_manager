@@ -5,6 +5,7 @@
     <meta charset="UTF-8">
     <title>Stock Transfer Form</title>
     <link rel="stylesheet" href="{{ asset('assets/css/bootstrap.min.css') }}">
+    <script src="{{ asset('assets/js/signature_pdf.js') }}"></script>
     <style>
         body {
             font-family: 'Segoe UI', sans-serif;
@@ -55,7 +56,7 @@
 
         .signature-box {
             width: 200px;
-            border-top: 1px solid #ccc;
+            border-bottom: 1px solid #ccc;
             padding-top: 0.5rem;
             margin-left: auto;
             text-align: center;
@@ -96,6 +97,7 @@
                 </div>
             </div>
         @endif
+
         <!-- Product Table -->
         <table class="table table-striped table-bordered">
             <thead class="table-light">
@@ -133,21 +135,36 @@
         </table>
 
         <!-- Footer Info -->
-        <div class="row">
-            <div class="col-md-6">
-                <p class="section-title">Created By</p>
-                <p class="fw-semibold mb-3">{{ $model->createdBy->name }}</p>
-
-                <p class="section-title">Last Updated At</p>
-                <p class="fw-semibold">{{ systemDateTime($model->created_at) }}</p>
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-top: 40px; gap: 20px;">
+            <div style="width: 50%;">
+                <div style="margin-bottom: 20px;">
+                    <p style="font-weight: bold; margin-bottom: 4px;">🧑 Created By</p>
+                    <p style="margin: 0;">{{ $model->createdBy->name }}</p>
+                </div>
+                <div>
+                    <p style="font-weight: bold; margin-bottom: 4px;">🕒 Last Updated At</p>
+                    <p style="margin: 0;">{{ systemDateTime($model->created_at) }}</p>
+                </div>
             </div>
-            <div class="col-md-6 text-end">
-                <p class="section-title">Approved By</p>
-                <p class="fw-semibold mb-4">{{ $model->approvedBy?->name }}</p>
-
-                <div class="signature-box">Signature</div>
+            <div style="width: 45%; text-align: right;">
+                <div style="margin-bottom: 12px;">
+                    <p style="font-weight: bold; margin-bottom: 4px;">✅ Approved By</p>
+                    <p style="margin: 0;">{{ $model->approvedBy?->name ?? '-' }}</p>
+                </div>
+                <div style="margin-top: 10px; border: 1px dashed #ccc; padding: 10px; min-height: 100px; display: inline-block;">
+                    @if ($model->signature)
+                        <img src="{{ public_path('storage/' . $model->signature) }}" alt="Signature" style="max-height: 80px;">
+                    @else
+                        <span style="color: #999; font-style: italic;">No signature</span>
+                    @endif
+                </div>
             </div>
         </div>
+        @if (!$model->signature)
+            <div class="row">
+                @livewire('inventory-transfer.sign', ['model' => $model])
+            </div>
+        @endif
     </div>
 </body>
 
