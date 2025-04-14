@@ -11,22 +11,24 @@ class BranchSelection extends Component
 {
     public $branch_id;
 
+    public $current_url;
+
     public function mount()
     {
         $this->branch_id = session('branch_id');
+        $this->current_url = url()->current();
     }
 
     public function save()
     {
         Session::put('branch_id', $this->branch_id);
-
         $branch = Branch::find($this->branch_id);
         if ($branch) {
             Session::put('branch_code', $branch->code);
             Session::put('branch_name', $branch->name);
         }
 
-        return redirect(url('/'));
+        return redirect($this->current_url);
     }
 
     public function render()
