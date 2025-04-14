@@ -47,6 +47,11 @@ class Inventory extends Model implements AuditableContracts
         static::addGlobalScope(new AssignedBranchScope());
     }
 
+    public static function find($id)
+    {
+        return self::withoutGlobalScopes()->find($id);
+    }
+
     public function product()
     {
         return $this->belongsTo(Product::class);

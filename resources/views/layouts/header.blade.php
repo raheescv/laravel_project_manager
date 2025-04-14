@@ -18,6 +18,12 @@
                     <i class="demo-psi-list-view"></i>
                 </button>
                 <div class="vr mx-1 d-none d-md-block"></div>
+                <div class="d-flex align-items-center px-3 py-1 rounded bg-light border text-dark shadow-sm">
+                    <i class="fa fa-code-branch me-2 text-primary"></i>
+                    <span class="fw-semibold small" id="branch_selection">
+                        Branch: {{ session('branch_name') }}
+                    </span>
+                </div>
             </div>
             <!-- End - Content Header - Left Side -->
 

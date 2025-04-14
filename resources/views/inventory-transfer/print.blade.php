@@ -71,7 +71,7 @@
             <div class="form-subtitle">Internal Inventory Movement Record</div>
         </div>
         <!-- Transfer Details Table -->
-        <table class="table table-bordered text-center meta-table mb-4">
+        <table class="table table-bordered table-sm text-center meta-table mb-4">
             <thead>
                 <tr>
                     <th>From Branch</th>
@@ -99,7 +99,7 @@
         @endif
 
         <!-- Product Table -->
-        <table class="table table-striped table-bordered">
+        <table class="table table-sm table-striped table-bordered">
             <thead class="table-light">
                 <tr>
                     <th>#</th>

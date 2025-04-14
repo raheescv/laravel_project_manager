@@ -67,6 +67,9 @@
             {{ $slot }}
             @include('layouts.footer')
         </section>
+
+
+        <x-branch-selection-modal />
         @include('layouts.header')
         @include('layouts.navigation')
         @include('layouts.sidebar')
