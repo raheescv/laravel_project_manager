@@ -16,6 +16,7 @@ class HandleBranchUpdated implements ShouldQueue
         if (Auth::check() && Auth::id() === $event->user->id) {
             session(['branch_id' => $event->branch_id]);
             session(['branch_code' => $event->user->branch?->code]);
+            session(['branch_name' => $event->user->branch?->code]);
         }
     }
 }
