@@ -53,7 +53,7 @@ class Page extends Component
                 'status' => 'pending',
             ];
             $this->fromBranch = [
-                Auth::user()->default_branch_id => Auth::user()->branch?->name,
+                session('branch_id') => session('branch_name'),
             ];
         } else {
             $this->inventory_transfer = InventoryTransfer::with('fromBranch:id,name', 'toBranch:id,name', 'items.product:id,name')->find($this->table_id);
@@ -85,6 +85,7 @@ class Page extends Component
             })->toArray();
             $this->inventory_transfers = $this->inventory_transfer->toArray();
         }
+        $this->dispatch('OpenToBranchBox');
     }
 
     public function updated($key, $value)

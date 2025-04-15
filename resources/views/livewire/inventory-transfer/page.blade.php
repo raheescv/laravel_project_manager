@@ -123,6 +123,9 @@
     @push('scripts')
         <script>
             $(document).ready(function() {
+
+                document.querySelector('#to_branch_id').tomselect.open();
+
                 $('#inventory_id').on('change', function(e) {
                     const value = $(this).val() || null;
                     @this.set('inventory_id', value);

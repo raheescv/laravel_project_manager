@@ -155,6 +155,13 @@
                                     </tr>
                                 @endforeach
                             </tbody>
+                            <tfoot>
+                                <tr>
+                                    <th colspan="5" class="text-end">Total</th>
+                                    <th class="text-end"><b>{{ currency($data->sum('quantity')) }}</b></th>
+                                    <th></th>
+                                </tr>
+                            </tfoot>
                         </table>
                     </div>
                 </div>
