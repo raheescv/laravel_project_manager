@@ -33,6 +33,7 @@ class View extends Component
         $this->role_names = $this->user->roles()->pluck('name')->toArray();
         $this->branches = Branch::pluck('name', 'id')->toArray();
         $this->branch_ids = $this->user->branches->pluck('branch_id', 'branch_id')->toArray();
+        $this->default_branch_id = $this->user->default_branch_id;
         $this->default_branch[$this->default_branch_id] = $this->user?->branch?->name;
     }
 
