@@ -4,19 +4,20 @@ namespace App\Livewire\Dashboard\Sale;
 
 use App\Models\Sale;
 use App\Models\SalePayment;
+use Illuminate\Support\Carbon;
 use Livewire\Component;
 
 class Overview extends Component
 {
     public function render()
     {
-        $todaySale = Sale::today()->sum('grand_total');
-        $todayPayment = SalePayment::today()->sum('amount');
+        $todaySale = Sale::currentBranch()->today()->sum('grand_total');
+        $todayPayment = SalePayment::currentBranch()->today()->sum('amount');
         $credit = $todaySale - $todayPayment;
-        $highestSale = Sale::today()->max('grand_total');
-        $lowestSale = Sale::today()->min('grand_total');
+        $highestSale = Sale::currentBranch()->today()->max('grand_total');
+        $lowestSale = Sale::currentBranch()->today()->min('grand_total');
 
-        $paymentData = SalePayment::today()
+        $paymentData = SalePayment::currentBranch()->today()
             ->join('accounts', 'payment_method_id', '=', 'accounts.id')->select('accounts.name as method')
             ->selectRaw('sum(amount) as amount')
             ->groupBy('payment_method_id')
@@ -35,11 +36,23 @@ class Overview extends Component
             $paymentData[$key]['percentage'] = $totalAmount ? round(($item['amount'] / $totalAmount) * 100, 2) : 0;
         }
 
-        $data = Sale::last30Days()
+        $sales = Sale::currentBranch()->last30Days()
             ->selectRaw("DATE_FORMAT(date, '%d-%b') as date, SUM(grand_total) as amount")
             ->groupBy('date')
-            ->get()
-            ->toArray();
+            ->pluck('amount', 'date');
+
+        $dates = collect();
+        for ($i = 29; $i >= 0; $i--) {
+            $date = Carbon::now()->subDays($i)->format('d-M');
+            $dates->put($date, 0); // default to 0
+        }
+
+        $data = $dates->merge($sales)->map(function ($amount, $date) {
+            return [
+                'date' => $date,
+                'amount' => (float) $amount,
+            ];
+        })->values()->toArray();
 
         return view('livewire.dashboard.sale.overview', compact('data', 'paymentData', 'highestSale', 'lowestSale', 'todaySale', 'todayPayment'));
     }
