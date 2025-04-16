@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Models\Models\Views\Ledger;
 use App\Models\Scopes\AssignedBranchScope;
+use App\Models\Scopes\CurrentBranchScope;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Validation\Rule;
@@ -75,6 +76,11 @@ class Sale extends Model implements AuditableContracts
     public function scopeToday($query)
     {
         return $query->where('date', date('Y-m-d'));
+    }
+
+    public function scopeCurrentBranch($query)
+    {
+        return CurrentBranchScope::apply($query);
     }
 
     public function scopeLast7Days($query)

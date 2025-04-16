@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Actions\Product\Inventory\CreateAction as InventoryCreateAction;
 use App\Models\Scopes\AssignedBranchScope;
+use App\Models\Scopes\CurrentBranchScope;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use OwenIt\Auditing\Auditable;
@@ -69,7 +70,7 @@ class Inventory extends Model implements AuditableContracts
 
     public function scopeCurrentBranch($query)
     {
-        return $query->where('inventories.branch_id', session('branch_id'));
+        return CurrentBranchScope::apply($query);
     }
 
     public static function selfCreateByProduct($product, $user_id, $quantity = 0, $current_branch = 1)

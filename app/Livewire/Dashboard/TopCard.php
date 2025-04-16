@@ -13,12 +13,12 @@ class TopCard extends Component
 {
     public function render()
     {
-        $todaySale = Sale::today()->sum('grand_total');
+        $todaySale = Sale::currentBranch()->today()->sum('grand_total');
         $todayPayment = SalePayment::today()->sum('amount');
 
-        $weeklySale = Sale::last7Days()->sum('grand_total');
-        $weeklyPayment = SalePayment::last7Days()->sum('amount');
-        $stockCost = Inventory::whereHas('product', function ($query) {
+        $weeklySale = Sale::currentBranch()->last7Days()->sum('grand_total');
+        $weeklyPayment = SalePayment::currentBranch()->last7Days()->sum('amount');
+        $stockCost = Inventory::currentBranch()->whereHas('product', function ($query) {
             return $query->where('products.type', 'product');
         })->sum('total');
         $category = Category::whereNull('parent_id')->count();

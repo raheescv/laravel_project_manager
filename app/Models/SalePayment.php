@@ -34,6 +34,13 @@ class SalePayment extends Model implements AuditableContracts
         ], $merge);
     }
 
+    public function scopeCurrentBranch($query)
+    {
+        return $query->whereHas('sale', function ($query) {
+            return $query->where('sales.branch_id', session('branch_id'));
+        });
+    }
+
     public function scopeToday($query)
     {
         return $query->where('date', date('Y-m-d'));
