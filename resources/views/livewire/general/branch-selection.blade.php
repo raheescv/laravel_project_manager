@@ -20,7 +20,7 @@
                 <div class="col-md-12">
                     <div class="form-group">
                         <h4> <label for="batch">Batch</label> </h4>
-                        {{ html()->select('branch_id', $assigned_branches)->value('')->class('form-control')->id('branch_id')->attribute('wire:model', 'branch_id')->placeholder('Product') }}
+                        {{ html()->select('branch_id', $assigned_branches)->value('')->class('form-control')->id('branch_id')->attribute('wire:model', 'branch_id')->placeholder('Please Select Branch') }}
                     </div>
                 </div>
             </div>
