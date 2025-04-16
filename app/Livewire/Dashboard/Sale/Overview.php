@@ -44,7 +44,7 @@ class Overview extends Component
         $dates = collect();
         for ($i = 29; $i >= 0; $i--) {
             $date = Carbon::now()->subDays($i)->format('d-M');
-            $dates->put($date, 0); // default to 0
+            $dates->put($date, 0);
         }
 
         $data = $dates->merge($sales)->map(function ($amount, $date) {
