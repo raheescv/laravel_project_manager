@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "9e4ffdc0de6ba6a1762728dd5fbd755d",
+    "content-hash": "dc5501bd1486c3221f0b13bc15371674",
     "packages": [
         {
             "name": "barryvdh/laravel-dompdf",
@@ -3658,6 +3658,73 @@
                 }
             ],
             "time": "2024-11-21T10:39:51+00:00"
+        },
+        {
+            "name": "ollama/ollama-php-client",
+            "version": "v1.0.2",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/dependencies-packagist/ollama-php-client.git",
+                "reference": "d5ac344265bc1d6d40d8850d3e52e184a2945fca"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/dependencies-packagist/ollama-php-client/zipball/d5ac344265bc1d6d40d8850d3e52e184a2945fca",
+                "reference": "d5ac344265bc1d6d40d8850d3e52e184a2945fca",
+                "shasum": ""
+            },
+            "require": {
+                "guzzlehttp/guzzle": "^7.9",
+                "php": "^8.1"
+            },
+            "require-dev": {
+                "laravel/pint": "^1.0",
+                "pestphp/pest": "^3.0",
+                "spatie/ray": "^1.28"
+            },
+            "type": "library",
+            "extra": {
+                "branch-alias": {
+                    "dev-main": "1.x-dev"
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "Ollama\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "jundayw",
+                    "email": "jundayw@126.com"
+                }
+            ],
+            "description": "Community-Driven PHP SDK for Ollama AI API Integration.",
+            "homepage": "https://github.com/dependencies-packagist/ollama-php-client",
+            "keywords": [
+                "ChatGpt",
+                "ai",
+                "deepseek",
+                "gemma2",
+                "grok",
+                "llama",
+                "llama3.1",
+                "llm",
+                "mistral",
+                "ollama",
+                "ollama-php",
+                "openai",
+                "qwen"
+            ],
+            "support": {
+                "issues": "https://github.com/dependencies-packagist/ollama-php-client/issues",
+                "source": "https://github.com/dependencies-packagist/ollama-php-client/tree/v1.0.2"
+            },
+            "time": "2025-03-03T11:58:54+00:00"
         },
         {
             "name": "owen-it/laravel-auditing",
