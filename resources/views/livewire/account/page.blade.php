@@ -16,18 +16,20 @@
                     @endif
                 </div>
             </div>
-            <div class="row">
-                <div class="col-md-12">
-                    <div class="form-group" wire:ignore>
-                        <h4> <label for="account_type">Account Type</label> </h4>
-                        {{ html()->select('account_type', accountTypes())->value('')->class('tomSelect')->placeholder('Please Select Account Type')->id('modal_account_type') }}
+            @if (!$type_selection_freeze)
+                <div class="row">
+                    <div class="col-md-12 mb-2">
+                        <div class="form-group">
+                            <b><label for="account_type" class="text-capitalize">Account Type *</label></b>
+                            {{ html()->select('account_type', accountTypes())->value('')->class('form-control')->attribute('wire:model', 'accounts.account_type')->placeholder('Please Select Account Type')->id('modal_account_type') }}
+                        </div>
                     </div>
                 </div>
-            </div>
+            @endif
             <div class="row">
-                <div class="col-md-12">
+                <div class="col-md-12 mb-2">
                     <div class="form-group">
-                        <h4> <label for="name">Name</label> </h4>
+                        <b><label for="name" class="text-capitalize">Name *</label></b>
                         {{ html()->input('name')->value('')->class('form-control')->attribute('wire:model', 'accounts.name') }}
                     </div>
                 </div>
@@ -35,8 +37,8 @@
             <div class="row">
                 <div class="col-md-12">
                     <div class="form-group">
-                        <h4> <label for="description">Description</label> </h4>
-                        {{ html()->input('description')->value('')->class('form-control')->attribute('wire:model', 'accounts.description') }}
+                        <b><label for="description" class="text-capitalize">Description</label></b>
+                        {{ html()->textarea('description')->value('')->class('form-control')->attribute('wire:model', 'accounts.description') }}
                     </div>
                 </div>
             </div>
@@ -50,20 +52,18 @@
     @push('scripts')
         <script>
             $(document).ready(function() {
-                $('#modal_account_type').on('change', function(e) {
-                    const value = $(this).val() || null;
-                    @this.set('accounts.account_type', value);
-                });
-                window.addEventListener('SelectDropDownValues', event => {
-                    var accounts = event.detail[0];
-                    console.log(accounts);
-                    var tomSelectInstance = document.querySelector('#modal_account_type').tomselect;
-                    @this.set('accounts.account_type', accounts['account_type']);
-                    if (accounts['account_type']) {
-                        tomSelectInstance.addItem(accounts['account_type']);
-                    } else {
-                        tomSelectInstance.clear();
+                window.addEventListener('AddToAccountSelectBox', event => {
+                    var data = event.detail[0];
+                    console.log(data);
+                    var tomSelectInstance = document.querySelector('.select-account_id').tomselect;
+                    if (data['name']) {
+                        preselectedData = {
+                            id: data['id'],
+                            name: data['name'],
+                        };
+                        tomSelectInstance.addOption(preselectedData);
                     }
+                    tomSelectInstance.addItem(data['id']);
                 });
             });
         </script>

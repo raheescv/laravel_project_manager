@@ -108,7 +108,7 @@
                                 {{ $item->id }}
                             </td>
                             <td>{{ ucFirst($item->account_type) }}</td>
-                            <td>{{ $item->name }}</td>
+                            <td> <a href="{{ route('account::view', $item->id) }}">{{ $item->name }}</a> </td>
                             <td>{{ $item->description }}</td>
                             <td>{{ ucFirst($item->model) }}</td>
                             <td class="text-end">

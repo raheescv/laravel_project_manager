@@ -46,7 +46,7 @@
                         <th> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="date" label="date" /> </th>
                         <th> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="account_name" label="account name" /> </th>
                         <th> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="description" label="description" /> </th>
-                        <th> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="reference_number" label="reference number" /> </th>
+                        <th> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="reference_number" label="reference no" /> </th>
                         <th> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="remarks" label="remarks" /> </th>
                         <th class="text-end"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="debit" label="debit" /> </th>
                         <th class="text-end"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="credit" label="credit" /> </th>
@@ -75,15 +75,15 @@
                             </td>
                             <td>{{ $item->reference_number }}</td>
                             <td>{{ $item->remarks }}</td>
-                            <td class="text-end">{{ $item->debit }}</td>
-                            <td class="text-end">{{ $item->credit }}</td>
-                            <td class="text-end">{{ $item->balance }}</td>
+                            <td class="text-end">{{ currency($item->debit) }}</td>
+                            <td class="text-end">{{ currency($item->credit) }}</td>
+                            <td class="text-end">{{ currency($item->balance) }}</td>
                         </tr>
                     @endforeach
                 </tbody>
                 <tfoot>
                     <tr>
-                        <th colspan="6">Total</th>
+                        <th class="text-end" colspan="6">Total</th>
                         <th class="text-end">{{ currency($total['debit']) }}</th>
                         <th class="text-end">{{ currency($total['credit']) }}</th>
                         <th class="text-end">{{ currency($total['debit'] - $total['credit']) }}</th>

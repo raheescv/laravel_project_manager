@@ -22,6 +22,6 @@
         </div>
     </div>
     @push('scripts')
-        @include('components.select.accountSelect')
+        <x-select.accountSelect />
     @endpush
 </x-app-layout>

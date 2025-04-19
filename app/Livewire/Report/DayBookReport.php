@@ -5,6 +5,7 @@ namespace App\Livewire\Report;
 use App\Exports\DayBookReportExport;
 use App\Jobs\Export\ExportSaleItemReportJob;
 use App\Models\Models\Views\Ledger;
+use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
 use Livewire\WithPagination;
 use Maatwebsite\Excel\Facades\Excel;
@@ -65,7 +66,7 @@ class DayBookReport extends Component
         ];
 
         if ($count > 2000) {
-            ExportSaleItemReportJob::dispatch(auth()->user(), $filter);
+            ExportSaleItemReportJob::dispatch(Auth::user(), $filter);
             $this->dispatch('success', ['message' => 'You will get your file in your mailbox.']);
         } else {
             $exportFileName = 'DayBookReport-'.now()->timestamp.'.xlsx';

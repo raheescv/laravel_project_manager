@@ -10,7 +10,7 @@ class CreateAction
     public function execute($data)
     {
         try {
-            $data['branch_id'] = session('branch_id');
+            $data['branch_id'] = $data['branch_id'] ?? session('branch_id');
             validationHelper(Journal::rules(), $data);
             $model = Journal::create($data);
             $entries = [];
@@ -20,6 +20,7 @@ class CreateAction
                 $single['model_id'] = $single['model_id'] ?? null;
                 $single['journal_id'] = $model->id;
                 $single['created_at'] = now();
+                $single['updated_at'] = now();
                 $entries[] = $single;
             }
             if ($entries) {

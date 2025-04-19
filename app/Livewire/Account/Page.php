@@ -21,9 +21,16 @@ class Page extends Component
 
     public $table_id;
 
-    public function create()
+    public $type_selection_freeze = false;
+
+    public function create($name = null, $account_type = null)
     {
         $this->mount();
+        $this->accounts['name'] = $name;
+        $this->accounts['account_type'] = $account_type;
+        if ($account_type) {
+            $this->type_selection_freeze = true;
+        }
         $this->dispatch('ToggleAccountModal');
     }
 
@@ -36,6 +43,7 @@ class Page extends Component
     public function mount($table_id = null)
     {
         $this->table_id = $table_id;
+        $this->type_selection_freeze = false;
         if (! $this->table_id) {
             $faker = Factory::create();
             $name = '';
@@ -52,7 +60,6 @@ class Page extends Component
             $account = Account::find($this->table_id);
             $this->accounts = $account->toArray();
         }
-        $this->dispatch('SelectDropDownValues', $this->accounts);
     }
 
     protected function rules()
@@ -83,6 +90,7 @@ class Page extends Component
             }
             $account_type = $response['data']['account_type'];
             $this->dispatch('success', ['message' => $response['message']]);
+            $this->dispatch('AddToAccountSelectBox', $response['data']);
             $this->mount($this->table_id);
             if (! $close) {
                 $this->dispatch('ToggleAccountModal');
