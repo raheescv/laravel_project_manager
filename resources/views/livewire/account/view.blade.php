@@ -133,7 +133,7 @@
                                         <tbody>
                                             @foreach ($groupedChartData as $item)
                                                 <tr>
-                                                    <td>{{ $item->counter_account_name }}</td>
+                                                    <td>{{ $item->account_name }}</td>
                                                     <td class="text-end">{{ currency($item->debit) }}</td>
                                                     <td class="text-end">{{ currency($item->credit) }}</td>
                                                 </tr>
