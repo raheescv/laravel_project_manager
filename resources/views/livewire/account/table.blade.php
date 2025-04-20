@@ -54,13 +54,13 @@
             <table class="table table-striped align-middle table-sm">
                 <thead>
                     <tr class="text-capitalize">
-                        <th>
+                        <th width="5%">
                             <input type="checkbox" wire:model.live="selectAll" />
                             <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="id" label="#" />
                         </th>
-                        <th> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="account_type" label="account type" /> </th>
-                        <th> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="name" label="name" /> </th>
-                        <th> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="description" label="description" /> </th>
+                        <th width="10%"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="account_type" label="account type" /> </th>
+                        <th width="30%"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="name" label="name" /> </th>
+                        <th width="40%"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="description" label="description" /> </th>
                         <th> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="model" label="model" /> </th>
                         <th class="text-end"> Action </th>
                     </tr>
