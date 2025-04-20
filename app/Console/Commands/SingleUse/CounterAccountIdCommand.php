@@ -9,7 +9,7 @@ class CounterAccountIdCommand extends Command
 {
     protected $signature = 'app:counter-account-id-command';
 
-    protected $description = 'Update counter_account_id for journal entries with journal_id = 1 and counter_account_id = 0';
+    protected $description = 'Update counter_account_id for journal entries where counter_account_id = 0';
 
     public function handle()
     {
