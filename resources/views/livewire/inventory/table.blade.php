@@ -41,7 +41,7 @@
                     {{ html()->select('sub_category_id', [])->value('')->class('select-category_id-list')->id('sub_category_id')->placeholder('Sub Category') }}
                 </div>
                 <div class="col-md-3" wire:ignore>
-                    {{ html()->select('product_id', [])->value('')->class('select-product_id-list')->id('product_id')->placeholder('Product') }}
+                    {{ html()->select('product_id', [])->value('')->class('select-product_id-list')->attribute('type', 'product')->id('product_id')->placeholder('Product') }}
                 </div>
             </div>
             <div class="row">

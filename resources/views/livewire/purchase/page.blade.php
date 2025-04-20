@@ -70,7 +70,7 @@
                                             </div>
                                             <div class="col-md-8">
                                                 <div class="searchbox input-group" wire:ignore>
-                                                    {{ html()->select('product_id', [])->value('')->class('select-product_id-list')->id('product_id')->attribute('style', 'width:100%')->placeholder('Select Product') }}
+                                                    {{ html()->select('product_id', [])->value('')->class('select-product_id-list')->attribute('type', 'product')->id('product_id')->attribute('style', 'width:100%')->placeholder('Select Product') }}
                                                 </div>
                                             </div>
                                         </div>

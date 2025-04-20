@@ -36,7 +36,7 @@
                 </div>
                 <div class="col-md-5" wire:ignore>
                     <label for="product_id">Product</label>
-                    {{ html()->select('product_id', [])->value('')->class('select-product_id-list')->id('product_id')->placeholder('Product') }}
+                    {{ html()->select('product_id', [])->value('')->class('select-product_id-list')->attribute('type', '')->id('product_id')->placeholder('Product') }}
                 </div>
             </div>
         </div>

@@ -1,5 +1,6 @@
 <script type="text/javascript">
-    $('.select-product_id-list').each(function() {
+    $('.select-product_id-list').each(function(index, el) {
+        const type = el.getAttribute('type') || null;
         new TomSelect(this, {
             persist: false,
             valueField: 'id',
@@ -7,7 +8,11 @@
             searchField: ['name', 'barcode', 'mrp', 'cost', 'size', 'color', 'id'],
             load: function(query, callback) {
                 var url = "{{ route('product::list') }}";
-                fetch(url + '?query=' + encodeURIComponent(query) + '&type=product')
+                url += '?query=' + encodeURIComponent(query);
+                if (type) {
+                    url += '?type=' + encodeURIComponent(type);
+                }
+                fetch(url)
                     .then(response => {
                         if (!response.ok) throw new Error('Network response was not ok');
                         return response.json();
