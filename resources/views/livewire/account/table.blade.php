@@ -56,48 +56,13 @@
                     <tr class="text-capitalize">
                         <th>
                             <input type="checkbox" wire:model.live="selectAll" />
-                            <a href="#" wire:click.prevent="sortBy('id')">
-                                #
-                                @if ($sortField === 'id')
-                                    {!! sortDirection($sortDirection) !!}
-                                @endif
-                            </a>
+                            <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="id" label="#" />
                         </th>
-                        <th>
-                            <a href="#" wire:click.prevent="sortBy('account_type')">
-                                Account Type
-                                @if ($sortField === 'account_type')
-                                    {!! sortDirection($sortDirection) !!}
-                                @endif
-                            </a>
-                        </th>
-                        <th>
-                            <a href="#" wire:click.prevent="sortBy('name')">
-                                Name
-                                @if ($sortField === 'name')
-                                    {!! sortDirection($sortDirection) !!}
-                                @endif
-                            </a>
-                        </th>
-                        <th>
-                            <a href="#" wire:click.prevent="sortBy('description')">
-                                description
-                                @if ($sortField === 'description')
-                                    {!! sortDirection($sortDirection) !!}
-                                @endif
-                            </a>
-                        </th>
-                        <th>
-                            <a href="#" wire:click.prevent="sortBy('model')">
-                                Model
-                                @if ($sortField === 'model')
-                                    {!! sortDirection($sortDirection) !!}
-                                @endif
-                            </a>
-                        </th>
-                        <th class="text-end">
-                            Action
-                        </th>
+                        <th> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="account_type" label="account type" /> </th>
+                        <th> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="name" label="name" /> </th>
+                        <th> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="description" label="description" /> </th>
+                        <th> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="model" label="model" /> </th>
+                        <th class="text-end"> Action </th>
                     </tr>
                 </thead>
                 <tbody>
