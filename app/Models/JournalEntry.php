@@ -15,6 +15,7 @@ class JournalEntry extends Model implements AuditableContracts
     protected $fillable = [
         'journal_id',
         'account_id',
+        'counter_account_id',
         'debit',
         'credit',
         'remarks',
