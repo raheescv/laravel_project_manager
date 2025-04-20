@@ -11,10 +11,21 @@ class CreateAction
     {
         try {
             validationHelper(Inventory::rules(), $data);
-            $model = Inventory::firstOrCreate([
-                'product_id' => $data['product_id'],
-                'branch_id' => $data['branch_id'],
-            ], $data);
+
+            $trashedExists = Inventory::withTrashed()
+                ->where('product_id', $data['product_id'])
+                ->where('branch_id', $data['branch_id'])
+                ->first();
+
+            if ($trashedExists) {
+                $model = $trashedExists->restore();
+            } else {
+                $model = Inventory::firstOrCreate([
+                    'product_id' => $data['product_id'],
+                    'branch_id' => $data['branch_id'],
+                ], $data);
+            }
+
             event(new InventoryActionOccurred('create', $model));
 
             $return['success'] = true;
