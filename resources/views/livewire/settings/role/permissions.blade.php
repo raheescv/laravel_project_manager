@@ -2,6 +2,9 @@
     <div class="card-header -4 mb-3">
         <div class="row">
             <div class="col-md-6 d-flex gap-1 align-items-center mb-3">
+                <button class="btn btn-sm btn-primary hstack gap-2 align-self-center" wire:click="syncPermission">
+                    Sync Permission
+                </button>
             </div>
             <div class="col-md-6 d-flex gap-1 align-items-center justify-content-md-end mb-3">
                 <div class="form-group">

@@ -21,7 +21,9 @@
                     </div>
                 </div>
             </div>
-            <div class="card-footer"> <br>
+            <div class="card-footer">
+                <br>
+                <button type="button" wire:click="dbView" class="btn btn-xs btn-info">View Table Re-Create</button>
                 <button type="submit" class="btn btn-primary">Save</button>
             </div>
         </form>

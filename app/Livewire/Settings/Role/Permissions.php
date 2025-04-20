@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Settings\Role;
 
+use Illuminate\Support\Facades\Artisan;
 use Livewire\Component;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
@@ -69,6 +70,11 @@ class Permissions extends Component
                 return true;
             }, $this->module);
         }
+    }
+
+    public function syncPermission()
+    {
+        Artisan::call('db:seed --class=PermissionSeeder');
     }
 
     public function moduleSelect($module)

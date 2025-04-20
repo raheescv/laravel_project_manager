@@ -4,6 +4,7 @@ namespace App\Livewire\Settings;
 
 use App\Models\Account;
 use App\Models\Configuration;
+use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Cache;
 use Livewire\Component;
 
@@ -27,6 +28,11 @@ class Configurations extends Component
         if ($this->payment_methods) {
             $this->paymentMethods = Account::whereIn('id', $this->payment_methods)->pluck('name', 'id')->toArray();
         }
+    }
+
+    public function dbView()
+    {
+        Artisan::call('db:seed --class=View');
     }
 
     public function save()
