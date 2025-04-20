@@ -261,7 +261,7 @@
                                         @if ($item_count)
                                             @foreach ($item_count as $sale_item)
                                                 <tr>
-                                                    <td>{{ $sale_item->product?->name }}</td>
+                                                    <td> <a href="{{ route('inventory::product::view', $sale_item->product_id) }}">{{ $sale_item->product?->name }}</a> </td>
                                                     <td class="text-end">{{ $sale_item->count }}</td>
                                                 </tr>
                                             @endforeach

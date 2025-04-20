@@ -21,6 +21,7 @@
                     });
             },
             onFocus: function() {
+                this.clearOptions();
                 this.load('');
             },
             render: {

@@ -112,6 +112,9 @@ class User extends Authenticatable implements AuditableContracts
                     ->orWhere('email', 'like', "%{$value}%");
             });
         });
+        $self = $self->whereHas('branches', function ($query) {
+            return $query->where('user_has_branches.branch_id', session('branch_id'));
+        });
         $self = $self->when($request['type'] ?? '', function ($query, $value) {
             return $query->where('type', $value);
         });

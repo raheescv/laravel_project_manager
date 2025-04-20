@@ -66,6 +66,7 @@ class View extends Component
     public function groupedChartData()
     {
         $this->groupedChartData = $this->dataFunction()
+            ->select('account_id')
             ->selectRaw('account_name, SUM(debit) as debit, SUM(credit) as credit')
             ->groupBy('account_id')
             ->orderBy('account_name')

@@ -259,7 +259,7 @@
                                             <tr>
                                                 <td class="text-end">{{ $entry->id }}</td>
                                                 <td>{{ systemDate($journal->date) }}</td>
-                                                <td>{{ $entry->account?->name }}</td>
+                                                <td> <a href="{{ route('account::view', $entry->account_id) }}">{{ $entry->account?->name }}</a> </td>
                                                 <td>{{ $entry->remarks }}</td>
                                                 <td class="text-end">{{ currency($entry->debit) }}</td>
                                                 <td class="text-end">{{ currency($entry->credit) }}</td>

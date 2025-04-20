@@ -133,7 +133,7 @@
                                         <tbody>
                                             @foreach ($groupedChartData as $item)
                                                 <tr>
-                                                    <td>{{ $item->account_name }}</td>
+                                                    <td> <a href="{{ route('account::view', $item->account_id) }}">{{ $item->account_name }}</a> </td>
                                                     <td class="text-end">{{ currency($item->debit) }}</td>
                                                     <td class="text-end">{{ currency($item->credit) }}</td>
                                                 </tr>
