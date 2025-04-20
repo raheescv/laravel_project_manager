@@ -10,6 +10,9 @@ class DeleteAction
     {
         try {
             $model = Account::find($id);
+            if ($model->is_locked) {
+                throw new \Exception("You can't delete this account; it's locked", 1);
+            }
             if (! $model) {
                 throw new \Exception("Resource not found with the specified ID: $id.", 1);
             }

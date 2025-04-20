@@ -23,6 +23,8 @@ return new class() extends Migration
 
             $table->string('description')->nullable();
 
+            $table->boolean('is_locked')->default(0);
+
             $table->softDeletes();
             $table->timestamps();
 

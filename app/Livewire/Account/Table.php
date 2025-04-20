@@ -6,6 +6,7 @@ use App\Actions\Account\DeleteAction;
 use App\Exports\AccountExport;
 use App\Jobs\Export\ExportAccountJob;
 use App\Models\Account;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Livewire\Component;
 use Livewire\WithPagination;
@@ -67,7 +68,7 @@ class Table extends Component
     {
         $count = Account::count();
         if ($count > 2000) {
-            ExportAccountJob::dispatch(auth()->user());
+            ExportAccountJob::dispatch(Auth::user());
             $this->dispatch('success', ['message' => 'You will get your file in your mailbox.']);
         } else {
             $exportFileName = 'account_'.now()->timestamp.'.xlsx';
