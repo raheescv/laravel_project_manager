@@ -5,7 +5,7 @@
                 <!-- Invoice info -->
                 <div class="d-md-flex">
                     <address class="mb-4 mb-md-0">
-                        <h5 class="mb-2">{{ $sale_return->account?->name }}</h5>
+                        <h5 class="mb-2"> <a href="{{ route('account::customer::view', $sale_return->account_id) }}">{{ $sale_return->account?->name }}</a> </h5>
                         @if ($sale_return->customer_name)
                             <b>Customer Name :</b> {{ $sale_return->customer_name }} <br>
                         @endif

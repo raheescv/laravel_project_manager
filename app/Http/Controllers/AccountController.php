@@ -32,4 +32,11 @@ class AccountController extends Controller
 
         return response()->json($list);
     }
+
+    public function view($id)
+    {
+        $account = Account::findOrFail($id);
+
+        return view('accounts.view', compact('id', 'account'));
+    }
 }

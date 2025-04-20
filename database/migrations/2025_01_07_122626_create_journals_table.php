@@ -10,10 +10,13 @@ return new class() extends Migration
     {
         Schema::create('journals', function (Blueprint $table) {
             $table->id();
+            $table->unsignedBigInteger('branch_id')->references('id')->on('branches');
             $table->date('date');
             $table->string('description');
             $table->string('remarks')->nullable();
             $table->string('reference_number', 50)->nullable();
+            $table->string('person_name')->nullable();
+            $table->string('source')->nullable();
 
             $table->string('model', 50)->nullable();
             $table->unsignedBigInteger('model_id')->nullable();

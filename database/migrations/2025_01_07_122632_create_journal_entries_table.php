@@ -12,6 +12,7 @@ return new class() extends Migration
             $table->id();
             $table->unsignedBigInteger('journal_id')->references('id')->on('journals');
             $table->unsignedBigInteger('account_id')->references('id')->on('accounts');
+            $table->unsignedBigInteger('counter_account_id')->references('id')->on('accounts');
             $table->decimal('debit', 16, 2)->default(0);
             $table->decimal('credit', 16, 2)->default(0);
             $table->text('remarks')->nullable();

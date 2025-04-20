@@ -49,7 +49,7 @@
                         <th class="text-end" width="5%">
                             <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="account_id" label="#" />
                         </th>
-                        <th> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="accounts.name" label="Customer" /> </th>
+                        <th> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="accounts.name" label="Vendor" /> </th>
                         <th class="text-end"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="purchases.total" label="total" /> </th>
                         <th class="text-end"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="purchases.paid" label="paid" /> </th>
                         <th class="text-end"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="purchases.balance" label="balance" /> </th>

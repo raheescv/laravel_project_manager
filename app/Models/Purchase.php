@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Models\Views\Ledger;
 use App\Models\Scopes\AssignedBranchScope;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -92,5 +93,10 @@ class Purchase extends Model implements AuditableContracts
     public function journals()
     {
         return $this->hasMany(Journal::class, 'model_id')->where('model', 'Purchase');
+    }
+
+    public function ledgers()
+    {
+        return $this->hasMany(Ledger::class, 'model_id')->where('model', 'Purchase');
     }
 }

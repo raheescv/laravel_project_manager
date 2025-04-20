@@ -54,16 +54,19 @@
             $(document).ready(function() {
                 window.addEventListener('AddToAccountSelectBox', event => {
                     var data = event.detail[0];
-                    console.log(data);
-                    var tomSelectInstance = document.querySelector('.select-account_id').tomselect;
-                    if (data['name']) {
-                        preselectedData = {
+                    if (data['id']) {
+                        var preselectedData = {
                             id: data['id'],
                             name: data['name'],
                         };
-                        tomSelectInstance.addOption(preselectedData);
+                        document.querySelectorAll('.select-account_id').forEach(function(element) {
+                            var tomSelectInstance = element.tomselect;
+                            if (tomSelectInstance) {
+                                tomSelectInstance.addOption(preselectedData);
+                                tomSelectInstance.addItem(data['id']);
+                            }
+                        });
                     }
-                    tomSelectInstance.addItem(data['id']);
                 });
             });
         </script>

@@ -31,8 +31,10 @@ class ReceiptAction
 
             if ($discount > 0) {
                 $remarks = Sale::ADDITIONAL_DISCOUNT_DESCRIPTION;
+                $discountAccountId = DB::table('accounts')->where('name', 'Discount')->value('id');
                 $entries[] = [
-                    'account_id' => DB::table('accounts')->where('name', 'Discount')->value('id'),
+                    'account_id' => $discountAccountId,
+                    'counter_account_id' => $account_id,
                     'debit' => $discount,
                     'credit' => 0,
                     'created_by' => $user_id,
@@ -40,6 +42,7 @@ class ReceiptAction
                 ];
                 $entries[] = [
                     'account_id' => $account_id,
+                    'counter_account_id' => $discountAccountId,
                     'debit' => 0,
                     'credit' => $discount,
                     'created_by' => $user_id,
@@ -58,6 +61,7 @@ class ReceiptAction
                 $remarks = $paymentMethod['name'].' payment made by '.$name;
                 $entries[] = [
                     'account_id' => $paymentData['payment_method_id'],
+                    'counter_account_id' => $account_id,
                     'debit' => $payment,
                     'credit' => 0,
                     'created_by' => $user_id,
@@ -67,6 +71,7 @@ class ReceiptAction
                 ];
                 $entries[] = [
                     'account_id' => $account_id,
+                    'counter_account_id' => $paymentData['payment_method_id'],
                     'debit' => 0,
                     'credit' => $payment,
                     'created_by' => $user_id,

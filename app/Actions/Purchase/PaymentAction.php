@@ -15,24 +15,30 @@ class PaymentAction
     {
         try {
             $paymentMethod = Account::find($paymentData['payment_method_id']);
-            $payment = $data['payment'];
-            $discount = $data['discount'];
             $purchase = Purchase::find($purchase_id);
 
-            $journalData['date'] = $paymentData['date'];
-            $journalData['created_by'] = $user_id;
-            $journalData['description'] = 'Purchase:'.$purchase->invoice_no;
-            $journalData['remarks'] = $paymentData['remarks'];
-            $journalData['reference_no'] = $purchase->reference_no;
-            $journalData['model'] = 'Purchase';
-            $journalData['model_id'] = $purchase_id;
+            $payment = $data['payment'];
+            $discount = $data['discount'];
+
+            $journalData = [
+                'date' => $paymentData['date'],
+                'created_by' => $user_id,
+                'description' => 'Purchase:'.$purchase->invoice_no,
+                'remarks' => $paymentData['remarks'],
+                'reference_no' => $purchase->reference_no,
+                'model' => 'Purchase',
+                'model_id' => $purchase_id,
+            ];
 
             $entries = [];
 
             if ($discount > 0) {
                 $remarks = 'Additional Discount granted on Purchase';
+                $discountAccountId = DB::table('accounts')->where('name', 'Discount')->value('id');
+
                 $entries[] = [
-                    'account_id' => DB::table('accounts')->where('name', 'Discount')->value('id'),
+                    'account_id' => $discountAccountId,
+                    'counter_account_id' => $account_id,
                     'debit' => 0,
                     'credit' => $discount,
                     'created_by' => $user_id,
@@ -40,42 +46,51 @@ class PaymentAction
                 ];
                 $entries[] = [
                     'account_id' => $account_id,
+                    'counter_account_id' => $discountAccountId,
                     'debit' => $discount,
                     'credit' => 0,
                     'created_by' => $user_id,
                     'remarks' => $remarks,
                 ];
             }
+
             if ($payment) {
                 $purchasePaymentData = [
                     'purchase_id' => $purchase_id,
                     'payment_method_id' => $paymentData['payment_method_id'],
                     'date' => $paymentData['date'],
-                    'amount' => $data['payment'],
+                    'amount' => $payment,
                 ];
+
                 $purchasePaymentResponse = (new PurchasePaymentCreateAction())->execute($purchasePaymentData, $user_id);
-                $purchase_payment_id = $purchasePaymentResponse['data']['id'];
-                $remarks = $paymentMethod['name'].' payment made by '.$name;
+                $purchasePaymentId = $purchasePaymentResponse['data']['id'];
+
+                $remarks = $paymentMethod->name.' payment made by '.$name;
+
                 $entries[] = [
                     'account_id' => $paymentData['payment_method_id'],
+                    'counter_account_id' => $account_id,
                     'debit' => 0,
                     'credit' => $payment,
                     'created_by' => $user_id,
                     'remarks' => $remarks,
                     'model' => 'PurchasePayment',
-                    'model_id' => $purchase_payment_id,
+                    'model_id' => $purchasePaymentId,
                 ];
                 $entries[] = [
                     'account_id' => $account_id,
+                    'counter_account_id' => $paymentData['payment_method_id'],
                     'debit' => $payment,
                     'credit' => 0,
                     'created_by' => $user_id,
                     'remarks' => $remarks,
                     'model' => 'PurchasePayment',
-                    'model_id' => $purchase_payment_id,
+                    'model_id' => $purchasePaymentId,
                 ];
             }
+
             $journalData['entries'] = $entries;
+
             $response = (new JournalCreateAction())->execute($journalData);
             if (! $response['success']) {
                 throw new \Exception($response['message'], 1);

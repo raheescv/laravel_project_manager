@@ -19,6 +19,8 @@ class Journal extends Model implements AuditableContracts
         'description',
         'remarks',
         'reference_number',
+        'person_name',
+        'source',
         'model',
         'model_id',
         'created_by',
@@ -43,5 +45,20 @@ class Journal extends Model implements AuditableContracts
     public function entries()
     {
         return $this->hasMany(JournalEntry::class);
+    }
+
+    public function sale()
+    {
+        return $this->belongsTo(Sale::class, 'model_id');
+    }
+
+    public function purchase()
+    {
+        return $this->belongsTo(Purchase::class, 'model_id');
+    }
+
+    public function saleReturn()
+    {
+        return $this->belongsTo(SaleReturn::class, 'model_id');
     }
 }

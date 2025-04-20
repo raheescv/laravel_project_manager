@@ -8,151 +8,118 @@ use Illuminate\Support\Facades\DB;
 
 class JournalEntryAction
 {
-    public function execute(SaleReturn $model, $user_id)
+    public $userId;
+
+    public function execute(SaleReturn $model, $userId)
     {
         try {
-            $data['date'] = $model->date;
-            $data['description'] = 'SaleReturn:'.$model->id;
-            $data['reference_no'] = $model->reference_no;
-            $data['model'] = 'SaleReturn';
-            $data['model_id'] = $model->id;
-            $data['created_by'] = $user_id;
+            $this->userId = $userId;
+            $data = [
+                'date' => $model->date,
+                'description' => 'SaleReturn:'.$model->id,
+                'reference_no' => $model->reference_no,
+                'source' => 'saleReturn',
+                'model' => 'SaleReturn',
+                'model_id' => $model->id,
+                'created_by' => $this->userId,
+            ];
+
+            $accountIds = $this->getAccountIds(['Sales Returns', 'Inventory', 'Cost of Goods Sold', 'Tax Amount', 'Discount']);
 
             $items = $model->items()->with('inventory')->get();
-            $totalCost = $items->map(function ($item) {
-                $item->total_cost = $item->inventory->cost * $item->quantity;
-
-                return $item;
-            })->sum('total_cost');
-
-            $items = $model->payments;
+            $totalCost = $items->sum(fn ($item) => $item->inventory->cost * $item->quantity);
 
             $entries = [];
+
             if ($model->gross_amount > 0) {
                 $remarks = 'SaleReturn to '.$model->account->name;
-                $entries[] = [
-                    'account_id' => DB::table('accounts')->where('name', 'Sales Returns')->value('id'),
-                    'debit' => $model->gross_amount,
-                    'credit' => 0,
-                    'created_by' => $user_id,
-                    'remarks' => $remarks,
-                ];
-                $entries[] = [
-                    'account_id' => $model->account_id,
-                    'debit' => 0,
-                    'credit' => $model->gross_amount,
-                    'created_by' => $user_id,
-                    'remarks' => $remarks,
-                ];
+                $debit = $model->gross_amount;
+                $credit = 0;
+                $entries[] = $this->makeEntryPair($accountIds['Sales Returns'], $model->account_id, $debit, $credit, $remarks);
             }
 
             if ($totalCost > 0) {
                 $remarks = 'Cost of goods return (Inventory transfer)';
-                $entries[] = [
-                    'account_id' => DB::table('accounts')->where('name', 'Cost of Goods Sold')->value('id'),
-                    'debit' => 0,
-                    'credit' => $totalCost,
-                    'created_by' => $user_id,
-                    'remarks' => $remarks,
-                ];
-                $entries[] = [
-                    'account_id' => DB::table('accounts')->where('name', 'Inventory')->value('id'),
-                    'debit' => $totalCost,
-                    'credit' => 0,
-                    'created_by' => $user_id,
-                    'remarks' => $remarks,
-                ];
+                $debit = $totalCost;
+                $credit = 0;
+                $entries[] = $this->makeEntryPair($accountIds['Inventory'], $accountIds['Cost of Goods Sold'], $debit, $credit, $remarks);
             }
 
             if ($model->tax_amount > 0) {
                 $remarks = 'Sale Returns tax collected on sale';
-                $entries[] = [
-                    'account_id' => DB::table('accounts')->where('name', 'Tax Amount')->value('id'),
-                    'debit' => $model->tax_amount,
-                    'credit' => 0,
-                    'created_by' => $user_id,
-                    'remarks' => $remarks,
-                ];
-                $entries[] = [
-                    'account_id' => $model->account_id,
-                    'debit' => 0,
-                    'credit' => $model->tax_amount,
-                    'created_by' => $user_id,
-                    'remarks' => $remarks,
-                ];
+                $debit = $model->tax_amount;
+                $credit = 0;
+                $entries[] = $this->makeEntryPair($accountIds['Tax Amount'], $model->account_id, $debit, $credit, $remarks);
             }
 
             if ($model->item_discount > 0) {
                 $remarks = 'Discount provided on individual product on sale return';
-                $entries[] = [
-                    'account_id' => DB::table('accounts')->where('name', 'Discount')->value('id'),
-                    'debit' => 0,
-                    'credit' => $model->item_discount,
-                    'created_by' => $user_id,
-                    'remarks' => $remarks,
-                ];
-                $entries[] = [
-                    'account_id' => $model->account_id,
-                    'debit' => $model->item_discount,
-                    'credit' => 0,
-                    'created_by' => $user_id,
-                    'remarks' => $remarks,
-                ];
+                $debit = 0;
+                $credit = $model->item_discount;
+                $entries[] = $this->makeEntryPair($accountIds['Discount'], $model->account_id, $debit, $credit, $remarks);
             }
+
             if ($model->other_discount > 0) {
                 $remarks = SaleReturn::ADDITIONAL_DISCOUNT_DESCRIPTION;
-                $entries[] = [
-                    'account_id' => DB::table('accounts')->where('name', 'Discount')->value('id'),
-                    'debit' => 0,
-                    'credit' => $model->other_discount,
-                    'created_by' => $user_id,
-                    'remarks' => $remarks,
-                ];
-                $entries[] = [
-                    'account_id' => $model->account_id,
-                    'debit' => $model->other_discount,
-                    'credit' => 0,
-                    'created_by' => $user_id,
-                    'remarks' => $remarks,
-                ];
+                $debit = 0;
+                $credit = $model->other_discount;
+                $entries[] = $this->makeEntryPair($accountIds['Discount'], $model->account_id, $debit, $credit, $remarks);
             }
 
-            foreach ($items as $value) {
-                $remarks = $value->paymentMethod->name.' payment made by '.$model->account->name;
-                $entries[] = [
-                    'account_id' => $value->payment_method_id,
-                    'debit' => 0,
-                    'credit' => $value->amount,
-                    'created_by' => $user_id,
-                    'remarks' => $remarks,
-                    'model' => 'SaleReturnPayment',
-                    'model_id' => $value->id,
-                ];
-                $entries[] = [
-                    'account_id' => $model->account_id,
-                    'debit' => $value->amount,
-                    'credit' => 0,
-                    'created_by' => $user_id,
-                    'remarks' => $remarks,
-                    'model' => 'SaleReturnPayment',
-                    'model_id' => $value->id,
-                ];
+            foreach ($model->payments as $payment) {
+                $remarks = $payment->paymentMethod->name.' payment made by '.$model->account->name;
+                $debit = 0;
+                $credit = $payment->amount;
+                $entries[] = $this->makeEntryPair($payment->payment_method_id, $model->account_id, $debit, $credit, $remarks, 'SaleReturnPayment', $payment->id);
             }
 
-            $data['entries'] = $entries;
+            $data['entries'] = array_merge(...$entries);
 
             $response = (new CreateAction())->execute($data);
+
             if (! $response['success']) {
-                throw new \Exception($response['message'], 1);
+                throw new \Exception($response['message']);
             }
+
             $return['success'] = true;
             $return['message'] = 'Successfully Updated Journal';
             $return['data'] = [];
+
         } catch (\Throwable $th) {
             $return['success'] = false;
             $return['message'] = $th->getMessage();
         }
 
         return $return;
+    }
+
+    protected function getAccountIds(array $names): array
+    {
+        return DB::table('accounts')->whereIn('name', $names)->pluck('id', 'name')->toArray();
+    }
+
+    protected function makeEntryPair($accountId1, $accountId2, $debit, $credit, $remarks, $model = null, $modelId = null): array
+    {
+        $base = [
+            'created_by' => $this->userId,
+            'remarks' => $remarks,
+            'model' => $model,
+            'model_id' => $modelId,
+        ];
+
+        return [
+            array_merge($base, [
+                'account_id' => $accountId1,
+                'counter_account_id' => $accountId2,
+                'debit' => $debit,
+                'credit' => $credit,
+            ]),
+            array_merge($base, [
+                'account_id' => $accountId2,
+                'counter_account_id' => $accountId1,
+                'debit' => $credit,
+                'credit' => $debit,
+            ]),
+        ];
     }
 }

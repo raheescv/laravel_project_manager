@@ -6,7 +6,7 @@
                     <img class="hv-gc hv-oc img-lg rounded-circle" src="{{ asset('assets/img/profile-photos/1.png') }}" alt="Profile Picture" loading="lazy">
                 </div>
                 <div class="flex-grow-1 ms-3">
-                    <a href="#" class="d-block stretched-link h5 link-offset-2-hover text-decoration-none link-underline-hover mb-0">
+                    <a href="{{ route('account::view', $accounts['id'] ?? '') }}" class="d-block stretched-link h5 link-offset-2-hover text-decoration-none link-underline-hover mb-0">
                         {{ $accounts['name'] ?? '' }}
                     </a>
                 </div>

@@ -1,8 +1,16 @@
 CREATE VIEW ledgers AS
 SELECT
     je.id,
-    a.id AS account_id,
+    je.journal_id,
+
+    je.account_id,
     a.name AS account_name,
+
+    je.counter_account_id,
+    ca.name AS counter_account_name,
+
+    j.source,
+    j.person_name,
     j.date,
     j.branch_id,
     j.description,
@@ -20,6 +28,8 @@ FROM
     journal_entries je
 JOIN
     accounts a ON je.account_id = a.id
+JOIN
+    accounts ca ON je.counter_account_id = ca.id
 JOIN
     journals j ON je.journal_id = j.id
 WHERE

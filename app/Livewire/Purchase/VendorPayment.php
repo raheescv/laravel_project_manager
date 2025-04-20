@@ -111,7 +111,9 @@ class VendorPayment extends Component
             $indexes = explode('.', $key);
             $index = $indexes[1] ?? null;
             if (! is_numeric($value)) {
-                $this->vendor_purchases[$index][$indexes[2]] = 0;
+                if ($indexes[2] != 'selected') {
+                    $this->vendor_purchases[$index][$indexes[2]] = 0;
+                }
             }
         }
         if (in_array($key, ['payment.amount'])) {
