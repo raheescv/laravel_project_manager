@@ -35,14 +35,20 @@ class EmployeeBranchAssignCommand extends Command
                 continue; // Skip header or invalid rows
             }
 
-            [$_, $employeeName, $branchName] = $row;
+            [$code, $employeeName, $branchName,$email,$password] = $row;
 
             $employee = User::employee()->whereRaw('LOWER(name) = ?', [Str::lower($employeeName)])->first();
 
             if (! $employee) {
-                Log::info("Employee not found: $employeeName");
-
-                continue;
+                $data = [
+                    'type' => 'employee',
+                    'code' => intval($code),
+                    'name' => $employeeName,
+                    'email' => strtolower($email),
+                    'password' => $password,
+                ];
+                $employee = User::create($data);
+                $this->info("Employee {$employeeName}  Created.");
             }
 
             $branch = Branch::whereRaw('LOWER(name) = ?', [Str::lower($branchName)])->first();
