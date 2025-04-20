@@ -88,7 +88,7 @@
                                     @php
                                         $first = array_values($groupedItems)[0];
                                     @endphp
-                                    <th colspan="8">{{ $first['employee_name'] }}</th>
+                                    <th colspan="8" class="text-capitalize">{{ $first['employee_name'] }}</th>
                                 </tr>
                                 @foreach ($groupedItems as $item)
                                     <tr>

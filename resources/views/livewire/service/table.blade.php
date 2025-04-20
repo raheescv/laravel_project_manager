@@ -79,7 +79,6 @@
                         <th> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="name_arabic" label="name arabic" /> </th>
                         <th class="text-end"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="mrp" label="mrp" /> </th>
                         <th class="text-end"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="time" label="time" /> </th>
-                        <th class="text-end">Action</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -93,15 +92,10 @@
                             <td>{{ $item->mainCategory?->name }}</td>
                             <td>{{ $item->subCategory?->name }}</td>
                             <td>{{ $item->code }}</td>
-                            <td>{{ $item->name }}</td>
+                            <td> <a href="{{ route('service::edit', $item->id) }}">{{ $item->name }} </a> </td>
                             <td dir="rtl">{{ $item->name_arabic }}</td>
                             <td class="text-end">{{ currency($item->mrp) }}</td>
                             <td class="text-end">{{ $item->time }}</td>
-                            <td class="text-end">
-                                @can('service.edit')
-                                    <a href="{{ route('service::edit', $item->id) }}"><i class="demo-psi-pencil fs-5 me-2 pointer"></i> </a>
-                                @endcan
-                            </td>
                         </tr>
                     @endforeach
                 </tbody>

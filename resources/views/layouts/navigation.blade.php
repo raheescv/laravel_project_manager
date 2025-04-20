@@ -68,9 +68,10 @@
                     @endif
                     @if (auth()->user()->can('sale.view') || auth()->user()->can('report.sale item'))
                         <li class="nav-item has-sub">
-                            <a href="#"
-                                class="mininav-toggle nav-link {{ request()->is(['sale', 'sale/create', 'sale/edit/*', 'sale/view/*', 'report/sale_item', 'sale/receipts']) ? 'active' : '' }}"><i
-                                    class="demo-pli-split-vertical-2 fs-5 me-2"></i>
+                            @php
+                                $list = ['report/sale_summary', 'report/sales_overview', 'sale', 'sale/create', 'sale/edit/*', 'sale/view/*', 'report/sale_item', 'sale/receipts'];
+                            @endphp
+                            <a href="#" class="mininav-toggle nav-link {{ request()->is($list) ? 'active' : '' }}"><i class="demo-pli-split-vertical-2 fs-5 me-2"></i>
                                 <span class="nav-label ms-1">Sale</span>
                             </a>
                             <ul class="mininav-content nav collapse">
@@ -93,6 +94,16 @@
                                 @can('sale.receipts')
                                     <li class="nav-item">
                                         <a href="{{ route('sale::receipts') }}" class="nav-link {{ request()->is(['sale/receipts']) ? 'active' : '' }}">Receipts</a>
+                                    </li>
+                                @endcan
+                                @can('report.sale summary')
+                                    <li class="nav-item">
+                                        <a href="{{ route('report::sale_summary') }}" class="nav-link {{ request()->is(['report/sale_summary']) ? 'active' : '' }}">Sale Summary</a>
+                                    </li>
+                                @endcan
+                                @can('report.sales overview')
+                                    <li class="nav-item">
+                                        <a href="{{ route('report::sales_overview') }}" class="nav-link {{ request()->is(['report/sales_overview']) ? 'active' : '' }}">Sales Overview</a>
                                     </li>
                                 @endcan
                             </ul>

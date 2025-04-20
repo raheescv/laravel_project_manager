@@ -20,6 +20,13 @@ return [
     'unit' => ['create', 'view', 'edit', 'delete'],
     'department' => ['create', 'view', 'edit', 'delete'],
     'whatsapp' => ['integration'],
-    'report' => ['sale item', 'sale return item', 'day book', 'purchase item'],
+    'report' => [
+        'sale item',
+        'sale return item',
+        'day book',
+        'sale summary',
+        'sales overview',
+        'purchase item',
+    ],
     'log' => ['inventory'],
 ];

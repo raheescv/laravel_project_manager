@@ -23,4 +23,14 @@ class ReportController extends Controller
     {
         return view('report.day_book');
     }
+
+    public function sale_summary()
+    {
+        return view('report.sale_summary');
+    }
+
+    public function sales_overview()
+    {
+        return view('report.sales_overview');
+    }
 }

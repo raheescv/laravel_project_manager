@@ -6,7 +6,7 @@
                     <thead>
                         <tr>
                             <th>SL No</th>
-                            <th width="20%">Product</th>
+                            <th width="30%">Product</th>
                             <th class="text-end">Unit Price</th>
                             <th class="text-end">Quantity</th>
                             <th class="text-end">Discount</th>
@@ -32,7 +32,7 @@
                                 @php
                                     $first = array_values($groupedItems)[0];
                                 @endphp
-                                <th colspan="8">{{ $first['employee_name'] }}</th>
+                                <th colspan="8" class="text-capitalize">{{ $first['employee_name'] }}</th>
                             </tr>
                             @foreach ($groupedItems as $item)
                                 <tr wire:key="item-{{ $item['key'] }}">

@@ -73,6 +73,11 @@ class Sale extends Model implements AuditableContracts
         return $query->where('status', 'draft');
     }
 
+    public function scopeCompleted($query)
+    {
+        return $query->where('status', 'completed');
+    }
+
     public function scopeToday($query)
     {
         return $query->where('date', date('Y-m-d'));
