@@ -10,7 +10,7 @@
             </nav>
             <h1 class="page-title mb-0 mt-2">{{ $product?->name }} Inventory</h1>
             <p class="lead">
-                A page is an details of Inventory <b>{{ $product?->name }}</b>
+                A page is an details of {{ $product?->type }} : <b>{{ $product?->name }}</b>
             </p>
         </div>
     </div>

@@ -55,6 +55,7 @@ class Table extends Component
         $this->from_date = date('Y-m-d');
         $this->to_date = date('Y-m-d');
         $this->status = Configuration::where('key', 'default_status')->value('value');
+        $this->branch_id = session('branch_id');
     }
 
     public function delete()
