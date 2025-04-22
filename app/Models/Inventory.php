@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Actions\Product\Inventory\CreateAction as InventoryCreateAction;
+use App\Jobs\BranchProductCreationJob;
 use App\Models\Scopes\AssignedBranchScope;
 use App\Models\Scopes\CurrentBranchScope;
 use Illuminate\Database\Eloquent\Model;
@@ -73,7 +74,7 @@ class Inventory extends Model implements AuditableContracts
         return CurrentBranchScope::apply($query);
     }
 
-    public static function selfCreateByProduct($product, $user_id, $quantity = 0, $current_branch = 1)
+    public static function selfCreateByProduct($product, $userId, $quantity = 0, $current_branch = 1)
     {
         $barcode_type = cache('barcode_type', '');
         $branches = cache('branches', []);
@@ -96,11 +97,12 @@ class Inventory extends Model implements AuditableContracts
                 $data['barcode'] = generateBarcode();
             }
             $data['batch'] = 'General';
-            $data['created_by'] = $data['updated_by'] = $user_id;
+            $data['created_by'] = $data['updated_by'] = $userId;
             $response = (new InventoryCreateAction())->execute($data);
             if (! $response['success']) {
                 throw new \Exception($response['message'], 1);
             }
+            BranchProductCreationJob::dispatch(null, $userId, $product->id);
         }
     }
 

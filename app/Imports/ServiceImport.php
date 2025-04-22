@@ -6,7 +6,6 @@ use App\Actions\Product\ProductPrice\CreateAction;
 use App\Actions\Product\ProductPrice\UpdateAction;
 use App\Events\FileImportCompleted;
 use App\Events\FileImportProgress;
-use App\Jobs\BranchProductCreationJob;
 use App\Models\Inventory;
 use App\Models\Product;
 use App\Models\ProductPrice;
@@ -50,7 +49,6 @@ class ServiceImport implements ToCollection, WithBatchInserts, WithChunkReading,
                         $model = Product::create($data);
                     }
                     Inventory::selfCreateByProduct($model, $this->userId, $quantity = 0);
-                    BranchProductCreationJob::dispatch(null, $this->userId, $model->id);
                 }
                 if ($home_service) {
                     $priceCheck = ProductPrice::where('product_id', $model->id)->where('price_type', 'home_service')->first();
