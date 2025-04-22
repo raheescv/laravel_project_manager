@@ -6,6 +6,7 @@ use App\Actions\Product\ProductPrice\CreateAction;
 use App\Actions\Product\ProductPrice\UpdateAction;
 use App\Events\FileImportCompleted;
 use App\Events\FileImportProgress;
+use App\Jobs\BranchProductCreationJob;
 use App\Models\Inventory;
 use App\Models\Product;
 use App\Models\ProductPrice;
@@ -21,7 +22,7 @@ class ServiceImport implements ToCollection, WithBatchInserts, WithChunkReading,
 
     private $errors = [];
 
-    public function __construct(private $user_id, private $totalRows) {}
+    public function __construct(private $userId, private $totalRows) {}
 
     public function collection(Collection $rows)
     {
@@ -30,7 +31,7 @@ class ServiceImport implements ToCollection, WithBatchInserts, WithChunkReading,
                 if (! $value['name']) {
                     continue;
                 }
-                $data = Product::constructData($value->toArray(), $this->user_id);
+                $data = Product::constructData($value->toArray(), $this->userId);
                 $data['mrp'] = $value['price'] ?? 0;
                 $data['code'] = $data['code'] ?? rand(999, 9999);
                 $data['status'] = $data['status'] ?? 'active';
@@ -48,7 +49,8 @@ class ServiceImport implements ToCollection, WithBatchInserts, WithChunkReading,
                     } else {
                         $model = Product::create($data);
                     }
-                    Inventory::selfCreateByProduct($model, $this->user_id, $quantity = 0);
+                    Inventory::selfCreateByProduct($model, $this->userId, $quantity = 0);
+                    BranchProductCreationJob::dispatch(null, $this->userId, $model->id);
                 }
                 if ($home_service) {
                     $priceCheck = ProductPrice::where('product_id', $model->id)->where('price_type', 'home_service')->first();
@@ -73,7 +75,7 @@ class ServiceImport implements ToCollection, WithBatchInserts, WithChunkReading,
         }
         $this->processedRows += count($rows);
         $progress = ($this->processedRows / $this->totalRows) * 100;
-        event(new FileImportProgress($this->user_id, 'Product', $progress));
+        event(new FileImportProgress($this->userId, 'Product', $progress));
     }
 
     public function batchSize(): int
@@ -84,7 +86,7 @@ class ServiceImport implements ToCollection, WithBatchInserts, WithChunkReading,
     public function __destruct()
     {
         if ($this->errors) {
-            event(new FileImportCompleted($this->user_id, 'Product', $this->errors));
+            event(new FileImportCompleted($this->userId, 'Product', $this->errors));
         }
     }
 
