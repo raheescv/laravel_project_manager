@@ -3,6 +3,7 @@
 return [
     'account' => ['create', 'view', 'edit', 'delete', 'export'],
     'expense' => ['create', 'view', 'edit', 'delete', 'export'],
+    'income' => ['create', 'view', 'edit', 'delete', 'export'],
     'customer' => ['create', 'view', 'edit', 'delete', 'export'],
     'vendor' => ['create', 'view', 'edit', 'delete', 'export'],
     'user' => ['create', 'view', 'edit', 'delete'],

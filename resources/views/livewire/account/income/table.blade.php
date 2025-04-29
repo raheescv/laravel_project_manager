@@ -2,18 +2,18 @@
     <div class="card-header">
         <div class="row">
             <div class="col-md-6 d-flex gap-1 align-items-center mb-3">
-                @can('expense.create')
-                    <button class="btn btn-primary hstack gap-2 align-self-center" id="ExpenseAdd">
+                @can('income.create')
+                    <button class="btn btn-primary hstack gap-2 align-self-center" id="IncomeAdd">
                         <i class="demo-psi-add fs-5"></i>
                         <span class="vr"></span>
                         Add New
                     </button>
                 @endcan
                 <div class="btn-group">
-                    @can('expense.export')
+                    @can('income.export')
                         <button class="btn btn-icon btn-outline-light" title="To export the items as excel" wire:click="export()"><i class="demo-pli-file-excel fs-5"></i></button>
                     @endcan
-                    @can('expense.delete')
+                    @can('income.delete')
                         <button class="btn btn-icon btn-outline-light" title="To delete the selected items" wire:click="delete()" wire:confirm="Are you sure you want to delete the selected items?">
                             <i class="demo-pli-recycling fs-5"></i>
                         </button>
@@ -32,7 +32,7 @@
                     <input type="text" wire:model.live="filter.search" autofocus placeholder="Search..." class="form-control" autocomplete="off">
                 </div>
                 <div class="btn-group">
-                    @can('expense.import')
+                    @can('income.import')
                         <button class="btn btn-icon btn-outline-light" data-bs-toggle="modal" data-bs-target="#ExpenseImportModal">
                             <i class="demo-pli-download-from-cloud fs-5"></i>
                         </button>
@@ -134,11 +134,11 @@
                     const value = $(this).val() || null;
                     @this.set('filter.account_id', value);
                 });
-                $('#ExpenseAdd').click(function() {
-                    Livewire.dispatch("Expense-Page-Create-Component");
+                $('#IncomeAdd').click(function() {
+                    Livewire.dispatch("Income-Page-Create-Component");
                 });
-                window.addEventListener('RefreshExpenseTable', event => {
-                    Livewire.dispatch("Expense-Refresh-Component");
+                window.addEventListener('RefreshIncomeTable', event => {
+                    Livewire.dispatch("Income-Refresh-Component");
                 });
             });
         </script>

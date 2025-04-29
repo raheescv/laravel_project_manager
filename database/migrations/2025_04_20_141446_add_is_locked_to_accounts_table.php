@@ -10,7 +10,7 @@ return new class() extends Migration
     {
         Schema::table('accounts', function (Blueprint $table) {
             if (! Schema::hasColumn('accounts', 'is_locked')) {
-                $table->boolean('is_locked')->after('description');
+                $table->boolean('is_locked')->default(0)->after('description');
             }
         });
     }

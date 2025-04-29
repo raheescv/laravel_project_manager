@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AccountController;
 use App\Http\Controllers\ExpenseController;
+use App\Http\Controllers\IncomeController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware('auth')->group(function (): void {
@@ -18,6 +19,9 @@ Route::middleware('auth')->group(function (): void {
         });
         Route::name('expense::')->prefix('expense')->controller(ExpenseController::class)->group(function (): void {
             Route::get('', 'index')->name('index')->can('expense.view');
+        });
+        Route::name('income::')->prefix('income')->controller(IncomeController::class)->group(function (): void {
+            Route::get('', 'index')->name('index')->can('income.view');
         });
     });
 });
