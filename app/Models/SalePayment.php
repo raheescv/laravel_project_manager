@@ -51,6 +51,13 @@ class SalePayment extends Model implements AuditableContracts
         return $query->whereBetween('date', [date('Y-m-d', strtotime('-7 days')), date('Y-m-d')]);
     }
 
+    public function scopeCompletedSale($query)
+    {
+        return $query->whereHas('sale', function ($query) {
+            return $query->where('status', 'completed');
+        });
+    }
+
     public function sale()
     {
         return $this->belongsTo(Sale::class);
