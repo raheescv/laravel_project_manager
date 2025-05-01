@@ -90,6 +90,41 @@ class DayWiseReport extends Component
         $this->resetPage();
     }
 
+    public function prepareSalesChartData($summaryCollection)
+    {
+        // First group by date to get unique dates for X-axis
+        $dates = $summaryCollection->groupBy('date')->keys();
+
+        // Group by branch to create series
+        $chartData = $summaryCollection
+            ->groupBy('branch_name')
+            ->map(function ($branchData, $branchName) use ($dates) {
+                // Create a complete dataset for each branch
+                $dataPoints = $dates->map(function ($date) use ($branchData) {
+                    // Find the matching record for this date/branch
+                    $record = $branchData->first(function ($item) use ($date) {
+                        return $item['date'] === $date;
+                    });
+
+                    return [
+                        'x' => strtotime($date) * 1000, // Convert to JS timestamp
+                        'y' => $record ? floatval($record['total_sales']) : 0,
+                        'net_sales' => $record ? floatval($record['net_sales']) : 0,
+                        'sales_discount' => $record ? floatval($record['sales_discount']) : 0,
+                        'invoices' => $record ? intval($record['no_of_invoices']) : 0,
+                    ];
+                })->values()->toArray();
+
+                return [
+                    'type' => 'column',
+                    'showInLegend' => true,
+                    'name' => $branchName,
+                    'dataPoints' => $dataPoints,
+                ];
+            })->values()->toArray();
+        $this->dispatch('updateChart', $chartData);
+    }
+
     public function render()
     {
         // Get payment methods (cached)
@@ -200,6 +235,8 @@ class DayWiseReport extends Component
         foreach ($paymentMethods as $name) {
             $total[$name] = $summaryCollection->sum($name);
         }
+
+        $this->prepareSalesChartData($summaryCollection);
 
         return view('livewire.report.sale.day-wise-report', [
             'data' => $summary,

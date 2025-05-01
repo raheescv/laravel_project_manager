@@ -25,6 +25,13 @@
             </div>
         </div>
     </div>
+    <div class="card mt-3">
+        <div class="card-body">
+            <div wire:ignore>
+                <canvas id="salesChart" height="300"></canvas>
+            </div>
+        </div>
+    </div>
     <div class="card-body">
         <div class="table-responsive">
             <table class="table table-striped table-sm">
@@ -81,11 +88,140 @@
         </div>
     </div>
     @push('scripts')
+        <script src="{{ asset('assets/vendors/chart.js/chart.umd.min.js') }}"></script>
         <script>
             $(document).ready(function() {
                 $('#branch_id').on('change', function(e) {
                     const value = $(this).val() || null;
                     @this.set('branch_id', value);
+                });
+            });
+
+            let salesChart;
+            window.addEventListener('updateChart', event => {
+                const ctx = document.getElementById('salesChart');
+
+                if (salesChart) {
+                    salesChart.destroy();
+                }
+
+                const chartSeriesData = event.detail[0];
+                if (!Array.isArray(chartSeriesData) || !chartSeriesData.length) {
+                    console.warn('No chart data available');
+                    return;
+                }
+
+                // Define beautiful gradient colors for bars
+                const colorPalette = [
+                    ['rgba(116, 185, 255, 0.9)', 'rgba(85, 171, 255, 0.9)'], // Azure Blue
+                    ['rgba(255, 171, 145, 0.9)', 'rgba(255, 143, 108, 0.9)'], // Coral
+                    ['rgba(108, 198, 177, 0.9)', 'rgba(78, 188, 162, 0.9)'], // Mint
+                    ['rgba(198, 162, 255, 0.9)', 'rgba(177, 132, 255, 0.9)'], // Lavender
+                    ['rgba(255, 201, 107, 0.9)', 'rgba(255, 189, 74, 0.9)'], // Golden
+                    ['rgba(255, 145, 190, 0.9)', 'rgba(255, 112, 170, 0.9)'], // Pink
+                    ['rgba(106, 217, 145, 0.9)', 'rgba(77, 208, 124, 0.9)'], // Emerald
+                    ['rgba(255, 170, 170, 0.9)', 'rgba(255, 140, 140, 0.9)'] // Salmon
+                ];
+
+                const datasets = chartSeriesData.map((series, index) => {
+                    let backgroundColor;
+                    try {
+                        if (ctx.getContext('2d')) {
+                            const gradient = ctx.getContext('2d').createLinearGradient(0, 0, 0, 300);
+                            gradient.addColorStop(0, colorPalette[index % colorPalette.length][0]);
+                            gradient.addColorStop(1, colorPalette[index % colorPalette.length][1]);
+                            backgroundColor = gradient;
+                        } else {
+                            backgroundColor = colorPalette[index % colorPalette.length][0];
+                        }
+                    } catch (e) {
+                        backgroundColor = colorPalette[index % colorPalette.length][0];
+                    }
+
+                    return {
+                        label: series.name,
+                        data: series.dataPoints.map(dp => dp.y),
+                        backgroundColor,
+                        borderWidth: 0,
+                        borderRadius: 6,
+                        borderSkipped: false,
+                        hoverBackgroundColor: colorPalette[index % colorPalette.length][0],
+                    };
+                });
+
+                // Get all unique dates across all series
+                const allDates = [...new Set(
+                    chartSeriesData.flatMap(series =>
+                        series.dataPoints.map(dp => dp.x)
+                    )
+                )].sort();
+
+                const labels = allDates.map(timestamp =>
+                    new Date(timestamp).toLocaleDateString('en-US', {
+                        day: '2-digit',
+                        month: 'short'
+                    })
+                );
+
+                salesChart = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels,
+                        datasets
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'top',
+                                labels: {
+                                    font: {
+                                        family: getComputedStyle(document.body).getPropertyValue('--bs-font-sans-serif')
+                                    }
+                                }
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    afterTitle: function(tooltipItems) {
+                                        const dataIndex = tooltipItems[0].dataIndex;
+                                        const originalData = chartSeriesData[tooltipItems[0].datasetIndex].dataPoints[dataIndex];
+                                        return [
+                                            `Net Sales: Rs ${originalData.net_sales.toFixed(2)}`,
+                                            `Discount: Rs ${originalData.sales_discount.toFixed(2)}`,
+                                            `Invoices: ${originalData.invoices}`
+                                        ];
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            x: {
+                                grid: {
+                                    display: false
+                                },
+                                ticks: {
+                                    font: {
+                                        family: getComputedStyle(document.body).getPropertyValue('--bs-font-sans-serif')
+                                    }
+                                }
+                            },
+                            y: {
+                                beginAtZero: true,
+                                grid: {
+                                    borderDash: [2, 2]
+                                },
+                                ticks: {
+                                    font: {
+                                        family: getComputedStyle(document.body).getPropertyValue('--bs-font-sans-serif')
+                                    },
+                                    callback: function(value) {
+                                        return 'Rs ' + value.toLocaleString();
+                                    }
+                                }
+                            }
+                        }
+                    }
                 });
             });
         </script>
