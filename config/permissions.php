@@ -30,4 +30,5 @@ return [
         'purchase item',
     ],
     'log' => ['inventory'],
+    'backup' => ['create', 'view', 'download'],
 ];

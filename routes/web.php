@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AuditController;
+use App\Http\Controllers\BackupController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\ProfileController;
@@ -30,5 +31,10 @@ Route::middleware('auth')->group(function (): void {
     });
     Route::name('audit::')->prefix('audit')->controller(AuditController::class)->group(function (): void {
         Route::get('{modal}/{id}', 'index')->name('index');
+    });
+    Route::name('backup::')->prefix('backup')->controller(BackupController::class)->group(function (): void {
+        Route::get('/', 'index')->name('index')->can('backup.view');
+        Route::get('download/{file}', 'get')->name('download')->can('backup.download');
+        Route::get('create', 'store')->name('create')->can('backup.create');
     });
 });
