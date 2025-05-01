@@ -22,6 +22,9 @@
     <div class="row">
         <div class="col-md-2">
             <div class="card mb-3">
+                <div class="card-header">
+                    <h5 class="card-title">Overview</h5>
+                </div>
                 <div class="card-body">
                     <div class="table-responsive">
                         <table class="table table-striped table-sm align-middle">
@@ -40,15 +43,18 @@
         </div>
         <div class="col-md-5">
             <div class="card mb-3">
+                <div class="card-header">
+                    <h5 class="card-title">Employee Sales</h5>
+                </div>
                 <div class="card-body">
                     <div class="table-responsive">
                         <table class="table table-striped table-sm align-middle">
                             <thead>
                                 <tr class="text-capitalize">
-                                    <th> #</th>
-                                    <th> employee</th>
-                                    <th class="text-end"> quantity</th>
-                                    <th class="text-end"> total</th>
+                                    <th>#</th>
+                                    <th>Employee</th>
+                                    <th class="text-end">Quantity</th>
+                                    <th class="text-end">Total</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -75,15 +81,18 @@
         </div>
         <div class="col-md-5">
             <div class="card mb-3">
+                <div class="card-header">
+                    <h5 class="card-title">Product/Service Sales</h5>
+                </div>
                 <div class="card-body">
                     <div class="table-responsive">
                         <table class="table table-striped table-sm align-middle">
                             <thead>
                                 <tr class="text-capitalize">
-                                    <th> #</th>
-                                    <th> product / service</th>
-                                    <th class="text-end"> quantity</th>
-                                    <th class="text-end"> total</th>
+                                    <th>#</th>
+                                    <th>Product / Service</th>
+                                    <th class="text-end">Quantity</th>
+                                    <th class="text-end">Total</th>
                                 </tr>
                             </thead>
                             <tbody>
