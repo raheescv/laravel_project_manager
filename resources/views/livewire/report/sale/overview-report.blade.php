@@ -20,23 +20,163 @@
         </div>
     </div>
     <div class="row">
-        <div class="col-md-12">
-            <div class="card mb-3">
-                <div class="card-header">
-                    <h6 class="card-title mb-0">Overview</h6>
+        <div class="col-md-12 mb-3">
+            <div class="row">
+                <div class="col-md-6" id="saleAndSaleReturnArea">
+                    <div class="row">
+                        <div class="card bg-gradient-primary  mb-3">
+                            <div class="card-body">
+                                <h5 class="card-title">Sales Overview</h5>
+                                <div class="d-flex justify-content-between align-items-center mb-3">
+                                    <div>
+                                        <h6 class="mb-0">Total Sales</h6>
+                                        <p class="h4 mb-0">{{ currency($totalSales) }}</p>
+                                    </div>
+                                    <div>
+                                        <h6 class="mb-0">Total Sales Returns</h6>
+                                        <p class="h4 mb-0">{{ currency($totalSalesReturn) }}</p>
+                                    </div>
+                                </div>
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <h6 class="mb-0">No. of Sales</h6>
+                                        <p class="h4 mb-0">{{ $noOfSales }}</p>
+                                    </div>
+                                    <div>
+                                        <h6 class="mb-0">No. of Sales Returns</h6>
+                                        <p class="h4 mb-0">{{ $noOfSalesReturns }}</p>
+                                    </div>
+                                </div>
+                                <div class="progress mt-3" style="height: 10px;">
+                                    <div class="progress-bar bg-success" role="progressbar" style="width: {{ $noOfSales > 0 ? (($noOfSales - $noOfSalesReturns) / $noOfSales) * 100 : 0 }}%;"
+                                        aria-valuenow="{{ $noOfSales - $noOfSalesReturns }}" aria-valuemin="0" aria-valuemax="{{ $noOfSales }}"></div>
+                                </div>
+                                <p class=" mt-2">Sales vs Returns Ratio</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="row">
+                            <div class="col-6">
+                                <div class="card mb-3 mb-xl-3">
+                                    <div class="card-body py-3">
+                                        <div class="d-flex align-items-center mb-3">
+                                            <div class="flex-shrink-0">
+                                                <i class="d-flex align-items-center justify-content-center pli-money display-5"></i>
+                                            </div>
+                                            <div class="flex-grow-1 ms-4">
+                                                <h5 class="h2 mb-0">{{ currency($netSales) }}</h5>
+                                                <p class=" text-opacity-75 mb-0">Net Sales</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="card mb-3 mb-xl-3">
+                                    <div class="card-body py-3">
+                                        <div class="d-flex align-items-center mb-3">
+                                            <div class="flex-shrink-0">
+                                                <i class="d-flex align-items-center justify-content-center pli-money display-5"></i>
+                                            </div>
+                                            <div class="flex-grow-1 ms-4">
+                                                <h5 class="h2 mb-0">{{ currency($saleDiscount) }}</h5>
+                                                <p class=" text-opacity-75 mb-0">Sales Discount</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row" id="itemTotalArea">
+                            <div class="col-md-4">
+                                <div class="card bg-info text-white mb-3 mb-xl-3">
+                                    <div class="card-body py-3">
+                                        <div class="d-flex align-items-center mb-3">
+                                            <div class="flex-shrink-0">
+                                                <i class="d-flex align-items-center justify-content-center pli-shop display-5"></i> <!-- Changed for Item Total -->
+                                            </div>
+                                            <div class="flex-grow-1 ms-4">
+                                                <h5 class="h2 mb-0">{{ currency($itemTotal) }}</h5>
+                                                <p class="text-white text-opacity-75 mb-0">Item Total</p>
+                                            </div>
+                                        </div>
+                                        <div class="progress progress-md mb-2">
+                                            <div class="progress-bar bg-white" role="progressbar" style="width: {{ $itemTotal > 0 ? 100 : 0 }}%;" aria-valuenow="{{ $itemTotal }}"
+                                                aria-valuemin="0" aria-valuemax="{{ $itemTotal }}">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="card bg-success text-white mb-3 mb-xl-3">
+                                    <div class="card-body py-3">
+                                        <div class="d-flex align-items-center mb-3">
+                                            <div class="flex-shrink-0">
+                                                <i class="d-flex align-items-center justify-content-center pli-reverbnation display-5"></i> <!-- Better icon for Service -->
+                                            </div>
+                                            <div class="flex-grow-1 ms-4">
+                                                <h5 class="h2 mb-0">{{ currency($serviceSale) }}</h5>
+                                                <p class="text-white text-opacity-75 mb-0">Service</p>
+                                            </div>
+                                        </div>
+                                        <div class="progress progress-md mb-2">
+                                            <div class="progress-bar bg-white" role="progressbar" style="width: {{ $itemTotal > 0 ? ($serviceSale / $itemTotal) * 100 : 0 }}%;"
+                                                aria-valuenow="{{ $serviceSale }}" aria-valuemin="0" aria-valuemax="{{ $itemTotal }}">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="card bg-warning text-white mb-3 mb-xl-3">
+                                    <div class="card-body py-3">
+                                        <div class="d-flex align-items-center mb-3">
+                                            <div class="flex-shrink-0">
+                                                <i class="d-flex align-items-center justify-content-center pli-full-cart display-5"></i> <!-- Better icon for Product -->
+                                            </div>
+                                            <div class="flex-grow-1 ms-4">
+                                                <h5 class="h2 mb-0">{{ currency($productSale) }}</h5>
+                                                <p class="text-white text-opacity-75 mb-0">Product</p>
+                                            </div>
+                                        </div>
+                                        <div class="progress progress-md mb-2">
+                                            <div class="progress-bar bg-white" role="progressbar" style="width: {{ $itemTotal > 0 ? ($productSale / $itemTotal) * 100 : 0 }}%;"
+                                                aria-valuenow="{{ $productSale }}" aria-valuemin="0" aria-valuemax="{{ $itemTotal }}">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <div class="card-body p-2">
-                    <div class="table-responsive">
-                        <table class="table table-borderless table-sm">
-                            <tbody>
-                                @foreach ($overview as $title => $value)
-                                    <tr>
-                                        <td class="fw-bold">{{ $title }}</td>
-                                        <td class="text-end fw-bold">{{ currency($value) }}</td>
-                                    </tr>
-                                @endforeach
-                            </tbody>
-                        </table>
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="col-md-12">
+                                <div class="card bg-info text-white mb-3 mb-xl-3">
+                                    <div class="card-body py-3">
+                                        <div class="d-flex align-items-center mb-3">
+                                            <div class="flex-shrink-0">
+                                                <i class="d-flex align-items-center justify-content-center pli-money-2 display-5"></i>
+                                            </div>
+                                            <div class="flex-grow-1 ms-4">
+                                                <h5 class="h2 mb-0">{{ currency($totalPayment) }}</h5>
+                                                <p class="text-white text-opacity-75 mb-0">Total Payment</p>
+                                            </div>
+                                        </div>
+                                        <div class="progress progress-md mb-2">
+                                            <div class="progress-bar bg-white" role="progressbar" style="width: {{ $totalPayment > 0 ? ($totalPayment / $totalSales) * 100 : 0 }}%;"
+                                                aria-valuenow="{{ $totalPayment }}" aria-valuemin="0" aria-valuemax="{{ $totalSales }}">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div wire:ignore id="chartContainer" style="height: 370px; width: 100%;"></div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -120,9 +260,6 @@
             </div>
         </div>
     </div>
-    @push('styles')
-        <link rel="stylesheet" href="{{ asset('assets/vendors/dataTable/datatables.min.css') }}">
-    @endpush
     @push('scripts')
         <script>
             $(document).ready(function() {
@@ -225,10 +362,31 @@
                     ]
                 });
             });
+            window.addEventListener('updatePieChart', event => {
+                var options = {
+                    title: {
+                        text: "Payment Method Overview"
+                    },
+                    data: [{
+                        type: "pie",
+                        startAngle: 45,
+                        showInLegend: "true",
+                        legendText: "{label}",
+                        indexLabel: "{label} ({y})",
+                        yValueFormatString: "#,##0.##",
+                        dataPoints: event.detail[0],
+                    }]
+                };
+                $("#chartContainer").CanvasJSChart(options);
+            });
         </script>
         <script src="{{ asset('assets/vendors/dataTable/bootstrap.bundle.min.js') }}"></script>
         <script src="{{ asset('assets/vendors/dataTable/pdfmake.min.js') }}"></script>
         <script src="{{ asset('assets/vendors/dataTable/vfs_fonts.js') }}"></script>
         <script src="{{ asset('assets/vendors/dataTable/datatables.min.js') }}"></script>
+        <script type="text/javascript" src="https://cdn.canvasjs.com/jquery.canvasjs.min.js"></script>
+    @endpush
+    @push('styles')
+        <link rel="stylesheet" href="{{ asset('assets/vendors/dataTable/datatables.min.css') }}">
     @endpush
 </div>

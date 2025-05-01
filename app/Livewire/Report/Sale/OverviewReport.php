@@ -17,11 +17,18 @@ class OverviewReport extends Component
 
     public $to_date;
 
+    public $dataPoints = [];
+
     public function mount()
     {
         $this->from_date = date('Y-m-01');
         $this->to_date = date('Y-m-d');
         $this->branch_id = session('branch_id');
+    }
+
+    public function updated($key, $value)
+    {
+        $this->dispatch('updatePieChart', $this->dataPoints);
     }
 
     public function export() {}
@@ -70,27 +77,50 @@ class OverviewReport extends Component
             ->groupBy('sale_payments.payment_method_id')
             ->pluck('total', 'payment_method');
 
-        $overview['Net Sales'] = $sales->sum('gross_amount');
-        $overview['No Of Sales'] = $sales->count();
-        $overview['No Of Sales Returns'] = $saleReturns->count();
-        $overview['Sale Discount'] = $sales->sum('other_discount');
-        $overview['Total Sales'] = $sales->sum('total');
-        $overview['Total Sales Return'] = $saleReturns->sum('grand_total');
+        $netSales = $sales->sum('gross_amount');
+        $saleDiscount = $sales->sum('other_discount');
+
+        $noOfSales = $sales->count();
+        $noOfSalesReturns = $saleReturns->count();
+
+        $totalSales = $sales->sum('total');
+        $totalSalesReturn = $saleReturns->sum('grand_total');
 
         foreach ($payments as $title => $amount) {
-            $overview[$title] = $amount;
+            $paymentMethods[$title] = $amount;
         }
-        $overview['Credit'] = $sales->sum('balance');
-        $overview['Payment Mode Total'] = $payments->sum();
+        $credit = $paymentMethods['Credit'] = $sales->sum('balance');
+        $totalPayment = $payments->sum();
 
-        $overview['Service Sale'] = $products->where('type', 'service')->sum('total');
-        $overview['Product Sale'] = $products->where('type', 'product')->sum('total');
-        $overview['Item Total'] = $products->sum('total');
+        $serviceSale = $products->where('type', 'service')->sum('total');
+        $productSale = $products->where('type', 'product')->sum('total');
+        $itemTotal = $products->sum('total');
+
+        $this->dataPoints = [];
+        foreach ($paymentMethods as $label => $value) {
+            $this->dataPoints[] = [
+                'label' => $label,
+                'y' => $value,
+            ];
+        }
+        $this->dispatch('updatePieChart', $this->dataPoints);
 
         return view('livewire.report.sale.overview-report', [
             'employees' => $employees,
             'products' => $products,
-            'overview' => $overview,
+            'netSales' => $netSales,
+            'saleDiscount' => $saleDiscount,
+            'serviceSale' => $serviceSale,
+            'productSale' => $productSale,
+            'itemTotal' => $itemTotal,
+            'totalPayment' => $totalPayment,
+            'credit' => $credit,
+            'paymentMethods' => $paymentMethods,
+            'dataPoints' => $this->dataPoints,
+            'noOfSales' => $noOfSales,
+            'noOfSalesReturns' => $noOfSalesReturns,
+            'totalSales' => $totalSales,
+            'totalSalesReturn' => $totalSalesReturn,
         ]);
     }
 }
