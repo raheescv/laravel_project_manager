@@ -8,22 +8,49 @@ use App\Models\SalePayment;
 use App\Models\SaleReturn;
 use Carbon\Carbon;
 use Livewire\Component;
+use Livewire\WithPagination;
 
 class OverviewReport extends Component
 {
-    public $branch_id;
+    use WithPagination;
 
-    public $from_date;
+    // Common properties
+    public $branchId;
 
-    public $to_date;
+    public $fromDate;
+
+    public $toDate;
 
     public $dataPoints = [];
 
+    protected $paginationTheme = 'bootstrap';
+
+    public $perPage = 10;
+
+    // Product table properties
+    public $productSearch = '';
+
+    public $productSortField = 'total';
+
+    public $productSortDirection = 'desc';
+
+    // Employee table properties
+    public $employeeSearch = '';
+
+    public $employeeSortField = 'total';
+
+    public $employeeSortDirection = 'desc';
+
+    // Page limit properties
+    public $employeePerPage = 10;
+
+    public $productPerPage = 10;
+
     public function mount()
     {
-        $this->from_date = date('Y-m-01');
-        $this->to_date = date('Y-m-d');
-        $this->branch_id = session('branch_id');
+        $this->fromDate = date('Y-m-01');
+        $this->toDate = date('Y-m-d');
+        $this->branchId = session('branch_id');
     }
 
     public function updated($key, $value)
@@ -33,13 +60,47 @@ class OverviewReport extends Component
 
     public function export() {}
 
+    public function sortBy($field)
+    {
+        [$type, $field] = explode('.', $field);
+        $sortField = "{$type}SortField";
+        $sortDirection = "{$type}SortDirection";
+
+        if ($this->{$sortField} === $field) {
+            $this->{$sortDirection} = $this->{$sortDirection} === 'asc' ? 'desc' : 'asc';
+        } else {
+            $this->{$sortField} = $field;
+            $this->{$sortDirection} = 'desc';
+        }
+    }
+
+    public function updatedProductSearch()
+    {
+        $this->resetPage('products-page');
+    }
+
+    public function updatedEmployeeSearch()
+    {
+        $this->resetPage('employees-page');
+    }
+
+    public function updatedEmployeePerPage()
+    {
+        $this->resetPage('employees-page');
+    }
+
+    public function updatedProductPerPage()
+    {
+        $this->resetPage('products-page');
+    }
+
     public function render()
     {
-        $from = $this->from_date ? Carbon::parse($this->from_date)->toDateString() : null;
-        $to = $this->to_date ? Carbon::parse($this->to_date)->toDateString() : null;
+        $from = $this->fromDate ? Carbon::parse($this->fromDate)->toDateString() : null;
+        $to = $this->toDate ? Carbon::parse($this->toDate)->toDateString() : null;
 
         $baseQuery = fn ($query) => $query
-            ->when($this->branch_id, fn ($q) => $q->where('sales.branch_id', $this->branch_id))
+            ->when($this->branchId, fn ($q) => $q->where('sales.branch_id', $this->branchId))
             ->when($from, fn ($q) => $q->where('sales.date', '>=', $from))
             ->when($to, fn ($q) => $q->where('sales.date', '<=', $to));
 
@@ -47,26 +108,40 @@ class OverviewReport extends Component
             ->join('sales', 'sales.id', '=', 'sale_items.sale_id')
             ->join('users', 'users.id', '=', 'sale_items.employee_id')
             ->tap($baseQuery)
-            ->groupBy('sale_items.employee_id')
-            ->select('users.name as employee')
+            ->where(function ($query) {
+                $query->where('users.name', 'like', '%'.$this->employeeSearch.'%');
+            });
+        $totalEmployees = clone $employees;
+        $employees = $employees->groupBy('sale_items.employee_id')
+            ->select('users.id', 'users.name as employee')
             ->selectRaw('sum(sale_items.total) as total')
             ->selectRaw('sum(sale_items.quantity) as quantity')
-            ->orderBy('users.name')
-            ->get();
+            ->orderBy($this->employeeSortField, $this->employeeSortDirection)
+            ->paginate($this->employeePerPage, ['*'], 'employees-page');
+        $employeeQuantity = clone $totalEmployees;
+        $employeeQuantity = $employeeQuantity->sum('quantity');
+
+        $employeeTotal = clone $totalEmployees;
+        $employeeTotal = $employeeTotal->sum('sale_items.total');
 
         $products = SaleItem::query()
             ->join('sales', 'sales.id', '=', 'sale_items.sale_id')
             ->join('products', 'products.id', '=', 'sale_items.product_id')
             ->tap($baseQuery)
-            ->groupBy('sale_items.product_id')
-            ->select('products.name as product', 'products.type')
+            ->where(function ($query) {
+                $query->where('products.name', 'like', '%'.$this->productSearch.'%');
+            });
+        $totalProducts = clone $products;
+
+        $products = $products->select('products.name as product', 'products.type')
             ->selectRaw('sum(sale_items.total) as total')
             ->selectRaw('sum(sale_items.quantity) as quantity')
-            ->orderBy('total', 'desc')
-            ->get();
+            ->orderBy($this->productSortField, $this->productSortDirection)
+            ->groupBy('sale_items.product_id')
+            ->paginate($this->productPerPage, ['*'], 'products-page');
 
-        $sales = Sale::query()->customerSearch($this->branch_id, $from, $to);
-        $saleReturns = SaleReturn::query()->customerSearch($this->branch_id, $from, $to);
+        $sales = Sale::query()->customerSearch($this->branchId, $from, $to);
+        $saleReturns = SaleReturn::query()->customerSearch($this->branchId, $from, $to);
 
         $payments = SalePayment::query()
             ->join('sales', 'sales.id', '=', 'sale_payments.sale_id')
@@ -92,9 +167,17 @@ class OverviewReport extends Component
         $credit = $paymentMethods['Credit'] = $sales->sum('balance');
         $totalPayment = $payments->sum();
 
-        $serviceSale = $products->where('type', 'service')->sum('total');
-        $productSale = $products->where('type', 'product')->sum('total');
-        $itemTotal = $products->sum('total');
+        $totalProductQuantity = clone $totalProducts;
+        $totalProductQuantity = $totalProductQuantity->sum('quantity');
+
+        $itemTotal = clone $totalProducts;
+        $itemTotal = $itemTotal->sum('sale_items.total');
+
+        $productSale = clone $totalProducts;
+        $productSale = $productSale->where('type', 'product')->sum('sale_items.total');
+
+        $serviceSale = clone $totalProducts;
+        $serviceSale = $serviceSale->where('type', 'service')->sum('sale_items.total');
 
         $this->dataPoints = [];
         foreach ($paymentMethods as $label => $value) {
@@ -113,6 +196,7 @@ class OverviewReport extends Component
             'serviceSale' => $serviceSale,
             'productSale' => $productSale,
             'itemTotal' => $itemTotal,
+            'totalProductQuantity' => $totalProductQuantity,
             'totalPayment' => $totalPayment,
             'credit' => $credit,
             'paymentMethods' => $paymentMethods,
@@ -121,6 +205,8 @@ class OverviewReport extends Component
             'noOfSalesReturns' => $noOfSalesReturns,
             'totalSales' => $totalSales,
             'totalSalesReturn' => $totalSalesReturn,
+            'employeeQuantity' => $employeeQuantity,
+            'employeeTotal' => $employeeTotal,
         ]);
     }
 }
