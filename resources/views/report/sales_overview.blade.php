@@ -5,23 +5,26 @@
                 <ol class="breadcrumb">
                     <li class="breadcrumb-item"><a href="{{ route('dashboard') }}">Home</a></li>
                     <li class="breadcrumb-item" aria-current="page">Report</li>
-                    <li class="breadcrumb-item active" aria-current="page">Day Book</li>
+                    <li class="breadcrumb-item active" aria-current="page">Sale Overview</li>
                 </ol>
             </nav>
-            <h1 class="page-title mb-0 mt-2">Day Book Report</h1>
+            <h1 class="page-title mb-0 mt-2">Sale Overview Report</h1>
             <p class="lead">
-                Report For Day Book
+                Report For Sale Overview
             </p>
         </div>
     </div>
     <div class="content__boxed">
         <div class="content__wrap">
-            <div class="card mb-3">
-                @livewire('report.day-book-report')
-            </div>
+            @livewire('report.sale.overview-report')
         </div>
     </div>
     @push('scripts')
-        <x-select.accountSelect />
+        <x-select.branchSelect />
+        <script>
+            $(document).ready(function() {
+                $('#root').attr('class', 'root tm--expanded-hd mn--min');
+            })
+        </script>
     @endpush
 </x-app-layout>

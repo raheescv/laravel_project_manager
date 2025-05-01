@@ -27,10 +27,6 @@ class DayWiseReport extends Component
 
     public $limit = 10;
 
-    public $selected = [];
-
-    public $selectAll = false;
-
     public $sortField = 'date';
 
     public $sortDirection = 'desc';
