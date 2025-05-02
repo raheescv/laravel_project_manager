@@ -1,6 +1,6 @@
 <div class="card">
     <div class="card-header">
-        <h5 class="card-title">Top 5 Sale Items Today</h5>
+        <h5 class="card-title">Today’s Top 5 Picks</h5>
     </div>
     <div class="card-body">
         <div class="table-responsive py-2">
