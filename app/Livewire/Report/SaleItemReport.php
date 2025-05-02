@@ -20,6 +20,8 @@ class SaleItemReport extends Component
 
     public $employee_id = '';
 
+    public $status = 'completed';
+
     public $branch_id = '';
 
     public $from_date;
@@ -62,7 +64,9 @@ class SaleItemReport extends Component
             ->when($this->product_id ?? '', function ($query, $value) {
                 return $query->where('product_id', $value);
             })
-            ->where('sales.status', 'completed')
+            ->when($this->status ?? '', function ($query, $value) {
+                return $query->where('status', $value);
+            })
             ->count();
 
         $filter = [
@@ -73,7 +77,7 @@ class SaleItemReport extends Component
             'product_id' => $this->product_id,
         ];
         if ($count > 2000) {
-            ExportSaleItemReportJob::dispatch(auth()->user(), $filter);
+            ExportSaleItemReportJob::dispatch(Auth::user(), $filter);
             $this->dispatch('success', ['message' => 'You will get your file in your mailbox.']);
         } else {
             $exportFileName = 'SaleItemReport_'.now()->timestamp.'.xlsx';
@@ -99,7 +103,12 @@ class SaleItemReport extends Component
 
     public function render()
     {
-        $data = SaleItem::with('sale:id,date,invoice_no,branch_id,other_discount,total', 'employee:id,name', 'product:id,name')->orderBy($this->sortField, $this->sortDirection)
+        $query = SaleItem::with(['sale:id,date,invoice_no,branch_id,other_discount,total', 'employee:id,name', 'product:id,name'])
+            ->select([
+                'sale_items.*',
+                'sales.invoice_no',
+                'sales.date',
+            ])
             ->join('sales', 'sales.id', '=', 'sale_items.sale_id')
             ->when($this->search, function ($query, $value) {
                 return $query->where(function ($q) use ($value): void {
@@ -110,38 +119,26 @@ class SaleItemReport extends Component
                         ->orWhere('sale_items.tax', 'like', "%{$value}%");
                 });
             })
-            ->when($this->from_date ?? '', function ($query, $value) {
-                return $query->where('date', '>=', date('Y-m-d', strtotime($value)));
-            })
-            ->when($this->to_date ?? '', function ($query, $value) {
-                return $query->where('date', '<=', date('Y-m-d', strtotime($value)));
-            })
-            ->when($this->branch_id ?? '', function ($query, $value) {
-                return $query->where('branch_id', $value);
-            })
-            ->when($this->employee_id ?? '', function ($query, $value) {
-                return $query->where('employee_id', $value);
-            })
-            ->when($this->product_id ?? '', function ($query, $value) {
-                return $query->where('product_id', $value);
-            })
-            ->whereIn('sales.branch_id', Auth::user()->branches->pluck('branch_id')->toArray())
-            ->where('sales.status', 'completed')
-            ->latest('sale_items.id')
-            ->select(
-                'sale_items.*',
-                'sales.invoice_no',
-                'sales.date',
-            );
-        $totalRow = clone $data;
-        $data = $data->paginate($this->limit);
+            ->when($this->from_date, fn ($q) => $q->whereDate('sales.date', '>=', $this->from_date))
+            ->when($this->to_date, fn ($q) => $q->whereDate('sales.date', '<=', $this->to_date))
+            ->when($this->branch_id, fn ($q) => $q->where('sales.branch_id', $this->branch_id))
+            ->when($this->employee_id, fn ($q) => $q->where('sale_items.employee_id', $this->employee_id))
+            ->when($this->product_id, fn ($q) => $q->where('sale_items.product_id', $this->product_id))
+            ->when($this->status, fn ($q) => $q->where('sales.status', $this->status))
+            ->whereIn('sales.branch_id', Auth::user()->branches->pluck('branch_id'))
+            ->orderBy($this->sortField, $this->sortDirection);
 
-        $total['gross_amount'] = $totalRow->sum('sale_items.gross_amount');
-        $total['discount'] = $totalRow->sum('sale_items.discount');
-        $total['net_amount'] = $totalRow->sum('sale_items.net_amount');
-        $total['tax_amount'] = $totalRow->sum('sale_items.tax_amount');
-        $total['total'] = $totalRow->sum('sale_items.total');
-        $total['effective_total'] = $totalRow->get()->sum('effective_total');
+        $totals = clone $query;
+        $data = $query->paginate($this->limit);
+
+        $total = [
+            'gross_amount' => $totals->sum('sale_items.gross_amount'),
+            'discount' => $totals->sum('sale_items.discount'),
+            'net_amount' => $totals->sum('sale_items.net_amount'),
+            'tax_amount' => $totals->sum('sale_items.tax_amount'),
+            'total' => $totals->sum('sale_items.total'),
+            'effective_total' => $totals->get()->sum('effective_total'),
+        ];
 
         return view('livewire.report.sale-item-report', [
             'total' => $total,

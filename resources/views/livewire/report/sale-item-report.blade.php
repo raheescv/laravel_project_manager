@@ -21,7 +21,7 @@
         </div>
         <hr>
         <div class="col-lg-12">
-            <div class="row">
+            <div class="row mb-2">
                 <div class="col-md-2">
                     <label for="from_date">From Date</label>
                     {{ html()->date('from_date')->value('')->class('form-control')->id('from_date')->attribute('wire:model.live', 'from_date') }}
@@ -41,6 +41,12 @@
                 <div class="col-md-3" wire:ignore>
                     <label for="employee_id">Employee</label>
                     {{ html()->select('employee_id', [])->value('')->class('select-employee_id-list')->id('employee_id')->placeholder('Employee') }}
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-3" wire:ignore>
+                    <label for="status">Status</label>
+                    {{ html()->select('status', saleStatuses())->value('completed')->class('tomSelect')->id('status') }}
                 </div>
             </div>
         </div>
@@ -113,6 +119,10 @@
                 $('#employee_id').on('change', function(e) {
                     const value = $(this).val() || null;
                     @this.set('employee_id', value);
+                });
+                $('#status').on('change', function(e) {
+                    const value = $(this).val() || null;
+                    @this.set('status', value);
                 });
             });
         </script>
