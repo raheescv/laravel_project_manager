@@ -23,6 +23,11 @@
                         @livewire('income-expense-chart')
                     </div>
                 @endcan
+                @can('sale.dashboard top items')
+                    <div class="col-xl-5">
+                        @livewire('dashboard.top-sale-items')
+                    </div>
+                @endcan
             </div>
             @can('sale.dashboard bar chart')
                 <div class="row">
