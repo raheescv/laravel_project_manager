@@ -32,6 +32,7 @@ class ConfigurationSeeder extends Seeder
             'other_discount' => false,
             'freight' => false,
             'grand_total' => true,
+            'payment_method_name' => true,
             'paid' => true,
             'balance' => true,
             'status' => false,

@@ -95,50 +95,12 @@ class Table extends Component
 
     public function updatedSelectAll($value)
     {
-        if ($value) {
-            $this->selected = Sale::latest()
-                ->when($this->branch_id ?? '', function ($query, $value) {
-                    return $query->where('branch_id', $value);
-                })
-                ->when($this->customer_id ?? '', function ($query, $value) {
-                    return $query->where('account_id', $value);
-                })
-                ->when($this->status ?? '', function ($query, $value) {
-                    return $query->where('status', $value);
-                })
-                ->when($this->from_date ?? '', function ($query, $value) {
-                    return $query->whereDate('date', '>=', date('Y-m-d', strtotime($value)));
-                })
-                ->when($this->to_date ?? '', function ($query, $value) {
-                    return $query->whereDate('date', '<=', date('Y-m-d', strtotime($value)));
-                })
-                ->limit(2000)
-                ->pluck('id')
-                ->toArray();
-        } else {
-            $this->selected = [];
-        }
+        $this->selected = $value ? $this->getBaseQuery()->limit(2000)->pluck('id')->toArray() : [];
     }
 
     public function export()
     {
-        $count = Sale::query()
-            ->when($this->branch_id ?? '', function ($query, $value) {
-                return $query->where('branch_id', $value);
-            })
-            ->when($this->customer_id ?? '', function ($query, $value) {
-                return $query->where('account_id', $value);
-            })
-            ->when($this->status ?? '', function ($query, $value) {
-                return $query->where('status', $value);
-            })
-            ->when($this->from_date ?? '', function ($query, $value) {
-                return $query->whereDate('date', '>=', date('Y-m-d', strtotime($value)));
-            })
-            ->when($this->to_date ?? '', function ($query, $value) {
-                return $query->whereDate('date', '<=', date('Y-m-d', strtotime($value)));
-            })
-            ->count();
+        $count = $this->getBaseQuery()->count();
         if ($count > 2000) {
             ExportSaleJob::dispatch(Auth::user());
             $this->dispatch('success', ['message' => 'You will get your file in your mailbox.']);
@@ -159,61 +121,47 @@ class Table extends Component
         }
     }
 
+    protected function getBaseQuery()
+    {
+        return Sale::with('branch')
+            ->join('accounts', 'accounts.id', '=', 'sales.account_id')
+            ->leftJoin('sale_payments', function ($join) {
+                $join->on('sales.id', '=', 'sale_payments.sale_id')
+                    ->whereRaw('sale_payments.id = (SELECT id FROM sale_payments sp WHERE sp.sale_id = sales.id ORDER BY sp.created_at ASC LIMIT 1)');
+            })
+            ->join('accounts as payment_method', 'payment_method.id', '=', 'sale_payments.payment_method_id')
+            ->select('sales.*', 'accounts.name', 'payment_method.name as payment_method_name')
+            ->filter([
+                'search' => $this->search,
+                'branch_id' => $this->branch_id,
+                'customer_id' => $this->customer_id,
+                'status' => $this->status,
+                'from_date' => $this->from_date,
+                'to_date' => $this->to_date,
+            ])
+            ->orderBy($this->sortField, $this->sortDirection);
+    }
+
     public function render()
     {
-        $data = Sale::with('branch')->orderBy($this->sortField, $this->sortDirection)
-            ->join('accounts', 'accounts.id', '=', 'sales.account_id')
-            ->when($this->search ?? '', function ($query, $value) {
-                return $query->where(function ($q) use ($value): void {
-                    $value = trim($value);
-                    $q->where('sales.invoice_no', 'like', "%{$value}%")
-                        ->orWhere('sales.gross_amount', 'like', "%{$value}%")
-                        ->orWhere('sales.item_discount', 'like', "%{$value}%")
-                        ->orWhere('sales.tax_amount', 'like', "%{$value}%")
-                        ->orWhere('sales.total', 'like', "%{$value}%")
-                        ->orWhere('sales.grand_total', 'like', "%{$value}%")
-                        ->orWhere('sales.other_discount', 'like', "%{$value}%")
-                        ->orWhere('sales.freight', 'like', "%{$value}%")
-                        ->orWhere('sales.paid', 'like', "%{$value}%")
-                        ->orWhere('accounts.name', 'like', "%{$value}%");
-                });
-            })
-            ->when($this->branch_id ?? '', function ($query, $value) {
-                return $query->where('branch_id', $value);
-            })
-            ->when($this->customer_id ?? '', function ($query, $value) {
-                return $query->where('account_id', $value);
-            })
-            ->when($this->status ?? '', function ($query, $value) {
-                return $query->where('status', $value);
-            })
-            ->when($this->from_date ?? '', function ($query, $value) {
-                return $query->whereDate('date', '>=', date('Y-m-d', strtotime($value)));
-            })
-            ->when($this->to_date ?? '', function ($query, $value) {
-                return $query->whereDate('date', '<=', date('Y-m-d', strtotime($value)));
-            })
-            ->select(
-                'sales.*',
-                'accounts.name',
-            )
-            ->latest('sales.id');
-        $totalRow = clone $data;
-        $data = $data->paginate($this->limit);
+        $query = $this->getBaseQuery();
+        $totalRow = clone $query;
 
-        $total['gross_amount'] = $totalRow->sum('gross_amount');
-        $total['item_discount'] = $totalRow->sum('item_discount');
-        $total['tax_amount'] = $totalRow->sum('tax_amount');
-        $total['total'] = $totalRow->sum('total');
-        $total['other_discount'] = $totalRow->sum('other_discount');
-        $total['freight'] = $totalRow->sum('freight');
-        $total['grand_total'] = $totalRow->sum('grand_total');
-        $total['paid'] = $totalRow->sum('paid');
-        $total['balance'] = $totalRow->sum('balance');
+        $total = [
+            'gross_amount' => $totalRow->sum('gross_amount'),
+            'item_discount' => $totalRow->sum('item_discount'),
+            'tax_amount' => $totalRow->sum('tax_amount'),
+            'total' => $totalRow->sum('total'),
+            'other_discount' => $totalRow->sum('other_discount'),
+            'freight' => $totalRow->sum('freight'),
+            'grand_total' => $totalRow->sum('grand_total'),
+            'paid' => $totalRow->sum('paid'),
+            'balance' => $totalRow->sum('balance'),
+        ];
 
         return view('livewire.sale.table', [
             'total' => $total,
-            'data' => $data,
+            'data' => $query->paginate($this->limit),
         ]);
     }
 }

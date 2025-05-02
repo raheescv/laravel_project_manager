@@ -105,6 +105,9 @@
                         @if ($sale_visible_column['grand_total'])
                             <th class="text-end"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="grand_total" label="grand total" /> </th>
                         @endif
+                        @if ($sale_visible_column['payment_method_name'] ?? '')
+                            <th class="text-end"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="payment_method_name" label="payment method" /> </th>
+                        @endif
                         @if ($sale_visible_column['paid'])
                             <th class="text-end"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="paid" label="paid" /> </th>
                         @endif
@@ -161,6 +164,9 @@
                             @if ($sale_visible_column['grand_total'])
                                 <td class="text-end">{{ currency($item->grand_total) }}</td>
                             @endif
+                            @if ($sale_visible_column['payment_method_name'] ?? '')
+                                <td class="text-end">{{ $item->payment_method_name }}</td>
+                            @endif
                             @if ($sale_visible_column['paid'])
                                 <td class="text-end">{{ currency($item->paid) }}</td>
                             @endif
@@ -207,6 +213,9 @@
                         @endif
                         @if ($sale_visible_column['grand_total'])
                             <th class="text-end">{{ currency($total['grand_total']) }}</th>
+                        @endif
+                        @if ($sale_visible_column['payment_method_name'] ?? '')
+                            <th class="text-end"></th>
                         @endif
                         @if ($sale_visible_column['paid'])
                             <th class="text-end">{{ currency($total['paid']) }}</th>

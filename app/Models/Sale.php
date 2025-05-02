@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Models\Models\Views\Ledger;
 use App\Models\Scopes\AssignedBranchScope;
 use App\Models\Scopes\CurrentBranchScope;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Validation\Rule;
@@ -103,6 +104,32 @@ class Sale extends Model implements AuditableContracts
         return $query->when($branch_id, fn ($q) => $q->where('branch_id', $branch_id))
             ->when($from, fn ($q) => $q->where('date', '>=', $from))
             ->when($to, fn ($q) => $q->where('date', '<=', $to));
+    }
+
+    public function scopeFilter(Builder $query, array $filters): Builder
+    {
+        return $query
+            ->when($filters['search'] ?? '', function ($q, $search) {
+                $search = trim($search);
+
+                return $q->where(function ($q) use ($search) {
+                    $q->where('sales.invoice_no', 'like', "%{$search}%")
+                        ->orWhere('sales.gross_amount', 'like', "%{$search}%")
+                        ->orWhere('sales.item_discount', 'like', "%{$search}%")
+                        ->orWhere('sales.tax_amount', 'like', "%{$search}%")
+                        ->orWhere('sales.total', 'like', "%{$search}%")
+                        ->orWhere('sales.grand_total', 'like', "%{$search}%")
+                        ->orWhere('sales.other_discount', 'like', "%{$search}%")
+                        ->orWhere('sales.freight', 'like', "%{$search}%")
+                        ->orWhere('sales.paid', 'like', "%{$search}%")
+                        ->orWhere('accounts.name', 'like', "%{$search}%");
+                });
+            })
+            ->when($filters['branch_id'] ?? '', fn ($q, $value) => $q->where('branch_id', $value))
+            ->when($filters['customer_id'] ?? '', fn ($q, $value) => $q->where('account_id', $value))
+            ->when($filters['status'] ?? '', fn ($q, $value) => $q->where('status', $value))
+            ->when($filters['from_date'] ?? '', fn ($q, $value) => $q->whereDate('sales.date', '>=', date('Y-m-d', strtotime($value))))
+            ->when($filters['to_date'] ?? '', fn ($q, $value) => $q->whereDate('sales.date', '<=', date('Y-m-d', strtotime($value))));
     }
 
     public function branch()
