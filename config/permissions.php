@@ -27,6 +27,7 @@ return [
     'whatsapp' => ['integration'],
     'report' => [
         'income vs expense dashboard pie chart',
+        'income vs expense dashboard bar chart',
         'sale item',
         'sale return item',
         'day book',

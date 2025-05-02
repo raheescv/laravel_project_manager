@@ -8,12 +8,9 @@
         </div>
     </div>
     @push('scripts')
-        <script src="{{ asset('assets/vendors/chart.js/chart.umd.min.js') }}"></script>
         <script>
             const ctx = document.getElementById('incomeExpenseChart').getContext('2d');
             const chartData = @json($chartData);
-
-            console.log(chartData);
             new Chart(ctx, {
                 type: 'pie',
                 data: chartData,
