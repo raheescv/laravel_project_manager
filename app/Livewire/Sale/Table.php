@@ -23,6 +23,8 @@ class Table extends Component
 
     public $customer_id = '';
 
+    public $payment_method_id = '';
+
     public $created_by = '';
 
     public $default_status = '';
@@ -128,11 +130,26 @@ class Table extends Component
         return Sale::with('branch')
             ->join('accounts', 'accounts.id', '=', 'sales.account_id')
             ->leftJoin('sale_payments', function ($join) {
-                $join->on('sales.id', '=', 'sale_payments.sale_id')
-                    ->whereRaw('sale_payments.id = (SELECT id FROM sale_payments sp WHERE sp.sale_id = sales.id ORDER BY sp.created_at ASC LIMIT 1)');
+                $join->on('sales.id', '=', 'sale_payments.sale_id');
+
+                // Optional filter by payment method in subquery
+                $subquery = DB::table('sale_payments as sp')
+                    ->select('sp.id')
+                    ->whereColumn('sp.sale_id', 'sales.id')
+                    ->when($this->payment_method_id, function ($query) {
+                        $query->where('sp.payment_method_id', $this->payment_method_id);
+                    })
+                    ->orderBy('sp.created_at', 'asc')
+                    ->limit(1);
+
+                $join->whereRaw("sale_payments.id = ({$subquery->toSql()})", $subquery->getBindings());
             })
             ->join('accounts as payment_method', 'payment_method.id', '=', 'sale_payments.payment_method_id')
-            ->select('sales.*', 'accounts.name', 'payment_method.name as payment_method_name')
+            ->select([
+                'sales.*',
+                'accounts.name',
+                'payment_method.name as payment_method_name',
+            ])
             ->filter([
                 'search' => $this->search,
                 'branch_id' => $this->branch_id,

@@ -62,6 +62,10 @@
                     {{ html()->select('created_by', [])->value('')->class('select-user_id-list')->id('created_by')->placeholder('All') }}
                 </div>
                 <div class="col-md-3" wire:ignore>
+                    <b><label for="payment_method_id">Payment Method</label></b>
+                    {{ html()->select('payment_method_id', [])->value('')->class('select-payment_method_id-list')->id('payment_method_id')->placeholder('All') }}
+                </div>
+                <div class="col-md-3" wire:ignore>
                     <b><label for="status">Status</label></b>
                     {{ html()->select('status', saleStatuses())->value($status)->class('tomSelect')->id('status')->placeholder('All') }}
                 </div>
@@ -263,6 +267,10 @@
                 $('#created_by').on('change', function(e) {
                     const value = $(this).val() || null;
                     @this.set('created_by', value);
+                });
+                $('#payment_method_id').on('change', function(e) {
+                    const value = $(this).val() || null;
+                    @this.set('payment_method_id', value);
                 });
             });
         </script>

@@ -25,5 +25,6 @@
         @include('components.select.customerSelect')
         @include('components.select.userSelect')
         @include('components.select.branchSelect')
+        @include('components.select.paymentMethodSelect')
     @endpush
 </x-app-layout>
