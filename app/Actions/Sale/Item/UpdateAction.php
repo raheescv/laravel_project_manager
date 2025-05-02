@@ -14,6 +14,12 @@ class UpdateAction
             if (! $model) {
                 throw new \Exception("Resource not found with the specified ID: $id.", 1);
             }
+
+            // to avoid storing the audit log
+            if ($model->quantity == $data['quantity']) {
+                $data['quantity'] = $model->quantity;
+            }
+
             validationHelper(SaleItem::rules($id), $data);
             $model->update($data);
 

@@ -19,6 +19,7 @@ return [
         'create', 'view', 'edit', 'edit completed', 'delete', 'cancel', 'export', 'receipts', 'view journal entries', 'dashboard bar chart',
         'dashboard weekly summary',
         'dashboard top items',
+        'audit view',
     ],
     'sales return' => ['create', 'view', 'edit', 'edit completed', 'delete', 'export', 'payments', 'view journal entries'],
     'purchase' => ['create', 'view', 'edit', 'edit completed', 'delete', 'cancel', 'export', 'payments', 'view journal entries'],

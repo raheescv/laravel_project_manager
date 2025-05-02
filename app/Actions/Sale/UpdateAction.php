@@ -44,6 +44,24 @@ class UpdateAction
             }
 
             validationHelper(Sale::rules($sale_id), $data);
+
+            // to avoid storing the audit log
+            if ($model->gross_amount == $data['gross_amount']) {
+                $data['gross_amount'] = $model->gross_amount;
+            }
+            if ($model->item_discount == $data['item_discount']) {
+                $data['item_discount'] = $model->item_discount;
+            }
+            if ($model->tax_amount == $data['tax_amount']) {
+                $data['tax_amount'] = $model->tax_amount;
+            }
+            if ($model->total == $data['total']) {
+                $data['total'] = $model->total;
+            }
+            if ($model->paid == $data['paid']) {
+                $data['paid'] = $model->paid;
+            }
+
             $model->update($data);
             if ($data['status'] != 'cancelled') {
 

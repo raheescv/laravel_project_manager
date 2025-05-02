@@ -236,6 +236,13 @@
                     </button>
                 </li>
             @endif
+            @can('sale.audit view')
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link px-3" data-bs-toggle="tab" data-bs-target="#tab-audit-report" type="button" role="tab" aria-controls="audit" aria-selected="false" tabindex="-1">
+                        Audit Report
+                    </button>
+                </li>
+            @endcan
         </ul>
         <div class="tab-content">
             @can('sale.view journal entries')
@@ -312,6 +319,135 @@
                             </tr>
                         </tfoot>
                     </table>
+                </div>
+            </div>
+            <div id="tab-audit-report" class="tab-pane fade" role="tabpanel" aria-labelledby="audit-tab">
+                <ul class="nav nav-tabs mt-3" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#sale-audit" type="button">Sale</button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" data-bs-toggle="tab" data-bs-target="#sale-items-audit" type="button">Sale Items</button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" data-bs-toggle="tab" data-bs-target="#sale-payments-audit" type="button">Sale Payments</button>
+                    </li>
+                </ul>
+
+                <div class="tab-content">
+                    <div id="sale-audit" class="tab-pane fade show active" role="tabpanel">
+                        <div class="table-responsive">
+                            <table class="table table-striped align-middle table-sm table-bordered">
+                                <thead>
+                                    <tr class="bg-primary">
+                                        <th class="text-white">Date Time</th>
+                                        <th class="text-white">User</th>
+                                        <th class="text-white">Event</th>
+                                        @php
+                                            $columns = $sale->audits->pluck('new_values')->filter()->map(fn($item) => array_keys($item))->flatten()->unique()->values()->all();
+                                        @endphp
+                                        @foreach ($columns as $key)
+                                            <th class="text-white text-end">{{ Str::title(str_replace('_', ' ', $key)) }}</th>
+                                        @endforeach
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach ($sale->audits as $audit)
+                                        <tr>
+                                            <td>{{ $audit->created_at }}</td>
+                                            <td>{{ $audit->user?->name }}</td>
+                                            <td>{{ $audit->event }}</td>
+                                            @foreach ($columns as $key)
+                                                <td class="text-end">{{ $audit->new_values[$key] ?? '' }}</td>
+                                            @endforeach
+                                        </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div id="sale-items-audit" class="tab-pane fade" role="tabpanel">
+                        <div class="table-responsive">
+                            <table class="table table-striped align-middle table-sm table-bordered">
+                                <thead>
+                                    <tr class="bg-primary">
+                                        <th class="text-white">Date Time</th>
+                                        <th class="text-white">User</th>
+                                        <th class="text-white">Event</th>
+                                        @php
+                                            $itemColumns = collect($sale->items)
+                                                ->flatMap->audits->pluck('new_values')
+                                                ->filter()
+                                                ->map(fn($item) => array_keys($item))
+                                                ->flatten()
+                                                ->unique()
+                                                ->values()
+                                                ->all();
+                                        @endphp
+                                        @foreach ($itemColumns as $key)
+                                            <th class="text-white text-end">{{ Str::title(str_replace('_', ' ', $key)) }}</th>
+                                        @endforeach
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach ($sale->items as $item)
+                                        @foreach ($item->audits as $audit)
+                                            <tr>
+                                                <td>{{ $audit->created_at }}</td>
+                                                <td>{{ $audit->user?->name }}</td>
+                                                <td>{{ $audit->event }}</td>
+                                                @foreach ($itemColumns as $key)
+                                                    <td class="text-end">{{ $audit->new_values[$key] ?? '' }}</td>
+                                                @endforeach
+                                            </tr>
+                                        @endforeach
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div id="sale-payments-audit" class="tab-pane fade" role="tabpanel">
+                        <div class="table-responsive">
+                            <table class="table table-striped align-middle table-sm table-bordered">
+                                <thead>
+                                    <tr class="bg-primary">
+                                        <th class="text-white">Date Time</th>
+                                        <th class="text-white">User</th>
+                                        <th class="text-white">Event</th>
+                                        @php
+                                            $paymentColumns = collect($sale->payments)
+                                                ->flatMap->audits->pluck('new_values')
+                                                ->filter()
+                                                ->map(fn($item) => array_keys($item))
+                                                ->flatten()
+                                                ->unique()
+                                                ->values()
+                                                ->all();
+                                        @endphp
+                                        @foreach ($paymentColumns as $key)
+                                            <th class="text-white text-end">{{ Str::title(str_replace('_', ' ', $key)) }}</th>
+                                        @endforeach
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach ($sale->payments as $payment)
+                                        @foreach ($payment->audits as $audit)
+                                            <tr>
+                                                <td>{{ $audit->created_at }}</td>
+                                                <td>{{ $audit->user?->name }}</td>
+                                                <td>{{ $audit->event }}</td>
+                                                @foreach ($paymentColumns as $key)
+                                                    <td class="text-end">{{ $audit->new_values[$key] ?? '' }}</td>
+                                                @endforeach
+                                            </tr>
+                                        @endforeach
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
