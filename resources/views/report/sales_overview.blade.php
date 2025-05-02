@@ -23,7 +23,7 @@
         <x-select.branchSelect />
         <script>
             $(document).ready(function() {
-                // $('#root').attr('class', 'root tm--expanded-hd mn--min');
+                $('#root').attr('class', 'root tm--expanded-hd mn--min');
             })
         </script>
     @endpush

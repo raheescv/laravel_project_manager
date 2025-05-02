@@ -154,15 +154,14 @@
                     chartSeriesData.flatMap(series =>
                         series.dataPoints.map(dp => dp.x)
                     )
-                )].sort();
+                )];
 
                 const labels = allDates.map(timestamp =>
                     new Date(timestamp).toLocaleDateString('en-US', {
                         day: '2-digit',
                         month: 'short'
                     })
-                );
-
+                )
                 salesChart = new Chart(ctx, {
                     type: 'bar',
                     data: {
@@ -187,8 +186,8 @@
                                         const dataIndex = tooltipItems[0].dataIndex;
                                         const originalData = chartSeriesData[tooltipItems[0].datasetIndex].dataPoints[dataIndex];
                                         return [
-                                            `Net Sales: Rs ${originalData.net_sales.toFixed(2)}`,
-                                            `Discount: Rs ${originalData.sales_discount.toFixed(2)}`,
+                                            `Net Sales:  ${originalData.net_sales.toFixed(2)}`,
+                                            `Discount:  ${originalData.sales_discount.toFixed(2)}`,
                                             `Invoices: ${originalData.invoices}`
                                         ];
                                     }

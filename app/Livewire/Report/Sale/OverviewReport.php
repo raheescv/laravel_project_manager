@@ -14,7 +14,6 @@ class OverviewReport extends Component
 {
     use WithPagination;
 
-    // Common properties
     public $branchId;
 
     public $fromDate;
@@ -27,21 +26,18 @@ class OverviewReport extends Component
 
     public $perPage = 10;
 
-    // Product table properties
     public $productSearch = '';
 
     public $productSortField = 'total';
 
     public $productSortDirection = 'desc';
 
-    // Employee table properties
     public $employeeSearch = '';
 
     public $employeeSortField = 'total';
 
     public $employeeSortDirection = 'desc';
 
-    // Page limit properties
     public $employeePerPage = 10;
 
     public $productPerPage = 10;
@@ -161,10 +157,10 @@ class OverviewReport extends Component
         $totalSales = $sales->sum('total');
         $totalSalesReturn = $saleReturns->sum('grand_total');
 
+        $credit = $paymentMethods['Credit'] = $sales->sum('balance');
         foreach ($payments as $title => $amount) {
             $paymentMethods[$title] = $amount;
         }
-        $credit = $paymentMethods['Credit'] = $sales->sum('balance');
         $totalPayment = $payments->sum();
 
         $totalProductQuantity = clone $totalProducts;

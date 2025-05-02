@@ -23,17 +23,17 @@
         <div class="col-md-12 mb-3">
             <div class="row">
                 <div class="col-md-6" id="saleAndSaleReturnArea">
-                    <div class="card bg-gradient-primary  mb-3">
+                    <div class="card mb-3">
                         <div class="card-body">
                             <h5 class="card-title">Sales Overview</h5>
                             <div class="d-flex justify-content-between align-items-center mb-3">
                                 <div>
                                     <h6 class="mb-0">Total Sales</h6>
-                                    <p class="h4 mb-0">{{ currency($totalSales) }}</p>
+                                    <p class="h3 mb-0">{{ currency($totalSales) }}</p>
                                 </div>
                                 <div>
                                     <h6 class="mb-0">Total Sales Returns</h6>
-                                    <p class="h4 mb-0">{{ currency($totalSalesReturn) }}</p>
+                                    <p class="h3 mb-0 pull-right">{{ currency($totalSalesReturn) }}</p>
                                 </div>
                             </div>
                             <div class="d-flex justify-content-between align-items-center">
@@ -43,14 +43,14 @@
                                 </div>
                                 <div>
                                     <h6 class="mb-0">No. of Sales Returns</h6>
-                                    <p class="h4 mb-0">{{ $noOfSalesReturns }}</p>
+                                    <p class="h4 mb-0 pull-right">{{ $noOfSalesReturns }}</p>
                                 </div>
                             </div>
                             <div class="progress mt-3" style="height: 10px;">
                                 <div class="progress-bar bg-success" role="progressbar" style="width: {{ $noOfSales > 0 ? (($noOfSales - $noOfSalesReturns) / $noOfSales) * 100 : 0 }}%;"
                                     aria-valuenow="{{ $noOfSales - $noOfSalesReturns }}" aria-valuemin="0" aria-valuemax="{{ $noOfSales }}"></div>
                             </div>
-                            <p class=" mt-2">Sales vs Returns Ratio</p>
+                            <p class="mt-2">Sales vs Returns Ratio</p>
                         </div>
                     </div>
                     <div class="row">
