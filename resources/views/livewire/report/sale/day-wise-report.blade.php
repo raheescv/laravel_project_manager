@@ -215,7 +215,7 @@
                                         family: getComputedStyle(document.body).getPropertyValue('--bs-font-sans-serif')
                                     },
                                     callback: function(value) {
-                                        return 'Rs ' + value.toLocaleString();
+                                        return value.toLocaleString();
                                     }
                                 }
                             }
