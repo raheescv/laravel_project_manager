@@ -47,9 +47,7 @@
             });
         </script>
         <script>
-            $(document).ready(function() {
-                $('#root').attr('class', 'root mn--push');
-            })
+            $('#root').attr('class', 'root mn--push');
         </script>
     @endpush
 </x-app-layout>
