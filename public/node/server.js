@@ -117,8 +117,17 @@ app.post('/send-message', async (req, res) => {
     }
 });
 
-const PORT = process.env.WHATSAPP_PORT || 3000;
+const DEFAULT_PORT = 3000;
+const PORT = process.env.WHATSAPP_PORT || DEFAULT_PORT;
 
+// Add port already in use handling
 app.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
+    console.log(`WhatsApp server running on port ${PORT}`);
+}).on('error', (err) => {
+    if (err.code === 'EADDRINUSE') {
+        console.error(`Port ${PORT} is already in use. Please free up port or use different port in .env file`);
+        process.exit(1);
+    } else {
+        console.error('Failed to start server:', err);
+    }
 });
