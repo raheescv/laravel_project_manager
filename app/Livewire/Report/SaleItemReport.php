@@ -48,27 +48,7 @@ class SaleItemReport extends Component
 
     public function export()
     {
-        $count = SaleItem::join('sales', 'sales.id', '=', 'sale_items.sale_id')
-            ->when($this->from_date ?? '', function ($query, $value) {
-                return $query->where('date', '>=', date('Y-m-d', strtotime($value)));
-            })
-            ->when($this->to_date ?? '', function ($query, $value) {
-                return $query->where('date', '<=', date('Y-m-d', strtotime($value)));
-            })
-            ->when($this->branch_id ?? '', function ($query, $value) {
-                return $query->where('branch_id', $value);
-            })
-            ->when($this->employee_id ?? '', function ($query, $value) {
-                return $query->where('employee_id', $value);
-            })
-            ->when($this->product_id ?? '', function ($query, $value) {
-                return $query->where('product_id', $value);
-            })
-            ->when($this->status ?? '', function ($query, $value) {
-                return $query->where('status', $value);
-            })
-            ->count();
-
+        $count = $this->baseQuery()->count();
         $filter = [
             'from_date' => $this->from_date,
             'to_date' => $this->to_date,
@@ -103,12 +83,29 @@ class SaleItemReport extends Component
 
     public function render()
     {
-        $query = SaleItem::with(['sale:id,date,invoice_no,branch_id,other_discount,total', 'employee:id,name', 'product:id,name'])
-            ->select([
-                'sale_items.*',
-                'sales.invoice_no',
-                'sales.date',
-            ])
+        $query = $this->baseQuery();
+        $totals = clone $query;
+        $data = $query->paginate($this->limit);
+
+        $total = [
+            'gross_amount' => $totals->sum('sale_items.gross_amount'),
+            'discount' => $totals->sum('sale_items.discount'),
+            'net_amount' => $totals->sum('sale_items.net_amount'),
+            'tax_amount' => $totals->sum('sale_items.tax_amount'),
+            'total' => $totals->sum('sale_items.total'),
+            'effective_total' => $totals->get()->sum('effective_total'),
+        ];
+
+        return view('livewire.report.sale-item-report', [
+            'total' => $total,
+            'data' => $data,
+        ]);
+    }
+
+    public function baseQuery()
+    {
+        return SaleItem::with(['sale:id,date,invoice_no,branch_id,other_discount,total', 'employee:id,name', 'product:id,name'])
+            ->select('sale_items.*', 'sales.invoice_no', 'sales.date')
             ->join('sales', 'sales.id', '=', 'sale_items.sale_id')
             ->when($this->search, function ($query, $value) {
                 return $query->where(function ($q) use ($value): void {
@@ -127,22 +124,5 @@ class SaleItemReport extends Component
             ->when($this->status, fn ($q) => $q->where('sales.status', $this->status))
             ->whereIn('sales.branch_id', Auth::user()->branches->pluck('branch_id'))
             ->orderBy($this->sortField, $this->sortDirection);
-
-        $totals = clone $query;
-        $data = $query->paginate($this->limit);
-
-        $total = [
-            'gross_amount' => $totals->sum('sale_items.gross_amount'),
-            'discount' => $totals->sum('sale_items.discount'),
-            'net_amount' => $totals->sum('sale_items.net_amount'),
-            'tax_amount' => $totals->sum('sale_items.tax_amount'),
-            'total' => $totals->sum('sale_items.total'),
-            'effective_total' => $totals->get()->sum('effective_total'),
-        ];
-
-        return view('livewire.report.sale-item-report', [
-            'total' => $total,
-            'data' => $data,
-        ]);
     }
 }
