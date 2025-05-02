@@ -16,7 +16,7 @@
                     @endif
                 </div>
             </div>
-            <div class="row">
+            <div class="row mb-2">
                 <div class="col-md-12">
                     <div class="form-group">
                         <b><label for="name">Name</label></b>
@@ -24,7 +24,7 @@
                     </div>
                 </div>
             </div>
-            <div class="row">
+            <div class="row mb-2">
                 <div class="col-md-6">
                     <div class="form-group">
                         <b><label for="email">Email</label></b>
@@ -42,7 +42,7 @@
                 <div class="col-md-12">
                     <div class="form-group">
                         <b><label for="password">Password</label></b>
-                        {{ html()->password('password')->value('')->class('form-control')->required(true)->attribute('wire:model', 'users.password') }}
+                        {{ html()->password('password')->value('')->class('form-control')->attribute('wire:model', 'users.password') }}
                     </div>
                 </div>
             </div>
