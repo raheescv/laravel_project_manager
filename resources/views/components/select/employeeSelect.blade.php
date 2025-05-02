@@ -1,3 +1,8 @@
+<style>
+    .ts-dropdown-content {
+        max-height: 400px !important;
+    }
+</style>
 <script type="text/javascript">
     $('.select-employee_id-list').each(function() {
         new TomSelect(this, {
@@ -5,6 +10,7 @@
             valueField: 'id',
             nameField: 'name',
             searchField: ['name', 'mobile', 'email', 'id'],
+            dropdownParent: 'body',
             load: function(query, callback) {
                 var url = "{{ route('users::list') }}";
                 url += '?query=' + encodeURIComponent(query);
