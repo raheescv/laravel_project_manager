@@ -23,6 +23,8 @@ class Table extends Component
 
     public $customer_id = '';
 
+    public $created_by = '';
+
     public $default_status = '';
 
     public $from_date = '';
@@ -135,6 +137,7 @@ class Table extends Component
                 'search' => $this->search,
                 'branch_id' => $this->branch_id,
                 'customer_id' => $this->customer_id,
+                'created_by' => $this->created_by,
                 'status' => $this->status,
                 'from_date' => $this->from_date,
                 'to_date' => $this->to_date,

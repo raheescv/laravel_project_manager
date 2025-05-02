@@ -23,6 +23,7 @@
     <x-sale.column-visibility-canvas />
     @push('scripts')
         @include('components.select.customerSelect')
+        @include('components.select.userSelect')
         @include('components.select.branchSelect')
     @endpush
 </x-app-layout>

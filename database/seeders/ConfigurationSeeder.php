@@ -24,7 +24,9 @@ class ConfigurationSeeder extends Seeder
         $saleVisibleColumns = [
             'reference_no' => true,
             'branch_id' => false,
+            'created_by' => true,
             'customer' => true,
+            'payment_method_name' => true,
             'gross_amount' => false,
             'item_discount' => false,
             'tax_amount' => false,
@@ -32,7 +34,6 @@ class ConfigurationSeeder extends Seeder
             'other_discount' => false,
             'freight' => false,
             'grand_total' => true,
-            'payment_method_name' => true,
             'paid' => true,
             'balance' => true,
             'status' => false,

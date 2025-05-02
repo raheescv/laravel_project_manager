@@ -1,10 +1,5 @@
-<style>
-    .ts-dropdown-content {
-        max-height: 400px !important;
-    }
-</style>
 <script type="text/javascript">
-    $('.select-employee_id-list').each(function() {
+    $('.select-user_id-list').each(function() {
         new TomSelect(this, {
             persist: false,
             valueField: 'id',
@@ -13,7 +8,6 @@
             load: function(query, callback) {
                 var url = "{{ route('users::list') }}";
                 url += '?query=' + encodeURIComponent(query);
-                url += '&type=employee';
                 fetch(url)
                     .then(response => {
                         if (!response.ok) throw new Error('Network response was not ok');

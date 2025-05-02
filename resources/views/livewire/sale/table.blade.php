@@ -58,6 +58,10 @@
                     {{ html()->select('branch_id', [auth()->user()->default_branch_id => auth()->user()->branch?->name])->value(auth()->user()->default_branch_id)->class('select-assigned-branch_id-list')->id('branch_id')->placeholder('All') }}
                 </div>
                 <div class="col-md-3" wire:ignore>
+                    <b><label for="created_by">Created By</label></b>
+                    {{ html()->select('created_by', [])->value('')->class('select-user_id-list')->id('created_by')->placeholder('All') }}
+                </div>
+                <div class="col-md-3" wire:ignore>
                     <b><label for="status">Status</label></b>
                     {{ html()->select('status', saleStatuses())->value($status)->class('tomSelect')->id('status')->placeholder('All') }}
                 </div>
@@ -81,8 +85,14 @@
                         @if ($sale_visible_column['branch_id'])
                             <th> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="branch_id" label="branch" /> </th>
                         @endif
+                        @if ($sale_visible_column['created_by'] ?? '')
+                            <th> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="created_by" label="created By" /> </th>
+                        @endif
                         @if ($sale_visible_column['customer'])
                             <th> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="accounts.name" label="Customer" /> </th>
+                        @endif
+                        @if ($sale_visible_column['payment_method_name'] ?? '')
+                            <th class="text-end"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="payment_method_name" label="payment method" /> </th>
                         @endif
                         @if ($sale_visible_column['gross_amount'])
                             <th class="text-end"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="gross_amount" label="Gross Amount" /> </th>
@@ -104,9 +114,6 @@
                         @endif
                         @if ($sale_visible_column['grand_total'])
                             <th class="text-end"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="grand_total" label="grand total" /> </th>
-                        @endif
-                        @if ($sale_visible_column['payment_method_name'] ?? '')
-                            <th class="text-end"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="payment_method_name" label="payment method" /> </th>
                         @endif
                         @if ($sale_visible_column['paid'])
                             <th class="text-end"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="paid" label="paid" /> </th>
@@ -140,8 +147,14 @@
                             @if ($sale_visible_column['branch_id'])
                                 <td>{{ $item->branch?->name }}</td>
                             @endif
+                            @if ($sale_visible_column['created_by'] ?? '')
+                                <td>{{ $item->createdUser?->name }}</td>
+                            @endif
                             @if ($sale_visible_column['customer'])
                                 <td>{{ $item->name }}</td>
+                            @endif
+                            @if ($sale_visible_column['payment_method_name'] ?? '')
+                                <td class="text-end">{{ $item->payment_method_name }}</td>
                             @endif
                             @if ($sale_visible_column['gross_amount'])
                                 <td class="text-end">{{ currency($item->gross_amount) }}</td>
@@ -163,9 +176,6 @@
                             @endif
                             @if ($sale_visible_column['grand_total'])
                                 <td class="text-end">{{ currency($item->grand_total) }}</td>
-                            @endif
-                            @if ($sale_visible_column['payment_method_name'] ?? '')
-                                <td class="text-end">{{ $item->payment_method_name }}</td>
                             @endif
                             @if ($sale_visible_column['paid'])
                                 <td class="text-end">{{ currency($item->paid) }}</td>
@@ -190,7 +200,13 @@
                         @if ($sale_visible_column['branch_id'])
                             <th></th>
                         @endif
+                        @if ($sale_visible_column['created_by'] ?? '')
+                            <th></th>
+                        @endif
                         @if ($sale_visible_column['customer'])
+                            <th></th>
+                        @endif
+                        @if ($sale_visible_column['payment_method_name'] ?? '')
                             <th></th>
                         @endif
                         @if ($sale_visible_column['gross_amount'])
@@ -214,14 +230,14 @@
                         @if ($sale_visible_column['grand_total'])
                             <th class="text-end">{{ currency($total['grand_total']) }}</th>
                         @endif
-                        @if ($sale_visible_column['payment_method_name'] ?? '')
-                            <th class="text-end"></th>
-                        @endif
                         @if ($sale_visible_column['paid'])
                             <th class="text-end">{{ currency($total['paid']) }}</th>
                         @endif
                         @if ($sale_visible_column['balance'])
                             <th class="text-end">{{ currency($total['balance']) }}</th>
+                        @endif
+                        @if ($sale_visible_column['status'])
+                            <th></th>
                         @endif
                     </tr>
                 </tfoot>
@@ -243,6 +259,10 @@
                 $('#customer_id').on('change', function(e) {
                     const value = $(this).val() || null;
                     @this.set('customer_id', value);
+                });
+                $('#created_by').on('change', function(e) {
+                    const value = $(this).val() || null;
+                    @this.set('created_by', value);
                 });
             });
         </script>

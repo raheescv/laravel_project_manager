@@ -122,9 +122,11 @@ class Sale extends Model implements AuditableContracts
                         ->orWhere('sales.other_discount', 'like', "%{$search}%")
                         ->orWhere('sales.freight', 'like', "%{$search}%")
                         ->orWhere('sales.paid', 'like', "%{$search}%")
-                        ->orWhere('accounts.name', 'like', "%{$search}%");
+                        ->orWhere('accounts.name', 'like', "%{$search}%")
+                        ->orWhere('payment_method.name', 'like', "%{$search}%");
                 });
             })
+            ->when($filters['created_by'] ?? '', fn ($q, $value) => $q->where('sales.created_by', $value))
             ->when($filters['branch_id'] ?? '', fn ($q, $value) => $q->where('branch_id', $value))
             ->when($filters['customer_id'] ?? '', fn ($q, $value) => $q->where('account_id', $value))
             ->when($filters['status'] ?? '', fn ($q, $value) => $q->where('status', $value))
