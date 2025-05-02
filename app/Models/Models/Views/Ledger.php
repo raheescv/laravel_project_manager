@@ -16,7 +16,7 @@ class Ledger extends Model
     {
         return self::where('source', 'expense')
             ->where('debit', '>', 0)
-            ->when($filter['search'], function ($query, $value) {
+            ->when($filter['search'] ?? '', function ($query, $value) {
                 return $query->where(function ($q) use ($value) {
                     $value = trim($value);
 
@@ -43,7 +43,7 @@ class Ledger extends Model
     {
         return self::where('source', 'income')
             ->where('credit', '>', 0)
-            ->when($filter['search'], function ($query, $value) {
+            ->when($filter['search'] ?? '', function ($query, $value) {
                 return $query->where(function ($q) use ($value) {
                     $value = trim($value);
 

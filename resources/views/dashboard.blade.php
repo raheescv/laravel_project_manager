@@ -12,14 +12,25 @@
     </div>
     <div class="content__boxed">
         <div class="content__wrap">
-            <div class="row">
-                <div class="col-xl-7 mb-3 mb-xl-0">
-                    @livewire('dashboard.sale.overview')
-                </div>
-                <div class="col-xl-5">
-                    @livewire('dashboard.top-card')
-                </div>
+            <div class="row  mb-3">
+                @if (auth()->user()->can('sale.dashboard weekly summary') || auth()->user()->can('inventory.dashboard status'))
+                    <div class="col-xl-4 mb-xl-0">
+                        @livewire('dashboard.top-card')
+                    </div>
+                @endif
+                @can('report.income vs expense dashboard pie chart')
+                    <div class="col-xl-3">
+                        @livewire('income-expense-chart')
+                    </div>
+                @endcan
             </div>
+            @can('sale.dashboard bar chart')
+                <div class="row">
+                    <div class="col-xl-12 mb-xl-0">
+                        @livewire('dashboard.sale.overview')
+                    </div>
+                </div>
+            @endcan
         </div>
     </div>
     @push('scripts')
