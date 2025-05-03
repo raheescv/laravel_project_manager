@@ -134,6 +134,8 @@ class Product extends Model implements AuditableContracts
 
     public static function constructData($data, $user_id)
     {
+        $value['is_favorite'] = $value['is_favorite'] ?? true;
+        $data['is_favorite'] = in_array($value['is_favorite'], ['Yes', true]) ? true : false;
         $value['is_selling'] = $value['is_selling'] ?? true;
         $data['is_selling'] = in_array($value['is_selling'], ['Yes', true]) ? true : false;
         $data['unit'] = $data['unit'] ?? 'Nos';
