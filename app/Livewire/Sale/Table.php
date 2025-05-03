@@ -25,6 +25,8 @@ class Table extends Component
 
     public $payment_method_id = '';
 
+    public $sale_type = '';
+
     public $created_by = '';
 
     public $default_status = '';
@@ -127,6 +129,17 @@ class Table extends Component
 
     protected function getBaseQuery()
     {
+        $filters = [
+            'search' => $this->search,
+            'branch_id' => $this->branch_id,
+            'customer_id' => $this->customer_id,
+            'sale_type' => $this->sale_type,
+            'created_by' => $this->created_by,
+            'status' => $this->status,
+            'from_date' => $this->from_date,
+            'to_date' => $this->to_date,
+        ];
+
         return Sale::with('branch')
             ->join('accounts', 'accounts.id', '=', 'sales.account_id')
             ->leftJoin('sale_payments', function ($join) {
@@ -150,15 +163,7 @@ class Table extends Component
                 'accounts.name',
                 'payment_method.name as payment_method_name',
             ])
-            ->filter([
-                'search' => $this->search,
-                'branch_id' => $this->branch_id,
-                'customer_id' => $this->customer_id,
-                'created_by' => $this->created_by,
-                'status' => $this->status,
-                'from_date' => $this->from_date,
-                'to_date' => $this->to_date,
-            ])
+            ->filter($filters)
             ->orderBy($this->sortField, $this->sortDirection);
     }
 

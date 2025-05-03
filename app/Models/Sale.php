@@ -126,6 +126,7 @@ class Sale extends Model implements AuditableContracts
                         ->orWhere('payment_method.name', 'like', "%{$search}%");
                 });
             })
+            ->when($filters['sale_type'] ?? '', fn ($q, $value) => $q->where('sales.sale_type', $value))
             ->when($filters['created_by'] ?? '', fn ($q, $value) => $q->where('sales.created_by', $value))
             ->when($filters['branch_id'] ?? '', fn ($q, $value) => $q->where('branch_id', $value))
             ->when($filters['customer_id'] ?? '', fn ($q, $value) => $q->where('account_id', $value))

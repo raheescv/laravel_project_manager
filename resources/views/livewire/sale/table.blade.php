@@ -47,9 +47,13 @@
                     <b><label for="to_date">To Date</label></b>
                     {{ html()->date('to_date')->value('')->class('form-control')->id('unit_id')->attribute('wire:model.live', 'to_date') }}
                 </div>
-                <div class="col-md-6" wire:ignore>
+                <div class="col-md-3" wire:ignore>
                     <b><label for="customer_id">Customer</label></b>
                     {{ html()->select('customer_id', [])->value('')->class('select-customer_id-list')->id('customer_id')->placeholder('All') }}
+                </div>
+                <div class="col-md-3" wire:ignore>
+                    <b><label for="sale_type">Sale Type</label></b>
+                    {{ html()->select('sale_type', priceTypes())->value('')->class('tomSelect')->id('sale_type')->placeholder('All') }}
                 </div>
             </div>
             <div class="row my-2">
@@ -271,6 +275,10 @@
                 $('#payment_method_id').on('change', function(e) {
                     const value = $(this).val() || null;
                     @this.set('payment_method_id', value);
+                });
+                $('#sale_type').on('change', function(e) {
+                    const value = $(this).val() || null;
+                    @this.set('sale_type', value);
                 });
             });
         </script>
