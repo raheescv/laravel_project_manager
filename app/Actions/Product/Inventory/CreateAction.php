@@ -18,14 +18,14 @@ class CreateAction
                 ->first();
 
             if ($trashedExists) {
-                $model = $trashedExists->restore();
+                $trashedExists->restore();
+                $model = $trashedExists;
             } else {
                 $model = Inventory::firstOrCreate([
                     'product_id' => $data['product_id'],
                     'branch_id' => $data['branch_id'],
                 ], $data);
             }
-
             event(new InventoryActionOccurred('create', $model));
 
             $return['success'] = true;
