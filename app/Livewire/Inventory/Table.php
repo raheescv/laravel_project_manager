@@ -82,7 +82,7 @@ class Table extends Component
             ->join('departments', 'products.department_id', '=', 'departments.id')
             ->join('units', 'products.unit_id', '=', 'units.id')
             ->join('categories as main_categories', 'products.main_category_id', '=', 'main_categories.id')
-            ->join('categories as sub_categories', 'products.sub_category_id', '=', 'sub_categories.id')
+            ->leftJoin('categories as sub_categories', 'products.sub_category_id', '=', 'sub_categories.id')
             ->when($this->search, function ($query, $value) {
                 return $query->where(function ($q) use ($value): void {
                     $value = trim($value);
