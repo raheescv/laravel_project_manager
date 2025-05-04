@@ -66,6 +66,7 @@
                         product_id: $('#item_product_id').val() || null,
                         employee_id: $('#item_employee_id').val(),
                         branch_id: $('#table_branch_id').val() || null,
+                        nationality: $('#nationality').val(),
                     };
                     Livewire.dispatch('customerSaleItemsFilterChanged', data);
                 });

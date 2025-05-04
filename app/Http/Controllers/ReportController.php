@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Account;
+
 class ReportController extends Controller
 {
     public function sale_item()
@@ -36,7 +38,9 @@ class ReportController extends Controller
 
     public function customer()
     {
-        return view('report.customer');
+        $countries = Account::pluck('nationality', 'nationality')->toArray();
+
+        return view('report.customer', compact('countries'));
     }
 
     public function employee()

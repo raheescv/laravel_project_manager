@@ -20,6 +20,8 @@ class CustomerLocation extends Component
 
     public $customer_id;
 
+    public $nationality;
+
     public $search = '';
 
     public $limit = 10;
@@ -34,9 +36,10 @@ class CustomerLocation extends Component
         $this->to_date = date('Y-m-d');
     }
 
-    public function filterChanged($from_date, $to_date, $customer_id = null)
+    public function filterChanged($from_date, $to_date, $customer_id = null, $nationality = null)
     {
         $this->customer_id = $customer_id;
+        $this->nationality = $nationality;
         $this->from_date = $from_date;
         $this->to_date = $to_date;
         $this->resetPage();
@@ -48,6 +51,7 @@ class CustomerLocation extends Component
             ->join('accounts', 'sales.account_id', '=', 'accounts.id')
             ->when($this->branch_id, fn ($q, $value) => $q->where('sales.branch_id', $value))
             ->when($this->customer_id, fn ($q, $value) => $q->where('account_id', $value))
+            ->when($this->nationality, fn ($q, $value) => $q->where('accounts.nationality', $value))
             ->when($this->from_date ?? '', fn ($q, $value) => $q->whereDate('sales.date', '>=', date('Y-m-d', strtotime($value))))
             ->when($this->to_date ?? '', fn ($q, $value) => $q->whereDate('sales.date', '<=', date('Y-m-d', strtotime($value))))
             ->whereNotNull('accounts.nationality')

@@ -12,6 +12,8 @@ class CustomerSales extends Component
 
     public $customer_id;
 
+    public $nationality;
+
     public $branch_id;
 
     public $from_date;
@@ -36,25 +38,32 @@ class CustomerSales extends Component
         $this->to_date = date('Y-m-d');
     }
 
-    public function filterChanged($from_date, $to_date, $customer_id = null, $branch_id = null)
+    public function filterChanged($from_date, $to_date, $customer_id = null, $branch_id = null, $nationality = null)
     {
         $this->customer_id = $customer_id;
         $this->from_date = $from_date;
         $this->to_date = $to_date;
         $this->branch_id = $branch_id;
+        $this->nationality = $nationality;
         $this->resetPage();
     }
 
     public function render()
     {
         $query = Sale::query()
-            ->with('account:id,name,mobile')
+            ->join('accounts', 'sales.account_id', '=', 'accounts.id')
             ->withCount('items')
             ->completed()
             ->when($this->branch_id, fn ($q, $value) => $q->where('sales.branch_id', $value))
             ->when($this->customer_id, fn ($q, $value) => $q->where('sales.account_id', $value))
+            ->when($this->nationality, fn ($q, $value) => $q->where('accounts.nationality', $value))
             ->when($this->from_date ?? '', fn ($q, $value) => $q->whereDate('sales.date', '>=', date('Y-m-d', strtotime($value))))
             ->when($this->to_date ?? '', fn ($q, $value) => $q->whereDate('sales.date', '<=', date('Y-m-d', strtotime($value))))
+            ->select(
+                'accounts.name as customer',
+                'accounts.mobile',
+                'sales.*',
+            )
             ->orderByDesc('date');
         // Calculate totals
         $totals = $query->get();

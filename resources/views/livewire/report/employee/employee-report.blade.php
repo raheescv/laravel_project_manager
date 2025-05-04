@@ -59,8 +59,8 @@
                                     <tr>
                                         <td>{{ $item->employee }}</td>
                                         <td>{{ $item->product }}</td>
-                                        <td class="text-end">{{ number_format($item->quantity) }}</td>
-                                        <td class="text-end">{{ currency($item->amount) }}</td>
+                                        <td class="text-end">{{ number_format($item->total_quantity) }}</td>
+                                        <td class="text-end">{{ currency($item->total_amount) }}</td>
                                     </tr>
                                 @endforeach
                             </tbody>

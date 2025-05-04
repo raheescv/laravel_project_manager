@@ -68,6 +68,7 @@
                         customer_id: $('#customer_id').val() || null,
                         from_date: $('#from_date').val(),
                         to_date: $('#to_date').val(),
+                        nationality: $('#nationality').val(),
                     };
                     Livewire.dispatch('CustomerLocationRefreshComponent', data);
                 });

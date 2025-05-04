@@ -37,6 +37,12 @@
                                 {{ html()->select('customer_id', [])->value('')->class('select-customer_id-list table_change customer_item_table_change customer_sale_item_table_change')->id('customer_id')->placeholder('All') }}
                             </div>
                         </div>
+                        <div class="row g-2 mb-3">
+                            <div class="col-md-3" wire:ignore>
+                                <b><label for="nationality">Nationality</label></b>
+                                {{ html()->select('nationality', $countries)->value('')->class('tomSelect table_change customer_item_table_change customer_sale_item_table_change')->id('nationality')->placeholder('All') }}
+                            </div>
+                        </div>
                     </div>
                 </div>
                 <div class="card-header">

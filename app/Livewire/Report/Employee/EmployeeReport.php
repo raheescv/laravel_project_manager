@@ -41,8 +41,6 @@ class EmployeeReport extends Component
             ->select(
                 'users.name as employee',
                 'products.name as product',
-                'sale_items.quantity',
-                'sale_items.total as amount'
             )
             ->when($this->branch_id, fn ($q, $value) => $q->where('sales.branch_id', $value))
             ->when($this->product_id, fn ($q, $value) => $q->where('sale_items.product_id', $value))
@@ -52,13 +50,18 @@ class EmployeeReport extends Component
             ->where('sales.status', 'completed');
 
         $summaryQuery = clone $query;
+        $query = $query->groupBy('sale_items.employee_id', 'sale_items.product_id')
+            ->selectRaw('SUM(sale_items.quantity) as total_quantity')
+            ->selectRaw('SUM(sale_items.total) as total_amount')
+            ->orderBy('total_amount', 'desc');
+
         $summary = $summaryQuery
             ->select('users.name as employee')
             ->selectRaw('SUM(sale_items.quantity) as total_quantity')
             ->selectRaw('SUM(sale_items.total) as total_amount')
             ->groupBy('sale_items.employee_id')
             ->limit(10)
-            ->orderBy('total_amount')
+            ->orderBy('total_amount', 'desc')
             ->get();
 
         $items = $query->paginate($this->perPage);

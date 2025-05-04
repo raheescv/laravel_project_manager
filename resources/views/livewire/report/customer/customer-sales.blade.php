@@ -20,8 +20,8 @@
                             <tr>
                                 <td>{{ systemDate($sale->date) }}</td>
                                 <td> <a href="{{ route('sale::view', $sale->id) }}">{{ $sale->invoice_no }} </a> </td>
-                                <td>{{ $sale->account?->name }}</td>
-                                <td>{{ $sale->account?->mobile }}</td>
+                                <td>{{ $sale->customer }}</td>
+                                <td>{{ $sale->mobile }}</td>
                                 <td class="text-end">{{ $sale->items_count }}</td>
                                 <td class="text-end">{{ currency($sale->other_discount) }}</td>
                                 <td class="text-end">{{ currency($sale->grand_total) }}</td>
@@ -58,6 +58,7 @@
                         to_date: $('#to_date').val(),
                         customer_id: $('#customer_id').val() || null,
                         branch_id: $('#table_branch_id').val() || null,
+                        nationality: $('#nationality').val(),
                     };
                     Livewire.dispatch('customerSalesFilterChanged', data);
                 });

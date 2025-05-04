@@ -151,6 +151,7 @@
                         product_id: $('#product_id').val() || null,
                         employee_id: $('#employee_id').val(),
                         branch_id: $('#table_branch_id').val() || null,
+                        nationality: $('#nationality').val(),
                     };
                     Livewire.dispatch('customerItemsFilterChanged', data);
                 });
