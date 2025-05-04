@@ -113,6 +113,9 @@
     @push('scripts')
         <script>
             $(document).ready(function() {
+                // Initial chart render
+                Livewire.dispatch('employeeReportFilterChanged');
+
                 $('#branch_id').on('change', function(e) {
                     const value = $(this).val() || null;
                     @this.set('branch_id', value);
@@ -125,9 +128,7 @@
                     const value = $(this).val() || null;
                     @this.set('product_id', value);
                 });
-                window.addEventListener('updateCharts', event => {
-                    var data = event.detail[0];
-
+                window.addEventListener('updatePieChart', event => {
                     var options = {
                         title: {
                             text: "Employee Sales Distribution"
@@ -140,7 +141,7 @@
                             indexLabel: "{label}: ₹{y}",
                             indexLabelFontSize: 12,
                             indexLabelFontFamily: "Helvetica Neue",
-                            dataPoints: data.summary
+                            dataPoints: event.detail[0].summary
                         }]
                     };
 

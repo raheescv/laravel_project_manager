@@ -16,9 +16,9 @@ Route::middleware('auth')->group(function (): void {
             Route::get('sale_return_item', 'sale_return_item')->name('sale_return_item');
             Route::get('purchase_item', 'purchase_item')->name('purchase_item');
             Route::get('day_book', 'day_book')->name('day_book');
-            Route::get('sale_summary', 'sale_summary')->name('sale_summary');
-            Route::get('sales_overview', 'sales_overview')->name('sales_overview');
-            Route::get('customer', 'customer')->name('customer');
-            Route::get('employee', 'employee')->name('employee');
+            Route::get('sale_summary', 'sale_summary')->name('sale_summary')->can('report.sale summary');
+            Route::get('sales_overview', 'sales_overview')->name('sales_overview')->can('report.sale overview');
+            Route::get('customer', 'customer')->name('customer')->can('report.customer');
+            Route::get('employee', 'employee')->name('employee')->can('report.employee');
         });
 });

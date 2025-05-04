@@ -36,6 +36,7 @@ return [
         'sales overview',
         'purchase item',
         'customer',
+        'employee',
     ],
     'log' => ['inventory'],
     'backup' => ['create', 'view', 'download'],

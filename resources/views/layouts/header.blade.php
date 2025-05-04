@@ -48,6 +48,9 @@
                                     @can('report.customer')
                                         <a href="{{ route('report::customer') }}" class="list-group-item list-group-item-action">Customer Report</a>
                                     @endcan
+                                    @can('report.employee')
+                                        <a href="{{ route('report::employee') }}" class="list-group-item list-group-item-action">Employee Report</a>
+                                    @endcan
                                     @can('report.sale summary')
                                         <a href="{{ route('report::sale_summary') }}" class="list-group-item list-group-item-action">Sale Summary</a>
                                     @endcan

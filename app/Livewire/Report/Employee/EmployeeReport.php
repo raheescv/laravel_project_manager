@@ -20,9 +20,11 @@ class EmployeeReport extends Component
 
     public $to_date;
 
-    public $perPage = 10;
+    public $perPage = 19;
 
     protected $paginationTheme = 'bootstrap';
+
+    protected $listeners = ['employeeReportFilterChanged' => '$refresh'];
 
     public function mount()
     {
@@ -61,9 +63,11 @@ class EmployeeReport extends Component
 
         $items = $query->paginate($this->perPage);
 
-        $this->dispatch('updateCharts', ['summary' => $summary->map(function ($item) {
-            return ['label' => $item->employee, 'y' => $item->total_amount];
-        })]);
+        $this->dispatch('updatePieChart', [
+            'summary' => $summary->map(function ($item) {
+                return ['label' => $item->employee, 'y' => $item->total_amount];
+            }),
+        ]);
 
         return view('livewire.report.employee.employee-report', [
             'items' => $items,
