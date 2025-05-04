@@ -20,6 +20,8 @@ class CustomerVisitHistory extends Component
 
     protected $listeners = ['customerVisitHistoryFilterChanged' => 'filterChanged'];
 
+    protected $paginationTheme = 'bootstrap';
+
     public function mount()
     {
         $this->from_date = date('Y-m-01');
@@ -31,6 +33,7 @@ class CustomerVisitHistory extends Component
         $this->customer_id = $customer_id;
         $this->from_date = $from_date;
         $this->to_date = $to_date;
+        $this->resetPage();
     }
 
     public function render()
@@ -43,10 +46,11 @@ class CustomerVisitHistory extends Component
             ->selectSub(function ($query) {
                 $query->from('sales')->select('date')->whereColumn('account_id', 'accounts.id')->orderBy('date', 'asc')->limit(1);
             }, 'first_sale_date')
-            ->selectRaw('CASE WHEN (SELECT MIN(date) FROM sales WHERE account_id = accounts.id) BETWEEN ? AND ? THEN true ELSE false END as is_new_customer', [$this->from_date, $this->to_date])->when($this->customer_id, fn ($q) => $q->where('account_id', $this->customer_id))
+            ->selectRaw('CASE WHEN (SELECT MIN(date) FROM sales WHERE account_id = accounts.id) BETWEEN ? AND ? THEN true ELSE false END as is_new_customer', [$this->from_date, $this->to_date])
+            ->when($this->customer_id, fn ($q, $value) => $q->where('account_id', $value))
             ->when($this->from_date ?? '', fn ($q, $value) => $q->whereDate('sales.date', '>=', date('Y-m-d', strtotime($value))))
             ->when($this->to_date ?? '', fn ($q, $value) => $q->whereDate('sales.date', '<=', date('Y-m-d', strtotime($value))))
-            ->groupBy('accounts.id', 'accounts.name', 'accounts.mobile')
+            ->groupBy('account_id')
             ->paginate($this->perPage);
 
         return view('livewire.report.customer-visit-history', [

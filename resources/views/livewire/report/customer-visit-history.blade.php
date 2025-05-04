@@ -5,8 +5,8 @@
                 <table class="table table-hover">
                     <thead>
                         <tr class="bg-primary">
-                            <th width='40%' class="text-white">Customer Name</th>
-                            <th width='15%' class="text-white">Customer Mobile</th>
+                            <th width='40%' class="text-white">Customer</th>
+                            <th width='15%' class="text-white">Mobile</th>
                             <th width='10%' class="text-white">First Visit Date</th>
                             <th width='15%' class="text-white text-end">Total</th>
                             <th width='10%' class="text-white text-end">No Of Visits</th>
@@ -41,10 +41,6 @@
     @push('scripts')
         <script>
             $(document).ready(function() {
-                $('#customer_id').on('change', function(e) {
-                    const value = $(this).val() || null;
-                    @this.set('customer_id', value);
-                });
                 $('.table_change').on('change', function() {
                     let data = {
                         customer_id: $('#customer_id').val() || null,
