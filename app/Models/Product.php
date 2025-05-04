@@ -53,10 +53,12 @@ class Product extends Model implements AuditableContracts
         'reorder_level',
         'plu',
 
+        'priority',
         'status',
 
         'created_by',
         'updated_by',
+        'second_reference_no',
     ];
 
     public static function rules($id = 0, $merge = [])
@@ -150,7 +152,7 @@ class Product extends Model implements AuditableContracts
         $main_category_id = Category::selfCreate($mainCategoryData);
         $data['main_category_id'] = $main_category_id;
 
-        if ($data['sub_category']) {
+        if (isset($data['sub_category']) && $data['sub_category'] !== '') {
             $subCategoryData = [
                 'parent_id' => $data['main_category_id'],
                 'name' => $data['sub_category'],

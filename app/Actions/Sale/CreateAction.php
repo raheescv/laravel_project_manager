@@ -11,9 +11,9 @@ class CreateAction
     public function execute($data, $user_id)
     {
         try {
-            $data['branch_id'] = session('branch_id');
+            $data['branch_id'] = $data['branch_id'] ?? session('branch_id');
             $data['created_by'] = $user_id;
-            $data['invoice_no'] = getNextSaleInvoiceNo();
+            $data['invoice_no'] = $data['invoice_no'] ?? getNextSaleInvoiceNo();
 
             validationHelper(Sale::rules(), $data);
             $model = Sale::create($data);

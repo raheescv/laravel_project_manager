@@ -15,14 +15,15 @@ class JournalEntryAction
         try {
             $this->userId = $userId;
             $data = [
-                    'date' => $sale->date,
-                    'description' => 'Sale:'.$sale->invoice_no,
-                    'reference_no' => $sale->reference_no,
-                    'source' => 'sale',
-                    'model' => 'Sale',
-                    'model_id' => $sale->id,
-                    'created_by' => $this->userId,
-                ];
+                'date' => $sale->date,
+                'branch_id' => $sale->branch_id,
+                'description' => 'Sale:'.$sale->invoice_no,
+                'reference_no' => $sale->reference_no,
+                'source' => 'sale',
+                'model' => 'Sale',
+                'model_id' => $sale->id,
+                'created_by' => $this->userId,
+            ];
 
             $accounts = $this->getAccountIds(['Sale', 'Inventory', 'Cost of Goods Sold', 'Tax Amount', 'Discount', 'Freight']);
 

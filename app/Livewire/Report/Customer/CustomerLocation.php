@@ -55,6 +55,7 @@ class CustomerLocation extends Component
             ->when($this->from_date ?? '', fn ($q, $value) => $q->whereDate('sales.date', '>=', date('Y-m-d', strtotime($value))))
             ->when($this->to_date ?? '', fn ($q, $value) => $q->whereDate('sales.date', '<=', date('Y-m-d', strtotime($value))))
             ->whereNotNull('accounts.nationality')
+            ->where('accounts.nationality', '!=', '')
             ->selectRaw('accounts.nationality, COUNT(*) as customer_count')
             ->groupBy('accounts.nationality');
         $total = clone $query;

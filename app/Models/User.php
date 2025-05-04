@@ -36,6 +36,7 @@ class User extends Authenticatable implements AuditableContracts
         'is_locked',
         'is_active',
         'is_whatsapp_enabled',
+        'second_reference_no',
     ];
 
     protected $hidden = [

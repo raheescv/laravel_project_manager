@@ -60,7 +60,7 @@
                 <div class="col-md-4">
                     <div class="form-group" wire:ignore>
                         <b><label for="nationality" class="text-capitalize">nationality</label></b>
-                        {{ html()->select('nationality', $countries)->value('')->class('tomSelect')->id('nationality')->placeholder('')->attribute('wire:model.live', 'accounts.nationality') }}
+                        {{ html()->select('nationality', $countries)->value('')->class('tomSelect')->id('modal_nationality')->placeholder('')->attribute('wire:model.live', 'accounts.nationality') }}
                     </div>
                 </div>
                 <div class="col-md-4">
@@ -103,9 +103,25 @@
     @push('scripts')
         <script>
             $(document).ready(function() {
-                $('#nationality').on('change', function(e) {
+                $('#modal_nationality').on('change', function(e) {
                     const value = $(this).val() || null;
                     @this.set('accounts.nationality', value);
+                });
+                window.addEventListener('SelectDropDownValues', event => {
+                    var data = event.detail[0];
+                    @this.set('countries.nationality', data.nationality);
+                    var tomSelectInstance = document.querySelector('#modal_nationality').tomselect;
+                    if (data.nationality) {
+                        preselectedData = {
+                            id: data.nationality,
+                            name: data.nationality,
+                        };
+                        console.log(preselectedData);
+                        tomSelectInstance.addOption(preselectedData);
+                        tomSelectInstance.addItem(preselectedData.id);
+                    } else {
+                        tomSelectInstance.clear();
+                    }
                 });
             });
         </script>

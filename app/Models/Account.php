@@ -28,6 +28,7 @@ class Account extends Model implements AuditableContracts
         'company',
 
         'description',
+        'second_reference_no',
     ];
 
     public static function rules($id = 0, $merge = [])
