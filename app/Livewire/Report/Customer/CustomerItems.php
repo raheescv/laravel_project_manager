@@ -10,15 +10,19 @@ class CustomerItems extends Component
 {
     use WithPagination;
 
-    public ?int $product_id = null;
+    public $product_id = null;
 
-    public ?int $customer_id = null;
+    public $customer_id = null;
 
-    public int $perPage = 10;
+    public $employee_id = null;
 
-    public string $from_date;
+    public int $productPerPage = 10;
 
-    public string $to_date;
+    public int $employeePerPage = 10;
+
+    public $from_date;
+
+    public $to_date;
 
     protected $listeners = ['customerItemsFilterChanged' => 'filterChanged'];
 
@@ -30,21 +34,22 @@ class CustomerItems extends Component
         $this->to_date = date('Y-m-d');
     }
 
-    public function filterChanged($from_date, $to_date, $customer_id = null, $product_id = null)
+    public function filterChanged($from_date, $to_date, $customer_id = null, $product_id = null, $employee_id = null)
     {
         $this->customer_id = $customer_id;
         $this->from_date = $from_date;
         $this->to_date = $to_date;
         $this->product_id = $product_id;
+        $this->employee_id = $employee_id;
         $this->resetPage();
     }
 
-    public function render()
+    protected function getProducts()
     {
-        $items = SaleItem::query()
+        return SaleItem::query()
             ->join('sales', 'sale_items.sale_id', '=', 'sales.id')
-            ->join('products', 'sale_items.product_id', '=', 'products.id')
             ->join('accounts', 'sales.account_id', '=', 'accounts.id')
+            ->join('products', 'sale_items.product_id', '=', 'products.id')
             ->select([
                 'accounts.name as customer',
                 'products.name as product',
@@ -55,13 +60,61 @@ class CustomerItems extends Component
             ->when($this->product_id, fn ($q, $value) => $q->where('sale_items.product_id', $value))
             ->when($this->from_date ?? '', fn ($q, $value) => $q->whereDate('sales.date', '>=', date('Y-m-d', strtotime($value))))
             ->when($this->to_date ?? '', fn ($q, $value) => $q->whereDate('sales.date', '<=', date('Y-m-d', strtotime($value))))
-            ->where('sales.status', 'completed')
+            ->where('sales.status', 'completed');
+
+    }
+
+    protected function getEmployees()
+    {
+        return SaleItem::query()
+            ->join('sales', 'sale_items.sale_id', '=', 'sales.id')
+            ->join('accounts', 'sales.account_id', '=', 'accounts.id')
+            ->join('users', 'sale_items.employee_id', '=', 'users.id')
+            ->select([
+                'accounts.name as customer',
+                'users.name as employee',
+                SaleItem::raw('SUM(sale_items.quantity) as total_quantity'),
+                SaleItem::raw('SUM(sale_items.total) as total_amount'),
+            ])
+            ->when($this->customer_id, fn ($q, $value) => $q->where('sales.account_id', $value))
+            ->when($this->employee_id, fn ($q, $value) => $q->where('sale_items.employee_id', $value))
+            ->when($this->from_date ?? '', fn ($q, $value) => $q->whereDate('sales.date', '>=', date('Y-m-d', strtotime($value))))
+            ->when($this->to_date ?? '', fn ($q, $value) => $q->whereDate('sales.date', '<=', date('Y-m-d', strtotime($value))))
+            ->where('sales.status', 'completed');
+
+    }
+
+    public function render()
+    {
+        $products = $this->getProducts();
+        $totalProducts = clone $products;
+
+        $productQuantity = $totalProducts->sum('sale_items.quantity');
+        $productAmount = $totalProducts->sum('sale_items.total');
+
+        $products = $products
             ->groupBy('sales.account_id', 'sale_items.product_id')
             ->orderBy('total_quantity', 'desc')
-            ->paginate($this->perPage);
+            ->paginate($this->productPerPage, ['*'], 'products_page');
+
+        $employees = $this->getEmployees();
+        $totalEmployees = clone $employees;
+
+        $employeeQuantity = $totalEmployees->sum('sale_items.quantity');
+        $employeeAmount = $totalEmployees->sum('sale_items.total');
+
+        $employees = $employees
+            ->groupBy('sales.account_id', 'sale_items.employee_id')
+            ->orderBy('total_quantity', 'desc')
+            ->paginate($this->employeePerPage, ['*'], 'employees_page');
 
         return view('livewire.report.customer.customer-items', [
-            'items' => $items,
+            'products' => $products,
+            'productAmount' => $productAmount,
+            'productQuantity' => $productQuantity,
+            'employees' => $employees,
+            'employeeAmount' => $employeeAmount,
+            'employeeQuantity' => $employeeQuantity,
         ]);
     }
 }

@@ -9,7 +9,7 @@
                     </div>
                     <div class="col-md-3" wire:ignore>
                         <b><label for="employee_id">Employee</label></b>
-                        {{ html()->select('employee_id', [])->value('')->class('select-employee_id-list customer_sale_item_table_change')->id('employee_id')->placeholder('All') }}
+                        {{ html()->select('employee_id', [])->value('')->class('select-employee_id-list customer_sale_item_table_change')->id('item_employee_id')->placeholder('All') }}
                     </div>
                 </div>
             </div>
@@ -64,7 +64,7 @@
                         from_date: $('#from_date').val(),
                         to_date: $('#to_date').val(),
                         product_id: $('#item_product_id').val() || null,
-                        employee_id: $('#employee_id').val(),
+                        employee_id: $('#item_employee_id').val(),
                     };
                     Livewire.dispatch('customerSaleItemsFilterChanged', data);
                 });

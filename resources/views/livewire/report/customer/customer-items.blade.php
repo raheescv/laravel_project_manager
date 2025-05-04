@@ -1,52 +1,122 @@
 <div>
-    <div class="card">
-        <div class="card-header">
-            <div class="card-tools">
-                <div class="row g-2">
-                    <div class="col-md-3" wire:ignore>
-                        <b><label for="product_id">Product</label></b>
-                        {{ html()->select('product_id', [])->value('')->class('select-product_id-list customer_item_table_change')->id('product_id')->placeholder('All') }}
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <h5 class="card-title mb-0">Products Wise</h5>
+                        <select wire:model.live="productPerPage" class="form-select form-select-sm" style="width: 100px">
+                            <option value="10">10</option>
+                            <option value="25">25</option>
+                            <option value="50">50</option>
+                            <option value="100">100</option>
+                        </select>
+                    </div>
+                    <div class="card-tools" wire:ignore>
+                        <div class="input-group">
+                            <span class="input-group-text bg-light">Product</span>
+                            {{ html()->select('product_id', [])->value('')->class('select-product_id-list customer_item_table_change form-select')->id('product_id')->placeholder('All') }}
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr class="bg-primary">
+                                    <th class="text-white">Customer</th>
+                                    <th class="text-white">Product</th>
+                                    <th class="text-white text-end">Quantity</th>
+                                    <th class="text-white text-end">Amount</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach ($products as $item)
+                                    <tr>
+                                        <td>{{ $item->customer }}</td>
+                                        <td>{{ $item->product }}</td>
+                                        <td class="text-end">{{ number_format($item->total_quantity) }}</td>
+                                        <td class="text-end">{{ currency($item->total_amount) }}</td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                            <tfoot class="fw-bold bg-light">
+                                <th colspan="2" class="text-end">Total:</th>
+                                <th class="text-end">{{ currency($productQuantity) }}</th>
+                                <th class="text-end">{{ currency($productAmount) }}</th>
+                            </tfoot>
+                        </table>
+                    </div>
+                    <div class="mt-3">
+                        {{ $products->links() }}
                     </div>
                 </div>
             </div>
         </div>
-        <div class="card-body">
-            <div class="table-responsive">
-                <table class="table table-hover">
-                    <thead>
-                        <tr class="bg-primary">
-                            <th width="10%" class="text-white">Customer</th>
-                            <th width="40%" class="text-white">Item</th>
-                            <th width="15%" class="text-white text-end">Quantity</th>
-                            <th width="20%" class="text-white text-end">Total Amount</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach ($items as $item)
-                            <tr>
-                                <td>{{ $item->customer }}</td>
-                                <td>{{ $item->product }}</td>
-                                <td class="text-end">{{ number_format($item->total_quantity) }}</td>
-                                <td class="text-end">{{ currency($item->total_amount) }}</td>
-                            </tr>
-                        @endforeach
-                    </tbody>
-                </table>
-            </div>
-            <div class="mt-3">
-                {{ $items->links() }}
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <h5 class="card-title mb-0">Employee Wise</h5>
+                        <select wire:model.live="employeePerPage" class="form-select form-select-sm" style="width: 100px">
+                            <option value="10">10</option>
+                            <option value="25">25</option>
+                            <option value="50">50</option>
+                            <option value="100">100</option>
+                        </select>
+                    </div>
+                    <div class="card-tools" wire:ignore>
+                        <div class="input-group">
+                            <span class="input-group-text bg-light">Employee</span>
+                            {{ html()->select('employee_id', [])->value('')->class('select-employee_id-list customer_item_table_change form-select')->id('employee_id')->placeholder('All') }}
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr class="bg-primary">
+                                    <th class="text-white">Customer</th>
+                                    <th class="text-white">Employee</th>
+                                    <th class="text-white text-end">Quantity</th>
+                                    <th class="text-white text-end">Amount</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach ($employees as $item)
+                                    <tr>
+                                        <td>{{ $item->customer }}</td>
+                                        <td>{{ $item->employee }}</td>
+                                        <td class="text-end">{{ number_format($item->total_quantity) }}</td>
+                                        <td class="text-end">{{ currency($item->total_amount) }}</td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                            <tfoot class="fw-bold bg-light">
+                                <th colspan="2" class="text-end">Total:</th>
+                                <th class="text-end">{{ currency($employeeQuantity) }}</th>
+                                <th class="text-end">{{ currency($employeeAmount) }}</th>
+                            </tfoot>
+                        </table>
+                    </div>
+                    <div class="mt-3">
+                        {{ $employees->links() }}
+                    </div>
+                </div>
             </div>
         </div>
     </div>
     @push('scripts')
         <script>
             $(document).ready(function() {
-                $('.customer_item_table_change').on('change', function() {
+                $('.customer_item_table_change').on('change keyup', function() {
                     var data = {
                         customer_id: $('#customer_id').val() || null,
                         from_date: $('#from_date').val(),
                         to_date: $('#to_date').val(),
                         product_id: $('#product_id').val() || null,
+                        employee_id: $('#employee_id').val(),
                     };
                     Livewire.dispatch('customerItemsFilterChanged', data);
                 });
