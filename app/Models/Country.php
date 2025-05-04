@@ -29,4 +29,17 @@ class Country extends Model
     protected $casts = [
         'status' => 'boolean',
     ];
+
+    public function getDropDownList($request)
+    {
+        $self = self::orderBy('name');
+        $self = $self->when($request['query'] ?? '', function ($query, $value) {
+            return $query->where('name', 'like', "%{$value}%")->orWhere('code', 'like', "%{$value}%");
+        });
+        $self = $self->limit(10);
+        $self = $self->get(['name', 'code', 'id'])->toArray();
+        $return['items'] = $self;
+
+        return $return;
+    }
 }

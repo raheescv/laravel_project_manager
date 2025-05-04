@@ -6,6 +6,7 @@ use App\Actions\Account\DeleteAction;
 use App\Exports\AccountExport;
 use App\Jobs\Export\ExportAccountJob;
 use App\Models\Account;
+use App\Models\Country;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Livewire\Component;
@@ -19,6 +20,8 @@ class Table extends Component
     public $search = '';
 
     public $limit = 10;
+
+    public $nationality;
 
     public $selected = [];
 
@@ -105,7 +108,11 @@ class Table extends Component
 
     public function render()
     {
+        $countries = Country::pluck('name', 'name')->toArray();
         $data = Account::orderBy($this->sortField, $this->sortDirection)
+            ->when($this->nationality, function ($query, $value) {
+                return $query->where('accounts.nationality', $value);
+            })
             ->when($this->search, function ($query, $value) {
                 return $query->where(function ($q) use ($value): void {
                     $value = trim($value);
@@ -120,6 +127,7 @@ class Table extends Component
             ->paginate($this->limit);
 
         return view('livewire.account.customer.table', [
+            'countries' => $countries,
             'data' => $data,
         ]);
     }

@@ -5,6 +5,7 @@ namespace App\Livewire\Account\Customer;
 use App\Actions\Account\CreateAction;
 use App\Actions\Account\UpdateAction;
 use App\Models\Account;
+use App\Models\Country;
 use Faker\Factory;
 use Livewire\Component;
 
@@ -16,6 +17,8 @@ class Page extends Component
     ];
 
     public $existingCustomers = [];
+
+    public $countries;
 
     public $accounts;
 
@@ -45,6 +48,7 @@ class Page extends Component
     public function mount($table_id = null)
     {
         $this->table_id = $table_id;
+        $this->countries = Country::pluck('name', 'name')->toArray();
         if (! $this->table_id) {
             $faker = Factory::create();
             $name = '';
@@ -63,10 +67,11 @@ class Page extends Component
                 'whatsapp_mobile' => '',
                 'email' => $email,
 
-                'dob' => '',
+                'dob' => null,
                 'id_no' => '',
-                'nationality' => '',
+                'nationality' => null,
                 'company' => '',
+                'model' => 'customer',
             ];
         } else {
             $account = Account::find($this->table_id);

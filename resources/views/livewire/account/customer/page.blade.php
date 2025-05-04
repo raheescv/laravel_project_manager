@@ -58,9 +58,9 @@
                     </div>
                 </div>
                 <div class="col-md-4">
-                    <div class="form-group">
+                    <div class="form-group" wire:ignore>
                         <b><label for="nationality" class="text-capitalize">nationality</label></b>
-                        {{ html()->input('nationality')->value('')->class('form-control')->attribute('wire:model.live', 'accounts.nationality') }}
+                        {{ html()->select('nationality', $countries)->value('')->class('tomSelect')->id('nationality')->placeholder('')->attribute('wire:model.live', 'accounts.nationality') }}
                     </div>
                 </div>
                 <div class="col-md-4">
@@ -102,7 +102,12 @@
     </form>
     @push('scripts')
         <script>
-            $(document).ready(function() {});
+            $(document).ready(function() {
+                $('#nationality').on('change', function(e) {
+                    const value = $(this).val() || null;
+                    @this.set('accounts.nationality', value);
+                });
+            });
         </script>
     @endpush
 </div>

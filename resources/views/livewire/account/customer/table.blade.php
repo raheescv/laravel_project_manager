@@ -40,6 +40,15 @@
                 </div>
             </div>
         </div>
+        <hr>
+        <div class="col-lg-12">
+            <div class="row">
+                <div class="col-md-4" wire:ignore>
+                    <label for="nationality">Nationality</label>
+                    {{ html()->select('nationality', $countries)->value('')->class('tomSelect')->id('table_nationality')->placeholder('All')->attribute('wire:model', 'nationality') }}
+                </div>
+            </div>
+        </div>
     </div>
     <div class="card-body">
         <div class="table-responsive">
@@ -91,6 +100,11 @@
     @push('scripts')
         <script>
             $(document).ready(function() {
+
+                $('#table_nationality').on('change', function(e) {
+                    const value = $(this).val() || null;
+                    @this.set('nationality', value);
+                });
                 $(document).on('click', '.edit', function() {
                     Livewire.dispatch("Customer-Page-Update-Component", {
                         id: $(this).attr('table_id')
