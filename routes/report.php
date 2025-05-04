@@ -19,5 +19,6 @@ Route::middleware('auth')->group(function (): void {
             Route::get('sale_summary', 'sale_summary')->name('sale_summary');
             Route::get('sales_overview', 'sales_overview')->name('sales_overview');
             Route::get('customer', 'customer')->name('customer');
+            Route::get('employee', 'employee')->name('employee');
         });
 });

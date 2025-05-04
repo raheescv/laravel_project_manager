@@ -38,4 +38,9 @@ class ReportController extends Controller
     {
         return view('report.customer');
     }
+
+    public function employee()
+    {
+        return view('report.employee');
+    }
 }
