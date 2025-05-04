@@ -49,8 +49,8 @@
                             <thead>
                                 <tr class="bg-primary">
                                     <th class="text-white">Employee</th>
-                                    <th class="text-white">Product</th>
-                                    <th class="text-white text-end">Quantity</th>
+                                    <th class="text-white">Item</th>
+                                    <th class="text-white text-end">Count</th>
                                     <th class="text-white text-end">Amount</th>
                                 </tr>
                             </thead>
@@ -90,7 +90,7 @@
                             <thead>
                                 <tr class="bg-light">
                                     <th>Employee</th>
-                                    <th class="text-end">Quantity</th>
+                                    <th class="text-end">Count</th>
                                     <th class="text-end">Amount</th>
                                 </tr>
                             </thead>
