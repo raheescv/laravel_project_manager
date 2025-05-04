@@ -6,6 +6,7 @@ use App\Actions\Settings\Category\DeleteAction;
 use App\Exports\CategoryExport;
 use App\Jobs\Export\ExportCategoryJob;
 use App\Models\Category;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Livewire\Component;
 use Livewire\WithPagination;
@@ -83,7 +84,7 @@ class Table extends Component
     {
         $count = Category::count();
         if ($count > 2000) {
-            ExportCategoryJob::dispatch(auth()->user());
+            ExportCategoryJob::dispatch(Auth::user());
             $this->dispatch('success', ['message' => 'You will get your file in your mailbox.']);
         } else {
             $exportFileName = 'category_'.now()->timestamp.'.xlsx';

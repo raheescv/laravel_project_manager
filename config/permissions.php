@@ -5,6 +5,7 @@ return [
     'expense' => ['create', 'view', 'edit', 'delete', 'export'],
     'income' => ['create', 'view', 'edit', 'delete', 'export'],
     'customer' => ['create', 'view', 'edit', 'delete', 'export'],
+    'country' => ['create', 'view', 'edit', 'delete'],
     'vendor' => ['create', 'view', 'edit', 'delete', 'export'],
     'user' => ['create', 'view', 'edit', 'delete'],
     'employee' => ['create', 'view', 'edit', 'delete', 'export'],

@@ -5,6 +5,7 @@ use App\Http\Controllers\RoleController;
 use App\Http\Controllers\ServiceController;
 use App\Http\Controllers\Settings\BranchController;
 use App\Http\Controllers\Settings\CategoryController;
+use App\Http\Controllers\Settings\CountryController;
 use App\Http\Controllers\Settings\DepartmentController;
 use App\Http\Controllers\Settings\UnitController;
 use App\Http\Controllers\SettingsController;
@@ -46,6 +47,10 @@ Route::middleware('auth')->group(function (): void {
         Route::get('', 'index')->name('index')->can('service.view');
         Route::get('create', 'page')->name('create')->can('service.create');
         Route::get('edit/{id}', 'page')->name('edit')->can('service.edit');
+        Route::get('list', 'get')->name('list');
+    });
+    Route::name('country::')->prefix('country')->controller(CountryController::class)->group(function (): void {
+        Route::get('', 'index')->name('index')->can('service.view');
         Route::get('list', 'get')->name('list');
     });
 });
