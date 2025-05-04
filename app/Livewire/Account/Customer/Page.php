@@ -60,8 +60,13 @@ class Page extends Component
                 'account_type' => $account_type,
                 'name' => $name,
                 'mobile' => $mobile,
+                'whatsapp_mobile' => '',
                 'email' => $email,
-                'model' => 'customer',
+
+                'dob' => '',
+                'id_no' => '',
+                'nationality' => '',
+                'company' => '',
             ];
         } else {
             $account = Account::find($this->table_id);

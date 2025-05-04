@@ -52,7 +52,12 @@
                         </th>
                         <th> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="name" label="name" /> </th>
                         <th> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="mobile" label="mobile" /> </th>
+                        <th> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="whatsapp_mobile" label="whatsapp mobile" /> </th>
                         <th> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="email" label="email" /> </th>
+                        <th> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="dob" label="dob" /> </th>
+                        <th> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="id_no" label="ID no" /> </th>
+                        <th> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="nationality" label="nationality" /> </th>
+                        <th> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="company" label="company" /> </th>
                         <th class="text-end"> Action </th>
                     </tr>
                 </thead>
@@ -65,7 +70,12 @@
                             </td>
                             <td><a href="{{ route('account::customer::view', $item->id) }}">{{ $item->name }}</a> </td>
                             <td>{{ $item->mobile }}</td>
+                            <td>{{ $item->whatsapp_mobile }}</td>
                             <td>{{ $item->email }}</td>
+                            <td>{{ systemDate($item->dob) }}</td>
+                            <td>{{ $item->id_no }}</td>
+                            <td>{{ $item->nationality }}</td>
+                            <td>{{ $item->company }}</td>
                             <td class="text-end">
                                 @can('customer.edit')
                                     <i table_id="{{ $item->id }}" class="demo-psi-pencil fs-5 me-2 pointer edit"></i>
