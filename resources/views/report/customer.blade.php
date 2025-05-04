@@ -47,15 +47,23 @@
                                 Items Summary
                             </a>
                         </li>
+                        <li class="nav-item">
+                            <a class="nav-link" data-bs-toggle="tab" href="#customer-sales">
+                                Sales
+                            </a>
+                        </li>
                     </ul>
                 </div>
                 <div class="card-body">
                     <div class="tab-content">
                         <div class="tab-pane fade show active" id="visit-history">
-                            @livewire('report.customer-visit-history')
+                            @livewire('report.customer.customer-visit-history')
                         </div>
                         <div class="tab-pane fade" id="customer-items">
-                            @livewire('report.customer-items')
+                            @livewire('report.customer.customer-items')
+                        </div>
+                        <div class="tab-pane fade" id="customer-sales">
+                            @livewire('report.customer.customer-sales')
                         </div>
                     </div>
                 </div>

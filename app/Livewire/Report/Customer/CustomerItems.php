@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Livewire\Report;
+namespace App\Livewire\Report\Customer;
 
 use App\Models\SaleItem;
 use Livewire\Component;
@@ -55,11 +55,12 @@ class CustomerItems extends Component
             ->when($this->product_id, fn ($q, $value) => $q->where('sale_items.product_id', $value))
             ->when($this->from_date ?? '', fn ($q, $value) => $q->whereDate('sales.date', '>=', date('Y-m-d', strtotime($value))))
             ->when($this->to_date ?? '', fn ($q, $value) => $q->whereDate('sales.date', '<=', date('Y-m-d', strtotime($value))))
+            ->where('sales.status', 'completed')
             ->groupBy('sales.account_id', 'sale_items.product_id')
             ->orderBy('total_quantity', 'desc')
             ->paginate($this->perPage);
 
-        return view('livewire.report.customer-items', [
+        return view('livewire.report.customer.customer-items', [
             'items' => $items,
         ]);
     }

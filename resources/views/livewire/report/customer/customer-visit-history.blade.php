@@ -1,4 +1,45 @@
 <div>
+    <div class="row g-3 mb-3">
+        <div class="col-sm-6 col-md-4">
+            <div class="card bg-primary">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h4 class="mb-1 text-white">{{ $totalCustomers ?? 0 }}</h4>
+                            <p class="text-white mb-0">Total Customers</p>
+                        </div>
+                        <i class="fa fa-users fa-2x text-white-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-sm-6 col-md-4">
+            <div class="card bg-success">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h4 class="mb-1 text-white">{{ $newCustomers ?? 0 }}</h4>
+                            <p class="text-white mb-0">New Customers</p>
+                        </div>
+                        <i class="fa fa-user-plus fa-2x text-white-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-sm-6 col-md-4">
+            <div class="card bg-info">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h4 class="mb-1 text-white">{{ $existingCustomers ?? 0 }}</h4>
+                            <p class="text-white mb-0">Existing Customers</p>
+                        </div>
+                        <i class="fa fa-user fa-2x text-white-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
     <div class="card">
         <div class="card-body">
             <div class="table-responsive">

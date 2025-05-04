@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Livewire\Report;
+namespace App\Livewire\Report\Customer;
 
 use App\Models\Sale;
 use Livewire\Component;
@@ -17,6 +17,12 @@ class CustomerVisitHistory extends Component
     public $from_date;
 
     public $to_date;
+
+    public $totalCustomers = 0;
+
+    public $newCustomers = 0;
+
+    public $existingCustomers = 0;
 
     protected $listeners = ['customerVisitHistoryFilterChanged' => 'filterChanged'];
 
@@ -38,7 +44,7 @@ class CustomerVisitHistory extends Component
 
     public function render()
     {
-        $visits = Sale::query()
+        $query = Sale::query()
             ->join('accounts', 'sales.account_id', '=', 'accounts.id')
             ->select('accounts.id', 'accounts.name', 'accounts.mobile')
             ->selectRaw('sum(sales.grand_total) as total')
@@ -50,11 +56,23 @@ class CustomerVisitHistory extends Component
             ->when($this->customer_id, fn ($q, $value) => $q->where('account_id', $value))
             ->when($this->from_date ?? '', fn ($q, $value) => $q->whereDate('sales.date', '>=', date('Y-m-d', strtotime($value))))
             ->when($this->to_date ?? '', fn ($q, $value) => $q->whereDate('sales.date', '<=', date('Y-m-d', strtotime($value))))
-            ->groupBy('account_id')
-            ->paginate($this->perPage);
+            ->completed()
+            ->groupBy('account_id');
 
-        return view('livewire.report.customer-visit-history', [
+        // Calculate statistics
+        $statistics = clone $query;
+        $statistics = collect($statistics->get());
+        $this->totalCustomers = $statistics->count();
+        $this->newCustomers = $statistics->where('is_new_customer', true)->count();
+        $this->existingCustomers = $this->totalCustomers - $this->newCustomers;
+
+        $visits = $query->paginate($this->perPage);
+
+        return view('livewire.report.customer.customer-visit-history', [
             'visits' => $visits,
+            'totalCustomers' => $this->totalCustomers,
+            'newCustomers' => $this->newCustomers,
+            'existingCustomers' => $this->existingCustomers,
         ]);
     }
 }
