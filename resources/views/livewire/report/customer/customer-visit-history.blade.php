@@ -84,6 +84,7 @@
             $(document).ready(function() {
                 $('.table_change').on('change', function() {
                     let data = {
+                        branch_id: $('#table_branch_id').val() || null,
                         customer_id: $('#customer_id').val() || null,
                         from_date: $('#from_date').val(),
                         to_date: $('#to_date').val()

@@ -12,6 +12,8 @@ class CustomerItems extends Component
 
     public $product_id = null;
 
+    public $branch_id = null;
+
     public $customer_id = null;
 
     public $employee_id = null;
@@ -36,9 +38,10 @@ class CustomerItems extends Component
         $this->to_date = date('Y-m-d');
     }
 
-    public function filterChanged($from_date, $to_date, $customer_id = null, $product_id = null, $employee_id = null)
+    public function filterChanged($from_date, $to_date, $customer_id = null, $product_id = null, $employee_id = null, $branch_id = null)
     {
         $this->customer_id = $customer_id;
+        $this->branch_id = $branch_id;
         $this->from_date = $from_date;
         $this->to_date = $to_date;
         $this->product_id = $product_id;
@@ -51,11 +54,21 @@ class CustomerItems extends Component
         $this->dispatch('updatePieChart', $this->dataPoints);
     }
 
-    protected function getProducts()
+    protected function basQuery()
     {
         return SaleItem::query()
             ->join('sales', 'sale_items.sale_id', '=', 'sales.id')
             ->join('accounts', 'sales.account_id', '=', 'accounts.id')
+            ->when($this->branch_id, fn ($q, $value) => $q->where('sales.branch_id', $value))
+            ->when($this->customer_id, fn ($q, $value) => $q->where('sales.account_id', $value))
+            ->when($this->from_date ?? '', fn ($q, $value) => $q->whereDate('sales.date', '>=', date('Y-m-d', strtotime($value))))
+            ->when($this->to_date ?? '', fn ($q, $value) => $q->whereDate('sales.date', '<=', date('Y-m-d', strtotime($value))))
+            ->where('sales.status', 'completed');
+    }
+
+    protected function getProducts()
+    {
+        return $this->basQuery()
             ->join('products', 'sale_items.product_id', '=', 'products.id')
             ->select([
                 'accounts.name as customer',
@@ -63,19 +76,13 @@ class CustomerItems extends Component
                 SaleItem::raw('SUM(sale_items.quantity) as total_quantity'),
                 SaleItem::raw('SUM(sale_items.total) as total_amount'),
             ])
-            ->when($this->customer_id, fn ($q, $value) => $q->where('sales.account_id', $value))
-            ->when($this->product_id, fn ($q, $value) => $q->where('sale_items.product_id', $value))
-            ->when($this->from_date ?? '', fn ($q, $value) => $q->whereDate('sales.date', '>=', date('Y-m-d', strtotime($value))))
-            ->when($this->to_date ?? '', fn ($q, $value) => $q->whereDate('sales.date', '<=', date('Y-m-d', strtotime($value))))
-            ->where('sales.status', 'completed');
+            ->when($this->product_id, fn ($q, $value) => $q->where('sale_items.product_id', $value));
 
     }
 
     protected function getEmployees()
     {
-        return SaleItem::query()
-            ->join('sales', 'sale_items.sale_id', '=', 'sales.id')
-            ->join('accounts', 'sales.account_id', '=', 'accounts.id')
+        return $this->basQuery()
             ->join('users', 'sale_items.employee_id', '=', 'users.id')
             ->select([
                 'accounts.name as customer',
@@ -83,12 +90,7 @@ class CustomerItems extends Component
                 SaleItem::raw('SUM(sale_items.quantity) as total_quantity'),
                 SaleItem::raw('SUM(sale_items.total) as total_amount'),
             ])
-            ->when($this->customer_id, fn ($q, $value) => $q->where('sales.account_id', $value))
-            ->when($this->employee_id, fn ($q, $value) => $q->where('sale_items.employee_id', $value))
-            ->when($this->from_date ?? '', fn ($q, $value) => $q->whereDate('sales.date', '>=', date('Y-m-d', strtotime($value))))
-            ->when($this->to_date ?? '', fn ($q, $value) => $q->whereDate('sales.date', '<=', date('Y-m-d', strtotime($value))))
-            ->where('sales.status', 'completed');
-
+            ->when($this->employee_id, fn ($q, $value) => $q->where('sale_items.employee_id', $value));
     }
 
     public function render()

@@ -14,6 +14,8 @@ class CustomerSaleItems extends Component
 
     public $product_id;
 
+    public $branch_id;
+
     public $employee_id;
 
     public $from_date;
@@ -36,13 +38,14 @@ class CustomerSaleItems extends Component
         $this->to_date = date('Y-m-d');
     }
 
-    public function filterChanged($from_date, $to_date, $customer_id = null, $product_id = null, $employee_id = null)
+    public function filterChanged($from_date, $to_date, $customer_id = null, $product_id = null, $employee_id = null, $branch_id = null)
     {
         $this->customer_id = $customer_id;
         $this->from_date = $from_date;
         $this->to_date = $to_date;
         $this->product_id = $product_id;
         $this->employee_id = $employee_id;
+        $this->branch_id = $branch_id;
         $this->resetPage();
     }
 
@@ -65,7 +68,8 @@ class CustomerSaleItems extends Component
             ])
             ->when($this->employee_id, fn ($q, $value) => $q->where('sale_items.employee_id', $value))
             ->when($this->product_id, fn ($q, $value) => $q->where('sale_items.product_id', $value))
-            ->when($this->customer_id, fn ($q) => $q->where('sales.account_id', $this->customer_id))
+            ->when($this->customer_id, fn ($q, $value) => $q->where('sales.account_id', $value))
+            ->when($this->branch_id, fn ($q, $value) => $q->where('sales.branch_id', $value))
             ->when($this->from_date ?? '', fn ($q, $value) => $q->whereDate('sales.date', '>=', date('Y-m-d', strtotime($value))))
             ->when($this->to_date ?? '', fn ($q, $value) => $q->whereDate('sales.date', '<=', date('Y-m-d', strtotime($value))))
             ->where('sales.status', 'completed')

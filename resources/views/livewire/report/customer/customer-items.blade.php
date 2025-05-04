@@ -135,14 +135,23 @@
         <script>
             $(document).ready(function() {
                 var data = {
-                    customer_id: $('#customer_id').val() || null,
                     from_date: $('#from_date').val(),
                     to_date: $('#to_date').val(),
+                    customer_id: $('#customer_id').val() || null,
                     product_id: $('#product_id').val() || null,
                     employee_id: $('#employee_id').val(),
+                    branch_id: $('#table_branch_id').val() || null,
                 };
                 Livewire.dispatch('customerItemsFilterChanged', data);
                 $('.customer_item_table_change').on('change keyup', function() {
+                    var data = {
+                        from_date: $('#from_date').val(),
+                        to_date: $('#to_date').val(),
+                        customer_id: $('#customer_id').val() || null,
+                        product_id: $('#product_id').val() || null,
+                        employee_id: $('#employee_id').val(),
+                        branch_id: $('#table_branch_id').val() || null,
+                    };
                     Livewire.dispatch('customerItemsFilterChanged', data);
                 });
 

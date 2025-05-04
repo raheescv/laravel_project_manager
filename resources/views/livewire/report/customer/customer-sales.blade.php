@@ -49,4 +49,19 @@
             </div>
         </div>
     </div>
+    @push('scripts')
+        <script>
+            $(document).ready(function() {
+                $('.customer_item_table_change').on('change keyup', function() {
+                    var data = {
+                        from_date: $('#from_date').val(),
+                        to_date: $('#to_date').val(),
+                        customer_id: $('#customer_id').val() || null,
+                        branch_id: $('#table_branch_id').val() || null,
+                    };
+                    Livewire.dispatch('customerSalesFilterChanged', data);
+                });
+            });
+        </script>
+    @endpush
 </div>

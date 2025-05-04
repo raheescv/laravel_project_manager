@@ -24,6 +24,8 @@ class CustomerVisitHistory extends Component
 
     public $existingCustomers = 0;
 
+    public $branch_id;
+
     protected $listeners = ['customerVisitHistoryFilterChanged' => 'filterChanged'];
 
     protected $paginationTheme = 'bootstrap';
@@ -34,11 +36,12 @@ class CustomerVisitHistory extends Component
         $this->to_date = date('Y-m-d');
     }
 
-    public function filterChanged($from_date, $to_date, $customer_id = null)
+    public function filterChanged($from_date, $to_date, $customer_id = null, $branch_id = null)
     {
         $this->customer_id = $customer_id;
         $this->from_date = $from_date;
         $this->to_date = $to_date;
+        $this->branch_id = $branch_id;
         $this->resetPage();
     }
 
@@ -53,6 +56,7 @@ class CustomerVisitHistory extends Component
                 $query->from('sales')->select('date')->whereColumn('account_id', 'accounts.id')->orderBy('date', 'asc')->limit(1);
             }, 'first_sale_date')
             ->selectRaw('CASE WHEN (SELECT MIN(date) FROM sales WHERE account_id = accounts.id) BETWEEN ? AND ? THEN true ELSE false END as is_new_customer', [$this->from_date, $this->to_date])
+            ->when($this->branch_id, fn ($q, $value) => $q->where('sales.branch_id', $value))
             ->when($this->customer_id, fn ($q, $value) => $q->where('account_id', $value))
             ->when($this->from_date ?? '', fn ($q, $value) => $q->whereDate('sales.date', '>=', date('Y-m-d', strtotime($value))))
             ->when($this->to_date ?? '', fn ($q, $value) => $q->whereDate('sales.date', '<=', date('Y-m-d', strtotime($value))))

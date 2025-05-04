@@ -12,6 +12,8 @@ class CustomerSales extends Component
 
     public $customer_id;
 
+    public $branch_id;
+
     public $from_date;
 
     public $to_date;
@@ -26,7 +28,7 @@ class CustomerSales extends Component
 
     protected $paginationTheme = 'bootstrap';
 
-    protected $listeners = ['customerVisitHistoryFilterChanged' => 'filterChanged'];
+    protected $listeners = ['customerSalesFilterChanged' => 'filterChanged'];
 
     public function mount()
     {
@@ -34,11 +36,12 @@ class CustomerSales extends Component
         $this->to_date = date('Y-m-d');
     }
 
-    public function filterChanged($from_date, $to_date, $customer_id = null)
+    public function filterChanged($from_date, $to_date, $customer_id = null, $branch_id = null)
     {
         $this->customer_id = $customer_id;
         $this->from_date = $from_date;
         $this->to_date = $to_date;
+        $this->branch_id = $branch_id;
         $this->resetPage();
     }
 
@@ -48,7 +51,8 @@ class CustomerSales extends Component
             ->with('account:id,name,mobile')
             ->withCount('items')
             ->completed()
-            ->when($this->customer_id, fn ($q) => $q->where('sales.account_id', $this->customer_id))
+            ->when($this->branch_id, fn ($q, $value) => $q->where('sales.branch_id', $value))
+            ->when($this->customer_id, fn ($q, $value) => $q->where('sales.account_id', $value))
             ->when($this->from_date ?? '', fn ($q, $value) => $q->whereDate('sales.date', '>=', date('Y-m-d', strtotime($value))))
             ->when($this->to_date ?? '', fn ($q, $value) => $q->whereDate('sales.date', '<=', date('Y-m-d', strtotime($value))))
             ->orderByDesc('date');

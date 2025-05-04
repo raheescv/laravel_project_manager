@@ -29,6 +29,10 @@
                                 {{ html()->date('to_date')->value(date('Y-m-d'))->class('form-control table_change customer_item_table_change customer_sale_item_table_change')->id('to_date') }}
                             </div>
                             <div class="col-md-3" wire:ignore>
+                                <b><label for="branch_id">Branch</label></b>
+                                {{ html()->select('branch_id', [])->value('')->class('select-branch_id-list table_change customer_item_table_change customer_sale_item_table_change')->id('table_branch_id')->placeholder('All') }}
+                            </div>
+                            <div class="col-md-3" wire:ignore>
                                 <b><label for="customer_id">Customer</label></b>
                                 {{ html()->select('customer_id', [])->value('')->class('select-customer_id-list table_change customer_item_table_change customer_sale_item_table_change')->id('customer_id')->placeholder('All') }}
                             </div>
@@ -81,6 +85,7 @@
     @push('scripts')
         <script type="text/javascript" src="https://cdn.canvasjs.com/jquery.canvasjs.min.js"></script>
         <x-select.customerSelect />
+        <x-select.branchSelect />
         <x-select.productSelect />
         <x-select.employeeSelect />
     @endpush
