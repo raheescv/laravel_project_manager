@@ -22,15 +22,15 @@
                         <div class="row g-2 mb-3">
                             <div class="col-md-3">
                                 <b><label for="from_date">From Date</label></b>
-                                {{ html()->date('from_date')->value(date('Y-m-01'))->class('form-control table_change customer_item_table_change')->id('from_date') }}
+                                {{ html()->date('from_date')->value(date('Y-m-01'))->class('form-control table_change customer_item_table_change customer_sale_item_table_change')->id('from_date') }}
                             </div>
                             <div class="col-md-3">
                                 <b><label for="to_date">To Date</label></b>
-                                {{ html()->date('to_date')->value(date('Y-m-d'))->class('form-control table_change customer_item_table_change')->id('to_date') }}
+                                {{ html()->date('to_date')->value(date('Y-m-d'))->class('form-control table_change customer_item_table_change customer_sale_item_table_change')->id('to_date') }}
                             </div>
                             <div class="col-md-3" wire:ignore>
                                 <b><label for="customer_id">Customer</label></b>
-                                {{ html()->select('customer_id', [])->value('')->class('select-customer_id-list table_change customer_item_table_change')->id('customer_id')->placeholder('All') }}
+                                {{ html()->select('customer_id', [])->value('')->class('select-customer_id-list table_change customer_item_table_change customer_sale_item_table_change')->id('customer_id')->placeholder('All') }}
                             </div>
                         </div>
                     </div>
@@ -52,6 +52,11 @@
                                 Sales
                             </a>
                         </li>
+                        <li class="nav-item">
+                            <a class="nav-link" data-bs-toggle="tab" href="#sale-items">
+                                Sale Items
+                            </a>
+                        </li>
                     </ul>
                 </div>
                 <div class="card-body">
@@ -65,6 +70,9 @@
                         <div class="tab-pane fade" id="customer-sales">
                             @livewire('report.customer.customer-sales')
                         </div>
+                        <div class="tab-pane fade" id="sale-items">
+                            @livewire('report.customer.customer-sale-items')
+                        </div>
                     </div>
                 </div>
             </div>
@@ -73,5 +81,6 @@
     @push('scripts')
         <x-select.customerSelect />
         <x-select.productSelect />
+        <x-select.employeeSelect />
     @endpush
 </x-app-layout>

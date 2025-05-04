@@ -16,7 +16,7 @@
                     <thead>
                         <tr class="bg-primary">
                             <th width="10%" class="text-white">Customer</th>
-                            <th width="40%" class="text-white">Product</th>
+                            <th width="40%" class="text-white">Item</th>
                             <th width="15%" class="text-white text-end">Quantity</th>
                             <th width="20%" class="text-white text-end">Total Amount</th>
                         </tr>

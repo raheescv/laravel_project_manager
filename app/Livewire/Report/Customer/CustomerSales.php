@@ -20,6 +20,8 @@ class CustomerSales extends Component
 
     public $totalAmount = 0;
 
+    public $totalDiscount = 0;
+
     public $totalItems = 0;
 
     protected $paginationTheme = 'bootstrap';
@@ -44,20 +46,17 @@ class CustomerSales extends Component
     {
         $query = Sale::query()
             ->with('account:id,name,mobile')
-            ->select([
-                'sales.*',
-                Sale::raw('(SELECT COUNT(*) FROM sale_items WHERE sale_items.sale_id = sales.id) as items_count'),
-            ])
+            ->withCount('items')
             ->completed()
             ->when($this->customer_id, fn ($q) => $q->where('sales.account_id', $this->customer_id))
             ->when($this->from_date ?? '', fn ($q, $value) => $q->whereDate('sales.date', '>=', date('Y-m-d', strtotime($value))))
             ->when($this->to_date ?? '', fn ($q, $value) => $q->whereDate('sales.date', '<=', date('Y-m-d', strtotime($value))))
             ->orderByDesc('date');
-
         // Calculate totals
         $totals = $query->get();
         $this->totalAmount = $totals->sum('grand_total');
         $this->totalItems = $totals->sum('items_count');
+        $this->totalDiscount = $totals->sum('other_discount');
 
         $sales = $query->paginate($this->perPage);
 

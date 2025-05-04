@@ -10,6 +10,7 @@
                             <th class="text-white">Customer</th>
                             <th class="text-white">Mobile</th>
                             <th class="text-white text-end">Items</th>
+                            <th class="text-white text-end">Discount</th>
                             <th class="text-white text-end">Amount</th>
                             <th class="text-white text-end">Status</th>
                         </tr>
@@ -22,6 +23,7 @@
                                 <td>{{ $sale->account?->name }}</td>
                                 <td>{{ $sale->account?->mobile }}</td>
                                 <td class="text-end">{{ $sale->items_count }}</td>
+                                <td class="text-end">{{ currency($sale->other_discount) }}</td>
                                 <td class="text-end">{{ currency($sale->grand_total) }}</td>
                                 <td class="text-end">
                                     <span class="badge bg-{{ $sale->balance == 0 ? 'success' : 'warning' }}">
@@ -35,6 +37,7 @@
                         <tr>
                             <td colspan="4">Total</td>
                             <td class="text-end">{{ number_format($totalItems) }}</td>
+                            <td class="text-end">{{ currency($totalDiscount) }}</td>
                             <td class="text-end">{{ currency($totalAmount) }}</td>
                             <td></td>
                         </tr>
