@@ -16,16 +16,53 @@
     </div>
     <div class="content__boxed">
         <div class="content__wrap">
-            @livewire('report.customer-items')
-            @livewire('report.customer-visit-history')
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-tools">
+                        <div class="row g-2 mb-3">
+                            <div class="col-md-3">
+                                <b><label for="from_date">From Date</label></b>
+                                {{ html()->date('from_date')->value(date('Y-m-01'))->class('form-control table_change')->id('from_date') }}
+                            </div>
+                            <div class="col-md-3">
+                                <b><label for="to_date">To Date</label></b>
+                                {{ html()->date('to_date')->value(date('Y-m-d'))->class('form-control table_change')->id('to_date') }}
+                            </div>
+                            <div class="col-md-3" wire:ignore>
+                                <b><label for="customer_id">Customer</label></b>
+                                {{ html()->select('customer_id', [])->value('')->class('select-customer_id-list table_change')->id('customer_id')->placeholder('All') }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-header">
+                    <ul class="nav nav-tabs card-header-tabs">
+                        <li class="nav-item">
+                            <a class="nav-link active" data-bs-toggle="tab" href="#visit-history">
+                                Visit History
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" data-bs-toggle="tab" href="#customer-items">
+                                Customer Items
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+                <div class="card-body">
+                    <div class="tab-content">
+                        <div class="tab-pane fade show active" id="visit-history">
+                            @livewire('report.customer-visit-history')
+                        </div>
+                        <div class="tab-pane fade" id="customer-items">
+                            @livewire('report.customer-items')
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
     @push('scripts')
         <x-select.customerSelect />
-        <script>
-            $(document).ready(function() {
-                // $('#root').attr('class', 'root tm--expanded-hd mn--min');
-            })
-        </script>
     @endpush
 </x-app-layout>

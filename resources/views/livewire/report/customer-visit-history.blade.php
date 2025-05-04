@@ -1,24 +1,5 @@
 <div>
     <div class="card">
-        <div class="card-header">
-            <h3 class="card-title">Customer Visit History</h3>
-            <div class="card-tools">
-                <div class="row g-2 mb-3">
-                    <div class="col-md-3">
-                        <b><label for="from_date">From Date</label></b>
-                        {{ html()->date('from_date')->value('')->class('form-control')->attribute('wire:model.live', 'from_date') }}
-                    </div>
-                    <div class="col-md-3">
-                        <b><label for="to_date">To Date</label></b>
-                        {{ html()->date('to_date')->value('')->class('form-control')->attribute('wire:model.live', 'to_date') }}
-                    </div>
-                    <div class="col-md-3" wire:ignore>
-                        <b><label for="customer_id">Customer</label></b>
-                        {{ html()->select('customer_id', [])->value('')->class('select-customer_id-list')->id('customer_id')->placeholder('All') }}
-                    </div>
-                </div>
-            </div>
-        </div>
         <div class="card-body">
             <div class="table-responsive">
                 <table class="table table-hover">
@@ -63,6 +44,14 @@
                 $('#customer_id').on('change', function(e) {
                     const value = $(this).val() || null;
                     @this.set('customer_id', value);
+                });
+                $('.table_change').on('change', function() {
+                    let data = {
+                        customer_id: $('#customer_id').val() || null,
+                        from_date: $('#from_date').val(),
+                        to_date: $('#to_date').val()
+                    };
+                    Livewire.dispatch('customerVisitHistoryFilterChanged', data);
                 });
             });
         </script>
