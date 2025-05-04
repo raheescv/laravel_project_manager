@@ -52,7 +52,22 @@
                     </div>
                 </div>
             </div>
+            <div class="card">
+                <div class="card-body">
+                </div>
+            </div>
         </div>
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-body">
+                    <div class="mt-4 w-100" wire:ignore>
+                        <div id="productPieChart" style="min-width:100%; width:100%; height: 630px; background: #f8f9fa; border-radius: 8px; padding: 15px;"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row">
         <div class="col-md-6">
             <div class="card">
                 <div class="card-header">
@@ -106,19 +121,70 @@
                 </div>
             </div>
         </div>
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-body">
+                    <div class="mt-4 w-100" wire:ignore>
+                        <div id="employeePieChart" style="min-width:100%; width:100%; height: 630px; background: #f8f9fa; border-radius: 8px; padding: 15px;"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
     @push('scripts')
         <script>
             $(document).ready(function() {
+                var data = {
+                    customer_id: $('#customer_id').val() || null,
+                    from_date: $('#from_date').val(),
+                    to_date: $('#to_date').val(),
+                    product_id: $('#product_id').val() || null,
+                    employee_id: $('#employee_id').val(),
+                };
+                Livewire.dispatch('customerItemsFilterChanged', data);
                 $('.customer_item_table_change').on('change keyup', function() {
-                    var data = {
-                        customer_id: $('#customer_id').val() || null,
-                        from_date: $('#from_date').val(),
-                        to_date: $('#to_date').val(),
-                        product_id: $('#product_id').val() || null,
-                        employee_id: $('#employee_id').val(),
-                    };
                     Livewire.dispatch('customerItemsFilterChanged', data);
+                });
+
+                window.addEventListener('updatePieChart', event => {
+                    var data = event.detail[0];
+                    var options = {
+                        title: {
+                            text: "Top 10 Products"
+                        },
+                        width: 694.502,
+                        height: 630,
+                        data: [{
+                            type: "doughnut",
+                            innerRadius: "50%",
+                            showInLegend: true,
+                            legendText: "{label}",
+                            indexLabel: "{label}: ₹{y}",
+                            indexLabelFontSize: 12,
+                            indexLabelFontFamily: "Helvetica Neue",
+                            dataPoints: data.product
+                        }],
+                    };
+                    $("#productPieChart").CanvasJSChart(options);
+
+                    var employeeOptions = {
+                        title: {
+                            text: "Top 10 Employees"
+                        },
+                        width: 694.502,
+                        height: 630,
+                        data: [{
+                            type: "doughnut",
+                            innerRadius: "50%",
+                            showInLegend: true,
+                            legendText: "{label}",
+                            indexLabel: "{label}: ₹{y}",
+                            indexLabelFontSize: 12,
+                            indexLabelFontFamily: "Helvetica Neue",
+                            dataPoints: data.employee
+                        }],
+                    };
+                    $("#employeePieChart").CanvasJSChart(employeeOptions);
                 });
             });
         </script>

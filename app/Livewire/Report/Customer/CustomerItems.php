@@ -20,6 +20,8 @@ class CustomerItems extends Component
 
     public int $employeePerPage = 10;
 
+    public $dataPoints = [];
+
     public $from_date;
 
     public $to_date;
@@ -42,6 +44,11 @@ class CustomerItems extends Component
         $this->product_id = $product_id;
         $this->employee_id = $employee_id;
         $this->resetPage();
+    }
+
+    public function updated($key, $value)
+    {
+        $this->dispatch('updatePieChart', $this->dataPoints);
     }
 
     protected function getProducts()
@@ -94,8 +101,9 @@ class CustomerItems extends Component
 
         $products = $products
             ->groupBy('sales.account_id', 'sale_items.product_id')
-            ->orderBy('total_quantity', 'desc')
-            ->paginate($this->productPerPage, ['*'], 'products_page');
+            ->orderBy('total_quantity', 'desc');
+        $productList = clone $products;
+        $products = $products->paginate($this->productPerPage, ['*'], 'products_page');
 
         $employees = $this->getEmployees();
         $totalEmployees = clone $employees;
@@ -105,8 +113,27 @@ class CustomerItems extends Component
 
         $employees = $employees
             ->groupBy('sales.account_id', 'sale_items.employee_id')
-            ->orderBy('total_quantity', 'desc')
-            ->paginate($this->employeePerPage, ['*'], 'employees_page');
+            ->orderBy('total_quantity', 'desc');
+        $employeeList = clone $employees;
+
+        $employees = $employees->paginate($this->employeePerPage, ['*'], 'employees_page');
+
+        $this->dataPoints = [];
+        $productList = $productList->orderBy('total_quantity', 'DESC')->limit(10)->pluck('total_amount', 'product')->toArray();
+        foreach ($productList as $label => $value) {
+            $this->dataPoints['product'][] = [
+                'label' => $label,
+                'y' => $value,
+            ];
+        }
+        $employeeList = $employeeList->orderBy('total_quantity', 'DESC')->limit(10)->pluck('total_amount', 'employee')->toArray();
+        foreach ($employeeList as $label => $value) {
+            $this->dataPoints['employee'][] = [
+                'label' => $label,
+                'y' => $value,
+            ];
+        }
+        $this->dispatch('updatePieChart', $this->dataPoints);
 
         return view('livewire.report.customer.customer-items', [
             'products' => $products,

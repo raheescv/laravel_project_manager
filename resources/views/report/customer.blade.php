@@ -79,6 +79,7 @@
         </div>
     </div>
     @push('scripts')
+        <script type="text/javascript" src="https://cdn.canvasjs.com/jquery.canvasjs.min.js"></script>
         <x-select.customerSelect />
         <x-select.productSelect />
         <x-select.employeeSelect />

@@ -49,11 +49,6 @@ class OverviewReport extends Component
         $this->branchId = session('branch_id');
     }
 
-    public function updated($key, $value)
-    {
-        $this->dispatch('updatePieChart', $this->dataPoints);
-    }
-
     public function export() {}
 
     public function sortBy($field)
