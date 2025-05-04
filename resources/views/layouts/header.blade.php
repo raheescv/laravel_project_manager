@@ -33,6 +33,29 @@
                 <div class="vr mx-1 d-none d-md-block"></div>
                 <div class="dropdown">
                     <button class="header__btn btn btn-icon btn-sm" type="button" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-label="Megamenu dropdown" aria-expanded="false">
+                        <i class="demo-psi-bar-chart"></i>
+                    </button>
+                    <div class="dropdown-menu dropdown-menu-end p-3 mega-dropdown">
+                        <div class="row">
+                            <div class="col-md-12">
+                                <div class="list-group list-group-borderless">
+                                    <div class="list-group-item d-flex align-items-center border-bottom mb-2">
+                                        <div class="flex-shrink-0 me-2">
+                                            <i class="demo-pli-file fs-4"></i>
+                                        </div>
+                                        <h5 class="flex-grow-1 m-0">Report</h5>
+                                    </div>
+                                    @can('report.customer')
+                                        <a href="{{ route('report::customer') }}" class="list-group-item list-group-item-action">Customer Report</a>
+                                    @endcan
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="vr mx-1 d-none d-md-block"></div>
+                <div class="dropdown">
+                    <button class="header__btn btn btn-icon btn-sm" type="button" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-label="Megamenu dropdown" aria-expanded="false">
                         <i class="demo-psi-layout-grid"></i>
                     </button>
                     <div class="dropdown-menu dropdown-menu-end p-3 mega-dropdown">

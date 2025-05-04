@@ -18,5 +18,6 @@ Route::middleware('auth')->group(function (): void {
             Route::get('day_book', 'day_book')->name('day_book');
             Route::get('sale_summary', 'sale_summary')->name('sale_summary');
             Route::get('sales_overview', 'sales_overview')->name('sales_overview');
+            Route::get('customer', 'customer')->name('customer');
         });
 });

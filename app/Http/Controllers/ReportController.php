@@ -33,4 +33,9 @@ class ReportController extends Controller
     {
         return view('report.sales_overview');
     }
+
+    public function customer()
+    {
+        return view('report.customer');
+    }
 }
