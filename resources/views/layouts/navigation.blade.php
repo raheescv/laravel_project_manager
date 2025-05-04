@@ -96,16 +96,6 @@
                                         <a href="{{ route('sale::receipts') }}" class="nav-link {{ request()->is(['sale/receipts']) ? 'active' : '' }}">Receipts</a>
                                     </li>
                                 @endcan
-                                @can('report.sale summary')
-                                    <li class="nav-item">
-                                        <a href="{{ route('report::sale_summary') }}" class="nav-link {{ request()->is(['report/sale_summary']) ? 'active' : '' }}">Sale Summary</a>
-                                    </li>
-                                @endcan
-                                @can('report.sales overview')
-                                    <li class="nav-item">
-                                        <a href="{{ route('report::sales_overview') }}" class="nav-link {{ request()->is(['report/sales_overview']) ? 'active' : '' }}">Sales Overview</a>
-                                    </li>
-                                @endcan
                             </ul>
                         </li>
                     @endif
