@@ -61,7 +61,7 @@
             <div class="card">
                 <div class="card-body">
                     <div class="mt-4 w-100" wire:ignore>
-                        <div id="productPieChart" style="min-width:100%; width:100%; height: 630px; background: #f8f9fa; border-radius: 8px; padding: 15px;"></div>
+                        <div id="productPieChart" style="min-width:100%; width:100%; min-height:600px; height:calc(100vh - 400px); background: #f8f9fa; border-radius: 8px; padding: 15px;"></div>
                     </div>
                 </div>
             </div>
@@ -125,7 +125,7 @@
             <div class="card">
                 <div class="card-body">
                     <div class="mt-4 w-100" wire:ignore>
-                        <div id="employeePieChart" style="min-width:100%; width:100%; height: 630px; background: #f8f9fa; border-radius: 8px; padding: 15px;"></div>
+                        <div id="employeePieChart" style="min-width:100%; width:100%; min-height:600px; height:calc(100vh - 400px); background: #f8f9fa; border-radius: 8px; padding: 15px;"></div>
                     </div>
                 </div>
             </div>
@@ -161,8 +161,6 @@
                         title: {
                             text: "Top 10 Products"
                         },
-                        width: 694.502,
-                        height: 630,
                         data: [{
                             type: "doughnut",
                             innerRadius: "50%",
@@ -180,8 +178,6 @@
                         title: {
                             text: "Top 10 Employees"
                         },
-                        width: 694.502,
-                        height: 630,
                         data: [{
                             type: "doughnut",
                             innerRadius: "50%",
