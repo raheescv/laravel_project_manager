@@ -36,6 +36,10 @@ Route::middleware('auth')->group(function (): void {
             Route::get('', 'index')->name('index')->can('role.view');
             Route::get('{id}/permissions', 'permissions')->name('permission')->can('role.permissions');
         });
+        Route::name('country::')->prefix('country')->controller(CountryController::class)->group(function (): void {
+            Route::get('', 'index')->name('index')->can('service.view');
+            Route::get('list', 'get')->name('list');
+        });
     });
     Route::name('product::')->prefix('product')->controller(ProductController::class)->group(function (): void {
         Route::get('', 'index')->name('index')->can('product.view');
@@ -47,10 +51,6 @@ Route::middleware('auth')->group(function (): void {
         Route::get('', 'index')->name('index')->can('service.view');
         Route::get('create', 'page')->name('create')->can('service.create');
         Route::get('edit/{id}', 'page')->name('edit')->can('service.edit');
-        Route::get('list', 'get')->name('list');
-    });
-    Route::name('country::')->prefix('country')->controller(CountryController::class)->group(function (): void {
-        Route::get('', 'index')->name('index')->can('service.view');
         Route::get('list', 'get')->name('list');
     });
 });

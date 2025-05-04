@@ -89,6 +89,9 @@
                                     @can('category.view')
                                         <a href="{{ route('settings::category::index') }}" class="list-group-item list-group-item-action">Category</a>
                                     @endcan
+                                    @can('country.view')
+                                        <a href="{{ route('settings::country::index') }}" class="list-group-item list-group-item-action">Country</a>
+                                    @endcan
                                     @can('unit.view')
                                         <a href="{{ route('settings::unit::index') }}" class="list-group-item list-group-item-action">Unit</a>
                                     @endcan

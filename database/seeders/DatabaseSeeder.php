@@ -19,6 +19,7 @@ class DatabaseSeeder extends Seeder
         $this->call(BranchSeeder::class);
         $this->call(UnitSeeder::class);
         $this->call(UserSeeder::class);
+        $this->call(CountrySeeder::class);
 
         Artisan::call('optimize');
         Artisan::call('config:cache');
