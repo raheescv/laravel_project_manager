@@ -49,7 +49,7 @@ class CustomerVisitHistory extends Component
     {
         $query = Sale::query()
             ->join('accounts', 'sales.account_id', '=', 'accounts.id')
-            ->select('accounts.id', 'accounts.name', 'accounts.mobile')
+            ->select('accounts.id', 'accounts.name', 'accounts.mobile', 'accounts.nationality')
             ->selectRaw('sum(sales.grand_total) as total')
             ->selectRaw('count(*) as visits')
             ->selectSub(function ($query) {

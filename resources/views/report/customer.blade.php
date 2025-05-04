@@ -61,6 +61,11 @@
                                 Sale Items
                             </a>
                         </li>
+                        <li class="nav-item">
+                            <a class="nav-link" data-bs-toggle="tab" href="#customer-location">
+                                Nationality Wise
+                            </a>
+                        </li>
                     </ul>
                 </div>
                 <div class="card-body">
@@ -76,6 +81,9 @@
                         </div>
                         <div class="tab-pane fade" id="sale-items">
                             @livewire('report.customer.customer-sale-items')
+                        </div>
+                        <div class="tab-pane fade" id="customer-location">
+                            @livewire('report.customer.customer-location')
                         </div>
                     </div>
                 </div>

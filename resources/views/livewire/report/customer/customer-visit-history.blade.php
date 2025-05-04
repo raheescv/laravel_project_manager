@@ -47,11 +47,12 @@
                     <thead>
                         <tr class="bg-primary">
                             <th width='40%' class="text-white">Customer</th>
-                            <th width='15%' class="text-white">Mobile</th>
-                            <th width='10%' class="text-white">First Visit Date</th>
-                            <th width='15%' class="text-white text-end">Total</th>
-                            <th width='10%' class="text-white text-end">No Of Visits</th>
-                            <th width="10%" class="text-white">Status</th>
+                            <th class="text-white">Mobile</th>
+                            <th class="text-white">Nationality</th>
+                            <th class="text-white">First Visit Date</th>
+                            <th class="text-white text-end">Total</th>
+                            <th class="text-white text-end">No Of Visits</th>
+                            <th class="text-white">Status</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -59,6 +60,7 @@
                             <tr>
                                 <td>{{ $visit->name }}</td>
                                 <td>{{ $visit->mobile }}</td>
+                                <td>{{ $visit->nationality }}</td>
                                 <td>{{ systemDate($visit->first_sale_date) }}</td>
                                 <td class="text-end">{{ currency($visit->total) }}</td>
                                 <td class="text-end">{{ $visit->visits }}</td>
