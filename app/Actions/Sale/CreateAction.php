@@ -46,6 +46,13 @@ class CreateAction
                 }
             }
 
+            $model->update([
+                'gross_amount' => $model->items->sum('total'),
+                'total_discount' => $model->items->sum('discount'),
+                'tax_amount' => $model->items->sum('tax_amount'),
+                'paid' => $model->payments->sum('amount'),
+            ]);
+
             $return['success'] = true;
             $return['message'] = 'Successfully Created Sale';
             $return['data'] = $model;

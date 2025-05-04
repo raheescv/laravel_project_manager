@@ -26,8 +26,11 @@ class JournalEntryAction
 
             $accountIds = $this->getAccountIds(['Sales Returns', 'Inventory', 'Cost of Goods Sold', 'Tax Amount', 'Discount']);
 
-            $items = $model->items()->with('inventory')->get();
-            $totalCost = $items->sum(fn ($item) => $item->inventory->cost * $item->quantity);
+            // Cost of Goods Sold
+            $totalCost = $model->items()->with('product', 'inventory')
+                ->get()
+                ->filter(fn ($item) => $item->product?->type === 'product')
+                ->sum(fn ($item) => $item->inventory->cost * $item->quantity);
 
             $entries = [];
 

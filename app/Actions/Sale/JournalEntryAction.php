@@ -38,7 +38,10 @@ class JournalEntryAction
             }
 
             // Cost of Goods Sold
-            $totalCost = $sale->items()->with('inventory')->get()->sum(fn ($item) => $item->inventory->cost * $item->quantity);
+            $totalCost = $sale->items()->with('product', 'inventory')
+                ->get()
+                ->filter(fn ($item) => $item->product?->type === 'product')
+                ->sum(fn ($item) => $item->inventory->cost * $item->quantity);
 
             if ($totalCost > 0) {
                 $remarks = 'Cost of goods sold (Inventory transfer)';
