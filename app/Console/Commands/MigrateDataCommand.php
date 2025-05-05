@@ -27,6 +27,7 @@ class MigrateDataCommand extends Command
         $this->accounts();
         $this->customer();
         $this->service();
+        $this->products();
         $this->employees();
         $this->users();
         $this->sales();
@@ -41,13 +42,17 @@ class MigrateDataCommand extends Command
             ->whereIn('id', [1, 16, 94, 336])
             ->get();
         foreach ($account_heads as $value) {
-            $name = str_replace(' ', '_', $value->name);
+            $name = ucfirst(strtolower($value->name));
             $data = [
                 'second_reference_no' => $value->id,
                 'account_type' => 'asset',
                 'name' => $name,
             ];
-            DB::table('accounts')->insertOrIgnore((array) $data);
+            Account::updateOrCreate([
+                    'account_type' => $data['account_type'],
+                    'name' => $data['name'],
+                ], $data
+            );
         }
     }
 
@@ -120,14 +125,50 @@ class MigrateDataCommand extends Command
                                 $data['items'][] = $item;
                             }
 
+                            $sale_items = DB::connection('mysql2')
+                                ->table('sale_items')
+                                ->select(
+                                    'product_id',
+                                    'employee_id',
+                                    'unit_price',
+                                    DB::raw('SUM(quantity) as total_quantity'),
+                                    DB::raw('SUM(discount) as total_discount')
+                                )
+                                ->whereNull('deleted_at')
+                                ->where('sale_id', $sale->id)
+                                ->groupBy('product_id', 'employee_id', 'unit_price')
+                                ->get();
+
+                            foreach ($sale_items as $value) {
+                                $product_id = Product::where('type', 'product')
+                                    ->where('second_reference_no', $value->product_id)
+                                    ->value('id');
+                                $employee_id = User::where('type', 'employee')
+                                    ->where('second_reference_no', $value->employee_id)
+                                    ->value('id');
+                                $inventory_id = Inventory::where('product_id', $product_id)
+                                    ->value('id');
+
+                                $item = [
+                                    'inventory_id' => $inventory_id,
+                                    'employee_id' => $employee_id,
+                                    'product_id' => $product_id,
+                                    'unit_price' => $value->unit_price,
+                                    'quantity' => $value->total_quantity,
+                                    'gross_total' => $value->unit_price * $value->total_quantity,
+                                    'discount' => $value->total_discount,
+                                    'tax' => 0,
+                                    'total' => ($value->unit_price * $value->total_quantity) - $value->total_discount,
+                                ];
+                                $data['items'][] = $item;
+                            }
+
                             $data['items'] = collect($data['items']);
 
                             $data['gross_amount'] = $data['items']->sum('gross_total');
                             $data['item_discount'] = $data['items']->sum('discount');
                             $data['total_quantity'] = $data['items']->sum('quantity');
                             $data['total'] = $data['items']->sum('total');
-
-                            // $data['items'] = $data['items']->toArray();
 
                             $journals = DB::connection('mysql2')
                                 ->table('journals')
@@ -281,6 +322,59 @@ class MigrateDataCommand extends Command
         }
     }
 
+    private function products()
+    {
+        $this->info('Migrating products...');
+        $products = DB::connection('mysql2')
+            ->table('products')
+            ->whereNull('products.deleted_at')
+            ->leftJoin('brands', 'brand_id', '=', 'brands.id')
+            ->leftJoin('categories', 'category_id', '=', 'categories.id')
+            ->leftJoin('units', 'unit_id', '=', 'units.id')
+            ->get([
+                'products.*',
+                'brands.name as brand_name',
+                'categories.name as category_name',
+                'units.name as unit_name',
+            ]);
+        foreach ($products as $item) {
+            $name = ucfirst(strtolower($item->name));
+            if ($name == 'Shampoo') {
+                $name .= '.';
+            }
+            if ($name == 'Eyelashes') {
+                $name .= '.';
+            }
+            $serviceData = [
+                'type' => 'product',
+                'code' => $item->code,
+                'second_reference_no' => $item->id,
+                'name' => $name,
+                'name_arabic' => $item->name_arabic,
+                'department' => 'Service',
+                'main_category' => ucfirst(strtolower($item->category_name)),
+                'sub_category' => '',
+                'cost' => $item->cost,
+                'unit' => ucfirst(strtolower($item->unit_name)),
+                'brand' => ucfirst(strtolower($item->brand_name)),
+                'mrp' => $item->mrp,
+                'tax' => $item->tax,
+                'priority' => $item->priority ? $item->priority : 0,
+                'size' => $item->size,
+                'barcode' => $item->barcode,
+                'created_at' => $item->created_at,
+                'updated_at' => $item->updated_at,
+            ];
+            $data = Product::constructData($serviceData, 1);
+            unset($data['department']);
+            unset($data['unit']);
+            unset($data['main_category']);
+            unset($data['sub_category']);
+            $product = Product::create((array) $data);
+            BranchProductCreationJob::dispatch(1, 1, $product->id);
+        }
+    }
+
     private function service()
     {
         $this->info('Migrating services...');
@@ -302,7 +396,7 @@ class MigrateDataCommand extends Command
                 'cost' => $item->price,
                 'mrp' => $item->price,
                 'time' => $item->time,
-                'priority' => $item->priority,
+                'priority' => $item->priority ? $item->priority : 0,
                 'created_at' => $item->created_at,
                 'updated_at' => $item->updated_at,
             ];
@@ -344,6 +438,27 @@ class MigrateDataCommand extends Command
                 case 'EGYP':
                 case 'egyp':
                     $nationality = 'Egypt';
+                    break;
+                case 'NIGERIA':
+                    $nationality = 'Nigeria';
+                    break;
+                case 'moroccan':
+                    $nationality = 'Morocco';
+                    break;
+                case 'PHILIPINES':
+                    $nationality = 'Philippines';
+                    break;
+                case 'SAUDI':
+                    $nationality = 'Saudi Arabia';
+                    break;
+                case 'tunisian':
+                    $nationality = 'Tunisia';
+                    break;
+                case 'SERIA':
+                    $nationality = 'Syria';
+                    break;
+                case 'Pakistanis':
+                    $nationality = 'Pakistan';
                     break;
             }
             $customerData = [

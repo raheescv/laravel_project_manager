@@ -22,7 +22,7 @@
     <div class="row">
         <div class="col-md-12 mb-3">
             <div class="row">
-                <div class="col-md-6" id="saleAndSaleReturnArea">
+                <div class="col-md-7" id="saleAndSaleReturnArea">
                     <div class="card mb-3">
                         <div class="card-body">
                             <h5 class="card-title">Sales Overview</h5>
@@ -62,7 +62,7 @@
                                             <i class="d-flex align-items-center justify-content-center pli-money display-5"></i>
                                         </div>
                                         <div class="flex-grow-1 ms-4">
-                                            <h5 class="h2 mb-0">{{ currency($netSales) }}</h5>
+                                            <h5 class="h2 mb-0">{{ currency($netSales, 0) }}</h5>
                                             <p class=" text-opacity-75 mb-0">Net Sales</p>
                                         </div>
                                     </div>
@@ -77,7 +77,7 @@
                                             <i class="d-flex align-items-center justify-content-center pli-money display-5"></i>
                                         </div>
                                         <div class="flex-grow-1 ms-4">
-                                            <h5 class="h2 mb-0">{{ currency($saleDiscount) }}</h5>
+                                            <h5 class="h2 mb-0">{{ currency($saleDiscount, 0) }}</h5>
                                             <p class=" text-opacity-75 mb-0">Sales Discount</p>
                                         </div>
                                     </div>
@@ -94,7 +94,7 @@
                                             <i class="d-flex align-items-center justify-content-center pli-shop display-5"></i> <!-- Changed for Item Total -->
                                         </div>
                                         <div class="flex-grow-1 ms-4">
-                                            <h5 class="h2 mb-0">{{ currency($itemTotal) }}</h5>
+                                            <h5 class="h2 mb-0">{{ currency($itemTotal, 0) }}</h5>
                                             <p class="text-white text-opacity-75 mb-0">Item Total</p>
                                         </div>
                                     </div>
@@ -114,7 +114,7 @@
                                             <i class="d-flex align-items-center justify-content-center pli-reverbnation display-5"></i> <!-- Better icon for Service -->
                                         </div>
                                         <div class="flex-grow-1 ms-4">
-                                            <h5 class="h2 mb-0">{{ currency($serviceSale) }}</h5>
+                                            <h5 class="h2 mb-0">{{ currency($serviceSale, 0) }}</h5>
                                             <p class="text-white text-opacity-75 mb-0">Service</p>
                                         </div>
                                     </div>
@@ -134,7 +134,7 @@
                                             <i class="d-flex align-items-center justify-content-center pli-full-cart display-5"></i> <!-- Better icon for Product -->
                                         </div>
                                         <div class="flex-grow-1 ms-4">
-                                            <h5 class="h2 mb-0">{{ currency($productSale) }}</h5>
+                                            <h5 class="h2 mb-0">{{ currency($productSale, 0) }}</h5>
                                             <p class="text-white text-opacity-75 mb-0">Product</p>
                                         </div>
                                     </div>
@@ -148,7 +148,7 @@
                         </div>
                     </div>
                 </div>
-                <div class="col-md-6">
+                <div class="col-md-5">
                     <div class="card">
                         <div class="card-body">
                             <div class="col-md-12">

@@ -10,6 +10,7 @@ class ConfigurationSeeder extends Seeder
     public function run(): void
     {
         Configuration::firstOrCreate(['key' => 'barcode_type', 'value' => 'product_wise']);
+        Configuration::firstOrCreate(['key' => 'contact_no', 'value' => '9633155669']);
         $payment_methods = [1, 2];
         Configuration::updateOrCreate(['key' => 'payment_methods'], ['value' => json_encode($payment_methods)]);
         Configuration::updateOrCreate(['key' => 'default_status'], ['value' => 'completed']);
@@ -22,7 +23,7 @@ class ConfigurationSeeder extends Seeder
         Configuration::updateOrCreate(['key' => 'sale_type'], ['value' => 'version_1']);
         Configuration::updateOrCreate(['key' => 'sale_type'], ['value' => 'pos']);
         $saleVisibleColumns = [
-            'reference_no' => true,
+            'reference_no' => false,
             'branch_id' => false,
             'created_by' => true,
             'customer' => true,

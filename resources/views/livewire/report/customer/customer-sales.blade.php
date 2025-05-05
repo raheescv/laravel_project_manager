@@ -2,7 +2,7 @@
     <div class="card">
         <div class="card-body">
             <div class="table-responsive">
-                <table class="table table-hover">
+                <table class="table table-sm table-hover">
                     <thead>
                         <tr class="bg-primary">
                             <th class="text-white">Date</th>

@@ -54,14 +54,17 @@ class CustomerLocation extends Component
             ->when($this->nationality, fn ($q, $value) => $q->where('accounts.nationality', $value))
             ->when($this->from_date ?? '', fn ($q, $value) => $q->whereDate('sales.date', '>=', date('Y-m-d', strtotime($value))))
             ->when($this->to_date ?? '', fn ($q, $value) => $q->whereDate('sales.date', '<=', date('Y-m-d', strtotime($value))))
+            ->completed()
             ->whereNotNull('accounts.nationality')
             ->where('accounts.nationality', '!=', '')
-            ->selectRaw('accounts.nationality, COUNT(*) as customer_count')
+            ->where('accounts.model', 'customer')
+            ->selectRaw('accounts.nationality, COUNT(DISTINCT accounts.id) as customer_count')
             ->groupBy('accounts.nationality');
+
         $total = clone $query;
         $this->dataPoints = [];
-        $productList = $total->orderBy('customer_count', 'DESC')->limit(10)->pluck('customer_count', 'nationality')->toArray();
-        foreach ($productList as $label => $value) {
+        $list = $total->orderBy('customer_count', 'DESC')->limit(10)->pluck('customer_count', 'nationality')->toArray();
+        foreach ($list as $label => $value) {
             $this->dataPoints[] = [
                 'label' => $label,
                 'y' => $value,

@@ -135,6 +135,7 @@ class Table extends Component
             'customer_id' => $this->customer_id,
             'sale_type' => $this->sale_type,
             'created_by' => $this->created_by,
+            'payment_method_id' => $this->payment_method_id,
             'status' => $this->status,
             'from_date' => $this->from_date,
             'to_date' => $this->to_date,
@@ -142,51 +143,49 @@ class Table extends Component
 
         return Sale::with('branch')
             ->join('accounts', 'accounts.id', '=', 'sales.account_id')
-            ->leftJoin('sale_payments', function ($join) {
-                $join->on('sales.id', '=', 'sale_payments.sale_id');
+            ->filter($filters);
 
-                // Optional filter by payment method in subquery
-                $subquery = DB::table('sale_payments as sp')
-                    ->select('sp.id')
-                    ->whereColumn('sp.sale_id', 'sales.id')
-                    ->when($this->payment_method_id, function ($query) {
-                        $query->where('sp.payment_method_id', $this->payment_method_id);
-                    })
-                    ->orderBy('sp.created_at', 'asc')
-                    ->limit(1);
-
-                $join->whereRaw("sale_payments.id = ({$subquery->toSql()})", $subquery->getBindings());
-            })
-            ->join('accounts as payment_method', 'payment_method.id', '=', 'sale_payments.payment_method_id')
-            ->select([
-                'sales.*',
-                'accounts.name',
-                'payment_method.name as payment_method_name',
-            ])
-            ->filter($filters)
-            ->orderBy($this->sortField, $this->sortDirection);
     }
 
     public function render()
     {
+        // DB::enableQueryLog();
         $query = $this->getBaseQuery();
-        $totalRow = clone $query;
+        $totals = clone $query;
+
+        $sql = '
+            SUM(gross_amount) as gross_amount,
+            SUM(item_discount) as item_discount,
+            SUM(tax_amount) as tax_amount,
+            SUM(total) as total,
+            SUM(other_discount) as other_discount,
+            SUM(freight) as freight,
+            SUM(grand_total) as grand_total,
+            SUM(paid) as paid,
+            SUM(balance) as balance
+        ';
+        $total = $totals->selectRaw($sql)
+            ->useIndex('sale_date_branch_id_status_index')
+            ->first();
 
         $total = [
-            'gross_amount' => $totalRow->sum('gross_amount'),
-            'item_discount' => $totalRow->sum('item_discount'),
-            'tax_amount' => $totalRow->sum('tax_amount'),
-            'total' => $totalRow->sum('total'),
-            'other_discount' => $totalRow->sum('other_discount'),
-            'freight' => $totalRow->sum('freight'),
-            'grand_total' => $totalRow->sum('grand_total'),
-            'paid' => $totalRow->sum('paid'),
-            'balance' => $totalRow->sum('balance'),
+            'gross_amount' => $total->gross_amount ?? 0,
+            'item_discount' => $total->item_discount ?? 0,
+            'tax_amount' => $total->tax_amount ?? 0,
+            'total' => $total->total ?? 0,
+            'other_discount' => $total->other_discount ?? 0,
+            'freight' => $total->freight ?? 0,
+            'grand_total' => $total->grand_total ?? 0,
+            'paid' => $total->paid ?? 0,
+            'balance' => $total->balance ?? 0,
         ];
 
+        // info(DB::getQueryLog());
         return view('livewire.sale.table', [
             'total' => $total,
-            'data' => $query->paginate($this->limit),
+            'data' => $query->select('sales.*', 'accounts.name')
+                ->orderBy($this->sortField, $this->sortDirection)
+                ->paginate($this->limit),
         ]);
     }
 }

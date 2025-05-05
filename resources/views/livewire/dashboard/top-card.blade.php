@@ -8,11 +8,11 @@
                         <ul class="list-group list-group-borderless">
                             <li class="list-group-item p-0 text-reset d-flex justify-content-between align-items-start">
                                 <div class="me-auto">Today</div>
-                                <span class="fw-bold">{{ currency($todayPayment) }}</span>
+                                <span class="fw-bold">{{ currency($todayPayment, 0) }}</span>
                             </li>
                             <li class="list-group-item p-0 text-reset d-flex justify-content-between align-items-start">
                                 <div class="me-auto">Last 7 Day</div>
-                                <span class="fw-bold">{{ currency($weeklyPayment) }}</span>
+                                <span class="fw-bold">{{ currency($weeklyPayment, 0) }}</span>
                             </li>
                         </ul>
                     </div>
@@ -30,11 +30,11 @@
                         <ul class="list-group list-group-borderless">
                             <li class="list-group-item p-0 text-reset d-flex justify-content-between align-items-start">
                                 <div class="me-auto">Today</div>
-                                <span class="fw-bold">{{ currency($todaySale) }}</span>
+                                <span class="fw-bold">{{ currency($todaySale, 0) }}</span>
                             </li>
                             <li class="list-group-item p-0 text-reset d-flex justify-content-between align-items-start">
                                 <div class="me-auto">Last 7 Day</div>
-                                <span class="fw-bold">{{ currency($weeklyPayment) }}</span>
+                                <span class="fw-bold">{{ currency($weeklyPayment, 0) }}</span>
                             </li>
                         </ul>
                     </div>
@@ -50,7 +50,7 @@
             <div class="card-body text-center">
                 <div class="d-flex align-items-center">
                     <div class="flex-shrink-0 p-3">
-                        <div class="h3 display-3">{{ $stockCost }}</div>
+                        <div class="h display-3">{{ currency($stockCost, 0) }}</div>
                         <span class="h6">Total Stocks</span>
                     </div>
                     <div class="flex-grow-1 text-center ms-3">

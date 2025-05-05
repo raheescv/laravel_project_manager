@@ -43,7 +43,7 @@
     <div class="card">
         <div class="card-body">
             <div class="table-responsive">
-                <table class="table table-hover">
+                <table class="table table-hover table-sm">
                     <thead>
                         <tr class="bg-primary">
                             <th width='40%' class="text-white">Customer</th>
@@ -61,7 +61,7 @@
                                 <td>{{ $visit->name }}</td>
                                 <td>{{ $visit->mobile }}</td>
                                 <td>{{ $visit->nationality }}</td>
-                                <td>{{ systemDate($visit->first_sale_date) }}</td>
+                                <td>{{ systemDate($visit->first_sale_date ?? '') }}</td>
                                 <td class="text-end">{{ currency($visit->total) }}</td>
                                 <td class="text-end">{{ $visit->visits }}</td>
                                 <td>

@@ -11,7 +11,7 @@ class BranchSeeder extends Seeder
     {
         DB::table('branches')->truncate();
         $data = [];
-        $data[] = ['name' => 'Main', 'code' => 'M', 'location' => ''];
+        $data[] = ['name' => 'Main', 'code' => 'M', 'location' => '', 'mobile' => '9633155669'];
         DB::table('branches')->insert($data);
     }
 }

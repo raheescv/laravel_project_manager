@@ -18,32 +18,32 @@
         <div class="content__wrap">
             <div class="row  mb-3">
                 @if (auth()->user()->can('sale.dashboard weekly summary') || auth()->user()->can('inventory.dashboard status'))
-                    <div class="col-xl-4 mb-xl-0">
+                    <div class="col-xl-6 mb-xl-0">
                         @livewire('dashboard.top-card')
                     </div>
                 @endif
-                @can('report.income vs expense dashboard pie chart')
-                    <div class="col-xl-3">
-                        @livewire('income-expense-chart')
-                    </div>
-                @endcan
                 @can('sale.dashboard top items')
-                    <div class="col-xl-5">
+                    <div class="col-xl-6">
                         @livewire('dashboard.top-sale-items')
                     </div>
                 @endcan
             </div>
-            @can('sale.dashboard bar chart')
-                <div class="row mb-3">
+            <div class="row mb-3">
+                @can('sale.dashboard bar chart')
                     <div class="col-xl-12 mb-xl-0">
                         @livewire('dashboard.sale.overview')
                     </div>
-                </div>
-            @endcan
+                @endcan
+            </div>
             <div class="row">
                 @can('report.income vs expense dashboard bar chart')
-                    <div class="col-xl-12">
+                    <div class="col-xl-9">
                         @livewire('dashboard.income-expense-bar-chart')
+                    </div>
+                @endcan
+                @can('report.income vs expense dashboard pie chart')
+                    <div class="col-xl-3">
+                        @livewire('income-expense-chart')
                     </div>
                 @endcan
             </div>

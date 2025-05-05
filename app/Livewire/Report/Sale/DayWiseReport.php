@@ -204,6 +204,7 @@ class DayWiseReport extends Component
 
         foreach ($payments as $payment) {
             $key = "{$payment->date}_{$payment->branch_id}";
+            $methodName = ucfirst(strtolower($payment->payment_method_name));
 
             // Create default row if not exists
             if (! isset($summary[$key])) {
@@ -220,8 +221,13 @@ class DayWiseReport extends Component
                 ], $emptyPaymentColumns);
             }
 
+            // Ensure payment method key exists
+            if (! isset($summary[$key][$methodName])) {
+                $summary[$key][$methodName] = 0;
+            }
+
             // Fill the correct method
-            $summary[$key][$payment->payment_method_name] += (float) $payment->amount;
+            $summary[$key][$methodName] += (float) $payment->amount;
         }
 
         // Compute totals
