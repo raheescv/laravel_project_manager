@@ -108,6 +108,7 @@ class MigrateDataCommand extends Command
                                 $item = [
                                     'inventory_id' => $inventory_id,
                                     'product_id' => $product_id,
+                                    'batch' => $value->batch,
                                     'unit_price' => $value->unit_price,
                                     'net_amount' => $value->unit_price * $value->quantity,
                                     'quantity' => $value->quantity,
