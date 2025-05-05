@@ -10,7 +10,7 @@
                 var url = "{{ route('product::list') }}";
                 url += '?query=' + encodeURIComponent(query);
                 if (type) {
-                    url += '?type=' + encodeURIComponent(type);
+                    url += '&type=' + encodeURIComponent(type);
                 }
                 fetch(url)
                     .then(response => {

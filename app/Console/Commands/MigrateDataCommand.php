@@ -2,7 +2,8 @@
 
 namespace App\Console\Commands;
 
-use App\Actions\Sale\CreateAction;
+use App\Actions\Purchase\CreateAction as PurchaseCreateAction;
+use App\Actions\Sale\CreateAction as SaleCreateAction;
 use App\Jobs\BranchProductCreationJob;
 use App\Models\Account;
 use App\Models\Inventory;
@@ -26,11 +27,13 @@ class MigrateDataCommand extends Command
 
         $this->accounts();
         $this->customer();
+        $this->vendor();
         $this->service();
         $this->products();
         $this->employees();
         $this->users();
         $this->sales();
+        $this->purchases();
 
         $this->info('Data migration completed successfully!');
     }
@@ -54,6 +57,103 @@ class MigrateDataCommand extends Command
                 ], $data
             );
         }
+    }
+
+    private function purchases()
+    {
+        $this->info('Migrating purchases...');
+
+        // Get total count for progress bar
+        $totalPurchases = DB::connection('mysql2')
+            ->table('purchases')
+            ->whereNull('deleted_at')
+            ->count();
+
+        $progressBar = $this->output->createProgressBar($totalPurchases);
+        $progressBar->start();
+
+        DB::connection('mysql2')
+            ->table('purchases')
+            ->whereNull('purchases.deleted_at')
+            ->orderBy('purchases.id')
+            ->chunk(100, function ($purchases) use ($progressBar) {
+                foreach ($purchases as $purchase) {
+                    $progressBar->advance();
+                    try {
+                        DB::transaction(function () use ($purchase) {
+                            $account = Account::where('second_reference_no', $purchase->vendor_id)->first();
+                            $created_by = User::where('type', 'user')->where('second_reference_no', $purchase->created_by)->value('id');
+                            $updated_by = User::where('type', 'user')->where('second_reference_no', $purchase->updated_by)->value('id');
+                            $data = [
+                                'branch_id' => 1,
+                                'date' => $purchase->date,
+                                'delivery_date' => $purchase->delivery_date,
+                                'invoice_no' => $purchase->invoice_no,
+                                'account_id' => $account->id,
+                                'other_discount' => $purchase->other_discount,
+                                'freight' => 0,
+                                'status' => 'completed',
+                                'created_by' => $created_by,
+                                'updated_by' => $updated_by,
+                            ];
+                            $data['items'] = [];
+                            $purchase_items = DB::connection('mysql2')
+                                ->table('purchase_items')
+                                ->whereNull('deleted_at')
+                                ->where('purchase_id', $purchase->id)
+                                ->get();
+                            foreach ($purchase_items as $value) {
+                                $product_id = Product::where('type', 'product')->where('second_reference_no', $value->product_id)->value('id');
+                                $inventory_id = Inventory::where('product_id', $product_id)->value('id');
+                                $item = [
+                                    'inventory_id' => $inventory_id,
+                                    'product_id' => $product_id,
+                                    'unit_price' => $value->unit_price,
+                                    'net_amount' => $value->unit_price * $value->quantity,
+                                    'quantity' => $value->quantity,
+                                    'discount' => $value->discount,
+                                    'tax' => 0,
+                                    'total' => ($value->unit_price * $value->quantity) - $value->discount,
+                                ];
+                                $data['items'][] = $item;
+                            }
+                            $data['items'] = collect($data['items']);
+                            $data['gross_amount'] = $data['items']->sum('net_amount');
+                            $data['item_discount'] = $data['items']->sum('discount');
+                            $data['total_quantity'] = $data['items']->sum('quantity');
+                            $data['total'] = $data['items']->sum('total');
+                            $journals = DB::connection('mysql2')
+                                ->table('journals')
+                                ->whereNull('deleted_at')
+                                ->where('purchase_id', $purchase->id)
+                                ->whereIn('credit', [1, 16, 94, 336])
+                                ->get();
+                            $data['payments'] = [];
+                            foreach ($journals as $value) {
+                                $account_id = Account::where('second_reference_no', $value->credit)->value('id');
+                                $journal = [
+                                    'payment_method_id' => $account_id,
+                                    'amount' => $value->amount,
+                                ];
+                                $data['payments'][] = $journal;
+                            }
+                            $data['payments'] = collect($data['payments']);
+                            $data['paid'] = $data['payments']->sum('amount');
+                            $response = (new PurchaseCreateAction())->execute($data, 1);
+                            if (! $response['success']) {
+                                $this->error('Failed to create purchase: '.$response['message']);
+                                Log::error('Failed to create purchase: '.$response['message']);
+                                Log::error($data);
+                            }
+                        });
+                    } catch (\Exception $e) {
+                        Log::error('Purchase migration error: '.$e->getMessage());
+                    }
+                }
+            });
+        $progressBar->finish();
+        $this->newLine();
+        $this->info('Purchase migration completed successfully!');
     }
 
     private function sales()
@@ -155,7 +255,7 @@ class MigrateDataCommand extends Command
                                     'product_id' => $product_id,
                                     'unit_price' => $value->unit_price,
                                     'quantity' => $value->total_quantity,
-                                    'gross_total' => $value->unit_price * $value->total_quantity,
+                                    'net_amount' => $value->unit_price * $value->total_quantity,
                                     'discount' => $value->total_discount,
                                     'tax' => 0,
                                     'total' => ($value->unit_price * $value->total_quantity) - $value->total_discount,
@@ -165,7 +265,7 @@ class MigrateDataCommand extends Command
 
                             $data['items'] = collect($data['items']);
 
-                            $data['gross_amount'] = $data['items']->sum('gross_total');
+                            $data['gross_amount'] = $data['items']->sum('net_amount');
                             $data['item_discount'] = $data['items']->sum('discount');
                             $data['total_quantity'] = $data['items']->sum('quantity');
                             $data['total'] = $data['items']->sum('total');
@@ -185,7 +285,7 @@ class MigrateDataCommand extends Command
                                 ];
                                 $data['payments'][] = $journal;
                             }
-                            $response = (new CreateAction())->execute($data, 1);
+                            $response = (new SaleCreateAction())->execute($data, 1);
                             if (! $response['success']) {
                                 $this->error('Failed to create sale: '.$response['message']);
                                 Log::error('Failed to create sale: '.$response['message']);
@@ -407,6 +507,28 @@ class MigrateDataCommand extends Command
             unset($data['sub_category']);
             $product = Product::create((array) $data);
             BranchProductCreationJob::dispatch(1, 1, $product->id);
+        }
+    }
+
+    private function vendor()
+    {
+        $this->info('Migrating vendors...');
+        $vendors = DB::connection('mysql2')->table('vendors')
+            ->join('account_heads', 'vendors.account_head_id', '=', 'account_heads.id')
+            ->get();
+        foreach ($vendors as $vendor) {
+            $vendorData = [
+                'account_type' => 'liability',
+                'second_reference_no' => $vendor->account_head_id,
+                'model' => 'vendor',
+                'name' => ucfirst(strtolower($vendor->name)),
+                'email' => $vendor->email,
+                'mobile' => $vendor->mobile,
+                'place' => $vendor->place,
+                'created_at' => $vendor->created_at,
+                'updated_at' => $vendor->updated_at,
+            ];
+            DB::table('accounts')->insertOrIgnore((array) $vendorData);
         }
     }
 

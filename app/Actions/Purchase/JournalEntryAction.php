@@ -16,6 +16,7 @@ class JournalEntryAction
 
             $data = [
                 'date' => $purchase->date,
+                'branch_id' => $purchase->branch_id,
                 'description' => 'Purchase:'.$purchase->invoice_no,
                 'reference_no' => $purchase->reference_no,
                 'source' => 'purchase',

@@ -53,6 +53,7 @@
                         <th> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="name" label="name" /> </th>
                         <th> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="mobile" label="mobile" /> </th>
                         <th> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="email" label="email" /> </th>
+                        <th> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="place" label="place" /> </th>
                         <th class="text-end"> Action </th>
                     </tr>
                 </thead>
@@ -66,6 +67,7 @@
                             <td>{{ $item->name }}</td>
                             <td>{{ $item->mobile }}</td>
                             <td>{{ $item->email }}</td>
+                            <td>{{ $item->place }}</td>
                             <td class="text-end">
                                 @can('vendor.edit')
                                     <i table_id="{{ $item->id }}" class="demo-psi-pencil fs-5 me-2 pointer edit"></i>

@@ -59,6 +59,7 @@ class Page extends Component
                 'mobile' => $mobile,
                 'email' => $email,
                 'model' => 'Vendor',
+                'place' => '',
             ];
         } else {
             $account = Account::find($this->table_id);

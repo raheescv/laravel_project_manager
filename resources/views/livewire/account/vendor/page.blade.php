@@ -16,15 +16,15 @@
                     @endif
                 </div>
             </div>
-            <div class="row mb-2">
+            <div class="row mb-3">
                 <div class="col-md-12">
                     <div class="form-group">
-                        <b><label for="name" class="text-capitalize">name</label></b>
+                        <b><label for="name" class="text-capitalize">name *</label></b>
                         {{ html()->input('name')->value('')->class('form-control')->attribute('wire:model', 'accounts.name') }}
                     </div>
                 </div>
             </div>
-            <div class="row">
+            <div class="row mb-3">
                 <div class="col-md-6">
                     <div class="form-group">
                         <b><label for="mobile" class="text-capitalize">mobile</label></b>
@@ -35,6 +35,14 @@
                     <div class="form-group">
                         <b><label for="email" class="text-capitalize">email</label></b>
                         {{ html()->email('email')->value('')->class('form-control')->attribute('wire:model', 'accounts.email') }}
+                    </div>
+                </div>
+            </div>
+            <div class="row mb-3">
+                <div class="col-md-12">
+                    <div class="form-group">
+                        <b><label for="place" class="text-capitalize">Place</label></b>
+                        {{ html()->input('place')->value('')->class('form-control')->attribute('wire:model', 'accounts.place') }}
                     </div>
                 </div>
             </div>
