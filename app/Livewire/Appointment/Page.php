@@ -175,10 +175,6 @@ class Page extends Component
 
     public function render()
     {
-        $products = Product::service()->active()->orderBy('name')->get();
-
-        return view('livewire.appointment.page', [
-            'products' => $products,
-        ]);
+        return view('livewire.appointment.page');
     }
 }
