@@ -89,6 +89,11 @@ class Product extends Model implements AuditableContracts
         return $query->where('type', 'product');
     }
 
+    public function scopeActive($query)
+    {
+        return $query->where('is_selling', true);
+    }
+
     public function scopeIsSelling($query)
     {
         return $query->where('is_selling', true);

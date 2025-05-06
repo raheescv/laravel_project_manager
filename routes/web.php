@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\AppointmentController;
 use App\Http\Controllers\AuditController;
 use App\Http\Controllers\BackupController;
 use App\Http\Controllers\HomeController;
@@ -36,5 +37,9 @@ Route::middleware('auth')->group(function (): void {
         Route::get('/', 'index')->name('index')->can('backup.view');
         Route::get('download/{file}', 'get')->name('download')->can('backup.download');
         Route::get('create', 'store')->name('create')->can('backup.create');
+    });
+
+    Route::name('appointments::')->prefix('appointments')->controller(AppointmentController::class)->group(function (): void {
+        Route::get('', 'index')->name('index');
     });
 });

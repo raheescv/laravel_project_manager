@@ -17,8 +17,11 @@ class Whatsapp extends Component
 
     public $message = null;
 
+    public $retry = 0;
+
     public function mount()
     {
+        $this->retry = 0;
         $this->number = '+919633155669';
         $this->message = 'This is a sample message from ASTRA Group';
         $this->checkClientStatus();
@@ -26,8 +29,12 @@ class Whatsapp extends Component
 
     public function getWhatsappQr()
     {
+        if ($this->retry > 3) {
+            return false;
+        }
         $response = WhatsappHelper::getCall('get-qr');
         if (! $response['success']) {
+            $this->retry++;
             $this->dispatch('error', ['message' => 'QR not returned']);
 
             return false;

@@ -72,7 +72,7 @@ class SaleItem extends Model implements AuditableContracts
 
     public function getEffectiveTotalAttribute()
     {
-        if ($this->sale?->other_discount) {
+        if ($this->sale?->other_discount != 0 && $this->sale->total != 0) {
             $discount_percentage = ($this->sale->other_discount / $this->sale->total) * 100;
 
             return round($this->total - ($discount_percentage * $this->total) / 100, 3);
