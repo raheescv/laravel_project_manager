@@ -1,4 +1,101 @@
 <div>
+    <style>
+        .fc {
+            --fc-border-color: #e5e7eb;
+            --fc-button-bg-color: #24447f;
+            --fc-button-border-color: #24447f;
+            --fc-button-hover-bg-color: #1B2850;
+            --fc-button-hover-border-color: #1B2850;
+            --fc-button-active-bg-color: #092C4C;
+            --fc-button-active-border-color: #092C4C;
+            --fc-event-bg-color: #28C76F;
+            --fc-event-border-color: #28C76F;
+            --fc-today-bg-color: rgba(40, 199, 111, 0.1);
+        }
+
+        .fc .fc-toolbar-title {
+            font-size: 1.75rem;
+            font-weight: 600;
+            color: #092C4C;
+            text-transform: capitalize;
+        }
+
+        .fc .fc-button {
+            padding: 0.6rem 1.2rem;
+            font-weight: 500;
+            border-radius: 0.5rem;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+            transition: all 0.2s ease-in-out;
+            text-transform: capitalize;
+        }
+
+        .fc .fc-button:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.12);
+        }
+
+        .fc .fc-button:active {
+            transform: translateY(0);
+        }
+
+        .fc .fc-event {
+            border-radius: 6px;
+            padding: 0.35rem 0.5rem;
+            font-size: 0.875rem;
+            font-weight: 500;
+            border: none;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.06);
+            transition: all 0.2s ease;
+        }
+
+        .fc .fc-event:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.12);
+        }
+
+        .fc .fc-col-header-cell {
+            background-color: #f8fafc;
+            padding: 1.25rem 0;
+            border-width: 1px;
+        }
+
+        .fc .fc-col-header-cell-cushion {
+            font-weight: 600;
+            color: #1B2850;
+        }
+
+        .fc .fc-day-today {
+            background-color: var(--fc-today-bg-color) !important;
+        }
+
+        .fc .fc-timegrid-slot {
+            height: 3.5em;
+            border-bottom: 1px dashed #e5e7eb;
+        }
+
+        .fc .fc-timegrid-slot-label {
+            font-size: 0.875rem;
+            color: #64748b;
+        }
+
+        .fc .fc-timegrid-now-indicator-line {
+            border-color: #FF9F43;
+        }
+
+        .fc .fc-timegrid-now-indicator-arrow {
+            border-color: #FF9F43;
+            background-color: #FF9F43;
+        }
+
+        .fc-direction-ltr .fc-timegrid-col-events {
+            margin: 0 5px;
+        }
+
+        .fc-theme-standard td,
+        .fc-theme-standard th {
+            border-color: #f1f5f9;
+        }
+    </style>
     <div class="card-header">
         <div class="col-lg-12">
             <div class="row">
@@ -74,6 +171,55 @@
                     expandRows: true,
                     height: 'auto',
                     initialView: 'resourceTimeGridDay',
+                    // Enhanced visual configurations
+                    eventDisplay: 'block',
+                    eventBackgroundColor: '#4f46e5',
+                    eventBorderColor: 'transparent',
+                    nowIndicator: true,
+                    dayMaxEvents: 4,
+                    navLinks: true,
+                    weekNumbers: true,
+                    weekNumberFormat: {
+                        week: 'numeric'
+                    },
+                    eventTimeFormat: {
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        meridiem: false,
+                        hour12: false
+                    },
+                    slotLabelFormat: {
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        hour12: false
+                    },
+                    views: {
+                        resourceTimeGridDay: {
+                            type: 'resourceTimeGrid',
+                            duration: {
+                                days: 1
+                            },
+                            buttonText: 'Day',
+                            slotDuration: '00:15:00',
+                            slotLabelInterval: '01:00',
+                        },
+                        resourceTimeGridWeek: {
+                            type: 'resourceTimeGrid',
+                            duration: {
+                                weeks: 1
+                            },
+                            buttonText: 'Week',
+                            slotDuration: '00:30:00',
+                            slotLabelInterval: '01:00',
+                        },
+                        resourceDayGridMonth: {
+                            type: 'resourceDayGridMonth',
+                            buttonText: 'Month',
+                        },
+                        listWeek: {
+                            buttonText: 'List'
+                        }
+                    },
                     resources: function(fetchInfo, successCallback, failureCallback) {
                         console.log(fetchInfo);
                         @this.getResources(fetchInfo).then(events => {
@@ -90,22 +236,6 @@
                         });
                     },
                     themeSystem: "bootstrap5",
-                    views: {
-                        resourceTimeGridDay: {
-                            type: 'resourceTimeGrid',
-                            duration: {
-                                days: 1
-                            },
-                            buttonText: 'day'
-                        },
-                        resourceTimeGridWeek: {
-                            type: 'resourceTimeGrid',
-                            duration: {
-                                weeks: 1
-                            },
-                            buttonText: 'week'
-                        }
-                    },
                     slotLabelInterval: '00:10:00',
                     slotDuration: '00:10:00',
                     allDaySlot: true,
