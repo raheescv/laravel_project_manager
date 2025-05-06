@@ -98,6 +98,7 @@
                 $('#account_id').on('change', function(e) {
                     const value = $(this).val() || null;
                     @this.set('appointments.account_id', value);
+                    document.querySelector('#modal_employee_id').tomselect.open();
                 });
                 $('#modal_service_id').on('change', function(e) {
                     const value = $(this).val() || null;
@@ -106,6 +107,27 @@
                 $('#modal_employee_id').on('change', function(e) {
                     const value = $(this).val() || null;
                     @this.set('item.employee_id', value);
+                    document.querySelector('#modal_service_id').tomselect.open();
+                });
+                window.addEventListener('SelectDropDownValues', event => {
+                    var data = event.detail[0];
+                    @this.set('appointments.account_id', data.account_id);
+
+                    var tomSelectInstance = document.querySelector('#account_id').tomselect;
+                    if (data.account_id) {
+                        preselectedData = {
+                            id: data.account_id,
+                            name: data.account_name,
+                        };
+                        tomSelectInstance.addOption(preselectedData);
+                        tomSelectInstance.addItem(preselectedData.id);
+                    } else {
+                        tomSelectInstance.clear();
+                    }
+                    var tomSelectInstance = document.querySelector('#modal_service_id').tomselect;
+                    tomSelectInstance.clear();
+                    var tomSelectInstanceEmployee = document.querySelector('#modal_employee_id').tomselect;
+                    tomSelectInstanceEmployee.clear();
                 });
             });
         </script>

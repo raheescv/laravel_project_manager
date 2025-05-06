@@ -32,13 +32,15 @@ class Page extends Component
     public function mount($table_id = null)
     {
         $this->table_id = $table_id;
+        $this->items = [];
         $this->item = [
-            'service_id' => null,
-            'employee_id' => null,
+        'service_id' => null,
+        'employee_id' => null,
         ];
         if ($table_id) {
-            $appointment = Appointment::with(['items', 'items.service:id,name', 'items.employee:id,name'])->find($table_id);
+            $appointment = Appointment::with(['items', 'account:id,name', 'items.service:id,name', 'items.employee:id,name'])->find($table_id);
             $this->appointments = $appointment->toArray();
+            $this->appointments['account_name'] = $appointment->account?->name;
             $this->appointments['start_time'] = date('Y-m-d H:i', strtotime($appointment->start_time));
             $this->appointments['end_time'] = date('Y-m-d H:i', strtotime($appointment->end_time));
             $this->items = $appointment->items->mapWithKeys(function ($item) {
@@ -58,6 +60,7 @@ class Page extends Component
             $this->appointments = [
                 'branch_id' => session('branch_id'),
                 'account_id' => null,
+                'account_name' => null,
                 'start_time' => date('Y-m-d H:i'),
                 'end_time' => date('Y-m-d H:i', strtotime('+1 hour')),
                 'color' => '#3788d8',
@@ -65,6 +68,7 @@ class Page extends Component
                 'status' => 'pending',
             ];
         }
+        $this->dispatch('SelectDropDownValues', $this->appointments);
     }
 
     public function create()
