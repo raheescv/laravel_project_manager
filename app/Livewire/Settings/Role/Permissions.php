@@ -2,7 +2,6 @@
 
 namespace App\Livewire\Settings\Role;
 
-use Illuminate\Support\Facades\Artisan;
 use Livewire\Component;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
@@ -74,7 +73,17 @@ class Permissions extends Component
 
     public function syncPermission()
     {
-        Artisan::call('db:seed --class=PermissionSeeder');
+        try {
+            $seeder = new \Database\Seeders\PermissionSeeder();
+            $seeder->run();
+
+            // Re-mount to refresh permissions
+            $this->mount($this->role_id);
+
+            $this->dispatch('success', ['message' => 'Permissions synchronized successfully']);
+        } catch (\Exception $e) {
+            $this->dispatch('error', ['message' => 'Error synchronizing permissions: '.$e->getMessage()]);
+        }
     }
 
     public function moduleSelect($module)

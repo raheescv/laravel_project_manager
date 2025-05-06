@@ -83,7 +83,7 @@
                     <tr class="text-capitalize">
                         <th>
                             <input type="checkbox" wire:model.live="selectAll" />
-                            <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="id" label="#" />
+                            <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="sales.id" label="#" />
                         </th>
                         <th> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="date" label="date" /> </th>
                         <th> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="invoice_no" label="invoice no" /> </th>

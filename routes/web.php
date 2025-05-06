@@ -39,7 +39,8 @@ Route::middleware('auth')->group(function (): void {
         Route::get('create', 'store')->name('create')->can('backup.create');
     });
 
-    Route::name('appointments::')->prefix('appointments')->controller(AppointmentController::class)->group(function (): void {
-        Route::get('', 'index')->name('index');
+    Route::name('appointment::')->prefix('appointment')->controller(AppointmentController::class)->group(function (): void {
+        Route::get('list', 'index')->name('list')->can('appointment.view');
+        Route::get('employee-calendar', 'calendar')->name('index')->can('appointment.view');
     });
 });

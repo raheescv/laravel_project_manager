@@ -101,7 +101,7 @@ class Table extends Component
 
     public function updatedSelectAll($value)
     {
-        $this->selected = $value ? $this->getBaseQuery()->limit(2000)->pluck('id')->toArray() : [];
+        $this->selected = $value ? $this->getBaseQuery()->select('sales.id')->limit(2000)->pluck('sales.id')->toArray() : [];
     }
 
     public function export()

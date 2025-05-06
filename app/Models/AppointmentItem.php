@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Validation\Rule;
 use OwenIt\Auditing\Auditable;
@@ -60,5 +61,27 @@ class AppointmentItem extends Model implements AuditableContracts
     public function employee()
     {
         return $this->belongsTo(User::class, 'employee_id');
+    }
+
+    public function scopeFilter(Builder $query, array $filters): Builder
+    {
+        return $query
+            ->when($filters['search'] ?? '', function ($q, $search) {
+                $search = trim($search);
+
+                return $q->where(function ($q) use ($search) {
+                    $q->where('accounts.name', 'like', "%{$search}%")
+                        ->orWhere('users.name', 'like', "%{$search}%")
+                        ->orWhere('products.name', 'like', "%{$search}%");
+                });
+            })
+            ->when($filters['created_by'] ?? '', fn ($q, $value) => $q->where('appointment_items.created_by', $value))
+            ->when($filters['branch_id'] ?? '', fn ($q, $value) => $q->where('appointments.branch_id', $value))
+            ->when($filters['customer_id'] ?? '', fn ($q, $value) => $q->where('appointments.account_id', $value))
+            ->when($filters['service_id'] ?? '', fn ($q, $value) => $q->where('appointment_items.service_id', $value))
+            ->when($filters['employee_id'] ?? '', fn ($q, $value) => $q->where('appointment_items.employee_id', $value))
+            ->when($filters['status'] ?? '', fn ($q, $value) => $q->where('appointments.status', $value))
+            ->when($filters['from_date'] ?? '', fn ($q, $value) => $q->whereDate('appointments.start_time', '>=', date('Y-m-d', strtotime($value))))
+            ->when($filters['to_date'] ?? '', fn ($q, $value) => $q->whereDate('appointments.start_time', '<=', date('Y-m-d', strtotime($value))));
     }
 }

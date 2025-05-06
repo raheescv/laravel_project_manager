@@ -122,6 +122,7 @@ class Sale extends Model implements AuditableContracts
             ->when($filters['sale_type'] ?? '', fn ($q, $value) => $q->where('sales.sale_type', $value))
             ->when($filters['created_by'] ?? '', fn ($q, $value) => $q->where('sales.created_by', $value))
             ->when($filters['branch_id'] ?? '', fn ($q, $value) => $q->where('branch_id', $value))
+            ->when($filters['customer_id'] ?? '', fn ($q, $value) => $q->where('account_id', $value))
             ->when($filters['payment_method_id'] ?? '', function ($q, $value) {
                 return $q->whereRaw('FIND_IN_SET(?, payment_method_ids)', [$value]);
             })

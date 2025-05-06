@@ -326,12 +326,14 @@
                     aspectRatio: 1.5,
                     eventResourceEditable: true, // except for between resources
                     customButtons: {
-                        myCustomButton: {
-                            text: 'Add Appointment',
-                            click: function() {
-                                Livewire.dispatch('Create-Appointment-Page-Component');
+                        @can('appointment.create')
+                            myCustomButton: {
+                                text: 'Add Appointment',
+                                click: function() {
+                                    Livewire.dispatch('Create-Appointment-Page-Component');
+                                }
                             }
-                        }
+                        @endcan
                     },
                     headerToolbar: {
                         left: 'prev,next,myCustomButton',

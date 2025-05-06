@@ -66,6 +66,29 @@
                             </ul>
                         </li>
                     @endif
+
+                    @if (auth()->user()->can('appointment.view'))
+                        <li class="nav-item has-sub">
+                            <a href="#" class="mininav-toggle nav-link {{ request()->is(['appointment/employee-calendar', 'appointment/list']) ? 'active' : '' }}"><i
+                                    class="demo-pli-split-vertical-2 fs-5 me-2"></i>
+                                <span class="nav-label ms-1">Appointments</span>
+                            </a>
+                            <ul class="mininav-content nav collapse">
+                                <li data-popper-arrow class="arrow"></li>
+                                @can('appointment.view')
+                                    <li class="nav-item">
+                                        <a href="{{ route('appointment::index') }}" class="nav-link {{ request()->is(['appointment/employee-calendar']) ? 'active' : '' }}">Employee Calendar</a>
+                                    </li>
+                                @endcan
+                                @can('appointment.view')
+                                    <li class="nav-item">
+                                        <a href="{{ route('appointment::list') }}" class="nav-link {{ request()->is(['appointment/list']) ? 'active' : '' }}"> List </a>
+                                    </li>
+                                @endcan
+                            </ul>
+                        </li>
+                    @endif
+
                     @if (auth()->user()->can('sale.view') || auth()->user()->can('report.sale item'))
                         <li class="nav-item has-sub">
                             @php

@@ -4,12 +4,16 @@ namespace App\Actions\Appointment\Item;
 
 use App\Models\AppointmentItem;
 use Exception;
+use Illuminate\Support\Facades\Auth;
 
 class DeleteAction
 {
     public function execute($id)
     {
         try {
+            if (Auth::user()->cannot('appointment.delete')) {
+                throw new \Exception('You do not have permission to delete this appointment item.', 1);
+            }
             $model = AppointmentItem::find($id);
             if (! $model) {
                 throw new Exception("Resource not found with the specified ID: $id.", 1);

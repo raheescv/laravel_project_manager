@@ -34,8 +34,8 @@ class Page extends Component
         $this->table_id = $table_id;
         $this->items = [];
         $this->item = [
-        'service_id' => null,
-        'employee_id' => null,
+            'service_id' => null,
+            'employee_id' => null,
         ];
         if ($table_id) {
             $appointment = Appointment::with(['items', 'account:id,name', 'items.service:id,name', 'items.employee:id,name'])->find($table_id);
