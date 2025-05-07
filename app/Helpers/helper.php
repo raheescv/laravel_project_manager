@@ -93,6 +93,17 @@ if (! function_exists('systemDate')) {
     }
 }
 
+if (! function_exists('systemTime')) {
+    function systemTime($value)
+    {
+        if ($value) {
+            return date('h:i:s A', strtotime($value));
+        } else {
+            return $value;
+        }
+    }
+}
+
 if (! function_exists('systemDateTime')) {
     function systemDateTime($value)
     {
@@ -215,6 +226,29 @@ if (! function_exists('saleStatuses')) {
             'draft' => 'Draft',
             'completed' => 'Completed',
             'cancelled' => 'Cancelled',
+        ];
+    }
+}
+if (! function_exists('appointmentStatuses')) {
+    function appointmentStatuses()
+    {
+        return [
+            'pending' => 'Pending',
+            'completed' => 'Completed',
+            'cancelled' => 'Cancelled',
+            'no response' => 'No Response',
+        ];
+    }
+}
+if (! function_exists('noteTypes')) {
+    function noteTypes()
+    {
+        return [
+            'general' => 'General',
+            'appointment' => 'Appointment',
+            'payment' => 'Payment',
+            'complaint' => 'Complaint',
+            'followup' => 'Follow Up',
         ];
     }
 }

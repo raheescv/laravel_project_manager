@@ -56,6 +56,7 @@ class View extends Component
         $this->total_sales = [];
         $this->mount($account_id);
         $this->dispatch('ToggleCustomerViewModal');
+        $this->dispatch('Add-TableId-AccountNote-Table-Component', $account_id);
     }
 
     public function mount($account_id = null)

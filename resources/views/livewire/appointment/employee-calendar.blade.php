@@ -432,7 +432,7 @@
                         // alert('Clicked on: ' + info.dateStr);
                     },
                     eventClick: function(info) {
-                        Livewire.dispatch('Edit-Appointment-Page-Component', {
+                        Livewire.dispatch('View-Appointment-Page-Component', {
                             id: info.event.id,
                         });
                     },
@@ -470,6 +470,7 @@
                 });
                 window.addEventListener('Refresh-EmployeeCalendar-Component', event => {
                     if (calendar) {
+                        calendar.refetchResources();
                         calendar.refetchEvents();
                     }
                 });

@@ -80,6 +80,11 @@ class Account extends Model implements AuditableContracts
         return $return;
     }
 
+    public function notes()
+    {
+        return $this->hasMany(AccountNote::class);
+    }
+
     public function ledger()
     {
         return $this->hasMany(Ledger::class, 'account_id');

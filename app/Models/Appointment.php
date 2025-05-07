@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use OwenIt\Auditing\Auditable;
@@ -20,6 +21,7 @@ class Appointment extends Model implements AuditableContracts
         'color',
         'status',
         'notes',
+        'sale_id',
         'created_by',
         'updated_by',
     ];
@@ -57,5 +59,35 @@ class Appointment extends Model implements AuditableContracts
     public function updatedBy()
     {
         return $this->belongsTo(User::class, 'updated_by');
+    }
+
+    public function scopeCompleted($query)
+    {
+        return $query->where('status', 'completed');
+    }
+
+    public function scopeNoResponse($query)
+    {
+        return $query->where('status', 'no response');
+    }
+
+    public function scopePending($query)
+    {
+        return $query->where('status', 'pending');
+    }
+
+    public function scopeCancelled($query)
+    {
+        return $query->where('status', 'cancelled');
+    }
+
+    public function scopeFilter(Builder $query, array $filters): Builder
+    {
+        return $query
+            ->when($filters['branch_id'] ?? '', fn ($q, $value) => $q->where('appointments.branch_id', $value))
+            ->when($filters['customer_id'] ?? '', fn ($q, $value) => $q->where('appointments.account_id', $value))
+            ->when($filters['status'] ?? '', fn ($q, $value) => $q->where('appointments.status', $value))
+            ->when($filters['from_date'] ?? '', fn ($q, $value) => $q->whereDate('appointments.date', '>=', date('Y-m-d', strtotime($value))))
+            ->when($filters['to_date'] ?? '', fn ($q, $value) => $q->whereDate('appointments.date', '<=', date('Y-m-d', strtotime($value))));
     }
 }

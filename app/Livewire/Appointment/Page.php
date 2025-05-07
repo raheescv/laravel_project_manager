@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Appointment;
 
+use App\Actions\Appointment\CheckoutAction;
 use App\Actions\Appointment\CreateAction;
 use App\Actions\Appointment\Item\DeleteAction as ItemDeleteAction;
 use App\Actions\Appointment\UpdateAction;
@@ -21,10 +22,13 @@ class Page extends Component
 
     public $item;
 
+    public $editMode = true;
+
     public $items = [];
 
     protected $listeners = [
         'Create-Appointment-Page-Component' => 'create',
+        'View-Appointment-Page-Component' => 'view',
         'Edit-Appointment-Page-Component' => 'edit',
         'Update-Appointment-Page-Component' => 'update',
     ];
@@ -68,19 +72,36 @@ class Page extends Component
                 'status' => 'pending',
             ];
         }
+        if ($this->appointments['status'] == 'completed') {
+            $this->editMode = false;
+        }
         $this->dispatch('SelectDropDownValues', $this->appointments);
     }
 
     public function create()
     {
+        $this->editMode = true;
         $this->mount();
         $this->dispatch('ToggleAppointmentBookingModal');
     }
 
     public function edit($id)
     {
+        $this->editMode = true;
         $this->mount($id);
         $this->dispatch('ToggleAppointmentBookingModal');
+    }
+
+    public function view($id)
+    {
+        $this->editMode = false;
+        $this->mount($id);
+        $this->dispatch('ToggleAppointmentBookingModal');
+    }
+
+    public function toggleEditMode()
+    {
+        $this->editMode = $this->editMode ? false : true;
     }
 
     public function update($id, $start, $end, $key, $employee_id)
@@ -146,6 +167,27 @@ class Page extends Component
         'appointments.end_time.after' => 'The end time must be a date after the start time.',
         'appointments.notes.string' => 'The notes must be a string.',
     ];
+
+    public function checkout()
+    {
+        try {
+            DB::beginTransaction();
+
+            $response = (new CheckoutAction())->execute($this->table_id, Auth::id());
+            if (! $response['success']) {
+                throw new \Exception($response['message'], 1);
+            }
+            $saleId = $response['data']['id'];
+            $this->dispatch('success', ['message' => $response['message']]);
+
+            DB::commit();
+
+            return redirect()->route('sale::edit', $saleId);
+        } catch (\Throwable $e) {
+            DB::rollback();
+            $this->dispatch('error', ['message' => $e->getMessage()]);
+        }
+    }
 
     public function save($close = false)
     {

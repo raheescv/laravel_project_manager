@@ -81,7 +81,7 @@ class AppointmentItem extends Model implements AuditableContracts
             ->when($filters['service_id'] ?? '', fn ($q, $value) => $q->where('appointment_items.service_id', $value))
             ->when($filters['employee_id'] ?? '', fn ($q, $value) => $q->where('appointment_items.employee_id', $value))
             ->when($filters['status'] ?? '', fn ($q, $value) => $q->where('appointments.status', $value))
-            ->when($filters['from_date'] ?? '', fn ($q, $value) => $q->whereDate('appointments.start_time', '>=', date('Y-m-d', strtotime($value))))
-            ->when($filters['to_date'] ?? '', fn ($q, $value) => $q->whereDate('appointments.start_time', '<=', date('Y-m-d', strtotime($value))));
+            ->when($filters['from_date'] ?? '', fn ($q, $value) => $q->whereDate('appointments.date', '>=', date('Y-m-d', strtotime($value))))
+            ->when($filters['to_date'] ?? '', fn ($q, $value) => $q->whereDate('appointments.date', '<=', date('Y-m-d', strtotime($value))));
     }
 }

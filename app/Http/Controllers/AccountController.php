@@ -26,6 +26,11 @@ class AccountController extends Controller
         return view('accounts.vendor');
     }
 
+    public function notes($id = null)
+    {
+        return view('accounts.notes', compact('id'));
+    }
+
     public function get(Request $request)
     {
         $list = (new Account())->getDropDownList($request->all());

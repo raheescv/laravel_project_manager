@@ -5,6 +5,7 @@ namespace App\Livewire\Appointment;
 use App\Actions\Appointment\Item\DeleteAction;
 use App\Exports\SaleExport;
 use App\Jobs\Export\ExportSaleJob;
+use App\Models\Appointment;
 use App\Models\AppointmentItem;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -99,9 +100,9 @@ class Table extends Component
         }
     }
 
-    public function edit($id)
+    public function view($id)
     {
-        $this->dispatch('Edit-Appointment-Page-Component', $id);
+        $this->dispatch('View-Appointment-Page-Component', $id);
     }
 
     public function sortBy($field)
@@ -125,24 +126,49 @@ class Table extends Component
             ->join('users as creator', 'creator.id', '=', 'appointment_items.created_by');
     }
 
+    protected function getCounts()
+    {
+        $filter = $this->filter;
+        unset($filter['status']);
+        $query = Appointment::filter($filter);
+
+        $total = (clone $query)->count();
+        $completed = (clone $query)->completed()->count();
+        $pending = (clone $query)->pending()->count();
+        $cancelled = (clone $query)->cancelled()->count();
+        $noResponse = (clone $query)->noResponse()->count();
+
+        return [
+            'total' => $total,
+            'completed' => $completed,
+            'pending' => $pending,
+            'cancelled' => $cancelled,
+            'no_response' => $noResponse,
+        ];
+    }
+
     public function render()
     {
         $query = $this->getBaseQuery();
 
+        $data = $query->orderBy($this->sortField, $this->sortDirection)
+            ->select(
+                'appointment_items.id',
+                'appointment_id',
+                'date',
+                'start_time',
+                'end_time',
+                'accounts.name as customer_name',
+                'products.name as service_name',
+                'users.name as employee_name',
+                'creator.name as creator_name',
+            )
+            ->paginate($this->limit);
+        $counts = $this->getCounts();
+
         return view('livewire.appointment.table', [
-            'data' => $query
-                ->select(
-                    'appointment_items.id',
-                    'appointment_id',
-                    'start_time',
-                    'end_time',
-                    'accounts.name as customer_name',
-                    'products.name as service_name',
-                    'users.name as employee_name',
-                    'creator.name as creator_name',
-                )
-                ->orderBy($this->sortField, $this->sortDirection)
-                ->paginate($this->limit),
+            'data' => $data,
+            'counts' => $counts,
         ]);
     }
 }

@@ -15,14 +15,16 @@ return new class() extends Migration
             $table->string('color');
             $table->datetime('start_time');
             $table->datetime('end_time');
-            $table->enum('status', ['pending', 'confirmed', 'cancelled'])->default('pending');
+            $table->date('date')->storedAs('DATE(start_time)');
+            $table->enum('status', array_keys(appointmentStatuses()))->default('pending');
             $table->text('notes')->nullable();
+            $table->unsignedBigInteger('sale_id')->nullable();
             $table->unsignedBigInteger('created_by')->references('id')->on('users');
             $table->unsignedBigInteger('updated_by')->nullable()->references('id')->on('users');
             $table->softDeletes();
             $table->timestamps();
 
-            $table->index(['branch_id', 'start_time']);
+            $table->index(['branch_id', 'date']);
             $table->index('status');
         });
     }

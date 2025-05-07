@@ -2,6 +2,7 @@
 
 return [
     'account' => ['create', 'view', 'edit', 'delete', 'export'],
+    'account note' => ['create', 'view', 'edit', 'delete'],
     'expense' => ['create', 'view', 'edit', 'delete', 'export'],
     'income' => ['create', 'view', 'edit', 'delete', 'export'],
     'customer' => ['create', 'view', 'edit', 'delete', 'export'],
@@ -16,7 +17,7 @@ return [
     'inventory' => ['view', 'edit', 'delete', 'import', 'export', 'dashboard status'],
     'inventory transfer' => ['create', 'view', 'edit', 'edit completed', 'delete', 'import', 'export'],
     'category' => ['create', 'view', 'edit', 'delete', 'import', 'export'],
-    'appointment' => ['create', 'view', 'edit', 'delete', 'export'],
+    'appointment' => ['create', 'view', 'edit', 'delete', 'export', 'checkout'],
     'sale' => [
         'create', 'view', 'edit', 'edit completed', 'delete', 'cancel', 'export', 'receipts', 'view journal entries', 'dashboard bar chart',
         'dashboard weekly summary',

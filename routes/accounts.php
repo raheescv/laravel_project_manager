@@ -23,5 +23,8 @@ Route::middleware('auth')->group(function (): void {
         Route::name('income::')->prefix('income')->controller(IncomeController::class)->group(function (): void {
             Route::get('', 'index')->name('index')->can('income.view');
         });
+        Route::name('notes::')->prefix('notes')->controller(AccountController::class)->group(function (): void {
+            Route::get('/{id?}', 'notes')->name('index')->can('account note.view');
+        });
     });
 });

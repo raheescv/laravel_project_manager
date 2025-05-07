@@ -59,10 +59,15 @@ class EmployeeCalendar extends Component
 
     public function getResources(): array
     {
+        $limit = $this->employee_id ? 20 : 10;
+        $employeeIds = AppointmentItem::pluck('employee_id')->toArray();
+
         return User::employee()
             ->select(['id', 'name'])
             ->whereHas('branches', fn ($query) => $query->where('user_has_branches.branch_id', session('branch_id')))
             ->when($this->employee_id, fn ($query) => $query->whereIn('id', $this->employee_id))
+            ->whereIn('id', $employeeIds)
+            ->limit($limit)
             ->get()
             ->map(fn ($employee) => [
                 'id' => $employee->id,
