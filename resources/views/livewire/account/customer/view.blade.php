@@ -52,11 +52,13 @@
                     <button class="nav-link px-3 @if ($selected_tab === 'SaleProductSummary') active @endif" data-bs-toggle="tab" data-bs-target="#tab-SaleProductSummary" type="button" role="tab"
                         aria-controls="profile" aria-selected="false" tabindex="-1" wire:click="$set('selected_tab', 'SaleProductSummary')">Sale Item Summary</button>
                 </li>
-                <li class="nav-item" role="presentation">
-                    <button class="nav-link px-3" data-bs-toggle="tab" data-bs-target="#tab-Notes" type="button" role="tab" aria-controls="contact" aria-selected="false" tabindex="-1">
-                        Notes
-                    </button>
-                </li>
+                @can('account note.view')
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link px-3" data-bs-toggle="tab" data-bs-target="#tab-Notes" type="button" role="tab" aria-controls="contact" aria-selected="false" tabindex="-1">
+                            Notes
+                        </button>
+                    </li>
+                @endcan
             </ul>
             <div class="tab-content">
                 <div id="tab-Sales" class="tab-pane fade @if ($selected_tab === 'Sales') active show @endif" role="tabpanel" aria-labelledby="home-tab">

@@ -5,12 +5,14 @@
             <h4 class="text-gradient mb-1">Account Notes</h4>
             <p class="text-muted mb-0">Manage and track all account related notes</p>
         </div>
-        @if ($account_id)
-            <button wire:click="openNoteModal()" class="btn btn-primary btn-sm rounded-3 btn-hover-elevate">
-                <i class="fa fa-plus-circle me-2"></i>
-                New Note
-            </button>
-        @endif
+        @can('account note.create')
+            @if ($account_id)
+                <button wire:click="openNoteModal()" class="btn btn-primary btn-sm rounded-3 btn-hover-elevate">
+                    <i class="fa fa-plus-circle me-2"></i>
+                    New Note
+                </button>
+            @endif
+        @endcan
     </div>
 
     <style>
@@ -217,14 +219,18 @@
                                 Follow-up: {{ systemDate($note->follow_up_date) }}
                             </div>
                         @endif
-                        <button class="btn-action edit" wire:click="$dispatch('Edit-AccountNote-Page-Component', {id: '{{ $note->id }}'})">
-                            <i class="far fa-edit"></i>
-                            Edit
-                        </button>
-                        <button class="btn-action delete" wire:confirm="Are you sure you want to delete this note?" wire:click="delete({{ $note->id }})">
-                            <i class="far fa-trash-alt"></i>
-                            Delete
-                        </button>
+                        @can('account note.edit')
+                            <button class="btn-action edit" wire:click="$dispatch('Edit-AccountNote-Page-Component', {id: '{{ $note->id }}'})">
+                                <i class="fa fa-edit"></i>
+                                Edit
+                            </button>
+                        @endcan
+                        @can('account note.delete')
+                            <button class="btn-action delete" wire:confirm="Are you sure you want to delete this note?" wire:click="delete({{ $note->id }})">
+                                <i class="fa fa-trash"></i>
+                                Delete
+                            </button>
+                        @endcan
                     </div>
                 </div>
             </div>
