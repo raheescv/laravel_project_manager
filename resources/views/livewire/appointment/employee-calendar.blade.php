@@ -272,16 +272,22 @@
     <div class="card-header">
         <div class="col-lg-12">
             <div class="row g-3">
-                <div class="col-md-3">
+                <div class="col-md-2">
                     <div class="form-group">
                         <label for="date" class="d-block">Date</label>
                         {{ html()->date('date')->value('')->class('form-control shadow-sm')->id('date')->attribute('wire:model.live', 'date') }}
                     </div>
                 </div>
-                <div class="col-md-9" wire:ignore>
+                <div class="col-md-7" wire:ignore>
                     <div class="form-group">
                         <label for="employee_id" class="d-block">Employee</label>
                         {{ html()->select('employee_id', [])->value()->class('select-employee_id-list w-100')->attribute('multiple')->id('employee_id')->placeholder('All') }}
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="form-group" wire:ignore>
+                        <label for="status" class="d-block">Status</label>
+                        {{ html()->select('status', appointmentStatuses())->value('')->class('tomSelect')->id('status')->attribute('wire:model.live', 'status') }}
                     </div>
                 </div>
             </div>
@@ -456,6 +462,15 @@
                     }
                 });
                 calendar.render();
+                $('#status').on('change', function(e) {
+                    const value = $(this).val() || null;
+                    @this.set('status', value).then(() => {
+                        if (calendar) {
+                            calendar.refetchResources();
+                            calendar.refetchEvents();
+                        }
+                    });
+                });
                 $('#employee_id').on('change', function(e) {
                     const value = $(this).val() || null;
                     @this.set('employee_id', value).then(() => {
