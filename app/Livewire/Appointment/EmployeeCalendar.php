@@ -13,6 +13,8 @@ class EmployeeCalendar extends Component
 
     public $employee_id;
 
+    public $status = 'pending';
+
     public $date;
 
     protected $listeners = [
@@ -32,9 +34,9 @@ class EmployeeCalendar extends Component
                 'service:id,name',
                 'appointment:id,start_time,end_time,color',
             ])
-            ->when($this->employee_id, fn ($query) => $query->whereIn('employee_id', $this->employee_id))
+            ->when($this->employee_id, fn ($query, $value) => $query->whereIn('employee_id', $value))
             ->whereHas('appointment', function ($query) {
-                // $query->whereDate('start_time', $this->date);
+                $query->when($this->status, fn ($query, $value) => $query->where('status', $value));
             })
             ->get()
             ->map(fn ($item) => [
