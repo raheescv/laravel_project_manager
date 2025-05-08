@@ -385,7 +385,7 @@
                                 days: 1
                             },
                             buttonText: 'Day',
-                            slotDuration: '00:15:00',
+                            slotDuration: '00:20:00',
                             slotLabelInterval: '01:00',
                         },
                         resourceTimeGridWeek: {
@@ -421,8 +421,8 @@
                         });
                     },
                     themeSystem: "bootstrap5",
-                    slotLabelInterval: '00:10:00',
-                    slotDuration: '00:10:00',
+                    slotLabelInterval: '00:20:00',
+                    slotDuration: '00:20:00',
                     allDaySlot: true,
                     businessHours: {
                         daysOfWeek: [1, 2, 3, 4, 5],
