@@ -12,7 +12,7 @@ class DeleteImageAction
         try {
             $model = ProductImage::find($id);
             if (! $model) {
-                throw new \Exception("Resource not found with the specified ID: $id.", 1);
+                throw new \Exception("ProductImage not found with the specified ID: $id.", 1);
             }
             $storagePath = parse_url($model->path, PHP_URL_PATH);
             $relativePath = str_replace('/storage/', '', $storagePath);

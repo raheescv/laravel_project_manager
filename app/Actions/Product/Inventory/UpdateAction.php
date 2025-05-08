@@ -12,7 +12,7 @@ class UpdateAction
         try {
             $model = Inventory::find($id);
             if (! $model) {
-                throw new \Exception("Resource not found with the specified ID: $id.", 1);
+                throw new \Exception("Inventory not found with the specified ID: $id.", 1);
             }
             validationHelper(Inventory::rules($id), $data);
             $oldModel = clone $model;

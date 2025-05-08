@@ -1,257 +1,369 @@
 <div>
     <div class="col-md-12 mb-3">
-        <div class="card">
+        <div class="card shadow-sm">
             <div class="card-body">
-                <!-- Invoice info -->
-                <div class="d-md-flex">
-                    <address class="mb-4 mb-md-0">
-                        <h5 class="mb-2"> <a href="{{ route('account::customer::view', $sale->account_id) }}">{{ $sale->account?->name }}</a> </h5>
-                        @if ($sale->customer_name)
-                            <b>Customer Name :</b> {{ $sale->customer_name }} <br>
-                        @endif
-                        @if ($sale->customer_mobile)
-                            <b>Mobile :</b> {{ $sale->customer_mobile }} <br>
-                        @endif
-                    </address>
-                    <ul class="list-group list-group-borderless ms-auto">
-                        <li class="list-group-item d-flex justify-content-between align-items-center px-0 pt-0 pb-1">
-                            <div class="me-5 fw-semibold text-body-emphasis">Invoice #</div>
-                            <span class="ms-auto text-info fw-bold">{{ $sale->invoice_no }}</span>
-                        </li>
-                        <li class="list-group-item d-flex justify-content-between align-items-center px-0 pt-0 pb-1">
-                            <div class="me-5 fw-semibold text-body-emphasis">Reference No</div>
-                            <span class="ms-auto">{{ systemDate($sale->reference_no) }}</span>
-                        </li>
-                        <li class="list-group-item d-flex justify-content-between align-items-center px-0 pt-0 pb-1">
-                            <div class="me-5 fw-semibold text-body-emphasis">Order Status</div>
-                            @php
-                                $statusClasses = [
-                                    'completed' => 'bg-success',
-                                    'draft' => 'bg-info',
-                                    'cancelled' => 'bg-warning',
-                                ];
-                            @endphp
-                            @if (isset($statusClasses[$sale->status]))
-                                <span class="badge {{ $statusClasses[$sale->status] }} rounded-pill">
-                                    {{ ucFirst($sale->status) }}
-                                </span>
-                            @endif
-                        </li>
-                        <li class="list-group-item d-flex justify-content-between align-items-center px-0 pt-0 pb-1">
-                            <div class="me-5 fw-semibold text-body-emphasis">Date</div>
-                            <span class="ms-auto">{{ systemDate($sale->date) }}</span>
-                        </li>
-                        <li class="list-group-item d-flex justify-content-between align-items-center px-0 pt-0 pb-1">
-                            <div class="me-5 fw-semibold text-body-emphasis">Due Date</div>
-                            <span class="ms-auto">{{ systemDate($sale->due_date) }}</span>
-                        </li>
-                        <li class="list-group-item d-flex justify-content-between align-items-center px-0 pt-0 pb-1">
-                            <div class="me-5 fw-semibold text-body-emphasis">Sale Type</div>
-                            <span class="ms-auto">{{ ucFirst($sale->sale_type) }}</span>
-                        </li>
-                    </ul>
-                </div>
-                <!-- END : Invoice info -->
-
-                <!-- Invoice table -->
-                <h5 class="card-title">Items</h5>
-                <div class="table-responsive">
-                    <table class="table table-striped table-sm align-middle">
-                        <thead>
-                            <tr class="bg-primary">
-                                <th class="text-white">SL No</th>
-                                <th class="text-white" width="20%">Product/Service</th>
-                                <th class="text-white text-end">Unit Price</th>
-                                <th class="text-white text-end">Quantity</th>
-                                <th class="text-white text-end">Discount</th>
-                                <th class="text-white text-end">Tax %</th>
-                                <th class="text-white text-end">Total</th>
-                                @if ($sales['other_discount'] > 0)
-                                    <th class="text-white text-end">Effective Total</th>
-                                @endif
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @php
-                                $result = [];
-                                foreach ($items as $key => $value) {
-                                    [$parent, $sub] = explode('-', $key);
-                                    if (!isset($result[$parent])) {
-                                        $result[$parent] = [];
-                                    }
-                                    $result[$parent][$sub] = $value;
-                                }
-                                $data = $result;
-                            @endphp
-                            @foreach ($data as $employee_id => $groupedItems)
-                                <tr>
-                                    @php
-                                        $first = array_values($groupedItems)[0];
-                                    @endphp
-                                    <th colspan="8" class="text-capitalize">{{ $first['employee_name'] }}</th>
-                                </tr>
-                                @foreach ($groupedItems as $item)
-                                    <tr>
-                                        <td>{{ $loop->iteration }}</td>
-                                        <td> <a href="{{ route('inventory::product::view', $item['product_id']) }}">{{ $item['name'] }}</a> </td>
-                                        <td class="text-end">{{ currency($item['unit_price']) }}</td>
-                                        <td class="text-end">{{ currency($item['quantity']) }}</td>
-                                        <td class="text-end">{{ currency($item['discount']) }}</td>
-                                        <td class="text-end">{{ currency($item['tax_amount']) }} ({{ round($item['tax'], 2) }}%)</td>
-                                        <td class="text-end"> {{ currency($item['total']) }} </td>
-                                        @if ($sales['other_discount'] > 0)
-                                            <td class="text-end"> {{ currency($item['effective_total']) }} </td>
-                                        @endif
-                                    </tr>
-                                @endforeach
-                            @endforeach
-                        </tbody>
-                        <tfoot>
-                            @php
-                                $items = collect($items);
-                            @endphp
-                            <tr>
-                                <th colspan="3" class="text-end">Total</th>
-                                <th class="text-end"><b>{{ currency($items->sum('quantity')) }}</b></th>
-                                <th class="text-end"><b>{{ currency($items->sum('discount')) }}</b></th>
-                                <th class="text-end"><b>{{ currency($items->sum('tax_amount')) }}</b></th>
-                                <th class="text-end"><b>{{ currency($items->sum('total')) }}</b></th>
-                                @if ($sales['other_discount'] > 0)
-                                    <th class="text-end"><b>{{ currency($items->sum('effective_total')) }}</b></th>
-                                @endif
-                            </tr>
-                        </tfoot>
-                    </table>
-                </div>
-                <!-- END : Invoice table -->
+                <!-- Invoice info with enhanced styling -->
                 <div class="row">
-                    <div class="col-12 col-md-5 mb-3 mb-md-0">
-                        <h5 class="card-title">Payments</h5>
-                        <div class="table-responsive">
-                            <table class="table table-striped align-left table-sm w-100">
-                                <thead>
-                                    <tr class="bg-primary">
-                                        <th class="text-white">Payment Method</th>
-                                        <th class="text-white text-end">Amount</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    @foreach ($payments as $key => $item)
-                                        <tr>
-                                            <td>{{ $item['name'] }}</td>
-                                            <td class="text-end">{{ currency($item['amount']) }}</td>
-                                        </tr>
-                                    @endforeach
-                                </tbody>
-                            </table>
+                    <div class="col-12">
+                        <div class="d-md-flex bg-light p-1 rounded mb-1 w-100">
+                            <address class="mb-4 mb-md-0 flex-grow-1">
+                                <div class="d-flex align-items-center mb-3">
+                                    <i class="demo-psi-user me-2 fs-4"></i>
+                                    <h5 class="mb-0"> <a href="{{ route('account::customer::view', $sale->account_id) }}" class="text-primary">{{ $sale->account?->name }}</a> </h5>
+                                </div>
+                                @if ($sale->customer_name)
+                                    <div class="d-flex align-items-center mb-2">
+                                        <i class="demo-psi-id-card me-2"></i>
+                                        <span><b>Customer Name:</b> {{ $sale->customer_name }}</span>
+                                    </div>
+                                @endif
+                                @if ($sale->customer_mobile)
+                                    <div class="d-flex align-items-center">
+                                        <i class="demo-psi-phone me-2"></i>
+                                        <span><b>Mobile:</b> {{ $sale->customer_mobile }}</span>
+                                    </div>
+                                @endif
+                            </address>
+                            <ul class="list-group list-group-borderless ms-md-5 bg-white p-3 rounded shadow-sm" style="min-width: 280px;">
+                                <li class="list-group-item d-flex justify-content-between align-items-center px-0 pt-0 pb-2">
+                                    <div class="me-5 fw-semibold text-body-emphasis"><i class="demo-psi-receipt-4 me-2"></i>Invoice #</div>
+                                    <span class="ms-auto text-info fw-bold">{{ $sale->invoice_no }}</span>
+                                </li>
+                                <li class="list-group-item d-flex justify-content-between align-items-center px-0 pt-0 pb-2">
+                                    <div class="me-5 fw-semibold text-body-emphasis"><i class="demo-psi-file me-2"></i>Reference No</div>
+                                    <span class="ms-auto">{{ systemDate($sale->reference_no) }}</span>
+                                </li>
+                                <li class="list-group-item d-flex justify-content-between align-items-center px-0 pt-0 pb-2">
+                                    <div class="me-5 fw-semibold text-body-emphasis"><i class="demo-psi-clock me-2"></i>Order Status</div>
+                                    @php
+                                        $statusClasses = [
+                                            'completed' => 'bg-success',
+                                            'draft' => 'bg-info',
+                                            'cancelled' => 'bg-warning',
+                                        ];
+                                    @endphp
+                                    @if (isset($statusClasses[$sale->status]))
+                                        <span class="badge {{ $statusClasses[$sale->status] }} rounded-pill px-3">
+                                            {{ ucFirst($sale->status) }}
+                                        </span>
+                                    @endif
+                                </li>
+                                <li class="list-group-item d-flex justify-content-between align-items-center px-0 pt-0 pb-2">
+                                    <div class="me-5 fw-semibold text-body-emphasis"><i class="demo-psi-calendar-4 me-2"></i>Date</div>
+                                    <span class="ms-auto">{{ systemDate($sale->date) }}</span>
+                                </li>
+                                <li class="list-group-item d-flex justify-content-between align-items-center px-0 pt-0 pb-2">
+                                    <div class="me-5 fw-semibold text-body-emphasis"><i class="demo-psi-calendar-4 me-2"></i>Due Date</div>
+                                    <span class="ms-auto">{{ systemDate($sale->due_date) }}</span>
+                                </li>
+                                <li class="list-group-item d-flex justify-content-between align-items-center px-0 pt-0 pb-2">
+                                    <div class="me-5 fw-semibold text-body-emphasis"><i class="demo-psi-tag me-2"></i>Sale Type</div>
+                                    <span class="ms-auto badge bg-primary">{{ ucFirst($sale->sale_type) }}</span>
+                                </li>
+                            </ul>
                         </div>
                     </div>
-                    <div class="col-12 offset-md-3 col-md-4">
-                        <ul class="list-group list-group-borderless">
-                            <li class="list-group-item d-flex justify-content-between align-items-center py-2">
-                                <div class="me-5 mb-0 h5">Gross Total</div>
-                                <span class="ms-auto h5 mb-0">{{ currency($sale->gross_amount) }}</span>
-                            </li>
-                            <li class="list-group-item d-flex justify-content-between align-items-center py-2">
-                                <div class="me-5 mb-0 h5">Sale Total</div>
-                                <span class="ms-auto h5 mb-0">{{ currency($sale->total) }}</span>
-                            </li>
-                            <li class="list-group-item d-flex justify-content-between align-items-center py-2">
-                                <div class="me-5 mb-0 h5">Other Discount</div>
-                                <span class="ms-auto h5 mb-0">{{ currency($sale->other_discount) }}</span>
-                            </li>
-                            <li class="list-group-item d-flex justify-content-between align-items-center py-2">
-                                <div class="me-5 mb-0 h5">Freight</div>
-                                <span class="ms-auto h5 mb-0">{{ currency($sale->freight) }}</span>
-                            </li>
-                            <li class="list-group-item d-flex justify-content-between align-items-center py-2">
-                                <div class="me-5 mb-0 h5">Total Payable Amount</div>
-                                <span class="ms-auto h5 mb-0">{{ currency($sale->grand_total) }}</span>
-                            </li>
-                            <br>
-                            @if ($sale->balance != 0)
-                                <li class="list-group-item d-flex justify-content-between align-items-center py-2">
-                                    <div class="me-5 mb-0 h5">Paid</div>
-                                    <span class="ms-auto h5 mb-0">{{ currency($sale->paid) }}</span>
-                                </li>
-                                <li class="list-group-item d-flex justify-content-between align-items-center py-2">
-                                    <div class="me-5 mb-0 h5">Balance</div>
-                                    <span class="ms-auto h5 mb-0">{{ currency($sale->balance) }}</span>
-                                </li>
-                            @endif
-                        </ul>
+                </div>
+                <!-- Package Items Section (New) -->
+                @if (count($sale->packages) > 0)
+                    <div class="mb-2">
+                        <h5 class="card-title mb-3">
+                            <i class="demo-psi-box-2 me-2"></i>Package Items
+                        </h5>
+                        <div class="row g-3">
+                            @foreach ($sale->packages as $package)
+                                <div class="col-md-6 col-lg-6">
+                                    <div class="card h-100 package-card border shadow-sm">
+                                        <div class="card-header bg-primary bg-opacity-10 py-3">
+                                            <h6 class="mb-0">
+                                                <i class="demo-psi-box me-2"></i>
+                                                {{ $package->servicePackage->name }}
+                                            </h6>
+                                        </div>
+                                        <div class="card-body p-1">
+                                            <div class="package-stats d-flex justify-content-between mb-1 p-2 bg-light rounded">
+                                                <div class="text-center">
+                                                    <div class="fw-bold text-primary">{{ $package->items->count() }}</div>
+                                                    <small class="text-muted">Services</small>
+                                                </div>
+                                                <div class="text-center">
+                                                    <div class="fw-bold text-success">{{ currency($package->amount) }}</div>
+                                                    <small class="text-muted">Package Price</small>
+                                                </div>
+                                            </div>
+                                            <div class="package-items">
+                                                @foreach ($package->items as $item)
+                                                    <div class="d-flex justify-content-between align-items-center p-2 border-bottom">
+                                                        <div>
+                                                            <div class="fw-semibold">{{ $item->product->name }}</div>
+                                                            <small class="text-muted">{{ $item->employee->name }}</small>
+                                                        </div>
+                                                        <div class="text-end">
+                                                            <div class="text-success">{{ currency($item->unit_price - $item->discount) }}</div>
+                                                            @if ($item->discount > 0)
+                                                                <small class="text-decoration-line-through text-muted">{{ currency($item->unit_price) }}</small>
+                                                            @endif
+                                                        </div>
+                                                    </div>
+                                                @endforeach
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            @endforeach
+                        </div>
+                    </div>
+                @endif
+
+                <!-- Items Table with enhanced styling -->
+                <div class="mb-4">
+                    <h5 class="card-title d-flex align-items-center mb-3">
+                        <i class="demo-psi-cart me-2"></i>
+                        Items
+                    </h5>
+                    <div class="table-responsive">
+                        <table class="table table-striped table-hover table-sm align-middle">
+                            <thead>
+                                <tr class="bg-primary text-white">
+                                    <th class="text-white rounded-start">SL No</th>
+                                    <th width="20%" class="text-white">Product/Service</th>
+                                    <th class="text-white text-end">Unit Price</th>
+                                    <th class="text-white text-end">Quantity</th>
+                                    <th class="text-white text-end">Discount</th>
+                                    <th class="text-white text-end">Tax %</th>
+                                    <th class="text-white text-end">Total</th>
+                                    @if ($sales['other_discount'] > 0)
+                                        <th class="text-white text-end rounded-end">Effective Total</th>
+                                    @endif
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @php
+                                    $result = [];
+                                    foreach ($items as $key => $value) {
+                                        [$parent, $sub] = explode('-', $key);
+                                        if (!isset($result[$parent])) {
+                                            $result[$parent] = [];
+                                        }
+                                        $result[$parent][$sub] = $value;
+                                    }
+                                    $data = $result;
+                                @endphp
+                                @foreach ($data as $employee_id => $groupedItems)
+                                    <tr>
+                                        @php
+                                            $first = array_values($groupedItems)[0];
+                                        @endphp
+                                        <th colspan="8" class="bg-light">
+                                            <i class="demo-psi-user me-2"></i>
+                                            {{ $first['employee_name'] }}
+                                        </th>
+                                    </tr>
+                                    @foreach ($groupedItems as $item)
+                                        <tr>
+                                            <td>{{ $loop->iteration }}</td>
+                                            <td>
+                                                <div class="d-flex align-items-center">
+                                                    <i class="demo-psi-box-2 me-2"></i>
+                                                    <div>
+                                                        <a href="{{ route('inventory::product::view', $item['product_id']) }}" class="text-primary">{{ $item['name'] }}</a>
+                                                        @if (!empty($item['sale_package_id']))
+                                                            <span class="badge bg-info ms-2">P</span>
+                                                        @endif
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td class="text-end">{{ currency($item['unit_price']) }}</td>
+                                            <td class="text-end">{{ currency($item['quantity']) }}</td>
+                                            <td class="text-end">
+                                                @if ($item['discount'] != 0)
+                                                    {{ currency($item['discount']) }}
+                                                @else
+                                                    -
+                                                @endif
+                                            </td>
+                                            <td class="text-end">
+                                                @if ($item['tax_amount'] != 0)
+                                                    {{ currency($item['tax_amount']) }} ({{ round($item['tax'], 2) }}%)
+                                                @else
+                                                    -
+                                                @endif
+                                            </td>
+                                            <td class="text-end fw-bold">{{ currency($item['total']) }}</td>
+                                            @if ($sales['other_discount'] > 0)
+                                                <td class="text-end fw-bold">{{ currency($item['effective_total']) }}</td>
+                                            @endif
+                                        </tr>
+                                    @endforeach
+                                @endforeach
+                            </tbody>
+                            <tfoot class="bg-light fw-bold">
+                                @php
+                                    $items = collect($items);
+                                @endphp
+                                <tr>
+                                    <th colspan="3" class="text-end">Total</th>
+                                    <th class="text-end">{{ currency($items->sum('quantity')) }}</th>
+                                    <th class="text-end">{{ currency($items->sum('discount')) }}</th>
+                                    <th class="text-end">{{ currency($items->sum('tax_amount')) }}</th>
+                                    <th class="text-end">{{ currency($items->sum('total')) }}</th>
+                                    @if ($sales['other_discount'] > 0)
+                                        <th class="text-end">{{ currency($items->sum('effective_total')) }}</th>
+                                    @endif
+                                </tr>
+                            </tfoot>
+                        </table>
                     </div>
                 </div>
 
+                <!-- Payments and Totals with enhanced styling -->
+                <div class="row g-4">
+                    <div class="col-12 col-md-5">
+                        <div class="card h-100 shadow-sm">
+                            <div class="card-header bg-light py-2">
+                                <h5 class="card-title mb-0">
+                                    <i class="demo-psi-wallet me-2"></i>
+                                    Payments
+                                </h5>
+                            </div>
+                            <div class="card-body p-0">
+                                <div class="table-responsive">
+                                    <table class="table table-hover mb-0">
+                                        <thead class="bg-primary text-white">
+                                            <tr>
+                                                <th class="text-white border-0">Payment Method</th>
+                                                <th class="text-white border-0 text-end">Amount</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @foreach ($payments as $key => $item)
+                                                <tr>
+                                                    <td>
+                                                        <i class="demo-psi-credit-card-2 me-2"></i>
+                                                        {{ $item['name'] }}
+                                                    </td>
+                                                    <td class="text-end fw-semibold">{{ currency($item['amount']) }}</td>
+                                                </tr>
+                                            @endforeach
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-12 col-md-7">
+                        <div class="card shadow-sm">
+                            <div class="card-body">
+                                <ul class="list-group list-group-flush">
+                                    <li class="list-group-item d-flex justify-content-between align-items-center py-2">
+                                        <div class="fw-semibold">Gross Total</div>
+                                        <span class="badge bg-primary rounded-pill px-4 py-2">{{ currency($sale->gross_amount) }}</span>
+                                    </li>
+                                    <li class="list-group-item d-flex justify-content-between align-items-center py-2">
+                                        <div class="fw-semibold">Sale Total</div>
+                                        <span class="badge bg-info rounded-pill px-4 py-2">{{ currency($sale->total) }}</span>
+                                    </li>
+                                    <li class="list-group-item d-flex justify-content-between align-items-center py-2">
+                                        <div class="fw-semibold">Other Discount</div>
+                                        <span class="badge bg-warning rounded-pill px-4 py-2">{{ currency($sale->other_discount) }}</span>
+                                    </li>
+                                    <li class="list-group-item d-flex justify-content-between align-items-center py-2">
+                                        <div class="fw-semibold">Freight</div>
+                                        <span class="badge bg-secondary rounded-pill px-4 py-2">{{ currency($sale->freight) }}</span>
+                                    </li>
+                                    <li class="list-group-item d-flex justify-content-between align-items-center py-3 bg-light">
+                                        <div class="h5 mb-0">Total Payable Amount</div>
+                                        <span class="h5 mb-0 badge bg-success rounded-pill px-4 py-2">{{ currency($sale->grand_total) }}</span>
+                                    </li>
+                                    @if ($sale->balance != 0)
+                                        <li class="list-group-item d-flex justify-content-between align-items-center py-2">
+                                            <div class="fw-semibold">Paid</div>
+                                            <span class="badge bg-info rounded-pill px-4 py-2">{{ currency($sale->paid) }}</span>
+                                        </li>
+                                        <li class="list-group-item d-flex justify-content-between align-items-center py-2">
+                                            <div class="fw-semibold">Balance</div>
+                                            <span class="badge bg-danger rounded-pill px-4 py-2">{{ currency($sale->balance) }}</span>
+                                        </li>
+                                    @endif
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
 
+                <!-- Action Buttons -->
                 <div class="d-flex justify-content-end gap-2 my-4 d-print-none">
                     @if ($sales['status'] != 'cancelled')
-                        <a target="_blank" href="{{ route('print::sale::invoice', $sales['id']) }}" class="btn btn-outline-light btn-icon">
+                        <a target="_blank" href="{{ route('print::sale::invoice', $sales['id']) }}" class="btn btn-light btn-icon" title="Print Invoice">
                             <i class="demo-pli-printer fs-4"></i>
                         </a>
                         @can('sale.cancel')
-                            <button type="button" wire:click='save("cancelled")' wire:confirm="Are you sure to cancel this?" class="btn btn-danger btn-sm">
-                                Cancel
+                            <button type="button" wire:click='save("cancelled")' wire:confirm="Are you sure to cancel this?" class="btn btn-danger">
+                                <i class="demo-psi-cross me-2"></i>Cancel
                             </button>
                         @endcan
                         @can('sale.edit completed')
-                            <a href="{{ route('sale::edit', $sales['id']) }}" type="button" class="btn btn-primary">Edit</a>
+                            <a href="{{ route('sale::edit', $sales['id']) }}" type="button" class="btn btn-primary">
+                                <i class="demo-psi-pen-5 me-2"></i>Edit
+                            </a>
                         @endcan
                         @can('sale.cancel')
-                            <button type="button" wire:click='sendToWhatsapp' class="btn btn-info btn-sm">
-                                Whatsapp
+                            <button type="button" wire:click='sendToWhatsapp' class="btn btn-success">
+                                <i class="demo-psi-whatsapp me-2"></i>Whatsapp
                             </button>
                         @endcan
                     @endif
                 </div>
-                <!-- END : Print button and confirm payment -->
+
                 @if ($sale['address'])
-                    <!-- Footer information -->
-                    <div class="bg-body-tertiary p-3 rounded bg-opacity-40 mt-5">
-                        <p class="h5">Notes &amp; Information</p>
-                        <p>{{ $sale['address'] }}</p>
+                    <div class="bg-light p-3 rounded mt-4">
+                        <h6 class="fw-bold mb-2">
+                            <i class="demo-psi-notepad me-2"></i>
+                            Notes & Information
+                        </h6>
+                        <p class="mb-0">{{ $sale['address'] }}</p>
                     </div>
-                    <!-- END : Footer information -->
                 @endif
             </div>
         </div>
     </div>
+
+    <!-- Tabs Section -->
     <div class="tab-base">
         <ul class="nav nav-underline nav-component border-bottom" role="tablist">
             @can('sale.view journal entries')
                 @if (count($sale->journals))
                     <li class="nav-item" role="presentation">
-                        <button class="nav-link px-3 active" data-bs-toggle="tab" data-bs-target="#tab-journal-entries" type="button" role="tab" aria-controls="contact" aria-selected="false"
-                            tabindex="-1">
-                            Journal Entries
+                        <button class="nav-link px-3 active" data-bs-toggle="tab" data-bs-target="#tab-journal-entries" type="button" role="tab">
+                            <i class="demo-psi-file-html me-2"></i>Journal Entries
                         </button>
                     </li>
                 @endif
             @endcan
             @if (count($sale_return_items))
                 <li class="nav-item" role="presentation">
-                    <button class="nav-link px-3" data-bs-toggle="tab" data-bs-target="#tab-sale-return-items" type="button" role="tab" aria-controls="contact" aria-selected="false"
-                        tabindex="-1">
-                        Sale Return Items
+                    <button class="nav-link px-3" data-bs-toggle="tab" data-bs-target="#tab-sale-return-items" type="button" role="tab">
+                        <i class="demo-psi-back me-2"></i>Sale Return Items
                     </button>
                 </li>
             @endif
             @can('sale.audit view')
                 <li class="nav-item" role="presentation">
-                    <button class="nav-link px-3" data-bs-toggle="tab" data-bs-target="#tab-audit-report" type="button" role="tab" aria-controls="audit" aria-selected="false" tabindex="-1">
-                        Audit Report
+                    <button class="nav-link px-3" data-bs-toggle="tab" data-bs-target="#tab-audit-report" type="button" role="tab">
+                        <i class="demo-psi-file-search me-2"></i>Audit Report
                     </button>
                 </li>
             @endcan
         </ul>
+
         <div class="tab-content">
             @can('sale.view journal entries')
                 @if (count($sale->journals))
-                    <div id="tab-journal-entries" class="tab-pane fade active show" role="tabpanel" aria-labelledby="contact-tab">
+                    <div id="tab-journal-entries" class="tab-pane fade active show" role="tabpanel">
                         <div class="table-responsive">
-                            <table class="table table-striped align-middle table-sm table-bordered">
+                            <table class="table table-striped align-middle table-sm">
                                 <thead>
-                                    <tr class="bg-primary">
+                                    <tr class="bg-primary text-white">
                                         <th class="text-white text-end">SL No</th>
                                         <th class="text-white">Date</th>
                                         <th class="text-white">Account Name</th>
@@ -266,7 +378,11 @@
                                             <tr>
                                                 <td class="text-end">{{ $entry->id }}</td>
                                                 <td>{{ systemDate($journal->date) }}</td>
-                                                <td> <a href="{{ route('account::view', $entry->account_id) }}">{{ $entry->account?->name }}</a> </td>
+                                                <td>
+                                                    <a href="{{ route('account::view', $entry->account_id) }}" class="text-primary">
+                                                        {{ $entry->account?->name }}
+                                                    </a>
+                                                </td>
                                                 <td>{{ $entry->remarks }}</td>
                                                 <td class="text-end">{{ currency($entry->debit) }}</td>
                                                 <td class="text-end">{{ currency($entry->credit) }}</td>
@@ -279,13 +395,14 @@
                     </div>
                 @endif
             @endcan
-            <div id="tab-sale-return-items" class="tab-pane fade" role="tabpanel" aria-labelledby="contact-tab">
+
+            <div id="tab-sale-return-items" class="tab-pane fade" role="tabpanel">
                 <div class="table-responsive">
-                    <table class="table table-striped align-middle table-sm table-bordered">
+                    <table class="table table-striped align-middle table-sm">
                         <thead>
-                            <tr class="bg-primary">
+                            <tr class="bg-primary text-white">
                                 <th class="text-white text-end">SL No</th>
-                                <th class="text-white" width="20%">Product/Service</th>
+                                <th width="20%" class="text-white">Product/Service</th>
                                 <th class="text-white text-end">Unit Price</th>
                                 <th class="text-white text-end">Quantity</th>
                                 <th class="text-white text-end">Discount</th>
@@ -297,49 +414,60 @@
                         <tbody>
                             @foreach ($sale_return_items as $item)
                                 <tr>
-                                    <td class="text-end">{{ $loop->iteration }}</td>
-                                    <td> <a href="{{ route('inventory::product::view', $item['product_id']) }}">{{ $item['name'] }}</a> </td>
-                                    <td class="text-end">{{ currency($item['unit_price']) }}</td>
-                                    <td class="text-end">{{ currency($item['quantity']) }}</td>
-                                    <td class="text-end">{{ currency($item['discount']) }}</td>
-                                    <td class="text-end">{{ currency($item['tax_amount']) }} ({{ round($item['tax'], 2) }}%)</td>
-                                    <td class="text-end"> {{ currency($item['total']) }} </td>
-                                    <td class="text-end"> {{ currency($item['effective_total']) }} </td>
+                                    <td class="text-white text-end">{{ $loop->iteration }}</td>
+                                    <td class="text-white">
+                                        <a href="{{ route('inventory::product::view', $item['product_id']) }}" class="text-primary">
+                                            {{ $item['name'] }}
+                                        </a>
+                                    </td>
+                                    <td class="text-white text-end">{{ currency($item['unit_price']) }}</td>
+                                    <td class="text-white text-end">{{ currency($item['quantity']) }}</td>
+                                    <td class="text-white text-end">{{ currency($item['discount']) }}</td>
+                                    <td class="text-white text-end">{{ currency($item['tax_amount']) }} ({{ round($item['tax'], 2) }}%)</td>
+                                    <td class="text-white text-end">{{ currency($item['total']) }}</td>
+                                    <td class="text-white text-end">{{ currency($item['effective_total']) }}</td>
                                 </tr>
                             @endforeach
                         </tbody>
-                        <tfoot>
+                        <tfoot class="bg-light">
                             <tr>
                                 <th colspan="3" class="text-end">Total</th>
-                                <th class="text-end"><b>{{ currency($sale_return_items->sum('quantity')) }}</b></th>
-                                <th class="text-end"><b>{{ currency($sale_return_items->sum('discount')) }}</b></th>
-                                <th class="text-end"><b>{{ currency($sale_return_items->sum('tax_amount')) }}</b></th>
-                                <th class="text-end"><b>{{ currency($sale_return_items->sum('total')) }}</b></th>
-                                <th class="text-end"><b>{{ currency($sale_return_items->sum('effective_total')) }}</b></th>
+                                <th class="text-end">{{ currency($sale_return_items->sum('quantity')) }}</th>
+                                <th class="text-end">{{ currency($sale_return_items->sum('discount')) }}</th>
+                                <th class="text-end">{{ currency($sale_return_items->sum('tax_amount')) }}</th>
+                                <th class="text-end">{{ currency($sale_return_items->sum('total')) }}</th>
+                                <th class="text-end">{{ currency($sale_return_items->sum('effective_total')) }}</th>
                             </tr>
                         </tfoot>
                     </table>
                 </div>
             </div>
-            <div id="tab-audit-report" class="tab-pane fade" role="tabpanel" aria-labelledby="audit-tab">
+
+            <div id="tab-audit-report" class="tab-pane fade" role="tabpanel">
                 <ul class="nav nav-tabs mt-3" role="tablist">
                     <li class="nav-item" role="presentation">
-                        <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#sale-audit" type="button">Sale</button>
+                        <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#sale-audit" type="button">
+                            <i class="demo-psi-file me-2"></i>Sale
+                        </button>
                     </li>
                     <li class="nav-item" role="presentation">
-                        <button class="nav-link" data-bs-toggle="tab" data-bs-target="#sale-items-audit" type="button">Sale Items</button>
+                        <button class="nav-link" data-bs-toggle="tab" data-bs-target="#sale-items-audit" type="button">
+                            <i class="demo-psi-cart me-2"></i>Sale Items
+                        </button>
                     </li>
                     <li class="nav-item" role="presentation">
-                        <button class="nav-link" data-bs-toggle="tab" data-bs-target="#sale-payments-audit" type="button">Sale Payments</button>
+                        <button class="nav-link" data-bs-toggle="tab" data-bs-target="#sale-payments-audit" type="button">
+                            <i class="demo-psi-wallet me-2"></i>Sale Payments
+                        </button>
                     </li>
                 </ul>
 
                 <div class="tab-content">
                     <div id="sale-audit" class="tab-pane fade show active" role="tabpanel">
                         <div class="table-responsive">
-                            <table class="table table-striped align-middle table-sm table-bordered">
+                            <table class="table table-striped align-middle table-sm">
                                 <thead>
-                                    <tr class="bg-primary">
+                                    <tr class="bg-primary text-white">
                                         <th class="text-white">Date Time</th>
                                         <th class="text-white">User</th>
                                         <th class="text-white">Event</th>
@@ -369,9 +497,9 @@
 
                     <div id="sale-items-audit" class="tab-pane fade" role="tabpanel">
                         <div class="table-responsive">
-                            <table class="table table-striped align-middle table-sm table-bordered">
+                            <table class="table table-striped align-middle table-sm">
                                 <thead>
-                                    <tr class="bg-primary">
+                                    <tr class="bg-primary text-white">
                                         <th class="text-white">Date Time</th>
                                         <th class="text-white">User</th>
                                         <th class="text-white">Event</th>
@@ -410,9 +538,9 @@
 
                     <div id="sale-payments-audit" class="tab-pane fade" role="tabpanel">
                         <div class="table-responsive">
-                            <table class="table table-striped align-middle table-sm table-bordered">
+                            <table class="table table-striped align-middle table-sm">
                                 <thead>
-                                    <tr class="bg-primary">
+                                    <tr class="bg-primary text-white">
                                         <th class="text-white">Date Time</th>
                                         <th class="text-white">User</th>
                                         <th class="text-white">Event</th>
@@ -452,5 +580,4 @@
             </div>
         </div>
     </div>
-
 </div>

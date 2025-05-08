@@ -28,6 +28,7 @@ class Page extends Component
         'Sale-Edited-Item-Component' => 'editedItem',
         'Sale-selectItem-Component' => 'selectItem',
         'Sale-Delete-Sync-Items-Component' => 'removeSyncItemFromViewItem',
+        'Sale-Package-Update-Price' => 'updatePackageItemPrice',
     ];
 
     public $categories;
@@ -72,6 +73,8 @@ class Page extends Component
 
     public $sales = [];
 
+    public $packages = [];
+
     public $default_payment_method_id = 1;
 
     public function mount($table_id = null)
@@ -94,7 +97,19 @@ class Page extends Component
         ];
 
         if ($this->table_id) {
-            $this->sale = Sale::with('account:id,name', 'branch:id,name', 'items.product:id,name', 'items.employee:id,name', 'createdUser:id,name', 'updatedUser:id,name', 'cancelledUser:id,name', 'payments.paymentMethod:id,name')->find($this->table_id);
+
+            $this->sale = Sale::with(
+                'account:id,name',
+                'branch:id,name',
+                'items.product:id,name',
+                'items.employee:id,name',
+                'packages.servicePackage:id,name',
+                'createdUser:id,name',
+                'updatedUser:id,name',
+                'cancelledUser:id,name',
+                'payments.paymentMethod:id,name'
+            )->find($this->table_id);
+
             if (! $this->sale) {
                 return redirect()->route('sale::index');
             }
@@ -110,6 +125,7 @@ class Page extends Component
                         'employee_id' => $item['employee_id'],
                         'inventory_id' => $item['inventory_id'],
                         'product_id' => $item['product_id'],
+                        'sale_package_id' => $item['sale_package_id'],
                         'name' => $item['name'],
                         'employee_name' => $item['employee_name'],
                         'tax_amount' => $item['tax_amount'],
@@ -124,6 +140,25 @@ class Page extends Component
                     ],
                 ];
             })->toArray();
+
+            $this->packages = $this->sale->packages->map(function ($package) {
+                $items = collect($this->items)->filter(function ($item) use ($package) {
+                    return $item['sale_package_id'] == $package['id'];
+                })->map(function ($item) {
+                    $item['package_price'] = $item['unit_price'] - $item['discount'];
+
+                    return $item;
+                })->toArray();
+
+                return [
+                    'id' => $package['id'],
+                    'service_package_id' => $package['service_package_id'],
+                    'amount' => $package['amount'],
+                    'package_name' => $package->servicePackage?->name,
+                    'items' => $items,
+                ];
+            })->toArray();
+
             $this->payments = $this->sale->payments->map->only(['id', 'amount', 'date', 'payment_method_id', 'created_by', 'name'])->toArray();
             if (count($this->payments) > 1) {
                 $this->payment_method_name = 'custom';
@@ -135,7 +170,6 @@ class Page extends Component
                 }
             }
             $this->mainCalculator();
-
         } else {
             $this->accounts = Account::where('id', 3)->pluck('name', 'id')->toArray();
             $this->items = [];
@@ -234,6 +268,18 @@ class Page extends Component
         }
         if (in_array($key, ['product_key'])) {
             $this->dispatch('Sale-getProducts-Component', $this->sales['sale_type'], $this->category_id, $this->product_key);
+        }
+    }
+
+    public function updatePackageItemPrice($items, $packages)
+    {
+        $this->items = $items;
+        $this->packages = $packages;
+
+        $this->cartCalculator();
+        $this->mainCalculator();
+        if (in_array($this->payment_method_name, ['cash', 'card'])) {
+            $this->selectPaymentMethod($this->payment_method_name);
         }
     }
 
@@ -488,6 +534,11 @@ class Page extends Component
         $this->dispatch('Sale-View-Items-Component', $this->sales['status'], $this->items);
     }
 
+    public function managePackage()
+    {
+        $this->dispatch('Open-Sale-Package-Component', $this->items, $this->packages);
+    }
+
     public function editItem($index)
     {
         $this->dispatch('Sale-Edit-Item-Component', $index, $this->items[$index]);
@@ -626,6 +677,7 @@ class Page extends Component
             $this->sales['status'] = $type;
             $this->sales['items'] = $this->items;
             $this->sales['payments'] = $this->payments;
+            $this->sales['packages'] = $this->packages;
             if ($this->sales['balance'] < 0) {
                 throw new Exception('Please check the payment', 1);
             }

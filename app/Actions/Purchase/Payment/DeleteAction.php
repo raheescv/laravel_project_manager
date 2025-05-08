@@ -13,7 +13,7 @@ class DeleteAction
         try {
             $model = PurchasePayment::find($id);
             if (! $model) {
-                throw new Exception("Resource not found with the specified ID: $id.", 1);
+                throw new Exception("PurchasePayment not found with the specified ID: $id.", 1);
             }
             if ($model->saleReturn->status == 'completed') {
                 if (! Auth::user()->can('purchase.edit completed')) {

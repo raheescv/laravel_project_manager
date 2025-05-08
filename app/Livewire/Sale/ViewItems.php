@@ -11,14 +11,40 @@ class ViewItems extends Component
         'Sale-View-Items-Component' => 'open',
     ];
 
-    public $status;
+    public $status = null;
 
-    public $items;
+    public $items = [];
+
+    protected function rules()
+    {
+        return [
+            'items.*.unit_price' => ['numeric', 'min:0'],
+            'items.*.quantity' => ['numeric', 'min:1'],
+            'items.*.discount' => ['numeric', 'min:0'],
+            'items.*.tax' => ['numeric', 'min:0', 'max:50'],
+        ];
+    }
 
     public function mount($status = null, $items = [])
     {
         $this->status = $status;
-        $this->items = $items;
+        $this->items = is_array($items) ? $this->sanitizeItems($items) : [];
+    }
+
+    protected function sanitizeItems(array $items): array
+    {
+        return array_map(function ($item) {
+            return array_merge([
+                'unit_price' => 0,
+                'quantity' => 1,
+                'discount' => 0,
+                'tax' => 0,
+                'gross_amount' => 0,
+                'net_amount' => 0,
+                'tax_amount' => 0,
+                'total' => 0,
+            ], $item);
+        }, $items);
     }
 
     public function open($status, $items)
@@ -29,42 +55,54 @@ class ViewItems extends Component
 
     public function updated($key, $value)
     {
-        if (preg_match('/^items\..*/', $key)) {
-            $indexes = explode('.', $key);
-            $index = $indexes[1] ?? null;
-            if (! is_numeric($value)) {
-                $this->items[$index][$indexes[2]] = 0;
-            }
-            $this->cartCalculator($index);
+        if (! preg_match('/^items\.(\d+)\.(unit_price|quantity|discount|tax)$/', $key, $matches)) {
+            return;
         }
+
+        $index = $matches[1];
+        $field = $matches[2];
+
+        $this->items[$index][$field] = is_numeric($value) ? (float) $value : 0;
+        $this->cartCalculator($index);
     }
 
     public function cartCalculator($key = null)
     {
-        if ($key) {
+        if ($key !== null && isset($this->items[$key])) {
             $this->singleCartCalculator($key);
         } else {
-            foreach ($this->items as $value) {
-                $key = $value['employee_id'].'-'.$value['inventory_id'];
-                $this->singleCartCalculator($key);
+            foreach (array_keys($this->items) as $itemKey) {
+                $this->singleCartCalculator($itemKey);
             }
         }
     }
 
-    public function singleCartCalculator($key)
+    protected function singleCartCalculator($key)
     {
-        $gross_amount = $this->items[$key]['unit_price'] * $this->items[$key]['quantity'];
-        $net_amount = $gross_amount - $this->items[$key]['discount'];
-        $tax_amount = $net_amount * $this->items[$key]['tax'] / 100;
+        if (! isset($this->items[$key])) {
+            return;
+        }
 
-        $this->items[$key]['gross_amount'] = round($gross_amount, 2);
-        $this->items[$key]['net_amount'] = round($net_amount, 2);
-        $this->items[$key]['tax_amount'] = round($tax_amount, 2);
-        $this->items[$key]['total'] = round($net_amount + $tax_amount, 2);
+        $item = &$this->items[$key];
+
+        $unit_price = (float) ($item['unit_price'] ?? 0);
+        $quantity = (float) ($item['quantity'] ?? 1);
+        $discount = (float) ($item['discount'] ?? 0);
+        $tax_rate = (float) ($item['tax'] ?? 0);
+
+        $gross_amount = $unit_price * $quantity;
+        $net_amount = $gross_amount - $discount;
+        $tax_amount = $net_amount * ($tax_rate / 100);
+
+        $item['gross_amount'] = round($gross_amount, 2);
+        $item['net_amount'] = round($net_amount, 2);
+        $item['tax_amount'] = round($tax_amount, 2);
+        $item['total'] = round($net_amount + $tax_amount, 2);
     }
 
     public function submit()
     {
+        $this->cartCalculator(); // Ensure all calculations are up to date
         $this->dispatch('Sale-Edited-Items-Component', $this->items);
         $this->dispatch('ToggleViewItemsModal');
     }
@@ -72,16 +110,18 @@ class ViewItems extends Component
     public function removeItem($index)
     {
         try {
-            $id = $this->items[$index]['id'] ?? '';
-            if ($id) {
-                $response = (new DeleteAction())->execute($id);
+            if (isset($this->items[$index]['id'])) {
+                $response = (new DeleteAction())->execute($this->items[$index]['id']);
                 if (! $response['success']) {
                     throw new \Exception($response['message'], 1);
                 }
             }
+
             unset($this->items[$index]);
+            $this->items = array_values($this->items); // Reindex array
+
             $this->dispatch('Sale-Delete-Sync-Items-Component', $index);
-            $this->dispatch('success', ['message' => 'item removed successfully']);
+            $this->dispatch('success', ['message' => 'Item removed successfully']);
         } catch (\Throwable $th) {
             $this->dispatch('error', ['message' => $th->getMessage()]);
         }

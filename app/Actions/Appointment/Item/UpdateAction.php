@@ -11,7 +11,7 @@ class UpdateAction
         try {
             $model = AppointmentItem::find($id);
             if (! $model) {
-                throw new \Exception("Resource not found with the specified ID: $id.", 1);
+                throw new \Exception("AppointmentItem not found with the specified ID: $id.", 1);
             }
             validationHelper(AppointmentItem::rules($data, $id), $data);
             $model->update($data);

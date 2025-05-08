@@ -14,7 +14,7 @@ class DeleteAction
                 throw new \Exception("You can't delete this account; it's locked", 1);
             }
             if (! $model) {
-                throw new \Exception("Resource not found with the specified ID: $id.", 1);
+                throw new \Exception("Account not found with the specified ID: $id.", 1);
             }
             if (! $model->delete()) {
                 throw new \Exception('Oops! Something went wrong while deleting the Account. Please try again.', 1);

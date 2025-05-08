@@ -15,7 +15,7 @@ class DeleteAction
         try {
             $model = Product::find($id);
             if (! $model) {
-                throw new Exception("Resource not found with the specified ID: $id.", 1);
+                throw new Exception("Product not found with the specified ID: $id.", 1);
             }
             if (! $model->delete()) {
                 throw new Exception('Oops! Something went wrong while deleting the Product. Please try again.', 1);

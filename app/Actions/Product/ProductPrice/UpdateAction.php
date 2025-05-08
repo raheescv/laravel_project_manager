@@ -11,7 +11,7 @@ class UpdateAction
         try {
             $model = ProductPrice::find($id);
             if (! $model) {
-                throw new \Exception("Resource not found with the specified ID: $id.", 1);
+                throw new \Exception("ProductPrice not found with the specified ID: $id.", 1);
             }
             if ($data['price_type'] != 'offer') {
                 unset($data['start_date']);

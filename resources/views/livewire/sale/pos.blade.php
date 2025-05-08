@@ -1,6 +1,6 @@
 <div>
     @push('styles')
-        <link rel="stylesheet" href="{{ asset('assets/pos/pos.css?v=2') }}">
+        <link rel="stylesheet" href="{{ asset('assets/pos/pos.css?v=3') }}">
     @endpush
     <div class="main-wrapper">
         <div class="page-wrapper pos-pg-wrapper ms-0">
@@ -57,22 +57,46 @@
                                     </div>
                                 @endif
                                 <div class="product-added block-section">
-                                    <div class="d-flex align-items-center justify-content-between">
+                                    <div class="cart-summary mb-3">
                                         @php
                                             $total_quantity = collect($items)->sum('quantity');
                                         @endphp
-                                        <h6 class="d-flex align-items-center mb-0">
-                                            Product Added <span class="count">{{ $total_quantity }}</span>
-                                            &nbsp;
-                                        </h6>
-                                        @if ($total_quantity)
-                                            <i class="fa fa-eye d-flex align-items-center pointer" wire:click="viewItems()">
-                                                &nbsp; View all
-                                            </i>
-                                            <i class="fa fa-close d-flex align-items-center text-danger pointer" wire:confirm="Are you sure to delete this?" wire:click="deleteAllItems()">
-                                                &nbsp; Clear all
-                                            </i>
-                                        @endif
+                                        <div class="d-flex align-items-center justify-content-between bg-white rounded-lg p-3 shadow-sm">
+                                            <!-- Cart Info -->
+                                            <div class="d-flex align-items-center gap-3">
+                                                <span class="cart-badge">{{ $total_quantity }}</span>
+                                                <div>
+                                                    <h6 class="mb-0 text-dark">Cart Items</h6>
+                                                    <small class="text-muted">{{ $total_quantity }} items in cart</small>
+                                                </div>
+                                            </div>
+                                            <!-- Action Buttons -->
+                                            @if ($total_quantity)
+                                                <div class="action-group d-flex gap-2">
+                                                    @can('sale.package')
+                                                        <div class="d-flex flex-column align-items-center">
+                                                            <button type='button' wire:click="managePackage()" class="action-btn package-btn" title="Manage Package">
+                                                                <i class="fa fa-cube"></i>
+                                                            </button>
+                                                            <small>Package</small>
+                                                        </div>
+                                                    @endcan
+                                                    <div class="d-flex flex-column align-items-center">
+                                                        <button type='button' wire:click="viewItems()" class="action-btn view-btn" title="View Items">
+                                                            <i class="fa fa-list"></i>
+                                                        </button>
+                                                        <small>View</small>
+                                                    </div>
+                                                    <div class="d-flex flex-column align-items-center">
+                                                        <button type='button' wire:confirm="Are you sure to delete this?" wire:click="deleteAllItems()" class="action-btn delete-btn"
+                                                            title="Delete All Items">
+                                                            <i class="fa fa-trash"></i>
+                                                        </button>
+                                                        <small>Delete</small>
+                                                    </div>
+                                                </div>
+                                            @endif
+                                        </div>
                                     </div>
                                     <div class="product-wrap">
                                         @foreach ($items as $item)
@@ -204,6 +228,7 @@
             </div>
         </div>
     </div>
+    <x-sale.package-modal :id="$sales['id'] ?? ''" />
     @push('scripts')
         <script src="{{ asset('assets/pos/feather.min.js') }}"></script>
         <script src="{{ asset('assets/pos/script.js') }}"></script>

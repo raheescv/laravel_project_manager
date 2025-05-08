@@ -17,6 +17,7 @@ class SaleItem extends Model implements AuditableContracts
         'employee_id',
         'inventory_id',
         'product_id',
+        'sale_package_id',
         'unit_price',
         'quantity',
         'discount',
@@ -58,6 +59,11 @@ class SaleItem extends Model implements AuditableContracts
     public function employee()
     {
         return $this->belongsTo(User::class, 'employee_id');
+    }
+
+    public function salePackage()
+    {
+        return $this->belongsTo(SalePackage::class, 'sale_package_id');
     }
 
     public function getNameAttribute()

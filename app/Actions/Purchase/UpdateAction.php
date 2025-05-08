@@ -16,7 +16,7 @@ class UpdateAction
         try {
             $model = Purchase::find($purchase_id);
             if (! $model) {
-                throw new \Exception("Resource not found with the specified ID: $purchase_id.", 1);
+                throw new \Exception("Purchase not found with the specified ID: $purchase_id.", 1);
             }
 
             if ($data['status'] == 'cancelled') {

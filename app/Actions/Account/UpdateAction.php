@@ -11,7 +11,7 @@ class UpdateAction
         try {
             $model = Account::find($id);
             if (! $model) {
-                throw new \Exception("Resource not found with the specified ID: $id.", 1);
+                throw new \Exception("Account not found with the specified ID: $id.", 1);
             }
             $data['mobile'] = $data['mobile'] ?? null;
             $name = $data['account_type'].'-'.$data['name'].'-'.$data['mobile'];

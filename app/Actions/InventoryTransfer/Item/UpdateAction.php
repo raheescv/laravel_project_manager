@@ -12,7 +12,7 @@ class UpdateAction
             $data['updated_by'] = $userId;
             $model = InventoryTransferItem::find($id);
             if (! $model) {
-                throw new \Exception("Resource not found with the specified ID: $id.", 1);
+                throw new \Exception("InventoryTransferItem not found with the specified ID: $id.", 1);
             }
             validationHelper(InventoryTransferItem::rules($id), $data);
             $model->update($data);

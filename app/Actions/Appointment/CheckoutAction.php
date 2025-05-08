@@ -18,7 +18,7 @@ class CheckoutAction
             }
             $model = Appointment::find($id);
             if (! $model) {
-                throw new \Exception("Resource not found with the specified ID: $id.", 1);
+                throw new \Exception("Appointment not found with the specified ID: $id.", 1);
             }
 
             $saleData = [

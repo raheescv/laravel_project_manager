@@ -12,7 +12,7 @@ class UpdateAction
             $data['updated_by'] = $user_id;
             $model = SaleItem::find($id);
             if (! $model) {
-                throw new \Exception("Resource not found with the specified ID: $id.", 1);
+                throw new \Exception("SaleItem not found with the specified ID: $id.", 1);
             }
 
             // to avoid storing the audit log

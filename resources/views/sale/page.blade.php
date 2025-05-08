@@ -28,11 +28,11 @@
     @push('styles')
     @endpush
     @push('scripts')
-        @include('components.select.customerSelect')
-        @include('components.select.employeeSelect')
-        @include('components.select.inventoryProductSelect')
-        @include('components.select.paymentMethodSelect')
-
+        <x-select.customerSelect />
+        <x-select.employeeSelect />
+        <x-select.inventoryProductSelect />
+        <x-select.paymentMethodSelect />
+        <x-select.packageSelect />
         <script>
             document.addEventListener('DOMContentLoaded', function() {
                 window.addEventListener('print-invoice', function(event) {

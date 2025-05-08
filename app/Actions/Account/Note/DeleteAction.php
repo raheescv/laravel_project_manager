@@ -14,7 +14,7 @@ class DeleteAction
                 throw new \Exception("You can't delete this AccountNote; it's locked", 1);
             }
             if (! $model) {
-                throw new \Exception("Resource not found with the specified ID: $id.", 1);
+                throw new \Exception("AccountNote not found with the specified ID: $id.", 1);
             }
             if (! $model->delete()) {
                 throw new \Exception('Oops! Something went wrong while deleting the AccountNote. Please try again.', 1);

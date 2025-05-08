@@ -15,7 +15,7 @@ class UpdateAction
         try {
             $model = InventoryTransfer::find($inventoryTransferId);
             if (! $model) {
-                throw new Exception("Resource not found with the specified ID: $inventoryTransferId.", 1);
+                throw new Exception("InventoryTransfer not found with the specified ID: $inventoryTransferId.", 1);
             }
             if ($data['status'] == 'completed') {
                 $data['approved_by'] = $userId;

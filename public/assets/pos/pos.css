@@ -1017,3 +1017,47 @@ aside.product-order-list .btn-row .btn:hover {
 .bg-custom-gray {
     background-color: #f3f6f9;
 }
+
+.cart-badge {
+    background: #4CAF50;
+    color: white;
+    width: 45px;
+    height: 45px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    font-weight: bold;
+}
+
+.action-btn {
+    width: 38px;
+    height: 38px;
+    border: none;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    background: #f8f9fa;
+}
+
+.action-btn:hover {
+    transform: translateY(-2px);
+}
+
+.package-btn:hover {
+    background: #e3f2fd;
+    color: #2196F3;
+}
+
+.view-btn:hover {
+    background: #e8f5e9;
+    color: #4CAF50;
+}
+
+.delete-btn:hover {
+    background: #ffebee;
+    color: #f44336;
+}

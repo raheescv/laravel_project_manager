@@ -12,14 +12,14 @@
     </title>
     <style>
         body {
-            font-family: "Courier New", Courier, monospace;
-            line-height: 1.2;
+            font-family: 'Arial', 'Courier New', monospace;
+            line-height: 1.4;
             font-size: 12px;
             margin: 0 auto;
             width: 80mm;
             background-color: #fff;
-            padding: 15px;
-            color: #000;
+            padding: 10px 15px;
+            color: #333;
         }
 
         @page {
@@ -29,31 +29,34 @@
 
         .receipt-container {
             background-color: #fff;
-            border-radius: 5px;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
             width: 100%;
-            padding: 1px;
+            padding: 10px 5px;
         }
 
         h1,
         h2,
         h3 {
-            margin: 5px 0;
+            margin: 8px 0;
             text-align: center;
             font-size: 14px;
             font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
 
         .divider {
-            border-top: 1px dashed #000;
-            margin: 5px 0;
+            border-top: 1px dashed #999;
+            margin: 8px 0;
+            opacity: 0.5;
         }
 
         .table {
             width: 100%;
             border-collapse: collapse;
-            margin-bottom: 10px;
-            font-size: 12px;
+            margin: 12px 0;
+            font-size: 11px;
         }
 
         .nowrap {
@@ -62,15 +65,17 @@
 
         .table th,
         .table td {
-            border: 1px solid #0e0d0d;
-            padding: 3px;
+            border: 1px solid #ddd;
+            padding: 5px;
             text-align: center;
         }
 
         .table th {
-            background-color: #f0f0f0;
-            font-size: 12px;
+            background-color: #f8f8f8;
+            font-size: 11px;
             font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
 
         .text-left {
@@ -91,13 +96,30 @@
 
         .barcode {
             text-align: center;
-            margin: 5px 0;
+            margin: 15px 0;
+            padding: 10px;
+            background: #f8f8f8;
+            border-radius: 4px;
+        }
+
+        .barcode img {
+            max-width: 100%;
+            height: auto;
+        }
+
+        .barcode p {
+            margin: 5px 0 0;
+            font-size: 10px;
+            color: #666;
         }
 
         .footer {
             text-align: center;
             font-size: 10px;
-            margin-top: 5px;
+            margin-top: 10px;
+            padding: 10px 0;
+            border-top: 1px dashed #999;
+            color: #666;
         }
 
         @media print {
@@ -120,6 +142,15 @@
 
             .no-print {
                 display: none;
+            }
+
+            .table th {
+                background-color: #f8f8f8 !important;
+            }
+
+            .table td,
+            .table th {
+                border-color: #ddd !important;
             }
         }
     </style>
@@ -241,7 +272,25 @@
                 @endif
             </thead>
             <tbody>
-                @foreach ($sale->items as $item)
+                {{--  Package Table Area --}}
+                @foreach ($sale->packages as $package)
+                    <tr>
+                        <td colspan="4" class="text-left"><b>{{ $package->servicePackage->name }}</b></td>
+                    </tr>
+                    @if ($package->servicePackage->name_arabic)
+                        <tr>
+                            <td colspan="4" class="text-left"><b>{{ $package->servicePackage->name_arabic }}</b></td>
+                        </tr>
+                    @endif
+                    <tr>
+                        <td class="text-right"> <b>{{ $loop->iteration }}</b> </td>
+                        <td class="text-right"> <b>{{ currency($package->amount) }}</b> </td>
+                        <td class="text-right"> <b>1</b> </td>
+                        <td class="text-right"> <b>{{ currency($package->amount) }}</b> </td>
+                    </tr>
+                @endforeach
+                {{--  Items Table Area --}}
+                @foreach ($sale->items()->whereNull('sale_package_id')->get() as $item)
                     <tr>
                         <td colspan="4" class="text-left"><b>{{ $item->product->name }}</b></td>
                     </tr>
@@ -251,7 +300,7 @@
                         </tr>
                     @endif
                     <tr>
-                        <td class="text-right"> <b>{{ $loop->iteration }}</b> </td>
+                        <td class="text-right"> <b>{{ $sale->packages->count() + $loop->iteration }}</b> </td>
                         @if ($enable_discount_in_print == 'yes')
                             <td class="text-right"> <b>{{ currency($item->unit_price) }}</b> </td>
                         @else

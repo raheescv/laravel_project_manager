@@ -35,7 +35,7 @@ class DeleteAction
                     break;
             }
             if (! $model) {
-                throw new Exception("Resource not found with the specified ID: $id.", 1);
+                throw new Exception("Journal not found with the specified ID: $id.", 1);
             }
 
             $this->subModelDelete($model);

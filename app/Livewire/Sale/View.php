@@ -46,6 +46,7 @@ class View extends Component
                         'employee_id' => $item['employee_id'],
                         'inventory_id' => $item['inventory_id'],
                         'product_id' => $item['product_id'],
+                        'sale_package_id' => $item['sale_package_id'],
                         'name' => $item['name'],
                         'employee_name' => $item['employee_name'],
                         'tax_amount' => $item['tax_amount'],

@@ -12,7 +12,7 @@ class UpdateAction
             $data['updated_by'] = $user_id;
             $model = PurchasePayment::find($id);
             if (! $model) {
-                throw new \Exception("Resource not found with the specified ID: $id.", 1);
+                throw new \Exception("PurchasePayment not found with the specified ID: $id.", 1);
             }
             validationHelper(PurchasePayment::rules($id), $data);
             $model->update($data);

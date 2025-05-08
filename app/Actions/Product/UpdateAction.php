@@ -13,7 +13,7 @@ class UpdateAction
         try {
             $model = Product::find($id);
             if (! $model) {
-                throw new \Exception("Resource not found with the specified ID: $id.", 1);
+                throw new \Exception("Product not found with the specified ID: $id.", 1);
             }
 
             if (str_contains($data['department_id'], 'add ')) {

@@ -11,7 +11,7 @@ class DeleteAction
         try {
             $model = Purchase::find($id);
             if (! $model) {
-                throw new \Exception("Resource not found with the specified ID: $id.", 1);
+                throw new \Exception("Purchase not found with the specified ID: $id.", 1);
             }
             if ($model->status == 'completed') {
                 throw new \Exception('Completed purchase cant be deleted', 1);

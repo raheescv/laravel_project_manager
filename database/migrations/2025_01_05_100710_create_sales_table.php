@@ -26,7 +26,7 @@ return new class() extends Migration
             $table->decimal('item_discount', 16, 2)->default(0);
             $table->decimal('tax_amount', 16, 2)->default(0);
 
-            $table->decimal('total', 16, 2)->default(0);
+            $table->decimal('total', 16, 2)->storedAs('gross_amount - item_discount + tax_amount');
 
             $table->decimal('other_discount', 16, 2)->default(0);
             $table->decimal('freight', 16, 2)->default(0);

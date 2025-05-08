@@ -15,7 +15,7 @@ class DeleteAction
             $userId = Auth::id();
             $model = InventoryTransferItem::find($id);
             if (! $model) {
-                throw new Exception("Resource not found with the specified ID: $id.", 1);
+                throw new Exception("InventoryTransferItem not found with the specified ID: $id.", 1);
             }
             if ($model->inventoryTransfer->status == 'completed') {
                 if (! Auth::user()->can('inventory transfer.edit completed')) {
