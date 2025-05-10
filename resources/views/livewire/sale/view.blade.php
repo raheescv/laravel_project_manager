@@ -65,34 +65,34 @@
                     </div>
                 </div>
                 <!-- Package Items Section (New) -->
-                @if (count($sale->packages) > 0)
+                @if (count($sale->comboOffers) > 0)
                     <div class="mb-2">
                         <h5 class="card-title mb-3">
-                            <i class="demo-psi-box-2 me-2"></i>Package Items
+                            <i class="demo-psi-box-2 me-2"></i>Combo Offer Items
                         </h5>
                         <div class="row g-3">
-                            @foreach ($sale->packages as $package)
+                            @foreach ($sale->comboOffers as $item)
                                 <div class="col-md-6 col-lg-6">
                                     <div class="card h-100 package-card border shadow-sm">
                                         <div class="card-header bg-primary bg-opacity-10 py-3">
                                             <h6 class="mb-0">
                                                 <i class="demo-psi-box me-2"></i>
-                                                {{ $package->servicePackage->name }}
+                                                {{ $item->comboOffer->name }}
                                             </h6>
                                         </div>
                                         <div class="card-body p-1">
                                             <div class="package-stats d-flex justify-content-between mb-1 p-2 bg-light rounded">
                                                 <div class="text-center">
-                                                    <div class="fw-bold text-primary">{{ $package->items->count() }}</div>
+                                                    <div class="fw-bold text-primary">{{ $item->items->count() }}</div>
                                                     <small class="text-muted">Services</small>
                                                 </div>
                                                 <div class="text-center">
-                                                    <div class="fw-bold text-success">{{ currency($package->amount) }}</div>
-                                                    <small class="text-muted">Package Price</small>
+                                                    <div class="fw-bold text-success">{{ currency($item->amount) }}</div>
+                                                    <small class="text-muted">Combo Offer Price</small>
                                                 </div>
                                             </div>
                                             <div class="package-items">
-                                                @foreach ($package->items as $item)
+                                                @foreach ($item->items as $item)
                                                     <div class="d-flex justify-content-between align-items-center p-2 border-bottom">
                                                         <div>
                                                             <div class="fw-semibold">{{ $item->product->name }}</div>
@@ -167,7 +167,7 @@
                                                     <i class="demo-psi-box-2 me-2"></i>
                                                     <div>
                                                         <a href="{{ route('inventory::product::view', $item['product_id']) }}" class="text-primary">{{ $item['name'] }}</a>
-                                                        @if (!empty($item['sale_package_id']))
+                                                        @if (!empty($item['sale_combo_offer_id']))
                                                             <span class="badge bg-info ms-2">P</span>
                                                         @endif
                                                     </div>

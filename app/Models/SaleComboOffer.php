@@ -4,11 +4,11 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-class SalePackage extends Model
+class SaleComboOffer extends Model
 {
     protected $fillable = [
         'sale_id',
-        'service_package_id',
+        'combo_offer_id',
         'amount',
     ];
 
@@ -16,7 +16,7 @@ class SalePackage extends Model
     {
         return array_merge([
             'sale_id' => ['required'],
-            'service_package_id' => ['required'],
+            'combo_offer_id' => ['required'],
             'amount' => ['required', 'numeric'],
         ], $merge);
     }
@@ -26,21 +26,21 @@ class SalePackage extends Model
         return $this->belongsTo(Sale::class);
     }
 
-    public function servicePackage()
+    public function comboOffer()
     {
-        return $this->belongsTo(ServicePackage::class);
+        return $this->belongsTo(ComboOffer::class);
     }
 
-    public static function addPackageId($sale_id, $inventory_id, $employee_id, $sale_package_id)
+    public static function addComboOfferId($sale_id, $inventory_id, $employee_id, $sale_combo_offer_id)
     {
         SaleItem::where('sale_id', $sale_id)
             ->where('inventory_id', $inventory_id)
             ->where('employee_id', $employee_id)
-            ->update(['sale_package_id' => $sale_package_id]);
+            ->update(['sale_combo_offer_id' => $sale_combo_offer_id]);
     }
 
     public function items()
     {
-        return $this->hasMany(SaleItem::class, 'sale_package_id');
+        return $this->hasMany(SaleItem::class, 'sale_combo_offer_id');
     }
 }

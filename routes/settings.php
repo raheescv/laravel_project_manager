@@ -1,9 +1,9 @@
 <?php
 
+use App\Http\Controllers\ComboOfferController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\ServiceController;
-use App\Http\Controllers\ServicePackageController;
 use App\Http\Controllers\Settings\BranchController;
 use App\Http\Controllers\Settings\CategoryController;
 use App\Http\Controllers\Settings\CountryController;
@@ -53,9 +53,9 @@ Route::middleware('auth')->group(function (): void {
         Route::get('create', 'page')->name('create')->can('service.create');
         Route::get('edit/{id}', 'page')->name('edit')->can('service.edit');
         Route::get('list', 'get')->name('list');
-        Route::name('package::')->prefix('package')->controller(ServicePackageController::class)->group(function (): void {
-            Route::get('', 'index')->name('index')->can('service package.view');
-            Route::get('list', 'get')->name('list');
-        });
+    });
+    Route::name('combo_offer::')->prefix('combo_offer')->controller(ComboOfferController::class)->group(function (): void {
+        Route::get('', 'index')->name('index')->can('combo offer.view');
+        Route::get('list', 'get')->name('list');
     });
 });

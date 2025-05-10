@@ -73,12 +73,12 @@
                                             <!-- Action Buttons -->
                                             @if ($total_quantity)
                                                 <div class="action-group d-flex gap-2">
-                                                    @can('sale.package')
+                                                    @can('sale.combo offer')
                                                         <div class="d-flex flex-column align-items-center">
-                                                            <button type='button' wire:click="managePackage()" class="action-btn package-btn" title="Manage Package">
+                                                            <button type='button' wire:click="manageComboOffer()" class="action-btn package-btn" title="Manage Combo Offer">
                                                                 <i class="fa fa-cube"></i>
                                                             </button>
-                                                            <small>Package</small>
+                                                            <small>Combo Offer</small>
                                                         </div>
                                                     @endcan
                                                     <div class="d-flex flex-column align-items-center">
@@ -228,7 +228,7 @@
             </div>
         </div>
     </div>
-    <x-sale.package-modal :id="$sales['id'] ?? ''" />
+    <x-sale.combo-offer-modal :id="$sales['id'] ?? ''" />
     @push('scripts')
         <script src="{{ asset('assets/pos/feather.min.js') }}"></script>
         <script src="{{ asset('assets/pos/script.js') }}"></script>

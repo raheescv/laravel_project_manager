@@ -1,12 +1,12 @@
 <script type="text/javascript">
-    $('.select-package_id-list').each(function() {
+    $('.select-combo_offer_id-list').each(function() {
         new TomSelect(this, {
             persist: false,
             valueField: 'id',
             nameField: 'name',
-            searchField: ['name', 'amount', 'description', 'service_count'],
+            searchField: ['name', 'amount', 'description', 'count'],
             load: function(query, callback) {
-                var url = "{{ route('service::package::list') }}";
+                var url = "{{ route('combo_offer::list') }}";
                 url += '?query=' + encodeURIComponent(query);
                 fetch(url)
                     .then(response => {
@@ -32,7 +32,7 @@
                             </div>
                             <div class="ml-4 text-right">
                                 <div class="text-success font-weight-bold text-lg">${escape(item.amount ? '₹' + item.amount : '')}</div>
-                                ${item.service_count ? `<div class="badge bg-primary text-white rounded-pill px-3 py-1 mt-1">${escape(item.service_count)} services</div>` : ''}
+                                ${item.count ? `<div class="badge bg-primary text-white rounded-pill px-3 py-1 mt-1">${escape(item.count)} services</div>` : ''}
                             </div>
                         </div>`;
                 },

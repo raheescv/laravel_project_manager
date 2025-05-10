@@ -2,39 +2,39 @@
 
 namespace Database\Seeders;
 
-use App\Models\ServicePackage;
+use App\Models\ComboOffer;
 use Illuminate\Database\Seeder;
 
-class ServicePackageSeeder extends Seeder
+class ComboOfferSeeder extends Seeder
 {
     public function run(): void
     {
-        $packages = [
+        $data = [
             [
-                'name' => '4 Services Package',
+                'name' => '4 Services Combo',
                 'description' => 'Any 4 services for 400 Riyals',
-                'service_count' => 4,
+                'count' => 4,
                 'amount' => 400,
                 'is_active' => true,
             ],
             [
-                'name' => '3 Services Package',
+                'name' => '3 Services Combo',
                 'description' => 'Any 3 services for 300 Riyals',
-                'service_count' => 3,
+                'count' => 3,
                 'amount' => 300,
                 'is_active' => true,
             ],
             [
-                'name' => '2 Services Package',
+                'name' => '2 Services Combo',
                 'description' => 'Any 2 services for 200 Riyals',
-                'service_count' => 2,
+                'count' => 2,
                 'amount' => 200,
                 'is_active' => true,
             ],
         ];
 
-        foreach ($packages as $package) {
-            ServicePackage::firstOrCreate(['name' => $package['name']], $package);
+        foreach ($data as $package) {
+            ComboOffer::firstOrCreate(['name' => $package['name']], $package);
         }
     }
 }

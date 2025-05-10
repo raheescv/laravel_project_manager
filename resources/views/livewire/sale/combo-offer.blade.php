@@ -1,35 +1,35 @@
-<div class="package-selection-container">
+<div class="combo-offerselection-container">
     <div class="modal-header bg-gradient-primary text-white py-4">
         <h5 class="modal-title d-flex align-items-center m-0">
             <i class="demo-psi-shopping-bag me-2 fs-4"></i>
-            Package Selection
+            Combo Selection
         </h5>
         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
     </div>
 
     <div class="modal-body p-4">
-        <!-- Package Selection Cards -->
-        <div class="package-cards mb-4">
+        <!-- ComboOffer Selection Cards -->
+        <div class="combo-offercards mb-4">
             <div class="row g-4">
                 <div class="col-md-9">
                     <div wire:ignore>
-                        <label for="package_id">Package</label>
-                        {{ html()->select('package_id', [])->value('')->class('select-package_id-list')->id('package_id')->placeholder('Select Package') }}
+                        <label for="combo_offer_id">Combo</label>
+                        {{ html()->select('combo_offer_id', [])->value('')->class('select-combo_offer_id-list')->id('combo_offer_id')->placeholder('Select ComboOffer') }}
                     </div>
                 </div>
                 <div class="col-md-3"> <br>
                     <button type="button" class="btn btn-primary" wire:click="add">
                         <i class="demo-psi-shopping-cart me-1"></i>
-                        Add Package
-                        @if (count($selectedPackages) > 0)
-                            <span class="badge bg-white text-primary ms-2">{{ count($selectedPackages) }}</span>
+                        Add Combo
+                        @if (count($selectedComboOffers) > 0)
+                            <span class="badge bg-white text-primary ms-2">{{ count($selectedComboOffers) }}</span>
                         @endif
                     </button>
                 </div>
             </div>
         </div>
 
-        @if ($selectedPackageId)
+        @if ($selectedComboOfferId)
             <!-- Service Selection -->
             <div class="service-selection-container">
                 <div class="d-flex justify-content-between align-items-center mb-3">
@@ -42,9 +42,9 @@
                     </span>
                 </div>
 
-                @if ($filtered_package_items && count($filtered_package_items) > 0)
+                @if ($filtered_combo_offer_items && count($filtered_combo_offer_items) > 0)
                     <div class="row g-2">
-                        @foreach ($filtered_package_items as $key => $item)
+                        @foreach ($filtered_combo_offer_items as $key => $item)
                             <div class="col-md-6 col-lg-4">
                                 <label class="w-100 mb-0" for="service-{{ $key }}">
                                     <div class="card service-card h-100 {{ in_array($key, $selectedServices) ? 'border-primary bg-light' : 'border-light' }}">
@@ -70,14 +70,14 @@
                 @else
                     <div class="alert alert-info d-flex align-items-center">
                         <i class="demo-psi-information me-2 fs-5"></i>
-                        <span>No services available for this package</span>
+                        <span>No services available for this combo offer</span>
                     </div>
                 @endif
             </div>
         @endif
 
-        @if (count($selectedPackages) > 0)
-            <div class="selected-packages-summary mt-3">
+        @if (count($selectedComboOffers) > 0)
+            <div class="selected-combo-offer-summary mt-3">
                 <div class="card border-0 shadow-sm">
                     <div class="card-body p-3">
                         <div class="summary-header d-flex align-items-center justify-content-between mb-3">
@@ -86,35 +86,35 @@
                                     <i class="demo-psi-shopping-cart"></i>
                                 </div>
                                 <div>
-                                    <h6 class="fw-bold mb-0">Package Summary</h6>
-                                    <small class="text-muted">Review your selected packages and services</small>
+                                    <h6 class="fw-bold mb-0">Combo Offer Summary</h6>
+                                    <small class="text-muted">Review your selected combo offer and services</small>
                                 </div>
                             </div>
                         </div>
-                        <div class="selected-packages">
-                            <div class="packages-grid">
-                                @foreach ($selectedPackages as $index => $package)
+                        <div class="selected-combo-offer">
+                            <div class="combo-offer-grid">
+                                @foreach ($selectedComboOffers as $index => $combo_offer)
                                     @php
-                                        $originalTotal = collect($package['items'])->sum('unit_price');
-                                        $discountPercent = round((1 - $package['amount'] / $originalTotal) * 100, 1);
+                                        $originalTotal = collect($combo_offer['items'])->sum('unit_price');
+                                        $discountPercent = round((1 - $combo_offer['amount'] / $originalTotal) * 100, 1);
                                     @endphp
-                                    <div class="package-summary-item">
-                                        <div class="card package-summary-card h-100">
+                                    <div class="combo-offer-summary-item">
+                                        <div class="card combo-offer-summary-card h-100">
                                             <div class="card-header py-2 px-2">
                                                 <div class="d-flex justify-content-between align-items-center">
                                                     <div class="d-flex align-items-center gap-2">
-                                                        <div class="package-indicator"></div>
-                                                        <h6 class="package-name mb-0">{{ $package['package_name'] }}</h6>
+                                                        <div class="combo-offer-indicator"></div>
+                                                        <h6 class="combo-offer-name mb-0">{{ $combo_offer['combo_offer_name'] }}</h6>
                                                     </div>
                                                     <button type="button" class="btn-close btn-close-sm" wire:click="remove({{ $index }})"></button>
                                                 </div>
                                             </div>
                                             <div class="card-body p-2 d-flex flex-column">
-                                                <div class="package-quick-stats rounded-3 mb-3">
+                                                <div class="combo-offer-quick-stats rounded-3 mb-3">
                                                     <div class="d-flex justify-content-around gap-2">
                                                         <div class="stat-item">
                                                             <div class="stat-info">
-                                                                <div class="stat-value fw-bold">{{ count($package['items']) }}</div>
+                                                                <div class="stat-value fw-bold">{{ count($combo_offer['items']) }}</div>
                                                                 <div class="stat-label">Services</div>
                                                             </div>
                                                         </div>
@@ -126,11 +126,11 @@
                                                         </div>
                                                     </div>
                                                 </div>
-                                                <div class="package-services flex-grow-1">
+                                                <div class="combo-offer-services flex-grow-1">
                                                     <div class="table-responsive h-100">
                                                         <table class="table table-sm service-price-table mb-0">
                                                             <tbody>
-                                                                @foreach ($package['items'] as $item)
+                                                                @foreach ($combo_offer['items'] as $item)
                                                                     <tr>
                                                                         <td class="py-1 w-60">
                                                                             <span class="service-name">{{ $item['employee_name'] }} - {{ $item['name'] }}</span>
@@ -141,11 +141,11 @@
                                                                                     {{ currency($item['unit_price']) }}
                                                                                 </span>
                                                                                 <span class="badge bg-danger-subtle text-danger rounded-pill" data-bs-toggle="tooltip"
-                                                                                    title="You Save {{ currency($item['unit_price'] - $item['package_price']) }}">
-                                                                                    -{{ currency($item['unit_price'] - $item['package_price']) }}
+                                                                                    title="You Save {{ currency($item['unit_price'] - $item['combo_offer_price']) }}">
+                                                                                    -{{ currency($item['unit_price'] - $item['combo_offer_price']) }}
                                                                                 </span>
                                                                                 <span class="text-success fw-bold">
-                                                                                    {{ currency($item['package_price']) }}
+                                                                                    {{ currency($item['combo_offer_price']) }}
                                                                                 </span>
                                                                             </div>
                                                                         </td>
@@ -155,10 +155,10 @@
                                                         </table>
                                                     </div>
                                                 </div>
-                                                <div class="package-footer mt-2">
+                                                <div class="combo-offer-footer mt-2">
                                                     <div class="total-row d-flex justify-content-between align-items-center py-2 px-1">
-                                                        <span class="fw-medium">Package Total</span>
-                                                        <span class="fw-bold">{{ number_format($package['amount'], 2) }}</span>
+                                                        <span class="fw-medium">ComboOffer Total</span>
+                                                        <span class="fw-bold">{{ number_format($combo_offer['amount'], 2) }}</span>
                                                     </div>
                                                 </div>
                                             </div>
@@ -179,7 +179,7 @@
         </button>
     </div>
     <style>
-        .package-quick-stats {
+        .combo-offer-quick-stats {
             background: linear-gradient(to right, rgba(var(--bs-primary-rgb), 0.05), rgba(var(--bs-success-rgb), 0.05));
             padding: 1rem;
             border: 1px solid rgba(var(--bs-primary-rgb), 0.1);
@@ -222,7 +222,7 @@
             color: white;
         }
 
-        .package-summary-card {
+        .combo-offer-summary-card {
             background: rgba(255, 255, 255, 0.9);
             border-radius: 16px;
             backdrop-filter: blur(10px);
@@ -232,11 +232,11 @@
             transition: transform 0.3s ease;
         }
 
-        .package-summary-card:hover {
+        .combo-offer-summary-card:hover {
             transform: translateY(-4px);
         }
 
-        .package-header {
+        .combo-offer-header {
             background: linear-gradient(135deg, var(--bs-primary), #2979ff);
             padding: 1rem;
             display: flex;
@@ -245,7 +245,7 @@
             color: white;
         }
 
-        .package-title {
+        .combo-offer-title {
             font-weight: 600;
             font-size: 1.1rem;
         }
@@ -267,11 +267,11 @@
             background: rgba(255, 255, 255, 0.3);
         }
 
-        .package-content {
+        .combo-offer-content {
             padding: 1.5rem;
         }
 
-        .package-stats {
+        .combo-offer-stats {
             display: flex;
             gap: 2rem;
             margin-bottom: 1.5rem;
@@ -321,7 +321,7 @@
             font-weight: 600;
         }
 
-        .package-total {
+        .combo-offer-total {
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -336,7 +336,7 @@
             color: var(--bs-primary);
         }
 
-        .package-card {
+        .combo-offer-card {
             cursor: pointer;
             transition: all 0.3s ease;
             border-radius: 12px;
@@ -344,27 +344,27 @@
             box-shadow: 0 0.25rem 0.75rem rgba(0, 0, 0, 0.08);
         }
 
-        .package-card:hover {
+        .combo-offer-card:hover {
             transform: translateY(-4px);
             box-shadow: 0 0.5rem 1.5rem rgba(0, 0, 0, 0.12);
         }
 
-        .package-card.active {
+        .combo-offer-card.active {
             background: linear-gradient(to bottom, rgba(var(--bs-primary-rgb), 0.05), transparent);
         }
 
-        .package-banner {
+        .combo-offer-banner {
             height: 80px;
             background: linear-gradient(135deg, var(--bs-primary) 0%, #2979ff 100%);
             opacity: 0.8;
             transition: opacity 0.3s ease;
         }
 
-        .package-card:hover .package-banner {
+        .combo-offer-card:hover .combo-offer-banner {
             opacity: 1;
         }
 
-        .package-icon-wrapper {
+        .combo-offer-icon-wrapper {
             width: 64px;
             height: 64px;
             background: white;
@@ -379,16 +379,16 @@
             box-shadow: 0 0.25rem 0.75rem rgba(0, 0, 0, 0.08);
         }
 
-        .package-icon-wrapper i {
+        .combo-offer-icon-wrapper i {
             font-size: 28px;
         }
 
-        .package-stats .badge {
+        .combo-offer-stats .badge {
             border-radius: 8px;
             font-weight: 500;
         }
 
-        .package-selected-indicator {
+        .combo-offer-selected-indicator {
             position: absolute;
             top: 1rem;
             right: 1rem;
@@ -436,13 +436,13 @@
             margin: 0;
         }
 
-        .package-summary-card {
+        .combo-offer-summary-card {
             border-left: 4px solid var(--bs-primary);
             border-radius: 12px;
         }
 
-        /* Package Summary Styling */
-        .selected-packages-summary {
+        /* ComboOffer Summary Styling */
+        .selected-combo-offer-summary {
             --summary-spacing: 0.75rem;
         }
 
@@ -458,24 +458,24 @@
             font-size: 1rem;
         }
 
-        .package-summary-card {
+        .combo-offer-summary-card {
             border: 1px solid var(--bs-border-color);
             border-radius: 8px;
         }
 
-        .package-summary-card .card-header {
+        .combo-offer-summary-card .card-header {
             background: var(--bs-light);
             border-bottom: 1px solid var(--bs-border-color);
         }
 
-        .package-indicator {
+        .combo-offer-indicator {
             width: 3px;
             height: 16px;
             background: var(--bs-primary);
             border-radius: 2px;
         }
 
-        .package-name {
+        .combo-offer-name {
             font-size: 0.9375rem;
             font-weight: 500;
         }
@@ -485,7 +485,7 @@
             padding: 0.25rem;
         }
 
-        .package-quick-stats {
+        .combo-offer-quick-stats {
             border-bottom: 1px solid var(--bs-border-color);
             padding-bottom: var(--summary-spacing);
         }
@@ -526,7 +526,7 @@
         }
 
         @media (max-width: 767.98px) {
-            .package-quick-stats {
+            .combo-offer-quick-stats {
                 flex-wrap: wrap;
             }
 
@@ -535,36 +535,36 @@
             }
         }
 
-        /* Package Summary Grid Layout */
-        .packages-grid {
+        /* ComboOffer Summary Grid Layout */
+        .combo-offer-grid {
             display: grid;
             gap: 1rem;
             padding: 0.5rem;
         }
 
-        /* Single package takes full width */
-        .packages-grid:has(.package-summary-item:only-child) {
+        /* Single combo offer takes full width */
+        .combo-offer-grid:has(.combo-offer-summary-item:only-child) {
             grid-template-columns: 1fr;
         }
 
-        /* Two or more packages show 2 per row */
-        .packages-grid:not(:has(.package-summary-item:only-child)) {
+        /* Two or more combo-offer show 2 per row */
+        .combo-offer-grid:not(:has(.combo-offer-summary-item:only-child)) {
             grid-template-columns: repeat(2, 1fr);
         }
 
         @media (max-width: 767.98px) {
-            .packages-grid {
+            .combo-offer-grid {
                 grid-template-columns: 1fr !important;
                 /* Force single column on mobile regardless of item count */
             }
         }
 
-        .package-summary-item {
+        .combo-offer-summary-item {
             min-width: 0;
             /* Ensures content doesn't overflow */
         }
 
-        .package-summary-card {
+        .combo-offer-summary-card {
             height: 100%;
             display: flex;
             flex-direction: column;
@@ -572,13 +572,13 @@
             border-radius: 8px;
         }
 
-        .packages-grid {
+        .combo-offer-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
             gap: 1rem;
         }
 
-        .package-summary-card {
+        .combo-offer-summary-card {
             display: flex;
             flex-direction: column;
             height: 100%;
@@ -586,14 +586,14 @@
             border-radius: 8px;
         }
 
-        .package-summary-card .card-body {
+        .combo-offer-summary-card .card-body {
             display: flex;
             flex-direction: column;
             height: 100%;
             padding: 0.75rem;
         }
 
-        .package-services {
+        .combo-offer-services {
             flex: 1;
             min-height: 0;
             overflow-y: auto;
@@ -616,7 +616,7 @@
             width: 40%;
         }
 
-        .package-quick-stats {
+        .combo-offer-quick-stats {
             padding: 0.5rem;
             background: rgba(var(--primary-rgb), 0.03);
             border-radius: 6px;
@@ -636,7 +636,7 @@
         }
 
         @media (max-width: 767.98px) {
-            .packages-grid {
+            .combo-offer-grid {
                 grid-template-columns: 1fr;
             }
         }
@@ -644,16 +644,16 @@
     @push('scripts')
         <script>
             $(document).ready(function() {
-                $('#package_id').on('change', function(e) {
+                $('#combo_offer_id').on('change', function(e) {
                     const value = $(this).val() || null;
-                    @this.set('selectedPackageId', value);
+                    @this.set('selectedComboOfferId', value);
                 });
 
-                window.addEventListener('OpenPackageBox', event => {
-                    @this.set('selectedPackageId', null);
-                    document.querySelector('#package_id').tomselect.clear();
-                    document.querySelector('#package_id').tomselect.clearOptions();
-                    document.querySelector('#package_id').tomselect.open();
+                window.addEventListener('OpenComboOfferBox', event => {
+                    @this.set('selectedComboOfferId', null);
+                    document.querySelector('#combo_offer_id').tomselect.clear();
+                    document.querySelector('#combo_offer_id').tomselect.clearOptions();
+                    document.querySelector('#combo_offer_id').tomselect.open();
                 });
             });
         </script>

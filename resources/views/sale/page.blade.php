@@ -32,7 +32,7 @@
         <x-select.employeeSelect />
         <x-select.inventoryProductSelect />
         <x-select.paymentMethodSelect />
-        <x-select.packageSelect />
+        <x-select.comboOfferSelect />
         <script>
             document.addEventListener('DOMContentLoaded', function() {
                 window.addEventListener('print-invoice', function(event) {

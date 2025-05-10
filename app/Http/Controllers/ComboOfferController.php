@@ -2,19 +2,19 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\ServicePackage;
+use App\Models\ComboOffer;
 use Illuminate\Http\Request;
 
-class ServicePackageController extends Controller
+class ComboOfferController extends Controller
 {
     public function index()
     {
-        return view('service.package');
+        return view('combo_offer.index');
     }
 
     public function get(Request $request)
     {
-        $list = (new ServicePackage())->getDropDownList($request->all());
+        $list = (new ComboOffer())->getDropDownList($request->all());
 
         return response()->json($list);
     }

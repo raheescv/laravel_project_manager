@@ -1,24 +1,24 @@
 <?php
 
-namespace App\Actions\Sale\Package;
+namespace App\Actions\Sale\ComboOffer;
 
-use App\Models\SalePackage;
+use App\Models\SaleComboOffer;
 
 class CreateAction
 {
     public function execute($data)
     {
         try {
-            validationHelper(SalePackage::rules(), $data);
+            validationHelper(SaleComboOffer::rules(), $data);
 
-            $model = SalePackage::create($data);
+            $model = SaleComboOffer::create($data);
 
             foreach ($data['items'] as $value) {
-                SalePackage::addPackageId($data['sale_id'], $value['inventory_id'], $value['employee_id'], $model->id);
+                SaleComboOffer::addComboOfferId($data['sale_id'], $value['inventory_id'], $value['employee_id'], $model->id);
             }
 
             $return['success'] = true;
-            $return['message'] = 'Successfully Created SalePackage';
+            $return['message'] = 'Successfully Created SaleComboOffer';
             $return['data'] = [];
         } catch (\Throwable $th) {
             $return['success'] = false;

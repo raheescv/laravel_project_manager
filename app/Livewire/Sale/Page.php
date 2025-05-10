@@ -28,7 +28,7 @@ class Page extends Component
         'Sale-Edited-Item-Component' => 'editedItem',
         'Sale-selectItem-Component' => 'selectItem',
         'Sale-Delete-Sync-Items-Component' => 'removeSyncItemFromViewItem',
-        'Sale-Package-Update-Price' => 'updatePackageItemPrice',
+        'Sale-ComboOffer-Update-Price' => 'updateComboOfferItemPrice',
     ];
 
     public $categories;
@@ -73,7 +73,7 @@ class Page extends Component
 
     public $sales = [];
 
-    public $packages = [];
+    public $comboOffers = [];
 
     public $default_payment_method_id = 1;
 
@@ -103,7 +103,7 @@ class Page extends Component
                 'branch:id,name',
                 'items.product:id,name',
                 'items.employee:id,name',
-                'packages.servicePackage:id,name',
+                'comboOffers.comboOffer:id,name',
                 'createdUser:id,name',
                 'updatedUser:id,name',
                 'cancelledUser:id,name',
@@ -125,7 +125,7 @@ class Page extends Component
                         'employee_id' => $item['employee_id'],
                         'inventory_id' => $item['inventory_id'],
                         'product_id' => $item['product_id'],
-                        'sale_package_id' => $item['sale_package_id'],
+                        'sale_combo_offer_id' => $item['sale_combo_offer_id'],
                         'name' => $item['name'],
                         'employee_name' => $item['employee_name'],
                         'tax_amount' => $item['tax_amount'],
@@ -141,20 +141,20 @@ class Page extends Component
                 ];
             })->toArray();
 
-            $this->packages = $this->sale->packages->map(function ($package) {
+            $this->comboOffers = $this->sale->comboOffers->map(function ($package) {
                 $items = collect($this->items)->filter(function ($item) use ($package) {
-                    return $item['sale_package_id'] == $package['id'];
+                    return $item['sale_combo_offer_id'] == $package['id'];
                 })->map(function ($item) {
-                    $item['package_price'] = $item['unit_price'] - $item['discount'];
+                    $item['combo_offer_price'] = $item['unit_price'] - $item['discount'];
 
                     return $item;
                 })->toArray();
 
                 return [
                     'id' => $package['id'],
-                    'service_package_id' => $package['service_package_id'],
+                    'combo_offer_id' => $package['combo_offer_id'],
                     'amount' => $package['amount'],
-                    'package_name' => $package->servicePackage?->name,
+                    'combo_offer_name' => $package->comboOffer?->name,
                     'items' => $items,
                 ];
             })->toArray();
@@ -271,10 +271,10 @@ class Page extends Component
         }
     }
 
-    public function updatePackageItemPrice($items, $packages)
+    public function updateComboOfferItemPrice($items, $comboOffers)
     {
         $this->items = $items;
-        $this->packages = $packages;
+        $this->comboOffers = $comboOffers;
 
         $this->cartCalculator();
         $this->mainCalculator();
@@ -534,9 +534,9 @@ class Page extends Component
         $this->dispatch('Sale-View-Items-Component', $this->sales['status'], $this->items);
     }
 
-    public function managePackage()
+    public function manageComboOffer()
     {
-        $this->dispatch('Open-Sale-Package-Component', $this->items, $this->packages);
+        $this->dispatch('Open-Sale-ComboOffer-Component', $this->items, $this->comboOffers);
     }
 
     public function editItem($index)
@@ -677,7 +677,7 @@ class Page extends Component
             $this->sales['status'] = $type;
             $this->sales['items'] = $this->items;
             $this->sales['payments'] = $this->payments;
-            $this->sales['packages'] = $this->packages;
+            $this->sales['comboOffers'] = $this->comboOffers;
             if ($this->sales['balance'] < 0) {
                 throw new Exception('Please check the payment', 1);
             }

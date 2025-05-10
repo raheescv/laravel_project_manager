@@ -63,7 +63,7 @@ class UpdateAction
 
                 $this->payments($data['payments']);
 
-                $this->packages($data['packages']);
+                $this->comboOffers($data['comboOffers']);
 
                 $this->model->update([
                     'gross_amount' => $this->model->items->sum('gross_amount'),
@@ -154,14 +154,14 @@ class UpdateAction
         }
     }
 
-    private function packages($data)
+    private function comboOffers($data)
     {
         foreach ($data as $value) {
             $value['sale_id'] = $this->saleId;
             if (isset($value['id'])) {
-                $response = (new Package\UpdateAction())->execute($value, $value['id']);
+                $response = (new ComboOffer\UpdateAction())->execute($value, $value['id']);
             } else {
-                $response = (new Package\CreateAction())->execute($value);
+                $response = (new ComboOffer\CreateAction())->execute($value);
             }
             if (! $response['success']) {
                 throw new Exception($response['message'], 1);

@@ -3,25 +3,39 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Validation\Rule;
 
-class ServicePackage extends Model
+class ComboOffer extends Model
 {
     protected $fillable = [
         'name',
+        'count',
         'description',
-        'service_count',
         'amount',
-        'is_active',
+        'status',
     ];
 
-    public function salePackages()
+    protected $casts = [
+        'amount' => 'decimal:2',
+    ];
+
+    public static function rules($id = 0, $merge = [])
     {
-        return $this->hasMany(SalePackage::class);
+        return array_merge([
+            'name' => ['required', Rule::unique(self::class)->ignore($id)],
+            'count' => ['required'],
+            'amount' => ['required'],
+        ], $merge);
+    }
+
+    public function saleComboOffers()
+    {
+        return $this->hasMany(SaleComboOffer::class);
     }
 
     public function scopeActive($query)
     {
-        return $query->where('is_active', true);
+        return $query->where('status', 'active');
     }
 
     public function getDropDownList($request)
@@ -33,14 +47,13 @@ class ServicePackage extends Model
 
                 return $q->where('name', 'like', "%{$value}%")
                     ->orWhere('description', 'like', "%{$value}%")
-                    ->orWhere('service_count', 'like', "%{$value}%")
-                    ->orWhere('color', 'like', "%{$value}%")
+                    ->orWhere('count', 'like', "%{$value}%")
                     ->orWhere('amount', 'like', "%{$value}%");
             });
         });
         $self = $self->active();
         $self = $self->limit(10);
-        $self = $self->get(['name', 'description', 'service_count', 'amount', 'id'])->toArray();
+        $self = $self->get(['name', 'description', 'count', 'amount', 'id'])->toArray();
         $return['items'] = $self;
 
         return $return;

@@ -272,25 +272,25 @@
                 @endif
             </thead>
             <tbody>
-                {{--  Package Table Area --}}
-                @foreach ($sale->packages as $package)
+                {{--  Combo Offers Table Area --}}
+                @foreach ($sale->comboOffers as $item)
                     <tr>
-                        <td colspan="4" class="text-left"><b>{{ $package->servicePackage->name }}</b></td>
+                        <td colspan="4" class="text-left"><b>{{ $item->comboOffer->name }}</b></td>
                     </tr>
-                    @if ($package->servicePackage->name_arabic)
+                    @if ($item->comboOffer->name_arabic)
                         <tr>
-                            <td colspan="4" class="text-left"><b>{{ $package->servicePackage->name_arabic }}</b></td>
+                            <td colspan="4" class="text-left"><b>{{ $item->comboOffer->name_arabic }}</b></td>
                         </tr>
                     @endif
                     <tr>
                         <td class="text-right"> <b>{{ $loop->iteration }}</b> </td>
-                        <td class="text-right"> <b>{{ currency($package->amount) }}</b> </td>
+                        <td class="text-right"> <b>{{ currency($item->amount) }}</b> </td>
                         <td class="text-right"> <b>1</b> </td>
-                        <td class="text-right"> <b>{{ currency($package->amount) }}</b> </td>
+                        <td class="text-right"> <b>{{ currency($item->amount) }}</b> </td>
                     </tr>
                 @endforeach
                 {{--  Items Table Area --}}
-                @foreach ($sale->items()->whereNull('sale_package_id')->get() as $item)
+                @foreach ($sale->items()->whereNull('sale_combo_offer_id')->get() as $item)
                     <tr>
                         <td colspan="4" class="text-left"><b>{{ $item->product->name }}</b></td>
                     </tr>
@@ -300,7 +300,7 @@
                         </tr>
                     @endif
                     <tr>
-                        <td class="text-right"> <b>{{ $sale->packages->count() + $loop->iteration }}</b> </td>
+                        <td class="text-right"> <b>{{ $sale->comboOffers->count() + $loop->iteration }}</b> </td>
                         @if ($enable_discount_in_print == 'yes')
                             <td class="text-right"> <b>{{ currency($item->unit_price) }}</b> </td>
                         @else

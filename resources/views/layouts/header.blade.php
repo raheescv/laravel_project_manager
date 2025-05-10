@@ -83,6 +83,9 @@
                                     @can('service.view')
                                         <a href="{{ route('service::index') }}" class="list-group-item list-group-item-action">Service</a>
                                     @endcan
+                                    @can('combo offer.view')
+                                        <a href="{{ route('combo_offer::index') }}" class="list-group-item list-group-item-action">Combo Offer</a>
+                                    @endcan
                                     @can('branch.view')
                                         <a href="{{ route('settings::branch::index') }}" class="list-group-item list-group-item-action">Branch</a>
                                     @endcan

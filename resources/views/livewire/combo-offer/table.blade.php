@@ -2,18 +2,15 @@
     <div class="card-header -4 mb-3">
         <div class="row">
             <div class="col-md-6 d-flex gap-1 align-items-center mb-3">
-                @can('category.create')
-                    <button class="btn btn-primary hstack gap-2 align-self-center" id="CategoryAdd">
+                @can('combo offer.create')
+                    <button class="btn btn-primary hstack gap-2 align-self-center" id="pageAdd">
                         <i class="demo-psi-add fs-5"></i>
                         <span class="vr"></span>
                         Add New
                     </button>
                 @endcan
                 <div class="btn-group">
-                    @can('category.export')
-                        <button class="btn btn-icon btn-outline-light" wire:click="export()"><i class="demo-pli-file-excel fs-5"></i></button>
-                    @endcan
-                    @can('category.delete')
+                    @can('combo offer.delete')
                         <button class="btn btn-icon btn-outline-light" wire:click="delete()" wire:confirm="Are you sure you want to delete the selected items?">
                             <i class="demo-pli-recycling fs-5"></i>
                         </button>
@@ -31,21 +28,6 @@
                 <div class="form-group">
                     <input type="text" wire:model.live="search" autofocus placeholder="Search..." class="form-control" autocomplete="off">
                 </div>
-                <div class="btn-group">
-                    @can('category.import')
-                        <button class="btn btn-icon btn-outline-light" data-bs-toggle="modal" data-bs-target="#CategoryImportModal">
-                            <i class="demo-pli-download-from-cloud fs-5"></i>
-                        </button>
-                    @endcan
-                </div>
-            </div>
-        </div>
-    </div>
-    <div class="card-header">
-        <div class="row">
-            <div class="col-md-4" wire:ignore>
-                <h4> <label for="parent_id">Parent</label> </h4>
-                {{ html()->select('parent_id', [])->value('')->class('select-category_id-list')->id('parent_id')->placeholder('All') }}
             </div>
         </div>
     </div>
@@ -58,8 +40,11 @@
                             <input type="checkbox" wire:model.live="selectAll" />
                             <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="id" label="ID" />
                         </th>
-                        <th> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="parent_id" label="parent" /> </th>
-                        <th> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="name" label="name" /> </th>
+                        <th><x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="name" label="Name" /></th>
+                        <th class="text-end"><x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="count" label="count" /></th>
+                        <th class="text-end"><x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="amount" label="amount" /></th>
+                        <th><x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="description" label="description" /></th>
+                        <th><x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="status" label="status" /></th>
                         <th width="10%">Action</th>
                     </tr>
                 </thead>
@@ -70,10 +55,13 @@
                                 <input type="checkbox" value="{{ $item->id }}" wire:model.live="selected" />
                                 {{ $item->id }}
                             </td>
-                            <td>{{ $item->parent?->name }}</td>
                             <td>{{ $item->name }}</td>
+                            <td class="text-end">{{ $item->count }}</td>
+                            <td class="text-end">{{ $item->amount }}</td>
+                            <td>{{ $item->description }}</td>
+                            <td>{{ ucFirst($item->status) }}</td>
                             <td>
-                                @can('category.edit')
+                                @can('combo offer.edit')
                                     <i table_id="{{ $item->id }}" class="demo-psi-pencil fs-5 me-2 pointer edit"></i>
                                 @endcan
                             </td>
@@ -88,18 +76,15 @@
         <script>
             $(document).ready(function() {
                 $(document).on('click', '.edit', function() {
-                    Livewire.dispatch("Category-Page-Update-Component", {
+                    Livewire.dispatch("ComboOffer-Page-Update-Component", {
                         id: $(this).attr('table_id')
                     });
                 });
-                $('#CategoryAdd').click(function() {
-                    Livewire.dispatch("Category-Page-Create-Component");
+                $('#pageAdd').click(function() {
+                    Livewire.dispatch("ComboOffer-Page-Create-Component");
                 });
-                window.addEventListener('RefreshCategoryTable', event => {
-                    Livewire.dispatch("Category-Refresh-Component");
-                });
-                $('#parent_id').on('change', function(e) {
-                    @this.set('parent_id', $(this).val());
+                window.addEventListener('RefreshComboOfferTable', event => {
+                    Livewire.dispatch("ComboOffer-Refresh-Component");
                 });
             });
         </script>

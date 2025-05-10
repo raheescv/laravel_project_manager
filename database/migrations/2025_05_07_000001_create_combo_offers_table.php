@@ -8,31 +8,31 @@ return new class() extends Migration
 {
     public function up(): void
     {
-        Schema::create('service_packages', function (Blueprint $table) {
+        Schema::create('combo_offers', function (Blueprint $table) {
             $table->id();
             $table->string('name');
             $table->string('description')->nullable();
-            $table->integer('service_count');
+            $table->integer('count');
             $table->decimal('amount', 10, 2);
-            $table->boolean('is_active')->default(true);
+            $table->enum('status', ['active', 'inactive'])->default('active');
             $table->timestamps();
         });
 
-        Schema::create('sale_packages', function (Blueprint $table) {
+        Schema::create('sale_combo_offers', function (Blueprint $table) {
             $table->id();
             $table->unsignedBigInteger('sale_id');
-            $table->unsignedBigInteger('service_package_id');
+            $table->unsignedBigInteger('combo_offer_id');
             $table->decimal('amount', 10, 2);
             $table->timestamps();
 
             $table->foreign('sale_id')->references('id')->on('sales')->onDelete('cascade');
-            $table->foreign('service_package_id')->references('id')->on('service_packages');
+            $table->foreign('combo_offer_id')->references('id')->on('combo_offers');
         });
     }
 
     public function down(): void
     {
-        Schema::dropIfExists('sale_packages');
-        Schema::dropIfExists('service_packages');
+        Schema::dropIfExists('sale_combo_offers');
+        Schema::dropIfExists('combo_offers');
     }
 };

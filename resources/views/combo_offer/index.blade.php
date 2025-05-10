@@ -4,26 +4,23 @@
             <nav aria-label="breadcrumb">
                 <ol class="breadcrumb">
                     <li class="breadcrumb-item"><a href="{{ route('dashboard') }}">Home</a></li>
-                    <li class="breadcrumb-item active" aria-current="page">Service Package</li>
+                    <li class="breadcrumb-item active" aria-current="page">combo Offer</li>
                 </ol>
             </nav>
-            <h1 class="page-title mb-0 mt-2">Service Package</h1>
+            <h1 class="page-title mb-0 mt-2">combo Offer</h1>
             <p class="lead">
-                A table is an arrangement of Service
+                A table is an arrangement of Combo Offer
             </p>
         </div>
     </div>
     <div class="content__boxed">
         <div class="content__wrap">
             <div class="card mb-3">
-                @livewire('service.table')
+                @livewire('combo-offer.table')
             </div>
         </div>
     </div>
-    <x-service.service-import-modal />
+    <x-combo-offer.combo-offer-modal />
     @push('scripts')
-        @include('components.select.departmentSelect')
-        @include('components.select.categorySelect')
-        @include('components.select.unitSelect')
     @endpush
 </x-app-layout>

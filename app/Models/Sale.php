@@ -160,9 +160,9 @@ class Sale extends Model implements AuditableContracts
         return $this->hasMany(SaleItem::class);
     }
 
-    public function packages()
+    public function comboOffers()
     {
-        return $this->hasMany(SalePackage::class);
+        return $this->hasMany(SaleComboOffer::class);
     }
 
     public function payments()
