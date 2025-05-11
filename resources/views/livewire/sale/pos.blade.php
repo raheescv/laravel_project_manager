@@ -80,14 +80,26 @@
                         <div class="col-md-12 col-lg-6">
                             <div class="pos-categories tabs_wrapper">
                                 <div class="pos-products">
-                                    <div class="d-flex align-items-center justify-content-between mb-3">
-                                        <div style="width:70% !important" wire:ignore>
-                                            <b>Employee</b>
-                                            {{ html()->select('employee_id', $employees ?? [])->value($employee_id ?? '')->class('select-employee_id-list')->id('employee_id')->attribute('style', 'width:100%')->placeholder('Select Employee') }}
-                                        </div>
-                                        <div style="width:29% !important">
-                                            <b>Sale Type</b>
-                                            {{ html()->select('sale_type', priceTypes())->class('form-control')->id('sale_type')->attribute('wire:model.live', 'sales.sale_type')->required(true)->placeholder('Select Sale Type') }}
+                                    <div class="sales-header p-3 bg-white rounded-lg shadow-sm mb-4">
+                                        <div class="row g-3">
+                                            <div class="col-lg-8">
+                                                <div class="form-group" wire:ignore>
+                                                    <label class="mb-2 d-flex align-items-center">
+                                                        <i class="fa fa-user me-2 text-primary"></i>
+                                                        <span class="fw-semibold">Select Employee</span>
+                                                    </label>
+                                                    {{ html()->select('employee_id', $employees ?? [])->value($employee_id ?? '')->class('select-employee_id-list')->id('employee_id')->attribute('style', 'width:100%')->placeholder('Choose an employee...') }}
+                                                </div>
+                                            </div>
+                                            <div class="col-lg-4">
+                                                <div class="form-group">
+                                                    <label class="mb-2 d-flex align-items-center">
+                                                        <i class="fa fa-tags me-2 text-primary"></i>
+                                                        <span class="fw-semibold">Sale Type</span>
+                                                    </label>
+                                                    {{ html()->select('sale_type', priceTypes())->class('form-select form-select-sm border-0 shadow-sm')->id('sale_type')->attribute('wire:model.live', 'sales.sale_type')->required(true)->placeholder('Select type...') }}
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
                                     <div class="search-section mb-4">
@@ -200,31 +212,42 @@
                                     </div>
                                 </div>
                                 <div class="block-section">
-                                    <div class="row">
-                                        <div class="col-12 col-sm-12">
-                                            <div class="row">
-                                                <div class="col-md-6">
-                                                    <b>Customer <span class="pull-right"> <i id="viewCustomer" class="fa pointer fa-eye"></i> </span></b>
-                                                    <div class="input-group mb-3">
-                                                        <div wire:ignore class="parent-container">
-                                                            {{ html()->select('account_id', $accounts)->value($sales['account_id'])->class('select-customer_id')->id('account_id')->placeholder('Select Customer') }}
-                                                        </div>
-                                                    </div>
+                                    <div class="customer-info-section mb-4">
+                                        <div class="row g-3">
+                                            <!-- Customer Selection -->
+                                            <div class="col-md-6">
+                                                <div class="form-group" wire:ignore>
+                                                    <label class="d-flex justify-content-between align-items-center mb-2">
+                                                        <span class="fw-bold">Customer</span>
+                                                        <i id="viewCustomer" class="fa fa-eye pointer hover-opacity" title="View Customer Details"></i>
+                                                    </label>
+                                                    {{ html()->select('account_id', $accounts)->value($sales['account_id'])->class('select-customer_id')->id('account_id')->placeholder('Select Customer') }}
                                                 </div>
-                                                <div class="col-md-6">
-                                                    <b>Customer Mobile</b>
-                                                    <div class="input-group mb-3">
-                                                        {{ html()->text('customer_mobile')->value('')->class('form-control select_on_focus')->style('padding:5px')->attribute('wire:model', 'sales.customer_mobile')->id('customer_mobile')->placeholder('Mobile No') }}
-                                                        &nbsp;&nbsp;<i class="fa fa-2x fa-user-plus pointer" id="addCustomer"></i>
+                                            </div>
+
+                                            <!-- Customer Mobile -->
+                                            <div class="col-md-6">
+                                                <div class="form-group">
+                                                    <label class="fw-bold mb-2">Customer Mobile</label>
+                                                    <div class="input-group">
+                                                        {{ html()->text('customer_mobile')->class('form-control border-start-0 select_on_focus')->attribute('wire:model', 'sales.customer_mobile')->id('customer_mobile')->placeholder('Mobile number') }}
+                                                        <button type="button" id="addCustomer" class="btn btn-light border" title="Add New Customer">
+                                                            <i class="fa fa-user-plus"></i>
+                                                        </button>
                                                     </div>
                                                 </div>
                                             </div>
-                                        </div>
-                                        <div class="col-12 col-sm-12 mb-3">
-                                            <div class="row">
-                                                <div class="col-md-12">
-                                                    <b>Discount</b>
-                                                    {{ html()->text('other_discount')->value('')->class('form-control number select_on_focus')->style('padding:5px')->attribute('wire:model.lazy', 'sales.other_discount') }}
+
+                                            <!-- Discount -->
+                                            <div class="col-12">
+                                                <div class="form-group">
+                                                    <label class="fw-bold mb-2">Discount Amount</label>
+                                                    <div class="input-group">
+                                                        <span class="input-group-text bg-light border-end-0">
+                                                            <i class="fa fa-tag text-muted"></i>
+                                                        </span>
+                                                        {{ html()->text('other_discount')->class('form-control border-start-0 number select_on_focus')->attribute('wire:model.lazy', 'sales.other_discount')->placeholder('Enter discount amount') }}
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
