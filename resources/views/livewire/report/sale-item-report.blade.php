@@ -34,16 +34,16 @@
                     <label for="branch_id">Branch</label>
                     {{ html()->select('branch_id', [auth()->user()->default_branch_id => auth()->user()->branch?->name])->value(auth()->user()->default_branch_id)->class('select-assigned-branch_id-list')->id('branch_id')->placeholder('All') }}
                 </div>
-                <div class="col-md-3" wire:ignore>
+                <div class="col-md-6" wire:ignore>
                     <label for="product_id">Product</label>
                     {{ html()->select('product_id', [])->value('')->class('select-product_id-list')->attribute('type', '')->id('product_id')->placeholder('Product') }}
                 </div>
+            </div>
+            <div class="row">
                 <div class="col-md-3" wire:ignore>
                     <label for="employee_id">Employee</label>
                     {{ html()->select('employee_id', [])->value('')->class('select-employee_id-list')->id('employee_id')->placeholder('Employee') }}
                 </div>
-            </div>
-            <div class="row">
                 <div class="col-md-3" wire:ignore>
                     <label for="status">Status</label>
                     {{ html()->select('status', saleStatuses())->value('completed')->class('tomSelect')->id('status') }}
