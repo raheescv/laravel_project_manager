@@ -3,24 +3,26 @@
 namespace App\Actions\Settings\CustomerType;
 
 use App\Models\CustomerType;
+use Exception;
+use Illuminate\Support\Facades\Auth;
 
 class CreateAction
 {
-    public $data;
-
     public function execute($data)
     {
         try {
+            if (! Auth::user()->can('customer type.create')) {
+                throw new Exception("You don't have permission to create the customer type it.", 1);
+            }
             $data['name'] = ucfirst(trim($data['name']));
-            $this->data = $data;
-            validationHelper(CustomerType::rules(), $this->data);
-            $model = CustomerType::create($this->data);
+            validationHelper(CustomerType::rules(), $data);
+            $model = CustomerType::create($data);
             $return['success'] = true;
             $return['message'] = 'Successfully Created CustomerType';
             $return['data'] = $model;
-        } catch (\Throwable $th) {
+        } catch (Exception $e) {
             $return['success'] = false;
-            $return['message'] = $th->getMessage();
+            $return['message'] = $e->getMessage();
         }
 
         return $return;
