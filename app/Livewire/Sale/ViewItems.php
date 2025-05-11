@@ -118,7 +118,6 @@ class ViewItems extends Component
             }
 
             unset($this->items[$index]);
-            $this->items = array_values($this->items); // Reindex array
 
             $this->dispatch('Sale-Delete-Sync-Items-Component', $index);
             $this->dispatch('success', ['message' => 'Item removed successfully']);
