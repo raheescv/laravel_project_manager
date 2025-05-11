@@ -7,19 +7,76 @@
             <div class="content pos-design p-0">
                 <form wire:submit="submit">
                     <div class="row align-items-start pos-wrapper">
-                        <div class="col-md-12 col-lg-2" style="height: 90vh; overflow: auto;  overflow-x: hidden;">
-                            <button type="button" class="side-button @if ($category_id == 'favorite') favorite @endif" wire:click="categorySelect('favorite')">
-                                Favorite
-                            </button>
-                            <button type="button" class="side-button @if ($category_id == '') active @endif" wire:click="categorySelect('')">
-                                All
-                            </button>
-                            @foreach ($categories as $item)
-                                <button type="button" class="side-button @if ($item['id'] == $category_id) active @endif" wire:click="categorySelect({{ $item['id'] }})">
-                                    {{ $item['name'] }}({{ $item['products_count'] }})
-                                </button>
-                            @endforeach
+                        <div class="col-md-12 col-lg-2" style="height: 90vh; overflow: auto; overflow-x: hidden;">
+                            <div class="category-sidebar">
+                                <div class="category-button @if ($category_id == 'favorite') active-favorite @endif" wire:click="categorySelect('favorite')">
+                                    <i class="fa fa-star"></i>
+                                    <span>Favorite</span>
+                                </div>
+
+                                <div class="category-button @if ($category_id == '') active @endif" wire:click="categorySelect('')">
+                                    <i class="fa fa-th-large"></i>
+                                    <span>All Products</span>
+                                </div>
+
+                                @foreach ($categories as $item)
+                                    <div class="category-button @if ($item['id'] == $category_id) active @endif" wire:click="categorySelect({{ $item['id'] }})">
+                                        <span>{{ $item['name'] }}</span>
+                                        <span class="badge">{{ $item['products_count'] }}</span>
+                                    </div>
+                                @endforeach
+                            </div>
                         </div>
+
+                        <style>
+                            .category-sidebar {
+                                padding: 10px;
+                                background: #f8f9fa;
+                                border-radius: 8px;
+                                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+                            }
+
+                            .category-button {
+                                display: flex;
+                                align-items: center;
+                                justify-content: space-between;
+                                padding: 12px 15px;
+                                margin: 5px 0;
+                                border-radius: 6px;
+                                background: white;
+                                border: 1px solid #e0e0e0;
+                                cursor: pointer;
+                                transition: all 0.3s ease;
+                            }
+
+                            .category-button:hover {
+                                background: #eef2ff;
+                                transform: translateX(3px);
+                            }
+
+                            .category-button.active {
+                                background: #4f46e5;
+                                color: white;
+                            }
+
+                            .category-button.active-favorite {
+                                background: #ffd700;
+                                color: #333;
+                            }
+
+                            .badge {
+                                background: #e5e7eb;
+                                color: #374151;
+                                padding: 2px 8px;
+                                border-radius: 12px;
+                                font-size: 0.8em;
+                            }
+
+                            .category-button.active .badge {
+                                background: rgba(255, 255, 255, 0.2);
+                                color: white;
+                            }
+                        </style>
                         <div class="col-md-12 col-lg-6">
                             <div class="pos-categories tabs_wrapper">
                                 <div class="pos-products">

@@ -1,315 +1,341 @@
 <div>
-    <div class="col-md-12 mb-3">
-        <div class="card h-100">
-            <div class="card-body">
+    <div class="col-md-12 mb-4">
+        <div class="card shadow-sm">
+            <div class="card-body p-4">
                 <form wire:submit="submit">
-                    <div class="row">
+                    <!-- Customer & Basic Info Section -->
+                    <div class="row g-4 mb-4">
                         <div class="col-md-3">
-                            <div class="row">
-                                <div wire:ignore>
-                                    <label for="account_id">Customer</label>
-                                    {{ html()->select('account_id', $accounts)->value($sales['account_id'])->class('select-customer_id')->id('account_id')->placeholder('Select Customer') }}
+                            <div class="card h-100 border">
+                                <div class="card-body">
+                                    <div class="mb-3" wire:ignore>
+                                        <label for="account_id" class="form-label fw-semibold">Customer</label>
+                                        {{ html()->select('account_id', $accounts)->value($sales['account_id'])->class('select-customer_id')->id('account_id')->placeholder('Select Customer') }}
+                                    </div>
+                                    <div class="table-responsive mt-2">
+                                        <table class="table table-sm m-0">
+                                            <tr class="bg-light">
+                                                <th>Balance</th>
+                                                <th class="text-end">{{ currency($account_balance ?? 0) }}</th>
+                                            </tr>
+                                        </table>
+                                    </div>
                                 </div>
                             </div>
-                            <div class="row my-2">
-                                <div class="table-responsive">
-                                    <table class="table table-striped align-middle table-sm">
-                                        <tr>
-                                            <th>Balance</th>
-                                            <th class="text-end">{{ currency($account_balance ?? 0) }}</th>
-                                        </tr>
-                                    </table>
+                        </div>
+
+                        <div class="col-md-3">
+                            @if ($sales['account_id'] == 3)
+                                <div class="card h-100 border">
+                                    <div class="card-body">
+                                        <label for="customer_name" class="form-label fw-semibold">Customer Details</label>
+                                        {{ html()->input('customer_name')->value('')->class('form-control mb-3')->placeholder('Enter Customer Name')->id('customer_name')->attribute('wire:model', 'sales.customer_name') }}
+                                        {{ html()->input('customer_mobile')->value('')->class('form-control')->placeholder('Enter Customer Mobile')->attribute('wire:model', 'sales.customer_mobile') }}
+                                    </div>
+                                </div>
+                            @endif
+                        </div>
+
+                        <div class="col-md-3">
+                            <div class="card h-100 border">
+                                <div class="card-body">
+                                    <label for="reference_no" class="form-label fw-semibold">Reference & Type</label>
+                                    {{ html()->input('reference_no')->value('')->class('form-control mb-3')->placeholder('Enter Reference No')->attribute('wire:model', 'sales.reference_no') }}
+                                    {{ html()->select('sale_type', priceTypes())->class('form-select')->id('sale_type')->attribute('wire:model.live', 'sales.sale_type')->required(true)->placeholder('Select Sale Type') }}
                                 </div>
                             </div>
                         </div>
+
                         <div class="col-md-3">
-                            @if ($sales['account_id'] == 3)
-                                <label for="customer_name">Customer Name</label>
-                                {{ html()->input('customer_name')->value('')->class('form-control')->placeholder('Enter Customer Name')->id('customer_name')->attribute('wire:model', 'sales.customer_name') }}
-                            @endif
-                        </div>
-                        <div class="col-md-2">
-                            @if ($sales['account_id'] == 3)
-                                <label for="customer_mobile">Customer Mobile</label>
-                                {{ html()->input('customer_mobile')->value('')->class('form-control')->placeholder('Enter Customer Mobile')->attribute('wire:model', 'sales.customer_mobile') }}
-                            @endif
-                        </div>
-                        <div class="col-md-2">
-                            <label for="reference_no">Reference No</label>
-                            {{ html()->input('reference_no')->value('')->class('form-control')->placeholder('Enter Reference No')->attribute('wire:model', 'sales.reference_no') }}
-                            <div class="row my-2 p-1">
-                                <label for="sale_type">Sale Type</label>
-                                {{ html()->select('sale_type', priceTypes())->class('form-control')->id('sale_type')->attribute('wire:model.live', 'sales.sale_type')->required(true)->placeholder('Select Sale Type') }}
-                            </div>
-                        </div>
-                        <div class="col-md-2">
-                            <div class="row">
-                                <label for="date">Date</label>
-                                {{ html()->date('date')->value('')->class('form-control')->attribute('wire:model', 'sales.date') }}
-                            </div>
-                            <div class="row my-2">
-                                <label for="date">Due Date</label>
-                                {{ html()->date('due_date')->value('')->class('form-control')->attribute('wire:model', 'sales.due_date') }}
+                            <div class="card h-100 border">
+                                <div class="card-body">
+                                    <label class="form-label fw-semibold">Dates</label>
+                                    <div class="mb-3">
+                                        {{ html()->date('date')->value('')->class('form-control')->attribute('wire:model', 'sales.date') }}
+                                        <small class="text-muted">Sale Date</small>
+                                    </div>
+                                    <div>
+                                        {{ html()->date('due_date')->value('')->class('form-control')->attribute('wire:model', 'sales.due_date') }}
+                                        <small class="text-muted">Due Date</small>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
-                    <div class="row">
-                        <div class="col-md-12 mb-3">
-                            <div class="card h-100">
-                                <div class="card-body">
-                                    <h5 class="card-title">ITEM INFO </h5>
-                                    <div class="row mb-3">
-                                        <div class="col-md-4">
-                                            <div class="searchbox input-group" wire:ignore>
-                                                {{ html()->select('employee_id', $employees)->value($employee_id)->class('select-employee_id-list')->id('employee_id')->attribute('style', 'width:100%')->placeholder('Select Employee') }}
-                                            </div>
-                                        </div>
-                                        <div class="col-md-8">
-                                            <div class="searchbox input-group" wire:ignore>
-                                                {{ html()->select('inventory_id', [])->value('')->class('select-inventory-product_id-list')->id('inventory_id')->attribute('style', 'width:100%')->placeholder('Select Product') }}
-                                            </div>
-                                        </div>
+
+                    <!-- Item Selection Section -->
+                    <div class="card shadow-sm mb-4">
+                        <div class="card-header bg-light py-3">
+                            <h5 class="card-title mb-0">
+                                <i class="demo-psi-cart me-2"></i>
+                                Item Information
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row mb-4">
+                                <div class="col-md-4">
+                                    <div class="form-group" wire:ignore>
+                                        {{ html()->select('employee_id', $employees)->value($employee_id)->class('select-employee_id-list')->id('employee_id')->attribute('style', 'width:100%')->placeholder('Select Employee') }}
                                     </div>
-                                    <div class="table-responsive">
-                                        <table class="table table-striped align-middle table-sm table-bordered">
-                                            <thead style="background: #f8f8f8">
-                                                <tr>
-                                                    <th>SL No</th>
-                                                    <th width="20%">Product</th>
-                                                    <th class="text-end">Unit Price</th>
-                                                    <th class="text-end">Quantity</th>
-                                                    <th class="text-end">Discount</th>
-                                                    <th class="text-end">Tax %</th>
-                                                    <th class="text-end">Total</th>
-                                                    @if ($sales['other_discount'] > 0)
-                                                        <th class="text-end">Effective Total</th>
-                                                    @endif
-                                                    <th>Action </th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                @php
-                                                    $result = [];
-                                                    foreach ($items as $key => $value) {
-                                                        [$parent, $sub] = explode('-', $key);
-                                                        if (!isset($result[$parent])) {
-                                                            $result[$parent] = [];
-                                                        }
-                                                        $result[$parent][$sub] = $value;
-                                                    }
-                                                    $data = $result;
-                                                @endphp
-                                                @foreach ($data as $employee_id => $groupedItems)
-                                                    <tr>
-                                                        @php
-                                                            $first = array_values($groupedItems)[0];
-                                                        @endphp
-                                                        <th colspan="8">{{ $first['employee_name'] }}</th>
-                                                    </tr>
-                                                    @foreach ($groupedItems as $item)
-                                                        <tr>
-                                                            <td>{{ $loop->iteration }}</td>
-                                                            <td>{{ $item['name'] }}</td>
-                                                            <td>
-                                                                {{ html()->number('unit_price')->value($item['unit_price'])->class('input-xs number select_on_focus transparent_border_input')->attribute('style', 'width:100%')->attribute('wire:model.live', 'items.' . $item['key'] . '.unit_price') }}
-                                                            </td>
-                                                            <td>
-                                                                {{ html()->number('quantity')->value($item['quantity'])->attribute('min', 1)->class('input-xs number select_on_focus transparent_border_input')->attribute('style', 'width:100%')->attribute('step', 'any')->attribute('wire:model.live', 'items.' . $item['key'] . '.quantity') }}
-                                                            </td>
-                                                            <td>
-                                                                {{ html()->number('discount')->value($item['discount'])->class('input-xs number select_on_focus transparent_border_input')->attribute('style', 'width:100%')->attribute('wire:model.live', 'items.' . $item['key'] . '.discount') }}
-                                                            </td>
-                                                            <td>
-                                                                {{ html()->number('tax')->value($item['tax'])->attribute('max', '50')->class('input-xs number select_on_focus transparent_border_input')->attribute('style', 'width:100%')->attribute('wire:model.live', 'items.' . $item['key'] . '.tax') }}
-                                                            </td>
-                                                            <td class="text-end"> {{ currency($item['total']) }} </td>
-                                                            @if ($sales['other_discount'] > 0)
-                                                                <td class="text-end"> {{ currency($item['effective_total']) }} </td>
-                                                            @endif
-                                                            <td>
-                                                                <i wire:click="removeItem('{{ $item['key'] }}')" wire:confirm="Are your sure?" class="demo-pli-recycling fs-5 me-2 pointer"></i>
-                                                            </td>
-                                                        </tr>
-                                                    @endforeach
-                                                @endforeach
-                                            </tbody>
-                                            <tfoot>
-                                                @php
-                                                    $items = collect($items);
-                                                @endphp
-                                                <tr>
-                                                    <th colspan="3" class="text-end">Total</th>
-                                                    <th class="text-end"><b>{{ currency($items->sum('quantity')) }}</b></th>
-                                                    <th class="text-end"><b>{{ currency($items->sum('discount')) }}</b></th>
-                                                    <th class="text-end"><b>{{ currency($items->sum('tax_amount')) }}</b></th>
-                                                    <th class="text-end"><b>{{ currency($items->sum('total')) }}</b></th>
-                                                    @if ($sales['other_discount'] > 0)
-                                                        <th class="text-end"><b>{{ currency($items->sum('effective_total')) }}</b></th>
-                                                    @endif
-                                                </tr>
-                                            </tfoot>
-                                        </table>
+                                </div>
+                                <div class="col-md-8">
+                                    <div class="form-group" wire:ignore>
+                                        {{ html()->select('inventory_id', [])->value('')->class('select-inventory-product_id-list')->id('inventory_id')->attribute('style', 'width:100%')->placeholder('Select Product') }}
                                     </div>
                                 </div>
                             </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="card shadow-lg">
-                                <div class="card-body">
-                                    <div class="col-md-12">
-                                        <div class="row g-3">
-                                            <div class="col-md-12">
-                                                <div class="table-responsive">
-                                                    <table class="table table-striped  table-sm table-bordered">
-                                                        <thead>
-                                                            <tr>
-                                                                <th>Gross Total</th>
-                                                                <td>
-                                                                    {{ html()->number('gross_amount')->value('')->class('form-control number select_on_focus')->attribute('disabled')->attribute('wire:model', 'sales.gross_amount') }}
-                                                                </td>
-                                                            </tr>
-                                                            <tr>
-                                                                <th>Sale Total</th>
-                                                                <td>
-                                                                    {{ html()->number('total')->value('')->class('form-control number select_on_focus')->attribute('disabled')->attribute('wire:model', 'sales.total') }}
-                                                                </td>
-                                                            </tr>
-                                                            <tr>
-                                                                <th>Other Discount</th>
-                                                                <th>
-                                                                    {{ html()->number('other_discount')->value('')->class('form-control number select_on_focus')->attribute('wire:model.lazy', 'sales.other_discount') }}
-                                                                </th>
-                                                            </tr>
-                                                            <tr>
-                                                                <th>Freight</th>
-                                                                <th>{{ html()->number('freight')->value('')->class('form-control number select_on_focus')->attribute('wire:model.lazy', 'sales.freight') }}
-                                                                </th>
-                                                            </tr>
-                                                        </thead>
-                                                    </table>
-                                                </div>
-                                                <div class="row g-1">
-                                                    <div class="col-md-12">
-                                                        <label for="address" class="form-label">Address</label>
-                                                        {{ html()->textarea('address')->value('')->class('form-control')->rows(3)->attribute('wire:model.live', 'sales.address') }}
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <div class="col-md-12">
-                                                <div class="row">
-                                                    <div class="d-grid">
-                                                        <span class="btn btn-outline-primary"> Net Total Amount : {{ currency($sales['grand_total']) }}</span>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="card shadow-lg">
-                                <div class="card-body">
-                                    <div class="text-center">
-                                        <h1 class="h3">Total payable amount: {{ currency($sales['grand_total']) }}</h1>
-                                    </div>
-                                    <div class="row">
-                                        <table class="table table-striped align-middle table-sm">
-                                            <thead>
+
+                            <div class="table-responsive">
+                                <table class="table table-hover align-middle table-striped">
+                                    <thead class="bg-light">
+                                        <tr>
+                                            <th>SL No</th>
+                                            <th width="20%">Product</th>
+                                            <th class="text-end">Unit Price</th>
+                                            <th class="text-end">Quantity</th>
+                                            <th class="text-end">Discount</th>
+                                            <th class="text-end">Tax %</th>
+                                            <th class="text-end">Total</th>
+                                            @if ($sales['other_discount'] > 0)
+                                                <th class="text-end">Effective Total</th>
+                                            @endif
+                                            <th>Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @php
+                                            $result = [];
+                                            foreach ($items as $key => $value) {
+                                                [$parent, $sub] = explode('-', $key);
+                                                if (!isset($result[$parent])) {
+                                                    $result[$parent] = [];
+                                                }
+                                                $result[$parent][$sub] = $value;
+                                            }
+                                            $data = $result;
+                                        @endphp
+                                        @foreach ($data as $employee_id => $groupedItems)
+                                            <tr>
+                                                @php
+                                                    $first = array_values($groupedItems)[0];
+                                                @endphp
+                                                <th colspan="9" class="bg-light">{{ $first['employee_name'] }}</th>
+                                            </tr>
+                                            @foreach ($groupedItems as $item)
                                                 <tr>
-                                                    <th width="60%">Payment Method</th>
-                                                    <th class="text-end">Amount</th>
-                                                    <th>Action</th>
-                                                </tr>
-                                                <tr>
-                                                    <th>
-                                                        <div wire:ignore>
-                                                            {{ html()->select('payment_method_id', $paymentMethods)->value($default_payment_method_id)->class('select-payment_method_id-list')->id('payment_method_id')->placeholder('Select Payment Method') }}
-                                                        </div>
-                                                    </th>
-                                                    <th>
-                                                        {{ html()->number('amount')->value('')->class('form-control number select_on_focus')->attribute('step', 'any')->id('payment')->attribute('wire:model.live', 'payment.amount') }}
-                                                    </th>
-                                                    <th>
-                                                        <button type="button" wire:click="addPayment" class="btn btn-primary hstack gap-2 align-self-center">
-                                                            <i class="demo-psi-add fs-5"></i>
+                                                    <td>{{ $loop->iteration }}</td>
+                                                    <td>{{ $item['name'] }}</td>
+                                                    <td>
+                                                        {{ html()->number('unit_price')->value($item['unit_price'])->class('form-control form-control-sm text-end px-1')->attribute('wire:model.live', 'items.' . $item['key'] . '.unit_price') }}
+                                                    </td>
+                                                    <td>
+                                                        {{ html()->number('quantity')->value($item['quantity'])->attribute('min', 1)->class('form-control form-control-sm text-end px-1')->attribute('step', 'any')->attribute('wire:model.live', 'items.' . $item['key'] . '.quantity') }}
+                                                    </td>
+                                                    <td>
+                                                        {{ html()->number('discount')->value($item['discount'])->class('form-control form-control-sm text-end px-1')->attribute('wire:model.live', 'items.' . $item['key'] . '.discount') }}
+                                                    </td>
+                                                    <td>
+                                                        {{ html()->number('tax')->value($item['tax'])->attribute('max', '50')->class('form-control form-control-sm text-end px-1')->attribute('wire:model.live', 'items.' . $item['key'] . '.tax') }}
+                                                    </td>
+                                                    <td class="text-end fw-bold">{{ currency($item['total']) }}</td>
+                                                    @if ($sales['other_discount'] > 0)
+                                                        <td class="text-end fw-bold">{{ currency($item['effective_total']) }}</td>
+                                                    @endif
+                                                    <td>
+                                                        <button type="button" wire:click="removeItem('{{ $item['key'] }}')" wire:confirm="Are your sure?" class="btn btn-xs btn-outline-danger">
+                                                            <i class="demo-pli-recycling"></i>
                                                         </button>
-                                                    </th>
+                                                    </td>
                                                 </tr>
-                                            </thead>
-                                            <tbody>
-                                                @foreach ($payments as $key => $item)
-                                                    <tr>
-                                                        <td>{{ $item['name'] }}</td>
-                                                        <td class="text-end">{{ currency($item['amount']) }}</td>
-                                                        <td>
-                                                            <i wire:click="removePayment('{{ $key }}')" wire:confirm="Are your sure?" class="demo-pli-recycling fs-5 me-2 pointer"></i>
-                                                        </td>
-                                                    </tr>
-                                                @endforeach
-                                            </tbody>
+                                            @endforeach
+                                        @endforeach
+                                    </tbody>
+                                    <tfoot class="table-group-divider">
+                                        @php
+                                            $items = collect($items);
+                                        @endphp
+                                        <tr class="fw-bold">
+                                            <th colspan="3" class="text-end">Total</th>
+                                            <th class="text-end">{{ currency($items->sum('quantity')) }}</th>
+                                            <th class="text-end">{{ currency($items->sum('discount')) }}</th>
+                                            <th class="text-end">{{ currency($items->sum('tax_amount')) }}</th>
+                                            <th class="text-end">{{ currency($items->sum('total')) }}</th>
+                                            @if ($sales['other_discount'] > 0)
+                                                <th class="text-end">{{ currency($items->sum('effective_total')) }}</th>
+                                            @endif
+                                            <th></th>
+                                        </tr>
+                                    </tfoot>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Totals & Payment Section -->
+                    <div class="row g-4">
+                        <div class="col-md-6">
+                            <div class="card shadow-sm h-100">
+                                <div class="card-header bg-light py-3">
+                                    <h5 class="card-title mb-0">Order Summary</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="table-responsive">
+                                        <table class="table table-borderless">
+                                            <tr>
+                                                <th width="50%">Gross Total</th>
+                                                <td class="text-end">
+                                                    {{ currency($sales['gross_amount']) }}
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <th>Sale Total</th>
+                                                <td class="text-end">
+                                                    {{ currency($sales['total']) }}
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <th>Other Discount</th>
+                                                <td>
+                                                    {{ html()->number('other_discount')->value('')->class('form-control form-control-sm text-end')->attribute('wire:model.lazy', 'sales.other_discount') }}
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <th>Freight</th>
+                                                <td>
+                                                    {{ html()->number('freight')->value('')->class('form-control form-control-sm text-end')->attribute('wire:model.lazy', 'sales.freight') }}
+                                                </td>
+                                            </tr>
                                         </table>
-                                        <div class="row">
-                                            <div class="col-md-12">
-                                                @if ($this->getErrorBag()->count())
-                                                    <ol>
-                                                        <?php foreach ($this->getErrorBag()->toArray() as $value): ?>
-                                                        <li style="color:red">* {{ $value[0] }}</li>
-                                                        <?php endforeach; ?>
-                                                    </ol>
-                                                @endif
+                                    </div>
+
+                                    <div class="mt-3">
+                                        <label for="address" class="form-label fw-semibold">Delivery Address</label>
+                                        {{ html()->textarea('address')->value('')->class('form-control')->rows(8)->attribute('wire:model.live', 'sales.address') }}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <div class="card shadow-sm h-100">
+                                <div class="card-header bg-light py-3">
+                                    <h5 class="card-title mb-0">Payment Details</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="alert alert-info mb-4">
+                                        <div class="text-center">
+                                            <h4 class="alert-heading">Total Payable Amount</h4>
+                                            <div class="fs-2 fw-bold">{{ currency($sales['grand_total']) }}</div>
+                                        </div>
+                                    </div>
+
+                                    <table class="table table-hover">
+                                        <thead class="table-light">
+                                            <tr>
+                                                <th>Payment Method</th>
+                                                <th class="text-end">Amount</th>
+                                                <th width="10%">Action</th>
+                                            </tr>
+                                            <tr>
+                                                <td>
+                                                    <div wire:ignore>
+                                                        {{ html()->select('payment_method_id', $paymentMethods)->value($default_payment_method_id)->class('select-payment_method_id-list')->id('payment_method_id')->placeholder('Select Payment Method') }}
+                                                    </div>
+                                                </td>
+                                                <td>
+                                                    {{ html()->number('amount')->value('')->class('form-control text-end')->attribute('step', 'any')->id('payment')->attribute('wire:model.live', 'payment.amount') }}
+                                                </td>
+                                                <td>
+                                                    <button type="button" wire:click="addPayment" class="btn btn-primary w-100">
+                                                        <i class="demo-psi-add"></i>
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @foreach ($payments as $key => $item)
+                                                <tr>
+                                                    <td>{{ $item['name'] }}</td>
+                                                    <td class="text-end">{{ currency($item['amount']) }}</td>
+                                                    <td>
+                                                        <button type="button" wire:click="removePayment('{{ $key }}')" wire:confirm="Are your sure?"
+                                                            class="btn btn-xs btn-outline-danger">
+                                                            <i class="demo-pli-recycling"></i>
+                                                        </button>
+                                                    </td>
+                                                </tr>
+                                            @endforeach
+                                        </tbody>
+                                    </table>
+
+                                    @if ($this->getErrorBag()->count())
+                                        <div class="alert alert-danger mt-3">
+                                            <ul class="mb-0">
+                                                @foreach ($this->getErrorBag()->toArray() as $error)
+                                                    <li>{{ $error[0] }}</li>
+                                                @endforeach
+                                            </ul>
+                                        </div>
+                                    @endif
+
+                                    <div class="row mt-4">
+                                        <div class="col-md-6">
+                                            <div class="table-responsive">
+                                                <table class="table table-sm table-borderless">
+                                                    <tbody class="text-muted">
+                                                        @isset($sales['created_user']['name'])
+                                                            <tr>
+                                                                <td>Created By:</td>
+                                                                <td><strong>{{ $sales['created_user']['name'] }}</strong></td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td>Updated By:</td>
+                                                                <td><strong>{{ $sales['updated_user']['name'] ?? '' }}</strong></td>
+                                                            </tr>
+                                                        @endisset
+                                                        @isset($sales['cancelled_user']['name'])
+                                                            <tr>
+                                                                <td>Cancelled By:</td>
+                                                                <td><strong>{{ $sales['cancelled_user']['name'] ?? '' }}</strong></td>
+                                                            </tr>
+                                                        @endisset
+                                                    </tbody>
+                                                </table>
                                             </div>
                                         </div>
-                                        <div class="col-12">
-                                            <div class="d-flex">
-                                                <div class="left-section w-50 me-3">
-                                                    <table class="table table-sm table-bordered table-striped">
-                                                        <thead>
-                                                            @isset($sales['created_user']['name'])
-                                                                <tr>
-                                                                    <td>Created By: <b>{{ $sales['created_user']['name'] }}</b> </td>
-                                                                </tr>
-                                                                <tr>
-                                                                    <td>Updated By: <b>{{ $sales['updated_user']['name'] ?? '' }}</b> </td>
-                                                                </tr>
-                                                            @endisset
-                                                            @isset($sales['cancelled_user']['name'])
-                                                                <tr>
-                                                                    <th>Cancelled By: <b>{{ $sales['cancelled_user']['name'] ?? '' }}</b> </th>
-                                                                </tr>
-                                                            @endisset
-                                                        </thead>
-                                                    </table>
-                                                </div>
-                                                <div class="right-section w-50">
-                                                    <ul class="list-group list-group-borderless">
-                                                        <li class="list-group-item d-flex justify-content-between align-items-center py-2">
-                                                            <div class="me-5 mb-0 h5">Total Paid:</div>
-                                                            <span class="fw-semibold" style="color:#1EB706;">{{ currency($sales['paid']) }}</span>
-                                                        </li>
-                                                        <li class="list-group-item d-flex justify-content-between align-items-center py-2">
-                                                            <div class="me-5 mb-0 h5">Balance:</div>
-                                                            <span class="text-danger fw-semibold">{{ currency($sales['balance']) }}</span>
-                                                        </li>
-                                                        <li class="list-group-item d-flex justify-content-between align-items-center py-2">
-                                                            <div class="form-check">
-                                                                <label for="send_to_whatsapp" class="form-check-label">
-                                                                    {{ html()->checkbox('send_to_whatsapp')->value('')->class('form-check-input')->attribute('wire:model.live', 'send_to_whatsapp') }}
-                                                                    Send Invoice To Whatsapp
-                                                                </label>
-                                                            </div>
-                                                        </li>
-                                                    </ul>
-                                                    <hr>
-                                                    <div class="d-flex justify-content-end gap-2 my-4 d-print-none">
-                                                        @if ($sales['status'] != 'completed')
-                                                            <button type="button" wire:click='save("draft")' class="btn btn-primary">Draft</button>
-                                                            <button type="submit" wire:confirm="Are you sure to submit this?" class="btn btn-success">Submit & Print</button>
-                                                        @else
-                                                            <button type="submit" wire:confirm="Are you sure to update this?" class="btn btn-warning">Updated & Print</button>
-                                                        @endif
+                                        <div class="col-md-6">
+                                            <ul class="list-group list-group-flush">
+                                                <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+                                                    <div class="fw-semibold">Total Paid:</div>
+                                                    <span class="fs-5 text-success">{{ currency($sales['paid']) }}</span>
+                                                </li>
+                                                <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+                                                    <div class="fw-semibold">Balance:</div>
+                                                    <span class="fs-5 text-danger">{{ currency($sales['balance']) }}</span>
+                                                </li>
+                                                <li class="list-group-item px-0">
+                                                    <div class="form-check">
+                                                        <label class="form-check-label">
+                                                            {{ html()->checkbox('send_to_whatsapp')->class('form-check-input')->attribute('wire:model.live', 'send_to_whatsapp') }}
+                                                            Send Invoice To WhatsApp
+                                                        </label>
                                                     </div>
-                                                </div>
+                                                </li>
+                                            </ul>
+
+                                            <div class="d-flex justify-content-end gap-2 mt-4">
+                                                @if ($sales['status'] != 'completed')
+                                                    <button type="button" wire:click='save("draft")' class="btn btn-secondary">
+                                                        <i class="demo-psi-file me-1"></i> Save as Draft
+                                                    </button>
+                                                    <button type="submit" wire:confirm="Are you sure to submit this?" class="btn btn-primary">
+                                                        <i class="demo-psi-printer me-1"></i> Submit & Print
+                                                    </button>
+                                                @else
+                                                    <button type="submit" wire:confirm="Are you sure to update this?" class="btn btn-warning">
+                                                        <i class="demo-psi-printer me-1"></i> Update & Print
+                                                    </button>
+                                                @endif
                                             </div>
                                         </div>
                                     </div>

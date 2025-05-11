@@ -31,6 +31,9 @@
         <hr>
         <div class="col-lg-12">
             <div class="row">
+                <div class="col-md-3 p-2" wire:ignore>
+                    {{ html()->select('branch_id', [auth()->user()->default_branch_id => auth()->user()->branch?->name])->value(auth()->user()->default_branch_id)->class('select-assigned-branch_id-list')->id('branch_id')->placeholder('Branch') }}
+                </div>
                 <div class="col-md-3" wire:ignore>
                     {{ html()->select('department_id', [])->value('')->class('select-department_id-list')->id('department_id')->placeholder('Department') }}
                 </div>
@@ -40,13 +43,10 @@
                 <div class="col-md-3" wire:ignore>
                     {{ html()->select('sub_category_id', [])->value('')->class('select-category_id-list')->id('sub_category_id')->placeholder('Sub Category') }}
                 </div>
-                <div class="col-md-3" wire:ignore>
-                    {{ html()->select('product_id', [])->value('')->class('select-product_id-list')->attribute('type', 'product')->id('product_id')->placeholder('Product') }}
-                </div>
             </div>
             <div class="row">
-                <div class="col-md-3 p-2" wire:ignore>
-                    {{ html()->select('branch_id', [auth()->user()->default_branch_id => auth()->user()->branch?->name])->value(auth()->user()->default_branch_id)->class('select-assigned-branch_id-list')->id('branch_id')->placeholder('Branch') }}
+                <div class="col-md-6" wire:ignore>
+                    {{ html()->select('product_id', [])->value('')->class('select-product_id-list')->attribute('type', 'product')->id('product_id')->placeholder('Product') }}
                 </div>
                 <div class="col-md-3">
                     <br>
