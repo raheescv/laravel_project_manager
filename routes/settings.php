@@ -7,6 +7,7 @@ use App\Http\Controllers\ServiceController;
 use App\Http\Controllers\Settings\BranchController;
 use App\Http\Controllers\Settings\CategoryController;
 use App\Http\Controllers\Settings\CountryController;
+use App\Http\Controllers\Settings\CustomerTypeController;
 use App\Http\Controllers\Settings\DepartmentController;
 use App\Http\Controllers\Settings\UnitController;
 use App\Http\Controllers\SettingsController;
@@ -39,6 +40,10 @@ Route::middleware('auth')->group(function (): void {
         });
         Route::name('country::')->prefix('country')->controller(CountryController::class)->group(function (): void {
             Route::get('', 'index')->name('index')->can('service.view');
+            Route::get('list', 'get')->name('list');
+        });
+        Route::name('customer_type::')->prefix('customer_type')->controller(CustomerTypeController::class)->group(function (): void {
+            Route::get('', 'index')->name('index')->can('customer type.view');
             Route::get('list', 'get')->name('list');
         });
     });

@@ -44,6 +44,10 @@
         <div class="col-lg-12">
             <div class="row">
                 <div class="col-md-4" wire:ignore>
+                    <label for="customer_type_id" class="text-capitalize">Customer Type</label>
+                    {{ html()->select('customer_type_id', [])->value('')->class('select-customer_type-id-list')->id('customer_type_id')->placeholder('All')->attribute('wire:model', 'customer_type_id') }}
+                </div>
+                <div class="col-md-4" wire:ignore>
                     <label for="nationality">Nationality</label>
                     {{ html()->select('nationality', $countries)->value('')->class('tomSelect')->id('table_nationality')->placeholder('All')->attribute('wire:model', 'nationality') }}
                 </div>
@@ -59,6 +63,7 @@
                             <input type="checkbox" wire:model.live="selectAll" />
                             <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="id" label="id" />
                         </th>
+                        <th> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="customer_type_id" label="Customer Type" /> </th>
                         <th> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="name" label="name" /> </th>
                         <th> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="mobile" label="mobile" /> </th>
                         <th> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="whatsapp_mobile" label="whatsapp mobile" /> </th>
@@ -77,6 +82,7 @@
                                 <input type="checkbox" value="{{ $item->id }}" wire:model.live="selected" />
                                 {{ $item->id }}
                             </td>
+                            <td>{{ $item->customerType?->name }}</td>
                             <td><a href="{{ route('account::customer::view', $item->id) }}">{{ $item->name }}</a> </td>
                             <td>{{ $item->mobile }}</td>
                             <td>{{ $item->whatsapp_mobile }}</td>
@@ -100,10 +106,13 @@
     @push('scripts')
         <script>
             $(document).ready(function() {
-
                 $('#table_nationality').on('change', function(e) {
                     const value = $(this).val() || null;
                     @this.set('nationality', value);
+                });
+                $('#customer_type_id').on('change', function(e) {
+                    const value = $(this).val() || null;
+                    @this.set('customer_type_id', value);
                 });
                 $(document).on('click', '.edit', function() {
                     Livewire.dispatch("Customer-Page-Update-Component", {

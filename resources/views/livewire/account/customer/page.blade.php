@@ -24,29 +24,43 @@
                     </div>
                 </div>
                 <div class="col-md-4">
+                    <div class="form-group" wire:ignore>
+                        <b><label for="customer_type_id" class="text-capitalize">Customer Type</label></b>
+                        {{ html()->select('customer_type_id', [])->value('')->class('select-customer_type-id')->id('modal_customer_type_id')->attribute('wire:model', 'accounts.customer_type_id') }}
+                    </div>
+                </div>
+            </div>
+            <div class="row mb-2">
+                <div class="col-md-6">
                     <div class="form-group">
-                        <b><label for="dob" class="text-capitalize">DOB</label></b>
-                        {{ html()->date('dob')->value('')->class('form-control')->attribute('wire:model', 'accounts.dob') }}
+                        <b><label for="mobile" class="text-capitalize">mobile</label></b>
+                        {{ html()->input('mobile')->value('')->class('form-control')->attribute('wire:model.live', 'accounts.mobile') }}
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <b><label for="whatsapp_mobile" class="text-capitalize">whatsapp mobile</label></b>
+                        {{ html()->input('whatsapp_mobile')->value('')->class('form-control')->attribute('wire:model.live', 'accounts.whatsapp_mobile') }}
                     </div>
                 </div>
             </div>
             <div class="row mb-2">
                 <div class="col-md-4">
                     <div class="form-group">
-                        <b><label for="mobile" class="text-capitalize">mobile</label></b>
-                        {{ html()->input('mobile')->value('')->class('form-control')->attribute('wire:model.live', 'accounts.mobile') }}
-                    </div>
-                </div>
-                <div class="col-md-4">
-                    <div class="form-group">
-                        <b><label for="whatsapp_mobile" class="text-capitalize">whatsapp mobile</label></b>
-                        {{ html()->input('whatsapp_mobile')->value('')->class('form-control')->attribute('wire:model.live', 'accounts.whatsapp_mobile') }}
-                    </div>
-                </div>
-                <div class="col-md-4">
-                    <div class="form-group">
                         <b><label for="email" class="text-capitalize">email</label></b>
                         {{ html()->email('email')->value('')->class('form-control')->attribute('wire:model', 'accounts.email') }}
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="form-group">
+                        <b><label for="dob" class="text-capitalize">DOB</label></b>
+                        {{ html()->date('dob')->value('')->class('form-control')->attribute('wire:model', 'accounts.dob') }}
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="form-group">
+                        <b><label for="company" class="text-capitalize">company</label></b>
+                        {{ html()->input('company')->value('')->class('form-control')->attribute('wire:model', 'accounts.company') }}
                     </div>
                 </div>
             </div>
@@ -57,16 +71,10 @@
                         {{ html()->input('id_no')->value('')->class('form-control')->attribute('wire:model.live', 'accounts.id_no') }}
                     </div>
                 </div>
-                <div class="col-md-4">
+                <div class="col-md-8">
                     <div class="form-group" wire:ignore>
                         <b><label for="nationality" class="text-capitalize">nationality</label></b>
                         {{ html()->select('nationality', $countries)->value('')->class('tomSelect')->id('modal_nationality')->placeholder('')->attribute('wire:model.live', 'accounts.nationality') }}
-                    </div>
-                </div>
-                <div class="col-md-4">
-                    <div class="form-group">
-                        <b><label for="company" class="text-capitalize">company</label></b>
-                        {{ html()->input('company')->value('')->class('form-control')->attribute('wire:model', 'accounts.company') }}
                     </div>
                 </div>
             </div>
@@ -109,12 +117,25 @@
                 });
                 window.addEventListener('SelectDropDownValues', event => {
                     var data = event.detail[0];
-                    @this.set('countries.nationality', data.nationality);
+                    @this.set('accounts.nationality', data.nationality);
                     var tomSelectInstance = document.querySelector('#modal_nationality').tomselect;
                     if (data.nationality) {
                         preselectedData = {
                             id: data.nationality,
                             name: data.nationality,
+                        };
+                        console.log(preselectedData);
+                        tomSelectInstance.addOption(preselectedData);
+                        tomSelectInstance.addItem(preselectedData.id);
+                    } else {
+                        tomSelectInstance.clear();
+                    }
+                    @this.set('accounts.customer_type_id', data.customer_type_id);
+                    var tomSelectInstance = document.querySelector('#modal_customer_type_id').tomselect;
+                    if (data.customer_type_id) {
+                        preselectedData = {
+                            id: data.customer_type_id,
+                            name: data.customer_type['name'],
                         };
                         console.log(preselectedData);
                         tomSelectInstance.addOption(preselectedData);

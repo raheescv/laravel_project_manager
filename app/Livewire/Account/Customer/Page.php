@@ -74,7 +74,7 @@ class Page extends Component
                 'model' => 'customer',
             ];
         } else {
-            $account = Account::find($this->table_id);
+            $account = Account::with('customerType:id,name')->find($this->table_id);
             $this->accounts = $account->toArray();
         }
         $this->dispatch('SelectDropDownValues', $this->accounts);

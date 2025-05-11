@@ -12,6 +12,7 @@ return new class() extends Migration
             $table->id();
 
             $table->enum('account_type', array_keys(accountTypes()));
+            $table->unsignedBigInteger('customer_type_id')->nullable()->references('id')->on('customer_types');
             $table->string('name', 100);
             $table->string('mobile', 15)->nullable();
 

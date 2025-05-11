@@ -22,6 +22,8 @@ class Table extends Component
 
     public $nationality;
 
+    public $customer_type_id;
+
     public $selected = [];
 
     public $selectAll = false;
@@ -108,9 +110,12 @@ class Table extends Component
     public function render()
     {
         $countries = Account::pluck('nationality', 'nationality')->toArray();
-        $data = Account::orderBy($this->sortField, $this->sortDirection)
+        $data = Account::with('customerType:id,name')
+            ->orderBy($this->sortField, $this->sortDirection)
             ->when($this->nationality, function ($query, $value) {
                 return $query->where('accounts.nationality', $value);
+            })->when($this->customer_type_id, function ($query, $value) {
+                return $query->where('accounts.customer_type_id', $value);
             })
             ->when($this->search, function ($query, $value) {
                 return $query->where(function ($q) use ($value): void {

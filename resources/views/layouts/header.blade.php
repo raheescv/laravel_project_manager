@@ -95,6 +95,9 @@
                                     @can('country.view')
                                         <a href="{{ route('settings::country::index') }}" class="list-group-item list-group-item-action">Country</a>
                                     @endcan
+                                    @can('customer type.view')
+                                        <a href="{{ route('settings::customer_type::index') }}" class="list-group-item list-group-item-action">Customer Type</a>
+                                    @endcan
                                     @can('unit.view')
                                         <a href="{{ route('settings::unit::index') }}" class="list-group-item list-group-item-action">Unit</a>
                                     @endcan

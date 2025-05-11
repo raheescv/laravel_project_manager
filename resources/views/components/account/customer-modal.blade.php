@@ -5,7 +5,9 @@
         </div>
     </div>
 </div>
+<x-settings.customer-type.customer-type-modal />
 @push('scripts')
+    <x-select.customerTypeSelect />
     <script>
         window.addEventListener('ToggleCustomerModal', event => {
             $('#CustomerModal').modal('toggle');
