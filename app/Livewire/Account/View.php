@@ -127,20 +127,6 @@ class View extends Component
         }
     }
 
-    public function render()
-    {
-        $data = $this->dataFunction()
-            ->orderBy($this->sortField, $this->sortDirection);
-
-        $totalRow = clone $data;
-
-        $data = $data->paginate($this->limit);
-        $total['debit'] = $totalRow->sum('debit');
-        $total['credit'] = $totalRow->sum('credit');
-
-        return view('livewire.account.view', ['data' => $data, 'total' => $total]);
-    }
-
     private function dataFunction()
     {
         return Ledger::where('counter_account_id', $this->accountId)
@@ -164,5 +150,21 @@ class View extends Component
     private function dataListFunction()
     {
         return Ledger::where('account_id', $this->accountId);
+    }
+
+    public function render()
+    {
+        DB::enableQueryLog();
+        $data = $this->dataFunction()
+            ->orderBy($this->sortField, $this->sortDirection);
+
+        $totalRow = clone $data;
+
+        $data = $data->paginate($this->limit);
+        $total['debit'] = $totalRow->sum('debit');
+        $total['credit'] = $totalRow->sum('credit');
+        info(DB::getQueryLog());
+
+        return view('livewire.account.view', ['data' => $data, 'total' => $total]);
     }
 }
