@@ -37,7 +37,7 @@
                         <i class="demo-psi-gear me-2"></i>
                         Available Services
                     </h6>
-                    <span class="badge bg-primary">
+                    <span class="badge bg-primary text-white">
                         {{ count($selectedServices) }} Selected
                     </span>
                 </div>

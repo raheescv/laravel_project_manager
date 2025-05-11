@@ -1,6 +1,55 @@
 <div>
     @push('styles')
         <link rel="stylesheet" href="{{ asset('assets/pos/pos.css?v=3') }}">
+        <style>
+            .category-sidebar {
+                padding: 10px;
+                background: #f8f9fa;
+                border-radius: 8px;
+                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            }
+
+            .category-button {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                padding: 12px 15px;
+                margin: 5px 0;
+                border-radius: 6px;
+                background: white;
+                border: 1px solid #e0e0e0;
+                cursor: pointer;
+                transition: all 0.3s ease;
+            }
+
+            .category-button:hover {
+                background: #eef2ff;
+                transform: translateX(3px);
+            }
+
+            .category-button.active {
+                background: #4f46e5;
+                color: white;
+            }
+
+            .category-button.active-favorite {
+                background: #ffd700;
+                color: #333;
+            }
+
+            .badge {
+                background: #e5e7eb;
+                color: #374151;
+                padding: 2px 8px;
+                border-radius: 12px;
+                font-size: 0.8em;
+            }
+
+            .category-button.active .badge {
+                background: rgba(255, 255, 255, 0.2);
+                color: white;
+            }
+        </style>
     @endpush
     <div class="main-wrapper">
         <div class="page-wrapper pos-pg-wrapper ms-0">
@@ -28,55 +77,6 @@
                             </div>
                         </div>
 
-                        <style>
-                            .category-sidebar {
-                                padding: 10px;
-                                background: #f8f9fa;
-                                border-radius: 8px;
-                                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-                            }
-
-                            .category-button {
-                                display: flex;
-                                align-items: center;
-                                justify-content: space-between;
-                                padding: 12px 15px;
-                                margin: 5px 0;
-                                border-radius: 6px;
-                                background: white;
-                                border: 1px solid #e0e0e0;
-                                cursor: pointer;
-                                transition: all 0.3s ease;
-                            }
-
-                            .category-button:hover {
-                                background: #eef2ff;
-                                transform: translateX(3px);
-                            }
-
-                            .category-button.active {
-                                background: #4f46e5;
-                                color: white;
-                            }
-
-                            .category-button.active-favorite {
-                                background: #ffd700;
-                                color: #333;
-                            }
-
-                            .badge {
-                                background: #e5e7eb;
-                                color: #374151;
-                                padding: 2px 8px;
-                                border-radius: 12px;
-                                font-size: 0.8em;
-                            }
-
-                            .category-button.active .badge {
-                                background: rgba(255, 255, 255, 0.2);
-                                color: white;
-                            }
-                        </style>
                         <div class="col-md-12 col-lg-6">
                             <div class="pos-categories tabs_wrapper">
                                 <div class="pos-products">
