@@ -21,7 +21,7 @@
                     </div>
                 </div>
                 <div class="row">
-                    <div class="col-md-3" wire:ignore>
+                    <div class="col-md-6" wire:ignore>
                         <b><label for="product_id">Product</label></b>
                         {{ html()->select('product_id', [])->value('')->class('select-product_id-list')->id('product_id')->attribute('wire:model', 'product_id')->placeholder('All') }}
                     </div>

@@ -28,7 +28,7 @@
                 </div>
                 <div class="col-md-2">
                     <label for="to_date">To Date</label>
-                    {{ html()->date('to_date')->value('')->class('form-control')->id('from_date')->attribute('wire:model.live', 'from_date') }}
+                    {{ html()->date('to_date')->value('')->class('form-control')->id('from_date')->attribute('wire:model.live', 'to_date') }}
                 </div>
                 <div class="col-md-2" wire:ignore>
                     <label for="branch_id">Branch</label>
@@ -69,9 +69,9 @@
                             <td class="text-end">{{ $item->unit_price }}</td>
                             <td class="text-end">{{ $item->quantity }}</td>
                             <td class="text-end">{{ $item->gross_amount }}</td>
-                            <td class="text-end">{{ $item->discount }}</td>
+                            <td class="text-end">{{ $item->discount != 0 ? currency($item->discount) : '-' }}</td>
                             <td class="text-end">{{ $item->net_amount }}</td>
-                            <td class="text-end">{{ $item->tax_amount }}</td>
+                            <td class="text-end">{{ $item->tax_amount != 0 ? currency($item->tax_amount) : '-' }}</td>
                             <td class="text-end">{{ $item->total }}</td>
                         </tr>
                     @endforeach

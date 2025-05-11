@@ -82,11 +82,11 @@
                             <td class="text-end">{{ currency($item->unit_price) }}</td>
                             <td class="text-end">{{ currency($item->quantity) }}</td>
                             <td class="text-end">{{ currency($item->gross_amount) }}</td>
-                            <td class="text-end">{{ currency($item->discount) }}</td>
+                            <td class="text-end">{{ $item->discount != 0 ? currency($item->discount) : '-' }}</td>
                             <td class="text-end">{{ currency($item->net_amount) }}</td>
-                            <td class="text-end">{{ currency($item->tax_amount) }}</td>
+                            <td class="text-end">{{ $item->tax_amount != 0 ? currency($item->tax_amount) : '-' }}</td>
                             <td class="text-end">{{ currency($item->total) }}</td>
-                            <td class="text-end">{{ currency($item->effective_total) }}</td>
+                            <td class="text-end">{{ $item->total != $item->effective_total ? currency($item->effective_total) : '-' }}</td>
                         </tr>
                     @endforeach
                 </tbody>

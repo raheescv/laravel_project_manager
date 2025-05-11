@@ -92,13 +92,14 @@ class DayBookReport extends Component
 
     public function render()
     {
-        $data = Ledger::select('id', 'date', 'account_name', 'description', 'reference_number', 'model', 'model_id', 'remarks', 'debit', 'credit', 'balance')
+        $data = Ledger::select('id', 'date', 'account_name', 'description', 'reference_number', 'model', 'model_id', 'remarks', 'journal_remarks', 'debit', 'credit', 'balance')
             ->when($this->search, function ($query, $value) {
                 return $query->where(function ($q) use ($value) {
                     $value = trim($value);
 
                     return $q->where('description', 'like', "%{$value}%")
                         ->orWhere('reference_number', 'like', "%{$value}%")
+                        ->orWhere('journal_remarks', 'like', "%{$value}%")
                         ->orWhere('remarks', 'like', "%{$value}%");
                 });
             })

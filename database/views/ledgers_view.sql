@@ -14,6 +14,7 @@ SELECT
     j.date,
     j.branch_id,
     j.description,
+    j.remarks as journal_remarks,
     j.reference_number,
     j.model,
     j.model_id,
