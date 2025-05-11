@@ -90,12 +90,32 @@
                                             {{ html()->select('sale_type', priceTypes())->class('form-control')->id('sale_type')->attribute('wire:model.live', 'sales.sale_type')->required(true)->placeholder('Select Sale Type') }}
                                         </div>
                                     </div>
-                                    <div class="d-flex align-items-center justify-content-between mb-3">
-                                        <div class="input-group">
-                                            <input type="search" style="padding: 5px !important" class="form-control form-control-sm w-25" wire:model.live="barcode_key" placeholder="Scan Barcode">
-                                            <input type="search" style="padding: 5px !important" class="form-control form-control-sm w-50" wire:model.live="product_key"
-                                                placeholder="Search Products/Service">
-                                            <button type="button" class="btn btn-sm btn-info w-25" id="viewDraftedSales">View Draft</button>
+                                    <div class="search-section mb-4">
+                                        <div class="d-flex gap-2">
+                                            <div class="search-box flex-grow-2">
+                                                <div class="input-group">
+                                                    <span class="input-group-text bg-light border-end-0">
+                                                        <i class="fa fa-barcode"></i>
+                                                    </span>
+                                                    <input type="search" class="form-control border-start-0" wire:model.live="barcode_key" placeholder="Scan Barcode"
+                                                        style="border-radius: 0 4px 4px 0;">
+                                                </div>
+                                            </div>
+
+                                            <div class="search-box flex-grow-1">
+                                                <div class="input-group">
+                                                    <span class="input-group-text bg-light border-end-0">
+                                                        <i class="fa fa-search"></i>
+                                                    </span>
+                                                    <input type="search" class="form-control border-start-0" wire:model.live="product_key" placeholder="Search Products/Services"
+                                                        style="border-radius: 0 4px 4px 0;">
+                                                </div>
+                                            </div>
+
+                                            <button type="button" id="viewDraftedSales" class="btn btn-primary d-flex align-items-center gap-2" style="min-width: 120px;">
+                                                <i class="fa fa-file-alt"></i>
+                                                <span>View Draft</span>
+                                            </button>
                                         </div>
                                     </div>
                                     <div class="tabs_container" style="height: 80vh; overflow: auto;  overflow-x: hidden; padding-right: 10px;">

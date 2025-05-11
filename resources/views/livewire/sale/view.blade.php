@@ -168,7 +168,7 @@
                                                     <div>
                                                         <a href="{{ route('inventory::product::view', $item['product_id']) }}" class="text-primary">{{ $item['name'] }}</a>
                                                         @if (!empty($item['sale_combo_offer_id']))
-                                                            <span class="badge bg-info ms-2">P</span>
+                                                            <span class="badge bg-info ms-2">C</span>
                                                         @endif
                                                     </div>
                                                 </div>
