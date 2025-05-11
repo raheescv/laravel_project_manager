@@ -18,6 +18,9 @@ class DeleteAction
             if (! $model) {
                 throw new Exception("AppointmentItem not found with the specified ID: $id.", 1);
             }
+            if ($model->appointment->items()->count() == 1) {
+                $model->appointment->delete();
+            }
 
             if (! $model->delete()) {
                 throw new Exception('Oops! Something went wrong while deleting the AppointmentItem. Please try again.', 1);
