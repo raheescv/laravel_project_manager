@@ -59,7 +59,8 @@ class CustomerLocation extends Component
             ->where('accounts.nationality', '!=', '')
             ->where('accounts.model', 'customer')
             ->selectRaw('accounts.nationality, COUNT(DISTINCT accounts.id) as customer_count')
-            ->groupBy('accounts.nationality');
+            ->groupBy('accounts.nationality')
+            ->orderByRaw('customer_count DESC');
 
         $total = clone $query;
         $this->dataPoints = [];

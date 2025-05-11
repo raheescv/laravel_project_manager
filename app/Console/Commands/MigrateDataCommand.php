@@ -202,6 +202,7 @@ class MigrateDataCommand extends Command
                                 'created_by' => $created_by,
                                 'updated_by' => $updated_by,
                             ];
+                            $data['comboOffers'] = [];
                             $data['items'] = [];
                             $sale_service_items = DB::connection('mysql2')
                                 ->table('sale_service_items')
@@ -506,8 +507,11 @@ class MigrateDataCommand extends Command
             unset($data['unit']);
             unset($data['main_category']);
             unset($data['sub_category']);
-            $product = Product::create((array) $data);
-            BranchProductCreationJob::dispatch(1, 1, $product->id);
+            $exists = Product::where('name', $data['name'])->exists();
+            if (! $exists) {
+                $product = Product::create((array) $data);
+                BranchProductCreationJob::dispatch(1, 1, $product->id);
+            }
         }
     }
 

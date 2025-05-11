@@ -160,7 +160,7 @@
                     var data = event.detail[0];
                     var options = {
                         title: {
-                            text: "Top 10 Products"
+                            text: "Top 10 Items"
                         },
                         data: [{
                             type: "doughnut",
