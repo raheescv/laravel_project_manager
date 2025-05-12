@@ -3,6 +3,7 @@
 use App\Http\Controllers\AppointmentController;
 use App\Http\Controllers\AuditController;
 use App\Http\Controllers\BackupController;
+use App\Http\Controllers\GitController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\ProfileController;
@@ -16,6 +17,9 @@ Route::middleware('auth')->group(function (): void {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+
+    // Git operations
+    Route::get('git/pull', [GitController::class, 'pull'])->name('git.pull');
 
     Route::name('users::')->prefix('users')->controller(UserController::class)->group(function (): void {
         Route::get('', 'index')->name('index')->can('user.view');
