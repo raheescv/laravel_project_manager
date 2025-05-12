@@ -191,7 +191,7 @@
                         <div
                             class="note-type {{ $note->type == 'general' ? 'type-general' : ($note->type == 'payment' ? 'type-payment' : ($note->type == 'complaint' ? 'type-complaint' : 'type-other')) }}">
                             <i
-                                class="far {{ $note->type == 'general' ? 'fa-comment' : ($note->type == 'payment' ? 'fa-credit-card' : ($note->type == 'complaint' ? 'fa-exclamation-circle' : 'fa-sticky-note')) }}"></i>
+                                class="fa {{ $note->type == 'general' ? 'fa-comment' : ($note->type == 'payment' ? 'fa-credit-card' : ($note->type == 'complaint' ? 'fa-exclamation-circle' : 'fa-sticky-note')) }}"></i>
                             {{ ucfirst($note->type) }}
                         </div>
                         <span class="status-badge {{ $note->status == 'pending' ? 'status-pending' : 'status-completed' }}"></span>
@@ -203,11 +203,11 @@
 
                     <div class="note-meta">
                         <div class="meta-item">
-                            <i class="far fa-calendar"></i>
+                            <i class="fa fa-calendar"></i>
                             {{ systemDateTime($note->created_at) }}
                         </div>
                         <div class="meta-item">
-                            <i class="far fa-user"></i>
+                            <i class="fa fa-user"></i>
                             {{ $note->createdBy?->name }}
                         </div>
                     </div>
@@ -215,7 +215,7 @@
                     <div class="note-actions">
                         @if ($note->follow_up_date)
                             <div class="follow-up-date">
-                                <i class="far fa-clock"></i>
+                                <i class="fa fa-clock"></i>
                                 Follow-up: {{ systemDate($note->follow_up_date) }}
                             </div>
                         @endif
@@ -238,7 +238,7 @@
             <div class="col-12">
                 <div class="empty-state">
                     <div class="empty-state-icon">
-                        <i class="far fa-sticky-note"></i>
+                        <i class="fa fa-sticky-note"></i>
                     </div>
                     <p>No notes found. Start by adding your first note.</p>
                 </div>

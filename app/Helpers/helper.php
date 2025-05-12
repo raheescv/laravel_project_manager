@@ -396,3 +396,14 @@ if (! function_exists('pendingCompletedStatuses')) {
         ];
     }
 }
+
+if (! function_exists('feedbackTypes')) {
+    function feedbackTypes()
+    {
+        return [
+            'compliment' => 'Compliment',
+            'suggestion' => 'Suggestion',
+            'complaint' => 'Complaint',
+        ];
+    }
+}

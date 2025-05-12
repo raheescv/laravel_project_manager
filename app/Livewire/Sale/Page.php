@@ -29,6 +29,7 @@ class Page extends Component
         'Sale-selectItem-Component' => 'selectItem',
         'Sale-Delete-Sync-Items-Component' => 'removeSyncItemFromViewItem',
         'Sale-ComboOffer-Update-Price' => 'updateComboOfferItemPrice',
+        'Save-Sale-Feedback' => 'saveFeedback',
     ];
 
     public $categories;
@@ -197,6 +198,9 @@ class Page extends Component
                 'balance' => 0,
 
                 'address' => null,
+                'rating' => 0,
+                'feedback_type' => null,
+                'feedback' => null,
                 'status' => 'draft',
             ];
             if (! app()->isProduction()) {
@@ -281,6 +285,17 @@ class Page extends Component
         if (in_array($this->payment_method_name, ['cash', 'card'])) {
             $this->selectPaymentMethod($this->payment_method_name);
         }
+    }
+
+    public function openFeedback()
+    {
+        $this->sales['rating'] = $this->sales['rating'] ?? 0;
+        $this->dispatch('Open-Sale-Feedback-Component', $this->sales);
+    }
+
+    public function saveFeedback($sales)
+    {
+        $this->sales = $sales;
     }
 
     public function getCustomerDetails()

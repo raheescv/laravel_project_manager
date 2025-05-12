@@ -26,6 +26,7 @@ return [
         'dashboard top items',
         'audit view',
         'combo offer',
+        'feedback',
     ],
     'sales return' => ['create', 'view', 'edit', 'edit completed', 'delete', 'export', 'payments', 'view journal entries'],
     'purchase' => ['create', 'view', 'edit', 'edit completed', 'delete', 'cancel', 'export', 'payments', 'view journal entries'],

@@ -159,6 +159,8 @@
                                 <th class="text-white text-end">Grand Total</th>
                                 <th class="text-white text-end">Paid</th>
                                 <th class="text-white text-end">Balance</th>
+                                <th class="text-white">Rating</th>
+                                <th class="text-white">Feedback</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -171,6 +173,16 @@
                                         <td class="text-end">{{ currency($value->grand_total) }}</td>
                                         <td class="text-end">{{ currency($value->paid) }}</td>
                                         <td class="text-end">{{ currency($value->balance) }}</td>
+                                        <td>
+                                            <div class="d-flex align-items-center mb-2">
+                                                <div class="stars">
+                                                    @for ($i = 1; $i <= 5; $i++)
+                                                        <i class="fa fa-star fs-5 {{ $value->rating >= $i ? 'text-warning' : 'text-muted' }}"></i>
+                                                    @endfor
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td>{{ $value->feedback }}</td>
                                     </tr>
                                 @endforeach
                             @endif

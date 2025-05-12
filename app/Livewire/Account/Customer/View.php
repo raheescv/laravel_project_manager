@@ -85,7 +85,7 @@ class View extends Component
                 ->when($this->sale_to_date ?? '', fn ($q, $value) => $q->whereDate('date', '<=', date('Y-m-d', strtotime($value))))
                 ->limit($this->sale_limit)
                 ->latest()
-                ->get(['id', 'date', 'invoice_no', 'grand_total', 'paid', 'balance']);
+                ->get(['id', 'date', 'invoice_no', 'grand_total', 'paid', 'balance', 'rating', 'feedback', 'feedback_type']);
 
             $this->total_sale_returns = DB::table('sale_returns')
                 ->where('account_id', $this->account_id)

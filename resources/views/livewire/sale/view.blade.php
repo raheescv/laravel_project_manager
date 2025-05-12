@@ -2,68 +2,206 @@
     <div class="col-md-12 mb-3">
         <div class="card shadow-sm">
             <div class="card-body">
-                <!-- Invoice info with enhanced styling -->
-                <div class="row">
-                    <div class="col-12">
-                        <div class="d-md-flex bg-light p-1 rounded mb-1 w-100">
-                            <address class="mb-4 mb-md-0 flex-grow-1">
-                                <div class="d-flex align-items-center mb-3">
-                                    <i class="demo-psi-user me-2 fs-4"></i>
-                                    <h5 class="mb-0"> <a href="{{ route('account::customer::view', $sale->account_id) }}" class="text-primary">{{ $sale->account?->name }}</a> </h5>
+                <!-- Invoice Information -->
+                <div class="row g-3 mb-2">
+                    <!-- Main Info Section -->
+                    <div class="row g-2">
+                        <!-- Left Column - Invoice Info -->
+                        <div class="col-lg-4">
+                            <div class="glass-card h-100">
+                                <div class="card-body p-3">
+                                    <div class="d-flex align-items-center mb-3">
+                                        <div class="icon-box bg-primary bg-opacity-10 rounded-circle p-2 me-2">
+                                            <i class="demo-psi-file text-primary-gradient fs-4"></i>
+                                        </div>
+                                        <div>
+                                            <h5 class="mb-0 text-primary-gradient">Invoice Details</h5>
+                                            <small class="text-muted">#{{ $sale->invoice_no }}</small>
+                                        </div>
+                                    </div>
+
+                                    <div class="info-list">
+                                        <div class="row g-2">
+                                            <!-- Date & Due Date -->
+                                            <div class="col-6">
+                                                <div class="info-item p-2 hover-lift rounded bg-light bg-opacity-50">
+                                                    <div class="d-flex align-items-center mb-1">
+                                                        <i class="demo-psi-calendar-4 text-primary me-2"></i>
+                                                        <small class="text-muted">Date</small>
+                                                    </div>
+                                                    <div class="fw-medium">{{ systemDate($sale->date) }}</div>
+                                                </div>
+                                            </div>
+                                            <div class="col-6">
+                                                <div class="info-item p-2 hover-lift rounded bg-light bg-opacity-50">
+                                                    <div class="d-flex align-items-center mb-1">
+                                                        <i class="demo-psi-calendar-4 text-danger me-2"></i>
+                                                        <small class="text-muted">Due</small>
+                                                    </div>
+                                                    <div class="fw-medium">{{ systemDate($sale->due_date) }}</div>
+                                                </div>
+                                            </div>
+
+                                            <!-- Reference & Status -->
+                                            <div class="col-6">
+                                                <div class="info-item p-2 hover-lift rounded bg-light bg-opacity-50">
+                                                    <div class="d-flex align-items-center mb-1">
+                                                        <i class="fa fa-file-text-o text-info me-2"></i>
+                                                        <small class="text-muted">Reference</small>
+                                                    </div>
+                                                    <div class="fw-medium">{{ $sale->reference_no ?: 'N/A' }}</div>
+                                                </div>
+                                            </div>
+
+                                            <!-- Type -->
+                                            <div class="col-6">
+                                                <div class="info-item p-2 hover-lift rounded bg-light bg-opacity-50">
+                                                    <div class="d-flex align-items-center mb-1">
+                                                        <i class="demo-psi-tag-2 text-success me-2"></i>
+                                                        <small class="text-muted">Type</small>
+                                                    </div>
+                                                    <div class="fw-medium">{{ ucfirst($sale->sale_type) }}</div>
+                                                </div>
+                                            </div>
+                                            <div class="col-12">
+                                                <div class="info-item p-2 hover-lift rounded bg-light bg-opacity-50">
+                                                    <div class="d-flex align-items-center mb-1">
+                                                        <i
+                                                            class="demo-psi-clock {{ $sale->status === 'completed' ? 'text-success' : ($sale->status === 'cancelled' ? 'text-danger' : 'text-warning') }} me-2"></i>
+                                                        <small class="text-muted">Status</small>
+                                                    </div>
+                                                    <span class="badge {{ $sale->status === 'completed' ? 'bg-success' : ($sale->status === 'cancelled' ? 'bg-danger' : 'bg-warning') }} rounded-pill">
+                                                        {{ ucfirst($sale->status) }}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
-                                @if ($sale->customer_name)
-                                    <div class="d-flex align-items-center mb-2">
-                                        <i class="demo-psi-id-card me-2"></i>
-                                        <span><b>Customer Name:</b> {{ $sale->customer_name }}</span>
+                            </div>
+                        </div>
+
+                        <!-- Right Column - Customer Info -->
+                        <div class="col-lg-8">
+                            <div class="glass-card h-100">
+                                <div class="card-body p-3">
+                                    <div class="d-flex justify-content-between align-items-center mb-3">
+                                        <div class="d-flex align-items-center">
+                                            <div class="icon-box bg-success bg-opacity-10 rounded-circle p-2 me-2">
+                                                <i class="demo-psi-male text-success-gradient fs-4"></i>
+                                            </div>
+                                            <div>
+                                                <h5 class="mb-0 text-success-gradient">Customer Information</h5>
+                                                <small class="text-muted">Customer #{{ $sale->account_id }}</small>
+                                            </div>
+                                        </div>
+                                        <a href="{{ route('account::customer::view', $sale->account_id) }}" class="btn btn-sm btn-outline-success hover-lift">
+                                            <i class="demo-psi-profile me-1"></i>Profile
+                                        </a>
                                     </div>
-                                @endif
-                                @if ($sale->customer_mobile)
-                                    <div class="d-flex align-items-center">
-                                        <i class="demo-psi-phone me-2"></i>
-                                        <span><b>Mobile:</b> {{ $sale->customer_mobile }}</span>
+
+                                    <div class="row g-2">
+                                        <!-- Customer Details -->
+                                        <div class="col-sm-6">
+                                            <div class="customer-info p-3 bg-light bg-opacity-50 rounded h-100">
+                                                <h6 class="mb-2 text-primary d-flex align-items-center">
+                                                    <i class="demo-psi-id-card me-2"></i>Customer Details
+                                                </h6>
+                                                <div class="ps-1">
+                                                    <div class="mb-2">
+                                                        <small class="text-muted d-block">Name</small>
+                                                        <span class="fw-medium">{{ $sale->account?->name }}</span>
+                                                    </div>
+                                                    @if ($sale->customer_name)
+                                                        <div>
+                                                            <small class="text-muted d-block">Display Name</small>
+                                                            <span class="fw-medium">{{ $sale->customer_name }}</span>
+                                                        </div>
+                                                    @endif
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- Contact Info -->
+                                        <div class="col-sm-6">
+                                            <div class="contact-info p-3 bg-light bg-opacity-50 rounded h-100">
+                                                <h6 class="mb-2 text-primary d-flex align-items-center">
+                                                    <i class="demo-psi-phone me-2"></i>Contact Details
+                                                </h6>
+                                                <div class="ps-1">
+                                                    @if ($sale->customer_mobile)
+                                                        <div class="mb-2">
+                                                            <small class="text-muted d-block">Mobile</small>
+                                                            <span class="fw-medium">{{ $sale->customer_mobile }}</span>
+                                                        </div>
+                                                    @endif
+                                                    @if ($sale->account?->email)
+                                                        <div>
+                                                            <small class="text-muted d-block">Email</small>
+                                                            <span class="fw-medium">{{ $sale->account?->email }}</span>
+                                                        </div>
+                                                    @endif
+                                                </div>
+                                            </div>
+                                        </div>
                                     </div>
-                                @endif
-                            </address>
-                            <ul class="list-group list-group-borderless ms-md-5 bg-white p-3 rounded shadow-sm" style="min-width: 280px;">
-                                <li class="list-group-item d-flex justify-content-between align-items-center px-0 pt-0 pb-2">
-                                    <div class="me-5 fw-semibold text-body-emphasis"><i class="demo-psi-receipt-4 me-2"></i>Invoice #</div>
-                                    <span class="ms-auto text-info fw-bold">{{ $sale->invoice_no }}</span>
-                                </li>
-                                <li class="list-group-item d-flex justify-content-between align-items-center px-0 pt-0 pb-2">
-                                    <div class="me-5 fw-semibold text-body-emphasis"><i class="demo-psi-file me-2"></i>Reference No</div>
-                                    <span class="ms-auto">{{ systemDate($sale->reference_no) }}</span>
-                                </li>
-                                <li class="list-group-item d-flex justify-content-between align-items-center px-0 pt-0 pb-2">
-                                    <div class="me-5 fw-semibold text-body-emphasis"><i class="demo-psi-clock me-2"></i>Order Status</div>
-                                    @php
-                                        $statusClasses = [
-                                            'completed' => 'bg-success',
-                                            'draft' => 'bg-info',
-                                            'cancelled' => 'bg-warning',
-                                        ];
-                                    @endphp
-                                    @if (isset($statusClasses[$sale->status]))
-                                        <span class="badge {{ $statusClasses[$sale->status] }} rounded-pill px-3">
-                                            {{ ucFirst($sale->status) }}
-                                        </span>
-                                    @endif
-                                </li>
-                                <li class="list-group-item d-flex justify-content-between align-items-center px-0 pt-0 pb-2">
-                                    <div class="me-5 fw-semibold text-body-emphasis"><i class="demo-psi-calendar-4 me-2"></i>Date</div>
-                                    <span class="ms-auto">{{ systemDate($sale->date) }}</span>
-                                </li>
-                                <li class="list-group-item d-flex justify-content-between align-items-center px-0 pt-0 pb-2">
-                                    <div class="me-5 fw-semibold text-body-emphasis"><i class="demo-psi-calendar-4 me-2"></i>Due Date</div>
-                                    <span class="ms-auto">{{ systemDate($sale->due_date) }}</span>
-                                </li>
-                                <li class="list-group-item d-flex justify-content-between align-items-center px-0 pt-0 pb-2">
-                                    <div class="me-5 fw-semibold text-body-emphasis"><i class="demo-psi-tag me-2"></i>Sale Type</div>
-                                    <span class="ms-auto badge bg-primary">{{ ucFirst($sale->sale_type) }}</span>
-                                </li>
-                            </ul>
+                                </div>
+                            </div>
                         </div>
                     </div>
+
+                    <!-- Customer Feedback Section -->
+                    @if ($sale->rating || $sale->feedback)
+                        <div class="col-12 mb-2">
+                            <div class="card border-0 bg-light">
+                                <div class="card-body p-4">
+                                    <div class="d-flex align-items-center mb-3">
+                                        <div class="avatar avatar-lg bg-primary bg-opacity-10 rounded-circle me-3">
+                                            <i class="demo-psi-like text-primary fs-2"></i>
+                                        </div>
+                                        <div>
+                                            <h5 class="mb-1">Customer Feedback</h5>
+                                            <small class="text-muted">Customer Experience Details</small>
+                                        </div>
+                                    </div>
+
+                                    <div class="row g-4">
+                                        @if ($sale->rating)
+                                            <div class="col-md-4">
+                                                <div class="p-4 bg-white rounded-3 shadow-sm h-100">
+                                                    <h6 class="mb-3">Rating Score</h6>
+                                                    <div class="d-flex align-items-center">
+                                                        <div class="display-4 fw-bold text-primary me-3">{{ $sale->rating }}/5</div>
+                                                        <div class="stars">
+                                                            @for ($i = 1; $i <= 5; $i++)
+                                                                <i class="fa fa-star fs-4 {{ $sale->rating >= $i ? 'text-warning' : 'text-muted' }}"></i>
+                                                            @endfor
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        @endif
+
+                                        @if ($sale->feedback)
+                                            <div class="col-md-8">
+                                                <div class="p-4 bg-white rounded-3 shadow-sm h-100">
+                                                    <h6 class="mb-3">Customer Comments</h6>
+                                                    <p class="mb-0">{{ $sale->feedback }}</p>
+                                                    @if ($sale->feedback_type)
+                                                        <div class="mt-3">
+                                                            <span class="badge bg-info bg-opacity-10 text-info">{{ $sale->feedback_type }}</span>
+                                                        </div>
+                                                    @endif
+                                                </div>
+                                            </div>
+                                        @endif
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    @endif
                 </div>
+
                 <!-- Package Items Section (New) -->
                 @if (count($sale->comboOffers) > 0)
                     <div class="mb-2">
@@ -325,259 +463,351 @@
                     </div>
                 @endif
             </div>
-        </div>
-    </div>
 
-    <!-- Tabs Section -->
-    <div class="tab-base">
-        <ul class="nav nav-underline nav-component border-bottom" role="tablist">
-            @can('sale.view journal entries')
-                @if (count($sale->journals))
-                    <li class="nav-item" role="presentation">
-                        <button class="nav-link px-3 active" data-bs-toggle="tab" data-bs-target="#tab-journal-entries" type="button" role="tab">
-                            <i class="demo-psi-file-html me-2"></i>Journal Entries
-                        </button>
-                    </li>
-                @endif
-            @endcan
-            @if (count($sale_return_items))
-                <li class="nav-item" role="presentation">
-                    <button class="nav-link px-3" data-bs-toggle="tab" data-bs-target="#tab-sale-return-items" type="button" role="tab">
-                        <i class="demo-psi-back me-2"></i>Sale Return Items
-                    </button>
-                </li>
-            @endif
-            @can('sale.audit view')
-                <li class="nav-item" role="presentation">
-                    <button class="nav-link px-3" data-bs-toggle="tab" data-bs-target="#tab-audit-report" type="button" role="tab">
-                        <i class="demo-psi-file-search me-2"></i>Audit Report
-                    </button>
-                </li>
-            @endcan
-        </ul>
+            <!-- Tabs Section -->
+            <div class="tab-base">
+                <ul class="nav nav-underline nav-component border-bottom" role="tablist">
+                    @can('sale.view journal entries')
+                        @if (count($sale->journals))
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link px-3 active" data-bs-toggle="tab" data-bs-target="#tab-journal-entries" type="button" role="tab">
+                                    <i class="demo-psi-file-html me-2"></i>Journal Entries
+                                </button>
+                            </li>
+                        @endif
+                    @endcan
+                    @if (count($sale_return_items))
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link px-3" data-bs-toggle="tab" data-bs-target="#tab-sale-return-items" type="button" role="tab">
+                                <i class="demo-psi-back me-2"></i>Sale Return Items
+                            </button>
+                        </li>
+                    @endif
+                    @can('sale.audit view')
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link px-3" data-bs-toggle="tab" data-bs-target="#tab-audit-report" type="button" role="tab">
+                                <i class="demo-psi-file-search me-2"></i>Audit Report
+                            </button>
+                        </li>
+                    @endcan
+                </ul>
 
-        <div class="tab-content">
-            @can('sale.view journal entries')
-                @if (count($sale->journals))
-                    <div id="tab-journal-entries" class="tab-pane fade active show" role="tabpanel">
+                <div class="tab-content">
+                    @can('sale.view journal entries')
+                        @if (count($sale->journals))
+                            <div id="tab-journal-entries" class="tab-pane fade active show" role="tabpanel">
+                                <div class="table-responsive">
+                                    <table class="table table-striped align-middle table-sm">
+                                        <thead>
+                                            <tr class="bg-primary text-white">
+                                                <th class="text-white text-end">SL No</th>
+                                                <th class="text-white">Date</th>
+                                                <th class="text-white">Account Name</th>
+                                                <th class="text-white">Description</th>
+                                                <th class="text-white text-end">Debit</th>
+                                                <th class="text-white text-end">Credit</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @foreach ($sale->journals as $journal)
+                                                @foreach ($journal->entries as $entry)
+                                                    <tr>
+                                                        <td class="text-end">{{ $entry->id }}</td>
+                                                        <td>{{ systemDate($journal->date) }}</td>
+                                                        <td>
+                                                            <a href="{{ route('account::view', $entry->account_id) }}" class="text-primary">
+                                                                {{ $entry->account?->name }}
+                                                            </a>
+                                                        </td>
+                                                        <td>{{ $entry->remarks }}</td>
+                                                        <td class="text-end">{{ currency($entry->debit) }}</td>
+                                                        <td class="text-end">{{ currency($entry->credit) }}</td>
+                                                    </tr>
+                                                @endforeach
+                                            @endforeach
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        @endif
+                    @endcan
+
+                    <div id="tab-sale-return-items" class="tab-pane fade" role="tabpanel">
                         <div class="table-responsive">
                             <table class="table table-striped align-middle table-sm">
                                 <thead>
                                     <tr class="bg-primary text-white">
                                         <th class="text-white text-end">SL No</th>
-                                        <th class="text-white">Date</th>
-                                        <th class="text-white">Account Name</th>
-                                        <th class="text-white">Description</th>
-                                        <th class="text-white text-end">Debit</th>
-                                        <th class="text-white text-end">Credit</th>
+                                        <th width="20%" class="text-white">Product/Service</th>
+                                        <th class="text-white text-end">Unit Price</th>
+                                        <th class="text-white text-end">Quantity</th>
+                                        <th class="text-white text-end">Discount</th>
+                                        <th class="text-white text-end">Tax %</th>
+                                        <th class="text-white text-end">Total</th>
+                                        <th class="text-white text-end">Effective Total</th>
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    @foreach ($sale->journals as $journal)
-                                        @foreach ($journal->entries as $entry)
-                                            <tr>
-                                                <td class="text-end">{{ $entry->id }}</td>
-                                                <td>{{ systemDate($journal->date) }}</td>
-                                                <td>
-                                                    <a href="{{ route('account::view', $entry->account_id) }}" class="text-primary">
-                                                        {{ $entry->account?->name }}
-                                                    </a>
-                                                </td>
-                                                <td>{{ $entry->remarks }}</td>
-                                                <td class="text-end">{{ currency($entry->debit) }}</td>
-                                                <td class="text-end">{{ currency($entry->credit) }}</td>
-                                            </tr>
-                                        @endforeach
-                                    @endforeach
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                @endif
-            @endcan
-
-            <div id="tab-sale-return-items" class="tab-pane fade" role="tabpanel">
-                <div class="table-responsive">
-                    <table class="table table-striped align-middle table-sm">
-                        <thead>
-                            <tr class="bg-primary text-white">
-                                <th class="text-white text-end">SL No</th>
-                                <th width="20%" class="text-white">Product/Service</th>
-                                <th class="text-white text-end">Unit Price</th>
-                                <th class="text-white text-end">Quantity</th>
-                                <th class="text-white text-end">Discount</th>
-                                <th class="text-white text-end">Tax %</th>
-                                <th class="text-white text-end">Total</th>
-                                <th class="text-white text-end">Effective Total</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach ($sale_return_items as $item)
-                                <tr>
-                                    <td class="text-white text-end">{{ $loop->iteration }}</td>
-                                    <td class="text-white">
-                                        <a href="{{ route('inventory::product::view', $item['product_id']) }}" class="text-primary">
-                                            {{ $item['name'] }}
-                                        </a>
-                                    </td>
-                                    <td class="text-white text-end">{{ currency($item['unit_price']) }}</td>
-                                    <td class="text-white text-end">{{ currency($item['quantity']) }}</td>
-                                    <td class="text-white text-end">{{ currency($item['discount']) }}</td>
-                                    <td class="text-white text-end">{{ currency($item['tax_amount']) }} ({{ round($item['tax'], 2) }}%)</td>
-                                    <td class="text-white text-end">{{ currency($item['total']) }}</td>
-                                    <td class="text-white text-end">{{ currency($item['effective_total']) }}</td>
-                                </tr>
-                            @endforeach
-                        </tbody>
-                        <tfoot class="bg-light">
-                            <tr>
-                                <th colspan="3" class="text-end">Total</th>
-                                <th class="text-end">{{ currency($sale_return_items->sum('quantity')) }}</th>
-                                <th class="text-end">{{ currency($sale_return_items->sum('discount')) }}</th>
-                                <th class="text-end">{{ currency($sale_return_items->sum('tax_amount')) }}</th>
-                                <th class="text-end">{{ currency($sale_return_items->sum('total')) }}</th>
-                                <th class="text-end">{{ currency($sale_return_items->sum('effective_total')) }}</th>
-                            </tr>
-                        </tfoot>
-                    </table>
-                </div>
-            </div>
-
-            <div id="tab-audit-report" class="tab-pane fade" role="tabpanel">
-                <ul class="nav nav-tabs mt-3" role="tablist">
-                    <li class="nav-item" role="presentation">
-                        <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#sale-audit" type="button">
-                            <i class="demo-psi-file me-2"></i>Sale
-                        </button>
-                    </li>
-                    <li class="nav-item" role="presentation">
-                        <button class="nav-link" data-bs-toggle="tab" data-bs-target="#sale-items-audit" type="button">
-                            <i class="demo-psi-cart me-2"></i>Sale Items
-                        </button>
-                    </li>
-                    <li class="nav-item" role="presentation">
-                        <button class="nav-link" data-bs-toggle="tab" data-bs-target="#sale-payments-audit" type="button">
-                            <i class="demo-psi-wallet me-2"></i>Sale Payments
-                        </button>
-                    </li>
-                </ul>
-
-                <div class="tab-content">
-                    <div id="sale-audit" class="tab-pane fade show active" role="tabpanel">
-                        <div class="table-responsive">
-                            <table class="table table-striped align-middle table-sm">
-                                <thead>
-                                    <tr class="bg-primary text-white">
-                                        <th class="text-white">Date Time</th>
-                                        <th class="text-white">User</th>
-                                        <th class="text-white">Event</th>
-                                        @php
-                                            $columns = $sale->audits->pluck('new_values')->filter()->map(fn($item) => array_keys($item))->flatten()->unique()->values()->all();
-                                        @endphp
-                                        @foreach ($columns as $key)
-                                            <th class="text-white text-end">{{ Str::title(str_replace('_', ' ', $key)) }}</th>
-                                        @endforeach
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    @foreach ($sale->audits as $audit)
+                                    @foreach ($sale_return_items as $item)
                                         <tr>
-                                            <td>{{ $audit->created_at }}</td>
-                                            <td>{{ $audit->user?->name }}</td>
-                                            <td>{{ $audit->event }}</td>
-                                            @foreach ($columns as $key)
-                                                <td class="text-end">{{ $audit->new_values[$key] ?? '' }}</td>
-                                            @endforeach
+                                            <td class="text-white text-end">{{ $loop->iteration }}</td>
+                                            <td class="text-white">
+                                                <a href="{{ route('inventory::product::view', $item['product_id']) }}" class="text-primary">
+                                                    {{ $item['name'] }}
+                                                </a>
+                                            </td>
+                                            <td class="text-white text-end">{{ currency($item['unit_price']) }}</td>
+                                            <td class="text-white text-end">{{ currency($item['quantity']) }}</td>
+                                            <td class="text-white text-end">{{ currency($item['discount']) }}</td>
+                                            <td class="text-white text-end">{{ currency($item['tax_amount']) }} ({{ round($item['tax'], 2) }}%)</td>
+                                            <td class="text-white text-end">{{ currency($item['total']) }}</td>
+                                            <td class="text-white text-end">{{ currency($item['effective_total']) }}</td>
                                         </tr>
                                     @endforeach
                                 </tbody>
+                                <tfoot class="bg-light">
+                                    <tr>
+                                        <th colspan="3" class="text-end">Total</th>
+                                        <th class="text-end">{{ currency($sale_return_items->sum('quantity')) }}</th>
+                                        <th class="text-end">{{ currency($sale_return_items->sum('discount')) }}</th>
+                                        <th class="text-end">{{ currency($sale_return_items->sum('tax_amount')) }}</th>
+                                        <th class="text-end">{{ currency($sale_return_items->sum('total')) }}</th>
+                                        <th class="text-end">{{ currency($sale_return_items->sum('effective_total')) }}</th>
+                                    </tr>
+                                </tfoot>
                             </table>
                         </div>
                     </div>
 
-                    <div id="sale-items-audit" class="tab-pane fade" role="tabpanel">
-                        <div class="table-responsive">
-                            <table class="table table-striped align-middle table-sm">
-                                <thead>
-                                    <tr class="bg-primary text-white">
-                                        <th class="text-white">Date Time</th>
-                                        <th class="text-white">User</th>
-                                        <th class="text-white">Event</th>
-                                        @php
-                                            $itemColumns = collect($sale->items)
-                                                ->flatMap->audits->pluck('new_values')
-                                                ->filter()
-                                                ->map(fn($item) => array_keys($item))
-                                                ->flatten()
-                                                ->unique()
-                                                ->values()
-                                                ->all();
-                                        @endphp
-                                        @foreach ($itemColumns as $key)
-                                            <th class="text-white text-end">{{ Str::title(str_replace('_', ' ', $key)) }}</th>
-                                        @endforeach
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    @foreach ($sale->items as $item)
-                                        @foreach ($item->audits as $audit)
-                                            <tr>
-                                                <td>{{ $audit->created_at }}</td>
-                                                <td>{{ $audit->user?->name }}</td>
-                                                <td>{{ $audit->event }}</td>
+                    <div id="tab-audit-report" class="tab-pane fade" role="tabpanel">
+                        <ul class="nav nav-tabs mt-3" role="tablist">
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#sale-audit" type="button">
+                                    <i class="demo-psi-file me-2"></i>Sale
+                                </button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" data-bs-toggle="tab" data-bs-target="#sale-items-audit" type="button">
+                                    <i class="demo-psi-cart me-2"></i>Sale Items
+                                </button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" data-bs-toggle="tab" data-bs-target="#sale-payments-audit" type="button">
+                                    <i class="demo-psi-wallet me-2"></i>Sale Payments
+                                </button>
+                            </li>
+                        </ul>
+
+                        <div class="tab-content">
+                            <div id="sale-audit" class="tab-pane fade show active" role="tabpanel">
+                                <div class="table-responsive">
+                                    <table class="table table-striped align-middle table-sm">
+                                        <thead>
+                                            <tr class="bg-primary text-white">
+                                                <th class="text-white">Date Time</th>
+                                                <th class="text-white">User</th>
+                                                <th class="text-white">Event</th>
+                                                @php
+                                                    $columns = $sale->audits->pluck('new_values')->filter()->map(fn($item) => array_keys($item))->flatten()->unique()->values()->all();
+                                                @endphp
+                                                @foreach ($columns as $key)
+                                                    <th class="text-white text-end">{{ Str::title(str_replace('_', ' ', $key)) }}</th>
+                                                @endforeach
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @foreach ($sale->audits as $audit)
+                                                <tr>
+                                                    <td>{{ $audit->created_at }}</td>
+                                                    <td>{{ $audit->user?->name }}</td>
+                                                    <td>{{ $audit->event }}</td>
+                                                    @foreach ($columns as $key)
+                                                        <td class="text-end">{{ $audit->new_values[$key] ?? '' }}</td>
+                                                    @endforeach
+                                                </tr>
+                                            @endforeach
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+
+                            <div id="sale-items-audit" class="tab-pane fade" role="tabpanel">
+                                <div class="table-responsive">
+                                    <table class="table table-striped align-middle table-sm">
+                                        <thead>
+                                            <tr class="bg-primary text-white">
+                                                <th class="text-white">Date Time</th>
+                                                <th class="text-white">User</th>
+                                                <th class="text-white">Event</th>
+                                                @php
+                                                    $itemColumns = collect($sale->items)
+                                                        ->flatMap->audits->pluck('new_values')
+                                                        ->filter()
+                                                        ->map(fn($item) => array_keys($item))
+                                                        ->flatten()
+                                                        ->unique()
+                                                        ->values()
+                                                        ->all();
+                                                @endphp
                                                 @foreach ($itemColumns as $key)
-                                                    <td class="text-end">{{ $audit->new_values[$key] ?? '' }}</td>
+                                                    <th class="text-white text-end">{{ Str::title(str_replace('_', ' ', $key)) }}</th>
                                                 @endforeach
                                             </tr>
-                                        @endforeach
-                                    @endforeach
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
+                                        </thead>
+                                        <tbody>
+                                            @foreach ($sale->items as $item)
+                                                @foreach ($item->audits as $audit)
+                                                    <tr>
+                                                        <td>{{ $audit->created_at }}</td>
+                                                        <td>{{ $audit->user?->name }}</td>
+                                                        <td>{{ $audit->event }}</td>
+                                                        @foreach ($itemColumns as $key)
+                                                            <td class="text-end">{{ $audit->new_values[$key] ?? '' }}</td>
+                                                        @endforeach
+                                                    </tr>
+                                                @endforeach
+                                            @endforeach
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
 
-                    <div id="sale-payments-audit" class="tab-pane fade" role="tabpanel">
-                        <div class="table-responsive">
-                            <table class="table table-striped align-middle table-sm">
-                                <thead>
-                                    <tr class="bg-primary text-white">
-                                        <th class="text-white">Date Time</th>
-                                        <th class="text-white">User</th>
-                                        <th class="text-white">Event</th>
-                                        @php
-                                            $paymentColumns = collect($sale->payments)
-                                                ->flatMap->audits->pluck('new_values')
-                                                ->filter()
-                                                ->map(fn($item) => array_keys($item))
-                                                ->flatten()
-                                                ->unique()
-                                                ->values()
-                                                ->all();
-                                        @endphp
-                                        @foreach ($paymentColumns as $key)
-                                            <th class="text-white text-end">{{ Str::title(str_replace('_', ' ', $key)) }}</th>
-                                        @endforeach
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    @foreach ($sale->payments as $payment)
-                                        @foreach ($payment->audits as $audit)
-                                            <tr>
-                                                <td>{{ $audit->created_at }}</td>
-                                                <td>{{ $audit->user?->name }}</td>
-                                                <td>{{ $audit->event }}</td>
+                            <div id="sale-payments-audit" class="tab-pane fade" role="tabpanel">
+                                <div class="table-responsive">
+                                    <table class="table table-striped align-middle table-sm">
+                                        <thead>
+                                            <tr class="bg-primary text-white">
+                                                <th class="text-white">Date Time</th>
+                                                <th class="text-white">User</th>
+                                                <th class="text-white">Event</th>
+                                                @php
+                                                    $paymentColumns = collect($sale->payments)
+                                                        ->flatMap->audits->pluck('new_values')
+                                                        ->filter()
+                                                        ->map(fn($item) => array_keys($item))
+                                                        ->flatten()
+                                                        ->unique()
+                                                        ->values()
+                                                        ->all();
+                                                @endphp
                                                 @foreach ($paymentColumns as $key)
-                                                    <td class="text-end">{{ $audit->new_values[$key] ?? '' }}</td>
+                                                    <th class="text-white text-end">{{ Str::title(str_replace('_', ' ', $key)) }}</th>
                                                 @endforeach
                                             </tr>
-                                        @endforeach
-                                    @endforeach
-                                </tbody>
-                            </table>
+                                        </thead>
+                                        <tbody>
+                                            @foreach ($sale->payments as $payment)
+                                                @foreach ($payment->audits as $audit)
+                                                    <tr>
+                                                        <td>{{ $audit->created_at }}</td>
+                                                        <td>{{ $audit->user?->name }}</td>
+                                                        <td>{{ $audit->event }}</td>
+                                                        @foreach ($paymentColumns as $key)
+                                                            <td class="text-end">{{ $audit->new_values[$key] ?? '' }}</td>
+                                                        @endforeach
+                                                    </tr>
+                                                @endforeach
+                                            @endforeach
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
+
+    <style>
+        .backdrop-blur-card {
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(10px);
+            border-radius: 0.75rem;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 2px 12px -1px rgba(0, 0, 0, 0.1);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .glass-card:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 15px -2px rgba(0, 0, 0, 0.15);
+        }
+
+        .text-primary-gradient {
+            background: linear-gradient(45deg, #0d6efd, #0dcaf0);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .text-success-gradient {
+            background: linear-gradient(45deg, #198754, #20c997);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .hover-lift {
+            transition: transform 0.2s ease;
+        }
+
+        .hover-lift:hover {
+            transform: translateY(-2px);
+        }
+
+        .stats-icon-container {
+            width: 48px;
+            height: 48px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 12px;
+            background: rgba(13, 110, 253, 0.1);
+        }
+
+        .customer-info-item,
+        .contact-info-item {
+            transition: all 0.2s ease;
+        }
+
+        .customer-info-item:hover,
+        .contact-info-item:hover {
+            transform: translateX(5px);
+        }
+
+        .icon-box {
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .icon-sm {
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .info-item {
+            transition: all 0.2s ease;
+        }
+
+        .info-item:hover {
+            background: var(--bs-light) !important;
+            transform: translateY(-1px);
+        }
+
+        .customer-info,
+        .contact-info {
+            height: 100%;
+        }
+    </style>
+
 </div>

@@ -36,6 +36,9 @@ return new class() extends Migration
             $table->decimal('balance', 16, 2)->storedAs('grand_total - paid');
 
             $table->text('address')->nullable();
+            $table->integer('rating')->nullable();
+            $table->enum('feedback_type', array_keys(feedbackTypes()))->nullable();
+            $table->text('feedback')->nullable();
 
             $table->enum('status', array_keys(saleStatuses()))->default('completed');
 

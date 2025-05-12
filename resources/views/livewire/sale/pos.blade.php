@@ -49,6 +49,21 @@
                 background: rgba(255, 255, 255, 0.2);
                 color: white;
             }
+
+            .hover-scale {
+                transition: transform 0.2s ease;
+            }
+
+            .hover-scale:hover {
+                transform: scale(1.02);
+            }
+
+            .action-buttons {
+                box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.05);
+                padding: 15px;
+                background: white;
+                border-radius: 0 0 8px 8px;
+            }
         </style>
     @endpush
     <div class="main-wrapper">
@@ -308,9 +323,25 @@
                                         </div>
                                     </div>
                                 </div>
-                                <div class="btn-row d-sm-flex align-items-center justify-content-between">
-                                    <button type="button" wire:click='save("draft")' class="btn btn-info btn-icon flex-fill">Draft</button>
-                                    <button type="submit" wire:confirm="Are you sure to submit this?" class="btn btn-success btn-icon flex-fill">Submit</button>
+                                <div class="action-buttons mt-4">
+                                    <div class="d-flex gap-3">
+                                        @can('sale.feedback')
+                                            <button type="button" wire:click="openFeedback" class="btn btn-outline-primary d-flex align-items-center gap-2" style="min-width: 130px;">
+                                                <i class="fa fa-comment"></i>
+                                                <span>Feedback</span>
+                                            </button>
+                                        @endcan
+                                        <div class="d-flex flex-fill gap-3">
+                                            <button type="button" wire:click='save("draft")' class="btn btn-secondary flex-fill hover-scale">
+                                                <i class="fa fa-save me-2"></i>
+                                                Draft
+                                            </button>
+                                            <button type="submit" wire:confirm="Are you sure to submit this?" class="btn btn-primary flex-fill hover-scale">
+                                                <i class="fa fa-check-circle me-2"></i>
+                                                Submit
+                                            </button>
+                                        </div>
+                                    </div>
                                 </div>
                             </aside>
                         </div>
