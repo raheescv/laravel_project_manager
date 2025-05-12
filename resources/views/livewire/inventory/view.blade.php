@@ -393,7 +393,10 @@
     </div>
     @push('scripts')
         <script src="{{ asset('assets/vendors/chart.js/chart.umd.min.js') }}"></script>
+        <script src="{{ asset('assets/vendors/chart.js/chartjs-plugin-datalabels@2.min.js') }}"></script>
         <script>
+            // Register the plugin to all charts
+            Chart.register(ChartDataLabels);
             let inventoryChart = null;
 
             function createChart(chartData, labels, currentView) {
@@ -441,28 +444,43 @@
                             title: {
                                 display: true,
                                 text: currentView === 'monthly' ? 'Monthly Inventory Movement (Last 1 Year)' : 'Daily Inventory Movement (Last 30 Days)'
+                            },
+                            datalabels: {
+                                display: true,
+                                color: 'black',
+                                align: 'top',
+                                formatter: function(value) {
+                                    return value.toLocaleString();
+                                }
                             }
                         },
                         scales: {
                             y: {
+                                display: true,
                                 beginAtZero: true,
                                 grid: {
                                     display: true,
                                     color: 'rgba(0, 0, 0, 0.05)'
                                 },
                                 ticks: {
+                                    display: true,
                                     callback: function(value) {
                                         return value.toLocaleString();
                                     }
                                 }
                             },
                             x: {
+                                display: true,
                                 grid: {
                                     display: false
+                                },
+                                ticks: {
+                                    display: true
                                 }
                             }
                         }
-                    }
+                    },
+                    plugins: [ChartDataLabels]
                 });
 
                 return inventoryChart;
@@ -480,9 +498,9 @@
 
                 createChart(chartData, labels, currentView);
 
-                // Listen for chart view toggle
-                @this.on('propertyUpdated', (currentView) => {
-                    currentView = currentView[0];
+                // Listen for chart view toggle using updated Livewire 3 syntax
+                Livewire.on('propertyUpdated', (data) => {
+                    const currentView = data[0];
                     const chartData = currentView === 'monthly' ? monthlyData : dailyData;
                     const labels = currentView === 'monthly' ?
                         chartData.map(item => item.month_name) :

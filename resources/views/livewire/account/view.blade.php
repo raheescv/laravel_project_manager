@@ -150,218 +150,111 @@
     </div>
     @push('scripts')
         <script src="{{ asset('assets/vendors/chart.js/chart.umd.min.js') }}"></script>
-        <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
-
+        <script src="{{ asset('assets/vendors/chart.js/chartjs-plugin-datalabels@2.min.js') }}"></script>
         <script>
-            const _body = getComputedStyle(document.body);
-            let primaryColor, headingsColor, mutedColorRGB, dangerColor, infoColor, warningColor, successColor, lineChart, gridColor, gridMainColor;
+            // Register the plugin to all charts
+            Chart.register(ChartDataLabels);
+            let lineChart = null;
 
-            let updateColorVars = () => {
-                // primaryColor = window.getComputedStyle(document.querySelector(".page-title")).color; // "red" //`rgba( ${_body.getPropertyValue( "--bs-primary-color-rgb" )}, .75)`;
-                primaryColor = _body.getPropertyValue("--bs-primary");
-                // headingsColor = window.getComputedStyle(document.querySelector(".text-body-emphasis")).color; //_body.getPropertyValue( "--bs-primary-color" );
-                headingsColor = _body.getPropertyValue("--bs-primary");
-                mutedColorRGB = `rgba( ${_body.getPropertyValue( "--bs-secondary-color-rgb" )}, .5)`;
-                dangerColor = _body.getPropertyValue("--bs-danger");
-                infoColor = _body.getPropertyValue("--bs-info");
-                warningColor = _body.getPropertyValue("--bs-warning");
-                successColor = _body.getPropertyValue("--bs-success");
-                gridColor = mutedColorRGB.replace(/^(.*,)(.*)\)/g, "$1 .075)");
-                gridMainColor = mutedColorRGB.replace(/^(.*,)(.*)\)/g, "$1 .575)");
-                return;
-            }
+            function createChart(chartData, labels) {
+                const ctx = document.getElementById('lineChart').getContext('2d');
 
-            const getGridYColor = function(context) {
-                if (context.index > 0) {
-                    return gridColor;
-                } else if (context.index == 0) {
-                    return gridMainColor;
+                // Ensure old chart is destroyed
+                if (lineChart) {
+                    lineChart.destroy();
                 }
-            }
 
-            const getGridXColor = function(context) {
-                if (context.index > 0) {
-                    return "transparent";
-                } else if (context.index == 0) {
-                    return gridMainColor;
-                }
-            }
-
-            document.addEventListener("DOMContentLoaded", () => {
-                updateColorVars();
-                const lineData2 = [{
-                        'elapsed': 'Jan 1',
-                        'value': 18
-                    }, {
-                        'elapsed': 'Jan 2',
-                        'value': 24
-                    }, {
-                        'elapsed': 'Jan 3',
-                        'value': 9
-                    }, {
-                        'elapsed': 'Jan 4',
-                        'value': 12
-                    }, {
-                        'elapsed': 'Jan 5',
-                        'value': 13
-                    }, {
-                        'elapsed': 'Jan 6',
-                        'value': 22
-                    }, {
-                        'elapsed': 'Jan 7',
-                        'value': 11
-                    }, {
-                        'elapsed': 'Jan 8',
-                        'value': 26
-                    }, {
-                        'elapsed': 'Jan 9',
-                        'value': 12
-                    }, {
-                        'elapsed': 'Jan 10',
-                        'value': 19
-                    },
-                    {
-                        'elapsed': 'Jan 11',
-                        'value': 18
-                    }, {
-                        'elapsed': 'Jan 12',
-                        'value': 24
-                    }, {
-                        'elapsed': 'Jan 13',
-                        'value': 9
-                    }, {
-                        'elapsed': 'Jan 14',
-                        'value': 12
-                    }, {
-                        'elapsed': 'Jan 15',
-                        'value': 13
-                    }, {
-                        'elapsed': 'Jan 16',
-                        'value': 22
-                    }, {
-                        'elapsed': 'Jan 17',
-                        'value': 11
-                    }, {
-                        'elapsed': 'Jan 18',
-                        'value': 26
-                    }, {
-                        'elapsed': 'Jan 19',
-                        'value': 12
-                    }, {
-                        'elapsed': 'Jan 20',
-                        'value': 19
-                    }
-                ];
-                const lineData = @js($lineChartData);
-                lineChart = new Chart(document.getElementById('lineChart'), {
+                lineChart = new Chart(ctx, {
                     type: 'line',
                     data: {
+                        labels: labels,
                         datasets: [{
-                                label: 'Credit Chart',
-                                data: lineData,
-                                borderWidth: 1.75,
-                                borderColor: infoColor,
-                                backgroundColor: infoColor,
-                                parsing: {
-                                    xAxisKey: 'month',
-                                    yAxisKey: 'credit'
-                                }
+                                label: 'Credit',
+                                data: chartData.map(item => item.credit),
+                                borderColor: 'rgb(75, 192, 192)',
+                                backgroundColor: 'rgba(75, 192, 192, 0.1)',
+                                tension: 0.3,
+                                fill: false
                             },
                             {
-                                label: 'Debit Chart',
-                                data: lineData,
-                                borderWidth: 1.75,
-                                borderColor: primaryColor,
-                                backgroundColor: primaryColor,
-                                parsing: {
-                                    xAxisKey: 'month',
-                                    yAxisKey: 'debit'
-                                }
+                                label: 'Debit',
+                                data: chartData.map(item => item.debit),
+                                borderColor: 'rgb(255, 99, 132)',
+                                backgroundColor: 'rgba(255, 99, 132, 0.1)',
+                                tension: 0.3,
+                                fill: false
                             }
                         ]
                     },
                     options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        interaction: {
+                            intersect: false,
+                            mode: 'index'
+                        },
                         plugins: {
-                            title: {
-                                display: true,
-                                color: headingsColor,
-                                text: '{{ ucFirst($account?->name) }}`s Monthly Overview'
-                            },
                             legend: {
                                 display: true,
-                                labels: {
-                                    color: headingsColor,
-                                    boxWidth: 10,
+                                position: 'top'
+                            },
+                            title: {
+                                display: true,
+                                text: '{{ $account->name }}`s Monthly Overview',
+                            },
+                            datalabels: {
+                                display: true,
+                                color: 'black',
+                                align: 'top',
+                                formatter: function(value) {
+                                    return value.toLocaleString();
                                 }
                             }
                         },
-                        // Tooltip mode
-                        interaction: {
-                            intersect: false,
-                        },
-                        responsive: true,
-                        maintainAspectRatio: false,
                         scales: {
                             y: {
+                                display: true,
+                                beginAtZero: true,
                                 grid: {
-                                    color: getGridYColor,
-                                    lineWidth: 2
+                                    display: true,
+                                    color: 'rgba(0, 0, 0, 0.05)'
                                 },
-                                // suggestedMax: 300000,
                                 ticks: {
-                                    font: {
-                                        size: 11
-                                    },
-                                    color: headingsColor,
-                                    beginAtZero: false,
-                                    stepSize: 5
+                                    display: true,
+                                    callback: function(value) {
+                                        return value.toLocaleString();
+                                    }
                                 }
                             },
                             x: {
+                                display: true,
                                 grid: {
-                                    color: getGridXColor,
-                                    lineWidth: 2
+                                    display: false
                                 },
                                 ticks: {
-                                    font: {
-                                        size: 12
-                                    },
-                                    color: headingsColor,
-                                    autoSkip: true,
-                                    maxRotation: 0,
-                                    minRotation: 0,
-                                    maxTicksLimit: 9
+                                    display: true
                                 }
                             }
-                        },
-
-                        elements: {
-                            // Dot width
-                            point: {
-                                radius: 1,
-                                hoverRadius: 5
-                            },
-                            // Smooth lines
-                            line: {
-                                tension: 0.4
-                            }
                         }
-                    }
+                    },
+                    plugins: [ChartDataLabels]
+                });
+
+                return lineChart;
+            }
+
+            document.addEventListener('livewire:initialized', () => {
+                let chartData = @json($lineChartData);
+                let labels = chartData.map(item => item.month);
+                createChart(chartData, labels);
+
+                // Listen for chart view toggle
+                @this.on('propertyUpdated', () => {
+                    let chartData = @json($lineChartData);
+                    let labels = chartData.map(item => item.month);
+                    createChart(chartData, labels);
                 });
             });
-            const updateDashboardChart = function() {
-                updateColorVars();
-                lineChart.data.datasets[0].borderColor = primaryColor;
-                lineChart.data.datasets[0].backgroundColor = primaryColor;
-                lineChart.options.plugins.title.color = headingsColor;
-                lineChart.options.plugins.legend.labels.color = primaryColor;
-                lineChart.options.scales.y.grid.color = getGridYColor;
-                lineChart.options.scales.x.grid.color = getGridXColor;
-                lineChart.options.scales.y.ticks.color = headingsColor;
-                lineChart.options.scales.x.ticks.color = headingsColor;
-                lineChart.update();
-            };
-            ["change.nf.colormode", "scheme-changed", "theme-changed"].forEach(ev => document.addEventListener(ev, updateDashboardChart))
         </script>
     @endpush
 </div>

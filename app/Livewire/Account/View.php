@@ -55,12 +55,9 @@ class View extends Component
 
     public function lineChartData()
     {
-        $this->lineChartData = $this->dataListFunction()
-            ->selectRaw("DATE_FORMAT(date, '%m-%Y') as month, SUM(debit) as debit, SUM(credit) as credit")
-            ->groupBy(DB::raw("DATE_FORMAT(date, '%m-%Y')"))
-            ->orderBy('month', 'asc')
-            ->get()
-            ->toArray();
+        $start = date('Y-m-d', strtotime('-12 months'));
+        $end = date('Y-m-d');
+        $this->lineChartData = Ledger::monthly_summary($start, $end, $this->accountId);
     }
 
     public function groupedChartData()
@@ -97,6 +94,7 @@ class View extends Component
         $this->resetPage();
         $this->lineChartData();
         $this->groupedChartData();
+        $this->dispatch('propertyUpdated');
     }
 
     public function delete()
@@ -154,7 +152,7 @@ class View extends Component
 
     public function render()
     {
-        DB::enableQueryLog();
+        // DB::enableQueryLog();
         $data = $this->dataFunction()
             ->orderBy($this->sortField, $this->sortDirection);
 
@@ -163,7 +161,7 @@ class View extends Component
         $data = $data->paginate($this->limit);
         $total['debit'] = $totalRow->sum('debit');
         $total['credit'] = $totalRow->sum('credit');
-        info(DB::getQueryLog());
+        // info(DB::getQueryLog());
 
         return view('livewire.account.view', ['data' => $data, 'total' => $total]);
     }
