@@ -26,6 +26,8 @@ class View extends Component
 
     public $sortDirection = 'desc';
 
+    public $chartView = 'daily';
+
     protected $paginationTheme = 'bootstrap';
 
     protected $listeners = [
@@ -47,6 +49,12 @@ class View extends Component
             $this->sortField = $field;
             $this->sortDirection = 'desc';
         }
+    }
+
+    public function toggleChartView()
+    {
+        $this->chartView = $this->chartView === 'monthly' ? 'daily' : 'monthly';
+        $this->dispatch('propertyUpdated', $this->chartView);
     }
 
     public function render()
@@ -90,8 +98,17 @@ class View extends Component
             ->latest()
             ->paginate();
 
+        $start = date('Y-m-d', strtotime('-12 months'));
+        $end = date('Y-m-d');
+        $monthly_summary = InventoryLog::monthly_summary($start, $end, $this->product_id);
+
+        $start = date('Y-m-d', strtotime('-30 days'));
+        $daily_summary = InventoryLog::daily_summary($start, $end, $this->product_id);
+
         return view('livewire.inventory.view', [
             'data' => $data,
+            'monthly_summary' => $monthly_summary,
+            'daily_summary' => $daily_summary,
             'logs' => $logs,
         ]);
     }

@@ -1,11 +1,39 @@
 <div>
+    @push('styles')
+        <style>
+            .modern-card {
+                background: linear-gradient(145deg, #ffffff 0%, #f8f9fa 100%);
+                border: none;
+                border-radius: 15px;
+                box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+                transition: all 0.3s ease;
+            }
+
+            .modern-card:hover {
+                transform: translateY(-5px);
+                box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            }
+
+            .table-modern th {
+                background: linear-gradient(145deg, #f8f9fa 0%, #e9ecef 100%);
+                color: #495057;
+            }
+
+            .card-header {
+                background: linear-gradient(145deg, #f8f9fa 0%, #e9ecef 100%);
+                border-bottom: none;
+                padding: 1.5rem;
+            }
+        </style>
+    @endpush
     @if ($product->type == 'product')
-        <div class="row">
+        <div class="row g-4">
             <div class="col-md-4">
-                <div class="card mb-3">
-                    <div class="card-body">
+                <div class="card modern-card mb-3">
+                    <div class="card-body p-4">
+                        <h5 class="card-title mb-4">Basic Information</h5>
                         <div class="table-responsive">
-                            <table class="table table-striped align-middle text-capitalize table-sm">
+                            <table class="table table-borderless align-middle text-capitalize table-modern">
                                 <tr>
                                     <th>Department</th>
                                     <td>{{ $product->department?->name }}</td>
@@ -36,10 +64,11 @@
                 </div>
             </div>
             <div class="col-md-4">
-                <div class="card mb-3">
-                    <div class="card-body">
+                <div class="card modern-card mb-3">
+                    <div class="card-body p-4">
+                        <h5 class="card-title mb-4">Pricing Details</h5>
                         <div class="table-responsive">
-                            <table class="table table-striped align-middle text-capitalize table-sm">
+                            <table class="table table-borderless align-middle text-capitalize table-modern">
                                 <tr>
                                     <th>MRP</th>
                                     <td> {{ currency($product->mrp) }} <br> </td>
@@ -70,10 +99,11 @@
                 </div>
             </div>
             <div class="col-md-4">
-                <div class="card mb-3">
-                    <div class="card-body">
+                <div class="card modern-card mb-3">
+                    <div class="card-body p-4">
+                        <h5 class="card-title mb-4">Product Specifications</h5>
                         <div class="table-responsive">
-                            <table class="table table-striped align-middle text-capitalize table-sm">
+                            <table class="table table-borderless align-middle text-capitalize table-modern">
                                 <tr>
                                     <th>Pattern</th>
                                     <td> {{ $product->pattern }} <br> </td>
@@ -108,10 +138,11 @@
     @if ($product->type == 'service')
         <div class="row">
             <div class="col-md-6">
-                <div class="card mb-3">
-                    <div class="card-body">
+                <div class="card modern-card mb-3">
+                    <div class="card-body p-4">
+                        <h5 class="card-title mb-4">Service Details</h5>
                         <div class="table-responsive">
-                            <table class="table table-striped align-middle text-capitalize table-sm">
+                            <table class="table table-borderless align-middle text-capitalize table-modern">
                                 <tr>
                                     <th>Service</th>
                                     <td>
@@ -146,10 +177,11 @@
                 </div>
             </div>
             <div class="col-md-6">
-                <div class="card mb-3">
-                    <div class="card-body">
+                <div class="card modern-card mb-3">
+                    <div class="card-body p-4">
+                        <h5 class="card-title mb-4">Pricing Details</h5>
                         <div class="table-responsive">
-                            <table class="table table-striped align-middle text-capitalize table-sm">
+                            <table class="table table-borderless align-middle text-capitalize table-modern">
                                 <tr>
                                     <th>Price</th>
                                     <td> {{ currency($product->mrp) }} <br> </td>
@@ -179,20 +211,18 @@
     @endif
     <div class="row">
         <div class="col-md-12">
-            <div class="card mb-3">
+            <div class="card modern-card mb-3">
                 <div class="card-header">
-                    <h3>Inventory</h3>
-                    <div class="row">
-                        <div class="col-lg-6">
-                            <div class="row ">
-                                <input type="text" wire:model.live="search" autofocus placeholder="Search..." class="form-control" autocomplete="off">
-                            </div>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="card-title mb-0">Inventory</h5>
+                        <div class="d-flex gap-3">
+                            <input type="text" wire:model.live="search" placeholder="Search..." class="form-control" autocomplete="off">
                         </div>
                     </div>
                 </div>
-                <div class="card-body">
+                <div class="card-body p-4">
                     <div class="table-responsive">
-                        <table class="table table-striped align-middle text-capitalize table-sm">
+                        <table class="table table-hover align-middle text-capitalize table-modern">
                             <thead>
                                 <tr class="text-capitalize">
                                     <th> # </th>
@@ -249,7 +279,9 @@
                                             @endif
                                         </b>
                                     </th>
-                                    <th></th>
+                                    @if ($product->type == 'product')
+                                        <th></th>
+                                    @endif
                                 </tr>
                             </tfoot>
                         </table>
@@ -257,103 +289,223 @@
                 </div>
             </div>
         </div>
-    </div>
-    <div class="row">
-        <div class="col-md-12">
-            <div class="card mb-3">
-                <div class="card-header">
-                    <h3>Log</h3>
-                    <div class="row">
-                        <div class="col-lg-6">
-                            <div wire:ignore>
-                                {{ html()->select('branch_id', [auth()->user()->default_branch_id => auth()->user()->branch?->name])->value(auth()->user()->default_branch_id)->class('select-assigned-branch_id-list')->id('branch_id')->placeholder('All') }}
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card modern-card">
+                    <div class="card-body p-4">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h5 class="card-title mb-0">Inventory Movement</h5>
+                            <div class="btn-group" role="group">
+                                <button type="button" class="btn {{ $chartView === 'monthly' ? 'btn-primary' : 'btn-outline-primary' }}" wire:click="toggleChartView"
+                                    {{ $chartView === 'monthly' ? 'disabled' : '' }}>Monthly</button>
+                                <button type="button" class="btn {{ $chartView === 'daily' ? 'btn-primary' : 'btn-outline-primary' }}" wire:click="toggleChartView"
+                                    {{ $chartView === 'daily' ? 'disabled' : '' }}>Daily</button>
                             </div>
                         </div>
-                        <div class="col-lg-6">
-                            <div class="row ">
-                                <input type="text" wire:model.live="log_search" autofocus placeholder="Search..." class="form-control" autocomplete="off">
-                            </div>
+                        <div class="chart-container" style="position: relative; height: 300px;">
+                            <canvas id="inventoryChart"></canvas>
                         </div>
                     </div>
                 </div>
-                <div class="card-body">
-                    <div class="table-responsive">
-                        <table class="table table-striped align-middle text-capitalize table-sm">
-                            <thead>
-                                <tr class="text-capitalize">
-                                    <th width="5%"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="id" label="#" /> </th>
-                                    <th> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="branch_id" label="Branch" /> </th>
-                                    <th> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="barcode" label="barcode" /> </th>
-                                    <th> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="batch" label="batch" /> </th>
-                                    <th class="text-end"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="cost" label="cost" /> </th>
-                                    <th class="text-end"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="quantity_in" label="In" /> </th>
-                                    <th class="text-end"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="quantity_out" label="out" /> </th>
-                                    <th class="text-end"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="balance" label="balance" /> </th>
-                                    <th width="40%"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="remarks" label="remarks" /> </th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @foreach ($logs as $item)
-                                    <tr>
-                                        <td>{{ $item->id }}</td>
-                                        <td>{{ $item->branch?->name }}</td>
-                                        <td>{{ $item->barcode }}</td>
-                                        <td>{{ $item->batch }}</td>
-                                        <td class="text-end">{{ currency($item->cost) }}</td>
-                                        <td class="text-end">{{ $item->quantity_in }}</td>
-                                        <td class="text-end">{{ $item->quantity_out }}</td>
-                                        <td class="text-end">
-                                            @if ($product->type == 'product')
-                                                {{ $item->balance }}
-                                            @else
-                                                {{ $item->balance * -1 }}
-                                            @endif
-                                        </td>
-                                        <td>
-                                            @php
-                                                switch ($item->model) {
-                                                    case 'Sale':
-                                                        $href = route('sale::view', $item->model_id);
-                                                        break;
-                                                    case 'SaleReturn':
-                                                        $href = route('sale_return::view', $item->model_id);
-                                                        break;
-                                                    default:
-                                                        $href = '';
-                                                        break;
-                                                }
-                                            @endphp
-                                            @if ($href)
-                                                <a href="{{ $href }}">{{ $item->remarks }}</a>
-                                            @else
-                                                {{ $item->remarks }}
-                                            @endif
-                                        </td>
-                                    </tr>
-                                @endforeach
-                            </tbody>
-                        </table>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-12">
+                <div class="card modern-card mb-3">
+                    <div class="card-header">
+                        <h3>Log</h3>
+                        <div class="row">
+                            <div class="col-lg-6">
+                                <div wire:ignore>
+                                    {{ html()->select('branch_id', [auth()->user()->default_branch_id => auth()->user()->branch?->name])->value(auth()->user()->default_branch_id)->class('select-assigned-branch_id-list')->id('branch_id')->placeholder('All') }}
+                                </div>
+                            </div>
+                            <div class="col-lg-6">
+                                <div class="row ">
+                                    <input type="text" wire:model.live="log_search" autofocus placeholder="Search..." class="form-control" autocomplete="off">
+                                </div>
+                            </div>
+                        </div>
                     </div>
-                    {{ $logs->links() }}
+                    <div class="card-body p-4">
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle text-capitalize table-modern">
+                                <thead>
+                                    <tr class="text-capitalize">
+                                        <th width="5%"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="id" label="#" /> </th>
+                                        <th> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="branch_id" label="Branch" /> </th>
+                                        <th> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="barcode" label="barcode" /> </th>
+                                        <th> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="batch" label="batch" /> </th>
+                                        <th class="text-end"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="cost" label="cost" /> </th>
+                                        <th class="text-end"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="quantity_in" label="In" /> </th>
+                                        <th class="text-end"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="quantity_out" label="out" /> </th>
+                                        <th class="text-end"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="balance" label="balance" /> </th>
+                                        <th width="40%"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="remarks" label="remarks" /> </th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach ($logs as $item)
+                                        <tr>
+                                            <td>{{ $item->id }}</td>
+                                            <td>{{ $item->branch?->name }}</td>
+                                            <td>{{ $item->barcode }}</td>
+                                            <td>{{ $item->batch }}</td>
+                                            <td class="text-end">{{ currency($item->cost) }}</td>
+                                            <td class="text-end">{{ $item->quantity_in }}</td>
+                                            <td class="text-end">{{ $item->quantity_out }}</td>
+                                            <td class="text-end">
+                                                @if ($product->type == 'product')
+                                                    {{ $item->balance }}
+                                                @else
+                                                    {{ $item->balance * -1 }}
+                                                @endif
+                                            </td>
+                                            <td>
+                                                @php
+                                                    switch ($item->model) {
+                                                        case 'Sale':
+                                                            $href = route('sale::view', $item->model_id);
+                                                            break;
+                                                        case 'SaleReturn':
+                                                            $href = route('sale_return::view', $item->model_id);
+                                                            break;
+                                                        default:
+                                                            $href = '';
+                                                            break;
+                                                    }
+                                                @endphp
+                                                @if ($href)
+                                                    <a href="{{ $href }}">{{ $item->remarks }}</a>
+                                                @else
+                                                    {{ $item->remarks }}
+                                                @endif
+                                            </td>
+                                        </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        </div>
+                        {{ $logs->links() }}
+                    </div>
                 </div>
             </div>
         </div>
     </div>
     @push('scripts')
+        <script src="{{ asset('assets/vendors/chart.js/chart.umd.min.js') }}"></script>
         <script>
-            $(document).ready(function() {
-                $('#branch_id').on('change', function(e) {
-                    const value = $(this).val() || null;
-                    @this.set('branch_id', value);
+            let inventoryChart = null;
+
+            function createChart(chartData, labels, currentView) {
+                const ctx = document.getElementById('inventoryChart').getContext('2d');
+
+                // Ensure old chart is destroyed
+                if (inventoryChart) {
+                    inventoryChart.destroy();
+                }
+
+                inventoryChart = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                                label: 'Quantity In',
+                                data: chartData.map(item => item.total_in),
+                                borderColor: 'rgb(75, 192, 192)',
+                                backgroundColor: 'rgba(75, 192, 192, 0.1)',
+                                tension: 0.3,
+                                fill: false
+                            },
+                            {
+                                label: 'Quantity Out',
+                                data: chartData.map(item => item.total_out),
+                                borderColor: 'rgb(255, 99, 132)',
+                                backgroundColor: 'rgba(255, 99, 132, 0.1)',
+                                tension: 0.3,
+                                fill: false
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        interaction: {
+                            intersect: false,
+                            mode: 'index'
+                        },
+                        plugins: {
+                            legend: {
+                                display: true,
+                                position: 'top'
+                            },
+                            title: {
+                                display: true,
+                                text: currentView === 'monthly' ? 'Monthly Inventory Movement (Last 1 Year)' : 'Daily Inventory Movement (Last 30 Days)'
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                grid: {
+                                    display: true,
+                                    color: 'rgba(0, 0, 0, 0.05)'
+                                },
+                                ticks: {
+                                    callback: function(value) {
+                                        return value.toLocaleString();
+                                    }
+                                }
+                            },
+                            x: {
+                                grid: {
+                                    display: false
+                                }
+                            }
+                        }
+                    }
                 });
-                $(document).on('click', '.edit', function() {
-                    Livewire.dispatch("Inventory-Page-Update-Component", {
-                        id: $(this).attr('table_id')
-                    });
+
+                return inventoryChart;
+            }
+
+            document.addEventListener('livewire:initialized', () => {
+                const monthlyData = @json($monthly_summary);
+                const dailyData = @json($daily_summary);
+                const currentView = @json($chartView);
+
+                const chartData = currentView === 'monthly' ? monthlyData : dailyData;
+                const labels = currentView === 'monthly' ?
+                    chartData.map(item => item.month_name) :
+                    chartData.map(item => item.day_name);
+
+                createChart(chartData, labels, currentView);
+
+                // Listen for chart view toggle
+                @this.on('propertyUpdated', (currentView) => {
+                    currentView = currentView[0];
+                    const chartData = currentView === 'monthly' ? monthlyData : dailyData;
+                    const labels = currentView === 'monthly' ?
+                        chartData.map(item => item.month_name) :
+                        chartData.map(item => item.day_name);
+
+                    createChart(chartData, labels, currentView);
                 });
-                window.addEventListener('RefreshInventoryTable', event => {
-                    Livewire.dispatch("Inventory-Refresh-Component");
+            });
+
+            // Other event handlers
+            $('#branch_id').on('change', function(e) {
+                const value = $(this).val() || null;
+                @this.set('branch_id', value);
+            });
+
+            $(document).on('click', '.edit', function() {
+                Livewire.dispatch("Inventory-Page-Update-Component", {
+                    id: $(this).attr('table_id')
                 });
+            });
+
+            window.addEventListener('RefreshInventoryTable', event => {
+                Livewire.dispatch("Inventory-Refresh-Component");
             });
         </script>
     @endpush
