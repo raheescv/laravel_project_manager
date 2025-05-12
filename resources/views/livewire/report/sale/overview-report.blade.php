@@ -1,19 +1,20 @@
 <div>
-    <!-- Filters Bar -->
-    <div class="card mb-2 border-0">
-        <div class="card-body">
-            <div class="row">
-                <div class="col-md-3">
-                    <label for="from_date" class="form-label text-muted small">From Date</label>
-                    {{ html()->date('from_date')->value('')->class('form-control form-control-lg')->id('from_date')->attribute('wire:model.live', 'fromDate') }}
-                </div>
-                <div class="col-md-3">
-                    <label for="to_date" class="form-label text-muted small">To Date</label>
-                    {{ html()->date('to_date')->value('')->class('form-control form-control-lg')->id('to_date')->attribute('wire:model.live', 'toDate') }}
-                </div>
-                <div class="col-md-4" wire:ignore>
-                    <label for="branch_id" class="form-label text-muted small">Branch</label>
-                    {{ html()->select('branch_id', [session('branch_id') => session('branch_name')])->value(session('branch_id'))->class('form-select-lg select-assigned-branch_id-list')->id('branch_id')->placeholder('Select Branch') }}
+    <div class="card mb-3">
+        <div class="card-header">
+            <div class="col-lg-12">
+                <div class="row">
+                    <div class="col-md-2">
+                        <label for="from_date">From Date</label>
+                        {{ html()->date('from_date')->value('')->class('form-control')->id('from_date')->attribute('wire:model.live', 'fromDate') }}
+                    </div>
+                    <div class="col-md-2">
+                        <label for="to_date">To Date</label>
+                        {{ html()->date('to_date')->value('')->class('form-control')->id('to_date')->attribute('wire:model.live', 'toDate') }}
+                    </div>
+                    <div class="col-md-4" wire:ignore>
+                        <label for="branch_id">Branch</label>
+                        {{ html()->select('branch_id', [session('branch_id') => session('branch_name')])->value(session('branch_id'))->class('select-assigned-branch_id-list')->id('branch_id')->placeholder('Branch') }}
+                    </div>
                 </div>
             </div>
         </div>
