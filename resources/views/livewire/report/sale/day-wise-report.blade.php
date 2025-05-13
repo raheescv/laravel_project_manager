@@ -89,7 +89,9 @@
     </div>
     @push('scripts')
         <script src="{{ asset('assets/vendors/chart.js/chart.umd.min.js') }}"></script>
+        <script src="{{ asset('assets/vendors/chart.js/chartjs-plugin-datalabels@2.min.js') }}"></script>
         <script>
+            Chart.register(ChartDataLabels);
             $(document).ready(function() {
                 $('#branch_id').on('change', function(e) {
                     const value = $(this).val() || null;
@@ -192,6 +194,19 @@
                                         ];
                                     }
                                 }
+                            },
+                            datalabels: {
+                                anchor: 'end',
+                                align: 'top',
+                                formatter: function(value) {
+                                    return value.toLocaleString();
+                                },
+                                font: {
+                                    weight: 'bold',
+                                    size: 11,
+                                    family: getComputedStyle(document.body).getPropertyValue('--bs-font-sans-serif')
+                                },
+                                padding: 4
                             }
                         },
                         scales: {
