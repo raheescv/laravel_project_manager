@@ -1,15 +1,16 @@
 <?php
 
+use App\Http\Controllers\AiImageController;
 use App\Http\Controllers\InventoryController;
 use App\Http\Controllers\InventoryTransferController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware('auth')->group(function (): void {
-    Route::name('inventory::')->prefix('inventory')->controller(InventoryController::class)->group(function (): void {
-        Route::get('', 'index')->name('index')->can('inventory.view');
+    Route::name('inventory::')->prefix('inventory')->group(function (): void {
+        Route::get('', [InventoryController::class, 'index'])->name('index')->can('inventory.view');
         Route::name('product::')->prefix('product')->group(function (): void {
-            Route::get('view/{id}', 'view')->name('view')->can('inventory.view');
-            Route::get('list', 'get')->name('list');
+            Route::get('view/{id}', [InventoryController::class, 'view'])->name('view')->can('inventory.view');
+            Route::get('list', [InventoryController::class, 'get'])->name('list');
         });
         Route::name('transfer::')->prefix('transfer')->controller(InventoryTransferController::class)->group(function (): void {
             Route::get('', 'index')->name('index')->can('inventory transfer.view');
@@ -19,5 +20,9 @@ Route::middleware('auth')->group(function (): void {
             Route::get('print/{id}', 'print')->name('print');
             Route::get('list', 'get')->name('list');
         });
+
+        // AI Image Generation routes
+        Route::get('ai-image', [AiImageController::class, 'index'])->name('ai-image')->can('inventory.view');
+        Route::post('ai-image/generate', [AiImageController::class, 'generate'])->name('ai-image.generate')->can('inventory.view');
     });
 });
