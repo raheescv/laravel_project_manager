@@ -1,18 +1,19 @@
-<div class="card h-100">
-    <div class="card-header d-flex align-items-center border-0">
-        <div class="me-auto">
-            <h3 class="h4 m-0">Sale</h3>
-        </div>
-        <div class="toolbar-end">
+<div class="card h-100 border-0 shadow-lg">
+    <div class="card-header bg-white border-0 py-3">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h4 class="mb-0 text-primary fw-bold">Sales Overview</h4>
+                <p class="text-muted small mb-0">Daily sales performance tracking</p>
+            </div>
             <div class="dropdown">
-                <button class="btn btn-icon btn-sm btn-hover btn-light" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Network dropdown">
-                    <i class="demo-pli-dot-horizontal fs-4"></i>
-                    <span class="visually-hidden">Toggle Dropdown</span>
+                <button class="btn btn-light btn-sm rounded-pill px-3 d-flex align-items-center gap-2" data-bs-toggle="dropdown">
+                    <i class="demo-pli-gear fs-5"></i>
+                    <span class="d-none d-md-inline">Options</span>
                 </button>
-                <ul class="dropdown-menu dropdown-menu-end">
+                <ul class="dropdown-menu dropdown-menu-end shadow-sm border-0">
                     <li>
-                        <a href="{{ route('sale::index') }}" class="dropdown-item">
-                            <i class="demo-pli-calendar-4 fs-5 me-2"></i>
+                        <a href="{{ route('sale::index') }}" class="dropdown-item d-flex align-items-center gap-2">
+                            <i class="demo-pli-calendar-4 fs-5"></i>
                             View Details
                         </a>
                     </li>
@@ -20,66 +21,101 @@
             </div>
         </div>
     </div>
-    <div class="card-body py-0" style="height: 250px; max-height: 275px">
-        <canvas id="sale-overview-chart"></canvas>
-    </div>
-    <div class="card-body">
-        <div class="row">
-            <div class="col-md-8">
-                <h4 class="h5">Today Sales</h4>
-                <div class="row">
-                    <div class="col-6">
-                        <div class="h5 display-6 fw-normal">
-                            {{ currency($todaySale) }}
-                        </div>
-                    </div>
-                    <div class="col-6 text-sm">
-                        <div class="d-flex justify-content-between align-items-start px-3 mb-3">
-                            Lowest Sale
-                            <span class="d-block badge bg-warning ms-auto">{{ currency($lowestSale) }}</span>
-                        </div>
-                        <div class="d-flex justify-content-between align-items-start px-3">
-                            Highest Sale
-                            <span class="d-block badge bg-success ms-auto">{{ currency($highestSale) }}</span>
+
+    <div class="card-body p-0">
+        <div class="p-4">
+            <div class="chart-container" style="height: 200px;">
+                <canvas id="sale-overview-chart" class="w-100"></canvas>
+            </div>
+        </div>
+
+        <div class="px-4 pb-4">
+            <div class="row g-4">
+                <div class="col-md-7">
+                    <div class="stats-grid">
+                        <!-- Today's Sales Section -->
+                        <div class="p-2 rounded-3 bg-light-subtle border">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h5 class="card-title mb-0 text-primary">
+                                    <i class="demo-pli-shopping-basket me-2"></i>Today's Sales
+                                </h5>
+                                <span class="badge bg-primary rounded-pill">Today</span>
+                            </div>
+                            <div class="row align-items-center">
+                                <div class="col-7">
+                                    <h3 class="display-6 fw-bold mb-0">{{ currency($todaySale) }}</h3>
+                                </div>
+                                <div class="col-5">
+                                    <div class="d-flex flex-column gap-2">
+                                        <div class="p-2 rounded bg-white shadow-sm">
+                                            <div class="d-flex justify-content-between align-items-center">
+                                                <span class="text-muted small">Lowest</span>
+                                                <span class="badge bg-warning-subtle text-warning">{{ currency($lowestSale) }}</span>
+                                            </div>
+                                        </div>
+                                        <div class="p-2 rounded bg-white shadow-sm">
+                                            <div class="d-flex justify-content-between align-items-center">
+                                                <span class="text-muted small">Highest</span>
+                                                <span class="badge bg-success-subtle text-success">{{ currency($highestSale) }}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
-                <h4 class="h5">Payments</h4>
-                <div class="h2 fw-normal"> {{ currency($todayPayment) }} </div>
 
-            </div>
-            <div class="col-md-4">
-                @php
-                    $colors = ['bg-success', 'bg-info', 'bg-warning'];
-                @endphp
-                @foreach ($paymentData as $item)
-                    <div class="mt-4 mb-2 d-flex justify-content-between">
-                        <span class>{{ $item['method'] }}</span>
-                        <span class>{{ $item['amount'] }}</span>
-                    </div>
-                    <div class="progress progress-md">
-                        <div class="progress-bar {{ $colors[rand(1, count($paymentData) - 1)] }}" role="progressbar" style="width: {{ $item['percentage'] }}%" aria-label="Incoming Progress"
-                            aria-valuenow="{{ $item['percentage'] }}" aria-valuemin="0" aria-valuemax="100">
+                <div class="col-md-5">
+                    <div class="p-2 rounded-3 bg-light-subtle border h-100">
+                        <h5 class="card-title mb-3 text-primary">
+                            <i class="demo-pli-wallet me-2"></i>Payment Methods
+                        </h5>
+                        <div class="payment-methods">
+                            @foreach ($paymentData as $index => $item)
+                                <div class="mb-3">
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <span class="text-muted">{{ $item['method'] }}</span>
+                                        <span class="fw-medium">{{ currency($item['amount']) }}</span>
+                                    </div>
+                                    <div class="progress bg-white" style="height: 8px;">
+                                        @php
+                                            $colors = ['bg-primary', 'bg-success', 'bg-info'];
+                                        @endphp
+                                        <div class="progress-bar {{ $colors[$index % 3] }}" role="progressbar" style="width: {{ $item['percentage'] }}%" aria-valuenow="{{ $item['percentage'] }}"
+                                            aria-valuemin="0" aria-valuemax="100">
+                                        </div>
+                                    </div>
+                                </div>
+                            @endforeach
                         </div>
                     </div>
-                @endforeach
+                </div>
             </div>
         </div>
     </div>
-    <script>
-        document.addEventListener("DOMContentLoaded", () => {
-            updateColorVars();
-            const saleData = @js($data);
-            networkChart = new Chart(
-                document.getElementById("sale-overview-chart"), {
+    @push('scripts')
+        <script>
+            // Register the plugin
+            Chart.register(ChartDataLabels);
+
+            document.addEventListener("DOMContentLoaded", () => {
+                const saleData = @js($data);
+                const ctx = document.getElementById("sale-overview-chart").getContext('2d');
+                const gradient = ctx.createLinearGradient(0, 0, 0, 200);
+                gradient.addColorStop(0, 'rgba(66, 135, 245, 0.2)');
+                gradient.addColorStop(1, 'rgba(66, 135, 245, 0.0)');
+
+                new Chart(ctx, {
                     type: "line",
                     data: {
                         datasets: [{
-                            label: "Sale",
+                            label: "Sales",
                             data: saleData,
-                            borderColor: primaryColor,
-                            backgroundColor: primaryColor,
-                            fill: "start",
+                            borderColor: '#4287f5',
+                            backgroundColor: gradient,
+                            fill: true,
+                            tension: 0.4,
                             parsing: {
                                 xAxisKey: "date",
                                 yAxisKey: "amount"
@@ -91,47 +127,68 @@
                         maintainAspectRatio: false,
                         plugins: {
                             legend: {
-                                display: true,
-                                align: "start",
-                                labels: {
-                                    boxWidth: 10,
-                                    color: textColor
-                                }
+                                display: false
                             },
-                        },
-                        interaction: {
-                            mode: "index",
-                            intersect: false,
+                            tooltip: {
+                                enabled: true,
+                                mode: 'index',
+                                intersect: false
+                            },
+                            datalabels: {
+                                align: 'top',
+                                anchor: 'end',
+                                offset: 5,
+                                color: '#666',
+                                font: {
+                                    size: 10,
+                                    weight: 'bold'
+                                },
+                                formatter: function(value) {
+                                    return value.amount.toLocaleString('en-US', {
+                                        minimumFractionDigits: 0,
+                                        maximumFractionDigits: 0
+                                    });
+                                },
+                                display: true
+                            }
                         },
                         scales: {
                             y: {
-                                display: false,
-                            },
-                            x: {
+                                beginAtZero: true,
                                 grid: {
-                                    borderWidth: 0,
-                                    drawOnChartArea: false
+                                    display: true,
+                                    drawBorder: false,
+                                    color: 'rgba(0,0,0,0.05)'
                                 },
                                 ticks: {
                                     font: {
                                         size: 11
                                     },
-                                    color: textColor,
-                                    autoSkip: true,
-                                    maxRotation: 0,
-                                    minRotation: 0,
-                                    maxTicksLimit: 9
+                                    color: '#666'
+                                }
+                            },
+                            x: {
+                                grid: {
+                                    display: false
+                                },
+                                ticks: {
+                                    font: {
+                                        size: 11
+                                    },
+                                    color: '#666',
+                                    maxTicksLimit: 7
                                 }
                             }
                         },
-                        radius: 1,
                         elements: {
-                            line: {
-                                tension: 0.25
+                            point: {
+                                radius: 3,
+                                hoverRadius: 5
                             }
                         }
                     }
                 });
-        });
-    </script>
+            });
+        </script>
+    @endpush
 </div>

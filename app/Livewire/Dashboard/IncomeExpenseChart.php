@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Livewire;
+namespace App\Livewire\Dashboard;
 
 use App\Models\Models\Views\Ledger;
 use Livewire\Component;
@@ -24,7 +24,7 @@ class IncomeExpenseChart extends Component
             ]],
         ];
 
-        return view('livewire.income-expense-chart', [
+        return view('livewire.dashboard.income-expense-chart', [
             'chartData' => $chartData,
         ]);
     }

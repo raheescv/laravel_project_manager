@@ -20,7 +20,7 @@ class TopSaleItems extends Component
             ->selectRaw('product_id, SUM(quantity) as total_quantity, SUM(total) as total_amount')
             ->groupBy('product_id')
             ->orderByDesc('total_quantity')
-            ->limit(5)
+            ->limit(10)
             ->get();
 
         return view('livewire.dashboard.top-sale-items', [

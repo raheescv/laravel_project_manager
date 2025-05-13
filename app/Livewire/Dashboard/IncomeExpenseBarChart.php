@@ -12,8 +12,8 @@ class IncomeExpenseBarChart extends Component
     public function getChartData()
     {
         $filter = [
-            'from_date' => date('Y-m-d', strtotime('-30 days')),
-            'to_date' => date('Y-m-d'),
+            'from_date' => Carbon::now()->subMonths(11)->startOfMonth()->format('Y-m-d'),
+            'to_date' => Carbon::now()->format('Y-m-d'),
         ];
 
         $dates = collect();
@@ -21,27 +21,28 @@ class IncomeExpenseBarChart extends Component
         $end = Carbon::parse($filter['to_date']);
 
         while ($current <= $end) {
-            $dates->push($current->format('Y-m-d'));
-            $current->addDay();
+            $dates->push($current->format('Y-m'));
+            $current->addMonth();
         }
 
         $income = Ledger::incomeList($filter)
-            ->groupBy('date')
-            ->select('date', DB::raw('SUM(credit) as income'))
-            ->pluck('income', 'date')
+            ->select(DB::raw('DATE_FORMAT(date, "%Y-%m") as month'), DB::raw('SUM(credit) as income'))
+            ->groupBy('month')
+            ->pluck('income', 'month')
             ->toArray();
 
         $expense = Ledger::expenseList($filter)
-            ->groupBy('date')
-            ->select('date', DB::raw('SUM(debit) as expense'))
-            ->pluck('expense', 'date')
+            ->select(DB::raw('DATE_FORMAT(date, "%Y-%m") as month'), DB::raw('SUM(debit) as expense'))
+            ->groupBy('month')
+            ->pluck('expense', 'month')
             ->toArray();
 
-        $chartData = $dates->map(function ($date) use ($income, $expense) {
+        $chartData = $dates->map(function ($month) use ($income, $expense) {
+            $date = Carbon::createFromFormat('Y-m', $month);
             return [
-                'date' => date('D (d) M', strtotime($date)),
-                'income' => $income[$date] ?? 0,
-                'expense' => $expense[$date] ?? 0,
+                'date' => $date->format('M Y'),
+                'income' => $income[$month] ?? 0,
+                'expense' => $expense[$month] ?? 0,
             ];
         });
 

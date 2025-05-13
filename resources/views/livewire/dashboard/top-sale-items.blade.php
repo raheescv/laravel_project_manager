@@ -1,9 +1,9 @@
 <div class="card">
-    <div class="card-header">
-        <h5 class="card-title">Today’s Top 5 Picks</h5>
+    <div class="card-header border-0 bg-transparent">
+        <h4 class="mb-0">Today's Top 10 Picks</h4>
     </div>
     <div class="card-body">
-        <div class="table-responsive py-2">
+        <div class="table-responsive">
             <table class="table table-sm table-striped">
                 <thead>
                     <tr>

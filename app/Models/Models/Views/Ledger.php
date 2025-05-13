@@ -3,6 +3,7 @@
 namespace App\Models\Models\Views;
 
 use App\Models\Scopes\AssignedBranchScope;
+use App\Models\Scopes\CurrentBranchScope;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 
@@ -11,6 +12,16 @@ class Ledger extends Model
     protected static function booted()
     {
         static::addGlobalScope(new AssignedBranchScope());
+    }
+
+    public function scopeCurrentBranch($query)
+    {
+        return CurrentBranchScope::apply($query);
+    }
+
+    public function scopeLast7Days($query)
+    {
+        return $query->whereBetween('date', [date('Y-m-d', strtotime('-7 days')), date('Y-m-d')]);
     }
 
     public static function expenseList($filter)
