@@ -31,7 +31,7 @@
                     <div class="col-md-6">
                         <div class="form-group">
                             <b><label for="discount" class="text-capitalize text-end">Discount</label></b>
-                            {{ html()->number('discount')->value('')->class('form-control number select_on_focus')->attribute('wire:model.live', 'item.discount') }}
+                            {{ html()->number('discount')->value('')->class('form-control number select_on_focus')->attribute('step', 'any')->attribute('wire:model.live', 'item.discount') }}
                         </div>
                     </div>
                     <div class="col-md-6">

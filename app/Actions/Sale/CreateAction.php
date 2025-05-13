@@ -26,6 +26,8 @@ class CreateAction
             $this->payments($data['payments']);
             $this->comboOffers($data['comboOffers']);
 
+            $this->model->refresh();
+
             $this->model->update([
                 'gross_amount' => $this->model->items->sum('gross_amount'),
                 'item_discount' => $this->model->items->sum('discount'),
