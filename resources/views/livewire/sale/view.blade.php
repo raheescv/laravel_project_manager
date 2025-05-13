@@ -391,39 +391,82 @@
                     </div>
                     <div class="col-12 col-md-7">
                         <div class="card shadow-sm">
-                            <div class="card-body">
-                                <ul class="list-group list-group-flush">
-                                    <li class="list-group-item d-flex justify-content-between align-items-center py-2">
-                                        <div class="fw-semibold">Gross Total</div>
-                                        <span class="badge bg-primary rounded-pill px-4 py-2">{{ currency($sale->gross_amount) }}</span>
-                                    </li>
-                                    <li class="list-group-item d-flex justify-content-between align-items-center py-2">
-                                        <div class="fw-semibold">Sale Total</div>
-                                        <span class="badge bg-info rounded-pill px-4 py-2">{{ currency($sale->total) }}</span>
-                                    </li>
-                                    <li class="list-group-item d-flex justify-content-between align-items-center py-2">
-                                        <div class="fw-semibold">Other Discount</div>
-                                        <span class="badge bg-warning rounded-pill px-4 py-2">{{ currency($sale->other_discount) }}</span>
-                                    </li>
-                                    <li class="list-group-item d-flex justify-content-between align-items-center py-2">
-                                        <div class="fw-semibold">Freight</div>
-                                        <span class="badge bg-secondary rounded-pill px-4 py-2">{{ currency($sale->freight) }}</span>
-                                    </li>
-                                    <li class="list-group-item d-flex justify-content-between align-items-center py-3 bg-light">
-                                        <div class="h5 mb-0">Total Payable Amount</div>
-                                        <span class="h5 mb-0 badge bg-success rounded-pill px-4 py-2">{{ currency($sale->grand_total) }}</span>
-                                    </li>
-                                    @if ($sale->balance != 0)
-                                        <li class="list-group-item d-flex justify-content-between align-items-center py-2">
-                                            <div class="fw-semibold">Paid</div>
-                                            <span class="badge bg-info rounded-pill px-4 py-2">{{ currency($sale->paid) }}</span>
-                                        </li>
-                                        <li class="list-group-item d-flex justify-content-between align-items-center py-2">
-                                            <div class="fw-semibold">Balance</div>
-                                            <span class="badge bg-danger rounded-pill px-4 py-2">{{ currency($sale->balance) }}</span>
-                                        </li>
-                                    @endif
-                                </ul>
+                            <div class="card-header bg-light py-3">
+                                <h5 class="card-title mb-0">
+                                    <i class="demo-psi-calculator me-2"></i>
+                                    Financial Summary
+                                </h5>
+                            </div>
+                            <div class="card-body p-0">
+                                <div class="row g-0">
+                                    <div class="col-md-6 border-end">
+                                        <div class="p-3">
+                                            <div class="d-flex align-items-center mb-3">
+                                                <div class="icon-sm bg-primary bg-opacity-10 rounded-circle me-2">
+                                                    <i class="fa fa-money text-primary"></i>
+                                                </div>
+                                                <h6 class="mb-0">Base Amounts</h6>
+                                            </div>
+                                            <div class="list-group list-group-flush">
+                                                <div class="list-group-item d-flex justify-content-between align-items-center px-0 py-2 border-0">
+                                                    <span class="text-muted">Gross Total</span>
+                                                    <span class="fw-medium">{{ currency($sale->gross_amount) }}</span>
+                                                </div>
+                                                <div class="list-group-item d-flex justify-content-between align-items-center px-0 py-2 border-0">
+                                                    <span class="text-muted">Sale Total</span>
+                                                    <span class="fw-medium">{{ currency($sale->total) }}</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="p-3">
+                                            <div class="d-flex align-items-center mb-3">
+                                                <div class="icon-sm bg-warning bg-opacity-10 rounded-circle me-2">
+                                                    <i class="demo-psi-receipt-4 text-warning"></i>
+                                                </div>
+                                                <h6 class="mb-0">Adjustments</h6>
+                                            </div>
+                                            <div class="list-group list-group-flush">
+                                                <div class="list-group-item d-flex justify-content-between align-items-center px-0 py-2 border-0">
+                                                    <span class="text-muted">Other Discount</span>
+                                                    <span class="fw-medium text-danger">-{{ currency($sale->other_discount) }}</span>
+                                                </div>
+                                                <div class="list-group-item d-flex justify-content-between align-items-center px-0 py-2 border-0">
+                                                    <span class="text-muted">Freight</span>
+                                                    <span class="fw-medium">{{ currency($sale->freight) }}</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="border-top p-3">
+                                    <div class="d-flex justify-content-between align-items-center mb-3">
+                                        <div class="d-flex align-items-center">
+                                            <div class="icon-sm bg-success bg-opacity-10 rounded-circle me-2">
+                                                <i class="fa fa-credit-card text-success"></i>
+                                            </div>
+                                            <h6 class="mb-0">Final Summary</h6>
+                                        </div>
+                                    </div>
+                                    <div class="list-group list-group-flush">
+                                        <div class="list-group-item d-flex justify-content-between align-items-center px-0 py-2 border-0">
+                                            <span class="h6 mb-0">Total Payable Amount</span>
+                                            <span class="h5 mb-0 text-success">{{ currency($sale->grand_total) }}</span>
+                                        </div>
+                                        @if ($sale->balance != 0)
+                                            <div class="list-group-item d-flex justify-content-between align-items-center px-0 py-2 border-0">
+                                                <span class="text-muted">Amount Paid</span>
+                                                <span class="fw-medium text-success">{{ currency($sale->paid) }}</span>
+                                            </div>
+                                            <div class="list-group-item d-flex justify-content-between align-items-center px-0 py-2 border-0">
+                                                <span class="text-muted">Balance Due</span>
+                                                <span class="fw-medium text-danger">{{ currency($sale->balance) }}</span>
+                                            </div>
+                                        @endif
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>

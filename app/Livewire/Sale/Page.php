@@ -199,7 +199,7 @@ class Page extends Component
 
                 'address' => null,
                 'rating' => 0,
-                'feedback_type' => null,
+                'feedback_type' => 'compliment',
                 'feedback' => null,
                 'status' => 'draft',
             ];
