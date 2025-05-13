@@ -18,11 +18,11 @@
                         </button>
                         <div id="usernav" class="nav flex-column collapse">
                             <a href="#" class="nav-link">
-                                <i class="demo-pli-male fs-5 me-2"></i>
+                                <i class="fa fa-user fs-5 me-2"></i>
                                 <span class="ms-1">Profile</span>
                             </a>
                             <a href="{{ route('settings::index') }}" class="nav-link">
-                                <i class="demo-pli-gear fs-5 me-2"></i>
+                                <i class="fa fa-cog fs-5 me-2"></i>
                                 <span class="ms-1">Settings</span>
                             </a>
                         </div>
@@ -32,7 +32,7 @@
             <ul class="mainnav__menu nav flex-column">
                 <li class="nav-item">
                     <a href="{{ route('home') }}" class="nav-link mininav-toggle {{ request()->is(['/', 'dashboard']) ? 'active' : '' }}">
-                        <i class="demo-pli-home fs-5 me-2"></i>
+                        <i class="fa fa-dashboard fs-5 me-2"></i>
                         <span class="nav-label mininav-content ms-1 collapse show" style="">
                             Dashboard
                         </span>
@@ -45,7 +45,7 @@
                         <li class="nav-item has-sub">
                             <a href="#"
                                 class="mininav-toggle nav-link {{ request()->is(['inventory', 'inventory/product/*', 'inventory/transfer', 'inventory/transfer/edit/*', 'inventory/transfer/create', 'inventory/transfer/view/*']) ? 'active' : '' }}"><i
-                                    class="demo-pli-split-vertical-2 fs-5 me-2"></i>
+                                    class="fa fa-cubes fs-5 me-2"></i>
                                 <span class="nav-label ms-1">Inventory</span>
                             </a>
                             <ul class="mininav-content nav collapse">
@@ -70,7 +70,7 @@
                     @if (auth()->user()->can('appointment.view'))
                         <li class="nav-item has-sub">
                             <a href="#" class="mininav-toggle nav-link {{ request()->is(['appointment/employee-calendar', 'appointment/list']) ? 'active' : '' }}"><i
-                                    class="demo-pli-split-vertical-2 fs-5 me-2"></i>
+                                    class="fa fa-calendar fs-5 me-2"></i>
                                 <span class="nav-label ms-1">Appointments</span>
                             </a>
                             <ul class="mininav-content nav collapse">
@@ -94,7 +94,7 @@
                             @php
                                 $list = ['report/sale_summary', 'report/sales_overview', 'sale', 'sale/create', 'sale/edit/*', 'sale/view/*', 'report/sale_item', 'sale/receipts'];
                             @endphp
-                            <a href="#" class="mininav-toggle nav-link {{ request()->is($list) ? 'active' : '' }}"><i class="demo-pli-split-vertical-2 fs-5 me-2"></i>
+                            <a href="#" class="mininav-toggle nav-link {{ request()->is($list) ? 'active' : '' }}"><i class="fa fa-shopping-cart fs-5 me-2"></i>
                                 <span class="nav-label ms-1">Sale</span>
                             </a>
                             <ul class="mininav-content nav collapse">
@@ -126,7 +126,7 @@
                         <li class="nav-item has-sub">
                             <a href="#"
                                 class="mininav-toggle nav-link {{ request()->is(['sale_return', 'sale_return/create', 'sale_return/edit/*', 'sale_return/view/*', 'report/sale_return_item', 'sale_return/payments']) ? 'active' : '' }}">
-                                <i class="demo-pli-split-vertical-2 fs-5 me-2"></i>
+                                <i class="fa fa-rotate-left fs-5 me-2"></i>
                                 <span class="nav-label ms-1">Sale Return</span>
                             </a>
                             <ul class="mininav-content nav collapse">
@@ -159,7 +159,7 @@
                         <li class="nav-item has-sub">
                             <a href="#"
                                 class="mininav-toggle nav-link {{ request()->is(['purchase', 'purchase/create', 'purchase/edit/*', 'report/purchase_item', 'purchase/payments']) ? 'active' : '' }}"><i
-                                    class="demo-pli-split-vertical-2 fs-5 me-2"></i>
+                                    class="fa fa-cart-plus fs-5 me-2"></i>
                                 <span class="nav-label ms-1">Purchase</span>
                             </a>
                             <ul class="mininav-content nav collapse">
@@ -191,7 +191,7 @@
                         <li class="nav-item has-sub">
                             <a href="#"
                                 class="mininav-toggle nav-link {{ request()->is(['account', 'account/expense', 'account/income', 'account/view/*', 'account/customer', 'account/customer/view/*', 'account/vendor', 'report/day_book']) ? 'active' : '' }}"><i
-                                    class="demo-pli-split-vertical-2 fs-5 me-2"></i>
+                                    class="fa fa-bank fs-5 me-2"></i>
                                 <span class="nav-label ms-1">Account</span>
                             </a>
                             <ul class="mininav-content nav collapse">
@@ -232,8 +232,7 @@
                     @endif
                     @if (auth()->user()->can('employee.view'))
                         <li class="nav-item has-sub">
-                            <a href="#" class="mininav-toggle nav-link {{ request()->is(['users/employee', 'users/employee/view/*']) ? 'active' : '' }}"><i
-                                    class="demo-pli-split-vertical-2 fs-5 me-2"></i>
+                            <a href="#" class="mininav-toggle nav-link {{ request()->is(['users/employee', 'users/employee/view/*']) ? 'active' : '' }}"><i class="fa fa-users fs-5 me-2"></i>
                                 <span class="nav-label ms-1">Employees</span>
                             </a>
                             <ul class="mininav-content nav collapse">
@@ -249,7 +248,7 @@
                     @if (auth()->user()->can('user.view') || auth()->user()->can('role.view'))
                         <li class="nav-item has-sub">
                             <a href="#" class="mininav-toggle nav-link {{ request()->is(['users', 'users/view/*', 'settings/roles', 'settings/roles/*']) ? 'active' : '' }}"><i
-                                    class="demo-pli-split-vertical-2 fs-5 me-2"></i>
+                                    class="fa fa-user-circle fs-5 me-2"></i>
                                 <span class="nav-label ms-1">Users</span>
                             </a>
                             <ul class="mininav-content nav collapse">
@@ -269,7 +268,7 @@
                     @endif
                     @if (auth()->user()->can('log.inventory'))
                         <li class="nav-item has-sub">
-                            <a href="#" class="mininav-toggle nav-link {{ request()->is(['log/inventory']) ? 'active' : '' }}"><i class="demo-pli-split-vertical-2 fs-5 me-2"></i>
+                            <a href="#" class="mininav-toggle nav-link {{ request()->is(['log/inventory']) ? 'active' : '' }}"><i class="fa fa-clipboard fs-5 me-2"></i>
                                 <span class="nav-label ms-1">Log</span>
                             </a>
                             <ul class="mininav-content nav collapse">
@@ -289,7 +288,7 @@
             <ul id="mainnav" class="mainnav__menu nav flex-column">
                 <li class="nav-item has-sub">
                     <a href="#" class="nav-link mininav-toggle collapsed" aria-expanded="false">
-                        <i class="demo-pli-unlock fs-5 me-2"></i>
+                        <i class="fa fa-sign-out fs-5 me-2"></i>
                         <span class="nav-label ms-1">Logout</span>
                     </a>
                     <ul class="mininav-content nav flex-column collapse">
