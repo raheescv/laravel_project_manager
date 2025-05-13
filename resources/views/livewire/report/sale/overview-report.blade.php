@@ -68,30 +68,30 @@
                     <!-- Financial Stats -->
                     <div class="row mb-3">
                         <div class="col-md-6">
-                            <div class="card bg-primary bg-opacity-10 border-0">
+                            <div class="card bg-blue-500 bg-gradient border-0">
                                 <div class="card-body">
                                     <div class="d-flex align-items-center">
                                         <div class="flex-shrink-0">
-                                            <i class="fa fa-money fa-2x text-primary"></i>
+                                            <i class="fa fa-money fa-2x text-white"></i>
                                         </div>
                                         <div class="flex-grow-1 ms-3">
-                                            <h6 class="text-primary mb-1">Net Sales</h6>
-                                            <h4 class="mb-0">{{ currency($netSales, 0) }}</h4>
+                                            <h6 class="text-white mb-1">Net Sales</h6>
+                                            <h4 class="mb-0 text-white">{{ currency($netSales, 0) }}</h4>
                                         </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
                         <div class="col-md-6">
-                            <div class="card bg-warning bg-opacity-10 border-0">
+                            <div class="card bg-purple-500 bg-gradient border-0">
                                 <div class="card-body">
                                     <div class="d-flex align-items-center">
                                         <div class="flex-shrink-0">
-                                            <i class="fa fa-tag fa-2x text-warning"></i>
+                                            <i class="fa fa-tag fa-2x text-white"></i>
                                         </div>
                                         <div class="flex-grow-1 ms-3">
-                                            <h6 class="text-warning mb-1">Discounts</h6>
-                                            <h4 class="mb-0">{{ currency($saleDiscount, 0) }}</h4>
+                                            <h6 class="text-white mb-1">Discounts</h6>
+                                            <h4 class="mb-0 text-white">{{ currency($saleDiscount, 0) }}</h4>
                                         </div>
                                     </div>
                                 </div>
@@ -100,45 +100,45 @@
                     </div>
                     <div class="row g-4">
                         <div class="col-md-4">
-                            <div class="card bg-indigo bg-opacity-10 border-0">
+                            <div class="card bg-pink-500 bg-gradient border-0">
                                 <div class="card-body">
                                     <div class="d-flex align-items-center">
                                         <div class="flex-shrink-0">
-                                            <i class="fa fa-cubes fa-2x text-indigo"></i>
+                                            <i class="fa fa-cubes fa-2x text-white"></i>
                                         </div>
                                         <div class="flex-grow-1 ms-3">
-                                            <h6 class="text-indigo mb-1">Total Item</h6>
-                                            <h4 class="mb-0">{{ currency($itemTotal, 0) }}</h4>
+                                            <h6 class="text-white mb-1">Total Item</h6>
+                                            <h4 class="mb-0 text-white">{{ currency($itemTotal, 0) }}</h4>
                                         </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
                         <div class="col-md-4">
-                            <div class="card bg-purple bg-opacity-10 border-0">
+                            <div class="card bg-indigo-500 bg-gradient border-0">
                                 <div class="card-body">
                                     <div class="d-flex align-items-center">
                                         <div class="flex-shrink-0">
-                                            <i class="fa fa-shopping-cart fa-2x text-purple"></i>
+                                            <i class="fa fa-shopping-cart fa-2x text-white"></i>
                                         </div>
                                         <div class="flex-grow-1 ms-3">
-                                            <h6 class="text-purple mb-1">Products</h6>
-                                            <h4 class="mb-0">{{ currency($productSale, 0) }}</h4>
+                                            <h6 class="text-white mb-1">Products</h6>
+                                            <h4 class="mb-0 text-white">{{ currency($productSale, 0) }}</h4>
                                         </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
                         <div class="col-md-4">
-                            <div class="card bg-teal bg-opacity-10 border-0">
+                            <div class="card bg-cyan-500 bg-gradient border-0">
                                 <div class="card-body">
                                     <div class="d-flex align-items-center">
                                         <div class="flex-shrink-0">
-                                            <i class="fa fa-star fa-2x text-teal"></i>
+                                            <i class="fa fa-star fa-2x text-white"></i>
                                         </div>
                                         <div class="flex-grow-1 ms-3">
-                                            <h6 class="text-teal mb-1">Services</h6>
-                                            <h4 class="mb-0">{{ currency($serviceSale, 0) }}</h4>
+                                            <h6 class="text-white mb-1">Services</h6>
+                                            <h4 class="mb-0 text-white">{{ currency($serviceSale, 0) }}</h4>
                                         </div>
                                     </div>
                                 </div>
