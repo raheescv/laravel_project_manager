@@ -3,7 +3,7 @@
         <div class="row g-3 mb-4">
             <!-- Weekly Sales Card -->
             <div class="col-sm-6 col-xl-3">
-                <div class="card bg-primary bg-gradient h-100 shadow-sm">
+                <div class="card bg-indigo bg-gradient h-100 shadow-sm">
                     <div class="card-body p-3">
                         <div class="d-flex align-items-center mb-2">
                             <div class="rounded-circle bg-white bg-opacity-25 p-2 me-3">
@@ -26,7 +26,7 @@
 
             <!-- Weekly Purchase Card -->
             <div class="col-sm-6 col-xl-3">
-                <div class="card bg-info bg-gradient h-100 shadow-sm">
+                <div class="card bg-teal bg-gradient h-100 shadow-sm">
                     <div class="card-body p-3">
                         <div class="d-flex align-items-center mb-2">
                             <div class="rounded-circle bg-white bg-opacity-25 p-2 me-3">
@@ -49,7 +49,7 @@
 
             <!-- Weekly Expense Card -->
             <div class="col-sm-6 col-xl-3">
-                <div class="card bg-danger bg-gradient h-100 shadow-sm">
+                <div class="card bg-purple bg-gradient h-100 shadow-sm">
                     <div class="card-body p-3">
                         <div class="d-flex align-items-center mb-2">
                             <div class="rounded-circle bg-white bg-opacity-25 p-2 me-3">
@@ -72,7 +72,7 @@
 
             <!-- Weekly Income Card -->
             <div class="col-sm-6 col-xl-3">
-                <div class="card bg-success bg-gradient h-100 shadow-sm">
+                <div class="card bg-orange bg-gradient h-100 shadow-sm">
                     <div class="card-body p-3">
                         <div class="d-flex align-items-center mb-2">
                             <div class="rounded-circle bg-white bg-opacity-25 p-2 me-3">
@@ -113,7 +113,7 @@
                 <div class="row g-4">
                     <!-- Total Stock Value Card -->
                     <div class="col-md-4">
-                        <div class="card bg-primary bg-gradient h-100 border-0">
+                        <div class="card bg-cyan bg-gradient h-100 border-0">
                             <div class="card-body p-3">
                                 <div class="d-flex align-items-center">
                                     <div class="rounded-circle bg-white bg-opacity-25 p-2 me-3">
@@ -133,7 +133,7 @@
                         <div class="row g-3">
                             <!-- Categories -->
                             <div class="col-sm-4">
-                                <div class="card bg-info bg-gradient h-100 border-0">
+                                <div class="card bg-pink bg-gradient h-100 border-0">
                                     <div class="card-body p-3">
                                         <div class="d-flex align-items-center">
                                             <div class="rounded-circle bg-white bg-opacity-25 p-2 me-3">
@@ -150,7 +150,7 @@
 
                             <!-- Products -->
                             <div class="col-sm-4">
-                                <div class="card bg-success bg-gradient h-100 border-0">
+                                <div class="card bg-green-500 bg-gradient h-100 border-0">
                                     <div class="card-body p-3">
                                         <div class="d-flex align-items-center">
                                             <div class="rounded-circle bg-white bg-opacity-25 p-2 me-3">
@@ -167,7 +167,7 @@
 
                             <!-- Services -->
                             <div class="col-sm-4">
-                                <div class="card bg-warning bg-gradient h-100 border-0">
+                                <div class="card bg-yellow-700 bg-gradient h-100 border-0">
                                     <div class="card-body p-3">
                                         <div class="d-flex align-items-center">
                                             <div class="rounded-circle bg-white bg-opacity-25 p-2 me-3">
