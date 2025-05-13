@@ -248,7 +248,7 @@
                     @if (auth()->user()->can('user.view') || auth()->user()->can('role.view'))
                         <li class="nav-item has-sub">
                             <a href="#" class="mininav-toggle nav-link {{ request()->is(['users', 'users/view/*', 'settings/roles', 'settings/roles/*']) ? 'active' : '' }}"><i
-                                    class="fa fa-user-circle fs-5 me-2"></i>
+                                    class="fa fa-user fs-5 me-2"></i>
                                 <span class="nav-label ms-1">Users</span>
                             </a>
                             <ul class="mininav-content nav collapse">
