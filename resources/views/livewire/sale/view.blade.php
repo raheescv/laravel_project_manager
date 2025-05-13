@@ -356,38 +356,116 @@
 
                 <!-- Payments and Totals with enhanced styling -->
                 <div class="row g-4">
+                    {{--  Payments area --}}
                     <div class="col-12 col-md-5">
                         <div class="card h-100 shadow-sm">
-                            <div class="card-header bg-light py-2">
-                                <h5 class="card-title mb-0">
-                                    <i class="demo-psi-wallet me-2"></i>
-                                    Payments
+                            <div class="card-header bg-light d-flex align-items-center justify-content-between py-3">
+                                <h5 class="card-title mb-0 d-flex align-items-center">
+                                    <i class="demo-psi-wallet fs-4 me-2 text-primary"></i>
+                                    Payment Details
                                 </h5>
+                                <span class="badge bg-primary rounded-pill">
+                                    {{ count($payments) }} Payments
+                                </span>
                             </div>
                             <div class="card-body p-0">
-                                <div class="table-responsive">
-                                    <table class="table table-hover mb-0">
-                                        <thead class="bg-primary text-white">
-                                            <tr>
-                                                <th class="text-white border-0">Payment Method</th>
-                                                <th class="text-white border-0 text-end">Amount</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            @foreach ($payments as $key => $item)
-                                                <tr>
-                                                    <td>
-                                                        <i class="demo-psi-credit-card-2 me-2"></i>
-                                                        {{ $item['name'] }}
-                                                    </td>
-                                                    <td class="text-end fw-semibold">{{ currency($item['amount']) }}</td>
-                                                </tr>
-                                            @endforeach
-                                        </tbody>
-                                    </table>
+                                <div class="payment-list">
+                                    @foreach ($payments as $key => $item)
+                                        <div class="payment-item p-3 {{ !$loop->last ? 'border-bottom' : '' }}">
+                                            <div class="d-flex align-items-center justify-content-between mb-2">
+                                                <div class="d-flex align-items-center">
+                                                    <div class="payment-icon me-3">
+                                                        @switch(strtolower($item['name']))
+                                                            @case('cash')
+                                                                <div class="avatar avatar-md bg-success bg-opacity-10">
+                                                                    <i class="fa fa-money text-success"></i>
+                                                                </div>
+                                                            @break
+
+                                                            @case('card')
+                                                                <div class="avatar avatar-md bg-info bg-opacity-10">
+                                                                    <i class="fa fa-credit-card text-info"></i>
+                                                                </div>
+                                                            @break
+
+                                                            @default
+                                                                <div class="avatar avatar-md bg-warning bg-opacity-10">
+                                                                    <i class="fa fa-university text-warning"></i>
+                                                                </div>
+                                                        @endswitch
+                                                    </div>
+                                                    <div>
+                                                        <h6 class="mb-1">{{ $item['name'] }}</h6>
+                                                        <small class="text-muted">
+                                                            Transaction #{{ str_pad($key + 1, 3, '0', STR_PAD_LEFT) }}
+                                                        </small>
+                                                    </div>
+                                                </div>
+                                                <div class="text-end">
+                                                    <h5 class="mb-1 text-success">{{ currency($item['amount']) }}</h5>
+                                                    <small class="text-muted">{{ now()->format('d M Y') }}</small>
+                                                </div>
+                                            </div>
+                                            @if (isset($item['reference']))
+                                                <div class="payment-details bg-light bg-opacity-50 rounded p-2 mt-2">
+                                                    <small class="text-muted d-flex align-items-center">
+                                                        <i class="demo-psi-file-text me-2"></i>
+                                                        Reference: {{ $item['reference'] }}
+                                                    </small>
+                                                </div>
+                                            @endif
+                                        </div>
+                                    @endforeach
+                                </div>
+
+                                <div class="p-3 bg-light border-top">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <h6 class="mb-0">Total Paid</h6>
+                                            <small class="text-muted">All payments combined</small>
+                                        </div>
+                                        <h4 class="mb-0 text-success">{{ currency(collect($payments)->sum('amount')) }}</h4>
+                                    </div>
                                 </div>
                             </div>
                         </div>
+
+                        <style>
+                            .payment-list {
+                                max-height: 400px;
+                                overflow-y: auto;
+                            }
+
+                            .payment-item {
+                                transition: all 0.2s ease;
+                            }
+
+                            .payment-item:hover {
+                                background-color: var(--bs-light);
+                            }
+
+                            .avatar {
+                                width: 40px;
+                                height: 40px;
+                                display: flex;
+                                align-items: center;
+                                justify-content: center;
+                                border-radius: 12px;
+                            }
+
+                            .avatar.avatar-md {
+                                width: 48px;
+                                height: 48px;
+                            }
+
+                            .payment-details {
+                                transition: all 0.2s ease;
+                            }
+
+                            .payment-item:hover .payment-details {
+                                background-color: var(--bs-light) !important;
+                            }
+                        </style>
                     </div>
                     <div class="col-12 col-md-7">
                         <div class="card shadow-sm">
@@ -761,96 +839,4 @@
             </div>
         </div>
     </div>
-
-    <style>
-        .backdrop-blur-card {
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            background: rgba(255, 255, 255, 0.05);
-        }
-
-        .glass-card {
-            background: rgba(255, 255, 255, 0.85);
-            backdrop-filter: blur(10px);
-            border-radius: 0.75rem;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            box-shadow: 0 2px 12px -1px rgba(0, 0, 0, 0.1);
-            transition: transform 0.2s ease, box-shadow 0.2s ease;
-        }
-
-        .glass-card:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 4px 15px -2px rgba(0, 0, 0, 0.15);
-        }
-
-        .text-primary-gradient {
-            background: linear-gradient(45deg, #0d6efd, #0dcaf0);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-
-        .text-success-gradient {
-            background: linear-gradient(45deg, #198754, #20c997);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-
-        .hover-lift {
-            transition: transform 0.2s ease;
-        }
-
-        .hover-lift:hover {
-            transform: translateY(-2px);
-        }
-
-        .stats-icon-container {
-            width: 48px;
-            height: 48px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 12px;
-            background: rgba(13, 110, 253, 0.1);
-        }
-
-        .customer-info-item,
-        .contact-info-item {
-            transition: all 0.2s ease;
-        }
-
-        .customer-info-item:hover,
-        .contact-info-item:hover {
-            transform: translateX(5px);
-        }
-
-        .icon-box {
-            width: 40px;
-            height: 40px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .icon-sm {
-            width: 32px;
-            height: 32px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .info-item {
-            transition: all 0.2s ease;
-        }
-
-        .info-item:hover {
-            background: var(--bs-light) !important;
-            transform: translateY(-1px);
-        }
-
-        .customer-info,
-        .contact-info {
-            height: 100%;
-        }
-    </style>
-
 </div>
