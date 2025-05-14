@@ -4,8 +4,10 @@ use App\Http\Controllers\AppointmentController;
 use App\Http\Controllers\AuditController;
 use App\Http\Controllers\BackupController;
 use App\Http\Controllers\HomeController;
+use App\Http\Controllers\ImageGenComfyController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\UserAttendanceController;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
 
@@ -24,6 +26,7 @@ Route::middleware('auth')->group(function (): void {
         Route::name('employee::')->prefix('employee')->group(function (): void {
             Route::get('', 'employee')->name('index')->can('employee.view');
             Route::get('view/{id}', 'view')->name('view')->can('employee.edit');
+            Route::get('attendance', [UserAttendanceController::class, 'index'])->name('attendance')->can('employee attendance.view');
         });
     });
 
@@ -43,4 +46,7 @@ Route::middleware('auth')->group(function (): void {
         Route::get('list', 'index')->name('list')->can('appointment.view');
         Route::get('employee-calendar', 'calendar')->name('index')->can('appointment.view');
     });
+
+    Route::get('generate-image', [ImageGenComfyController::class, 'generate']);
+
 });
