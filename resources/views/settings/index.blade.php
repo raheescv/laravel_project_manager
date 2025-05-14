@@ -52,15 +52,12 @@
                         </ul>
                         <div class="tab-content">
                             <div id="tabsConfiguration" class="tab-pane" role="tabpanel">
-                                <h5>Configuration</h5>
                                 @livewire('settings.configurations')
                             </div>
                             <div id="tabsSaleSettings" class="tab-pane" role="tabpanel">
-                                <h5>Sale Settings</h5>
                                 @livewire('settings.sale-configuration')
                             </div>
                             <div id="tabsCompanyProfile" class="tab-pane fade active show" role="tabpanel">
-                                <h5>Company Profile</h5>
                                 @livewire('settings.company-profile')
                             </div>
                             <div id="tabsTheme" class="tab-pane" role="tabpanel">
