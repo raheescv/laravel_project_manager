@@ -722,28 +722,28 @@
                         <div class="tab-content">
                             <div id="sale-audit" class="tab-pane fade show active" role="tabpanel">
                                 <div class="table-responsive">
-                                    <table class="table table-striped align-middle table-sm">
+                                    <table class="table table-striped align-middle table-bordered table-sm">
                                         <thead>
                                             <tr class="bg-primary text-white">
-                                                <th class="text-white">Date Time</th>
+                                                <th class="text-white text-nowrap">Date Time</th>
                                                 <th class="text-white">User</th>
                                                 <th class="text-white">Event</th>
                                                 @php
                                                     $columns = $sale->audits->pluck('new_values')->filter()->map(fn($item) => array_keys($item))->flatten()->unique()->values()->all();
                                                 @endphp
                                                 @foreach ($columns as $key)
-                                                    <th class="text-white text-end">{{ Str::title(str_replace('_', ' ', $key)) }}</th>
+                                                    <th class="text-white text-end text-nowrap">{{ Str::title(str_replace('_', ' ', $key)) }}</th>
                                                 @endforeach
                                             </tr>
                                         </thead>
                                         <tbody>
                                             @foreach ($sale->audits as $audit)
                                                 <tr>
-                                                    <td>{{ $audit->created_at }}</td>
+                                                    <td class="text-nowrap">{{ $audit->created_at }}</td>
                                                     <td>{{ $audit->user?->name }}</td>
                                                     <td>{{ $audit->event }}</td>
                                                     @foreach ($columns as $key)
-                                                        <td class="text-end">{{ $audit->new_values[$key] ?? '' }}</td>
+                                                        <td class="text-end text-nowrap">{{ $audit->new_values[$key] ?? '' }}</td>
                                                     @endforeach
                                                 </tr>
                                             @endforeach
