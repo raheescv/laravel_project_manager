@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Jobs\GenerateProductImageJob;
 use App\Jobs\GenerateServiceImageJob;
 use App\Models\Product;
 use Illuminate\Http\Request;
@@ -17,11 +18,14 @@ class ImageGenComfyController extends Controller
         //     GenerateServiceImageJob::dispatch($category, $serviceName);
         // }
 
-        $category = 'Cutting';
+        $category = 'Facial';
+        $category = 'Eyelashes';
         // $category = 'Wax';
-        $serviceName = 'Hair Cutting';
+        // $serviceName = 'Hair Cutting';
         // $serviceName = 'Full body with brazilian';
-        GenerateServiceImageJob::dispatch($category, $serviceName);
+        $serviceName = 'Natures fruit cleanser';
+        $serviceName = 'Eyelashes mixed';
+        GenerateProductImageJob::dispatch($category, $serviceName);
 
         return response()->json([
             'success' => true,

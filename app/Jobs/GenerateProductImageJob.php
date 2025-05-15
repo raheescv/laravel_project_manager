@@ -2,7 +2,6 @@
 
 namespace App\Jobs;
 
-use App\Helpers\Facades\OllamaHelper;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -11,7 +10,7 @@ use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
-class GenerateServiceImageJob implements ShouldQueue
+class GenerateProductImageJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
@@ -20,20 +19,14 @@ class GenerateServiceImageJob implements ShouldQueue
     public function __construct(
         protected string $category,
         protected string $serviceName
-    ) {
-        // $this->referenceImagePath = public_path('models/full-body-lady.jpg');
-        $this->referenceImagePath = public_path('models/rahees.jpg');
-    }
+    ) {}
 
     public function handle()
     {
         try {
-            $response = OllamaHelper::generatePromptForServiceImage($this->category, $this->serviceName);
-            if (! $response['success']) {
-                throw new \Exception($response['message']);
-            }
 
-            $basePrompt = $response['data']['prompt'];
+            $basePrompt = "A high-quality product photo of a '{$this->category}' item labeled '{$this->serviceName}'. The product is in a modern, elegant bottle or tube, placed on a clean, minimal background with soft natural lighting. The packaging should feel organic and fresh, nature-inspired";
+
             info($basePrompt);
             $workflow = $this->buildWorkflow($basePrompt);
 
@@ -134,9 +127,7 @@ class GenerateServiceImageJob implements ShouldQueue
             'checkpoint' => [
                 'class_type' => 'CheckpointLoaderSimple',
                 'inputs' => [
-                    'ckpt_name' => 'v1-5-pruned-emaonly-fp16.safetensors',
-                    // 'ckpt_name' => 'sd_xl_base_1.0.safetensors',
-                    // 'ckpt_name' => 'Realistic_Vision_V5.1-inpainting.safetensors',
+                    'ckpt_name' => 'Realistic_Vision_V5.1-inpainting.safetensors',
                 ],
             ],
             'positive_prompt' => [
@@ -153,48 +144,19 @@ class GenerateServiceImageJob implements ShouldQueue
                     'text' => $negativePrompt,
                 ],
             ],
-            'reference_image' => [
-                'class_type' => 'LoadImage',
-                'inputs' => [
-                    'image' => $this->referenceImagePath,
-                ],
-            ],
-            'canny_preprocessor' => [
-                'class_type' => 'Canny',
-                'inputs' => [
-                    'image' => ['reference_image', 0],
-                    'low_threshold' => 0.3,
-                    'high_threshold' => 0.7,
-                ],
-            ],
-            'control_net' => [
-                'class_type' => 'ControlNetLoader',
-                'inputs' => [
-                    'control_net_name' => 'control_v11p_sd15_canny.pth',
-                ],
-            ],
-            'conditioning' => [
-                'class_type' => 'ControlNetApply',
-                'inputs' => [
-                    'conditioning' => ['positive_prompt', 0],
-                    'control_net' => ['control_net', 0],
-                    'image' => ['canny_preprocessor', 0],
-                    'strength' => 0.6,
-                ],
-            ],
             'sampler' => [
                 'class_type' => 'KSampler',
                 'inputs' => [
-                    'cfg' => 6,
-                    'denoise' => 0.6,
+                    'cfg' => 7,
+                    'denoise' => 1.0,
                     'latent_image' => ['empty_latent', 0],
                     'model' => ['checkpoint', 0],
                     'negative' => ['negative_prompt', 0],
-                    'positive' => ['conditioning', 0],
+                    'positive' => ['positive_prompt', 0],
                     'sampler_name' => 'euler_ancestral',
                     'scheduler' => 'normal',
                     'seed' => rand(1, 999999999),
-                    'steps' => 20,
+                    'steps' => 30,
                 ],
             ],
             'decoder' => [
