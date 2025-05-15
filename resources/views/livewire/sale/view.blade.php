@@ -96,7 +96,7 @@
                                             </div>
                                         </div>
                                         <a href="{{ route('account::customer::view', $sale->account_id) }}" class="btn btn-sm btn-outline-success hover-lift">
-                                            <i class="demo-psi-profile me-1"></i>Profile
+                                            <i class="fa fa-user me-1"></i>Profile
                                         </a>
                                     </div>
 
@@ -126,7 +126,7 @@
                                         <div class="col-sm-6">
                                             <div class="contact-info p-3 bg-light bg-opacity-50 rounded h-100">
                                                 <h6 class="mb-2 text-primary d-flex align-items-center">
-                                                    <i class="demo-psi-phone me-2"></i>Contact Details
+                                                    <i class="fa fa-phone me-2"></i>Contact Details
                                                 </h6>
                                                 <div class="ps-1">
                                                     @if ($sale->customer_mobile)
@@ -256,7 +256,7 @@
                 <!-- Items Table with enhanced styling -->
                 <div class="mb-4">
                     <h5 class="card-title d-flex align-items-center mb-3">
-                        <i class="demo-psi-cart me-2"></i>
+                        <i class="fa fa-shopping-cart me-2"></i>
                         Items
                     </h5>
                     <div class="table-responsive">
