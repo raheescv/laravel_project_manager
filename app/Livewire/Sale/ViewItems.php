@@ -55,12 +55,11 @@ class ViewItems extends Component
 
     public function updated($key, $value)
     {
-        if (! preg_match('/^items\.(\d+)\.(unit_price|quantity|discount|tax)$/', $key, $matches)) {
+        if (! preg_match('/^items\.(\d+)-(\d+)\.(unit_price|quantity|discount|tax)$/', $key, $matches)) {
             return;
         }
-
-        $index = $matches[1];
-        $field = $matches[2];
+        $index = $matches[1].'-'.$matches[2];
+        $field = $matches[3];
 
         $this->items[$index][$field] = is_numeric($value) ? (float) $value : 0;
         $this->cartCalculator($index);
