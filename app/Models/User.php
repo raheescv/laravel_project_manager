@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Validation\Rule;
+use Laravel\Sanctum\HasApiTokens;
 use OwenIt\Auditing\Auditable;
 use OwenIt\Auditing\Contracts\Auditable as AuditableContracts;
 use Spatie\Permission\Traits\HasRoles;
@@ -14,6 +15,7 @@ use Spatie\Permission\Traits\HasRoles;
 class User extends Authenticatable implements AuditableContracts
 {
     use Auditable, HasFactory, HasRoles,Notifiable;
+    use HasApiTokens;
 
     protected $fillable = [
         'type',
