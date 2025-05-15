@@ -4,11 +4,6 @@ namespace App\Traits;
 
 trait JsonResponse
 {
-    /**
-     * Send success response with data
-     *
-     * @return \Illuminate\Http\JsonResponse
-     */
     protected function success(string $message, mixed $data = null, int $code = 200)
     {
         $response = [
@@ -23,11 +18,6 @@ trait JsonResponse
         return response()->json($response, $code);
     }
 
-    /**
-     * Send error response
-     *
-     * @return \Illuminate\Http\JsonResponse
-     */
     protected function error(string $message, mixed $errors = null, int $code = 400)
     {
         $response = [
