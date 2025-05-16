@@ -122,7 +122,7 @@
             </div>
 
             <div class="table-container">
-                <table class="table modern-table">
+                <table class="table table-striped modern-table">
                     <thead>
                         <tr>
                             <th>SL No</th>
@@ -178,7 +178,7 @@
             </div>
 
             <div class="table-container">
-                <table class="table modern-table">
+                <table class="table table-striped modern-table">
                     <thead>
                         <tr>
                             <th>#</th>
@@ -209,8 +209,8 @@
                                 </td>
                                 <td>{{ $item->barcode }}</td>
                                 <td>{{ $item->batch }}</td>
-                                <td class="text-end">{{ $item->quantity_in }}</td>
-                                <td class="text-end">{{ $item->quantity_out }}</td>
+                                <td class="text-end">{{ $item->quantity_in ?: '' }}</td>
+                                <td class="text-end">{{ $item->quantity_out ?: '' }}</td>
                                 <td class="text-end">{{ $item->balance }}</td>
                             </tr>
                         @endforeach
@@ -372,7 +372,7 @@
             }
 
             .modern-table th {
-                text-transform: uppercase;
+                text-transform: capitalize;
                 font-size: 0.875rem;
                 font-weight: 600;
                 letter-spacing: 0.05em;
@@ -381,7 +381,7 @@
             }
 
             .modern-table td {
-                padding: 1rem;
+                padding: 0.5rem;
                 vertical-align: middle;
                 border-bottom: 1px solid #f1f5f9;
             }
