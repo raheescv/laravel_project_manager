@@ -1,7 +1,7 @@
 <div>
-    <div class="inventory-transfer-container py-5">
+    <div class="inventory-transfer-container">
         <!-- Hero Section -->
-        <div class="transfer-hero mb-5">
+        <div class="transfer-hero mb-4">
             <div class="glass-card p-4">
                 <div class="transfer-flow position-relative">
                     <div class="row g-4">
@@ -242,7 +242,7 @@
             /* Branch Cards */
             .branch-card {
                 background: var(--card-bg);
-                padding: 2rem;
+                padding: 0.1rem;
                 border-radius: var(--border-radius);
                 text-align: center;
                 transition: var(--transition);
@@ -315,8 +315,7 @@
                 align-items: center;
                 gap: 1rem;
                 transition: var(--transition);
-                box-shadow: 5px 5px 15px rgba(0, 0, 0, 0.05),
-                    -5px -5px 15px rgba(255, 255, 255, 0.9);
+
             }
 
             .neo-card:hover {
