@@ -10,7 +10,7 @@ return new class() extends Migration
     {
         if (Schema::hasTable('sales') && ! Schema::hasIndex('sales', 'sale_date_branch_id_status_index')) {
             Schema::table('sales', function (Blueprint $table) {
-                $table->index(['date', 'counter_account_id'], 'journal_entries_date_counter_idx');
+                $table->index(['date', 'branch_id', 'status'], 'sale_date_branch_id_status_index');
             });
         }
     }

@@ -61,17 +61,24 @@ class Product extends Model implements AuditableContracts
         'second_reference_no',
     ];
 
-    public static function rules($id = 0, $merge = [])
+    public static function rules($data, $id = 0, $merge = [])
     {
-        return array_merge([
-            'name' => ['required', Rule::unique(self::class, 'name')->whereNull('deleted_at')->ignore($id)],
+        $rules = [
+            'name' => [
+                'required',
+                'max:100',
+                Rule::unique('products')->where('type', $data['type'])->whereNull('deleted_at')->ignore($id),
+            ],
+            'type' => ['required', 'max:100'],
             'code' => ['required'],
             'unit_id' => ['required'],
             'department_id' => ['required'],
             'main_category_id' => ['required'],
             'cost' => ['required'],
             'mrp' => ['required'],
-        ], $merge);
+        ];
+
+        return array_merge($rules, $merge);
     }
 
     public function scopeService($query)

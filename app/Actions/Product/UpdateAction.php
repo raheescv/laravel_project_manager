@@ -38,7 +38,7 @@ class UpdateAction
                 $data['cost'] = $data['mrp'];
             }
 
-            validationHelper(Product::rules($id), $data);
+            validationHelper(Product::rules($data, $id), $data);
 
             $data['updated_by'] = $user_id;
             $model->update($data);

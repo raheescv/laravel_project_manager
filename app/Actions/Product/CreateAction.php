@@ -34,9 +34,9 @@ class CreateAction
                 $data['cost'] = $data['mrp'];
             }
 
-            validationHelper(Product::rules(), $data);
+            validationHelper(Product::rules($data), $data);
             $user_id = $data['created_by'] = $data['updated_by'] = $user_id;
-            $trashedExists = Product::withTrashed()->firstWhere('name', $data['name']);
+            $trashedExists = Product::onlyTrashed()->firstWhere('name', $data['name']);
             if ($trashedExists) {
                 $trashedExists->restore();
                 $trashedExists->update($data);

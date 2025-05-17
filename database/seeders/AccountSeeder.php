@@ -12,18 +12,18 @@ class AccountSeeder extends Seeder
         // DB::table('accounts')->truncate();
         $data = [];
 
-        $data[] = ['name' => 'Cash', 'account_type' => 'asset', 'description' => null, 'model' => null];
-        $data[] = ['name' => 'Card', 'account_type' => 'asset', 'description' => null, 'model' => null];
-        $data[] = ['name' => 'General Customer', 'account_type' => 'asset', 'description' => null, 'model' => 'customer'];
-        $data[] = ['name' => 'Sale', 'account_type' => 'income', 'description' => 'Sales Revenue', 'model' => null];
-        $data[] = ['name' => 'Sales Returns', 'account_type' => 'expense', 'description' => 'Sales Returns & Allowances', 'model' => null];
-        $data[] = ['name' => 'Purchase', 'account_type' => 'expense', 'description' => 'Purchase', 'model' => null];
-        $data[] = ['name' => 'Tax Amount', 'account_type' => 'liability', 'description' => 'Tax', 'model' => null];
-        $data[] = ['name' => 'Discount', 'account_type' => 'expense', 'description' => 'Discounts', 'model' => null];
-        $data[] = ['name' => 'Purchase Discount', 'account_type' => 'income', 'description' => 'Purchase Discounts', 'model' => null];
-        $data[] = ['name' => 'Freight', 'account_type' => 'expense', 'description' => 'Cost of transportation or logistics', 'model' => null];
-        $data[] = ['name' => 'Inventory', 'account_type' => 'asset', 'description' => null, 'model' => null];
-        $data[] = ['name' => 'Cost of Goods Sold', 'account_type' => 'expense', 'description' => null, 'model' => null];
+        $data[] = ['name' => 'Cash', 'account_type' => 'asset', 'description' => null, 'model' => null, 'second_reference_no' => null];
+        $data[] = ['name' => 'Card', 'account_type' => 'asset', 'description' => null, 'model' => null, 'second_reference_no' => null];
+        $data[] = ['name' => 'General Customer', 'account_type' => 'asset', 'description' => null, 'model' => 'customer', 'second_reference_no' => 2];
+        $data[] = ['name' => 'Sale', 'account_type' => 'income', 'description' => 'Sales Revenue', 'model' => null, 'second_reference_no' => null];
+        $data[] = ['name' => 'Sales Returns', 'account_type' => 'expense', 'description' => 'Sales Returns & Allowances', 'model' => null, 'second_reference_no' => null];
+        $data[] = ['name' => 'Purchase', 'account_type' => 'expense', 'description' => 'Purchase', 'model' => null, 'second_reference_no' => null];
+        $data[] = ['name' => 'Tax Amount', 'account_type' => 'liability', 'description' => 'Tax', 'model' => null, 'second_reference_no' => null];
+        $data[] = ['name' => 'Discount', 'account_type' => 'expense', 'description' => 'Discounts', 'model' => null, 'second_reference_no' => null];
+        $data[] = ['name' => 'Purchase Discount', 'account_type' => 'income', 'description' => 'Purchase Discounts', 'model' => null, 'second_reference_no' => null];
+        $data[] = ['name' => 'Freight', 'account_type' => 'expense', 'description' => 'Cost of transportation or logistics', 'model' => null, 'second_reference_no' => null];
+        $data[] = ['name' => 'Inventory', 'account_type' => 'asset', 'description' => null, 'model' => null, 'second_reference_no' => null];
+        $data[] = ['name' => 'Cost of Goods Sold', 'account_type' => 'expense', 'description' => null, 'model' => null, 'second_reference_no' => null];
         foreach ($data as $value) {
             $value['is_locked'] = 1;
             $exists = DB::table('accounts')

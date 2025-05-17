@@ -238,6 +238,7 @@
                                         @endif
                                     </th>
                                     @if ($product->type == 'product')
+                                        <th class="text-end">Total</th>
                                         <th class="text-end">Action</th>
                                     @endif
                                 </tr>
@@ -258,6 +259,7 @@
                                             @endif
                                         </td>
                                         @if ($product->type == 'product')
+                                            <td class="text-end">{{ currency($item->total) }}</td>
                                             <td class="text-end">
                                                 @can('inventory.edit')
                                                     <i table_id="{{ $item->id }}" class="demo-psi-pencil fs-5 me-2 pointer edit"></i>
@@ -280,6 +282,7 @@
                                         </b>
                                     </th>
                                     @if ($product->type == 'product')
+                                        <th class='text-end'>{{ currency($data->sum('total')) }}</th>
                                         <th></th>
                                     @endif
                                 </tr>

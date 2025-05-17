@@ -114,7 +114,7 @@ class Page extends Component
     protected function rules()
     {
         $rules = [
-            'products.name' => ['required', Rule::unique(Product::class, 'name')->whereNull('deleted_at')->ignore($this->table_id)],
+            'products.name' => ['required'],
             'products.code' => ['required', Rule::unique(Product::class, 'code')->whereNull('deleted_at')->ignore($this->table_id)],
             'products.unit_id' => ['required'],
             'products.department_id' => ['required'],

@@ -82,6 +82,7 @@ class View extends Component
                 'inventories.batch',
                 'inventories.cost',
                 'inventories.quantity',
+                'inventories.total',
             )
             ->get();
         $logs = InventoryLog::with('branch')->orderBy($this->sortField, $this->sortDirection)

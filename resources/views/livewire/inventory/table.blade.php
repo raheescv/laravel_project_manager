@@ -66,101 +66,21 @@
                 <thead>
                     <tr class="text-capitalize">
                         <th>
-                            <a href="#" wire:click.prevent="sortBy('inventories.id')">
-                                #
-                                @if ($sortField === 'inventories.id')
-                                    {!! sortDirection($sortDirection) !!}
-                                @endif
-                            </a>
+                            <input type="checkbox" wire:model.live="selectAll" />
+                            <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="inventories.id" label="id" />
                         </th>
-                        <th>
-                            <a href="#" wire:click.prevent="sortBy('branches.name')">
-                                Branch
-                                @if ($sortField === 'branches.name')
-                                    {!! sortDirection($sortDirection) !!}
-                                @endif
-                            </a>
-                        </th>
-                        <th>
-                            <a href="#" wire:click.prevent="sortBy('departments.name')">
-                                Department
-                                @if ($sortField === 'departments.name')
-                                    {!! sortDirection($sortDirection) !!}
-                                @endif
-                            </a>
-                        </th>
-                        <th>
-                            <a href="#" wire:click.prevent="sortBy('main_categories.name')">
-                                Main Category
-                                @if ($sortField === 'main_categories.name')
-                                    {!! sortDirection($sortDirection) !!}
-                                @endif
-                            </a>
-                        </th>
-                        <th>
-                            <a href="#" wire:click.prevent="sortBy('sub_categories.name')">
-                                Sub Category
-                                @if ($sortField === 'sub_categories.name')
-                                    {!! sortDirection($sortDirection) !!}
-                                @endif
-                            </a>
-                        </th>
-                        <th>
-                            <a href="#" wire:click.prevent="sortBy('units.name')">
-                                Unit
-                                @if ($sortField === 'units.name')
-                                    {!! sortDirection($sortDirection) !!}
-                                @endif
-                            </a>
-                        </th>
-                        <th>
-                            <a href="#" wire:click.prevent="sortBy('products.code')">
-                                Code
-                                @if ($sortField === 'products.code')
-                                    {!! sortDirection($sortDirection) !!}
-                                @endif
-                            </a>
-                        </th>
-                        <th>
-                            <a href="#" wire:click.prevent="sortBy('products.name')">
-                                Name
-                                @if ($sortField === 'products.name')
-                                    {!! sortDirection($sortDirection) !!}
-                                @endif
-                            </a>
-                        </th>
-                        <th class="text-end">
-                            <a href="#" wire:click.prevent="sortBy('inventories.quantity')">
-                                Qty
-                                @if ($sortField === 'inventories.quantity')
-                                    {!! sortDirection($sortDirection) !!}
-                                @endif
-                            </a>
-                        </th>
-                        <th class="text-end">
-                            <a href="#" wire:click.prevent="sortBy('inventories.cost')">
-                                cost
-                                @if ($sortField === 'inventories.cost')
-                                    {!! sortDirection($sortDirection) !!}
-                                @endif
-                            </a>
-                        </th>
-                        <th>
-                            <a href="#" wire:click.prevent="sortBy('inventories.barcode')">
-                                Barcode
-                                @if ($sortField === 'inventories.barcode')
-                                    {!! sortDirection($sortDirection) !!}
-                                @endif
-                            </a>
-                        </th>
-                        <th>
-                            <a href="#" wire:click.prevent="sortBy('inventories.batch')">
-                                Batch
-                                @if ($sortField === 'inventories.batch')
-                                    {!! sortDirection($sortDirection) !!}
-                                @endif
-                            </a>
-                        </th>
+                        <th> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="branches.name" label="Branch" /> </th>
+                        <th> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="departments.name" label="department" /> </th>
+                        <th> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="main_categories.name" label="Main Category" /> </th>
+                        <th> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="sub_categories.name" label="sub Category" /> </th>
+                        <th> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="units.name" label="unit" /> </th>
+                        <th> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="products.code" label="code" /> </th>
+                        <th> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="products.name" label="name" /> </th>
+                        <th class="text-end"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="inventories.quantity" label="qty" /> </th>
+                        <th class="text-end"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="inventories.cost" label="cost" /> </th>
+                        <th class="text-end"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="inventories.total" label="Total" /> </th>
+                        <th> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="inventories.barcode" label="barcode" /> </th>
+                        <th> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="inventories.batch" label="batch" /> </th>
                     </tr>
                 </thead>
                 <tbody>
@@ -186,11 +106,18 @@
                             </td>
                             <td class="text-end">{{ $item->quantity }}</td>
                             <td class="text-end">{{ currency($item->cost) }}</td>
+                            <th class="text-end">{{ currency($item->total) }}</th>
                             <td>{{ $item->barcode }}</td>
                             <td>{{ $item->batch }}</td>
                         </tr>
                     @endforeach
                 </tbody>
+                <tfoot>
+                    <th class="text-end" colspan="10">Total</th>
+                    <th class="text-end">{{ currency($total) }}</th>
+                    <th></th>
+                    <th></th>
+                </tfoot>
             </table>
         </div>
         {{ $data->links() }}

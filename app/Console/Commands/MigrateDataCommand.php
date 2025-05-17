@@ -12,6 +12,7 @@ use App\Models\User;
 use App\Models\UserHasBranch;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Spatie\Permission\Models\Role;
 
@@ -21,9 +22,12 @@ class MigrateDataCommand extends Command
 
     protected $description = 'Migrate data from mysql2 to mysql database';
 
+    public $paymentModesIds;
+
     public function handle()
     {
         $this->info('Starting data migration...');
+        $this->paymentModesIds = DB::connection('mysql2')->table('account_heads')->whereIn('account_category_id', [16, 17])->pluck('id', 'id')->toArray();
 
         $this->accounts();
         $this->customer();
@@ -32,6 +36,7 @@ class MigrateDataCommand extends Command
         $this->products();
         $this->employees();
         $this->users();
+        sleep(40);
         $this->sales();
         $this->purchases();
 
@@ -42,7 +47,7 @@ class MigrateDataCommand extends Command
     {
         $account_heads = DB::connection('mysql2')
             ->table('account_heads')
-            ->whereIn('id', [1, 16, 94, 336])
+            ->whereIn('id', $this->paymentModesIds)
             ->get();
         foreach ($account_heads as $value) {
             $name = ucfirst(strtolower($value->name));
@@ -173,6 +178,7 @@ class MigrateDataCommand extends Command
         DB::connection('mysql2')
             ->table('sales')
             ->whereNull('sales.deleted_at')
+            // ->where('invoice_no', '25-26/614')
             ->orderBy('sales.id')
             ->chunk(100, function ($sales) use ($progressBar) {
                 foreach ($sales as $sale) {
@@ -276,8 +282,8 @@ class MigrateDataCommand extends Command
                                 ->table('journals')
                                 ->whereNull('deleted_at')
                                 ->where('sale_id', $sale->id)
-                                ->whereIn('debit', [1, 16, 94, 336])
-                                ->get();
+                                ->whereIn('debit', $this->paymentModesIds)
+                                ->get(['amount', 'debit']);
                             $data['payments'] = [];
                             foreach ($journals as $value) {
                                 $account_id = Account::where('second_reference_no', $value->debit)->value('id');
@@ -319,7 +325,6 @@ class MigrateDataCommand extends Command
                     foreach ($users as $item) {
                         try {
                             DB::transaction(function () use ($item) {
-                                // Create user
                                 $name = ucfirst(strtolower($item->name));
                                 $user = User::create([
                                     'type' => 'user',
@@ -328,7 +333,7 @@ class MigrateDataCommand extends Command
                                     'name' => $name,
                                     'email' => strtolower($item->email ?? $name.'@astra.com'),
                                     'mobile' => $item->mobile,
-                                    'password' => $item->password,
+                                    'password' => $item->password ?: Hash::make('asdasd'),
                                     'created_at' => $item->created_at,
                                     'updated_at' => $item->updated_at,
                                 ]);
@@ -391,7 +396,7 @@ class MigrateDataCommand extends Command
                                     'dob' => $item->dob,
                                     'doj' => $item->doj,
                                     'pin' => $item->pin,
-                                    'password' => $item->password,
+                                    'password' => $item->password ?: Hash::make('asdasd'),
                                     'created_at' => $item->created_at,
                                     'updated_at' => $item->updated_at,
                                 ]);
@@ -449,7 +454,7 @@ class MigrateDataCommand extends Command
             }
             $serviceData = [
                 'type' => 'product',
-                'code' => $item->code,
+                'code' => $item->code ?: rand(100000, 999999),
                 'second_reference_no' => $item->id,
                 'name' => $name,
                 'name_arabic' => $item->name_arabic,
@@ -459,7 +464,7 @@ class MigrateDataCommand extends Command
                 'cost' => $item->cost,
                 'unit' => ucfirst(strtolower($item->unit_name)),
                 'brand' => ucfirst(strtolower($item->brand_name)),
-                'mrp' => $item->mrp,
+                'mrp' => $item->mrp ?: 0,
                 'tax' => $item->tax,
                 'priority' => $item->priority ? $item->priority : 0,
                 'size' => $item->size,

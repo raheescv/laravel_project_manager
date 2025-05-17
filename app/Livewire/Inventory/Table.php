@@ -127,6 +127,7 @@ class Table extends Component
                 'inventories.id',
                 'inventories.cost',
                 'inventories.quantity',
+                'inventories.total',
                 'inventories.barcode',
                 'inventories.batch',
                 'inventories.created_at',
@@ -144,11 +145,14 @@ class Table extends Component
                 'units.name as unit_name',
                 'branch_id',
                 'branches.name as branch_name',
-            )
-            ->paginate($this->limit);
+            );
+        $total = clone $data;
+        $total = $total->sum('total');
+        $data = $data->paginate($this->limit);
 
         return view('livewire.inventory.table', [
             'data' => $data,
+            'total' => $total,
         ]);
     }
 }
