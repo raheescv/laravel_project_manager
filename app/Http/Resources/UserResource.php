@@ -12,15 +12,17 @@ class UserResource extends JsonResource
     {
         return [
             'token' => $this->createToken('astra-auth-token')->plainTextToken,
-            'id' => $this->id,
+            'id' => (string) $this->id,
             'type' => $this->type,
+            'type' => 'admin',
+            'user_type' => $this->type,
+            'user_type' => 'admin',
             'name' => $this->name,
-            'code' => $this->code,
             'email' => $this->email,
             'mobile' => $this->mobile,
             'is_admin' => (bool) $this->is_admin,
-            'branch_id' => $this->default_branch_id,
-            'invoiceCounts' => Sale::count(),
+            'branch_id' => (string) $this->default_branch_id,
+            'invoice_counts' => Sale::count(),
             // 'is_active' => (bool) $this->is_active,
             // 'branch' => $this->when($this->branch, [
             //     'id' => $this->branch?->id,

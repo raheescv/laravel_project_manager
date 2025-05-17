@@ -43,11 +43,11 @@ class ProductController extends Controller
             ->when($request->main_category_id, function ($query, $main_category_id) {
                 return $query->where('main_category_id', $main_category_id);
             })
+            // ->where('name', 1)
+            ->limit(2)
             ->active();
 
-        $products = $request->per_page ?
-            $query->paginate($request->per_page) :
-            $query->get();
+        $products = $request->per_page ? $query->paginate($request->per_page) : $query->get();
 
         return ProductResource::collection($products);
     }
