@@ -126,16 +126,16 @@
                                                     <td>{{ $loop->iteration }}</td>
                                                     <td>{{ $item['name'] }}</td>
                                                     <td>
-                                                        {{ html()->number('unit_price')->value($item['unit_price'])->class('form-control form-control-sm text-end px-1')->attribute('wire:model.live', 'items.' . $item['key'] . '.unit_price') }}
+                                                        {{ html()->number('unit_price')->value($item['unit_price'])->class('form-control form-control-sm text-end px-1')->attribute('wire:model.lazy', 'items.' . $item['key'] . '.unit_price') }}
                                                     </td>
                                                     <td>
-                                                        {{ html()->number('quantity')->value($item['quantity'])->attribute('min', 1)->class('form-control form-control-sm text-end px-1')->attribute('step', 'any')->attribute('wire:model.live', 'items.' . $item['key'] . '.quantity') }}
+                                                        {{ html()->number('quantity')->value($item['quantity'])->attribute('min', 1)->class('form-control form-control-sm text-end px-1')->attribute('step', 'any')->attribute('wire:model.lazy', 'items.' . $item['key'] . '.quantity') }}
                                                     </td>
                                                     <td>
-                                                        {{ html()->number('discount')->value($item['discount'])->class('form-control form-control-sm text-end px-1')->attribute('wire:model.live', 'items.' . $item['key'] . '.discount') }}
+                                                        {{ html()->number('discount')->value($item['discount'])->class('form-control form-control-sm text-end px-1')->attribute('wire:model.lazy', 'items.' . $item['key'] . '.discount') }}
                                                     </td>
                                                     <td>
-                                                        {{ html()->number('tax')->value($item['tax'])->attribute('max', '50')->class('form-control form-control-sm text-end px-1')->attribute('wire:model.live', 'items.' . $item['key'] . '.tax') }}
+                                                        {{ html()->number('tax')->value($item['tax'])->attribute('max', '50')->class('form-control form-control-sm text-end px-1')->attribute('wire:model.lazy', 'items.' . $item['key'] . '.tax') }}
                                                     </td>
                                                     <td class="text-end fw-bold">{{ currency($item['total']) }}</td>
                                                     @if ($sales['other_discount'] > 0)
@@ -156,7 +156,7 @@
                                         @endphp
                                         <tr class="fw-bold">
                                             <th colspan="3" class="text-end">Total</th>
-                                            <th class="text-end">{{ currency($items->sum('quantity')) }}</th>
+                                            <th class="text-end">{{ currency($items->sum('quantity'), 3) }}</th>
                                             <th class="text-end">{{ currency($items->sum('discount')) }}</th>
                                             <th class="text-end">{{ currency($items->sum('tax_amount')) }}</th>
                                             <th class="text-end">{{ currency($items->sum('total')) }}</th>
