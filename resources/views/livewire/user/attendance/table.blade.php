@@ -25,7 +25,7 @@
                     </div>
                     <div class="col-md-3" wire:ignore>
                         <label for="employee_id">Employee</label>
-                        {{ html()->select('employee_id', [session('employee_id') => session('employee_name')])->value(session('employee_id'))->class('select-employee_id-list')->id('employee_id')->placeholder('Employee') }}
+                        {{ html()->select('employee_id', [session('employee_id') => session('employee_name')])->value()->class('select-employee_id-list')->id('employee_id')->placeholder('Employee') }}
                     </div>
 
                     <div class="col-md-3 text-md-end mt-3 mt-md-0">
@@ -295,6 +295,9 @@
                 });
                 window.addEventListener('RefreshAttendanceTable', event => {
                     Livewire.dispatch("Attendance-Refresh-Component");
+                });
+                $('#employee_id').on('change', function(e) {
+                    @this.set('filter.employee_id', $(this).val());
                 });
             });
         </script>
