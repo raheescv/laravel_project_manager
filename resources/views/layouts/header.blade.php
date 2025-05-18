@@ -77,6 +77,12 @@
                                         </div>
                                         <h5 class="flex-grow-1 m-0">Settings</h5>
                                     </div>
+                                    @can('customer.view')
+                                        <a href="{{ route('account::customer::index') }}" class="list-group-item list-group-item-action">Customers</a>
+                                    @endcan
+                                    @can('vendor.view')
+                                        <a href="{{ route('account::vendor::index') }}" class="list-group-item list-group-item-action">Vendors</a>
+                                    @endcan
                                     @can('product.view')
                                         <a href="{{ route('product::index') }}" class="list-group-item list-group-item-action">Product</a>
                                     @endcan

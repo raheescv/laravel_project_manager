@@ -184,6 +184,7 @@ return [
     'cashFlow' => 'CashFlow',
     'summary' => 'Summary',
     'taxReport' => 'TaxReport',
+    'tax' => 'tax',
     'detailedGstReport' => 'DetailedGstReport',
     'cessReport' => 'CessReport',
     'topMovingProduct' => 'TopMovingProduct',

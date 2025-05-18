@@ -349,6 +349,15 @@
                     @endif
                 </tr>
             @endif
+            @if ($sale->tax)
+                <tr>
+                    <td class="text-left" width="39%"><b>Tax</b></td>
+                    <td class="text-right"><b>{{ currency($sale->tax) }}</b></td>
+                    @if ($thermal_printer_style == 'with_arabic')
+                        <td width="39%" class="text-right"> <b>{{ __('lang.tax', [], 'ar') }}</b> </td>
+                    @endif
+                </tr>
+            @endif
             <tr>
                 <td class="text-left" width="39%"><b>Total</b></td>
                 <td class="text-right"><b>{{ currency($sale->grand_total) }}</b></td>

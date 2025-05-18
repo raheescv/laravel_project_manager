@@ -312,7 +312,7 @@
                                                 </div>
                                             </td>
                                             <td class="text-end">{{ currency($item['unit_price']) }}</td>
-                                            <td class="text-end">{{ currency($item['quantity']) }}</td>
+                                            <td class="text-end">{{ currency($item['quantity'], 3) }}</td>
                                             <td class="text-end">
                                                 @if ($item['discount'] != 0)
                                                     {{ currency($item['discount']) }}
@@ -341,7 +341,7 @@
                                 @endphp
                                 <tr>
                                     <th colspan="3" class="text-end">Total</th>
-                                    <th class="text-end">{{ currency($items->sum('quantity')) }}</th>
+                                    <th class="text-end">{{ currency($items->sum('quantity'), 3) }}</th>
                                     <th class="text-end">{{ currency($items->sum('discount')) }}</th>
                                     <th class="text-end">{{ currency($items->sum('tax_amount')) }}</th>
                                     <th class="text-end">{{ currency($items->sum('total')) }}</th>
@@ -678,7 +678,7 @@
                                                 </a>
                                             </td>
                                             <td class="text-white text-end">{{ currency($item['unit_price']) }}</td>
-                                            <td class="text-white text-end">{{ currency($item['quantity']) }}</td>
+                                            <td class="text-white text-end">{{ currency($item['quantity'], 3) }}</td>
                                             <td class="text-white text-end">{{ currency($item['discount']) }}</td>
                                             <td class="text-white text-end">{{ currency($item['tax_amount']) }} ({{ round($item['tax'], 2) }}%)</td>
                                             <td class="text-white text-end">{{ currency($item['total']) }}</td>

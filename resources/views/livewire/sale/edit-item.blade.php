@@ -23,7 +23,7 @@
                     <div class="col-md-6">
                         <div class="form-group">
                             <b><label for="quantity" class="text-capitalize text-end">quantity</label></b>
-                            {{ html()->number('quantity')->value('')->class('form-control number select_on_focus')->attribute('wire:model.live', 'item.quantity') }}
+                            {{ html()->number('quantity')->value('')->class('form-control number select_on_focus')->attribute('wire:model.live', 'item.quantity')->attribute('step', 'any') }}
                         </div>
                     </div>
                 </div>

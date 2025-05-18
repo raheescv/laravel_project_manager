@@ -124,6 +124,7 @@ return [
     'cashFlow' => 'نقد متدفق',
     'summary' => 'ملخص',
     'taxReport' => 'تقرير الضرائب',
+    'tax' => 'ضريبة',
     'detailedGstReport' => 'تقرير مفصل Gst',
     'cessReport' => 'CessReport',
     'topMovingProduct' => 'أعلى المنتجات المتحركة',

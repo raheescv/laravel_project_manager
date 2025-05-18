@@ -45,7 +45,7 @@
                                             {{ html()->number('unit_price')->value($item['unit_price'])->class('number select_on_focus form-control form-control-sm text-end')->attribute('wire:model.live', 'items.' . $item['key'] . '.unit_price') }}
                                         </td>
                                         <td>
-                                            {{ html()->number('quantity')->value($item['quantity'])->attribute('min', 1)->class('number select_on_focus form-control form-control-sm text-end')->attribute('wire:model.live', 'items.' . $item['key'] . '.quantity') }}
+                                            {{ html()->number('quantity')->value($item['quantity'])->attribute('min', 1)->attribute('step', 'any')->class('number select_on_focus form-control form-control-sm text-end')->attribute('wire:model.live', 'items.' . $item['key'] . '.quantity') }}
                                         </td>
                                         <td>
                                             {{ html()->number('discount')->value($item['discount'])->class('number select_on_focus form-control form-control-sm text-end')->attribute('wire:model.live', 'items.' . $item['key'] . '.discount') }}
