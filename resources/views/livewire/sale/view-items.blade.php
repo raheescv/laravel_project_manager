@@ -69,7 +69,7 @@
                             @endphp
                             <tr class="fw-bold">
                                 <td colspan="3" class="text-end">Total</td>
-                                <td class="text-end">{{ currency($items->sum('quantity')) }}</td>
+                                <td class="text-end">{{ currency($items->sum('quantity'), 3) }}</td>
                                 <td class="text-end">{{ currency($items->sum('discount')) }}</td>
                                 <td class="text-end">{{ currency($items->sum('tax_amount')) }}</td>
                                 <td class="text-end">{{ currency($items->sum('total')) }}</td>
