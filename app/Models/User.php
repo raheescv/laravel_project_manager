@@ -84,6 +84,11 @@ class User extends Authenticatable implements AuditableContracts
         return $this->belongsTo(Branch::class, 'default_branch_id');
     }
 
+    public function attendances()
+    {
+        return $this->hasMany(UserAttendance::class, 'employee_id');
+    }
+
     protected function casts(): array
     {
         return [
@@ -101,6 +106,11 @@ class User extends Authenticatable implements AuditableContracts
     public function scopeUser($query)
     {
         return $query->where('type', 'user');
+    }
+
+    public function scopeActive($query)
+    {
+        return $query->where('is_active', 1);
     }
 
     public function getDropDownList($request)

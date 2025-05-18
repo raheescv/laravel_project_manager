@@ -11,6 +11,7 @@ return [
     'vendor' => ['create', 'view', 'edit', 'delete', 'export'],
     'user' => ['create', 'view', 'edit', 'delete'],
     'employee' => ['create', 'view', 'edit', 'delete', 'export'],
+    'employee attendance' => ['create', 'view', 'modify', 'export'],
     'role' => ['create', 'view', 'edit', 'delete', 'permissions'],
     'branch' => ['create', 'view', 'edit', 'delete'],
     'product' => ['create', 'view', 'edit', 'delete', 'import', 'export'],
