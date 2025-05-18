@@ -2,7 +2,7 @@
 
 namespace App\Livewire\Dashboard;
 
-use App\Models\Models\Views\Ledger;
+use App\Models\JournalEntry;
 use Livewire\Component;
 
 class IncomeExpenseChart extends Component
@@ -13,8 +13,8 @@ class IncomeExpenseChart extends Component
             'start_date' => now()->startOfMonth(),
             'end_date' => now()->endOfMonth(),
         ];
-        $income = Ledger::incomeList($filter)->sum('credit');
-        $expense = Ledger::expenseList($filter)->sum('debit');
+        $income = JournalEntry::incomeList($filter)->sum('credit');
+        $expense = JournalEntry::expenseList($filter)->sum('debit');
 
         $chartData = [
             'labels' => ['Income', 'Expense'],

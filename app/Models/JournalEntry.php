@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Scopes\CurrentBranchScope;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use OwenIt\Auditing\Auditable;
@@ -43,5 +44,71 @@ class JournalEntry extends Model implements AuditableContracts
     public function account()
     {
         return $this->belongsTo(Account::class);
+    }
+
+    public function scopeCurrentBranch($query)
+    {
+        return CurrentBranchScope::apply($query);
+    }
+
+    public function scopeLast7Days($query)
+    {
+        return $query->whereBetween('date', [date('Y-m-d', strtotime('-7 days')), date('Y-m-d')]);
+    }
+
+    public static function expenseList($filter)
+    {
+        return self::join('journals', 'journals.id', '=', 'journal_entries.journal_id')
+            ->where('source', 'expense')
+            ->where('debit', '>', 0)
+            ->when($filter['search'] ?? '', function ($query, $value) {
+                return $query->where(function ($q) use ($value) {
+                    $value = trim($value);
+
+                    return $q->where('description', 'like', "%{$value}%")
+                        ->orWhere('reference_number', 'like', "%{$value}%")
+                        ->orWhere('remarks', 'like', "%{$value}%");
+                });
+            })
+            ->when($filter['from_date'] ?? '', function ($query, $value) {
+                return $query->where('date', '>=', date('Y-m-d', strtotime($value)));
+            })
+            ->when($filter['to_date'] ?? '', function ($query, $value) {
+                return $query->where('date', '<=', date('Y-m-d', strtotime($value)));
+            })
+            ->when($filter['branch_id'] ?? '', function ($query, $value) {
+                return $query->where('branch_id', $value);
+            })
+            ->when($filter['account_id'] ?? '', function ($query, $value) {
+                return $query->where('account_id', $value);
+            });
+    }
+
+    public static function incomeList($filter)
+    {
+        return self::join('journals', 'journals.id', '=', 'journal_entries.journal_id')
+            ->where('source', 'income')
+            ->where('credit', '>', 0)
+            ->when($filter['search'] ?? '', function ($query, $value) {
+                return $query->where(function ($q) use ($value) {
+                    $value = trim($value);
+
+                    return $q->where('description', 'like', "%{$value}%")
+                        ->orWhere('reference_number', 'like', "%{$value}%")
+                        ->orWhere('remarks', 'like', "%{$value}%");
+                });
+            })
+            ->when($filter['from_date'] ?? '', function ($query, $value) {
+                return $query->where('date', '>=', date('Y-m-d', strtotime($value)));
+            })
+            ->when($filter['to_date'] ?? '', function ($query, $value) {
+                return $query->where('date', '<=', date('Y-m-d', strtotime($value)));
+            })
+            ->when($filter['branch_id'] ?? '', function ($query, $value) {
+                return $query->where('branch_id', $value);
+            })
+            ->when($filter['account_id'] ?? '', function ($query, $value) {
+                return $query->where('account_id', $value);
+            });
     }
 }

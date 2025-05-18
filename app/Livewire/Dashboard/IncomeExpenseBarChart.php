@@ -2,7 +2,7 @@
 
 namespace App\Livewire\Dashboard;
 
-use App\Models\Models\Views\Ledger;
+use App\Models\JournalEntry;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Livewire\Component;
@@ -25,20 +25,21 @@ class IncomeExpenseBarChart extends Component
             $current->addMonth();
         }
 
-        $income = Ledger::incomeList($filter)
-            ->select(DB::raw('DATE_FORMAT(date, "%Y-%m") as month'), DB::raw('SUM(credit) as income'))
+        $income = JournalEntry::incomeList($filter)
+            ->select(DB::raw('DATE_FORMAT(date, "%Y-%m") as month'), DB::raw('SUM(debit) as total'))
             ->groupBy('month')
-            ->pluck('income', 'month')
+            ->pluck('total', 'month')
             ->toArray();
 
-        $expense = Ledger::expenseList($filter)
-            ->select(DB::raw('DATE_FORMAT(date, "%Y-%m") as month'), DB::raw('SUM(debit) as expense'))
+        $expense = JournalEntry::expenseList($filter)
+            ->select(DB::raw('DATE_FORMAT(date, "%Y-%m") as month'), DB::raw('SUM(debit) as total'))
             ->groupBy('month')
-            ->pluck('expense', 'month')
+            ->pluck('total', 'month')
             ->toArray();
 
         $chartData = $dates->map(function ($month) use ($income, $expense) {
             $date = Carbon::createFromFormat('Y-m', $month);
+
             return [
                 'date' => $date->format('M Y'),
                 'income' => $income[$month] ?? 0,
