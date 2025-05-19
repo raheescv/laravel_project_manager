@@ -86,6 +86,7 @@ class Page extends Component
         foreach ($this->employees as $employee) {
             $this->attendance[$employee->id] = $value;
         }
+        $this->calculateStats();
     }
 
     public function save()
