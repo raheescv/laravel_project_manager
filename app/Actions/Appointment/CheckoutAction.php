@@ -38,6 +38,7 @@ class CheckoutAction
                 'updated_by' => $userId,
             ];
 
+            $saleData['comboOffers'] = [];
             $saleData['items'] = [];
             $saleData['payments'] = [];
             foreach ($model->items as $value) {

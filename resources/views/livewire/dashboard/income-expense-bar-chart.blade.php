@@ -60,7 +60,8 @@
                                         minimumFractionDigits: 0,
                                         maximumFractionDigits: 0
                                     });
-                                }
+                                },
+                                offset: -2,
                             },
                             legend: {
                                 display: true,

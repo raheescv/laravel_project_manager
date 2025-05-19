@@ -12,16 +12,25 @@
                 <p class="lead mb-0 text-white">Here's what's happening with your business today.</p>
             </div>
 
-            <div class="row mb-4">
-                @if (auth()->user()->can('sale.dashboard weekly summary') || auth()->user()->can('inventory.dashboard status'))
+            @if (auth()->user()->can('sale.dashboard weekly summary') || auth()->user()->can('inventory.dashboard status'))
+                <div class="row mb-4">
                     <div class="col-xl-12 mb-4">
                         <div class="row g-3">
                             @livewire('dashboard.top-card')
                         </div>
                     </div>
-                @endif
-            </div>
-
+                </div>
+            @endif
+            @can('appointment.view')
+                <div class="row">
+                    <div class="col-xl-8 mb-4">
+                        @livewire('dashboard.appointment.appointment-chart')
+                    </div>
+                    <div class="col-xl-4 mb-4">
+                        @livewire('dashboard.appointment.upcoming-appointments')
+                    </div>
+                </div>
+            @endcan
             <div class="row mb-4">
                 @can('sale.dashboard bar chart')
                     <div class="col-xl-8 mb-4">
