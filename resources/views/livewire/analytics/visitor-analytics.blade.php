@@ -108,7 +108,7 @@
     <!-- Traffic & Popular Pages -->
     <div class="row g-4">
         <!-- Traffic Chart -->
-        <div class="col-lg-8">
+        <div class="col-lg-7">
             <div class="card border-0 shadow-sm">
                 <div class="card-header bg-transparent border-0">
                     <h5 class="card-title mb-0">Traffic Overview</h5>
@@ -122,7 +122,7 @@
         </div>
 
         <!-- Popular Pages -->
-        <div class="col-lg-4">
+        <div class="col-lg-5">
             <div class="card border-0 shadow-sm">
                 <div class="card-header bg-transparent border-0">
                     <h5 class="card-title mb-0">Popular Pages</h5>
@@ -154,6 +154,8 @@
     @push('scripts')
         <script>
             document.addEventListener('livewire:initialized', function() {
+                Chart.register(ChartDataLabels);
+
                 // Initialize traffic chart
                 let trafficCtx = document.getElementById('trafficChart').getContext('2d');
                 trafficChart = new Chart(trafficCtx, {
@@ -165,6 +167,52 @@
                         plugins: {
                             legend: {
                                 display: false
+                            },
+                            title: {
+                                display: true,
+                                text: 'Daily Visitor Traffic',
+                                position: 'top',
+                                font: {
+                                    size: 16,
+                                    weight: 'bold'
+                                },
+                                padding: {
+                                    top: 10,
+                                    bottom: 20
+                                }
+                            },
+                            datalabels: {
+                                anchor: 'end',
+                                align: 'top',
+                                offset: 5,
+                                backgroundColor: 'rgba(255,255,255,0.8)',
+                                borderRadius: 4,
+                                padding: 4,
+                                color: '#666',
+                                font: {
+                                    weight: 'bold',
+                                    size: 11
+                                },
+                                formatter: function(value) {
+                                    return value > 0 ? value.toLocaleString() : '';
+                                }
+                            },
+                            datalabels: {
+                                display: true,
+                                anchor: 'end',
+                                align: 'top',
+                                offset: 1,
+                                backgroundColor: 'rgba(255,255,255,0.8)',
+                                borderRadius: 4,
+                                padding: 4,
+                                color: '#666',
+                                font: {
+                                    weight: 'bold',
+                                    size: 11
+                                },
+                                formatter: function(value) {
+                                    return value > 0 ? value.toLocaleString() : '';
+                                }
                             }
                         },
                         scales: {
@@ -187,9 +235,6 @@
             });
 
             // Handle real-time updates
-            // Livewire.on('visitorDataUpdated', (data) => {
-            //     updateChart(event.detail[0]);
-            // });
             window.addEventListener('visitorDataUpdated', event => {
                 updateChart(event.detail[0]);
             });
