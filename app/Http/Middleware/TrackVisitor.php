@@ -44,6 +44,7 @@ class TrackVisitor
             && ! $request->is('api/*')
             && ! $request->is('_debugbar/*')
             && ! $request->is('livewire/*')
+            && ! str_contains($path, '/')
             && ! str_contains($path, 'list')
             && ! str_contains($path, '.')  // Skip files with extensions (assets)
             && ! app()->runningUnitTests();
