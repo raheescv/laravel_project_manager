@@ -53,7 +53,7 @@
                                                 <div class="flex-grow-1">
                                                     <input type="checkbox" class="form-check-input me-2" value="{{ $key }}" wire:model.live="selectedServices"
                                                         id="service-{{ $key }}">
-                                                    <span class="text-truncate">{{ $item['employee_name'] }} - {{ $item['name'] }}</span>
+                                                    <span>{{ $item['employee_name'] }} - {{ $item['name'] }}</span>
                                                 </div>
                                                 <div class="text-end ms-2">
                                                     <small class="text-success d-block">
