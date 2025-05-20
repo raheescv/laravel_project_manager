@@ -9,7 +9,7 @@ use Livewire\Component;
 
 class Overview extends Component
 {
-    public $period = 'day';
+    public $period = 'week';
 
     public function changePeriod($period)
     {
@@ -66,18 +66,12 @@ class Overview extends Component
 
     private function getMonthlyData()
     {
-        // Initialize last 12 months with zero amounts
         $list = collect(range(11, 0, -1))->map(function ($months) {
             $date = now()->subMonths($months);
 
-            return (object) [
-                'order_date' => $date->format('Y-m'),
-                'date' => $date->format('M Y'),
-                'amount' => 0,
-            ];
+            return (object) ['order_date' => $date->format('Y-m'), 'date' => $date->format('M Y'), 'amount' => 0];
         })->keyBy('order_date');
 
-        // Get actual sales data
         $salesData = Sale::completed()
             ->currentBranch()
             ->lastYear()
@@ -86,16 +80,37 @@ class Overview extends Component
             ->get()
             ->keyBy('order_date');
 
-        // Merge initialized data with actual sales data
         return $list->map(function ($month, $orderDate) use ($salesData) {
             if (isset($salesData[$orderDate])) {
                 $month->amount = $salesData[$orderDate]->amount;
             }
 
-            return (object) [
-                'date' => $month->date,
-                'amount' => $month->amount,
-            ];
+            return (object) ['date' => $month->date, 'amount' => $month->amount];
+        })->values();
+    }
+
+    private function getYearlyData()
+    {
+        $list = collect(range(5, 0, -1))->map(function ($years) {
+            $date = now()->subYears($years);
+
+            return (object) ['order_date' => $date->format('Y'), 'date' => $date->format('Y'), 'amount' => 0];
+        })->keyBy('order_date');
+
+        $salesData = Sale::completed()
+            ->currentBranch()
+            ->where('date', '>=', now()->subYears(10)->startOfYear())
+            ->selectRaw("DATE_FORMAT(date, '%Y') as order_date, DATE_FORMAT(date, '%Y') as date, SUM(grand_total) as amount")
+            ->groupBy(DB::raw("DATE_FORMAT(date, '%Y')"))
+            ->get()
+            ->keyBy('order_date');
+
+        return $list->map(function ($year, $orderDate) use ($salesData) {
+            if (isset($salesData[$orderDate])) {
+                $year->amount = $salesData[$orderDate]->amount;
+            }
+
+            return (object) ['date' => $year->date, 'amount' => $year->amount];
         })->values();
     }
 
@@ -107,7 +122,9 @@ class Overview extends Component
         $highestSale = Sale::completed()->currentBranch()->today()->max('grand_total');
         $lowestSale = Sale::completed()->currentBranch()->today()->min('grand_total');
 
-        $paymentData = SalePayment::completedSale()->currentBranch()->today()
+        $paymentData = SalePayment::completedSale()
+            ->currentBranch()
+            ->today()
             ->join('accounts', 'payment_method_id', '=', 'accounts.id')
             ->select('accounts.name as method')
             ->selectRaw('sum(amount) as amount')
@@ -131,6 +148,7 @@ class Overview extends Component
         $data = match ($this->period) {
             'week' => $this->getWeeklyData(),
             'month' => $this->getMonthlyData(),
+            'year' => $this->getYearlyData(),
             default => $this->getDailyData(),
         };
 

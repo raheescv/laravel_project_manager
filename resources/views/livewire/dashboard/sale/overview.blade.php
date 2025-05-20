@@ -9,6 +9,7 @@
                 <button wire:click="changePeriod('day')" class="btn btn-sm {{ $period === 'day' ? 'btn-primary' : 'btn-light' }}">Day</button>
                 <button wire:click="changePeriod('week')" class="btn btn-sm {{ $period === 'week' ? 'btn-primary' : 'btn-light' }}">Week</button>
                 <button wire:click="changePeriod('month')" class="btn btn-sm {{ $period === 'month' ? 'btn-primary' : 'btn-light' }}">Month</button>
+                <button wire:click="changePeriod('year')" class="btn btn-sm {{ $period === 'year' ? 'btn-primary' : 'btn-light' }}">Year</button>
             </div>
             <div class="dropdown">
                 <button class="btn btn-light btn-sm rounded-pill px-3 d-flex align-items-center gap-2" data-bs-toggle="dropdown">
@@ -112,20 +113,30 @@
                 }
 
                 const ctx = document.getElementById("sale-overview-chart").getContext('2d');
-                const gradient = ctx.createLinearGradient(0, 0, 0, 200);
-                gradient.addColorStop(0, 'rgba(66, 135, 245, 0.2)');
-                gradient.addColorStop(1, 'rgba(66, 135, 245, 0.0)');
+
+                // Create sophisticated gradient
+                const gradient = ctx.createLinearGradient(0, 0, 0, 300);
+                gradient.addColorStop(0, 'rgba(16, 185, 129, 0.65)'); // Emerald
+                gradient.addColorStop(0.5, 'rgba(16, 185, 129, 0.35)'); // Mid fade
+                gradient.addColorStop(1, 'rgba(16, 185, 129, 0.05)'); // Almost transparent
 
                 salesChart = new Chart(ctx, {
-                    type: "line",
+                    type: "bar",
                     data: {
                         datasets: [{
                             label: "Sales",
                             data: data,
-                            borderColor: '#4287f5',
+                            borderColor: '#059669', // Emerald 600
+                            borderWidth: 1.5,
                             backgroundColor: gradient,
-                            fill: true,
-                            tension: 0.4,
+                            borderRadius: {
+                                topLeft: 8,
+                                topRight: 8
+                            },
+                            barThickness: 'flex',
+                            minBarLength: 6,
+                            categoryPercentage: 0.8,
+                            barPercentage: 0.9,
                             parsing: {
                                 xAxisKey: "date",
                                 yAxisKey: "amount"
@@ -135,65 +146,132 @@
                     options: {
                         responsive: true,
                         maintainAspectRatio: false,
+                        layout: {
+                            padding: {
+                                top: 20,
+                                right: 20,
+                                bottom: 0,
+                                left: 0
+                            }
+                        },
+                        animation: {
+                            duration: 750,
+                            easing: 'easeInOutQuart',
+                            delay: (context) => context.dataIndex * 50
+                        },
+                        interaction: {
+                            intersect: false,
+                            mode: 'index'
+                        },
                         plugins: {
                             legend: {
                                 display: false
                             },
                             tooltip: {
-                                enabled: true,
-                                mode: 'index',
-                                intersect: false
+                                backgroundColor: 'rgba(255, 255, 255, 0.98)',
+                                titleColor: '#0f172a',
+                                bodyColor: '#059669',
+                                borderColor: '#e2e8f0',
+                                borderWidth: 1,
+                                padding: {
+                                    top: 10,
+                                    right: 15,
+                                    bottom: 10,
+                                    left: 15
+                                },
+                                cornerRadius: 8,
+                                displayColors: false,
+                                titleFont: {
+                                    size: 13,
+                                    weight: '600',
+                                    family: "'Inter', system-ui, sans-serif"
+                                },
+                                bodyFont: {
+                                    size: 13,
+                                    weight: '500',
+                                    family: "'Inter', system-ui, sans-serif"
+                                },
+                                callbacks: {
+                                    label: function(context) {
+                                        return new Intl.NumberFormat('en-US', {
+                                            minimumFractionDigits: 0,
+                                            maximumFractionDigits: 0
+                                        }).format(context.parsed.y);
+                                    }
+                                }
                             },
                             datalabels: {
                                 align: 'top',
                                 anchor: 'end',
-                                offset: 5,
-                                color: '#666',
+                                offset: 6,
+                                color: '#059669',
                                 font: {
-                                    size: 10,
-                                    weight: 'bold'
+                                    size: 11,
+                                    weight: '600',
+                                    family: "'Inter', system-ui, sans-serif"
                                 },
                                 formatter: function(value) {
-                                    return value.amount.toLocaleString('en-US', {
+                                    if (value.amount < 1000) return ''; // Hide small values
+                                    return new Intl.NumberFormat('en-US', {
+                                        style: 'currency',
+                                        currency: 'USD',
+                                        notation: 'compact',
                                         minimumFractionDigits: 0,
-                                        maximumFractionDigits: 0
-                                    });
-                                },
-                                display: true
+                                        maximumFractionDigits: 1
+                                    }).format(value.amount);
+                                }
                             }
                         },
                         scales: {
                             y: {
                                 beginAtZero: true,
+                                border: {
+                                    display: false
+                                },
                                 grid: {
-                                    display: true,
+                                    color: 'rgba(226, 232, 240, 0.4)',
                                     drawBorder: false,
-                                    color: 'rgba(0,0,0,0.05)'
+                                    lineWidth: 1
                                 },
                                 ticks: {
                                     font: {
-                                        size: 11
+                                        size: 11,
+                                        weight: '500',
+                                        family: "'Inter', system-ui, sans-serif"
                                     },
-                                    color: '#666'
+                                    padding: 12,
+                                    color: '#64748b',
+                                    maxTicksLimit: 6,
+                                    callback: function(value) {
+                                        return new Intl.NumberFormat('en-US', {
+                                            style: 'currency',
+                                            currency: 'USD',
+                                            notation: 'compact',
+                                            minimumFractionDigits: 0,
+                                            maximumFractionDigits: 1
+                                        }).format(value);
+                                    }
                                 }
                             },
                             x: {
+                                border: {
+                                    display: false
+                                },
                                 grid: {
                                     display: false
                                 },
                                 ticks: {
                                     font: {
-                                        size: 11
+                                        size: 11,
+                                        weight: '500',
+                                        family: "'Inter', system-ui, sans-serif"
                                     },
-                                    color: '#666',
-                                    maxTicksLimit: 7
+                                    color: '#64748b',
+                                    padding: 8,
+                                    maxRotation: 0,
+                                    autoSkip: true,
+                                    maxTicksLimit: 10
                                 }
-                            }
-                        },
-                        elements: {
-                            point: {
-                                radius: 3,
-                                hoverRadius: 5
                             }
                         }
                     }
