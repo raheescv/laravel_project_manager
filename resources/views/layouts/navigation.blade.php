@@ -263,7 +263,7 @@
                     @endif
                     @if (auth()->user()->can('log.inventory'))
                         <li class="nav-item has-sub">
-                            <a href="#" class="mininav-toggle nav-link {{ request()->is(['log/inventory']) ? 'active' : '' }}"><i class="fa fa-clipboard fs-5 me-2"></i>
+                            <a href="#" class="mininav-toggle nav-link {{ request()->is(['log/inventory', 'visitor-analytics']) ? 'active' : '' }}"><i class="fa fa-clipboard fs-5 me-2"></i>
                                 <span class="nav-label ms-1">Log</span>
                             </a>
                             <ul class="mininav-content nav collapse">
@@ -271,6 +271,11 @@
                                 @can('log.inventory')
                                     <li class="nav-item">
                                         <a href="{{ route('log::inventory') }}" class="nav-link {{ request()->is(['log/inventory']) ? 'active' : '' }}">Inventory</a>
+                                    </li>
+                                @endcan
+                                @can('visitor analytics.view')
+                                    <li class="nav-item">
+                                        <a href="{{ route('visitor-analytics') }}" class="nav-link {{ request()->is(['visitor-analytics']) ? 'active' : '' }}">Visitor Analytics</a>
                                     </li>
                                 @endcan
                             </ul>
