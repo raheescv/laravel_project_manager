@@ -113,17 +113,17 @@
                 }
 
                 const ctx = document.getElementById("sale-overview-chart").getContext('2d');
-                
+
                 // Create gradient based on period
                 const gradient = ctx.createLinearGradient(0, 0, 0, 300);
                 if (data.length <= 12) { // For yearly view
-                    gradient.addColorStop(0, 'rgba(79, 70, 229, 0.65)');    // Indigo
-                    gradient.addColorStop(0.5, 'rgba(79, 70, 229, 0.35)');  // Mid fade
-                    gradient.addColorStop(1, 'rgba(79, 70, 229, 0.05)');    // Almost transparent
+                    gradient.addColorStop(0, 'rgba(79, 70, 229, 0.65)'); // Indigo
+                    gradient.addColorStop(0.5, 'rgba(79, 70, 229, 0.35)'); // Mid fade
+                    gradient.addColorStop(1, 'rgba(79, 70, 229, 0.05)'); // Almost transparent
                 } else {
-                    gradient.addColorStop(0, 'rgba(16, 185, 129, 0.65)');   // Emerald
+                    gradient.addColorStop(0, 'rgba(16, 185, 129, 0.65)'); // Emerald
                     gradient.addColorStop(0.5, 'rgba(16, 185, 129, 0.35)'); // Mid fade
-                    gradient.addColorStop(1, 'rgba(16, 185, 129, 0.05)');   // Almost transparent
+                    gradient.addColorStop(1, 'rgba(16, 185, 129, 0.05)'); // Almost transparent
                 }
 
                 salesChart = new Chart(ctx, {
@@ -160,10 +160,6 @@
                                 left: 0
                             }
                         },
-                        animation: {
-                            duration: 750,
-                            easing: 'easeInOutQuart'
-                        },
                         interaction: {
                             intersect: false,
                             mode: 'index'
@@ -199,8 +195,6 @@
                                 callbacks: {
                                     label: function(context) {
                                         return new Intl.NumberFormat('en-US', {
-                                            style: 'currency',
-                                            currency: 'USD',
                                             minimumFractionDigits: 0,
                                             maximumFractionDigits: 0
                                         }).format(context.parsed.y);
@@ -220,8 +214,6 @@
                                 formatter: function(value) {
                                     if (value.amount < 1000) return ''; // Hide small values
                                     return new Intl.NumberFormat('en-US', {
-                                        style: 'currency',
-                                        currency: 'USD',
                                         notation: data.length <= 12 ? 'standard' : 'compact',
                                         minimumFractionDigits: 0,
                                         maximumFractionDigits: data.length <= 12 ? 0 : 1
@@ -249,15 +241,7 @@
                                     padding: 12,
                                     color: '#64748b',
                                     maxTicksLimit: 6,
-                                    callback: function(value) {
-                                        return new Intl.NumberFormat('en-US', {
-                                            style: 'currency',
-                                            currency: 'USD',
-                                            notation: data.length <= 12 ? 'standard' : 'compact',
-                                            minimumFractionDigits: 0,
-                                            maximumFractionDigits: data.length <= 12 ? 0 : 1
-                                        }).format(value);
-                                    }
+                                    callback: function(value) {}
                                 }
                             },
                             x: {
@@ -277,7 +261,7 @@
                                     padding: 8,
                                     maxRotation: 0,
                                     autoSkip: true,
-                                    maxTicksLimit: data.length <= 12 ? 12 : 10
+                                    maxTicksLimit: 10
                                 }
                             }
                         }
