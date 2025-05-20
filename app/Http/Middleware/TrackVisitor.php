@@ -2,7 +2,7 @@
 
 namespace App\Http\Middleware;
 
-use App\Models\Visitor;
+use App\Jobs\TrackVisitorJob;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -27,10 +27,10 @@ class TrackVisitor
                 'browser' => $agent->browser(),
                 'os' => $agent->platform(),
                 'user_id' => Auth::id(),
-                'user_name' => Auth::user()->name,
+                'user_name' => Auth::user()?->name,
                 'device_type' => $this->getDeviceType($agent),
             ];
-            Visitor::create($data);
+            TrackVisitorJob::dispatch($data);
         }
 
         return $response;
