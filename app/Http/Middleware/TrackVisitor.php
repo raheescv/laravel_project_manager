@@ -6,7 +6,6 @@ use App\Jobs\TrackVisitorJob;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Cache;
 use Jenssegers\Agent\Agent;
 use Symfony\Component\HttpFoundation\Response;
 
@@ -29,24 +28,23 @@ class TrackVisitor
 
     private function shouldTrack(Request $request): bool
     {
-        // Cache excluded paths for better performance
-        $excludedPaths = Cache::remember('visitor_excluded_paths', 3600, function () {
-            return [
-                'api/*',
-                '_debugbar/*',
-                'livewire/*',
-                'assets/*',
-                'storage/*',
-                'list*',
-                'dashboard*',
-                '*.js',
-                '*.css',
-                '*.png',
-                '*.jpg',
-                '*.ico',
-                '*.svg',
-            ];
-        });
+        $excludedPaths = [
+            'api/*',
+            '_debugbar/*',
+            'livewire/*',
+            'assets/*',
+            'storage/*',
+            '*/list*',
+            'list*',
+            'login',
+            'dashboard*',
+            '*.js',
+            '*.css',
+            '*.png',
+            '*.jpg',
+            '*.ico',
+            '*.svg',
+        ];
 
         return ! $request->ajax()
             && ! collect($excludedPaths)->contains(fn ($path) => $request->is($path))
