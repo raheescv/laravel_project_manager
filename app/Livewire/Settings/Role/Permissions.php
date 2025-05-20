@@ -106,7 +106,7 @@ class Permissions extends Component
     {
         try {
             if ($this->role['id'] == 1 && Auth::user()->id != 3) {
-                // throw new \Exception('You cant edit Super Admin privileges', 1);
+                throw new \Exception('You cant edit Super Admin privileges', 1);
             }
             $this->role->syncPermissions([]);
             $this->selected = array_keys(array_filter($this->selected));
