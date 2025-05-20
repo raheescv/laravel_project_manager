@@ -6,6 +6,7 @@ use App\Jobs\TrackVisitorJob;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 use Jenssegers\Agent\Agent;
 use Symfony\Component\HttpFoundation\Response;
 
@@ -18,19 +19,9 @@ class TrackVisitor
         // Don't track assets, API calls, or when testing
         if ($this->shouldTrack($request)) {
             $agent = new Agent();
-            $data = [
-                'branch_id' => session('branch_id', 1),
-                'ip_address' => $request->ip(),
-                'user_agent' => $request->userAgent(),
-                'url' => $request->fullUrl(),
-                'visited_at' => now(),
-                'browser' => $agent->browser(),
-                'os' => $agent->platform(),
-                'user_id' => Auth::id(),
-                'user_name' => Auth::user()?->name,
-                'device_type' => $this->getDeviceType($agent),
-            ];
-            TrackVisitorJob::dispatch($data);
+            $data = $this->prepareVisitorData($request, $agent);
+
+            TrackVisitorJob::dispatch($data)->onQueue('visitors');
         }
 
         return $response;
@@ -38,28 +29,58 @@ class TrackVisitor
 
     private function shouldTrack(Request $request): bool
     {
-        $path = $request->path();
+        // Cache excluded paths for better performance
+        $excludedPaths = Cache::remember('visitor_excluded_paths', 3600, function () {
+            return [
+                'api/*',
+                '_debugbar/*',
+                'livewire/*',
+                'assets/*',
+                'storage/*',
+                'list*',
+                'dashboard*',
+                '*.js',
+                '*.css',
+                '*.png',
+                '*.jpg',
+                '*.ico',
+                '*.svg',
+            ];
+        });
 
         return ! $request->ajax()
-            && ! $request->is('api/*')
-            && ! $request->is('_debugbar/*')
-            && ! $request->is('livewire/*')
-            && ! str_contains($path, '/') // skip dashboard
-            && ! str_contains($path, 'list') // list get list for select
-            && ! str_contains($path, '.')  // Skip files with extensions (assets)
+            && ! collect($excludedPaths)->contains(fn ($path) => $request->is($path))
             && ! app()->runningUnitTests();
+    }
+
+    private function prepareVisitorData(Request $request, Agent $agent): array
+    {
+        return [
+            'branch_id' => session('branch_id', 1),
+            'ip_address' => $request->ip(),
+            'user_agent' => substr($request->userAgent(), 0, 255),
+            'url' => substr($request->fullUrl(), 0, 255),
+            'visited_at' => now(),
+            'browser' => $agent->browser(),
+            'os' => $agent->platform(),
+            'user_id' => Auth::id(),
+            'user_name' => Auth::user()?->name,
+            'device_type' => $this->getDeviceType($agent),
+        ];
     }
 
     private function getDeviceType(Agent $agent): string
     {
         if ($agent->isTablet()) {
             return 'tablet';
-        } elseif ($agent->isMobile()) {
-            return 'mobile';
-        } elseif ($agent->isDesktop()) {
-            return 'desktop';
-        } else {
-            return 'other';
         }
+        if ($agent->isMobile()) {
+            return 'mobile';
+        }
+        if ($agent->isDesktop()) {
+            return 'desktop';
+        }
+
+        return 'other';
     }
 }

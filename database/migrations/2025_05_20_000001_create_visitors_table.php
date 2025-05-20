@@ -10,8 +10,8 @@ return new class() extends Migration
     {
         Schema::create('visitors', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('branch_id')->nullable()->constrained()->nullOnDelete();
-            $table->foreignId('user_id')->nullable()->constrained()->nullOnDelete();
+            $table->unsignedBigInteger('branch_id')->nullable();
+            $table->unsignedBigInteger('user_id')->nullable();
             $table->string('user_name')->nullable();
             $table->string('ip_address');
             $table->string('user_agent')->nullable();
@@ -20,11 +20,13 @@ return new class() extends Migration
             $table->string('device_type')->nullable();
             $table->string('browser')->nullable();
             $table->string('os')->nullable();
-            $table->timestamps();
 
-            $table->index(['visited_at', 'ip_address']);
+            // Optimized indexes for common queries
+            $table->index('visited_at');
             $table->index(['visited_at', 'user_id']);
-            $table->index('device_type');
+            $table->index(['visited_at', 'device_type']);
+            $table->index(['visited_at', 'url']);
+            $table->index(['ip_address', 'user_id']);
         });
     }
 

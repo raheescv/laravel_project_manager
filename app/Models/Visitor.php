@@ -21,6 +21,8 @@ class Visitor extends Model
         'os',
     ];
 
+    public $timestamps = false;
+
     protected $casts = [
         'visited_at' => 'datetime',
     ];

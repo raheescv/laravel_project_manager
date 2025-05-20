@@ -10,3 +10,6 @@ Artisan::command('inspire', function (): void {
 
 Schedule::command('backup:run --only-db')->daily();
 Schedule::command('backup:clean')->daily();
+
+// Process any remaining visitor batches that haven't reached batch size
+Schedule::command('visitors:process-batches')->everyFiveMinutes();
