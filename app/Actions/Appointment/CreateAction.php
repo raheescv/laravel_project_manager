@@ -9,15 +9,16 @@ class CreateAction
     public function execute($data, $userId)
     {
         try {
-            $data['created_by'] = $data['updated_by'] = $userId;
+            $data['created_by'] = $data['created_by'] ?? $userId;
+            $data['updated_by'] = $data['created_by'] ?? $userId;
 
             validationHelper(Appointment::rules(), $data);
             $model = Appointment::create($data);
 
             foreach ($data['items'] as $item) {
                 $item['appointment_id'] = $model->id;
-                $item['updated_by'] = $userId;
-                $item['created_by'] = $userId;
+                $item['created_by'] = $item['created_by'] ?? $userId;
+                $item['updated_by'] = $item['updated_by'] ?? $userId;
                 $response = (new Item\CreateAction())->execute($item);
                 if (! $response['success']) {
                     throw new \Exception($response['message'], 1);

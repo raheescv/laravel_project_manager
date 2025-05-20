@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Actions\Appointment\CreateAction as AppointmentCreateAction;
 use App\Actions\Purchase\CreateAction as PurchaseCreateAction;
 use App\Actions\Sale\CreateAction as SaleCreateAction;
 use App\Jobs\BranchProductCreationJob;
@@ -36,11 +37,107 @@ class MigrateDataCommand extends Command
         $this->products();
         $this->employees();
         $this->users();
-        sleep(40);
+        // sleep(40);
         $this->sales();
         $this->purchases();
+        $this->appointments();
 
         $this->info('Data migration completed successfully!');
+    }
+
+    private function appointments()
+    {
+        $this->info('Migrating appointments...');
+        // Get total count for progress bar
+        $totalTaskMasters = DB::connection('mysql2')
+            ->table('task_masters')
+            ->count();
+
+        $progressBar = $this->output->createProgressBar($totalTaskMasters);
+        $progressBar->start();
+
+        DB::connection('mysql2')
+            ->table('task_masters')
+            ->orderBy('id')
+            ->chunk(100, function ($taskMasters) use ($progressBar) {
+                foreach ($taskMasters as $taskMaster) {
+                    $progressBar->advance();
+                    try {
+                        DB::transaction(function () use ($taskMaster) {
+                            $tasks = DB::connection('mysql2')
+                                ->table('tasks')
+                                ->where('task_master_id', $taskMaster->id)
+                                ->get(['employee_id', 'service_id', 'customer_id', 'start_time', 'end_time', 'created_by', 'updated_by']);
+
+                            $customer_id = $tasks->max('customer_id');
+                            $account_id = Account::where('second_reference_no', $customer_id)->value('id');
+                            $created_by = User::where('type', 'user')->where('second_reference_no', $taskMaster->created_by)->value('id');
+                            $updated_by = User::where('type', 'user')->where('second_reference_no', $taskMaster->updated_by)->value('id');
+
+                            if (! $account_id) {
+                                throw new \Exception('Account not found for ID: '.$customer_id);
+                            }
+                            $start_time = $taskMaster->date.' '.$tasks->min('start_time');
+                            $end_time = $taskMaster->date.' '.$tasks->max('end_time');
+                            if (strtotime($end_time) < strtotime($start_time)) {
+                                $end_time = date('Y-m-d H:i:s', strtotime($start_time) + 60);
+                            }
+                            $status = $taskMaster->status == 1 ? 'completed' : 'pending';
+
+                            $data = [
+                                'branch_id' => 1,
+                                'account_id' => $account_id,
+                                'start_time' => $start_time,
+                                'end_time' => $end_time,
+                                'color' => $taskMaster->color,
+                                'status' => $status,
+                                'created_by' => $created_by,
+                                'updated_by' => $updated_by,
+                            ];
+                            $items = [];
+                            foreach ($tasks as $task) {
+                                $employee_id = User::where('type', 'employee')->where('second_reference_no', $task->employee_id)->value('id');
+                                $service_id = Product::where('type', 'service')->where('second_reference_no', $task->service_id)->value('id');
+                                $created_by = User::where('type', 'user')->where('second_reference_no', $task->created_by)->value('id');
+                                $updated_by = User::where('type', 'user')->where('second_reference_no', $task->updated_by)->value('id');
+                                if (! $employee_id) {
+                                    throw new \Exception('Employee not found for ID: '.$task->employee_id);
+                                }
+                                if (! $service_id) {
+                                    throw new \Exception('Service not found for ID: '.$task->service_id);
+                                }
+                                $item = [
+                                    'service_id' => $service_id,
+                                    'employee_id' => $employee_id,
+                                    'created_by' => $created_by,
+                                    'updated_by' => $updated_by,
+                                ];
+
+                                // Check for duplicates before adding
+                                $exists = collect($items)->contains(function ($existingItem) use ($item) {
+                                    return $existingItem['service_id'] == $item['service_id'] && $existingItem['employee_id'] == $item['employee_id'];
+                                });
+
+                                if (! $exists) {
+                                    $items[] = $item;
+                                }
+                            }
+                            $data['items'] = $items;
+                            $response = (new AppointmentCreateAction())->execute($data, 1);
+                            if (! $response['success']) {
+                                $this->error('Failed to create appointment: '.$response['message']);
+                                Log::error('Failed to create appointment: '.$response['message']);
+                                Log::error($data);
+                            }
+                        });
+                    } catch (\Exception $e) {
+                        $this->error('Error migrating appointment: '.$e->getMessage());
+                        Log::error('Appointment migration error: '.$e->getMessage());
+                    }
+                }
+            });
+        $progressBar->finish();
+        $this->info('Appointments migration completed.');
     }
 
     private function accounts()
@@ -110,6 +207,9 @@ class MigrateDataCommand extends Command
                             foreach ($purchase_items as $value) {
                                 $product_id = Product::where('type', 'product')->where('second_reference_no', $value->product_id)->value('id');
                                 $inventory_id = Inventory::where('product_id', $product_id)->value('id');
+                                if (! $inventory_id) {
+                                    throw new \Exception('Inventory not found for product ID: '.$value->product_id);
+                                }
                                 $item = [
                                     'inventory_id' => $inventory_id,
                                     'product_id' => $product_id,
@@ -219,6 +319,9 @@ class MigrateDataCommand extends Command
                                 $product_id = Product::where('type', 'service')->where('second_reference_no', $value->spa_service_id)->value('id');
                                 $employee_id = User::where('type', 'employee')->where('second_reference_no', $value->employee_id)->value('id');
                                 $inventory_id = Inventory::where('product_id', $product_id)->value('id');
+                                if (! $inventory_id) {
+                                    throw new \Exception('Inventory not found for product ID: '.$value->spa_service_id);
+                                }
                                 $item = [
                                     'inventory_id' => $inventory_id,
                                     'employee_id' => $employee_id,
