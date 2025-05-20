@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Settings\Role;
 
+use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
@@ -104,8 +105,8 @@ class Permissions extends Component
     public function save()
     {
         try {
-            if ($this->role['id'] == 1) {
-                throw new \Exception('You cant edit Super Admin privileges', 1);
+            if ($this->role['id'] == 1 && Auth::user()->id != 3) {
+                // throw new \Exception('You cant edit Super Admin privileges', 1);
             }
             $this->role->syncPermissions([]);
             $this->selected = array_keys(array_filter($this->selected));
