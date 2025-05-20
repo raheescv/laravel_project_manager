@@ -11,6 +11,7 @@
     "require": {
         "php": "^8.2",
         "barryvdh/laravel-dompdf": "^3.0",
+        "jenssegers/agent": "^2.6",
         "larastan/larastan": "^3.0",
         "laravel/framework": "^11.31",
         "laravel/horizon": "^5.30",

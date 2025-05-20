@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Middleware\TrackVisitor;
 use App\Http\Middleware\TrustProxies;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -26,6 +27,7 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->trustHosts();
         $middleware->use([TrustProxies::class]);
+        $middleware->use([TrackVisitor::class]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //

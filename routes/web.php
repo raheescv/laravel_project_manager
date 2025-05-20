@@ -10,6 +10,7 @@ use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\UserAttendanceController;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\VisitorAnalyticsController;
 use Illuminate\Support\Facades\Route;
 
 require __DIR__.'/auth.php';
@@ -50,5 +51,6 @@ Route::middleware('auth')->group(function (): void {
 
     Route::get('generate-image', [ImageGenComfyController::class, 'generate']);
     Route::get('family-tree', [FamilyTreeController::class, 'index'])->name('family-tree'); // ->can('family-tree.view');
+    Route::get('visitor-analytics', [VisitorAnalyticsController::class, 'index'])->name('visitor-analytics')->can('visitor analytics.view');
 
 });
