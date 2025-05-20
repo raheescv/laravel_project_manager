@@ -104,6 +104,11 @@ class Sale extends Model implements AuditableContracts
         return $query->whereBetween('date', [date('Y-m-d', strtotime('-30 days')), date('Y-m-d')]);
     }
 
+    public function scopeLastYear($query)
+    {
+        return $query->whereBetween('date', [date('Y-m-d', strtotime('-11 month')), date('Y-m-d')]);
+    }
+
     public function scopeCustomerSearch($query, $branch_id = null, $from = null, $to = null)
     {
         return $query->when($branch_id, fn ($q) => $q->where('branch_id', $branch_id))
