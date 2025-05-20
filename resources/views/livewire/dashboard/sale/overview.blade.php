@@ -113,12 +113,18 @@
                 }
 
                 const ctx = document.getElementById("sale-overview-chart").getContext('2d');
-
-                // Create sophisticated gradient
+                
+                // Create gradient based on period
                 const gradient = ctx.createLinearGradient(0, 0, 0, 300);
-                gradient.addColorStop(0, 'rgba(16, 185, 129, 0.65)'); // Emerald
-                gradient.addColorStop(0.5, 'rgba(16, 185, 129, 0.35)'); // Mid fade
-                gradient.addColorStop(1, 'rgba(16, 185, 129, 0.05)'); // Almost transparent
+                if (data.length <= 12) { // For yearly view
+                    gradient.addColorStop(0, 'rgba(79, 70, 229, 0.65)');    // Indigo
+                    gradient.addColorStop(0.5, 'rgba(79, 70, 229, 0.35)');  // Mid fade
+                    gradient.addColorStop(1, 'rgba(79, 70, 229, 0.05)');    // Almost transparent
+                } else {
+                    gradient.addColorStop(0, 'rgba(16, 185, 129, 0.65)');   // Emerald
+                    gradient.addColorStop(0.5, 'rgba(16, 185, 129, 0.35)'); // Mid fade
+                    gradient.addColorStop(1, 'rgba(16, 185, 129, 0.05)');   // Almost transparent
+                }
 
                 salesChart = new Chart(ctx, {
                     type: "bar",
@@ -126,17 +132,17 @@
                         datasets: [{
                             label: "Sales",
                             data: data,
-                            borderColor: '#059669', // Emerald 600
+                            borderColor: data.length <= 12 ? '#4F46E5' : '#059669',
                             borderWidth: 1.5,
                             backgroundColor: gradient,
                             borderRadius: {
                                 topLeft: 8,
                                 topRight: 8
                             },
-                            barThickness: 'flex',
+                            barThickness: data.length <= 12 ? 40 : 'flex',
                             minBarLength: 6,
-                            categoryPercentage: 0.8,
-                            barPercentage: 0.9,
+                            categoryPercentage: data.length <= 12 ? 0.9 : 0.8,
+                            barPercentage: data.length <= 12 ? 0.9 : 0.9,
                             parsing: {
                                 xAxisKey: "date",
                                 yAxisKey: "amount"
@@ -156,8 +162,7 @@
                         },
                         animation: {
                             duration: 750,
-                            easing: 'easeInOutQuart',
-                            delay: (context) => context.dataIndex * 50
+                            easing: 'easeInOutQuart'
                         },
                         interaction: {
                             intersect: false,
@@ -170,7 +175,7 @@
                             tooltip: {
                                 backgroundColor: 'rgba(255, 255, 255, 0.98)',
                                 titleColor: '#0f172a',
-                                bodyColor: '#059669',
+                                bodyColor: data.length <= 12 ? '#4F46E5' : '#059669',
                                 borderColor: '#e2e8f0',
                                 borderWidth: 1,
                                 padding: {
@@ -194,6 +199,8 @@
                                 callbacks: {
                                     label: function(context) {
                                         return new Intl.NumberFormat('en-US', {
+                                            style: 'currency',
+                                            currency: 'USD',
                                             minimumFractionDigits: 0,
                                             maximumFractionDigits: 0
                                         }).format(context.parsed.y);
@@ -204,7 +211,7 @@
                                 align: 'top',
                                 anchor: 'end',
                                 offset: 6,
-                                color: '#059669',
+                                color: data.length <= 12 ? '#4F46E5' : '#059669',
                                 font: {
                                     size: 11,
                                     weight: '600',
@@ -215,9 +222,9 @@
                                     return new Intl.NumberFormat('en-US', {
                                         style: 'currency',
                                         currency: 'USD',
-                                        notation: 'compact',
+                                        notation: data.length <= 12 ? 'standard' : 'compact',
                                         minimumFractionDigits: 0,
-                                        maximumFractionDigits: 1
+                                        maximumFractionDigits: data.length <= 12 ? 0 : 1
                                     }).format(value.amount);
                                 }
                             }
@@ -246,9 +253,9 @@
                                         return new Intl.NumberFormat('en-US', {
                                             style: 'currency',
                                             currency: 'USD',
-                                            notation: 'compact',
+                                            notation: data.length <= 12 ? 'standard' : 'compact',
                                             minimumFractionDigits: 0,
-                                            maximumFractionDigits: 1
+                                            maximumFractionDigits: data.length <= 12 ? 0 : 1
                                         }).format(value);
                                     }
                                 }
@@ -270,7 +277,7 @@
                                     padding: 8,
                                     maxRotation: 0,
                                     autoSkip: true,
-                                    maxTicksLimit: 10
+                                    maxTicksLimit: data.length <= 12 ? 12 : 10
                                 }
                             }
                         }
