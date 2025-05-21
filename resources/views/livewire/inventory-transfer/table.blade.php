@@ -46,7 +46,7 @@
                     {{ html()->select('based_on', ['created_branch' => 'Created Branch', 'from_branch' => 'From Branch', 'to_branch' => 'To Branch'])->value('')->class('tomSelect')->placeholder('Select based on')->id('based_on')->attribute('wire:model.live', 'based_on') }}
                 </div>
                 <div class="col-md-3" wire:ignore>
-                    <label for="based_on" class="form-label">Branch</label>
+                    <label for="branch_id" class="form-label">Branch</label>
                     {{ html()->select('branch_id', [auth()->user()->default_branch_id => auth()->user()->branch?->name])->value(auth()->user()->default_branch_id)->class('select-branch_id-list')->id('branch_id')->placeholder('All') }}
                 </div>
                 <div class="col-md-3" wire:ignore>

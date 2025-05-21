@@ -45,6 +45,7 @@ class Table extends Component
     {
         $this->from_date = date('Y-m-d');
         $this->to_date = date('Y-m-d');
+        $this->branch_id = session('branch_id');
     }
 
     public function delete()
