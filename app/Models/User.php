@@ -14,7 +14,7 @@ use Spatie\Permission\Traits\HasRoles;
 
 class User extends Authenticatable implements AuditableContracts
 {
-    use Auditable, HasFactory, HasRoles,Notifiable;
+    use Auditable, HasFactory, HasRoles, Notifiable;
     use HasApiTokens;
 
     protected $fillable = [
@@ -39,6 +39,8 @@ class User extends Authenticatable implements AuditableContracts
         'is_active',
         'is_whatsapp_enabled',
         'second_reference_no',
+        'telegram_chat_id',
+        'is_telegram_enabled',
     ];
 
     protected $hidden = [
