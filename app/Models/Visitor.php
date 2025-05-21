@@ -130,7 +130,7 @@ class Visitor extends Model
                     'name' => $visitor->user_name,
                     'last_active_at' => $visitor->last_active_at,
                     'sessions_count' => $visitor->sessions_count,
-                    'is_online' => $visitor->visited_at >= now()->subMinutes(5),
+                    'is_online' => $visitor->last_active_at >= now()->subMinutes(5),
                 ];
             });
     }

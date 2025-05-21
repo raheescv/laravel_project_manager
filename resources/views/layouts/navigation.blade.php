@@ -69,7 +69,7 @@
 
                     @if (auth()->user()->can('appointment.view'))
                         <li class="nav-item has-sub">
-                            <a href="#" class="mininav-toggle nav-link {{ request()->is(['appointment/employee-calendar', 'appointment/list']) ? 'active' : '' }}"><i
+                            <a href="#" class="mininav-toggle nav-link {{ request()->is(['appointment/employee-calendar', 'appointment']) ? 'active' : '' }}"><i
                                     class="fa fa-calendar fs-5 me-2"></i>
                                 <span class="nav-label ms-1">Appointments</span>
                             </a>
@@ -82,7 +82,7 @@
                                 @endcan
                                 @can('appointment.view')
                                     <li class="nav-item">
-                                        <a href="{{ route('appointment::list') }}" class="nav-link {{ request()->is(['appointment/list']) ? 'active' : '' }}"> List </a>
+                                        <a href="{{ route('appointment::list') }}" class="nav-link {{ request()->is(['appointment']) ? 'active' : '' }}"> List </a>
                                     </li>
                                 @endcan
                             </ul>

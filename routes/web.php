@@ -45,7 +45,7 @@ Route::middleware('auth')->group(function (): void {
     });
 
     Route::name('appointment::')->prefix('appointment')->controller(AppointmentController::class)->group(function (): void {
-        Route::get('list', 'index')->name('list')->can('appointment.view');
+        Route::get('', 'index')->name('list')->can('appointment.view');
         Route::get('employee-calendar', 'calendar')->name('index')->can('appointment.view');
     });
 
