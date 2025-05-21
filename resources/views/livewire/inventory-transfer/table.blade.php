@@ -47,7 +47,7 @@
                 </div>
                 <div class="col-md-3" wire:ignore>
                     <label for="based_on" class="form-label">Branch</label>
-                    {{ html()->select('branch_id', [auth()->user()->default_branch_id => auth()->user()->branch?->name])->value(auth()->user()->default_branch_id)->class('select-assigned-branch_id-list')->id('branch_id')->placeholder('All') }}
+                    {{ html()->select('branch_id', [auth()->user()->default_branch_id => auth()->user()->branch?->name])->value(auth()->user()->default_branch_id)->class('select-branch_id-list')->id('branch_id')->placeholder('All') }}
                 </div>
                 <div class="col-md-3" wire:ignore>
                     <label for="status" class="form-label">Status *</label>
