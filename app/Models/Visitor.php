@@ -104,4 +104,81 @@ class Visitor extends Model
             ];
         })->toArray();
     }
+
+    public static function getOnlineActiveUsers($user_id = null, $branch_id = null)
+    {
+        $query = self::with('user')
+            ->select('user_id', 'user_name')
+            ->selectRaw('COUNT(*) as sessions_count')
+            ->selectRaw('MAX(visited_at) as last_active_at')
+            ->whereNotNull('user_id');
+
+        if ($user_id) {
+            $query->where('user_id', $user_id);
+        }
+
+        if ($branch_id) {
+            $query->where('branch_id', $branch_id);
+        }
+
+        return $query->groupBy('user_id', 'user_name')
+            ->orderByDesc('last_active_at')
+            ->get()
+            ->map(function ($visitor) {
+                return [
+                    'user_id' => $visitor->user_id,
+                    'name' => $visitor->user_name,
+                    'last_active_at' => $visitor->last_active_at,
+                    'sessions_count' => $visitor->sessions_count,
+                    'is_online' => $visitor->visited_at >= now()->subMinutes(5),
+                ];
+            });
+    }
+
+    public static function getUserActivity($userId, $limit = 20)
+    {
+        return self::where('user_id', $userId)
+            ->select('url', 'visited_at', 'device_type', 'browser', 'ip_address', 'os')
+            ->orderByDesc('visited_at')
+            ->limit($limit)
+            ->get()
+            ->map(function ($activity) {
+                return [
+                    'url' => $activity->url,
+                    'os' => $activity->os,
+                    'visited_at' => $activity->visited_at,
+                    'ip_address' => $activity->ip_address,
+                    'device_type' => $activity->device_type,
+                    'browser' => $activity->browser,
+                    'time_ago' => $activity->visited_at->diffForHumans(),
+                ];
+            });
+    }
+
+    public static function getTopUserActivities($startDate = null, $endDate = null, $limit = 5)
+    {
+        $query = self::with('user')
+            ->select('user_id', 'user_name')
+            ->selectRaw('COUNT(*) as total_visits')
+            ->selectRaw('MAX(visited_at) as last_visit')
+            ->whereNotNull('user_id');
+
+        if ($startDate && $endDate) {
+            $query->whereBetween('visited_at', [$startDate, $endDate]);
+        }
+
+        return $query->groupBy('user_id', 'user_name')
+            ->orderByDesc('total_visits')
+            ->limit($limit)
+            ->get()
+            ->map(function ($activity) {
+                return [
+                    'user_id' => $activity->user_id,
+                    'name' => $activity->user_name,
+                    'total_visits' => $activity->total_visits,
+                    'last_visit' => $activity->last_visit,
+                    'last_visit_ago' => Carbon::parse($activity->last_visit)->diffForHumans(),
+                ];
+            });
+    }
 }

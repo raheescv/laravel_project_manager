@@ -151,6 +151,105 @@
         </div>
     </div>
 
+    <!-- Active Users and Their Activities -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-transparent border-0 d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">Active Users & Top Pages</h5>
+                    <button wire:click="refreshActiveUsers" class="btn btn-sm btn-outline-primary">
+                        <i class="fas fa-sync-alt"></i> Refresh
+                    </button>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>User</th>
+                                    <th>Last Active</th>
+                                    <th>Top Visited Pages</th>
+                                    <th>Total Views</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach ($activeUsers as $user)
+                                    <tr>
+                                        <td>
+                                            <div class="d-flex align-items-center">
+                                                <div class="avatar avatar-sm me-2">
+                                                    <div class="avatar-initial rounded-circle bg-{{ $user['is_online'] ? 'success' : 'secondary' }}">
+                                                        {{ substr($user['name'], 0, 1) }}
+                                                    </div>
+                                                </div>
+                                                {{ $user['name'] }}
+                                            </div>
+                                        </td>
+                                        <td>{{ \Carbon\Carbon::parse($user['last_active_at'])->diffForHumans() }}</td>
+                                        <td>
+                                            <button type="button" class="btn btn-link p-0" wire:click="viewUserActivity({{ $user['user_id'] }})">
+                                                View Activity
+                                            </button>
+                                        </td>
+                                        <td>{{ number_format($user['sessions_count']) }}</td>
+                                        <td>
+                                            @if ($user['is_online'])
+                                                <span class="badge bg-success">Online</span>
+                                            @else
+                                                <span class="badge bg-secondary">Offline</span>
+                                            @endif
+                                        </td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- User Activity Modal -->
+    <div class="modal fade" id="userActivityModal" tabindex="-1" wire:ignore.self>
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">User Activity Details</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    @if ($userActivities)
+                        <div class="table-responsive">
+                            <table class="table table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>Page URL</th>
+                                        <th>Visited</th>
+                                        <th>Ip Address</th>
+                                        <th>Device Info</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach ($userActivities as $activity)
+                                        <tr>
+                                            <td>{{ $activity['url'] }}</td>
+                                            <td>{{ $activity['time_ago'] }}</td>
+                                            <td>{{ $activity['ip_address'] }}</td>
+                                            <td>{{ $activity['device_type'] }} / {{ $activity['browser'] }}/ {{ $activity['os'] }}</td>
+                                        </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        </div>
+                    @else
+                        <p class="text-center">No activity data available.</p>
+                    @endif
+                </div>
+            </div>
+        </div>
+    </div>
+
     @push('scripts')
         <script>
             document.addEventListener('livewire:initialized', function() {
@@ -245,6 +344,16 @@
                     trafficChart.update('active');
                 }
             }
+
+            // Handle user activity modal
+            let userActivityModal;
+            document.addEventListener('livewire:initialized', () => {
+                userActivityModal = new bootstrap.Modal(document.getElementById('userActivityModal'));
+            });
+
+            window.addEventListener('show-modal', event => {
+                userActivityModal.show();
+            });
         </script>
     @endpush
 </div>

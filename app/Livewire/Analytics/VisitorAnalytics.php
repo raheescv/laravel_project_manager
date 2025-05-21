@@ -43,11 +43,16 @@ class VisitorAnalytics extends Component
 
     public $deviceStats = [];
 
+    public $activeUsers = [];
+
+    public $userActivities = [];
+
     protected $queryString = ['dateRange', 'user_id', 'branch_id'];
 
     protected $listeners = [
         'refreshData' => 'loadData',
         'echo:private-visitor-analytics,.visitor.created' => 'loadData',
+        'echo:visitors,VisitorUpdated' => 'handleVisitorUpdate',
     ];
 
     public function mount()
@@ -62,11 +67,14 @@ class VisitorAnalytics extends Component
         });
 
         $this->setDateRange($this->dateRange);
+
+        $this->loadActiveUsers();
     }
 
     public function updated($key, $value)
     {
         if ($key == 'user_id' || $key == 'branch_id') {
+            $this->loadActiveUsers();
             $this->loadData();
         }
     }
@@ -213,6 +221,27 @@ class VisitorAnalytics extends Component
             ->groupBy('device_type')
             ->pluck('count', 'device_type')
             ->toArray();
+    }
+
+    public function loadActiveUsers()
+    {
+        $this->activeUsers = Visitor::getOnlineActiveUsers($this->user_id, $this->branch_id);
+    }
+
+    public function viewUserActivity($userId)
+    {
+        $this->userActivities = Visitor::getUserActivity($userId);
+        $this->dispatch('show-modal', 'userActivityModal');
+    }
+
+    public function refreshActiveUsers()
+    {
+        $this->loadActiveUsers();
+    }
+
+    public function handleVisitorUpdate()
+    {
+        $this->loadActiveUsers();
     }
 
     public function render()
