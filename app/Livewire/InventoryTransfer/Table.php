@@ -21,9 +21,9 @@ class Table extends Component
 
     public $status = '';
 
-    public $based_on = '';
+    public $to_branch_id = '';
 
-    public $branch_id = '';
+    public $from_branch_id = '';
 
     public $limit = 10;
 
@@ -45,7 +45,8 @@ class Table extends Component
     {
         $this->from_date = date('Y-m-d');
         $this->to_date = date('Y-m-d');
-        $this->branch_id = session('branch_id');
+        $this->from_branch_id = session('branch_id');
+        $this->to_branch_id = '';
     }
 
     public function delete()
@@ -121,17 +122,11 @@ class Table extends Component
             ->when($this->status ?? '', function ($query, $value) {
                 return $query->where('status', $value);
             })
-            ->when($this->branch_id ?? '', function ($query, $value) {
-                switch ($this->based_on) {
-                    case 'created_branch':
-                        return $query->where('branch_id', $value);
-                    case 'from_branch':
-                        return $query->where('from_branch_id', $value);
-                    case 'to_branch':
-                        return $query->where('to_branch_id', $value);
-                    default:
-                        return $query->where('from_branch_id', $value);
-                }
+            ->when($this->to_branch_id ?? '', function ($query, $value) {
+                return $query->where('to_branch_id', $value);
+            })
+            ->when($this->from_branch_id ?? '', function ($query, $value) {
+                return $query->where('from_branch_id', $value);
             })
             ->latest()
             ->paginate($this->limit);

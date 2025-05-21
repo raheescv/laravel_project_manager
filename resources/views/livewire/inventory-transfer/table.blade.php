@@ -41,15 +41,15 @@
                     <label for="to_date" class="form-label">To Date</label>
                     {{ html()->date('to_date')->value('')->class('form-control')->id('to_date')->attribute('wire:model.live', 'to_date') }}
                 </div>
+                <div class="col-md-3" wire:ignore>
+                    <label for="from_branch_id" class="form-label">From Branch</label>
+                    {{ html()->select('from_branch_id', [auth()->user()->default_branch_id => auth()->user()->branch?->name])->value(auth()->user()->default_branch_id)->class('select-branch_id-list')->id('from_branch_id')->placeholder('All') }}
+                </div>
+                <div class="col-md-3" wire:ignore>
+                    <label for="to_branch_id" class="form-label">To Branch</label>
+                    {{ html()->select('to_branch_id', [])->value()->class('select-branch_id-list')->id('to_branch_id')->placeholder('All') }}
+                </div>
                 <div class="col-md-2" wire:ignore>
-                    <label for="based_on" class="form-label">Based On *</label>
-                    {{ html()->select('based_on', ['created_branch' => 'Created Branch', 'from_branch' => 'From Branch', 'to_branch' => 'To Branch'])->value('')->class('tomSelect')->placeholder('Select based on')->id('based_on')->attribute('wire:model.live', 'based_on') }}
-                </div>
-                <div class="col-md-3" wire:ignore>
-                    <label for="branch_id" class="form-label">Branch</label>
-                    {{ html()->select('branch_id', [auth()->user()->default_branch_id => auth()->user()->branch?->name])->value(auth()->user()->default_branch_id)->class('select-branch_id-list')->id('branch_id')->placeholder('All') }}
-                </div>
-                <div class="col-md-3" wire:ignore>
                     <label for="status" class="form-label">Status *</label>
                     {{ html()->select('status', pendingCompletedStatuses())->value('')->class('tomSelect')->placeholder('Select Status')->id('status')->attribute('wire:model.live', 'status') }}
                 </div>
@@ -100,9 +100,13 @@
     @push('scripts')
         <script>
             $(document).ready(function() {
-                $('#branch_id').on('change', function(e) {
+                $('#from_branch_id').on('change', function(e) {
                     const value = $(this).val() || null;
-                    @this.set('branch_id', value);
+                    @this.set('from_branch_id', value);
+                });
+                $('#to_branch_id').on('change', function(e) {
+                    const value = $(this).val() || null;
+                    @this.set('to_branch_id', value);
                 });
                 $('#status').on('change', function(e) {
                     const value = $(this).val() || null;
