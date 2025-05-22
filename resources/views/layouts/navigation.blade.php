@@ -44,7 +44,7 @@
                     @if (auth()->user()->can('inventory.view'))
                         <li class="nav-item has-sub">
                             <a href="#"
-                                class="mininav-toggle nav-link {{ request()->is(['inventory', 'inventory/product/*', 'inventory/transfer', 'inventory/transfer/edit/*', 'inventory/transfer/create', 'inventory/transfer/view/*']) ? 'active' : '' }}"><i
+                                class="mininav-toggle nav-link {{ request()->is(['inventory', 'inventory/product/*', 'inventory/transfer', 'inventory/transfer/edit/*', 'inventory/transfer/create', 'inventory/transfer/view/*', 'report/product']) ? 'active' : '' }}"><i
                                     class="fa fa-cubes fs-5 me-2"></i>
                                 <span class="nav-label ms-1">Inventory</span>
                             </a>
@@ -60,6 +60,13 @@
                                         <a href="{{ route('inventory::transfer::index') }}"
                                             class="nav-link {{ request()->is(['inventory/transfer', 'inventory/transfer/edit/*', 'inventory/transfer/create', 'inventory/transfer/view/*']) ? 'active' : '' }}">
                                             Inventory Transfer
+                                        </a>
+                                    </li>
+                                @endcan
+                                @can('report.product')
+                                    <li class="nav-item">
+                                        <a href="{{ route('report::product') }}" class="nav-link {{ request()->is(['report/product']) ? 'active' : '' }}">
+                                            Product Check
                                         </a>
                                     </li>
                                 @endcan

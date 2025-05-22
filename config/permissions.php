@@ -45,6 +45,7 @@ return [
         'purchase item',
         'customer',
         'employee',
+        'product',
     ],
     'log' => ['inventory'],
     'backup' => ['create', 'view', 'download'],

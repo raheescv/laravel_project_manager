@@ -20,5 +20,6 @@ Route::middleware('auth')->group(function (): void {
             Route::get('sales_overview', 'sales_overview')->name('sales_overview')->can('report.sales overview');
             Route::get('customer', 'customer')->name('customer')->can('report.customer');
             Route::get('employee', 'employee')->name('employee')->can('report.employee');
+            Route::get('product', 'product')->name('product')->can('report.product');
         });
 });
