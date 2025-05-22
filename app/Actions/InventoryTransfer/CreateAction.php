@@ -10,12 +10,13 @@ class CreateAction
     public function execute($data, $userId)
     {
         try {
-            $data['branch_id'] = session('branch_id');
-            $data['created_by'] = $data['updated_by'] = $userId;
+            $data['branch_id'] = $data['branch_id'] ?? session('branch_id');
+            $data['created_by'] = $data['created_by'] ?? $userId;
+            $data['updated_by'] = $data['updated_by'] ?? $userId;
 
             if ($data['status'] == 'completed') {
-                $data['approved_by'] = $userId;
-                $data['approved_at'] = now();
+                $data['approved_by'] = $data['approved_by'] ?? $userId;
+                $data['approved_at'] = $data['approved_at'] ?? now();
             }
             validationHelper(InventoryTransfer::rules(), $data);
             $model = InventoryTransfer::create($data);

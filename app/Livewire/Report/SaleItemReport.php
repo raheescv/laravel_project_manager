@@ -119,7 +119,12 @@ class SaleItemReport extends Component
             ->when($this->from_date, fn ($q) => $q->whereDate('sales.date', '>=', $this->from_date))
             ->when($this->to_date, fn ($q) => $q->whereDate('sales.date', '<=', $this->to_date))
             ->when($this->branch_id, fn ($q) => $q->where('sales.branch_id', $this->branch_id))
-            ->when($this->employee_id, fn ($q) => $q->where('sale_items.employee_id', $this->employee_id))
+            ->when($this->employee_id, function ($q) {
+                $q->where(function ($query) {
+                    $query->where('sale_items.employee_id', $this->employee_id)
+                        ->orWhere('sale_items.assistant_id', $this->employee_id);
+                });
+            })
             ->when($this->product_id, fn ($q) => $q->where('sale_items.product_id', $this->product_id))
             ->when($this->status, fn ($q) => $q->where('sales.status', $this->status))
             ->whereIn('sales.branch_id', Auth::user()->branches->pluck('branch_id'))

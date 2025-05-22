@@ -33,7 +33,11 @@ class UpdateInventoryLogsDateCommand extends Command
                     // Get the creation date of the associated model
                     $modelClass = 'App\\Models\\'.$log->model;
                     if (class_exists($modelClass)) {
-                        $model = $modelClass::withTrashed()->find($log->model_id);
+                        if ($log->model != 'InventoryTransfer') {
+                            $model = $modelClass::withTrashed()->find($log->model_id);
+                        } else {
+                            $model = $modelClass::find($log->model_id);
+                        }
                         if ($model && $model->date) {
                             $log->created_at = date('Y-m-d H:i:s', strtotime($model->date));
                             $log->updated_at = date('Y-m-d H:i:s', strtotime($model->date));

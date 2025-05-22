@@ -32,7 +32,7 @@ class BranchInventoryCreationJob implements ShouldQueue
                 if (! isset($data['barcode'])) {
                     $data['barcode'] = generateBarcode();
                 }
-                $data['batch'] = 'General';
+                $data['batch'] = $this->product->barcode;
                 $data['created_by'] = $data['updated_by'] = $this->userId;
                 $response = (new CreateAction())->execute($data);
                 if (! $response['success']) {

@@ -60,25 +60,27 @@
                         <th> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="sales.date" label="date" /> </th>
                         <th> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="sales.invoice_no" label="invoice no" /> </th>
                         <th> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="employee_id" label="employee" /> </th>
+                        <th> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="assistant_id" label="assistant" /> </th>
                         <th> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="product_id" label="product" /> </th>
-                        <th class="text-end"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="unit_price" label="unit price" /> </th>
-                        <th class="text-end"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="quantity" label="quantity" /> </th>
-                        <th class="text-end"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="gross_amount" label="gross amount" /> </th>
-                        <th class="text-end"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="discount" label="discount" /> </th>
-                        <th class="text-end"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="net_amount" label="net amount" /> </th>
-                        <th class="text-end"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="tax_amount" label="tax amount" /> </th>
-                        <th class="text-end"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="total" label="total" /> </th>
-                        <th class="text-end"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="effective_total" label="effective total" /> </th>
+                        <th class="text-nowrap text-end"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="unit_price" label="unit price" /> </th>
+                        <th class="text-nowrap text-end"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="quantity" label="quantity" /> </th>
+                        <th class="text-nowrap text-end"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="gross_amount" label="gross amount" /> </th>
+                        <th class="text-nowrap text-end"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="discount" label="discount" /> </th>
+                        <th class="text-nowrap text-end"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="net_amount" label="net amount" /> </th>
+                        <th class="text-nowrap text-end"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="tax_amount" label="tax amount" /> </th>
+                        <th class="text-nowrap text-end"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="total" label="total" /> </th>
+                        <th class="text-nowrap text-end"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="effective_total" label="effective total" /> </th>
                     </tr>
                 </thead>
                 <tbody>
                     @foreach ($data as $item)
                         <tr>
                             <td>{{ $item->id }}</td>
-                            <td>{{ systemDate($item->date) }}</td>
-                            <td> <a href="{{ route('sale::view', $item->sale_id) }}">{{ $item->invoice_no }}</a> </td>
-                            <td>{{ $item->employee?->name }}</td>
-                            <td>{{ $item->product?->name }}</td>
+                            <td class="text-nowrap">{{ systemDate($item->date) }}</td>
+                            <td class="text-nowrap"> <a href="{{ route('sale::view', $item->sale_id) }}">{{ $item->invoice_no }}</a> </td>
+                            <td class="text-nowrap">{{ $item->employee?->name }}</td>
+                            <td class="text-nowrap">{{ $item->assistant?->name }}</td>
+                            <td class="text-nowrap">{{ $item->product?->name }}</td>
                             <td class="text-end">{{ currency($item->unit_price) }}</td>
                             <td class="text-end">{{ currency($item->quantity) }}</td>
                             <td class="text-end">{{ currency($item->gross_amount) }}</td>
@@ -92,7 +94,7 @@
                 </tbody>
                 <tfoot>
                     <tr>
-                        <th colspan="7">Total</th>
+                        <th colspan="8">Total</th>
                         <th class="text-end">{{ currency($total['gross_amount']) }}</th>
                         <th class="text-end">{{ currency($total['discount']) }}</th>
                         <th class="text-end">{{ currency($total['net_amount']) }}</th>

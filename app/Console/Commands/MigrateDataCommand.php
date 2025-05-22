@@ -3,6 +3,7 @@
 namespace App\Console\Commands;
 
 use App\Actions\Appointment\CreateAction as AppointmentCreateAction;
+use App\Actions\InventoryTransfer\CreateAction as InventoryTransferCreateAction;
 use App\Actions\Purchase\CreateAction as PurchaseCreateAction;
 use App\Actions\Sale\CreateAction as SaleCreateAction;
 use App\Jobs\BranchProductCreationJob;
@@ -30,6 +31,7 @@ class MigrateDataCommand extends Command
         $this->info('Starting data migration...');
         $this->paymentModesIds = DB::connection('mysql2')->table('account_heads')->whereIn('account_category_id', [16, 17])->pluck('id', 'id')->toArray();
 
+        $this->branches();
         $this->accounts();
         $this->customer();
         $this->vendor();
@@ -41,8 +43,107 @@ class MigrateDataCommand extends Command
         $this->sales();
         $this->purchases();
         $this->appointments();
+        $this->stockTransfers();
 
         $this->info('Data migration completed successfully!');
+    }
+
+    private function stockTransfers()
+    {
+        $this->info('Migrating stockTransfers...');
+        $stockTransferCount = DB::connection('mysql2')->table('stock_transfers')->count();
+        $progressBar = $this->output->createProgressBar($stockTransferCount);
+        $progressBar->start();
+
+        $stockTransfers = DB::connection('mysql2')
+            ->table('stock_transfers')
+            ->where('id', 445)
+            ->get();
+        foreach ($stockTransfers as $stockTransfer) {
+            DB::beginTransaction();
+            $progressBar->advance();
+            try {
+                $status = $stockTransfer->status == 1 ? 'pending' : 'completed';
+                $created_by = User::where('type', 'user')->where('second_reference_no', $stockTransfer->created_by)->value('id');
+                $approved_by = User::where('type', 'user')->where('second_reference_no', $stockTransfer->approved_by)->value('id');
+                $updated_by = User::where('type', 'user')->where('second_reference_no', $stockTransfer->updated_by)->value('id');
+                $data = [
+                    'date' => $stockTransfer->date,
+                    'branch_id' => $stockTransfer->branch_id,
+                    'from_branch_id' => $stockTransfer->from_branch_id,
+                    'to_branch_id' => $stockTransfer->to_branch_id,
+                    'description' => $stockTransfer->description,
+                    'status' => $status,
+                    'created_by' => $created_by,
+                    'approved_by' => $approved_by,
+                    'approved_at' => $stockTransfer->updated_at,
+                    'updated_by' => $updated_by,
+                    'created_at' => $stockTransfer->created_at,
+                    'updated_at' => $stockTransfer->updated_at,
+                ];
+                $data['items'] = [];
+                $items = DB::connection('mysql2')->table('stock_transfer_items')->where('stock_transfer_id', $stockTransfer->id)->get();
+                foreach ($items as $item) {
+                    $product_id = Product::where('type', 'product')->where('second_reference_no', $item->product_id)->value('id');
+                    $inventory_id = Inventory::where('product_id', $product_id)->value('id');
+                    if (! $inventory_id) {
+                        throw new \Exception('Inventory not found for product ID: '.$item->product_id);
+                    }
+                    $data['items'][] = [
+                        'product_id' => $product_id,
+                        'inventory_id' => $inventory_id,
+                        'quantity' => $item->quantity,
+                        'remark' => $item->remark,
+                    ];
+                }
+                $groupedItems = [];
+                foreach ($data['items'] as $item) {
+                    if (isset($groupedItems[$item['inventory_id']])) {
+                        $groupedItems[$item['inventory_id']]['quantity'] += $item['quantity'];
+                    } else {
+                        $groupedItems[$item['inventory_id']] = $item;
+                    }
+                }
+                $data['items'] = array_values($groupedItems);
+                $response = (new InventoryTransferCreateAction())->execute($data, 1);
+                if (! $response['success']) {
+                    $this->error('Failed to create Stock Transfer: '.$response['message']);
+                    Log::error('Failed to create Stock Transfer: '.$response['message']);
+                    Log::error($data);
+                }
+                DB::commit();
+            } catch (\Exception $e) {
+                DB::rollback();
+                Log::error('Stock Transfer migration error: '.$e->getMessage());
+            }
+        }
+        $progressBar->finish();
+        $this->info('Stock transfers migration completed.');
+    }
+
+    private function branches()
+    {
+        $this->info('Migrating branches...');
+        // Get total count for progress bar
+        $branches = DB::connection('mysql2')->table('branches')->whereNull('deleted_at')->count();
+        $progressBar = $this->output->createProgressBar($branches);
+        $progressBar->start();
+        $branches = DB::connection('mysql2')->table('branches')->whereNull('deleted_at')->get();
+        foreach ($branches as $branch) {
+            $branchData = [
+                'id' => $branch->id,
+                'name' => $branch->name,
+                'code' => $branch->code,
+                'location' => $branch->code,
+                'mobile' => '',
+                'created_at' => $branch->created_at,
+                'updated_at' => $branch->updated_at,
+            ];
+            DB::table('branches')->insertOrIgnore((array) $branchData);
+            $progressBar->advance();
+        }
+        $progressBar->finish();
+        $this->info('Branches migration completed.');
     }
 
     private function appointments()
@@ -187,7 +288,7 @@ class MigrateDataCommand extends Command
                             $created_by = User::where('type', 'user')->where('second_reference_no', $purchase->created_by)->value('id');
                             $updated_by = User::where('type', 'user')->where('second_reference_no', $purchase->updated_by)->value('id');
                             $data = [
-                                'branch_id' => 1,
+                                'branch_id' => $purchase->branch_id,
                                 'date' => $purchase->date,
                                 'delivery_date' => $purchase->delivery_date,
                                 'invoice_no' => $purchase->invoice_no,
@@ -289,7 +390,7 @@ class MigrateDataCommand extends Command
                             $created_by = User::where('type', 'user')->where('second_reference_no', $sale->created_by)->value('id');
                             $updated_by = User::where('type', 'user')->where('second_reference_no', $sale->updated_by)->value('id');
                             $data = [
-                                'branch_id' => 1,
+                                'branch_id' => $sale->branch_id,
                                 'date' => $sale->date,
                                 'due_date' => $sale->due_date,
                                 'invoice_no' => $sale->invoice_no,
@@ -476,7 +577,7 @@ class MigrateDataCommand extends Command
             DB::connection('mysql2')
                 ->table('employees')
                 ->join('designations', 'designation_id', '=', 'designations.id')
-                ->whereNull('employees.deleted_at')
+                // ->whereNull('employees.deleted_at')
                 ->select(['employees.*', 'designations.name as designation_name'])
                 ->orderBy('employees.id')
                 ->chunk(100, function ($employees) {
@@ -535,6 +636,10 @@ class MigrateDataCommand extends Command
     private function products()
     {
         $this->info('Migrating products...');
+        $productsCount = DB::connection('mysql2')->table('products')
+            ->whereNull('deleted_at')
+            ->count();
+        $this->info("Total products to migrate: {$productsCount}");
         $products = DB::connection('mysql2')
             ->table('products')
             ->whereNull('products.deleted_at')
@@ -547,7 +652,10 @@ class MigrateDataCommand extends Command
                 'categories.name as category_name',
                 'units.name as unit_name',
             ]);
+        $progressBar = $this->output->createProgressBar($productsCount);
+        $progressBar->start();
         foreach ($products as $item) {
+            $progressBar->advance();
             $name = ucfirst(strtolower($item->name));
             if ($name == 'Shampoo') {
                 $name .= '.';
@@ -562,7 +670,7 @@ class MigrateDataCommand extends Command
                 'name' => $name,
                 'name_arabic' => $item->name_arabic,
                 'department' => 'Service',
-                'main_category' => ucfirst(strtolower($item->category_name)),
+                'main_category' => ucfirst(strtolower($item->category_name ?: 'General')),
                 'sub_category' => '',
                 'cost' => $item->cost,
                 'unit' => ucfirst(strtolower($item->unit_name)),
@@ -583,6 +691,7 @@ class MigrateDataCommand extends Command
             $product = Product::create((array) $data);
             BranchProductCreationJob::dispatch(1, 1, $product->id);
         }
+        $progressBar->finish();
     }
 
     private function service()
