@@ -7,8 +7,16 @@
             <div class="row mb-2">
                 <div class="col-md-12">
                     <div class="form-group" wire:ignore>
-                        <b><label for="unit_price" class="text-capitalize text-end">Employee</label></b>
+                        <b><label for="employee_id" class="text-capitalize text-end">Employee</label></b>
                         {{ html()->select('employee_id', [])->value('')->class('select-employee_id-list')->id('edit_employee_id')->attribute('style', 'width:100%')->placeholder('Select Employee') }}
+                    </div>
+                </div>
+            </div>
+            <div class="row mb-2">
+                <div class="col-md-12">
+                    <div class="form-group" wire:ignore>
+                        <b><label for="assistant_id" class="text-capitalize text-end">Assistant</label></b>
+                        {{ html()->select('assistant_id', [])->value('')->class('select-employee_id-list')->id('edit_assistant_id')->attribute('style', 'width:100%')->placeholder('Select Assistant') }}
                     </div>
                 </div>
             </div>
@@ -63,11 +71,25 @@
                     const value = $(this).val() || null;
                     @this.set('item.employee_id', value);
                 });
+                $('#edit_assistant_id').on('change', function(e) {
+                    const value = $(this).val() || null;
+                    @this.set('item.assistant_id', value);
+                });
                 window.addEventListener('SelectEmployeeFromDropDown', event => {
                     preselectedData = event.detail[0];
                     var tomSelectInstance = document.querySelector('#edit_employee_id').tomselect;
                     tomSelectInstance.addOption(preselectedData);
                     tomSelectInstance.addItem(preselectedData.id);
+                });
+                window.addEventListener('SelectAssistantFromDropDown', event => {
+                    preselectedData = event.detail[0];
+                    var tomSelectInstance = document.querySelector('#edit_assistant_id').tomselect;
+                    if (preselectedData.id) {
+                        tomSelectInstance.addOption(preselectedData);
+                        tomSelectInstance.addItem(preselectedData.id);
+                    } else {
+                        tomSelectInstance.clear();
+                    }
                 });
             });
         </script>

@@ -124,11 +124,13 @@ class Page extends Component
                         'id' => $item['id'],
                         'key' => $key,
                         'employee_id' => $item['employee_id'],
+                        'assistant_id' => $item['assistant_id'],
                         'inventory_id' => $item['inventory_id'],
                         'product_id' => $item['product_id'],
                         'sale_combo_offer_id' => $item['sale_combo_offer_id'],
                         'name' => $item['name'],
                         'employee_name' => $item['employee_name'],
+                        'assistant_name' => $item['assistant_name'],
                         'tax_amount' => $item['tax_amount'],
                         'unit_price' => $item['unit_price'],
                         'quantity' => round($item['quantity'], 3),
@@ -455,6 +457,7 @@ class Page extends Component
             'barcode' => $inventory->barcode,
             'employee_id' => $this->employee_id,
             'employee_name' => $this->employee->name,
+            'assistant_name' => '',
             'product_id' => $product_id,
             'name' => $product->name,
             'unit_price' => $product->mrp,
@@ -569,6 +572,7 @@ class Page extends Component
             $item['key'] = $newId;
             $id = $newId;
         }
+        $item['assistant_name'] = User::find($item['assistant_id'])?->name;
         $this->items[$id] = $item;
         $this->mainCalculator();
     }

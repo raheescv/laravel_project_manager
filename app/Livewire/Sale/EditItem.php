@@ -21,7 +21,13 @@ class EditItem extends Component
         $this->item = $item;
         if ($item) {
             $employee = User::find($item['employee_id']);
+            $assistant = User::find($item['assistant_id'] ?? '');
             $this->dispatch('SelectEmployeeFromDropDown', ['name' => $employee->name, 'id' => $employee->id]);
+            if ($assistant) {
+                $this->dispatch('SelectAssistantFromDropDown', ['name' => $assistant->name, 'id' => $assistant->id]);
+            } else {
+                $this->dispatch('SelectAssistantFromDropDown', ['name' => '', 'id' => '']);
+            }
         }
     }
 

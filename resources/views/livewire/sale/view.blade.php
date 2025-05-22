@@ -301,13 +301,20 @@
                                         <tr>
                                             <td>{{ $loop->iteration }}</td>
                                             <td>
-                                                <div class="d-flex align-items-center">
-                                                    <i class="demo-psi-box-2 me-2"></i>
+                                                <div class="d-flex align-items-start">
+                                                    <i class="fa fa-cube text-primary me-2 fs-5"></i>
                                                     <div>
-                                                        <a href="{{ route('inventory::product::view', $item['product_id']) }}" class="text-primary">{{ $item['name'] }}</a>
-                                                        @if (!empty($item['sale_combo_offer_id']))
-                                                            <span class="badge bg-info ms-2">C</span>
-                                                        @endif
+                                                        <a href="{{ route('inventory::product::view', $item['product_id']) }}" class="text-primary fw-semibold">{{ $item['name'] }}</a>
+                                                        <div class="mt-1">
+                                                            @if (!empty($item['sale_combo_offer_id']))
+                                                                <span class="badge bg-info text-white me-1">Combo</span>
+                                                            @endif
+                                                            @if (!empty($item['assistant_name']))
+                                                                <small class="text-muted">
+                                                                    <i class="fa fa-user-plus me-1"></i>{{ $item['assistant_name'] }}
+                                                                </small>
+                                                            @endif
+                                                        </div>
                                                     </div>
                                                 </div>
                                             </td>

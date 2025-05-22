@@ -12,6 +12,7 @@ return new class() extends Migration
             $table->id();
             $table->unsignedBigInteger('sale_id')->references('id')->on('sales');
             $table->unsignedBigInteger('employee_id')->references('id')->on('users');
+            $table->unsignedBigInteger('assistant_id')->references('id')->on('users')->nullable();
 
             $table->unsignedBigInteger('inventory_id')->references('id')->on('inventories');
             $table->unsignedBigInteger('product_id')->references('id')->on('products');

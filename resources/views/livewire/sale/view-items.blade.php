@@ -40,7 +40,14 @@
                                 @foreach ($groupedItems as $item)
                                     <tr wire:key="item-{{ $item['key'] }}" class="border-bottom">
                                         <td>{{ $loop->iteration }}</td>
-                                        <td class="fw-bold">{{ $item['name'] }}</td>
+                                        <td class="fw-bold">
+                                            {{ $item['name'] }}
+                                            @if (!empty($item['assistant_name']))
+                                                <span class="text-muted ms-2"> <br>
+                                                    <i class="fa fa-user-plus me-1"></i>{{ $item['assistant_name'] }}
+                                                </span>
+                                            @endif
+                                        </td>
                                         <td>
                                             {{ html()->number('unit_price')->value($item['unit_price'])->class('number select_on_focus form-control form-control-sm text-end')->attribute('wire:model.live', 'items.' . $item['key'] . '.unit_price') }}
                                         </td>

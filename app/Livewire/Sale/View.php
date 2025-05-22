@@ -49,6 +49,7 @@ class View extends Component
                         'sale_combo_offer_id' => $item['sale_combo_offer_id'],
                         'name' => $item['name'],
                         'employee_name' => $item['employee_name'],
+                        'assistant_name' => $item['assistant_name'],
                         'tax_amount' => $item['tax_amount'],
                         'unit_price' => $item['unit_price'],
                         'quantity' => round($item['quantity'], 3),

@@ -15,6 +15,7 @@ class SaleItem extends Model implements AuditableContracts
     protected $fillable = [
         'sale_id',
         'employee_id',
+        'assistant_id',
         'inventory_id',
         'product_id',
         'sale_combo_offer_id',
@@ -61,6 +62,11 @@ class SaleItem extends Model implements AuditableContracts
         return $this->belongsTo(User::class, 'employee_id');
     }
 
+    public function assistant()
+    {
+        return $this->belongsTo(User::class, 'assistant_id');
+    }
+
     public function salePackage()
     {
         return $this->belongsTo(SaleComboOffer::class, 'sale_combo_offer_id');
@@ -74,6 +80,11 @@ class SaleItem extends Model implements AuditableContracts
     public function getEmployeeNameAttribute()
     {
         return $this->employee?->name;
+    }
+
+    public function getAssistantNameAttribute()
+    {
+        return $this->assistant?->name;
     }
 
     public function getEffectiveTotalAttribute()
