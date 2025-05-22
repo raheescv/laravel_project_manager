@@ -136,7 +136,7 @@
                         @foreach ($model->items as $item)
                             <tr>
                                 <td>{{ $loop->iteration }}</td>
-                                <td>{{ $item['name'] }}</td>
+                                <td> <a href="{{ route('inventory::product::view', $item->product_id) }}">{{ $item['name'] }}</a> </td>
                                 <td>{{ $item->inventory->batch }}</td>
                                 <td>{{ $item->inventory->barcode }}</td>
                                 <td class="text-end">{{ $item['quantity'] }}</td>
@@ -158,7 +158,7 @@
             <div class="description-section mb-5">
                 <div class="neo-card">
                     <div class="card-icon">
-                        <i class="bi bi-text-paragraph"></i>
+                        <i class="fa fa-paragraph"></i>
                     </div>
                     <div class="card-content">
                         <h6 class="text-muted mb-3">Description</h6>

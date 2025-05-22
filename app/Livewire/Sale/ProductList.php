@@ -26,7 +26,7 @@ class ProductList extends Component
 
     public function getProducts($sale_type = 'normal', $category_id = null, $product_key = null)
     {
-        $this->products = Inventory::join('products', 'product_id', 'products.id')
+        $this->products = Inventory::with('product')->join('products', 'product_id', 'products.id')
             ->when($product_key, function ($query, $value) {
                 return $query->where('products.name', 'LIKE', '%'.$value.'%');
             })
@@ -48,6 +48,7 @@ class ProductList extends Component
                 'products.name',
                 'products.thumbnail',
             )
+            ->limit(50)
             ->get()
             ->map(function ($item) use ($sale_type) {
 

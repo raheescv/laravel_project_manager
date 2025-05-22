@@ -147,7 +147,7 @@
                                     </div>
                                     <div class="tabs_container" style="height: 80vh; overflow: auto;  overflow-x: hidden; padding-right: 10px;">
                                         <div class="tab_content active" data-tab="all">
-                                            <livewire:sale.product-list :sale_type="$sales['sale_type']" :category_id="$category_id" :product_key="$product_key" />
+                                            <livewire:sale.product-list :sale_type="$sales['sale_type']" :category_id="$category_id" :product_key="$product_key" wire:loading.delay />
                                         </div>
                                     </div>
                                 </div>

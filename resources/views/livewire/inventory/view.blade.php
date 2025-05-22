@@ -374,6 +374,12 @@
                                                         case 'SaleReturn':
                                                             $href = route('sale_return::view', $item->model_id);
                                                             break;
+                                                        case 'InventoryTransfer':
+                                                            $href = route('inventory::transfer::view', $item->model_id);
+                                                            break;
+                                                        case 'Purchase':
+                                                            $href = route('purchase::edit', $item->model_id);
+                                                            break;
                                                         default:
                                                             $href = '';
                                                             break;

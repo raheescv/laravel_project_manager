@@ -17,7 +17,7 @@ class StockUpdateAction
                 }
                 $inventory = $inventory->first();
                 if (! $inventory) {
-                    throw new \Exception('Inventory not found', 1);
+                    throw new \Exception('Inventory not found '.$value->product_id, 1);
                 }
                 $inventory = $inventory->toArray();
                 if ($is_purchase) {
