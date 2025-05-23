@@ -248,7 +248,10 @@
                                     <tr>
                                         <td>{{ $item->id }}</td>
                                         <td>{{ $item->branch?->name }}</td>
-                                        <td>{{ $item->barcode }}</td>
+                                        <td>
+                                            {{ $item->barcode }}
+                                            <a href="{{ route('inventory::barcode::print', $item->id) }}"><i class="fa fa-2x fa-print pull-right"></i></a>
+                                        </td>
                                         <td>{{ $item->batch }}</td>
                                         <td class="text-end">{{ currency($item->cost) }}</td>
                                         <td class="text-end">

@@ -73,5 +73,75 @@ class ConfigurationSeeder extends Seeder
             'status' => false,
         ];
         Configuration::updateOrCreate(['key' => 'purchase_visible_column'], ['value' => json_encode($purchaseVisibleColumns)]);
+
+        $barcode = [
+           'product_name' => [
+               'font_size' => '12',
+               'no_of_letters' => '26',
+               'up' => '2',
+               'down' => '123',
+               'left' => '0',
+               'right' => '0',
+               'align' => 'left',
+               'top' => '4',
+               'bottom' => '0',
+           ],
+           'product_arabic_name' => [
+               'font_size' => '12',
+               'no_of_letters' => '200',
+               'up' => '123',
+               'down' => '23',
+               'left' => '0',
+               'right' => '0',
+               'align' => 'right',
+               'top' => '-2',
+               'bottom' => '0',
+           ],
+           'mrp' => [
+               'font_size' => '18',
+               'up' => '123',
+               'down' => '123',
+               'left' => '0',
+               'right' => '0',
+               'align' => 'left',
+               'top' => '-15',
+               'bottom' => '0',
+           ],
+           'mrp_arabic' => [
+               'font_size' => '18',
+               'up' => '123',
+               'down' => '123',
+               'left' => '0',
+               'right' => '0',
+               'align' => 'right',
+               'top' => '-22',
+               'bottom' => '0',
+           ],
+           'barcode' => [
+               'font_size' => '12',
+               'up' => '23',
+               'down' => '123',
+               'left' => '0',
+               'right' => '0',
+               'align' => 'center',
+               'top' => '-14',
+               'bottom' => '0',
+           ],
+           'barcode_image' => [
+               'font_size' => '0',
+               'up' => '123',
+               'down' => '123',
+               'left' => '0',
+               'right' => '0',
+               'align' => 'center',
+               'top' => '0',
+               'bottom' => '0',
+           ],
+           'width' => '50',
+           'height' => '12',
+           'sheet_size' => '1112mm 120mm',
+        ];
+        Configuration::updateOrCreate(['key' => 'barcode_configurations'], ['value' => json_encode($barcode)]);
+
     }
 }

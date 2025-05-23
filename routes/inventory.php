@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AiImageController;
+use App\Http\Controllers\BarcodeController;
 use App\Http\Controllers\InventoryController;
 use App\Http\Controllers\InventoryTransferController;
 use Illuminate\Support\Facades\Route;
@@ -20,7 +21,12 @@ Route::middleware('auth')->group(function (): void {
             Route::get('print/{id}', 'print')->name('print');
             Route::get('list', 'get')->name('list');
         });
-
+        // Barcode Routes
+        Route::name('barcode::')->prefix('barcode')->group(function (): void {
+            Route::get('print/{id?}', [BarcodeController::class, 'print'])->name('print');
+            Route::get('view/{id?}', [BarcodeController::class, 'print'])->name('view');
+            Route::get('configuration', [BarcodeController::class, 'configuration'])->name('configuration');
+        });
         // AI Image Generation routes
         Route::get('ai-image', [AiImageController::class, 'index'])->name('ai-image')->can('inventory.view');
         Route::post('ai-image/generate', [AiImageController::class, 'generate'])->name('ai-image.generate')->can('inventory.view');

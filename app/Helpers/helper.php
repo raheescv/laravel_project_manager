@@ -407,3 +407,12 @@ if (! function_exists('feedbackTypes')) {
         ];
     }
 }
+
+if (! function_exists('arabicNumber')) {
+    function arabicNumber($value)
+    {
+        $arabicNumerals = ['٠', '١', '٢', '٣', '٤', '٥', '٦', '٧', '٨', '٩'];
+
+        return strtr(number_format($value, 2), array_combine(range(0, 9), $arabicNumerals));
+    }
+}

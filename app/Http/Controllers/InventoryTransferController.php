@@ -24,7 +24,7 @@ class InventoryTransferController extends Controller
 
     public function print($id)
     {
-        $model = InventoryTransfer::findOrFail($id);
+        $model = InventoryTransfer::with('items.inventory', 'fromBranch', 'toBranch')->findOrFail($id);
         $html = view('inventory-transfer.print', compact('model', 'id'));
         if (! $model->signature) {
             return $html;
