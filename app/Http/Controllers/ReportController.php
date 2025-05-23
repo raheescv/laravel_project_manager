@@ -52,4 +52,9 @@ class ReportController extends Controller
     {
         return view('report.product');
     }
+
+    public function ai_generated()
+    {
+        return view('report.ai_generated');
+    }
 }

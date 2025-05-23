@@ -14,6 +14,10 @@ class OllamaHelper
     public function __construct()
     {
         $this->client = new OllamaClient();
+        if (! $this->client->isRunning()) {
+            throw new Exception('Ollama API is not running', 1);
+        }
+
     }
 
     public function generatePromptForServiceImage(string $category, string $service_name): array
@@ -62,10 +66,6 @@ class OllamaHelper
     public function analyzeText(string $text): ?array
     {
         try {
-            if (! $this->client->isRunning()) {
-                throw new Exception('Ollama API is not running', 1);
-            }
-
             $prompt = <<<PROMPT
                 Analyze the following customer feedback and perform these tasks:
                     - Sentiment Analysis:
@@ -123,14 +123,9 @@ class OllamaHelper
     public function paraphrasing($sentence, $style): ?array
     {
         try {
-            if (! $this->client->isRunning()) {
-                throw new Exception('Ollama API is not running', 1);
-            }
-
             if (! in_array($style, ['rephrase', 'grammar correction', 'expand', 'concise', 'formal', 'informal', 'quirky'])) {
                 throw new Exception('Invalid style provided.');
             }
-
             $prompt = <<<PROMPT
                 Alter the following sentence according to the specified style. Apply the style strictly and return only the modified sentence.
                 Style: "$style"
@@ -157,6 +152,38 @@ class OllamaHelper
         } catch (Exception $e) {
             $return['success'] = false;
             $return['message'] = 'Error analyzing text: '.$e->getMessage();
+        }
+
+        return $return;
+    }
+
+    public function generateReport($data, $prompt)
+    {
+        try {
+            $prompt = 'Analyze this sales data and '.$prompt.". Return your analysis as a valid JSON array of objects, where each object represents a row and each key is a column name. Only return the JSON array, no explanation. Data:\n".json_encode($data);
+            $response = $this->client->post('generate', [
+                'model' => $this->model,
+                'prompt' => $prompt,
+                'stream' => false,
+                'context' => [],
+                'system' => 'You are a data analyst specialized in creating reports based on sales data. Your task is to analyze the data and provide insights.',
+                'options' => [
+                    'temperature' => 0.7,
+                    'top_k' => 40,
+                    'top_p' => 0.9,
+                ],
+            ]);
+            if (! isset($response['response'])) {
+                throw new Exception("Invalid response from {$this->model} API.");
+            }
+            $data = json_decode($response['response'], true);
+
+            $return['success'] = true;
+            $return['data'] = $data;
+            $return['message'] = 'Successfully Generated';
+        } catch (Exception $e) {
+            $return['success'] = false;
+            $return['message'] = 'Failed to generate report from Ollama: '.$e->getMessage();
         }
 
         return $return;
