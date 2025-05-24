@@ -57,4 +57,9 @@ class ReportController extends Controller
     {
         return view('report.ai_generated');
     }
+
+    public function profit_loss()
+    {
+        return view('report.profit_loss');
+    }
 }

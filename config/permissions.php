@@ -46,6 +46,7 @@ return [
         'customer',
         'employee',
         'product',
+        'profit_loss',
     ],
     'log' => ['inventory'],
     'backup' => ['create', 'view', 'download'],
