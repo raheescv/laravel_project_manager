@@ -53,6 +53,11 @@ class ReportController extends Controller
         return view('report.trial_balance');
     }
 
+    public function balance_sheet()
+    {
+        return view('report.balance_sheet');
+    }
+
     public function product()
     {
         return view('report.product');

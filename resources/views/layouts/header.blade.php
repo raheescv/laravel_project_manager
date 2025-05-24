@@ -57,11 +57,14 @@
                                     @can('report.sales overview')
                                         <a href="{{ route('report::sales_overview') }}" class="list-group-item list-group-item-action">Sales Overview</a>
                                     @endcan
-                                    @can('report.profit_loss')
+                                    @can('report.profit loss')
                                         <a href="{{ route('report::profit_loss') }}" class="list-group-item list-group-item-action">Profit & Loss</a>
                                     @endcan
-                                    @can('report.trial_balance')
+                                    @can('report.trial balance')
                                         <a href="{{ route('report::trial_balance') }}" class="list-group-item list-group-item-action">Trial Balance</a>
+                                    @endcan
+                                    @can('report.balance sheet')
+                                        <a href="{{ route('report::balance_sheet') }}" class="list-group-item list-group-item-action">Balance Sheet</a>
                                     @endcan
                                 </div>
                             </div>

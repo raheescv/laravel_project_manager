@@ -94,6 +94,11 @@ class Account extends Model implements AuditableContracts
         return $this->hasMany(Ledger::class, 'account_id');
     }
 
+    public function journalEntries()
+    {
+        return $this->hasMany(JournalEntry::class, 'account_id');
+    }
+
     public function customerType()
     {
         return $this->belongsTo(CustomerType::class);

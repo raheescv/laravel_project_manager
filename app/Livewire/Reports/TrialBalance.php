@@ -27,6 +27,44 @@ class TrialBalance extends Component
 
     public $totalCredit = 0;
 
+    // Section totals
+    public $assets = [];
+
+    public $liabilities = [];
+
+    public $equity = [];
+
+    public $income = [];
+
+    public $expenses = [];
+
+    public $totalAssets = 0;
+
+    public $totalLiabilities = 0;
+
+    public $netBalance = 0;
+
+    // Section totals for debit/credit
+    public $totalAssetsDebit = 0;
+
+    public $totalAssetsCredit = 0;
+
+    public $totalLiabilitiesDebit = 0;
+
+    public $totalLiabilitiesCredit = 0;
+
+    public $totalEquityDebit = 0;
+
+    public $totalEquityCredit = 0;
+
+    public $totalIncomeDebit = 0;
+
+    public $totalIncomeCredit = 0;
+
+    public $totalExpensesDebit = 0;
+
+    public $totalExpensesCredit = 0;
+
     public function mount()
     {
         $this->branches = Branch::pluck('name', 'id')->toArray();
@@ -84,57 +122,107 @@ class TrialBalance extends Component
                 account_id,
                 accounts.name as account_name,
                 accounts.account_type,
-                SUM(debit) as total_debit,
-                SUM(credit) as total_credit
+                COALESCE(SUM(journal_entries.debit), 0) as total_debit,
+                COALESCE(SUM(journal_entries.credit), 0) as total_credit
             ')
             ->join('journals', 'journals.id', '=', 'journal_id')
             ->join('accounts', 'accounts.id', '=', 'account_id')
             ->whereBetween('journals.date', [$this->start_date, $this->end_date])
             ->when($this->branch_id, function ($query) {
-                return $query->where('branch_id', $this->branch_id);
+                return $query->where('journals.branch_id', $this->branch_id);
             })
             ->groupBy('account_id', 'accounts.name', 'accounts.account_type');
 
         $accounts = $query->get();
 
-        // Initialize arrays
-        $debitAccounts = [];
-        $creditAccounts = [];
+        // Reset arrays and totals
+        $this->assets = [];
+        $this->liabilities = [];
+        $this->equity = [];
+        $this->income = [];
+        $this->expenses = [];
 
-        // Sort accounts by type and their normal balance
+        $this->totalAssetsDebit = 0;
+        $this->totalAssetsCredit = 0;
+        $this->totalLiabilitiesDebit = 0;
+        $this->totalLiabilitiesCredit = 0;
+        $this->totalEquityDebit = 0;
+        $this->totalEquityCredit = 0;
+        $this->totalIncomeDebit = 0;
+        $this->totalIncomeCredit = 0;
+        $this->totalExpensesDebit = 0;
+        $this->totalExpensesCredit = 0;
+
+        // Process and categorize accounts
         foreach ($accounts as $account) {
-            $balance = [
-                'account' => $account->account_name,
-                'debit' => $account->total_debit,
-                'credit' => $account->total_credit,
+            $debit = round((float) ($account->total_debit ?? 0), 2);
+            $credit = round((float) ($account->total_credit ?? 0), 2);
+
+            $accountData = (object) [
+                'code' => $account->account_code,
+                'name' => $account->account_name,
+                'debit' => $debit,
+                'credit' => $credit,
             ];
 
-            // Assets and Expenses normally have debit balances
-            if (in_array($account->account_type, ['asset', 'expense'])) {
-                $netBalance = $account->total_debit - $account->total_credit;
-                if ($netBalance != 0) {
-                    $balance['debit'] = max(0, $netBalance);
-                    $balance['credit'] = max(0, -$netBalance);
-                    $debitAccounts[] = $balance;
-                }
-            }
-            // Liabilities, Income, and Capital normally have credit balances
-            elseif (in_array($account->account_type, ['liability', 'income'])) {
-                $netBalance = $account->total_credit - $account->total_debit;
-                if ($netBalance != 0) {
-                    $balance['debit'] = max(0, -$netBalance);
-                    $balance['credit'] = max(0, $netBalance);
-                    $creditAccounts[] = $balance;
-                }
+            switch ($account->account_type) {
+                case 'asset':
+                    $this->assets[] = $accountData;
+                    $this->totalAssetsDebit = bcadd($this->totalAssetsDebit, $debit, 2);
+                    $this->totalAssetsCredit = bcadd($this->totalAssetsCredit, $credit, 2);
+                    break;
+                case 'liability':
+                    $this->liabilities[] = $accountData;
+                    $this->totalLiabilitiesDebit = bcadd($this->totalLiabilitiesDebit, $debit, 2);
+                    $this->totalLiabilitiesCredit = bcadd($this->totalLiabilitiesCredit, $credit, 2);
+                    break;
+                case 'equity':
+                    $this->equity[] = $accountData;
+                    $this->totalEquityDebit = bcadd($this->totalEquityDebit, $debit, 2);
+                    $this->totalEquityCredit = bcadd($this->totalEquityCredit, $credit, 2);
+                    break;
+                case 'income':
+                    $this->income[] = $accountData;
+                    $this->totalIncomeDebit = bcadd($this->totalIncomeDebit, $debit, 2);
+                    $this->totalIncomeCredit = bcadd($this->totalIncomeCredit, $credit, 2);
+                    break;
+                case 'expense':
+                    $this->expenses[] = $accountData;
+                    $this->totalExpensesDebit = bcadd($this->totalExpensesDebit, $debit, 2);
+                    $this->totalExpensesCredit = bcadd($this->totalExpensesCredit, $credit, 2);
+                    break;
             }
         }
 
-        // Sort accounts by name
-        $this->debitAccounts = collect($debitAccounts)->sortBy('account')->values()->all();
-        $this->creditAccounts = collect($creditAccounts)->sortBy('account')->values()->all();
+        // Calculate total assets (assets have a debit balance normally)
+        $this->totalAssets = bcsub($this->totalAssetsDebit, $this->totalAssetsCredit, 2);
 
-        $this->totalDebit = collect($this->debitAccounts)->sum('debit');
-        $this->totalCredit = collect($this->creditAccounts)->sum('credit');
+        // Calculate total liabilities (liabilities have a credit balance normally)
+        $this->totalLiabilities = bcsub($this->totalLiabilitiesCredit, $this->totalLiabilitiesDebit, 2);
+
+        // Calculate net balance
+        $this->netBalance = bcsub($this->totalAssets, $this->totalLiabilities, 2);
+
+        // Calculate grand totals
+        $this->totalDebit = array_sum([
+            $this->totalAssetsDebit,
+            $this->totalLiabilitiesDebit,
+            $this->totalEquityDebit,
+            $this->totalIncomeDebit,
+            $this->totalExpensesDebit,
+        ]);
+
+        $this->totalCredit = array_sum([
+            $this->totalAssetsCredit,
+            $this->totalLiabilitiesCredit,
+            $this->totalEquityCredit,
+            $this->totalIncomeCredit,
+            $this->totalExpensesCredit,
+        ]);
+
+        // Ensure proper decimal precision
+        $this->totalDebit = round($this->totalDebit, 2);
+        $this->totalCredit = round($this->totalCredit, 2);
     }
 
     public function render()

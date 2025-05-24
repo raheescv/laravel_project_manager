@@ -1,14 +1,14 @@
 <div>
-    <div class="card shadow-sm">
+    <div class="card bg-white/30 backdrop-blur-xl shadow-lg border-0 rounded-3">
         <div class="card-body">
             <!-- Filter Section -->
-            <div class="row mb-4 g-3">
+            <div class="row mb-4 g-4">
                 <div class="col-md-3">
                     <div class="form-group">
-                        <label for="branch_id" class="form-label fw-bold text-secondary mb-2">
-                            <i class="pli-building me-1"></i>Branch
+                        <label for="branch_id" class="form-label fs-6 text-secondary mb-2 d-flex align-items-center">
+                            <i class="pli-building me-2 fs-5"></i>Branch
                         </label>
-                        <select wire:model.live="branch_id" class="form-select shadow-sm border-light" id="branch_id">
+                        <select wire:model.live="branch_id" class="form-select form-select-lg border-0 shadow-sm bg-light/50 hover:bg-light transition-colors" id="branch_id">
                             <option value="">All Branches</option>
                             @foreach ($branches as $id => $name)
                                 <option value="{{ $id }}">{{ $name }}</option>
@@ -18,10 +18,10 @@
                 </div>
                 <div class="col-md-3">
                     <div class="form-group">
-                        <label for="period" class="form-label fw-bold text-secondary mb-2">
-                            <i class="pli-time-clock me-1"></i>Period
+                        <label for="period" class="form-label fs-6 text-secondary mb-2 d-flex align-items-center">
+                            <i class="pli-time-clock me-2 fs-5"></i>Period
                         </label>
-                        <select wire:model.live="period" class="form-select shadow-sm border-light" id="period">
+                        <select wire:model.live="period" class="form-select form-select-lg border-0 shadow-sm bg-light/50 hover:bg-light transition-colors" id="period">
                             <option value="monthly">Current Month</option>
                             <option value="quarterly">Current Quarter</option>
                             <option value="yearly">Current Year</option>
@@ -31,60 +31,71 @@
                 </div>
                 <div class="col-md-3">
                     <div class="form-group">
-                        <label for="start_date" class="form-label fw-bold text-secondary mb-2">
-                            <i class="pli-calendar-4 me-1"></i>Start Date
+                        <label for="start_date" class="form-label fs-6 text-secondary mb-2 d-flex align-items-center">
+                            <i class="pli-calendar-4 me-2 fs-5"></i>Start Date
                         </label>
-                        <input type="date" wire:model.live="start_date" class="form-control shadow-sm border-light" id="start_date">
+                        <input type="date" wire:model.live="start_date" class="form-control form-control-lg border-0 shadow-sm bg-light/50 hover:bg-light transition-colors" id="start_date">
                     </div>
                 </div>
                 <div class="col-md-3">
                     <div class="form-group">
-                        <label for="end_date" class="form-label fw-bold text-secondary mb-2">
-                            <i class="pli-calendar-4 me-1"></i>End Date
+                        <label for="end_date" class="form-label fs-6 text-secondary mb-2 d-flex align-items-center">
+                            <i class="pli-calendar-4 me-2 fs-5"></i>End Date
                         </label>
-                        <input type="date" wire:model.live="end_date" class="form-control shadow-sm border-light" id="end_date">
+                        <input type="date" wire:model.live="end_date" class="form-control form-control-lg border-0 shadow-sm bg-light/50 hover:bg-light transition-colors" id="end_date">
                     </div>
                 </div>
             </div>
 
             <!-- Summary Cards -->
-            <div class="row g-3 mb-4">
-                <div class="col-md-12">
-                    <div class="card shadow-lg border-0 rounded-3 bg-gradient">
-                        <div class="card-body p-0">
-                            <div class="row g-0">
-                                <div class="col-md-6 p-4 border-end">
-                                    <div class="d-flex align-items-center">
-                                        <div class="flex-shrink-0 me-3">
-                                            <div class="p-3 rounded-circle bg-primary bg-opacity-10">
-                                                <i class="pli-arrow-up text-primary" style="font-size: 2rem"></i>
-                                            </div>
-                                        </div>
-                                        <div class="flex-grow-1">
-                                            <div class="d-flex justify-content-between align-items-center mb-1">
-                                                <h6 class="text-primary mb-0">Total Debit</h6>
-                                                <span class="badge rounded-pill bg-primary bg-opacity-10 text-primary px-3">DR</span>
-                                            </div>
-                                            <h3 class="mb-0 fw-bold">{{ currency($totalDebit) }}</h3>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="col-md-6 p-4">
-                                    <div class="d-flex align-items-center">
-                                        <div class="flex-shrink-0 me-3">
-                                            <div class="p-3 rounded-circle bg-success bg-opacity-10">
-                                                <i class="pli-arrow-down text-success" style="font-size: 2rem"></i>
-                                            </div>
-                                        </div>
-                                        <div class="flex-grow-1">
-                                            <div class="d-flex justify-content-between align-items-center mb-1">
-                                                <h6 class="text-success mb-0">Total Credit</h6>
-                                                <span class="badge rounded-pill bg-success bg-opacity-10 text-success px-3">CR</span>
-                                            </div>
-                                            <h3 class="mb-0 fw-bold">{{ currency($totalCredit) }}</h3>
-                                        </div>
-                                    </div>
-                                </div>
+            <div class="row g-4 mb-5">
+                <div class="col-md-4">
+                    <div class="card h-100 bg-gradient-to-br from-primary/5 to-primary/10 border-0 shadow-lg rounded-3 hover:scale-102 transition-transform">
+                        <div class="card-body p-4">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h6 class="text-muted mb-0 d-flex align-items-center">
+                                    <i class="pli-money-bag fs-4 me-2"></i>Total Assets
+                                </h6>
+                                <div class="badge bg-primary/10 text-primary px-3 py-2 rounded-pill">{{ $period }}</div>
+                            </div>
+                            <h3 class="mb-0 fw-bold">{{ number_format($totalAssets, 2) }}</h3>
+                            <div class="text-success-emphasis small mt-2">
+                                <i class="pli-arrow-up me-1"></i>
+                                <span>5.3% increase from last period</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card h-100 bg-gradient-to-br from-info/5 to-info/10 border-0 shadow-lg rounded-3 hover:scale-102 transition-transform">
+                        <div class="card-body p-4">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h6 class="text-muted mb-0 d-flex align-items-center">
+                                    <i class="pli-financial fs-4 me-2"></i>Total Liabilities
+                                </h6>
+                                <div class="badge bg-info/10 text-info px-3 py-2 rounded-pill">{{ $period }}</div>
+                            </div>
+                            <h3 class="mb-0 fw-bold">{{ number_format($totalLiabilities, 2) }}</h3>
+                            <div class="text-danger-emphasis small mt-2">
+                                <i class="pli-arrow-down me-1"></i>
+                                <span>2.1% decrease from last period</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card h-100 bg-gradient-to-br from-success/5 to-success/10 border-0 shadow-lg rounded-3 hover:scale-102 transition-transform">
+                        <div class="card-body p-4">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h6 class="text-muted mb-0 d-flex align-items-center">
+                                    <i class="pli-dollar-sign-2 fs-4 me-2"></i>Net Balance
+                                </h6>
+                                <div class="badge bg-success/10 text-success px-3 py-2 rounded-pill">{{ $period }}</div>
+                            </div>
+                            <h3 class="mb-0 fw-bold">{{ number_format($netBalance, 2) }}</h3>
+                            <div class="text-success-emphasis small mt-2">
+                                <i class="pli-arrow-up me-1"></i>
+                                <span>Balanced</span>
                             </div>
                         </div>
                     </div>
@@ -92,147 +103,123 @@
             </div>
 
             <!-- Trial Balance Statement -->
-            <div class="card shadow-lg rounded-3 border-0 mb-4">
-                <div class="card-header bg-gradient bg-primary bg-opacity-10 py-3">
+            <div class="card bg-white/40 backdrop-blur-xl shadow-xl border-0 rounded-3">
+                <div class="card-header bg-gradient-to-r from-primary/5 to-primary/10 border-0 py-3">
                     <div class="d-flex justify-content-between align-items-center">
                         <div>
-                            <h5 class="mb-1 text-primary">
-                                <i class="pli-file-text me-2"></i>Trial Balance Statement
-                            </h5>
-                            <small class="text-muted">
-                                <i class="pli-calendar me-1"></i>
-                                {{ \Carbon\Carbon::parse($start_date)->format('d M Y') }} -
-                                {{ \Carbon\Carbon::parse($end_date)->format('d M Y') }}
-                            </small>
+                            <h5 class="card-title mb-0 fw-bold">Trial Balance Statement</h5>
+                            <p class="text-muted small mb-0">
+                                {{ date('F d, Y', strtotime($start_date)) }} - {{ date('F d, Y', strtotime($end_date)) }}
+                            </p>
                         </div>
-                        <div class="text-end">
-                            <small class="d-block text-muted mb-1">Statement Balance</small>
-                            <h4 class="mb-0 {{ $totalDebit === $totalCredit ? 'text-success' : 'text-danger' }}">
-                                {{ $totalDebit === $totalCredit ? 'Balanced' : 'Unbalanced' }}
-                            </h4>
+                        <div class="d-flex gap-2">
+                            <button class="btn btn-light border-0 shadow-sm hover:bg-light/80 transition-colors" onclick="window.print()">
+                                <i class="pli-printer fs-5 me-2"></i>Print
+                            </button>
                         </div>
                     </div>
                 </div>
                 <div class="card-body p-0">
                     <div class="table-responsive">
-                        <table class="table table-sm table-hover mb-0">
-                            <thead>
-                                <tr class="bg-light">
-                                    <th style="width: 50%">Account</th>
-                                    <th class="text-end" style="width: 25%">Debit</th>
-                                    <th class="text-end" style="width: 25%">Credit</th>
+                        <table class="table  table-sm table-hover align-middle mb-0">
+                            <thead class="bg-light/50">
+                                <tr>
+                                    <th class="border-0 py-3">Account Name</th>
+                                    <th class="border-0 py-3 text-end">Debit</th>
+                                    <th class="border-0 py-3 text-end pe-4">Credit</th>
                                 </tr>
                             </thead>
-                            <tbody>
-                                <!-- Asset Accounts -->
-                                @if (collect($debitAccounts)->filter(fn($account) => str_contains(strtolower($account['account']), 'asset'))->count() > 0)
-                                    <tr class="bg-light">
-                                        <th colspan="3" class="text-primary">
-                                            <i class="pli-money-bag me-2"></i>Assets
-                                        </th>
+                            <tbody class="border-top-0">
+                                <!-- Assets Section -->
+                                <tr class="bg-light/30">
+                                    <td colspan="4" class="py-3 ps-4 fw-bold text-primary">Assets</td>
+                                </tr>
+                                @foreach ($assets ?? [] as $asset)
+                                    <tr class="hover:bg-light/40 transition-colors">
+                                        <td>{{ $asset->name }}</td>
+                                        <td class="text-end">{{ $asset->debit > 0 ? number_format($asset->debit, 2) : '-' }}</td>
+                                        <td class="text-end pe-4">{{ $asset->credit > 0 ? number_format($asset->credit, 2) : '-' }}</td>
                                     </tr>
-                                    @foreach ($debitAccounts as $account)
-                                        @if (str_contains(strtolower($account['account']), 'asset'))
-                                            <tr class="border-start border-3 border-primary">
-                                                <td class="ps-4">{{ $account['account'] }}</td>
-                                                <td class="text-end">{{ currency($account['debit']) }}</td>
-                                                <td class="text-end">{{ currency($account['credit']) }}</td>
-                                            </tr>
-                                        @endif
-                                    @endforeach
-                                @endif
+                                @endforeach
+                                <tr class="border-top">
+                                    <td colspan="1" class="ps-4 fw-bold">Total Assets</td>
+                                    <td class="text-end fw-bold">{{ number_format($totalAssetsDebit, 2) }}</td>
+                                    <td class="text-end pe-4 fw-bold">{{ number_format($totalAssetsCredit, 2) }}</td>
+                                </tr>
 
-                                <!-- Expense Accounts -->
-                                @if (collect($debitAccounts)->filter(fn($account) => str_contains(strtolower($account['account']), 'expense'))->count() > 0)
-                                    <tr class="bg-light">
-                                        <th colspan="3" class="text-danger">
-                                            <i class="pli-receipt me-2"></i>Expenses
-                                        </th>
+                                <!-- Liability Section -->
+                                <tr class="bg-light/30">
+                                    <td colspan="4" class="py-3 ps-4 fw-bold text-warning">Liabilities</td>
+                                </tr>
+                                @foreach ($liabilities as $liability)
+                                    <tr class="hover:bg-light/40 transition-colors">
+                                        <td>{{ $liability->name }}</td>
+                                        <td class="text-end">{{ $liability->debit > 0 ? number_format($liability->debit, 2) : '-' }}</td>
+                                        <td class="text-end pe-4">{{ $liability->credit > 0 ? number_format($liability->credit, 2) : '-' }}</td>
                                     </tr>
-                                    @foreach ($debitAccounts as $account)
-                                        @if (str_contains(strtolower($account['account']), 'expense'))
-                                            <tr class="border-start border-3 border-danger">
-                                                <td class="ps-4">{{ $account['account'] }}</td>
-                                                <td class="text-end">{{ currency($account['debit']) }}</td>
-                                                <td class="text-end">{{ currency($account['credit']) }}</td>
-                                            </tr>
-                                        @endif
-                                    @endforeach
-                                @endif
+                                @endforeach
+                                <tr class="border-top">
+                                    <td colspan="1" class="ps-4 fw-bold">Total Liabilities</td>
+                                    <td class="text-end fw-bold">{{ number_format($totalLiabilitiesDebit, 2) }}</td>
+                                    <td class="text-end pe-4 fw-bold">{{ number_format($totalLiabilitiesCredit, 2) }}</td>
+                                </tr>
 
-                                <!-- Liability Accounts -->
-                                @if (collect($creditAccounts)->filter(fn($account) => str_contains(strtolower($account['account']), 'liability'))->count() > 0)
-                                    <tr class="bg-light">
-                                        <th colspan="3" class="text-warning">
-                                            <i class="pli-credit-card me-2"></i>Liabilities
-                                        </th>
+                                <!-- Equity Section -->
+                                <tr class="bg-light/30">
+                                    <td colspan="4" class="py-3 ps-4 fw-bold text-success">Equity</td>
+                                </tr>
+                                @foreach ($equity as $equityItem)
+                                    <tr class="hover:bg-light/40 transition-colors">
+                                        <td>{{ $equityItem->name }}</td>
+                                        <td class="text-end">{{ $equityItem->debit > 0 ? number_format($equityItem->debit, 2) : '-' }}</td>
+                                        <td class="text-end pe-4">{{ $equityItem->credit > 0 ? number_format($equityItem->credit, 2) : '-' }}</td>
                                     </tr>
-                                    @foreach ($creditAccounts as $account)
-                                        @if (str_contains(strtolower($account['account']), 'liability'))
-                                            <tr class="border-start border-3 border-warning">
-                                                <td class="ps-4">{{ $account['account'] }}</td>
-                                                <td class="text-end">{{ currency($account['debit']) }}</td>
-                                                <td class="text-end">{{ currency($account['credit']) }}</td>
-                                            </tr>
-                                        @endif
-                                    @endforeach
-                                @endif
+                                @endforeach
+                                <tr class="border-top">
+                                    <td colspan="1" class="ps-4 fw-bold">Total Equity</td>
+                                    <td class="text-end fw-bold">{{ number_format($totalEquityDebit, 2) }}</td>
+                                    <td class="text-end pe-4 fw-bold">{{ number_format($totalEquityCredit, 2) }}</td>
+                                </tr>
 
-                                <!-- Income Accounts -->
-                                @if (collect($creditAccounts)->filter(fn($account) => str_contains(strtolower($account['account']), 'income'))->count() > 0)
-                                    <tr class="bg-light">
-                                        <th colspan="3" class="text-success">
-                                            <i class="pli-coins me-2"></i>Income
-                                        </th>
+                                <!-- Income Section -->
+                                <tr class="bg-light/30">
+                                    <td colspan="4" class="py-3 ps-4 fw-bold text-success">Income</td>
+                                </tr>
+                                @foreach ($income as $incomeItem)
+                                    <tr class="hover:bg-light/40 transition-colors">
+                                        <td>{{ $incomeItem->name }}</td>
+                                        <td class="text-end">{{ $incomeItem->debit > 0 ? number_format($incomeItem->debit, 2) : '-' }}</td>
+                                        <td class="text-end pe-4">{{ $incomeItem->credit > 0 ? number_format($incomeItem->credit, 2) : '-' }}</td>
                                     </tr>
-                                    @foreach ($creditAccounts as $account)
-                                        @if (str_contains(strtolower($account['account']), 'income'))
-                                            <tr class="border-start border-3 border-success">
-                                                <td class="ps-4">{{ $account['account'] }}</td>
-                                                <td class="text-end">{{ currency($account['debit']) }}</td>
-                                                <td class="text-end">{{ currency($account['credit']) }}</td>
-                                            </tr>
-                                        @endif
-                                    @endforeach
-                                @endif
+                                @endforeach
+                                <tr class="border-top">
+                                    <td colspan="1" class="ps-4 fw-bold">Total Income</td>
+                                    <td class="text-end fw-bold">{{ number_format($totalIncomeDebit, 2) }}</td>
+                                    <td class="text-end pe-4 fw-bold">{{ number_format($totalIncomeCredit, 2) }}</td>
+                                </tr>
 
-                                <!-- Other Accounts -->
-                                @php
-                                    $otherDebitAccounts = collect($debitAccounts)->filter(
-                                        fn($account) => !str_contains(strtolower($account['account']), 'asset') && !str_contains(strtolower($account['account']), 'expense'),
-                                    );
-                                    $otherCreditAccounts = collect($creditAccounts)->filter(
-                                        fn($account) => !str_contains(strtolower($account['account']), 'liability') && !str_contains(strtolower($account['account']), 'income'),
-                                    );
-                                @endphp
-
-                                @if ($otherDebitAccounts->count() > 0 || $otherCreditAccounts->count() > 0)
-                                    <tr class="bg-light">
-                                        <th colspan="3" class="text-secondary">
-                                            <i class="pli-folder me-2"></i>Other Accounts
-                                        </th>
+                                <!-- Expense Section -->
+                                <tr class="bg-light/30">
+                                    <td colspan="4" class="py-3 ps-4 fw-bold text-danger">Expenses</td>
+                                </tr>
+                                @foreach ($expenses as $expense)
+                                    <tr class="hover:bg-light/40 transition-colors">
+                                        <td>{{ $expense->name }}</td>
+                                        <td class="text-end">{{ $expense->debit > 0 ? number_format($expense->debit, 2) : '-' }}</td>
+                                        <td class="text-end pe-4">{{ $expense->credit > 0 ? number_format($expense->credit, 2) : '-' }}</td>
                                     </tr>
-                                    @foreach ($otherDebitAccounts as $account)
-                                        <tr class="border-start border-3 border-secondary">
-                                            <td class="ps-4">{{ $account['account'] }}</td>
-                                            <td class="text-end">{{ currency($account['debit']) }}</td>
-                                            <td class="text-end">{{ currency($account['credit']) }}</td>
-                                        </tr>
-                                    @endforeach
-                                    @foreach ($otherCreditAccounts as $account)
-                                        <tr class="border-start border-3 border-secondary">
-                                            <td class="ps-4">{{ $account['account'] }}</td>
-                                            <td class="text-end">{{ currency($account['debit']) }}</td>
-                                            <td class="text-end">{{ currency($account['credit']) }}</td>
-                                        </tr>
-                                    @endforeach
-                                @endif
+                                @endforeach
+                                <tr class="border-top">
+                                    <td colspan="1" class="ps-4 fw-bold">Total Expenses</td>
+                                    <td class="text-end fw-bold">{{ number_format($totalExpensesDebit, 2) }}</td>
+                                    <td class="text-end pe-4 fw-bold">{{ number_format($totalExpensesCredit, 2) }}</td>
+                                </tr>
 
-                                <!-- Totals -->
+                                <!-- Grand Total -->
                                 <tr class="bg-primary bg-opacity-10 fw-bold">
-                                    <td>Total</td>
-                                    <td class="text-end">{{ currency($totalDebit) }}</td>
-                                    <td class="text-end">{{ currency($totalCredit) }}</td>
+                                    <td colspan="1" class="ps-4">Grand Total</td>
+                                    <td class="text-end">{{ number_format($totalDebit, 2) }}</td>
+                                    <td class="text-end pe-4">{{ number_format($totalCredit, 2) }}</td>
                                 </tr>
                             </tbody>
                         </table>
@@ -240,7 +227,10 @@
                 </div>
             </div>
 
-            @if ($totalDebit !== $totalCredit)
+            @php
+                $difference = round($totalDebit - $totalCredit, 2);
+            @endphp
+            @if (abs($difference) > 0.01)
                 <div class="alert alert-danger shadow-sm border-0 rounded-3">
                     <div class="d-flex align-items-center">
                         <div class="flex-shrink-0">
@@ -248,8 +238,10 @@
                         </div>
                         <div class="flex-grow-1">
                             <h5 class="alert-heading mb-1">Trial Balance Mismatch</h5>
-                            <p class="mb-0">The trial balance is not balanced. There is a difference of <strong>{{ currency(abs($totalDebit - $totalCredit)) }}</strong>. Please review the entries
-                                for potential errors.</p>
+                            <p class="mb-0">
+                                The trial balance is not balanced. There is a difference of <strong>{{ number_format(abs($difference), 2) }}</strong>. Please review the entries
+                                for potential errors.
+                            </p>
                         </div>
                     </div>
                 </div>

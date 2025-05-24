@@ -18,8 +18,9 @@ Route::middleware('auth')->group(function (): void {
             Route::get('day_book', 'day_book')->name('day_book');
             Route::get('sale_summary', 'sale_summary')->name('sale_summary')->can('report.sale summary');
             Route::get('sales_overview', 'sales_overview')->name('sales_overview')->can('report.sales overview');
-            Route::get('profit_loss', 'profit_loss')->name('profit_loss')->can('report.profit_loss');
-            Route::get('trial_balance', 'trial_balance')->name('trial_balance')->can('report.trial_balance');
+            Route::get('profit_loss', 'profit_loss')->name('profit_loss')->can('report.profit loss');
+            Route::get('trial_balance', 'trial_balance')->name('trial_balance')->can('report.trial balance');
+            Route::get('balance_sheet', 'balance_sheet')->name('balance_sheet')->can('report.balance sheet');
             Route::get('customer', 'customer')->name('customer')->can('report.customer');
             Route::get('employee', 'employee')->name('employee')->can('report.employee');
             Route::get('product', 'product')->name('product')->can('report.product');
