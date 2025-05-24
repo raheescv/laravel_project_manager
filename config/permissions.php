@@ -47,6 +47,7 @@ return [
         'employee',
         'product',
         'profit_loss',
+        'trial_balance',
     ],
     'log' => ['inventory'],
     'backup' => ['create', 'view', 'download'],

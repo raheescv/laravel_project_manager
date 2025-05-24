@@ -60,6 +60,9 @@
                                     @can('report.profit_loss')
                                         <a href="{{ route('report::profit_loss') }}" class="list-group-item list-group-item-action">Profit & Loss</a>
                                     @endcan
+                                    @can('report.trial_balance')
+                                        <a href="{{ route('report::trial_balance') }}" class="list-group-item list-group-item-action">Trial Balance</a>
+                                    @endcan
                                 </div>
                             </div>
                         </div>
