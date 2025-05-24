@@ -50,4 +50,5 @@ return [
     'log' => ['inventory'],
     'backup' => ['create', 'view', 'download'],
     'visitor analytics' => ['view'],
+    'barcode' => ['configuration'],
 ];
