@@ -48,7 +48,7 @@ class BarcodeConfiguration extends Component
                 'align' => 'center',
                 'visible' => true,
                 'show_value' => true,
-                'scale' => 4,
+                'scale' => 3,
             ],
             'price' => [
                 'font_size' => 16,

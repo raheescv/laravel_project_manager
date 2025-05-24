@@ -27,6 +27,9 @@
                                 </div>
                                 <div class="barcode-designer" id="barcodeDesigner">
                                     @foreach ($barcode['elements'] as $elementId => $position)
+                                        @if ($barcode[$elementId]['visible'] === false)
+                                            @continue
+                                        @endif
                                         <div class="design-element" id="{{ $elementId }}" data-element="{{ $elementId }}"
                                             style="top: {{ $position['top'] }}px; left: {{ $position['left'] }}px; width: {{ $position['width'] }}; height: {{ $position['height'] }};">
                                             <div class="resize-handle nw"></div>

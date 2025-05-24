@@ -2,7 +2,6 @@
 <html lang="ar" dir="rtl">
 
 @php
-    // Helper functions
     function convertToUnits($value)
     {
         if (is_numeric($value)) {
@@ -92,8 +91,8 @@
         }
 
         .barcode-image img {
-            width: calc(10mm * {{ $settings['barcode']['scale'] ?? 1 }});
-            height: calc({{ $settings['elements']['barcode']['height'] }}mm * {{ $settings['barcode']['scale'] ?? 1 }});
+            width: {{ $settings['elements']['barcode']['width'] ?? 180 }};
+            height: {{ $settings['elements']['barcode']['height'] ?? 40 }};
         }
 
         .barcode-value {
@@ -175,8 +174,12 @@
 
         @if ($settings['barcode']['visible'] ?? true)
             <div class="barcode-element barcode-image" style="{{ getElementStyle('barcode', $settings) }}">
-                <img src="data:image/png;base64,{{ DNS1D::getBarcodePNG($inventory->barcode, 'C128', $settings['elements']['barcode']['width'] ?? 40, $settings['elements']['barcode']['height'] ?? 40, [0, 0, 0], $settings['barcode']['show_value'] ?? false) }}"
-                    alt="{{ $inventory->barcode }}">
+                @php
+                    $scale = $settings['barcode']['scale'];
+                    $height = $settings['elements']['barcode']['height'] ?? 40;
+                    $showCode = $settings['barcode']['show_value'] ?? true;
+                @endphp
+                <img src="data:image/png;base64,{{ DNS1D::getBarcodePNG($inventory->barcode, 'C128', $scale, $height, [0, 0, 0], $showCode) }}" alt="{{ $inventory->barcode }}">
             </div>
         @endif
 
@@ -192,137 +195,6 @@
             </div>
         @endif
     </div>
-
-    <script>
-        document.addEventListener('livewire:initialized', () => {
-            const container = document.querySelector('.barcode-container');
-            const elements = document.querySelectorAll('.barcode-element');
-
-            // Initialize draggable elements
-            elements.forEach(element => {
-                initializeDraggable(element);
-                initializeResizable(element);
-            });
-
-            function initializeDraggable(element) {
-                element.addEventListener('mousedown', startDragging);
-                element.addEventListener('touchstart', startDragging, {
-                    passive: false
-                });
-            }
-
-            function startDragging(e) {
-                if (e.target.classList.contains('element-handle')) return;
-                e.preventDefault();
-                const element = e.target.closest('.barcode-element');
-                if (!element) return;
-
-                const startX = e.type === 'mousedown' ? e.clientX : e.touches[0].clientX;
-                const startY = e.type === 'mousedown' ? e.clientY : e.touches[0].clientY;
-                const startLeft = element.offsetLeft;
-                const startTop = element.offsetTop;
-
-                function onMove(e) {
-                    const currentX = e.type === 'mousemove' ? e.clientX : e.touches[0].clientX;
-                    const currentY = e.type === 'mousemove' ? e.clientY : e.touches[0].clientY;
-
-                    const deltaX = currentX - startX;
-                    const deltaY = currentY - startY;
-
-                    const newLeft = Math.max(0, Math.min(startLeft + deltaX, container.offsetWidth - element.offsetWidth));
-                    const newTop = Math.max(0, Math.min(startTop + deltaY, container.offsetHeight - element.offsetHeight));
-
-                    element.style.left = `${newLeft}px`;
-                    element.style.top = `${newTop}px`;
-
-                    // Update Livewire component
-                    window.Livewire.dispatch('elementMoved', {
-                        elementId: element.id,
-                        position: {
-                            top: newTop,
-                            left: newLeft
-                        }
-                    });
-                }
-
-                function onEnd() {
-                    document.removeEventListener('mousemove', onMove);
-                    document.removeEventListener('mouseup', onEnd);
-                    document.removeEventListener('touchmove', onMove);
-                    document.removeEventListener('touchend', onEnd);
-                }
-
-                document.addEventListener('mousemove', onMove);
-                document.addEventListener('mouseup', onEnd);
-                document.addEventListener('touchmove', onMove, {
-                    passive: false
-                });
-                document.addEventListener('touchend', onEnd);
-            }
-
-            function initializeResizable(element) {
-                const handles = element.querySelectorAll('.element-handle');
-                handles.forEach(handle => {
-                    handle.addEventListener('mousedown', startResizing);
-                    handle.addEventListener('touchstart', startResizing, {
-                        passive: false
-                    });
-                });
-            }
-
-            function startResizing(e) {
-                e.preventDefault();
-                e.stopPropagation();
-
-                const handle = e.target;
-                const element = handle.closest('.barcode-element');
-                const startX = e.type === 'mousedown' ? e.clientX : e.touches[0].clientX;
-                const startY = e.type === 'mousedown' ? e.clientY : e.touches[0].clientY;
-                const startWidth = element.offsetWidth;
-                const startHeight = element.offsetHeight;
-                const isRight = handle.classList.contains('top-right');
-
-                function onMove(e) {
-                    const currentX = e.type === 'mousemove' ? e.clientX : e.touches[0].clientX;
-                    const currentY = e.type === 'mousemove' ? e.clientY : e.touches[0].clientY;
-
-                    const deltaX = currentX - startX;
-                    const newWidth = Math.max(50, isRight ? startWidth + deltaX : startWidth - deltaX);
-                    const newHeight = Math.max(20, startHeight + (currentY - startY));
-
-                    element.style.width = `${newWidth}px`;
-                    element.style.height = `${newHeight}px`;
-
-                    if (!isRight) {
-                        element.style.left = `${element.offsetLeft - (newWidth - startWidth)}px`;
-                    }
-
-                    // Update Livewire component
-                    window.Livewire.dispatch('elementResized', {
-                        elementId: element.id,
-                        size: {
-                            width: newWidth,
-                            height: newHeight
-                        }
-                    });
-                }
-
-                function onEnd() {
-                    document.removeEventListener('mousemove', onMove);
-                    document.removeEventListener('mouseup', onEnd);
-                    document.removeEventListener('touchmove', onMove);
-                    document.removeEventListener('touchend', onEnd);
-                }
-
-                document.addEventListener('mousemove', onMove);
-                document.addEventListener('mouseup', onEnd);
-                document.addEventListener('touchmove', onMove, {
-                    passive: false
-                });
-                document.addEventListener('touchend', onEnd);
-            }
-        });
-    </script>
 </body>
 
 </html>
