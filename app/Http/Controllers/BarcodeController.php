@@ -46,10 +46,9 @@ class BarcodeController extends Controller
         $settings = json_decode($settings, true) ?? [];
 
         $html = view('inventory.barcode', compact('settings', 'inventory'))->render();
-
         // Configure Browsershot with optimized settings for faster rendering
         $pdf = Browsershot::html($html)
-            ->paperSize(50, 30)
+            ->paperSize($settings['width'], $settings['height'])
             ->noSandbox()
             ->setNodeBinary('/usr/local/bin/node')
             ->setNpmBinary('/usr/local/bin/npm')
@@ -59,7 +58,7 @@ class BarcodeController extends Controller
             ->setOption('args', ['--disable-web-security', '--no-sandbox', '--disable-gpu'])
             ->margins(0, 0, 0, 0)
             ->deviceScaleFactor(1)
-            ->windowSize(142, 85)
+            // ->windowSize($settings['height'], $settings['width'])
             ->pdf([
                 'printBackground' => false,
                 'preferCSSPageSize' => true,
