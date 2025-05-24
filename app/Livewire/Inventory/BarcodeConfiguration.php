@@ -24,7 +24,6 @@ class BarcodeConfiguration extends Component
     {
         $barcode = Configuration::where('key', 'barcode_configurations')->value('value') ?? '';
         $this->barcode = json_decode($barcode, true) ?? $this->getDefaultSettings();
-        $this->barcode = $this->getDefaultSettings();
     }
 
     protected function getDefaultSettings()
