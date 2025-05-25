@@ -49,6 +49,7 @@ return [
         'profit loss',
         'trial balance',
         'balance sheet',
+        'stock analysis',
     ],
     'log' => ['inventory'],
     'backup' => ['create', 'view', 'download'],

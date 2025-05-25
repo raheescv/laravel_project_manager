@@ -276,7 +276,6 @@
 
             // Re-initialize chart when Livewire updates the data
             Livewire.on('chartDataUpdated', (data) => {
-                console.log('Chart data updated:', data[0]);
                 initializeChart(data[0]);
             });
 

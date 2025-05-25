@@ -24,6 +24,7 @@ Route::middleware('auth')->group(function (): void {
             Route::get('customer', 'customer')->name('customer')->can('report.customer');
             Route::get('employee', 'employee')->name('employee')->can('report.employee');
             Route::get('product', 'product')->name('product')->can('report.product');
+            Route::get('stock_analysis', 'stock_analysis')->name('stock_analysis')->can('report.stock analysis');
             Route::get('ai_generated', 'ai_generated')->name('ollama');
         });
 });
