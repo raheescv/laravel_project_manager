@@ -5,7 +5,7 @@ namespace App\Livewire\Account\Income;
 use App\Actions\Journal\DeleteAction;
 use App\Exports\IncomeExport;
 use App\Jobs\Export\ExportIncomeJob;
-use App\Models\Models\Views\Ledger;
+use App\Models\JournalEntry;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Livewire\Component;
@@ -24,7 +24,7 @@ class Table extends Component
 
     public $selectAll = false;
 
-    public $sortField = 'ledgers.id';
+    public $sortField = 'journal_entries.id';
 
     public $sortDirection = 'desc';
 
@@ -112,36 +112,43 @@ class Table extends Component
 
     private function dataFunction()
     {
-        return Ledger::incomeList($this->filter)
-            ->select(
-                'id',
-                'account_id',
-                'journal_id',
-                'date',
-                'account_name',
-                'description',
-                'reference_number',
-                'model',
-                'person_name',
-                'model_id',
-                'remarks',
-                'debit',
-                'credit',
-                'balance'
-            );
+        return JournalEntry::incomeList($this->filter);
+    }
+
+    private function calculateTotals($query)
+    {
+        return $query->selectRaw('SUM(debit) as total_debit, SUM(credit) as total_credit')->first();
     }
 
     public function render()
     {
-        $data = $this->dataFunction();
-        $data = $data->orderBy($this->sortField, $this->sortDirection);
+        $query = $this->dataFunction();
+        $totals = $this->calculateTotals($query);
 
-        $totalRow = clone $data;
+        $data = $query
+            ->join('accounts', 'accounts.id', '=', 'journal_entries.account_id')
+            ->select([
+                   'journal_entries.id',
+                    'account_id',
+                    'journal_id',
+                    'date',
+                    'accounts.name as account_name',
+                    'journals.description',
+                    'reference_number',
+                    'journal_entries.model',
+                    'person_name',
+                    'journal_entries.model_id',
+                    'journal_entries.remarks',
+                    'debit',
+                    'credit',
+             ])
+            ->orderBy($this->sortField, $this->sortDirection)
+            ->paginate($this->limit);
 
-        $data = $data->paginate($this->limit);
-
-        $total['debit'] = $totalRow->sum('debit');
-        $total['credit'] = $totalRow->sum('credit');
+        $total = [
+            'debit' => round($totals->total_debit, 2),
+            'credit' => round($totals->total_credit, 2),
+        ];
 
         return view('livewire.account.income.table', [
             'data' => $data,

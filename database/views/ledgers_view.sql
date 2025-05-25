@@ -7,7 +7,6 @@ SELECT
     a.name AS account_name,
 
     je.counter_account_id,
-    ca.name AS counter_account_name,
 
     j.source,
     j.person_name,
@@ -29,8 +28,6 @@ FROM
     journal_entries je
 JOIN
     accounts a ON je.account_id = a.id
-JOIN
-    accounts ca ON je.counter_account_id = ca.id
 JOIN
     journals j ON je.journal_id = j.id
 WHERE

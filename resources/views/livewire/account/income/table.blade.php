@@ -74,7 +74,6 @@
                         <th> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="description" label="description" /> </th>
                         <th class="text-end"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="debit" label="debit" /> </th>
                         <th class="text-end"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="credit" label="credit" /> </th>
-                        <th class="text-end"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="balance" label="balance" /> </th>
                     </tr>
                 </thead>
                 <tbody>
@@ -106,7 +105,6 @@
                             </td>
                             <td class="text-end">{{ currency($item->debit) }}</td>
                             <td class="text-end">{{ currency($item->credit) }}</td>
-                            <td class="text-end">{{ currency($item->balance) }}</td>
                         </tr>
                     @endforeach
                 </tbody>
@@ -115,7 +113,6 @@
                         <th class="text-end" colspan="6">Total</th>
                         <th class="text-end">{{ currency($total['debit']) }}</th>
                         <th class="text-end">{{ currency($total['credit']) }}</th>
-                        <th></th>
                     </tr>
                 </tfoot>
             </table>

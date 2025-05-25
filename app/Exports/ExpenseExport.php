@@ -2,7 +2,7 @@
 
 namespace App\Exports;
 
-use App\Models\Models\Views\Ledger;
+use App\Models\JournalEntry;
 use Maatwebsite\Excel\Concerns\Exportable;
 use Maatwebsite\Excel\Concerns\FromQuery;
 use Maatwebsite\Excel\Concerns\WithColumnFormatting;
@@ -20,7 +20,8 @@ class ExpenseExport implements FromQuery, WithColumnFormatting, WithEvents, With
 
     public function query()
     {
-        $query = Ledger::expenseList($this->filters);
+        $query = JournalEntry::expenseList($this->filters)
+            ->with('account:id,name', 'journal:id,date,description');
 
         return $query;
     }
@@ -33,9 +34,9 @@ class ExpenseExport implements FromQuery, WithColumnFormatting, WithEvents, With
             'account name',
             'payee',
             'reference number',
+            'journal description',
             'description',
             'amount',
-            'balance',
         ];
     }
 
@@ -47,21 +48,21 @@ class ExpenseExport implements FromQuery, WithColumnFormatting, WithEvents, With
     public function map($row): array
     {
         return [
-            $row->journal_id,
-            systemDate($row->date),
-            $row->account_name,
+            $row->journal->id,
+            systemDate($row->journal->date),
+            $row->account->name,
             $row->person_name,
             $row->reference_number,
+            $row->journal->description,
             $row->description,
             $row->debit,
-            $row->balance,
         ];
     }
 
     public function columnFormats(): array
     {
         return [
-            'G' => NumberFormat::FORMAT_NUMBER_00,
+            'H' => NumberFormat::FORMAT_NUMBER_00,
         ];
     }
 
@@ -80,7 +81,7 @@ class ExpenseExport implements FromQuery, WithColumnFormatting, WithEvents, With
 
                 $endRow = $totalRows - 1;
                 $sheet->setCellValue("A{$totalRows}", 'Total');
-                $sheet->setCellValue("G{$totalRows}", "=SUM(G2:G{$endRow})");
+                $sheet->setCellValue("H{$totalRows}", "=SUM(H2:H{$endRow})");
             },
         ];
     }
