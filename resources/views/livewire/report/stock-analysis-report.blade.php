@@ -112,7 +112,7 @@
                                 </td>
                                 <td>
                                     @if ($product->last_movement)
-                                        <span class="badge bg-info">{{ date('Y-m-d', strtotime($product->last_movement)) }}</span>
+                                        <span class="badge bg-info">{{ systemDate($product->last_movement) }}</span>
                                     @else
                                         <span class="badge bg-warning">Never</span>
                                     @endif

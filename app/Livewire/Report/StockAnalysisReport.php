@@ -34,10 +34,13 @@ class StockAnalysisReport extends Component
         $this->to_date = date('Y-m-d');
     }
 
-    public function updated($property)
+    public function updated($key, $value)
     {
-        if (in_array($property, ['from_date', 'to_date', 'branch_id', 'limit', 'report_type'])) {
-            $this->dispatch('updateChart', $this->getChartData());
+        $this->resetPage();
+        if (in_array($key, ['from_date', 'to_date', 'branch_id', 'limit', 'report_type'])) {
+            if ($this->report_type === 'top_moving') {
+                $this->dispatch('updateChart', $this->getChartData());
+            }
         }
     }
 
@@ -64,7 +67,7 @@ class StockAnalysisReport extends Component
         // If last movement is null or older than threshold days
         $query->where(function ($q) {
             $q->whereNull('last_movements.last_movement')
-                ->orWhere('last_movements.last_movement', '<=', Carbon::now()->subDays($this->days_threshold));
+                ->orWhere('last_movements.last_movement', '<=', now()->subDays(intval($this->days_threshold)));
         });
 
         return $query->select(
