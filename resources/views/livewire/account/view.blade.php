@@ -67,19 +67,17 @@
                                             <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="id" label="id" />
                                         </th>
                                         <th> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="date" label="date" /> </th>
-                                        <th> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="account_name" label="account name" /> </th>
+                                        <th> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="account_id" label="account name" /> </th>
                                         <th> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="person_name" label="payee" /> </th>
                                         <th> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="reference_number" label="reference No" /> </th>
                                         <th> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="description" label="description" /> </th>
                                         <th class="text-end"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="debit" label="debit" /> </th>
                                         <th class="text-end"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="credit" label="credit" /> </th>
-                                        <th class="text-end"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="balance" label="balance" /> </th>
                                     </tr>
                                     <tr>
                                         <th class="text-end" colspan="6">Total</th>
                                         <th class="text-end">{{ currency($total['debit']) }}</th>
                                         <th class="text-end">{{ currency($total['credit']) }}</th>
-                                        <th class="text-end">{{ currency($total['debit'] - $total['credit']) }}</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -89,8 +87,8 @@
                                                 <input type="checkbox" value="{{ $item->journal_id }}" wire:model.live="selected" />
                                                 {{ $item->journal_id }}
                                             </td>
-                                            <td>{{ systemDate($item->date) }}</td>
-                                            <td>{{ $item->account_name }}</td>
+                                            <td>{{ systemDate($item->journal->date) }}</td>
+                                            <td>{{ $item->account->name }}</td>
                                             <td>{{ $item->person_name }}</td>
                                             <td>{{ $item->reference_number }}</td>
                                             <td>
@@ -109,7 +107,6 @@
                                             </td>
                                             <td class="text-end">{{ currency($item->debit) }}</td>
                                             <td class="text-end">{{ currency($item->credit) }}</td>
-                                            <td class="text-end">{{ currency($item->balance) }}</td>
                                         </tr>
                                     @endforeach
                                 </tbody>
@@ -133,7 +130,7 @@
                                         <tbody>
                                             @foreach ($groupedChartData as $item)
                                                 <tr>
-                                                    <td> <a href="{{ route('account::view', $item->account_id) }}">{{ $item->account_name }}</a> </td>
+                                                    <td> <a href="{{ route('account::view', $item->account_id) }}">{{ $item->account->name }}</a> </td>
                                                     <td class="text-end">{{ currency($item->debit) }}</td>
                                                     <td class="text-end">{{ currency($item->credit) }}</td>
                                                 </tr>

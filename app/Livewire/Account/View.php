@@ -4,6 +4,7 @@ namespace App\Livewire\Account;
 
 use App\Actions\Journal\DeleteAction;
 use App\Models\Account;
+use App\Models\JournalEntry;
 use App\Models\Models\Views\Ledger;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -30,7 +31,7 @@ class View extends Component
 
     public $account;
 
-    public $sortField = 'id';
+    public $sortField = 'journal_entries.id';
 
     public $sortDirection = 'desc';
 
@@ -64,9 +65,9 @@ class View extends Component
     {
         $this->groupedChartData = $this->dataFunction()
             ->select('account_id')
-            ->selectRaw('account_name, SUM(debit) as debit, SUM(credit) as credit')
+            ->selectRaw('account_id, SUM(debit) as debit, SUM(credit) as credit')
             ->groupBy('account_id')
-            ->orderBy('account_name')
+            ->orderBy('account_id')
             ->get();
     }
 
@@ -127,14 +128,15 @@ class View extends Component
 
     private function dataFunction()
     {
-        return Ledger::where('counter_account_id', $this->accountId)
+        return JournalEntry::with('account')->where('counter_account_id', $this->accountId)
+            ->join('journals', 'journals.id', '=', 'journal_entries.journal_id')
             ->when($this->filter['search'], function ($query, $value) {
                 return $query->where(function ($q) use ($value) {
                     $value = trim($value);
 
-                    return $q->where('description', 'like', "%{$value}%")
-                        ->orWhere('reference_number', 'like', "%{$value}%")
-                        ->orWhere('remarks', 'like', "%{$value}%");
+                    return $q->where('journals.description', 'like', "%{$value}%")
+                        ->orWhere('journal_entries.reference_number', 'like', "%{$value}%")
+                        ->orWhere('journal_entries.remarks', 'like', "%{$value}%");
                 });
             })
             ->when($this->filter['from_date'] ?? '', function ($query, $value) {
@@ -145,23 +147,16 @@ class View extends Component
             });
     }
 
-    private function dataListFunction()
-    {
-        return Ledger::where('account_id', $this->accountId);
-    }
-
     public function render()
     {
-        // DB::enableQueryLog();
-        $data = $this->dataFunction()
-            ->orderBy($this->sortField, $this->sortDirection);
-
+        $data = $this->dataFunction();
         $totalRow = clone $data;
 
-        $data = $data->paginate($this->limit);
-        $total['debit'] = $totalRow->sum('debit');
-        $total['credit'] = $totalRow->sum('credit');
-        // info(DB::getQueryLog());
+        $data = $data->orderBy($this->sortField, $this->sortDirection)->paginate($this->limit);
+
+        $totalRow = $totalRow->selectRaw('SUM(debit) as debit, SUM(credit) as credit')->first();
+        $total['debit'] = $totalRow->debit;
+        $total['credit'] = $totalRow->credit;
 
         return view('livewire.account.view', ['data' => $data, 'total' => $total]);
     }
