@@ -1,97 +1,133 @@
 <div>
-    <div class="card-header -4 mb-3">
-        <div class="row">
-            <div class="col-md-6 d-flex gap-1 align-items-center mb-3">
-                @can('role.create')
-                    <button class="btn btn-primary hstack gap-2 align-self-center" id="RoleAdd">
-                        <i class="demo-psi-add fs-5"></i>
-                        <span class="vr"></span>
-                        Add New
-                    </button>
-                @endcan
-                @can('role.delete')
-                    <div class="btn-group">
-                        <button class="btn btn-icon btn-outline-light" wire:click="delete()" wire:confirm="Are you sure you want to delete the selected items?"><i class="demo-pli-recycling fs-5"></i>
+    <div class="card-header bg-white p-4">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div class="d-flex align-items-center gap-2">
+                <div class="btn-group">
+                    @can('role.create')
+                        <button class="btn btn-sm btn-primary d-flex align-items-center gap-2" id="RoleAdd">
+                            <i class="demo-psi-add fs-5"></i>
+                            Add New Role
                         </button>
-                    </div>
-                @endcan
+                    @endcan
+                    @can('role.delete')
+                        <button class="btn btn-sm btn-outline-danger d-flex align-items-center gap-2" wire:click="delete()" wire:confirm="Are you sure you want to delete the selected items?">
+                            <i class="demo-pli-recycling fs-5"></i>
+                            Delete
+                        </button>
+                    @endcan
+                </div>
             </div>
-            <div class="col-md-6 d-flex gap-1 align-items-center justify-content-md-end mb-3">
-                <div class="form-group">
-                    <select wire:model.live="limit" class="form-control">
-                        <option value="10">10</option>
-                        <option value="100">100</option>
-                        <option value="500">500</option>
+            <div class="d-flex gap-2 align-items-center">
+                <div class="input-group input-group-sm" style="width: 120px;">
+                    <select wire:model.live="limit" class="form-select border-start-0">
+                        <option value="10">10 rows</option>
+                        <option value="100">100 rows</option>
+                        <option value="500">500 rows</option>
                     </select>
                 </div>
-                <div class="form-group">
-                    <input type="text" wire:model.live="search" autofocus placeholder="Search..." class="form-control" autocomplete="off">
+                <div class="input-group input-group-sm" style="width: 200px;">
+                    <span class="input-group-text bg-light border-end-0">
+                        <i class="demo-pli-magnifi-glass"></i>
+                    </span>
+                    <input type="text" wire:model.live="search" class="form-control border-start-0" placeholder="Search roles..." autofocus>
                 </div>
             </div>
         </div>
     </div>
-    <div class="card-body">
+
+    <div class="card-body p-0">
         <div class="table-responsive">
-            <table class="table table-striped">
-                <thead>
+            <table class="table table-hover align-middle mb-0 border">
+                <thead class="bg-light">
                     <tr>
-                        <th width="20%">
-                            <input type="checkbox" wire:model.live="selectAll" />
-                            <a href="#" wire:click.prevent="sortBy('id')">
-                                ID
-                                @if ($sortField === 'id')
-                                    {!! sortDirection($sortDirection) !!}
-                                @endif
-                            </a>
+                        <th class="border-bottom py-3">
+                            <div class="d-flex align-items-center gap-2">
+                                <div class="form-check mb-0">
+                                    <input type="checkbox" class="form-check-input" wire:model.live="selectAll" id="selectAll">
+                                    <label class="form-check-label" for="selectAll"></label>
+                                </div>
+                                <a href="#" class="text-decoration-none text-dark d-flex align-items-center gap-1" wire:click.prevent="sortBy('id')">
+                                    ID
+                                    @if ($sortField === 'id')
+                                        <i class="demo-pli-arrow-{{ $sortDirection === 'asc' ? 'up' : 'down' }} fs-5"></i>
+                                    @endif
+                                </a>
+                            </div>
                         </th>
-                        <th>
-                            <a href="#" wire:click.prevent="sortBy('name')">
-                                Name
+                        <th class="border-bottom py-3">
+                            <a href="#" class="text-decoration-none text-dark d-flex align-items-center gap-1" wire:click.prevent="sortBy('name')">
+                                Role Name
                                 @if ($sortField === 'name')
-                                    {!! sortDirection($sortDirection) !!}
+                                    <i class="demo-pli-arrow-{{ $sortDirection === 'asc' ? 'up' : 'down' }} fs-5"></i>
                                 @endif
                             </a>
                         </th>
-                        <th width="10%">Permission</th>
-                        <th width="10%">Action</th>
+                        <th class="border-bottom py-3 text-center" width="15%">Permissions</th>
+                        <th class="border-bottom py-3 text-end" width="10%">Actions</th>
                     </tr>
                 </thead>
                 <tbody>
-                    @foreach ($data as $item)
+                    @forelse ($data as $item)
                         <tr>
                             <td>
-                                <input type="checkbox" value="{{ $item->id }}" wire:model.live="selected" />
-                                {{ $item->id }}
+                                <div class="d-flex align-items-center gap-2">
+                                    <div class="form-check mb-0">
+                                        <input type="checkbox" class="form-check-input" value="{{ $item->id }}" wire:model.live="selected">
+                                    </div>
+                                    <span class="text-muted">#{{ $item->id }}</span>
+                                </div>
                             </td>
-                            <td>{{ $item->name }}</td>
-                            <td> <a href="{{ route('settings::roles::permission', $item->id) }}"><i class="demo-psi-list-view fs-5 me-2"></i></a> </td>
                             <td>
-                                @can('role.edit')
-                                    <i table_id="{{ $item->id }}" class="demo-psi-pencil fs-5 me-2 pointer edit"></i>
-                                @endcan
+                                <div class="d-flex align-items-center gap-2">
+                                    <i class="demo-pli-user fs-5 text-primary"></i>
+                                    <span class="fw-medium">{{ $item->name }}</span>
+                                </div>
+                            </td>
+                            <td class="text-center">
+                                <a href="{{ route('settings::roles::permission', $item->id) }}" class="btn btn-sm btn-outline-info d-inline-flex align-items-center gap-2">
+                                    <i class="demo-psi-list-view fs-5"></i>
+                                    Manage
+                                </a>
+                            </td>
+                            <td>
+                                <div class="d-flex justify-content-end gap-2">
+                                    @can('role.edit')
+                                        <button class="btn btn-sm btn-outline-primary d-inline-flex align-items-center edit" table_id="{{ $item->id }}">
+                                            <i class="demo-psi-pencil fs-5"></i>
+                                        </button>
+                                    @endcan
+                                </div>
                             </td>
                         </tr>
-                    @endforeach
+                    @empty
+                        <tr>
+                            <td colspan="4" class="text-center py-4 text-muted">
+                                <i class="demo-pli-warning-window fs-2 d-block mb-2"></i>
+                                No roles found
+                            </td>
+                        </tr>
+                    @endforelse
                 </tbody>
             </table>
         </div>
-        {{ $data->links() }}
-    </div>
-    @push('scripts')
-        <script>
-            $(document).ready(function() {
-                $(document).on('click', '.edit', function() {
-                    Livewire.dispatch("Role-Page-Update-Component", {
-                        id: $(this).attr('table_id')
+        <div class="p-3">
+            {{ $data->links() }}
+        </div>
+        @push('scripts')
+            <script>
+                $(document).ready(function() {
+                    $(document).on('click', '.edit', function() {
+                        Livewire.dispatch("Role-Page-Update-Component", {
+                            id: $(this).attr('table_id')
+                        });
+                    });
+                    $('#RoleAdd').click(function() {
+                        Livewire.dispatch("Role-Page-Create-Component");
+                    });
+                    window.addEventListener('RefreshRoleTable', event => {
+                        Livewire.dispatch("Role-Refresh-Component");
                     });
                 });
-                $('#RoleAdd').click(function() {
-                    Livewire.dispatch("Role-Page-Create-Component");
-                });
-                window.addEventListener('RefreshRoleTable', event => {
-                    Livewire.dispatch("Role-Refresh-Component");
-                });
-            });
-        </script>
-    @endpush
-</div>
+            </script>
+        @endpush
+    </div>
