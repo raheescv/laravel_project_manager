@@ -84,6 +84,16 @@ class Account extends Model implements AuditableContracts
         return $return;
     }
 
+    public function scopeVendor($query)
+    {
+        return $query->where('model', 'Vendor');
+    }
+
+    public function scopeCustomer($query)
+    {
+        return $query->where('model', 'Customer');
+    }
+
     public function notes()
     {
         return $this->hasMany(AccountNote::class);

@@ -272,6 +272,16 @@ if (! function_exists('purchaseStatuses')) {
         ];
     }
 }
+if (! function_exists('purchaseReturnStatuses')) {
+    function purchaseReturnStatuses()
+    {
+        return [
+            'draft' => 'Draft',
+            'completed' => 'Completed',
+            'cancelled' => 'Cancelled',
+        ];
+    }
+}
 
 if (! function_exists('saleTypes')) {
     function saleTypes()

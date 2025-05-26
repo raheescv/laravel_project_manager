@@ -9,6 +9,10 @@
                         <li class="breadcrumb-item active" aria-current="page">Page</li>
                     </ol>
                 </nav>
+                <h1 class="page-title mb-0 mt-2">Purchase</h1>
+                <p class="lead">
+                    Manage of purchased items to suppliers and track payments efficiently
+                </p>
             </div>
         </div>
     @endif

@@ -194,6 +194,39 @@
                             </ul>
                         </li>
                     @endif
+                    @if (auth()->user()->can('purchase return.view') || auth()->user()->can('report.purchase item'))
+                        <li class="nav-item has-sub">
+                            <a href="#"
+                                class="mininav-toggle nav-link {{ request()->is(['purchase_return', 'purchase_return/create', 'purchase_return/edit/*', 'purchase_return/view/*', 'report/purchase_item', 'purchase_return/payments']) ? 'active' : '' }}"><i
+                                    class="fa fa-cart-plus fs-5 me-2"></i>
+                                <span class="nav-label ms-1">Purchase Return</span>
+                            </a>
+                            <ul class="mininav-content nav collapse">
+                                <li data-popper-arrow class="arrow"></li>
+                                @can('purchase return.create')
+                                    <li class="nav-item">
+                                        <a href="{{ route('purchase_return::create') }}" class="nav-link {{ request()->is(['purchase_return/create']) ? 'active' : '' }}">Create</a>
+                                    </li>
+                                @endcan
+                                @can('purchase return.view')
+                                    <li class="nav-item">
+                                        <a href="{{ route('purchase_return::index') }}"
+                                            class="nav-link {{ request()->is(['purchase_return', 'purchase_return/edit/*', 'purchase_return/view/*']) ? 'active' : '' }}">List</a>
+                                    </li>
+                                @endcan
+                                @can('report.purchase return item')
+                                    <li class="nav-item">
+                                        <a href="{{ route('report::purchase_item') }}" class="nav-link {{ request()->is(['report/purchase_item']) ? 'active' : '' }}">Item Wise Report</a>
+                                    </li>
+                                @endcan
+                                @can('purchase return.payments')
+                                    <li class="nav-item">
+                                        <a href="{{ route('purchase_return::payments') }}" class="nav-link {{ request()->is(['purchase_return/payments']) ? 'active' : '' }}">Payments</a>
+                                    </li>
+                                @endcan
+                            </ul>
+                        </li>
+                    @endif
                     @if (auth()->user()->can('account.view'))
                         <li class="nav-item has-sub">
                             <a href="#"

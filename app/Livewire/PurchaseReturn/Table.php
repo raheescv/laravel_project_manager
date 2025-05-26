@@ -1,12 +1,12 @@
 <?php
 
-namespace App\Livewire\Purchase;
+namespace App\Livewire\PurchaseReturn;
 
-use App\Actions\Purchase\DeleteAction;
-use App\Exports\PurchaseExport;
-use App\Jobs\Export\ExportPurchaseJob;
+use App\Actions\PurchaseReturn\DeleteAction;
+use App\Exports\PurchaseReturnExport;
+use App\Jobs\Export\ExportPurchaseReturnJob;
 use App\Models\Configuration;
-use App\Models\Purchase;
+use App\Models\PurchaseReturn;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Livewire\Component;
@@ -39,14 +39,14 @@ class Table extends Component
 
     public $selectAll = false;
 
-    public $sortField = 'purchases.id';
+    public $sortField = 'purchase_returns.id';
 
     public $sortDirection = 'desc';
 
     protected $paginationTheme = 'bootstrap';
 
     protected $listeners = [
-        'Purchase-Refresh-Component' => '$refresh',
+        'PurchaseReturn-Refresh-Component' => '$refresh',
     ];
 
     public function mount()
@@ -105,12 +105,12 @@ class Table extends Component
     {
         $count = $this->query()->count();
         if ($count > 2000) {
-            ExportPurchaseJob::dispatch(Auth::id());
+            ExportPurchaseReturnJob::dispatch(Auth::id());
             $this->dispatch('success', ['message' => 'You will get your file in your mailbox.']);
         } else {
-            $exportFileName = 'Purchase_'.now()->timestamp.'.xlsx';
+            $exportFileName = 'PurchaseReturn_'.now()->timestamp.'.xlsx';
 
-            return Excel::download(new PurchaseExport(), $exportFileName);
+            return Excel::download(new PurchaseReturnExport(), $exportFileName);
         }
     }
 
@@ -126,20 +126,20 @@ class Table extends Component
 
     private function query()
     {
-        return Purchase::with('branch')
-            ->join('accounts', 'accounts.id', '=', 'purchases.account_id')
+        return PurchaseReturn::with('branch')
+            ->join('accounts', 'accounts.id', '=', 'purchase_returns.account_id')
             ->when($this->search ?? '', function ($query, $value) {
                 return $query->where(function ($q) use ($value) {
                     $value = trim($value);
 
-                    return $q->where('purchases.invoice_no', 'like', "%{$value}%")
-                        ->orWhere('purchases.gross_amount', 'like', "%{$value}%")
-                        ->orWhere('purchases.item_discount', 'like', "%{$value}%")
-                        ->orWhere('purchases.tax_amount', 'like', "%{$value}%")
-                        ->orWhere('purchases.total', 'like', "%{$value}%")
-                        ->orWhere('purchases.other_discount', 'like', "%{$value}%")
-                        ->orWhere('purchases.freight', 'like', "%{$value}%")
-                        ->orWhere('purchases.paid', 'like', "%{$value}%")
+                    return $q->where('purchase_returns.invoice_no', 'like', "%{$value}%")
+                        ->orWhere('purchase_returns.gross_amount', 'like', "%{$value}%")
+                        ->orWhere('purchase_returns.item_discount', 'like', "%{$value}%")
+                        ->orWhere('purchase_returns.tax_amount', 'like', "%{$value}%")
+                        ->orWhere('purchase_returns.total', 'like', "%{$value}%")
+                        ->orWhere('purchase_returns.other_discount', 'like', "%{$value}%")
+                        ->orWhere('purchase_returns.freight', 'like', "%{$value}%")
+                        ->orWhere('purchase_returns.paid', 'like', "%{$value}%")
                         ->orWhere('accounts.name', 'like', "%{$value}%");
                 });
             })
@@ -157,18 +157,18 @@ class Table extends Component
             })
             ->when($this->to_date ?? '', function ($query, $value) {
                 return $query->whereDate('date', '<=', date('Y-m-d', strtotime($value)));
-            });
+            })
+            ->select(
+                'purchase_returns.*',
+                'accounts.name',
+            );
     }
 
     public function render()
     {
         $data = $this->query()
             ->orderBy($this->sortField, $this->sortDirection)
-            ->select(
-                'purchases.*',
-                'accounts.name',
-            )
-            ->latest('purchases.id');
+            ->latest('purchase_returns.id');
         $totalRow = clone $data;
         $data = $data->paginate($this->limit);
 
@@ -182,7 +182,7 @@ class Table extends Component
         $total['paid'] = $totalRow->sum('paid');
         $total['balance'] = $totalRow->sum('balance');
 
-        return view('livewire.purchase.table', [
+        return view('livewire.purchase-return.table', [
             'total' => $total,
             'data' => $data,
         ]);

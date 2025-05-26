@@ -31,6 +31,7 @@ return [
     ],
     'sales return' => ['create', 'view', 'edit', 'edit completed', 'delete', 'export', 'payments', 'view journal entries'],
     'purchase' => ['create', 'view', 'edit', 'edit completed', 'delete', 'cancel', 'export', 'payments', 'view journal entries'],
+    'purchase return' => ['create', 'view', 'edit', 'edit completed', 'delete', 'cancel', 'export', 'view journal entries'],
     'unit' => ['create', 'view', 'edit', 'delete'],
     'department' => ['create', 'view', 'edit', 'delete'],
     'whatsapp' => ['integration'],

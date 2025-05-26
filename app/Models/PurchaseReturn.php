@@ -10,7 +10,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use OwenIt\Auditing\Auditable;
 use OwenIt\Auditing\Contracts\Auditable as AuditableContracts;
 
-class Purchase extends Model implements AuditableContracts
+class PurchaseReturn extends Model implements AuditableContracts
 {
     use Auditable;
     use SoftDeletes;
@@ -20,7 +20,6 @@ class Purchase extends Model implements AuditableContracts
         'branch_id',
         'account_id',
         'date',
-        'delivery_date',
         'gross_amount',
         'item_discount',
         'tax_amount',
@@ -28,8 +27,8 @@ class Purchase extends Model implements AuditableContracts
         'other_discount',
         'freight',
         'paid',
-        'address',
         'status',
+        'reason',
         'created_by',
         'updated_by',
         'cancelled_by',
@@ -39,10 +38,10 @@ class Purchase extends Model implements AuditableContracts
     public static function rules($id = null, $merge = [])
     {
         return array_merge([
+            'invoice_no' => ['required'],
             'branch_id' => ['required'],
             'account_id' => ['required'],
             'date' => ['required'],
-            'invoice_no' => ['required'],
         ], $merge);
     }
 
@@ -88,46 +87,26 @@ class Purchase extends Model implements AuditableContracts
 
     public function items()
     {
-        return $this->hasMany(PurchaseItem::class);
+        return $this->hasMany(PurchaseReturnItem::class);
     }
 
     public function payments()
     {
-        return $this->hasMany(PurchasePayment::class);
+        return $this->hasMany(PurchaseReturnPayment::class);
     }
 
     public function journal()
     {
-        return $this->hasOne(Journal::class, 'model_id')->where('model', 'Purchase');
+        return $this->hasOne(Journal::class, 'model_id')->where('model', 'PurchaseReturn');
     }
 
     public function journals()
     {
-        return $this->hasMany(Journal::class, 'model_id')->where('model', 'Purchase');
+        return $this->hasMany(Journal::class, 'model_id')->where('model', 'PurchaseReturn');
     }
 
     public function ledgers()
     {
-        return $this->hasMany(Ledger::class, 'model_id')->where('model', 'Purchase');
-    }
-
-    public function getDropDownList($request)
-    {
-        $self = self::orderBy('invoice_no');
-        $self = $self->when($request['query'] ?? '', function ($query, $value) {
-            return $query->where(function ($q) use ($value): void {
-                $value = trim($value);
-                $q->where('sales.invoice_no', 'like', "%{$value}%");
-            });
-        });
-        $self = $self->when($request['account_id'] ?? '', function ($query, $value) {
-            return $query->where('account_id', $value);
-        });
-        $self = $self->limit(10);
-        $self = $self->get(['invoice_no', 'id'])->toArray();
-        array_unshift($self, ['invoice_no' => 'General', 'id' => 0]);
-        $return['items'] = $self;
-
-        return $return;
+        return $this->hasMany(Ledger::class, 'model_id')->where('model', 'PurchaseReturn');
     }
 }

@@ -115,7 +115,7 @@ class Table extends Component
                 });
             })
             ->where('account_type', 'liability')
-            ->where('model', 'Vendor')
+            ->vendor()
             ->latest()
             ->paginate($this->limit);
 

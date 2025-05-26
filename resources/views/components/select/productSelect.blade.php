@@ -103,16 +103,33 @@
 <script type="text/javascript">
     $('.select-product_id-list').each(function(index, el) {
         const type = el.getAttribute('type') || null;
+        const source = el.getAttribute('source') || null;
         new TomSelect(this, {
             persist: false,
             valueField: 'id',
             nameField: 'name',
             searchField: ['name', 'barcode', 'mrp', 'cost', 'size', 'color', 'id'],
+            onChange: function(value) {
+                if (value) {
+                    const selectedOption = this.options[value];
+                    if (selectedOption) {
+                        if (source == 'purchase_return') {
+                            Livewire.dispatch('PurchaseReturn-SelectProduct', {
+                                product_id: selectedOption.id,
+                                purchase_item_id: selectedOption.purchase_item_id,
+                            });
+                        }
+                    }
+                }
+            },
             load: function(query, callback) {
                 var url = "{{ route('product::list') }}";
                 url += '?query=' + encodeURIComponent(query);
                 if (type) {
                     url += '&type=' + encodeURIComponent(type);
+                }
+                if (source == 'purchase_return') {
+                    url += '&invoice_id=' + $('#invoice_id').val();
                 }
                 fetch(url)
                     .then(response => {
@@ -126,6 +143,7 @@
                     });
             },
             onFocus: function() {
+                this.clearOptions();
                 this.load('');
             },
             render: {

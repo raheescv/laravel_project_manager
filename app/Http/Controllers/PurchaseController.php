@@ -2,6 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Purchase;
+use Illuminate\Http\Request;
+
 class PurchaseController extends Controller
 {
     public function index()
@@ -17,5 +20,12 @@ class PurchaseController extends Controller
     public function payments()
     {
         return view('purchase.payments');
+    }
+
+    public function get(Request $request)
+    {
+        $list = (new Purchase())->getDropDownList($request->all());
+
+        return response()->json($list);
     }
 }
