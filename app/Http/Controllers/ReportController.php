@@ -82,4 +82,9 @@ class ReportController extends Controller
     {
         return view('report.stock-analysis');
     }
+
+    public function employee_productivity()
+    {
+        return view('report.employee-productivity');
+    }
 }

@@ -51,6 +51,7 @@ return [
         'trial balance',
         'balance sheet',
         'stock analysis',
+        'employee productivity',
     ],
     'log' => ['inventory'],
     'backup' => ['create', 'view', 'download'],

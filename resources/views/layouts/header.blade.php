@@ -69,6 +69,9 @@
                                     @can('report.stock analysis')
                                         <a href="{{ route('report::stock_analysis') }}" class="list-group-item list-group-item-action">Stock Analysis</a>
                                     @endcan
+                                    @can('report.employee productivity')
+                                        <a href="{{ route('report::employee_productivity') }}" class="list-group-item list-group-item-action">Employee Productivity</a>
+                                    @endcan
                                 </div>
                             </div>
                         </div>
