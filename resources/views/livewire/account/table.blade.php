@@ -1,84 +1,99 @@
 <div>
-    <div class="card-header">
-        <div class="row">
-            <div class="col-md-6 d-flex gap-1 align-items-center mb-3">
-                @can('account.create')
-                    <button class="btn btn-primary hstack gap-2 align-self-center" id="AccountAdd">
-                        <i class="demo-psi-add fs-5"></i>
-                        <span class="vr"></span>
-                        Add New
-                    </button>
-                @endcan
-                <div class="btn-group">
-                    @can('account.export')
-                        <button class="btn btn-icon btn-outline-light" title="To export the items as excel" wire:click="export()"><i class="demo-pli-file-excel fs-5"></i></button>
-                    @endcan
-                    @can('account.delete')
-                        <button class="btn btn-icon btn-outline-light" title="To delete the selected items" wire:click="delete()" wire:confirm="Are you sure you want to delete the selected items?">
-                            <i class="demo-pli-recycling fs-5"></i>
+    <div class="card-header bg-light py-3">
+        <div class="row g-3">
+            <div class="col-md-6">
+                <div class="d-flex gap-2 align-items-center">
+                    @can('account.create')
+                        <button class="btn btn-primary d-inline-flex gap-2 align-items-center shadow-sm" id="AccountAdd">
+                            <i class="demo-psi-add fs-5"></i>
+                            <span class="vr my-1"></span>
+                            Add New
                         </button>
                     @endcan
+                    <div class="btn-group shadow-sm">
+                        @can('account.export')
+                            <button class="btn btn-success" title="Export as Excel" wire:click="export()">
+                                <i class="demo-pli-file-excel fs-5"></i>
+                            </button>
+                        @endcan
+                        @can('account.delete')
+                            <button class="btn btn-danger" title="Delete selected items" wire:click="delete()" wire:confirm="Are you sure you want to delete the selected items?">
+                                <i class="demo-pli-recycling fs-5"></i>
+                            </button>
+                        @endcan
+                    </div>
                 </div>
             </div>
-            <div class="col-md-6 d-flex gap-1 align-items-center justify-content-md-end mb-3">
-                <div class="form-group">
-                    <select wire:model.live="limit" class="form-control">
-                        <option value="10">10</option>
-                        <option value="100">100</option>
-                        <option value="500">500</option>
+            <div class="col-md-6">
+                <div class="d-flex gap-2 justify-content-md-end">
+                    <select wire:model.live="limit" class="form-select w-auto shadow-sm">
+                        <option value="10">10 rows</option>
+                        <option value="100">100 rows</option>
+                        <option value="500">500 rows</option>
                     </select>
-                </div>
-                <div class="form-group">
-                    <input type="text" wire:model.live="search" autofocus placeholder="Search..." class="form-control" autocomplete="off">
-                </div>
-                <div class="btn-group">
+                    <div class="input-group shadow-sm">
+                        <span class="input-group-text bg-white border-end-0">
+                            <i class="demo-pli-magnifi-glass"></i>
+                        </span>
+                        <input type="text" wire:model.live="search" class="form-control border-start-0" placeholder="Search..." autofocus autocomplete="off">
+                    </div>
                     @can('account.import')
-                        <button class="btn btn-icon btn-outline-light" data-bs-toggle="modal" data-bs-target="#AccountImportModal">
+                        <button class="btn btn-light shadow-sm" data-bs-toggle="modal" data-bs-target="#AccountImportModal" title="Import Data">
                             <i class="demo-pli-download-from-cloud fs-5"></i>
                         </button>
                     @endcan
                 </div>
             </div>
         </div>
-        <hr>
-        <div class="col-lg-12">
-            <div class="row">
-                <div class="col-md-3" wire:ignore>
-                    {{ html()->select('account_type', accountTypes())->value('')->class('tomSelect')->id('account_type')->placeholder('Account Type') }}
-                </div>
+        <hr class="my-3">
+        <div class="row">
+            <div class="col-md-4" wire:ignore>
+                {{ html()->select('account_type', accountTypes())->value('')->class('tomSelect')->id('account_type')->placeholder('Account Type') }}
             </div>
         </div>
     </div>
-    <div class="card-body">
+    <div class="card-body p-0">
         <div class="table-responsive">
-            <table class="table table-striped align-middle table-sm">
-                <thead>
+            <table class="table table-hover align-middle mb-0">
+                <thead class="bg-light">
                     <tr class="text-capitalize">
-                        <th width="5%">
-                            <input type="checkbox" wire:model.live="selectAll" />
-                            <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="id" label="#" />
+                        <th width="5%" class="text-nowrap">
+                            <div class="form-check">
+                                <input type="checkbox" class="form-check-input" wire:model.live="selectAll">
+                                <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="id" label="#" />
+                            </div>
                         </th>
-                        <th width="10%"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="account_type" label="account type" /> </th>
-                        <th width="30%"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="name" label="name" /> </th>
-                        <th width="40%"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="description" label="description" /> </th>
-                        <th> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="model" label="model" /> </th>
-                        <th class="text-end"> Action </th>
+                        <th width="10%" class="text-nowrap"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="account_type" label="account type" /> </th>
+                        <th width="30%" class="text-nowrap"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="name" label="name" /> </th>
+                        <th width="40%" class="text-nowrap"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="description" label="description" /> </th>
+                        <th class="text-nowrap"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="model" label="model" /> </th>
+                        <th class="text-end px-3"> Action </th>
                     </tr>
                 </thead>
                 <tbody>
                     @foreach ($data as $item)
                         <tr>
-                            <td>
-                                <input type="checkbox" value="{{ $item->id }}" wire:model.live="selected" />
-                                {{ $item->id }}
+                            <td class="px-3 text-nowrap">
+                                <div class="form-check">
+                                    <input type="checkbox" class="form-check-input" value="{{ $item->id }}" wire:model.live="selected">
+                                    <label class="form-check-label">{{ $item->id }}</label>
+                                </div>
                             </td>
-                            <td>{{ ucFirst($item->account_type) }}</td>
-                            <td> <a href="{{ route('account::view', $item->id) }}">{{ $item->name }}</a> </td>
-                            <td>{{ $item->description }}</td>
-                            <td>{{ ucFirst($item->model) }}</td>
-                            <td class="text-end">
+                            <td>
+                                <span class="badge bg-light text-dark">{{ ucFirst($item->account_type) }}</span>
+                            </td>
+                            <td>
+                                <a href="{{ route('account::view', $item->id) }}" class="text-decoration-none">{{ $item->name }}</a>
+                            </td>
+                            <td class="text-muted">{{ $item->description }}</td>
+                            <td>
+                                <span class="badge bg-light text-dark">{{ ucFirst($item->model) }}</span>
+                            </td>
+                            <td class="text-end px-3">
                                 @can('account.edit')
-                                    <i table_id="{{ $item->id }}" class="demo-psi-pencil fs-5 me-2 pointer edit"></i>
+                                    <button class="btn btn-light btn-sm edit" title="Edit" table_id="{{ $item->id }}">
+                                        <i class="demo-psi-pencil fs-5"></i>
+                                    </button>
                                 @endcan
                             </td>
                         </tr>
@@ -86,27 +101,33 @@
                 </tbody>
             </table>
         </div>
-        {{ $data->links() }}
+        <div class="p-3 border-top">
+            {{ $data->links() }}
+        </div>
     </div>
-    @push('scripts')
-        <script>
-            $(document).ready(function() {
-                $('#account_type').on('change', function(e) {
-                    const value = $(this).val() || null;
-                    @this.set('account_type', value);
-                });
-                $(document).on('click', '.edit', function() {
-                    Livewire.dispatch("Account-Page-Update-Component", {
-                        id: $(this).attr('table_id')
-                    });
-                });
-                $('#AccountAdd').click(function() {
-                    Livewire.dispatch("Account-Page-Create-Component");
-                });
-                window.addEventListener('RefreshAccountTable', event => {
-                    Livewire.dispatch("Account-Refresh-Component");
+</div>
+
+@push('scripts')
+    <script>
+        $(document).ready(function() {
+            $('#account_type').on('change', function(e) {
+                const value = $(this).val() || null;
+                @this.set('account_type', value);
+            });
+
+            $(document).on('click', '.edit', function() {
+                Livewire.dispatch("Account-Page-Update-Component", {
+                    id: $(this).attr('table_id')
                 });
             });
-        </script>
-    @endpush
-</div>
+
+            $('#AccountAdd').click(function() {
+                Livewire.dispatch("Account-Page-Create-Component");
+            });
+
+            window.addEventListener('RefreshAccountTable', event => {
+                Livewire.dispatch("Account-Refresh-Component");
+            });
+        });
+    </script>
+@endpush
