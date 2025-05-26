@@ -59,8 +59,8 @@
                                 @endphp
                             @endforeach
 
-                            @if($selectedCount > 0)
-                                @foreach($groupedPermissions as $module => $selectedActions)
+                            @if ($selectedCount > 0)
+                                @foreach ($groupedPermissions as $module => $selectedActions)
                                     <div class="col-md-4">
                                         <div class="card h-100 border-0 shadow-sm">
                                             <div class="card-header bg-primary bg-opacity-10 py-2">
@@ -71,7 +71,7 @@
                                             </div>
                                             <div class="card-body p-2">
                                                 <div class="d-flex flex-wrap gap-1">
-                                                    @foreach($selectedActions as $action)
+                                                    @foreach ($selectedActions as $action)
                                                         <span class="badge bg-success bg-opacity-10 text-success rounded-pill px-2 py-1">
                                                             <i class="fa fa-check-circle me-1"></i>
                                                             {{ ucFirst($action) }}
