@@ -49,13 +49,21 @@ class Table extends Component
     public function export()
     {
         $count = Inventory::count();
+        $filter = [
+            'branch_id' => $this->branch_id,
+            'department_id' => $this->department_id,
+            'main_category_id' => $this->main_category_id,
+            'sub_category_id' => $this->sub_category_id,
+            'product_id' => $this->product_id,
+            'unit_id' => $this->unit_id,
+        ];
         if ($count > 2000) {
-            ExportProductJob::dispatch(Auth::user());
+            ExportProductJob::dispatch(Auth::user(), $filter);
             $this->dispatch('success', ['message' => 'You will get your file in your mailbox.']);
         } else {
             $exportFileName = 'inventory_'.now()->timestamp.'.xlsx';
 
-            return Excel::download(new ProductExport(), $exportFileName);
+            return Excel::download(new ProductExport($filter), $exportFileName);
         }
     }
 

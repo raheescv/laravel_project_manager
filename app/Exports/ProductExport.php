@@ -18,6 +18,9 @@ class ProductExport implements FromQuery, WithHeadings, WithMapping
     {
         $query = Product::with('unit', 'department', 'mainCategory', 'subCategory')
             ->product()
+            ->when($this->branch_id ?? '', function ($query, $value) {
+                return $query->where('branch_id', $value);
+            })
             ->when($this->department_id ?? '', function ($query, $value) {
                 return $query->where('department_id', $value);
             })

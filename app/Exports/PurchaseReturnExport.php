@@ -2,7 +2,7 @@
 
 namespace App\Exports;
 
-use App\Models\Purchase;
+use App\Models\PurchaseReturn;
 use Maatwebsite\Excel\Concerns\Exportable;
 use Maatwebsite\Excel\Concerns\FromQuery;
 use Maatwebsite\Excel\Concerns\WithColumnFormatting;
@@ -11,7 +11,6 @@ use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithMapping;
 use Maatwebsite\Excel\Events\AfterSheet;
 use PhpOffice\PhpSpreadsheet\Style\NumberFormat;
-use App\Models\PurchaseReturn;
 
 class PurchaseReturnExport implements FromQuery, WithColumnFormatting, WithEvents, WithHeadings, WithMapping
 {

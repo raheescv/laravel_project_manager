@@ -2,6 +2,7 @@
 
 namespace App\Jobs\Export;
 
+use App\Exports\PurchaseReturnExport;
 use App\Models\User;
 use App\Notifications\ExportCompleted;
 use Illuminate\Bus\Queueable;
@@ -10,7 +11,6 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Maatwebsite\Excel\Facades\Excel;
-use App\Exports\PurchaseReturnExport;
 
 class ExportPurchaseReturnJob implements ShouldQueue
 {
