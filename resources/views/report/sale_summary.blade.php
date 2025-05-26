@@ -8,10 +8,6 @@
                     <li class="breadcrumb-item active" aria-current="page">Sale Summary</li>
                 </ol>
             </nav>
-            <h1 class="page-title mb-0 mt-2">Sale Summary Report</h1>
-            <p class="lead">
-                Sales Summary : Day Wise
-            </p>
         </div>
     </div>
     <div class="content__boxed">
