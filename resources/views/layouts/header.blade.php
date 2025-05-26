@@ -153,7 +153,7 @@
                         </div>
                         <div class="list-group list-group-borderless">
                             @foreach (auth()->user()->unreadNotifications()->limit(5)->get() as $item)
-                                <div class="list-group-item list-group-item-action d-flex align-items-start mb-3">
+                                <a href="{{ route('notification::index') }}" class="list-group-item list-group-item-action d-flex align-items-start mb-3 text-decoration-none">
                                     @switch($item['type'])
                                         @case('App\Notifications\ImportErrorsNotification')
                                             <div class="flex-shrink-0 me-3">
@@ -168,14 +168,14 @@
                                     @endswitch
                                     <div class="flex-grow-1">
                                         <div class="d-flex justify-content-between align-items-start">
-                                            <a href="#" class="h6 fw-normal mb-0 stretched-link text-decoration-none">{{ $item['data']['title'] }}</a>
+                                            <span class="h6 fw-normal mb-0">{{ $item['data']['title'] }}</span>
                                             @if (!$item['read_at'])
                                                 <span class="badge bg-info rounded ms-auto">NEW</span>
                                             @endif
                                         </div>
                                         <small class="text-body-secondary">{{ $item['data']['message'] }}</small>
                                     </div>
-                                </div>
+                                </a>
                             @endforeach
                             <div class="text-center mb-2">
                                 <a href="{{ route('notification::index') }}" class="btn-link text-primary icon-link icon-link-hover">

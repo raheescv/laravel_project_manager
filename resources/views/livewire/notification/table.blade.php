@@ -1,87 +1,125 @@
 <div>
-    <div class="card-header -4 mb-3">
-        <div class="row">
-            <div class="col-md-6 d-flex gap-1 align-items-center mb-3">
-
+    <div class="card-header bg-light p-3 mb-3">
+        <div class="row align-items-center">
+            <div class="col-md-6 mb-3 mb-md-0">
+                <h4 class="mb-0">
+                    <i class="demo-psi-bell text-primary me-2"></i>
+                    Notifications
+                </h4>
             </div>
-            <div class="col-md-6 d-flex gap-1 align-items-center justify-content-md-end mb-3">
-                <div class="form-group">
-                    <select wire:model.live="limit" class="form-control">
-                        <option value="10">10</option>
-                        <option value="100">100</option>
-                        <option value="500">500</option>
+            <div class="col-md-6">
+                <div class="d-flex gap-2 justify-content-md-end">
+                    <select wire:model.live="limit" class="form-select w-auto">
+                        <option value="10">10 rows</option>
+                        <option value="100">100 rows</option>
+                        <option value="500">500 rows</option>
                     </select>
-                </div>
-                <div class="form-group">
-                    <input type="text" wire:model.live="search" autofocus placeholder="Search..." class="form-control" autocomplete="off">
+                    <div class="input-group">
+                        <span class="input-group-text bg-light border-end-0">
+                            <i class="demo-pli-magnifi-glass"></i>
+                        </span>
+                        <input type="text" wire:model.live="search" class="form-control border-start-0 ps-0" placeholder="Search notifications..." autofocus autocomplete="off">
+                    </div>
                 </div>
             </div>
         </div>
     </div>
-    <div class="card-header">
-        <div class="row">
+
+    <div class="card-body bg-light rounded-3 mb-3">
+        <div class="row g-3">
             <div class="col-md-3">
-                <h4> <label for="start_date">Start Date</label> </h4>
+                <label for="start_date" class="form-label fw-medium text-dark">
+                    <i class="demo-pli-calendar-4 me-1"></i>
+                    Start Date
+                </label>
                 {{ html()->date('start_date')->value('')->class('form-control')->attribute('wire:model.live', 'start_date') }}
             </div>
             <div class="col-md-3">
-                <h4> <label for="end_date">End Date</label> </h4>
+                <label for="end_date" class="form-label fw-medium text-dark">
+                    <i class="demo-pli-calendar-4 me-1"></i>
+                    End Date
+                </label>
                 {{ html()->date('end_date')->value('')->class('form-control')->attribute('wire:model.live', 'end_date') }}
             </div>
             <div class="col-md-3">
-                <h4> <label for="type">Type</label> </h4>
-                {{ html()->select('type', $types)->value('')->class('form-control')->placeholder('All')->attribute('wire:model.live', 'type') }}
+                <label for="type" class="form-label fw-medium text-dark">
+                    <i class="demo-pli-tag me-1"></i>
+                    Type
+                </label>
+                {{ html()->select('type', $types)->value('')->class('form-select')->placeholder('All Types')->attribute('wire:model.live', 'type') }}
             </div>
-            <div class="col-md-3">
-                <br> <br>
-                <div class="form-check mb-4">
-                    <label for="unread_only" class="form-check-label">
-                        {{ html()->checkbox('unread_only')->value('')->class('form-check-input')->placeholder('All')->attribute('wire:model.live', 'unread_only') }}
-                        Unread Only
+            <div class="col-md-3 d-flex align-items-end">
+                <div class="form-check">
+                    <label class="form-check-label d-flex align-items-center gap-2" for="unread_only">
+                        {{ html()->checkbox('unread_only')->value('')->class('form-check-input')->attribute('wire:model.live', 'unread_only') }}
+                        <span>
+                            <i class="demo-pli-mail me-1"></i>
+                            Unread Only
+                        </span>
                     </label>
                 </div>
             </div>
         </div>
     </div>
-    <div class="card-body">
-        <div class="table-responsive">
-            <table class="table table-striped align-middle table-sm">
-                <thead>
-                    <tr class="text-capitalize">
-                        <th> # </th>
-                        <th>Type</th>
-                        <th>Title</th>
-                        <th>Message</th>
-                        <th>File</th>
-                        <th>Received At</th>
-                        <th>Read At</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach ($data as $item)
-                        <tr>
+
+    <div class="card rounded-3 shadow-sm">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-sm table-hover align-middle mb-0">
+                    <thead class="bg-light">
+                        <tr class="text-capitalize">
+                            <th class="py-3">#</th>
+                            <th class="py-3">Type</th>
+                            <th class="py-3">Title</th>
+                            <th class="py-3">Message</th>
+                            <th class="py-3">File</th>
+                            <th class="py-3">Received</th>
+                            <th class="py-3">Read</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach ($data as $item)
                             @php
                                 $item->markAsRead();
                                 $itemData = $item['data'];
                                 $file_path = $itemData['file_path'] ?? '';
                                 $type = explode('\\', $item->type);
                             @endphp
-                            <td>{{ $loop->iteration }}</td>
-                            <td>{{ end($type) }}</td>
-                            <td>{{ $itemData['title'] ?? '' }}</td>
-                            <td>{{ $itemData['message'] ?? '' }}</td>
-                            <td>
-                                @if ($file_path)
-                                    <a href="{{ url($file_path) }}" download><i class="demo-psi-download-from-cloud fs-5 me-2 pointer"></i></a>
-                                @endif
-                            </td>
-                            <td>{{ $item->created_at->diffForHumans() }}</td>
-                            <td>{{ $item->read_at->diffForHumans() }}</td>
-                        </tr>
-                    @endforeach
-                </tbody>
-            </table>
+                            <tr>
+                                <td>{{ $loop->iteration }}</td>
+                                <td>
+                                    <span class="badge bg-primary-subtle text-primary">
+                                        {{ end($type) }}
+                                    </span>
+                                </td>
+                                <td class="fw-medium">{{ $itemData['title'] ?? '' }}</td>
+                                <td>{{ $itemData['message'] ?? '' }}</td>
+                                <td>
+                                    @if ($file_path)
+                                        <a href="{{ url($file_path) }}" download class="btn btn-sm btn-light">
+                                            <i class="demo-psi-download-from-cloud fs-6"></i>
+                                        </a>
+                                    @endif
+                                </td>
+                                <td>
+                                    <span class="text-muted" title="{{ $item->created_at }}">
+                                        {{ $item->created_at->diffForHumans() }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <span class="text-muted" title="{{ $item->read_at }}">
+                                        {{ $item->read_at->diffForHumans() }}
+                                    </span>
+                                </td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
         </div>
+    </div>
+
+    <div class="mt-3">
         {{ $data->links() }}
     </div>
 </div>

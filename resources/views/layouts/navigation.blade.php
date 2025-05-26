@@ -198,7 +198,7 @@
                         <li class="nav-item has-sub">
                             <a href="#"
                                 class="mininav-toggle nav-link {{ request()->is(['purchase_return', 'purchase_return/create', 'purchase_return/edit/*', 'purchase_return/view/*', 'report/purchase_item', 'purchase_return/payments']) ? 'active' : '' }}"><i
-                                    class="fa fa-cart-plus fs-5 me-2"></i>
+                                    class="fa fa-reply fs-5 me-2"></i>
                                 <span class="nav-label ms-1">Purchase Return</span>
                             </a>
                             <ul class="mininav-content nav collapse">
