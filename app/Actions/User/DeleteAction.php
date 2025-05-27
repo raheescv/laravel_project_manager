@@ -17,7 +17,7 @@ class DeleteAction
                 throw new \Exception('Oops! Something went wrong while deleting the User. Please try again.', 1);
             }
             $return['success'] = true;
-            $return['message'] = 'Successfully Update User';
+            $return['message'] = 'Successfully Deleted User';
             $return['data'] = $model;
         } catch (\Throwable $th) {
             $return['success'] = false;

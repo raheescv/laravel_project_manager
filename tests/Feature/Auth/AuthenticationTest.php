@@ -12,8 +12,8 @@ test('users can authenticate using the login screen', function (): void {
     $user = User::factory()->create();
 
     $response = $this->post('/login', [
-        'email' => $user->email,
-        'password' => 'password',
+        'email' => 'rahees@astra.com',
+        'password' => 'asdasd',
     ]);
 
     $this->assertAuthenticated();

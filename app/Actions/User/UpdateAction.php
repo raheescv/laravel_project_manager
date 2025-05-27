@@ -17,7 +17,7 @@ class UpdateAction
             $model->update($data);
 
             $return['success'] = true;
-            $return['message'] = 'Successfully Update User';
+            $return['message'] = 'Successfully Updated User';
             $return['data'] = $model;
         } catch (\Throwable $th) {
             $return['success'] = false;
