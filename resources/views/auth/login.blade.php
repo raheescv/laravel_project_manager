@@ -2,25 +2,27 @@
     <div>
         <div class="text-center mb-4">
             <div class="avatar-icon mb-4">
-                <i class="demo-pli-gear text-primary"></i>
+                <i class="demo-pli-gear"></i>
             </div>
-            <h3 class="fw-bold text-dark mb-1">Welcome Back! 👋</h3>
-            <p class="text-muted">Access your account</p>
+            <h2 class="fw-bold mb-1 welcome-title"
+                style="background: linear-gradient(90deg, var(--futuristic-primary), var(--futuristic-secondary)); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">Welcome Back! 👋
+            </h2>
+            <p class="text-secondary">Access your account</p>
         </div>
         <div class="card login-card border-0">
-            <div class="card-body p-4">
-                <form method="POST" action="{{ route('login') }}">
+            <div class="card-body p-4 p-lg-5">
+                <form method="POST" action="{{ route('login') }}" class="responsive-form">
                     @csrf
                     <div class="mb-4">
                         <label class="form-label d-flex justify-content-between">
                             <span class="fw-medium">Email Address</span>
-                            <span class="text-primary fw-medium opacity-75">
+                            <span class="fw-medium" style="color: var(--futuristic-secondary)">
                                 <i class="demo-pli-information me-1 fs-sm"></i>
                                 Required
                             </span>
                         </label>
                         <div class="input-group input-group-lg">
-                            <span class="input-group-text text-muted border-end-0">
+                            <span class="input-group-text border-end-0">
                                 <i class="demo-pli-mail"></i>
                             </span>
                             <x-text-input id="email" class="form-control border-start-0 ps-0" type="email" name="email" :value="old('email', env('DEFAULT_USERNAME'))" placeholder="name@example.com" required autofocus
@@ -32,13 +34,13 @@
                     <div class="mb-4">
                         <label class="form-label d-flex justify-content-between">
                             <span class="fw-medium">Password</span>
-                            <span class="text-primary fw-medium opacity-75">
+                            <span class="fw-medium" style="color: var(--futuristic-secondary)">
                                 <i class="demo-pli-information me-1 fs-sm"></i>
                                 Required
                             </span>
                         </label>
                         <div class="input-group input-group-lg">
-                            <span class="input-group-text text-muted border-end-0">
+                            <span class="input-group-text border-end-0">
                                 <i class="demo-pli-lock-2"></i>
                             </span>
                             <x-text-input id="password" class="form-control border-start-0 ps-0" type="password" name="password" value="{{ env('DEFAULT_PASSWORD') }}" required
@@ -66,7 +68,7 @@
             </div>
         </div>
         <div class="text-center mt-4">
-            <p class="text-muted mb-0">
+            <p class="mb-0" style="color: var(--futuristic-secondary)">
                 <i class="demo-pli-security-check me-1"></i>
                 Secured by {{ config('app.name', 'Laravel') }}
             </p>
