@@ -7,14 +7,20 @@
     @endpush
     <div class="content__boxed">
         <div class="content__wrap">
-            <div class="bg-primary p-4 rounded-4 mb-4">
-                <h1 class="display-5 text-white mb-2">Welcome back, {{ auth()->user()->name }}</h1>
-                <p class="lead mb-0 text-white">Here's what's happening with your business today.</p>
+            <div class="bg-primary bg-gradient p-4 p-md-3 rounded-4 mb-4 shadow-sm position-relative overflow-hidden">
+                <div class="position-absolute top-0 end-0 opacity-10 d-none d-md-block">
+                    <i class="demo-pli-monitor-2 display-1 text-white" style="font-size: 8rem;"></i>
+                </div>
+                <div class="position-relative">
+                    <h1 class="display-5 fw-bold text-white mb-2">Welcome back, {{ auth()->user()->name }}</h1>
+                    <p class="lead mb-0 text-white text-opacity-75">Here's what's happening with your business today.</p>
+                </div>
             </div>
 
             @if (auth()->user()->can('sale.dashboard weekly summary') || auth()->user()->can('inventory.dashboard status'))
                 <div class="row mb-4">
-                    <div class="col-xl-12 mb-4">
+                    <div class="col-xl-12 mb-3">
+                        <h5 class="mb-3 text-secondary fw-semibold border-start border-4 border-primary ps-3">Business Overview</h5>
                         <div class="row g-3">
                             @livewire('dashboard.top-card')
                         </div>
@@ -22,7 +28,10 @@
                 </div>
             @endif
             @can('appointment.view')
-                <div class="row">
+                <div class="row mb-4">
+                    <div class="col-12 mb-3">
+                        <h5 class="mb-3 text-secondary fw-semibold border-start border-4 border-info ps-3">Appointment Analytics</h5>
+                    </div>
                     <div class="col-xl-8 mb-4">
                         @livewire('dashboard.appointment.appointment-chart')
                     </div>
@@ -32,6 +41,9 @@
                 </div>
             @endcan
             <div class="row mb-4">
+                <div class="col-12 mb-3">
+                    <h5 class="mb-3 text-secondary fw-semibold border-start border-4 border-success ps-3">Sales Performance</h5>
+                </div>
                 @can('sale.dashboard bar chart')
                     <div class="col-xl-8 mb-4">
                         @livewire('dashboard.sale.overview')
@@ -39,12 +51,19 @@
                 @endcan
                 @can('sale.dashboard top items')
                     <div class="col-xl-4 mb-4">
-                        @livewire('dashboard.top-sale-items')
+                        <div class="card h-100 shadow-sm border-0 rounded-3 overflow-hidden">
+                            <div class="card-body">
+                                @livewire('dashboard.top-sale-items')
+                            </div>
+                        </div>
                     </div>
                 @endcan
             </div>
 
-            <div class="row">
+            <div class="row mb-4">
+                <div class="col-12 mb-3">
+                    <h5 class="mb-3 text-secondary fw-semibold border-start border-4 border-warning ps-3">Financial Overview</h5>
+                </div>
                 @can('report.income vs expense dashboard bar chart')
                     <div class="col-xl-8 mb-4">
                         @livewire('dashboard.income-expense-bar-chart')
@@ -55,6 +74,10 @@
                         @livewire('dashboard.income-expense-chart')
                     </div>
                 @endcan
+            </div>
+
+            <div class="text-center text-muted small py-3">
+                <p class="mb-0">© {{ date('Y') }} {{ config('app.name') }} | Dashboard last updated: {{ date('d M Y, H:i A') }}</p>
             </div>
         </div>
     </div>
