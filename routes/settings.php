@@ -16,7 +16,7 @@ use Illuminate\Support\Facades\Route;
 Route::middleware('auth')->group(function (): void {
 
     Route::name('settings::')->prefix('settings')->controller(SettingsController::class)->group(function (): void {
-        Route::get('', 'index')->name('index');
+        Route::get('', 'index')->name('index')->can('configuration.settings');
         Route::name('category::')->prefix('category')->controller(CategoryController::class)->group(function (): void {
             Route::get('', 'index')->name('index')->can('category.view');
             Route::get('list', 'get')->name('list');

@@ -125,10 +125,12 @@
                                     @can('department.view')
                                         <a href="{{ route('settings::department::index') }}" class="list-group-item list-group-item-action">Department</a>
                                     @endcan
-                                    @can('barcode.configuration')
+                                    @can('configuration.barcode')
                                         <a href="{{ route('inventory::barcode::configuration') }}" class="list-group-item list-group-item-action">Barcode Configuration</a>
                                     @endcan
-                                    <a href="{{ route('settings::index') }}" class="list-group-item list-group-item-action">Settings</a>
+                                    @can('configuration.settings')
+                                        <a href="{{ route('settings::index') }}" class="list-group-item list-group-item-action">Settings</a>
+                                    @endcan
                                     @can('backup.view')
                                         <a href="{{ route('backup::index') }}" class="list-group-item list-group-item-action">Backup</a>
                                     @endcan
