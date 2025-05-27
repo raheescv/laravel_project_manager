@@ -7,7 +7,7 @@
             <h3 class="fw-bold text-dark mb-1">Welcome Back! 👋</h3>
             <p class="text-muted">Access your account</p>
         </div>
-        <div class="card login-  border-0">
+        <div class="card login-card border-0">
             <div class="card-body p-4">
                 <form method="POST" action="{{ route('login') }}">
                     @csrf
