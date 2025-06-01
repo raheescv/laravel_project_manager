@@ -78,6 +78,7 @@ class CustomPayment extends Component
 
         $this->payment['amount'] = 0;
         $this->mainCalculator();
+        $this->dispatch('paymentAdded');
     }
 
     public function removePayment($index)

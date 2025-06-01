@@ -1,40 +1,45 @@
 <div>
-    <div class="table-top">
-        <div class="search-set w-100 search-order">
-            <div class="search-input w-100">
-                <div id="DataTables_Table_0_filter" class="dataTables_filter">
-                    <label>
-                        <input type="search" wire:model.live="search" class="form-control form-control-sm" placeholder="Search" aria-controls="DataTables_Table_0">
-                    </label>
-                </div>
+    <div class="row mb-3">
+        <div class="col-md-4">
+            <div class="input-group">
+                <span class="input-group-text"><i class="fa fa-search"></i></span>
+                <input type="search" wire:model.live.debounce.300ms="search" class="form-control" placeholder="Search drafts...">
             </div>
         </div>
     </div>
-    <div class="order-body">
-        <table class="table table-sm">
-            <thead>
+
+    <div class="table-responsive">
+        <table class="table table-hover align-middle">
+            <thead class="table-light">
                 <tr>
                     <th>#</th>
                     <th>Date</th>
-                    <th>invoice no</th>
-                    <th>Customer</th>
-                    <th>Customer</th>
+                    <th>Invoice No</th>
+                    <th>Customer Name</th>
                     <th>Mobile</th>
                     <th class="text-end">Grand Total</th>
                 </tr>
             </thead>
             <tbody>
-                @foreach ($lists as $item)
+                @forelse ($lists as $item)
                     <tr>
                         <td>{{ $loop->iteration }}</td>
                         <td>{{ systemDate($item->date) }}</td>
-                        <td> <a href="{{ route('sale::edit', $item->id) }}">{{ $item->invoice_no }}</a> </td>
-                        <td> {{ $item->name }}</td>
-                        <td>{{ $item->customer_name }}</td>
-                        <td>{{ $item->customer_mobile }}</td>
-                        <td class="text-end">{{ currency($item->grand_total) }}</td>
+                        <td>
+                            <a href="{{ route('sale::edit', $item->id) }}" class="fw-semibold text-primary">{{ $item->invoice_no }}</a>
+                        </td>
+                        <td>{{ $item->customer_name ?: ($item->name ?: 'N/A') }}</td>
+                        <td>{{ $item->customer_mobile ?: 'N/A' }}</td>
+                        <td class="text-end fw-bold">{{ currency($item->grand_total) }}</td>
                     </tr>
-                @endforeach
+                @empty
+                    <tr>
+                        <td colspan="6" class="text-center py-4">
+                            <i class="fa fa-box-open fa-2x text-muted mb-2"></i>
+                            <p class="mb-0 text-muted">No draft sales found.</p>
+                        </td>
+                    </tr>
+                @endforelse
             </tbody>
         </table>
     </div>
