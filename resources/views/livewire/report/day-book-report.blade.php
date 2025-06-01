@@ -61,13 +61,13 @@
                             <td>{{ systemDate($item->date) }}</td>
                             <td>{{ $item->account_name }}</td>
                             <td>
-                                @switch($item->model)
+                                @switch($item->journal_model)
                                     @case('Sale')
-                                        <a href="{{ route('sale::view', $item->model_id) }}">{{ $item->description }}</a>
+                                        <a href="{{ route('sale::view', $item->journal_model_id) }}">{{ $item->description }}</a>
                                     @break
 
                                     @case('SaleReturn')
-                                        <a href="{{ route('sale_return::view', $item->model_id) }}">{{ $item->description }}</a>
+                                        <a href="{{ route('sale_return::view', $item->journal_model_id) }}">{{ $item->description }}</a>
                                     @break
 
                                     @default
