@@ -133,7 +133,7 @@ class Table extends Component
                     'journal_id',
                     'date',
                     'accounts.name as account_name',
-                    'journals.description',
+                    'journal_entries.description',
                     'reference_number',
                     'journal_entries.model',
                     'person_name',

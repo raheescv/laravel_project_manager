@@ -113,4 +113,9 @@ class Account extends Model implements AuditableContracts
     {
         return $this->belongsTo(CustomerType::class);
     }
+
+    public function sales()
+    {
+        return $this->hasMany(Sale::class);
+    }
 }

@@ -15,11 +15,24 @@ class JournalEntry extends Model implements AuditableContracts
 
     protected $fillable = [
         'journal_id',
+        'branch_id',
         'account_id',
         'counter_account_id',
+
+        'date',
+
         'debit',
         'credit',
         'remarks',
+
+        'source',
+        'person_name',
+        'description',
+        'journal_remarks',
+        'reference_number',
+        'journal_model',
+        'journal_model_id',
+
         'model',
         'model_id',
         'created_by',
@@ -41,6 +54,16 @@ class JournalEntry extends Model implements AuditableContracts
         return $this->belongsTo(Journal::class);
     }
 
+    public function scopeExpense($query)
+    {
+        return $query->where('source', 'expense');
+    }
+
+    public function scopeIncome($query)
+    {
+        return $query->where('source', 'income');
+    }
+
     public function account()
     {
         return $this->belongsTo(Account::class);
@@ -58,8 +81,7 @@ class JournalEntry extends Model implements AuditableContracts
 
     public static function expenseList($filter)
     {
-        return self::join('journals', 'journals.id', '=', 'journal_entries.journal_id')
-            ->where('source', 'expense')
+        return self::expense()
             ->where('debit', '>', 0)
             ->when($filter['search'] ?? '', function ($query, $value) {
                 return $query->where(function ($q) use ($value) {
@@ -67,6 +89,7 @@ class JournalEntry extends Model implements AuditableContracts
 
                     return $q->where('description', 'like', "%{$value}%")
                         ->orWhere('reference_number', 'like', "%{$value}%")
+                        ->orWhere('journal_remarks', 'like', "%{$value}%")
                         ->orWhere('remarks', 'like', "%{$value}%");
                 });
             })
@@ -86,8 +109,7 @@ class JournalEntry extends Model implements AuditableContracts
 
     public static function incomeList($filter)
     {
-        return self::join('journals', 'journals.id', '=', 'journal_entries.journal_id')
-            ->where('source', 'income')
+        return self::income()
             ->where('credit', '>', 0)
             ->when($filter['search'] ?? '', function ($query, $value) {
                 return $query->where(function ($q) use ($value) {
@@ -95,6 +117,7 @@ class JournalEntry extends Model implements AuditableContracts
 
                     return $q->where('description', 'like', "%{$value}%")
                         ->orWhere('reference_number', 'like', "%{$value}%")
+                        ->orWhere('journal_remarks', 'like', "%{$value}%")
                         ->orWhere('remarks', 'like', "%{$value}%");
                 });
             })

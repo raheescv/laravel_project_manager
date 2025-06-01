@@ -129,13 +129,13 @@ class View extends Component
     private function dataFunction()
     {
         return JournalEntry::with('account')->where('counter_account_id', $this->accountId)
-            ->join('journals', 'journals.id', '=', 'journal_entries.journal_id')
             ->when($this->filter['search'], function ($query, $value) {
                 return $query->where(function ($q) use ($value) {
                     $value = trim($value);
 
-                    return $q->where('journals.description', 'like', "%{$value}%")
+                    return $q->where('description', 'like', "%{$value}%")
                         ->orWhere('journal_entries.reference_number', 'like', "%{$value}%")
+                        ->orWhere('journal_entries.journal_remarks', 'like', "%{$value}%")
                         ->orWhere('journal_entries.remarks', 'like', "%{$value}%");
                 });
             })

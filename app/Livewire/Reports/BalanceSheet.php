@@ -102,10 +102,9 @@ class BalanceSheet extends Component
 
         // Query base for journal entries with their journals to get date and branch info
         $query = JournalEntry::query()
-            ->join('journals', 'journals.id', '=', 'journal_entries.journal_id')
-            ->whereBetween('journals.date', [$this->start_date, $this->end_date])
+            ->whereBetween('date', [$this->start_date, $this->end_date])
             ->when($this->branch_id, function ($q) {
-                return $q->where('journals.branch_id', $this->branch_id);
+                return $q->where('branch_id', $this->branch_id);
             })
             ->select('journal_entries.*');
 

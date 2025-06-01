@@ -125,11 +125,10 @@ class TrialBalance extends Component
                 COALESCE(SUM(journal_entries.debit), 0) as total_debit,
                 COALESCE(SUM(journal_entries.credit), 0) as total_credit
             ')
-            ->join('journals', 'journals.id', '=', 'journal_id')
             ->join('accounts', 'accounts.id', '=', 'account_id')
-            ->whereBetween('journals.date', [$this->start_date, $this->end_date])
+            ->whereBetween('date', [$this->start_date, $this->end_date])
             ->when($this->branch_id, function ($query) {
-                return $query->where('journals.branch_id', $this->branch_id);
+                return $query->where('branch_id', $this->branch_id);
             })
             ->groupBy('account_id', 'accounts.name', 'accounts.account_type');
 

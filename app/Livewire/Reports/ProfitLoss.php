@@ -62,13 +62,9 @@ class ProfitLoss extends Component
     public function render()
     {
         $query = JournalEntry::query()
-            ->join('journals', function ($join) {
-                $join->on('journals.id', '=', 'journal_entries.journal_id')
-                    ->whereBetween('journals.date', [$this->start_date, $this->end_date]);
-
-                if ($this->branch_id) {
-                    $join->where('journals.branch_id', $this->branch_id);
-                }
+            ->whereBetween('date', [$this->start_date, $this->end_date])
+            ->when($this->branch_id, function ($q) {
+                return $q->where('branch_id', $this->branch_id);
             });
 
         // Get detailed income breakdown

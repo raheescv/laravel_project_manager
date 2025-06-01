@@ -8,29 +8,32 @@ SELECT
 
     je.counter_account_id,
 
-    j.source,
-    j.person_name,
-    j.date,
-    j.branch_id,
-    j.description,
-    j.remarks as journal_remarks,
-    j.reference_number,
-    j.model,
-    j.model_id,
+    je.source,
+    je.person_name,
+    je.date,
+    je.branch_id,
+    je.description,
+    je.journal_remarks,
+    je.reference_number,
+
+    je.journal_model,
+    je.journal_model_id,
+
+    je.model,
+    je.model_id,
+
     je.remarks,
     je.debit,
     je.credit,
     (
-        SUM(je.debit) OVER (PARTITION BY a.id ORDER BY j.date, je.id) -
-        SUM(je.credit) OVER (PARTITION BY a.id ORDER BY j.date, je.id)
+        SUM(je.debit) OVER (PARTITION BY a.id ORDER BY je.date, je.id) -
+        SUM(je.credit) OVER (PARTITION BY a.id ORDER BY je.date, je.id)
     ) AS balance
 FROM
     journal_entries je
 JOIN
     accounts a ON je.account_id = a.id
-JOIN
-    journals j ON je.journal_id = j.id
 WHERE
-    j.deleted_at IS NULL
+    je.deleted_at IS NULL
 ORDER BY
-    j.date, je.id;
+    je.date, je.id;
