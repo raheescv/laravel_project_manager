@@ -35,7 +35,11 @@ class Branch extends Model
 
     public function getAssignedBranchDropDownList($request)
     {
-        $user = User::find($request['user_id'] ?? Auth::id());
+        $userId = $request['user_id'] ?? null;
+        if (! $userId) {
+            $userId = Auth::id();
+        }
+        $user = User::find($userId);
         $self = self::orderBy('name');
         $assigned_ids = [];
         if ($user) {
