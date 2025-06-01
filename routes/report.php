@@ -28,5 +28,6 @@ Route::middleware('auth')->group(function (): void {
             Route::get('stock_analysis', 'stock_analysis')->name('stock_analysis')->can('report.stock analysis');
             Route::get('ai_generated', 'ai_generated')->name('ollama');
             Route::get('employee_productivity', 'employee_productivity')->name('employee_productivity')->can('report.employee productivity');
+            Route::get('customer_callback_reminder', 'customer_callback_reminder')->name('customer_callback_reminder')->can('report.customer callback reminder');
         });
 });

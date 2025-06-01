@@ -72,6 +72,9 @@
                                     @can('report.employee productivity')
                                         <a href="{{ route('report::employee_productivity') }}" class="list-group-item list-group-item-action">Employee Productivity</a>
                                     @endcan
+                                    @can('report.customer callback reminder')
+                                        <a href="{{ route('report::customer_callback_reminder') }}" class="list-group-item list-group-item-action">Customer Callback Reminder</a>
+                                    @endcan
                                 </div>
                             </div>
                         </div>

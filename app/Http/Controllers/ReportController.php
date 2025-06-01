@@ -87,4 +87,9 @@ class ReportController extends Controller
     {
         return view('report.employee-productivity');
     }
+
+    public function customer_callback_reminder()
+    {
+        return view('report.customer.customer-callback-reminder');
+    }
 }

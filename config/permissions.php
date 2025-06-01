@@ -52,6 +52,7 @@ return [
         'balance sheet',
         'stock analysis',
         'employee productivity',
+        'customer callback reminder',
     ],
     'log' => ['inventory'],
     'backup' => ['create', 'view', 'download'],
