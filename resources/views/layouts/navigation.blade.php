@@ -17,7 +17,7 @@
 
                         </button>
                         <div id="usernav" class="nav flex-column collapse">
-                            <a href="#" class="nav-link">
+                            <a href="{{ route('profile.edit') }}" class="nav-link">
                                 <i class="fa fa-user fs-5 me-2"></i>
                                 <span class="ms-1">Profile</span>
                             </a>
@@ -46,7 +46,7 @@
                             <a href="#"
                                 class="mininav-toggle nav-link {{ request()->is(['inventory', 'inventory/product/*', 'inventory/transfer', 'inventory/transfer/edit/*', 'inventory/transfer/create', 'inventory/transfer/view/*', 'report/product']) ? 'active' : '' }}"><i
                                     class="fa fa-cubes fs-5 me-2"></i>
-                                <span class="nav-label ms-1">Inventory</span>
+                                <span class="nav-label mininav-content ms-1 collapse show" style="">Inventory</span>
                             </a>
                             <ul class="mininav-content nav collapse">
                                 <li data-popper-arrow class="arrow"></li>
@@ -78,7 +78,7 @@
                         <li class="nav-item has-sub">
                             <a href="#" class="mininav-toggle nav-link {{ request()->is(['appointment/employee-calendar', 'appointment']) ? 'active' : '' }}"><i
                                     class="fa fa-calendar fs-5 me-2"></i>
-                                <span class="nav-label ms-1">Appointments</span>
+                                <span class="nav-label mininav-content ms-1 collapse show" style="">Appointments</span>
                             </a>
                             <ul class="mininav-content nav collapse">
                                 <li data-popper-arrow class="arrow"></li>
@@ -102,7 +102,7 @@
                                 $list = ['report/sale_summary', 'report/sales_overview', 'sale', 'sale/create', 'sale/edit/*', 'sale/view/*', 'report/sale_item', 'sale/receipts'];
                             @endphp
                             <a href="#" class="mininav-toggle nav-link {{ request()->is($list) ? 'active' : '' }}"><i class="fa fa-shopping-cart fs-5 me-2"></i>
-                                <span class="nav-label ms-1">Sale</span>
+                                <span class="nav-label mininav-content ms-1 collapse show" style="">Sale</span>
                             </a>
                             <ul class="mininav-content nav collapse">
                                 <li data-popper-arrow class="arrow"></li>
@@ -134,7 +134,7 @@
                             <a href="#"
                                 class="mininav-toggle nav-link {{ request()->is(['sale_return', 'sale_return/create', 'sale_return/edit/*', 'sale_return/view/*', 'report/sale_return_item', 'sale_return/payments']) ? 'active' : '' }}">
                                 <i class="fa fa-rotate-left fs-5 me-2"></i>
-                                <span class="nav-label ms-1">Sale Return</span>
+                                <span class="nav-label mininav-content ms-1 collapse show" style="">Sale Return</span>
                             </a>
                             <ul class="mininav-content nav collapse">
                                 <li data-popper-arrow class="arrow"></li>
@@ -167,7 +167,7 @@
                             <a href="#"
                                 class="mininav-toggle nav-link {{ request()->is(['purchase', 'purchase/create', 'purchase/edit/*', 'report/purchase_item', 'purchase/payments']) ? 'active' : '' }}"><i
                                     class="fa fa-cart-plus fs-5 me-2"></i>
-                                <span class="nav-label ms-1">Purchase</span>
+                                <span class="nav-label mininav-content ms-1 collapse show" style="">Purchase</span>
                             </a>
                             <ul class="mininav-content nav collapse">
                                 <li data-popper-arrow class="arrow"></li>
@@ -199,7 +199,7 @@
                             <a href="#"
                                 class="mininav-toggle nav-link {{ request()->is(['purchase_return', 'purchase_return/create', 'purchase_return/edit/*', 'purchase_return/view/*', 'report/purchase_item', 'purchase_return/payments']) ? 'active' : '' }}"><i
                                     class="fa fa-reply fs-5 me-2"></i>
-                                <span class="nav-label ms-1">Purchase Return</span>
+                                <span class="nav-label mininav-content ms-1 collapse show" style="">Purchase Return</span>
                             </a>
                             <ul class="mininav-content nav collapse">
                                 <li data-popper-arrow class="arrow"></li>
@@ -232,7 +232,7 @@
                             <a href="#"
                                 class="mininav-toggle nav-link {{ request()->is(['account', 'account/expense', 'account/income', 'account/view/*', 'report/day_book']) ? 'active' : '' }}"><i
                                     class="fa fa-bank fs-5 me-2"></i>
-                                <span class="nav-label ms-1">Account</span>
+                                <span class="nav-label mininav-content ms-1 collapse show" style="">Account</span>
                             </a>
                             <ul class="mininav-content nav collapse">
                                 <li data-popper-arrow class="arrow"></li>
@@ -263,7 +263,7 @@
                         <li class="nav-item has-sub">
                             <a href="#" class="mininav-toggle nav-link {{ request()->is(['users/employee', 'users/employee/attendance']) ? 'active' : '' }}"><i
                                     class="fa fa-users fs-5 me-2"></i>
-                                <span class="nav-label ms-1">Employee</span>
+                                <span class="nav-label mininav-content ms-1 collapse show" style="">Employee</span>
                             </a>
                             <ul class="mininav-content nav collapse">
                                 <li data-popper-arrow class="arrow"></li>
@@ -284,7 +284,7 @@
                         <li class="nav-item has-sub">
                             <a href="#" class="mininav-toggle nav-link {{ request()->is(['users', 'users/view/*', 'settings/roles', 'settings/roles/*']) ? 'active' : '' }}"><i
                                     class="fa fa-user fs-5 me-2"></i>
-                                <span class="nav-label ms-1">Users</span>
+                                <span class="nav-label mininav-content ms-1 collapse show" style="">Users</span>
                             </a>
                             <ul class="mininav-content nav collapse">
                                 <li data-popper-arrow class="arrow"></li>
@@ -304,7 +304,7 @@
                     @if (auth()->user()->can('log.inventory'))
                         <li class="nav-item has-sub">
                             <a href="#" class="mininav-toggle nav-link {{ request()->is(['log/inventory', 'visitor-analytics']) ? 'active' : '' }}"><i class="fa fa-clipboard fs-5 me-2"></i>
-                                <span class="nav-label ms-1">Log</span>
+                                <span class="nav-label mininav-content ms-1 collapse show" style="">Log</span>
                             </a>
                             <ul class="mininav-content nav collapse">
                                 <li data-popper-arrow class="arrow"></li>
@@ -329,7 +329,7 @@
                 <li class="nav-item has-sub">
                     <a href="#" class="nav-link mininav-toggle collapsed" aria-expanded="false">
                         <i class="fa fa-sign-out fs-5 me-2"></i>
-                        <span class="nav-label ms-1">Logout</span>
+                        <span class="nav-label mininav-content ms-1 collapse show" style="">Logout</span>
                     </a>
                     <ul class="mininav-content nav flex-column collapse">
                         <li data-popper-arrow class="arrow"></li>

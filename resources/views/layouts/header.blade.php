@@ -6,7 +6,7 @@
                 <a href="{{ route('dashboard') }}" class="brand-img stretched-link">
                     <img src="{{ cache('logo', asset('assets/img/logo.svg')) }}" alt="Nifty Logo" class="Nifty logo" width="150%" height="150%">
                 </a>
-                <div class="brand-title">{{ config('app.name', 'Astra') }}</div>
+                <div class="brand-title d-none d-sm-block">{{ config('app.name', 'Astra') }}</div>
             </div>
         </div>
         <!-- End - Brand -->
@@ -21,7 +21,7 @@
                 <div class="d-flex align-items-center px-3 py-1 rounded bg-light border text-dark shadow-sm">
                     <i class="fa fa-code-branch me-2 text-primary"></i>
                     <span class="fw-semibold small" id="branch_selection">
-                        Branch: {{ session('branch_name') }}
+                        <span class="d-none d-sm-inline">Branch: </span>{{ session('branch_name') }}
                     </span>
                 </div>
             </div>
@@ -29,7 +29,7 @@
 
             <!-- Content Header - Right Side: -->
             <div class="header__content-end">
-                <i class="fa fa-2x fa-arrows" aria-hidden="true" id="btnFullscreen"></i>
+                <i class="fa fa-2x fa-arrows d-none d-md-inline-block" aria-hidden="true" id="btnFullscreen"></i>
                 <div class="vr mx-1 d-none d-md-block"></div>
                 <div class="dropdown">
                     <button class="header__btn btn btn-icon btn-sm" type="button" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-label="Megamenu dropdown" aria-expanded="false">
@@ -227,7 +227,7 @@
 
                                 <!-- User menu link -->
                                 <div class="list-group list-group-borderless h-100 py-3">
-                                    <a href="#" class="list-group-item list-group-item-action">
+                                    <a href="{{ route('profile.edit') }}" class="list-group-item list-group-item-action">
                                         <i class="demo-pli-male fs-5 me-2"></i>
                                         Profile
                                     </a>
