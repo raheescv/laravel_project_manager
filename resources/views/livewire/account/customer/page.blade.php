@@ -169,6 +169,7 @@
                     </div>
                 </div>
             @endif
+        </div>
     </form>
     @push('scripts')
         <script>
