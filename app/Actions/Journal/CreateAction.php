@@ -21,7 +21,7 @@ class CreateAction
                 $single['branch_id'] = $model->branch_id;
                 $single['source'] = $model->source;
                 $single['person_name'] = $model->person_name;
-                $single['journal_description'] = $model->description;
+                $single['description'] = $model->description;
                 $single['journal_remarks'] = $model->remarks;
                 $single['reference_number'] = $model->reference_number;
 
