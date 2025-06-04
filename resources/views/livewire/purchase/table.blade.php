@@ -157,7 +157,7 @@
                                 </div>
                             </td>
                             <td class="text-nowrap">
-                                <a href="{{ route('purchase_return::view', $item->id) }}" class="text-primary fw-semibold text-decoration-none">
+                                <a href="{{ route('purchase::edit', $item->id) }}" class="text-primary fw-semibold text-decoration-none">
                                     {{ $item->invoice_no }}
                                 </a>
                             </td>

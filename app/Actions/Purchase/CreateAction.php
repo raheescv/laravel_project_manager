@@ -2,8 +2,6 @@
 
 namespace App\Actions\Purchase;
 
-use App\Actions\Purchase\Item\CreateAction as ItemCreateAction;
-use App\Actions\Purchase\Payment\CreateAction as PaymentCreateAction;
 use App\Models\Purchase;
 
 class CreateAction
@@ -18,7 +16,7 @@ class CreateAction
             $model = Purchase::create($data);
             foreach ($data['items'] as $value) {
                 $value['purchase_id'] = $model->id;
-                $response = (new ItemCreateAction())->execute($value, $user_id);
+                $response = (new Item\CreateAction())->execute($value, $user_id);
                 if (! $response['success']) {
                     throw new \Exception($response['message'], 1);
                 }
@@ -26,7 +24,7 @@ class CreateAction
             foreach ($data['payments'] as $value) {
                 $value['purchase_id'] = $model->id;
                 $value['date'] = $model->date;
-                $response = (new PaymentCreateAction())->execute($value, $user_id);
+                $response = (new Payment\CreateAction())->execute($value, $user_id);
                 if (! $response['success']) {
                     throw new \Exception($response['message'], 1);
                 }
