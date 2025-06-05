@@ -4,6 +4,7 @@ use App\Http\Controllers\AppointmentController;
 use App\Http\Controllers\AuditController;
 use App\Http\Controllers\BackupController;
 use App\Http\Controllers\FamilyTreeController;
+use App\Http\Controllers\HealthController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\ImageGenComfyController;
 use App\Http\Controllers\NotificationController;
@@ -53,4 +54,5 @@ Route::middleware('auth')->group(function (): void {
     Route::get('family-tree', [FamilyTreeController::class, 'index'])->name('family-tree'); // ->can('family-tree.view');
     Route::get('visitor-analytics', [VisitorAnalyticsController::class, 'index'])->name('visitor-analytics')->can('visitor analytics.view');
 
+    Route::get('health', [HealthController::class, 'index'])->name('health')->can('system health.view');
 });
