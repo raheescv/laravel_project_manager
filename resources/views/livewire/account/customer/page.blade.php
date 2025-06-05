@@ -146,10 +146,6 @@
                                     Date of Birth
                                 </label>
                             </div>
-                            <div class="form-text ms-1">
-                                <i class="fa fa-calendar me-1"></i>
-                                yyyy-mm-dd format
-                            </div>
                         </div>
                         <div class="col-md-4">
                             <div class="form-floating">
