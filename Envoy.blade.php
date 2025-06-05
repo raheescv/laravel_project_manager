@@ -206,10 +206,7 @@
 @endstory
 
 @story('safe-production-deploy')
-    maintenance-on
-    backup
     deploy-production
-    maintenance-off
 @endstory
 
 @story('emergency-rollback')
