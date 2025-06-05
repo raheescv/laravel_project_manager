@@ -421,7 +421,7 @@ class MigrateDataCommand extends Command
                                 $employee_id = User::where('type', 'employee')->where('second_reference_no', $value->employee_id)->value('id');
                                 $inventory_id = Inventory::where('product_id', $product_id)->value('id');
                                 if (! $inventory_id) {
-                                    throw new \Exception('Inventory not found for product ID: '.$value->spa_service_id);
+                                    throw new \Exception('Inventory not found for service ID: '.$value->spa_service_id);
                                 }
                                 $item = [
                                     'inventory_id' => $inventory_id,
@@ -724,7 +724,7 @@ class MigrateDataCommand extends Command
             unset($data['unit']);
             unset($data['main_category']);
             unset($data['sub_category']);
-            $exists = Product::where('name', $data['name'])->exists();
+            $exists = Product::service()->where('name', $data['name'])->exists();
             if (! $exists) {
                 $product = Product::create((array) $data);
                 BranchProductCreationJob::dispatch(1, 1, $product->id);
