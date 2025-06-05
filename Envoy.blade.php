@@ -1,9 +1,8 @@
 @servers(['local' => '127.0.0.1', 'production' => 'your-production-server.com'])
 
 @setup
-    $repository = 'git@github.com:your-username/project_manager.git';
+    $repository = 'git@github.com:raheescv/laravel_project_manager.git';
     $releases_dir = '/var/www/releases';
-    $app_dir = '/var/www/html/project_manager';
     $release = date('YmdHis');
     $new_release_dir = $releases_dir .'/'. $release;
 @endsetup
@@ -140,12 +139,6 @@
 @task('deploy-production', ['on' => 'production'])
     echo "🚀 Starting production deployment..."
 
-    {{-- echo "🚧 Enabling maintenance mode..." --}}
-    {{-- php artisan down --message="Deployment in progress" --retry=60 --}}
-
-    {{-- echo "💾 Creating backup..." --}}
-    {{-- php artisan backup:run --only-db --}}
-
     echo "📥 Pulling latest changes..."
     git pull origin main
 
@@ -170,9 +163,6 @@
 
     echo "🏥 Running health check..."
     php artisan health:check
-
-    {{-- echo "🟢 Disabling maintenance mode..." --}}
-    {{-- php artisan up --}}
 
     echo "✅ Production deployment completed successfully!"
 @endtask
