@@ -28,7 +28,7 @@ class HealthMonitor extends Component
         try {
             // Run the health checks using Artisan command
             \Illuminate\Support\Facades\Artisan::call('health:check');
-            
+
             // Clear cached results to get fresh data
             \Illuminate\Support\Facades\Cache::forget('health_results');
 
