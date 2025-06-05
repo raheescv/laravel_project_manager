@@ -77,9 +77,6 @@
 @task('deploy-safe', ['on' => 'local'])
     echo "🛡️ Starting safe deployment with backup..."
 
-    echo "💾 Creating backup before deployment..."
-    php artisan backup:run --only-db
-
     echo "📥 Pulling latest changes..."
     git pull origin main
 
@@ -192,7 +189,6 @@
 @endstory
 
 @story('deploy-production')
-    backup
     deploy-safe
     health-check
 @endstory
