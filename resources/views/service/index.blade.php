@@ -7,9 +7,9 @@
                     <li class="breadcrumb-item active" aria-current="page">Service</li>
                 </ol>
             </nav>
-            <h1 class="page-title mb-0 mt-2">Service</h1>
+            <h1 class="page-title mb-0 mt-2">Service Management</h1>
             <p class="lead">
-                A table is an arrangement of Service
+                Manage your services with advanced filtering
             </p>
         </div>
     </div>

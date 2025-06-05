@@ -7,9 +7,9 @@
                     <li class="breadcrumb-item active" aria-current="page">Product</li>
                 </ol>
             </nav>
-            <h1 class="page-title mb-0 mt-2">Product</h1>
+            <h1 class="page-title mb-0 mt-2"> Product Management</h1>
             <p class="lead">
-                A table is an arrangement of Product
+                Manage your inventory products with advanced filtering
             </p>
         </div>
     </div>
