@@ -1,0 +1,76 @@
+/**
+ * Theme color scheme helper styles
+ * These styles help ensure that color schemes are properly applied
+ */
+
+/* Gray Theme */
+html[data-scheme="gray"],
+html.scheme-gray {
+    --scheme: gray !important;
+}
+
+/* Navy Theme */
+html[data-scheme="navy"],
+html.scheme-navy {
+    --scheme: navy !important;
+}
+
+/* Ocean Theme */
+html[data-scheme="ocean"],
+html.scheme-ocean {
+    --scheme: ocean !important;
+}
+
+/* Lime Theme */
+html[data-scheme="lime"],
+html.scheme-lime {
+    --scheme: lime !important;
+}
+
+/* Violet Theme */
+html[data-scheme="violet"],
+html.scheme-violet {
+    --scheme: violet !important;
+}
+
+/* Orange Theme */
+html[data-scheme="orange"],
+html.scheme-orange {
+    --scheme: orange !important;
+}
+
+/* Teal Theme */
+html[data-scheme="teal"],
+html.scheme-teal {
+    --scheme: teal !important;
+}
+
+/* Corn Theme */
+html[data-scheme="corn"],
+html.scheme-corn {
+    --scheme: corn !important;
+}
+
+/* Cherry Theme */
+html[data-scheme="cherry"],
+html.scheme-cherry {
+    --scheme: cherry !important;
+}
+
+/* Coffee Theme */
+html[data-scheme="coffee"],
+html.scheme-coffee {
+    --scheme: coffee !important;
+}
+
+/* Pear Theme */
+html[data-scheme="pear"],
+html.scheme-pear {
+    --scheme: pear !important;
+}
+
+/* Night Theme */
+html[data-scheme="night"],
+html.scheme-night {
+    --scheme: night !important;
+}

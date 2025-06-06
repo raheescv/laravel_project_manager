@@ -1,7 +1,10 @@
 <!DOCTYPE html>
-<html lang="en" data-bs-theme="light" data-scheme="navy">
+<html lang="en" data-bs-theme="light" data-scheme="">
 
 <head>
+    <!-- Early theme initialization to prevent flash of unstyled content -->
+    @include('layouts.theme-init')
+
     <meta http-equiv="content-type" content="text/html; charset=UTF-8">
     <meta name="viewport" content="width=device-width, height=device-height, initial-scale=1">
     <meta name="description" content="Nifty is a responsive admin dashboard template based on Bootstrap 5 framework. There are a lot of useful components.">
@@ -15,6 +18,7 @@
     <link rel="stylesheet" href="{{ asset('assets/css/demo-purpose/demo-icons.min.css') }}">
     <link rel="stylesheet" href="{{ asset('assets/premium/icon-sets/line-icons/premium-line-icons.css') }}">
     <link rel="stylesheet" href="{{ asset('assets/css/demo-purpose/demo-settings.min.css') }}">
+    <link rel="stylesheet" href="{{ asset('css/theme-helper.css') }}"><!-- Theme persistence helper -->
     <link rel="apple-touch-icon" sizes="180x180" href="{{ asset('apple-touch-icon.png') }}">
     <link rel="icon" type="image/png" sizes="32x32" href="{{ asset('favicon-32x32.png') }}">
     <link rel="icon" type="image/png" sizes="16x16" href="{{ asset('favicon-16x16.png') }}">
@@ -82,10 +86,26 @@
     <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
     <!-- END - SCROLL TO TOP BUTTON -->
 
+    <!-- Theme Applier - Must be before other scripts to ensure it runs first -->
+    <script src="{{ asset('js/theme-applier.js') }}"></script>
+
     <script src="{{ asset('assets/vendors/popperjs/popper.min.js') }}"></script>
     <script src="{{ asset('assets/vendors/bootstrap/bootstrap.min.js') }}"></script>
     <script src="{{ asset('assets/js/nifty.js') }}"></script>
     <script src="{{ asset('assets/js/demo-purpose-only.js') }}"></script>
+
+    <!-- Reapply theme settings after all scripts have loaded -->
+    <script>
+        // Ensure theme settings are applied after all other scripts
+        window.addEventListener('load', function() {
+            setTimeout(function() {
+                // Reapply the stored theme settings
+                if (typeof applyStoredThemeSettings === 'function') {
+                    applyStoredThemeSettings();
+                }
+            }, 200); // Small delay to ensure other scripts have finished
+        });
+    </script>
     <script src="{{ asset('assets/vendors/toaster/toastr.min.js') }}"></script>
     <script src="{{ asset('assets/vendors/tom-select/tom-select.min.js') }}"></script>
     <script src="{{ asset('assets/vendors/sweetalert/sweetalert2.js') }}"></script>

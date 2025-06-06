@@ -42,6 +42,13 @@ class AppServiceProvider extends ServiceProvider
 
                 return Configuration::where('key', 'sale_type')->value('value');
             });
+
+            Cache::remember('theme_settings', now()->addYear(), function () {
+                info('theme_settings remember');
+                $themeSettings = Configuration::where('key', 'theme_settings')->value('value');
+
+                return $themeSettings ? json_decode($themeSettings, true) : null;
+            });
             Cache::remember('logo', now()->addYear(), function () {
                 info('logo remember');
 

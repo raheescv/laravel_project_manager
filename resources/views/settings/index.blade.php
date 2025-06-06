@@ -61,8 +61,61 @@
                                 @livewire('settings.company-profile')
                             </div>
                             <div id="tabsTheme" class="tab-pane" role="tabpanel">
-                                <h5>Theme tab</h5>
-                                <p class="mb-0">Far far away, behind the word mountains,</p>
+                                <div class="card">
+                                    <div class="card-header">
+                                        <h5 class="card-title mb-0">Theme Settings</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <p class="text-muted mb-4">
+                                            Customize your workspace appearance. All settings are automatically saved to your browser's local storage and synchronized with your account.
+                                        </p>
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <div class="mb-4">
+                                                    <h6>Layout Preferences</h6>
+                                                    <p class="text-muted small">
+                                                        Choose your preferred layout style, transitions and positioning.
+                                                    </p>
+                                                    <button class="btn btn-primary" id="openSettingsOffcanvas" type="button" data-bs-toggle="offcanvas" data-bs-target="#_dm-settingsContainer">
+                                                        <i class="demo-psi-gear me-2"></i> Open Settings Panel
+                                                    </button>
+                                                </div>
+
+                                                <div class="mb-4">
+                                                    <h6>Sync with Server</h6>
+                                                    <p class="text-muted small">
+                                                        Synchronize theme settings between your browser and the server.
+                                                    </p>
+                                                    <button class="btn btn-outline-primary" id="syncThemeSettings">
+                                                        <i class="demo-psi-synchronize me-2"></i> Sync Settings
+                                                    </button>
+                                                </div>
+
+                                                <div class="mb-4">
+                                                    <h6>Reset to Defaults</h6>
+                                                    <p class="text-muted small">
+                                                        Reset all theme settings to their default values.
+                                                    </p>
+                                                    <button class="btn btn-outline-danger" id="resetThemeSettings">
+                                                        <i class="demo-psi-reset me-2"></i> Reset Settings
+                                                    </button>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="card bg-light">
+                                                    <div class="card-body">
+                                                        <h6>Theme Settings Status</h6>
+                                                        <div id="themeSettingsStatus">
+                                                            <p><strong>Storage:</strong> <span id="storageStatus">Checking...</span></p>
+                                                            <p><strong>Last Updated:</strong> <span id="lastUpdated">Checking...</span></p>
+                                                            <p><strong>Sync Status:</strong> <span id="syncStatus">Checking...</span></p>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                             @can('whatsapp.integration')
                                 <div id="tabsWhatsapp" class="tab-pane" role="tabpanel">
@@ -75,13 +128,15 @@
             </div>
         </div>
     </div>
-    <!-- SETTINGS CONTAINER [ DEMO ] -->
+    <!-- SETTINGS CONTAINER  -->
     <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
     <div id="_dm-settingsContainer" class="_dm-settings-container offcanvas offcanvas-end rounded-start" tabindex="-1">
         <button id="_dm-settingsToggler" class="_dm-btn-settings btn btn-sm btn-danger p-2 rounded-0 rounded-start shadow-none" type="button" data-bs-toggle="offcanvas"
             data-bs-target="#_dm-settingsContainer" aria-label="Customization button" aria-controls="#_dm-settingsContainer">
             <i class="demo-psi-gear fs-1"></i>
         </button>
+
+        @livewire('settings.theme-settings')
 
         <div class="offcanvas-body py-0">
             <div class="_dm-settings-container__content row">
@@ -99,7 +154,7 @@
                     </div>
 
                     <!-- OPTION : Boxed layout -->
-                    <div class="d-flex align-items-center pt-1 mb-2">
+                    <div class="d-flex align-items-center pt-1 mb-2" hidden style="display: none">
                         <label class="form-check-label flex-fill" for="_dm-boxedLayoutRadio">Boxed Layout</label>
                         <div class="form-check form-switch">
                             <input id="_dm-boxedLayoutRadio" class="form-check-input ms-0" type="radio" name="settingLayouts" autocomplete="off">
@@ -107,7 +162,7 @@
                     </div>
 
                     <!-- OPTION : Boxed layout with background images -->
-                    <div id="_dm-boxedBgOption" class="opacity-50 d-flex align-items-center pt-1 mb-2">
+                    <div id="_dm-boxedBgOption" class="opacity-50 d-flex align-items-center pt-1 mb-2" hidden style="display: none">
                         <label class="form-label flex-fill mb-0">BG for
                             Boxed Layout</label>
 
@@ -496,5 +551,8 @@
     <!-- END - OFFCANVAS [ DEMO ] -->
     @push('scripts')
         @include('components.select.accountSelect')
+        <script src="{{ asset('js/theme-settings.js') }}"></script>
+        <script src="{{ asset('js/theme-settings-status.js') }}"></script>
+        <script src="{{ asset('js/theme-settings-sync.js') }}"></script>
     @endpush
 </x-app-layout>
