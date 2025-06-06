@@ -92,15 +92,24 @@ class DayWiseReport extends Component
 
     public function prepareSalesChartData($summaryCollection)
     {
-        // First group by date to get unique dates for X-axis
-        $dates = $summaryCollection->groupBy('date')->keys();
+        // Generate complete date range between from_date and to_date
+        $from = $this->from_date ? Carbon::parse($this->from_date) : Carbon::now()->startOfMonth();
+        $to = $this->to_date ? Carbon::parse($this->to_date) : Carbon::now();
+
+        $allDates = collect();
+        $currentDate = $from->copy();
+
+        while ($currentDate->lte($to)) {
+            $allDates->push($currentDate->format('Y-m-d'));
+            $currentDate->addDay();
+        }
 
         // Group by branch to create series
         $chartData = $summaryCollection
             ->groupBy('branch_name')
-            ->map(function ($branchData, $branchName) use ($dates) {
-                // Create a complete dataset for each branch
-                $dataPoints = $dates->map(function ($date) use ($branchData) {
+            ->map(function ($branchData, $branchName) use ($allDates) {
+                // Create a complete dataset for each branch with all dates
+                $dataPoints = $allDates->map(function ($date) use ($branchData) {
                     // Find the matching record for this date/branch
                     $record = $branchData->first(function ($item) use ($date) {
                         return $item['date'] === $date;
@@ -121,8 +130,29 @@ class DayWiseReport extends Component
                     'name' => $branchName,
                     'dataPoints' => $dataPoints,
                 ];
-            })->values()->toArray();
-        $this->dispatch('updateChart', $chartData);
+            })->values();
+
+        // If no branch data exists, create a default series with all dates showing zero values
+        if ($chartData->isEmpty()) {
+            $chartData = collect([
+                [
+                    'type' => 'column',
+                    'showInLegend' => true,
+                    'name' => 'No Data',
+                    'dataPoints' => $allDates->map(function ($date) {
+                        return [
+                            'x' => strtotime($date) * 1000,
+                            'y' => 0,
+                            'net_sales' => 0,
+                            'sales_discount' => 0,
+                            'invoices' => 0,
+                        ];
+                    })->values()->toArray(),
+                ],
+            ]);
+        }
+
+        $this->dispatch('updateChart', $chartData->toArray());
     }
 
     public function render()
