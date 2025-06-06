@@ -1,6 +1,6 @@
 <x-app-layout>
     @if (cache('sale_type') != 'pos')
-        <div class="content__header content__boxed overlapping">
+        <div class="content__boxed overlapping">
             <div class="content__wrap">
                 <nav aria-label="breadcrumb">
                     <ol class="breadcrumb">

@@ -764,6 +764,10 @@ class Page extends Component
         switch (cache('sale_type')) {
             case 'pos':
                 return view('livewire.sale.pos');
+            case 'version_1':
+                return view('livewire.sale.page');
+            case 'version_2':
+                return view('livewire.sale.page-version-two');
             default:
                 return view('livewire.sale.page');
         }

@@ -20,7 +20,7 @@
                     <li>
                         <a href="{{ route('sale::index') }}" class="dropdown-item d-flex align-items-center gap-2">
                             <i class="demo-pli-calendar-4 fs-5"></i>
-                            View Details
+                            View Sales List
                         </a>
                     </li>
                 </ul>

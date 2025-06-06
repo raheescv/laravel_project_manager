@@ -22,7 +22,7 @@ function applyStoredThemeSettings() {
 
         // Apply color scheme
         if (settings.color.scheme) {
-            console.log('Global: Applying stored color scheme:', settings.color.scheme);
+            // console.log('Global: Applying stored color scheme:', settings.color.scheme);
 
             // Update the data-scheme attribute on the html element
             document.documentElement.setAttribute('data-scheme', settings.color.scheme);
@@ -64,7 +64,7 @@ function applyStoredThemeSettings() {
 
         // Apply color mode
         if (settings.color.mode) {
-            console.log('Global: Applying stored color mode:', settings.color.mode);
+            // console.log('Global: Applying stored color mode:', settings.color.mode);
             document.documentElement.className = document.documentElement.className
                 .replace(/\btm--\S+/g, '')
                 .trim();
@@ -75,7 +75,7 @@ function applyStoredThemeSettings() {
 
         // Apply dark mode
         if (settings.color.darkMode) {
-            console.log('Global: Applying dark mode');
+            // console.log('Global: Applying dark mode');
             document.documentElement.classList.add('dark');
         } else {
             document.documentElement.classList.remove('dark');
@@ -83,7 +83,7 @@ function applyStoredThemeSettings() {
 
         // Apply font size
         if (settings.misc && settings.misc.fontSize) {
-            console.log('Global: Applying font size:', settings.misc.fontSize + 'px');
+            // console.log('Global: Applying font size:', settings.misc.fontSize + 'px');
             document.documentElement.style.fontSize = settings.misc.fontSize + 'px';
         }
     } catch (error) {

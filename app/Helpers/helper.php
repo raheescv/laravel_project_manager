@@ -287,8 +287,9 @@ if (! function_exists('saleTypes')) {
     function saleTypes()
     {
         return [
-            'version_1' => 'Version 1',
             'pos' => 'POS',
+            'version_1' => 'Version 1',
+            'version_2' => 'Version 2',
         ];
     }
 }
