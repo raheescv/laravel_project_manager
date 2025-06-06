@@ -152,54 +152,62 @@
                                             }
                                             $data = $result;
                                         @endphp
-                                        @foreach ($data as $employee_id => $groupedItems)
-                                            <tr>
-                                                @php
-                                                    $first = array_values($groupedItems)[0];
-                                                @endphp
-                                                <th colspan="9" class="bg-info text-white py-2"><i class="fa fa-user-circle me-1"></i> {{ $first['employee_name'] }}</th>
-                                            </tr>
-                                            @foreach ($groupedItems as $item)
+                                        @if (count($data))
+                                            @foreach ($data as $employee_id => $groupedItems)
                                                 <tr>
-                                                    <td>{{ $loop->iteration }}</td>
-                                                    <td>{{ $item['name'] }}</td>
-                                                    <td>
-                                                        <div class="input-group input-group-sm">
-                                                            <span class="input-group-text bg-primary text-white px-1"><i class="fa fa-tag"></i></span>
-                                                            {{ html()->number('unit_price')->value($item['unit_price'])->class('form-control text-end px-1')->attribute('wire:model.lazy', 'items.' . $item['key'] . '.unit_price') }}
-                                                        </div>
-                                                    </td>
-                                                    <td>
-                                                        <div class="input-group input-group-sm">
-                                                            <span class="input-group-text bg-success text-white px-1"><i class="fa fa-cubes"></i></span>
-                                                            {{ html()->number('quantity')->value($item['quantity'])->attribute('min', 1)->class('form-control text-end px-1')->attribute('step', 'any')->attribute('wire:model.lazy', 'items.' . $item['key'] . '.quantity') }}
-                                                        </div>
-                                                    </td>
-                                                    <td>
-                                                        <div class="input-group input-group-sm">
-                                                            <span class="input-group-text bg-warning text-white px-1"><i class="fa fa-tag"></i></span>
-                                                            {{ html()->number('discount')->value($item['discount'])->class('form-control text-end px-1')->attribute('wire:model.lazy', 'items.' . $item['key'] . '.discount') }}
-                                                        </div>
-                                                    </td>
-                                                    <td>
-                                                        <div class="input-group input-group-sm">
-                                                            <span class="input-group-text bg-info text-white px-1"><i class="fa fa-calculator"></i></span>
-                                                            {{ html()->number('tax')->value($item['tax'])->attribute('max', '50')->class('form-control text-end px-1')->attribute('wire:model.lazy', 'items.' . $item['key'] . '.tax') }}
-                                                        </div>
-                                                    </td>
-                                                    <td class="text-end fw-bold">{{ currency($item['total']) }}</td>
-                                                    @if ($sales['other_discount'] > 0)
-                                                        <td class="text-end fw-bold">{{ currency($item['effective_total']) }}</td>
-                                                    @endif
-                                                    <td>
-                                                        <button type="button" wire:click="removeItem('{{ $item['key'] }}')" wire:confirm="Are your sure?"
-                                                            class="btn btn-sm btn-danger rounded-circle">
-                                                            <i class="fa fa-trash"></i>
-                                                        </button>
-                                                    </td>
+                                                    @php
+                                                        $first = array_values($groupedItems)[0];
+                                                    @endphp
+                                                    <th colspan="9" class="bg-info text-white py-2"><i class="fa fa-user-circle me-1"></i> {{ $first['employee_name'] }}</th>
                                                 </tr>
+                                                @foreach ($groupedItems as $item)
+                                                    <tr>
+                                                        <td>{{ $loop->iteration }}</td>
+                                                        <td>{{ $item['name'] }}</td>
+                                                        <td>
+                                                            <div class="input-group input-group-sm">
+                                                                <span class="input-group-text bg-primary text-white px-1"><i class="fa fa-tag"></i></span>
+                                                                {{ html()->number('unit_price')->value($item['unit_price'])->class('form-control text-end px-1')->attribute('wire:model.lazy', 'items.' . $item['key'] . '.unit_price') }}
+                                                            </div>
+                                                        </td>
+                                                        <td>
+                                                            <div class="input-group input-group-sm">
+                                                                <span class="input-group-text bg-success text-white px-1"><i class="fa fa-cubes"></i></span>
+                                                                {{ html()->number('quantity')->value($item['quantity'])->attribute('min', 1)->class('form-control text-end px-1')->attribute('step', 'any')->attribute('wire:model.lazy', 'items.' . $item['key'] . '.quantity') }}
+                                                            </div>
+                                                        </td>
+                                                        <td>
+                                                            <div class="input-group input-group-sm">
+                                                                <span class="input-group-text bg-warning text-white px-1"><i class="fa fa-tag"></i></span>
+                                                                {{ html()->number('discount')->value($item['discount'])->class('form-control text-end px-1')->attribute('wire:model.lazy', 'items.' . $item['key'] . '.discount') }}
+                                                            </div>
+                                                        </td>
+                                                        <td>
+                                                            <div class="input-group input-group-sm">
+                                                                <span class="input-group-text bg-info text-white px-1"><i class="fa fa-calculator"></i></span>
+                                                                {{ html()->number('tax')->value($item['tax'])->attribute('max', '50')->class('form-control text-end px-1')->attribute('wire:model.lazy', 'items.' . $item['key'] . '.tax') }}
+                                                            </div>
+                                                        </td>
+                                                        <td class="text-end fw-bold">{{ currency($item['total']) }}</td>
+                                                        @if ($sales['other_discount'] > 0)
+                                                            <td class="text-end fw-bold">{{ currency($item['effective_total']) }}</td>
+                                                        @endif
+                                                        <td>
+                                                            <button type="button" wire:click="removeItem('{{ $item['key'] }}')" wire:confirm="Are your sure?"
+                                                                class="btn btn-sm btn-danger rounded-circle">
+                                                                <i class="fa fa-trash"></i>
+                                                            </button>
+                                                        </td>
+                                                    </tr>
+                                                @endforeach
                                             @endforeach
-                                        @endforeach
+                                        @else
+                                            <tr>
+                                                <td colspan="{{ $sales['other_discount'] > 0 ? 9 : 8 }}" class="text-center text-muted py-4">
+                                                    <i class="fa fa-info-circle me-1"></i> No items found for this employee.
+                                                </td>
+                                            </tr>
+                                        @endif
                                     </tbody>
                                     <tfoot class="table-group-divider">
                                         @php
