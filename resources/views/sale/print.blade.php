@@ -584,7 +584,7 @@
     window.addEventListener('afterprint', function() {
         setTimeout(function() {
             window.close();
-        }, 2000);
+        }, 5000);
     });
 
     setTimeout(function() {
