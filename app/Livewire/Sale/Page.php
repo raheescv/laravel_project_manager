@@ -684,6 +684,19 @@ class Page extends Component
         ]);
     }
 
+    public function renderConfirmationDialog($customer, $grandTotal, $paid, $balance, $paymentMethods = null)
+    {
+        $data = [
+            'customer' => $customer,
+            'grandTotal' => $grandTotal,
+            'paid' => $paid,
+            'balance' => $balance,
+            'paymentMethods' => $paymentMethods,
+        ];
+
+        return view('components.confirmation-dialog', $data)->render();
+    }
+
     public function save($type = 'completed', $print = true)
     {
         $this->validate();
