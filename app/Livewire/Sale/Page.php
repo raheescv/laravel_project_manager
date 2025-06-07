@@ -688,13 +688,13 @@ class Page extends Component
     {
         $data = [
             'customer' => $customer,
-            'grandTotal' => $grandTotal,
-            'paid' => $paid,
-            'balance' => $balance,
+            'grandTotal' => floatval($grandTotal),
+            'paid' => floatval($paid),
+            'balance' => floatval($balance),
             'paymentMethods' => $paymentMethods,
         ];
 
-        return view('components.confirmation-dialog', $data)->render();
+        return view('components.sale.confirmation-dialog', $data)->render();
     }
 
     public function save($type = 'completed', $print = true)
