@@ -292,6 +292,7 @@ class CalendarReport extends Component
             'bestDayInfo' => $bestDayInfo,
             'avgDailySales' => $avgDailySales,
             'prevMonthCompare' => $prevMonthCompare ?? null,
+            'maxTotal' => $maxTotal,
         ]);
     }
 }

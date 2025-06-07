@@ -188,6 +188,9 @@
                                 <th class="text-center">Thu</th>
                                 <th class="text-center">Fri</th>
                                 <th class="text-center">Sat</th>
+                                <th class="text-center weekly-summary-header">
+                                    <i class="fa fa-calendar-week"></i> Week Total
+                                </th>
                             </tr>
                         </thead>
                         <tbody>
@@ -220,6 +223,24 @@
                                             @endif
                                         </td>
                                     @endforeach
+
+                                    <!-- Weekly Summary Column -->
+                                    <td class="text-center weekly-summary-cell">
+                                        @php
+                                            $weekTotal = 0;
+                                            $weekCount = 0;
+                                            foreach ($week as $day) {
+                                                if (!is_null($day['day'])) {
+                                                    $weekTotal += $day['total'];
+                                                    $weekCount += $day['count'];
+                                                }
+                                            }
+                                        @endphp
+                                        <div class="weekly-summary-content">
+                                            <div class="weekly-summary-amount">{{ currency($weekTotal) }}</div>
+                                            <div class="weekly-summary-count">{{ $weekCount }} sales</div>
+                                        </div>
+                                    </td>
                                 </tr>
                             @endforeach
                         </tbody>
@@ -252,6 +273,9 @@
                                 <th class="text-center">Thu</th>
                                 <th class="text-center">Fri</th>
                                 <th class="text-center">Sat</th>
+                                <th class="text-center weekly-summary-header">
+                                    <i class="fa fa-calendar-week"></i> Week Total
+                                </th>
                             </tr>
                         </thead>
                         <tbody>
@@ -279,6 +303,30 @@
                                             @endif
                                         </td>
                                     @endforeach
+
+                                    <!-- Weekly Summary Column for Heatmap -->
+                                    <td class="weekly-summary-heatmap-cell">
+                                        @php
+                                            $weekTotal = 0;
+                                            $weekCount = 0;
+                                            foreach ($week as $day) {
+                                                if (!is_null($day['day'])) {
+                                                    $weekTotal += $day['total'];
+                                                    $weekCount += $day['count'];
+                                                }
+                                            }
+                                            // Calculate intensity relative to the highest value in the calendar
+                                            $weekIntensity = $maxTotal > 0 ? min($weekTotal / $maxTotal, 1) : 0;
+                                        @endphp
+                                        <div class="weekly-summary-heatmap-content" style="background-color: {{ $weekIntensity > 0 ? 'rgba(25, 135, 84, ' . $weekIntensity . ')' : 'transparent' }}">
+                                            <div class="weekly-summary-heatmap-amount">
+                                                {{ currency($weekTotal) }}
+                                            </div>
+                                            <div class="weekly-summary-heatmap-count">
+                                                {{ $weekCount }} sales
+                                            </div>
+                                        </div>
+                                    </td>
                                 </tr>
                             @endforeach
                         </tbody>
@@ -747,6 +795,87 @@
                 margin-bottom: 0;
             }
 
+            /* Weekly Summary Styles */
+            .weekly-summary-header {
+                background: #4682B4;
+                color: white;
+                font-weight: 600;
+                width: 120px;
+            }
+
+            .weekly-summary-cell {
+                background-color: #EBF5FB;
+                vertical-align: middle;
+                width: 120px;
+                border-left: 2px solid #4682B4;
+                box-shadow: inset 0 0 0 1px rgba(70, 130, 180, 0.2);
+            }
+
+            .weekly-summary-content {
+                padding: 8px 4px;
+            }
+
+            .weekly-summary-label {
+                font-size: 0.8rem;
+                font-weight: 600;
+                color: #4682B4;
+                margin-bottom: 4px;
+                text-transform: uppercase;
+            }
+
+            .weekly-summary-amount {
+                font-weight: bold;
+                font-size: 1rem;
+                color: #2471A3;
+                margin-bottom: 4px;
+            }
+
+            .weekly-summary-count {
+                font-size: 0.8rem;
+                color: #566573;
+            }
+
+            /* Weekly summary for heatmap */
+            .weekly-summary-heatmap-cell {
+                width: 120px;
+                vertical-align: middle;
+                border-left: 2px solid #4682B4;
+                background-color: #f5f5f5;
+            }
+
+            .weekly-summary-heatmap-content {
+                height: 100%;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                padding: 8px 4px;
+                color: white;
+                text-shadow: 0 1px 1px rgba(0, 0, 0, 0.2);
+            }
+
+            .weekly-summary-heatmap-label {
+                font-size: 0.75rem;
+                font-weight: 600;
+                margin-bottom: 6px;
+                background: rgba(255, 255, 255, 0.3);
+                padding: 2px 8px;
+                border-radius: 12px;
+                display: inline-block;
+                text-transform: uppercase;
+            }
+
+            .weekly-summary-heatmap-amount {
+                font-weight: bold;
+                font-size: 0.95rem;
+                margin-bottom: 4px;
+            }
+
+            .weekly-summary-heatmap-count {
+                font-size: 0.8rem;
+                opacity: 0.9;
+            }
+
             /* Custom color overrides */
             .text-success {
                 color: #3AAFA9 !important;
@@ -754,6 +883,12 @@
 
             .text-danger {
                 color: #e76f51 !important;
+            }
+
+            /* Fallback for calendar-week icon if not available */
+            .fa-calendar-week:before {
+                content: "\f133";
+                /* This is the calendar icon code which is widely available */
             }
         </style>
     @endpush
