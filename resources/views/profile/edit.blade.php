@@ -1,7 +1,7 @@
 <x-app-layout>
     <x-slot name="header">
         <h2 class="h4 fw-semibold">
-            <i class="fa fa-user-edit me-2"></i>{{ __('Profile') }}
+            <i class="fa fa-user me-2"></i>{{ __('Profile') }}
         </h2>
     </x-slot>
 

@@ -19,7 +19,7 @@
                 </button>
                 <div class="vr mx-1 d-none d-md-block"></div>
                 <div class="d-flex align-items-center px-3 py-1 rounded bg-light border text-dark shadow-sm">
-                    <i class="fa fa-code-branch me-2 text-primary"></i>
+                    <i class="fa fa-code-fork me-2 text-primary"></i>
                     <span class="fw-semibold small" id="branch_selection">
                         <span class="d-none d-sm-inline">Branch: </span>{{ session('branch_name') }}
                     </span>
@@ -33,7 +33,7 @@
                 <div class="vr mx-1 d-none d-md-block"></div>
                 <div class="dropdown">
                     <button class="header__btn btn btn-icon btn-sm" type="button" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-label="Megamenu dropdown" aria-expanded="false">
-                        <i class="demo-psi-bar-chart"></i>
+                        <i class="fa fa-bar-chart"></i>
                     </button>
                     <div class="dropdown-menu dropdown-menu-end p-3 mega-dropdown">
                         <div class="row">
@@ -41,39 +41,59 @@
                                 <div class="list-group list-group-borderless">
                                     <div class="list-group-item d-flex align-items-center border-bottom mb-2">
                                         <div class="flex-shrink-0 me-2">
-                                            <i class="demo-pli-file fs-4"></i>
+                                            <i class="fa fa-file-text fs-4"></i>
                                         </div>
                                         <h5 class="flex-grow-1 m-0">Report</h5>
                                     </div>
                                     @can('report.customer')
-                                        <a href="{{ route('report::customer') }}" class="list-group-item list-group-item-action">Customer Report</a>
+                                        <a href="{{ route('report::customer') }}" class="list-group-item list-group-item-action">
+                                            <i class="fa fa-users fs-5 me-2"></i>Customer Report
+                                        </a>
                                     @endcan
                                     @can('report.employee')
-                                        <a href="{{ route('report::employee') }}" class="list-group-item list-group-item-action">Employee Report</a>
+                                        <a href="{{ route('report::employee') }}" class="list-group-item list-group-item-action">
+                                            <i class="fa fa-user fs-5 me-2"></i>Employee Report
+                                        </a>
                                     @endcan
                                     @can('report.sale summary')
-                                        <a href="{{ route('report::sale_summary') }}" class="list-group-item list-group-item-action">Sale Summary</a>
+                                        <a href="{{ route('report::sale_summary') }}" class="list-group-item list-group-item-action">
+                                            <i class="fa fa-file-text-o fs-5 me-2"></i>Sale Summary
+                                        </a>
                                     @endcan
                                     @can('report.sales overview')
-                                        <a href="{{ route('report::sales_overview') }}" class="list-group-item list-group-item-action">Sales Overview</a>
+                                        <a href="{{ route('report::sales_overview') }}" class="list-group-item list-group-item-action">
+                                            <i class="fa fa-bar-chart fs-5 me-2"></i>Sales Overview
+                                        </a>
                                     @endcan
                                     @can('report.profit loss')
-                                        <a href="{{ route('report::profit_loss') }}" class="list-group-item list-group-item-action">Profit & Loss</a>
+                                        <a href="{{ route('report::profit_loss') }}" class="list-group-item list-group-item-action">
+                                            <i class="fa fa-usd fs-5 me-2"></i>Profit & Loss
+                                        </a>
                                     @endcan
                                     @can('report.trial balance')
-                                        <a href="{{ route('report::trial_balance') }}" class="list-group-item list-group-item-action">Trial Balance</a>
+                                        <a href="{{ route('report::trial_balance') }}" class="list-group-item list-group-item-action">
+                                            <i class="fa fa-calculator fs-5 me-2"></i>Trial Balance
+                                        </a>
                                     @endcan
                                     @can('report.balance sheet')
-                                        <a href="{{ route('report::balance_sheet') }}" class="list-group-item list-group-item-action">Balance Sheet</a>
+                                        <a href="{{ route('report::balance_sheet') }}" class="list-group-item list-group-item-action">
+                                            <i class="fa fa-file-o fs-5 me-2"></i>Balance Sheet
+                                        </a>
                                     @endcan
                                     @can('report.stock analysis')
-                                        <a href="{{ route('report::stock_analysis') }}" class="list-group-item list-group-item-action">Stock Analysis</a>
+                                        <a href="{{ route('report::stock_analysis') }}" class="list-group-item list-group-item-action">
+                                            <i class="fa fa-cubes fs-5 me-2"></i>Stock Analysis
+                                        </a>
                                     @endcan
                                     @can('report.employee productivity')
-                                        <a href="{{ route('report::employee_productivity') }}" class="list-group-item list-group-item-action">Employee Productivity</a>
+                                        <a href="{{ route('report::employee_productivity') }}" class="list-group-item list-group-item-action">
+                                            <i class="fa fa-trophy fs-5 me-2"></i>Employee Productivity
+                                        </a>
                                     @endcan
                                     @can('report.customer callback reminder')
-                                        <a href="{{ route('report::customer_callback_reminder') }}" class="list-group-item list-group-item-action">Customer Callback Reminder</a>
+                                        <a href="{{ route('report::customer_callback_reminder') }}" class="list-group-item list-group-item-action">
+                                            <i class="fa fa-phone fs-5 me-2"></i>Customer Callback Reminder
+                                        </a>
                                     @endcan
                                 </div>
                             </div>
@@ -83,7 +103,7 @@
                 <div class="vr mx-1 d-none d-md-block"></div>
                 <div class="dropdown">
                     <button class="header__btn btn btn-icon btn-sm" type="button" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-label="Megamenu dropdown" aria-expanded="false">
-                        <i class="demo-psi-layout-grid"></i>
+                        <i class="fa fa-th"></i>
                     </button>
                     <div class="dropdown-menu dropdown-menu-end p-3 mega-dropdown">
                         <div class="row">
@@ -91,51 +111,79 @@
                                 <div class="list-group list-group-borderless">
                                     <div class="list-group-item d-flex align-items-center border-bottom mb-2">
                                         <div class="flex-shrink-0 me-2">
-                                            <i class="demo-pli-file fs-4"></i>
+                                            <i class="fa fa-cog fs-4"></i>
                                         </div>
                                         <h5 class="flex-grow-1 m-0">Settings</h5>
                                     </div>
                                     @can('customer.view')
-                                        <a href="{{ route('account::customer::index') }}" class="list-group-item list-group-item-action">Customers</a>
+                                        <a href="{{ route('account::customer::index') }}" class="list-group-item list-group-item-action">
+                                            <i class="fa fa-users fs-5 me-2"></i>Customers
+                                        </a>
                                     @endcan
                                     @can('vendor.view')
-                                        <a href="{{ route('account::vendor::index') }}" class="list-group-item list-group-item-action">Vendors</a>
+                                        <a href="{{ route('account::vendor::index') }}" class="list-group-item list-group-item-action">
+                                            <i class="fa fa-truck fs-5 me-2"></i>Vendors
+                                        </a>
                                     @endcan
                                     @can('product.view')
-                                        <a href="{{ route('product::index') }}" class="list-group-item list-group-item-action">Product</a>
+                                        <a href="{{ route('product::index') }}" class="list-group-item list-group-item-action">
+                                            <i class="fa fa-cubes fs-5 me-2"></i>Product
+                                        </a>
                                     @endcan
                                     @can('service.view')
-                                        <a href="{{ route('service::index') }}" class="list-group-item list-group-item-action">Service</a>
+                                        <a href="{{ route('service::index') }}" class="list-group-item list-group-item-action">
+                                            <i class="fa fa-wrench fs-5 me-2"></i>Service
+                                        </a>
                                     @endcan
                                     @can('combo offer.view')
-                                        <a href="{{ route('combo_offer::index') }}" class="list-group-item list-group-item-action">Combo Offer</a>
+                                        <a href="{{ route('combo_offer::index') }}" class="list-group-item list-group-item-action">
+                                            <i class="fa fa-gift fs-5 me-2"></i>Combo Offer
+                                        </a>
                                     @endcan
                                     @can('branch.view')
-                                        <a href="{{ route('settings::branch::index') }}" class="list-group-item list-group-item-action">Branch</a>
+                                        <a href="{{ route('settings::branch::index') }}" class="list-group-item list-group-item-action">
+                                            <i class="fa fa-building fs-5 me-2"></i>Branch
+                                        </a>
                                     @endcan
                                     @can('category.view')
-                                        <a href="{{ route('settings::category::index') }}" class="list-group-item list-group-item-action">Category</a>
+                                        <a href="{{ route('settings::category::index') }}" class="list-group-item list-group-item-action">
+                                            <i class="fa fa-folder fs-5 me-2"></i>Category
+                                        </a>
                                     @endcan
                                     @can('country.view')
-                                        <a href="{{ route('settings::country::index') }}" class="list-group-item list-group-item-action">Country</a>
+                                        <a href="{{ route('settings::country::index') }}" class="list-group-item list-group-item-action">
+                                            <i class="fa fa-globe fs-5 me-2"></i>Country
+                                        </a>
                                     @endcan
                                     @can('customer type.view')
-                                        <a href="{{ route('settings::customer_type::index') }}" class="list-group-item list-group-item-action">Customer Type</a>
+                                        <a href="{{ route('settings::customer_type::index') }}" class="list-group-item list-group-item-action">
+                                            <i class="fa fa-tags fs-5 me-2"></i>Customer Type
+                                        </a>
                                     @endcan
                                     @can('unit.view')
-                                        <a href="{{ route('settings::unit::index') }}" class="list-group-item list-group-item-action">Unit</a>
+                                        <a href="{{ route('settings::unit::index') }}" class="list-group-item list-group-item-action">
+                                            <i class="fa fa-cubes fs-5 me-2"></i>Unit
+                                        </a>
                                     @endcan
                                     @can('department.view')
-                                        <a href="{{ route('settings::department::index') }}" class="list-group-item list-group-item-action">Department</a>
+                                        <a href="{{ route('settings::department::index') }}" class="list-group-item list-group-item-action">
+                                            <i class="fa fa-sitemap fs-5 me-2"></i>Department
+                                        </a>
                                     @endcan
                                     @can('configuration.barcode')
-                                        <a href="{{ route('inventory::barcode::configuration') }}" class="list-group-item list-group-item-action">Barcode Configuration</a>
+                                        <a href="{{ route('inventory::barcode::configuration') }}" class="list-group-item list-group-item-action">
+                                            <i class="fa fa-barcode fs-5 me-2"></i>Barcode Configuration
+                                        </a>
                                     @endcan
                                     @can('configuration.settings')
-                                        <a href="{{ route('settings::index') }}" class="list-group-item list-group-item-action">Settings</a>
+                                        <a href="{{ route('settings::index') }}" class="list-group-item list-group-item-action">
+                                            <i class="fa fa-cogs fs-5 me-2"></i>Settings
+                                        </a>
                                     @endcan
                                     @can('backup.view')
-                                        <a href="{{ route('backup::index') }}" class="list-group-item list-group-item-action">Backup</a>
+                                        <a href="{{ route('backup::index') }}" class="list-group-item list-group-item-action">
+                                            <i class="fa fa-database fs-5 me-2"></i>Backup
+                                        </a>
                                     @endcan
                                 </div>
                             </div>
@@ -145,7 +193,7 @@
                 <div class="dropdown">
                     <button class="header__btn btn btn-icon btn-sm" type="button" data-bs-toggle="dropdown" aria-label="Notification dropdown" aria-expanded="false">
                         <span class="d-block position-relative">
-                            <i class="demo-psi-bell"></i>
+                            <i class="fa fa-bell"></i>
                             <span class="badge badge-super rounded-pill bg-danger p-1">
                                 <span class="visually-hidden">unread messages</span>
                             </span>
@@ -165,13 +213,13 @@
                                     @switch($item['type'])
                                         @case('App\Notifications\ImportErrorsNotification')
                                             <div class="flex-shrink-0 me-3">
-                                                <i class="demo-psi-speech-bubble-3 text-danger fs-2"></i>
+                                                <i class="fa fa-exclamation-triangle text-danger fs-2"></i>
                                             </div>
                                         @break
 
                                         @default
                                             <div class="flex-shrink-0 me-3">
-                                                <i class="demo-psi-speech-bubble-3 text-success fs-2"></i>
+                                                <i class="fa fa-info-circle text-success fs-2"></i>
                                             </div>
                                     @endswitch
                                     <div class="flex-grow-1">
@@ -188,7 +236,7 @@
                             <div class="text-center mb-2">
                                 <a href="{{ route('notification::index') }}" class="btn-link text-primary icon-link icon-link-hover">
                                     Show all Notifications
-                                    <i class="bi demo-psi-arrow-out-right"></i>
+                                    <i class="fa fa-arrow-right"></i>
                                 </a>
                             </div>
                         </div>
@@ -198,7 +246,7 @@
                 <div class="dropdown">
                     <!-- Toggler -->
                     <button class="header__btn btn btn-icon btn-sm" type="button" data-bs-toggle="dropdown" aria-label="User dropdown" aria-expanded="false">
-                        <i class="demo-psi-male"></i>
+                        <i class="fa fa-user"></i>
                     </button>
                     <div class="dropdown-menu dropdown-menu-end w-md-450px">
                         <!-- User dropdown header -->
@@ -218,7 +266,7 @@
                                 <div class="list-group list-group-borderless mb-3">
                                     <div class="list-group-item text-center border-bottom mb-3">
                                         <p class="h1 display-1 text-primary fw-semibold">17</p>
-                                        <p class="h6 mb-0"><i class="demo-pli-basket-coins fs-3 me-2"></i> New orders</p>
+                                        <p class="h6 mb-0"><i class="fa fa-shopping-cart fs-3 me-2"></i> New orders</p>
                                         <small class="text-body-secondary">You have new orders</small>
                                     </div>
                                 </div>
@@ -228,17 +276,17 @@
                                 <!-- User menu link -->
                                 <div class="list-group list-group-borderless h-100 py-3">
                                     <a href="{{ route('profile.edit') }}" class="list-group-item list-group-item-action">
-                                        <i class="demo-pli-male fs-5 me-2"></i>
+                                        <i class="fa fa-user fs-5 me-2"></i>
                                         Profile
                                     </a>
                                     <a href="{{ route('settings::index') }}" class="list-group-item list-group-item-action">
-                                        <i class="demo-pli-gear fs-5 me-2"></i>
+                                        <i class="fa fa-cog fs-5 me-2"></i>
                                         Settings
                                     </a>
                                     <form method="POST" action="{{ route('logout') }}">
                                         @csrf
                                         <a href="#" onclick="event.preventDefault(); this.closest('form').submit();" class="list-group-item list-group-item-action">
-                                            <i class="demo-pli-gear fs-5 me-2"></i>
+                                            <i class="fa fa-sign-out fs-5 me-2"></i>
                                             {{ __('Log Out') }}
                                         </a>
                                     </form>
@@ -256,8 +304,8 @@
                 <div class="form-check form-check-alt form-switch mx-md-2">
                     <input id="headerThemeToggler" class="form-check-input mode-switcher" type="checkbox" role="switch">
                     <label class="form-check-label ps-1 fw-bold d-none d-md-flex align-items-center " for="headerThemeToggler">
-                        <i class="mode-switcher-icon icon-light demo-psi-sun fs-5"></i>
-                        <i class="mode-switcher-icon icon-dark d-none demo-psi-half-moon"></i>
+                        <i class="mode-switcher-icon icon-light fa fa-sun fs-5"></i>
+                        <i class="mode-switcher-icon icon-dark d-none fa fa-moon"></i>
                     </label>
                 </div>
 
@@ -265,7 +313,7 @@
 
                 <!-- Sidebar Toggler -->
                 <button class="sidebar-toggler header__btn btn btn-icon btn-sm" type="button" aria-label="Sidebar button">
-                    <i class="demo-psi-dot-vertical"></i>
+                    <i class="fa fa-ellipsis-v"></i>
                 </button>
 
             </div>

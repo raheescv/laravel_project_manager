@@ -1,7 +1,7 @@
 <section class="p-4 bg-light border rounded-3 shadow-sm">
     <header class="mb-4">
         <h2 class="h4 mb-1">
-            <i class="fa fa-user-circle me-2"></i>{{ __('Profile Information') }}
+            <i class="fa fa-user me-2"></i>{{ __('Profile Information') }}
         </h2>
         <p class="text-muted small">
             {{ __("Update your account's profile information and email address.") }}
