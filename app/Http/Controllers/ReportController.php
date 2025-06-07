@@ -41,6 +41,11 @@ class ReportController extends Controller
         return view('report.sales_overview');
     }
 
+    public function sale_calendar()
+    {
+        return view('report.sale_calendar');
+    }
+
     public function customer()
     {
         $countries = Account::pluck('nationality', 'nationality')->toArray();

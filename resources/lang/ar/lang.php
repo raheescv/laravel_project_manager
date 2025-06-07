@@ -129,6 +129,7 @@ return [
     'cessReport' => 'CessReport',
     'topMovingProduct' => 'أعلى المنتجات المتحركة',
     'calenderSaleReport' => 'تقرير مبيعات التقويم',
+    'saleCalendar' => 'تقويم المبيعات',
     'saleItemWise' => 'بيع البند الحكيم',
     'saleCategoryWise' => 'فئة المبيعات الحكيمة',
     'purchaseItemWise' => 'شراء عنصر الحكمة',

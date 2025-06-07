@@ -65,6 +65,9 @@
                                             <i class="fa fa-bar-chart fs-5 me-2"></i>Sales Overview
                                         </a>
                                     @endcan
+                                    <a href="{{ route('report::sale_calendar') }}" class="list-group-item list-group-item-action">
+                                        <i class="fa fa-calendar fs-5 me-2"></i>Sales Calendar
+                                    </a>
                                     @can('report.profit loss')
                                         <a href="{{ route('report::profit_loss') }}" class="list-group-item list-group-item-action">
                                             <i class="fa fa-usd fs-5 me-2"></i>Profit & Loss

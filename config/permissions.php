@@ -53,6 +53,7 @@ return [
         'stock analysis',
         'employee productivity',
         'customer callback reminder',
+        'sale calendar',
     ],
     'log' => ['inventory'],
     'backup' => ['create', 'view', 'download'],
