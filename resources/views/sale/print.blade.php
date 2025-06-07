@@ -13,7 +13,7 @@
     <style>
         body {
             font-family: 'Arial', 'Courier New', monospace;
-            line-height: 1.4;
+            line-height: 1.5;
             font-size: 12px;
             margin: 0 auto;
             width: 80mm;
@@ -29,33 +29,47 @@
 
         .receipt-container {
             background-color: #fff;
-            border-radius: 8px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
             width: 100%;
-            padding: 10px 5px;
+            padding: 15px 8px;
         }
 
         h1,
         h2,
         h3 {
-            margin: 8px 0;
+            margin: 10px 0;
             text-align: center;
-            font-size: 14px;
-            font-weight: bold;
+            font-size: 15px;
+            font-weight: 700;
             text-transform: uppercase;
-            letter-spacing: 0.5px;
+            letter-spacing: 0.8px;
+            color: #222;
         }
 
         .divider {
             border-top: 1px dashed #999;
-            margin: 8px 0;
+            margin: 10px 0;
             opacity: 0.5;
+        }
+
+        .store-info {
+            text-align: center;
+            margin-bottom: 15px;
+        }
+
+        .invoice-header {
+            background-color: #f8f8f8;
+            border-radius: 6px;
+            padding: 8px;
+            margin-bottom: 12px;
+            border-left: 3px solid #555;
         }
 
         .table {
             width: 100%;
             border-collapse: collapse;
-            margin: 12px 0;
+            margin: 15px 0;
             font-size: 11px;
         }
 
@@ -65,17 +79,34 @@
 
         .table th,
         .table td {
-            border: 1px solid #ddd;
-            padding: 5px;
+            border: 1px solid #e0e0e0;
+            padding: 7px 5px;
             text-align: center;
         }
 
         .table th {
-            background-color: #f8f8f8;
+            background-color: #f3f3f3;
             font-size: 11px;
             font-weight: bold;
             text-transform: uppercase;
-            letter-spacing: 0.5px;
+            letter-spacing: 0.8px;
+            color: #444;
+        }
+
+        .table-striped tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+
+        .item-name {
+            font-weight: 700;
+            color: #333;
+        }
+
+        .item-description {
+            font-size: 9px;
+            color: #666;
+            font-style: italic;
+            margin-top: 2px;
         }
 
         .text-left {
@@ -96,10 +127,11 @@
 
         .barcode {
             text-align: center;
-            margin: 15px 0;
-            padding: 10px;
-            background: #f8f8f8;
-            border-radius: 4px;
+            margin: 18px 0;
+            padding: 12px;
+            background: #f5f5f5;
+            border-radius: 6px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
         }
 
         .barcode img {
@@ -110,16 +142,98 @@
         .barcode p {
             margin: 5px 0 0;
             font-size: 10px;
-            color: #666;
+            color: #555;
+            letter-spacing: 0.5px;
+        }
+
+        .qrcode {
+            text-align: center;
+            margin: 15px 0;
+        }
+
+        .qrcode img {
+            max-width: 120px;
+            height: auto;
+        }
+
+        .codes-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 15px 0;
+        }
+
+        .codes-container .barcode {
+            flex: 1;
+            margin: 0 5px;
+        }
+
+        .codes-container .qrcode {
+            max-width: 35%;
+            margin: 0 5px;
         }
 
         .footer {
             text-align: center;
             font-size: 10px;
-            margin-top: 10px;
-            padding: 10px 0;
+            margin-top: 15px;
+            padding: 12px 0;
             border-top: 1px dashed #999;
+            color: #555;
+        }
+
+        .thank-you {
+            text-align: center;
+            font-size: 14px;
+            font-weight: 700;
+            margin: 15px 0 10px;
+            color: #444;
+        }
+
+        .policies {
+            font-size: 9px;
             color: #666;
+            text-align: center;
+            margin: 10px 0;
+            padding: 8px;
+            background-color: #f9f9f9;
+            border-radius: 5px;
+            line-height: 1.3;
+        }
+
+        .meta-info {
+            font-size: 10px;
+            color: #777;
+            text-align: right;
+            margin-top: 5px;
+        }
+
+        .highlight-box {
+            background-color: #f8f8f8;
+            border-left: 3px solid #555;
+            padding: 8px;
+            margin: 10px 0;
+            border-radius: 3px;
+        }
+
+        .payment-badge {
+            display: inline-block;
+            background-color: #e8f4fd;
+            color: #2484c6;
+            font-size: 11px;
+            padding: 3px 8px;
+            border-radius: 3px;
+            margin: 2px;
+        }
+
+        .payment-badge.cash {
+            background-color: #e6f7e6;
+            color: #2c7c2c;
+        }
+
+        .payment-badge.card {
+            background-color: #ffeee6;
+            color: #d35400;
         }
 
         @media print {
@@ -127,7 +241,7 @@
                 margin: 0 auto;
                 width: 80mm;
                 height: 100% !important;
-                sheet-size: 80mm 80mm;
+                sheet-size: 80mm auto;
             }
 
             .receipt-container {
@@ -138,6 +252,7 @@
             body {
                 -webkit-print-color-adjust: exact;
                 print-color-adjust: exact;
+                color-adjust: exact;
             }
 
             .no-print {
@@ -145,12 +260,31 @@
             }
 
             .table th {
-                background-color: #f8f8f8 !important;
+                background-color: #f3f3f3 !important;
             }
 
             .table td,
             .table th {
-                border-color: #ddd !important;
+                border-color: #e0e0e0 !important;
+            }
+
+            .highlight-box {
+                background-color: #f8f8f8 !important;
+            }
+
+            .payment-badge {
+                background-color: #e8f4fd !important;
+                color: #2484c6 !important;
+            }
+
+            .payment-badge.cash {
+                background-color: #e6f7e6 !important;
+                color: #2c7c2c !important;
+            }
+
+            .payment-badge.card {
+                background-color: #ffeee6 !important;
+                color: #d35400 !important;
             }
         }
     </style>
@@ -158,26 +292,31 @@
 
 <body onload="window.print();">
     <div class="receipt-container">
-        <h1>
+        <div class="store-info">
             @if ($enable_logo_in_print == 'yes')
-                <img src="{{ cache('logo') }}" alt="Logo" style="width: 100%;">
+                <img src="{{ cache('logo') }}" alt="Logo" style="width: 80%; max-width: 180px; margin-bottom: 10px;">
             @endif
-        </h1>
-        <h3 class="divider">
-            {{ $sale->branch?->location }}
-        </h3>
-        <h3 class="divider">
-            {{ $sale->branch?->mobile }}
-        </h3>
-        @if ($thermal_printer_style == 'with_arabic')
-            {{-- <h1> اسم المتجر </h1> Store Name --}}
-        @endif
-        <h3 class="divider">
-            Invoice
-            @if ($thermal_printer_style == 'with_arabic')
-                | {{ __('lang.invoice', [], 'ar') }}
-            @endif
-        </h3>
+            <h3>
+                {{ $sale->branch?->location }}
+            </h3>
+            <div style="font-size: 12px; margin-top: 5px;">
+                <strong>Tel:</strong> {{ $sale->branch?->mobile }}
+                @if ($sale->branch?->email)
+                    <br><strong>Email:</strong> {{ $sale->branch?->email }}
+                @endif
+            </div>
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="invoice-header">
+            <h3 style="margin: 5px 0;">
+                Invoice
+                @if ($thermal_printer_style == 'with_arabic')
+                    | {{ __('lang.invoice', [], 'ar') }}
+                @endif
+            </h3>
+        </div>
         @if ($thermal_printer_style == 'with_arabic')
             <table class="table">
                 <tr>
@@ -219,19 +358,27 @@
                     </td>
                 </tr>
                 <tr>
-                    <td colspan="2" class="text-center"><b>{{ $payments }}</b></td>
+                    <td colspan="2" class="text-center">
+                        @if (isset($payments))
+                            <span class="payment-badge">{{ $payments }}</span>
+                        @endif
+                    </td>
                 </tr>
             </table>
         @endif
         @if ($thermal_printer_style == 'english_only')
-            <table class="table">
+            <table class="table table-striped">
                 <tr>
-                    <td class="text-left"><b>Invoice No</b> <br></td>
+                    <td class="text-left"><b>Invoice No</b></td>
                     <td class="text-left"><b>{{ $sale->invoice_no }}</b></td>
                 </tr>
                 <tr>
                     <td class="nowrap text-left"><b>Date</b></td>
                     <td class="text-left"><b>{{ systemDate($sale->date) }}</b></td>
+                </tr>
+                <tr>
+                    <td class="nowrap text-left"><b>Time</b></td>
+                    <td class="text-left"><b>{{ date('h:i A', strtotime($sale->created_at)) }}</b></td>
                 </tr>
                 <tr>
                     <td class="nowrap text-left"><b>Customer</b></td>
@@ -246,13 +393,17 @@
                     </td>
                 </tr>
                 <tr>
-                    <td class="text-left"><b>Payment Mode</b> <br></td>
-                    <td class="text-left"><b>Cash</b></td>
+                    <td class="text-left"><b>Payment Mode</b></td>
+                    <td class="text-left">
+                        @if (isset($payments))
+                            <span class="payment-badge">{{ $payments }}</span>
+                        @endif
+                    </td>
                 </tr>
             </table>
         @endif
         <div class="divider"></div>
-        <table class="table">
+        <table class="table table-striped">
             <thead>
                 @if ($thermal_printer_style == 'with_arabic')
                     <tr>
@@ -292,7 +443,12 @@
                 {{--  Items Table Area --}}
                 @foreach ($sale->items()->whereNull('sale_combo_offer_id')->get() as $item)
                     <tr>
-                        <td colspan="4" class="text-left"><b>{{ $item->product->name }}</b></td>
+                        <td colspan="4" class="text-left">
+                            <div class="item-name">{{ $item->product->name }}</div>
+                            @if ($item->product->description)
+                                <div class="item-description">{{ Str::limit($item->product->description, 30) }}</div>
+                            @endif
+                        </td>
                     </tr>
                     @if ($item->product->name_arabic)
                         <tr>
@@ -382,30 +538,39 @@
                 </tr>
             @endif
         </table>
-        <div class="barcode">
-            <img src="data:image/png;base64,{{ DNS1D::getBarcodePNG($barcode_string, 'C128') }}" alt="barcode" />
-            <p> <b>{{ $barcode_string }}</b> </p>
+        <div class="codes-container">
+            <div class="barcode">
+                <img src="data:image/png;base64,{{ DNS1D::getBarcodePNG($barcode_string, 'C128') }}" alt="barcode" />
+                <p> <b>{{ $barcode_string }}</b> </p>
+            </div>
+            <div class="qrcode">
+                <img src="data:image/png;base64,{{ DNS2D::getBarcodePNG(url('/') . '/invoice/' . $sale->id, 'QRCODE', 3, 3) }}" alt="QR Code" />
+            </div>
         </div>
-        <div class="footer">
+        <div class="highlight-box">
             <div>
-                <span class="text-left"> <b>Served By</b> </span> : <b>{{ $sale->createdUser->name }}</b>
+                <span class="text-left"> <b>Served By</b> </span>: <b>{{ $sale->createdUser->name }}</b>
                 @if ($thermal_printer_style == 'with_arabic')
                     <span class="text-right">
                         <b>:{{ __('lang.served_by', [], 'ar') }}</b>
                     </span>
                 @endif
             </div>
-            <div>
-                <b><?= date('D d-M-Y h:i A', strtotime($sale->updated_at)) ?></b></b>
+            <div style="margin-top: 5px;">
+                <b><?= date('D d-M-Y h:i A', strtotime($sale->updated_at)) ?></b>
             </div>
         </div>
+
         <div class="footer">
-            <p> <b>{{ $thermal_printer_footer_english }}</b> </p>
+            <p style="font-weight: bold; margin-bottom: 10px;">{{ $thermal_printer_footer_english }}</p>
             @if ($thermal_printer_style == 'with_arabic')
                 <b>
                     <p dir="rtl">{{ $thermal_printer_footer_arabic }}</p>
                 </b>
             @endif
+            <div style="margin-top: 8px; font-size: 9px; color: #777;">
+                Invoice generated on {{ date('d/m/Y') }} at {{ date('h:i A') }}
+            </div>
         </div>
     </div>
 </body>
@@ -414,6 +579,17 @@
     window.onFocus = function() {
         window.close();
     };
+
+    // Auto close after printing or after 60 seconds
+    window.addEventListener('afterprint', function() {
+        setTimeout(function() {
+            window.close();
+        }, 2000);
+    });
+
+    setTimeout(function() {
+        window.close();
+    }, 60000);
 </script>
 
 </html>
