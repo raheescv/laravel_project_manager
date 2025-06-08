@@ -290,7 +290,7 @@
                                                 class="bg-light" @endif>
                                             @if ($day['day'])
                                                 <div class="heatmap-day-content">
-                                                    <div class="day-number {{ $day['date'] == date('Y-m-d') ? 'bg-primary text-white' : '' }}">
+                                                    <div style="color:black" class="day-number {{ $day['date'] == date('Y-m-d') ? 'bg-primary ' : '' }}">
                                                         {{ $day['day'] }}
                                                     </div>
 
