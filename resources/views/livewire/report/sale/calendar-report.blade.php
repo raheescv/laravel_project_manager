@@ -295,7 +295,7 @@
                                                     </div>
 
                                                     @if ($day['total'] > 0)
-                                                        <div class="heatmap-amount">
+                                                        <div style="color:black" class="heatmap-amount">
                                                             {{ currency($day['total']) }}
                                                         </div>
                                                     @endif
