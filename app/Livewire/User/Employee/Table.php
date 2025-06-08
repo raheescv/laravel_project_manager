@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\DB;
 use Livewire\Component;
 use Livewire\WithPagination;
 use Maatwebsite\Excel\Facades\Excel;
+use Spatie\Permission\Models\Role;
 
 class Table extends Component
 {
@@ -23,6 +24,8 @@ class Table extends Component
     public $selected = [];
 
     public $selectAll = false;
+
+    public $role_id = '';
 
     public $sortField = 'id';
 
@@ -119,12 +122,19 @@ class Table extends Component
                         ->orWhere('nationality', 'like', "%{$value}%");
                 });
             })
+            ->when($this->role_id, function ($query) {
+                $query->whereHas('roles', function ($q) {
+                    $q->where('id', $this->role_id);
+                });
+            })
             ->employee()
             ->latest()
             ->paginate($this->limit);
+        $roles = Role::orderBy('name')->get();
 
         return view('livewire.user.employee.table', [
             'data' => $data,
+            'roles' => $roles,
         ]);
     }
 }
