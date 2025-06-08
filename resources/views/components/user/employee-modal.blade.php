@@ -1,6 +1,6 @@
 <div class="modal" id="EmployeeModal" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content modal-lg">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
             @livewire('user.employee.page')
         </div>
     </div>

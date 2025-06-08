@@ -7,6 +7,7 @@ use App\Actions\User\UpdateAction;
 use App\Models\User;
 use Faker\Factory;
 use Livewire\Component;
+use Spatie\Permission\Models\Role;
 
 class Page extends Component
 {
@@ -18,6 +19,8 @@ class Page extends Component
     public $users;
 
     public $table_id;
+
+    public $selectedRoles = [];
 
     public function create()
     {
@@ -54,8 +57,9 @@ class Page extends Component
                 'password' => $password,
             ];
         } else {
-            $branch = User::find($this->table_id);
-            $this->users = $branch->toArray();
+            $user = User::find($this->table_id);
+            $this->users = $user->toArray();
+            $this->selectedRoles = $user->roles->pluck('name')->toArray();
         }
     }
 
@@ -87,8 +91,16 @@ class Page extends Component
         try {
             if (! $this->table_id) {
                 $response = (new CreateAction())->execute($this->users);
+                if ($response['success'] && ! empty($this->selectedRoles)) {
+                    $user = User::find($response['data']['id']);
+                    $user->syncRoles($this->selectedRoles);
+                }
             } else {
                 $response = (new UpdateAction())->execute($this->users, $this->table_id);
+                if ($response['success']) {
+                    $user = User::find($this->table_id);
+                    $user->syncRoles($this->selectedRoles);
+                }
             }
             if (! $response['success']) {
                 throw new \Exception($response['message'], 1);
@@ -108,6 +120,10 @@ class Page extends Component
 
     public function render()
     {
-        return view('livewire.user.employee.page');
+        $roles = Role::orderBy('name')->get();
+
+        return view('livewire.user.employee.page', [
+            'roles' => $roles,
+        ]);
     }
 }

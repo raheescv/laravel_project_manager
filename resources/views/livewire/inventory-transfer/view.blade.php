@@ -6,12 +6,14 @@
                 <div class="transfer-flow position-relative">
                     <div class="row g-4">
                         <div class="col-md-5">
-                            <div class="branch-card from-branch">
-                                <div class="branch-icon">
-                                    <i class="fa fa-building text-primary"></i>
+                            <div class="neo-card">
+                                <div class="card-icon">
+                                    <i class="fa fa-building"></i>
                                 </div>
-                                <h6 class="text-uppercase mb-2 text-muted tracking-wide">From Branch</h6>
-                                <h3 class="branch-name">{{ $model->fromBranch?->name }}</h3>
+                                <div class="card-content">
+                                    <h6 class="text-muted mb-1">From Branch</h6>
+                                    <h4 class="mb-0">{{ $model->fromBranch?->name }}</h4>
+                                </div>
                             </div>
                         </div>
                         <div class="col-md-2 d-flex align-items-center justify-content-center">
@@ -21,12 +23,14 @@
                             </div>
                         </div>
                         <div class="col-md-5">
-                            <div class="branch-card to-branch">
-                                <div class="branch-icon">
-                                    <i class="fa fa-building text-success"></i>
+                            <div class="neo-card">
+                                <div class="card-icon">
+                                    <i class="fa fa-building"></i>
                                 </div>
-                                <h6 class="text-uppercase mb-2 text-muted tracking-wide">To Branch</h6>
-                                <h3 class="branch-name">{{ $model->toBranch?->name }}</h3>
+                                <div class="card-content">
+                                    <h6 class="text-muted mb-1">To Branch</h6>
+                                    <h4 class="mb-0">{{ $model->toBranch?->name }}</h4>
+                                </div>
                             </div>
                         </div>
                     </div>
