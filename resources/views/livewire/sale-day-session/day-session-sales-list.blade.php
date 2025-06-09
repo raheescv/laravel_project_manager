@@ -6,7 +6,7 @@
                     <i class="fa fa-shopping-cart" style="font-size: 20px;"></i>
                 </div>
                 <div>
-                    <h5 class="mb-0">Session Sales</h5>
+                    <h5 class="mb-0 text-white">Session Sales</h5>
                     <small class="text-light opacity-75">All sales recorded during this day session</small>
                 </div>
             </div>
