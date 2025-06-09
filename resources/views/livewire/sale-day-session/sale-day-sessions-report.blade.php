@@ -28,7 +28,7 @@
                                 <label for="branchId" class="form-label">
                                     <i class="fa fa-building me-2" style="color: #4a6fa5;"></i>Branch
                                 </label>
-                                <select wire:model="branchId" id="branchId" class="form-select">
+                                <select wire:model.live="branchId" id="branchId" class="form-select">
                                     <option value="">All Branches</option>
                                     @foreach ($branches as $branch)
                                         <option value="{{ $branch->id }}">{{ $branch->name }}</option>
