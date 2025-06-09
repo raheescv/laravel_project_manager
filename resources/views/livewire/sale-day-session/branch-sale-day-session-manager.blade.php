@@ -470,7 +470,7 @@
                                             <label for="closing_amount" class="form-label">
                                                 <i class="fa fa-money me-1 text-success"></i>Closing Amount <span class="text-danger">*</span>
                                             </label>
-                                            <input type="number" step="0.01" class="form-control" id="closing_amount" wire:model="closing_amount" placeholder="0.00">
+                                            <input type="number" step="0.01" class="form-control" id="closing_amount" autofocus wire:model="closing_amount" placeholder="0.00">
                                             @error('closing_amount')
                                                 <div class="text-danger small mt-1">{{ $message }}</div>
                                             @enderror
@@ -527,7 +527,7 @@
                                                         <span class="input-group-text bg-success text-white">
                                                             <i class="fa fa-dollar"></i>
                                                         </span>
-                                                        <input type="number" step="0.01" class="form-control" id="opening_amount" wire:model="opening_amount" placeholder="0.00">
+                                                        <input type="number" step="0.01" class="form-control" id="opening_amount" autofocus wire:model="opening_amount" placeholder="0.00">
                                                     </div>
                                                     @error('opening_amount')
                                                         <div class="text-danger small mt-1">{{ $message }}</div>

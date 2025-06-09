@@ -41,7 +41,7 @@
                                 <label for="dateFrom" class="form-label">
                                     <i class="fa fa-calendar-o me-2" style="color: #5a9fd4;"></i>Date From
                                 </label>
-                                <input type="date" wire:model="dateFrom" id="dateFrom" class="form-control">
+                                <input type="date" wire:model.live="dateFrom" id="dateFrom" class="form-control">
                             </div>
                         </div>
                         <div class="col-md-3">
@@ -49,7 +49,7 @@
                                 <label for="dateTo" class="form-label">
                                     <i class="fa fa-calendar-o me-2" style="color: #5a9fd4;"></i>Date To
                                 </label>
-                                <input type="date" wire:model="dateTo" id="dateTo" class="form-control">
+                                <input type="date" wire:model.live="dateTo" id="dateTo" class="form-control">
                             </div>
                         </div>
                         <div class="col-md-3">
@@ -57,7 +57,7 @@
                                 <label for="status" class="form-label">
                                     <i class="fa fa-info-circle me-2" style="color: #b8860b;"></i>Status
                                 </label>
-                                <select wire:model="status" id="status" class="form-select">
+                                <select wire:model.live="status" id="status" class="form-select">
                                     <option value="">All Status</option>
                                     <option value="open">Open</option>
                                     <option value="closed">Closed</option>

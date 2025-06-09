@@ -19,7 +19,7 @@
                         <span class="input-group-text" style="background-color: #e9ecef; border-color: #ced4da;">
                             <i class="fa fa-search" style="color: #6c757d;"></i>
                         </span>
-                        <input type="text" wire:model.debounce.300ms="search" class="form-control" placeholder="Search by invoice, customer name, or mobile..." style="border-color: #ced4da;">
+                        <input type="text" wire:model.live="search" class="form-control" placeholder="Search by invoice, customer name, or mobile..." style="border-color: #ced4da;">
                     </div>
                 </div>
                 <div class="col-md-3">
