@@ -99,7 +99,19 @@
                     @if (auth()->user()->can('sale.view') || auth()->user()->can('report.sale item'))
                         <li class="nav-item has-sub">
                             @php
-                                $list = ['report/sale_summary', 'report/sales_overview', 'sale', 'sale/create', 'sale/edit/*', 'sale/view/*', 'report/sale_item', 'sale/receipts'];
+                                $list = [
+                                    'report/sale_summary',
+                                    'report/sales_overview',
+                                    'sale',
+                                    'sale/create',
+                                    'sale/edit/*',
+                                    'sale/view/*',
+                                    'report/sale_item',
+                                    'sale/receipts',
+                                    'sale/day-management',
+                                    'sale/day-sessions-report',
+                                    'sale/day-session/*',
+                                ];
                             @endphp
                             <a href="#" class="mininav-toggle nav-link {{ request()->is($list) ? 'active' : '' }}"><i class="fa fa-shopping-cart fs-5 me-2"></i>
                                 <span class="nav-label mininav-content ms-1 collapse show" style="">Sale</span>
@@ -124,6 +136,17 @@
                                 @can('sale.receipts')
                                     <li class="nav-item">
                                         <a href="{{ route('sale::receipts') }}" class="nav-link {{ request()->is(['sale/receipts']) ? 'active' : '' }}">Receipts</a>
+                                    </li>
+                                @endcan
+                                @can('sale.view')
+                                    <li class="nav-item">
+                                        <a href="{{ route('sale::day-management') }}" class="nav-link {{ request()->is(['sale/day-management']) ? 'active' : '' }}">Day Management</a>
+                                    </li>
+                                @endcan
+                                @can('sale.view')
+                                    <li class="nav-item">
+                                        <a href="{{ route('sale::day-sessions-report') }}" class="nav-link {{ request()->is(['sale/day-sessions-report', 'sale/day-session/*']) ? 'active' : '' }}">Day
+                                            Sessions Report</a>
                                     </li>
                                 @endcan
                             </ul>

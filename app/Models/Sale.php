@@ -28,6 +28,7 @@ class Sale extends Model implements AuditableContracts
         'account_id',
         'date',
         'due_date',
+        'sale_day_session_id',
 
         'customer_name',
         'customer_mobile',
@@ -72,6 +73,32 @@ class Sale extends Model implements AuditableContracts
     protected static function booted()
     {
         static::addGlobalScope(new AssignedBranchScope());
+
+        static::creating(function ($sale) {
+            // Check if sale needs to be associated with an open day session
+            if ($sale->branch_id) {
+                // If no sale_day_session_id is provided, find the open session for the branch
+                if (empty($sale->sale_day_session_id)) {
+                    $openSession = SaleDaySession::getOpenSessionForBranch($sale->branch_id);
+                    if ($openSession) {
+                        $sale->sale_day_session_id = $openSession->id;
+
+                        // If no date is provided, use the session's opened_at date
+                        if (empty($sale->date)) {
+                            $sale->date = $openSession->opened_at->format('Y-m-d');
+                        }
+                    }
+                }
+
+                // If a session ID is provided, ensure it's valid and open
+                else {
+                    $session = SaleDaySession::find($sale->sale_day_session_id);
+                    if (! $session || $session->status !== 'open' || $session->branch_id !== $sale->branch_id) {
+                        throw new \Exception('Invalid or closed day session provided.');
+                    }
+                }
+            }
+        });
     }
 
     public function scopeDraft($query)
@@ -134,6 +161,7 @@ class Sale extends Model implements AuditableContracts
             ->when($filters['payment_method_id'] ?? '', function ($q, $value) {
                 return $q->whereRaw('FIND_IN_SET(?, payment_method_ids)', [$value]);
             })
+            ->when($filters['sale_day_session_id'] ?? '', fn ($q, $value) => $q->where('sale_day_session_id', $value))
             ->when($filters['status'] ?? '', fn ($q, $value) => $q->where('status', $value))
             ->when($filters['from_date'] ?? '', fn ($q, $value) => $q->whereDate('sales.date', '>=', date('Y-m-d', strtotime($value))))
             ->when($filters['to_date'] ?? '', fn ($q, $value) => $q->whereDate('sales.date', '<=', date('Y-m-d', strtotime($value))));
@@ -147,6 +175,11 @@ class Sale extends Model implements AuditableContracts
     public function account()
     {
         return $this->belongsTo(Account::class);
+    }
+
+    public function saleDaySession()
+    {
+        return $this->belongsTo(SaleDaySession::class);
     }
 
     public function createdUser()
