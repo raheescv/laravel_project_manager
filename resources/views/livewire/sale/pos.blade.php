@@ -203,11 +203,68 @@
             }
 
             .sales-header {
+                background: #f1f5f9;
+                border-radius: 0.5rem;
+                padding: 0.75rem;
+                margin-bottom: 0.75rem;
+            }
+
+            .sales-header .form-label {
+                color: #1e293b;
+                font-size: 0.75rem;
+                margin-bottom: 0.25rem;
+            }
+
+            .sales-header .form-label i {
+                font-size: 0.875rem;
+            }
+
+            .sales-header .select2-container--default .select2-selection--single {
+                height: 2.25rem;
+                border: 2px solid transparent;
+                border-radius: 0.5rem;
                 background: white;
-                border-radius: 1rem;
-                box-shadow: var(--card-shadow);
-                padding: 1.5rem;
-                margin-bottom: 1.5rem;
+                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+                transition: all 0.2s ease;
+            }
+
+            .sales-header .select2-container--default .select2-selection--single:focus,
+            .sales-header .select2-container--default.select2-container--open .select2-selection--single {
+                border-color: #0ea5e9;
+                background: #f0f9ff;
+            }
+
+            .sales-header .select2-container--default .select2-selection--single .select2-selection__rendered {
+                line-height: 2.25rem;
+                padding-left: 0.75rem;
+                font-size: 0.875rem;
+                color: #1e293b;
+            }
+
+            .sales-header .select2-container--default .select2-selection--single .select2-selection__arrow {
+                height: 2.25rem;
+                width: 2rem;
+            }
+
+            .sales-header .select2-container--default .select2-selection--single .select2-selection__placeholder {
+                color: #94a3b8;
+            }
+
+            .sales-header .form-select {
+                height: 2.25rem;
+                padding: 0.375rem 0.75rem;
+                font-size: 0.875rem;
+                border: 2px solid transparent;
+                border-radius: 0.5rem;
+                background: white;
+                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+                transition: all 0.2s ease;
+            }
+
+            .sales-header .form-select:focus {
+                border-color: #0ea5e9;
+                background: #f0f9ff;
+                box-shadow: none;
             }
 
             .search-section {
@@ -1443,21 +1500,21 @@
                         <div class="col-12 col-lg-6">
                             <div class="pos-products">
                                 <div class="sales-header">
-                                    <div class="row g-3">
+                                    <div class="row g-2">
                                         <div class="col-lg-8">
                                             <div class="form-group" wire:ignore>
-                                                <label class="form-label d-flex align-items-center mb-2">
-                                                    <i class="fa fa-user me-2 text-primary"></i>
-                                                    <span class="fw-semibold">Select Employee</span>
+                                                <label class="form-label d-flex align-items-center mb-1">
+                                                    <i class="fa fa-user me-1 text-primary"></i>
+                                                    <span class="fw-semibold small">Employee</span>
                                                 </label>
-                                                {{ html()->select('employee_id', $employees ?? [])->value($employee_id ?? '')->class('select-employee_id-list')->id('employee_id')->attribute('style', 'width:100%')->placeholder('Choose an employee...') }}
+                                                {{ html()->select('employee_id', $employees ?? [])->value($employee_id ?? '')->class('select-employee_id-list')->id('employee_id')->attribute('style', 'width:100%')->placeholder('Select employee...') }}
                                             </div>
                                         </div>
                                         <div class="col-lg-4">
                                             <div class="form-group">
-                                                <label class="form-label d-flex align-items-center mb-2">
-                                                    <i class="fa fa-tags me-2 text-primary"></i>
-                                                    <span class="fw-semibold">Sale Type</span>
+                                                <label class="form-label d-flex align-items-center mb-1">
+                                                    <i class="fa fa-tags me-1 text-primary"></i>
+                                                    <span class="fw-semibold small">Sale Type</span>
                                                 </label>
                                                 {{ html()->select('sale_type', priceTypes())->class('form-select')->id('sale_type')->attribute('wire:model.live', 'sales.sale_type')->required(true)->placeholder('Select type...') }}
                                             </div>
@@ -1465,32 +1522,7 @@
                                     </div>
                                 </div>
 
-                                <div class="search-section">
-                                    <div class="d-flex gap-2">
-                                        <div class="search-box flex-grow-2">
-                                            <div class="input-group">
-                                                <span class="input-group-text">
-                                                    <i class="fa fa-barcode"></i>
-                                                </span>
-                                                <input type="search" class="form-control" wire:model.live="barcode_key" placeholder="Scan Barcode">
-                                            </div>
-                                        </div>
-
-                                        <div class="search-box flex-grow-1">
-                                            <div class="input-group">
-                                                <span class="input-group-text">
-                                                    <i class="fa fa-search"></i>
-                                                </span>
-                                                <input type="search" class="form-control" wire:model.live="product_key" placeholder="Search Products/Services">
-                                            </div>
-                                        </div>
-
-                                        <button type="button" id="viewDraftedSales" class="btn btn-primary d-flex align-items-center gap-2">
-                                            <i class="fa fa-file-alt"></i>
-                                            <span>View Draft</span>
-                                        </button>
-                                    </div>
-                                </div>
+                                @include('livewire.sale.search-section')
 
                                 <div class="tabs_container" style="height: calc(100vh - 20rem); overflow: auto;">
                                     <div class="tab_content active" data-tab="all">
