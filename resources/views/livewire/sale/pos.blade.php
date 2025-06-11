@@ -1461,7 +1461,7 @@
                                             <i class="fa fa-th-large me-2"></i>
                                             Categories
                                         </h6>
-                                        <span class="badge bg-white bg-opacity-25 text-white">{{ count($categories) + 2 }}</span>
+                                        <span class="badge bg-white bg-opacity-25 text-white">{{ $categoryCount }}</span>
                                     </div>
                                 </div>
                                 <div class="card-body p-0">
@@ -1483,7 +1483,7 @@
                                         @foreach ($categories as $item)
                                             <button type="button"
                                                 class="list-group-item list-group-item-action d-flex align-items-center py-2 px-3 border-0 {{ $item['id'] == $category_id ? 'active bg-primary text-white' : '' }}"
-                                                wire:click="categorySelect({{ $item['id'] }})">
+                                                wire:click="categorySelect({{ $item['id'] }})" wire:key="category-{{ $item['id'] }}">
                                                 <i class="fa fa-tag me-2 {{ $item['id'] == $category_id ? 'text-white' : 'text-primary' }}"></i>
                                                 <span class="flex-grow-1 text-truncate">{{ $item['name'] }}</span>
                                                 <span class="badge {{ $item['id'] == $category_id ? 'bg-white bg-opacity-25 text-white' : 'bg-light text-primary' }} rounded-pill ms-2">
@@ -1577,7 +1577,7 @@
 
                                 <div class="product-wrap">
                                     @forelse ($items as $item)
-                                        <div class="product-list">
+                                        <div class="product-list" wire:key="cartitem-{{ $item['key'] }}">
                                             <div class="product-info">
                                                 <h6>{{ $item['name'] }}</h6>
                                                 <p>{{ currency($item['total']) }}</p>
@@ -1700,7 +1700,7 @@
                                         <div class="col-md-4">
                                             <div class="default-cover">
                                                 <a href="#" class="@if ($payment_method_name == 'cash') active @endif" wire:click="selectPaymentMethod('cash')">
-                                                    <img src="{{ asset('assets/img/cash-pay.svg') }}" alt="Cash Payment">
+                                                    <img src="{{ asset('assets/img/cash-pay.svg') }}" alt="Cash Payment" loading="lazy">
                                                     <span>Cash</span>
                                                 </a>
                                             </div>
@@ -1708,7 +1708,7 @@
                                         <div class="col-md-4">
                                             <div class="default-cover">
                                                 <a href="#" class="@if ($payment_method_name == 'card') active @endif" wire:click="selectPaymentMethod('card')">
-                                                    <img src="{{ asset('assets/img/card-pay.svg') }}" alt="Card Payment">
+                                                    <img src="{{ asset('assets/img/card-pay.svg') }}" alt="Card Payment" loading="lazy">
                                                     <span>Debit Card</span>
                                                 </a>
                                             </div>
@@ -1716,7 +1716,7 @@
                                         <div class="col-md-4">
                                             <div class="default-cover">
                                                 <a href="#" class="@if ($payment_method_name == 'custom') active @endif" wire:click="selectPaymentMethod('custom')">
-                                                    <img src="{{ asset('assets/img/custom-pay.svg') }}" alt="Custom Payment">
+                                                    <img src="{{ asset('assets/img/custom-pay.svg') }}" alt="Custom Payment" loading="lazy">
                                                     <span>Custom Pay</span>
                                                 </a>
                                             </div>

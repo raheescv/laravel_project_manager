@@ -16,7 +16,9 @@ use App\Models\Product;
 use App\Models\Sale;
 use App\Models\User;
 use Exception;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Livewire\Component;
 
@@ -33,6 +35,8 @@ class Page extends Component
     ];
 
     public $categories;
+
+    public $categoryCount;
 
     public $products;
 
@@ -82,13 +86,27 @@ class Page extends Component
     {
         $this->category_id = 'favorite';
         $this->table_id = $table_id;
-        $this->paymentMethods = Account::where('id', $this->default_payment_method_id)->pluck('name', 'id')->toArray();
 
+        // Cache payment methods for 1 hour since they rarely change
+        $this->paymentMethods = Cache::remember('payment_methods', 3600, function () {
+            return Account::where('id', $this->default_payment_method_id)
+                ->pluck('name', 'id')
+                ->toArray();
+        });
+
+        // Cache employees for 1 hour
         if (User::employee()->count() > 0) {
-            $this->employees = User::employee()->pluck('name', 'id')->toArray();
+            $this->employees = Cache::remember('employees', 3600, function () {
+                return User::employee()->pluck('name', 'id')->toArray();
+            });
             $this->employee_id = User::employee()->first(['id'])->id;
         }
-        $this->default_payment_method_id = Configuration::where('key', 'default_payment_method_id')->value('value') ?? 1;
+
+        // Cache configuration for 1 hour
+        $this->default_payment_method_id = Cache::remember('default_payment_method_id', 3600, function () {
+            return Configuration::where('key', 'default_payment_method_id')->value('value') ?? 1;
+        });
+
         $this->payment_method_name = strtolower(Account::find($this->default_payment_method_id)->name);
         $this->payment = [
             'payment_method_id' => $this->default_payment_method_id,
@@ -98,60 +116,40 @@ class Page extends Component
         ];
 
         if ($this->table_id) {
-
-            $this->sale = Sale::with(
-                'account:id,name',
+            // Eager load all relationships in a single query
+            $this->sale = Sale::with([
+                'account:id,name,mobile',
                 'branch:id,name',
-                'items.product:id,name',
+                'items.product:id,name,mrp',
                 'items.employee:id,name',
+                'items.assistant:id,name',
                 'comboOffers.comboOffer:id,name',
                 'createdUser:id,name',
                 'updatedUser:id,name',
                 'cancelledUser:id,name',
-                'payments.paymentMethod:id,name'
-            )->find($this->table_id);
+                'payments.paymentMethod:id,name',
+            ])->find($this->table_id);
 
             if (! $this->sale) {
                 return redirect()->route('sale::index');
             }
             $this->sales = $this->sale->toArray();
             $this->accounts = Account::where('id', $this->sales['account_id'])->pluck('name', 'id')->toArray();
+            // Optimize items collection processing
             $this->items = $this->sale->items->mapWithKeys(function ($item) {
                 $key = $item['employee_id'].'-'.$item['inventory_id'];
 
-                return [
-                    $key => [
-                        'id' => $item['id'],
-                        'key' => $key,
-                        'employee_id' => $item['employee_id'],
-                        'assistant_id' => $item['assistant_id'],
-                        'inventory_id' => $item['inventory_id'],
-                        'product_id' => $item['product_id'],
-                        'sale_combo_offer_id' => $item['sale_combo_offer_id'],
-                        'name' => $item['name'],
-                        'employee_name' => $item['employee_name'],
-                        'assistant_name' => $item['assistant_name'],
-                        'tax_amount' => $item['tax_amount'],
-                        'unit_price' => $item['unit_price'],
-                        'quantity' => round($item['quantity'], 3),
-                        'gross_amount' => $item['gross_amount'],
-                        'discount' => $item['discount'],
-                        'tax' => $item['tax'],
-                        'total' => $item['total'],
-                        'effective_total' => $item['effective_total'],
-                        'created_by' => $item['created_by'],
-                    ],
-                ];
+                return [$key => $this->formatItem($item)];
             })->toArray();
 
+            // Optimize combo offers processing
             $this->comboOffers = $this->sale->comboOffers->map(function ($package) {
-                $items = collect($this->items)->filter(function ($item) use ($package) {
-                    return $item['sale_combo_offer_id'] == $package['id'];
-                })->map(function ($item) {
-                    $item['combo_offer_price'] = $item['unit_price'] - $item['discount'];
-
-                    return $item;
-                })->toArray();
+                $items = collect($this->items)
+                    ->filter(fn ($item) => $item['sale_combo_offer_id'] == $package['id'])
+                    ->map(fn ($item) => array_merge($item, [
+                        'combo_offer_price' => $item['unit_price'] - $item['discount'],
+                    ]))
+                    ->toArray();
 
                 return [
                     'id' => $package['id'],
@@ -165,8 +163,7 @@ class Page extends Component
             $this->payments = $this->sale->payments->map->only(['id', 'amount', 'date', 'payment_method_id', 'created_by', 'name'])->toArray();
             if (count($this->payments) > 1) {
                 $this->payment_method_name = 'custom';
-            }
-            if (count($this->payments) == 1) {
+            } elseif (count($this->payments) == 1) {
                 $this->payment_method_name = strtolower($this->payments[0]['name']);
                 if (! in_array($this->payment_method_name, ['cash', 'card'])) {
                     $this->payment_method_name = 'custom';
@@ -214,16 +211,45 @@ class Page extends Component
         $this->getCategories();
     }
 
+    protected function formatItem($item)
+    {
+        return [
+            'id' => $item['id'],
+            'key' => $item['employee_id'].'-'.$item['inventory_id'],
+            'employee_id' => $item['employee_id'],
+            'assistant_id' => $item['assistant_id'],
+            'inventory_id' => $item['inventory_id'],
+            'product_id' => $item['product_id'],
+            'sale_combo_offer_id' => $item['sale_combo_offer_id'],
+            'name' => $item['name'],
+            'employee_name' => $item['employee_name'],
+            'assistant_name' => $item['assistant_name'],
+            'tax_amount' => $item['tax_amount'],
+            'unit_price' => $item['unit_price'],
+            'quantity' => round($item['quantity'], 3),
+            'gross_amount' => $item['gross_amount'],
+            'discount' => $item['discount'],
+            'tax' => $item['tax'],
+            'total' => $item['total'],
+            'effective_total' => $item['effective_total'],
+            'created_by' => $item['created_by'],
+        ];
+    }
+
     public function getCategories()
     {
-        $this->categories = Category::withCount('products')
-            ->having('products_count', '>', 0)
-            ->when($this->category_key, function ($query, $value) {
-                return $query->where('name', 'LIKE', '%'.$value.'%');
-            })
-            ->orderBy('name')
-            ->get()
-            ->toArray();
+        // Cache categories for 1 hour
+        $this->categories = Cache::remember('categories_with_products', 3600, function () {
+            return Category::withCount('products')
+                ->having('products_count', '>', 0)
+                ->when($this->category_key, function ($query, $value) {
+                    return $query->where('name', 'LIKE', '%'.$value.'%');
+                })
+                ->orderBy('name')
+                ->get()
+                ->toArray();
+        });
+        $this->categoryCount = count($this->categories);
     }
 
     public function updated($key, $value)
@@ -302,8 +328,17 @@ class Page extends Component
 
     public function getCustomerDetails()
     {
-        $account = Account::find($this->sales['account_id']);
-        $this->account_balance = $account->ledger()->latest('id')->value('balance');
+        // Cache account balance for 5 minutes
+        $this->account_balance = Cache::remember(
+            "account_balance_{$this->sales['account_id']}",
+            300,
+            function () {
+                return Account::find($this->sales['account_id'])
+                    ->ledger()
+                    ->latest('id')
+                    ->value('balance');
+            }
+        );
     }
 
     public function updatedInventoryId()
@@ -368,33 +403,54 @@ class Page extends Component
 
     public function singleCartCalculator($key)
     {
-        $gross_amount = $this->items[$key]['unit_price'] * $this->items[$key]['quantity'];
-        $net_amount = $gross_amount - $this->items[$key]['discount'];
-        $tax_amount = $net_amount * $this->items[$key]['tax'] / 100;
+        $item = &$this->items[$key];
+        $gross_amount = $item['unit_price'] * $item['quantity'];
+        $net_amount = $gross_amount - $item['discount'];
+        $tax_amount = $net_amount * $item['tax'] / 100;
 
-        $this->items[$key]['gross_amount'] = round($gross_amount, 2);
-        $this->items[$key]['net_amount'] = round($net_amount, 2);
-        $this->items[$key]['tax_amount'] = round($tax_amount, 2);
+        $item['gross_amount'] = round($gross_amount, 2);
+        $item['net_amount'] = round($net_amount, 2);
+        $item['tax_amount'] = round($tax_amount, 2);
+
         $total = round($net_amount + $tax_amount, 2);
-        $this->items[$key]['total'] = $total;
+        $item['total'] = $total;
+
         if ($this->sales['other_discount'] && $this->sales['total']) {
             $discount_percentage = ($this->sales['other_discount'] / $this->sales['total']) * 100;
-            $this->items[$key]['effective_total'] = round($total - ($discount_percentage * $total) / 100, 3);
+            $item['effective_total'] = round($total - ($discount_percentage * $total) / 100, 3);
         } else {
-            $this->items[$key]['effective_total'] = $total;
+            $item['effective_total'] = $total;
         }
     }
 
     public function mainCalculator()
     {
+        // Use collection methods for better performance
         $items = collect($this->items);
         $payments = collect($this->payments);
-        $this->sales['gross_amount'] = round($items->sum('gross_amount'), 2);
-        $this->sales['total_quantity'] = round($items->sum('quantity'), 2);
-        $this->sales['item_discount'] = round($items->sum('discount'), 2);
-        $this->sales['tax_amount'] = round($items->sum('tax_amount'), 2);
 
-        $this->sales['total'] = round($items->sum('total'), 2);
+        // Calculate all totals in one pass
+        $totals = $items->reduce(function ($carry, $item) {
+            $carry['gross_amount'] += $item['gross_amount'];
+            $carry['total_quantity'] += $item['quantity'];
+            $carry['item_discount'] += $item['discount'];
+            $carry['tax_amount'] += $item['tax_amount'];
+            $carry['total'] += $item['total'];
+
+            return $carry;
+        }, [
+            'gross_amount' => 0,
+            'total_quantity' => 0,
+            'item_discount' => 0,
+            'tax_amount' => 0,
+            'total' => 0,
+        ]);
+
+        $this->sales['gross_amount'] = round($totals['gross_amount'], 2);
+        $this->sales['total_quantity'] = round($totals['total_quantity'], 2);
+        $this->sales['item_discount'] = round($totals['item_discount'], 2);
+        $this->sales['tax_amount'] = round($totals['tax_amount'], 2);
+        $this->sales['total'] = round($totals['total'], 2);
 
         $this->sales['grand_total'] = $this->sales['total'];
         $this->sales['grand_total'] -= $this->sales['other_discount'];
