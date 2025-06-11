@@ -330,7 +330,13 @@ class Page extends Component
 
         // Only calculate for the new item
         $key = $this->employee_id.'-'.$inventory->id;
-        $this->updateCalculations($key);
+
+        $this->singleCartCalculator($key);
+
+        $this->mainCalculator();
+        if (in_array($this->payment_method_name, ['cash', 'card'])) {
+            $this->selectPaymentMethod($this->payment_method_name);
+        }
     }
 
     public function addToCart($inventory)
@@ -415,15 +421,6 @@ class Page extends Component
         return true;
     }
 
-    protected function updateCalculations($key)
-    {
-        $this->singleCartCalculator($key);
-
-        if (in_array($this->payment_method_name, ['cash', 'card'])) {
-            $this->selectPaymentMethod($this->payment_method_name);
-        }
-    }
-
     public function mainCalculator()
     {
         if (empty($this->items)) {
@@ -433,17 +430,15 @@ class Page extends Component
         }
 
         // Use computed property to avoid recalculating if items haven't changed
-        if ($this->computedItems === $this->items) {
-            return;
-        }
+        // if ($this->computedItems === $this->items) {
+        //     return;
+        // }
 
         $this->computedItems = $this->items;
         $items = collect($this->items);
         $payments = collect($this->payments);
-
         // Calculate totals in a single pass
         $this->computedTotals = $this->calculateTotals($items);
-
         // Update sales data in one go
         $this->updateSalesData($this->computedTotals, $payments->sum('amount'));
     }
@@ -469,7 +464,7 @@ class Page extends Component
 
     protected function updateSalesData($totals, $paidAmount)
     {
-        $this->sales = array_merge($this->sales, [
+        $data = [
             'gross_amount' => round($totals['gross_amount'], 2),
             'total_quantity' => round($totals['total_quantity'], 2),
             'item_discount' => round($totals['item_discount'], 2),
@@ -477,9 +472,9 @@ class Page extends Component
             'total' => round($totals['total'], 2),
             'grand_total' => $this->calculateGrandTotal($totals['total']),
             'paid' => round($paidAmount, 2),
-            'balance' => round($this->calculateGrandTotal($totals['total']) - $paidAmount, 2),
-        ]);
-
+        ];
+        $data['balance'] = round($data['grand_total'] - $paidAmount, 2);
+        $this->sales = array_merge($this->sales, $data);
         $this->payment['amount'] = $this->sales['balance'];
     }
 
