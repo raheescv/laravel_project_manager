@@ -16,10 +16,10 @@ use App\Models\Product;
 use App\Models\Sale;
 use App\Models\User;
 use Exception;
-use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Redis;
 use Livewire\Component;
 
 class Page extends Component
@@ -82,30 +82,84 @@ class Page extends Component
 
     public $default_payment_method_id = 1;
 
+    // Add new properties for caching
+    protected $cachePrefix = 'sale_page_';
+
+    protected $cacheTtl = 3600; // 1 hour
+
+    protected $cacheTtlShort = 300; // 5 minutes
+
+    // Add computed properties to reduce calculations
+    protected $computedTotals = null;
+
+    protected $computedItems = null;
+
     public function mount($table_id = null)
     {
         $this->category_id = 'favorite';
         $this->table_id = $table_id;
 
-        // Cache payment methods for 1 hour since they rarely change
-        $this->paymentMethods = Cache::remember('payment_methods', 3600, function () {
-            return Account::where('id', $this->default_payment_method_id)
-                ->pluck('name', 'id')
-                ->toArray();
+        // Batch load all required data in parallel
+        $this->loadInitialData();
+
+        if ($this->table_id) {
+            $this->loadSaleData();
+        } else {
+            $this->initializeNewSale();
+        }
+
+        $this->getCustomerDetails();
+        $this->dispatch('SelectDropDownValues', $this->sales);
+        $this->getCategories();
+    }
+
+    protected function getCachedData($key, $ttl, $callback)
+    {
+        $serialized = Redis::get($key);
+        if ($serialized) {
+            return unserialize($serialized);
+        }
+
+        $data = $callback();
+        Redis::setex($key, $ttl, serialize($data));
+
+        return $data;
+    }
+
+    protected function loadInitialData()
+    {
+        // Load all initial data in parallel using Redis
+        $data = Redis::pipeline(function ($pipe) {
+            $pipe->get($this->cachePrefix.'payment_methods');
+            $pipe->get($this->cachePrefix.'employees');
+            $pipe->get($this->cachePrefix.'default_payment_method_id');
         });
 
-        // Cache employees for 1 hour
+        // Set payment methods
+        $this->paymentMethods = $this->getCachedData(
+            $this->cachePrefix.'payment_methods',
+            $this->cacheTtl,
+            fn () => Account::where('id', $this->default_payment_method_id)
+                ->pluck('name', 'id')
+                ->toArray()
+        );
+
+        // Set employees
         if (User::employee()->count() > 0) {
-            $this->employees = Cache::remember('employees', 3600, function () {
-                return User::employee()->pluck('name', 'id')->toArray();
-            });
+            $this->employees = $this->getCachedData(
+                $this->cachePrefix.'employees',
+                $this->cacheTtl,
+                fn () => User::employee()->pluck('name', 'id')->toArray()
+            );
             $this->employee_id = User::employee()->first(['id'])->id;
         }
 
-        // Cache configuration for 1 hour
-        $this->default_payment_method_id = Cache::remember('default_payment_method_id', 3600, function () {
-            return Configuration::where('key', 'default_payment_method_id')->value('value') ?? 1;
-        });
+        // Set default payment method
+        $this->default_payment_method_id = $this->getCachedData(
+            $this->cachePrefix.'default_payment_method_id',
+            $this->cacheTtl,
+            fn () => Configuration::where('key', 'default_payment_method_id')->value('value') ?? 1
+        );
 
         $this->payment_method_name = strtolower(Account::find($this->default_payment_method_id)->name);
         $this->payment = [
@@ -114,101 +168,319 @@ class Page extends Component
             'amount' => 0,
             'name' => null,
         ];
+    }
 
-        if ($this->table_id) {
-            // Eager load all relationships in a single query
-            $this->sale = Sale::with([
+    protected function initializeNewSale()
+    {
+        // Cache account data for 1 hour
+        $this->accounts = $this->getCachedData(
+            $this->cachePrefix.'accounts_default',
+            $this->cacheTtl,
+            fn () => Account::where('id', 3)->pluck('name', 'id')->toArray()
+        );
+
+        // Initialize empty arrays
+        $this->items = [];
+        $this->payments = [];
+        $this->comboOffers = [];
+
+        // Initialize sales data with default values
+        $this->sales = [
+            'date' => now()->format('Y-m-d'),
+            'due_date' => now()->format('Y-m-d'),
+            'sale_type' => 'normal',
+            'account_id' => 3,
+            'customer_name' => '',
+            'customer_mobile' => '',
+
+            // Financial fields
+            'gross_amount' => 0,
+            'total_quantity' => 0,
+            'item_discount' => 0,
+            'tax_amount' => 0,
+            'total' => 0,
+            'other_discount' => 0,
+            'freight' => 0,
+            'grand_total' => 0,
+            'paid' => 0,
+            'balance' => 0,
+
+            // Additional fields
+            'address' => null,
+            'rating' => 0,
+            'feedback_type' => 'compliment',
+            'feedback' => null,
+            'status' => 'draft',
+        ];
+
+        // Set test customer mobile in non-production environment
+        if (! app()->isProduction()) {
+            $this->sales['customer_mobile'] = '+919633155669';
+        }
+
+        // Initialize payment data
+        $this->payment = [
+            'payment_method_id' => $this->default_payment_method_id,
+            'payment_method_name' => $this->payment_method_name,
+            'amount' => 0,
+            'name' => null,
+        ];
+
+        // Reset computed properties
+        $this->computedTotals = null;
+        $this->computedItems = null;
+    }
+
+    protected function loadSaleData()
+    {
+        // Load sale data with all relationships in a single query
+        $this->sale = $this->getCachedData(
+            $this->cachePrefix."sale_{$this->table_id}",
+            $this->cacheTtlShort,
+            fn () => Sale::with([
                 'account:id,name,mobile',
                 'branch:id,name',
-                'items.product:id,name,mrp',
-                'items.employee:id,name',
-                'items.assistant:id,name',
+                'items' => function ($query) {
+                    $query->with([
+                        'product:id,name,mrp',
+                        'employee:id,name',
+                        'assistant:id,name',
+                    ]);
+                },
                 'comboOffers.comboOffer:id,name',
                 'createdUser:id,name',
                 'updatedUser:id,name',
                 'cancelledUser:id,name',
                 'payments.paymentMethod:id,name',
-            ])->find($this->table_id);
+            ])->find($this->table_id)
+        );
 
-            if (! $this->sale) {
-                return redirect()->route('sale::index');
-            }
-            $this->sales = $this->sale->toArray();
-            $this->accounts = Account::where('id', $this->sales['account_id'])->pluck('name', 'id')->toArray();
-            // Optimize items collection processing
-            $this->items = $this->sale->items->mapWithKeys(function ($item) {
-                $key = $item['employee_id'].'-'.$item['inventory_id'];
-
-                return [$key => $this->formatItem($item)];
-            })->toArray();
-
-            // Optimize combo offers processing
-            $this->comboOffers = $this->sale->comboOffers->map(function ($package) {
-                $items = collect($this->items)
-                    ->filter(fn ($item) => $item['sale_combo_offer_id'] == $package['id'])
-                    ->map(fn ($item) => array_merge($item, [
-                        'combo_offer_price' => $item['unit_price'] - $item['discount'],
-                    ]))
-                    ->toArray();
-
-                return [
-                    'id' => $package['id'],
-                    'combo_offer_id' => $package['combo_offer_id'],
-                    'amount' => $package['amount'],
-                    'combo_offer_name' => $package->comboOffer?->name,
-                    'items' => $items,
-                ];
-            })->toArray();
-
-            $this->payments = $this->sale->payments->map->only(['id', 'amount', 'date', 'payment_method_id', 'created_by', 'name'])->toArray();
-            if (count($this->payments) > 1) {
-                $this->payment_method_name = 'custom';
-            } elseif (count($this->payments) == 1) {
-                $this->payment_method_name = strtolower($this->payments[0]['name']);
-                if (! in_array($this->payment_method_name, ['cash', 'card'])) {
-                    $this->payment_method_name = 'custom';
-                }
-            }
-            $this->mainCalculator();
-        } else {
-            $this->accounts = Account::where('id', 3)->pluck('name', 'id')->toArray();
-            $this->items = [];
-            $this->payments = [];
-            $this->sales = [
-                'date' => date('Y-m-d'),
-                'due_date' => date('Y-m-d'),
-                'sale_type' => 'normal',
-                'account_id' => 3,
-                'customer_name' => '',
-                'customer_mobile' => '',
-
-                'gross_amount' => 0,
-                'total_quantity' => 0,
-                'item_discount' => 0,
-                'tax_amount' => 0,
-
-                'total' => 0,
-
-                'other_discount' => 0,
-                'freight' => 0,
-                'grand_total' => 0,
-
-                'paid' => 0,
-                'balance' => 0,
-
-                'address' => null,
-                'rating' => 0,
-                'feedback_type' => 'compliment',
-                'feedback' => null,
-                'status' => 'draft',
-            ];
-            if (! app()->isProduction()) {
-                $this->sales['customer_mobile'] = '+919633155669';
-            }
+        if (! $this->sale) {
+            return redirect()->route('sale::index');
         }
-        $this->getCustomerDetails();
-        $this->dispatch('SelectDropDownValues', $this->sales);
-        $this->getCategories();
+
+        $this->processSaleData();
+    }
+
+    protected function processSaleData()
+    {
+        $this->sales = $this->sale->toArray();
+
+        // Process items in batch
+        $this->items = $this->processItems($this->sale->items);
+
+        // Process combo offers in batch
+        $this->comboOffers = $this->processComboOffers($this->sale->comboOffers);
+
+        // Process payments
+        $this->processPayments();
+
+        $this->mainCalculator();
+    }
+
+    protected function processItems($items)
+    {
+        return $items->mapWithKeys(function ($item) {
+            $key = $item['employee_id'].'-'.$item['inventory_id'];
+
+            return [$key => $this->formatItem($item)];
+        })->toArray();
+    }
+
+    protected function processComboOffers($comboOffers)
+    {
+        return $comboOffers->map(function ($package) {
+            $items = collect($this->items)
+                ->filter(fn ($item) => $item['sale_combo_offer_id'] == $package['id'])
+                ->map(fn ($item) => array_merge($item, [
+                    'combo_offer_price' => $item['unit_price'] - $item['discount'],
+                ]))
+                ->toArray();
+
+            return [
+                'id' => $package['id'],
+                'combo_offer_id' => $package['combo_offer_id'],
+                'amount' => $package['amount'],
+                'combo_offer_name' => $package->comboOffer?->name,
+                'items' => $items,
+            ];
+        })->toArray();
+    }
+
+    public function selectItem($id)
+    {
+        // Use Redis for faster inventory lookup
+        $inventory = $this->getCachedData(
+            $this->cachePrefix."inventory_{$id}",
+            $this->cacheTtlShort,
+            fn () => Inventory::with(['product:id,name,mrp'])->find($id)
+        );
+
+        if (! $inventory) {
+            $this->dispatch('error', ['message' => 'Product not found']);
+
+            return false;
+        }
+
+        if (! $this->validateEmployee()) {
+            return false;
+        }
+
+        $this->addToCart($inventory);
+
+        // Only calculate for the new item
+        $key = $this->employee_id.'-'.$inventory->id;
+        $this->updateCalculations($key);
+    }
+
+    public function addToCart($inventory)
+    {
+        $key = $this->employee_id.'-'.$inventory->id;
+        $product = $inventory->product;
+
+        // Pre-calculate sale type price and discount
+        $saleTypePrice = $product->saleTypePrice($this->sales['sale_type']);
+        $discount = $product->mrp - $saleTypePrice;
+
+        $single = [
+            'key' => $key,
+            'inventory_id' => $inventory->id,
+            'barcode' => $inventory->barcode,
+            'employee_id' => $this->employee_id,
+            'employee_name' => $this->employee->name,
+            'assistant_name' => '',
+            'product_id' => $product->id,
+            'name' => $product->name,
+            'unit_price' => $discount > 0 ? $product->mrp : $saleTypePrice,
+            'discount' => $discount > 0 ? $discount : 0,
+            'quantity' => 1,
+            'tax' => 0,
+        ];
+
+        if (isset($this->items[$key])) {
+            $this->items[$key]['quantity'] += 1;
+        } else {
+            $this->items[$key] = $single;
+        }
+
+        // Calculate only for this item
+        $this->singleCartCalculator($key);
+        $this->mainCalculator();
+    }
+
+    public function resetItemsBasedOnType()
+    {
+        foreach ($this->items as $key => $item) {
+            $product = Product::find($item['product_id']);
+
+            $saleTypePrice = $product->saleTypePrice($this->sales['sale_type']);
+            $discount = $product->mrp - $saleTypePrice;
+
+            $this->items[$key]['discount'] = 0;
+            if ($discount > 0) {
+                $this->items[$key]['unit_price'] = $product->mrp;
+                $this->items[$key]['discount'] = $discount;
+            } else {
+                $this->items[$key]['unit_price'] = $saleTypePrice;
+            }
+
+            $this->singleCartCalculator($key);
+        }
+        $this->mainCalculator();
+    }
+
+    protected function validateEmployee()
+    {
+        if (! $this->employee_id) {
+            $this->dispatch('error', ['message' => 'please select your employee first']);
+            $this->dispatch('OpenEmployeeDropBox');
+
+            return false;
+        }
+
+        $this->employee = $this->getCachedData(
+            $this->cachePrefix."employee_{$this->employee_id}",
+            $this->cacheTtlShort,
+            fn () => User::find($this->employee_id)
+        );
+
+        if (! $this->employee) {
+            $this->dispatch('error', ['message' => 'Employee not found']);
+
+            return false;
+        }
+
+        $this->employee_id = $this->employee->id;
+
+        return true;
+    }
+
+    protected function updateCalculations($key)
+    {
+        $this->singleCartCalculator($key);
+
+        if (in_array($this->payment_method_name, ['cash', 'card'])) {
+            $this->selectPaymentMethod($this->payment_method_name);
+        }
+    }
+
+    public function mainCalculator()
+    {
+        if (empty($this->items)) {
+            $this->resetSalesTotals();
+
+            return;
+        }
+
+        // Use computed property to avoid recalculating if items haven't changed
+        if ($this->computedItems === $this->items) {
+            return;
+        }
+
+        $this->computedItems = $this->items;
+        $items = collect($this->items);
+        $payments = collect($this->payments);
+
+        // Calculate totals in a single pass
+        $this->computedTotals = $this->calculateTotals($items);
+
+        // Update sales data in one go
+        $this->updateSalesData($this->computedTotals, $payments->sum('amount'));
+    }
+
+    protected function calculateTotals($items)
+    {
+        return $items->reduce(function ($carry, $item) {
+            $carry['gross_amount'] += $item['gross_amount'];
+            $carry['total_quantity'] += $item['quantity'];
+            $carry['item_discount'] += $item['discount'];
+            $carry['tax_amount'] += $item['tax_amount'];
+            $carry['total'] += $item['total'];
+
+            return $carry;
+        }, [
+            'gross_amount' => 0,
+            'total_quantity' => 0,
+            'item_discount' => 0,
+            'tax_amount' => 0,
+            'total' => 0,
+        ]);
+    }
+
+    protected function updateSalesData($totals, $paidAmount)
+    {
+        $this->sales = array_merge($this->sales, [
+            'gross_amount' => round($totals['gross_amount'], 2),
+            'total_quantity' => round($totals['total_quantity'], 2),
+            'item_discount' => round($totals['item_discount'], 2),
+            'tax_amount' => round($totals['tax_amount'], 2),
+            'total' => round($totals['total'], 2),
+            'grand_total' => $this->calculateGrandTotal($totals['total']),
+            'paid' => round($paidAmount, 2),
+            'balance' => round($this->calculateGrandTotal($totals['total']) - $paidAmount, 2),
+        ]);
+
+        $this->payment['amount'] = $this->sales['balance'];
     }
 
     protected function formatItem($item)
@@ -436,51 +708,6 @@ class Page extends Component
         return $total;
     }
 
-    public function mainCalculator()
-    {
-        if (empty($this->items)) {
-            $this->resetSalesTotals();
-
-            return;
-        }
-
-        // Use collection methods for better performance
-        $items = collect($this->items);
-        $payments = collect($this->payments);
-
-        // Calculate all totals in one pass using reduce
-        $totals = $items->reduce(function ($carry, $item) {
-            $carry['gross_amount'] += $item['gross_amount'];
-            $carry['total_quantity'] += $item['quantity'];
-            $carry['item_discount'] += $item['discount'];
-            $carry['tax_amount'] += $item['tax_amount'];
-            $carry['total'] += $item['total'];
-
-            return $carry;
-        }, [
-            'gross_amount' => 0,
-            'total_quantity' => 0,
-            'item_discount' => 0,
-            'tax_amount' => 0,
-            'total' => 0,
-        ]);
-
-        // Update sales totals in one go
-        $this->sales = array_merge($this->sales, [
-            'gross_amount' => round($totals['gross_amount'], 2),
-            'total_quantity' => round($totals['total_quantity'], 2),
-            'item_discount' => round($totals['item_discount'], 2),
-            'tax_amount' => round($totals['tax_amount'], 2),
-            'total' => round($totals['total'], 2),
-            'grand_total' => $this->calculateGrandTotal($totals['total']),
-            'paid' => round($payments->sum('amount'), 2),
-        ]);
-
-        // Calculate final balance
-        $this->sales['balance'] = round($this->sales['grand_total'] - $this->sales['paid'], 2);
-        $this->payment['amount'] = $this->sales['balance'];
-    }
-
     protected function calculateGrandTotal($total)
     {
         $grandTotal = $total;
@@ -503,108 +730,6 @@ class Page extends Component
             'balance' => 0,
         ]);
         $this->payment['amount'] = 0;
-    }
-
-    public function selectItem($id)
-    {
-        // Cache inventory with product data for 1 hour
-        $inventory = Cache::remember("inventory_{$id}", 3600, function () use ($id) {
-            return Inventory::with(['product:id,name,mrp'])->find($id);
-        });
-
-        if (! $inventory) {
-            $this->dispatch('error', ['message' => 'Product not found']);
-
-            return false;
-        }
-
-        // Cache employee data for 1 hour
-        if (! $this->employee_id) {
-            $this->dispatch('error', ['message' => 'please select your employee first']);
-            $this->dispatch('OpenEmployeeDropBox');
-
-            return false;
-        }
-
-        $this->employee = Cache::remember("employee_{$this->employee_id}", 3600, function () {
-            return User::find($this->employee_id);
-        });
-
-        if (! $this->employee) {
-            $this->dispatch('error', ['message' => 'Employee not found']);
-
-            return false;
-        }
-
-        $this->employee_id = $this->employee->id;
-
-        // Optimize addToCart by passing pre-loaded data
-        $this->addToCart($inventory);
-
-        // Calculate only for the new item
-        $key = $this->employee_id.'-'.$inventory->id;
-        $this->cartCalculator($key);
-
-        // Only update payment if needed
-        if (in_array($this->payment_method_name, ['cash', 'card'])) {
-            $this->selectPaymentMethod($this->payment_method_name);
-        }
-    }
-
-    public function addToCart($inventory)
-    {
-        $key = $this->employee_id.'-'.$inventory->id;
-        $product = $inventory->product;
-
-        // Pre-calculate sale type price and discount
-        $saleTypePrice = $product->saleTypePrice($this->sales['sale_type']);
-        $discount = $product->mrp - $saleTypePrice;
-
-        $single = [
-            'key' => $key,
-            'inventory_id' => $inventory->id,
-            'barcode' => $inventory->barcode,
-            'employee_id' => $this->employee_id,
-            'employee_name' => $this->employee->name,
-            'assistant_name' => '',
-            'product_id' => $product->id,
-            'name' => $product->name,
-            'unit_price' => $discount > 0 ? $product->mrp : $saleTypePrice,
-            'discount' => $discount > 0 ? $discount : 0,
-            'quantity' => 1,
-            'tax' => 0,
-        ];
-
-        if (isset($this->items[$key])) {
-            $this->items[$key]['quantity'] += 1;
-        } else {
-            $this->items[$key] = $single;
-        }
-
-        // Calculate only for this item
-        $this->singleCartCalculator($key);
-        $this->mainCalculator();
-    }
-
-    public function resetItemsBasedOnType()
-    {
-        foreach ($this->items as $key => $item) {
-            $product = Product::find($item['product_id']);
-
-            $saleTypePrice = $product->saleTypePrice($this->sales['sale_type']);
-            $discount = $product->mrp - $saleTypePrice;
-
-            $this->items[$key]['discount'] = 0;
-            if ($discount > 0) {
-                $this->items[$key]['unit_price'] = $product->mrp;
-                $this->items[$key]['discount'] = $discount;
-            } else {
-                $this->items[$key]['unit_price'] = $saleTypePrice;
-            }
-
-            $this->singleCartCalculator($key);
-        }
-        $this->mainCalculator();
     }
 
     public function removeSyncItemFromViewItem($index)
@@ -796,14 +921,14 @@ class Page extends Component
             $account = Account::find($this->sales['account_id']);
             $customer = $account->name.'@'.$account->mobile;
         }
-
-        $this->dispatch('show-confirmation', [
+        $data = [
             'customer' => $customer,
-            'grand_total' => currency($this->sales['grand_total']),
-            'paid' => currency($this->sales['paid']),
+            'grand_total' => ($this->sales['grand_total']),
+            'paid' => ($this->sales['paid']),
             'payment_methods' => $payment_methods,
-            'balance' => currency($this->sales['balance']),
-        ]);
+            'balance' => ($this->sales['balance']),
+        ];
+        $this->dispatch('show-confirmation', $data);
     }
 
     public function renderConfirmationDialog($customer, $grandTotal, $paid, $balance, $paymentMethods = null)

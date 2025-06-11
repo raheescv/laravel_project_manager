@@ -33,7 +33,7 @@
                     Grand Total
                 </td>
                 <td style="padding: 12px 15px; text-align: right; font-weight: 600; color: #28a745;">
-                    {{ $grandTotal }}
+                    {{ currency($grandTotal) }}
                 </td>
             </tr>
             <tr style="border-bottom: 1px solid #dee2e6;">
@@ -42,7 +42,7 @@
                     Paid Amount
                 </td>
                 <td style="padding: 12px 15px; text-align: right; font-weight: 500; color: #007bff;">
-                    {{ $paid }}
+                    {{ currency($paid) }}
                 </td>
             </tr>
             <tr style="background: {{ $balance === 0 ? '#f8f9fa' : ($balance > 0 ? '#fff5f5' : '#fffbf0') }};">
