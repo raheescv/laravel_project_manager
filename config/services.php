@@ -42,4 +42,7 @@ return [
         'refresh_token' => env('FYERS_REFRESH_TOKEN'),
         'auth_code' => env('FYERS_AUTH_CODE'),
     ],
+    'id_scanner' => [
+        'url' => env('ID_SCANNER_URL', 'http://localhost:5000'),
+    ],
 ];

@@ -8,6 +8,7 @@ use App\Http\Controllers\HealthController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\ImageGenComfyController;
 use App\Http\Controllers\NotificationController;
+use App\Http\Controllers\PhysicalVisitorController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\UserAttendanceController;
 use App\Http\Controllers\UserController;
@@ -55,4 +56,14 @@ Route::middleware('auth')->group(function (): void {
     Route::get('visitor-analytics', [VisitorAnalyticsController::class, 'index'])->name('visitor-analytics')->can('visitor analytics.view');
 
     Route::get('health', [HealthController::class, 'index'])->name('health')->can('system health.view');
+});
+
+// Physical Visitor Management Routes
+Route::middleware(['auth'])->group(function () {
+    Route::get('/visitors', [PhysicalVisitorController::class, 'index'])->name('visitors.index');
+    Route::get('/visitors/create', [PhysicalVisitorController::class, 'create'])->name('visitors.create');
+    Route::post('/visitors', [PhysicalVisitorController::class, 'store'])->name('visitors.store');
+    Route::get('/visitors/{visitor}', [PhysicalVisitorController::class, 'show'])->name('visitors.show');
+    Route::post('/visitors/{visitor}/checkout', [PhysicalVisitorController::class, 'checkout'])->name('visitors.checkout');
+    Route::get('/visitors/stats', [PhysicalVisitorController::class, 'stats'])->name('visitors.stats');
 });
