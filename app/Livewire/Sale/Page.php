@@ -328,12 +328,6 @@ class Page extends Component
 
         $this->addToCart($inventory);
 
-        // Only calculate for the new item
-        $key = $this->employee_id.'-'.$inventory->id;
-
-        $this->singleCartCalculator($key);
-
-        $this->mainCalculator();
         if (in_array($this->payment_method_name, ['cash', 'card'])) {
             $this->selectPaymentMethod($this->payment_method_name);
         }
