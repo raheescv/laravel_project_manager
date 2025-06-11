@@ -272,7 +272,7 @@
                                 </div>
                             </div>
                         @else
-                            O/S
+                            Out of stock
                         @endif
                     </div>
                 @endif
