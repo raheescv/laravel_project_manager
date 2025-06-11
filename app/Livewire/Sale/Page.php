@@ -136,8 +136,26 @@ class Page extends Component
             return unserialize($serialized);
         }
 
-        // Fallback to regular cache
-        return Cache::tags($tags)->remember($cacheKey, $ttl, $callback);
+        // Check if cache store supports tagging
+        if ($this->cacheSupportsTagging()) {
+            return Cache::tags($tags)->remember($cacheKey, $ttl, $callback);
+        }
+
+        // Fallback to regular cache without tags
+        return Cache::remember($cacheKey, $ttl, $callback);
+    }
+
+    /**
+     * Check if the current cache store supports tagging
+     */
+    protected function cacheSupportsTagging()
+    {
+        $store = Cache::getStore();
+
+        return method_exists($store, 'tags') && (
+            $store instanceof \Illuminate\Cache\RedisStore ||
+            $store instanceof \Illuminate\Cache\MemcachedStore
+        );
     }
 
     // DATA LOADING METHODS
@@ -1089,7 +1107,7 @@ class Page extends Component
     protected function processSaleTransaction($saleData)
     {
         // Clear relevant caches before saving
-        Cache::tags(['sales', 'accounts', 'ledgers'])->flush();
+        $this->clearCaches(['sales', 'accounts', 'ledgers']);
 
         $user_id = Auth::id();
         $response = $this->table_id
@@ -1101,6 +1119,43 @@ class Page extends Component
         }
 
         return $response;
+    }
+
+    /**
+     * Clear caches with support for both tagged and non-tagged cache stores
+     */
+    protected function clearCaches($tags = [])
+    {
+        if ($this->cacheSupportsTagging() && ! empty($tags)) {
+            Cache::tags($tags)->flush();
+        } else {
+            // For cache stores that don't support tagging, clear specific keys
+            $this->clearSpecificCacheKeys($tags);
+        }
+    }
+
+    /**
+     * Clear specific cache keys when tagging is not supported
+     */
+    protected function clearSpecificCacheKeys($tags = [])
+    {
+        $keysToFlush = [
+            self::CACHE_PREFIX.'payment_methods',
+            self::CACHE_PREFIX.'employees',
+            self::CACHE_PREFIX.'default_payment_method_id',
+            self::CACHE_PREFIX.'accounts_default',
+            self::CACHE_PREFIX.'categories_with_products',
+        ];
+
+        // Add dynamic keys if table_id exists
+        if ($this->table_id) {
+            $keysToFlush[] = self::CACHE_PREFIX."sale_{$this->table_id}";
+            $keysToFlush[] = self::CACHE_PREFIX."account_balance_{$this->sales['account_id']}";
+        }
+
+        foreach ($keysToFlush as $key) {
+            Cache::forget($key);
+        }
     }
 
     protected function dispatchSuccessMessage($message)
