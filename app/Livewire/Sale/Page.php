@@ -403,33 +403,52 @@ class Page extends Component
 
     public function singleCartCalculator($key)
     {
+        if (! isset($this->items[$key])) {
+            return;
+        }
+
         $item = &$this->items[$key];
+
+        // Pre-calculate values to avoid multiple calculations
         $gross_amount = $item['unit_price'] * $item['quantity'];
         $net_amount = $gross_amount - $item['discount'];
-        $tax_amount = $net_amount * $item['tax'] / 100;
-
-        $item['gross_amount'] = round($gross_amount, 2);
-        $item['net_amount'] = round($net_amount, 2);
-        $item['tax_amount'] = round($tax_amount, 2);
-
+        $tax_amount = $net_amount * ($item['tax'] / 100);
         $total = round($net_amount + $tax_amount, 2);
-        $item['total'] = $total;
 
+        // Update item values in one go
+        $item = array_merge($item, [
+            'gross_amount' => round($gross_amount, 2),
+            'net_amount' => round($net_amount, 2),
+            'tax_amount' => round($tax_amount, 2),
+            'total' => $total,
+            'effective_total' => $this->calculateEffectiveTotal($total),
+        ]);
+    }
+
+    protected function calculateEffectiveTotal($total)
+    {
         if ($this->sales['other_discount'] && $this->sales['total']) {
             $discount_percentage = ($this->sales['other_discount'] / $this->sales['total']) * 100;
-            $item['effective_total'] = round($total - ($discount_percentage * $total) / 100, 3);
-        } else {
-            $item['effective_total'] = $total;
+
+            return round($total - ($discount_percentage * $total) / 100, 3);
         }
+
+        return $total;
     }
 
     public function mainCalculator()
     {
+        if (empty($this->items)) {
+            $this->resetSalesTotals();
+
+            return;
+        }
+
         // Use collection methods for better performance
         $items = collect($this->items);
         $payments = collect($this->payments);
 
-        // Calculate all totals in one pass
+        // Calculate all totals in one pass using reduce
         $totals = $items->reduce(function ($carry, $item) {
             $carry['gross_amount'] += $item['gross_amount'];
             $carry['total_quantity'] += $item['quantity'];
@@ -446,39 +465,125 @@ class Page extends Component
             'total' => 0,
         ]);
 
-        $this->sales['gross_amount'] = round($totals['gross_amount'], 2);
-        $this->sales['total_quantity'] = round($totals['total_quantity'], 2);
-        $this->sales['item_discount'] = round($totals['item_discount'], 2);
-        $this->sales['tax_amount'] = round($totals['tax_amount'], 2);
-        $this->sales['total'] = round($totals['total'], 2);
+        // Update sales totals in one go
+        $this->sales = array_merge($this->sales, [
+            'gross_amount' => round($totals['gross_amount'], 2),
+            'total_quantity' => round($totals['total_quantity'], 2),
+            'item_discount' => round($totals['item_discount'], 2),
+            'tax_amount' => round($totals['tax_amount'], 2),
+            'total' => round($totals['total'], 2),
+            'grand_total' => $this->calculateGrandTotal($totals['total']),
+            'paid' => round($payments->sum('amount'), 2),
+        ]);
 
-        $this->sales['grand_total'] = $this->sales['total'];
-        $this->sales['grand_total'] -= $this->sales['other_discount'];
-        $this->sales['grand_total'] += $this->sales['freight'];
-        $this->sales['grand_total'] = round($this->sales['grand_total'], 2);
-
-        $this->sales['paid'] = round($payments->sum('amount'), 2);
+        // Calculate final balance
         $this->sales['balance'] = round($this->sales['grand_total'] - $this->sales['paid'], 2);
-        $this->payment['amount'] = round($this->sales['balance'], 2);
+        $this->payment['amount'] = $this->sales['balance'];
+    }
+
+    protected function calculateGrandTotal($total)
+    {
+        $grandTotal = $total;
+        $grandTotal -= $this->sales['other_discount'];
+        $grandTotal += $this->sales['freight'];
+
+        return round($grandTotal, 2);
+    }
+
+    protected function resetSalesTotals()
+    {
+        $this->sales = array_merge($this->sales, [
+            'gross_amount' => 0,
+            'total_quantity' => 0,
+            'item_discount' => 0,
+            'tax_amount' => 0,
+            'total' => 0,
+            'grand_total' => 0,
+            'paid' => 0,
+            'balance' => 0,
+        ]);
+        $this->payment['amount'] = 0;
     }
 
     public function selectItem($id)
     {
-        $inventory = Inventory::find($id);
+        // Cache inventory with product data for 1 hour
+        $inventory = Cache::remember("inventory_{$id}", 3600, function () use ($id) {
+            return Inventory::with(['product:id,name,mrp'])->find($id);
+        });
+
+        if (! $inventory) {
+            $this->dispatch('error', ['message' => 'Product not found']);
+
+            return false;
+        }
+
+        // Cache employee data for 1 hour
         if (! $this->employee_id) {
             $this->dispatch('error', ['message' => 'please select your employee first']);
             $this->dispatch('OpenEmployeeDropBox');
 
             return false;
         }
-        $this->employee = User::find($this->employee_id);
+
+        $this->employee = Cache::remember("employee_{$this->employee_id}", 3600, function () {
+            return User::find($this->employee_id);
+        });
+
+        if (! $this->employee) {
+            $this->dispatch('error', ['message' => 'Employee not found']);
+
+            return false;
+        }
+
         $this->employee_id = $this->employee->id;
+
+        // Optimize addToCart by passing pre-loaded data
         $this->addToCart($inventory);
-        $this->cartCalculator($this->employee_id.'-'.$inventory->id);
+
+        // Calculate only for the new item
+        $key = $this->employee_id.'-'.$inventory->id;
+        $this->cartCalculator($key);
+
+        // Only update payment if needed
         if (in_array($this->payment_method_name, ['cash', 'card'])) {
             $this->selectPaymentMethod($this->payment_method_name);
         }
-        // $this->dispatch('OpenProductBox');
+    }
+
+    public function addToCart($inventory)
+    {
+        $key = $this->employee_id.'-'.$inventory->id;
+        $product = $inventory->product;
+
+        // Pre-calculate sale type price and discount
+        $saleTypePrice = $product->saleTypePrice($this->sales['sale_type']);
+        $discount = $product->mrp - $saleTypePrice;
+
+        $single = [
+            'key' => $key,
+            'inventory_id' => $inventory->id,
+            'barcode' => $inventory->barcode,
+            'employee_id' => $this->employee_id,
+            'employee_name' => $this->employee->name,
+            'assistant_name' => '',
+            'product_id' => $product->id,
+            'name' => $product->name,
+            'unit_price' => $discount > 0 ? $product->mrp : $saleTypePrice,
+            'discount' => $discount > 0 ? $discount : 0,
+            'quantity' => 1,
+            'tax' => 0,
+        ];
+
+        if (isset($this->items[$key])) {
+            $this->items[$key]['quantity'] += 1;
+        } else {
+            $this->items[$key] = $single;
+        }
+
+        // Calculate only for this item
+        $this->singleCartCalculator($key);
+        $this->mainCalculator();
     }
 
     public function resetItemsBasedOnType()
@@ -500,45 +605,6 @@ class Page extends Component
             $this->singleCartCalculator($key);
         }
         $this->mainCalculator();
-    }
-
-    public function addToCart($inventory)
-    {
-        $key = $this->employee_id.'-'.$inventory->id;
-        $product_id = $inventory->product_id;
-        $product = $inventory->product;
-        $single = [
-            'key' => $key,
-            'inventory_id' => $inventory->id,
-            'barcode' => $inventory->barcode,
-            'employee_id' => $this->employee_id,
-            'employee_name' => $this->employee->name,
-            'assistant_name' => '',
-            'product_id' => $product_id,
-            'name' => $product->name,
-            'unit_price' => $product->mrp,
-            'discount' => 0,
-            'quantity' => 1,
-            'tax' => 0,
-        ];
-        $saleTypePrice = $product->saleTypePrice($this->sales['sale_type']);
-        $discount = $product->mrp - $saleTypePrice;
-
-        if ($discount > 0) {
-            $single['unit_price'] = $product->mrp;
-            $single['discount'] = $discount;
-        } else {
-            $single['unit_price'] = $saleTypePrice;
-        }
-
-        if (isset($this->items[$key])) {
-            $this->items[$key]['quantity'] += 1;
-        } else {
-            $this->items[$key] = $single;
-        }
-        $this->singleCartCalculator($key);
-        $this->mainCalculator();
-        // $this->dispatch('success', ['message' => 'item added successfully']);
     }
 
     public function removeSyncItemFromViewItem($index)
