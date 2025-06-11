@@ -160,7 +160,6 @@
                                 <th class="text-white text-end">Paid</th>
                                 <th class="text-white text-end">Balance</th>
                                 <th class="text-white">Rating</th>
-                                <th class="text-white">Feedback</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -182,8 +181,13 @@
                                                 </div>
                                             </div>
                                         </td>
-                                        <td>{{ $value->feedback }}</td>
                                     </tr>
+                                    @if ($value->feedback)
+                                        <tr>
+                                            <td></td>
+                                            <td colspan="6">{{ $value->feedback }}</td>
+                                        </tr>
+                                    @endif
                                 @endforeach
                             @endif
                         </tbody>
