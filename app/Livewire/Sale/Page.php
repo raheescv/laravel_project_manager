@@ -24,25 +24,6 @@ use Livewire\Component;
 
 class Page extends Component
 {
-    // Cache Configuration
-    protected const CACHE_PREFIX = 'sale_page_';
-
-    protected const CACHE_TTL = 3600; // 1 hour
-
-    protected const CACHE_TTL_SHORT = 300; // 5 minutes
-
-    protected const CACHE_TTL_VERY_SHORT = 60; // 1 minute
-
-    // Computed Properties Cache
-    protected $computedTotals = null;
-
-    protected $computedItems = null;
-
-    protected $computedCategories = null;
-
-    protected $computedAccounts = null;
-
-    // Livewire Listeners
     protected $listeners = [
         'Sale-Custom-Payment-Confirmed' => 'collectPayments',
         'Sale-Edited-Items-Component' => 'editedItems',
@@ -53,7 +34,6 @@ class Page extends Component
         'Save-Sale-Feedback' => 'saveFeedback',
     ];
 
-    // Public Properties
     public $categories;
 
     public $categoryCount;
@@ -84,7 +64,6 @@ class Page extends Component
 
     public $send_to_whatsapp;
 
-    // Sale Data
     public $items = [];
 
     public $payment = [];
@@ -103,7 +82,17 @@ class Page extends Component
 
     public $default_payment_method_id = 1;
 
-    // LIFECYCLE METHODS
+    // Add new properties for caching
+    protected $cachePrefix = 'sale_page_';
+
+    protected $cacheTtl = 3600; // 1 hour
+
+    protected $cacheTtlShort = 300; // 5 minutes
+
+    // Add computed properties to reduce calculations
+    protected $computedTotals = null;
+
+    protected $computedItems = null;
 
     public function mount($table_id = null)
     {
@@ -124,90 +113,55 @@ class Page extends Component
         $this->getCategories();
     }
 
-    // CACHE METHODS
-
-    protected function getCachedData($key, $ttl, $callback, $tags = [])
+    protected function getCachedData($key, $ttl, $callback)
     {
-        $cacheKey = self::CACHE_PREFIX.$key;
-
-        // Try Redis first for faster access
-        $serialized = Redis::get($cacheKey);
+        $serialized = Redis::get($key);
         if ($serialized) {
             return unserialize($serialized);
         }
 
-        // Check if cache store supports tagging
-        if ($this->cacheSupportsTagging()) {
-            return Cache::tags($tags)->remember($cacheKey, $ttl, $callback);
-        }
+        $data = $callback();
+        Redis::setex($key, $ttl, serialize($data));
 
-        // Fallback to regular cache without tags
-        return Cache::remember($cacheKey, $ttl, $callback);
+        return $data;
     }
-
-    /**
-     * Check if the current cache store supports tagging
-     */
-    protected function cacheSupportsTagging()
-    {
-        $store = Cache::getStore();
-
-        return method_exists($store, 'tags') && (
-            $store instanceof \Illuminate\Cache\RedisStore ||
-            $store instanceof \Illuminate\Cache\MemcachedStore
-        );
-    }
-
-    // DATA LOADING METHODS
 
     protected function loadInitialData()
     {
-        // Use Redis pipeline for parallel data loading
+        // Load all initial data in parallel using Redis
         $data = Redis::pipeline(function ($pipe) {
-            $pipe->get(self::CACHE_PREFIX.'payment_methods');
-            $pipe->get(self::CACHE_PREFIX.'employees');
-            $pipe->get(self::CACHE_PREFIX.'default_payment_method_id');
+            $pipe->get($this->cachePrefix.'payment_methods');
+            $pipe->get($this->cachePrefix.'employees');
+            $pipe->get($this->cachePrefix.'default_payment_method_id');
         });
 
-        // Load payment methods with eager loading
+        // Set payment methods
         $this->paymentMethods = $this->getCachedData(
-            'payment_methods',
-            self::CACHE_TTL,
-            fn () => Account::select('id', 'name')
-                ->where('id', $this->default_payment_method_id)
+            $this->cachePrefix.'payment_methods',
+            $this->cacheTtl,
+            fn () => Account::where('id', $this->default_payment_method_id)
                 ->pluck('name', 'id')
-                ->toArray(),
-            ['accounts']
+                ->toArray()
         );
 
-        // Load employees with eager loading
-        if (User::employee()->exists()) {
+        // Set employees
+        if (User::employee()->count() > 0) {
             $this->employees = $this->getCachedData(
-                'employees',
-                self::CACHE_TTL,
-                fn () => User::employee()
-                    ->select('id', 'name')
-                    ->pluck('name', 'id')
-                    ->toArray(),
-                ['users']
+                $this->cachePrefix.'employees',
+                $this->cacheTtl,
+                fn () => User::employee()->pluck('name', 'id')->toArray()
             );
-            $this->employee_id = User::employee()->value('id');
+            $this->employee_id = User::employee()->first(['id'])->id;
         }
 
-        // Load default payment method
+        // Set default payment method
         $this->default_payment_method_id = $this->getCachedData(
-            'default_payment_method_id',
-            self::CACHE_TTL,
-            fn () => Configuration::where('key', 'default_payment_method_id')->value('value') ?? 1,
-            ['configurations']
+            $this->cachePrefix.'default_payment_method_id',
+            $this->cacheTtl,
+            fn () => Configuration::where('key', 'default_payment_method_id')->value('value') ?? 1
         );
 
         $this->payment_method_name = strtolower(Account::find($this->default_payment_method_id)->name);
-        $this->initializePayment();
-    }
-
-    protected function initializePayment()
-    {
         $this->payment = [
             'payment_method_id' => $this->default_payment_method_id,
             'payment_method_name' => $this->payment_method_name,
@@ -220,8 +174,8 @@ class Page extends Component
     {
         // Cache account data for 1 hour
         $this->accounts = $this->getCachedData(
-            'accounts_default',
-            self::CACHE_TTL,
+            $this->cachePrefix.'accounts_default',
+            $this->cacheTtl,
             fn () => Account::where('id', 3)->pluck('name', 'id')->toArray()
         );
 
@@ -279,21 +233,15 @@ class Page extends Component
 
     protected function loadSaleData()
     {
-        // Optimize sale loading with eager loading and specific columns
+        // Load sale data with all relationships in a single query
         $this->sale = $this->getCachedData(
-            "sale_{$this->table_id}",
-            self::CACHE_TTL_SHORT,
+            $this->cachePrefix."sale_{$this->table_id}",
+            $this->cacheTtlShort,
             fn () => Sale::with([
                 'account:id,name,mobile',
                 'branch:id,name',
                 'items' => function ($query) {
-                    $query->select([
-                        'id', 'employee_id', 'assistant_id', 'inventory_id',
-                        'product_id', 'sale_combo_offer_id', 'name', 'employee_name',
-                        'assistant_name', 'tax_amount', 'unit_price', 'quantity',
-                        'gross_amount', 'discount', 'tax', 'total', 'effective_total',
-                        'created_by',
-                    ])->with([
+                    $query->with([
                         'product:id,name,mrp',
                         'employee:id,name',
                         'assistant:id,name',
@@ -304,8 +252,7 @@ class Page extends Component
                 'updatedUser:id,name',
                 'cancelledUser:id,name',
                 'payments.paymentMethod:id,name',
-            ])->find($this->table_id),
-            ['sales']
+            ])->find($this->table_id)
         );
 
         if (! $this->sale) {
@@ -329,6 +276,36 @@ class Page extends Component
         $this->processPayments();
 
         $this->mainCalculator();
+    }
+
+    protected function processPayments()
+    {
+        if (! $this->sale) {
+            return;
+        }
+
+        $this->payments = $this->sale->payments->map(function ($payment) {
+            return [
+                'id' => $payment->id,
+                'payment_method_id' => $payment->payment_method_id,
+                'payment_method_name' => $payment->paymentMethod->name,
+                'amount' => $payment->amount,
+                'date' => $payment->date,
+                'name' => $payment->name,
+                'created_by' => $payment->created_by,
+            ];
+        })->toArray();
+
+        // Set default payment method if no payments exist
+        if (empty($this->payments)) {
+            $this->payment_method_name = strtolower(Account::find($this->default_payment_method_id)->name);
+            $this->payment = [
+                'payment_method_id' => $this->default_payment_method_id,
+                'payment_method_name' => $this->payment_method_name,
+                'amount' => $this->sales['balance'],
+                'name' => null,
+            ];
+        }
     }
 
     protected function processItems($items)
@@ -364,8 +341,8 @@ class Page extends Component
     {
         // Use Redis for faster inventory lookup
         $inventory = $this->getCachedData(
-            "inventory_{$id}",
-            self::CACHE_TTL_SHORT,
+            $this->cachePrefix."inventory_{$id}",
+            $this->cacheTtlShort,
             fn () => Inventory::with(['product:id,name,mrp'])->find($id)
         );
 
@@ -391,24 +368,11 @@ class Page extends Component
         $key = $this->employee_id.'-'.$inventory->id;
         $product = $inventory->product;
 
-        $itemData = $this->createItemData($key, $inventory, $product);
-
-        if (isset($this->items[$key])) {
-            $this->items[$key]['quantity'] += 1;
-        } else {
-            $this->items[$key] = $itemData;
-        }
-
-        $this->singleCartCalculator($key);
-        $this->mainCalculator();
-    }
-
-    protected function createItemData($key, $inventory, $product)
-    {
+        // Pre-calculate sale type price and discount
         $saleTypePrice = $product->saleTypePrice($this->sales['sale_type']);
         $discount = $product->mrp - $saleTypePrice;
 
-        return [
+        $single = [
             'key' => $key,
             'inventory_id' => $inventory->id,
             'barcode' => $inventory->barcode,
@@ -422,6 +386,16 @@ class Page extends Component
             'quantity' => 1,
             'tax' => 0,
         ];
+
+        if (isset($this->items[$key])) {
+            $this->items[$key]['quantity'] += 1;
+        } else {
+            $this->items[$key] = $single;
+        }
+
+        // Calculate only for this item
+        $this->singleCartCalculator($key);
+        $this->mainCalculator();
     }
 
     public function resetItemsBasedOnType()
@@ -455,8 +429,8 @@ class Page extends Component
         }
 
         $this->employee = $this->getCachedData(
-            "employee_{$this->employee_id}",
-            self::CACHE_TTL_SHORT,
+            $this->cachePrefix."employee_{$this->employee_id}",
+            $this->cacheTtlShort,
             fn () => User::find($this->employee_id)
         );
 
@@ -471,8 +445,6 @@ class Page extends Component
         return true;
     }
 
-    // CALCULATION METHODS
-
     public function mainCalculator()
     {
         if (empty($this->items)) {
@@ -482,17 +454,15 @@ class Page extends Component
         }
 
         // Use computed property to avoid recalculating if items haven't changed
-        if ($this->computedItems === $this->items) {
-            return;
-        }
+        // if ($this->computedItems === $this->items) {
+        //     return;
+        // }
 
         $this->computedItems = $this->items;
         $items = collect($this->items);
         $payments = collect($this->payments);
-
-        // Calculate totals in a single pass using array_reduce
+        // Calculate totals in a single pass
         $this->computedTotals = $this->calculateTotals($items);
-
         // Update sales data in one go
         $this->updateSalesData($this->computedTotals, $payments->sum('amount'));
     }
@@ -559,113 +529,69 @@ class Page extends Component
 
     public function getCategories()
     {
-        // Optimize category loading with eager loading and caching
-        $this->categories = $this->getCachedData(
-            'categories_with_products',
-            self::CACHE_TTL,
-            fn () => Category::withCount('products')
+        // Cache categories for 1 hour
+        $this->categories = Cache::remember('categories_with_products', 3600, function () {
+            return Category::withCount('products')
                 ->having('products_count', '>', 0)
                 ->when($this->category_key, function ($query, $value) {
                     return $query->where('name', 'LIKE', '%'.$value.'%');
                 })
                 ->orderBy('name')
                 ->get()
-                ->toArray(),
-            ['categories']
-        );
-
+                ->toArray();
+        });
         $this->categoryCount = count($this->categories);
     }
 
     public function updated($key, $value)
     {
-        // Handle item updates
         if (preg_match('/^items\..*/', $key)) {
-            $this->handleItemUpdate($key, $value);
-
-            return;
-        }
-
-        // Handle specific field updates
-        match ($key) {
-            'sales.other_discount' => $this->handleDiscountUpdate($value),
-            'sales.freight' => $this->handleFreightUpdate($value),
-            'barcode_key' => $this->handleBarcodeUpdate($value),
-            'sales.sale_type' => $this->handleSaleTypeUpdate(),
-            'sales.account_id' => $this->getCustomerDetails(),
-            'product_key' => $this->dispatchProductUpdate(),
-            default => null
-        };
-    }
-
-    protected function handleItemUpdate($key, $value)
-    {
-        $indexes = explode('.', $key);
-        $index = $indexes[1] ?? null;
-
-        if (! is_numeric($value)) {
-            $this->items[$index][$indexes[2]] = 0;
-        }
-
-        $this->cartCalculator($index);
-        $this->mainCalculator();
-    }
-
-    protected function handleDiscountUpdate($value)
-    {
-        // Handle percentage discount
-        if (str_ends_with($value, '%')) {
-            $percentage = rtrim($value, '%');
-            $value = round($this->sales['total'] / 100 * $percentage, 2);
-
-            if ($value > $this->sales['total']) {
-                $value = $percentage;
+            $indexes = explode('.', $key);
+            $index = $indexes[1] ?? null;
+            if (! is_numeric($value)) {
+                $this->items[$index][$indexes[2]] = 0;
             }
-
-            $this->sales['other_discount'] = $value;
+            $this->cartCalculator($index);
+            $this->mainCalculator();
         }
-
-        // Ensure numeric value
-        if (! is_numeric($value)) {
-            $this->sales['other_discount'] = 0;
+        if (in_array($key, ['sales.other_discount'])) {
+            if (str_ends_with($value, '%')) {
+                $percentage = rtrim($value, '%');
+                $value = round($this->sales['total'] / 100 * $percentage, 2);
+                if ($value > $this->sales['total']) {
+                    $value = $percentage;
+                }
+                $this->sales['other_discount'] = $value;
+            }
+            if (! is_numeric($value)) {
+                $this->sales['other_discount'] = 0;
+            }
+            $this->cartCalculator();
+            $this->mainCalculator();
+            if (in_array($this->payment_method_name, ['cash', 'card'])) {
+                $this->selectPaymentMethod($this->payment_method_name);
+            }
         }
-
-        $this->cartCalculator();
-        $this->mainCalculator();
-
-        if (in_array($this->payment_method_name, ['cash', 'card'])) {
-            $this->selectPaymentMethod($this->payment_method_name);
+        if (in_array($key, ['sales.freight'])) {
+            if (! is_numeric($value)) {
+                $this->sales['freight'] = 0;
+            }
+            $this->mainCalculator();
         }
-    }
-
-    protected function handleFreightUpdate($value)
-    {
-        if (! is_numeric($value)) {
-            $this->sales['freight'] = 0;
+        if ($key == 'barcode_key') {
+            $this->getProductByBarcode($value);
+            $this->barcode_key = '';
         }
-
-        $this->mainCalculator();
-    }
-
-    protected function handleBarcodeUpdate($value)
-    {
-        $this->getProductByBarcode($value);
-        $this->barcode_key = '';
-    }
-
-    protected function handleSaleTypeUpdate()
-    {
-        $this->resetItemsBasedOnType();
-        $this->dispatchProductUpdate();
-    }
-
-    protected function dispatchProductUpdate()
-    {
-        $this->dispatch('Sale-getProducts-Component',
-            $this->sales['sale_type'],
-            $this->category_id,
-            $this->product_key
-        );
+        if ($key == 'sales.sale_type') {
+            $this->resetItemsBasedOnType();
+            $this->dispatch('Sale-getProducts-Component', $this->sales['sale_type'], $this->category_id, $this->product_key);
+        }
+        if ($key == 'sales.account_id') {
+            $this->getCustomerDetails();
+        }
+        if (in_array($key, ['product_key'])) {
+            $this->dispatch('Sale-getProducts-Component', $this->sales['sale_type'], $this->category_id, $this->product_key);
+        }
     }
 
     public function updateComboOfferItemPrice($items, $comboOffers)
@@ -693,15 +619,16 @@ class Page extends Component
 
     public function getCustomerDetails()
     {
-        // Optimize account balance loading with caching
-        $this->account_balance = $this->getCachedData(
+        // Cache account balance for 5 minutes
+        $this->account_balance = Cache::remember(
             "account_balance_{$this->sales['account_id']}",
-            self::CACHE_TTL_VERY_SHORT,
-            fn () => Account::find($this->sales['account_id'])
-                ->ledger()
-                ->latest('id')
-                ->value('balance'),
-            ['accounts', 'ledgers']
+            300,
+            function () {
+                return Account::find($this->sales['account_id'])
+                    ->ledger()
+                    ->latest('id')
+                    ->value('balance');
+            }
         );
     }
 
@@ -720,8 +647,6 @@ class Page extends Component
             $this->dispatch('OpenProductBox');
         }
     }
-
-    // UTILITY METHODS
 
     public function modifyQuantity($key, $action)
     {
@@ -826,8 +751,6 @@ class Page extends Component
         $this->payment['amount'] = 0;
     }
 
-    // ITEM REMOVAL METHODS
-
     public function removeSyncItemFromViewItem($index)
     {
         unset($this->items[$index]);
@@ -890,8 +813,6 @@ class Page extends Component
         }
     }
 
-    // UI INTERACTION METHODS
-
     public function viewItems()
     {
         $this->dispatch('Sale-View-Items-Component', $this->sales['status'], $this->items);
@@ -927,8 +848,6 @@ class Page extends Component
         $this->items = $items;
         $this->mainCalculator();
     }
-
-    // PAYMENT METHODS
 
     public function selectPaymentMethod($method)
     {
@@ -995,8 +914,6 @@ class Page extends Component
         $this->mainCalculator();
     }
 
-    // VALIDATION RULES
-
     protected $rules = [
         'sales.account_id' => ['required'],
         'sales.date' => ['required'],
@@ -1015,34 +932,22 @@ class Page extends Component
 
             return false;
         }
-
-        $confirmationData = $this->prepareConfirmationData();
-        $this->dispatch('show-confirmation', $confirmationData);
-    }
-
-    protected function prepareConfirmationData()
-    {
-        $paymentMethods = collect($this->payments)->pluck('name')->implode(',');
-        $customer = $this->getCustomerInfo();
-
-        return [
-            'customer' => $customer,
-            'grand_total' => $this->sales['grand_total'],
-            'paid' => $this->sales['paid'],
-            'payment_methods' => $paymentMethods,
-            'balance' => $this->sales['balance'],
-        ];
-    }
-
-    protected function getCustomerInfo()
-    {
+        $payment_methods = collect($this->payments)->pluck('name')->toArray();
+        $payment_methods = implode(',', $payment_methods);
         if ($this->sales['account_id'] == 3) {
-            return $this->sales['customer_name'].'@'.$this->sales['customer_mobile'];
+            $customer = $this->sales['customer_name'].'@'.$this->sales['customer_mobile'];
+        } else {
+            $account = Account::find($this->sales['account_id']);
+            $customer = $account->name.'@'.$account->mobile;
         }
-
-        $account = Account::find($this->sales['account_id']);
-
-        return $account->name.'@'.$account->mobile;
+        $data = [
+            'customer' => $customer,
+            'grand_total' => ($this->sales['grand_total']),
+            'paid' => ($this->sales['paid']),
+            'payment_methods' => $payment_methods,
+            'balance' => ($this->sales['balance']),
+        ];
+        $this->dispatch('show-confirmation', $data);
     }
 
     public function renderConfirmationDialog($customer, $grandTotal, $paid, $balance, $paymentMethods = null)
@@ -1061,176 +966,77 @@ class Page extends Component
     public function save($type = 'completed', $print = true)
     {
         $this->validate();
-
-        $oldStatus = $this->sales['status'];
-
         try {
+            $oldStatus = $this->sales['status'];
             DB::beginTransaction();
-
-            $this->validateSaleData();
-            $saleData = $this->prepareSaleData($type);
-            $response = $this->processSaleTransaction($saleData);
+            if (! count($this->items)) {
+                throw new Exception('Please add any item', 1);
+            }
+            $this->sales['status'] = $type;
+            $this->sales['items'] = $this->items;
+            $this->sales['payments'] = $this->payments;
+            $this->sales['comboOffers'] = $this->comboOffers;
+            if ($this->sales['balance'] < 0) {
+                throw new Exception('Please check the payment', 1);
+            }
+            $user_id = Auth::id();
+            if (! $this->table_id) {
+                $response = (new CreateAction())->execute($this->sales, $user_id);
+            } else {
+                $response = (new UpdateAction())->execute($this->sales, $this->table_id, $user_id);
+            }
+            if (! $response['success']) {
+                throw new Exception($response['message'], 1);
+            }
             $table_id = $response['data']['id'];
-
+            $this->mount($this->table_id);
             DB::commit();
-
-            $this->handlePostSaveOperations($table_id, $type, $print);
-            $this->dispatchSuccessMessage($response['message']);
-
+            if ($this->send_to_whatsapp) {
+                $this->sendToWhatsapp($table_id);
+            }
+            if ($type == 'completed') {
+                $this->dispatch('print-invoice', ['link' => route('print::sale::invoice', $response['data']['id']), 'print' => $print]);
+            }
+            $this->dispatch('ResetSelectBox');
+            $this->dispatch('success', ['message' => $response['message']]);
         } catch (\Throwable $th) {
             DB::rollback();
-            $this->handleSaveError($th, $oldStatus);
-        }
-    }
-
-    protected function validateSaleData()
-    {
-        if (! count($this->items)) {
-            throw new Exception('Please add any item', 1);
-        }
-
-        if ($this->sales['balance'] < 0) {
-            throw new Exception('Please check the payment', 1);
-        }
-    }
-
-    protected function prepareSaleData($type)
-    {
-        return array_merge($this->sales, [
-            'status' => $type,
-            'items' => $this->items,
-            'payments' => $this->payments,
-            'comboOffers' => $this->comboOffers,
-        ]);
-    }
-
-    protected function processSaleTransaction($saleData)
-    {
-        // Clear relevant caches before saving
-        $this->clearCaches(['sales', 'accounts', 'ledgers']);
-
-        $user_id = Auth::id();
-        $response = $this->table_id
-            ? (new UpdateAction())->execute($saleData, $this->table_id, $user_id)
-            : (new CreateAction())->execute($saleData, $user_id);
-
-        if (! $response['success']) {
-            throw new Exception($response['message'], 1);
-        }
-
-        return $response;
-    }
-
-    /**
-     * Clear caches with support for both tagged and non-tagged cache stores
-     */
-    protected function clearCaches($tags = [])
-    {
-        if ($this->cacheSupportsTagging() && ! empty($tags)) {
-            Cache::tags($tags)->flush();
-        } else {
-            // For cache stores that don't support tagging, clear specific keys
-            $this->clearSpecificCacheKeys($tags);
-        }
-    }
-
-    /**
-     * Clear specific cache keys when tagging is not supported
-     */
-    protected function clearSpecificCacheKeys($tags = [])
-    {
-        $keysToFlush = [
-            self::CACHE_PREFIX.'payment_methods',
-            self::CACHE_PREFIX.'employees',
-            self::CACHE_PREFIX.'default_payment_method_id',
-            self::CACHE_PREFIX.'accounts_default',
-            self::CACHE_PREFIX.'categories_with_products',
-        ];
-
-        // Add dynamic keys if table_id exists
-        if ($this->table_id) {
-            $keysToFlush[] = self::CACHE_PREFIX."sale_{$this->table_id}";
-            $keysToFlush[] = self::CACHE_PREFIX."account_balance_{$this->sales['account_id']}";
-        }
-
-        foreach ($keysToFlush as $key) {
-            Cache::forget($key);
-        }
-    }
-
-    protected function dispatchSuccessMessage($message)
-    {
-        $this->dispatch('ResetSelectBox');
-        $this->dispatch('success', ['message' => $message]);
-    }
-
-    protected function handleSaveError(\Throwable $th, $oldStatus)
-    {
-        $this->dispatch('error', ['message' => $th->getMessage()]);
-        $this->sales['status'] = $oldStatus;
-    }
-
-    protected function handlePostSaveOperations($table_id, $type, $print)
-    {
-        $this->mount($this->table_id);
-
-        if ($this->send_to_whatsapp) {
-            $this->sendToWhatsapp($table_id);
-        }
-
-        if ($type === 'completed') {
-            $this->dispatch('print-invoice', [
-                'link' => route('print::sale::invoice', $table_id),
-                'print' => $print,
-            ]);
+            $this->dispatch('error', ['message' => $th->getMessage()]);
+            $this->sales['status'] = $oldStatus;
         }
     }
 
     public function sendToWhatsapp($table_id = null)
     {
-        $table_id = $table_id ?: $this->table_id;
+        if (! $table_id) {
+            $table_id = $this->table_id;
+        }
         $sale = Sale::find($table_id);
-
-        $number = $this->getCustomerNumber($sale);
+        if ($sale['customer_mobile']) {
+            $number = $sale['customer_mobile'];
+        } else {
+            $number = $sale->account->mobile;
+        }
+        $imageContent = SaleHelper::saleInvoice($table_id, 'thermal');
+        $image_path = SaleHelper::convertHtmlToImage($imageContent, $sale->invoice_no);
         if (! $number) {
             $this->dispatch('error', ['message' => 'Invalid Number']);
 
-            return;
+            goto skip;
         }
-
-        $response = $this->sendWhatsappMessage($sale, $table_id, $number);
-        $this->handleWhatsappResponse($response);
-    }
-
-    protected function getCustomerNumber($sale)
-    {
-        return $sale['customer_mobile'] ?: $sale->account->mobile;
-    }
-
-    protected function sendWhatsappMessage($sale, $table_id, $number)
-    {
-        $imageContent = SaleHelper::saleInvoice($table_id, 'thermal');
-        $image_path = SaleHelper::convertHtmlToImage($imageContent, $sale->invoice_no);
-
         $data = [
             'number' => $number,
             'message' => 'Please Check Your Invoice : '.currency($sale->grand_total),
             'filePath' => $image_path,
         ];
-
-        return WhatsappHelper::send($data);
-    }
-
-    protected function handleWhatsappResponse($response)
-    {
+        $response = WhatsappHelper::send($data);
         if (! $response['success']) {
             $this->dispatch('error', ['message' => $response['message']]);
         } else {
             $this->dispatch('success', ['message' => $response['message']]);
         }
+        skip :
     }
-
-    // RENDER METHODS
 
     public function render()
     {

@@ -251,7 +251,7 @@
                                     <div class="row g-2 methods">
                                         <div class="col-md-4">
                                             <div class="default-cover">
-                                                <a href="#" class="@if ($payment_method_name == 'cash') active @endif" wire:click="selectPaymentMethod('cash')">
+                                                <a href="javascript:void(0)" class="@if ($payment_method_name == 'cash') active @endif" wire:click.prevent="selectPaymentMethod('cash')">
                                                     <img src="{{ asset('assets/img/cash-pay.svg') }}" alt="Cash Payment" loading="lazy">
                                                     <span>Cash</span>
                                                 </a>
@@ -259,7 +259,7 @@
                                         </div>
                                         <div class="col-md-4">
                                             <div class="default-cover">
-                                                <a href="#" class="@if ($payment_method_name == 'card') active @endif" wire:click="selectPaymentMethod('card')">
+                                                <a href="javascript:void(0)" class="@if ($payment_method_name == 'card') active @endif" wire:click.prevent="selectPaymentMethod('card')">
                                                     <img src="{{ asset('assets/img/card-pay.svg') }}" alt="Card Payment" loading="lazy">
                                                     <span>Debit Card</span>
                                                 </a>
@@ -267,7 +267,7 @@
                                         </div>
                                         <div class="col-md-4">
                                             <div class="default-cover">
-                                                <a href="#" class="@if ($payment_method_name == 'custom') active @endif" wire:click="selectPaymentMethod('custom')">
+                                                <a href="javascript:void(0)" class="@if ($payment_method_name == 'custom') active @endif" wire:click.prevent="selectPaymentMethod('custom')">
                                                     <img src="{{ asset('assets/img/custom-pay.svg') }}" alt="Custom Payment" loading="lazy">
                                                     <span>Custom Pay</span>
                                                 </a>
