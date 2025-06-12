@@ -32,3 +32,15 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::get('/products', [ProductController::class, 'list']);
 });
+
+// Sale Routes
+Route::prefix('sale')->group(function () {
+    Route::post('add-item', [App\Http\Controllers\Sale\PageController::class, 'addItem']);
+    Route::post('update-item', [App\Http\Controllers\Sale\PageController::class, 'updateItem']);
+    Route::post('remove-item', [App\Http\Controllers\Sale\PageController::class, 'removeItem']);
+    Route::post('save', [App\Http\Controllers\Sale\PageController::class, 'save']);
+    Route::post('send-whatsapp', [App\Http\Controllers\Sale\PageController::class, 'sendWhatsapp']);
+});
+
+// Product Routes
+Route::get('products', [App\Http\Controllers\ProductController::class, 'index']);
