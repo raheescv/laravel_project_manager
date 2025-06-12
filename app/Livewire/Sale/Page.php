@@ -624,8 +624,12 @@ class Page extends Component
             "account_balance_{$this->sales['account_id']}",
             300,
             function () {
-                return Account::find($this->sales['account_id'])
-                    ->ledger()
+                $account = Account::find($this->sales['account_id']);
+                if (! $account) {
+                    return;
+                }
+
+                return $account->ledger()
                     ->latest('id')
                     ->value('balance');
             }
