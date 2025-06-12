@@ -14,6 +14,7 @@ use App\Models\Configuration;
 use App\Models\Inventory;
 use App\Models\Product;
 use App\Models\Sale;
+use App\Models\SaleDaySession;
 use App\Models\User;
 use Exception;
 use Illuminate\Support\Facades\Auth;
@@ -184,10 +185,13 @@ class Page extends Component
         $this->payments = [];
         $this->comboOffers = [];
 
+        $date = now()->format('Y-m-d');
+        $openingSession = SaleDaySession::getOpenSessionForBranch(session('branch_id'));
+        $date = $openingSession ? $openingSession->opened_at->format('Y-m-d') : $date;
         // Initialize sales data with default values
         $this->sales = [
-            'date' => now()->format('Y-m-d'),
-            'due_date' => now()->format('Y-m-d'),
+            'date' => $date,
+            'due_date' => $date,
             'sale_type' => 'normal',
             'account_id' => 3,
             'customer_name' => '',
