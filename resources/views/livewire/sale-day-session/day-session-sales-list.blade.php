@@ -58,74 +58,46 @@
                                     @endif
                                 </div>
                             </th>
-                            <th wire:click="sortBy('invoice_no')" style="cursor: pointer; color: #495057; font-weight: 600; border-bottom: 2px solid #dee2e6; padding: 15px 12px;">
+                            <th style="cursor: pointer; color: #495057; font-weight: 600; border-bottom: 2px solid #dee2e6; padding: 15px 12px;">
                                 <div class="d-flex align-items-center">
                                     <i class="fa fa-file-text-o me-2" style="color: #6c757d; font-size: 14px;"></i>
-                                    Invoice No
-                                    @if ($sortField === 'invoice_no')
-                                        @if ($sortDirection === 'asc')
-                                            <i class="fa fa-caret-up ms-2" style="color: #4a6fa5;"></i>
-                                        @else
-                                            <i class="fa fa-caret-down ms-2" style="color: #4a6fa5;"></i>
-                                        @endif
-                                    @endif
+                                    <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="invoice_no" label="Invoice No" />
                                 </div>
                             </th>
                             <th style="color: #495057; font-weight: 600; border-bottom: 2px solid #dee2e6; padding: 15px 12px;">
                                 <div class="d-flex align-items-center">
                                     <i class="fa fa-user me-2" style="color: #6c757d; font-size: 14px;"></i>
-                                    Customer
+                                    <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="account_id" label="Customer" />
                                 </div>
                             </th>
-                            <th wire:click="sortBy('date')" style="cursor: pointer; color: #495057; font-weight: 600; border-bottom: 2px solid #dee2e6; padding: 15px 12px;">
+                            <th style="cursor: pointer; color: #495057; font-weight: 600; border-bottom: 2px solid #dee2e6; padding: 15px 12px;">
                                 <div class="d-flex align-items-center">
                                     <i class="fa fa-calendar me-2" style="color: #6c757d; font-size: 14px;"></i>
-                                    Date
-                                    @if ($sortField === 'date')
-                                        @if ($sortDirection === 'asc')
-                                            <i class="fa fa-caret-up ms-2" style="color: #4a6fa5;"></i>
-                                        @else
-                                            <i class="fa fa-caret-down ms-2" style="color: #4a6fa5;"></i>
-                                        @endif
-                                    @endif
+                                    <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="date" label="Date" />
                                 </div>
                             </th>
-                            <th class="text-end" wire:click="sortBy('gross_amount')" style="cursor: pointer; color: #495057; font-weight: 600; border-bottom: 2px solid #dee2e6; padding: 15px 12px;">
+                            <th class="text-end" style="cursor: pointer; color: #495057; font-weight: 600; border-bottom: 2px solid #dee2e6; padding: 15px 12px;">
                                 <div class="d-flex align-items-center justify-content-end">
                                     <i class="fa fa-money me-2" style="color: #b8860b; font-size: 14px;"></i>
-                                    Gross Amount
-                                    @if ($sortField === 'gross_amount')
-                                        @if ($sortDirection === 'asc')
-                                            <i class="fa fa-caret-up ms-2" style="color: #4a6fa5;"></i>
-                                        @else
-                                            <i class="fa fa-caret-down ms-2" style="color: #4a6fa5;"></i>
-                                        @endif
-                                    @endif
+                                    <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="gross_amount" label="Gross Amount" />
                                 </div>
                             </th>
                             <th class="text-end" style="color: #495057; font-weight: 600; border-bottom: 2px solid #dee2e6; padding: 15px 12px;">
                                 <div class="d-flex align-items-center justify-content-end">
                                     <i class="fa fa-percent me-2" style="color: #dc3545; font-size: 14px;"></i>
-                                    Discount
+                                    <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="item_discount" label="Discount" />
                                 </div>
                             </th>
                             <th class="text-end" style="color: #495057; font-weight: 600; border-bottom: 2px solid #dee2e6; padding: 15px 12px;">
                                 <div class="d-flex align-items-center justify-content-end">
                                     <i class="fa fa-calculator me-2" style="color: #5a9fd4; font-size: 14px;"></i>
-                                    Tax
+                                    <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="tax_amount" label="Tax" />
                                 </div>
                             </th>
-                            <th class="text-end" wire:click="sortBy('paid')" style="cursor: pointer; color: #495057; font-weight: 600; border-bottom: 2px solid #dee2e6; padding: 15px 12px;">
+                            <th class="text-end" style="cursor: pointer; color: #495057; font-weight: 600; border-bottom: 2px solid #dee2e6; padding: 15px 12px;">
                                 <div class="d-flex align-items-center justify-content-end">
                                     <i class="fa fa-check-circle me-2" style="color: #28a745; font-size: 14px;"></i>
-                                    Paid
-                                    @if ($sortField === 'paid')
-                                        @if ($sortDirection === 'asc')
-                                            <i class="fa fa-caret-up ms-2" style="color: #4a6fa5;"></i>
-                                        @else
-                                            <i class="fa fa-caret-down ms-2" style="color: #4a6fa5;"></i>
-                                        @endif
-                                    @endif
+                                    <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="paid" label="Paid" />
                                 </div>
                             </th>
                         </tr>

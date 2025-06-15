@@ -55,28 +55,42 @@ class DaySessionSalesList extends Component
 
     public function render()
     {
-        $sales = Sale::where('sale_day_session_id', $this->sessionId)
-            ->when($this->search, function ($query, $search) {
-                return $query->where(function ($q) use ($search) {
-                    $q->where('invoice_no', 'like', '%'.$search.'%')
-                        ->orWhere('customer_name', 'like', '%'.$search.'%')
-                        ->orWhere('customer_mobile', 'like', '%'.$search.'%')
-                        ->orWhere('id', 'like', '%'.$search.'%');
-                });
-            })
+        $baseQuery = Sale::with(['account', 'payments.paymentMethod'])
+            ->where('sale_day_session_id', $this->sessionId);
+
+        if ($this->search) {
+            $baseQuery->where(function ($q) {
+                $search = '%'.$this->search.'%';
+                $q->where('invoice_no', 'like', $search)
+                    ->orWhere('customer_name', 'like', $search)
+                    ->orWhere('customer_mobile', 'like', $search)
+                    ->orWhere('id', 'like', $search);
+            });
+        }
+
+        $totals = Sale::where('sale_day_session_id', $this->sessionId)
+            ->selectRaw('
+                SUM(gross_amount) as gross_amount,
+                SUM(item_discount) as item_discount,
+                SUM(tax_amount) as tax_amount,
+                SUM(paid) as paid,
+                COUNT(*) as total_count
+            ')
+            ->first();
+
+        $sales = $baseQuery
             ->orderBy($this->sortField, $this->sortDirection)
             ->paginate($this->perPage);
 
-        $totals = [
-            'gross_amount' => Sale::where('sale_day_session_id', $this->sessionId)->sum('gross_amount'),
-            'item_discount' => Sale::where('sale_day_session_id', $this->sessionId)->sum('item_discount'),
-            'tax_amount' => Sale::where('sale_day_session_id', $this->sessionId)->sum('tax_amount'),
-            'paid' => Sale::where('sale_day_session_id', $this->sessionId)->sum('paid'),
-        ];
-
         return view('livewire.sale-day-session.day-session-sales-list', [
             'sales' => $sales,
-            'totals' => $totals,
+            'totals' => [
+                'gross_amount' => $totals->gross_amount ?? 0,
+                'item_discount' => $totals->item_discount ?? 0,
+                'tax_amount' => $totals->tax_amount ?? 0,
+                'paid' => $totals->paid ?? 0,
+                'total_count' => $totals->total_count ?? 0,
+            ],
         ]);
     }
 }

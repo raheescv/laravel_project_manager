@@ -64,7 +64,7 @@ class BranchSaleDaySessionManager extends Component
             return;
         }
 
-        $sales = Sale::where('sale_day_session_id', $this->currentSession->id)->get();
+        $sales = Sale::completed()->where('sale_day_session_id', $this->currentSession->id)->get();
 
         $this->sessionStats = [
             'total_sales' => $sales->count(),
