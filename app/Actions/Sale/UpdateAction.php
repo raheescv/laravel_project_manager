@@ -67,12 +67,27 @@ class UpdateAction
 
                 $this->model->refresh();
 
-                $this->model->update([
+                $updateData = [
                     'gross_amount' => $this->model->items->sum('gross_amount'),
                     'item_discount' => $this->model->items->sum('discount'),
                     'tax_amount' => $this->model->items->sum('tax_amount'),
                     'paid' => $this->model->payments->sum('amount'),
-                ]);
+                ];
+                if ($updateData['gross_amount'] == $this->model->gross_amount) {
+                    unset($updateData['gross_amount']);
+                }
+                if ($updateData['item_discount'] == $this->model->item_discount) {
+                    unset($updateData['item_discount']);
+                }
+                if ($updateData['tax_amount'] == $this->model->tax_amount) {
+                    unset($updateData['tax_amount']);
+                }
+                if ($updateData['paid'] == $this->model->paid) {
+                    unset($updateData['paid']);
+                }
+                if ($updateData) {
+                    $this->model->update($updateData);
+                }
 
                 if ($model['status'] == 'completed') {
                     $this->completed();
