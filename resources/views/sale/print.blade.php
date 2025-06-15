@@ -433,6 +433,17 @@
                             <td colspan="4" class="text-left"><b>{{ $item->comboOffer->name_arabic }}</b></td>
                         </tr>
                     @endif
+                    @foreach ($item->items as $comboItem)
+                        <tr>
+                            <td></td>
+                            <td colspan="3" class="text-left"><i><b>{{ $comboItem->name }}</b></i> </td>
+                        </tr>
+                        @if ($comboItem->name_arabic)
+                            <tr>
+                                <td colspan="4" class="text-left"><b>{{ $comboItem->name_arabic }}</b></td>
+                            </tr>
+                        @endif
+                    @endforeach
                     <tr>
                         <td class="text-right"> <b>{{ $loop->iteration }}</b> </td>
                         <td class="text-right"> <b>{{ currency($item->amount) }}</b> </td>
@@ -505,7 +516,7 @@
                     @endif
                 </tr>
             @endif
-            @if ($sale->tax_amount)
+            @if ($sale->tax_amount != 0)
                 <tr>
                     <td class="text-left" width="39%"><b>Tax</b></td>
                     <td class="text-right"><b>{{ currency($sale->tax_amount) }}</b></td>
