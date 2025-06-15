@@ -598,7 +598,7 @@
         </div>
         <div class="highlight-box">
             <div>
-                <span class="text-left"> <b>Served By</b> </span>: <b>{{ $sale->createdUser->name }}</b>
+                <span class="text-left"> <b>Served By</b> </span>: <b>{!! $sale->employeeNames() !!}</b>
                 @if ($thermal_printer_style == 'with_arabic')
                     <span class="text-right">
                         <b>:{{ __('lang.served_by', [], 'ar') }}</b>

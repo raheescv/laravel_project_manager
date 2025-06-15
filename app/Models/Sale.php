@@ -167,6 +167,17 @@ class Sale extends Model implements AuditableContracts
             ->when($filters['to_date'] ?? '', fn ($q, $value) => $q->whereDate('sales.date', '<=', date('Y-m-d', strtotime($value))));
     }
 
+    public function employeeNames()
+    {
+        $employeeIds = $this->items()->whereNotNull('employee_id')->distinct()->pluck('employee_id')->filter()->toArray();
+        if (empty($employeeIds)) {
+            return '';
+        }
+        $employeeNames = User::whereIn('id', $employeeIds)->orderBy('name')->pluck('name')->filter()->unique()->toArray();
+
+        return implode(', ', $employeeNames);
+    }
+
     public function branch()
     {
         return $this->belongsTo(Branch::class);
