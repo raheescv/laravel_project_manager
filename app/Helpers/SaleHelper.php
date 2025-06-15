@@ -99,7 +99,7 @@ class SaleHelper
     {
         $session = SaleDaySession::with(['branch', 'opener', 'closer'])->findOrFail($id);
 
-        $sales = Sale::where('sale_day_session_id', $id)
+        $sales = Sale::completed()->where('sale_day_session_id', $id)
             ->with(['branch', 'payments.paymentMethod'])
             ->orderBy('created_at', 'asc')
             ->get();
