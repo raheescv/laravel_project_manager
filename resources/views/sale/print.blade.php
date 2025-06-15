@@ -11,6 +11,18 @@
         @endif
     </title>
     <style>
+        h1,
+        h2,
+        h3 {
+            margin: 10px 0;
+            text-align: center;
+            font-size: 15px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            color: #000;
+        }
+
         body {
             font-family: 'Arial', 'Courier New', monospace;
             line-height: 1.5;
@@ -19,7 +31,7 @@
             width: 80mm;
             background-color: #fff;
             padding: 10px 15px;
-            color: #333;
+            color: #000;
         }
 
         @page {
@@ -29,8 +41,6 @@
 
         .receipt-container {
             background-color: #fff;
-            border-radius: 10px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
             width: 100%;
             padding: 15px 8px;
         }
@@ -44,13 +54,12 @@
             font-weight: 700;
             text-transform: uppercase;
             letter-spacing: 0.8px;
-            color: #222;
+            color: black;
         }
 
         .divider {
-            border-top: 1px dashed #999;
+            border-top: 1px dashed #000;
             margin: 10px 0;
-            opacity: 0.5;
         }
 
         .store-info {
@@ -59,11 +68,11 @@
         }
 
         .invoice-header {
-            background-color: #f8f8f8;
+            background-color: transparent;
             border-radius: 6px;
             padding: 8px;
             margin-bottom: 12px;
-            border-left: 3px solid #555;
+            border-left: 3px solid #000;
         }
 
         .table {
@@ -79,32 +88,32 @@
 
         .table th,
         .table td {
-            border: 1px solid #e0e0e0;
+            border: 1px solid #000;
             padding: 7px 5px;
             text-align: center;
         }
 
         .table th {
-            background-color: #f3f3f3;
+            background-color: transparent;
             font-size: 11px;
             font-weight: bold;
             text-transform: uppercase;
             letter-spacing: 0.8px;
-            color: #444;
+            color: #000;
         }
 
         .table-striped tr:nth-child(even) {
-            background-color: #f9f9f9;
+            background-color: transparent;
         }
 
         .item-name {
             font-weight: 700;
-            color: #333;
+            color: #000;
         }
 
         .item-description {
             font-size: 9px;
-            color: #666;
+            color: #000;
             font-style: italic;
             margin-top: 2px;
         }
@@ -129,9 +138,8 @@
             text-align: center;
             margin: 18px 0;
             padding: 12px;
-            background: #f5f5f5;
-            border-radius: 6px;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+            background: transparent;
+            border: 1px solid #000;
         }
 
         .barcode img {
@@ -142,7 +150,7 @@
         .barcode p {
             margin: 5px 0 0;
             font-size: 10px;
-            color: #555;
+            color: #000;
             letter-spacing: 0.5px;
         }
 
@@ -178,8 +186,8 @@
             font-size: 10px;
             margin-top: 15px;
             padding: 12px 0;
-            border-top: 1px dashed #999;
-            color: #555;
+            border-top: 1px dashed #000;
+            color: #000;
         }
 
         .thank-you {
@@ -187,53 +195,52 @@
             font-size: 14px;
             font-weight: 700;
             margin: 15px 0 10px;
-            color: #444;
+            color: #000;
         }
 
         .policies {
             font-size: 9px;
-            color: #666;
+            color: #000;
             text-align: center;
             margin: 10px 0;
             padding: 8px;
-            background-color: #f9f9f9;
-            border-radius: 5px;
+            background-color: transparent;
+            border: 1px solid #000;
             line-height: 1.3;
         }
 
         .meta-info {
             font-size: 10px;
-            color: #777;
+            color: #000;
             text-align: right;
             margin-top: 5px;
         }
 
         .highlight-box {
-            background-color: #f8f8f8;
-            border-left: 3px solid #555;
+            background-color: transparent;
+            border: 1px solid #000;
             padding: 8px;
             margin: 10px 0;
-            border-radius: 3px;
         }
 
         .payment-badge {
             display: inline-block;
-            background-color: #e8f4fd;
-            color: #2484c6;
+            background-color: transparent;
+            color: #000;
             font-size: 11px;
             padding: 3px 8px;
-            border-radius: 3px;
+            border: 1px solid #000;
             margin: 2px;
         }
 
         .payment-badge.cash {
-            background-color: #e6f7e6;
-            color: #2c7c2c;
+            background-color: transparent;
+            color: #000;
         }
 
         .payment-badge.card {
-            background-color: #ffeee6;
-            color: #d35400;
+            background-color: transparent;
+            color: #000;
         }
 
         @media print {
@@ -253,38 +260,69 @@
                 -webkit-print-color-adjust: exact;
                 print-color-adjust: exact;
                 color-adjust: exact;
+                color: #000 !important;
+                background: #fff !important;
             }
 
             .no-print {
                 display: none;
             }
 
+            /* Force all elements to use black color only */
+            * {
+                color: #000 !important;
+                background-color: transparent !important;
+                border-color: #000 !important;
+            }
+
+            /* Keep white background only for body and main container */
+            body,
+            .receipt-container {
+                background-color: #fff !important;
+            }
+
             .table th {
-                background-color: #f3f3f3 !important;
+                background-color: transparent !important;
+                color: #000 !important;
             }
 
             .table td,
             .table th {
-                border-color: #e0e0e0 !important;
+                border-color: #000 !important;
+                color: #000 !important;
             }
 
             .highlight-box {
-                background-color: #f8f8f8 !important;
+                background-color: transparent !important;
+                border-color: #000 !important;
+                color: #000 !important;
             }
 
             .payment-badge {
-                background-color: #e8f4fd !important;
-                color: #2484c6 !important;
+                background-color: transparent !important;
+                color: #000 !important;
+                border: 1px solid #000 !important;
             }
 
-            .payment-badge.cash {
-                background-color: #e6f7e6 !important;
-                color: #2c7c2c !important;
-            }
-
+            .payment-badge.cash,
             .payment-badge.card {
-                background-color: #ffeee6 !important;
-                color: #d35400 !important;
+                background-color: transparent !important;
+                color: #000 !important;
+                border: 1px solid #000 !important;
+            }
+
+            .barcode {
+                background: transparent !important;
+                border: 1px solid #000 !important;
+            }
+
+            .footer {
+                border-top: 1px dashed #000 !important;
+                color: #000 !important;
+            }
+
+            .divider {
+                border-top: 1px dashed #000 !important;
             }
         }
     </style>
