@@ -846,7 +846,7 @@ class Page extends Component
             $item['key'] = $newId;
             $id = $newId;
         }
-        $item['assistant_name'] = User::find($item['assistant_id'])?->name;
+        $item['assistant_name'] = User::find($item['assistant_id'] ?? null)?->name;
         $this->items[$id] = $item;
         $this->mainCalculator();
     }

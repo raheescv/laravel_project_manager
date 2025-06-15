@@ -39,6 +39,12 @@ class EditItem extends Component
 
     public function updated($key, $value)
     {
+        if (strpos($key, 'item.') === 0) {
+            $property = substr($key, strlen('item.'));
+            if (! is_numeric($value)) {
+                $this->item[$property] = 0;
+            }
+        }
         $this->singleCartCalculator();
     }
 
