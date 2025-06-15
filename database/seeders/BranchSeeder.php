@@ -9,7 +9,9 @@ class BranchSeeder extends Seeder
 {
     public function run(): void
     {
-        DB::table('branches')->truncate();
+        // Use delete instead of truncate to respect foreign key constraints
+        DB::table('branches')->delete();
+
         $data = [];
         $data[] = ['name' => 'Main', 'code' => 'M', 'location' => '', 'mobile' => '9633155669'];
         DB::table('branches')->insert($data);
