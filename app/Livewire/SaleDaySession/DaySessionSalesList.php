@@ -55,7 +55,7 @@ class DaySessionSalesList extends Component
 
     public function render()
     {
-        $baseQuery = Sale::with(['account', 'payments.paymentMethod'])
+        $baseQuery = Sale::completed()->with(['account', 'payments.paymentMethod'])
             ->where('sale_day_session_id', $this->sessionId);
 
         if ($this->search) {
@@ -68,7 +68,7 @@ class DaySessionSalesList extends Component
             });
         }
 
-        $totals = Sale::where('sale_day_session_id', $this->sessionId)
+        $totals = Sale::completed()->where('sale_day_session_id', $this->sessionId)
             ->selectRaw('
                 SUM(gross_amount) as gross_amount,
                 SUM(item_discount) as item_discount,
