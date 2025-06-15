@@ -363,7 +363,7 @@
 
             <div class="total-row grand-total">
                 <span>TOTAL</span>
-                <span>{{ currency($sale->sum('grand_total')) }}</span>
+                <span>{{ currency($sales->sum('grand_total')) }}</span>
             </div>
         </div>
         <div class="footer">
