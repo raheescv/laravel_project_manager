@@ -57,7 +57,7 @@ class SaleDaySession extends Model implements AuditableContracts
 
     public function sales()
     {
-        return $this->hasMany(Sale::class, 'sale_day_session_id');
+        return $this->hasMany(Sale::class, 'sale_day_session_id')->where('status', 'completed');
     }
 
     public function scopeOpen($query)
