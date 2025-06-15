@@ -42,7 +42,7 @@
 
             <!-- Enhanced Data Table -->
             <div class="table-responsive">
-                <table class="table table-hover mb-0" style="background-color: white;">
+                <table class="table table-sm table-hover mb-0" style="background-color: white;">
                     <thead style="background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);">
                         <tr>
                             <th wire:click="sortBy('id')" style="cursor: pointer; color: #495057; font-weight: 600; border-bottom: 2px solid #dee2e6; padding: 15px 12px;">
@@ -128,26 +128,25 @@
                                     @endif
                                 </div>
                             </th>
-                            <th style="color: #495057; font-weight: 600; border-bottom: 2px solid #dee2e6; padding: 15px 12px;">
-                                <div class="d-flex align-items-center">
-                                    <i class="fa fa-cogs me-2" style="color: #6c757d; font-size: 14px;"></i>
-                                    Actions
-                                </div>
-                            </th>
                         </tr>
                     </thead>
                     <tbody>
                         @foreach ($sales as $sale)
                             <tr style="border-bottom: 1px solid #f8f9fa;">
-                                <td style="padding: 15px 12px; vertical-align: middle;">
+                                <td style=" vertical-align: middle;">
                                     <span class="badge" style="background-color: #e9ecef; color: #495057; font-weight: 500;">
                                         #{{ $sale->id }}
                                     </span>
                                 </td>
-                                <td style="padding: 15px 12px; vertical-align: middle;">
-                                    <div class="fw-bold" style="color: #4a6fa5;">{{ $sale->invoice_no }}</div>
+                                <td style=" vertical-align: middle;">
+                                    <div class="fw-bold" style="color: #4a6fa5;">
+                                        <a href="{{ route('sale::view', $sale->id) }}">
+                                            <i class="fa fa-eye me-2" style="font-size: 12px;"></i>
+                                            {{ $sale->invoice_no }}
+                                        </a>
+                                    </div>
                                 </td>
-                                <td style="padding: 15px 12px; vertical-align: middle;">
+                                <td style=" vertical-align: middle;">
                                     <div>
                                         <div class="fw-medium" style="color: #495057;">{{ $sale->customer_name ?? ($sale->account->name ?? 'N/A') }}</div>
                                         @if ($sale->customer_mobile ?? ($sale->account->mobile ?? ''))
@@ -158,30 +157,23 @@
                                         @endif
                                     </div>
                                 </td>
-                                <td style="padding: 15px 12px; vertical-align: middle;">
+                                <td style=" vertical-align: middle;">
                                     <div class="d-flex align-items-center">
                                         <i class="fa fa-calendar-o me-2" style="color: #6c757d; font-size: 12px;"></i>
                                         <span style="color: #495057;">{{ systemDate($sale->date) }}</span>
                                     </div>
                                 </td>
-                                <td class="text-end" style="padding: 15px 12px; vertical-align: middle;">
+                                <td class="text-end" style=" vertical-align: middle;">
                                     <span class="fw-bold" style="color: #b8860b; font-size: 15px;">{{ currency($sale->gross_amount) }}</span>
                                 </td>
-                                <td class="text-end" style="padding: 15px 12px; vertical-align: middle;">
+                                <td class="text-end" style=" vertical-align: middle;">
                                     <span style="color: #dc3545;">{{ currency($sale->item_discount) }}</span>
                                 </td>
-                                <td class="text-end" style="padding: 15px 12px; vertical-align: middle;">
+                                <td class="text-end" style=" vertical-align: middle;">
                                     <span style="color: #5a9fd4;">{{ currency($sale->tax_amount) }}</span>
                                 </td>
-                                <td class="text-end" style="padding: 15px 12px; vertical-align: middle;">
+                                <td class="text-end" style=" vertical-align: middle;">
                                     <span class="fw-bold" style="color: #28a745; font-size: 15px;">{{ currency($sale->paid) }}</span>
-                                </td>
-                                <td style="padding: 15px 12px; vertical-align: middle;">
-                                    <a href="{{ route('sale::view', $sale->id) }}" class="btn btn-sm d-flex align-items-center"
-                                        style="background-color: #4a6fa5; color: white; border: none; padding: 8px 12px;">
-                                        <i class="fa fa-eye me-2" style="font-size: 12px;"></i>
-                                        View
-                                    </a>
                                 </td>
                             </tr>
                         @endforeach
@@ -220,7 +212,6 @@
                             <td class="text-end fw-bold" style="color: #28a745; padding: 20px 12px; font-size: 16px;">
                                 {{ currency($totals['paid']) }}
                             </td>
-                            <td style="padding: 20px 12px;"></td>
                         </tr>
                     </tfoot>
                 </table>

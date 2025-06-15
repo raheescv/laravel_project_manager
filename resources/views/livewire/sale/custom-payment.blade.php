@@ -83,7 +83,7 @@
             </div>
         </div>
         <div class="card-footer bg-light text-end p-3">
-            <button type="submit" wire:click="save" class="btn btn-primary btn-lg px-5" @if (empty($payments) || $sales['balance'] < 0) disabled @endif>
+            <button type="submit" wire:click="save" class="btn btn-primary btn-lg px-5">
                 <i class="fa fa-save me-2"></i>Save Payment
             </button>
         </div>

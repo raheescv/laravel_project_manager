@@ -2,8 +2,10 @@
 
 namespace App\Helpers;
 
+use App\Models\Account;
 use App\Models\Configuration;
 use App\Models\Sale;
+use App\Models\SaleDaySession;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\View;
 
@@ -91,5 +93,29 @@ class SaleHelper
         }
 
         return $result;
+    }
+
+    public function daySessionReport($id)
+    {
+        $session = SaleDaySession::with(['branch', 'opener', 'closer'])->findOrFail($id);
+
+        $sales = Sale::where('sale_day_session_id', $id)
+            ->with(['branch', 'payments.paymentMethod'])
+            ->orderBy('created_at', 'asc')
+            ->get();
+
+        $paymentMethods = Account::whereIn('id', cache('payment_methods', []))->get();
+        $totals['credit'] = $sales->sum('balance');
+        foreach ($paymentMethods as $method) {
+            $totals[$method->name] = 0;
+        }
+        foreach ($sales as $sale) {
+            foreach ($sale->payments as $payment) {
+                $amount = $payment->amount ?? 0;
+                $totals[$payment->name] += $amount;
+            }
+        }
+
+        return view('sale.day-session-print', compact('session', 'sales', 'totals'));
     }
 }

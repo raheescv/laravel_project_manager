@@ -10,4 +10,9 @@ class PrintController extends Controller
     {
         return SaleHelper::saleInvoice($id);
     }
+
+    public function daySessionReport($id)
+    {
+        return SaleHelper::daySessionReport($id);
+    }
 }

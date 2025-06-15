@@ -16,6 +16,9 @@
                     </p>
                 </div>
                 <div class="text-end">
+                    <a href="{{ route('print::sale::day-session-report', $session->id) }}" class="btn btn-success text-white me-2" target="_blank" title="Print Thermal Receipt">
+                        <i class="fa fa-print me-2"></i>Print
+                    </a>
                     <a href="{{ route('sale::day-sessions-report') }}" class="btn btn-outline-secondary text-white">
                         <i class="fa fa-arrow-left me-2"></i>Back to Report
                     </a>
@@ -286,85 +289,86 @@
             </div>
         </div>
     </div>
-
-    <style>
-        /* Custom styles for the timeline */
-        .timeline {
-            position: relative;
-        }
-
-        .timeline::before {
-            content: '';
-            position: absolute;
-            left: 24px;
-            top: 0;
-            bottom: 0;
-            width: 2px;
-            background: #e9ecef;
-        }
-
-        .timeline-item {
-            position: relative;
-        }
-
-        .timeline-marker {
-            width: 32px;
-            height: 32px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 1;
-        }
-
-        /* Card hover effects */
-        .card {
-            transition: all 0.3s ease;
-        }
-
-        .card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1) !important;
-        }
-
-        /* Badge styles */
-        .badge {
-            font-weight: 500;
-            padding: 0.5em 0.75em;
-            border-radius: 0.375rem;
-        }
-
-        /* Responsive adjustments */
-        @media (max-width: 768px) {
-            .card-body {
-                padding: 1rem !important;
+    @push('styles')
+        <style>
+            /* Custom styles for the timeline */
+            .timeline {
+                position: relative;
             }
 
             .timeline::before {
-                left: 20px;
+                content: '';
+                position: absolute;
+                left: 24px;
+                top: 0;
+                bottom: 0;
+                width: 2px;
+                background: #e9ecef;
+            }
+
+            .timeline-item {
+                position: relative;
             }
 
             .timeline-marker {
-                width: 28px;
-                height: 28px;
+                width: 32px;
+                height: 32px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                z-index: 1;
             }
 
-            .fw-bold {
-                font-size: 1rem !important;
+            /* Card hover effects */
+            .card {
+                transition: all 0.3s ease;
             }
-        }
 
-        /* Theme colors */
-        :root {
-            --primary-color: #4a6fa5;
-            --primary-gradient: linear-gradient(135deg, #4a6fa5 0%, #357abd 100%);
-            --success-color: #28a745;
-            --success-gradient: linear-gradient(135deg, #28a745 0%, #34d399 100%);
-            --warning-color: #b8860b;
-            --warning-gradient: linear-gradient(135deg, #b8860b 0%, #daa520 100%);
-            --danger-color: #dc3545;
-            --danger-gradient: linear-gradient(135deg, #dc3545 0%, #ef4444 100%);
-            --text-primary: #2c3e50;
-            --text-secondary: #6c757d;
-        }
-    </style>
+            .card:hover {
+                transform: translateY(-5px);
+                box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1) !important;
+            }
+
+            /* Badge styles */
+            .badge {
+                font-weight: 500;
+                padding: 0.5em 0.75em;
+                border-radius: 0.375rem;
+            }
+
+            /* Responsive adjustments */
+            @media (max-width: 768px) {
+                .card-body {
+                    padding: 1rem !important;
+                }
+
+                .timeline::before {
+                    left: 20px;
+                }
+
+                .timeline-marker {
+                    width: 28px;
+                    height: 28px;
+                }
+
+                .fw-bold {
+                    font-size: 1rem !important;
+                }
+            }
+
+            /* Theme colors */
+            :root {
+                --primary-color: #4a6fa5;
+                --primary-gradient: linear-gradient(135deg, #4a6fa5 0%, #357abd 100%);
+                --success-color: #28a745;
+                --success-gradient: linear-gradient(135deg, #28a745 0%, #34d399 100%);
+                --warning-color: #b8860b;
+                --warning-gradient: linear-gradient(135deg, #b8860b 0%, #daa520 100%);
+                --danger-color: #dc3545;
+                --danger-gradient: linear-gradient(135deg, #dc3545 0%, #ef4444 100%);
+                --text-primary: #2c3e50;
+                --text-secondary: #6c757d;
+            }
+        </style>
+    @endpush
 </x-app-layout>
