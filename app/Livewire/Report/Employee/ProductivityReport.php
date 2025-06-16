@@ -60,11 +60,9 @@ class ProductivityReport extends Component
     {
         $this->employees = $this->getEmployeesData();
         $this->calculateTotals();
-        $departmentAverages = $this->getDepartmentAverages();
         $topCategories = $this->getTopCategories();
 
         return view('livewire.report.employee.productivity-report', [
-            'departmentAverages' => $departmentAverages,
             'topCategories' => $topCategories,
         ]);
     }
@@ -149,18 +147,6 @@ class ProductivityReport extends Component
         $this->totalTransactions = $this->getSalesQuery()->distinct('sales.id')->count('sales.id');
         $this->totalItems = $this->getSalesQuery()->count('sale_items.id');
         $this->avgTransaction = $this->totalTransactions > 0 ? $this->totalSales / $this->totalTransactions : 0;
-    }
-
-    private function getDepartmentAverages()
-    {
-        $employees = collect($this->employees);
-
-        return [
-            'avg_sales' => $employees->sum('total_sales'),
-            'avg_transactions' => $employees->avg('total_transactions'),
-            'avg_items' => $employees->count(),
-            'avg_transaction_value' => $employees->avg('avg_transaction_value'),
-        ];
     }
 
     private function getTopCategories()
