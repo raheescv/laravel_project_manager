@@ -511,7 +511,7 @@
                         @else
                             @php
                                 $difference = $item->total - $item->effective_total;
-                                $unit_price = round($item->unit_price - $difference / $item->quantity, 2);
+                                $unit_price = round(($item->unit_price - $difference - $item->discount) / $item->quantity, 2);
                             @endphp
                             <td class="text-right"> <b>{{ currency($unit_price) }}</b> </td>
                         @endif

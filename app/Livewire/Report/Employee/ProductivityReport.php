@@ -3,8 +3,6 @@
 namespace App\Livewire\Report\Employee;
 
 use App\Models\SaleItem;
-use App\Models\User;
-use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Livewire\Component;
 use Livewire\WithPagination;
@@ -22,6 +20,8 @@ class ProductivityReport extends Component
     public $branchId;
 
     public $department;
+
+    public $employees;
 
     public $totalSales = 0;
 
@@ -58,73 +58,114 @@ class ProductivityReport extends Component
 
     public function render()
     {
-        $query = User::query()
-            ->employee()
-            ->when($this->branchId, fn ($q) => $q->whereHas('branches', fn ($q) => $q->where('branch_id', $this->branchId)))
-            ->when($this->employeeId, fn ($q) => $q->where('id', $this->employeeId));
+        $this->employees = $this->getEmployeesData();
+        $this->calculateTotals();
+        $departmentAverages = $this->getDepartmentAverages();
+        $topCategories = $this->getTopCategories();
 
-        // Sales Performance
-        $salesQuery = SaleItem::query()
+        return view('livewire.report.employee.productivity-report', [
+            'departmentAverages' => $departmentAverages,
+            'topCategories' => $topCategories,
+        ]);
+    }
+
+    private function getEmployeesData()
+    {
+        $employeeSales = $this->getEmployeeSalesQuery()->get();
+        $employees = [];
+
+        foreach ($employeeSales as $item) {
+            $effectiveTotal = $this->calculateEffectiveTotal($item);
+
+            $employeeData = [
+                'id' => $item->id,
+                'name' => $item->employee,
+                'email' => $item->email,
+                'items_sold' => 1,
+                'total_sales' => $effectiveTotal,
+            ];
+
+            if (! isset($employees[$item->employee_id])) {
+                $employees[$item->employee_id] = $employeeData;
+                $employees[$item->employee_id]['sale_ids'] = [];
+            } else {
+                $employees[$item->employee_id]['items_sold']++;
+                $employees[$item->employee_id]['total_sales'] += $effectiveTotal;
+            }
+
+            $employees[$item->employee_id]['sale_ids'][$item->sale_id] = $item->sale_id;
+            $employees[$item->employee_id]['total_transactions'] = count($employees[$item->employee_id]['sale_ids']);
+            $employees[$item->employee_id]['avg_transaction_value'] = $employees[$item->employee_id]['total_sales'] / $employees[$item->employee_id]['total_transactions'];
+        }
+
+        return $employees;
+    }
+
+    private function getEmployeeSalesQuery()
+    {
+        return $this->getSalesQuery()
+            ->join('users', 'users.id', '=', 'sale_items.employee_id')
+            ->select(
+                'users.id',
+                'users.name as employee',
+                'users.email',
+                'sale_items.sale_id',
+                'sale_items.employee_id',
+                'sales.total as sale_total',
+                'sales.other_discount',
+                'sale_items.total',
+            );
+    }
+
+    private function getSalesQuery()
+    {
+        return SaleItem::query()
             ->join('sales', 'sales.id', '=', 'sale_items.sale_id')
             ->where('sales.status', 'completed')
-            ->whereBetween('sales.date', [
-                Carbon::parse($this->fromDate)->startOfDay(),
-                Carbon::parse($this->toDate)->endOfDay(),
-            ]);
+            ->whereBetween('sales.date', [date('Y-m-d', strtotime($this->fromDate)), date('Y-m-d', strtotime($this->toDate))]);
+    }
 
-        // Get employee performance metrics
-        $employees = $query->select([
-            'users.id',
-            'users.name',
-            'users.email',
-            DB::raw('(SELECT COUNT(DISTINCT sale_items.sale_id) FROM sale_items
-                    JOIN sales ON sales.id = sale_items.sale_id
-                    WHERE (sale_items.employee_id = users.id OR sale_items.assistant_id = users.id)
-                    AND sales.status = "completed"
-                    AND sales.date BETWEEN ? AND ?) as total_transactions'),
-            DB::raw('(SELECT SUM(sale_items.total) FROM sale_items
-                    JOIN sales ON sales.id = sale_items.sale_id
-                    WHERE (sale_items.employee_id = users.id OR sale_items.assistant_id = users.id)
-                    AND sales.status = "completed"
-                    AND sales.date BETWEEN ? AND ?) as total_sales'),
-            DB::raw('(SELECT COUNT(*) FROM sale_items
-                    JOIN sales ON sales.id = sale_items.sale_id
-                    WHERE (sale_items.employee_id = users.id OR sale_items.assistant_id = users.id)
-                    AND sales.status = "completed"
-                    AND sales.date BETWEEN ? AND ?) as items_sold'),
-            DB::raw('(SELECT AVG(sale_items.total) FROM sale_items
-                    JOIN sales ON sales.id = sale_items.sale_id
-                    WHERE (sale_items.employee_id = users.id OR sale_items.assistant_id = users.id)
-                    AND sales.status = "completed"
-                    AND sales.date BETWEEN ? AND ?) as avg_transaction_value'),
-        ])
-            ->addBinding([
-                $this->fromDate, $this->toDate,
-                $this->fromDate, $this->toDate,
-                $this->fromDate, $this->toDate,
-                $this->fromDate, $this->toDate,
-            ], 'select')
-            ->orderBy($this->sortField, $this->sortDirection)
-            ->paginate($this->perPage);
+    private function calculateEffectiveTotal($item)
+    {
+        if ($item->other_discount == 0 || $item->sale_total == 0) {
+            return $item->total;
+        }
 
-        // Calculate department averages for comparison
-        // Calculate overall totals and averages
-        $this->totalSales = $salesQuery->sum('sale_items.total');
-        $this->totalTransactions = $salesQuery->distinct('sales.id')->count('sales.id');
-        $this->totalItems = $salesQuery->count('sale_items.id');
-        $this->avgTransaction = $this->totalTransactions > 0 ? $this->totalSales / $this->totalTransactions : 0;
+        $discountPercentage = ($item->other_discount / $item->sale_total) * 100;
 
-        $departmentAverages = $query->get()->groupBy('department')->map(function ($group) {
-            return [
-                'avg_sales' => $group->avg('total_sales'),
-                'avg_transactions' => $group->avg('total_transactions'),
-                'avg_items' => $group->avg('items_sold'),
-                'avg_transaction_value' => $group->avg('avg_transaction_value'),
-            ];
+        return $item->total - ($discountPercentage / 100 * $item->total);
+    }
+
+    private function calculateTotals()
+    {
+        $salesData = $this->getSalesQuery()
+            ->select(['sales.total as sale_total', 'sales.other_discount', 'sale_items.id', 'sale_items.total'])
+            ->get();
+
+        $this->totalSales = $salesData->sum(function ($item) {
+            return $this->calculateEffectiveTotal($item);
         });
 
-        // Get top selling categories per employee
-        $topCategories = SaleItem::query()
+        $this->totalTransactions = $this->getSalesQuery()->distinct('sales.id')->count('sales.id');
+        $this->totalItems = $this->getSalesQuery()->count('sale_items.id');
+        $this->avgTransaction = $this->totalTransactions > 0 ? $this->totalSales / $this->totalTransactions : 0;
+    }
+
+    private function getDepartmentAverages()
+    {
+        $employees = collect($this->employees);
+
+        return [
+            'avg_sales' => $employees->sum('total_sales'),
+            'avg_transactions' => $employees->avg('total_transactions'),
+            'avg_items' => $employees->count(),
+            'avg_transaction_value' => $employees->avg('avg_transaction_value'),
+        ];
+    }
+
+    private function getTopCategories()
+    {
+        return SaleItem::query()
             ->join('sales', 'sales.id', '=', 'sale_items.sale_id')
             ->join('products', 'products.id', '=', 'sale_items.product_id')
             ->join('categories', 'categories.id', '=', 'products.main_category_id')
@@ -139,11 +180,5 @@ class ProductivityReport extends Component
             ->orderBy('total', 'desc')
             ->get()
             ->groupBy('employee_id');
-
-        return view('livewire.report.employee.productivity-report', [
-            'employees' => $employees,
-            'departmentAverages' => $departmentAverages,
-            'topCategories' => $topCategories,
-        ]);
     }
 }

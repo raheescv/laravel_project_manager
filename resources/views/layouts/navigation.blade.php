@@ -1,4 +1,99 @@
 <nav id="mainnav-container" class="mainnav">
+    <style>
+        /* Colorful FontAwesome Icons Styles */
+        .nav-link .fa-dashboard {
+            color: #2196F3;
+        }
+
+        /* Blue for Dashboard */
+        .nav-link .fa-cubes {
+            color: #FF9800;
+        }
+
+        /* Orange for Inventory */
+        .nav-link .fa-calendar {
+            color: #4CAF50;
+        }
+
+        /* Green for Appointments */
+        .nav-link .fa-shopping-cart {
+            color: #E91E63;
+        }
+
+        /* Pink for Sale */
+        .nav-link .fa-rotate-left {
+            color: #9C27B0;
+        }
+
+        /* Purple for Sale Return */
+        .nav-link .fa-cart-plus {
+            color: #00BCD4;
+        }
+
+        /* Cyan for Purchase */
+        .nav-link .fa-reply {
+            color: #FF5722;
+        }
+
+        /* Deep Orange for Purchase Return */
+        .nav-link .fa-bank {
+            color: #8BC34A;
+        }
+
+        /* Light Green for Account */
+        .nav-link .fa-users {
+            color: #FFC107;
+        }
+
+        /* Amber for Employee */
+        .nav-link .fa-user {
+            color: #607D8B;
+        }
+
+        /* Blue Grey for Users */
+        .nav-link .fa-cog {
+            color: #795548;
+        }
+
+        /* Brown for Settings */
+        .nav-link .fa-clipboard {
+            color: #3F51B5;
+        }
+
+        /* Indigo for Log */
+        .nav-link .fa-sign-out {
+            color: #F44336;
+        }
+
+        /* Red for Logout */
+
+        /* Hover effects for icons */
+        .nav-link:hover .fa {
+            transform: scale(1.1);
+            transition: all 0.3s ease;
+            text-shadow: 0 0 8px currentColor;
+        }
+
+        /* Active state glow effect */
+        .nav-link.active .fa {
+            filter: drop-shadow(0 0 3px currentColor);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.7;
+            }
+
+            100% {
+                opacity: 1;
+            }
+        }
+    </style>
     <div class="mainnav__inner">
         <div class="mainnav__top-content scrollable-content pb-5">
             <div id="_dm-mainnavProfile" class="mainnav__widget my-3 hv-outline-parent">

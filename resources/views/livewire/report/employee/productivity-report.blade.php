@@ -138,7 +138,7 @@
         </div>
         <div class="card-body pt-3">
             <div class="table-responsive">
-                <table class="table table-hover align-middle border">
+                <table class="table table-sm  table-hover align-middle border">
                     <thead>
                         <tr>
                             <th wire:click="sortBy('name')" style="cursor: pointer" class="border-end bg-light">
@@ -165,6 +165,7 @@
                                             <i class="fa fa-arrow-down"></i>
                                         @endif
                                     @endif
+                                </div>
                             </th>
                             <th class="text-end border-end bg-light" wire:click="sortBy('total_sales')" style="cursor: pointer">
                                 <div class="d-flex align-items-center justify-content-end">
@@ -210,35 +211,26 @@
                                             <i class="fa fa-user text-primary"></i>
                                         </div>
                                         <div>
-                                            <div class="fw-semibold">{{ $employee->name }}</div>
+                                            <div class="fw-semibold">{{ $employee['name'] }}</div>
                                         </div>
                                     </div>
                                 </td>
                                 <td class="text-end border-end border-secondary">
-                                    <div class="fw-semibold">{{ currency($employee->total_transactions, 0) }}</div>
+                                    <div class="fw-semibold">{{ currency($employee['total_transactions'], 0) }}</div>
                                 </td>
                                 <td class="text-end border-end border-secondary">
-                                    <div class="fw-semibold text-success">{{ currency($employee->total_sales, 2) }}</div>
+                                    <div class="fw-semibold text-success">{{ currency($employee['total_sales'], 2) }}</div>
                                 </td>
                                 <td class="text-end border-end border-secondary">
-                                    <div class="fw-semibold text-info">{{ currency($employee->items_sold, 0) }}</div>
+                                    <div class="fw-semibold text-info">{{ currency($employee['items_sold'], 0) }}</div>
                                 </td>
                                 <td class="text-end">
-                                    <div class="fw-semibold text-warning">{{ currency($employee->avg_transaction_value, 2) }}</div>
+                                    <div class="fw-semibold text-warning">{{ currency($employee['avg_transaction_value'], 2) }}</div>
                                 </td>
                             </tr>
                         @endforeach
                     </tbody>
                 </table>
-            </div>
-            <div class="mt-4 d-flex justify-content-between align-items-center">
-                <div class="text-muted">
-                    <i class="fa fa-info-circle me-1"></i>
-                    Showing {{ $employees->firstItem() }} to {{ $employees->lastItem() }} of {{ $employees->total() }} entries
-                </div>
-                <div>
-                    {{ $employees->links() }}
-                </div>
             </div>
         </div>
     </div>
@@ -265,7 +257,7 @@
                             <th class="text-end border-end">
                                 <div class="d-flex align-items-center justify-content-end">
                                     <span class="bg-primary bg-opacity-10 p-1 rounded-2 me-2">
-                                        <i class="fa fa-chart-line text-primary"></i>
+                                        <i class="fa fa-bar-chart text-primary"></i>
                                     </span>
                                     <span class="text-primary fw-semibold">Avg Sales</span>
                                 </div>
@@ -297,14 +289,12 @@
                         </tr>
                     </thead>
                     <tbody>
-                        @foreach ($departmentAverages as $dept => $averages)
-                            <tr>
-                                <td class="text-end">{{ currency($averages['avg_sales'], 2) }}</td>
-                                <td class="text-end">{{ currency($averages['avg_transactions'], 1) }}</td>
-                                <td class="text-end">{{ currency($averages['avg_items'], 1) }}</td>
-                                <td class="text-end">{{ currency($averages['avg_transaction_value'], 2) }}</td>
-                            </tr>
-                        @endforeach
+                        <tr>
+                            <td class="text-end">{{ currency($departmentAverages['avg_sales'], 2) }}</td>
+                            <td class="text-end">{{ currency($departmentAverages['avg_transactions'], 1) }}</td>
+                            <td class="text-end">{{ currency($departmentAverages['avg_items'], 1) }}</td>
+                            <td class="text-end">{{ currency($departmentAverages['avg_transaction_value'], 2) }}</td>
+                        </tr>
                     </tbody>
                 </table>
             </div>
@@ -321,7 +311,7 @@
         <div class="card-body pt-0">
             <div class="row g-4">
                 @foreach ($employees as $employee)
-                    @if (isset($topCategories[$employee->id]))
+                    @if (isset($topCategories[$employee['id']]))
                         <div class="col-md-6 col-lg-4">
                             <div class="card h-100 border shadow-sm">
                                 <div class="card-header py-3 bg-gradient">
@@ -329,7 +319,7 @@
                                         <span class="bg-primary bg-opacity-10 p-2 rounded-circle me-2">
                                             <i class="fa fa-user"></i>
                                         </span>
-                                        {{ $employee->name }}
+                                        {{ $employee['name'] }}
                                     </h6>
                                 </div>
                                 <div class="card-body">
@@ -343,7 +333,7 @@
                                                 </tr>
                                             </thead>
                                             <tbody>
-                                                @foreach ($topCategories[$employee->id]->take(3) as $category)
+                                                @foreach ($topCategories[$employee['id']]->take(3) as $category)
                                                     <tr class="border-bottom">
                                                         <td class="border-end">{{ $category->category }}</td>
                                                         <td class="text-end border-end text-info">{{ currency($category->count, 0) }}</td>
