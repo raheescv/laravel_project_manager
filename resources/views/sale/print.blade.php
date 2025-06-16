@@ -553,6 +553,16 @@
                         <td width="39%" class="text-right"> <b>{{ __('lang.discount', [], 'ar') }}</b> </td>
                     @endif
                 </tr>
+            @else
+                @if ($sale->other_discount != 0)
+                    <tr>
+                        <td class="text-left" width="39%"><b>Discount</b></td>
+                        <td class="text-right"><b>{{ currency($sale->other_discount) }}</b></td>
+                        @if ($thermal_printer_style == 'with_arabic')
+                            <td width="39%" class="text-right"> <b>{{ __('lang.discount', [], 'ar') }}</b> </td>
+                        @endif
+                    </tr>
+                @endif
             @endif
             @if ($sale->tax_amount != 0)
                 <tr>
