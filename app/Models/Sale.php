@@ -2,9 +2,12 @@
 
 namespace App\Models;
 
+use App\Helpers\Facades\SaleHelper;
+use App\Helpers\Facades\WhatsappHelper;
 use App\Models\Models\Views\Ledger;
 use App\Models\Scopes\AssignedBranchScope;
 use App\Models\Scopes\CurrentBranchScope;
+use Exception;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -259,6 +262,47 @@ class Sale extends Model implements AuditableContracts
             'id' => 0,
         ]);
         $return['items'] = $self;
+
+        return $return;
+    }
+
+    public static function sendToWhatsapp($table_id)
+    {
+        try {
+            $sale = self::find($table_id);
+            if ($sale['customer_mobile']) {
+                $number = $sale['customer_mobile'];
+            } else {
+                $number = $sale->account->mobile;
+            }
+            if ($number) {
+                // Remove all non-numeric characters
+                $number = preg_replace('/\D/', '', $number);
+                if (! str_starts_with($number, '974')) {
+                    $number = '974'.ltrim($number, '0');
+                }
+                $number = '+'.$number;
+            }
+            if (! $number) {
+                throw new Exception('No valid mobile number found for the customer.');
+            }
+            $imageContent = SaleHelper::saleInvoice($table_id, 'thermal');
+            $image_path = SaleHelper::convertHtmlToImage($imageContent, $sale->invoice_no);
+            $data = [
+                'number' => $number,
+                'message' => 'Please Check Your Invoice : '.currency($sale->grand_total),
+                'filePath' => $image_path,
+            ];
+            $response = WhatsappHelper::send($data);
+            if (! $response['success']) {
+                throw new Exception($response['message']);
+            }
+            $return['success'] = true;
+            $return['message'] = 'WhatsApp message sent successfully.';
+        } catch (Exception $e) {
+            $return['success'] = false;
+            $return['message'] = "WhatsApp server error: {$e->getMessage()}";
+        }
 
         return $return;
     }

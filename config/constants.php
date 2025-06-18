@@ -1,6 +1,7 @@
 <?php
 
 return [
+    'whatsapp_port' => env('WHATSAPP_PORT'),
     'whatsapp_server_url' => env('WHATSAPP_SERVER_URL'),
     'data_depth' => [
         'totalbuyqty' => 'Total buying quantity',

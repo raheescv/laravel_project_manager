@@ -3,8 +3,6 @@
 namespace App\Livewire\Sale;
 
 use App\Actions\Sale\UpdateAction;
-use App\Helpers\Facades\SaleHelper;
-use App\Helpers\Facades\WhatsappHelper;
 use App\Models\Sale;
 use App\Models\SaleReturnItem;
 use Illuminate\Support\Facades\Auth;
@@ -95,36 +93,14 @@ class View extends Component
         }
     }
 
-    public function sendToWhatsapp($table_id = null)
+    public function sendToWhatsapp()
     {
-        if (! $table_id) {
-            $table_id = $this->table_id;
-        }
-        $sale = Sale::find($table_id);
-        if ($sale['customer_mobile']) {
-            $number = $sale['customer_mobile'];
-        } else {
-            $number = $sale->account->mobile;
-        }
-        $imageContent = SaleHelper::saleInvoice($table_id, 'thermal');
-        $image_path = SaleHelper::convertHtmlToImage($imageContent, $sale->invoice_no);
-        if (! $number) {
-            $this->dispatch('error', ['message' => 'Invalid Number']);
-
-            goto skip;
-        }
-        $data = [
-            'number' => $number,
-            'message' => 'Please Check Your Invoice : '.currency($sale->grand_total),
-            'filePath' => $image_path,
-        ];
-        $response = WhatsappHelper::send($data);
+        $response = Sale::sendToWhatsapp($this->table_id);
         if (! $response['success']) {
             $this->dispatch('error', ['message' => $response['message']]);
         } else {
             $this->dispatch('success', ['message' => $response['message']]);
         }
-        skip :
     }
 
     public function render()

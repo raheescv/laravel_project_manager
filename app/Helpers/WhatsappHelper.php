@@ -20,8 +20,8 @@ class WhatsappHelper
 
     public function __construct()
     {
-        $port = env('WHATSAPP_PORT', self::DEFAULT_PORT);
-        $baseUrl = env('WHATSAPP_SERVER_URL', 'http://localhost:'.$port);
+        $port = config('constants.whatsapp_port', self::DEFAULT_PORT);
+        $baseUrl = config('constants.whatsapp_server_url', 'http://localhost:'.$port);
         $this->baseUrl = rtrim($baseUrl, '/');
     }
 

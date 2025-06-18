@@ -6,8 +6,6 @@ use App\Actions\Sale\CreateAction;
 use App\Actions\Sale\Item\DeleteAction as ItemDeleteAction;
 use App\Actions\Sale\Payment\DeleteAction as PaymentDeleteAction;
 use App\Actions\Sale\UpdateAction;
-use App\Helpers\Facades\SaleHelper;
-use App\Helpers\Facades\WhatsappHelper;
 use App\Models\Account;
 use App\Models\Category;
 use App\Models\Configuration;
@@ -1003,7 +1001,7 @@ class Page extends Component
                 $this->sendToWhatsapp($table_id);
             }
             if ($type == 'completed') {
-                $this->dispatch('print-invoice', ['link' => route('print::sale::invoice', $response['data']['id']), 'print' => $print]);
+                $this->dispatch('print-invoice', ['link' => route('print::sale::invoice', $table_id), 'print' => $print]);
             }
             $this->dispatch('ResetSelectBox');
             $this->dispatch('success', ['message' => $response['message']]);
@@ -1016,43 +1014,12 @@ class Page extends Component
 
     public function sendToWhatsapp($table_id = null)
     {
-        if (! $table_id) {
-            $table_id = $this->table_id;
-        }
-        $sale = Sale::find($table_id);
-        if ($sale['customer_mobile']) {
-            $number = $sale['customer_mobile'];
-        } else {
-            $number = $sale->account->mobile;
-        }
-        if ($number) {
-            // Remove all non-numeric characters
-            $number = preg_replace('/\D/', '', $number);
-            // Add default country code if not present (assuming Qatar +974, adjust as needed)
-            if (! str_starts_with($number, '974')) {
-                $number = '974'.ltrim($number, '0');
-            }
-            $number = '+'.$number;
-        }
-        $imageContent = SaleHelper::saleInvoice($table_id, 'thermal');
-        $image_path = SaleHelper::convertHtmlToImage($imageContent, $sale->invoice_no);
-        if (! $number) {
-            $this->dispatch('error', ['message' => 'Invalid Number']);
-
-            goto skip;
-        }
-        $data = [
-            'number' => $number,
-            'message' => 'Please Check Your Invoice : '.currency($sale->grand_total),
-            'filePath' => $image_path,
-        ];
-        $response = WhatsappHelper::send($data);
+        $response = Sale::sendToWhatsapp($table_id);
         if (! $response['success']) {
             $this->dispatch('error', ['message' => $response['message']]);
         } else {
             $this->dispatch('success', ['message' => $response['message']]);
         }
-        skip :
     }
 
     public function render()
