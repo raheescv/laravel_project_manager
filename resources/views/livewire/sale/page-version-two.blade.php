@@ -1209,7 +1209,7 @@
                                                 </label>
                                                 <div class="input-group elegant-input-group">
                                                     <span class="input-group-text bg-light"><i class="fa fa-mobile"></i></span>
-                                                    {{ html()->input('customer_mobile')->value('')->class('form-control')->placeholder(' ')->id('customer_mobile') }}
+                                                    {{ html()->input('customer_mobile')->value('')->class('form-control')->placeholder(' ')->attribute('wire:model', 'sales.customer_mobile')->id('customer_mobile') }}
                                                 </div>
                                             </div>
                                         </div>

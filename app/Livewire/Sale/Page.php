@@ -1025,6 +1025,15 @@ class Page extends Component
         } else {
             $number = $sale->account->mobile;
         }
+        if ($number) {
+            // Remove all non-numeric characters
+            $number = preg_replace('/\D/', '', $number);
+            // Add default country code if not present (assuming Qatar +974, adjust as needed)
+            if (! str_starts_with($number, '974')) {
+                $number = '974'.ltrim($number, '0');
+            }
+            $number = '+'.$number;
+        }
         $imageContent = SaleHelper::saleInvoice($table_id, 'thermal');
         $image_path = SaleHelper::convertHtmlToImage($imageContent, $sale->invoice_no);
         if (! $number) {
