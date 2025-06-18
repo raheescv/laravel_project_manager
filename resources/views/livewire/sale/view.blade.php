@@ -129,10 +129,10 @@
                                                     <i class="fa fa-phone me-2"></i>Contact Details
                                                 </h6>
                                                 <div class="ps-1">
-                                                    @if ($sale->customer_mobile)
+                                                    @if ($sale->customer_mobile || $sale->account?->mobile)
                                                         <div class="mb-2">
                                                             <small class="text-muted d-block">Mobile</small>
-                                                            <span class="fw-medium">{{ $sale->customer_mobile }}</span>
+                                                            <span class="fw-medium">{{ $sale->customer_mobile ?: $sale->account?->mobile }}</span>
                                                         </div>
                                                     @endif
                                                     @if ($sale->account?->email)
