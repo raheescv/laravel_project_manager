@@ -621,10 +621,10 @@
         </div>
 
         <div class="footer">
-            <p style="font-weight: bold; margin-bottom: 10px;">{{ $thermal_printer_footer_english }}</p>
+            <p style="font-weight: bold; margin-bottom: 10px;">{!! $thermal_printer_footer_english !!}</p>
             @if ($thermal_printer_style == 'with_arabic')
                 <b>
-                    <p dir="rtl">{{ $thermal_printer_footer_arabic }}</p>
+                    <p dir="rtl">{!! $thermal_printer_footer_arabic !!}</p>
                 </b>
             @endif
             <div style="margin-top: 8px; font-size: 9px; color: #777;">
