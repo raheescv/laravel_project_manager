@@ -27,7 +27,7 @@ class View extends Component
     {
         $this->table_id = $table_id;
         if ($this->table_id) {
-            $this->sale = Sale::with('account:id,name', 'branch:id,name', 'items.product:id,name', 'items.employee:id,name', 'createdUser:id,name', 'updatedUser:id,name', 'cancelledUser:id,name', 'payments.paymentMethod:id,name')->find($this->table_id);
+            $this->sale = Sale::with('account:id,name,mobile', 'branch:id,name', 'items.product:id,name', 'items.employee:id,name', 'createdUser:id,name', 'updatedUser:id,name', 'cancelledUser:id,name', 'payments.paymentMethod:id,name')->find($this->table_id);
             if (! $this->sale) {
                 return redirect()->route('sale::index');
             }
