@@ -70,13 +70,14 @@ class DaySessionSalesList extends Component
 
         $totals = Sale::completed()->where('sale_day_session_id', $this->sessionId)
             ->selectRaw('
-                SUM(gross_amount) as gross_amount,
+                SUM(total) as total,
                 SUM(item_discount) as item_discount,
                 SUM(tax_amount) as tax_amount,
                 SUM(paid) as paid,
+                SUM(balance) as balance,
                 COUNT(*) as total_count
             ')
-            ->first();
+            ->first()->toArray();
 
         $sales = $baseQuery
             ->orderBy($this->sortField, $this->sortDirection)
@@ -84,13 +85,7 @@ class DaySessionSalesList extends Component
 
         return view('livewire.sale-day-session.day-session-sales-list', [
             'sales' => $sales,
-            'totals' => [
-                'gross_amount' => $totals->gross_amount ?? 0,
-                'item_discount' => $totals->item_discount ?? 0,
-                'tax_amount' => $totals->tax_amount ?? 0,
-                'paid' => $totals->paid ?? 0,
-                'total_count' => $totals->total_count ?? 0,
-            ],
+            'totals' => $totals,
         ]);
     }
 }

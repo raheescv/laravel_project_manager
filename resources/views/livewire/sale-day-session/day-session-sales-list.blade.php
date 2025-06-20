@@ -23,7 +23,7 @@
                     </div>
                 </div>
                 <div class="col-md-3">
-                    <select wire:model="perPage" class="form-select" style="border-color: #ced4da;">
+                    <select wire:model.live="perPage" class="form-select" style="border-color: #ced4da;">
                         <option value="10">10 per page</option>
                         <option value="25">25 per page</option>
                         <option value="50">50 per page</option>
@@ -47,7 +47,7 @@
                         <tr>
                             <th wire:click="sortBy('id')" style="cursor: pointer; color: #495057; font-weight: 600; border-bottom: 2px solid #dee2e6; padding: 15px 12px;">
                                 <div class="d-flex align-items-center">
-                                    <i class="fa fa-hashtag me-2" style="color: #6c757d; font-size: 14px;"></i>
+                                    <i class="fa fa-tag me-2" style="color: #6c757d; font-size: 14px;"></i>
                                     ID
                                     @if ($sortField === 'id')
                                         @if ($sortDirection === 'asc')
@@ -79,12 +79,12 @@
                             <th class="text-end" style="cursor: pointer; color: #495057; font-weight: 600; border-bottom: 2px solid #dee2e6; padding: 15px 12px;">
                                 <div class="d-flex align-items-center justify-content-end">
                                     <i class="fa fa-money me-2" style="color: #b8860b; font-size: 14px;"></i>
-                                    <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="gross_amount" label="Gross Amount" />
+                                    <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="total" label="Total" />
                                 </div>
                             </th>
                             <th class="text-end" style="color: #495057; font-weight: 600; border-bottom: 2px solid #dee2e6; padding: 15px 12px;">
                                 <div class="d-flex align-items-center justify-content-end">
-                                    <i class="fa fa-percent me-2" style="color: #dc3545; font-size: 14px;"></i>
+                                    <i class="fa fa-tag me-2" style="color: #dc3545; font-size: 14px;"></i>
                                     <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="item_discount" label="Discount" />
                                 </div>
                             </th>
@@ -98,6 +98,12 @@
                                 <div class="d-flex align-items-center justify-content-end">
                                     <i class="fa fa-check-circle me-2" style="color: #28a745; font-size: 14px;"></i>
                                     <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="paid" label="Paid" />
+                                </div>
+                            </th>
+                            <th class="text-end" style="cursor: pointer; color: #495057; font-weight: 600; border-bottom: 2px solid #dee2e6; padding: 15px 12px;">
+                                <div class="d-flex align-items-center justify-content-end">
+                                    <i class="fa fa-check-circle me-2" style="color: #28a745; font-size: 14px;"></i>
+                                    <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="balance" label="balance" />
                                 </div>
                             </th>
                         </tr>
@@ -136,16 +142,19 @@
                                     </div>
                                 </td>
                                 <td class="text-end" style=" vertical-align: middle;">
-                                    <span class="fw-bold" style="color: #b8860b; font-size: 15px;">{{ currency($sale->gross_amount) }}</span>
+                                    <span class="fw-bold" style="color: #b8860b; font-size: 15px;">{{ currency($sale->total) }}</span>
                                 </td>
                                 <td class="text-end" style=" vertical-align: middle;">
-                                    <span style="color: #dc3545;">{{ currency($sale->item_discount) }}</span>
+                                    <span style="color: #dc3545;">{{ $sale->item_discount != 0 ? currency($sale->item_discount) : '-' }}</span>
                                 </td>
                                 <td class="text-end" style=" vertical-align: middle;">
-                                    <span style="color: #5a9fd4;">{{ currency($sale->tax_amount) }}</span>
+                                    <span style="color: #5a9fd4;">{{ $sale->tax_amount != 0 ? currency($sale->tax_amount) : '-' }}</span>
                                 </td>
                                 <td class="text-end" style=" vertical-align: middle;">
                                     <span class="fw-bold" style="color: #28a745; font-size: 15px;">{{ currency($sale->paid) }}</span>
+                                </td>
+                                <td class="text-end" style=" vertical-align: middle;">
+                                    <span class="fw-bold" style="color: red; font-size: 15px;">{{ $sale->balance != 0 ? currency($sale->balance) : '-' }}</span>
                                 </td>
                             </tr>
                         @endforeach
@@ -173,7 +182,7 @@
                                 </div>
                             </td>
                             <td class="text-end fw-bold" style="color: #b8860b; padding: 20px 12px; font-size: 16px;">
-                                {{ currency($totals['gross_amount']) }}
+                                {{ currency($totals['total']) }}
                             </td>
                             <td class="text-end fw-bold" style="color: #dc3545; padding: 20px 12px; font-size: 16px;">
                                 {{ currency($totals['item_discount']) }}
@@ -183,6 +192,9 @@
                             </td>
                             <td class="text-end fw-bold" style="color: #28a745; padding: 20px 12px; font-size: 16px;">
                                 {{ currency($totals['paid']) }}
+                            </td>
+                            <td class="text-end fw-bold" style="color: #28a745; padding: 20px 12px; font-size: 16px;">
+                                {{ currency($totals['balance']) }}
                             </td>
                         </tr>
                     </tfoot>
