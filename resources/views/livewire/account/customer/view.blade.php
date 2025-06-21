@@ -45,14 +45,16 @@
                                             <i class="fa fa-id-card me-2 text-primary"></i>
                                             ID: #{{ $accounts['id'] ?? '000' }}
                                         </span>
-                                        @php
-                                            $customer_type = $accounts['customer_type']['name'] ?? '';
-                                        @endphp
-                                        @if ($customer_type)
-                                            <span class="badge bg-success bg-gradient px-3 py-2 rounded-pill shadow-sm">
-                                                <i class="fa fa-star me-2"></i>
-                                                {{ $customer_type }}
-                                            </span>
+                                        @if ($accounts)
+                                            @php
+                                                $customer_type = $accounts['customer_type']['name'] ?? '';
+                                            @endphp
+                                            @if ($customer_type)
+                                                <span class="badge bg-success bg-gradient px-3 py-2 rounded-pill shadow-sm">
+                                                    <i class="fa fa-star me-2"></i>
+                                                    {{ $customer_type }}
+                                                </span>
+                                            @endif
                                         @endif
                                     </div>
                                 </div>
@@ -73,7 +75,7 @@
                                         </div>
                                         <div class="contact-info">
                                             <h6 class="text-muted mb-2 fw-semibold">Mobile Number</h6>
-                                            <div class="fw-bold text-dark fs-6">{{ $accounts['mobile'] ?: 'Not provided' }}</div>
+                                            <div class="fw-bold text-dark fs-6">{{ $accounts['mobile'] ?? 'Not provided' }}</div>
                                         </div>
                                     </div>
                                 </div>
@@ -87,7 +89,7 @@
                                         </div>
                                         <div class="contact-info">
                                             <h6 class="text-muted mb-2 fw-semibold">Email Address</h6>
-                                            <div class="fw-bold text-dark fs-6 text-truncate">{{ $accounts['email'] ?: 'Not provided' }}</div>
+                                            <div class="fw-bold text-dark fs-6 text-truncate">{{ $accounts['email'] ?? 'Not provided' }}</div>
                                         </div>
                                     </div>
                                 </div>
@@ -474,7 +476,7 @@
             $(document).ready(function() {
                 $('#CustomerEdit').click(function() {
                     Livewire.dispatch("Customer-Page-Update-Component", {
-                        id: "{{ $accounts['id'] }}"
+                        id: "{{ $accounts['id'] ?? '' }}"
                     });
                 });
             });
