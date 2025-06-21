@@ -74,7 +74,7 @@ class View extends Component
     public function render()
     {
         if ($this->account_id) {
-            $this->accounts = Account::find($this->account_id)->toArray();
+            $this->accounts = Account::with('customerType')->find($this->account_id)->toArray();
             $this->total_sales = DB::table('sales')
                 ->where('account_id', $this->account_id)
                 ->selectRaw('account_id, SUM(grand_total) AS grand_total, SUM(paid) AS paid, SUM(balance) AS balance')

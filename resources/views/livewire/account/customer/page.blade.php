@@ -1,6 +1,6 @@
 <div>
     <div class="modal-header bg-primary bg-gradient text-white">
-        <h1 class="modal-title fs-5 d-flex align-items-center">
+        <h1 class="modal-title fs-5 d-flex align-items-center text-white">
             <i class="fa fa-user-plus me-2"></i>
             <span>Customer Information</span>
             @if (isset($accounts['id']))

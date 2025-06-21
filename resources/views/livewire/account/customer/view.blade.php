@@ -1,30 +1,99 @@
 <div>
-    <div class="row mb-2">
-        <div class="col-md-6">
-            <div class="d-flex align-items-center position-relative hv-grow-parent hv-outline-parent">
-                <div class="flex-shrink-0">
-                    <img class="hv-gc hv-oc img-lg rounded-circle" src="{{ asset('assets/img/profile-photos/1.png') }}" alt="Profile Picture" loading="lazy">
-                </div>
-                <div class="flex-grow-1 ms-3">
-                    <a href="{{ route('account::view', $accounts['id'] ?? '') }}" class="d-block stretched-link h5 link-offset-2-hover text-decoration-none link-underline-hover mb-0">
-                        {{ $accounts['name'] ?? '' }}
-                    </a>
-                </div>
+    <div class="customer-details-hero mb-4">
+        <div class="card border-0 shadow-lg overflow-hidden">
+            <!-- Decorative Background -->
+            <div class="position-absolute top-0 start-0 w-100 h-100 opacity-25">
+                <div class="bg-gradient-primary h-100 w-100"></div>
+                <div class="position-absolute top-0 end-0 w-50 h-100 bg-gradient-secondary opacity-50"></div>
             </div>
-        </div>
-        <div class="col-md-6">
-            <div class="d-flex align-items-center position-relative hv-grow-parent hv-outline-parent">
-                <div class="flex-grow-1 ms-3">
-                    <ul class="list-group list-group-borderless">
-                        <li class="list-group-item d-flex justify-content-between align-items-center py-2">
-                            <div class="me-5 mb-0 h5">Mobile</div>
-                            <span class="ms-auto h5 mb-0">{{ $accounts['mobile'] ?? '' }}</span>
-                        </li>
-                        <li class="list-group-item d-flex justify-content-between align-items-center py-2">
-                            <div class="me-5 mb-0 h5">Email</div>
-                            <span class="ms-auto h5 mb-0">{{ $accounts['email'] ?? '' }}</span>
-                        </li>
-                    </ul>
+
+            <div class="card-body position-relative" id="customer-details" style="padding: 2rem;">
+                <!-- Edit Button - Premium positioning -->
+                <div class="position-absolute top-0 end-0 me-4 mt-3" style="z-index: 10;">
+                    <button type="button" id="CustomerEdit" class="btn btn-premium btn-sm d-flex align-items-center gap-2 shadow-lg hover-lift rounded-pill px-4 py-2" data-bs-toggle="tooltip"
+                        data-bs-placement="left" title="Edit Customer Details">
+                        <i class="fa fa-edit"></i>
+                        <span class="d-none d-lg-inline fw-semibold">Edit Customer</span>
+                    </button>
+                </div>
+
+                <div class="row align-items-center g-4">
+                    <!-- Customer Profile Section -->
+                    <div class="col-lg-6">
+                        <div class="d-flex align-items-center">
+                            <div class="flex-shrink-0 me-4">
+                                <div class="position-relative customer-avatar">
+                                    <div class="avatar-ring"></div>
+                                    <img class="img-fluid rounded-circle shadow-lg" src="{{ asset('assets/img/profile-photos/1.png') }}" alt="Profile Picture"
+                                        style="width: 80px; height: 80px; object-fit: cover; border: 4px solid rgba(255,255,255,0.9);">
+
+                                    <!-- Status Indicator -->
+                                    <div class="position-absolute bottom-0 end-0 bg-success rounded-circle border-3 border-white shadow-sm pulse-animation" style="width: 22px; height: 22px;"
+                                        data-bs-toggle="tooltip" title="Active Customer">
+                                        <i class="fa fa-check text-white" style="font-size: 8px; line-height: 22px;"></i>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="flex-grow-1">
+                                <div class="customer-info">
+                                    <h2 class="customer-name mb-2 text-dark fw-bold display-6">
+                                        {{ $accounts['name'] ?? 'Customer Name' }}
+                                    </h2>
+                                    <div class="customer-meta d-flex flex-wrap gap-3 align-items-center">
+                                        <span class="badge bg-light text-dark px-3 py-2 rounded-pill shadow-sm">
+                                            <i class="fa fa-id-card me-2 text-primary"></i>
+                                            ID: #{{ $accounts['id'] ?? '000' }}
+                                        </span>
+                                        @php
+                                            $customer_type = $accounts['customer_type']['name'] ?? '';
+                                        @endphp
+                                        @if ($customer_type)
+                                            <span class="badge bg-success bg-gradient px-3 py-2 rounded-pill shadow-sm">
+                                                <i class="fa fa-star me-2"></i>
+                                                {{ $customer_type }}
+                                            </span>
+                                        @endif
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Contact Information Cards -->
+                    <div class="col-lg-6">
+                        <div class="contact-cards">
+                            <div class="row g-3">
+                                <div class="col-sm-6">
+                                    <div class="contact-card text-center p-4 rounded-4 shadow-sm h-100 hover-card">
+                                        <div class="contact-icon mb-3">
+                                            <div class="icon-circle bg-primary bg-gradient d-inline-flex align-items-center justify-content-center rounded-circle shadow">
+                                                <i class="fa fa-mobile text-white fs-5"></i>
+                                            </div>
+                                        </div>
+                                        <div class="contact-info">
+                                            <h6 class="text-muted mb-2 fw-semibold">Mobile Number</h6>
+                                            <div class="fw-bold text-dark fs-6">{{ $accounts['mobile'] ?: 'Not provided' }}</div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="col-sm-6">
+                                    <div class="contact-card text-center p-4 rounded-4 shadow-sm h-100 hover-card">
+                                        <div class="contact-icon mb-3">
+                                            <div class="icon-circle bg-success bg-gradient d-inline-flex align-items-center justify-content-center rounded-circle shadow">
+                                                <i class="fa fa-envelope text-white fs-5"></i>
+                                            </div>
+                                        </div>
+                                        <div class="contact-info">
+                                            <h6 class="text-muted mb-2 fw-semibold">Email Address</h6>
+                                            <div class="fw-bold text-dark fs-6 text-truncate">{{ $accounts['email'] ?: 'Not provided' }}</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -399,4 +468,257 @@
             </div>
         </div>
     </div>
+
+    @push('scripts')
+        <script>
+            $(document).ready(function() {
+                $('#CustomerEdit').click(function() {
+                    Livewire.dispatch("Customer-Page-Update-Component", {
+                        id: "{{ $accounts['id'] }}"
+                    });
+                });
+            });
+        </script>
+    @endpush
+    @push('styles')
+        <style>
+            .hover-lift {
+                transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+                position: relative;
+                z-index: 1;
+            }
+
+            .hover-lift:hover {
+                transform: translateY(-3px) scale(1.02);
+                box-shadow: 0 8px 25px rgba(0, 123, 255, 0.4) !important;
+            }
+
+            .hover-lift:active {
+                transform: translateY(-1px) scale(0.98);
+            }
+
+            #CustomerEdit {
+                border: none;
+                background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+                border-radius: 25px;
+                font-weight: 600;
+                letter-spacing: 0.5px;
+                padding: 8px 16px;
+                box-shadow: 0 4px 15px rgba(0, 123, 255, 0.3);
+                position: relative;
+                overflow: hidden;
+            }
+
+            #CustomerEdit::before {
+                content: '';
+                position: absolute;
+                top: 0;
+                left: -100%;
+                width: 100%;
+                height: 100%;
+                background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+                transition: left 0.5s;
+            }
+
+            #CustomerEdit:hover::before {
+                left: 100%;
+            }
+
+            #CustomerEdit:hover {
+                background: linear-gradient(135deg, #0056b3 0%, #004085 100%);
+                transform: translateY(-3px);
+                box-shadow: 0 8px 25px rgba(0, 123, 255, 0.4);
+            }
+
+            #CustomerEdit i {
+                font-size: 0.9rem;
+                transition: transform 0.3s ease;
+            }
+
+            #CustomerEdit:hover i {
+                transform: rotate(15deg);
+            }
+
+            .card {
+                transition: all 0.3s ease;
+                border-radius: 15px;
+            }
+
+            .card:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1) !important;
+            }
+
+            .bg-light {
+                background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%) !important;
+                transition: all 0.3s ease;
+            }
+
+            .bg-light:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            }
+
+            /* Customer Details Hero Section */
+            .customer-details-hero .card {
+                border-radius: 20px;
+                overflow: hidden;
+                background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+            }
+
+            .bg-gradient-primary {
+                background: linear-gradient(45deg, rgba(0, 123, 255, 0.1), rgba(0, 86, 179, 0.05));
+            }
+
+            .bg-gradient-secondary {
+                background: linear-gradient(-45deg, rgba(40, 167, 69, 0.08), rgba(25, 135, 84, 0.05));
+            }
+
+            /* Premium Button Styles */
+            .btn-premium {
+                background: linear-gradient(135deg, #6f42c1 0%, #e83e8c 100%);
+                border: none;
+                color: white;
+                font-weight: 600;
+                letter-spacing: 0.5px;
+                box-shadow: 0 6px 20px rgba(111, 66, 193, 0.4);
+                transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            }
+
+            .btn-premium:hover {
+                background: linear-gradient(135deg, #5a2d91 0%, #d63384 100%);
+                transform: translateY(-3px);
+                box-shadow: 0 10px 30px rgba(111, 66, 193, 0.5);
+                color: white;
+            }
+
+            /* Customer Avatar */
+            .customer-avatar {
+                position: relative;
+            }
+
+            .avatar-ring {
+                position: absolute;
+                top: -8px;
+                left: -8px;
+                right: -8px;
+                bottom: -8px;
+                border: 2px solid transparent;
+                border-radius: 50%;
+                background: linear-gradient(45deg, #007bff, #28a745, #ffc107, #dc3545);
+                background-size: 400% 400%;
+                animation: gradient-rotate 3s ease infinite;
+                z-index: -1;
+            }
+
+            @keyframes gradient-rotate {
+
+                0%,
+                100% {
+                    background-position: 0% 50%;
+                }
+
+                50% {
+                    background-position: 100% 50%;
+                }
+            }
+
+            /* Pulse Animation for Status */
+            .pulse-animation {
+                animation: pulse 2s infinite;
+            }
+
+            @keyframes pulse {
+                0% {
+                    box-shadow: 0 0 0 0 rgba(40, 167, 69, 0.7);
+                }
+
+                70% {
+                    box-shadow: 0 0 0 10px rgba(40, 167, 69, 0);
+                }
+
+                100% {
+                    box-shadow: 0 0 0 0 rgba(40, 167, 69, 0);
+                }
+            }
+
+            /* Customer Name Typography */
+            .customer-name {
+                background: linear-gradient(135deg, #2c3e50 0%, #3498db 100%);
+                -webkit-background-clip: text;
+                -webkit-text-fill-color: transparent;
+                background-clip: text;
+                text-shadow: none;
+            }
+
+            /* Contact Cards */
+            .contact-card {
+                background: rgba(255, 255, 255, 0.9);
+                border: 1px solid rgba(255, 255, 255, 0.2);
+                backdrop-filter: blur(10px);
+                transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            }
+
+            .hover-card:hover {
+                transform: translateY(-8px) scale(1.02);
+                box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+                background: rgba(255, 255, 255, 0.95);
+            }
+
+            /* Icon Circles */
+            .icon-circle {
+                width: 50px;
+                height: 50px;
+                transition: all 0.3s ease;
+            }
+
+            .contact-card:hover .icon-circle {
+                transform: scale(1.1) rotate(5deg);
+                box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+            }
+
+            /* Badge Enhancements */
+            .badge {
+                font-size: 0.75rem;
+                font-weight: 600;
+                transition: all 0.3s ease;
+            }
+
+            .badge:hover {
+                transform: scale(1.05);
+            }
+
+            /* Responsive Enhancements */
+            @media (max-width: 768px) {
+                .customer-details-hero .card-body {
+                    padding: 1.5rem !important;
+                }
+
+                .customer-name {
+                    font-size: 1.75rem !important;
+                }
+
+                .contact-cards .col-sm-6 {
+                    margin-bottom: 1rem;
+                }
+            }
+
+            /* Verification Status */
+            .text-success {
+                animation: fadeInUp 0.5s ease-out;
+            }
+
+            @keyframes fadeInUp {
+                from {
+                    opacity: 0;
+                    transform: translateY(10px);
+                }
+
+                to {
+                    opacity: 1;
+                    transform: translateY(0);
+                }
+            }
+        </style>
+    @endpush
 </div>
