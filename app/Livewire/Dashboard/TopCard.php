@@ -20,7 +20,7 @@ class TopCard extends Component
 
         $weeklySale = Sale::currentBranch()->last7Days()->sum('grand_total');
         $lastWeekSale = Sale::currentBranch()->whereBetween('date', [now()->subDays(14), now()->subDays(7)])->sum('grand_total');
-        $sale_percentage = $lastWeekSale ? (($weeklySale - $lastWeekSale) / $lastWeekSale) * 100 : 0;
+        $sale_percentage = $lastWeekSale != 0 ? (($weeklySale - $lastWeekSale) / $lastWeekSale) * 100 : 0;
 
         $weeklyPurchase = Purchase::currentBranch()->last7Days()->sum('grand_total');
         $lastWeekPurchase = Purchase::currentBranch()->whereBetween('date', [now()->subDays(14), now()->subDays(7)])->sum('grand_total');
