@@ -251,25 +251,43 @@
                                     <div class="row g-2 methods">
                                         <div class="col-md-4">
                                             <div class="default-cover">
-                                                <a href="javascript:void(0)" class="@if ($payment_method_name == 'cash') active @endif" wire:click.prevent="selectPaymentMethod('cash')">
-                                                    <img src="{{ asset('assets/img/cash-pay.svg') }}" alt="Cash Payment" loading="lazy">
-                                                    <span>Cash</span>
+                                                <a href="javascript:void(0)" 
+                                                   class="btn @if ($payment_method_name == 'cash') btn-success @else btn-outline-secondary @endif d-flex flex-column align-items-center p-3 text-decoration-none h-100" 
+                                                   wire:click.prevent="selectPaymentMethod('cash')">
+                                                    <img src="{{ asset('assets/img/cash-pay.svg') }}" alt="Cash Payment" loading="lazy" style="width: 48px; height: 48px;" 
+                                                         class="mb-2 @if ($payment_method_name == 'cash') filter-invert @endif">
+                                                    <span class="fw-medium">Cash</span>
+                                                    @if ($payment_method_name == 'cash')
+                                                        <i class="fas fa-check-circle position-absolute top-0 end-0 m-2 text-white"></i>
+                                                    @endif
                                                 </a>
                                             </div>
                                         </div>
                                         <div class="col-md-4">
                                             <div class="default-cover">
-                                                <a href="javascript:void(0)" class="@if ($payment_method_name == 'card') active @endif" wire:click.prevent="selectPaymentMethod('card')">
-                                                    <img src="{{ asset('assets/img/card-pay.svg') }}" alt="Card Payment" loading="lazy">
-                                                    <span>Debit Card</span>
+                                                <a href="javascript:void(0)" 
+                                                   class="btn @if ($payment_method_name == 'card') btn-success @else btn-outline-secondary @endif d-flex flex-column align-items-center p-3 text-decoration-none h-100" 
+                                                   wire:click.prevent="selectPaymentMethod('card')">
+                                                    <img src="{{ asset('assets/img/card-pay.svg') }}" alt="Card Payment" loading="lazy" style="width: 48px; height: 48px;" 
+                                                         class="mb-2 @if ($payment_method_name == 'card') filter-invert @endif">
+                                                    <span class="fw-medium">Debit Card</span>
+                                                    @if ($payment_method_name == 'card')
+                                                        <i class="fas fa-check-circle position-absolute top-0 end-0 m-2 text-white"></i>
+                                                    @endif
                                                 </a>
                                             </div>
                                         </div>
                                         <div class="col-md-4">
                                             <div class="default-cover">
-                                                <a href="javascript:void(0)" class="@if ($payment_method_name == 'custom') active @endif" wire:click.prevent="selectPaymentMethod('custom')">
-                                                    <img src="{{ asset('assets/img/custom-pay.svg') }}" alt="Custom Payment" loading="lazy">
-                                                    <span>Custom Pay</span>
+                                                <a href="javascript:void(0)" 
+                                                   class="btn @if ($payment_method_name == 'custom') btn-success @else btn-outline-secondary @endif d-flex flex-column align-items-center p-3 text-decoration-none h-100" 
+                                                   wire:click.prevent="selectPaymentMethod('custom')">
+                                                    <img src="{{ asset('assets/img/custom-pay.svg') }}" alt="Custom Payment" loading="lazy" style="width: 48px; height: 48px;" 
+                                                         class="mb-2 @if ($payment_method_name == 'custom') filter-invert @endif">
+                                                    <span class="fw-medium">Custom Pay</span>
+                                                    @if ($payment_method_name == 'custom')
+                                                        <i class="fas fa-check-circle position-absolute top-0 end-0 m-2 text-white"></i>
+                                                    @endif
                                                 </a>
                                             </div>
                                         </div>
@@ -354,5 +372,19 @@
                 });
             });
         </script>
+    @endpush
+    @push('styles')
+        <style>
+            /* Minimal Bootstrap-compatible styles */
+            .filter-invert {
+                filter: brightness(0) invert(1);
+            }
+            
+            .default-cover .btn {
+                position: relative;
+                border-radius: 0.5rem;
+                min-height: 120px;
+            }
+        </style>
     @endpush
 </div>
