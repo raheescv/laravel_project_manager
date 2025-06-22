@@ -17,7 +17,7 @@
                 </div>
             </div>
 
-            @if (auth()->user()->can('dashboard.top-card'))
+            @if (auth()->user()->can('sale.dashboard weekly summary') || auth()->user()->can('inventory.dashboard status'))
                 <div class="row mb-4">
                     <div class="col-xl-12 mb-3">
                         <h5 class="mb-3 text-secondary fw-semibold border-start border-4 border-primary ps-3">Business Overview</h5>
@@ -62,7 +62,7 @@
                 </div>
             @endif
 
-            @if (auth()->user()->can('dashboard.income-expense-bar-chart') || auth()->user()->can('report.income vs expense dashboard pie chart'))
+            @if (auth()->user()->can('report.income vs expense dashboard bar chart') || auth()->user()->can('report.income vs expense dashboard pie chart'))
                 <div class="row mb-4">
                     <div class="col-12 mb-3">
                         <h5 class="mb-3 text-secondary fw-semibold border-start border-4 border-warning ps-3">Financial Overview</h5>
