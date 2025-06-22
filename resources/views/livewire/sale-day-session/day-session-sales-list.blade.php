@@ -126,11 +126,21 @@
                                 </td>
                                 <td style=" vertical-align: middle;">
                                     <div>
-                                        <div class="fw-medium" style="color: #495057;">{{ $sale->customer_name ?? ($sale->account->name ?? 'N/A') }}</div>
-                                        @if ($sale->customer_mobile ?? ($sale->account->mobile ?? ''))
+                                        <div class="fw-medium" style="color: #495057;">
+                                            @php
+                                                $customer_name = $sale->customer_name;
+                                                $customer_mobile = $sale->customer_mobile;
+                                                if ($sale->account && $sale->account->name) {
+                                                    $customer_name = $sale->account->name;
+                                                    $customer_mobile = $sale->account->mobile;
+                                                }
+                                            @endphp
+                                            {{ $customer_name }}
+                                        </div>
+                                        @if ($customer_mobile)
                                             <small class="text-muted d-flex align-items-center mt-1">
                                                 <i class="fa fa-phone me-1" style="font-size: 10px;"></i>
-                                                {{ $sale->customer_mobile ?? ($sale->account->mobile ?? '') }}
+                                                {{ $customer_mobile }}
                                             </small>
                                         @endif
                                     </div>
