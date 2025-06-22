@@ -40,23 +40,6 @@
                     </div>
                 </div>
             @endcan
-            @if (auth()->user()->can('inventory.dashboard status') || auth()->user()->can('sale.dashboard weekly summary'))
-                <div class="row mb-4">
-                    <div class="col-12 mb-3">
-                        <h5 class="mb-3 text-secondary fw-semibold border-start border-4 border-danger ps-3">Weekly Summary</h5>
-                    </div>
-                    @can('inventory.dashboard status')
-                        <div class="col-xl-6 mb-4">
-                            @livewire('dashboard.inventory.status')
-                        </div>
-                    @endcan
-                    @can('sale.dashboard weekly summary')
-                        <div class="col-xl-6 mb-4">
-                            @livewire('dashboard.sale.weekly-summary')
-                        </div>
-                    @endcan
-                </div>
-            @endif
             @if (auth()->user()->can('sale.dashboard bar chart') || auth()->user()->can('sale.dashboard top items'))
                 <div class="row mb-4">
                     <div class="col-12 mb-3">
@@ -79,7 +62,7 @@
                 </div>
             @endif
 
-            @if (auth()->user()->can('report.income vs expense dashboard bar chart') || auth()->user()->can('report.income vs expense dashboard pie chart'))
+            @if (auth()->user()->can('dashboard.income-expense-bar-chart') || auth()->user()->can('report.income vs expense dashboard pie chart'))
                 <div class="row mb-4">
                     <div class="col-12 mb-3">
                         <h5 class="mb-3 text-secondary fw-semibold border-start border-4 border-warning ps-3">Financial Overview</h5>
@@ -96,8 +79,9 @@
                     @endcan
                 </div>
             @endif
+
             <div class="text-center text-muted small py-3">
-                <p class="mb-0"> Dashboard last updated: {{ date('d M Y, H:i A') }}</p>
+                <p class="mb-0">© {{ date('Y') }} {{ config('app.name') }} | Dashboard last updated: {{ date('d M Y, H:i A') }}</p>
             </div>
         </div>
     </div>
