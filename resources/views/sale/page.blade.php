@@ -1952,6 +1952,42 @@
                     }
                 }
             </style>
+            <style>
+                .payment-option .btn {
+                    transform: scale(1);
+                    transition: all 0.2s ease-in-out !important;
+                }
+
+                .payment-option .btn:hover {
+                    transform: scale(1.02);
+                    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
+                }
+
+                .payment-option .btn.btn-outline-light:hover {
+                    background-color: var(--bs-light);
+                    border-color: var(--bs-gray-300);
+                }
+
+                .payment-option .btn:active {
+                    transform: scale(0.98);
+                }
+
+                .payment-option .btn .icon-wrapper {
+                    transition: transform 0.2s ease-in-out;
+                }
+
+                .payment-option .btn:hover .icon-wrapper {
+                    transform: translateY(-2px);
+                }
+
+                .transition-all {
+                    transition: all 0.2s ease-in-out;
+                }
+
+                .hover-shadow:hover {
+                    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+                }
+            </style>
         @endif
     @endpush
     @push('scripts')
