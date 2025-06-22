@@ -251,42 +251,42 @@
                                     <div class="row g-2 methods">
                                         <div class="col-md-4">
                                             <div class="default-cover">
-                                                <a href="javascript:void(0)" 
-                                                   class="btn @if ($payment_method_name == 'cash') btn-success @else btn-outline-secondary @endif d-flex flex-column align-items-center p-3 text-decoration-none h-100" 
-                                                   wire:click.prevent="selectPaymentMethod('cash')">
-                                                    <img src="{{ asset('assets/img/cash-pay.svg') }}" alt="Cash Payment" loading="lazy" style="width: 48px; height: 48px;" 
-                                                         class="mb-2 @if ($payment_method_name == 'cash') filter-invert @endif">
+                                                <a href="javascript:void(0)"
+                                                    class="btn @if ($payment_method_name == 'cash') btn-success @else btn-outline-secondary @endif d-flex flex-column align-items-center p-3 text-decoration-none h-100"
+                                                    wire:click.prevent="selectPaymentMethod('cash')">
+                                                    <img src="{{ asset('assets/img/cash-pay.svg') }}" alt="Cash Payment" loading="lazy" style="width: 48px; height: 48px;"
+                                                        class="mb-2 @if ($payment_method_name == 'cash') filter-invert @endif">
                                                     <span class="fw-medium">Cash</span>
                                                     @if ($payment_method_name == 'cash')
-                                                        <i class="fas fa-check-circle position-absolute top-0 end-0 m-2 text-white"></i>
+                                                        <i class="fa fa-check-circle position-absolute top-0 end-0 m-2 text-white"></i>
                                                     @endif
                                                 </a>
                                             </div>
                                         </div>
                                         <div class="col-md-4">
                                             <div class="default-cover">
-                                                <a href="javascript:void(0)" 
-                                                   class="btn @if ($payment_method_name == 'card') btn-success @else btn-outline-secondary @endif d-flex flex-column align-items-center p-3 text-decoration-none h-100" 
-                                                   wire:click.prevent="selectPaymentMethod('card')">
-                                                    <img src="{{ asset('assets/img/card-pay.svg') }}" alt="Card Payment" loading="lazy" style="width: 48px; height: 48px;" 
-                                                         class="mb-2 @if ($payment_method_name == 'card') filter-invert @endif">
+                                                <a href="javascript:void(0)"
+                                                    class="btn @if ($payment_method_name == 'card') btn-success @else btn-outline-secondary @endif d-flex flex-column align-items-center p-3 text-decoration-none h-100"
+                                                    wire:click.prevent="selectPaymentMethod('card')">
+                                                    <img src="{{ asset('assets/img/card-pay.svg') }}" alt="Card Payment" loading="lazy" style="width: 48px; height: 48px;"
+                                                        class="mb-2 @if ($payment_method_name == 'card') filter-invert @endif">
                                                     <span class="fw-medium">Debit Card</span>
                                                     @if ($payment_method_name == 'card')
-                                                        <i class="fas fa-check-circle position-absolute top-0 end-0 m-2 text-white"></i>
+                                                        <i class="fa fa-check-circle position-absolute top-0 end-0 m-2 text-white"></i>
                                                     @endif
                                                 </a>
                                             </div>
                                         </div>
                                         <div class="col-md-4">
                                             <div class="default-cover">
-                                                <a href="javascript:void(0)" 
-                                                   class="btn @if ($payment_method_name == 'custom') btn-success @else btn-outline-secondary @endif d-flex flex-column align-items-center p-3 text-decoration-none h-100" 
-                                                   wire:click.prevent="selectPaymentMethod('custom')">
-                                                    <img src="{{ asset('assets/img/custom-pay.svg') }}" alt="Custom Payment" loading="lazy" style="width: 48px; height: 48px;" 
-                                                         class="mb-2 @if ($payment_method_name == 'custom') filter-invert @endif">
+                                                <a href="javascript:void(0)"
+                                                    class="btn @if ($payment_method_name == 'custom') btn-success @else btn-outline-secondary @endif d-flex flex-column align-items-center p-3 text-decoration-none h-100"
+                                                    wire:click.prevent="selectPaymentMethod('custom')">
+                                                    <img src="{{ asset('assets/img/custom-pay.svg') }}" alt="Custom Payment" loading="lazy" style="width: 48px; height: 48px;"
+                                                        class="mb-2 @if ($payment_method_name == 'custom') filter-invert @endif">
                                                     <span class="fw-medium">Custom Pay</span>
                                                     @if ($payment_method_name == 'custom')
-                                                        <i class="fas fa-check-circle position-absolute top-0 end-0 m-2 text-white"></i>
+                                                        <i class="fa fa-check-circle position-absolute top-0 end-0 m-2 text-white"></i>
                                                     @endif
                                                 </a>
                                             </div>
@@ -375,15 +375,140 @@
     @endpush
     @push('styles')
         <style>
-            /* Minimal Bootstrap-compatible styles */
-            .filter-invert {
+            /* Payment Method Selection Styles */
+            .methods .default-cover a {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                padding: 1rem;
+                border: 2px solid #e9ecef;
+                border-radius: 12px;
+                text-decoration: none;
+                color: #6c757d;
+                background: #fff;
+                transition: all 0.3s ease;
+                position: relative;
+                overflow: hidden;
+            }
+
+            .methods .default-cover a:hover {
+                border-color: #28a745;
+                color: #28a745;
+                transform: translateY(-2px);
+                box-shadow: 0 4px 15px rgba(40, 167, 69, 0.2);
+            }
+
+            .methods .default-cover a.active {
+                border-color: #28a745;
+                background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+                color: #fff;
+                box-shadow: 0 6px 20px rgba(40, 167, 69, 0.3);
+                transform: translateY(-3px);
+            }
+
+            .methods .default-cover a.active::before {
+                content: '';
+                position: absolute;
+                top: 0;
+                left: -100%;
+                width: 100%;
+                height: 100%;
+                background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+                transition: left 0.5s;
+                animation: shimmer 2s infinite;
+            }
+
+            @keyframes shimmer {
+                0% {
+                    left: -100%;
+                }
+
+                50% {
+                    left: 100%;
+                }
+
+                100% {
+                    left: 100%;
+                }
+            }
+
+            .methods .default-cover a.active img {
                 filter: brightness(0) invert(1);
             }
-            
-            .default-cover .btn {
-                position: relative;
-                border-radius: 0.5rem;
-                min-height: 120px;
+
+            .methods .default-cover a.active span {
+                font-weight: 600;
+                text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+            }
+
+            .methods .default-cover a img {
+                width: 48px;
+                height: 48px;
+                margin-bottom: 0.5rem;
+                transition: all 0.3s ease;
+            }
+
+            .methods .default-cover a:hover img {
+                transform: scale(1.1);
+            }
+
+            .methods .default-cover a.active img {
+                transform: scale(1.1);
+            }
+
+            .methods .default-cover a span {
+                font-size: 0.9rem;
+                font-weight: 500;
+                transition: all 0.3s ease;
+            }
+
+            /* Success checkmark for active payment method */
+            .methods .default-cover a.active::after {
+                content: '✓';
+                position: absolute;
+                top: 8px;
+                right: 8px;
+                background: rgba(255, 255, 255, 0.2);
+                color: #fff;
+                width: 20px;
+                height: 20px;
+                border-radius: 50%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 12px;
+                font-weight: bold;
+                animation: checkmarkPop 0.3s ease;
+            }
+
+            @keyframes checkmarkPop {
+                0% {
+                    transform: scale(0);
+                }
+
+                70% {
+                    transform: scale(1.2);
+                }
+
+                100% {
+                    transform: scale(1);
+                }
+            }
+
+            /* Responsive adjustments */
+            @media (max-width: 768px) {
+                .methods .default-cover a {
+                    padding: 0.75rem;
+                }
+
+                .methods .default-cover a img {
+                    width: 40px;
+                    height: 40px;
+                }
+
+                .methods .default-cover a span {
+                    font-size: 0.8rem;
+                }
             }
         </style>
     @endpush
