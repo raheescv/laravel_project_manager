@@ -17,7 +17,7 @@
                 </div>
             </div>
 
-            @if (auth()->user()->can('sale.dashboard weekly summary') || auth()->user()->can('inventory.dashboard status'))
+            @if (auth()->user()->can('dashboard.top-card'))
                 <div class="row mb-4">
                     <div class="col-xl-12 mb-3">
                         <h5 class="mb-3 text-secondary fw-semibold border-start border-4 border-primary ps-3">Business Overview</h5>
