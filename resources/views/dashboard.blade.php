@@ -27,7 +27,7 @@
                     </div>
                 </div>
             @endif
-            @can('appointment.view')
+            @can('appointment.dashboard')
                 <div class="row mb-4">
                     <div class="col-12 mb-3">
                         <h5 class="mb-3 text-secondary fw-semibold border-start border-4 border-info ps-3">Appointment Analytics</h5>
@@ -40,44 +40,64 @@
                     </div>
                 </div>
             @endcan
-            <div class="row mb-4">
-                <div class="col-12 mb-3">
-                    <h5 class="mb-3 text-secondary fw-semibold border-start border-4 border-success ps-3">Sales Performance</h5>
-                </div>
-                @can('sale.dashboard bar chart')
-                    <div class="col-xl-8 mb-4">
-                        @livewire('dashboard.sale.overview')
+            @if (auth()->user()->can('inventory.dashboard status') || auth()->user()->can('sale.dashboard weekly summary'))
+                <div class="row mb-4">
+                    <div class="col-12 mb-3">
+                        <h5 class="mb-3 text-secondary fw-semibold border-start border-4 border-danger ps-3">Weekly Summary</h5>
                     </div>
-                @endcan
-                @can('sale.dashboard top items')
-                    <div class="col-xl-4 mb-4">
-                        <div class="card h-100 shadow-sm border-0 rounded-3 overflow-hidden">
-                            <div class="card-body">
-                                @livewire('dashboard.top-sale-items')
+                    @can('inventory.dashboard status')
+                        <div class="col-xl-6 mb-4">
+                            @livewire('dashboard.inventory.status')
+                        </div>
+                    @endcan
+                    @can('sale.dashboard weekly summary')
+                        <div class="col-xl-6 mb-4">
+                            @livewire('dashboard.sale.weekly-summary')
+                        </div>
+                    @endcan
+                </div>
+            @endif
+            @if (auth()->user()->can('sale.dashboard bar chart') || auth()->user()->can('sale.dashboard top items'))
+                <div class="row mb-4">
+                    <div class="col-12 mb-3">
+                        <h5 class="mb-3 text-secondary fw-semibold border-start border-4 border-success ps-3">Sales Performance</h5>
+                    </div>
+                    @can('sale.dashboard bar chart')
+                        <div class="col-xl-8 mb-4">
+                            @livewire('dashboard.sale.overview')
+                        </div>
+                    @endcan
+                    @can('sale.dashboard top items')
+                        <div class="col-xl-4 mb-4">
+                            <div class="card h-100 shadow-sm border-0 rounded-3 overflow-hidden">
+                                <div class="card-body">
+                                    @livewire('dashboard.top-sale-items')
+                                </div>
                             </div>
                         </div>
-                    </div>
-                @endcan
-            </div>
-
-            <div class="row mb-4">
-                <div class="col-12 mb-3">
-                    <h5 class="mb-3 text-secondary fw-semibold border-start border-4 border-warning ps-3">Financial Overview</h5>
+                    @endcan
                 </div>
-                @can('report.income vs expense dashboard bar chart')
-                    <div class="col-xl-8 mb-4">
-                        @livewire('dashboard.income-expense-bar-chart')
-                    </div>
-                @endcan
-                @can('report.income vs expense dashboard pie chart')
-                    <div class="col-xl-4 mb-4">
-                        @livewire('dashboard.income-expense-chart')
-                    </div>
-                @endcan
-            </div>
+            @endif
 
+            @if (auth()->user()->can('report.income vs expense dashboard bar chart') || auth()->user()->can('report.income vs expense dashboard pie chart'))
+                <div class="row mb-4">
+                    <div class="col-12 mb-3">
+                        <h5 class="mb-3 text-secondary fw-semibold border-start border-4 border-warning ps-3">Financial Overview</h5>
+                    </div>
+                    @can('report.income vs expense dashboard bar chart')
+                        <div class="col-xl-8 mb-4">
+                            @livewire('dashboard.income-expense-bar-chart')
+                        </div>
+                    @endcan
+                    @can('report.income vs expense dashboard pie chart')
+                        <div class="col-xl-4 mb-4">
+                            @livewire('dashboard.income-expense-chart')
+                        </div>
+                    @endcan
+                </div>
+            @endif
             <div class="text-center text-muted small py-3">
-                <p class="mb-0">© {{ date('Y') }} {{ config('app.name') }} | Dashboard last updated: {{ date('d M Y, H:i A') }}</p>
+                <p class="mb-0"> Dashboard last updated: {{ date('d M Y, H:i A') }}</p>
             </div>
         </div>
     </div>
