@@ -306,4 +306,19 @@ class Sale extends Model implements AuditableContracts
 
         return $return;
     }
+
+    public static function updateSalePaymentMethods(Sale $sale): void
+    {
+        $payment_method_ids = $sale->payments->pluck('payment_method_id')->toArray();
+        $payment_method_name = Account::whereIn('id', $payment_method_ids)
+            ->pluck('name')
+            ->toArray();
+
+        $data = [
+            'payment_method_ids' => implode(',', $payment_method_ids),
+            'payment_method_name' => implode(', ', $payment_method_name),
+            'paid' => $sale->payments->sum('amount'),
+        ];
+        $sale->update($data);
+    }
 }

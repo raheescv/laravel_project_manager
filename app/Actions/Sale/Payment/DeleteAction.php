@@ -2,6 +2,8 @@
 
 namespace App\Actions\Sale\Payment;
 
+use App\Models\JournalEntry;
+use App\Models\Sale;
 use App\Models\SalePayment;
 use Exception;
 use Illuminate\Support\Facades\Auth;
@@ -15,15 +17,20 @@ class DeleteAction
             if (! $model) {
                 throw new Exception("Resource not found with the specified ID: $id.", 1);
             }
-            if ($model->sale->status == 'completed') {
+            $sale = $model->sale;
+            if ($sale->status == 'completed') {
                 if (! Auth::user()->can('sale.edit completed')) {
                     throw new Exception("You don't have permission to delete it.", 1);
                 }
-                dd('journal delete');
+                JournalEntry::where('model', 'SalePayment')->where('model_id', $model->id)->delete();
             }
+
             if (! $model->delete()) {
                 throw new Exception('Oops! Something went wrong while deleting the SalePayment. Please try again.', 1);
             }
+            // Update sale payment methods
+            Sale::updateSalePaymentMethods($sale);
+
             $return['success'] = true;
             $return['message'] = 'Successfully Update SalePayment';
             $return['data'] = $model;

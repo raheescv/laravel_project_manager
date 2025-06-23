@@ -297,10 +297,14 @@ class Page extends Component
                 'created_by' => $payment->created_by,
             ];
         })->toArray();
-
         // Set default payment method if no payments exist
-        if (empty($this->payments)) {
-            $this->payment_method_name = strtolower(Account::find($this->default_payment_method_id)->name);
+        if ($this->payments) {
+            if (count($this->payments) == 1) {
+                $this->default_payment_method_id = $this->payments[0]['payment_method_id'];
+                $this->payment_method_name = $this->payments[0]['payment_method_name'];
+            } else {
+                $this->payment_method_name = 'custom';
+            }
             $this->payment = [
                 'payment_method_id' => $this->default_payment_method_id,
                 'payment_method_name' => $this->payment_method_name,

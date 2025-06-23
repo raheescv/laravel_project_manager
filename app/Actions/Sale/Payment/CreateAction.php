@@ -2,7 +2,6 @@
 
 namespace App\Actions\Sale\Payment;
 
-use App\Models\Account;
 use App\Models\Sale;
 use App\Models\SalePayment;
 
@@ -16,7 +15,7 @@ class CreateAction
             $model = SalePayment::create($data);
 
             // Update sale payment methods
-            $this->updateSalePaymentMethods($model->sale);
+            Sale::updateSalePaymentMethods($model->sale);
 
             $return['success'] = true;
             $return['message'] = 'Successfully Created SalePayment';
@@ -27,19 +26,5 @@ class CreateAction
         }
 
         return $return;
-    }
-
-    public function updateSalePaymentMethods(Sale $sale): void
-    {
-        $payment_method_ids = $sale->payments->pluck('payment_method_id')->toArray();
-        $payment_method_name = Account::whereIn('id', $payment_method_ids)
-            ->pluck('name')
-            ->toArray();
-
-        $data = [
-            'payment_method_ids' => implode(',', $payment_method_ids),
-            'payment_method_name' => implode(', ', $payment_method_name),
-        ];
-        $sale->update($data);
     }
 }
