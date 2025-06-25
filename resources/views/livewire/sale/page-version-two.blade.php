@@ -1614,7 +1614,7 @@
                                     <div class="grand-total-gradient-overlay"></div>
 
                                     <!-- Header with animated icon -->
-                                    <div class="card-header bg-gradient-primary text-white py-3 position-relative">
+                                    <div class="card-header bg-primary text-white py-2">
                                         <div class="d-flex align-items-center justify-content-between">
                                             <h6 class="mb-0 fw-bold d-flex align-items-center text-white">
                                                 <div class="icon-container me-2">
