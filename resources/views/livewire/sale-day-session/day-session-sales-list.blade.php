@@ -94,6 +94,12 @@
                                     <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="tax_amount" label="Tax" />
                                 </div>
                             </th>
+                            <th class="text-end" style="color: #495057; font-weight: 600; border-bottom: 2px solid #dee2e6; padding: 15px 12px;">
+                                <div class="d-flex align-items-center justify-content-end">
+                                    <i class="fa fa-calculator me-2" style="color: #5a9fd4; font-size: 14px;"></i>
+                                    <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="payment_method_name" label="Payment Method" />
+                                </div>
+                            </th>
                             <th class="text-end" style="cursor: pointer; color: #495057; font-weight: 600; border-bottom: 2px solid #dee2e6; padding: 15px 12px;">
                                 <div class="d-flex align-items-center justify-content-end">
                                     <i class="fa fa-check-circle me-2" style="color: #28a745; font-size: 14px;"></i>
@@ -161,6 +167,9 @@
                                     <span style="color: #5a9fd4;">{{ $sale->tax_amount != 0 ? currency($sale->tax_amount) : '-' }}</span>
                                 </td>
                                 <td class="text-end" style=" vertical-align: middle;">
+                                    <span class="fw-bold" style="color: #28a745; font-size: 15px;">{{ $sale->payment_method_name }}</span>
+                                </td>
+                                <td class="text-end" style=" vertical-align: middle;">
                                     <span class="fw-bold" style="color: #28a745; font-size: 15px;">{{ currency($sale->paid) }}</span>
                                 </td>
                                 <td class="text-end" style=" vertical-align: middle;">
@@ -199,6 +208,8 @@
                             </td>
                             <td class="text-end fw-bold" style="color: #5a9fd4; padding: 20px 12px; font-size: 16px;">
                                 {{ currency($totals['tax_amount']) }}
+                            </td>
+                            <td class="text-end fw-bold" style="color: #5a9fd4; padding: 20px 12px; font-size: 16px;">
                             </td>
                             <td class="text-end fw-bold" style="color: #28a745; padding: 20px 12px; font-size: 16px;">
                                 {{ currency($totals['paid']) }}
