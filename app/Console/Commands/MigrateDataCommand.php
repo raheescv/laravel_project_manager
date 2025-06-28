@@ -6,10 +6,14 @@ use App\Actions\Appointment\CreateAction as AppointmentCreateAction;
 use App\Actions\InventoryTransfer\CreateAction as InventoryTransferCreateAction;
 use App\Actions\Purchase\CreateAction as PurchaseCreateAction;
 use App\Actions\Sale\CreateAction as SaleCreateAction;
+use App\Actions\SaleReturn\CreateAction as SaleReturnCreateAction;
 use App\Jobs\BranchProductCreationJob;
 use App\Models\Account;
+use App\Models\Branch;
 use App\Models\Inventory;
 use App\Models\Product;
+use App\Models\Sale;
+use App\Models\SaleItem;
 use App\Models\User;
 use App\Models\UserHasBranch;
 use Illuminate\Console\Command;
@@ -31,6 +35,7 @@ class MigrateDataCommand extends Command
         $this->info('Starting data migration...');
         $this->paymentModesIds = DB::connection('mysql2')->table('account_heads')->whereIn('account_category_id', [16, 17])->pluck('id', 'id')->toArray();
 
+        DB::statement('SET FOREIGN_KEY_CHECKS=0;');
         $this->branches();
         $this->accounts();
         $this->customer();
@@ -39,8 +44,9 @@ class MigrateDataCommand extends Command
         $this->products();
         $this->employees();
         $this->users();
-        // sleep(40);
+        // sleep(200);
         $this->sales();
+        $this->salesReturns();
         $this->purchases();
         $this->appointments();
         $this->stockTransfers();
@@ -129,6 +135,7 @@ class MigrateDataCommand extends Command
         $progressBar = $this->output->createProgressBar($branches);
         $progressBar->start();
         $branches = DB::connection('mysql2')->table('branches')->whereNull('deleted_at')->get();
+        DB::table('branches')->truncate();
         foreach ($branches as $branch) {
             $branchData = [
                 'id' => $branch->id,
@@ -405,7 +412,7 @@ class MigrateDataCommand extends Command
                                 'paid' => $sale->paid ? $sale->paid : 0,
                                 'balance' => $sale->balance,
                                 'address' => null,
-                                'status' => 'completed',
+                                'status' => $sale->status == 2 ? 'completed' : 'draft',
                                 'created_by' => $created_by,
                                 'updated_by' => $updated_by,
                             ];
@@ -513,6 +520,137 @@ class MigrateDataCommand extends Command
         $progressBar->finish();
         $this->newLine();
         $this->info('Sales migration completed successfully!');
+    }
+
+    private function salesReturns()
+    {
+        $this->info('Migrating sales returns...');
+
+        // Get total count for progress bar
+        $totalSaleReturns = DB::connection('mysql2')
+            ->table('sale_returns')
+            ->whereNull('deleted_at')
+            ->count();
+
+        $progressBar = $this->output->createProgressBar($totalSaleReturns);
+        $progressBar->start();
+
+        DB::connection('mysql2')
+            ->table('sale_returns')
+            ->whereNull('sale_returns.deleted_at')
+            ->orderBy('sale_returns.id')
+            ->chunk(100, function ($saleReturns) use ($progressBar) {
+                foreach ($saleReturns as $saleReturn) {
+                    $progressBar->advance();
+                    try {
+                        DB::transaction(function () use ($saleReturn) {
+                            $account = Account::where('second_reference_no', $saleReturn->customer_id)->first();
+                            $created_by = User::where('type', 'user')->where('second_reference_no', $saleReturn->created_by)->value('id');
+                            $updated_by = User::where('type', 'user')->where('second_reference_no', $saleReturn->updated_by)->value('id');
+                            $branch_id = Branch::where('id', $saleReturn->branch_id)->value('id') ?? 1;
+
+                            $data = [
+                                'branch_id' => $branch_id,
+                                'date' => $saleReturn->date,
+                                'reference_no' => $saleReturn->invoice_no,
+                                'account_id' => $account->id,
+                                'tax_amount' => 0,
+                                'other_discount' => $saleReturn->other_discount ?: 0,
+                                'freight' => 0,
+                                'status' => 'completed',
+                                'created_by' => $created_by,
+                                'updated_by' => $updated_by,
+                            ];
+
+                            $data['items'] = [];
+
+                            // Migrate sale return product items
+                            $sale_return_items = DB::connection('mysql2')
+                                ->table('sale_return_items')
+                                ->whereNull('deleted_at')
+                                ->where('sale_return_id', $saleReturn->id)
+                                ->get();
+
+                            foreach ($sale_return_items as $value) {
+
+                                $sale_id = null;
+                                $sale_item_id = null;
+
+                                $secondSale = DB::connection('mysql2')->table('sales')->find($value->sale_id);
+                                if ($secondSale) {
+                                    $sale = Sale::where('invoice_no', $secondSale->invoice_no)->first();
+                                    if ($sale) {
+                                        $sale_id = $sale->id;
+                                        $secondSaleItem = SaleItem::where('sale_id', $sale_id)->where('product_id', $value->product_id)->first();
+                                        if ($secondSaleItem) {
+                                            $sale_item_id = $secondSaleItem->id;
+                                        }
+                                    }
+                                }
+
+                                $product_id = Product::where('type', 'product')->where('second_reference_no', $value->product_id)->value('id');
+                                $inventory_id = Inventory::where('branch_id', $branch_id)->where('product_id', $product_id)->value('id');
+
+                                if (! $inventory_id) {
+                                    throw new \Exception('Inventory not found for product ID: '.$value->product_id.' for the branch ID: '.$branch_id);
+                                }
+
+                                $item = [
+                                    'sale_id' => $sale_id,
+                                    'sale_item_id' => $sale_item_id,
+                                    'inventory_id' => $inventory_id,
+                                    'product_id' => $product_id,
+                                    'unit_price' => $value->unit_price,
+                                    'quantity' => $value->quantity,
+                                    'gross_total' => $value->unit_price * $value->quantity,
+                                    'discount' => $value->discount,
+                                    'tax' => 0,
+                                    'total' => $value->unit_price * $value->quantity,
+                                ];
+                                $data['items'][] = $item;
+                            }
+
+                            $data['items'] = collect($data['items']);
+
+                            $data['gross_amount'] = $data['items']->sum('net_amount');
+                            $data['item_discount'] = $data['items']->sum('discount');
+                            $data['total_quantity'] = $data['items']->sum('quantity');
+                            $data['total'] = $data['items']->sum('total');
+
+                            // Migrate sale return payments
+                            $journals = DB::connection('mysql2')
+                                ->table('journals')
+                                ->whereNull('deleted_at')
+                                ->where('sale_return_id', $saleReturn->id)
+                                ->whereIn('credit', $this->paymentModesIds)
+                                ->get(['amount', 'credit']);
+
+                            $data['payments'] = [];
+                            foreach ($journals as $value) {
+                                $account_id = Account::where('second_reference_no', $value->credit)->value('id');
+                                $journal = [
+                                    'payment_method_id' => $account_id,
+                                    'amount' => $value->amount,
+                                ];
+                                $data['payments'][] = $journal;
+                            }
+                            $response = (new SaleReturnCreateAction())->execute($data, 1);
+                            if (! $response['success']) {
+                                $this->error('Failed to create sale return: '.$response['message']);
+                                Log::error('Failed to create sale return: '.$response['message']);
+                                Log::error($data);
+                            }
+                        });
+                    } catch (\Exception $e) {
+                        $this->error('Error migrating sale return: '.$e->getMessage());
+                        Log::error('Sale return migration error: '.$e->getMessage());
+                    }
+                }
+            });
+
+        $progressBar->finish();
+        $this->newLine();
+        $this->info('Sales returns migration completed successfully!');
     }
 
     private function users()
@@ -689,7 +827,10 @@ class MigrateDataCommand extends Command
             unset($data['main_category']);
             unset($data['sub_category']);
             $product = Product::create((array) $data);
-            BranchProductCreationJob::dispatch(1, 1, $product->id);
+            $branches = Branch::all();
+            foreach ($branches as $branch) {
+                BranchProductCreationJob::dispatch($branch->id, 1, $product->id);
+            }
         }
         $progressBar->finish();
     }

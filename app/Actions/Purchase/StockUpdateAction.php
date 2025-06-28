@@ -13,11 +13,12 @@ class StockUpdateAction
             foreach ($purchase->items as $value) {
                 $inventory = Inventory::where('product_id', $value->product_id);
                 if ($value->batch) {
-                    $inventory = $inventory->where('batch', $value->batch);
+                    // $inventory = $inventory->where('batch', $value->batch);
                 }
+                $inventory = $inventory->where('branch_id', $purchase->branch_id);
                 $inventory = $inventory->first();
                 if (! $inventory) {
-                    throw new \Exception('Inventory not found '.$value->product_id, 1);
+                    throw new \Exception('Inventory not found '.$value->product_id.' with batch: '.$value->batch, 1);
                 }
                 $inventory = $inventory->toArray();
                 if ($is_purchase) {

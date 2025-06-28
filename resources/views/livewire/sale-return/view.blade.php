@@ -131,6 +131,7 @@
                             <thead>
                                 <tr class="bg-primary">
                                     <th class="text-white">SL No</th>
+                                    <th class="text-white" width="20%">Invoice No</th>
                                     <th class="text-white" width="20%">Product/Service</th>
                                     <th class="text-white text-end">Unit Price</th>
                                     <th class="text-white text-end">Quantity</th>
@@ -146,6 +147,16 @@
                                 @foreach ($items as $item)
                                     <tr>
                                         <td>{{ $loop->iteration }}</td>
+                                        <td>
+                                            <div class="d-flex align-items-center">
+                                                <i class="fa fa-box me-2"></i>
+                                                <div>
+                                                    @if ($item['sale_id'])
+                                                        <a href="{{ route('sale::view', $item['sale_id']) }}" class="text-primary">{{ $item['invoice_no'] }}</a>
+                                                    @endif
+                                                </div>
+                                            </div>
+                                        </td>
                                         <td>
                                             <div class="d-flex align-items-center">
                                                 <i class="fa fa-box me-2"></i>
@@ -182,7 +193,7 @@
                                     $items = collect($items);
                                 @endphp
                                 <tr class="fw-bold">
-                                    <td colspan="3" class="text-end">Total</td>
+                                    <td colspan="4" class="text-end">Total</td>
                                     <td class="text-end">{{ currency($items->sum('quantity')) }}</td>
                                     <td class="text-end">{{ currency($items->sum('discount')) }}</td>
                                     <td class="text-end">{{ currency($items->sum('tax_amount')) }}</td>

@@ -23,7 +23,7 @@ class View extends Component
         if ($this->table_id) {
             $this->sale_return = SaleReturn::with('account:id,name', 'branch:id,name', 'items.product:id,name', 'createdUser:id,name', 'updatedUser:id,name')->find($this->table_id);
             if (! $this->sale_return) {
-                return redirect()->route('sale::index');
+                return redirect()->route('sale_return::index');
             }
             $this->sale_returns = $this->sale_return->toArray();
             $this->items = $this->sale_return->items->mapWithKeys(function ($item) {
@@ -33,6 +33,8 @@ class View extends Component
                     $key => [
                         'id' => $item['id'],
                         'key' => $key,
+                        'sale_id' => $item->saleItem?->sale_id,
+                        'invoice_no' => $item->saleItem?->sale?->invoice_no,
                         'inventory_id' => $item['inventory_id'],
                         'product_id' => $item['product_id'],
                         'name' => $item['name'],
