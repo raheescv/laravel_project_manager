@@ -40,6 +40,70 @@
                 </div>
             </div>
 
+            <!-- Payment Method Summary Cards -->
+            @if (count($paymentSummary) > 0)
+                <div class="row g-3 mb-4">
+                    <div class="col-12">
+                        <h6 class="mb-3 text-muted d-flex align-items-center">
+                            <i class="fa fa-credit-card me-2"></i>
+                            Payment Methods Summary
+                            <span class="badge bg-light text-dark ms-2">{{ count($paymentSummary) }} Methods</span>
+                        </h6>
+                    </div>
+                    @foreach ($paymentSummary as $payment)
+                        <div class="col-xl-3 col-lg-4 col-md-6">
+                            <div
+                                class="card h-100 shadow-sm border-0
+                                @if (strtolower($payment['payment_method_name']) === 'cash') bg-success
+                                @elseif(strtolower($payment['payment_method_name']) === 'card') bg-primary
+                                @else bg-info @endif
+                                text-white">
+                                <div class="card-body p-4">
+                                    <div class="d-flex align-items-center justify-content-between mb-3">
+                                        <div class="d-flex align-items-center">
+                                            <div class="bg-white bg-opacity-25 rounded-3 p-3 me-3 d-flex align-items-center justify-content-center">
+                                                @if (strtolower($payment['payment_method_name']) === 'cash')
+                                                    <i class="fa fa-money fs-4"></i>
+                                                @elseif(strtolower($payment['payment_method_name']) === 'card')
+                                                    <i class="fa fa-credit-card fs-4"></i>
+                                                @else
+                                                    <i class="fa fa-wallet fs-4"></i>
+                                                @endif
+                                            </div>
+                                            <div>
+                                                <h6 class="mb-0 fw-bold text-uppercase small">
+                                                    {{ $payment['payment_method_name'] }}
+                                                </h6>
+                                                <small class="opacity-75">Payment Method</small>
+                                            </div>
+                                        </div>
+                                        <span class="badge bg-white bg-opacity-25 rounded-pill px-3 py-2">
+                                            {{ number_format(($payment['total_paid'] / $totals['paid']) * 100, 1) }}%
+                                        </span>
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <h3 class="mb-1 fw-bold">{{ currency($payment['total_paid']) }}</h3>
+                                        <small class="opacity-75">Total Collected</small>
+                                    </div>
+
+                                    <div class="d-flex justify-content-between align-items-center pt-3 border-top border-white border-opacity-25">
+                                        <div class="d-flex align-items-center">
+                                            <i class="fa fa-chart-line me-2 opacity-75"></i>
+                                            <span class="small">{{ $payment['count'] }} Transactions</span>
+                                        </div>
+                                        <div class="d-flex align-items-center">
+                                            <span class="badge bg-light text-success rounded-circle me-2" style="width: 8px; height: 8px;"></span>
+                                            <span class="small opacity-75">Active</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    @endforeach
+                </div>
+            @endif
+
             <!-- Enhanced Data Table -->
             <div class="table-responsive">
                 <table class="table table-sm table-hover mb-0" style="background-color: white;">

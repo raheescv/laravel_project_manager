@@ -4,6 +4,7 @@ namespace App\Livewire\SaleDaySession;
 
 use App\Models\Sale;
 use App\Models\SaleDaySession;
+use App\Models\SalePayment;
 use Livewire\Component;
 use Livewire\WithPagination;
 
@@ -79,6 +80,21 @@ class DaySessionSalesList extends Component
             ')
             ->first()->toArray();
 
+        // Get payment method summary from SalePayment table
+        $paymentSummary = SalePayment::query()
+            ->join('sales', 'sale_payments.sale_id', '=', 'sales.id')
+            ->join('accounts', 'sale_payments.payment_method_id', '=', 'accounts.id')
+            ->where('sales.sale_day_session_id', $this->sessionId)
+            ->whereNull('sales.deleted_at')
+            ->selectRaw('
+                accounts.name as payment_method_name,
+                COUNT(DISTINCT sales.id) as count,
+                SUM(sale_payments.amount) as total_paid
+            ')
+            ->groupBy('accounts.id', 'accounts.name')
+            ->get()
+            ->toArray();
+
         $sales = $baseQuery
             ->orderBy($this->sortField, $this->sortDirection)
             ->paginate($this->perPage);
@@ -86,6 +102,7 @@ class DaySessionSalesList extends Component
         return view('livewire.sale-day-session.day-session-sales-list', [
             'sales' => $sales,
             'totals' => $totals,
+            'paymentSummary' => $paymentSummary,
         ]);
     }
 }
