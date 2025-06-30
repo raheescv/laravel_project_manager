@@ -127,7 +127,7 @@ class Inventory extends Model implements AuditableContracts
         $self = $self->when($request['type'] ?? '', function ($query, $value) {
             return $query->where('products.type', $value);
         });
-        $self = $self->when($request['branch_id'] ?? '', function ($query, $value) {
+        $self = $self->when($request['branch_id'] ?? session('branch_id'), function ($query, $value) {
             return $query->where('inventories.branch_id', $value);
         });
         $self = $self->limit(10);

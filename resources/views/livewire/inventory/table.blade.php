@@ -38,61 +38,43 @@
         </div>
 
         <!-- Filter Section -->
-        <div class="bg-light rounded-3 border p-3">
-            <h6 class="mb-3 d-flex align-items-center gap-2">
-                <i class="demo-pli-filter-2 fs-4 text-primary"></i>
+        <div class="bg-light rounded-4 border shadow-sm p-4 mb-4">
+            <h6 class="mb-4 d-flex align-items-center gap-2 text-primary">
+                <i class="demo-pli-filter-2 fs-4"></i>
                 <span>Filter Items</span>
             </h6>
-            <div class="row g-3">
-                <div class="col-md-3" wire:ignore>
-                    <div class="form-group">
-                        <label class="form-label text-muted small fw-semibold mb-2">
-                            <i class="demo-psi-building me-1"></i> Branch
-                        </label>
-                        {{ html()->select('branch_id', [auth()->user()->default_branch_id => auth()->user()->branch?->name])->value(auth()->user()->default_branch_id)->class('select-assigned-branch_id-list')->multiple()->id('branch_id') }}
-                    </div>
+            <div class="row g-4">
+                <div class="col-12 col-md-3" wire:ignore>
+                    <label class="form-label fw-semibold mb-2">
+                        <i class="demo-psi-building me-1 text-info"></i> Branch
+                    </label>
+                    {{ html()->select('branch_id', [auth()->user()->default_branch_id => auth()->user()->branch?->name])->value(auth()->user()->default_branch_id)->class('select-assigned-branch_id-list')->multiple()->id('branch_id') }}
                 </div>
-                <div class="col-md-3" wire:ignore>
-                    <div class="form-group">
-                        <label class="form-label text-muted small fw-semibold mb-2">
-                            <i class="demo-pli-reload-3 me-1"></i> Department
-                        </label>
-                        {{ html()->select('department_id', [])->value('')->class('select-department_id-list')->id('department_id')->placeholder('All Departments') }}
-                    </div>
+                <div class="col-12 col-md-3" wire:ignore>
+                    <label class="form-label fw-semibold mb-2">
+                        <i class="demo-pli-reload-3 me-1 text-warning"></i> Department
+                    </label>
+                    {{ html()->select('department_id', [])->value('')->class('select-department_id-list')->id('department_id')->placeholder('All Departments') }}
                 </div>
-                <div class="col-md-3" wire:ignore>
-                    <div class="form-group">
-                        <label class="form-label text-muted small fw-semibold mb-2">
-                            <i class="demo-pli-folder me-1"></i> Main Category
-                        </label>
-                        {{ html()->select('main_category_id', [])->value('')->class('select-category_id-list')->id('main_category_id')->placeholder('All Main Categories') }}
-                    </div>
+                <div class="col-12 col-md-3" wire:ignore>
+                    <label class="form-label fw-semibold mb-2">
+                        <i class="demo-pli-folder me-1 text-primary"></i> Main Category
+                    </label>
+                    {{ html()->select('main_category_id', [])->value('')->class('select-category_id-list')->id('main_category_id')->placeholder('All Main Categories') }}
                 </div>
-                <div class="col-md-3" wire:ignore>
-                    <div class="form-group">
-                        <label class="form-label text-muted small fw-semibold mb-2">
-                            <i class="demo-pli-folder-with-document me-1"></i> Sub Category
-                        </label>
-                        {{ html()->select('sub_category_id', [])->value('')->class('select-category_id-list')->id('sub_category_id')->placeholder('All Sub Categories') }}
-                    </div>
+                <div class="col-12 col-md-3" wire:ignore>
+                    <label class="form-label fw-semibold mb-2">
+                        <i class="demo-pli-folder-with-document me-1 text-success"></i> Sub Category
+                    </label>
+                    {{ html()->select('sub_category_id', [])->value('')->class('select-category_id-list')->id('sub_category_id')->placeholder('All Sub Categories') }}
                 </div>
-                <div class="col-md-6" wire:ignore>
-                    <div class="form-group">
-                        <label class="form-label text-muted small fw-semibold mb-2">
-                            <i class="demo-pli-box me-1"></i> Product
-                        </label>
-                        {{ html()->select('product_id', [])->value('')->class('select-product_id-list')->attribute('type', 'product')->id('product_id')->placeholder('All Products') }}
-                    </div>
+                <div class="col-12 col-md-3">
+                    <label class="form-label fw-semibold mb-2">
+                        <i class="demo-pli-barcode me-1 text-secondary"></i> UPC/EAN/ISBN/SKU
+                    </label>
+                    <input type="text" wire:model.live="code" class="form-control shadow-sm" placeholder="Search by code...">
                 </div>
-                <div class="col-md-3">
-                    <div class="form-group">
-                        <label class="form-label text-muted small fw-semibold mb-2">
-                            <i class="demo-pli-barcode me-1"></i> UPC/EAN/ISBN/SKU
-                        </label>
-                        <input type="text" wire:model.live="code" class="form-control" placeholder="Search by UPC/EAN/ISBN/SKU...">
-                    </div>
-                </div>
-                <div class="col-md-3">
+                <div class="col-12 col-md-3">
                     <div class="form-group mt-4">
                         <div class="form-check">
                             <input type="checkbox" id="non_zero" wire:model.live="non_zero" class="form-check-input">
@@ -103,30 +85,27 @@
                     </div>
                 </div>
             </div>
-            <div class="row g-3">
-                <div class="col-md-3" wire:ignore>
-                    <div class="form-group">
-                        <label class="form-label text-muted small fw-semibold mb-2">
-                            <i class="demo-pli-folder me-1"></i> Brand
-                        </label>
-                        {{ html()->select('brand', [])->value('')->class('select-brand-list')->id('brand')->placeholder('All Brand') }}
-                    </div>
+            <hr class="my-4">
+            <div class="row g-4">
+                <div class="col-12 col-md-3" wire:ignore>
+                    <label class="form-label fw-semibold mb-2">
+                        <i class="demo-pli-folder me-1 text-info"></i> Brand
+                    </label>
+                    {{ html()->select('brand', [])->value('')->class('select-brand-list')->id('brand')->placeholder('All Brand') }}
                 </div>
-                <div class="col-md-3">
-                    <div class="form-group">
-                        <label class="form-label text-muted small fw-semibold mb-2">
-                            <i class="demo-pli-barcode me-1"></i> Size
-                        </label>
-                        <input type="text" wire:model.live="size" class="form-control" placeholder="Search by Size...">
-                    </div>
+                <div class="col-12 col-md-3">
+                    <label class="form-label fw-semibold mb-2">
+                        <i class="demo-pli-barcode me-1 text-warning"></i> Size
+                    </label>
+                    <input type="text" wire:model.live="size" class="form-control shadow-sm" placeholder="Search by size...">
                 </div>
             </div>
         </div>
     </div>
     <div class="card-body px-4 pb-4">
-        <div class="table-responsive">
+        <div class="table-responsive" style="max-height: 600px;">
             <table class="table table-hover align-middle mb-0 border">
-                <thead class="bg-light">
+                <thead class="bg-light position-sticky top-0" style="z-index: 1;">
                     <tr class="text-capitalize">
                         <th class="border-bottom">
                             <div class="d-flex align-items-center gap-2">
