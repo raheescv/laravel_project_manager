@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\BrandController;
 use App\Http\Controllers\ComboOfferController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\RoleController;
@@ -44,6 +45,9 @@ Route::middleware('auth')->group(function (): void {
         });
         Route::name('customer_type::')->prefix('customer_type')->controller(CustomerTypeController::class)->group(function (): void {
             Route::get('', 'index')->name('index')->can('customer type.view');
+            Route::get('list', 'get')->name('list');
+        });
+        Route::name('brand::')->prefix('brand')->controller(BrandController::class)->group(function (): void {
             Route::get('list', 'get')->name('list');
         });
     });

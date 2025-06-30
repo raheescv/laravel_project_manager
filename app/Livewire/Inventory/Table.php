@@ -28,6 +28,10 @@ class Table extends Component
 
     public $branch_id = '';
 
+    public $brand = '';
+
+    public $size = '';
+
     public $unit_id = '';
 
     public $limit = 100;
@@ -106,6 +110,7 @@ class Table extends Component
                         ->orWhere('sub_categories.name', 'like', "%{$value}%")
                         ->orWhere('inventories.barcode', 'like', "%{$value}%")
                         ->orWhere('inventories.batch', 'like', "%{$value}%")
+                        ->orWhere('products.size', 'like', "%{$value}%")
                         ->orWhere('inventories.quantity', 'like', "%{$value}%")
                         ->orWhere('inventories.cost', 'like', "%{$value}%");
                 });
@@ -113,11 +118,17 @@ class Table extends Component
             ->when($this->code ?? '', function ($query, $value) {
                 return $query->where('products.code', $value);
             })
+            ->when($this->brand ?? '', function ($query, $value) {
+                return $query->where('brand', $value);
+            })
             ->when($this->department_id ?? '', function ($query, $value) {
                 return $query->where('department_id', $value);
             })
             ->when($this->main_category_id ?? '', function ($query, $value) {
                 return $query->where('main_category_id', $value);
+            })
+            ->when($this->size ?? '', function ($query, $value) {
+                return $query->where('products.size', 'like', "%{$value}%");
             })
             ->when($this->sub_category_id ?? '', function ($query, $value) {
                 return $query->where('sub_category_id', $value);
@@ -128,8 +139,8 @@ class Table extends Component
             ->when($this->non_zero ?? false, function ($query, $value) {
                 return $query->where('quantity', '!=', 0);
             })
-            ->when($this->branch_id ?? '', function ($query, $value) {
-                return $query->where('branch_id', $value);
+            ->when($this->branch_id ?? [], function ($query, $value) {
+                return $query->whereIn('branch_id', $value);
             })
             ->when($this->product_id ?? '', function ($query, $value) {
                 return $query->where('product_id', $value);
@@ -147,6 +158,8 @@ class Table extends Component
                 'product_id',
                 'products.name',
                 'products.code',
+                'products.brand',
+                'products.size',
                 'products.name_arabic',
                 'products.department_id',
                 'departments.name as department_name',
@@ -159,13 +172,15 @@ class Table extends Component
                 'branch_id',
                 'branches.name as branch_name',
             );
-        $total = clone $data;
-        $total = $total->sum('total');
+        $totalData = clone $data;
+        $total = $totalData->sum('total');
+        $quantity = $totalData->sum('quantity');
         $data = $data->paginate($this->limit);
 
         return view('livewire.inventory.table', [
             'data' => $data,
             'total' => $total,
+            'quantity' => $quantity,
         ]);
     }
 }

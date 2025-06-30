@@ -26,5 +26,6 @@
         @include('components.select.categorySelect')
         @include('components.select.productSelect')
         @include('components.select.branchSelect')
+        @include('components.select.brandSelect')
     @endpush
 </x-app-layout>

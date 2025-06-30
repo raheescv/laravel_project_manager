@@ -116,7 +116,7 @@
             persist: false,
             valueField: 'id',
             nameField: 'name',
-            searchField: ['name', 'barcode', 'batch', 'size', 'color', 'id'],
+            searchField: ['name', 'barcode', 'code', 'batch', 'size', 'color', 'id'],
             load: function(query, callback) {
                 var url = "{{ route('inventory::product::list') }}";
                 fetch(url + '?query=' + encodeURIComponent(query))
@@ -147,6 +147,7 @@
                                     <span><strong>MRP:</strong> ${escape(item.mrp)}</span>
                                     <span><strong>Barcode:</strong> ${escape(item.barcode)}</span>
                                     ${item.size ? `<span><strong>Size:</strong> ${escape(item.size)}</span>`:''}
+                                    ${item.code ? `<span><strong>Code:</strong> ${escape(item.code)}</span>`:''}
                                     ${item.color ? `<span><strong>Color:</strong> ${escape(item.color)}</span>`:''}
                                     ${item.batch ? `<span><strong>Batch:</strong> ${escape(item.batch)}</span>`:''}
                                 </div>`;
@@ -172,7 +173,7 @@
             persist: false,
             valueField: 'id',
             nameField: 'name',
-            searchField: ['name', 'barcode', 'batch', 'size', 'color', 'id'],
+            searchField: ['name', 'barcode', 'code', 'batch', 'size', 'color', 'id'],
             load: function(query, callback) {
                 let branch_id = $('.selected_branch_id').val();
                 var url = "{{ route('inventory::product::list') }}";
@@ -212,6 +213,7 @@
                                     <span><strong>MRP:</strong> ${escape(item.mrp)}</span>
                                     <span><strong>Barcode:</strong> ${escape(item.barcode)}</span>
                                     ${item.size ? `<span><strong>Size:</strong> ${escape(item.size)}</span>`:''}
+                                    ${item.code ? `<span><strong>Code:</strong> ${escape(item.code)}</span>`:''}
                                     ${item.color ? `<span><strong>Color:</strong> ${escape(item.color)}</span>`:''}
                                     ${item.batch ? `<span><strong>Batch:</strong> ${escape(item.batch)}</span>`:''}
                                 </div>`;

@@ -138,6 +138,7 @@ class Inventory extends Model implements AuditableContracts
             'inventories.batch',
             'inventories.quantity',
             'products.name',
+            'products.code',
             'products.size',
             'products.mrp',
             'products.type',

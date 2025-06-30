@@ -49,7 +49,7 @@
                         <label class="form-label text-muted small fw-semibold mb-2">
                             <i class="demo-psi-building me-1"></i> Branch
                         </label>
-                        {{ html()->select('branch_id', [auth()->user()->default_branch_id => auth()->user()->branch?->name])->value(auth()->user()->default_branch_id)->class('select-assigned-branch_id-list')->id('branch_id')->placeholder('All Branches') }}
+                        {{ html()->select('branch_id', [auth()->user()->default_branch_id => auth()->user()->branch?->name])->value(auth()->user()->default_branch_id)->class('select-assigned-branch_id-list')->multiple()->id('branch_id') }}
                     </div>
                 </div>
                 <div class="col-md-3" wire:ignore>
@@ -87,9 +87,9 @@
                 <div class="col-md-3">
                     <div class="form-group">
                         <label class="form-label text-muted small fw-semibold mb-2">
-                            <i class="demo-pli-barcode me-1"></i> Code Search
+                            <i class="demo-pli-barcode me-1"></i> UPC/EAN/ISBN/SKU
                         </label>
-                        <input type="text" wire:model.live="code" class="form-control" placeholder="Search by code...">
+                        <input type="text" wire:model.live="code" class="form-control" placeholder="Search by UPC/EAN/ISBN/SKU...">
                     </div>
                 </div>
                 <div class="col-md-3">
@@ -100,6 +100,24 @@
                                 <i class="demo-pli-box-with-folders me-1"></i> Show Non-Zero Items Only
                             </label>
                         </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row g-3">
+                <div class="col-md-3" wire:ignore>
+                    <div class="form-group">
+                        <label class="form-label text-muted small fw-semibold mb-2">
+                            <i class="demo-pli-folder me-1"></i> Brand
+                        </label>
+                        {{ html()->select('brand', [])->value('')->class('select-brand-list')->id('brand')->placeholder('All Brand') }}
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="form-group">
+                        <label class="form-label text-muted small fw-semibold mb-2">
+                            <i class="demo-pli-barcode me-1"></i> Size
+                        </label>
+                        <input type="text" wire:model.live="size" class="form-control" placeholder="Search by Size...">
                     </div>
                 </div>
             </div>
@@ -124,6 +142,8 @@
                         <th class="border-bottom"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="main_categories.name" label="Main Category" /> </th>
                         <th class="border-bottom"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="sub_categories.name" label="Sub Category" /> </th>
                         <th class="border-bottom"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="units.name" label="Unit" /> </th>
+                        <th class="border-bottom"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="brand" label="Brand" /> </th>
+                        <th class="border-bottom"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="products.size" label="Size" /> </th>
                         <th class="border-bottom"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="products.code" label="Code" /> </th>
                         <th class="border-bottom"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="products.name" label="Product Name" /> </th>
                         <th class="text-end border-bottom"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="inventories.quantity" label="Quantity" /> </th>
@@ -169,6 +189,8 @@
                                 </div>
                             </td>
                             <td>{{ $item->unit_name }}</td>
+                            <td class="text-nowrap">{{ $item->brand }}</td>
+                            <td class="text-nowrap">{{ $item->size }}</td>
                             <td>
                                 <code class="bg-light px-2 py-1 rounded">{{ $item->code }}</code>
                             </td>
@@ -213,6 +235,8 @@
                 <tfoot class="table-group-divider bg-light">
                     <tr>
                         <th colspan="10" class="text-end fw-bold">Total</th>
+                        <th class="text-end fw-bold text-primary">{{ currency($quantity) }}</th>
+                        <th></th>
                         <th class="text-end fw-bold text-primary">{{ currency($total) }}</th>
                         <th colspan="2"></th>
                     </tr>
@@ -244,6 +268,10 @@
                 $('#product_id').on('change', function(e) {
                     const value = $(this).val() || null;
                     @this.set('product_id', value);
+                });
+                $('#brand').on('change', function(e) {
+                    const value = $(this).val() || null;
+                    @this.set('brand', value);
                 });
             });
         </script>

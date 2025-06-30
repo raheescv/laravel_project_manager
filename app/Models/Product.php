@@ -216,6 +216,25 @@ class Product extends Model implements AuditableContracts
         return $return;
     }
 
+    public function getBrandDropDownList($request)
+    {
+        $self = self::orderBy('brand');
+        $self = $self->when($request['query'] ?? '', function ($query, $value) {
+            return $query->where(function ($q) use ($value) {
+                $value = trim($value);
+
+                return $q->where('brand', 'like', "%{$value}%");
+            });
+        });
+        $self = $self->limit(10);
+        $self = $self->distinct('brand');
+        $self = $self->select(['brand']);
+        $self = $self->get()->toArray();
+        $return['items'] = $self;
+
+        return $return;
+    }
+
     public function prices()
     {
         return $this->hasMany(ProductPrice::class, 'product_id');
