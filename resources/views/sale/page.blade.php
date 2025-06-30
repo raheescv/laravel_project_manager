@@ -9,13 +9,6 @@
                         <li class="breadcrumb-item active" aria-current="page">Page</li>
                     </ol>
                 </nav>
-                @if (!$id)
-                    <h1 class="page-title mb-0 mt-2">Create Sale</h1>
-                    <p class="lead">Create a new sale entry</p>
-                @else
-                    <h1 class="page-title mb-0 mt-2">Edit Sale</h1>
-                    <p class="lead">Update existing sale entry</p>
-                @endif
             </div>
         </div>
     @endif
