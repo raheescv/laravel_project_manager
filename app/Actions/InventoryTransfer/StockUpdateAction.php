@@ -9,9 +9,15 @@ use Exception;
 
 class StockUpdateAction
 {
+    public $fromBranch;
+
+    public $toBranch;
+
     public function execute($model, $userId, $type = 'transfer')
     {
         try {
+            $this->fromBranch = $model->fromBranch->name;
+            $this->toBranch = $model->toBranch->name;
             foreach ($model->items as $item) {
                 $fromInventory = Inventory::find($item->inventory_id);
                 if (! $fromInventory) {
@@ -79,11 +85,11 @@ class StockUpdateAction
         switch ($type) {
             case 'transfer_from':
                 $inventory['quantity'] -= $quantity;
-                $inventory['remarks'] = 'InventoryTransfer:'.$modelId;
+                $inventory['remarks'] = 'InventoryTransfer:'.$modelId.' ['.$this->fromBranch.' -> '.$this->toBranch.']';
                 break;
             case 'transfer_to':
                 $inventory['quantity'] += $quantity;
-                $inventory['remarks'] = 'InventoryTransfer:'.$modelId;
+                $inventory['remarks'] = 'InventoryTransfer:'.$modelId.' ['.$this->toBranch.' <- '.$this->fromBranch.']';
                 break;
 
             case 'transfer_reversal_from':

@@ -2,7 +2,6 @@
 
 namespace App\Actions\InventoryTransfer;
 
-use App\Actions\InventoryTransfer\Item\CreateAction as ItemCreateAction;
 use App\Models\InventoryTransfer;
 
 class CreateAction
@@ -23,7 +22,7 @@ class CreateAction
 
             foreach ($data['items'] as $value) {
                 $value['inventory_transfer_id'] = $model->id;
-                $response = (new ItemCreateAction())->execute($value, $userId);
+                $response = (new Item\CreateAction())->execute($value, $userId);
                 if (! $response['success']) {
                     throw new \Exception($response['message'], 1);
                 }
