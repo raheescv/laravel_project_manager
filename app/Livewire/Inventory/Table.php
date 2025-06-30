@@ -30,7 +30,9 @@ class Table extends Component
 
     public $unit_id = '';
 
-    public $limit = 10;
+    public $limit = 100;
+
+    public $code = '';
 
     public $selected = [];
 
@@ -107,6 +109,9 @@ class Table extends Component
                         ->orWhere('inventories.quantity', 'like', "%{$value}%")
                         ->orWhere('inventories.cost', 'like', "%{$value}%");
                 });
+            })
+            ->when($this->code ?? '', function ($query, $value) {
+                return $query->where('products.code', $value);
             })
             ->when($this->department_id ?? '', function ($query, $value) {
                 return $query->where('department_id', $value);

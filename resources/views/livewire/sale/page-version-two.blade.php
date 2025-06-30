@@ -138,7 +138,7 @@
             }
 
             .card-header-gradient {
-                background: linear-gradient(135deg, var(--bs-primary) 0%, #4361ee 100%);
+                background: linear-gradient(135deg, var(--bs-primary) 0%, var(--bs-primary-dark, #2c3e50) 100%);
                 color: white;
                 border-bottom: 0;
                 padding: 16px 20px;
@@ -146,11 +146,11 @@
 
             /* Hero Header Styling */
             .hero-header {
-                background: linear-gradient(135deg, var(--bs-primary) 0%, #4361ee 100%);
+                background: linear-gradient(135deg, var(--bs-primary) 0%, var(--bs-primary-dark, #2c3e50) 100%);
                 border-radius: 15px;
                 padding: 25px;
                 margin-bottom: 25px;
-                box-shadow: 0 10px 25px rgba(67, 97, 238, 0.15);
+                box-shadow: 0 10px 25px rgba(var(--bs-primary-rgb), 0.15);
                 position: relative;
                 overflow: hidden;
             }
@@ -351,23 +351,24 @@
 
             /* Color-coded payment method icons */
             .payment-method-cash {
-                color: #28a745 !important;
+                color: var(--bs-success) !important;
             }
 
             .payment-method-card {
-                color: #007bff !important;
+                color: var(--bs-primary) !important;
             }
 
             .payment-method-bank {
-                color: #6f42c1 !important;
+                color: var(--bs-purple) !important;
+                /* If you have a purple variable, otherwise define one */
             }
 
             .payment-method-mobile {
-                color: #fd7e14 !important;
+                color: var(--bs-warning) !important;
             }
 
             .payment-method-crypto {
-                color: #ffc107 !important;
+                color: var(--bs-warning) !important;
             }
 
             /* Enhanced remove button */
@@ -712,7 +713,7 @@
 
             /* Employee group header */
             .employee-group-header {
-                background: linear-gradient(135deg, #3498db, #2c3e50);
+                background: linear-gradient(135deg, var(--bs-primary) 0%, var(--bs-primary-dark, #2c3e50) 100%);
                 color: white;
                 border-radius: 8px 8px 0 0;
                 padding: 10px 15px;

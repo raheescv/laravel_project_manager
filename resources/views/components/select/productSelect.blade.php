@@ -108,7 +108,7 @@
             persist: false,
             valueField: 'id',
             nameField: 'name',
-            searchField: ['name', 'barcode', 'mrp', 'cost', 'size', 'color', 'id'],
+            searchField: ['name', 'barcode', 'code', 'mrp', 'cost', 'size', 'color', 'id'],
             onChange: function(value) {
                 if (value) {
                     const selectedOption = this.options[value];
@@ -161,6 +161,7 @@
                                         <span><strong>Cost:</strong> ${escape(item.cost)}</span>
                                         ${item.barcode ? `<span><strong>barcode:</strong> ${escape(item.barcode)}</span>`:''}
                                         ${item.size ? `<span><strong>Size:</strong> ${escape(item.size)}</span>`:''}
+                                        ${item.code ? `<span><strong>Code:</strong> ${escape(item.code)}</span>`:''}
                                         ${item.color ? `<span><strong>Color:</strong> ${escape(item.color)}</span>`:''}
                                     </div>`;
                     } else {

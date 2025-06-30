@@ -24,6 +24,8 @@
                         <option value="10">10 rows</option>
                         <option value="100">100 rows</option>
                         <option value="500">500 rows</option>
+                        <option value="1000">1000 rows</option>
+                        <option value="1500">1500 rows</option>
                     </select>
                 </div>
                 <div class="input-group input-group-sm" style="width: 250px;">
@@ -80,6 +82,14 @@
                             <i class="demo-pli-box me-1"></i> Product
                         </label>
                         {{ html()->select('product_id', [])->value('')->class('select-product_id-list')->attribute('type', 'product')->id('product_id')->placeholder('All Products') }}
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="form-group">
+                        <label class="form-label text-muted small fw-semibold mb-2">
+                            <i class="demo-pli-barcode me-1"></i> Code Search
+                        </label>
+                        <input type="text" wire:model.live="code" class="form-control" placeholder="Search by code...">
                     </div>
                 </div>
                 <div class="col-md-3">
