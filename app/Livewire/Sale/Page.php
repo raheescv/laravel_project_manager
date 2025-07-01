@@ -150,7 +150,7 @@ class Page extends Component
                 $this->cacheTtl,
                 fn () => User::employee()->pluck('name', 'id')->toArray()
             );
-            $this->employee_id = User::employee()->first(['id'])->id;
+            // $this->employee_id = User::employee()->first(['id'])->id;
         }
 
         // Set default payment method

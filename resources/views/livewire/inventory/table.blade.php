@@ -95,7 +95,7 @@
                 </div>
                 <div class="col-12 col-md-3">
                     <label class="form-label fw-semibold mb-2">
-                        <i class="demo-pli-barcode me-1 text-warning"></i> Size
+                        <i class="demo-pli-folder me-1 text-warning"></i> Size
                     </label>
                     <input type="text" wire:model.live="size" class="form-control shadow-sm" placeholder="Search by size...">
                 </div>
@@ -145,25 +145,33 @@
                             </td>
                             <td>
                                 <div class="d-flex align-items-center gap-2">
-                                    <i class="demo-psi-building fs-5 text-info"></i>
+                                    <span class="bg-info bg-opacity-10 rounded-circle p-2 d-inline-flex align-items-center justify-content-center" title="Branch">
+                                        <i class="demo-psi-building fs-5 text-info"></i>
+                                    </span>
                                     <span>{{ $item->branch_name ?? 'N/A' }}</span>
                                 </div>
                             </td>
                             <td>
                                 <div class="d-flex align-items-center gap-2">
-                                    <i class="demo-pli-reload-3 fs-5 text-warning"></i>
+                                    <span class="bg-warning bg-opacity-10 rounded-circle p-2 d-inline-flex align-items-center justify-content-center" title="Department">
+                                        <i class="demo-pli-reload-3 fs-5 text-warning"></i>
+                                    </span>
                                     <span>{{ $item->department_name ?? 'N/A' }}</span>
                                 </div>
                             </td>
                             <td>
                                 <div class="d-flex align-items-center gap-2">
-                                    <i class="demo-pli-folder fs-5 text-primary"></i>
+                                    <span class="bg-primary bg-opacity-10 rounded-circle p-2 d-inline-flex align-items-center justify-content-center" title="Main Category">
+                                        <i class="demo-pli-folder fs-5 text-primary"></i>
+                                    </span>
                                     <span>{{ $item->main_category_name }}</span>
                                 </div>
                             </td>
                             <td>
                                 <div class="d-flex align-items-center gap-2">
-                                    <i class="demo-pli-folder-with-document fs-5 text-success"></i>
+                                    <span class="bg-success bg-opacity-10 rounded-circle p-2 d-inline-flex align-items-center justify-content-center" title="Sub Category">
+                                        <i class="demo-pli-folder-with-document fs-5 text-success"></i>
+                                    </span>
                                     <span>{{ $item->sub_category_name }}</span>
                                 </div>
                             </td>
