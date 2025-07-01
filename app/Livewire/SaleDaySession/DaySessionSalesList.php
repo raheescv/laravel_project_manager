@@ -85,6 +85,7 @@ class DaySessionSalesList extends Component
             ->join('sales', 'sale_payments.sale_id', '=', 'sales.id')
             ->join('accounts', 'sale_payments.payment_method_id', '=', 'accounts.id')
             ->where('sales.sale_day_session_id', $this->sessionId)
+            ->where('sales.status', 'completed')
             ->whereNull('sales.deleted_at')
             ->selectRaw('
                 accounts.name as payment_method_name,
