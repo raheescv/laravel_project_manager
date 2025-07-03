@@ -387,7 +387,6 @@
             </div>
         </div>
     </div>
-    <x-sale.combo-offer-modal :id="$sales['id'] ?? ''" />
     @push('scripts')
         <script src="{{ asset('assets/pos/feather.min.js') }}"></script>
         <script src="{{ asset('assets/pos/script.js') }}"></script>

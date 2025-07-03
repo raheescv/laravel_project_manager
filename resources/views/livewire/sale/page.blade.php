@@ -109,7 +109,7 @@
                                         </div>
                                     </div>
                                 </div>
-                                <div class="col-md-8">
+                                <div class="col-md-6">
                                     <div wire:ignore>
                                         <div class="ts-wrapper-container position-relative">
                                             <div class="input-group">
@@ -120,6 +120,16 @@
                                             </div>
                                         </div>
                                     </div>
+                                </div>
+                                <div class="col-md-2">
+                                    @can('sale.combo offer')
+                                        <div class="d-flex flex-column align-items-center">
+                                            <button type="button" wire:click="manageComboOffer()"
+                                                class="combo-offer-label fw-bold text-primary fs-5 text-uppercase mb-1 bg-light bg-opacity-75 px-3 py-1 rounded-pill shadow-sm" title="Manage Combo Offer">
+                                                <span>Combo Offer</span>
+                                            </button>
+                                        </div>
+                                    @endcan
                                 </div>
                             </div>
 

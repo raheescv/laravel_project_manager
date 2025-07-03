@@ -20,6 +20,7 @@
     <x-account.customer-modal />
     <x-account.customer-view-modal />
     <x-sale.feedback-modal />
+    <x-sale.combo-offer-modal :id="$id" />
     @if (cache('sale_type') == 'pos')
         <x-sale.custom-payment-modal />
         <x-sale.edit-item-modal />
