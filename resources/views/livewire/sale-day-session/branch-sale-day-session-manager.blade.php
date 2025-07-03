@@ -326,8 +326,11 @@
                             </div>
 
                             <!-- Close Session Form -->
+                            @php
+                                $isPastSession = isset($sessionStats['opened_at']) && \Carbon\Carbon::parse($sessionStats['opened_at'])->lt(\Carbon\Carbon::today());
+                            @endphp
                             <div class="card">
-                                <div class="card-header" style="background: var(--danger-gradient); border-bottom: none; padding: 1.5rem;">
+                                <div class="card-header" style="background: {{ $isPastSession ? 'var(--danger-gradient)' : 'var(--primary-gradient)' }}; border-bottom: none; padding: 1.5rem;">
                                     <div class="d-flex align-items-center justify-content-between">
                                         <h5 class="mb-0 text-white">
                                             <i class="fa fa-lock me-2"></i>Close Session
