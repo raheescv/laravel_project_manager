@@ -17,7 +17,7 @@ class UpdateAction
             $data['name'] = ucfirst(trim($data['name']));
             $model = CustomerType::find($id);
             if (! $model) {
-                throw new Exception("Resource not found with the specified ID: $id.", 1);
+                throw new Exception("Customer Type not found with the specified ID: $id.", 1);
             }
             validationHelper(CustomerType::rules($id), $data);
             $model->update($data);

@@ -13,7 +13,7 @@ class DeleteAction
         try {
             $model = SaleReturnPayment::find($id);
             if (! $model) {
-                throw new Exception("Resource not found with the specified ID: $id.", 1);
+                throw new Exception("Sale Return Payment not found with the specified ID: $id.", 1);
             }
             if ($model->saleReturn->status == 'completed') {
                 if (! Auth::user()->can('sales return.edit completed')) {

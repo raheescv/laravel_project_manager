@@ -11,7 +11,7 @@ class UpdateAction
         try {
             $model = Department::find($id);
             if (! $model) {
-                throw new \Exception("Resource not found with the specified ID: $id.", 1);
+                throw new \Exception("Department not found with the specified ID: $id.", 1);
             }
 
             $data['name'] = trim($data['name']);

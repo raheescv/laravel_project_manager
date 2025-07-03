@@ -12,7 +12,7 @@ class UpdateAction
             $data['updated_by'] = $user_id;
             $model = SaleReturnPayment::find($id);
             if (! $model) {
-                throw new \Exception("Resource not found with the specified ID: $id.", 1);
+                throw new \Exception("Sale Return Payment not found with the specified ID: $id.", 1);
             }
             validationHelper(SaleReturnPayment::rules($id), $data);
             $model->update($data);

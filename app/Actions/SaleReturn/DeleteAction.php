@@ -12,7 +12,7 @@ class DeleteAction
         try {
             $model = SaleReturn::find($id);
             if (! $model) {
-                throw new Exception("Resource not found with the specified ID: $id.", 1);
+                throw new Exception("Sale Return not found with the specified ID: $id.", 1);
             }
 
             if ($model->status == 'completed') {

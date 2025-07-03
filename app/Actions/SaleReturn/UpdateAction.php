@@ -18,7 +18,7 @@ class UpdateAction
         try {
             $model = SaleReturn::find($saleReturnId);
             if (! $model) {
-                throw new Exception("Resource not found with the specified ID: $saleReturnId.", 1);
+                throw new Exception("Sale Return not found with the specified ID: $saleReturnId.", 1);
             }
 
             $data['updated_by'] = $user_id;

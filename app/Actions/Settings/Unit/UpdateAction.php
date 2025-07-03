@@ -11,7 +11,7 @@ class UpdateAction
         try {
             $model = Unit::find($id);
             if (! $model) {
-                throw new \Exception("Resource not found with the specified ID: $id.", 1);
+                throw new \Exception("Unit not found with the specified ID: $id.", 1);
             }
             validationHelper(Unit::rules($id), $data);
             $model->update($data);

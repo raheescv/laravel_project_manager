@@ -11,7 +11,7 @@ class UpdateAction
         try {
             $model = User::find($id);
             if (! $model) {
-                throw new \Exception("Resource not found with the specified ID: $id.", 1);
+                throw new \Exception("User not found with the specified ID: $id.", 1);
             }
             validationHelper(User::updateRules($id), $data);
             $model->update($data);

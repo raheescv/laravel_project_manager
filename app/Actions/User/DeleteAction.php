@@ -11,7 +11,7 @@ class DeleteAction
         try {
             $model = User::find($id);
             if (! $model) {
-                throw new \Exception("Resource not found with the specified ID: $id.", 1);
+                throw new \Exception("User not found with the specified ID: $id.", 1);
             }
             if (! $model->delete()) {
                 throw new \Exception('Oops! Something went wrong while deleting the User. Please try again.', 1);

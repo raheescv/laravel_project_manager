@@ -11,7 +11,7 @@ class UpdateAction
         try {
             $model = Branch::find($id);
             if (! $model) {
-                throw new \Exception("Resource not found with the specified ID: $id.", 1);
+                throw new \Exception("Branch not found with the specified ID: $id.", 1);
             }
 
             validationHelper(Branch::rules($id), $data);

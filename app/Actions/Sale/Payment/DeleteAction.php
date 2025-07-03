@@ -15,7 +15,7 @@ class DeleteAction
         try {
             $model = SalePayment::find($id);
             if (! $model) {
-                throw new Exception("Resource not found with the specified ID: $id.", 1);
+                throw new Exception("Sale Payment not found with the specified ID: $id.", 1);
             }
             $sale = $model->sale;
             if ($sale->status == 'completed') {
