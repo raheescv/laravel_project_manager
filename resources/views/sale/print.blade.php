@@ -546,13 +546,15 @@
                         <td width="39%" class="text-right"> <b>{{ __('lang.net_value', [], 'ar') }}</b> </td>
                     @endif
                 </tr>
-                <tr>
-                    <td class="text-left" width="39%"><b>Discount</b></td>
-                    <td class="text-right"><b>{{ currency($sale->other_discount + $sale->item_discount) }}</b></td>
-                    @if ($thermal_printer_style == 'with_arabic')
-                        <td width="39%" class="text-right"> <b>{{ __('lang.discount', [], 'ar') }}</b> </td>
-                    @endif
-                </tr>
+                @if ($sale->other_discount + $sale->item_discount != 0)
+                    <tr>
+                        <td class="text-left" width="39%"><b>Discount</b></td>
+                        <td class="text-right"><b>{{ currency($sale->other_discount + $sale->item_discount) }}</b></td>
+                        @if ($thermal_printer_style == 'with_arabic')
+                            <td width="39%" class="text-right"> <b>{{ __('lang.discount', [], 'ar') }}</b> </td>
+                        @endif
+                    </tr>
+                @endif
             @else
                 @if ($sale->other_discount != 0)
                     <tr>
@@ -570,6 +572,15 @@
                     <td class="text-right"><b>{{ currency($sale->tax_amount) }}</b></td>
                     @if ($thermal_printer_style == 'with_arabic')
                         <td width="39%" class="text-right"> <b>{{ __('lang.tax', [], 'ar') }}</b> </td>
+                    @endif
+                </tr>
+            @endif
+            @if ($sale->round_off != 0)
+                <tr>
+                    <td class="text-left" width="39%"><b>Round Off</b></td>
+                    <td class="text-right"><b>{{ currency($sale->round_off) }}</b></td>
+                    @if ($thermal_printer_style == 'with_arabic')
+                        <td width="39%" class="text-right"> <b>{{ __('lang.round_off', [], 'ar') }}</b> </td>
                     @endif
                 </tr>
             @endif

@@ -125,6 +125,7 @@ return [
     'summary' => 'ملخص',
     'taxReport' => 'تقرير الضرائب',
     'tax' => 'ضريبة',
+    'round_off' => 'تقريب',
     'detailedGstReport' => 'تقرير مفصل Gst',
     'cessReport' => 'CessReport',
     'topMovingProduct' => 'أعلى المنتجات المتحركة',

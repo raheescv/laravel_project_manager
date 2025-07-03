@@ -185,6 +185,7 @@ return [
     'summary' => 'Summary',
     'taxReport' => 'TaxReport',
     'tax' => 'tax',
+    'round_off' => 'round off',
     'detailedGstReport' => 'DetailedGstReport',
     'cessReport' => 'CessReport',
     'topMovingProduct' => 'TopMovingProduct',
