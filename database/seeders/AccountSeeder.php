@@ -25,6 +25,7 @@ class AccountSeeder extends Seeder
         $data[] = ['name' => 'Freight', 'account_type' => 'expense', 'description' => 'Transportation and logistics costs for goods', 'model' => null, 'second_reference_no' => null];
         $data[] = ['name' => 'Inventory', 'account_type' => 'asset', 'description' => 'Value of goods held for sale or production', 'model' => null, 'second_reference_no' => null];
         $data[] = ['name' => 'Cost of Goods Sold', 'account_type' => 'expense', 'description' => 'Direct costs of producing goods sold by the business', 'model' => null, 'second_reference_no' => null];
+        $data[] = ['name' => 'Round Off', 'account_type' => 'income', 'description' => 'Rounding adjustments for sales and payments', 'model' => null, 'second_reference_no' => null];
         foreach ($data as $value) {
             $value['is_locked'] = 1;
             $exists = DB::table('accounts')

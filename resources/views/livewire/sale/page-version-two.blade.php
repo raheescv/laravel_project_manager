@@ -1582,6 +1582,14 @@
                                     </div>
                                     <div class="fw-bold text-danger">{{ currency($sales['item_discount']) }}</div>
                                 </div>
+                                @if (isset($sales['round_off']) && $sales['round_off'] != 0)
+                                    <div class="d-flex justify-content-between align-items-center mt-3">
+                                        <div class="fw-semibold text-dark">
+                                            <i class="fa fa-circle me-1 text-info"></i> Round Off
+                                        </div>
+                                        <div class="fw-bold text-info">{{ currency($sales['round_off']) }}</div>
+                                    </div>
+                                @endif
                             </div>
 
                             <!-- Additional Costs Table -->
@@ -1644,6 +1652,11 @@
                                                         <div>
                                                             <h5 class="mb-1 fw-bold text-dark">Grand Total</h5>
                                                             <small class="text-muted">Final amount to be paid</small>
+                                                            @if (isset($sales['round_off']) && $sales['round_off'] != 0)
+                                                                <div class="mt-1 small text-info">
+                                                                    <i class="fa fa-circle-notch me-1"></i>Round Off: <span class="fw-bold">{{ currency($sales['round_off']) }}</span>
+                                                                </div>
+                                                            @endif
                                                         </div>
                                                     </div>
                                                 </div>

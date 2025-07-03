@@ -270,6 +270,12 @@
                                                     </div>
                                                 </td>
                                             </tr>
+                                            @if (isset($sales['round_off']) && $sales['round_off'] != 0)
+                                                <tr>
+                                                    <th class="py-3"><i class="fa fa-circle-notch me-1 text-info"></i> Round Off</th>
+                                                    <td class="text-end fw-bold text-info py-3">{{ currency($sales['round_off']) }}</td>
+                                                </tr>
+                                            @endif
                                         </table>
                                     </div>
 
@@ -300,6 +306,11 @@
                                         <div class="text-center py-2">
                                             <h4 class="alert-heading text-info"><i class="fa fa-money me-2"></i>Total Payable Amount</h4>
                                             <div class="fs-1 fw-bold text-primary">{{ currency($sales['grand_total']) }}</div>
+                                            @if (isset($sales['round_off']) && $sales['round_off'] != 0)
+                                                <div class="small text-info mt-1">
+                                                    <i class="fa fa-circle-notch me-1"></i>Round Off: <span class="fw-bold">{{ currency($sales['round_off']) }}</span>
+                                                </div>
+                                            @endif
                                         </div>
                                     </div>
                                     <table class="table table-hover rounded-3 border">

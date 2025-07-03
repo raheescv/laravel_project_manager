@@ -30,6 +30,7 @@ return new class() extends Migration
 
             $table->decimal('other_discount', 16, 2)->default(0);
             $table->decimal('freight', 16, 2)->default(0);
+            $table->decimal('round_off', 10, 2)->default(0);
 
             $table->decimal('grand_total', 16, 2)->storedAs('total - other_discount + freight');
             $table->decimal('paid', 16, 2)->default(0);

@@ -223,6 +223,14 @@
                                             </td>
                                             <td class="text-end text-danger">{{ currency($sales['other_discount']) }}</td>
                                         </tr>
+                                        <!-- Round Off Row -->
+                                        <tr>
+                                            <td class="text-info">
+                                                <i class="fa fa-circle me-2"></i>
+                                                Round Off
+                                            </td>
+                                            <td class="text-end text-info">{{ currency($sales['round_off']) }}</td>
+                                        </tr>
                                         <tr class="border-top">
                                             <td class="fw-bold">
                                                 <i class="fa fa-money me-2"></i>

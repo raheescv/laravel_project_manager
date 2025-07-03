@@ -203,6 +203,7 @@ class Page extends Component
             'total' => 0,
             'other_discount' => 0,
             'freight' => 0,
+            'round_off' => 0,
             'grand_total' => 0,
             'paid' => 0,
             'balance' => 0,
@@ -494,13 +495,18 @@ class Page extends Component
 
     protected function updateSalesData($totals, $paidAmount)
     {
+        $grand_total = $this->calculateGrandTotal($totals['total']);
+        $grand_total_after = round($grand_total);
+        $round_off = $grand_total_after - $grand_total;
+        $grand_total += $round_off;
         $data = [
             'gross_amount' => round($totals['gross_amount'], 2),
             'total_quantity' => round($totals['total_quantity'], 2),
             'item_discount' => round($totals['item_discount'], 2),
             'tax_amount' => round($totals['tax_amount'], 2),
             'total' => round($totals['total'], 2),
-            'grand_total' => $this->calculateGrandTotal($totals['total']),
+            'round_off' => $round_off,
+            'grand_total' => $grand_total,
             'paid' => round($paidAmount, 2),
         ];
         $data['balance'] = round($data['grand_total'] - $paidAmount, 2);

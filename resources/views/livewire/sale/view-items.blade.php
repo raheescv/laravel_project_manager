@@ -49,16 +49,16 @@
                                             @endif
                                         </td>
                                         <td>
-                                            {{ html()->number('unit_price')->value($item['unit_price'])->class('number select_on_focus form-control form-control-sm text-end')->attribute('wire:model.live', 'items.' . $item['key'] . '.unit_price') }}
+                                            {{ html()->number('unit_price')->value($item['unit_price'])->class('select_on_focus form-control form-control-sm text-end')->attribute('wire:model.lazy', 'items.' . $item['key'] . '.unit_price') }}
                                         </td>
                                         <td>
-                                            {{ html()->number('quantity')->value($item['quantity'])->attribute('min', 1)->attribute('step', 'any')->class('number select_on_focus form-control form-control-sm text-end')->attribute('wire:model.live', 'items.' . $item['key'] . '.quantity') }}
+                                            {{ html()->number('quantity')->value($item['quantity'])->attribute('min', 1)->attribute('step', 'any')->class('select_on_focus form-control form-control-sm text-end')->attribute('wire:model.lazy', 'items.' . $item['key'] . '.quantity') }}
                                         </td>
                                         <td>
-                                            {{ html()->number('discount')->value($item['discount'])->class('number select_on_focus form-control form-control-sm text-end')->attribute('wire:model.live', 'items.' . $item['key'] . '.discount') }}
+                                            {{ html()->number('discount')->value($item['discount'])->class('select_on_focus form-control form-control-sm text-end')->attribute('wire:model.lazy', 'items.' . $item['key'] . '.discount') }}
                                         </td>
                                         <td>
-                                            {{ html()->number('tax')->value($item['tax'])->attribute('max', '50')->class('number select_on_focus form-control form-control-sm text-end')->attribute('wire:model.live', 'items.' . $item['key'] . '.tax') }}
+                                            {{ html()->number('tax')->value($item['tax'])->attribute('max', '50')->class('select_on_focus form-control form-control-sm text-end')->attribute('wire:model.lazy', 'items.' . $item['key'] . '.tax') }}
                                         </td>
                                         <td class="text-end fw-bold"> {{ currency($item['total']) }} </td>
                                         <td>

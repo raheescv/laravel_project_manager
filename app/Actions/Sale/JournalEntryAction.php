@@ -25,7 +25,7 @@ class JournalEntryAction
                 'created_by' => $this->userId,
             ];
 
-            $accounts = $this->getAccountIds(['Sale', 'Inventory', 'Cost of Goods Sold', 'Tax Amount', 'Discount', 'Freight']);
+            $accounts = $this->getAccountIds(['Sale', 'Inventory', 'Cost of Goods Sold', 'Tax Amount', 'Discount', 'Freight', 'Round Off']);
 
             $entries = [];
 
@@ -81,6 +81,19 @@ class JournalEntryAction
                 $entries[] = $this->makeEntryPair($accounts['Freight'], $sale->account_id, $debit, $credit, $remarks);
             }
 
+            // Round Off
+            if (abs($sale->round_off) > 0) {
+                $remarks = 'Round Off adjustment';
+                // If round_off is positive, it's an extra credit to customer; if negative, it's a debit
+                if ($sale->round_off > 0) {
+                    $debit = 0;
+                    $credit = $sale->round_off;
+                } else {
+                    $debit = abs($sale->round_off);
+                    $credit = 0;
+                }
+                $entries[] = $this->makeEntryPair($accounts['Round Off'], $sale->account_id, $debit, $credit, $remarks);
+            }
             // Payments
             foreach ($sale->payments as $payment) {
                 $remarks = $payment->paymentMethod->name.' payment made by '.$sale->account->name;

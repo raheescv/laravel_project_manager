@@ -42,6 +42,7 @@ class Sale extends Model implements AuditableContracts
 
         'other_discount',
         'freight',
+        'round_off',
 
         'paid',
 
