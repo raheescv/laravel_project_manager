@@ -16,7 +16,7 @@ class UpdateAction
             $this->data = $data;
             $model = Country::find($id);
             if (! $model) {
-                throw new \Exception("Resource not found with the specified ID: $id.", 1);
+                throw new \Exception("Country not found with the specified ID: $id.", 1);
             }
             validationHelper(Country::rules($id), $this->data);
             $model->update($this->data);
