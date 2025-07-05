@@ -52,7 +52,7 @@ class Page extends Component
     {
         $this->table_id = $table_id;
         $this->countries = Country::pluck('name', 'name')->toArray();
-        $this->customerTypes = CustomerType::pluck('name', 'name')->toArray();
+        $this->customerTypes = CustomerType::pluck('name', 'id')->toArray();
         if (! $this->table_id) {
             $faker = Factory::create();
             $name = '';
