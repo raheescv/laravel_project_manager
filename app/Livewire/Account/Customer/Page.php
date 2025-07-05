@@ -6,6 +6,7 @@ use App\Actions\Account\CreateAction;
 use App\Actions\Account\UpdateAction;
 use App\Models\Account;
 use App\Models\Country;
+use App\Models\CustomerType;
 use Faker\Factory;
 use Livewire\Component;
 
@@ -19,6 +20,8 @@ class Page extends Component
     public $existingCustomers = [];
 
     public $countries;
+
+    public $customerTypes;
 
     public $accounts;
 
@@ -49,6 +52,7 @@ class Page extends Component
     {
         $this->table_id = $table_id;
         $this->countries = Country::pluck('name', 'name')->toArray();
+        $this->customerTypes = CustomerType::pluck('name', 'name')->toArray();
         if (! $this->table_id) {
             $faker = Factory::create();
             $name = '';
