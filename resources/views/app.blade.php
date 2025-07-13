@@ -29,11 +29,11 @@
     <script src="{{ asset('assets/vendors/popperjs/popper.min.js') }}"></script>
     <script src="{{ asset('assets/vendors/bootstrap/bootstrap.min.js') }}"></script>
     <script src="{{ asset('assets/js/nifty.js') }}"></script>
-    <script src="{{ asset('assets/js/demo-purpose-only.js') }}"></script>
+    {{-- <script src="{{ asset('assets/js/demo-purpose-only.js') }}"></script> --}}
     <script src="{{ asset('assets/vendors/popperjs/popper.min.js') }}"></script>
     <script src="{{ asset('assets/vendors/bootstrap/bootstrap.min.js') }}"></script>
     <script src="{{ asset('assets/js/nifty.js') }}"></script>
-    <script src="{{ asset('assets/js/demo-purpose-only.js') }}"></script>
+    {{-- <script src="{{ asset('assets/js/demo-purpose-only.js') }}"></script> --}}
 </body>
 
 </html>

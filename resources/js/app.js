@@ -5,6 +5,7 @@ import { createApp, h } from 'vue';
 import Toast from 'vue-toastification';
 import 'vue-toastification/dist/index.css';
 import { ZiggyVue } from 'ziggy-js';
+import '../css/app.css';
 import './bootstrap';
 
 // Initialize Inertia Progress

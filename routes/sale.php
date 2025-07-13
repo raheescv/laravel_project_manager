@@ -14,6 +14,7 @@ Route::middleware('auth')->group(function (): void {
         Route::middleware([RequireOpenDaySession::class])->group(function (): void {
             // Route::get('create', [App\Http\Controllers\Sale\PageController::class, 'index'])->name('create');
             Route::get('create', 'page')->name('create')->can('sale.create');
+            Route::get('pos', 'posPage')->name('pos')->can('sale.create');
             Route::get('edit/{id}', 'page')->name('edit')->can('sale.edit');
         });
 

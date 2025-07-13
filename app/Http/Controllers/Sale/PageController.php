@@ -470,7 +470,7 @@ class PageController extends Controller
         return round($grandTotal, 2);
     }
 
-    protected function createItemData($inventory, $employee_id)
+    protected function createItemData($inventory, $employee_id, $type = 'normal')
     {
         $product = $inventory->product;
         $employee = User::find($employee_id);
@@ -479,7 +479,7 @@ class PageController extends Controller
             throw new \Exception('Employee not found');
         }
 
-        $saleTypePrice = $product->saleTypePrice('normal'); // Default to normal sale type
+        $saleTypePrice = $product->saleTypePrice($type);
         $discount = $product->mrp - $saleTypePrice;
         $key = $employee_id.'-'.$inventory->id;
 
