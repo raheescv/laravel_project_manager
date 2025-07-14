@@ -14,12 +14,12 @@ class UpdateAction
             if (! $model) {
                 throw new \Exception("SaleItem not found with the specified ID: $id.", 1);
             }
+            $data['created_by'] = $model->created_by;
 
             // to avoid storing the audit log
             if ($model->quantity == $data['quantity']) {
                 $data['quantity'] = $model->quantity;
             }
-
             validationHelper(SaleItem::rules($id), $data);
             $model->update($data);
 

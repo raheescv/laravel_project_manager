@@ -195,22 +195,21 @@ class POSController extends Controller
     public function submitSale(Request $request)
     {
         try {
-            $table_id = 0;
             $user_id = Auth::id();
             DB::beginTransaction();
 
             $saleData = $request->all();
-            info($saleData);
             if ($saleData['payment_method'] == 'custom') {
                 $saleData['payments'] = $saleData['custom_payment_data']['payments'];
+                $saleData['paid'] = array_sum(array_column($saleData['payments'], 'amount'));
             } else {
-                $saleData['payments'] = [
-                    [
+                $saleData['paid'] = $saleData['grand_total'];
+                $saleData['payments'] = [[
                         'amount' => $saleData['grand_total'],
                         'payment_method_id' => $saleData['payment_method'],
-                    ],
-                ];
+                    ], ];
             }
+            $table_id = $saleData['id'] ?? null;
             if (! $table_id) {
                 $response = (new CreateAction())->execute($saleData, $user_id);
             } else {
@@ -253,5 +252,35 @@ class POSController extends Controller
         $item['total'] = round($net_amount + $tax_amount, 2);
 
         return $item;
+    }
+
+    public function getDraftSales(Request $request)
+    {
+        try {
+            $drafts = Sale::with(['account:id,name,mobile', 'createdUser:id,name'])
+                ->where('status', 'draft')
+                ->currentBranch()
+                ->orderBy('created_at', 'desc')
+                ->get()
+                ->map(function ($sale) {
+                    return [
+                        'id' => $sale->id,
+                        'date' => $sale->date,
+                        'customer_name' => $sale->account->name ?? 'General Customer',
+                        'customer_mobile' => $sale->account->mobile ?? $sale->customer_mobile,
+                        'employee_name' => $sale->createdUser->name ?? 'Unknown',
+                        'items_count' => $sale->items()->count(),
+                        'grand_total' => $sale->grand_total,
+                        'created_at' => $sale->created_at->format('Y-m-d H:i:s'),
+                    ];
+                });
+
+            return response()->json($drafts);
+        } catch (Exception $e) {
+            return response()->json([
+                'message' => 'Failed to fetch draft sales',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
     }
 }

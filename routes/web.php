@@ -133,5 +133,6 @@ Route::middleware(['auth'])->group(function () {
         Route::post('update-item', [POSController::class, 'updateItem'])->name('update-item');
         Route::post('remove-item', [POSController::class, 'removeItem'])->name('remove-item');
         Route::post('submit', [POSController::class, 'submitSale'])->name('submit');
+        Route::get('drafts', [POSController::class, 'getDraftSales'])->name('drafts');
     });
 });

@@ -26,9 +26,12 @@ export default defineConfig({
         port: 5173,
         host: '0.0.0.0',
         strictPort: false,
+        https: false,
         hmr: {
-            host: 'localhost',
+            host: 'project_manager.test',
+            port: 5173,
         },
+        cors: true,
     },
     build: {
         chunkSizeWarningLimit: 1000,

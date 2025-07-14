@@ -83,7 +83,7 @@ export default {
         return {
             feedbackData: {
                 rating: 0,
-                feedback_type: null,
+                feedback_type: 'compliment',
                 feedback: ''
             },
             feedbackTypes: {

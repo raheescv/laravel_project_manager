@@ -35,7 +35,36 @@
                                 <div
                                     class="absolute inset-0 bg-gradient-to-br from-blue-50/30 via-indigo-50/20 to-slate-50/30">
                                 </div>
-                                <!-- Sales Header -->
+                                <!-- Customer and Mobile Above Employee -->
+                                <div class="relative grid grid-cols-1 lg:grid-cols-2 gap-2 sm:gap-3 mb-2 sm:mb-3">
+                                    <div class="space-y-1">
+                                        <label class="text-xs font-bold text-slate-700 mb-2 flex items-center">
+                                            <div
+                                                class="bg-gradient-to-r from-blue-500 to-indigo-600 p-1.5 rounded-md mr-2 shadow-md">
+                                                <i class="fa fa-user text-white text-xs"></i>
+                                            </div>
+                                            Customer
+                                        </label>
+                                        <SearchableSelect v-model="form.account_id" :options="formattedCustomers"
+                                            placeholder="Select Customer"
+                                            filter-placeholder="Search by name or mobile..." :visibleItems="10"
+                                            @search="searchCustomers"
+                                            input-class="w-full rounded-lg border-slate-200 shadow-sm focus:border-blue-500 focus:ring-blue-500/20 transition-all duration-200 bg-white/80 backdrop-blur-sm hover:shadow-md text-xs sm:text-sm py-1.5 sm:py-2" />
+                                    </div>
+                                    <div class="space-y-1">
+                                        <label class="text-xs font-bold text-slate-700 mb-2 flex items-center">
+                                            <div
+                                                class="bg-gradient-to-r from-blue-500 to-indigo-600 p-1.5 rounded-md mr-2 shadow-md">
+                                                <i class="fa fa-phone text-white text-xs"></i>
+                                            </div>
+                                            Mobile
+                                        </label>
+                                        <input v-model="form.customer_mobile" type="text"
+                                            class="w-full rounded-lg border-slate-200 shadow-sm focus:border-blue-500 focus:ring-blue-500/20 transition-all duration-200 bg-white/80 backdrop-blur-sm hover:shadow-md text-xs sm:text-sm py-1.5 sm:py-2"
+                                            placeholder="Mobile">
+                                    </div>
+                                </div>
+                                <!-- Sales Header (Employee and Sale Type) -->
                                 <div class="relative grid grid-cols-1 lg:grid-cols-2 gap-2 sm:gap-3 mb-2 sm:mb-3">
                                     <div class="space-y-1">
                                         <label class="text-xs font-bold text-slate-700 mb-2 flex items-center">
@@ -90,14 +119,12 @@
                                             </div>
                                         </div>
                                     </div>
-                                    <div class="flex items-end sm:col-span-2 xl:col-span-1">
-                                        <button type="button" @click="viewDraftSales"
-                                            class="w-full bg-gradient-to-r from-slate-600 via-slate-700 to-slate-800 text-white py-1.5 sm:py-2 px-2 sm:px-3 rounded-lg hover:from-slate-700 hover:via-slate-800 hover:to-slate-900 transition-all duration-200 shadow-sm hover:shadow-md transform hover:-translate-y-0.5 font-semibold text-xs sm:text-sm">
-                                            <i class="fa fa-file-alt mr-1 sm:mr-1.5 text-xs"></i>
-                                            <span class="hidden sm:inline">Drafts</span>
-                                            <span class="sm:hidden">Draft</span>
-                                        </button>
-                                    </div>
+                                    <button type="button" @click="viewDraftSales"
+                                        class="bg-gradient-to-r from-slate-600 via-slate-700 to-slate-800 text-white py-1.5 sm:py-2 px-2 sm:px-3 rounded-lg hover:from-slate-700 hover:via-slate-800 hover:to-slate-900 transition-all duration-200 shadow-sm hover:shadow-md transform hover:-translate-y-0.5 font-semibold text-xs sm:text-sm">
+                                        <i class="fa fa-file-alt mr-1 sm:mr-1.5 text-xs"></i>
+                                        <span class="hidden sm:inline">Drafts</span>
+                                        <span class="sm:hidden">View Draft</span>
+                                    </button>
                                 </div>
                             </div>
 
@@ -447,19 +474,23 @@
         <!-- Sale Confirmation Modal -->
         <SaleConfirmationModal :show="showConfirmationModal" :sale-data="confirmationData" :loading="submitting"
             @close="closeConfirmationModal" @submit="processSubmitSale" />
+
+        <!-- Draft Sales Modal -->
+        <DraftSalesModal :show="showDraftSalesModal" @close="closeDraftSalesModal" @draft-loaded="handleDraftLoaded" />
     </div>
 </template>
 
 <script>
 import CartItems from '@/components/CartItems.vue'
-import CartItemsModal from '@/Components/CartItemsModal.vue'
-import CategoriesSidebar from '@/Components/CategoriesSidebar.vue'
-import CustomerModal from '@/Components/CustomerModal.vue'
-import CustomPaymentModal from '@/Components/CustomPaymentModal.vue'
-import FeedbackModal from '@/Components/FeedbackModal.vue'
-import ProductsGrid from '@/Components/ProductsGrid.vue'
-import SaleConfirmationModal from '@/Components/SaleConfirmationModal.vue'
-import SearchableSelect from '@/Components/SearchableSelectFixed.vue'
+import CartItemsModal from '@/components/CartItemsModal.vue'
+import CategoriesSidebar from '@/components/CategoriesSidebar.vue'
+import CustomerModal from '@/components/CustomerModal.vue'
+import CustomPaymentModal from '@/components/CustomPaymentModal.vue'
+import DraftSalesModal from '@/components/DraftSalesModal.vue'
+import FeedbackModal from '@/components/FeedbackModal.vue'
+import ProductsGrid from '@/components/ProductsGrid.vue'
+import SaleConfirmationModal from '@/components/SaleConfirmationModal.vue'
+import SearchableSelect from '@/components/SearchableSelectFixed.vue'
 import { useForm } from '@inertiajs/vue3'
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useToast } from 'vue-toastification'
@@ -472,6 +503,7 @@ export default {
         CartItemsModal,
         CategoriesSidebar,
         CustomPaymentModal,
+        DraftSalesModal,
         FeedbackModal,
         ProductsGrid,
         SaleConfirmationModal
@@ -520,6 +552,7 @@ export default {
         const showCartModal = ref(false)
         const showCustomerModal = ref(false)
         const showCustomPaymentModal = ref(false)
+        const showDraftSalesModal = ref(false)
         const showFeedbackModal = ref(false)
         const showConfirmationModal = ref(false)
         const submitting = ref(false)
@@ -537,6 +570,7 @@ export default {
 
         // Form data
         const form = useForm({
+            id: null,
             date: new Date().toISOString().split('T')[0],
             employee_id: '',
             sale_type: 'normal',
@@ -552,9 +586,86 @@ export default {
             payment_method: 1,
             custom_payment_data: {},
             rating: 0,
-            feedback_type: null,
+            feedback_type: 'compliment',
             feedback: ''
         })
+
+        // Initialize form with sale data if provided
+        const initializeFormWithSaleData = () => {
+            if (props.saleData && props.saleData.id) {
+                // Show loading error if there was an issue loading the sale
+                if (props.saleData.load_error) {
+                    toast.error(props.saleData.load_error)
+                    return
+                }
+                // Update form with sale data
+                form.id = props.saleData.id
+                form.date = props.saleData.date || form.date
+                form.employee_id = props.saleData.employee_id || ''
+                form.sale_type = props.saleData.sale_type || 'normal'
+                form.account_id = props.saleData.account_id || 3
+                form.customer_mobile = props.saleData.customer_mobile || ''
+                form.other_discount = props.saleData.other_discount || 0
+                form.round_off = props.saleData.round_off || 0
+                form.total = props.saleData.total || 0
+                form.grand_total = props.saleData.grand_total || 0
+
+                // Ensure the customer from the sale is included in serverCustomers
+                if (props.customers && Object.keys(props.customers).length > 0) {
+                    // Merge the loaded customers with serverCustomers
+                    Object.entries(props.customers).forEach(([id, customer]) => {
+                        serverCustomers.value[id] = customer
+                    })
+                }
+
+                // Clear existing items and load sale items
+                form.items = {}
+
+                // Transform sale items to cart items format
+                if (props.saleData.items && Array.isArray(props.saleData.items)) {
+                    props.saleData.items.forEach((item, index) => {
+                        const key = `${item.employee_id}-${item.inventory_id}-${index}`
+                        form.items[key] = {
+                            id: item.id,
+                            employee_id: item.employee_id,
+                            employee_name: item.employee_name,
+                            product_id: item.product_id,
+                            inventory_id: item.inventory_id,
+                            name: item.name,
+                            barcode: item.barcode,
+                            category: item.category,
+                            unit_price: parseFloat(item.unit_price),
+                            quantity: parseInt(item.quantity),
+                            discount: parseFloat(item.discount || 0),
+                            tax: parseFloat(item.tax || 0),
+                            gross_amount: parseFloat(item.gross_amount),
+                            net_amount: parseFloat(item.net_amount),
+                            tax_amount: parseFloat(item.tax_amount),
+                            total: parseFloat(item.total),
+                            stock_available: item.stock_available || 0
+                        }
+                    })
+                }
+
+                // Handle payment method
+                if (props.saleData.payment_method === 'custom' && props.saleData.custom_payment_data) {
+                    selectedPaymentMethod.value = 'custom'
+                    customPaymentData.value = props.saleData.custom_payment_data
+                    form.payment_method = 'custom'
+                    form.custom_payment_data = props.saleData.custom_payment_data
+                } else {
+                    selectedPaymentMethod.value = props.saleData.payment_method || 1
+                    form.payment_method = props.saleData.payment_method || 1
+                    customPaymentData.value = { payments: [], totalPaid: 0, balanceDue: 0 }
+                }
+
+                // Recalculate totals to ensure consistency
+                calculateTotals()
+
+                const statusText = props.saleData.status === 'draft' ? 'draft' : 'sale'
+                toast.success(`${statusText.charAt(0).toUpperCase() + statusText.slice(1)} loaded successfully`)
+            }
+        }
 
         // Initialize confirmationData after form is created
         const confirmationData = ref({
@@ -611,6 +722,13 @@ export default {
                     // Add server customers
                     response.data.items.forEach(customer => {
                         customerObj[customer.id] = customer
+                    })
+
+                    // Preserve any existing customers that aren't in the new data (e.g., from loaded sale)
+                    Object.entries(serverCustomers.value).forEach(([id, customer]) => {
+                        if (!customerObj[id] && parseInt(id) !== 3) {
+                            customerObj[id] = customer
+                        }
                     })
 
                     serverCustomers.value = customerObj
@@ -824,7 +942,10 @@ export default {
         }
 
         const calculateTotals = () => {
-            let total = 0
+            let tax_amount = 0;
+            let item_discount = 0;
+            let gross_amount = 0;
+            let total = 0;
 
             Object.values(form.items).forEach(item => {
                 const quantity = Number(item.quantity) || 1
@@ -838,9 +959,15 @@ export default {
                 item.total = item.net_amount + item.tax_amount
 
                 total += item.total
+                gross_amount += item.gross_amount
+                item_discount += item.discount
+                tax_amount += item.tax_amount
             })
 
-            form.total = parseFloat(total).toFixed(2)
+            form.gross_amount = parseFloat(gross_amount).toFixed(2);
+            form.item_discount = parseFloat(item_discount).toFixed(2);
+            form.tax_amount = parseFloat(tax_amount).toFixed(2);
+            form.total = parseFloat(total).toFixed(2);
 
             // Calculate grand total with discount and round off
             const otherDiscount = Number(form.other_discount) || 0
@@ -918,8 +1045,16 @@ export default {
         }
 
         const viewDraftSales = () => {
-            // Implement view draft sales modal
-            toast.info('View draft sales modal')
+            showDraftSalesModal.value = true
+        }
+
+        const handleDraftLoaded = (draft) => {
+            // Navigate to the POS page with the draft ID
+            window.location.href = `/sale/pos/${draft.id}`
+        }
+
+        const closeDraftSalesModal = () => {
+            showDraftSalesModal.value = false
         }
 
         const openFeedback = () => {
@@ -993,6 +1128,7 @@ export default {
 
                 // Prepare form data for submission
                 const formData = {
+                    id: form.id,
                     date: form.date,
                     employee_id: form.employee_id,
                     sale_type: form.sale_type,
@@ -1000,6 +1136,11 @@ export default {
                     customer_mobile: form.customer_mobile,
                     other_discount: Number(form.other_discount) || 0,
                     round_off: Number(form.round_off) || 0,
+
+                    gross_amount: Number(form.gross_amount) || 0,
+                    item_discount: Number(form.item_discount) || 0,
+                    tax_amount: Number(form.tax_amount) || 0,
+
                     total: Number(form.total) || 0,
                     grand_total: Number(form.grand_total) || 0,
                     items: validItems,
@@ -1009,7 +1150,6 @@ export default {
                             customPaymentData.value : { payments: [] }) :
                         { payments: [] },
                     send_to_whatsapp: sendToWhatsapp.value || false,
-                    // Include feedback data if provided
                     rating: Number(form.rating) || 0,
                     feedback_type: form.feedback_type || null,
                     feedback: form.feedback || null,
@@ -1032,24 +1172,25 @@ export default {
                 } else {
                     showConfirmationModal.value = false;
                     toast.success('Sale submitted successfully');
+                }
 
-                    // Reset form or redirect for completed sales
-                    if (response.data && response.data.redirect) {
-                        window.location.href = response.data.redirect;
-                    } else {
-                        // Reset form for new sale
-                        form.reset();
-                        form.items = {};
-                        calculateTotals();
-                        customPaymentData.value = {
-                            payments: [],
-                            totalPaid: 0,
-                            balanceDue: 0
-                        };
-                        selectedPaymentMethod.value = 1;
-                    }
+                // Reset form or redirect for completed sales
+                if (response.data && response.data.redirect) {
+                    window.location.href = response.data.redirect;
+                } else {
+                    // Reset form for new sale
+                    form.reset();
+                    form.items = {};
+                    calculateTotals();
+                    customPaymentData.value = {
+                        payments: [],
+                        totalPaid: 0,
+                        balanceDue: 0
+                    };
+                    selectedPaymentMethod.value = 1;
                 }
             } catch (error) {
+                console.log(error);
                 // Get detailed error message from response if available
                 let errorMessage = status === 'draft' ? 'Failed to save draft' : 'Failed to submit sale';
 
@@ -1140,7 +1281,31 @@ export default {
             showConfirmationModal.value = false
         }
 
-        // Utility function
+        // Helper function to clear form for new sale
+        const startNewSale = () => {
+            // Reset form to default values
+            form.reset()
+            form.items = {}
+            form.date = new Date().toISOString().split('T')[0]
+            form.employee_id = ''
+            form.sale_type = 'normal'
+            form.account_id = 3
+            form.customer_mobile = ''
+            form.other_discount = 0
+            form.round_off = 0
+            form.total = 0
+            form.grand_total = 0
+            form.payment_method = 1
+
+            // Reset payment method
+            selectedPaymentMethod.value = 1
+            customPaymentData.value = { payments: [], totalPaid: 0, balanceDue: 0 }
+
+            calculateTotals()
+            toast.success('Ready for new sale')
+        }
+
+        // Debounce function to limit the rate of function calls
         function debounce(func, wait) {
             let timeout
             return function executedFunction(...args) {
@@ -1172,6 +1337,9 @@ export default {
 
         // Lifecycle
         onMounted(() => {
+            // Initialize form with sale data if provided from controller FIRST
+            initializeFormWithSaleData()
+
             loadProducts()
             fetchCustomers()
 
@@ -1235,6 +1403,7 @@ export default {
             showCartModal,
             showCustomerModal,
             showCustomPaymentModal,
+            showDraftSalesModal,
             showFeedbackModal,
             showConfirmationModal,
             submitting,
@@ -1274,6 +1443,9 @@ export default {
             handleCustomerSelected,
             handleCustomPaymentSave,
             closeCustomPaymentModal,
+            viewDraftSales,
+            handleDraftLoaded,
+            closeDraftSalesModal,
             openFeedback,
             closeFeedbackModal,
             handleFeedbackSubmitted,
@@ -1283,7 +1455,7 @@ export default {
             processSubmitSale,
             saveDraft,
             submitSale,
-            viewDraftSales
+            startNewSale
         }
     }
 }

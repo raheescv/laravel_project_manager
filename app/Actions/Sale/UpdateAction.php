@@ -25,18 +25,18 @@ class UpdateAction
             if (! $model) {
                 throw new Exception("Sale not found with the specified ID: $saleId.", 1);
             }
+            $data['invoice_no'] = $model->invoice_no;
+            $data['branch_id'] = $model->branch_id;
 
             if ($data['status'] == 'cancelled') {
                 $data['cancelled_by'] = $this->userId;
             } else {
                 $data['updated_by'] = $this->userId;
             }
-
             // if it is edit after complete
             $this->rollbackIfCompleted();
 
             validationHelper(Sale::rules($saleId), $data);
-
             // to avoid storing the audit log
             if (true) {
                 if ($model->gross_amount == $data['gross_amount']) {
@@ -51,19 +51,19 @@ class UpdateAction
                 if ($model->total == $data['total']) {
                     $data['total'] = $model->total;
                 }
-                if ($model->paid == $data['paid']) {
+                if ($model->paid == $data['paid'] ?? 0) {
                     $data['paid'] = $model->paid;
                 }
             }
 
             $model->update($data);
-            if ($data['status'] != 'cancelled') {
 
+            if ($data['status'] != 'cancelled') {
                 $this->items($data['items']);
 
                 $this->payments($data['payments']);
 
-                $this->comboOffers($data['comboOffers']);
+                // $this->comboOffers($data['comboOffers']);
 
                 $this->model->refresh();
 
@@ -146,7 +146,6 @@ class UpdateAction
             } else {
                 $response = (new Item\CreateAction())->execute($value, $this->userId);
             }
-
             if (! $response['success']) {
                 throw new Exception($response['message'], 1);
             }
