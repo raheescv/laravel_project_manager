@@ -66,7 +66,7 @@
                                         </th>
                                         <th class="text-right py-2 px-3 font-semibold text-teal-700 text-xs">Discount
                                         </th>
-                                        <th class="text-right py-2 px-3 font-semibold text-teal-700 text-xs">Tax
+                                        <th class="text-right py-2 px-3 font-semibold text-teal-700 text-xs">Tax %
                                         </th>
                                         <th class="text-right py-2 px-3 font-semibold text-teal-700 text-xs">Total
                                         </th>

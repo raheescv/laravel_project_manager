@@ -158,6 +158,7 @@ class SaleController extends Controller
                     $saleData['custom_payment_data'] = [
                         'payments' => $sale->payments->map(function ($payment) {
                             return [
+                                'id' => $payment->id,
                                 'amount' => $payment->amount,
                                 'payment_method_id' => $payment->payment_method_id,
                                 'payment_method_name' => $payment->paymentMethod->name ?? 'Unknown',

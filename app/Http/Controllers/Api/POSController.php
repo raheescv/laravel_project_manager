@@ -3,11 +3,14 @@
 namespace App\Http\Controllers\Api;
 
 use App\Actions\Sale\CreateAction;
+use App\Actions\Sale\Item\DeleteAction as ItemDeleteAction;
+use App\Actions\Sale\Payment\DeleteAction as PaymentDeleteAction;
 use App\Actions\Sale\UpdateAction;
 use App\Http\Controllers\Controller;
 use App\Models\Category;
 use App\Models\Inventory;
 use App\Models\Sale;
+use App\Models\SalePayment;
 use App\Models\User;
 use Exception;
 use Illuminate\Http\Request;
@@ -137,7 +140,7 @@ class POSController extends Controller
 
             // Create item data with guaranteed id
             $item = [
-                'id' => $inventory->id, // Use inventory_id as the ID to ensure it's always present
+                'id' => null,
                 'inventory_id' => $inventory->id,
                 'product_id' => $inventory->product_id,
                 'employee_id' => $request->employee_id,
@@ -181,13 +184,16 @@ class POSController extends Controller
                 'key' => 'required|string',
             ]);
 
-            // If there's an item_id, you might want to handle database cleanup here
-            // For now, we'll just return success as the frontend handles the removal
+            $id = $request->item_id ?? null;
+            if ($id) {
+                $response = (new ItemDeleteAction())->execute($id);
+                if (! $response['success']) {
+                    throw new Exception($response['message'], 1);
+                }
+            }
 
             return response()->json(['success' => true]);
-        } catch (\Exception $e) {
-            Log::error('Error removing item: '.$e->getMessage());
-
+        } catch (Exception $e) {
             return response()->json(['error' => 'Failed to remove item'], 500);
         }
     }
@@ -199,21 +205,31 @@ class POSController extends Controller
             DB::beginTransaction();
 
             $saleData = $request->all();
+            info($saleData);
+            $table_id = $saleData['id'] ?? null;
+
             if ($saleData['status'] == 'completed') {
+                if ($table_id) {
+                    $response = $this->removePayment($table_id);
+                    if (! $response['success']) {
+                        throw new Exception($response['message'], 1);
+                    }
+                }
                 if ($saleData['payment_method'] == 'custom') {
                     $saleData['payments'] = $saleData['custom_payment_data']['payments'];
                     $saleData['paid'] = array_sum(array_column($saleData['payments'], 'amount'));
                 } else {
                     $saleData['paid'] = $saleData['grand_total'];
-                    $saleData['payments'] = [[
+                    $saleData['payments'] = [
+                        [
                             'amount' => $saleData['grand_total'],
                             'payment_method_id' => $saleData['payment_method'],
-                        ], ];
+                        ],
+                    ];
                 }
             } else {
                 $saleData['payments'] = [];
             }
-            $table_id = $saleData['id'] ?? null;
             if (! $table_id) {
                 $response = (new CreateAction())->execute($saleData, $user_id);
             } else {
@@ -286,5 +302,27 @@ class POSController extends Controller
                 'error' => $e->getMessage(),
             ], 500);
         }
+    }
+
+    public function removePayment($sale_id)
+    {
+        try {
+            $payments = SalePayment::where('sale_id', $sale_id)->get();
+            if ($payments->isNotEmpty()) {
+                foreach ($payments as $payment) {
+                    $response = (new PaymentDeleteAction())->execute($payment->id);
+                    if (! $response['success']) {
+                        throw new Exception($response['message'], 1);
+                    }
+                }
+            }
+            $return['success'] = true;
+            $return['message'] = 'Payment removed successfully';
+        } catch (\Throwable $th) {
+            $return['success'] = false;
+            $return['message'] = 'Failed to remove payment: '.$th->getMessage();
+        }
+
+        return $return;
     }
 }

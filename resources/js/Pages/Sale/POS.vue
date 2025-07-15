@@ -149,15 +149,16 @@
 
                         <!-- Cart Section - Mobile: bottom section, Desktop: right sidebar -->
                         <div
-                            class="w-full lg:w-96 xl:w-[30rem] lg:flex-[0.4] xl:flex-[0.45] flex flex-col order-3 lg:order-3 min-h-0 lg:h-full">
+                            class="w-full lg:w-96 xl:w-[30rem] lg:flex-[0.4] xl:flex-[0.45] flex flex-col order-3 lg:order-3 h-full">
                             <div
-                                class="bg-white rounded-xl shadow-lg border border-slate-200 h-auto lg:h-full flex flex-col min-h-0">
+                                class="bg-white rounded-xl shadow-lg border border-slate-200 h-full flex flex-col min-h-0">
                                 <!-- Cart Items Component -->
                                 <CartItems :items="form.items" :total-quantity="totalQuantity" :cart-height="cartHeight"
-                                    :max-height="windowWidth >= 1024 ? null : '300px'" @view-cart-items="viewCartItems"
-                                    @clear-cart="clearCart" @update-item-quantity="updateItemQuantity"
-                                    @edit-cart-item="editCartItem" @remove-cart-item="removeCartItem"
-                                    @increase-quantity="increaseQuantity" @decrease-quantity="decreaseQuantity" />
+                                    :max-height="windowWidth >= 1024 ? '100%' : '400px'"
+                                    @view-cart-items="viewCartItems" @clear-cart="clearCart"
+                                    @update-item-quantity="updateItemQuantity" @edit-cart-item="editCartItem"
+                                    @remove-cart-item="removeCartItem" @increase-quantity="increaseQuantity"
+                                    @decrease-quantity="decreaseQuantity" item-class="min-h-[64px] py-4" />
 
                                 <!-- Discount Only (full width) -->
                                 <div class="p-2 sm:p-3 border-t border-slate-200">
@@ -219,8 +220,9 @@
                                                 </span>
                                                 <div
                                                     class="bg-gradient-to-r from-emerald-500 to-green-500 text-white px-2 sm:px-4 py-1.5 sm:py-2 rounded-xl shadow-lg">
-                                                    <span class="text-base sm:text-lg font-black">{{ form.grand_total
-                                                        }}</span>
+                                                    <span class="text-base sm:text-lg font-black">
+                                                        {{ form.grand_total }}
+                                                    </span>
                                                 </div>
                                             </div>
                                         </div>
