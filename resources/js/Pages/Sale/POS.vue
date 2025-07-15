@@ -189,13 +189,16 @@
                                             <div class="flex justify-between items-center text-red-600">
                                                 <span class="font-medium flex items-center">
                                                     <i class="fa fa-tag text-red-500 mr-1 sm:mr-2 text-xs"></i>
-                                                    <span class="hidden sm:inline">Discount ({{ discountPercentage
-                                                        }}%)</span>
+                                                    <span class="hidden sm:inline">
+                                                        Discount
+                                                        ( {{ discountPercentage }}%)
+                                                    </span>
                                                     <span class="sm:hidden">Disc ({{ discountPercentage }}%)</span>
                                                 </span>
                                                 <span
-                                                    class="font-bold bg-red-50 px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-lg shadow-sm text-xs sm:text-sm">-{{
-                                                        form.other_discount }}</span>
+                                                    class="font-bold bg-red-50 px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-lg shadow-sm text-xs sm:text-sm">
+                                                    -{{ form.other_discount }}
+                                                </span>
                                             </div>
                                             <div class="flex justify-between items-center text-blue-600">
                                                 <span class="font-medium flex items-center">
