@@ -33,6 +33,127 @@
                         <h4 class="font-semibold text-gray-800">{{ customerName.name }} : {{ customerName.mobile }}</h4>
                     </div>
 
+                    <!-- Payment Method Selection (moved from cart sidebar) -->
+                    <div class="mb-4">
+                        <div class="flex items-center justify-between mb-3">
+                            <h6 class="text-sm sm:text-base font-semibold text-slate-800 mb-0 flex items-center gap-2">
+                                <i class="fa fa-credit-card text-blue-500"></i>
+                                <span>Payment Method</span>
+                            </h6>
+                            <label class="flex items-center text-xs sm:text-sm gap-2">
+                                <input v-model="localSendToWhatsapp" type="checkbox"
+                                    class="rounded border-slate-300 text-green-600 focus:ring-green-500">
+                                <i class="fa fa-whatsapp text-green-500"></i>
+                                <span class="hidden sm:inline">Send Invoice To Whatsapp</span>
+                                <span class="sm:hidden">WhatsApp</span>
+                            </label>
+                        </div>
+                        <div class="grid grid-cols-3 gap-2 sm:gap-3">
+                            <!-- Cash Payment -->
+                            <div class="payment-option">
+                                <button type="button" @click="$emit('update:paymentMethod', 1)" :class="[
+                                    'w-full h-20 sm:h-24 flex flex-col items-center justify-center p-2 sm:p-3 border-2 relative transition-all duration-200 rounded-lg',
+                                    localPaymentMethod === 1 || localPaymentMethod === ''
+                                        ? 'bg-green-500 border-green-500 shadow-lg text-white'
+                                        : 'bg-white border-gray-200 text-gray-700 hover:shadow-md hover:border-gray-300'
+                                ]">
+                                    <div class="icon-wrapper mb-1 sm:mb-2">
+                                        <i :class="[
+                                            'fa fa-money text-lg sm:text-2xl',
+                                            localPaymentMethod === 1 || localPaymentMethod === ''
+                                                ? 'text-white'
+                                                : 'text-green-500'
+                                        ]"></i>
+                                    </div>
+                                    <span :class="[
+                                        'text-xs sm:text-sm font-semibold',
+                                        localPaymentMethod === 1 || localPaymentMethod === ''
+                                            ? 'text-white'
+                                            : 'text-gray-700'
+                                    ]">Cash</span>
+                                    <div v-if="localPaymentMethod === 1 || localPaymentMethod === ''"
+                                        class="absolute top-1 right-1 sm:top-2 sm:right-2">
+                                        <i
+                                            class="fa fa-check-circle text-white bg-green-600 rounded-full text-xs sm:text-sm"></i>
+                                    </div>
+                                    <div v-if="localPaymentMethod === 1 || localPaymentMethod === ''"
+                                        class="absolute inset-0 bg-green-500 bg-opacity-10 rounded-lg pointer-events-none">
+                                    </div>
+                                </button>
+                            </div>
+                            <!-- Card Payment -->
+                            <div class="payment-option">
+                                <button type="button" @click="$emit('update:paymentMethod', 2)" :class="[
+                                    'w-full h-20 sm:h-24 flex flex-col items-center justify-center p-2 sm:p-3 border-2 relative transition-all duration-200 rounded-lg',
+                                    localPaymentMethod === 2
+                                        ? 'bg-blue-500 border-blue-500 shadow-lg text-white'
+                                        : 'bg-white border-gray-200 text-gray-700 hover:shadow-md hover:border-gray-300'
+                                ]">
+                                    <div class="icon-wrapper mb-1 sm:mb-2">
+                                        <i :class="[
+                                            'fa fa-credit-card text-lg sm:text-2xl',
+                                            localPaymentMethod === 2
+                                                ? 'text-white'
+                                                : 'text-blue-500'
+                                        ]"></i>
+                                    </div>
+                                    <span :class="[
+                                        'text-xs sm:text-sm font-semibold',
+                                        localPaymentMethod === 2
+                                            ? 'text-white'
+                                            : 'text-gray-700'
+                                    ]">Card</span>
+                                    <div v-if="localPaymentMethod === 2"
+                                        class="absolute top-1 right-1 sm:top-2 sm:right-2">
+                                        <i
+                                            class="fa fa-check-circle text-white bg-blue-600 rounded-full text-xs sm:text-sm"></i>
+                                    </div>
+                                    <div v-if="localPaymentMethod === 2"
+                                        class="absolute inset-0 bg-blue-500 bg-opacity-10 rounded-lg pointer-events-none">
+                                    </div>
+                                </button>
+                            </div>
+                            <!-- Custom Payment -->
+                            <div class="payment-option">
+                                <button type="button" @click="$emit('openCustomPayment')" :class="[
+                                    'w-full h-20 sm:h-24 flex flex-col items-center justify-center p-2 sm:p-3 border-2 relative transition-all duration-200 rounded-lg',
+                                    localPaymentMethod === 'custom'
+                                        ? 'bg-amber-500 border-amber-500 shadow-lg text-white'
+                                        : 'bg-white border-gray-200 text-gray-700 hover:shadow-md hover:border-gray-300'
+                                ]">
+                                    <div class="icon-wrapper mb-1 sm:mb-2">
+                                        <i :class="[
+                                            'fa fa-cogs text-lg sm:text-2xl',
+                                            localPaymentMethod === 'custom'
+                                                ? 'text-white'
+                                                : 'text-amber-500'
+                                        ]"></i>
+                                    </div>
+                                    <span :class="[
+                                        'text-xs sm:text-sm font-semibold',
+                                        localPaymentMethod === 'custom'
+                                            ? 'text-white'
+                                            : 'text-gray-700'
+                                    ]">
+                                        {{ localCustomPaymentCount > 0 ? `${localCustomPaymentCount} Methods` : 'Custom'
+                                        }}
+                                    </span>
+                                    <div v-if="localPaymentMethod === 'custom'"
+                                        class="absolute top-1 right-1 sm:top-2 sm:right-2">
+                                        <i
+                                            class="fa fa-check-circle text-white bg-amber-600 rounded-full text-xs sm:text-sm"></i>
+                                    </div>
+                                    <div v-if="localPaymentMethod === 'custom'"
+                                        class="absolute inset-0 bg-amber-500 bg-opacity-10 rounded-lg pointer-events-none">
+                                    </div>
+                                    <div v-if="localCustomPaymentCount > 0 && localPaymentMethod !== 'custom'"
+                                        class="absolute -top-1 -right-1 w-3 h-3 bg-green-500 rounded-full border-2 border-white">
+                                    </div>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- Transaction Summary -->
                     <div class="mb-4">
                         <table
@@ -58,7 +179,7 @@
                             <tr
                                 :class="{ 'bg-gray-50': balanceAmount === 0, 'bg-red-50': balanceAmount > 0, 'bg-yellow-50': balanceAmount < 0 }">
                                 <td class="px-4 py-3 font-semibold text-gray-700">
-                                    <i :class="`fa ${balanceIcon} mr-2`" :style="`color: ${balanceColor}`"></i>
+                                    <i :class="`fa ${balanceIcon}`" :style="`color: ${balanceColor}`"></i>
                                     {{ balanceText }}
                                 </td>
                                 <td class="px-4 py-3 text-right font-bold" :style="`color: ${balanceColor}`">
@@ -131,19 +252,25 @@ export default {
     name: 'SaleConfirmationModal',
     props: {
         show: {
-            type: Boolean,
             default: false
         },
         saleData: {
-            type: Object,
             required: true
         },
         loading: {
-            type: Boolean,
             default: false
+        },
+        paymentMethod: {
+            default: 1
+        },
+        sendToWhatsapp: {
+            default: false
+        },
+        openCustomPayment: {
+            default: () => { }
         }
     },
-    emits: ['close', 'submit'],
+    emits: ['close', 'submit', 'update:paymentMethod', 'openCustomPayment', 'update:sendToWhatsapp'],
     setup(props, { emit }) {
         const customerName = computed(() => {
             if (props.saleData.account_id && props.saleData.customerName) {
@@ -227,6 +354,31 @@ export default {
             return null
         })
 
+        const localPaymentMethod = computed({
+            get() {
+                return props.paymentMethod
+            },
+            set(value) {
+                emit('update:paymentMethod', value)
+            }
+        })
+
+        const localSendToWhatsapp = computed({
+            get() {
+                return props.sendToWhatsapp
+            },
+            set(value) {
+                emit('update:sendToWhatsapp', value)
+            }
+        })
+
+        const localCustomPaymentCount = computed(() => {
+            if (props.saleData.custom_payment_data?.payments) {
+                return props.saleData.custom_payment_data.payments.length
+            }
+            return 0
+        })
+
         const close = () => {
             emit('close')
         }
@@ -247,6 +399,9 @@ export default {
             statusText,
             statusDescription,
             paymentMethods,
+            localPaymentMethod,
+            localSendToWhatsapp,
+            localCustomPaymentCount,
             close,
             submit
         }

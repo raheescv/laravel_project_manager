@@ -29,7 +29,7 @@
                     <div
                         class="flex-1 flex flex-col lg:flex-row gap-2 sm:gap-3 lg:gap-4 order-2 lg:order-2 min-h-0 lg:h-full">
                         <!-- Products Section -->
-                        <div class="flex-1 lg:flex-[0.6] xl:flex-[0.65] flex flex-col order-1 lg:order-1 min-h-0">
+                        <div class="flex-1 lg:flex-[0.6] xl:flex-[0.55] flex flex-col order-1 lg:order-1 min-h-0">
                             <div
                                 class="bg-white/90 backdrop-blur-lg rounded-lg shadow-md border border-white/50 mb-2 sm:mb-3 p-2 sm:p-3 relative overflow-hidden">
                                 <div
@@ -149,7 +149,7 @@
 
                         <!-- Cart Section - Mobile: bottom section, Desktop: right sidebar -->
                         <div
-                            class="w-full lg:w-80 xl:w-96 lg:flex-[0.35] xl:flex-[0.4] flex flex-col order-3 lg:order-3 min-h-0 lg:h-full">
+                            class="w-full lg:w-96 xl:w-[30rem] lg:flex-[0.4] xl:flex-[0.45] flex flex-col order-3 lg:order-3 min-h-0 lg:h-full">
                             <div
                                 class="bg-white rounded-xl shadow-lg border border-slate-200 h-auto lg:h-full flex flex-col min-h-0">
                                 <!-- Cart Items Component -->
@@ -159,63 +159,17 @@
                                     @edit-cart-item="editCartItem" @remove-cart-item="removeCartItem"
                                     @increase-quantity="increaseQuantity" @decrease-quantity="decreaseQuantity" />
 
-                                <!-- Customer Info - Mobile optimized -->
+                                <!-- Discount Only (full width) -->
                                 <div class="p-2 sm:p-3 border-t border-slate-200">
-                                    <div class="space-y-2 mb-2 sm:mb-3">
-                                        <div>
-                                            <div class="flex items-center justify-between mb-1">
-                                                <label class="text-xs font-semibold text-slate-700">
-                                                    <i class="fa fa-user mr-1 text-blue-500"></i>
-                                                    <span class="hidden sm:inline">Customer</span>
-                                                    <span class="sm:hidden">Customer</span>
-                                                </label>
-                                                <div class="flex items-center space-x-2">
-                                                    <button v-if="loadingCustomers" type="button"
-                                                        class="px-1.5 sm:px-2 py-0.5 sm:py-1 bg-blue-100 text-blue-600 rounded"
-                                                        disabled>
-                                                        <i class="fa fa-spinner fa-spin text-xs"></i>
-                                                    </button>
-                                                    <button type="button" @click="fetchCustomers()"
-                                                        class="px-1.5 sm:px-2 py-0.5 sm:py-1 bg-blue-100 text-blue-600 rounded hover:bg-blue-200 transition-colors"
-                                                        title="Refresh Customers">
-                                                        <i class="fa fa-sync-alt text-xs"></i>
-                                                    </button>
-                                                    <button type="button" @click="addNewCustomer"
-                                                        class="px-1.5 sm:px-2 py-0.5 sm:py-1 bg-blue-100 text-blue-600 rounded hover:bg-blue-200 transition-colors"
-                                                        title="Add Customer">
-                                                        <i class="fa fa-user-plus text-xs mr-1"></i>
-                                                        <span class="text-xs">Add</span>
-                                                    </button>
-                                                </div>
-                                            </div>
-                                            <SearchableSelect v-model="form.account_id" :options="formattedCustomers"
-                                                placeholder="Select Customer"
-                                                filter-placeholder="Search by name or mobile..." :visibleItems="10"
-                                                @search="searchCustomers"
-                                                input-class="w-full text-xs py-1.5 sm:py-2 rounded border-slate-300 focus:border-blue-500 focus:ring-blue-500" />
-                                        </div>
-                                        <div class="grid grid-cols-2 gap-2">
-                                            <div>
-                                                <label class="block text-xs font-semibold text-slate-700 mb-1">
-                                                    <i class="fa fa-phone mr-1 text-blue-500"></i>
-                                                    <span class="hidden sm:inline">Mobile</span>
-                                                    <span class="sm:hidden">Phone</span>
-                                                </label>
-                                                <input v-model="form.customer_mobile" type="text"
-                                                    class="w-full text-xs py-1.5 sm:py-2 rounded border-slate-300 focus:border-blue-500 focus:ring-blue-500"
-                                                    placeholder="Mobile">
-                                            </div>
-                                            <div>
-                                                <label class="block text-xs font-semibold text-slate-700 mb-1">
-                                                    <i class="fa fa-tag mr-1 text-blue-500"></i>
-                                                    Discount
-                                                </label>
-                                                <input v-model.number="form.other_discount" @input="calculateTotals"
-                                                    type="number" step="0.01"
-                                                    class="w-full text-xs py-1.5 sm:py-2 rounded border-slate-300 focus:border-blue-500 focus:ring-blue-500"
-                                                    placeholder="0">
-                                            </div>
-                                        </div>
+                                    <div class="mb-2 sm:mb-3">
+                                        <label class="block text-xs font-semibold text-slate-700 mb-1">
+                                            <i class="fa fa-tag mr-1 text-blue-500"></i>
+                                            Discount
+                                        </label>
+                                        <input v-model.number="form.other_discount" @input="calculateTotals"
+                                            type="number" step="0.01"
+                                            class="w-full text-xs py-1.5 sm:py-2 rounded border-slate-300 focus:border-blue-500 focus:ring-blue-500"
+                                            placeholder="0">
                                     </div>
 
                                     <!-- Enhanced Order Total - Mobile optimized -->
@@ -265,143 +219,6 @@
                                                     <span class="text-base sm:text-lg font-black">{{ form.grand_total
                                                         }}</span>
                                                 </div>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <!-- Payment Method - Matching pos.blade.php design -->
-                                    <div class="mb-3">
-                                        <div class="flex items-center justify-between mb-3">
-                                            <h6
-                                                class="text-sm sm:text-base font-semibold text-slate-800 mb-0 flex items-center gap-2">
-                                                <i class="fa fa-credit-card text-blue-500"></i>
-                                                <span>Payment Method</span>
-                                            </h6>
-                                            <label class="flex items-center text-xs sm:text-sm gap-2">
-                                                <input v-model="sendToWhatsapp" type="checkbox"
-                                                    class="rounded border-slate-300 text-green-600 focus:ring-green-500">
-                                                <i class="fa fa-whatsapp text-green-500"></i>
-                                                <span class="hidden sm:inline">Send Invoice To Whatsapp</span>
-                                                <span class="sm:hidden">WhatsApp</span>
-                                            </label>
-                                        </div>
-
-                                        <div class="grid grid-cols-3 gap-2 sm:gap-3">
-                                            <!-- Cash Payment -->
-                                            <div class="payment-option">
-                                                <button type="button" @click="selectPaymentMethod(1)" :class="[
-                                                    'w-full h-20 sm:h-24 flex flex-col items-center justify-center p-2 sm:p-3 border-2 relative transition-all duration-200 rounded-lg',
-                                                    selectedPaymentMethod === 1 || selectedPaymentMethod === ''
-                                                        ? 'bg-green-500 border-green-500 shadow-lg text-white'
-                                                        : 'bg-white border-gray-200 text-gray-700 hover:shadow-md hover:border-gray-300'
-                                                ]">
-                                                    <div class="icon-wrapper mb-1 sm:mb-2">
-                                                        <i :class="[
-                                                            'fa fa-money text-lg sm:text-2xl',
-                                                            selectedPaymentMethod === 1 || selectedPaymentMethod === ''
-                                                                ? 'text-white'
-                                                                : 'text-green-500'
-                                                        ]"></i>
-                                                    </div>
-                                                    <span :class="[
-                                                        'text-xs sm:text-sm font-semibold',
-                                                        selectedPaymentMethod === 1 || selectedPaymentMethod === ''
-                                                            ? 'text-white'
-                                                            : 'text-gray-700'
-                                                    ]">Cash</span>
-
-                                                    <!-- Selected indicator -->
-                                                    <div v-if="selectedPaymentMethod === 1 || selectedPaymentMethod === ''"
-                                                        class="absolute top-1 right-1 sm:top-2 sm:right-2">
-                                                        <i
-                                                            class="fa fa-check-circle text-white bg-green-600 rounded-full text-xs sm:text-sm"></i>
-                                                    </div>
-                                                    <!-- Selected overlay -->
-                                                    <div v-if="selectedPaymentMethod === 1 || selectedPaymentMethod === ''"
-                                                        class="absolute inset-0 bg-green-500 bg-opacity-10 rounded-lg pointer-events-none">
-                                                    </div>
-                                                </button>
-                                            </div>
-
-                                            <!-- Card Payment -->
-                                            <div class="payment-option">
-                                                <button type="button" @click="selectPaymentMethod(2)" :class="[
-                                                    'w-full h-20 sm:h-24 flex flex-col items-center justify-center p-2 sm:p-3 border-2 relative transition-all duration-200 rounded-lg',
-                                                    selectedPaymentMethod === 2
-                                                        ? 'bg-blue-500 border-blue-500 shadow-lg text-white'
-                                                        : 'bg-white border-gray-200 text-gray-700 hover:shadow-md hover:border-gray-300'
-                                                ]">
-                                                    <div class="icon-wrapper mb-1 sm:mb-2">
-                                                        <i :class="[
-                                                            'fa fa-credit-card text-lg sm:text-2xl',
-                                                            selectedPaymentMethod === 2
-                                                                ? 'text-white'
-                                                                : 'text-blue-500'
-                                                        ]"></i>
-                                                    </div>
-                                                    <span :class="[
-                                                        'text-xs sm:text-sm font-semibold',
-                                                        selectedPaymentMethod === 2
-                                                            ? 'text-white'
-                                                            : 'text-gray-700'
-                                                    ]">Card</span>
-
-                                                    <!-- Selected indicator -->
-                                                    <div v-if="selectedPaymentMethod === 2"
-                                                        class="absolute top-1 right-1 sm:top-2 sm:right-2">
-                                                        <i
-                                                            class="fa fa-check-circle text-white bg-blue-600 rounded-full text-xs sm:text-sm"></i>
-                                                    </div>
-                                                    <!-- Selected overlay -->
-                                                    <div v-if="selectedPaymentMethod === 2"
-                                                        class="absolute inset-0 bg-blue-500 bg-opacity-10 rounded-lg pointer-events-none">
-                                                    </div>
-                                                </button>
-                                            </div>
-
-                                            <!-- Custom Payment -->
-                                            <div class="payment-option">
-                                                <button type="button" @click="selectPaymentMethod('custom')" :class="[
-                                                    'w-full h-20 sm:h-24 flex flex-col items-center justify-center p-2 sm:p-3 border-2 relative transition-all duration-200 rounded-lg',
-                                                    selectedPaymentMethod === 'custom'
-                                                        ? 'bg-amber-500 border-amber-500 shadow-lg text-white'
-                                                        : 'bg-white border-gray-200 text-gray-700 hover:shadow-md hover:border-gray-300'
-                                                ]">
-                                                    <div class="icon-wrapper mb-1 sm:mb-2">
-                                                        <i :class="[
-                                                            'fa fa-cogs text-lg sm:text-2xl',
-                                                            selectedPaymentMethod === 'custom'
-                                                                ? 'text-white'
-                                                                : 'text-amber-500'
-                                                        ]"></i>
-                                                    </div>
-                                                    <span :class="[
-                                                        'text-xs sm:text-sm font-semibold',
-                                                        selectedPaymentMethod === 'custom'
-                                                            ? 'text-white'
-                                                            : 'text-gray-700'
-                                                    ]">
-                                                        {{ customPaymentData.payments &&
-                                                            customPaymentData.payments.length > 0
-                                                            ? `${customPaymentData.payments.length} Methods`
-                                                            : 'Custom' }}
-                                                    </span>
-
-                                                    <!-- Selected indicator -->
-                                                    <div v-if="selectedPaymentMethod === 'custom'"
-                                                        class="absolute top-1 right-1 sm:top-2 sm:right-2">
-                                                        <i
-                                                            class="fa fa-check-circle text-white bg-amber-600 rounded-full text-xs sm:text-sm"></i>
-                                                    </div>
-                                                    <!-- Selected overlay -->
-                                                    <div v-if="selectedPaymentMethod === 'custom'"
-                                                        class="absolute inset-0 bg-amber-500 bg-opacity-10 rounded-lg pointer-events-none">
-                                                    </div>
-                                                    <!-- Custom payment configured indicator -->
-                                                    <div v-if="customPaymentData.payments && customPaymentData.payments.length > 0 && selectedPaymentMethod !== 'custom'"
-                                                        class="absolute -top-1 -right-1 w-3 h-3 bg-green-500 rounded-full border-2 border-white">
-                                                    </div>
-                                                </button>
                                             </div>
                                         </div>
                                     </div>
@@ -473,7 +290,10 @@
 
         <!-- Sale Confirmation Modal -->
         <SaleConfirmationModal :show="showConfirmationModal" :sale-data="confirmationData" :loading="submitting"
-            @close="closeConfirmationModal" @submit="processSubmitSale" />
+            :payment-method="selectedPaymentMethod" :send-to-whatsapp="sendToWhatsapp"
+            @update:paymentMethod="selectPaymentMethod" @update:sendToWhatsapp="val => sendToWhatsapp = val"
+            @openCustomPayment="showCustomPaymentModal = true" @close="closeConfirmationModal"
+            @submit="processSubmitSale" />
 
         <!-- Draft Sales Modal -->
         <DraftSalesModal :show="showDraftSalesModal" @close="closeDraftSalesModal" @draft-loaded="handleDraftLoaded" />
@@ -1335,6 +1155,16 @@ export default {
             }
         }, { immediate: true })
 
+        // Watch for payment method changes to update confirmation modal
+        watch(selectedPaymentMethod, () => {
+            updateConfirmationData()
+        })
+
+        // Watch for custom payment data changes to update confirmation modal
+        watch(customPaymentData, () => {
+            updateConfirmationData()
+        }, { deep: true })
+
         // Lifecycle
         onMounted(() => {
             // Initialize form with sale data if provided from controller FIRST
@@ -1369,7 +1199,7 @@ export default {
         const cartHeight = computed(() => {
             if (windowWidth.value >= 1024) {
                 // Desktop: Take full height minus header, footer and padding
-                return 'calc(100vh - 450px)'
+                return 'calc(100vh - 150px)'
             } else {
                 // Mobile: Limited height
                 return 'calc(40vh - 100px)'
@@ -1465,4 +1295,19 @@ export default {
 @import '../../../css/pos-common.css';
 @import '../../../css/pos.css';
 @import '../../../css/mobile-responsive.css';
+
+.payment-modal {
+    position: fixed;
+    z-index: 50;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+
+.modal-overlay {
+    position: fixed;
+    z-index: 40;
+    inset: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+}
 </style>

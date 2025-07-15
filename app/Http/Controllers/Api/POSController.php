@@ -199,15 +199,19 @@ class POSController extends Controller
             DB::beginTransaction();
 
             $saleData = $request->all();
-            if ($saleData['payment_method'] == 'custom') {
-                $saleData['payments'] = $saleData['custom_payment_data']['payments'];
-                $saleData['paid'] = array_sum(array_column($saleData['payments'], 'amount'));
+            if ($saleData['status'] == 'completed') {
+                if ($saleData['payment_method'] == 'custom') {
+                    $saleData['payments'] = $saleData['custom_payment_data']['payments'];
+                    $saleData['paid'] = array_sum(array_column($saleData['payments'], 'amount'));
+                } else {
+                    $saleData['paid'] = $saleData['grand_total'];
+                    $saleData['payments'] = [[
+                            'amount' => $saleData['grand_total'],
+                            'payment_method_id' => $saleData['payment_method'],
+                        ], ];
+                }
             } else {
-                $saleData['paid'] = $saleData['grand_total'];
-                $saleData['payments'] = [[
-                        'amount' => $saleData['grand_total'],
-                        'payment_method_id' => $saleData['payment_method'],
-                    ], ];
+                $saleData['payments'] = [];
             }
             $table_id = $saleData['id'] ?? null;
             if (! $table_id) {
