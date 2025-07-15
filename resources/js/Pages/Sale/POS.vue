@@ -302,6 +302,10 @@
 
         <!-- Draft Sales Modal -->
         <DraftSalesModal :show="showDraftSalesModal" @close="closeDraftSalesModal" @draft-loaded="handleDraftLoaded" />
+
+        <!-- Edit Item Modal as a component -->
+        <EditItemModal :show="showEditItemModal" :item="editItemData" @close="showEditItemModal = false"
+            @save="onEditItemSave" />
     </div>
 </template>
 
@@ -312,6 +316,7 @@ import CategoriesSidebar from '@/components/CategoriesSidebar.vue'
 import CustomerModal from '@/components/CustomerModal.vue'
 import CustomPaymentModal from '@/components/CustomPaymentModal.vue'
 import DraftSalesModal from '@/components/DraftSalesModal.vue'
+import EditItemModal from '@/components/EditItemModal.vue'
 import FeedbackModal from '@/components/FeedbackModal.vue'
 import ProductsGrid from '@/components/ProductsGrid.vue'
 import SaleConfirmationModal from '@/components/SaleConfirmationModal.vue'
@@ -331,7 +336,8 @@ export default {
         DraftSalesModal,
         FeedbackModal,
         ProductsGrid,
-        SaleConfirmationModal
+        SaleConfirmationModal,
+        EditItemModal
     },
     props: {
         categories: Array,
@@ -819,9 +825,51 @@ export default {
             showCartModal.value = true
         }
 
+        // --- Vue-based Edit Item Modal ---
+        const showEditItemModal = ref(false)
+        const editItemKey = ref(null)
+        const editItemData = ref({})
+
+        // Handler for saving from EditItemModal
+        const onEditItemSave = (updatedItem) => {
+            console.log('Saving edited item:', updatedItem)
+            if (editItemKey.value && form.items[editItemKey.value]) {
+                console.log('Saving edited item:', updatedItem)
+                // Use Object.assign to preserve reactivity
+                Object.assign(form.items[editItemKey.value], updatedItem)
+                calculateTotals()
+                showEditItemModal.value = false
+                toast.success('Item updated successfully')
+            }
+        }
         const editCartItem = (key) => {
-            // Implement edit cart item modal
-            toast.info('Edit cart item modal')
+            const item = form.items[key]
+            if (!item) return
+            editItemKey.value = key
+            // Deep clone to avoid mutating original until save
+            editItemData.value = JSON.parse(JSON.stringify(item))
+            showEditItemModal.value = true
+        }
+
+        const saveEditedItem = () => {
+            if (editItemKey.value && form.items[editItemKey.value]) {
+                // Validate numeric fields
+                ['quantity', 'unit_price', 'discount', 'tax'].forEach(field => {
+                    editItemData.value[field] = Number(editItemData.value[field]) || 0
+                })
+                // Calculate amounts (inspired by Livewire)
+                const item = editItemData.value
+                item.gross_amount = item.unit_price * item.quantity
+                item.net_amount = item.gross_amount - item.discount
+                item.tax_amount = item.net_amount * (item.tax / 100)
+                item.total = item.net_amount + item.tax_amount
+
+                // Save back to cart
+                form.items[editItemKey.value] = { ...item }
+                calculateTotals()
+                showEditItemModal.value = false
+                toast.success('Item updated successfully')
+            }
         }
 
         const addNewCustomer = () => {
@@ -1247,6 +1295,9 @@ export default {
             form,
             newCustomer,
             windowWidth,
+            showEditItemModal,
+            editItemKey,
+            editItemData,
 
             // Computed
             totalQuantity,
@@ -1273,6 +1324,7 @@ export default {
             clearCart,
             viewCartItems,
             editCartItem,
+            saveEditedItem,
             addNewCustomer,
             handleCustomerSaved,
             handleCustomerSelected,
@@ -1290,6 +1342,7 @@ export default {
             processSubmitSale,
             saveDraft,
             submitSale,
+            onEditItemSave,
             startNewSale
         }
     }
