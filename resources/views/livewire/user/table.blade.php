@@ -61,7 +61,7 @@
                             <div class="card-body hv-outline-parent">
                                 <div class="d-flex align-items-center position-relative pb-3">
                                     <div class="flex-shrink-0">
-                                        <img class="hv-oc img-md rounded-circle" src="{{ asset('assets/img/profile-photos/3.png') }}" alt="Profile Picture" loading="lazy">
+                                                                                 <img class="hv-oc img-md rounded-circle" src="{{ secure_asset('assets/img/profile-photos/3.png') }}" alt="Profile Picture" loading="lazy">
                                     </div>
                                     <div class="flex-grow-1 ms-3">
                                         <a href="{{ route('users::view', $user['id']) }}" class="h5 stretched-link btn-link">{{ $user['name'] }}</a>

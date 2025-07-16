@@ -12,19 +12,19 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;700&family=Ubuntu:wght@400;500;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="{{ asset('assets/css/bootstrap.min.css') }}">
-    <link rel="stylesheet" href="{{ asset('assets/vendors/font-awesome/font-awesome.min.css') }}">
-    <link rel="stylesheet" href="{{ asset('assets/css/nifty.min.css') }}">
-    <link rel="stylesheet" href="{{ asset('assets/css/demo-purpose/demo-icons.min.css') }}">
-    <link rel="stylesheet" href="{{ asset('assets/premium/icon-sets/line-icons/premium-line-icons.css') }}">
-    <link rel="stylesheet" href="{{ asset('assets/css/demo-purpose/demo-settings.min.css') }}">
-    <link rel="stylesheet" href="{{ asset('css/theme-helper.css') }}"><!-- Theme persistence helper -->
-    <link rel="apple-touch-icon" sizes="180x180" href="{{ asset('apple-touch-icon.png') }}">
-    <link rel="icon" type="image/png" sizes="32x32" href="{{ asset('favicon-32x32.png') }}">
-    <link rel="icon" type="image/png" sizes="16x16" href="{{ asset('favicon-16x16.png') }}">
-    {{-- <link rel="manifest" href="{{ asset('site.webmanifest') }}"> --}}
-    <link rel="stylesheet" href="{{ asset('assets/vendors/tom-select/tom-select.min.css') }}">
-    <link rel="stylesheet" href="{{ asset('assets/vendors/toaster/toastr.min.css') }}">
+    <link rel="stylesheet" href="{{ https_asset('assets/css/bootstrap.min.css') }}">
+    <link rel="stylesheet" href="{{ https_asset('assets/vendors/font-awesome/font-awesome.min.css') }}">
+    <link rel="stylesheet" href="{{ https_asset('assets/css/nifty.min.css') }}">
+    <link rel="stylesheet" href="{{ https_asset('assets/css/demo-purpose/demo-icons.min.css') }}">
+    <link rel="stylesheet" href="{{ https_asset('assets/premium/icon-sets/line-icons/premium-line-icons.css') }}">
+    <link rel="stylesheet" href="{{ https_asset('assets/css/demo-purpose/demo-settings.min.css') }}">
+    <link rel="stylesheet" href="{{ https_asset('css/theme-helper.css') }}"><!-- Theme persistence helper -->
+    <link rel="apple-touch-icon" sizes="180x180" href="{{ https_asset('apple-touch-icon.png') }}">
+    <link rel="icon" type="image/png" sizes="32x32" href="{{ https_asset('favicon-32x32.png') }}">
+    <link rel="icon" type="image/png" sizes="16x16" href="{{ https_asset('favicon-16x16.png') }}">
+    {{-- <link rel="manifest" href="{{ https_asset('site.webmanifest') }}"> --}}
+    <link rel="stylesheet" href="{{ https_asset('assets/vendors/tom-select/tom-select.min.css') }}">
+    <link rel="stylesheet" href="{{ https_asset('assets/vendors/toaster/toastr.min.css') }}">
     @livewireStyles
     <style>
         .pointer {
@@ -61,7 +61,7 @@
             width: 10%
         }
     </style>
-    <script src="{{ asset('assets/js/jquery-3.7.1.min.js') }}"></script>
+    {{-- <script src="{{ asset('assets/js/jquery-3.7.1.min.js') }}"></script> --}}
     @stack('styles')
 </head>
 
@@ -86,12 +86,15 @@
     <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
     <!-- END - SCROLL TO TOP BUTTON -->
 
-    <!-- Theme Applier - Must be before other scripts to ensure it runs first -->
-    <script src="{{ asset('js/theme-applier.js') }}"></script>
+    <!-- jQuery must be loaded first -->
+    <script src="{{ https_asset('assets/js/jquery-3.7.1.min.js') }}"></script>
 
-    <script src="{{ asset('assets/vendors/popperjs/popper.min.js') }}"></script>
-    <script src="{{ asset('assets/vendors/bootstrap/bootstrap.min.js') }}"></script>
-    <script src="{{ asset('assets/js/nifty.js') }}"></script>
+    <!-- Theme Applier - Must be before other scripts to ensure it runs first -->
+    <script src="{{ https_asset('js/theme-applier.js') }}"></script>
+
+    <script src="{{ https_asset('assets/vendors/popperjs/popper.min.js') }}"></script>
+    <script src="{{ https_asset('assets/vendors/bootstrap/bootstrap.min.js') }}"></script>
+    <script src="{{ https_asset('assets/js/nifty.js') }}"></script>
     {{-- <script src="{{ asset('assets/js/demo-purpose-only.js') }}"></script> --}}
 
     <!-- Reapply theme settings after all scripts have loaded -->
@@ -106,33 +109,35 @@
             }, 200); // Small delay to ensure other scripts have finished
         });
     </script>
-    <script src="{{ asset('assets/vendors/toaster/toastr.min.js') }}"></script>
-    <script src="{{ asset('assets/vendors/tom-select/tom-select.min.js') }}"></script>
-    <script src="{{ asset('assets/vendors/sweetalert/sweetalert2.js') }}"></script>
+    <script src="{{ https_asset('assets/vendors/toaster/toastr.min.js') }}"></script>
+    <script src="{{ https_asset('assets/vendors/tom-select/tom-select.min.js') }}"></script>
+    <script src="{{ https_asset('assets/vendors/sweetalert/sweetalert2.js') }}"></script>
 
     <script>
-        var eventHandler = function(name) {
-            return function() {
-                console.log(name, arguments);
+        $(document).ready(function() {
+            var eventHandler = function(name) {
+                return function() {
+                    console.log(name, arguments);
+                };
             };
-        };
-        $('.tomSelect').each(function() {
-            new TomSelect(this, {
-                // onChange: eventHandler('onChange'),
-                // onItemAdd: eventHandler('onItemAdd'),
-                // onItemRemove: eventHandler('onItemRemove'),
-                // onOptionAdd: eventHandler('onOptionAdd'),
-                // onOptionRemove: eventHandler('onOptionRemove'),
-                // onDropdownOpen: eventHandler('onDropdownOpen'),
-                // onDropdownClose: eventHandler('onDropdownClose'),
-                // onFocus: eventHandler('onFocus'),
-                // onBlur: eventHandler('onBlur'),
-                // onInitialize: eventHandler('onInitialize'),
-                plugins: ['remove_button'],
-                sortField: {
-                    field: "text",
-                    direction: "asc"
-                }
+            $('.tomSelect').each(function() {
+                new TomSelect(this, {
+                    // onChange: eventHandler('onChange'),
+                    // onItemAdd: eventHandler('onItemAdd'),
+                    // onItemRemove: eventHandler('onItemRemove'),
+                    // onOptionAdd: eventHandler('onOptionAdd'),
+                    // onOptionRemove: eventHandler('onOptionRemove'),
+                    // onDropdownOpen: eventHandler('onDropdownOpen'),
+                    // onDropdownClose: eventHandler('onDropdownClose'),
+                    // onFocus: eventHandler('onFocus'),
+                    // onBlur: eventHandler('onBlur'),
+                    // onInitialize: eventHandler('onInitialize'),
+                    plugins: ['remove_button'],
+                    sortField: {
+                        field: "text",
+                        direction: "asc"
+                    }
+                });
             });
         });
     </script>
@@ -140,24 +145,26 @@
     @livewireScripts
     @stack('scripts')
     <script>
-        toastr.options = {
-            "closeButton": true,
-            "progressBar": true,
-            "positionClass": "toast-top-right",
-            "timeOut": "5000"
-        };
-        $(document).on('focus', '.select_on_focus', function() {
-            $(this).select();
+        $(document).ready(function() {
+            toastr.options = {
+                "closeButton": true,
+                "progressBar": true,
+                "positionClass": "toast-top-right",
+                "timeOut": "5000"
+            };
+            $(document).on('focus', '.select_on_focus', function() {
+                $(this).select();
+            });
+            @if (session('success'))
+                toastr.success("{{ session('success') }}");
+            @elseif (session('error'))
+                toastr.error("{{ session('error') }}");
+            @elseif (session('info'))
+                toastr.info("{{ session('info') }}");
+            @elseif (session('warning'))
+                toastr.warning("{{ session('warning') }}");
+            @endif
         });
-        @if (session('success'))
-            toastr.success("{{ session('success') }}");
-        @elseif (session('error'))
-            toastr.error("{{ session('error') }}");
-        @elseif (session('info'))
-            toastr.info("{{ session('info') }}");
-        @elseif (session('warning'))
-            toastr.warning("{{ session('warning') }}");
-        @endif
     </script>
 
     <script type="text/javascript">

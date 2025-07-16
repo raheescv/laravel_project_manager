@@ -1,9 +1,9 @@
 <x-app-layout>
 
     @push('scripts')
-        <script src="{{ asset('assets/vendors/chart.js/chart.umd.min.js') }}"></script>
-        <script src="{{ asset('assets/pages/dashboard-1.js') }}"></script>
-        <script src="{{ asset('assets/vendors/chart.js/chartjs-plugin-datalabels@2.min.js') }}"></script>
+        <script src="{{ secure_asset('assets/vendors/chart.js/chart.umd.min.js') }}"></script>
+        <script src="{{ secure_asset('assets/pages/dashboard-1.js') }}"></script>
+        <script src="{{ secure_asset('assets/vendors/chart.js/chartjs-plugin-datalabels@2.min.js') }}"></script>
     @endpush
     <div class="content__boxed">
         <div class="content__wrap">

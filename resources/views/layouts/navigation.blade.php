@@ -98,7 +98,7 @@
         <div class="mainnav__top-content scrollable-content pb-5">
             <div id="_dm-mainnavProfile" class="mainnav__widget my-3 hv-outline-parent">
                 <div class="mininav-toggle text-center py-2">
-                    <img class="mainnav__avatar img-md rounded-circle hv-oc" src="{{ asset('assets/img/profile-photos/1.png') }}" alt="Profile Picture">
+                    <img class="mainnav__avatar img-md rounded-circle hv-oc" src="{{ secure_asset('assets/img/profile-photos/1.png') }}" alt="Profile Picture">
                 </div>
                 <div class="mininav-content collapse d-mn-max">
                     <span data-popper-arrow class="arrow"></span>

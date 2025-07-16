@@ -332,8 +332,8 @@
         </div>
     </div>
     @push('scripts')
-        <script src="{{ asset('assets/pos/feather.min.js') }}"></script>
-        <script src="{{ asset('assets/pos/script.js') }}"></script>
+        <script src="{{ https_asset('assets/pos/feather.min.js') }}"></script>
+        <script src="{{ https_asset('assets/pos/script.js') }}"></script>
         <script>
             document.addEventListener('DOMContentLoaded', function() {
                 window.addEventListener('show-confirmation', function(event) {

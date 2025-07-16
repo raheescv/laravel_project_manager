@@ -24,7 +24,7 @@
                             <div class="flex-shrink-0 me-4">
                                 <div class="position-relative customer-avatar">
                                     <div class="avatar-ring"></div>
-                                    <img class="img-fluid rounded-circle shadow-lg" src="{{ asset('assets/img/profile-photos/1.png') }}" alt="Profile Picture"
+                                                                         <img class="img-fluid rounded-circle shadow-lg" src="{{ secure_asset('assets/img/profile-photos/1.png') }}" alt="Profile Picture"
                                         style="width: 80px; height: 80px; object-fit: cover; border: 4px solid rgba(255,255,255,0.9);">
 
                                     <!-- Status Indicator -->

@@ -18,6 +18,19 @@ class AppServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
+        // Force HTTPS for assets when the app is served over HTTPS
+        if (request()->isSecure() || env('FORCE_HTTPS', false) || env('APP_URL', '')->startsWith('https://')) {
+            \Illuminate\Support\Facades\URL::forceScheme('https');
+        }
+
+        // Register a custom helper for HTTPS assets
+        if (!function_exists('https_asset')) {
+            function https_asset($path) {
+                $url = asset($path);
+                return str_replace('http://', 'https://', $url);
+            }
+        }
+
         if (Schema::hasTable('branches')) {
             Cache::remember('branches', now()->addYear(), function () {
                 info('branches remember');
