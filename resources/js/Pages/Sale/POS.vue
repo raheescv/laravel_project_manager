@@ -304,7 +304,7 @@
         <DraftSalesModal :show="showDraftSalesModal" @close="closeDraftSalesModal" @draft-loaded="handleDraftLoaded" />
 
         <!-- Edit Item Modal as a component -->
-        <EditItemModal :show="showEditItemModal" :item="editItemData" @close="showEditItemModal = false"
+        <EditItemModal :show="showEditItemModal" :item="editItemData" :employees="employees" @close="showEditItemModal = false"
             @save="onEditItemSave" />
     </div>
 </template>
