@@ -210,7 +210,6 @@ class POSController extends Controller
             DB::beginTransaction();
 
             $saleData = $request->all();
-            info($saleData);
             $table_id = $saleData['id'] ?? null;
 
             if ($saleData['status'] == 'completed') {

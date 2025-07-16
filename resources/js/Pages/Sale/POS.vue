@@ -171,6 +171,17 @@
                                     @remove-cart-item="removeCartItem" @increase-quantity="increaseQuantity"
                                     @decrease-quantity="decreaseQuantity" item-class="min-h-[64px] py-4" />
 
+                                <!-- Combo Offer Button -->
+                                <div v-if="Object.keys(form.items).length > 0" class="p-2 sm:p-3 border-t border-slate-200">
+                                    <div class="flex justify-center">
+                                        <button type="button" @click="manageComboOffer"
+                                            class="bg-gradient-to-r from-purple-500 to-indigo-600 text-white py-2 px-4 rounded-lg hover:from-purple-600 hover:to-indigo-700 transition-all duration-200 shadow-md hover:shadow-lg transform hover:-translate-y-0.5 font-semibold text-sm flex items-center justify-center">
+                                            <i class="fa fa-cube mr-2 text-sm"></i>
+                                            Manage Combo Offer
+                                        </button>
+                                    </div>
+                                </div>
+
                                 <!-- Discount Only (full width) -->
                                 <div class="p-2 sm:p-3 border-t border-slate-200">
                                     <div class="mb-2 sm:mb-3">
@@ -317,6 +328,15 @@
         <!-- Edit Item Modal as a component -->
         <EditItemModal :show="showEditItemModal" :item="editItemData" :employees="employees" @close="showEditItemModal = false"
             @save="onEditItemSave" />
+
+                        <!-- Combo Offer Modal -->
+        <ComboOfferModal
+            :show="showComboOfferModal"
+            :cart-items="form.items"
+            :initial-combo-offers="form.comboOffers"
+            @close="closeComboOfferModal"
+            @save="handleComboOfferSave"
+            @openSettings="openComboOfferSettings" />
     </div>
 </template>
 
@@ -332,6 +352,7 @@ import FeedbackModal from '@/components/FeedbackModal.vue'
 import ProductsGrid from '@/components/ProductsGrid.vue'
 import SaleConfirmationModal from '@/components/SaleConfirmationModal.vue'
 import SearchableSelect from '@/components/SearchableSelectFixed.vue'
+import ComboOfferModal from '@/components/ComboOfferModal.vue'
 import { useForm } from '@inertiajs/vue3'
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useToast } from 'vue-toastification'
@@ -348,7 +369,8 @@ export default {
         FeedbackModal,
         ProductsGrid,
         SaleConfirmationModal,
-        EditItemModal
+        EditItemModal,
+        ComboOfferModal
     },
     props: {
         categories: Array,
@@ -433,6 +455,7 @@ export default {
             paid: 0,
             balance: 0,
             items: {},
+            comboOffers: [],
             payment_method: 1,
             custom_payment_data: {},
             rating: 0,
@@ -474,7 +497,7 @@ export default {
                 // Transform sale items to cart items format
                 if (props.saleData.items && Array.isArray(props.saleData.items)) {
                     props.saleData.items.forEach((item, index) => {
-                        const key = `${item.employee_id}-${item.inventory_id}-${index}`
+                        const key = `${item.employee_id}-${item.inventory_id}`
                         form.items[key] = {
                             id: item.id,
                             employee_id: item.employee_id,
@@ -507,6 +530,27 @@ export default {
                     selectedPaymentMethod.value = props.saleData.payment_method || 1
                     form.payment_method = props.saleData.payment_method || 1
                     customPaymentData.value = { payments: [], totalPaid: 0, balanceDue: 0 }
+                }
+
+                // Handle combo offers
+                if (props.saleData.comboOffers && Array.isArray(props.saleData.comboOffers)) {
+                    form.comboOffers = props.saleData.comboOffers
+
+                    // Update cart items with combo offer pricing
+                    props.saleData.comboOffers.forEach(comboOffer => {
+                        comboOffer.items.forEach(item => {
+                            const key = item.key
+                            if (form.items[key]) {
+                                // Update the cart item with combo offer pricing
+                                form.items[key] = {
+                                    ...form.items[key],
+                                    combo_offer_price: item.combo_offer_price || 0,
+                                    discount: item.discount || 0,
+                                    combo_offer_id: item.combo_offer_id || null
+                                }
+                            }
+                        })
+                    })
                 }
 
                 // Recalculate totals to ensure consistency
@@ -811,7 +855,13 @@ export default {
                 item.gross_amount = unitPrice * quantity
                 item.net_amount = item.gross_amount - discountAmount
                 item.tax_amount = item.net_amount * (taxRate / 100)
-                item.total = item.net_amount + item.tax_amount
+
+                // Use combo offer price if available, otherwise use regular total
+                if (item.combo_offer_price && item.combo_offer_price > 0) {
+                    item.total = item.combo_offer_price * quantity
+                } else {
+                    item.total = item.net_amount + item.tax_amount
+                }
 
                 total += item.total
                 gross_amount += item.gross_amount
@@ -853,6 +903,9 @@ export default {
         const showEditItemModal = ref(false)
         const editItemKey = ref(null)
         const editItemData = ref({})
+
+        // Combo Offer Modal
+        const showComboOfferModal = ref(false)
 
         // Handler for saving from EditItemModal
         const onEditItemSave = (updatedItem) => {
@@ -1041,6 +1094,7 @@ export default {
                     total: Number(form.total) || 0,
                     grand_total: Number(form.grand_total) || 0,
                     items: validItems,
+                    comboOffers: form.comboOffers || [],
                     payment_method: form.payment_method,
                     custom_payment_data: form.payment_method === 'custom' ?
                         (customPaymentData.value && customPaymentData.value.payments && customPaymentData.value.payments.length > 0 ?
@@ -1183,6 +1237,7 @@ export default {
             // Reset form to default values
             form.reset()
             form.items = {}
+            form.comboOffers = []
             form.date = new Date().toISOString().split('T')[0]
             form.employee_id = ''
             form.sale_type = 'normal'
@@ -1200,6 +1255,49 @@ export default {
 
             calculateTotals()
             toast.success('Ready for new sale')
+        }
+
+        // Combo Offer Methods
+        const manageComboOffer = () => {
+            if (Object.keys(form.items).length === 0) {
+                toast.error('Please add items to cart before managing combo offers')
+                return
+            }
+            showComboOfferModal.value = true
+        }
+
+        const closeComboOfferModal = () => {
+            showComboOfferModal.value = false
+        }
+
+        const openComboOfferSettings = () => {
+            // This would typically open the combo offer management page
+            // For now, we'll show a toast and close the modal
+            toast.info('Combo offer settings would open here')
+            closeComboOfferModal()
+        }
+
+        const handleComboOfferSave = (comboData) => {
+            // Update cart items with combo offer pricing
+            Object.entries(comboData.comboOfferItems).forEach(([key, item]) => {
+                if (form.items[key]) {
+                    // Update the cart item with combo offer pricing
+                    form.items[key] = {
+                        ...form.items[key],
+                        combo_offer_price: item.combo_offer_price || 0,
+                        discount: item.discount || 0,
+                        combo_offer_id: item.combo_offer_id || null
+                    }
+                }
+            })
+
+            // Store combo offers data for submission
+            form.comboOffers = comboData.selectedComboOffers
+
+            // Recalculate totals
+            calculateTotals()
+
+            toast.success('Combo offers applied successfully')
         }
 
         // Debounce function to limit the rate of function calls
@@ -1324,6 +1422,7 @@ export default {
             editItemData,
             selectedProductType,
             productTypeOptions,
+            showComboOfferModal,
 
             // Computed
             totalQuantity,
@@ -1370,7 +1469,11 @@ export default {
             submitSale,
             onEditItemSave,
             startNewSale,
-            filterByProductType
+            filterByProductType,
+            manageComboOffer,
+            closeComboOfferModal,
+            openComboOfferSettings,
+            handleComboOfferSave
         }
     }
 }

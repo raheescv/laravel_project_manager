@@ -4,6 +4,7 @@ use App\Http\Controllers\Api\POSController;
 use App\Http\Controllers\AppointmentController;
 use App\Http\Controllers\AuditController;
 use App\Http\Controllers\BackupController;
+use App\Http\Controllers\ComboOfferController;
 use App\Http\Controllers\FamilyTreeController;
 use App\Http\Controllers\HealthController;
 use App\Http\Controllers\HomeController;
@@ -134,5 +135,10 @@ Route::middleware(['auth'])->group(function () {
         Route::post('remove-item', [POSController::class, 'removeItem'])->name('remove-item');
         Route::post('submit', [POSController::class, 'submitSale'])->name('submit');
         Route::get('drafts', [POSController::class, 'getDraftSales'])->name('drafts');
+    });
+
+    // Combo Offer API Routes
+    Route::prefix('combo_offer')->name('api.combo_offer.')->group(function () {
+        Route::get('list', [ComboOfferController::class, 'get'])->name('list');
     });
 });

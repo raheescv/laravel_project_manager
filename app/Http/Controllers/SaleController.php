@@ -59,6 +59,7 @@ class SaleController extends Controller
             'total' => 0,
             'grand_total' => 0,
             'items' => [],
+            'comboOffers' => [],
             'payment_method' => 1,
             'custom_payment_data' => null,
             'status' => null,
@@ -128,6 +129,7 @@ class SaleController extends Controller
                 // Transform sale items to match POS item structure
                 foreach ($sale->items as $item) {
                     $posItem = [
+                        'key' => $item->employee_id . '-' . $item->inventory_id,
                         'id' => $item->id,
                         'product_id' => $item->product_id,
                         'inventory_id' => $item->inventory_id,
@@ -143,8 +145,8 @@ class SaleController extends Controller
                         'tax_amount' => $item->tax_amount,
                         'total' => $item->total,
                         'stock_available' => $item->inventory->quantity ?? 0,
-                        'employee_id' => $sale->created_by,
-                        'employee_name' => $employees[$sale->created_by] ?? 'Unknown Employee',
+                        'employee_id' => $item->employee_id,
+                        'employee_name' => $item->employee->name ?? 'Unknown Employee',
                     ];
                     $saleData['items'][] = $posItem;
                 }
@@ -165,6 +167,40 @@ class SaleController extends Controller
                             ];
                         })->toArray(),
                     ];
+                }
+
+                // Handle combo offers
+                if ($sale->comboOffers->count() > 0) {
+                    $saleData['comboOffers'] = $sale->comboOffers->map(function ($saleComboOffer) {
+                        return [
+                            'id' => $saleComboOffer->id,
+                            'combo_offer_id' => $saleComboOffer->combo_offer_id,
+                            'combo_offer_name' => $saleComboOffer->comboOffer->name,
+                            'amount' => $saleComboOffer->amount,
+                            'items' => $saleComboOffer->items->map(function ($item) use ($saleComboOffer) {
+                                return [
+                                    'key' => $item->employee_id . '-' . $item->inventory_id,
+                                    'employee_id' => $item->employee_id,
+                                    'employee_name' => $item->employee->name ?? 'Unknown Employee',
+                                    'inventory_id' => $item->inventory_id,
+                                    'product_id' => $item->product_id,
+                                    'name' => $item->product->name ?? 'Unknown Product',
+                                    'unit_price' => $item->unit_price,
+                                    'quantity' => $item->quantity,
+                                    'discount' => $item->discount,
+                                    'tax' => $item->tax_percentage,
+                                    'gross_amount' => $item->gross_amount,
+                                    'net_amount' => $item->net_amount,
+                                    'tax_amount' => $item->tax_amount,
+                                    'total' => $item->total,
+                                    'combo_offer_price' => $item->unit_price - $item->discount,
+                                    'combo_offer_id' => $saleComboOffer->combo_offer_id
+                                ];
+                            })->toArray()
+                        ];
+                    })->toArray();
+                } else {
+                    $saleData['comboOffers'] = [];
                 }
             } catch (\Exception $e) {
                 // If sale not found or error, use default data but show the ID for error handling

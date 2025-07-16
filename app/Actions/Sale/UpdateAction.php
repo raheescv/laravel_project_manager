@@ -63,7 +63,7 @@ class UpdateAction
 
                 $this->payments($data['payments']);
 
-                // $this->comboOffers($data['comboOffers']);
+                $this->comboOffers($data['comboOffers']);
 
                 $this->model->refresh();
 
