@@ -1,7 +1,11 @@
 <?php
 
+use App\Http\Controllers\Api\POSController;
+use App\Http\Controllers\ComboOfferController;
+use App\Http\Controllers\ProductController;
 use App\Http\Controllers\SaleController;
 use App\Http\Controllers\SaleReturnController;
+use App\Http\Controllers\Settings\CustomerController;
 use App\Http\Middleware\RequireOpenDaySession;
 use Illuminate\Support\Facades\Route;
 
@@ -33,5 +37,30 @@ Route::middleware('auth')->group(function (): void {
         Route::get('edit/{id}', 'page')->name('edit')->can('sales return.edit');
         Route::get('view/{id}', 'view')->name('view')->can('sales return.view');
         Route::get('payments', 'payments')->name('payments')->can('sales return.payments');
+    });
+
+    Route::prefix('products')->name('api.products.')->group(function () {
+        Route::get('/', [POSController::class, 'getProducts'])->name('index');
+        Route::get('search', [ProductController::class, 'index'])->name('search');
+        Route::get('by-barcode', [POSController::class, 'getProductByBarcode'])->name('by-barcode');
+    });
+
+    // Customer Management
+    Route::prefix('customers')->name('api.customers.')->group(function () {
+        Route::post('/', [CustomerController::class, 'store'])->name('store');
+        Route::get('check-mobile', [CustomerController::class, 'get'])->name('get');
+    });
+
+    Route::prefix('pos')->name('api.pos.')->group(function () {
+        Route::post('add-item', [POSController::class, 'addItem'])->name('add-item');
+        Route::post('update-item', [POSController::class, 'updateItem'])->name('update-item');
+        Route::post('remove-item', [POSController::class, 'removeItem'])->name('remove-item');
+        Route::post('submit', [POSController::class, 'submitSale'])->name('submit');
+        Route::get('drafts', [POSController::class, 'getDraftSales'])->name('drafts');
+    });
+
+    // Combo Offer API Routes
+    Route::prefix('combo_offer')->name('api.combo_offer.')->group(function () {
+        Route::get('list', [ComboOfferController::class, 'get'])->name('list');
     });
 });

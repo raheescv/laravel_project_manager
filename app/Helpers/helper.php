@@ -429,8 +429,10 @@ if (! function_exists('arabicNumber')) {
 }
 
 if (! function_exists('https_asset')) {
-    function https_asset($path) {
+    function https_asset($path)
+    {
         $url = asset($path);
+
         return str_replace('http://', 'https://', $url);
     }
 }

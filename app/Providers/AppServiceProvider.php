@@ -24,9 +24,11 @@ class AppServiceProvider extends ServiceProvider
         }
 
         // Register a custom helper for HTTPS assets
-        if (!function_exists('https_asset')) {
-            function https_asset($path) {
+        if (! function_exists('https_asset')) {
+            function https_asset($path)
+            {
                 $url = asset($path);
+
                 return str_replace('http://', 'https://', $url);
             }
         }

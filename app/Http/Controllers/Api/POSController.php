@@ -31,7 +31,7 @@ class POSController extends Controller
                     $q->where('type', $request->type);
                 });
             }
-                if ($request->category_id && $request->category_id !== 'favorite') {
+            if ($request->category_id && $request->category_id !== 'favorite') {
                 $query->whereHas('product', function ($q) use ($request) {
                     $q->where('main_category_id', $request->category_id);
                 });

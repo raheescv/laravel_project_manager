@@ -131,7 +131,7 @@ class SaleController extends Controller
                 // Transform sale items to match POS item structure (as object with keys)
                 $cartItems = [];
                 foreach ($sale->items as $item) {
-                    $key = $item->employee_id . '-' . $item->inventory_id;
+                    $key = $item->employee_id.'-'.$item->inventory_id;
                     $cartItems[$key] = [
                         'id' => $item->id,
                         'product_id' => $item->product_id,
@@ -182,7 +182,7 @@ class SaleController extends Controller
                     foreach ($sale->comboOffers as $saleComboOffer) {
                         $comboOfferItems = [];
                         foreach ($saleComboOffer->items as $item) {
-                            $key = $item->employee_id . '-' . $item->inventory_id;
+                            $key = $item->employee_id.'-'.$item->inventory_id;
                             $comboOfferPrice = (float) ($item->unit_price - $item->discount);
                             $discount = (float) ($item->unit_price - $comboOfferPrice);
 
@@ -202,7 +202,7 @@ class SaleController extends Controller
                                 'tax_amount' => (float) $item->tax_amount,
                                 'total' => (float) $item->total,
                                 'combo_offer_price' => $comboOfferPrice,
-                                'combo_offer_id' => $saleComboOffer->combo_offer_id
+                                'combo_offer_id' => $saleComboOffer->combo_offer_id,
                             ];
 
                             // Update the corresponding cart item with combo offer pricing
@@ -218,7 +218,7 @@ class SaleController extends Controller
                             'combo_offer_id' => $saleComboOffer->combo_offer_id,
                             'combo_offer_name' => $saleComboOffer->comboOffer->name,
                             'amount' => (float) $saleComboOffer->amount,
-                            'items' => $comboOfferItems
+                            'items' => $comboOfferItems,
                         ];
                     }
                     $saleData['comboOffers'] = $comboOffers;

@@ -29,6 +29,12 @@
                     <div v-if="filteredOptions.length === 0 && !searchTerm" class="px-3 py-2 text-sm text-gray-500">
                         No options available
                     </div>
+                    <div v-else-if="filteredOptions.length === 0 && searchTerm && searchTerm.length >= 2" class="px-3 py-2 text-sm text-gray-500">
+                        <div class="flex items-center justify-center">
+                            <div class="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-500 mr-2"></div>
+                            <span>Searching...</span>
+                        </div>
+                    </div>
                     <div v-else-if="filteredOptions.length === 0 && searchTerm" class="px-3 py-2 text-sm text-gray-500">
                         No results found for "{{ searchTerm }}"
                     </div>
@@ -133,6 +139,8 @@ const filterOptions = () => {
     // Emit search event when the search term changes with at least 2 characters
     if (searchTerm.value && searchTerm.value.trim().length >= 2) {
         emit('search', searchTerm.value.trim())
+        // Don't filter immediately when searching - wait for new options to arrive
+        return
     }
 
     if (!searchTerm.value || searchTerm.value.trim() === '') {
@@ -300,7 +308,27 @@ watch(() => props.modelValue, () => {
 
 // Watch for changes in options
 watch(() => props.options, () => {
-    filteredOptions.value = normalizedOptions.value
+    // If there's an active search term, filter the new options
+    if (searchTerm.value && searchTerm.value.trim().length >= 2) {
+        const searchLower = searchTerm.value.toLowerCase().trim()
+        filteredOptions.value = normalizedOptions.value.filter(option => {
+            // Search in label
+            if (option.label.toLowerCase().includes(searchLower)) {
+                return true
+            }
+            // Search in name and mobile if they exist as separate fields
+            if (option.name && option.name.toLowerCase().includes(searchLower)) {
+                return true
+            }
+            if (option.mobile && option.mobile.toLowerCase().includes(searchLower)) {
+                return true
+            }
+            return false
+        })
+    } else {
+        filteredOptions.value = normalizedOptions.value
+    }
+    highlightedIndex.value = 0
 }, { deep: true, immediate: true })
 </script>
 

@@ -30,7 +30,7 @@
                         class="flex-1 flex flex-col lg:flex-row gap-2 sm:gap-3 lg:gap-4 order-2 lg:order-2 min-h-0 lg:h-full">
                         <!-- Products Section -->
                         <div class="flex-1 lg:flex-[0.6] xl:flex-[0.55] flex flex-col order-1 lg:order-1 min-h-0">
-                                                        <!-- Compact customer - employee-product search area -->
+                            <!-- Compact customer - employee-product search area -->
                             <div
                                 class="bg-gradient-to-br from-white/95 via-blue-50/30 to-indigo-50/20 backdrop-blur-xl rounded-lg shadow-lg border border-white/60 mb-2 p-3 relative overflow-hidden">
                                 <!-- Subtle background elements -->
@@ -42,23 +42,23 @@
                                 <!-- Customer and Mobile -->
                                 <div class="relative grid grid-cols-1 lg:grid-cols-2 gap-2 mb-3">
                                     <div class="space-y-1">
-                                        <label class="text-xs font-bold text-slate-700 flex items-center">
-                                            <div class="bg-gradient-to-r from-blue-500 to-indigo-600 p-1 rounded-md mr-1.5 shadow-sm">
-                                                <i class="fa fa-user text-white text-xs"></i>
-                                            </div>
-                                            Customer
+                                        <label class="text-xs font-bold text-slate-700 flex items-center justify-between">
+                                            <span>Customer</span>
+                                            <button type="button" @click="addNewCustomer"
+                                                class="bg-gradient-to-r from-blue-500 to-indigo-600 text-white px-2 py-1 rounded-md hover:from-blue-600 hover:to-indigo-700 transition-all duration-200 shadow-sm hover:shadow-md transform hover:-translate-y-0.5 font-semibold text-xs flex items-center">
+                                                <i class="fa fa-plus mr-1 text-xs"></i>
+                                                Add
+                                            </button>
                                         </label>
                                         <SearchableSelect v-model="form.account_id" :options="formattedCustomers"
                                             placeholder="Select Customer"
                                             filter-placeholder="Search by name or mobile..." :visibleItems="8"
                                             @search="searchCustomers"
+                                            @change="handleCustomerChange"
                                             input-class="w-full rounded-lg border-slate-200 shadow-sm focus:border-blue-500 focus:ring-blue-500/20 transition-all duration-200 bg-white/90 backdrop-blur-sm hover:shadow-md text-xs py-2" />
                                     </div>
                                     <div class="space-y-1">
                                         <label class="text-xs font-bold text-slate-700 flex items-center">
-                                            <div class="bg-gradient-to-r from-emerald-500 to-teal-600 p-1 rounded-md mr-1.5 shadow-sm">
-                                                <i class="fa fa-phone text-white text-xs"></i>
-                                            </div>
                                             Mobile
                                         </label>
                                         <input v-model="form.customer_mobile" type="text"
@@ -71,9 +71,6 @@
                                 <div class="relative grid grid-cols-1 lg:grid-cols-2 gap-2 mb-3">
                                     <div class="space-y-1">
                                         <label class="text-xs font-bold text-slate-700 flex items-center">
-                                            <div class="bg-gradient-to-r from-purple-500 to-pink-600 p-1 rounded-md mr-1.5 shadow-sm">
-                                                <i class="fa fa-user-tie text-white text-xs"></i>
-                                            </div>
                                             Employee
                                         </label>
                                         <SearchableSelect v-model="form.employee_id" :options="employees"
@@ -83,9 +80,6 @@
                                     </div>
                                     <div class="space-y-1">
                                         <label class="text-xs font-bold text-slate-700 flex items-center">
-                                            <div class="bg-gradient-to-r from-orange-500 to-red-600 p-1 rounded-md mr-1.5 shadow-sm">
-                                                <i class="fa fa-tags text-white text-xs"></i>
-                                            </div>
                                             Sale Type
                                         </label>
                                         <SearchableSelect v-model="form.sale_type" :options="priceTypes"
@@ -546,35 +540,28 @@ export default {
             loadProducts()
         }
 
-        // New method to fetch customers from server
+                // New method to fetch customers from server
         const fetchCustomers = async (query = '') => {
-            loadingCustomers.value = true
             try {
                 const response = await axios.get(`/account/list?query=${encodeURIComponent(query)}&model=customer`, {
                     headers: { 'Cache-Control': 'no-cache' }
                 })
 
                 if (response.data?.items) {
-                    // Build customer object starting with default customer
-                    const customerObj = {
-                        3: { id: 3, name: 'General Customer', mobile: '', phone: '' }
-                    }
+                    // Start with existing customers to preserve them
+                    const customerObj = { ...serverCustomers.value }
+
+                    // Ensure default customer is always present
+                    customerObj[3] = { id: 3, name: 'General Customer', mobile: '', phone: '' }
 
                     // Add props customers (excluding default to avoid duplicates)
                     Object.entries(props.customers || {}).forEach(([id, customer]) => {
                         if (parseInt(id) !== 3) customerObj[id] = customer
                     })
 
-                    // Add server customers
+                    // Add/update server customers from API response
                     response.data.items.forEach(customer => {
                         customerObj[customer.id] = customer
-                    })
-
-                    // Preserve any existing customers that aren't in the new data (e.g., from loaded sale)
-                    Object.entries(serverCustomers.value).forEach(([id, customer]) => {
-                        if (!customerObj[id] && parseInt(id) !== 3) {
-                            customerObj[id] = customer
-                        }
                     })
 
                     serverCustomers.value = customerObj
@@ -586,8 +573,6 @@ export default {
                 }
             } catch (error) {
                 toast.error('Failed to load customer list')
-            } finally {
-                loadingCustomers.value = false
             }
         }
 
@@ -625,7 +610,10 @@ export default {
 
         const searchCustomers = debounce((query) => {
             if (query && query.length > 1) {
-                fetchCustomers(query)
+                loadingCustomers.value = true
+                fetchCustomers(query).finally(() => {
+                    loadingCustomers.value = false
+                })
             }
         }, 300)
 
@@ -906,13 +894,26 @@ export default {
         }
 
         const handleCustomerSaved = (customer) => {
-            // Add new customer to the customers list and refresh from server
-            fetchCustomers().then(() => {
-                // After refreshing the list, select the new customer
-                form.account_id = customer.id
-                form.customer_mobile = customer.mobile || ''
-                toast.success('Customer saved successfully')
-            })
+            // Add the new customer to the existing list
+            if (customer && customer.id) {
+                serverCustomers.value[customer.id] = customer
+            }
+
+            // Set the form to use the new customer
+            form.account_id = parseInt(customer.id)
+            form.customer_mobile = customer.mobile || '';
+        }
+
+        const handleCustomerChange = (selectedValue) => {
+            if (selectedValue) {
+                const customer = findCustomerById(selectedValue)
+                if (customer) {
+                    const normalized = normalizeCustomerData(customer)
+                    form.customer_mobile = normalized.mobile
+                }
+            } else {
+                form.customer_mobile = ''
+            }
         }
 
         const handleCustomerSelected = (customer) => {
@@ -1403,6 +1404,7 @@ export default {
             editCartItem,
             saveEditedItem,
             addNewCustomer,
+            handleCustomerChange,
             handleCustomerSaved,
             handleCustomerSelected,
             handleCustomPaymentSave,

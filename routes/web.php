@@ -1,24 +1,18 @@
 <?php
 
-use App\Http\Controllers\Api\POSController;
 use App\Http\Controllers\AppointmentController;
 use App\Http\Controllers\AuditController;
 use App\Http\Controllers\BackupController;
-use App\Http\Controllers\ComboOfferController;
 use App\Http\Controllers\FamilyTreeController;
 use App\Http\Controllers\HealthController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\ImageGenComfyController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\PhysicalVisitorController;
-use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\UserAttendanceController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\VisitorAnalyticsController;
-use App\Models\Account;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 
 require __DIR__.'/auth.php';
@@ -73,72 +67,4 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/visitors/{visitor}', [PhysicalVisitorController::class, 'show'])->name('visitors.show');
     Route::post('/visitors/{visitor}/checkout', [PhysicalVisitorController::class, 'checkout'])->name('visitors.checkout');
     Route::get('/visitors/stats', [PhysicalVisitorController::class, 'stats'])->name('visitors.stats');
-});
-
-// POS API Routes - Authenticated for Inertia.js frontend
-Route::middleware(['auth'])->group(function () {
-    // Products
-    Route::prefix('products')->name('api.products.')->group(function () {
-        Route::get('/', [POSController::class, 'getProducts'])->name('index');
-        Route::get('search', [ProductController::class, 'index'])->name('search');
-        Route::get('by-barcode', [POSController::class, 'getProductByBarcode'])->name('by-barcode');
-    });
-
-    // Customer Management
-    Route::prefix('customers')->name('api.customers.')->group(function () {
-        Route::post('/', function (Request $request) {
-            $request->validate([
-                'name' => 'required|string|max:255',
-                'mobile' => 'nullable|string|max:20',
-                'email' => 'nullable|email|max:255',
-            ]);
-
-            $customer = Account::create([
-                'name' => $request->name,
-                'mobile' => $request->mobile,
-                'email' => $request->email,
-                'type' => 'customer',
-                'status' => 'active',
-                'created_by' => Auth::id(),
-            ]);
-
-            return response()->json([
-                'success' => true,
-                'customer' => $customer,
-                'message' => 'Customer created successfully',
-            ]);
-        })->name('store');
-
-        Route::get('check-mobile', function (Request $request) {
-            $mobile = $request->query('mobile');
-
-            if (! $mobile) {
-                return response()->json(['customers' => []]);
-            }
-
-            $customers = Account::where('mobile', 'like', '%'.$mobile.'%')
-                ->where('type', 'customer')
-                ->select('id', 'name', 'mobile', 'email')
-                ->limit(10)
-                ->get();
-
-            return response()->json([
-                'success' => true,
-                'customers' => $customers,
-            ]);
-        })->name('check-mobile');
-    });
-
-    Route::prefix('pos')->name('api.pos.')->group(function () {
-        Route::post('add-item', [POSController::class, 'addItem'])->name('add-item');
-        Route::post('update-item', [POSController::class, 'updateItem'])->name('update-item');
-        Route::post('remove-item', [POSController::class, 'removeItem'])->name('remove-item');
-        Route::post('submit', [POSController::class, 'submitSale'])->name('submit');
-        Route::get('drafts', [POSController::class, 'getDraftSales'])->name('drafts');
-    });
-
-    // Combo Offer API Routes
-    Route::prefix('combo_offer')->name('api.combo_offer.')->group(function () {
-        Route::get('list', [ComboOfferController::class, 'get'])->name('list');
-    });
 });
