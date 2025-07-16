@@ -30,101 +30,112 @@
                         class="flex-1 flex flex-col lg:flex-row gap-2 sm:gap-3 lg:gap-4 order-2 lg:order-2 min-h-0 lg:h-full">
                         <!-- Products Section -->
                         <div class="flex-1 lg:flex-[0.6] xl:flex-[0.55] flex flex-col order-1 lg:order-1 min-h-0">
+                                                        <!-- Compact customer - employee-product search area -->
                             <div
-                                class="bg-white/90 backdrop-blur-lg rounded-lg shadow-md border border-white/50 mb-2 sm:mb-3 p-2 sm:p-3 relative overflow-hidden">
-                                <div
-                                    class="absolute inset-0 bg-gradient-to-br from-blue-50/30 via-indigo-50/20 to-slate-50/30">
+                                class="bg-gradient-to-br from-white/95 via-blue-50/30 to-indigo-50/20 backdrop-blur-xl rounded-lg shadow-lg border border-white/60 mb-2 p-3 relative overflow-hidden">
+                                <!-- Subtle background elements -->
+                                <div class="absolute inset-0 overflow-hidden">
+                                    <div class="absolute top-0 right-0 w-16 h-16 bg-gradient-to-br from-blue-200/20 to-indigo-300/20 rounded-full blur-lg"></div>
+                                    <div class="absolute bottom-0 left-0 w-12 h-12 bg-gradient-to-tr from-emerald-200/20 to-teal-300/20 rounded-full blur-md"></div>
                                 </div>
-                                <!-- Customer and Mobile Above Employee -->
-                                <div class="relative grid grid-cols-1 lg:grid-cols-2 gap-2 sm:gap-3 mb-2 sm:mb-3">
+
+                                <!-- Customer and Mobile -->
+                                <div class="relative grid grid-cols-1 lg:grid-cols-2 gap-2 mb-3">
                                     <div class="space-y-1">
-                                        <label class="text-xs font-bold text-slate-700 mb-2 flex items-center">
-                                            <div
-                                                class="bg-gradient-to-r from-blue-500 to-indigo-600 p-1.5 rounded-md mr-2 shadow-md">
+                                        <label class="text-xs font-bold text-slate-700 flex items-center">
+                                            <div class="bg-gradient-to-r from-blue-500 to-indigo-600 p-1 rounded-md mr-1.5 shadow-sm">
                                                 <i class="fa fa-user text-white text-xs"></i>
                                             </div>
                                             Customer
                                         </label>
                                         <SearchableSelect v-model="form.account_id" :options="formattedCustomers"
                                             placeholder="Select Customer"
-                                            filter-placeholder="Search by name or mobile..." :visibleItems="10"
+                                            filter-placeholder="Search by name or mobile..." :visibleItems="8"
                                             @search="searchCustomers"
-                                            input-class="w-full rounded-lg border-slate-200 shadow-sm focus:border-blue-500 focus:ring-blue-500/20 transition-all duration-200 bg-white/80 backdrop-blur-sm hover:shadow-md text-xs sm:text-sm py-1.5 sm:py-2" />
+                                            input-class="w-full rounded-lg border-slate-200 shadow-sm focus:border-blue-500 focus:ring-blue-500/20 transition-all duration-200 bg-white/90 backdrop-blur-sm hover:shadow-md text-xs py-2" />
                                     </div>
                                     <div class="space-y-1">
-                                        <label class="text-xs font-bold text-slate-700 mb-2 flex items-center">
-                                            <div
-                                                class="bg-gradient-to-r from-blue-500 to-indigo-600 p-1.5 rounded-md mr-2 shadow-md">
+                                        <label class="text-xs font-bold text-slate-700 flex items-center">
+                                            <div class="bg-gradient-to-r from-emerald-500 to-teal-600 p-1 rounded-md mr-1.5 shadow-sm">
                                                 <i class="fa fa-phone text-white text-xs"></i>
                                             </div>
                                             Mobile
                                         </label>
                                         <input v-model="form.customer_mobile" type="text"
-                                            class="w-full rounded-lg border-slate-200 shadow-sm focus:border-blue-500 focus:ring-blue-500/20 transition-all duration-200 bg-white/80 backdrop-blur-sm hover:shadow-md text-xs sm:text-sm py-1.5 sm:py-2"
+                                            class="w-full rounded-lg border-slate-200 shadow-sm focus:border-emerald-500 focus:ring-emerald-500/20 transition-all duration-200 bg-white/90 backdrop-blur-sm hover:shadow-md text-xs py-2"
                                             placeholder="Mobile">
                                     </div>
                                 </div>
-                                <!-- Sales Header (Employee and Sale Type) -->
-                                <div class="relative grid grid-cols-1 lg:grid-cols-2 gap-2 sm:gap-3 mb-2 sm:mb-3">
+
+                                <!-- Employee and Sale Type -->
+                                <div class="relative grid grid-cols-1 lg:grid-cols-2 gap-2 mb-3">
                                     <div class="space-y-1">
-                                        <label class="text-xs font-bold text-slate-700 mb-2 flex items-center">
-                                            <div
-                                                class="bg-gradient-to-r from-blue-500 to-indigo-600 p-1.5 rounded-md mr-2 shadow-md">
-                                                <i class="fa fa-user text-white text-xs"></i>
+                                        <label class="text-xs font-bold text-slate-700 flex items-center">
+                                            <div class="bg-gradient-to-r from-purple-500 to-pink-600 p-1 rounded-md mr-1.5 shadow-sm">
+                                                <i class="fa fa-user-tie text-white text-xs"></i>
                                             </div>
                                             Employee
                                         </label>
                                         <SearchableSelect v-model="form.employee_id" :options="employees"
                                             placeholder="Select employee..." filter-placeholder="Search employees..."
-                                            :visibleItems="10"
-                                            input-class="w-full rounded-lg border-slate-200 shadow-sm focus:border-blue-500 focus:ring-blue-500/20 transition-all duration-200 bg-white/80 backdrop-blur-sm hover:shadow-md text-xs sm:text-sm py-1.5 sm:py-2" />
+                                            :visibleItems="8"
+                                            input-class="w-full rounded-lg border-slate-200 shadow-sm focus:border-purple-500 focus:ring-purple-500/20 transition-all duration-200 bg-white/90 backdrop-blur-sm hover:shadow-md text-xs py-2" />
                                     </div>
                                     <div class="space-y-1">
-                                        <label class="text-xs font-bold text-slate-700 mb-2 flex items-center">
-                                            <div
-                                                class="bg-gradient-to-r from-emerald-500 to-teal-600 p-1.5 rounded-md mr-2 shadow-md">
+                                        <label class="text-xs font-bold text-slate-700 flex items-center">
+                                            <div class="bg-gradient-to-r from-orange-500 to-red-600 p-1 rounded-md mr-1.5 shadow-sm">
                                                 <i class="fa fa-tags text-white text-xs"></i>
                                             </div>
                                             Sale Type
                                         </label>
                                         <SearchableSelect v-model="form.sale_type" :options="priceTypes"
                                             placeholder="Select type..." filter-placeholder="Search sale types..."
-                                            :visibleItems="10"
-                                            input-class="w-full rounded-lg border-slate-200 shadow-sm focus:border-emerald-500 focus:ring-emerald-500/20 transition-all duration-200 bg-white/80 backdrop-blur-sm hover:shadow-md text-xs sm:text-sm py-1.5 sm:py-2"
+                                            :visibleItems="8"
+                                            input-class="w-full rounded-lg border-slate-200 shadow-sm focus:border-orange-500 focus:ring-orange-500/20 transition-all duration-200 bg-white/90 backdrop-blur-sm hover:shadow-md text-xs py-2"
                                             @change="loadProducts" />
                                     </div>
                                 </div>
 
                                 <!-- Search Section -->
-                                <div class="relative grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-2 sm:gap-3">
-                                    <div class="space-y-1">
-                                        <div class="relative group">
-                                            <input v-model="barcodeKey" @input="searchByBarcode" type="text"
-                                                class="w-full pl-8 sm:pl-10 pr-3 py-1.5 sm:py-2 rounded-lg border-slate-200 shadow-sm focus:border-purple-500 focus:ring-purple-500/20 transition-all duration-200 bg-white/80 backdrop-blur-sm group-hover:shadow-md text-xs sm:text-sm"
-                                                placeholder="Scan barcode" autocomplete="off">
-                                            <div
-                                                class="absolute left-3 top-1/2 transform -translate-y-1/2 text-purple-400 group-focus-within:text-purple-600 transition-colors">
-                                                <i class="fa fa-barcode text-sm"></i>
+                                <div class="relative">
+                                    <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-2">
+                                        <div class="space-y-1">
+                                            <select v-model="selectedProductType" @change="filterByProductType"
+                                                class="w-full rounded-lg border-slate-200 shadow-sm focus:border-indigo-500 focus:ring-indigo-500/20 transition-all duration-200 bg-white/90 backdrop-blur-sm hover:shadow-md text-xs py-2">
+                                                <option v-for="option in productTypeOptions" :key="option.value" :value="option.value">
+                                                    {{ option.label }}
+                                                </option>
+                                            </select>
+                                        </div>
+                                        <div class="space-y-1">
+                                            <div class="relative group">
+                                                <input v-model="barcodeKey" @input="searchByBarcode" type="text"
+                                                    class="w-full pl-8 pr-3 py-2 rounded-lg border-slate-200 shadow-sm focus:border-purple-500 focus:ring-purple-500/20 transition-all duration-200 bg-white/90 backdrop-blur-sm group-hover:shadow-md text-xs"
+                                                    placeholder="Scan barcode" autocomplete="off">
+                                                <div
+                                                    class="absolute left-3 top-1/2 transform -translate-y-1/2 text-purple-500 group-focus-within:text-purple-600 transition-colors">
+                                                    <i class="fa fa-barcode text-xs"></i>
+                                                </div>
                                             </div>
                                         </div>
-                                    </div>
-                                    <div class="space-y-1">
-                                        <div class="relative group">
-                                            <input v-model="productKey" @input="searchProducts" type="text"
-                                                class="w-full pl-8 sm:pl-10 pr-3 py-1.5 sm:py-2 rounded-lg border-slate-200 shadow-sm focus:border-orange-500 focus:ring-orange-500/20 transition-all duration-200 bg-white/80 backdrop-blur-sm group-hover:shadow-md text-xs sm:text-sm"
-                                                placeholder="Search products" autocomplete="off">
-                                            <div
-                                                class="absolute left-3 top-1/2 transform -translate-y-1/2 text-orange-400 group-focus-within:text-orange-600 transition-colors">
-                                                <i class="fa fa-search text-sm"></i>
+                                        <div class="space-y-1">
+                                            <div class="relative group">
+                                                <input v-model="productKey" @input="searchProducts" type="text"
+                                                    class="w-full pl-8 pr-3 py-2 rounded-lg border-slate-200 shadow-sm focus:border-orange-500 focus:ring-orange-500/20 transition-all duration-200 bg-white/90 backdrop-blur-sm group-hover:shadow-md text-xs"
+                                                    placeholder="Search products" autocomplete="off">
+                                                <div
+                                                    class="absolute left-3 top-1/2 transform -translate-y-1/2 text-orange-500 group-focus-within:text-orange-600 transition-colors">
+                                                    <i class="fa fa-search text-xs"></i>
+                                                </div>
                                             </div>
                                         </div>
+                                        <button type="button" @click="viewDraftSales"
+                                            class="bg-gradient-to-r from-slate-600 via-slate-700 to-slate-800 text-white py-2 px-3 rounded-lg hover:from-slate-700 hover:via-slate-800 hover:to-slate-900 transition-all duration-200 shadow-sm hover:shadow-md transform hover:-translate-y-0.5 font-semibold text-xs flex items-center justify-center">
+                                            <i class="fa fa-file-alt mr-1 text-xs"></i>
+                                            <span class="hidden sm:inline">Drafts</span>
+                                            <span class="sm:hidden">Drafts</span>
+                                        </button>
                                     </div>
-                                    <button type="button" @click="viewDraftSales"
-                                        class="bg-gradient-to-r from-slate-600 via-slate-700 to-slate-800 text-white py-1.5 sm:py-2 px-2 sm:px-3 rounded-lg hover:from-slate-700 hover:via-slate-800 hover:to-slate-900 transition-all duration-200 shadow-sm hover:shadow-md transform hover:-translate-y-0.5 font-semibold text-xs sm:text-sm">
-                                        <i class="fa fa-file-alt mr-1 sm:mr-1.5 text-xs"></i>
-                                        <span class="hidden sm:inline">Drafts</span>
-                                        <span class="sm:hidden">View Draft</span>
-                                    </button>
                                 </div>
                             </div>
 
@@ -399,6 +410,14 @@ export default {
             email: ''
         })
 
+        // Product type filter
+        const selectedProductType = ref('service')
+        const productTypeOptions = ref([
+            { value: '', label: 'All Types' },
+            { value: 'product', label: 'Products' },
+            { value: 'service', label: 'Services' },
+        ])
+
         // Form data
         const form = useForm({
             id: null,
@@ -583,7 +602,8 @@ export default {
                     params: {
                         category_id: selectedCategory.value,
                         sale_type: form.sale_type,
-                        search: productKey.value
+                        search: productKey.value,
+                        type: selectedProductType.value
                     }
                 })
 
@@ -601,6 +621,10 @@ export default {
             } finally {
                 loading.value = false
             }
+        }
+
+        const filterByProductType = () => {
+            loadProducts()
         }
 
         const searchCustomers = debounce((query) => {
@@ -1298,6 +1322,8 @@ export default {
             showEditItemModal,
             editItemKey,
             editItemData,
+            selectedProductType,
+            productTypeOptions,
 
             // Computed
             totalQuantity,
@@ -1343,7 +1369,8 @@ export default {
             saveDraft,
             submitSale,
             onEditItemSave,
-            startNewSale
+            startNewSale,
+            filterByProductType
         }
     }
 }
