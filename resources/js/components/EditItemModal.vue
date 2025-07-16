@@ -16,18 +16,18 @@
 
             <div v-if="item" class="space-y-4">
                 <!-- Product Info -->
-                <div class="bg-gradient-to-r from-slate-50 to-blue-50 rounded-lg p-4 border border-slate-200">
-                    <label class="block text-sm font-semibold text-slate-700 mb-2 flex items-center">
-                        <i class="fa fa-box text-blue-500 mr-2"></i>
+                <div class="bg-gradient-to-r from-slate-50 to-blue-50 rounded-lg p-2 border border-slate-200">
+                    <label class="block text-xs font-semibold text-slate-700 mb-1 flex items-center">
+                        <i class="fa fa-box text-blue-500 mr-1 text-xs"></i>
                         Product
                     </label>
-                    <div class="text-sm font-medium text-slate-800 bg-white px-3 py-2 rounded-lg border">
+                    <div class="text-xs font-medium text-slate-800 bg-white px-2 py-1 rounded border">
                         {{ item.name }}
                     </div>
                 </div>
 
                                 <!-- Employee Selection -->
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="grid grid-cols-1 gap-3">
                     <div>
                         <label class="block text-sm font-semibold text-slate-700 mb-2 flex items-center">
                             <i class="fa fa-user text-emerald-500 mr-2"></i>
