@@ -26,6 +26,11 @@
                         title="View Items">
                         <i class="fa fa-list text-xs"></i>
                     </button>
+                    <button type="button" @click="$emit('manage-combo-offer')"
+                        class="h-6 w-6 flex items-center justify-center bg-purple-100 text-purple-600 rounded-md hover:bg-purple-600 hover:text-white transition-all duration-200"
+                        title="Manage Combo Offer">
+                        <i class="fa fa-cube text-xs"></i>
+                    </button>
                     <button type="button" @click="$emit('clear-cart')"
                         class="h-6 w-6 flex items-center justify-center bg-rose-50 text-rose-500 rounded-md hover:bg-rose-500 hover:text-white transition-all duration-200"
                         title="Clear Cart">
@@ -168,7 +173,8 @@ export default {
         'remove-cart-item',
         'edit-cart-item',
         'increase-quantity',
-        'decrease-quantity'
+        'decrease-quantity',
+        'manage-combo-offer'
     ],
     methods: {
         updateItemQuantity(key) {

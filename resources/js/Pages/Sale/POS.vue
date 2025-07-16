@@ -169,18 +169,10 @@
                                     @view-cart-items="viewCartItems" @clear-cart="clearCart"
                                     @update-item-quantity="updateItemQuantity" @edit-cart-item="editCartItem"
                                     @remove-cart-item="removeCartItem" @increase-quantity="increaseQuantity"
-                                    @decrease-quantity="decreaseQuantity" item-class="min-h-[64px] py-4" />
+                                    @decrease-quantity="decreaseQuantity" @manage-combo-offer="manageComboOffer"
+                                    item-class="min-h-[64px] py-4" />
 
-                                <!-- Combo Offer Button -->
-                                <div v-if="Object.keys(form.items).length > 0" class="p-2 sm:p-3 border-t border-slate-200">
-                                    <div class="flex justify-center">
-                                        <button type="button" @click="manageComboOffer"
-                                            class="bg-gradient-to-r from-purple-500 to-indigo-600 text-white py-2 px-4 rounded-lg hover:from-purple-600 hover:to-indigo-700 transition-all duration-200 shadow-md hover:shadow-lg transform hover:-translate-y-0.5 font-semibold text-sm flex items-center justify-center">
-                                            <i class="fa fa-cube mr-2 text-sm"></i>
-                                            Manage Combo Offer
-                                        </button>
-                                    </div>
-                                </div>
+
 
                                 <!-- Discount Only (full width) -->
                                 <div class="p-2 sm:p-3 border-t border-slate-200">
@@ -471,6 +463,7 @@ export default {
                     toast.error(props.saleData.load_error)
                     return
                 }
+
                 // Update form with sale data
                 form.id = props.saleData.id
                 form.date = props.saleData.date || form.date
@@ -485,39 +478,14 @@ export default {
 
                 // Ensure the customer from the sale is included in serverCustomers
                 if (props.customers && Object.keys(props.customers).length > 0) {
-                    // Merge the loaded customers with serverCustomers
                     Object.entries(props.customers).forEach(([id, customer]) => {
                         serverCustomers.value[id] = customer
                     })
                 }
 
-                // Clear existing items and load sale items
-                form.items = {}
-
-                // Transform sale items to cart items format
-                if (props.saleData.items && Array.isArray(props.saleData.items)) {
-                    props.saleData.items.forEach((item, index) => {
-                        const key = `${item.employee_id}-${item.inventory_id}`
-                        form.items[key] = {
-                            id: item.id,
-                            employee_id: item.employee_id,
-                            employee_name: item.employee_name,
-                            product_id: item.product_id,
-                            inventory_id: item.inventory_id,
-                            name: item.name,
-                            barcode: item.barcode,
-                            category: item.category,
-                            unit_price: parseFloat(item.unit_price),
-                            quantity: parseInt(item.quantity),
-                            discount: parseFloat(item.discount || 0),
-                            tax: parseFloat(item.tax || 0),
-                            gross_amount: parseFloat(item.gross_amount),
-                            net_amount: parseFloat(item.net_amount),
-                            tax_amount: parseFloat(item.tax_amount),
-                            total: parseFloat(item.total),
-                            stock_available: item.stock_available || 0
-                        }
-                    })
+                // Load sale items (already in correct format from controller)
+                if (props.saleData.items && typeof props.saleData.items === 'object') {
+                    form.items = { ...props.saleData.items }
                 }
 
                 // Handle payment method
@@ -532,25 +500,9 @@ export default {
                     customPaymentData.value = { payments: [], totalPaid: 0, balanceDue: 0 }
                 }
 
-                // Handle combo offers
+                // Handle combo offers (already processed by controller)
                 if (props.saleData.comboOffers && Array.isArray(props.saleData.comboOffers)) {
                     form.comboOffers = props.saleData.comboOffers
-
-                    // Update cart items with combo offer pricing
-                    props.saleData.comboOffers.forEach(comboOffer => {
-                        comboOffer.items.forEach(item => {
-                            const key = item.key
-                            if (form.items[key]) {
-                                // Update the cart item with combo offer pricing
-                                form.items[key] = {
-                                    ...form.items[key],
-                                    combo_offer_price: item.combo_offer_price || 0,
-                                    discount: item.discount || 0,
-                                    combo_offer_id: item.combo_offer_id || null
-                                }
-                            }
-                        })
-                    })
                 }
 
                 // Recalculate totals to ensure consistency

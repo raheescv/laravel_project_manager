@@ -1,48 +1,55 @@
 <template>
     <div v-if="show" class="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog"
         aria-modal="true">
-        <div class="flex items-center justify-center min-h-screen p-4 text-center">
-            <div class="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm transition-opacity" aria-hidden="true" @click="$emit('close')">
+        <div class="flex items-center justify-center min-h-screen p-2 sm:p-4 text-center">
+            <div class="fixed inset-0 bg-black/40 backdrop-blur-sm transition-opacity" aria-hidden="true" @click="$emit('close')">
             </div>
 
-            <div class="relative inline-block align-bottom bg-white rounded-xl text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:align-middle sm:max-w-6xl w-full max-h-[90vh] overflow-y-auto">
+            <div class="relative inline-block align-bottom bg-white rounded-xl text-left overflow-hidden shadow-2xl transform transition-all sm:my-4 sm:align-middle sm:max-w-4xl w-full max-h-[85vh] overflow-y-auto">
                 <!-- Modal Header -->
-                <div class="bg-gradient-to-r from-purple-600 to-indigo-700 px-6 py-4 text-white flex items-center justify-between">
+                <div class="bg-gradient-to-br from-emerald-500 via-teal-600 to-cyan-600 px-4 sm:px-6 py-3 sm:py-4 text-white flex items-center justify-between">
                     <div class="flex items-center">
                         <div class="bg-white/20 p-2 rounded-lg mr-3">
                             <i class="fa fa-cube text-white text-lg"></i>
                         </div>
-                        <h4 class="text-xl font-bold text-white">
-                            Combo Selection
-                        </h4>
+                        <div>
+                            <h4 class="text-lg sm:text-xl font-bold text-white mb-0.5">
+                                Combo Offers
+                            </h4>
+                            <p class="text-emerald-100 text-xs">Manage combo offers for your cart</p>
+                        </div>
                     </div>
-                    <button type="button" @click="$emit('close')" class="text-white hover:text-gray-200 focus:outline-none transition-colors">
+                    <button type="button" @click="$emit('close')"
+                        class="text-white hover:text-emerald-100 focus:outline-none transition-colors p-1.5 rounded-lg hover:bg-white/10">
                         <i class="fa fa-times text-lg"></i>
                     </button>
                 </div>
 
-                                <!-- Modal Body -->
-                <div class="px-6 py-6">
+                <!-- Modal Body -->
+                <div class="px-4 sm:px-6 py-4 sm:py-6 bg-gradient-to-br from-gray-50 to-blue-50/30">
                     <!-- Combo Offer Selection -->
                     <div class="mb-6">
-                        <div class="grid grid-cols-1 lg:grid-cols-4 gap-4">
+                        <div class="grid grid-cols-1 lg:grid-cols-4 gap-3">
                             <div class="lg:col-span-3">
-                                <label class="block text-sm font-semibold text-slate-700 mb-2">Combo</label>
+                                <label class="block text-sm font-semibold text-gray-700 mb-2 flex items-center">
+                                    <i class="fa fa-tags text-emerald-500 mr-2"></i>
+                                    Select Combo Offer
+                                </label>
                                 <SearchableSelect
                                     v-model="selectedComboOfferId"
                                     :options="comboOfferOptions"
-                                    placeholder="Select Combo Offer"
+                                    placeholder="Choose a combo offer..."
                                     filter-placeholder="Search combo offers..."
-                                    :visibleItems="8"
+                                    :visibleItems="6"
                                     @change="onComboOfferSelected"
-                                    input-class="w-full rounded-lg border-slate-200 shadow-sm focus:border-purple-500 focus:ring-purple-500/20 transition-all duration-200 bg-white/90 backdrop-blur-sm hover:shadow-md text-sm py-2" />
+                                    input-class="w-full rounded-lg border-gray-200 shadow-sm focus:border-emerald-500 focus:ring-emerald-500/20 transition-all duration-200 bg-white/90 backdrop-blur-sm hover:shadow-md text-sm py-2 px-3" />
                             </div>
                             <div class="lg:col-span-1 flex items-end">
                                 <button type="button" @click="addComboOffer"
-                                    class="w-full bg-gradient-to-r from-purple-500 to-indigo-600 text-white py-2 px-4 rounded-lg hover:from-purple-600 hover:to-indigo-700 transition-all duration-200 shadow-md hover:shadow-lg transform hover:-translate-y-0.5 font-semibold text-sm flex items-center justify-center">
-                                    <i class="fa fa-shopping-cart mr-2 text-sm"></i>
-                                    Add Combo
-                                    <span v-if="selectedComboOffers.length > 0" class="ml-2 bg-white text-purple-600 px-2 py-0.5 rounded-full text-xs font-bold">
+                                    class="w-full bg-gradient-to-r from-emerald-500 to-teal-600 text-white py-2 px-4 rounded-lg hover:from-emerald-600 hover:to-teal-700 transition-all duration-200 shadow-md hover:shadow-lg transform hover:-translate-y-0.5 font-semibold text-sm flex items-center justify-center">
+                                    <i class="fa fa-plus mr-1.5 text-sm"></i>
+                                    Add
+                                    <span v-if="selectedComboOffers.length > 0" class="ml-1.5 bg-white text-emerald-600 px-1.5 py-0.5 rounded-full text-xs font-bold">
                                         {{ selectedComboOffers.length }}
                                     </span>
                                 </button>
@@ -50,27 +57,32 @@
                         </div>
                     </div>
 
-                                        <!-- Service Selection -->
+                    <!-- Service Selection -->
                     <div v-if="selectedComboOfferId && selectedComboOffer" class="mb-6">
                         <div class="flex justify-between items-center mb-4">
-                            <h6 class="font-bold text-slate-800 flex items-center">
-                                <i class="fa fa-cog mr-2 text-purple-500"></i>
+                            <h6 class="font-bold text-gray-800 flex items-center text-base">
+                                <i class="fa fa-list-check mr-2 text-emerald-500"></i>
                                 Available Services
                             </h6>
-                            <span class="badge bg-purple-500 text-white px-3 py-1 rounded-full text-sm">
+                            <span class="badge bg-emerald-100 text-emerald-700 px-3 py-1 rounded-full text-xs font-semibold border border-emerald-200">
                                 {{ selectedServices.length }} Selected
                             </span>
                         </div>
 
-                        <div v-if="Object.keys(comboOfferItems).length === 0" class="alert alert-warning flex items-center p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-                            <i class="fa fa-exclamation-triangle text-yellow-500 mr-2 text-lg"></i>
-                            <span class="text-yellow-700">No cart items available. Please add items to cart first.</span>
+                        <div v-if="Object.keys(comboOfferItems).length === 0"
+                            class="bg-amber-50 border border-amber-200 rounded-lg p-4 text-center">
+                            <div class="flex items-center justify-center mb-2">
+                                <i class="fa fa-exclamation-triangle text-amber-500 text-lg mr-2"></i>
+                                <span class="text-amber-700 font-medium text-sm">No cart items available</span>
+                            </div>
+                            <p class="text-amber-600 text-xs">Please add items to cart first.</p>
                         </div>
-                        <div v-else-if="Object.keys(filteredComboOfferItems).length > 0" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                        <div v-else-if="Object.keys(filteredComboOfferItems).length > 0"
+                            class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                             <div v-for="(item, key) in filteredComboOfferItems" :key="key" class="w-full">
                                 <label class="w-full mb-0 cursor-pointer" :for="`service-${key}`">
-                                    <div class="card service-card h-full transition-all duration-200"
-                                        :class="selectedServices.includes(key) ? 'border-purple-500 bg-purple-50' : 'border-slate-200'">
+                                    <div class="card service-card h-full transition-all duration-300 rounded-lg border-2 hover:shadow-md"
+                                        :class="selectedServices.includes(key) ? 'border-emerald-500 bg-emerald-50 shadow-emerald-100' : 'border-gray-200 bg-white hover:border-emerald-300'">
                                         <div class="card-body p-3">
                                             <div class="flex items-center">
                                                 <div class="flex-grow-1">
@@ -78,15 +90,15 @@
                                                         :value="key"
                                                         v-model="selectedServices"
                                                         :id="`service-${key}`"
-                                                        class="form-check-input mr-2">
-                                                    <span class="text-sm font-medium text-slate-700">
+                                                        class="form-check-input mr-2 text-emerald-500 focus:ring-emerald-500">
+                                                    <span class="text-xs font-medium text-gray-700">
                                                         {{ item.employee_name }} - {{ item.name }}
                                                     </span>
                                                 </div>
                                                 <div class="text-end ml-2">
-                                                    <small class="text-success font-semibold block">
+                                                    <div class="text-emerald-600 font-bold text-xs">
                                                         {{ formatCurrency(item.unit_price) }}
-                                                    </small>
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
@@ -94,28 +106,30 @@
                                 </label>
                             </div>
                         </div>
-                        <div v-else class="alert alert-info flex items-center p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                            <i class="fa fa-info-circle text-blue-500 mr-2 text-lg"></i>
-                            <span class="text-blue-700">
-                                No services available for this combo offer.
-                                Cart items: {{ Object.keys(comboOfferItems).length }},
-                                Filtered: {{ Object.keys(filteredComboOfferItems).length }}
-                            </span>
+                        <div v-else
+                            class="bg-blue-50 border border-blue-200 rounded-lg p-4 text-center">
+                            <div class="flex items-center justify-center mb-2">
+                                <i class="fa fa-info-circle text-blue-500 text-lg mr-2"></i>
+                                <span class="text-blue-700 font-medium text-sm">No services available</span>
+                            </div>
+                            <p class="text-blue-600 text-xs">
+                                All cart items are already in combo offers.
+                            </p>
                         </div>
                     </div>
 
                     <!-- Selected Combo Offers Summary -->
                     <div v-if="selectedComboOffers.length > 0" class="selected-combo-offer-summary">
-                        <div class="card border-0 shadow-sm">
-                            <div class="card-body p-4">
-                                <div class="summary-header flex items-center justify-between mb-4">
+                        <div class="card border-0 shadow-md rounded-lg overflow-hidden">
+                            <div class="card-body p-3 sm:p-4 bg-gradient-to-br from-white to-gray-50/50">
+                                <div class="summary-header flex items-center justify-between mb-3">
                                     <div class="flex items-center">
-                                        <div class="summary-icon mr-3">
-                                            <i class="fa fa-shopping-cart text-purple-500"></i>
+                                        <div class="summary-icon mr-2 p-1.5 bg-emerald-100 rounded-md">
+                                            <i class="fa fa-shopping-cart text-emerald-600 text-sm"></i>
                                         </div>
                                         <div>
-                                            <h6 class="font-bold mb-0 text-slate-800">Combo Offer Summary</h6>
-                                            <small class="text-slate-600">Review your selected combo offer and services</small>
+                                            <h6 class="font-bold mb-0 text-gray-800 text-base">Combo Summary</h6>
+                                            <small class="text-gray-600 text-xs">Review selected offers</small>
                                         </div>
                                     </div>
                                 </div>
@@ -123,34 +137,34 @@
                                 <div class="selected-combo-offer">
                                     <div class="combo-offer-grid">
                                         <div v-for="(comboOffer, index) in selectedComboOffers" :key="index" class="combo-offer-summary-item">
-                                            <div class="card combo-offer-summary-card h-full">
-                                                <div class="card-header py-3 px-4">
+                                            <div class="card combo-offer-summary-card h-full rounded-md border-0 shadow-sm">
+                                                <div class="card-header py-2 px-3 bg-gradient-to-r from-emerald-50 to-teal-50 border-b border-emerald-100">
                                                     <div class="flex justify-between items-center">
-                                                        <div class="flex items-center gap-2">
+                                                        <div class="flex items-center gap-1.5">
                                                             <div class="combo-offer-indicator"></div>
-                                                            <h6 class="combo-offer-name mb-0">{{ comboOffer.combo_offer_name }}</h6>
+                                                            <h6 class="combo-offer-name mb-0 text-emerald-700 font-semibold text-xs">{{ comboOffer.combo_offer_name }}</h6>
                                                         </div>
                                                         <button type="button" @click="removeComboOffer(index)"
-                                                            class="btn-close btn-close-sm text-slate-400 hover:text-slate-600 transition-colors">
-                                                            <i class="fa fa-times text-sm"></i>
+                                                            class="btn-close btn-close-sm text-gray-400 hover:text-red-500 transition-colors p-1 rounded-md hover:bg-red-50">
+                                                            <i class="fa fa-times text-xs"></i>
                                                         </button>
                                                     </div>
                                                 </div>
-                                                <div class="card-body p-4 flex flex-col">
-                                                    <div class="combo-offer-quick-stats rounded-lg mb-4 p-4">
-                                                        <div class="flex justify-around gap-4">
+                                                <div class="card-body p-2 sm:p-3 flex flex-col">
+                                                    <div class="combo-offer-quick-stats rounded-md mb-2 p-2">
+                                                        <div class="flex justify-around gap-3">
                                                             <div class="stat-item text-center">
                                                                 <div class="stat-info">
-                                                                    <div class="stat-value font-bold text-lg">{{ comboOffer.items.length }}</div>
-                                                                    <div class="stat-label text-slate-600 text-sm">Services</div>
+                                                                    <div class="stat-value font-bold text-base text-emerald-600">{{ comboOffer.items.length }}</div>
+                                                                    <div class="stat-label text-gray-600 text-xs font-medium">Services</div>
                                                                 </div>
                                                             </div>
                                                             <div class="stat-item text-center">
                                                                 <div class="stat-info">
-                                                                    <div class="stat-value font-bold text-lg text-success">
+                                                                    <div class="stat-value font-bold text-base text-emerald-600">
                                                                         {{ calculateDiscountPercentage(comboOffer) }}%
                                                                     </div>
-                                                                    <div class="stat-label text-slate-600 text-sm">Savings</div>
+                                                                    <div class="stat-label text-gray-600 text-xs font-medium">Savings</div>
                                                                 </div>
                                                             </div>
                                                         </div>
@@ -159,20 +173,20 @@
                                                         <div class="table-responsive h-full">
                                                             <table class="table table-sm service-price-table mb-0">
                                                                 <tbody>
-                                                                    <tr v-for="item in comboOffer.items" :key="item.key">
-                                                                        <td class="py-2 w-60">
-                                                                            <span class="service-name text-sm">{{ item.employee_name }} - {{ item.name }}</span>
+                                                                    <tr v-for="item in comboOffer.items" :key="item.key" class="border-b border-gray-100">
+                                                                        <td class="py-1.5 w-60">
+                                                                            <span class="service-name text-xs text-gray-700">{{ item.employee_name }} - {{ item.name }}</span>
                                                                         </td>
-                                                                        <td class="text-end py-2 w-40">
-                                                                            <div class="flex items-center justify-end gap-2">
-                                                                                <span class="text-muted line-through text-xs">
+                                                                        <td class="text-end py-1.5 w-40">
+                                                                            <div class="flex items-center justify-end gap-1">
+                                                                                <span class="text-gray-400 line-through text-xs">
                                                                                     {{ formatCurrency(item.unit_price) }}
                                                                                 </span>
-                                                                                <span class="badge bg-red-100 text-red-600 rounded-pill text-xs"
+                                                                                <span class="badge bg-red-100 text-red-600 rounded-full text-xs px-1 py-0.5"
                                                                                     :title="`You Save ${formatCurrency(item.unit_price - item.combo_offer_price)}`">
                                                                                     -{{ formatCurrency(item.unit_price - item.combo_offer_price) }}
                                                                                 </span>
-                                                                                <span class="text-success font-bold text-sm">
+                                                                                <span class="text-emerald-600 font-bold text-xs">
                                                                                     {{ formatCurrency(item.combo_offer_price) }}
                                                                                 </span>
                                                                             </div>
@@ -182,10 +196,10 @@
                                                             </table>
                                                         </div>
                                                     </div>
-                                                    <div class="combo-offer-footer mt-4">
-                                                        <div class="total-row flex justify-between items-center py-3 px-4 bg-slate-50 rounded-lg">
-                                                            <span class="font-medium text-slate-700">Combo Offer Total</span>
-                                                            <span class="font-bold text-lg text-slate-800">{{ formatCurrency(comboOffer.amount) }}</span>
+                                                    <div class="combo-offer-footer mt-2">
+                                                        <div class="total-row flex justify-between items-center py-2 px-2.5 bg-emerald-50 rounded-md border border-emerald-100">
+                                                            <span class="font-semibold text-gray-700 text-xs">Combo Total</span>
+                                                            <span class="font-bold text-base text-emerald-600">{{ formatCurrency(comboOffer.amount) }}</span>
                                                         </div>
                                                     </div>
                                                 </div>
@@ -199,17 +213,17 @@
                 </div>
 
                 <!-- Modal Footer -->
-                <div class="bg-gradient-to-r from-slate-50 to-gray-50 px-6 py-4 border-t border-slate-200">
+                <div class="bg-gradient-to-r from-gray-50 to-blue-50/30 px-4 sm:px-6 py-4 border-t border-gray-200">
                     <div class="flex justify-end gap-3">
                         <button type="button" @click="$emit('close')"
-                            class="inline-flex items-center justify-center px-6 py-3 border border-slate-300 shadow-sm text-sm font-semibold rounded-xl text-slate-700 bg-white hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200">
-                            <i class="fa fa-times mr-2"></i>
+                            class="inline-flex items-center justify-center px-4 sm:px-6 py-2.5 border border-gray-300 shadow-sm text-sm font-semibold rounded-lg text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 transition-all duration-200">
+                            <i class="fa fa-times mr-1.5"></i>
                             Close
                         </button>
                         <button type="button" @click="saveComboOffers"
-                            class="inline-flex items-center justify-center px-6 py-3 border border-transparent text-sm font-semibold rounded-xl text-white shadow-lg focus:outline-none focus:ring-2 focus:ring-offset-2 transition-all duration-200 bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-purple-600 hover:to-indigo-700 focus:ring-purple-500">
-                            <i class="fa fa-check mr-2"></i>
-                            Submit
+                            class="inline-flex items-center justify-center px-6 sm:px-8 py-2.5 border border-transparent text-sm font-semibold rounded-lg text-white shadow-lg focus:outline-none focus:ring-2 focus:ring-offset-2 transition-all duration-200 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 focus:ring-emerald-500">
+                            <i class="fa fa-check mr-1.5"></i>
+                            Apply Offers
                         </button>
                     </div>
                 </div>
@@ -567,13 +581,13 @@ export default {
 
 <style scoped>
 .combo-offer-quick-stats {
-    background: linear-gradient(to right, rgba(147, 51, 234, 0.05), rgba(59, 130, 246, 0.05));
-    border: 1px solid rgba(147, 51, 234, 0.1);
+    background: linear-gradient(to right, rgba(16, 185, 129, 0.05), rgba(20, 184, 166, 0.05));
+    border: 1px solid rgba(16, 185, 129, 0.1);
 }
 
 .stat-icon-wrapper {
-    width: 36px;
-    height: 36px;
+    width: 32px;
+    height: 32px;
     border-radius: 50%;
     background: white;
     display: flex;
@@ -588,39 +602,40 @@ export default {
 }
 
 .stat-value {
-    font-size: 1.25rem;
+    font-size: 1.125rem;
     line-height: 1.2;
 }
 
 .stat-label {
-    font-size: 0.875rem;
-    color: #64748b;
+    font-size: 0.75rem;
+    color: #6b7280;
 }
 
 .combo-offer-summary-card {
-    background: rgba(255, 255, 255, 0.9);
-    border-radius: 16px;
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 8px;
     backdrop-filter: blur(10px);
-    border: 1px solid rgba(147, 51, 234, 0.1);
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+    border: 1px solid rgba(16, 185, 129, 0.1);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
     overflow: hidden;
-    transition: transform 0.3s ease;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
 .combo-offer-summary-card:hover {
-    transform: translateY(-4px);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
 .combo-offer-indicator {
-    width: 3px;
-    height: 16px;
-    background: #8b5cf6;
-    border-radius: 2px;
+    width: 2px;
+    height: 12px;
+    background: #10b981;
+    border-radius: 1px;
 }
 
 .combo-offer-name {
-    font-size: 0.9375rem;
-    font-weight: 500;
+    font-size: 0.75rem;
+    font-weight: 600;
 }
 
 .btn-close-sm {
@@ -629,15 +644,16 @@ export default {
 }
 
 .service-card {
-    transition: all 0.2s ease;
+    transition: all 0.3s ease;
     cursor: pointer;
-    border-radius: 8px;
+    border-radius: 6px;
 }
 
 .service-card:hover {
-    border-color: #8b5cf6 !important;
-    background-color: #f8fafc;
-    transform: translateY(-2px);
+    border-color: #10b981 !important;
+    background-color: #f0fdf4;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 6px rgba(16, 185, 129, 0.12);
 }
 
 .service-card .form-check-input {
@@ -646,8 +662,8 @@ export default {
 
 .combo-offer-grid {
     display: grid;
-    gap: 1rem;
-    padding: 0.5rem;
+    gap: 0.75rem;
+    padding: 0.125rem;
 }
 
 .combo-offer-grid:has(.combo-offer-summary-item:only-child) {
@@ -672,8 +688,8 @@ export default {
     height: 100%;
     display: flex;
     flex-direction: column;
-    border: 1px solid #e2e8f0;
-    border-radius: 8px;
+    border: 1px solid #e5e7eb;
+    border-radius: 6px;
 }
 
 .combo-offer-summary-card .card-body {
@@ -691,17 +707,17 @@ export default {
 
 .service-price-table {
     margin-bottom: 0;
-    font-size: 0.875rem;
+    font-size: 0.6875rem;
 }
 
 .service-price-table td {
     border: none;
     vertical-align: middle;
-    padding: 0.4rem 0.75rem;
+    padding: 0.375rem 0.5rem;
 }
 
 .service-name {
-    font-size: 0.875rem;
+    font-size: 0.6875rem;
     color: #374151;
 }
 
@@ -714,8 +730,8 @@ export default {
 }
 
 .total-row {
-    border-top: 1px solid #e2e8f0;
-    background: rgba(147, 51, 234, 0.02);
+    border-top: 1px solid #e5e7eb;
+    background: rgba(16, 185, 129, 0.02);
 }
 
 @media (max-width: 767.98px) {
@@ -724,7 +740,37 @@ export default {
     }
 
     .service-name {
-        font-size: 0.8125rem;
+        font-size: 0.625rem;
+    }
+
+    .stat-value {
+        font-size: 0.875rem;
+    }
+
+    .combo-offer-summary-card .card-body {
+        padding: 0.5rem;
+    }
+
+    .service-price-table td {
+        padding: 0.25rem 0.375rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .combo-offer-grid {
+        gap: 0.5rem;
+    }
+
+    .stat-value {
+        font-size: 0.75rem;
+    }
+
+    .stat-label {
+        font-size: 0.625rem;
+    }
+
+    .combo-offer-summary-card .card-body {
+        padding: 0.375rem;
     }
 }
 </style>

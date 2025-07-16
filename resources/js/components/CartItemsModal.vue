@@ -137,7 +137,7 @@
                                         <td class="py-2 px-3 text-right">
                                             <div
                                                 class="bg-gradient-to-r from-teal-50 to-emerald-100 text-teal-700 font-bold text-xs px-2.5 py-1 rounded-md border border-emerald-200 inline-block shadow-sm">
-                                                {{ item.total }}
+                                                {{ parseFloat(item.total).toFixed(2) }}
                                             </div>
                                         </td>
 
