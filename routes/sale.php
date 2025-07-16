@@ -48,6 +48,7 @@ Route::middleware('auth')->group(function (): void {
     // Customer Management
     Route::prefix('customers')->name('api.customers.')->group(function () {
         Route::post('/', [CustomerController::class, 'store'])->name('store');
+        Route::put('/{id}', [CustomerController::class, 'store'])->name('edit');
         Route::get('check-mobile', [CustomerController::class, 'get'])->name('get');
     });
 

@@ -44,11 +44,24 @@
                                     <div class="space-y-1">
                                         <label class="text-xs font-bold text-slate-700 flex items-center justify-between">
                                             <span>Customer</span>
-                                            <button type="button" @click="addNewCustomer"
-                                                class="bg-gradient-to-r from-blue-500 to-indigo-600 text-white px-2 py-1 rounded-md hover:from-blue-600 hover:to-indigo-700 transition-all duration-200 shadow-sm hover:shadow-md transform hover:-translate-y-0.5 font-semibold text-xs flex items-center">
-                                                <i class="fa fa-plus mr-1 text-xs"></i>
-                                                Add
-                                            </button>
+                                            <div class="flex items-center space-x-1">
+                                                <button type="button" @click="viewCustomerDetails"
+                                                    :disabled="!form.account_id || form.account_id === 3"
+                                                    :class="[
+                                                        'px-2 py-1 rounded-md transition-all duration-200 shadow-sm hover:shadow-md transform hover:-translate-y-0.5 font-semibold text-xs flex items-center',
+                                                        (!form.account_id || form.account_id === 3)
+                                                            ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                                                            : 'bg-gradient-to-r from-purple-500 to-pink-600 text-white hover:from-purple-600 hover:to-pink-700'
+                                                    ]">
+                                                    <i class="fa fa-eye mr-1 text-xs"></i>
+                                                    View
+                                                </button>
+                                                <button type="button" @click="addNewCustomer"
+                                                    class="bg-gradient-to-r from-blue-500 to-indigo-600 text-white px-2 py-1 rounded-md hover:from-blue-600 hover:to-indigo-700 transition-all duration-200 shadow-sm hover:shadow-md transform hover:-translate-y-0.5 font-semibold text-xs flex items-center">
+                                                    <i class="fa fa-plus mr-1 text-xs"></i>
+                                                    Add
+                                                </button>
+                                            </div>
                                         </label>
                                         <SearchableSelect v-model="form.account_id" :options="formattedCustomers"
                                             placeholder="Select Customer"
@@ -292,6 +305,10 @@
             :countries="countries" @close="showCustomerModal = false" @customer-saved="handleCustomerSaved"
             @customer-selected="handleCustomerSelected" />
 
+        <!-- Customer Details Modal -->
+        <CustomerDetailsModal :show="showCustomerDetailsModal" :customer-id="selectedCustomerId"
+            @close="showCustomerDetailsModal = false" @edit="handleCustomerEdit" />
+
         <!-- Custom Payment Modal -->
         <CustomPaymentModal :show="showCustomPaymentModal" :total-amount="form.grand_total"
             :payment-methods="paymentMethods" :initial-payments="customPaymentData.payments"
@@ -339,6 +356,7 @@ import ProductsGrid from '@/components/ProductsGrid.vue'
 import SaleConfirmationModal from '@/components/SaleConfirmationModal.vue'
 import SearchableSelect from '@/components/SearchableSelectFixed.vue'
 import ComboOfferModal from '@/components/ComboOfferModal.vue'
+import CustomerDetailsModal from '@/components/CustomerDetailsModal.vue'
 import { useForm } from '@inertiajs/vue3'
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useToast } from 'vue-toastification'
@@ -356,7 +374,8 @@ export default {
         ProductsGrid,
         SaleConfirmationModal,
         EditItemModal,
-        ComboOfferModal
+        ComboOfferModal,
+        CustomerDetailsModal
     },
     props: {
         categories: Array,
@@ -846,6 +865,8 @@ export default {
 
         // Combo Offer Modal
         const showComboOfferModal = ref(false)
+        const showCustomerDetailsModal = ref(false)
+        const selectedCustomerId = ref(null)
 
         // Handler for saving from EditItemModal
         const onEditItemSave = (updatedItem) => {
@@ -890,6 +911,24 @@ export default {
         }
 
         const addNewCustomer = () => {
+            showCustomerModal.value = true
+        }
+
+                        const viewCustomerDetails = () => {
+            if (!form.account_id || form.account_id === 3) {
+                toast.error('Please select a customer first')
+                return
+            }
+
+            // Show customer details modal
+            selectedCustomerId.value = form.account_id
+            showCustomerDetailsModal.value = true
+        }
+
+        const handleCustomerEdit = (customer) => {
+            // Close details modal and open edit modal
+            showCustomerDetailsModal.value = false
+            newCustomer.value = customer
             showCustomerModal.value = true
         }
 
@@ -1376,6 +1415,8 @@ export default {
             selectedProductType,
             productTypeOptions,
             showComboOfferModal,
+            showCustomerDetailsModal,
+            selectedCustomerId,
 
             // Computed
             totalQuantity,
@@ -1404,6 +1445,8 @@ export default {
             editCartItem,
             saveEditedItem,
             addNewCustomer,
+            viewCustomerDetails,
+            handleCustomerEdit,
             handleCustomerChange,
             handleCustomerSaved,
             handleCustomerSelected,

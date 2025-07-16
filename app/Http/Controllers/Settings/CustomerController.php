@@ -3,13 +3,14 @@
 namespace App\Http\Controllers\Settings;
 
 use App\Actions\Account\CreateAction;
+use App\Actions\Account\UpdateAction;
 use App\Http\Controllers\Controller;
 use App\Models\Account;
 use Illuminate\Http\Request;
 
 class CustomerController extends Controller
 {
-    public function store(Request $request)
+    public function store(Request $request, $id = null)
     {
         try {
             $data = $request->all();
@@ -18,7 +19,12 @@ class CustomerController extends Controller
                 unset($data['customer_type_id']);
             }
             $data['model'] = 'customer';
-            $response = (new CreateAction())->execute($data);
+            if ($id) {
+                $response = (new UpdateAction())->execute($data, $id);
+            } else {
+                $response = (new CreateAction())->execute($data);
+            }
+
             if (! $response['success']) {
                 throw new \Exception($response['message'], 1);
             }
