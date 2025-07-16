@@ -2,241 +2,247 @@
     <div v-if="show" class="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog"
         aria-modal="true">
         <!-- Background overlay -->
-        <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-            <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true" @click="close">
+        <div class="flex items-center justify-center min-h-screen p-2 text-center">
+            <div class="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm transition-opacity" aria-hidden="true" @click="close">
             </div>
 
             <!-- Modal positioning -->
             <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
 
-            <!-- Modal panel -->
+            <!-- Modal panel - More compact -->
             <div
-                class="relative inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
-                <!-- Header -->
-                <div class="bg-blue-600 px-4 py-3 text-white flex items-center justify-between">
-                    <h4 class="text-lg font-semibold text-white mb-0">
-                        <i class="fa fa-clipboard-check mr-2"></i> Confirm Sale Transaction
-                    </h4>
-                    <button type="button" @click="close" class="text-white hover:text-gray-200 focus:outline-none">
-                        <i class="fa fa-times"></i>
+                class="relative inline-block align-bottom bg-white rounded-xl text-left overflow-hidden shadow-2xl transform transition-all sm:my-4 sm:align-middle sm:max-w-lg w-full max-h-[95vh] overflow-y-auto">
+                <!-- Compact Header -->
+                <div class="bg-gradient-to-r from-blue-600 via-blue-700 to-indigo-700 px-4 py-3 text-white flex items-center justify-between">
+                    <div class="flex items-center">
+                        <div class="bg-white/20 p-1.5 rounded-md mr-2">
+                            <i class="fa fa-clipboard-check text-white text-sm"></i>
+                        </div>
+                        <h4 class="text-lg font-bold text-white">
+                            Confirm Sale
+                        </h4>
+                    </div>
+                    <button type="button" @click="close" class="text-white hover:text-gray-200 focus:outline-none transition-colors">
+                        <i class="fa fa-times text-sm"></i>
                     </button>
                 </div>
 
-                <!-- Body -->
+                <!-- Compact Body -->
                 <div class="px-4 py-4">
-                    <!-- Customer Header -->
-                    <div class="bg-gray-100 border border-gray-200 rounded-lg p-4 mb-4 text-center">
-                        <div
-                            class="w-12 h-12 bg-gray-500 text-white rounded-full flex items-center justify-center mx-auto mb-3">
-                            <i class="fa fa-user text-lg"></i>
+                    <!-- Customer Info - Compact -->
+                    <div class="bg-gradient-to-r from-slate-50 to-blue-50 border border-slate-200 rounded-lg p-2 mb-3 text-center relative overflow-hidden">
+                        <div class="relative z-10 flex items-center justify-center gap-2">
+                            <div class="w-8 h-8 bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-full flex items-center justify-center shadow-sm">
+                                <i class="fa fa-user text-xs"></i>
+                            </div>
+                            <div class="text-left">
+                                <h4 class="font-bold text-slate-800 text-xs">{{ customerName.name }}</h4>
+                                <p class="text-slate-600 text-xs">{{ customerName.mobile || 'No mobile number' }}</p>
+                            </div>
                         </div>
-                        <h4 class="font-semibold text-gray-800">{{ customerName.name }} : {{ customerName.mobile }}</h4>
                     </div>
 
-                    <!-- Payment Method Selection (moved from cart sidebar) -->
+                    <!-- Payment Method Selection - Compact -->
                     <div class="mb-4">
-                        <div class="flex items-center justify-between mb-3">
-                            <h6 class="text-sm sm:text-base font-semibold text-slate-800 mb-0 flex items-center gap-2">
-                                <i class="fa fa-credit-card text-blue-500"></i>
+                        <div class="flex flex-col sm:flex-row sm:items-center justify-between mb-3 gap-2">
+                            <h6 class="text-sm font-bold text-slate-800 flex items-center gap-1">
+                                <i class="fa fa-credit-card text-blue-500 text-xs"></i>
                                 <span>Payment Method</span>
                             </h6>
-                            <label class="flex items-center text-xs sm:text-sm gap-2">
+                            <label class="flex items-center text-xs gap-1 bg-green-50 border border-green-200 rounded px-2 py-1 cursor-pointer hover:bg-green-100 transition-colors">
                                 <input v-model="localSendToWhatsapp" type="checkbox"
-                                    class="rounded border-slate-300 text-green-600 focus:ring-green-500">
-                                <i class="fa fa-whatsapp text-green-500"></i>
-                                <span class="hidden sm:inline">Send Invoice To Whatsapp</span>
-                                <span class="sm:hidden">WhatsApp</span>
+                                    class="rounded border-green-300 text-green-600 focus:ring-green-500">
+                                <i class="fa fa-whatsapp text-green-500 text-xs"></i>
+                                <span class="font-medium text-green-700">WhatsApp</span>
                             </label>
                         </div>
-                        <div class="grid grid-cols-3 gap-2 sm:gap-3">
+                        <div class="grid grid-cols-3 gap-2">
                             <!-- Cash Payment -->
                             <div class="payment-option">
                                 <button type="button" @click="$emit('update:paymentMethod', 1)" :class="[
-                                    'w-full h-20 sm:h-24 flex flex-col items-center justify-center p-2 sm:p-3 border-2 relative transition-all duration-200 rounded-lg',
+                                    'w-full h-16 flex flex-col items-center justify-center p-2 border-2 relative transition-all duration-300 rounded-lg hover:scale-105',
                                     localPaymentMethod === 1 || localPaymentMethod === ''
-                                        ? 'bg-green-500 border-green-500 shadow-lg text-white'
-                                        : 'bg-white border-gray-200 text-gray-700 hover:shadow-md hover:border-gray-300'
+                                        ? 'bg-gradient-to-r from-green-500 to-emerald-600 border-green-500 shadow-lg text-white'
+                                        : 'bg-white border-slate-200 text-slate-700 hover:shadow-md hover:border-green-300 hover:bg-green-50'
                                 ]">
-                                    <div class="icon-wrapper mb-1 sm:mb-2">
+                                    <div class="icon-wrapper mb-1">
                                         <i :class="[
-                                            'fa fa-money text-lg sm:text-2xl',
+                                            'fa fa-money text-lg',
                                             localPaymentMethod === 1 || localPaymentMethod === ''
                                                 ? 'text-white'
                                                 : 'text-green-500'
                                         ]"></i>
                                     </div>
                                     <span :class="[
-                                        'text-xs sm:text-sm font-semibold',
+                                        'text-xs font-bold',
                                         localPaymentMethod === 1 || localPaymentMethod === ''
                                             ? 'text-white'
-                                            : 'text-gray-700'
+                                            : 'text-slate-700'
                                     ]">Cash</span>
                                     <div v-if="localPaymentMethod === 1 || localPaymentMethod === ''"
-                                        class="absolute top-1 right-1 sm:top-2 sm:right-2">
-                                        <i
-                                            class="fa fa-check-circle text-white bg-green-600 rounded-full text-xs sm:text-sm"></i>
-                                    </div>
-                                    <div v-if="localPaymentMethod === 1 || localPaymentMethod === ''"
-                                        class="absolute inset-0 bg-green-500 bg-opacity-10 rounded-lg pointer-events-none">
+                                        class="absolute top-1 right-1">
+                                        <i class="fa fa-check-circle text-white bg-green-600 rounded-full text-xs"></i>
                                     </div>
                                 </button>
                             </div>
                             <!-- Card Payment -->
                             <div class="payment-option">
                                 <button type="button" @click="$emit('update:paymentMethod', 2)" :class="[
-                                    'w-full h-20 sm:h-24 flex flex-col items-center justify-center p-2 sm:p-3 border-2 relative transition-all duration-200 rounded-lg',
+                                    'w-full h-16 flex flex-col items-center justify-center p-2 border-2 relative transition-all duration-300 rounded-lg hover:scale-105',
                                     localPaymentMethod === 2
-                                        ? 'bg-blue-500 border-blue-500 shadow-lg text-white'
-                                        : 'bg-white border-gray-200 text-gray-700 hover:shadow-md hover:border-gray-300'
+                                        ? 'bg-gradient-to-r from-blue-500 to-indigo-600 border-blue-500 shadow-lg text-white'
+                                        : 'bg-white border-slate-200 text-slate-700 hover:shadow-md hover:border-blue-300 hover:bg-blue-50'
                                 ]">
-                                    <div class="icon-wrapper mb-1 sm:mb-2">
+                                    <div class="icon-wrapper mb-1">
                                         <i :class="[
-                                            'fa fa-credit-card text-lg sm:text-2xl',
+                                            'fa fa-credit-card text-lg',
                                             localPaymentMethod === 2
                                                 ? 'text-white'
                                                 : 'text-blue-500'
                                         ]"></i>
                                     </div>
                                     <span :class="[
-                                        'text-xs sm:text-sm font-semibold',
+                                        'text-xs font-bold',
                                         localPaymentMethod === 2
                                             ? 'text-white'
-                                            : 'text-gray-700'
+                                            : 'text-slate-700'
                                     ]">Card</span>
                                     <div v-if="localPaymentMethod === 2"
-                                        class="absolute top-1 right-1 sm:top-2 sm:right-2">
-                                        <i
-                                            class="fa fa-check-circle text-white bg-blue-600 rounded-full text-xs sm:text-sm"></i>
-                                    </div>
-                                    <div v-if="localPaymentMethod === 2"
-                                        class="absolute inset-0 bg-blue-500 bg-opacity-10 rounded-lg pointer-events-none">
+                                        class="absolute top-1 right-1">
+                                        <i class="fa fa-check-circle text-white bg-blue-600 rounded-full text-xs"></i>
                                     </div>
                                 </button>
                             </div>
                             <!-- Custom Payment -->
                             <div class="payment-option">
                                 <button type="button" @click="$emit('openCustomPayment')" :class="[
-                                    'w-full h-20 sm:h-24 flex flex-col items-center justify-center p-2 sm:p-3 border-2 relative transition-all duration-200 rounded-lg',
+                                    'w-full h-16 flex flex-col items-center justify-center p-2 border-2 relative transition-all duration-300 rounded-lg hover:scale-105',
                                     localPaymentMethod === 'custom'
-                                        ? 'bg-amber-500 border-amber-500 shadow-lg text-white'
-                                        : 'bg-white border-gray-200 text-gray-700 hover:shadow-md hover:border-gray-300'
+                                        ? 'bg-gradient-to-r from-amber-500 to-orange-600 border-amber-500 shadow-lg text-white'
+                                        : 'bg-white border-slate-200 text-slate-700 hover:shadow-md hover:border-amber-300 hover:bg-amber-50'
                                 ]">
-                                    <div class="icon-wrapper mb-1 sm:mb-2">
+                                    <div class="icon-wrapper mb-1">
                                         <i :class="[
-                                            'fa fa-cogs text-lg sm:text-2xl',
+                                            'fa fa-cogs text-lg',
                                             localPaymentMethod === 'custom'
                                                 ? 'text-white'
                                                 : 'text-amber-500'
                                         ]"></i>
                                     </div>
                                     <span :class="[
-                                        'text-xs sm:text-sm font-semibold',
+                                        'text-xs font-bold',
                                         localPaymentMethod === 'custom'
                                             ? 'text-white'
-                                            : 'text-gray-700'
+                                            : 'text-slate-700'
                                     ]">
-                                        {{ localCustomPaymentCount > 0 ? `${localCustomPaymentCount} Methods` : 'Custom'
-                                        }}
+                                        {{ localCustomPaymentCount > 0 ? `${localCustomPaymentCount}` : 'Custom' }}
                                     </span>
                                     <div v-if="localPaymentMethod === 'custom'"
-                                        class="absolute top-1 right-1 sm:top-2 sm:right-2">
-                                        <i
-                                            class="fa fa-check-circle text-white bg-amber-600 rounded-full text-xs sm:text-sm"></i>
-                                    </div>
-                                    <div v-if="localPaymentMethod === 'custom'"
-                                        class="absolute inset-0 bg-amber-500 bg-opacity-10 rounded-lg pointer-events-none">
+                                        class="absolute top-1 right-1">
+                                        <i class="fa fa-check-circle text-white bg-amber-600 rounded-full text-xs"></i>
                                     </div>
                                     <div v-if="localCustomPaymentCount > 0 && localPaymentMethod !== 'custom'"
-                                        class="absolute -top-1 -right-1 w-3 h-3 bg-green-500 rounded-full border-2 border-white">
+                                        class="absolute -top-1 -right-1 w-4 h-4 bg-green-500 rounded-full border-2 border-white flex items-center justify-center">
+                                        <span class="text-white text-xs font-bold">{{ localCustomPaymentCount }}</span>
                                     </div>
                                 </button>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Transaction Summary -->
-                    <div class="mb-4">
-                        <table
-                            class="w-full border-collapse bg-white border border-gray-200 rounded-lg overflow-hidden">
-                            <tr class="bg-gray-50 border-b border-gray-200">
-                                <td class="px-4 py-3 font-semibold text-gray-700">
-                                    <i class="fa fa-dollar-sign mr-2 text-gray-500"></i>
-                                    Grand Total
-                                </td>
-                                <td class="px-4 py-3 text-right font-semibold text-green-600">
-                                    ₹{{ grandTotal.toFixed(2) }}
-                                </td>
-                            </tr>
-                            <tr class="border-b border-gray-200">
-                                <td class="px-4 py-3 text-gray-700">
-                                    <i class="fa fa-credit-card mr-2 text-gray-500"></i>
-                                    Paid Amount
-                                </td>
-                                <td class="px-4 py-3 text-right font-medium text-blue-600">
-                                    ₹{{ paidAmount.toFixed(2) }}
-                                </td>
-                            </tr>
-                            <tr
-                                :class="{ 'bg-gray-50': balanceAmount === 0, 'bg-red-50': balanceAmount > 0, 'bg-yellow-50': balanceAmount < 0 }">
-                                <td class="px-4 py-3 font-semibold text-gray-700">
-                                    <i :class="`fa ${balanceIcon}`" :style="`color: ${balanceColor}`"></i>
-                                    {{ balanceText }}
-                                </td>
-                                <td class="px-4 py-3 text-right font-bold" :style="`color: ${balanceColor}`">
-                                    ₹{{ Math.abs(balanceAmount).toFixed(2) }}
-                                </td>
-                            </tr>
-                        </table>
-                    </div>
-
-                    <!-- Payment Methods (if applicable) -->
-                    <div v-if="paymentMethods" class="bg-gray-50 border border-gray-200 rounded-lg p-4 mb-4">
-                        <div class="flex items-center mb-2 text-gray-700 font-semibold">
-                            <i class="fa fa-credit-card mr-2 text-gray-500"></i>
-                            Payment Methods Used
-                        </div>
-                        <div class="bg-white p-3 rounded border-l-4 border-blue-500 font-mono text-sm text-gray-700">
-                            {{ paymentMethods }}
+                    <!-- Transaction Summary - Compact -->
+                    <div class="mb-3">
+                        <h6 class="text-sm font-bold text-slate-800 mb-2 flex items-center gap-1">
+                            <i class="fa fa-receipt text-emerald-500 text-xs"></i>
+                            Transaction Summary
+                        </h6>
+                        <div class="bg-gradient-to-r from-slate-50 to-blue-50 border border-slate-200 rounded-lg p-2">
+                            <div class="space-y-1">
+                                <div class="flex justify-between items-center py-0.5 border-b border-slate-200">
+                                    <span class="text-slate-700 font-semibold text-xs flex items-center">
+                                        <i class="fa fa-dollar-sign mr-1 text-slate-500 text-xs"></i>
+                                        Grand Total
+                                    </span>
+                                    <span class="font-bold text-sm text-emerald-600">
+                                        ₹{{ grandTotal.toFixed(2) }}
+                                    </span>
+                                </div>
+                                <div class="flex justify-between items-center py-0.5 border-b border-slate-200">
+                                    <span class="text-slate-700 font-semibold text-xs flex items-center">
+                                        <i class="fa fa-credit-card mr-1 text-slate-500 text-xs"></i>
+                                        Paid Amount
+                                    </span>
+                                    <span class="font-bold text-sm text-blue-600">
+                                        ₹{{ paidAmount.toFixed(2) }}
+                                    </span>
+                                </div>
+                                <div class="flex justify-between items-center py-0.5" :class="{
+                                    'bg-green-50 rounded px-1': balanceAmount === 0,
+                                    'bg-red-50 rounded px-1': balanceAmount > 0,
+                                    'bg-yellow-50 rounded px-1': balanceAmount < 0
+                                }">
+                                    <span class="font-bold text-xs flex items-center" :style="`color: ${balanceColor}`">
+                                        <i :class="`fa ${balanceIcon} mr-1 text-xs`"></i>
+                                        {{ balanceText }}
+                                    </span>
+                                    <span class="font-bold text-sm" :style="`color: ${balanceColor}`">
+                                        ₹{{ Math.abs(balanceAmount).toFixed(2) }}
+                                    </span>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
-                    <!-- Status Indicator -->
-                    <div class="text-center p-4" :class="{
-                        'bg-gray-50 border border-gray-200': balanceAmount === 0,
-                        'bg-yellow-50 border border-yellow-200': balanceAmount > 0,
-                        'bg-blue-50 border border-blue-200': balanceAmount < 0
+                    <!-- Payment Methods (if applicable) - Compact -->
+                    <div v-if="paymentMethods" class="mb-4">
+                        <h6 class="text-sm font-bold text-slate-800 mb-2 flex items-center gap-1">
+                            <i class="fa fa-credit-card text-blue-500 text-xs"></i>
+                            Payment Methods
+                        </h6>
+                        <div class="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg p-3">
+                            <div class="bg-white p-2 rounded border-l-4 border-blue-500 font-mono text-xs text-slate-700">
+                                {{ paymentMethods }}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Status Indicator - Compact -->
+                    <div class="text-center p-2 rounded-lg border-2" :class="{
+                        'bg-gradient-to-r from-green-50 to-emerald-50 border-green-200': balanceAmount === 0,
+                        'bg-gradient-to-r from-yellow-50 to-amber-50 border-yellow-200': balanceAmount > 0,
+                        'bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200': balanceAmount < 0
                     }">
-                        <div class="w-10 h-10 rounded-full flex items-center justify-center mx-auto mb-2"
-                            :style="`background-color: ${balanceColor}; color: white;`">
-                            <i :class="`fa ${balanceIcon}`"></i>
+                        <div class="w-8 h-8 rounded-full flex items-center justify-center mx-auto mb-1 shadow-sm"
+                            :style="`background: linear-gradient(135deg, ${balanceColor}, ${balanceColor}dd); color: white;`">
+                            <i :class="`fa ${balanceIcon} text-xs`"></i>
                         </div>
-                        <div class="font-semibold mb-1" :style="`color: ${balanceTextColor}`">
+                        <div class="font-bold text-xs mb-0.5" :style="`color: ${balanceTextColor}`">
                             {{ statusText }}
                         </div>
-                        <div class="text-sm opacity-80" :style="`color: ${balanceTextColor}`">
+                        <div class="text-xs opacity-90" :style="`color: ${balanceTextColor}`">
                             {{ statusDescription }}
                         </div>
                     </div>
                 </div>
 
-                <!-- Footer -->
-                <div class="bg-gray-50 px-4 py-3 text-right">
-                    <div class="flex justify-end space-x-3">
+                <!-- Compact Footer -->
+                <div class="bg-gradient-to-r from-slate-50 to-gray-50 px-4 py-3 border-t border-slate-200">
+                    <div class="flex flex-col sm:flex-row justify-end gap-2">
                         <button type="button" @click="close"
-                            class="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
-                            <i class="fa fa-times mr-2"></i>
+                            class="inline-flex items-center justify-center px-4 py-2 border border-slate-300 shadow-sm text-xs font-semibold rounded-lg text-slate-700 bg-white hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200">
+                            <i class="fa fa-times mr-1 text-xs"></i>
                             Cancel
                         </button>
                         <button type="button" @click="submit" :disabled="loading" :class="[
-                            'inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2',
+                            'inline-flex items-center justify-center px-4 py-2 border border-transparent text-xs font-semibold rounded-lg text-white shadow-lg focus:outline-none focus:ring-2 focus:ring-offset-2 transition-all duration-200 hover:scale-105',
                             loading ? 'opacity-75 cursor-not-allowed' : '',
                             balanceAmount === 0
-                                ? 'bg-green-600 hover:bg-green-700 focus:ring-green-500'
-                                : 'bg-yellow-500 hover:bg-yellow-600 focus:ring-yellow-500'
+                                ? 'bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 focus:ring-green-500'
+                                : 'bg-gradient-to-r from-yellow-500 to-amber-600 hover:from-yellow-600 hover:to-amber-700 focus:ring-yellow-500'
                         ]">
-                            <i class="fa mr-2" :class="loading ? 'fa-spinner fa-spin' : 'fa-check-circle'"></i>
+                            <i class="fa mr-1 text-xs" :class="loading ? 'fa-spinner fa-spin' : 'fa-check-circle'"></i>
                             {{ loading ? 'Processing...' :
-                                (balanceAmount === 0 ? 'Submit Transaction' : 'Submit Anyway') }}
+                                (balanceAmount === 0 ? 'Submit' : 'Submit Anyway') }}
                         </button>
                     </div>
                 </div>
