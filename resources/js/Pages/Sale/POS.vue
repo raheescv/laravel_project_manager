@@ -16,20 +16,20 @@
 
         <div class="container-fluid h-screen relative z-10 flex flex-col">
             <form class="flex-1 flex flex-col min-h-0">
-                <!-- Mobile-first responsive layout -->
+                <!-- Enhanced Mobile-first responsive layout -->
                 <div
-                    class="flex flex-col lg:flex-row flex-1 gap-2 sm:gap-3 lg:gap-4 xl:gap-6 p-2 sm:p-3 lg:p-4 xl:p-6 min-h-0">
-                    <!-- Categories Sidebar Component - Mobile: Hidden by default, Desktop: Always visible -->
-                    <div class="order-1 lg:order-1 w-full lg:w-auto lg:h-full">
+                    class="flex flex-col md:flex-row lg:flex-row flex-1 gap-1 sm:gap-2 md:gap-3 lg:gap-4 xl:gap-6 p-1 sm:p-2 md:p-3 lg:p-4 xl:p-6 min-h-0">
+                    <!-- Categories Sidebar Component - Mobile: Collapsible, Tablet: Sidebar, Desktop: Always visible -->
+                    <div class="order-1 md:order-1 w-full md:w-64 lg:w-auto md:h-full">
                         <CategoriesSidebar :categories="categories" :selected-category="selectedCategory"
                             @category-selected="selectCategory" />
                     </div>
 
                     <!-- Main Content Area - Products and Cart -->
                     <div
-                        class="flex-1 flex flex-col lg:flex-row gap-2 sm:gap-3 lg:gap-4 order-2 lg:order-2 min-h-0 lg:h-full">
-                        <!-- Products Section -->
-                        <div class="flex-1 lg:flex-[0.6] xl:flex-[0.55] flex flex-col order-1 lg:order-1 min-h-0">
+                        class="flex-1 flex flex-col md:flex-row lg:flex-row gap-1 sm:gap-2 md:gap-3 lg:gap-4 order-2 md:order-2 min-h-0 md:h-full">
+                        <!-- Products Section - Enhanced responsive layout -->
+                        <div class="flex-1 md:flex-[0.7] lg:flex-[0.6] xl:flex-[0.55] flex flex-col order-1 md:order-1 min-h-0">
                             <!-- Compact customer - employee-product search area -->
                             <div
                                 class="bg-gradient-to-br from-white/95 via-blue-50/30 to-indigo-50/20 backdrop-blur-xl rounded-lg shadow-lg border border-white/60 mb-2 p-3 relative overflow-hidden">
@@ -39,8 +39,8 @@
                                     <div class="absolute bottom-0 left-0 w-12 h-12 bg-gradient-to-tr from-emerald-200/20 to-teal-300/20 rounded-full blur-md"></div>
                                 </div>
 
-                                <!-- Customer and Mobile -->
-                                <div class="relative grid grid-cols-1 lg:grid-cols-2 gap-2 mb-3">
+                                <!-- Customer and Mobile - Enhanced responsive grid -->
+                                <div class="relative grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-2 mb-2 sm:mb-3">
                                     <div class="space-y-1">
                                         <label class="text-xs font-bold text-slate-700 flex items-center justify-between">
                                             <span>Customer</span>
@@ -80,8 +80,8 @@
                                     </div>
                                 </div>
 
-                                <!-- Employee and Sale Type -->
-                                <div class="relative grid grid-cols-1 lg:grid-cols-2 gap-2 mb-3">
+                                <!-- Employee and Sale Type - Enhanced responsive grid -->
+                                <div class="relative grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-2 mb-2 sm:mb-3">
                                     <div class="space-y-1">
                                         <label class="text-xs font-bold text-slate-700 flex items-center">
                                             Employee
@@ -103,9 +103,9 @@
                                     </div>
                                 </div>
 
-                                <!-- Search Section -->
+                                <!-- Search Section - Enhanced responsive grid -->
                                 <div class="relative">
-                                    <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-2">
+                                    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-1 sm:gap-2">
                                         <div class="space-y-1">
                                             <select v-model="selectedProductType" @change="filterByProductType"
                                                 class="w-full rounded-lg border-slate-200 shadow-sm focus:border-indigo-500 focus:ring-indigo-500/20 transition-all duration-200 bg-white/90 backdrop-blur-sm hover:shadow-md text-xs py-2">
@@ -116,9 +116,9 @@
                                         </div>
                                         <div class="space-y-1">
                                             <div class="relative group">
-                                                <input v-model="barcodeKey" @input="searchByBarcode" type="text"
-                                                    class="w-full pl-8 pr-3 py-2 rounded-lg border-slate-200 shadow-sm focus:border-purple-500 focus:ring-purple-500/20 transition-all duration-200 bg-white/90 backdrop-blur-sm group-hover:shadow-md text-xs"
-                                                    placeholder="Scan barcode" autocomplete="off">
+                                                                                        <input v-model="barcodeKey" @input="searchByBarcode" type="text"
+                                            class="w-full pl-8 pr-3 py-2 sm:py-2.5 rounded-lg border-slate-200 shadow-sm focus:border-purple-500 focus:ring-purple-500/20 transition-all duration-200 bg-white/90 backdrop-blur-sm group-hover:shadow-md text-xs sm:text-sm min-h-[44px] sm:min-h-[40px]"
+                                            placeholder="Scan barcode" autocomplete="off">
                                                 <div
                                                     class="absolute left-3 top-1/2 transform -translate-y-1/2 text-purple-500 group-focus-within:text-purple-600 transition-colors">
                                                     <i class="fa fa-barcode text-xs"></i>
@@ -128,7 +128,7 @@
                                         <div class="space-y-1">
                                             <div class="relative group">
                                                 <input v-model="productKey" @input="searchProducts" type="text"
-                                                    class="w-full pl-8 pr-3 py-2 rounded-lg border-slate-200 shadow-sm focus:border-orange-500 focus:ring-orange-500/20 transition-all duration-200 bg-white/90 backdrop-blur-sm group-hover:shadow-md text-xs"
+                                                    class="w-full pl-8 pr-3 py-2 sm:py-2.5 rounded-lg border-slate-200 shadow-sm focus:border-orange-500 focus:ring-orange-500/20 transition-all duration-200 bg-white/90 backdrop-blur-sm group-hover:shadow-md text-xs sm:text-sm min-h-[44px] sm:min-h-[40px]"
                                                     placeholder="Search products" autocomplete="off">
                                                 <div
                                                     class="absolute left-3 top-1/2 transform -translate-y-1/2 text-orange-500 group-focus-within:text-orange-600 transition-colors">
@@ -137,7 +137,7 @@
                                             </div>
                                         </div>
                                         <button type="button" @click="viewDraftSales"
-                                            class="bg-gradient-to-r from-slate-600 via-slate-700 to-slate-800 text-white py-2 px-3 rounded-lg hover:from-slate-700 hover:via-slate-800 hover:to-slate-900 transition-all duration-200 shadow-sm hover:shadow-md transform hover:-translate-y-0.5 font-semibold text-xs flex items-center justify-center">
+                                            class="bg-gradient-to-r from-slate-600 via-slate-700 to-slate-800 text-white py-2 sm:py-2.5 px-2 sm:px-3 rounded-lg hover:from-slate-700 hover:via-slate-800 hover:to-slate-900 transition-all duration-200 shadow-sm hover:shadow-md transform hover:-translate-y-0.5 font-semibold text-xs sm:text-sm flex items-center justify-center min-h-[44px] sm:min-h-[40px]">
                                             <i class="fa fa-file-alt mr-1 text-xs"></i>
                                             <span class="hidden sm:inline">Drafts</span>
                                             <span class="sm:hidden">Drafts</span>
@@ -150,7 +150,11 @@
                             <div
                                 class="bg-white rounded-lg shadow-md border border-slate-200 flex-1 p-2 sm:p-3 min-h-0">
                                 <div class="h-full overflow-y-auto products-container custom-scrollbar"
-                                    :style="{ 'height': windowWidth >= 1024 ? 'calc(100vh - 220px)' : 'calc(60vh - 100px)', 'min-height': '300px' }">
+                                    :style="{
+                                        'height': windowWidth >= 1024 ? 'calc(100vh - 220px)' :
+                                                 windowWidth >= 768 ? 'calc(70vh - 120px)' : 'calc(50vh - 80px)',
+                                        'min-height': windowWidth >= 768 ? '300px' : '200px'
+                                    }">
                                     <div v-if="loading" class="flex items-center justify-center h-full">
                                         <div class="text-center">
                                             <div
@@ -165,14 +169,14 @@
                             </div>
                         </div>
 
-                        <!-- Cart Section - Mobile: bottom section, Desktop: right sidebar -->
+                        <!-- Cart Section - Enhanced responsive layout -->
                         <div
-                            class="w-full lg:w-96 xl:w-[30rem] lg:flex-[0.4] xl:flex-[0.45] flex flex-col order-3 lg:order-3 h-full">
+                            class="w-full md:w-80 lg:w-96 xl:w-[30rem] md:flex-[0.3] lg:flex-[0.4] xl:flex-[0.45] flex flex-col order-3 md:order-3 h-full">
                             <div
                                 class="bg-white rounded-xl shadow-lg border border-slate-200 h-full flex flex-col min-h-0">
                                 <!-- Cart Items Component -->
                                 <CartItems :items="form.items" :total-quantity="totalQuantity" :cart-height="cartHeight"
-                                    :max-height="windowWidth >= 1024 ? '100%' : '400px'"
+                                    :max-height="windowWidth >= 1024 ? '100%' : windowWidth >= 768 ? '500px' : '350px'"
                                     @view-cart-items="viewCartItems" @clear-cart="clearCart"
                                     @update-item-quantity="updateItemQuantity" @edit-cart-item="editCartItem"
                                     @remove-cart-item="removeCartItem" @increase-quantity="increaseQuantity"
@@ -190,7 +194,7 @@
                                         </label>
                                         <input v-model.number="form.other_discount" @input="calculateTotals"
                                             type="number" step="0.01"
-                                            class="w-full text-xs py-1.5 sm:py-2 rounded border-slate-300 focus:border-blue-500 focus:ring-blue-500"
+                                            class="w-full text-xs sm:text-sm py-2 sm:py-2.5 rounded border-slate-300 focus:border-blue-500 focus:ring-blue-500 min-h-[44px] sm:min-h-[40px]"
                                             placeholder="0">
                                     </div>
 
@@ -249,19 +253,19 @@
                                         </div>
                                     </div>
 
-                                    <!-- Action Buttons - Mobile optimized -->
-                                    <div class="space-y-2">
+                                    <!-- Action Buttons - Enhanced mobile/tablet optimized -->
+                                    <div class="space-y-2 sm:space-y-3">
                                         <button type="button" @click="openFeedback"
-                                            class="w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-2.5 sm:py-2 px-3 rounded-xl text-xs sm:text-sm font-bold hover:from-blue-700 hover:to-indigo-700 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-1 relative overflow-hidden group min-h-[44px]">
+                                            class="w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-3 sm:py-2.5 md:py-2 px-3 rounded-xl text-xs sm:text-sm font-bold hover:from-blue-700 hover:to-indigo-700 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-1 relative overflow-hidden group min-h-[48px] sm:min-h-[44px]">
                                             <div
                                                 class="absolute inset-0 bg-gradient-to-r from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                                             </div>
                                             <i class="fa fa-comment mr-1 sm:mr-2 relative z-10 text-xs sm:text-sm"></i>
                                             <span class="relative z-10">Feedback</span>
                                         </button>
-                                        <div class="grid grid-cols-2 gap-2">
+                                        <div class="grid grid-cols-2 gap-2 sm:gap-3">
                                             <button type="button" @click="saveDraft"
-                                                class="bg-gradient-to-r from-slate-600 via-slate-700 to-gray-700 text-white py-2.5 sm:py-2 px-2 sm:px-3 rounded-xl text-xs sm:text-sm font-bold hover:from-slate-700 hover:via-slate-800 hover:to-gray-800 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-1 relative overflow-hidden group min-h-[44px]">
+                                                class="bg-gradient-to-r from-slate-600 via-slate-700 to-gray-700 text-white py-3 sm:py-2.5 md:py-2 px-2 sm:px-3 rounded-xl text-xs sm:text-sm font-bold hover:from-slate-700 hover:via-slate-800 hover:to-gray-800 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-1 relative overflow-hidden group min-h-[48px] sm:min-h-[44px]">
                                                 <div
                                                     class="absolute inset-0 bg-gradient-to-r from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                                                 </div>
@@ -270,7 +274,7 @@
                                             </button>
                                             <button type="button" @click="submitSale"
                                                 :disabled="Object.keys(form.items).length === 0" :class="[
-                                                    'py-2.5 sm:py-2 px-2 sm:px-3 rounded-xl text-xs sm:text-sm font-bold transition-all duration-300 shadow-lg relative overflow-hidden group min-h-[44px]',
+                                                    'py-3 sm:py-2.5 md:py-2 px-2 sm:px-3 rounded-xl text-xs sm:text-sm font-bold transition-all duration-300 shadow-lg relative overflow-hidden group min-h-[48px] sm:min-h-[44px]',
                                                     Object.keys(form.items).length === 0
                                                         ? 'bg-gray-400 text-gray-600 cursor-not-allowed'
                                                         : 'bg-gradient-to-r from-green-500 via-green-600 to-emerald-600 text-white hover:from-green-600 hover:via-green-700 hover:to-emerald-700 hover:shadow-xl transform hover:-translate-y-1 btn-pulse'
@@ -1367,9 +1371,12 @@ export default {
             if (windowWidth.value >= 1024) {
                 // Desktop: Take full height minus header, footer and padding
                 return 'calc(100vh - 150px)'
+            } else if (windowWidth.value >= 768) {
+                // Tablet: Medium height
+                return 'calc(60vh - 120px)'
             } else {
                 // Mobile: Limited height
-                return 'calc(40vh - 100px)'
+                return 'calc(45vh - 80px)'
             }
         })
 
@@ -1480,6 +1487,7 @@ export default {
 @import '../../../css/pos-common.css';
 @import '../../../css/pos.css';
 @import '../../../css/mobile-responsive.css';
+@import '../../../css/pos-enhanced-responsive.css';
 
 .payment-modal {
     position: fixed;
