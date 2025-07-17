@@ -243,6 +243,12 @@ class POSController extends Controller
                 throw new Exception($response['message'], 1);
             }
             $sale = $response['data'];
+
+            if ($saleData['status'] == 'completed') {
+                if ($saleData['send_to_whatsapp']) {
+                    $this->sendToWhatsapp($sale->id);
+                }
+            }
             DB::commit();
 
             return response()->json([
@@ -256,6 +262,14 @@ class POSController extends Controller
             Log::error('Error submitting sale: '.$e->getMessage());
 
             return response()->json(['error' => 'Failed to submit sales'], 500);
+        }
+    }
+
+    public function sendToWhatsapp($table_id)
+    {
+        $response = Sale::sendToWhatsapp($table_id);
+        if (! $response['success']) {
+            Log::error('Error submitting sale: '.$response['message']);
         }
     }
 
