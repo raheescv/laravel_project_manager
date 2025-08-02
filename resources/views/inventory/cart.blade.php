@@ -7,10 +7,6 @@
                     <li class="breadcrumb-item active" aria-current="page">Barcode Print</li>
                 </ol>
             </nav>
-            <h1 class="page-title mb-0 mt-2">Inventory</h1>
-            <p class="lead">
-                A table is an arrangement of Inventory
-            </p>
         </div>
     </div>
     <div class="content__boxed">
