@@ -5,11 +5,11 @@
             <!-- Product Name Filter -->
             <div class="col-md-7">
                 <label class="form-label fw-semibold mb-2">
-                    <i class="demo-psi-user me-1 text-warning"></i> Product Name
+                    <i class="fa fa-user me-1 text-warning"></i> Product Name
                 </label>
                 <div class="input-group">
                     <span class="input-group-text bg-white border-end-0">
-                        <i class="demo-psi-tag text-muted"></i>
+                        <i class="fa fa-tag text-muted"></i>
                     </span>
                     <input type="text" wire:model.live.debounce.300ms="productName" class="form-control border-start-0" placeholder="Enter product name..." autocomplete="off">
                 </div>
@@ -17,15 +17,15 @@
             <!-- Product Code Filter -->
             <div class="col-md-3">
                 <label class="form-label fw-semibold mb-2">
-                    <i class="demo-psi-tag me-1 text-info"></i> Product Code
+                    <i class="fa fa-barcode me-1 text-info"></i> Product Code
                 </label>
                 <div class="input-group">
                     <span class="input-group-text bg-white border-end-0">
-                        <i class="demo-psi-tag text-muted"></i>
+                        <i class="fa fa-barcode text-muted"></i>
                     </span>
                     <input type="text" wire:model.live.debounce.300ms="productCode" class="form-control border-start-0" placeholder="Enter product code..." autocomplete="off" id="productCodeInput">
                     <button type="button" class="btn btn-outline-primary border-start-0" onclick="startBarcodeScanner()" title="Scan Barcode">
-                        <i class="demo-psi-camera"></i>
+                        <i class="fa fa-camera"></i>
                     </button>
                 </div>
                 <small class="text-muted">Click the camera icon to scan barcode</small>
@@ -34,7 +34,7 @@
             <!-- Branch Filter -->
             <div class="col-md-2" wire:ignore>
                 <label class="form-label fw-semibold mb-2">
-                    <i class="demo-psi-building me-1 text-success"></i> Branch
+                    <i class="fa fa-building me-1 text-success"></i> Branch
                 </label>
                 <select wire:model.live="selectedBranch" class="form-select">
                     <option value="">All Branches</option>
@@ -51,7 +51,7 @@
                 <div class="d-flex justify-content-between align-items-center">
                     <div class="d-flex gap-2">
                         <button wire:click="clearFilters" class="btn btn-outline-secondary btn-sm">
-                            <i class="demo-psi-close me-1"></i> Clear Filters
+                            <i class="fa fa-times me-1"></i> Clear Filters
                         </button>
                         @if ($loading)
                             <div class="d-flex align-items-center text-muted">
@@ -84,25 +84,25 @@
                     <thead class="table-light">
                         <tr>
                             <th class="border-0">
-                                <i class="demo-psi-building me-1 text-muted"></i> Branch
+                                <i class="fa fa-building me-1 text-muted"></i> Branch
                             </th>
                             <th class="border-0">
-                                <i class="demo-psi-box me-1 text-muted"></i> Product Name
+                                <i class="fa fa-cube me-1 text-muted"></i> Product Name
                             </th>
                             <th class="border-0">
-                                <i class="demo-psi-box me-1 text-muted"></i> Brand
+                                <i class="fa fa-tag me-1 text-muted"></i> Brand
                             </th>
                             <th class="border-0 text-end">
-                                <i class="demo-psi-tag me-1 text-muted"></i> Code
+                                <i class="fa fa-barcode me-1 text-muted"></i> Code
                             </th>
                             <th class="border-0">
-                                <i class="demo-psi-ruler me-1 text-muted"></i> Size
+                                <i class="fa fa-ruler me-1 text-muted"></i> Size
                             </th>
                             <th class="border-0 text-end">
-                                <i class="demo-psi-inbox me-1 text-muted"></i> Quantity
+                                <i class="fa fa-cubes me-1 text-muted"></i> Quantity
                             </th>
                             <th class="border-0 text-end">
-                                <i class="demo-psi-money me-1 text-muted"></i> Price
+                                <i class="fa fa-money me-1 text-muted"></i> Price
                             </th>
                         </tr>
                     </thead>
@@ -112,7 +112,7 @@
                                 <td>
                                     <div class="d-flex align-items-center">
                                         <div class="bg-primary bg-opacity-10 rounded-circle p-2 me-2">
-                                            <i class="demo-psi-building text-primary"></i>
+                                            <i class="fa fa-building text-primary"></i>
                                         </div>
                                         <span class="fw-medium">{{ $item->branch->name }}</span>
                                     </div>
@@ -160,7 +160,7 @@
         @else
             <div class="text-center py-5">
                 <div class="mb-3">
-                    <i class="demo-psi-search fs-1 text-muted"></i>
+                    <i class="fa fa-search fa-3x text-muted"></i>
                 </div>
                 <h5 class="text-muted">No products found</h5>
                 <p class="text-muted mb-0">Try adjusting your search criteria or filters.</p>
@@ -178,9 +178,9 @@
         <div class="modal-dialog modal-lg">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title" id="barcodeScannerModalLabel">
-                        <i class="demo-psi-camera me-2"></i>Barcode Scanner
-                    </h5>
+                                    <h5 class="modal-title" id="barcodeScannerModalLabel">
+                    <i class="fa fa-camera me-2"></i>Barcode Scanner
+                </h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
@@ -194,10 +194,10 @@
                     </div>
                     <div class="text-center mt-3">
                         <div id="scanner-status" class="alert alert-info" style="display: none;">
-                            <i class="demo-psi-search me-2"></i>Scanning for barcode...
+                            <i class="fa fa-search me-2"></i>Scanning for barcode...
                         </div>
                         <div id="scanner-result" class="alert alert-success" style="display: none;">
-                            <i class="demo-psi-check me-2"></i>Barcode detected: <span id="scanned-code"></span>
+                            <i class="fa fa-check me-2"></i>Barcode detected: <span id="scanned-code"></span>
                         </div>
                     </div>
                 </div>
@@ -235,7 +235,7 @@
 
             // Check if browser supports getUserMedia
             if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-                statusDiv.innerHTML = '<i class="demo-psi-close me-2"></i>Camera not supported in this browser';
+                statusDiv.innerHTML = '<i class="fa fa-times me-2"></i>Camera not supported in this browser';
                 statusDiv.className = 'alert alert-danger';
                 return;
             }
@@ -266,7 +266,7 @@
                 })
                 .catch(function(err) {
                     console.error('Camera access error:', err);
-                    statusDiv.innerHTML = '<i class="demo-psi-close me-2"></i>Unable to access camera. Please check permissions.';
+                    statusDiv.innerHTML = '<i class="fa fa-times me-2"></i>Unable to access camera. Please check permissions.';
                     statusDiv.className = 'alert alert-danger';
                 });
         }
@@ -279,7 +279,7 @@
                 initializeQuaggaScanner();
             };
             script.onerror = function() {
-                document.getElementById('scanner-status').innerHTML = '<i class="demo-psi-close me-2"></i>Failed to load scanner library';
+                document.getElementById('scanner-status').innerHTML = '<i class="fa fa-times me-2"></i>Failed to load scanner library';
                 document.getElementById('scanner-status').className = 'alert alert-danger';
             };
             document.head.appendChild(script);
@@ -316,12 +316,12 @@
             }, function(err) {
                 if (err) {
                     console.error('Quagga initialization error:', err);
-                    statusDiv.innerHTML = '<i class="demo-psi-close me-2"></i>Failed to initialize scanner';
+                    statusDiv.innerHTML = '<i class="fa fa-times me-2"></i>Failed to initialize scanner';
                     statusDiv.className = 'alert alert-danger';
                     return;
                 }
 
-                statusDiv.innerHTML = '<i class="demo-psi-search me-2"></i>Scanning for barcode...';
+                statusDiv.innerHTML = '<i class="fa fa-search me-2"></i>Scanning for barcode...';
                 statusDiv.className = 'alert alert-info';
 
                 Quagga.start();
