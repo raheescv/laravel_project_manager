@@ -17,7 +17,7 @@
                 <div class="col-lg-4 col-xl-3 mb-4 mb-lg-0">
                     <div class="card shadow-sm mb-4">
                         <div class="card-body text-center">
-                            <img class="img-fluid rounded-circle border mb-3" src="{{ asset('assets/img/profile-photos/3.png') }}" alt="Profile Picture" loading="lazy"
+                                                         <img class="img-fluid rounded-circle border mb-3" src="{{ secure_asset('assets/img/profile-photos/3.png') }}" alt="Profile Picture" loading="lazy"
                                 style="width: 120px; height: 120px; object-fit: cover;">
                             <h4 class="card-title mb-0">{{ $user->name }}</h4>
                             <p class="text-muted mb-3">{{ getUserRoles($user) }}</p>

@@ -16,6 +16,7 @@ use App\Http\Controllers\VisitorAnalyticsController;
 use Illuminate\Support\Facades\Route;
 
 require __DIR__.'/auth.php';
+
 Route::middleware('auth')->group(function (): void {
     Route::get('/dashboard', [HomeController::class, 'index'])->name('dashboard');
     Route::get('/', [HomeController::class, 'index'])->name('home');

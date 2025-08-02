@@ -2582,7 +2582,7 @@
     <script src="{{ asset('assets/js/nifty.js') }}"></script>
 
     <!-- Nifty Settings [ DEMO ] -->
-    <script src="{{ asset('assets/js/demo-purpose-only.js') }}"></script>
+    <!-- <script src="{{ asset('assets/js/demo-purpose-only.js') }}"></script> -->
 
     <!-- Chart JS Scripts [ OPTIONAL ] -->
     <script src="{{ asset('assets/vendors/chart.js/chart.umd.min.js') }}"></script>

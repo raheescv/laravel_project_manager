@@ -427,3 +427,12 @@ if (! function_exists('arabicNumber')) {
         return strtr(number_format($value, 2), array_combine(range(0, 9), $arabicNumerals));
     }
 }
+
+if (! function_exists('https_asset')) {
+    function https_asset($path)
+    {
+        $url = asset($path);
+
+        return str_replace('http://', 'https://', $url);
+    }
+}

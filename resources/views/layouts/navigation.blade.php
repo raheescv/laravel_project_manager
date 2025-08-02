@@ -98,7 +98,7 @@
         <div class="mainnav__top-content scrollable-content pb-5">
             <div id="_dm-mainnavProfile" class="mainnav__widget my-3 hv-outline-parent">
                 <div class="mininav-toggle text-center py-2">
-                    <img class="mainnav__avatar img-md rounded-circle hv-oc" src="{{ asset('assets/img/profile-photos/1.png') }}" alt="Profile Picture">
+                    <img class="mainnav__avatar img-md rounded-circle hv-oc" src="{{ secure_asset('assets/img/profile-photos/1.png') }}" alt="Profile Picture">
                 </div>
                 <div class="mininav-content collapse d-mn-max">
                     <span data-popper-arrow class="arrow"></span>
@@ -139,7 +139,7 @@
                     @if (auth()->user()->can('inventory.view'))
                         <li class="nav-item has-sub">
                             <a href="#"
-                                class="mininav-toggle nav-link {{ request()->is(['inventory', 'inventory/product/*', 'inventory/transfer', 'inventory/transfer/edit/*', 'inventory/transfer/create', 'inventory/transfer/view/*', 'report/product']) ? 'active' : '' }}"><i
+                                class="mininav-toggle nav-link {{ request()->is(['inventory', 'inventory/product/*', 'inventory/transfer','inventory/barcode/cart', 'inventory/transfer/edit/*', 'inventory/transfer/create', 'inventory/transfer/view/*', 'report/product']) ? 'active' : '' }}"><i
                                     class="fa fa-cubes fs-5 me-2"></i>
                                 <span class="nav-label mininav-content ms-1 collapse show" style="">Inventory</span>
                             </a>
@@ -148,6 +148,9 @@
                                 @can('inventory.view')
                                     <li class="nav-item">
                                         <a href="{{ route('inventory::index') }}" class="nav-link {{ request()->is(['inventory', 'inventory/product/*']) ? 'active' : '' }}">List</a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a href="{{ route('inventory::barcode::cart::index') }}" class="nav-link {{ request()->is(['inventory/barcode/cart']) ? 'active' : '' }}">Barcode Cart</a>
                                     </li>
                                 @endcan
                                 @can('inventory transfer.create')
@@ -199,6 +202,7 @@
                                     'report/sales_overview',
                                     'sale',
                                     'sale/create',
+                                    'sale/pos',
                                     'sale/edit/*',
                                     'sale/view/*',
                                     'report/sale_item',
@@ -216,6 +220,11 @@
                                 @can('sale.create')
                                     <li class="nav-item">
                                         <a href="{{ route('sale::create') }}" class="nav-link {{ request()->is(['sale/create']) ? 'active' : '' }}">Create</a>
+                                    </li>
+                                @endcan
+                                @can('sale.create')
+                                    <li class="nav-item">
+                                        <a href="{{ route('sale::pos') }}" class="nav-link {{ request()->is(['sale/pos']) ? 'active' : '' }}">POS Sale</a>
                                     </li>
                                 @endcan
                                 @can('sale.view')

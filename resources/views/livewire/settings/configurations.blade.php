@@ -28,6 +28,17 @@
                                     {{ html()->select('default_payment_method_id', $paymentMethods)->value($default_payment_method_id)->class('form-select select-account_id-list')->id('default_payment_method_id')->placeholder('Select Default Payment Method')->attribute('wire:model', 'default_payment_method_id') }}
                                 </div>
                             </div>
+
+                            <div class="col-12">
+                                <div class="form-group">
+                                    <label class="form-label fw-medium" for="default_product_type">Default Product Type</label>
+                                    {{ html()->select('default_product_type', [
+                                        'product' => 'Products',
+                                        'service' => 'Services',
+                                        '' => 'All Types'
+                                    ])->value($default_product_type)->class('form-select')->placeholder('Select Default Product Type')->attribute('wire:model', 'default_product_type') }}
+                                </div>
+                            </div>
                         </div>
                     </div>
 

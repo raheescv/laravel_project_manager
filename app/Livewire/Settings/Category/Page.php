@@ -79,6 +79,7 @@ class Page extends Component
             }
             $this->categories['id'] = $response['data']['id'];
             $parent_id = $response['data']['parent_id'];
+            $parent_name = $response['data']->parent?->name;
             $this->dispatch('success', ['message' => $response['message']]);
             $this->mount($this->table_id);
             if (! $close) {
@@ -87,6 +88,7 @@ class Page extends Component
                 $this->mount();
             }
             $this->categories['parent_id'] = $parent_id;
+            $this->categories['parent']['name'] = $parent_name;
             $this->dispatch('RefreshCategoryTable');
         } catch (\Throwable $e) {
             $this->dispatch('error', ['message' => $e->getMessage()]);
