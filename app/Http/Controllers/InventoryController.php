@@ -13,6 +13,11 @@ class InventoryController extends Controller
         return view('inventory.index');
     }
 
+    public function search()
+    {
+        return view('inventory.product-search');
+    }
+
     public function view($product_id)
     {
         $product = Product::find($product_id);
