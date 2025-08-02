@@ -18,6 +18,7 @@ return Application::configure(basePath: dirname(__DIR__))
             __DIR__.'/../routes/print.php',
             __DIR__.'/../routes/report.php',
             __DIR__.'/../routes/settings.php',
+            __DIR__.'/../routes/api_log.php',
         ],
         api: __DIR__.'/../routes/api.php',
         commands: __DIR__.'/../routes/console.php',

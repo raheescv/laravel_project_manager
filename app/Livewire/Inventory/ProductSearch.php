@@ -40,7 +40,7 @@ class ProductSearch extends Component
         $this->branches = Branch::get();
     }
 
-    public function updated($key,$value)
+    public function updated($key, $value)
     {
         $this->resetPage();
     }

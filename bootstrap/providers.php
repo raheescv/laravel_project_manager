@@ -7,6 +7,7 @@ return [
     App\Providers\OllamaProvider::class,
     App\Providers\OpenAIServiceProvider::class,
     App\Providers\SaleProvider::class,
+    App\Providers\MoqSolutionsProvider::class,
     App\Providers\TelegramServiceProvider::class,
     App\Providers\WhatsappProvider::class,
     Maatwebsite\Excel\ExcelServiceProvider::class,

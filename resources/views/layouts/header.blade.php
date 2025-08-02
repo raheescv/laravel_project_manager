@@ -180,6 +180,11 @@
                                             <i class="fa fa-barcode fs-5 me-2"></i>Barcode Configuration
                                         </a>
                                     @endcan
+                                    @can('api_log.moq settings')
+                                        <a href="{{ route('api_log::moq-settings') }}" class="list-group-item list-group-item-action">
+                                            <i class="fa fa-cog fs-5 me-2"></i>Moq Settings
+                                        </a>
+                                    @endcan
                                     @can('configuration.settings')
                                         <a href="{{ route('settings::index') }}" class="list-group-item list-group-item-action">
                                             <i class="fa fa-cogs fs-5 me-2"></i>Settings
