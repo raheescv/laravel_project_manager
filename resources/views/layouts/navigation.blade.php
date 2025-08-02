@@ -139,7 +139,7 @@
                     @if (auth()->user()->can('inventory.view'))
                         <li class="nav-item has-sub">
                             <a href="#"
-                                class="mininav-toggle nav-link {{ request()->is(['inventory', 'inventory/product/*', 'inventory/transfer', 'inventory/transfer/edit/*', 'inventory/transfer/create', 'inventory/transfer/view/*', 'report/product']) ? 'active' : '' }}"><i
+                                class="mininav-toggle nav-link {{ request()->is(['inventory', 'inventory/product/*', 'inventory/transfer','inventory/barcode/cart', 'inventory/transfer/edit/*', 'inventory/transfer/create', 'inventory/transfer/view/*', 'report/product']) ? 'active' : '' }}"><i
                                     class="fa fa-cubes fs-5 me-2"></i>
                                 <span class="nav-label mininav-content ms-1 collapse show" style="">Inventory</span>
                             </a>
@@ -148,6 +148,9 @@
                                 @can('inventory.view')
                                     <li class="nav-item">
                                         <a href="{{ route('inventory::index') }}" class="nav-link {{ request()->is(['inventory', 'inventory/product/*']) ? 'active' : '' }}">List</a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a href="{{ route('inventory::barcode::cart::index') }}" class="nav-link {{ request()->is(['inventory/barcode/cart']) ? 'active' : '' }}">Barcode Cart</a>
                                     </li>
                                 @endcan
                                 @can('inventory transfer.create')

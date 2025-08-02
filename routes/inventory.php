@@ -26,6 +26,10 @@ Route::middleware('auth')->group(function (): void {
             Route::get('print/{id?}', [BarcodeController::class, 'print'])->name('print');
             Route::get('view/{id?}', [BarcodeController::class, 'print'])->name('view');
             Route::get('configuration', [BarcodeController::class, 'configuration'])->name('configuration')->can('configuration.barcode');
+            Route::name('cart::')->prefix('cart')->group(function (): void {
+                Route::get('', [BarcodeController::class, 'index'])->name('index');
+                Route::get('print', [BarcodeController::class, 'cartPrint'])->name('print');
+            });
         });
         // AI Image Generation routes
         Route::get('ai-image', [AiImageController::class, 'index'])->name('ai-image')->can('inventory.view');
