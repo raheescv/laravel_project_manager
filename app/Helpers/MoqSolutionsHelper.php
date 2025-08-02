@@ -18,8 +18,6 @@ class MoqSolutionsHelper
 
     protected $token;
 
-    protected $outlet_name;
-
     public function __construct()
     {
         $this->username = config('moq.username');
@@ -27,7 +25,6 @@ class MoqSolutionsHelper
         $this->token = config('moq.token');
         $this->endpoint_sandbox = config('moq.endpoint_sandbox');
         $this->endpoint = config('moq.endpoint');
-        $this->outlet_name = config('moq.outlet_name');
     }
 
     /**
@@ -109,7 +106,6 @@ class MoqSolutionsHelper
     public function getConfig()
     {
         return [
-            'outlet_name' => $this->outlet_name,
             'endpoint' => $this->endpoint,
             'endpoint_sandbox' => $this->endpoint_sandbox,
             'username' => $this->username,
@@ -129,7 +125,7 @@ class MoqSolutionsHelper
             $testData = [
                 [
                     'Date' => date('Y-m-d'),
-                    'Outlet' => $this->outlet_name,
+                    'Outlet' => config('app.name'),
                     'Revenue' => 1,
                 ],
             ];

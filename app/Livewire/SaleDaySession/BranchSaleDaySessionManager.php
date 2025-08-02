@@ -143,13 +143,13 @@ class BranchSaleDaySessionManager extends Component
             // Close the day session
             $this->currentSession->close($this->closing_amount, $this->sync_amount, Auth::id(), $this->notes);
 
-            $syncData = [
-                'Date' => $this->currentSession->opened_at->format('Y-m-d'),
-                'Revenue' => floatval($this->sync_amount),
-                'Outlet' => config('moq.outlet_name'),
-            ];
-
             if ($this->currentSession->branch->moq_sync) {
+                $syncData = [
+                    'Date' => $this->currentSession->opened_at->format('Y-m-d'),
+                    'Revenue' => floatval($this->sync_amount),
+                    'Outlet' => config('app.name').' '.$this->currentSession->branch->name,
+                ];
+                dd($syncData);
                 $result = MoqSolutionsHelper::syncDayCloseAmount($syncData);
                 if (! $result['success']) {
                     throw new \Exception('Failed to close day: '.$result['error']);
