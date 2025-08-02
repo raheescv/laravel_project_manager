@@ -25,10 +25,6 @@ class ProductSearch extends Component
 
     public $limit = 25;
 
-    public $totalProducts = 0;
-
-    public $inStockCount = 0;
-
     protected $queryString = [
         'search' => ['except' => ''],
         'productCode' => ['except' => ''],

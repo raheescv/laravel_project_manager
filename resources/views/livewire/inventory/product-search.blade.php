@@ -1,29 +1,4 @@
 <div class="card shadow-sm border-0">
-    <!-- Header Section -->
-    <div class="card-header bg-primary text-white py-3">
-        <div class="row align-items-center">
-            <div class="col-md-6">
-                <div class="d-flex align-items-center">
-                    <div class="me-3">
-                        <i class="demo-psi-search fs-4"></i>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-6 text-md-end">
-                <div class="d-flex align-items-center justify-content-md-end gap-3">
-                    <div class="text-center">
-                        <div class="text-white-50 small">Total Products</div>
-                        <div class="fs-4 fw-bold">{{ $totalProducts }}</div>
-                    </div>
-                    <div class="text-center">
-                        <div class="text-white-50 small">In Stock</div>
-                        <div class="fs-4 fw-bold text-success">{{ $inStockCount }}</div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
     <!-- Search and Filters Section -->
     <div class="card-body bg-light">
         <div class="row g-3 align-items-end">
