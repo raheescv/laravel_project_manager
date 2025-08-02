@@ -398,6 +398,10 @@ export default {
         paymentMethods: {
             type: Array,
             default: () => []
+        },
+        defaultProductType: {
+            type: String,
+            default: 'service'
         }
     },
 
@@ -442,7 +446,7 @@ export default {
         })
 
         // Product type filter
-        const selectedProductType = ref('service')
+        const selectedProductType = ref(props.defaultProductType)
         const productTypeOptions = ref([
             { value: '', label: 'All Types' },
             { value: 'product', label: 'Products' },

@@ -16,6 +16,8 @@ class Configurations extends Component
 
     public $default_payment_method_id;
 
+    public $default_product_type;
+
     public $paymentMethods;
 
     public function mount()
@@ -23,6 +25,7 @@ class Configurations extends Component
         $this->barcode_type = Configuration::where('key', 'barcode_type')->value('value');
         $this->payment_methods = Configuration::where('key', 'payment_methods')->value('value');
         $this->default_payment_method_id = Configuration::where('key', 'default_payment_method_id')->value('value') ?? 1;
+        $this->default_product_type = Configuration::where('key', 'default_product_type')->value('value') ?? 'service';
         $this->payment_methods = json_decode($this->payment_methods, 1);
         $this->paymentMethods = [];
         if ($this->payment_methods) {
@@ -40,6 +43,7 @@ class Configurations extends Component
         Configuration::updateOrCreate(['key' => 'default_payment_method_id'], ['value' => $this->default_payment_method_id]);
         Configuration::updateOrCreate(['key' => 'barcode_type'], ['value' => $this->barcode_type]);
         Configuration::updateOrCreate(['key' => 'payment_methods'], ['value' => json_encode($this->payment_methods)]);
+        Configuration::updateOrCreate(['key' => 'default_product_type'], ['value' => $this->default_product_type]);
         Cache::forget('payment_methods');
         $this->dispatch('success', ['message' => 'Updated Successfully']);
     }

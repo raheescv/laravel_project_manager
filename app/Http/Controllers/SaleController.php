@@ -46,6 +46,9 @@ class SaleController extends Controller
             $paymentMethods = Account::whereIn('id', $paymentMethodIds)->get(['name', 'id'])->toArray();
         }
 
+        // Get default product type from configuration
+        $defaultProductType = Configuration::where('key', 'default_product_type')->value('value') ?? 'service';
+
         // Default sale data
         $saleData = [
             'id' => null,
@@ -242,6 +245,7 @@ class SaleController extends Controller
             'countries' => $countries,
             'paymentMethods' => $paymentMethods,
             'saleData' => $saleData,
+            'defaultProductType' => $defaultProductType,
         ];
 
         return inertia('Sale/POS', $data);
