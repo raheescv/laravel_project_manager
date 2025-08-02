@@ -25,6 +25,8 @@ class ProductSearch extends Component
 
     public $limit = 25;
 
+    protected $paginationTheme = 'bootstrap';
+
     protected $queryString = [
         'search' => ['except' => ''],
         'productCode' => ['except' => ''],
@@ -55,21 +57,8 @@ class ProductSearch extends Component
                 $q->where('type', 'product');
             });
 
-        // Apply branch filter
         if ($this->selectedBranch) {
             $query->where('branch_id', $this->selectedBranch);
-        }
-
-        // Apply search filters
-        if ($this->search) {
-            $query->whereHas('product', function ($q) {
-                $q->where(function ($subQ) {
-                    $subQ->where('code', 'like', "%{$this->search}%")
-                        ->orWhere('name', 'like', "%{$this->search}%")
-                        ->orWhere('barcode', 'like', "%{$this->search}%")
-                        ->orWhere('name_arabic', 'like', "%{$this->search}%");
-                });
-            });
         }
 
         if ($this->productCode) {
