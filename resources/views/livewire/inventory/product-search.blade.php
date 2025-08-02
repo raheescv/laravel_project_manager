@@ -23,8 +23,12 @@
                     <span class="input-group-text bg-white border-end-0">
                         <i class="demo-psi-tag text-muted"></i>
                     </span>
-                    <input type="text" wire:model.live.debounce.300ms="productCode" class="form-control border-start-0" placeholder="Enter product code..." autocomplete="off">
+                    <input type="text" wire:model.live.debounce.300ms="productCode" class="form-control border-start-0" placeholder="Enter product code..." autocomplete="off" id="productCodeInput">
+                    <button type="button" class="btn btn-outline-primary border-start-0" onclick="startBarcodeScanner()" title="Scan Barcode">
+                        <i class="demo-psi-camera"></i>
+                    </button>
                 </div>
+                <small class="text-muted">Click the camera icon to scan barcode</small>
             </div>
 
             <!-- Branch Filter -->
@@ -168,4 +172,202 @@
     @if ($products && $products->hasPages())
         {{ $products->links() }}
     @endif
+
+    <!-- Barcode Scanner Modal -->
+    <div class="modal fade" id="barcodeScannerModal" tabindex="-1" aria-labelledby="barcodeScannerModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="barcodeScannerModalLabel">
+                        <i class="demo-psi-camera me-2"></i>Barcode Scanner
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="text-center mb-3">
+                        <p class="text-muted">Position the barcode within the camera view</p>
+                    </div>
+                    <div class="d-flex justify-content-center">
+                        <div id="scanner-container" style="width: 100%; max-width: 500px;">
+                            <video id="scanner-video" style="width: 100%; height: 300px; border: 2px solid #ddd; border-radius: 8px;"></video>
+                        </div>
+                    </div>
+                    <div class="text-center mt-3">
+                        <div id="scanner-status" class="alert alert-info" style="display: none;">
+                            <i class="demo-psi-search me-2"></i>Scanning for barcode...
+                        </div>
+                        <div id="scanner-result" class="alert alert-success" style="display: none;">
+                            <i class="demo-psi-check me-2"></i>Barcode detected: <span id="scanned-code"></span>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" onclick="applyScannedCode()">Apply Code</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let scanner = null;
+        let scannedBarcode = '';
+
+        function startBarcodeScanner() {
+            // Show modal
+            const modal = new bootstrap.Modal(document.getElementById('barcodeScannerModal'));
+            modal.show();
+
+            // Initialize scanner after modal is shown
+            document.getElementById('barcodeScannerModal').addEventListener('shown.bs.modal', function() {
+                initializeScanner();
+            });
+        }
+
+        function initializeScanner() {
+            const video = document.getElementById('scanner-video');
+            const statusDiv = document.getElementById('scanner-status');
+            const resultDiv = document.getElementById('scanner-result');
+
+            // Show status
+            statusDiv.style.display = 'block';
+            resultDiv.style.display = 'none';
+
+            // Check if browser supports getUserMedia
+            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                statusDiv.innerHTML = '<i class="demo-psi-close me-2"></i>Camera not supported in this browser';
+                statusDiv.className = 'alert alert-danger';
+                return;
+            }
+
+            // Get camera access
+            navigator.mediaDevices.getUserMedia({
+                    video: {
+                        facingMode: 'environment', // Use back camera on mobile
+                        width: {
+                            ideal: 1280
+                        },
+                        height: {
+                            ideal: 720
+                        }
+                    }
+                })
+                .then(function(stream) {
+                    video.srcObject = stream;
+                    video.play();
+
+                    // Initialize barcode scanner library
+                    if (typeof Quagga !== 'undefined') {
+                        initializeQuaggaScanner();
+                    } else {
+                        // Fallback: load Quagga library
+                        loadQuaggaLibrary();
+                    }
+                })
+                .catch(function(err) {
+                    console.error('Camera access error:', err);
+                    statusDiv.innerHTML = '<i class="demo-psi-close me-2"></i>Unable to access camera. Please check permissions.';
+                    statusDiv.className = 'alert alert-danger';
+                });
+        }
+
+        function loadQuaggaLibrary() {
+            // Load Quagga library dynamically
+            const script = document.createElement('script');
+            script.src = 'https://cdnjs.cloudflare.com/ajax/libs/quagga/0.12.1/quagga.min.js';
+            script.onload = function() {
+                initializeQuaggaScanner();
+            };
+            script.onerror = function() {
+                document.getElementById('scanner-status').innerHTML = '<i class="demo-psi-close me-2"></i>Failed to load scanner library';
+                document.getElementById('scanner-status').className = 'alert alert-danger';
+            };
+            document.head.appendChild(script);
+        }
+
+        function initializeQuaggaScanner() {
+            const statusDiv = document.getElementById('scanner-status');
+            const resultDiv = document.getElementById('scanner-result');
+
+            Quagga.init({
+                inputStream: {
+                    name: "Live",
+                    type: "LiveStream",
+                    target: document.getElementById('scanner-video'),
+                    constraints: {
+                        width: 640,
+                        height: 480,
+                        facingMode: "environment"
+                    },
+                },
+                decoder: {
+                    readers: [
+                        "code_128_reader",
+                        "ean_reader",
+                        "ean_8_reader",
+                        "code_39_reader",
+                        "code_39_vin_reader",
+                        "codabar_reader",
+                        "upc_reader",
+                        "upc_e_reader",
+                        "i2of5_reader"
+                    ]
+                }
+            }, function(err) {
+                if (err) {
+                    console.error('Quagga initialization error:', err);
+                    statusDiv.innerHTML = '<i class="demo-psi-close me-2"></i>Failed to initialize scanner';
+                    statusDiv.className = 'alert alert-danger';
+                    return;
+                }
+
+                statusDiv.innerHTML = '<i class="demo-psi-search me-2"></i>Scanning for barcode...';
+                statusDiv.className = 'alert alert-info';
+
+                Quagga.start();
+            });
+
+            Quagga.onDetected(function(result) {
+                const code = result.codeResult.code;
+                scannedBarcode = code;
+
+                // Show result
+                document.getElementById('scanned-code').textContent = code;
+                resultDiv.style.display = 'block';
+                statusDiv.style.display = 'none';
+
+                // Stop scanning
+                Quagga.stop();
+            });
+        }
+
+        function applyScannedCode() {
+            if (scannedBarcode) {
+                // Set the scanned barcode to the input field
+                document.getElementById('productCodeInput').value = scannedBarcode;
+
+                // Trigger Livewire update
+                @this.set('productCode', scannedBarcode);
+
+                // Close modal
+                const modal = bootstrap.Modal.getInstance(document.getElementById('barcodeScannerModal'));
+                modal.hide();
+
+                // Reset
+                scannedBarcode = '';
+                document.getElementById('scanner-result').style.display = 'none';
+            }
+        }
+
+        // Clean up when modal is hidden
+        document.getElementById('barcodeScannerModal').addEventListener('hidden.bs.modal', function() {
+            if (scanner) {
+                Quagga.stop();
+            }
+            const video = document.getElementById('scanner-video');
+            if (video.srcObject) {
+                video.srcObject.getTracks().forEach(track => track.stop());
+            }
+        });
+    </script>
 </div>
