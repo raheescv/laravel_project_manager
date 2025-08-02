@@ -23,55 +23,33 @@ class AppServiceProvider extends ServiceProvider
             \Illuminate\Support\Facades\URL::forceScheme('https');
         }
 
-        // Register a custom helper for HTTPS assets
-        if (! function_exists('https_asset')) {
-            function https_asset($path)
-            {
-                $url = asset($path);
-
-                return str_replace('http://', 'https://', $url);
-            }
-        }
-
         if (Schema::hasTable('branches')) {
             Cache::remember('branches', now()->addYear(), function () {
-                info('branches remember');
-
                 return Branch::select('id', 'name')->get();
             });
         }
         if (Schema::hasTable('configurations')) {
             Cache::remember('barcode_type', now()->addYear(), function () {
-                info('configuration remember');
-
                 return Configuration::where('key', 'barcode_type')->value('value');
             });
             Cache::remember('payment_methods', now()->addYear(), function () {
-                info('payment_methods remember');
                 $list = Configuration::where('key', 'payment_methods')->value('value');
 
                 return json_decode($list, 1);
             });
             Cache::remember('sale_type', now()->addYear(), function () {
-                info('sale_type remember');
-
                 return Configuration::where('key', 'sale_type')->value('value');
             });
 
             Cache::remember('theme_settings', now()->addYear(), function () {
-                info('theme_settings remember');
                 $themeSettings = Configuration::where('key', 'theme_settings')->value('value');
 
                 return $themeSettings ? json_decode($themeSettings, true) : null;
             });
             Cache::remember('logo', now()->addYear(), function () {
-                info('logo remember');
-
                 return Configuration::where('key', 'logo')->value('value') ?? asset('assets/img/logo.svg');
             });
             Cache::remember('mobile', now()->addYear(), function () {
-                info('mobile remember');
-
                 return Configuration::where('key', 'mobile')->value('value');
             });
         }

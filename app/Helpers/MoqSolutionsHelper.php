@@ -72,14 +72,12 @@ class MoqSolutionsHelper
             }
 
             if ($response['status'] != 'Posted') {
-                $status = 'failed';
-            } else {
-                $status = 'success';
+                throw new \Exception($response['status']);
             }
 
             $apiLog->update([
                 'response' => json_encode($response),
-                'status' => $status,
+                'status' => 'success',
             ]);
 
             return [

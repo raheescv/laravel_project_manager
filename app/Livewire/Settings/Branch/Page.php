@@ -46,10 +46,14 @@ class Page extends Component
                 'code' => $code,
                 'name' => $name,
                 'location' => '',
+                'mobile' => '',
+                'moq_sync' => false,
             ];
         } else {
             $branch = Branch::find($this->table_id);
             $this->branches = $branch->toArray();
+            // Ensure moq_sync is a boolean
+            $this->branches['moq_sync'] = (bool) $this->branches['moq_sync'];
         }
     }
 

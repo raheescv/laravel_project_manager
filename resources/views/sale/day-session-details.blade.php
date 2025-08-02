@@ -118,9 +118,13 @@
                                     <h6 class="mb-1 text-muted">Cash Summary</h6>
                                     <h4 class="mb-0 fw-bold" style="color: #2c3e50;">
                                         @if ($session->status == 'closed')
-                                            {{ number_format($session->closing_amount, 2) }}
+                                            {{ currency($session->closing_amount) }}
+                                            @if ($session->sync_amount != 0)
+                                                <br>
+                                                {{ currency($session->sync_amount) }}
+                                            @endif
                                         @else
-                                            {{ number_format($session->opening_amount, 2) }}
+                                            {{ currency($session->opening_amount) }}
                                         @endif
                                     </h4>
                                 </div>

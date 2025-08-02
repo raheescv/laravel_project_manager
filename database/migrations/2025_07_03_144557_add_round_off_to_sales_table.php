@@ -18,7 +18,6 @@ return new class() extends Migration
     public function down(): void
     {
         Schema::table('sales', function (Blueprint $table) {
-
             if (Schema::hasColumn('sales', 'round_off')) {
                 $table->dropColumn('round_off');
             }

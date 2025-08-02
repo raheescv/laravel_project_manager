@@ -346,12 +346,24 @@
                                                     <i class="fa fa-money me-2" style="color: var(--success-color);"></i>Closing Amount
                                                     <span class="text-danger">*</span>
                                                 </label>
-                                                <input type="number" step="0.01" class="form-control" wire:model="closing_amount" placeholder="0.00">
+                                                <input type="number" step="0.01" class="form-control" wire:model.live="closing_amount" placeholder="0.00">
                                                 @error('closing_amount')
                                                     <div class="text-danger small mt-2">{{ $message }}</div>
                                                 @enderror
                                             </div>
-                                            <div class="col-md-8">
+                                            @can('day close.sync amount')
+                                            <div class="col-md-4">
+                                                <label class="form-label fw-bold" style="color: var(--text-primary);">
+                                                    <i class="fa fa-money me-2" style="color: var(--success-color);"></i>Sync Amount
+                                                    <span class="text-danger">*</span>
+                                                </label>
+                                                <input type="number" step="0.01" class="form-control" wire:model="sync_amount" placeholder="0.00">
+                                                @error('sync_amount')
+                                                    <div class="text-danger small mt-2">{{ $message }}</div>
+                                                @enderror
+                                            </div>
+                                            @endcan
+                                            <div class="col-md-12">
                                                 <label class="form-label fw-bold" style="color: var(--text-primary);">
                                                     <i class="fa fa-comment me-2" style="color: var(--text-secondary);"></i>Notes
                                                     <span class="text-muted">(Optional)</span>

@@ -56,6 +56,7 @@ return [
         'sale calendar',
     ],
     'log' => ['inventory'],
+    'day close' => ['sync amount'],
     'api_log' => ['view', 'moq settings'],
     'backup' => ['create', 'view', 'download'],
     'system health' => ['view'],

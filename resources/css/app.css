@@ -1249,5 +1249,106 @@
 
 /* Skip link for accessibility */
 .skip-link {
-    @apply sr-only focus:not-sr-only focus:absolute focus:top-0 focus:left-0 bg-blue-600 text-white p-2 z-50;
+    @apply absolute -top-10 left-6 bg-blue-600 text-white px-4 py-2 rounded-md z-50;
+}
+
+.skip-link:focus {
+    @apply top-6;
+}
+
+/* MOQ Sync Checkbox Styles */
+.moq-sync-container {
+    @apply mt-4;
+}
+
+.custom-checkbox-wrapper {
+    @apply relative flex items-start p-4 rounded-lg border-2 border-gray-200 bg-white transition-all duration-300 ease-in-out;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.custom-checkbox-wrapper:hover {
+    @apply border-blue-300 bg-blue-50;
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
+    transform: translateY(-1px);
+}
+
+.moq-sync-checkbox {
+    @apply mt-1 mr-3 w-5 h-5 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2;
+    transition: all 0.2s ease-in-out;
+}
+
+.moq-sync-checkbox:checked {
+    @apply bg-blue-600 border-blue-600;
+    animation: checkboxPulse 0.3s ease-in-out;
+}
+
+.moq-sync-checkbox:focus {
+    @apply ring-2 ring-blue-500 ring-offset-2;
+}
+
+.moq-sync-label {
+    @apply flex items-start cursor-pointer text-gray-700 hover:text-gray-900 transition-colors duration-200;
+    flex: 1;
+}
+
+.checkbox-icon {
+    @apply flex items-center justify-center w-8 h-8 mr-3 rounded-full bg-blue-100 text-blue-600 transition-all duration-200;
+}
+
+.custom-checkbox-wrapper:hover .checkbox-icon {
+    @apply bg-blue-200 text-blue-700;
+    transform: scale(1.05);
+}
+
+.checkbox-icon i {
+    @apply text-sm;
+    transition: transform 0.2s ease-in-out;
+}
+
+.custom-checkbox-wrapper:hover .checkbox-icon i {
+    transform: rotate(15deg);
+}
+
+.checkbox-text {
+    @apply flex-1;
+}
+
+.checkbox-text strong {
+    @apply text-base font-semibold text-gray-900 mb-1 block;
+}
+
+.checkbox-text small {
+    @apply text-sm text-gray-500 leading-relaxed;
+}
+
+/* Animation for checkbox when checked */
+@keyframes checkboxPulse {
+    0% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.1);
+    }
+    100% {
+        transform: scale(1);
+    }
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .custom-checkbox-wrapper {
+        @apply p-3;
+    }
+
+    .checkbox-icon {
+        @apply w-6 h-6 mr-2;
+    }
+
+    .checkbox-text strong {
+        @apply text-sm;
+    }
+
+    .checkbox-text small {
+        @apply text-xs;
+    }
 }

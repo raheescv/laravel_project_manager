@@ -13,6 +13,7 @@ class Branch extends Model
         'code',
         'location',
         'mobile',
+        'moq_sync',
     ];
 
     public static function rules($id = 0, $merge = [])

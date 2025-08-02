@@ -46,6 +46,26 @@
                     </div>
                 </div>
             </div>
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="form-group">
+                        <div class="moq-sync-container">
+                            <div class="custom-checkbox-wrapper"> <br>
+                                {{ html()->checkbox('moq_sync')->class('form-check-input moq-sync-checkbox')->attribute('wire:model', 'branches.moq_sync')->id('moq_sync') }}
+                                <label for="moq_sync" class="form-check-label moq-sync-label">
+                                    <span class="checkbox-icon">
+                                        <i class="fas fa-sync-alt"></i>
+                                    </span>
+                                    <span class="checkbox-text">
+                                        <strong>MOQ Sync</strong>
+                                        <small class="text-muted d-block">Synchronize with MOQ Service</small>
+                                    </span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
         <div class="modal-footer">
             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>

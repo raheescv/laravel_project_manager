@@ -14,6 +14,7 @@ return new class() extends Migration
             $table->string('code')->unique();
             $table->string('location')->nullable();
             $table->string('mobile', 15)->nullable();
+            $table->boolean('moq_sync')->default(false);
             $table->timestamps();
         });
     }

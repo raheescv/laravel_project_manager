@@ -2,10 +2,12 @@
 
 namespace App\Livewire\SaleDaySession;
 
+use App\Helpers\Facades\MoqSolutionsHelper;
 use App\Models\Branch;
 use App\Models\Sale;
 use App\Models\SaleDaySession;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Livewire\Component;
 
 class BranchSaleDaySessionManager extends Component
@@ -15,6 +17,8 @@ class BranchSaleDaySessionManager extends Component
     public $opening_amount = 0;
 
     public $closing_amount = 0;
+
+    public $sync_amount = 0;
 
     public $notes;
 
@@ -35,6 +39,11 @@ class BranchSaleDaySessionManager extends Component
         $this->branch_id = Auth::user()->default_branch_id;
         $this->loadOpenSessions();
         $this->loadCurrentSession();
+    }
+
+    public function updatedClosingAmount()
+    {
+        $this->sync_amount = $this->closing_amount;
     }
 
     public function loadOpenSessions()
@@ -77,6 +86,7 @@ class BranchSaleDaySessionManager extends Component
 
         // Set the default closing amount to the expected amount
         $this->closing_amount = $this->sessionStats['expected_amount'];
+        $this->sync_amount = $this->closing_amount;
     }
 
     public function openDay()
@@ -117,29 +127,44 @@ class BranchSaleDaySessionManager extends Component
 
     public function closeDay()
     {
-        $this->validate([
-            'closing_amount' => 'required|numeric|min:0',
-        ]);
+        try {
+            DB::beginTransaction();
+            $this->validate([
+                'closing_amount' => 'required|numeric|min:0',
+                'sync_amount' => 'required|numeric|min:0',
+            ]);
 
-        if (! $this->currentSession) {
-            session()->flash('error', 'No open day session found for this branch.');
+            if (! $this->currentSession) {
+                session()->flash('error', 'No open day session found for this branch.');
 
-            return;
+                return;
+            }
+
+            // Close the day session
+            $this->currentSession->close($this->closing_amount, $this->sync_amount, Auth::id(), $this->notes);
+
+            $syncData = [
+                'Date' => $this->currentSession->opened_at->format('Y-m-d'),
+                'Revenue' => floatval($this->sync_amount),
+                'Outlet' => config('moq.outlet_name'),
+            ];
+
+            if ($this->currentSession->branch->moq_sync) {
+                $result = MoqSolutionsHelper::syncDayCloseAmount($syncData);
+                if (! $result['success']) {
+                    throw new \Exception('Failed to close day: '.$result['error']);
+                }
+            }
+
+            // Reset the form and reload sessions
+            $this->reset(['closing_amount', 'notes']);
+            $this->loadOpenSessions();
+            $this->loadCurrentSession(); // code...
+            DB::commit();
+        } catch (\Throwable $th) {
+            DB::rollback();
+            session()->flash('error', 'Failed to close day: '.$th->getMessage());
         }
-
-        // Close the day session
-        $this->currentSession->close(
-            $this->closing_amount,
-            Auth::id(),
-            $this->notes
-        );
-
-        session()->flash('success', 'Day closed successfully.');
-
-        // Reset the form and reload sessions
-        $this->reset(['closing_amount', 'notes']);
-        $this->loadOpenSessions();
-        $this->loadCurrentSession();
     }
 
     public function changeBranch($branchId)

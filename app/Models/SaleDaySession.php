@@ -22,6 +22,7 @@ class SaleDaySession extends Model implements AuditableContracts
         'closing_amount',
         'expected_amount',
         'difference_amount',
+        'sync_amount',
         'status',
         'notes',
     ];
@@ -90,11 +91,12 @@ class SaleDaySession extends Model implements AuditableContracts
             ->exists();
     }
 
-    public function close($closingAmount, $closedBy, $notes = null)
+    public function close($closingAmount, $syncAmount, $closedBy, $notes = null)
     {
         $this->closed_at = now();
         $this->closed_by = $closedBy;
         $this->closing_amount = $closingAmount;
+        $this->sync_amount = $syncAmount;
 
         // Calculate total sales amount for this session
         $totalSalesAmount = $this->sales->sum('paid');
