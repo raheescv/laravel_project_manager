@@ -83,52 +83,34 @@
                 <table class="table table-hover table-striped mb-0">
                     <thead class="table-light">
                         <tr>
-                            <th class="border-0"> <i class="fa fa-cube me-1 text-muted"></i> Name </th>
-                            <th class="border-0"> <i class="fa fa-barcode me-1 text-muted"></i> Code </th>
-                            <th class="border-0 text-end"> <i class="fa fa-cubes me-1 text-muted"></i> Quantity </th>
+                            <th class="border-0 text-end"> <i class="fa fa-barcode me-1 text-muted"></i> SKU </th>
+                            <th class="border-0"> <i class="fa fa-tag me-1 text-muted"></i> Name </th>
+                            <th class="border-0 text-end"> <i class="fa fa-ruler me-1 text-muted"></i> Size </th>
+                            <th class="border-0 text-end"> <i class="fa fa-barcode me-1 text-muted"></i> Bar </th>
+                            <th class="border-0 text-end"> <i class="fa fa-money me-1 text-muted"></i> Price </th>
+                            <th class="border-0"> <i class="fa fa-building me-1 text-muted"></i> Br </th>
+                            <th class="border-0 text-end"> <i class="fa fa-cubes me-1 text-muted"></i> QTY </th>
                         </tr>
                     </thead>
                     <tbody>
                         @foreach ($products as $item)
                             <tr class="align-middle">
+                                <td class="text-end"> <code class="text-primary">{{ $item->product->code }}</code> </td>
                                 <td>
                                     <div class="d-flex align-items-center">
                                         <div class="fw-medium">
-                                            {{ $item->product->name }}<br>
-                                            <small class="text-muted">{{ $item->product->brand }}</small>
-                                            <br>
-                                            <i class="fa fa-building text-primary"></i>
-                                            <span class="fw-medium">{{ $item->branch->name }}</span>
+                                            {{ $item->product->name }}
                                         </div>
                                     </div>
                                 </td>
-                                <td>
-                                    <table width="100%">
-                                        <tr>
-                                            <th>Code</th>
-                                            <td class="text-end"><code class="text-primary">{{ $item->product->code }}</code></td>
-                                        </tr>
-                                        <tr>
-                                            <th>Barcode</th>
-                                            <td class="text-end"><code class="text-primary">{{ $item->barcode }}</code></td>
-                                        </tr>
-                                        <tr>
-                                            <th>Size</th>
-                                            <td class="text-end">
-                                                @if ($item->product->size)
-                                                    <span class="badge bg-light text-dark">{{ $item->product->size }}</span>
-                                                @else
-                                                    <span class="text-muted">-</span>
-                                                @endif
-                                            </td>
-                                        </tr>
-                                    </table>
-                                </td>
+                                <td class="text-end"> <code class="text-primary">{{ $item->product->size }}</code> </td>
+                                <td class="text-end"> <code class="text-primary">{{ $item->barcode }}</code> </td>
+                                <td class="text-end"> <code class="text-primary">{{ $item->product->mrp }}</code> </td>
+                                <td> <span class="fw-medium">{{ $item->branch->name }}</span> </td>
                                 <td class="text-end">
                                     <span class="badge {{ $item->quantity > 0 ? 'bg-success' : 'bg-danger' }} fs-6">
                                         {{ $item->quantity }}
                                     </span>
-                                    <div class="fw-medium">{{ currency($item->product->mrp) }}</div>
                                 </td>
                             </tr>
                         @endforeach
