@@ -19,11 +19,16 @@ class ProductSearch extends Component
 
     public $selectedBranch = '';
 
+    public $showNonZeroOnly = false;
+
     public $branches = [];
 
     public $loading = false;
 
-    public $limit = 25;
+    public $limit = 50;
+
+    public $sortField = 'products.name';
+    public $sortDirection = 'asc';
 
     protected $paginationTheme = 'bootstrap';
 
@@ -32,7 +37,10 @@ class ProductSearch extends Component
         'productCode' => ['except' => ''],
         'productName' => ['except' => ''],
         'selectedBranch' => ['except' => ''],
+        'showNonZeroOnly' => ['except' => false],
         'limit' => ['except' => 25],
+        'sortField' => ['except' => 'products.name'],
+        'sortDirection' => ['except' => 'asc'],
     ];
 
     public function mount()
@@ -47,37 +55,57 @@ class ProductSearch extends Component
 
     public function clearFilters()
     {
-        $this->reset(['search', 'productCode', 'productName', 'selectedBranch']);
+        $this->reset(['search', 'productCode', 'productName', 'selectedBranch', 'showNonZeroOnly']);
+    }
+
+    public function sortBy($field)
+    {
+        if ($this->sortField === $field) {
+            $this->sortDirection = $this->sortDirection === 'asc' ? 'desc' : 'asc';
+        } else {
+            $this->sortField = $field;
+            $this->sortDirection = 'asc';
+        }
+
+        $this->resetPage();
     }
 
     public function render()
     {
-        $query = Inventory::with(['product', 'branch'])
-            ->whereHas('product', function ($q) {
-                $q->where('type', 'product');
-            });
+        $query = Inventory::query()
+            ->join('products', 'inventories.product_id', '=', 'products.id')
+            ->join('branches', 'inventories.branch_id', '=', 'branches.id')
+            ->where('products.type', 'product');
+        $query = $query->orderBy($this->sortField, $this->sortDirection);
 
         if ($this->selectedBranch) {
             $query->where('branch_id', $this->selectedBranch);
         }
-
         if ($this->productCode) {
-            $query->whereHas('product', function ($q) {
-                $q->where('code', 'like', "%{$this->productCode}%")
-                    ->orWhere('barcode', 'like', "%{$this->productCode}%")
-                    ->orWhere('inventories.barcode', 'like', "%{$this->productCode}%");
-            });
+            $query->where('products.code', 'like', "%{$this->productCode}%")
+                ->orWhere('inventories.barcode', 'like', "%{$this->productCode}%");
         }
 
         if ($this->productName) {
-            $query->whereHas('product', function ($q) {
-                $q->where(function ($subQ) {
-                    $subQ->where('name', 'like', "%{$this->productName}%")
-                        ->orWhere('name_arabic', 'like', "%{$this->productName}%");
-                });
-            });
+            $query->where('products.name', 'like', "%{$this->productName}%")
+                ->orWhere('products.name_arabic', 'like', "%{$this->productName}%");
         }
 
+        if ($this->showNonZeroOnly) {
+            $query->where('inventories.quantity', '>', 0);
+        }
+
+        $query = $query->select(
+            'inventories.id',
+            'inventories.quantity',
+            'inventories.barcode',
+            'products.name',
+            'products.name_arabic',
+            'products.code',
+            'products.size',
+            'products.mrp',
+            'branches.name as branch_name',
+        );
         $products = $query->paginate($this->limit);
 
         return view('livewire.inventory.product-search', compact('products'));

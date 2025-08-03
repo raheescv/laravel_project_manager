@@ -3,7 +3,7 @@
     <div class="card-body bg-light">
         <div class="row g-3 align-items-end">
             <!-- Product Name Filter -->
-            <div class="col-md-7">
+            <div class="col-md-6">
                 <label class="form-label fw-semibold mb-2">
                     <i class="fa fa-user me-1 text-warning"></i> Product Name
                 </label>
@@ -42,6 +42,19 @@
                         <option value="{{ $branch->id }}">{{ $branch->name }}</option>
                     @endforeach
                 </select>
+            </div>
+
+            <!-- Non-Zero Filter -->
+            <div class="col-md-1">
+                <label class="form-label fw-semibold mb-2">
+                    <i class="fa fa-filter me-1 text-warning"></i> Stock
+                </label>
+                <div class="form-check form-switch">
+                    <input class="form-check-input" type="checkbox" wire:model.live="showNonZeroOnly" id="showNonZeroOnly">
+                    <label class="form-check-label small" for="showNonZeroOnly">
+                        In stock only
+                    </label>
+                </div>
             </div>
         </div>
 
@@ -83,30 +96,51 @@
                 <table class="table table-hover table-striped mb-0">
                     <thead class="table-light">
                         <tr>
-                            <th class="border-0 text-end"> <i class="fa fa-barcode me-1 text-muted"></i> SKU </th>
-                            <th class="border-0"> <i class="fa fa-tag me-1 text-muted"></i> Name </th>
-                            <th class="border-0 text-end"> <i class="fa fa-ruler me-1 text-muted"></i> Size </th>
-                            <th class="border-0 text-end"> <i class="fa fa-barcode me-1 text-muted"></i> Bar </th>
-                            <th class="border-0 text-end"> <i class="fa fa-money me-1 text-muted"></i> Price </th>
-                            <th class="border-0"> <i class="fa fa-building me-1 text-muted"></i> Br </th>
-                            <th class="border-0 text-end"> <i class="fa fa-cubes me-1 text-muted"></i> QTY </th>
+                            <th class="border-0 text-end" style="cursor: pointer;">
+                                <i class="fa fa-barcode me-1 text-muted"></i>
+                                <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="products.code" label="SKU" />
+                            </th>
+                            <th class="border-0" style="cursor: pointer;">
+                                <i class="fa fa-tag me-1 text-muted"></i>
+                                <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="products.name" label="Name" />
+                            </th>
+                            <th class="border-0 text-end" style="cursor: pointer;">
+                                <i class="fa fa-ruler me-1 text-muted"></i>
+                                <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="products.size" label="Size" />
+                            </th>
+                            <th class="border-0 text-end" style="cursor: pointer;">
+                                <i class="fa fa-barcode me-1 text-muted"></i>
+                                <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="inventories.barcode" label="Barcode" />
+                            </th>
+                            <th class="border-0 text-end" style="cursor: pointer;">
+                                <i class="fa fa-money me-1 text-muted"></i>
+                                <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="products.mrp" label="Price" />
+                            </th>
+                            <th class="border-0" style="cursor: pointer;">
+                                <i class="fa fa-building me-1 text-muted"></i>
+                                <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="branches.name" label="Branch" />
+                            </th>
+                            <th class="border-0 text-end" style="cursor: pointer;">
+                                <i class="fa fa-cubes me-1 text-muted"></i>
+                                <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="inventories.quantity" label="Quantity" />
+                            </th>
                         </tr>
                     </thead>
                     <tbody>
                         @foreach ($products as $item)
                             <tr class="align-middle">
-                                <td class="text-end"> <code class="text-primary">{{ $item->product->code }}</code> </td>
+                                <td class="text-end"> <code class="text-primary">{{ $item->code }}</code> </td>
                                 <td>
                                     <div class="d-flex align-items-center">
                                         <div class="fw-medium">
-                                            {{ $item->product->name }}
+                                            {{ $item->name }}
                                         </div>
                                     </div>
                                 </td>
-                                <td class="text-end"> <code class="text-primary">{{ $item->product->size }}</code> </td>
+                                <td class="text-end"> <code class="text-primary">{{ $item->size }}</code> </td>
                                 <td class="text-end"> <code class="text-primary">{{ $item->barcode }}</code> </td>
-                                <td class="text-end"> <code class="text-primary">{{ $item->product->mrp }}</code> </td>
-                                <td> <span class="fw-medium">{{ $item->branch->name }}</span> </td>
+                                <td class="text-end"> <code class="text-primary">{{ currency($item->mrp) }}</code> </td>
+                                <td> <span class="fw-medium">{{ $item->branch_name }}</span> </td>
                                 <td class="text-end">
                                     <span class="badge {{ $item->quantity > 0 ? 'bg-success' : 'bg-danger' }} fs-6">
                                         {{ $item->quantity }}
