@@ -79,20 +79,20 @@ class ProductSearch extends Component
         $query = $query->orderBy($this->sortField, $this->sortDirection);
 
         if ($this->branch_id) {
-            $query->whereIn('branch_id', $this->branch_id);
+            $query = $query->whereIn('branch_id', $this->branch_id);
         }
         if ($this->productCode) {
-            $query->where('products.code', 'like', "%{$this->productCode}%")
+            $query = $query->where('products.code', 'like', "%{$this->productCode}%")
                 ->orWhere('inventories.barcode', 'like', "%{$this->productCode}%");
         }
 
         if ($this->productName) {
-            $query->where('products.name', 'like', "%{$this->productName}%")
+            $query = $query->where('products.name', 'like', "%{$this->productName}%")
                 ->orWhere('products.name_arabic', 'like', "%{$this->productName}%");
         }
 
         if ($this->showNonZeroOnly) {
-            $query->where('inventories.quantity', '>', 0);
+            $query = $query->where('inventories.quantity', '>', 0);
         }
 
         $query = $query->select(
