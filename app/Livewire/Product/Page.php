@@ -137,7 +137,6 @@ class Page extends Component
         'products.name.unique' => 'The name is already Registered',
         'products.name.max' => 'The name field must not be greater than 20 characters.',
         'products.code.required' => 'The code field is required',
-        'products.code.unique' => 'The code is already Registered',
         'products.code.max' => 'The code field must not be greater than 20 characters.',
         'products.unit_id' => 'The unit field is required.',
         'products.department_id' => 'The department  field is required.',
