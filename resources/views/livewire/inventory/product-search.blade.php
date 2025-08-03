@@ -3,7 +3,7 @@
     <div class="card-body bg-light">
         <div class="row g-3 align-items-end">
             <!-- Product Name Filter -->
-            <div class="col-md-6">
+            <div class="col-md-4">
                 <label class="form-label fw-semibold mb-2">
                     <i class="fa fa-user me-1 text-warning"></i> Product Name
                 </label>
@@ -32,20 +32,15 @@
             </div>
 
             <!-- Branch Filter -->
-            <div class="col-md-2" wire:ignore>
+            <div class="col-md-3" wire:ignore>
                 <label class="form-label fw-semibold mb-2">
                     <i class="fa fa-building me-1 text-success"></i> Branch
                 </label>
-                <select wire:model.live="selectedBranch" class="form-select">
-                    <option value="">All Branches</option>
-                    @foreach ($branches as $branch)
-                        <option value="{{ $branch->id }}">{{ $branch->name }}</option>
-                    @endforeach
-                </select>
+                {{ html()->select('branch_id', [auth()->user()->default_branch_id => auth()->user()->branch?->name])->value(auth()->user()->default_branch_id)->class('select-assigned-branch_id-list')->multiple()->id('branch_id') }}
             </div>
 
             <!-- Non-Zero Filter -->
-            <div class="col-md-1">
+            <div class="col-md-2">
                 <label class="form-label fw-semibold mb-2">
                     <i class="fa fa-filter me-1 text-warning"></i> Stock
                 </label>
@@ -203,7 +198,15 @@
         </div>
     </div>
 
-    <script>
+    @push('scripts')
+        <script>
+            $(document).ready(function() {
+                $('#branch_id').on('change', function(e) {
+                    const value = $(this).val() || null;
+                    @this.set('branch_id', value);
+                });
+            });
+
         let scanner = null;
         let scannedBarcode = '';
 
@@ -364,4 +367,5 @@
             }
         });
     </script>
+    @endpush
 </div>

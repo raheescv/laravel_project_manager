@@ -17,7 +17,7 @@ class ProductSearch extends Component
 
     public $productName = '';
 
-    public $selectedBranch = '';
+    public $branch_id = '';
 
     public $showNonZeroOnly = false;
 
@@ -36,7 +36,7 @@ class ProductSearch extends Component
         'search' => ['except' => ''],
         'productCode' => ['except' => ''],
         'productName' => ['except' => ''],
-        'selectedBranch' => ['except' => ''],
+        'branch_id' => ['except' => ''],
         'showNonZeroOnly' => ['except' => false],
         'limit' => ['except' => 25],
         'sortField' => ['except' => 'products.name'],
@@ -55,7 +55,7 @@ class ProductSearch extends Component
 
     public function clearFilters()
     {
-        $this->reset(['search', 'productCode', 'productName', 'selectedBranch', 'showNonZeroOnly']);
+        $this->reset(['search', 'productCode', 'productName', 'branch_id', 'showNonZeroOnly']);
     }
 
     public function sortBy($field)
@@ -78,8 +78,8 @@ class ProductSearch extends Component
             ->where('products.type', 'product');
         $query = $query->orderBy($this->sortField, $this->sortDirection);
 
-        if ($this->selectedBranch) {
-            $query->where('branch_id', $this->selectedBranch);
+        if ($this->branch_id) {
+            $query->whereIn('branch_id', $this->branch_id);
         }
         if ($this->productCode) {
             $query->where('products.code', 'like', "%{$this->productCode}%")

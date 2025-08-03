@@ -20,4 +20,7 @@
             </div>
         </div>
     </div>
+    @push('scripts')
+        @include('components.select.branchSelect')
+    @endpush
 </x-app-layout>
