@@ -92,6 +92,7 @@ class POSController extends Controller
                     $q->where('barcode', $request->barcode)
                         ->where('status', 'active');
                 })
+                ->where('inventories.branch_id', session('branch_id'))
                 ->first();
 
             if (! $inventory) {
@@ -121,7 +122,7 @@ class POSController extends Controller
         } catch (\Exception $e) {
             Log::error('Error finding product by barcode: '.$e->getMessage());
 
-            return response()->json(['error' => 'Failed to find product'], 500);
+            return response()->json(['error' => $e->getMessage()], 500);
         }
     }
 
