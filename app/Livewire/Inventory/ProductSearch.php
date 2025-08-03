@@ -19,7 +19,7 @@ class ProductSearch extends Component
 
     public $branch_id = '';
 
-    public $showNonZeroOnly = false;
+    public $showNonZeroOnly = true;
 
     public $branches = [];
 

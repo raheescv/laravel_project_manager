@@ -105,7 +105,7 @@
                             </th>
                             <th class="border-0 text-end" style="cursor: pointer;">
                                 <i class="fa fa-barcode me-1 text-muted"></i>
-                                <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="inventories.barcode" label="Barcode" />
+                                <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="inventories.barcode" label="Barcd" />
                             </th>
                             <th class="border-0 text-end" style="cursor: pointer;">
                                 <i class="fa fa-money me-1 text-muted"></i>
@@ -113,11 +113,11 @@
                             </th>
                             <th class="border-0" style="cursor: pointer;">
                                 <i class="fa fa-building me-1 text-muted"></i>
-                                <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="branches.name" label="Branch" />
+                                <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="branches.name" label="Br" />
                             </th>
                             <th class="border-0 text-end" style="cursor: pointer;">
                                 <i class="fa fa-cubes me-1 text-muted"></i>
-                                <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="inventories.quantity" label="Quantity" />
+                                <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="inventories.quantity" label="QTY" />
                             </th>
                         </tr>
                     </thead>
