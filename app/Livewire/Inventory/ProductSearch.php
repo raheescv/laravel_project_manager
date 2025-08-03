@@ -78,22 +78,28 @@ class ProductSearch extends Component
             ->where('products.type', 'product');
         $query = $query->orderBy($this->sortField, $this->sortDirection);
 
-        if ($this->branch_id) {
-            $query = $query->whereIn('branch_id', $this->branch_id);
-        }
-        if ($this->productCode) {
-            $query = $query->where('products.code', 'like', "%{$this->productCode}%")
-                ->orWhere('inventories.barcode', 'like', "%{$this->productCode}%");
-        }
+        $query = $query->when($this->branch_id, function ($query, $value) {
+            return $query->where('branch_id', $value);
+        });
 
-        if ($this->productName) {
-            $query = $query->where('products.name', 'like', "%{$this->productName}%")
-                ->orWhere('products.name_arabic', 'like', "%{$this->productName}%");
-        }
+        $query = $query->when($this->productCode, function ($query, $value) {
+            return $query->where(function ($q) use ($value): void {
+                $value = trim($value);
+                $q->where('products.code', 'like', "%{$value}%")
+                    ->orWhere('inventories.barcode', 'like', "%{$value}%");
+            });
+        });
+        $query = $query->when($this->productName, function ($query, $value) {
+            return $query->where(function ($q) use ($value): void {
+                $value = trim($value);
+                $q->where('products.name', 'like', "%{$value}%")
+                    ->orWhere('products.name_arabic', 'like', "%{$value}%");
+            });
+        });
 
-        if ($this->showNonZeroOnly) {
-            $query = $query->where('inventories.quantity', '>', 0);
-        }
+        $query = $query->when($this->showNonZeroOnly, function ($query, $value) {
+            return $query->where('inventories.quantity', '>', 0);
+        });
 
         $query = $query->select(
             'inventories.id',
