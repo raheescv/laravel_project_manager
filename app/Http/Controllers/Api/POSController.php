@@ -25,6 +25,8 @@ class POSController extends Controller
         try {
             $query = Inventory::with(['product']);
 
+            $query = $query->where('inventories.branch_id', session('branch_id'));
+
             // Filter by category
             if ($request->type) {
                 $query->whereHas('product', function ($q) use ($request) {
