@@ -128,7 +128,7 @@
                                     <span class="badge {{ $item->quantity > 0 ? 'bg-success' : 'bg-danger' }} fs-6">
                                         {{ $item->quantity }}
                                     </span>
-                                    <div class="fw-medium">₹{{ currency($item->product->mrp) }}</div>
+                                    <div class="fw-medium">{{ currency($item->product->mrp) }}</div>
                                 </td>
                             </tr>
                         @endforeach
