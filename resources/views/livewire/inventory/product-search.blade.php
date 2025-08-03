@@ -147,6 +147,12 @@
                             </tr>
                         @endforeach
                     </tbody>
+                    <tfoot>
+                        <tr>
+                            <th class="text-end" colspan="6">Total</th>
+                            <th class="text-end">{{ $products->sum('quantity') }}</th>
+                        </tr>
+                    </tfoot>
                 </table>
             </div>
         @else
