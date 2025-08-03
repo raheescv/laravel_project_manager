@@ -64,7 +64,8 @@ class ProductSearch extends Component
         if ($this->productCode) {
             $query->whereHas('product', function ($q) {
                 $q->where('code', 'like', "%{$this->productCode}%")
-                    ->orWhere('barcode', 'like', "%{$this->productCode}%");
+                    ->orWhere('barcode', 'like', "%{$this->productCode}%")
+                    ->orWhere('inventories.barcode', 'like', "%{$this->productCode}%");
             });
         }
 

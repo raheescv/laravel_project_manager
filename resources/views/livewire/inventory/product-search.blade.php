@@ -83,27 +83,9 @@
                 <table class="table table-hover table-striped mb-0">
                     <thead class="table-light">
                         <tr>
-                            <th class="border-0">
-                                <i class="fa fa-building me-1 text-muted"></i> Branch
-                            </th>
-                            <th class="border-0">
-                                <i class="fa fa-cube me-1 text-muted"></i> Product Name
-                            </th>
-                            <th class="border-0">
-                                <i class="fa fa-tag me-1 text-muted"></i> Brand
-                            </th>
-                            <th class="border-0 text-end">
-                                <i class="fa fa-barcode me-1 text-muted"></i> Code
-                            </th>
-                            <th class="border-0">
-                                <i class="fa fa-ruler me-1 text-muted"></i> Size
-                            </th>
-                            <th class="border-0 text-end">
-                                <i class="fa fa-cubes me-1 text-muted"></i> Quantity
-                            </th>
-                            <th class="border-0 text-end">
-                                <i class="fa fa-money me-1 text-muted"></i> Price
-                            </th>
+                            <th class="border-0"> <i class="fa fa-cube me-1 text-muted"></i> Name </th>
+                            <th class="border-0"> <i class="fa fa-barcode me-1 text-muted"></i> Code </th>
+                            <th class="border-0 text-end"> <i class="fa fa-cubes me-1 text-muted"></i> Quantity </th>
                         </tr>
                     </thead>
                     <tbody>
@@ -111,46 +93,42 @@
                             <tr class="align-middle">
                                 <td>
                                     <div class="d-flex align-items-center">
-                                        <div class="bg-primary bg-opacity-10 rounded-circle p-2 me-2">
+                                        <div class="fw-medium">
+                                            {{ $item->product->name }}<br>
+                                            <small class="text-muted">{{ $item->product->brand }}</small>
+                                            <br>
                                             <i class="fa fa-building text-primary"></i>
+                                            <span class="fw-medium">{{ $item->branch->name }}</span>
                                         </div>
-                                        <span class="fw-medium">{{ $item->branch->name }}</span>
                                     </div>
                                 </td>
                                 <td>
-                                    <div class="d-flex align-items-center">
-                                        <div class="fw-medium">{{ $item->product->name }} </div>
-                                    </div>
-                                </td>
-                                <td>
-                                    <div class="d-flex align-items-center">
-                                        <div class="fw-medium">{{ $item->product->brand }} </div>
-                                    </div>
-                                </td>
-                                <td class="text-end">
-                                    <code class="text-primary">{{ $item->product->code }}</code>
-                                </td>
-                                <td>
-                                    @if ($item->product->size)
-                                        <span class="badge bg-light text-dark">{{ $item->product->size }}</span>
-                                    @else
-                                        <span class="text-muted">-</span>
-                                    @endif
+                                    <table width="100%">
+                                        <tr>
+                                            <th>Code</th>
+                                            <td class="text-end"><code class="text-primary">{{ $item->product->code }}</code></td>
+                                        </tr>
+                                        <tr>
+                                            <th>Barcode</th>
+                                            <td class="text-end"><code class="text-primary">{{ $item->barcode }}</code></td>
+                                        </tr>
+                                        <tr>
+                                            <th>Size</th>
+                                            <td class="text-end">
+                                                @if ($item->product->size)
+                                                    <span class="badge bg-light text-dark">{{ $item->product->size }}</span>
+                                                @else
+                                                    <span class="text-muted">-</span>
+                                                @endif
+                                            </td>
+                                        </tr>
+                                    </table>
                                 </td>
                                 <td class="text-end">
                                     <span class="badge {{ $item->quantity > 0 ? 'bg-success' : 'bg-danger' }} fs-6">
                                         {{ $item->quantity }}
                                     </span>
-                                </td>
-                                <td class="text-end">
-                                    @if ($item->product->mrp)
-                                        <div class="fw-medium">₹{{ currency($item->product->mrp) }}</div>
-                                        @if ($item->product->cost)
-                                            <small class="text-muted">Cost: ₹{{ currency($item->product->cost) }}</small>
-                                        @endif
-                                    @else
-                                        <span class="text-muted">-</span>
-                                    @endif
+                                    <div class="fw-medium">₹{{ currency($item->product->mrp) }}</div>
                                 </td>
                             </tr>
                         @endforeach
@@ -178,9 +156,9 @@
         <div class="modal-dialog modal-lg">
             <div class="modal-content">
                 <div class="modal-header">
-                                    <h5 class="modal-title" id="barcodeScannerModalLabel">
-                    <i class="fa fa-camera me-2"></i>Barcode Scanner
-                </h5>
+                    <h5 class="modal-title" id="barcodeScannerModalLabel">
+                        <i class="fa fa-camera me-2"></i>Barcode Scanner
+                    </h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
