@@ -12,7 +12,7 @@
         'card' => ['icon' => 'fa-credit-card', 'color' => 'text-primary'],
         'bank' => ['icon' => 'fa-university', 'color' => 'text-info'],
         'mobile money' => ['icon' => 'fa-mobile', 'color' => 'text-warning'],
-        'default' => ['icon' => 'fa-credit-card', 'color' => 'text-secondary']
+        'default' => ['icon' => 'fa-credit-card', 'color' => 'text-secondary'],
     ];
 @endphp
 
@@ -51,14 +51,67 @@
                             <div class="text-muted small">{{ number_format($successRate, 1) }}%</div>
                         </div>
                         <div class="progress rounded-pill" style="height: 8px;">
-                            <div class="progress-bar bg-gradient" role="progressbar" style="width: {{ $successRate }}%;"
-                                aria-valuenow="{{ $noOfSales - $noOfSalesReturns }}" aria-valuemin="0" aria-valuemax="{{ $noOfSales }}">
+                            <div class="progress-bar bg-gradient" role="progressbar" style="width: {{ $successRate }}%;" aria-valuenow="{{ $noOfSales - $noOfSalesReturns }}" aria-valuemin="0"
+                                aria-valuemax="{{ $noOfSales }}">
                             </div>
                         </div>
                     </div>
 
+                    <div class="row g-4">
+                        @foreach ($allPaymentMethods as $method)
+                            @php
+                                $saleAmount = $salePayments->where('payment_method', $method)->first()?->total ?? 0;
+                                $returnAmount = $saleReturnPayments->where('payment_method', $method)->first()?->total ?? 0;
+                                $netAmount = $saleAmount - $returnAmount;
+                                $saleCount = $salePayments->where('payment_method', $method)->first()?->transaction_count ?? 0;
+                                $returnCount = $saleReturnPayments->where('payment_method', $method)->first()?->transaction_count ?? 0;
+                                $methodLower = strtolower($method);
+                                $iconData = $paymentIcons[$methodLower] ?? $paymentIcons['default'];
+                            @endphp
+
+                            <div class="col-md-4 col-lg-4">
+                                <div class="card border-0 bg-light h-100">
+                                    <div class="card-body p-3">
+                                        <div class="d-flex align-items-center mb-3">
+                                            <div class="payment-method-icon me-2">
+                                                <i class="fa {{ $iconData['icon'] }} fa-lg {{ $iconData['color'] }}"></i>
+                                            </div>
+                                            <div>
+                                                <h6 class="mb-0 fw-bold">{{ $method }}</h6>
+                                                <small class="text-muted">{{ $saleCount + $returnCount }} transactions</small>
+                                            </div>
+                                        </div>
+
+                                        <div class="row g-2 text-center">
+                                            <div class="col-4">
+                                                <div class="bg-success bg-opacity-10 rounded p-2">
+                                                    <div class="fw-bold text-success">{{ currency($saleAmount) }}</div>
+                                                    <small class="text-muted">Sales</small>
+                                                </div>
+                                            </div>
+                                            <div class="col-4">
+                                                <div class="bg-warning bg-opacity-10 rounded p-2">
+                                                    <div class="fw-bold text-warning">{{ currency($returnAmount) }}</div>
+                                                    <small class="text-muted">Returns</small>
+                                                </div>
+                                            </div>
+                                            <div class="col-4">
+                                                <div class="bg-primary bg-opacity-10 rounded p-2">
+                                                    <div class="fw-bold {{ $netAmount >= 0 ? 'text-success' : 'text-danger' }}">
+                                                        {{ currency($netAmount) }}
+                                                    </div>
+                                                    <small class="text-muted">Net</small>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        @endforeach
+                    </div>
+
                     <!-- Financial Stats -->
-                    <div class="row mb-3">
+                    <div class="row g-4 mt-4">
                         <div class="col-md-6">
                             <div class="card bg-primary bg-gradient border-0">
                                 <div class="card-body">
@@ -90,7 +143,7 @@
                             </div>
                         </div>
                     </div>
-                    <div class="row g-4">
+                    <div class="row g-4 mt-4">
                         <div class="col-md-4">
                             <div class="card bg-secondary bg-gradient border-0">
                                 <div class="card-body">
@@ -132,74 +185,6 @@
                                             <h6 class="text-white mb-1">Services</h6>
                                             <h4 class="mb-0 text-white">{{ currency($serviceSale, 0) }}</h4>
                                         </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Payment Method Summary Cards -->
-                    <div class="row g-4 mt-4">
-                        <div class="col-12">
-                            <div class="card border-0 shadow-sm">
-                                <div class="card-header bg-transparent py-3">
-                                    <h6 class="card-title mb-0 fw-bold">
-                                        <i class="fa fa-chart-pie text-primary me-2"></i>
-                                        Payment Method Summary
-                                    </h6>
-                                </div>
-                                <div class="card-body">
-                                    <div class="row g-4">
-                                        @foreach($allPaymentMethods as $method)
-                                            @php
-                                                $saleAmount = $salePayments->where('payment_method', $method)->first()?->total ?? 0;
-                                                $returnAmount = $saleReturnPayments->where('payment_method', $method)->first()?->total ?? 0;
-                                                $netAmount = $saleAmount - $returnAmount;
-                                                $saleCount = $salePayments->where('payment_method', $method)->first()?->transaction_count ?? 0;
-                                                $returnCount = $saleReturnPayments->where('payment_method', $method)->first()?->transaction_count ?? 0;
-                                                $methodLower = strtolower($method);
-                                                $iconData = $paymentIcons[$methodLower] ?? $paymentIcons['default'];
-                                            @endphp
-
-                                            <div class="col-md-4 col-lg-4">
-                                                <div class="card border-0 bg-light h-100">
-                                                    <div class="card-body p-3">
-                                                        <div class="d-flex align-items-center mb-3">
-                                                            <div class="payment-method-icon me-2">
-                                                                <i class="fa {{ $iconData['icon'] }} fa-lg {{ $iconData['color'] }}"></i>
-                                                            </div>
-                                                            <div>
-                                                                <h6 class="mb-0 fw-bold">{{ $method }}</h6>
-                                                                <small class="text-muted">{{ $saleCount + $returnCount }} transactions</small>
-                                                            </div>
-                                                        </div>
-
-                                                        <div class="row g-2 text-center">
-                                                            <div class="col-4">
-                                                                <div class="bg-success bg-opacity-10 rounded p-2">
-                                                                    <div class="fw-bold text-success">{{ currency($saleAmount) }}</div>
-                                                                    <small class="text-muted">Sales</small>
-                                                                </div>
-                                                            </div>
-                                                            <div class="col-4">
-                                                                <div class="bg-warning bg-opacity-10 rounded p-2">
-                                                                    <div class="fw-bold text-warning">{{ currency($returnAmount) }}</div>
-                                                                    <small class="text-muted">Returns</small>
-                                                                </div>
-                                                            </div>
-                                                            <div class="col-4">
-                                                                <div class="bg-primary bg-opacity-10 rounded p-2">
-                                                                    <div class="fw-bold {{ $netAmount >= 0 ? 'text-success' : 'text-danger' }}">
-                                                                        {{ currency($netAmount) }}
-                                                                    </div>
-                                                                    <small class="text-muted">Net</small>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        @endforeach
                                     </div>
                                 </div>
                             </div>
@@ -251,8 +236,8 @@
                             <div class="text-muted small">{{ number_format($collectionRate, 1) }}%</div>
                         </div>
                         <div class="progress rounded-pill" style="height: 8px;">
-                            <div class="progress-bar bg-success" role="progressbar" style="width: {{ $collectionRate }}%"
-                                aria-valuenow="{{ $totalPayment }}" aria-valuemin="0" aria-valuemax="{{ $totalSales }}">
+                            <div class="progress-bar bg-success" role="progressbar" style="width: {{ $collectionRate }}%" aria-valuenow="{{ $totalPayment }}" aria-valuemin="0"
+                                aria-valuemax="{{ $totalSales }}">
                             </div>
                         </div>
                     </div>
@@ -264,7 +249,7 @@
                             @php
                                 $topPaymentMethods = $salePayments->take(3);
                             @endphp
-                            @foreach($topPaymentMethods as $payment)
+                            @foreach ($topPaymentMethods as $payment)
                                 <div class="col-12">
                                     <div class="d-flex justify-content-between align-items-center p-2 rounded bg-light">
                                         <div class="d-flex align-items-center">
@@ -582,12 +567,12 @@
                 align-items: center;
                 justify-content: center;
                 border-radius: 50%;
-                background: rgba(0,0,0,0.05);
+                background: rgba(0, 0, 0, 0.05);
             }
 
             .card.bg-light:hover {
                 transform: translateY(-2px);
-                box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
                 transition: all 0.3s ease;
             }
 
@@ -604,7 +589,7 @@
             }
 
             .table-hover tbody tr:hover {
-                background-color: rgba(0,0,0,0.02);
+                background-color: rgba(0, 0, 0, 0.02);
             }
 
             .badge.bg-light {
@@ -614,7 +599,7 @@
 
             /* Improved compatibility for older Bootstrap versions */
             .bg-gradient {
-                background-image: linear-gradient(180deg, rgba(255,255,255,.15), rgba(255,255,255,0)) !important;
+                background-image: linear-gradient(180deg, rgba(255, 255, 255, .15), rgba(255, 255, 255, 0)) !important;
             }
 
             .rounded-pill {
@@ -622,7 +607,7 @@
             }
 
             .shadow-sm {
-                box-shadow: 0 .125rem .25rem rgba(0,0,0,.075) !important;
+                box-shadow: 0 .125rem .25rem rgba(0, 0, 0, .075) !important;
             }
 
             /* Responsive improvements */
