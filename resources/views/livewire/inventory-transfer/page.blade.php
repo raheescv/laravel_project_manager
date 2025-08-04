@@ -35,9 +35,15 @@
                                 <div class="card-body">
                                     <h5 class="card-title">ITEM INFO </h5>
                                     <div class="row mb-3">
-                                        <div class="col-md-2">
+                                        <div class="col-md-3">
+                                            <div class="input-group">
+                                                <span class="input-group-text bg-dark text-white">
+                                                    <i class="fa fa-barcode"></i>
+                                                </span>
+                                                <input type="text" wire:model.live="barcode" class="form-control" placeholder="Scan barcode or enter manually...">
+                                            </div>
                                         </div>
-                                        <div class="col-md-8">
+                                        <div class="col-md-9">
                                             <div class="searchbox input-group" wire:ignore>
                                                 {{ html()->select('inventory_id', [])->value('')->class('select-selected-branch-products-list')->id('inventory_id')->attribute('style', 'width:100%')->placeholder('Select Product') }}
                                             </div>

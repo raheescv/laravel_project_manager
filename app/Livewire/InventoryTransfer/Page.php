@@ -26,7 +26,7 @@ class Page extends Component
 
     public $inventory_id;
 
-    public $barcode_key;
+    public $barcode;
 
     public $inventory_transfer;
 
@@ -108,9 +108,9 @@ class Page extends Component
                 $this->inventory_id = '';
             }
         }
-        if ($key == 'barcode_key') {
+        if ($key == 'barcode') {
             $this->getProductByBarcode($value);
-            $this->barcode_key = '';
+            $this->barcode = '';
         }
     }
 

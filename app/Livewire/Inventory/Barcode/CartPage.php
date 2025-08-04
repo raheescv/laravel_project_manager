@@ -82,8 +82,6 @@ class CartPage extends Component
     {
         $barcode = $this->barcodeInput;
         if (empty($barcode)) {
-            $this->dispatch('error', ['message' => 'Please enter a barcode.']);
-
             return;
         }
 
@@ -92,8 +90,6 @@ class CartPage extends Component
             $this->addToCart($inventory->id);
             $this->barcodeInput = '';
             $this->dispatch('success', ['message' => 'Product added to cart via barcode scan.']);
-        } else {
-            $this->dispatch('error', ['message' => 'Product not found for barcode : '.$barcode]);
         }
     }
 
