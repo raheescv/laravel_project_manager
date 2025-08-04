@@ -1,20 +1,37 @@
+@php
+    // Pre-calculate common values to avoid repetition
+    $netPayment = $totalPayment - $saleReturnPayments->sum('total');
+    $collectionRate = $totalPayment > 0 ? ($totalPayment / $totalSales) * 100 : 0;
+    $successRate = $noOfSales > 0 ? (($noOfSales - $noOfSalesReturns) / $noOfSales) * 100 : 0;
+    $totalTransactions = $salePayments->sum('transaction_count') + $saleReturnPayments->sum('transaction_count');
+    $allPaymentMethods = $salePayments->pluck('payment_method')->merge($saleReturnPayments->pluck('payment_method'))->unique();
+
+    // Payment method icons mapping
+    $paymentIcons = [
+        'cash' => ['icon' => 'fa-money', 'color' => 'text-success'],
+        'card' => ['icon' => 'fa-credit-card', 'color' => 'text-primary'],
+        'bank' => ['icon' => 'fa-university', 'color' => 'text-info'],
+        'mobile money' => ['icon' => 'fa-mobile', 'color' => 'text-warning'],
+        'default' => ['icon' => 'fa-credit-card', 'color' => 'text-secondary']
+    ];
+@endphp
+
 <div>
+    <!-- Filter Section -->
     <div class="card mb-3">
         <div class="card-header">
-            <div class="col-lg-12">
-                <div class="row">
-                    <div class="col-md-2">
-                        <label for="from_date">From Date</label>
-                        {{ html()->date('from_date')->value('')->class('form-control')->id('from_date')->attribute('wire:model.live', 'fromDate') }}
-                    </div>
-                    <div class="col-md-2">
-                        <label for="to_date">To Date</label>
-                        {{ html()->date('to_date')->value('')->class('form-control')->id('to_date')->attribute('wire:model.live', 'toDate') }}
-                    </div>
-                    <div class="col-md-4" wire:ignore>
-                        <label for="branch_id">Branch</label>
-                        {{ html()->select('branch_id', [session('branch_id') => session('branch_name')])->value(session('branch_id'))->class('select-assigned-branch_id-list')->id('branch_id')->placeholder('Branch') }}
-                    </div>
+            <div class="row">
+                <div class="col-md-2">
+                    <label for="from_date">From Date</label>
+                    {{ html()->date('from_date')->value('')->class('form-control')->id('from_date')->attribute('wire:model.live', 'fromDate') }}
+                </div>
+                <div class="col-md-2">
+                    <label for="to_date">To Date</label>
+                    {{ html()->date('to_date')->value('')->class('form-control')->id('to_date')->attribute('wire:model.live', 'toDate') }}
+                </div>
+                <div class="col-md-4" wire:ignore>
+                    <label for="branch_id">Branch</label>
+                    {{ html()->select('branch_id', [session('branch_id') => session('branch_name')])->value(session('branch_id'))->class('select-assigned-branch_id-list')->id('branch_id')->placeholder('Branch') }}
                 </div>
             </div>
         </div>
@@ -56,10 +73,10 @@
                     <div class="mb-4">
                         <div class="d-flex justify-content-between align-items-center mb-2">
                             <h6 class="mb-0">Sales Success Rate</h6>
-                            <div class="text-muted small">{{ number_format($noOfSales > 0 ? (($noOfSales - $noOfSalesReturns) / $noOfSales) * 100 : 0, 1) }}%</div>
+                            <div class="text-muted small">{{ number_format($successRate, 1) }}%</div>
                         </div>
                         <div class="progress rounded-pill" style="height: 8px;">
-                            <div class="progress-bar bg-gradient" role="progressbar" style="width: {{ $noOfSales > 0 ? (($noOfSales - $noOfSalesReturns) / $noOfSales) * 100 : 0 }}%;"
+                            <div class="progress-bar bg-gradient" role="progressbar" style="width: {{ $successRate }}%;"
                                 aria-valuenow="{{ $noOfSales - $noOfSalesReturns }}" aria-valuemin="0" aria-valuemax="{{ $noOfSales }}">
                             </div>
                         </div>
@@ -68,7 +85,7 @@
                     <!-- Financial Stats -->
                     <div class="row mb-3">
                         <div class="col-md-6">
-                            <div class="card bg-blue-500 bg-gradient border-0">
+                            <div class="card bg-primary bg-gradient border-0">
                                 <div class="card-body">
                                     <div class="d-flex align-items-center">
                                         <div class="flex-shrink-0">
@@ -83,7 +100,7 @@
                             </div>
                         </div>
                         <div class="col-md-6">
-                            <div class="card bg-purple-500 bg-gradient border-0">
+                            <div class="card bg-info bg-gradient border-0">
                                 <div class="card-body">
                                     <div class="d-flex align-items-center">
                                         <div class="flex-shrink-0">
@@ -100,7 +117,7 @@
                     </div>
                     <div class="row g-4">
                         <div class="col-md-4">
-                            <div class="card bg-pink-500 bg-gradient border-0">
+                            <div class="card bg-secondary bg-gradient border-0">
                                 <div class="card-body">
                                     <div class="d-flex align-items-center">
                                         <div class="flex-shrink-0">
@@ -115,7 +132,7 @@
                             </div>
                         </div>
                         <div class="col-md-4">
-                            <div class="card bg-indigo-500 bg-gradient border-0">
+                            <div class="card bg-success bg-gradient border-0">
                                 <div class="card-body">
                                     <div class="d-flex align-items-center">
                                         <div class="flex-shrink-0">
@@ -130,7 +147,7 @@
                             </div>
                         </div>
                         <div class="col-md-4">
-                            <div class="card bg-cyan-500 bg-gradient border-0">
+                            <div class="card bg-warning bg-gradient border-0">
                                 <div class="card-body">
                                     <div class="d-flex align-items-center">
                                         <div class="flex-shrink-0">
@@ -175,15 +192,12 @@
 
                     <!-- Net Payment -->
                     <div class="text-center mb-4">
-                        @php
-                            $netPayment = $totalPayment - $saleReturnPayments->sum('total');
-                        @endphp
                         <div class="display-6 fw-bold mb-1 {{ $netPayment >= 0 ? 'text-success' : 'text-danger' }}">
                             {{ currency($netPayment) }}
                         </div>
                         <div class="text-muted">Net Payments</div>
                         <div class="small text-muted">
-                            {{ $salePayments->sum('transaction_count') + $saleReturnPayments->sum('transaction_count') }} total transactions
+                            {{ $totalTransactions }} total transactions
                         </div>
                     </div>
 
@@ -191,10 +205,10 @@
                     <div class="mb-4">
                         <div class="d-flex justify-content-between align-items-center mb-2">
                             <h6 class="mb-0">Collection Rate</h6>
-                            <div class="text-muted small">{{ number_format($totalPayment > 0 ? ($totalPayment / $totalSales) * 100 : 0, 1) }}%</div>
+                            <div class="text-muted small">{{ number_format($collectionRate, 1) }}%</div>
                         </div>
                         <div class="progress rounded-pill" style="height: 8px;">
-                            <div class="progress-bar bg-success" role="progressbar" style="width: {{ $totalPayment > 0 ? ($totalPayment / $totalSales) * 100 : 0 }}%"
+                            <div class="progress-bar bg-success" role="progressbar" style="width: {{ $collectionRate }}%"
                                 aria-valuenow="{{ $totalPayment }}" aria-valuemin="0" aria-valuemax="{{ $totalSales }}">
                             </div>
                         </div>
@@ -212,22 +226,11 @@
                                     <div class="d-flex justify-content-between align-items-center p-2 rounded bg-light">
                                         <div class="d-flex align-items-center">
                                             <div class="payment-method-icon me-2">
-                                                @switch(strtolower($payment->payment_method))
-                                                    @case('cash')
-                                                        <i class="fa fa-money text-success"></i>
-                                                        @break
-                                                    @case('card')
-                                                        <i class="fa fa-credit-card text-primary"></i>
-                                                        @break
-                                                    @case('bank')
-                                                        <i class="fa fa-university text-info"></i>
-                                                        @break
-                                                    @case('mobile money')
-                                                        <i class="fa fa-mobile text-warning"></i>
-                                                        @break
-                                                    @default
-                                                        <i class="fa fa-credit-card text-secondary"></i>
-                                                @endswitch
+                                                @php
+                                                    $method = strtolower($payment->payment_method);
+                                                    $iconData = $paymentIcons[$method] ?? $paymentIcons['default'];
+                                                @endphp
+                                                <i class="fa {{ $iconData['icon'] }} {{ $iconData['color'] }}"></i>
                                             </div>
                                             <span class="small fw-medium">{{ $payment->payment_method }}</span>
                                         </div>
@@ -395,22 +398,11 @@
                                         <td>
                                             <div class="d-flex align-items-center">
                                                 <div class="payment-method-icon me-2">
-                                                    @switch(strtolower($payment->payment_method))
-                                                        @case('cash')
-                                                            <i class="fa fa-money text-success"></i>
-                                                            @break
-                                                        @case('card')
-                                                            <i class="fa fa-credit-card text-primary"></i>
-                                                            @break
-                                                        @case('bank')
-                                                            <i class="fa fa-university text-info"></i>
-                                                            @break
-                                                        @case('mobile money')
-                                                            <i class="fa fa-mobile text-warning"></i>
-                                                            @break
-                                                        @default
-                                                            <i class="fa fa-credit-card text-secondary"></i>
-                                                    @endswitch
+                                                    @php
+                                                        $method = strtolower($payment->payment_method);
+                                                        $iconData = $paymentIcons[$method] ?? $paymentIcons['default'];
+                                                    @endphp
+                                                    <i class="fa {{ $iconData['icon'] }} {{ $iconData['color'] }}"></i>
                                                 </div>
                                                 <span class="fw-medium">{{ $payment->payment_method }}</span>
                                             </div>
@@ -472,22 +464,11 @@
                                         <td>
                                             <div class="d-flex align-items-center">
                                                 <div class="payment-method-icon me-2">
-                                                    @switch(strtolower($payment->payment_method))
-                                                        @case('cash')
-                                                            <i class="fa fa-money text-success"></i>
-                                                            @break
-                                                        @case('card')
-                                                            <i class="fa fa-credit-card text-primary"></i>
-                                                            @break
-                                                        @case('bank')
-                                                            <i class="fa fa-university text-info"></i>
-                                                            @break
-                                                        @case('mobile money')
-                                                            <i class="fa fa-mobile text-warning"></i>
-                                                            @break
-                                                        @default
-                                                            <i class="fa fa-credit-card text-secondary"></i>
-                                                    @endswitch
+                                                    @php
+                                                        $method = strtolower($payment->payment_method);
+                                                        $iconData = $paymentIcons[$method] ?? $paymentIcons['default'];
+                                                    @endphp
+                                                    <i class="fa {{ $iconData['icon'] }} {{ $iconData['color'] }}"></i>
                                                 </div>
                                                 <span class="fw-medium">{{ $payment->payment_method }}</span>
                                             </div>
@@ -532,10 +513,6 @@
                 </div>
                 <div class="card-body">
                     <div class="row g-4">
-                        @php
-                            $allPaymentMethods = $salePayments->pluck('payment_method')->merge($saleReturnPayments->pluck('payment_method'))->unique();
-                        @endphp
-
                         @foreach($allPaymentMethods as $method)
                             @php
                                 $saleAmount = $salePayments->where('payment_method', $method)->first()?->total ?? 0;
@@ -543,6 +520,8 @@
                                 $netAmount = $saleAmount - $returnAmount;
                                 $saleCount = $salePayments->where('payment_method', $method)->first()?->transaction_count ?? 0;
                                 $returnCount = $saleReturnPayments->where('payment_method', $method)->first()?->transaction_count ?? 0;
+                                $methodLower = strtolower($method);
+                                $iconData = $paymentIcons[$methodLower] ?? $paymentIcons['default'];
                             @endphp
 
                             <div class="col-md-4 col-lg-3">
@@ -550,22 +529,7 @@
                                     <div class="card-body p-3">
                                         <div class="d-flex align-items-center mb-3">
                                             <div class="payment-method-icon me-2">
-                                                @switch(strtolower($method))
-                                                    @case('cash')
-                                                        <i class="fa fa-money fa-lg text-success"></i>
-                                                        @break
-                                                    @case('card')
-                                                        <i class="fa fa-credit-card fa-lg text-primary"></i>
-                                                        @break
-                                                    @case('bank')
-                                                        <i class="fa fa-university fa-lg text-info"></i>
-                                                        @break
-                                                    @case('mobile money')
-                                                        <i class="fa fa-mobile fa-lg text-warning"></i>
-                                                        @break
-                                                    @default
-                                                        <i class="fa fa-credit-card fa-lg text-secondary"></i>
-                                                @endswitch
+                                                <i class="fa {{ $iconData['icon'] }} fa-lg {{ $iconData['color'] }}"></i>
                                             </div>
                                             <div>
                                                 <h6 class="mb-0 fw-bold">{{ $method }}</h6>
@@ -671,6 +635,31 @@
             .badge.bg-light {
                 background-color: #f8f9fa !important;
                 color: #6c757d !important;
+            }
+
+            /* Improved compatibility for older Bootstrap versions */
+            .bg-gradient {
+                background-image: linear-gradient(180deg, rgba(255,255,255,.15), rgba(255,255,255,0)) !important;
+            }
+
+            .rounded-pill {
+                border-radius: 50rem !important;
+            }
+
+            .shadow-sm {
+                box-shadow: 0 .125rem .25rem rgba(0,0,0,.075) !important;
+            }
+
+            /* Responsive improvements */
+            @media (max-width: 768px) {
+                .col-md-4.col-lg-3 {
+                    flex: 0 0 100%;
+                    max-width: 100%;
+                }
+
+                .display-6 {
+                    font-size: 1.5rem;
+                }
             }
         </style>
     @endpush
