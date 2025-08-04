@@ -327,7 +327,7 @@
                     @if (auth()->user()->can('purchase return.view') || auth()->user()->can('report.purchase return item'))
                         <li class="nav-item has-sub">
                             <a href="#"
-                                class="mininav-toggle nav-link {{ request()->is(['purchase_return', 'purchase_return/create', 'purchase_return/edit/*', 'purchase_return/view/*', 'report/purchase_item', 'purchase_return/payments']) ? 'active' : '' }}"><i
+                                class="mininav-toggle nav-link {{ request()->is(['purchase_return', 'purchase_return/create', 'purchase_return/edit/*', 'purchase_return/view/*', 'purchase_return/payments']) ? 'active' : '' }}"><i
                                     class="fa fa-reply fs-5 me-2"></i>
                                 <span class="nav-label mininav-content ms-1 collapse show" style="">Purchase Return</span>
                             </a>
