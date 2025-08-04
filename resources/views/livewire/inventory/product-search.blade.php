@@ -150,7 +150,11 @@
                     <tfoot>
                         <tr>
                             <th class="text-end" colspan="6">Total</th>
-                            <th class="text-end">{{ $products->sum('quantity') }}</th>
+                            <th class="text-center">
+                                <span class="badge bg-success fs-6">
+                                    {{ $products->sum('quantity') }}
+                                </span>
+                            </th>
                         </tr>
                     </tfoot>
                 </table>
