@@ -418,7 +418,7 @@
     <!-- Sales Details Tables -->
     <div class="row g-4 mt-4">
         <!-- Employee Sales Table -->
-        <div class="col-md-6">
+        <div class="col-md-4">
             <div class="card border-0 shadow-sm">
                 <div class="card-header bg-transparent py-3">
                     <div class="d-flex justify-content-between align-items-center">
@@ -473,7 +473,7 @@
         </div>
 
         <!-- Product Sales Table -->
-        <div class="col-md-6">
+        <div class="col-md-8">
             <div class="card border-0 shadow-sm">
                 <div class="card-header bg-transparent py-3">
                     <div class="d-flex justify-content-between align-items-center">
