@@ -332,7 +332,7 @@
     <div class="receipt-container">
         <div class="store-info">
             @if ($enable_logo_in_print == 'yes')
-                <img src="{{ cache('logo') }}" alt="Logo" style="width: 80%; max-width: 180px; margin-bottom: 10px;">
+                <img src="{{ cache('logo') }}" alt="Logo" style="width: 80%; max-width: 100px; margin-bottom: 10px;">
             @endif
             <h3>
                 {{ $sale->branch?->location }}
@@ -470,7 +470,7 @@
                     </tr>
                     @if ($item->comboOffer->name_arabic)
                         <tr>
-                            <td colspan="4" class="text-left"><b>{{ $item->comboOffer->name_arabic }}</b></td>
+                            <td colspan="4" class="text-right"><b>{{ $item->comboOffer->name_arabic }}</b></td>
                         </tr>
                     @endif
                     @foreach ($item->items as $comboItem)
@@ -480,7 +480,7 @@
                         </tr>
                         @if ($comboItem->name_arabic)
                             <tr>
-                                <td colspan="4" class="text-left"><b>{{ $comboItem->name_arabic }}</b></td>
+                                <td colspan="4" class="text-right"><b>{{ $comboItem->name_arabic }}</b></td>
                             </tr>
                         @endif
                     @endforeach
@@ -503,7 +503,7 @@
                     </tr>
                     @if ($item->product->name_arabic)
                         <tr>
-                            <td colspan="4" class="text-left"><b>{{ $item->product->name_arabic }}</b></td>
+                            <td colspan="4" class="text-right"><b>{{ $item->product->name_arabic }}</b></td>
                         </tr>
                     @endif
                     <tr>
@@ -549,9 +549,13 @@
                     @endif
                 </tr>
                 @if ($sale->other_discount + $sale->item_discount != 0)
+                    @php
+                        $total_discount = $sale->other_discount + $sale->item_discount;
+                        $discount_percentage = $sale->total > 0 ? round(($total_discount / $sale->total) * 100, 2) : 0;
+                    @endphp
                     <tr>
                         <td class="text-left" width="39%"><b>Discount</b></td>
-                        <td class="text-right"><b>{{ currency($sale->other_discount + $sale->item_discount) }}</b></td>
+                        <td class="text-right"><b>{{ currency($total_discount) }} ({{ $discount_percentage }}%)</b></td>
                         @if ($thermal_printer_style == 'with_arabic')
                             <td width="39%" class="text-right"> <b>{{ __('lang.discount', [], 'ar') }}</b> </td>
                         @endif
@@ -559,9 +563,12 @@
                 @endif
             @else
                 @if ($sale->other_discount != 0)
+                    @php
+                        $discount_percentage = $sale->total > 0 ? round(($sale->other_discount / $sale->total) * 100, 2) : 0;
+                    @endphp
                     <tr>
                         <td class="text-left" width="39%"><b>Discount</b></td>
-                        <td class="text-right"><b>{{ currency($sale->other_discount) }}</b></td>
+                        <td class="text-right"><b>{{ currency($sale->other_discount) }} ({{ $discount_percentage }}%)</b></td>
                         @if ($thermal_printer_style == 'with_arabic')
                             <td width="39%" class="text-right"> <b>{{ __('lang.discount', [], 'ar') }}</b> </td>
                         @endif
