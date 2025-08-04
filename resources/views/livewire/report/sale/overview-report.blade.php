@@ -155,10 +155,36 @@
                 <div class="card-body">
                     <h5 class="card-title fw-bold mb-4">Payment Overview</h5>
 
-                    <!-- Total Payment Stats -->
+                    <!-- Sales vs Returns Payment Stats -->
+                    <div class="row g-3 mb-4">
+                        <div class="col-6">
+                            <div class="text-center p-3 rounded bg-success bg-opacity-10">
+                                <div class="h4 fw-bold text-success mb-1">{{ currency($totalPayment) }}</div>
+                                <div class="text-muted small">Sales Payments</div>
+                                <div class="text-success small">{{ $salePayments->sum('transaction_count') }} transactions</div>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="text-center p-3 rounded bg-warning bg-opacity-10">
+                                <div class="h4 fw-bold text-warning mb-1">{{ currency($saleReturnPayments->sum('total')) }}</div>
+                                <div class="text-muted small">Returns Payments</div>
+                                <div class="text-warning small">{{ $saleReturnPayments->sum('transaction_count') }} returns</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Net Payment -->
                     <div class="text-center mb-4">
-                        <div class="display-6 fw-bold mb-1">{{ currency($totalPayment) }}</div>
-                        <div class="text-muted">Total Payments Received</div>
+                        @php
+                            $netPayment = $totalPayment - $saleReturnPayments->sum('total');
+                        @endphp
+                        <div class="display-6 fw-bold mb-1 {{ $netPayment >= 0 ? 'text-success' : 'text-danger' }}">
+                            {{ currency($netPayment) }}
+                        </div>
+                        <div class="text-muted">Net Payments</div>
+                        <div class="small text-muted">
+                            {{ $salePayments->sum('transaction_count') + $saleReturnPayments->sum('transaction_count') }} total transactions
+                        </div>
                     </div>
 
                     <!-- Payment Progress -->
@@ -174,9 +200,50 @@
                         </div>
                     </div>
 
+                    <!-- Payment Methods Summary -->
+                    <div class="mb-3">
+                        <h6 class="mb-2">Payment Methods</h6>
+                        <div class="row g-2">
+                            @php
+                                $topPaymentMethods = $salePayments->take(3);
+                            @endphp
+                            @foreach($topPaymentMethods as $payment)
+                                <div class="col-12">
+                                    <div class="d-flex justify-content-between align-items-center p-2 rounded bg-light">
+                                        <div class="d-flex align-items-center">
+                                            <div class="payment-method-icon me-2">
+                                                @switch(strtolower($payment->payment_method))
+                                                    @case('cash')
+                                                        <i class="fa fa-money text-success"></i>
+                                                        @break
+                                                    @case('card')
+                                                        <i class="fa fa-credit-card text-primary"></i>
+                                                        @break
+                                                    @case('bank')
+                                                        <i class="fa fa-university text-info"></i>
+                                                        @break
+                                                    @case('mobile money')
+                                                        <i class="fa fa-mobile text-warning"></i>
+                                                        @break
+                                                    @default
+                                                        <i class="fa fa-credit-card text-secondary"></i>
+                                                @endswitch
+                                            </div>
+                                            <span class="small fw-medium">{{ $payment->payment_method }}</span>
+                                        </div>
+                                        <div class="text-end">
+                                            <div class="fw-bold">{{ currency($payment->total) }}</div>
+                                            <small class="text-muted">{{ $payment->transaction_count }} txns</small>
+                                        </div>
+                                    </div>
+                                </div>
+                            @endforeach
+                        </div>
+                    </div>
+
                     <!-- Payment Methods Chart -->
                     <div wire:ignore>
-                        <div id="chartContainer" style="height: 250px; width: 100%;"></div>
+                        <div id="chartContainer" style="height: 200px; width: 100%;"></div>
                     </div>
                 </div>
             </div>
@@ -296,6 +363,248 @@
         </div>
     </div>
 
+    <!-- Payment Method Wise Summary -->
+    <div class="row g-4 mt-4">
+        <!-- Sales Payment Methods -->
+        <div class="col-md-6">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-transparent py-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h6 class="card-title mb-0 fw-bold">
+                            <i class="fa fa-credit-card text-success me-2"></i>
+                            Sales Payment Methods
+                        </h6>
+                        <span class="badge bg-success rounded-pill">{{ $salePayments->count() }} Methods</span>
+                    </div>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="bg-light">
+                                <tr>
+                                    <th class="ps-3">#</th>
+                                    <th>Payment Method</th>
+                                    <th class="text-center">Transactions</th>
+                                    <th class="text-end pe-3">Amount</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @forelse ($salePayments as $index => $payment)
+                                    <tr wire:key="sale-payment-{{ $index }}">
+                                        <td class="ps-3">{{ $index + 1 }}</td>
+                                        <td>
+                                            <div class="d-flex align-items-center">
+                                                <div class="payment-method-icon me-2">
+                                                    @switch(strtolower($payment->payment_method))
+                                                        @case('cash')
+                                                            <i class="fa fa-money text-success"></i>
+                                                            @break
+                                                        @case('card')
+                                                            <i class="fa fa-credit-card text-primary"></i>
+                                                            @break
+                                                        @case('bank')
+                                                            <i class="fa fa-university text-info"></i>
+                                                            @break
+                                                        @case('mobile money')
+                                                            <i class="fa fa-mobile text-warning"></i>
+                                                            @break
+                                                        @default
+                                                            <i class="fa fa-credit-card text-secondary"></i>
+                                                    @endswitch
+                                                </div>
+                                                <span class="fw-medium">{{ $payment->payment_method }}</span>
+                                            </div>
+                                        </td>
+                                        <td class="text-center">
+                                            <span class="badge bg-light text-dark">{{ $payment->transaction_count }}</span>
+                                        </td>
+                                        <td class="text-end pe-3 fw-bold">{{ currency($payment->total) }}</td>
+                                    </tr>
+                                @empty
+                                    <tr>
+                                        <td colspan="4" class="text-center py-4 text-muted">
+                                            <i class="fa fa-info-circle me-2"></i>
+                                            No payment data available
+                                        </td>
+                                    </tr>
+                                @endforelse
+                            </tbody>
+                            <tfoot class="bg-light">
+                                <tr>
+                                    <td colspan="2" class="ps-3 fw-bold">Total</td>
+                                    <td class="text-center fw-bold">{{ $salePayments->sum('transaction_count') }}</td>
+                                    <td class="text-end pe-3 fw-bold">{{ currency($salePayments->sum('total')) }}</td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sale Returns Payment Methods -->
+        <div class="col-md-6">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-transparent py-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h6 class="card-title mb-0 fw-bold">
+                            <i class="fa fa-undo text-warning me-2"></i>
+                            Returns Payment Methods
+                        </h6>
+                        <span class="badge bg-warning rounded-pill">{{ $saleReturnPayments->count() }} Methods</span>
+                    </div>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="bg-light">
+                                <tr>
+                                    <th class="ps-3">#</th>
+                                    <th>Payment Method</th>
+                                    <th class="text-center">Returns</th>
+                                    <th class="text-end pe-3">Amount</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @forelse ($saleReturnPayments as $index => $payment)
+                                    <tr wire:key="return-payment-{{ $index }}">
+                                        <td class="ps-3">{{ $index + 1 }}</td>
+                                        <td>
+                                            <div class="d-flex align-items-center">
+                                                <div class="payment-method-icon me-2">
+                                                    @switch(strtolower($payment->payment_method))
+                                                        @case('cash')
+                                                            <i class="fa fa-money text-success"></i>
+                                                            @break
+                                                        @case('card')
+                                                            <i class="fa fa-credit-card text-primary"></i>
+                                                            @break
+                                                        @case('bank')
+                                                            <i class="fa fa-university text-info"></i>
+                                                            @break
+                                                        @case('mobile money')
+                                                            <i class="fa fa-mobile text-warning"></i>
+                                                            @break
+                                                        @default
+                                                            <i class="fa fa-credit-card text-secondary"></i>
+                                                    @endswitch
+                                                </div>
+                                                <span class="fw-medium">{{ $payment->payment_method }}</span>
+                                            </div>
+                                        </td>
+                                        <td class="text-center">
+                                            <span class="badge bg-light text-dark">{{ $payment->transaction_count }}</span>
+                                        </td>
+                                        <td class="text-end pe-3 fw-bold text-danger">{{ currency($payment->total) }}</td>
+                                    </tr>
+                                @empty
+                                    <tr>
+                                        <td colspan="4" class="text-center py-4 text-muted">
+                                            <i class="fa fa-info-circle me-2"></i>
+                                            No return payment data available
+                                        </td>
+                                    </tr>
+                                @endforelse
+                            </tbody>
+                            <tfoot class="bg-light">
+                                <tr>
+                                    <td colspan="2" class="ps-3 fw-bold">Total</td>
+                                    <td class="text-center fw-bold">{{ $saleReturnPayments->sum('transaction_count') }}</td>
+                                    <td class="text-end pe-3 fw-bold text-danger">{{ currency($saleReturnPayments->sum('total')) }}</td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Payment Method Summary Cards -->
+    <div class="row g-4 mt-4">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-transparent py-3">
+                    <h6 class="card-title mb-0 fw-bold">
+                        <i class="fa fa-chart-pie text-primary me-2"></i>
+                        Payment Method Summary
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="row g-4">
+                        @php
+                            $allPaymentMethods = $salePayments->pluck('payment_method')->merge($saleReturnPayments->pluck('payment_method'))->unique();
+                        @endphp
+
+                        @foreach($allPaymentMethods as $method)
+                            @php
+                                $saleAmount = $salePayments->where('payment_method', $method)->first()?->total ?? 0;
+                                $returnAmount = $saleReturnPayments->where('payment_method', $method)->first()?->total ?? 0;
+                                $netAmount = $saleAmount - $returnAmount;
+                                $saleCount = $salePayments->where('payment_method', $method)->first()?->transaction_count ?? 0;
+                                $returnCount = $saleReturnPayments->where('payment_method', $method)->first()?->transaction_count ?? 0;
+                            @endphp
+
+                            <div class="col-md-4 col-lg-3">
+                                <div class="card border-0 bg-light h-100">
+                                    <div class="card-body p-3">
+                                        <div class="d-flex align-items-center mb-3">
+                                            <div class="payment-method-icon me-2">
+                                                @switch(strtolower($method))
+                                                    @case('cash')
+                                                        <i class="fa fa-money fa-lg text-success"></i>
+                                                        @break
+                                                    @case('card')
+                                                        <i class="fa fa-credit-card fa-lg text-primary"></i>
+                                                        @break
+                                                    @case('bank')
+                                                        <i class="fa fa-university fa-lg text-info"></i>
+                                                        @break
+                                                    @case('mobile money')
+                                                        <i class="fa fa-mobile fa-lg text-warning"></i>
+                                                        @break
+                                                    @default
+                                                        <i class="fa fa-credit-card fa-lg text-secondary"></i>
+                                                @endswitch
+                                            </div>
+                                            <div>
+                                                <h6 class="mb-0 fw-bold">{{ $method }}</h6>
+                                                <small class="text-muted">{{ $saleCount + $returnCount }} transactions</small>
+                                            </div>
+                                        </div>
+
+                                        <div class="row g-2 text-center">
+                                            <div class="col-4">
+                                                <div class="bg-success bg-opacity-10 rounded p-2">
+                                                    <div class="fw-bold text-success">{{ currency($saleAmount) }}</div>
+                                                    <small class="text-muted">Sales</small>
+                                                </div>
+                                            </div>
+                                            <div class="col-4">
+                                                <div class="bg-warning bg-opacity-10 rounded p-2">
+                                                    <div class="fw-bold text-warning">{{ currency($returnAmount) }}</div>
+                                                    <small class="text-muted">Returns</small>
+                                                </div>
+                                            </div>
+                                            <div class="col-4">
+                                                <div class="bg-primary bg-opacity-10 rounded p-2">
+                                                    <div class="fw-bold {{ $netAmount >= 0 ? 'text-success' : 'text-danger' }}">
+                                                        {{ currency($netAmount) }}
+                                                    </div>
+                                                    <small class="text-muted">Net</small>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        @endforeach
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     @push('scripts')
         <script>
             $(document).ready(function() {
@@ -323,5 +632,46 @@
             });
         </script>
         <script type="text/javascript" src="https://cdn.canvasjs.com/jquery.canvasjs.min.js"></script>
+    @endpush
+
+    @push('styles')
+        <style>
+            .payment-method-icon {
+                width: 32px;
+                height: 32px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                border-radius: 50%;
+                background: rgba(0,0,0,0.05);
+            }
+
+            .card.bg-light:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+                transition: all 0.3s ease;
+            }
+
+            .bg-success.bg-opacity-10 {
+                background-color: rgba(25, 135, 84, 0.1) !important;
+            }
+
+            .bg-warning.bg-opacity-10 {
+                background-color: rgba(255, 193, 7, 0.1) !important;
+            }
+
+            .bg-primary.bg-opacity-10 {
+                background-color: rgba(13, 110, 253, 0.1) !important;
+            }
+
+            .table-hover tbody tr:hover {
+                background-color: rgba(0,0,0,0.02);
+            }
+
+            .badge.bg-light {
+                background-color: #f8f9fa !important;
+                color: #6c757d !important;
+            }
+        </style>
     @endpush
 </div>

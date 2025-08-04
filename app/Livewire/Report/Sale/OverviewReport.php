@@ -6,6 +6,7 @@ use App\Models\Sale;
 use App\Models\SaleItem;
 use App\Models\SalePayment;
 use App\Models\SaleReturn;
+use App\Models\SaleReturnPayment;
 use Carbon\Carbon;
 use Livewire\Component;
 use Livewire\WithPagination;
@@ -44,7 +45,7 @@ class OverviewReport extends Component
 
     public function mount()
     {
-        $this->fromDate = date('Y-m-01');
+        $this->fromDate = date('Y-m-d');
         $this->toDate = date('Y-m-d');
         $this->branchId = session('branch_id');
     }
@@ -95,6 +96,11 @@ class OverviewReport extends Component
             ->when($from, fn ($q) => $q->where('sales.date', '>=', $from))
             ->when($to, fn ($q) => $q->where('sales.date', '<=', $to));
 
+        $baseReturnQuery = fn ($query) => $query
+            ->when($this->branchId, fn ($q) => $q->where('sale_returns.branch_id', $this->branchId))
+            ->when($from, fn ($q) => $q->where('sale_returns.date', '>=', $from))
+            ->when($to, fn ($q) => $q->where('sale_returns.date', '<=', $to));
+
         $employees = SaleItem::query()
             ->join('sales', 'sales.id', '=', 'sale_items.sale_id')
             ->join('users', 'users.id', '=', 'sale_items.employee_id')
@@ -133,6 +139,30 @@ class OverviewReport extends Component
 
         $sales = Sale::query()->customerSearch($this->branchId, $from, $to);
         $saleReturns = SaleReturn::query()->customerSearch($this->branchId, $from, $to);
+
+        // Payment methods for sales
+        $salePayments = SalePayment::query()
+            ->join('sales', 'sales.id', '=', 'sale_payments.sale_id')
+            ->join('accounts', 'accounts.id', '=', 'sale_payments.payment_method_id')
+            ->tap($baseQuery)
+            ->select('accounts.name as payment_method')
+            ->selectRaw('sum(sale_payments.amount) as total')
+            ->selectRaw('count(distinct sale_payments.sale_id) as transaction_count')
+            ->groupBy('sale_payments.payment_method_id')
+            ->orderBy('total', 'desc')
+            ->get();
+
+        // Payment methods for sale returns
+        $saleReturnPayments = SaleReturnPayment::query()
+            ->join('sale_returns', 'sale_returns.id', '=', 'sale_return_payments.sale_return_id')
+            ->join('accounts', 'accounts.id', '=', 'sale_return_payments.payment_method_id')
+            ->tap($baseReturnQuery)
+            ->select('accounts.name as payment_method')
+            ->selectRaw('sum(sale_return_payments.amount) as total')
+            ->selectRaw('count(distinct sale_return_payments.sale_return_id) as transaction_count')
+            ->groupBy('sale_return_payments.payment_method_id')
+            ->orderBy('total', 'desc')
+            ->get();
 
         $payments = SalePayment::query()
             ->join('sales', 'sales.id', '=', 'sale_payments.sale_id')
@@ -198,6 +228,8 @@ class OverviewReport extends Component
             'totalSalesReturn' => $totalSalesReturn,
             'employeeQuantity' => $employeeQuantity,
             'employeeTotal' => $employeeTotal,
+            'salePayments' => $salePayments,
+            'saleReturnPayments' => $saleReturnPayments,
         ]);
     }
 }
