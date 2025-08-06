@@ -9,7 +9,7 @@ use Illuminate\Support\Facades\Route;
 Route::middleware('auth')->group(function (): void {
     Route::name('inventory::')->prefix('inventory')->group(function (): void {
         Route::get('', [InventoryController::class, 'index'])->name('index')->can('inventory.view');
-        Route::get('search', [InventoryController::class, 'search'])->name('search')->can('inventory.view');
+        Route::get('search', [InventoryController::class, 'search'])->name('search')->can('inventory.product search');
         Route::name('product::')->prefix('product')->group(function (): void {
             Route::get('view/{id}', [InventoryController::class, 'view'])->name('view')->can('inventory.view');
             Route::get('list', [InventoryController::class, 'get'])->name('list');
@@ -28,7 +28,7 @@ Route::middleware('auth')->group(function (): void {
             Route::get('view/{id?}', [BarcodeController::class, 'print'])->name('view');
             Route::get('configuration', [BarcodeController::class, 'configuration'])->name('configuration')->can('configuration.barcode');
             Route::name('cart::')->prefix('cart')->group(function (): void {
-                Route::get('', [BarcodeController::class, 'index'])->name('index');
+                Route::get('', [BarcodeController::class, 'index'])->name('index')->can('inventory.barcode cart');
                 Route::get('print', [BarcodeController::class, 'cartPrint'])->name('print');
             });
         });
