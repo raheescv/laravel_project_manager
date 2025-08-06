@@ -110,7 +110,7 @@ class Table extends Component
                         ->orWhere('sub_categories.name', 'like', "%{$value}%")
                         ->orWhere('inventories.barcode', 'like', "%{$value}%")
                         ->orWhere('inventories.batch', 'like', "%{$value}%")
-                        ->orWhere('products.size', 'like', "%{$value}%")
+                        ->orWhere('products.size',$value)
                         ->orWhere('inventories.quantity', 'like', "%{$value}%")
                         ->orWhere('inventories.cost', 'like', "%{$value}%");
                 });
@@ -128,7 +128,7 @@ class Table extends Component
                 return $query->where('main_category_id', $value);
             })
             ->when($this->size ?? '', function ($query, $value) {
-                return $query->where('products.size', 'like', "%{$value}%");
+                return $query->where('products.size', $value);
             })
             ->when($this->sub_category_id ?? '', function ($query, $value) {
                 return $query->where('sub_category_id', $value);
