@@ -127,6 +127,7 @@ class PurchaseItemReport extends Component
         $totalRow = clone $data;
         $data = $data->paginate($this->limit);
 
+        $total['quantity'] = $totalRow->sum('purchase_items.quantity');
         $total['gross_amount'] = $totalRow->sum('purchase_items.gross_amount');
         $total['discount'] = $totalRow->sum('purchase_items.discount');
         $total['net_amount'] = $totalRow->sum('purchase_items.net_amount');

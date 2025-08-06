@@ -78,7 +78,8 @@
                 </tbody>
                 <tfoot>
                     <tr>
-                        <th colspan="6">Total</th>
+                        <th colspan="5">Total</th>
+                        <th class="text-end">{{ currency($total['quantity']) }}</th>
                         <th class="text-end">{{ currency($total['gross_amount']) }}</th>
                         <th class="text-end">{{ currency($total['discount']) }}</th>
                         <th class="text-end">{{ currency($total['net_amount']) }}</th>
