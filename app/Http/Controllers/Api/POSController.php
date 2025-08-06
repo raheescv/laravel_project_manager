@@ -202,7 +202,7 @@ class POSController extends Controller
 
             return response()->json(['success' => true]);
         } catch (Exception $e) {
-            return response()->json(['error' => 'Failed to remove item'], 500);
+            return response()->json(['error' => 'Failed to remove item : '.$e->getMessage()], 500);
         }
     }
 

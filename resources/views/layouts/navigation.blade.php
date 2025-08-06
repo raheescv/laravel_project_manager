@@ -149,10 +149,14 @@
                                     <li class="nav-item">
                                         <a href="{{ route('inventory::index') }}" class="nav-link {{ request()->is(['inventory', 'inventory/product/*']) ? 'active' : '' }}">List</a>
                                     </li>
+                                @endcan
+                                @can('inventory.product search')
                                     <li class="nav-item">
                                         <a href="{{ route('inventory::search') }}" class="nav-link {{ request()->is(['inventory/search']) ? 'active' : '' }}">Product Search</a>
                                     </li>
-                                    <li class="nav-item">
+                                @endcan
+                                @can('inventory.barcode cart')
+                                <li class="nav-item">
                                         <a href="{{ route('inventory::barcode::cart::index') }}" class="nav-link {{ request()->is(['inventory/barcode/cart']) ? 'active' : '' }}">Barcode Cart</a>
                                     </li>
                                 @endcan

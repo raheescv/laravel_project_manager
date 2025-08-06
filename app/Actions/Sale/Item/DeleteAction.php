@@ -17,7 +17,7 @@ class DeleteAction
                 throw new Exception("SaleItem not found with the specified ID: $id.", 1);
             }
             if ($model->sale->status == 'completed') {
-                if (! Auth::user()->can('sale.edit completed')) {
+                if (! Auth::user()->can('sale.delete item after completed')) {
                     throw new Exception("You don't have permission to delete it.", 1);
                 }
                 (new StockUpdateAction())->singleItemDelete($model, $model->sale, 'delete_item', Auth::id());

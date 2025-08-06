@@ -731,7 +731,7 @@
                         calculateTotals()
                         toast.success('Item removed from cart')
                     } catch (error) {
-                        toast.error('Failed to remove item')
+                        toast.error(error.response?.data?.error || 'Failed to remove item')
                     }
                 }
             }
