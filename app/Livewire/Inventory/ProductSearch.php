@@ -93,7 +93,9 @@ class ProductSearch extends Component
             return $query->where(function ($q) use ($value): void {
                 $value = trim($value);
                 $q->where('products.name', 'like', "%{$value}%")
-                    ->orWhere('products.name_arabic', 'like', "%{$value}%");
+                    ->orWhere('products.name_arabic', 'like', "%{$value}%")
+                    ->orWhere('products.code', 'like', "%{$value}%")
+                    ->orWhere('inventories.barcode', 'like', "%{$value}%");
             });
         });
 

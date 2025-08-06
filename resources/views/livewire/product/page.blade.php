@@ -102,6 +102,20 @@
                                     </label>
                                     {{ html()->select('unit_id', $units)->value('')->class('tomSelect border-primary-subtle shadow-sm')->placeholder('Select your unit')->id('unit_id')->attribute('wire:model', 'products.unit_id') }}
                                 </div>
+                                <div class="col-md-4">
+                                    <label for="unit_id" class="form-label fw-medium">
+                                        <i class="fa fa-cube text-primary me-1 small"></i>
+                                        Brand
+                                    </label>
+                                    {{ html()->input('brand')->value('')->class('form-control')->placeholder('Enter your brand')->attribute('wire:model', 'products.brand') }}
+                                </div>
+                                <div class="col-md-4">
+                                    <label for="unit_id" class="form-label fw-medium">
+                                        <i class="fa fa-cube text-primary me-1 small"></i>
+                                        Size
+                                    </label>
+                                    {{ html()->input('size')->value('')->class('form-control')->placeholder('Enter your size')->attribute('wire:model', 'products.size') }}
+                                </div>
                                 @if ($type == 'product')
                                     <div class="col-12">
                                         <div class="row g-3">
@@ -517,19 +531,11 @@
                                                                 {{ html()->input('color')->value('')->class('form-control')->placeholder('Enter your color')->attribute('wire:model', 'products.color') }}
                                                             </div>
                                                             <div class="col-md-4">
-                                                                <label for="size" class="form-label">Size</label>
-                                                                {{ html()->input('size')->value('')->class('form-control')->placeholder('Enter your size')->attribute('wire:model', 'products.size') }}
-                                                            </div>
-                                                            <div class="col-md-4">
                                                                 <label for="model" class="form-label">Model</label>
                                                                 {{ html()->input('model')->value('')->class('form-control')->placeholder('Enter your model')->attribute('wire:model', 'products.model') }}
                                                             </div>
                                                             <div class="col-md-4">
-                                                                <label for="brand" class="form-label">Brand</label>
-                                                                {{ html()->input('brand')->value('')->class('form-control')->placeholder('Enter your brand')->attribute('wire:model', 'products.brand') }}
-                                                            </div>
-                                                            <div class="col-md-4">
-                                                                <label for="part_no" class="form-label">PartNo</label>
+                                                                <label for="part_no" class="form-label">Part No</label>
                                                                 {{ html()->input('part_no')->value('')->class('form-control')->placeholder('Enter your part no')->attribute('wire:model', 'products.part_no') }}
                                                             </div>
                                                         </div>

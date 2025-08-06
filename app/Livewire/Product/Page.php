@@ -56,12 +56,14 @@ class Page extends Component
             $faker = Factory::create();
             $name = '';
             $code = time();
+            $code = '';
             $barcode = null;
             $mrp = 0;
             $cost = 0;
             if (! app()->isProduction()) {
                 $name = $faker->name;
                 $code = $faker->hexcolor;
+                $code = '';
                 $barcode = $faker->hexcolor;
                 $cost = rand(100, 900);
                 $mrp = rand(1000, 9000);
@@ -74,7 +76,7 @@ class Page extends Component
                 'is_selling' => true,
                 'is_favorite' => false,
                 'hsn_code' => '',
-                'tax' => 5,
+                'tax' => 0,
                 'cost' => $cost,
                 'mrp' => $mrp,
                 'pattern' => '',
@@ -89,9 +91,9 @@ class Page extends Component
                 'reorder_level' => '',
                 'plu' => '',
                 'unit_id' => 1,
+                'department_id' => 1,
                 'main_category_id' => null,
                 'sub_category_id' => null,
-                'department_id' => null,
                 'status' => 'active',
                 'department' => ['id' => 1, 'name' => 'Food'],
                 'sub_category' => [],
