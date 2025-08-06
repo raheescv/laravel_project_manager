@@ -9,6 +9,7 @@ use App\Actions\Product\ProductUnit\DeleteAction as UnitDeleteAction;
 use App\Actions\Product\UpdateAction;
 use App\Models\Configuration;
 use App\Models\Product;
+use App\Models\Department;
 use App\Models\Unit;
 use Faker\Factory;
 use Illuminate\Support\Facades\Auth;
@@ -91,11 +92,11 @@ class Page extends Component
                 'reorder_level' => '',
                 'plu' => '',
                 'unit_id' => 1,
-                'department_id' => 1,
                 'main_category_id' => null,
                 'sub_category_id' => null,
                 'status' => 'active',
-                'department' => ['id' => 1, 'name' => 'Food'],
+                'department_id' => 1,
+                'department' => Department::first(['id','name'])->toArray(),
                 'sub_category' => [],
                 'main_category' => [],
                 'images' => [],
@@ -125,11 +126,6 @@ class Page extends Component
             'products.mrp' => ['required'],
             'images.*' => 'mimes:jpg,jpeg,png,gif,bmp,webp,svg|max:3100',
         ];
-        if ($this->type == 'product') {
-            if ($this->barcode_type == 'product_wise') {
-                $rules['products.barcode'] = ['required', Rule::unique(Product::class, 'barcode')->whereNull('deleted_at')->ignore($this->table_id)];
-            }
-        }
 
         return $rules;
     }
@@ -148,8 +144,6 @@ class Page extends Component
         'products.mrp' => 'The mrp field is required.',
         'images.mimetypes' => 'The images field must be a file of type: image.',
         'images.*.max' => 'The images field must not be greater than 3100 KB',
-        'products.barcode.required' => 'The barcode field is required',
-        'products.barcode.unique' => 'The barcode has already been taken',
     ];
 
     public function save($edit = false)

@@ -297,7 +297,7 @@
                     <tr>
                         <th colspan="{{ count(array_filter($inventory_visible_column ?? [])) - 2 }}" class="text-end fw-bold">Total</th>
                         @if ($inventory_visible_column['quantity'] ?? true)
-                            <th class="text-end fw-bold text-primary">{{ currency($quantity) }}</th>
+                            <th class="text-end fw-bold text-primary">{{ $quantity }}</th>
                         @endif
                         @if ($inventory_visible_column['total'] ?? true)
                             <th class="text-end fw-bold text-primary">{{ currency($total) }}</th>

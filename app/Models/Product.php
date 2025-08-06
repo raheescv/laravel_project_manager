@@ -76,6 +76,10 @@ class Product extends Model implements AuditableContracts
             'main_category_id' => ['required'],
             'cost' => ['required'],
             'mrp' => ['required'],
+            'barcode' => [
+                'required',
+                Rule::unique('products')->where('barcode', $data['barcode'])->whereNull('deleted_at')->ignore($id),
+            ],
         ];
 
         return array_merge($rules, $merge);

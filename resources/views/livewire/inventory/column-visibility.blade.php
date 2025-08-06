@@ -1,16 +1,22 @@
 <div>
     <table class="table table-striped align-middle table-sm table-bordered">
         <tbody>
-            @foreach ($inventory_visible_column as $column => $visible)
+            @if($inventory_visible_column)
+                @foreach ($inventory_visible_column as $column => $visible)
+                    <tr>
+                        <th>
+                            <label class="me-3">
+                                <input type="checkbox" wire:click="toggleColumn('{{ $column }}')" @if ($visible) checked @endif>
+                                &nbsp; {{ ucFirst(str_replace('_', ' ', $column)) }}
+                            </label>
+                        </th>
+                    </tr>
+                @endforeach
+            @else
                 <tr>
-                    <th>
-                        <label class="me-3">
-                            <input type="checkbox" wire:click="toggleColumn('{{ $column }}')" @if ($visible) checked @endif>
-                            &nbsp; {{ ucFirst(str_replace('_', ' ', $column)) }}
-                        </label>
-                    </th>
+                    <th class="text-center text-muted">No columns available</th>
                 </tr>
-            @endforeach
+            @endif
         </tbody>
         <tfoot>
             <tr>

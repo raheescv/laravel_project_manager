@@ -11,7 +11,28 @@ class ColumnVisibility extends Component
 
     public function mount()
     {
-        $this->inventory_visible_column = json_decode(Configuration::where('key', 'inventory_visible_column')->value('value'), true);
+        $config = Configuration::where('key', 'inventory_visible_column')->value('value');
+        $this->inventory_visible_column = $config ? json_decode($config, true) : $this->getDefaultColumns();
+    }
+
+    protected function getDefaultColumns()
+    {
+        return [
+            'branch' => true,
+            'department' => true,
+            'main_category' => true,
+            'sub_category' => true,
+            'unit' => true,
+            'brand' => true,
+            'size' => true,
+            'code' => true,
+            'product_name' => true,
+            'quantity' => true,
+            'cost' => true,
+            'total' => true,
+            'barcode' => true,
+            'batch' => true,
+        ];
     }
 
     public function toggleColumn($column)

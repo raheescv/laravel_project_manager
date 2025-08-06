@@ -152,13 +152,13 @@
                                         <div class="col-12">
                                             <label for="barcode" class="form-label fw-medium">
                                                 <i class="fa fa-barcode text-primary me-1 small"></i>
-                                                Barcode <span class="text-danger">*</span>
+                                                Barcode
                                             </label>
                                             <div class="input-group">
                                                 <span class="input-group-text bg-light border-primary-subtle">
                                                     <i class="fa fa-qrcode"></i>
                                                 </span>
-                                                {{ html()->input('barcode')->value('')->class('form-control border-primary-subtle shadow-sm')->placeholder('Enter a unique barcode here')->required(true)->attribute('wire:model', 'products.barcode') }}
+                                                {{ html()->input('barcode')->value('')->class('form-control border-primary-subtle shadow-sm')->placeholder('Enter a unique barcode here')->attribute('wire:model', 'products.barcode') }}
                                             </div>
                                             <small class="text-muted mt-1 d-block">Enter a unique barcode identifier for this product</small>
                                         </div>
@@ -670,53 +670,81 @@
             window.addEventListener('SelectDropDownValues', event => {
                 var product = event.detail[0];
 
-                var tomSelectInstance = document.querySelector('#unit_id').tomselect;
-                if (product['unit_id']) {
-                    tomSelectInstance.addItem(product['unit_id']);
-                } else {
-                    tomSelectInstance.clear();
+                var unitElement = document.querySelector('#unit_id');
+                if (unitElement && unitElement.tomselect) {
+                    try {
+                        var tomSelectInstance = unitElement.tomselect;
+                        if (product['unit_id']) {
+                            tomSelectInstance.addItem(product['unit_id']);
+                        } else {
+                            tomSelectInstance.clear();
+                        }
+                    } catch (error) {
+                        console.warn('Error handling unit_id:', error);
+                    }
                 }
 
-                var tomSelectInstance = document.querySelector('#department_id').tomselect;
-                if (product['department_id']) {
-                    if (product['department']) {
-                        preselectedData = {
-                            id: product['department']['id'],
-                            name: product['department']['name'],
-                        };
-                        tomSelectInstance.addOption(preselectedData);
+                var departmentElement = document.querySelector('#department_id');
+                if (departmentElement && departmentElement.tomselect) {
+                    try {
+                        var tomSelectInstance = departmentElement.tomselect;
+                        if (product['department_id']) {
+                            if (product['department']) {
+                                var preselectedData = {
+                                    id: product['department']['id'],
+                                    name: product['department']['name'],
+                                };
+                                tomSelectInstance.addOption(preselectedData);
+                            }
+                            tomSelectInstance.addItem(product['department_id']);
+                        } else {
+                            tomSelectInstance.clear();
+                        }
+                    } catch (error) {
+                        console.warn('Error handling department_id:', error);
                     }
-                    tomSelectInstance.addItem(product['department_id']);
-                } else {
-                    tomSelectInstance.clear();
                 }
 
-                var tomSelectInstance = document.querySelector('#main_category_id').tomselect;
-                if (product['main_category_id']) {
-                    if (product['main_category']) {
-                        preselectedData = {
-                            id: product['main_category']['id'],
-                            name: product['main_category']['name'],
-                        };
-                        tomSelectInstance.addOption(preselectedData);
+                var mainCategoryElement = document.querySelector('#main_category_id');
+                if (mainCategoryElement && mainCategoryElement.tomselect) {
+                    try {
+                        var tomSelectInstance = mainCategoryElement.tomselect;
+                        if (product['main_category_id']) {
+                            if (product['main_category']) {
+                                var preselectedData = {
+                                    id: product['main_category']['id'],
+                                    name: product['main_category']['name'],
+                                };
+                                tomSelectInstance.addOption(preselectedData);
+                            }
+                            tomSelectInstance.addItem(product['main_category_id']);
+                        } else {
+                            tomSelectInstance.clear();
+                        }
+                    } catch (error) {
+                        console.warn('Error handling main_category_id:', error);
                     }
-                    tomSelectInstance.addItem(product['main_category_id']);
-                } else {
-                    tomSelectInstance.clear();
                 }
 
-                var tomSelectInstance = document.querySelector('#sub_category_id').tomselect;
-                if (product['sub_category_id']) {
-                    if (product['sub_category']) {
-                        preselectedData = {
-                            id: product['sub_category']['id'],
-                            name: product['sub_category']['name'],
-                        };
-                        tomSelectInstance.addOption(preselectedData);
+                var subCategoryElement = document.querySelector('#sub_category_id');
+                if (subCategoryElement && subCategoryElement.tomselect) {
+                    try {
+                        var tomSelectInstance = subCategoryElement.tomselect;
+                        if (product['sub_category_id']) {
+                            if (product['sub_category']) {
+                                var preselectedData = {
+                                    id: product['sub_category']['id'],
+                                    name: product['sub_category']['name'],
+                                };
+                                tomSelectInstance.addOption(preselectedData);
+                            }
+                            tomSelectInstance.addItem(product['sub_category_id']);
+                        } else {
+                            tomSelectInstance.clear();
+                        }
+                    } catch (error) {
+                        console.warn('Error handling sub_category_id:', error);
                     }
-                    tomSelectInstance.addItem(product['sub_category_id']);
-                } else {
-                    tomSelectInstance.clear();
                 }
                 $('#name').select();
             });

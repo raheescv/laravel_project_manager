@@ -59,7 +59,28 @@ class Table extends Component
 
     public function mount()
     {
-        $this->inventory_visible_column = json_decode(Configuration::where('key', 'inventory_visible_column')->value('value'), true);
+        $config = Configuration::where('key', 'inventory_visible_column')->value('value');
+        $this->inventory_visible_column = $config ? json_decode($config, true) : $this->getDefaultColumns();
+    }
+
+    protected function getDefaultColumns()
+    {
+        return [
+            'branch' => true,
+            'department' => true,
+            'main_category' => true,
+            'sub_category' => true,
+            'unit' => true,
+            'brand' => true,
+            'size' => true,
+            'code' => true,
+            'product_name' => true,
+            'quantity' => true,
+            'cost' => true,
+            'total' => true,
+            'barcode' => true,
+            'batch' => true,
+        ];
     }
 
     public function export()
@@ -141,7 +162,7 @@ class Table extends Component
                 return $query->where('products.size', $value);
             })
             ->when($this->barcode ?? '', function ($query, $value) {
-                return $query->where('products.barcode', $value);
+                return $query->where('inventories.barcode', $value);
             })
             ->when($this->sub_category_id ?? '', function ($query, $value) {
                 return $query->where('sub_category_id', $value);
