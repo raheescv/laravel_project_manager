@@ -28,7 +28,7 @@ class SaleHelper
         $enable_discount_in_print = Configuration::where('key', 'enable_discount_in_print')->value('value');
         $enable_total_quantity_in_print = Configuration::where('key', 'enable_total_quantity_in_print')->value('value');
         $enable_logo_in_print = Configuration::where('key', 'enable_logo_in_print')->value('value');
-        $payments = $sale->payments()->with('paymentMethod:id,name')->get(['amount','payment_method_id'])->toArray();
+        $payments = $sale->payments()->with('paymentMethod:id,name')->get(['amount', 'payment_method_id'])->toArray();
         $data = compact(
             'payments',
             'sale',

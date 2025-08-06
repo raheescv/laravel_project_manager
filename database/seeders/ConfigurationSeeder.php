@@ -75,6 +75,24 @@ class ConfigurationSeeder extends Seeder
         ];
         Configuration::updateOrCreate(['key' => 'purchase_visible_column'], ['value' => json_encode($purchaseVisibleColumns)]);
 
+        $inventoryVisibleColumns = [
+            'branch' => true,
+            'department' => true,
+            'main_category' => true,
+            'sub_category' => true,
+            'unit' => true,
+            'brand' => true,
+            'size' => true,
+            'code' => true,
+            'product_name' => true,
+            'quantity' => true,
+            'cost' => true,
+            'total' => true,
+            'barcode' => true,
+            'batch' => true,
+        ];
+        Configuration::updateOrCreate(['key' => 'inventory_visible_column'], ['value' => json_encode($inventoryVisibleColumns)]);
+
         $barcode = [
             'width' => 50,
             'height' => 30,

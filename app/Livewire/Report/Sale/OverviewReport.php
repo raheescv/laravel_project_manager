@@ -95,13 +95,13 @@ class OverviewReport extends Component
             ->when($this->branchId, fn ($q) => $q->where('sales.branch_id', $this->branchId))
             ->when($from, fn ($q) => $q->where('sales.date', '>=', $from))
             ->when($to, fn ($q) => $q->where('sales.date', '<=', $to))
-            ->where('sales.status','completed');
+            ->where('sales.status', 'completed');
 
         $baseReturnQuery = fn ($query) => $query
             ->when($this->branchId, fn ($q) => $q->where('sale_returns.branch_id', $this->branchId))
             ->when($from, fn ($q) => $q->where('sale_returns.date', '>=', $from))
             ->when($to, fn ($q) => $q->where('sale_returns.date', '<=', $to))
-            ->where('sale_returns.status','completed');
+            ->where('sale_returns.status', 'completed');
 
         $employees = SaleItem::query()
             ->join('sales', 'sales.id', '=', 'sale_items.sale_id')

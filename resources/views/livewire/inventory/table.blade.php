@@ -34,6 +34,18 @@
                     </span>
                     <input type="text" wire:model.live="search" class="form-control border-start-0" placeholder="Search inventory..." autofocus>
                 </div>
+                <div class="dropdown">
+                    <button class="btn btn-sm btn-outline-primary" data-bs-toggle="dropdown" aria-expanded="false">
+                        <i class="demo-pli-layout-grid me-1"></i> Columns
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end shadow-sm">
+                        <li>
+                            <a class="dropdown-item" data-bs-toggle="offcanvas" data-bs-target="#inventoryColumnVisibility" aria-controls="inventoryColumnVisibility">
+                                <i class="demo-pli-column-width me-2"></i>Column Visibility
+                            </a>
+                        </li>
+                    </ul>
+                </div>
             </div>
         </div>
 
@@ -116,20 +128,48 @@
                                 <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="inventories.id" label="ID" />
                             </div>
                         </th>
-                        <th class="border-bottom"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="branches.name" label="Branch" /> </th>
-                        <th class="border-bottom"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="departments.name" label="Department" /> </th>
-                        <th class="border-bottom"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="main_categories.name" label="Main Category" /> </th>
-                        <th class="border-bottom"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="sub_categories.name" label="Sub Category" /> </th>
-                        <th class="border-bottom"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="units.name" label="Unit" /> </th>
-                        <th class="border-bottom"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="brand" label="Brand" /> </th>
-                        <th class="border-bottom"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="products.size" label="Size" /> </th>
-                        <th class="border-bottom"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="products.code" label="Code" /> </th>
-                        <th class="border-bottom"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="products.name" label="Product Name" /> </th>
-                        <th class="text-end border-bottom"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="inventories.quantity" label="Quantity" /> </th>
-                        <th class="text-end border-bottom"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="inventories.cost" label="Cost" /> </th>
-                        <th class="text-end border-bottom"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="inventories.total" label="Total" /> </th>
-                        <th class="border-bottom"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="inventories.barcode" label="Barcode" /> </th>
-                        <th class="border-bottom"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="inventories.batch" label="Batch" /> </th>
+                        @if ($inventory_visible_column['branch'] ?? true)
+                            <th class="border-bottom"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="branches.name" label="Branch" /> </th>
+                        @endif
+                        @if ($inventory_visible_column['department'] ?? true)
+                            <th class="border-bottom"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="departments.name" label="Department" /> </th>
+                        @endif
+                        @if ($inventory_visible_column['main_category'] ?? true)
+                            <th class="border-bottom"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="main_categories.name" label="Main Category" /> </th>
+                        @endif
+                        @if ($inventory_visible_column['sub_category'] ?? true)
+                            <th class="border-bottom"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="sub_categories.name" label="Sub Category" /> </th>
+                        @endif
+                        @if ($inventory_visible_column['unit'] ?? true)
+                            <th class="border-bottom"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="units.name" label="Unit" /> </th>
+                        @endif
+                        @if ($inventory_visible_column['brand'] ?? true)
+                            <th class="border-bottom"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="brand" label="Brand" /> </th>
+                        @endif
+                        @if ($inventory_visible_column['size'] ?? true)
+                            <th class="border-bottom"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="products.size" label="Size" /> </th>
+                        @endif
+                        @if ($inventory_visible_column['code'] ?? true)
+                            <th class="border-bottom"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="products.code" label="Code" /> </th>
+                        @endif
+                        @if ($inventory_visible_column['product_name'] ?? true)
+                            <th class="border-bottom"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="products.name" label="Product Name" /> </th>
+                        @endif
+                        @if ($inventory_visible_column['quantity'] ?? true)
+                            <th class="text-end border-bottom"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="inventories.quantity" label="Quantity" /> </th>
+                        @endif
+                        @if ($inventory_visible_column['cost'] ?? true)
+                            <th class="text-end border-bottom"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="inventories.cost" label="Cost" /> </th>
+                        @endif
+                        @if ($inventory_visible_column['total'] ?? true)
+                            <th class="text-end border-bottom"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="inventories.total" label="Total" /> </th>
+                        @endif
+                        @if ($inventory_visible_column['barcode'] ?? true)
+                            <th class="border-bottom"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="inventories.barcode" label="Barcode" /> </th>
+                        @endif
+                        @if ($inventory_visible_column['batch'] ?? true)
+                            <th class="border-bottom"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="inventories.batch" label="Batch" /> </th>
+                        @endif
                     </tr>
                 </thead>
                 <tbody>
@@ -143,76 +183,104 @@
                                     <span class="text-muted">#{{ $item->id }}</span>
                                 </div>
                             </td>
-                            <td>
-                                <div class="d-flex align-items-center gap-2">
-                                    <span class="bg-info bg-opacity-10 rounded-circle p-2 d-inline-flex align-items-center justify-content-center" title="Branch">
-                                        <i class="demo-psi-building fs-5 text-info"></i>
-                                    </span>
-                                    <span>{{ $item->branch_name ?? 'N/A' }}</span>
-                                </div>
-                            </td>
-                            <td>
-                                <div class="d-flex align-items-center gap-2">
-                                    <span class="bg-warning bg-opacity-10 rounded-circle p-2 d-inline-flex align-items-center justify-content-center" title="Department">
-                                        <i class="demo-pli-reload-3 fs-5 text-warning"></i>
-                                    </span>
-                                    <span>{{ $item->department_name ?? 'N/A' }}</span>
-                                </div>
-                            </td>
-                            <td>
-                                <div class="d-flex align-items-center gap-2">
-                                    <span class="bg-primary bg-opacity-10 rounded-circle p-2 d-inline-flex align-items-center justify-content-center" title="Main Category">
-                                        <i class="demo-pli-folder fs-5 text-primary"></i>
-                                    </span>
-                                    <span>{{ $item->main_category_name }}</span>
-                                </div>
-                            </td>
-                            <td>
-                                <div class="d-flex align-items-center gap-2">
-                                    <span class="bg-success bg-opacity-10 rounded-circle p-2 d-inline-flex align-items-center justify-content-center" title="Sub Category">
-                                        <i class="demo-pli-folder-with-document fs-5 text-success"></i>
-                                    </span>
-                                    <span>{{ $item->sub_category_name }}</span>
-                                </div>
-                            </td>
-                            <td>{{ $item->unit_name }}</td>
-                            <td class="text-nowrap">{{ $item->brand }}</td>
-                            <td class="text-nowrap">{{ $item->size }}</td>
-                            <td>
-                                <code class="bg-light px-2 py-1 rounded">{{ $item->code }}</code>
-                            </td>
-                            <td>
-                                <a href="{{ route('inventory::product::view', $item->product_id) }}" class="text-decoration-none">
-                                    <strong class="text-primary">{{ $item->name }}</strong>
-                                    @if ($item->name_arabic)
-                                        <br>
-                                        <span class="text-muted small" style="text-align: right; display: block;" dir="rtl">
-                                            {{ $item->name_arabic }}
+                            @if ($inventory_visible_column['branch'] ?? true)
+                                <td>
+                                    <div class="d-flex align-items-center gap-2">
+                                        <span class="bg-info bg-opacity-10 rounded-circle p-2 d-inline-flex align-items-center justify-content-center" title="Branch">
+                                            <i class="demo-psi-building fs-5 text-info"></i>
                                         </span>
+                                        <span>{{ $item->branch_name ?? 'N/A' }}</span>
+                                    </div>
+                                </td>
+                            @endif
+                            @if ($inventory_visible_column['department'] ?? true)
+                                <td>
+                                    <div class="d-flex align-items-center gap-2">
+                                        <span class="bg-warning bg-opacity-10 rounded-circle p-2 d-inline-flex align-items-center justify-content-center" title="Department">
+                                            <i class="demo-pli-reload-3 fs-5 text-warning"></i>
+                                        </span>
+                                        <span>{{ $item->department_name ?? 'N/A' }}</span>
+                                    </div>
+                                </td>
+                            @endif
+                            @if ($inventory_visible_column['main_category'] ?? true)
+                                <td>
+                                    <div class="d-flex align-items-center gap-2">
+                                        <span class="bg-primary bg-opacity-10 rounded-circle p-2 d-inline-flex align-items-center justify-content-center" title="Main Category">
+                                            <i class="demo-pli-folder fs-5 text-primary"></i>
+                                        </span>
+                                        <span>{{ $item->main_category_name }}</span>
+                                    </div>
+                                </td>
+                            @endif
+                            @if ($inventory_visible_column['sub_category'] ?? true)
+                                <td>
+                                    <div class="d-flex align-items-center gap-2">
+                                        <span class="bg-success bg-opacity-10 rounded-circle p-2 d-inline-flex align-items-center justify-content-center" title="Sub Category">
+                                            <i class="demo-pli-folder-with-document fs-5 text-success"></i>
+                                        </span>
+                                        <span>{{ $item->sub_category_name }}</span>
+                                    </div>
+                                </td>
+                            @endif
+                            @if ($inventory_visible_column['unit'] ?? true)
+                                <td>{{ $item->unit_name }}</td>
+                            @endif
+                            @if ($inventory_visible_column['brand'] ?? true)
+                                <td class="text-nowrap">{{ $item->brand }}</td>
+                            @endif
+                            @if ($inventory_visible_column['size'] ?? true)
+                                <td class="text-nowrap">{{ $item->size }}</td>
+                            @endif
+                            @if ($inventory_visible_column['code'] ?? true)
+                                <td>
+                                    <code class="bg-light px-2 py-1 rounded">{{ $item->code }}</code>
+                                </td>
+                            @endif
+                            @if ($inventory_visible_column['product_name'] ?? true)
+                                <td>
+                                    <a href="{{ route('inventory::product::view', $item->product_id) }}" class="text-decoration-none">
+                                        <strong class="text-primary">{{ $item->name }}</strong>
+                                        @if ($item->name_arabic)
+                                            <br>
+                                            <span class="text-muted small" style="text-align: right; display: block;" dir="rtl">
+                                                {{ $item->name_arabic }}
+                                            </span>
+                                        @endif
+                                    </a>
+                                </td>
+                            @endif
+                            @if ($inventory_visible_column['quantity'] ?? true)
+                                <td class="text-end fw-bold">{{ $item->quantity }}</td>
+                            @endif
+                            @if ($inventory_visible_column['cost'] ?? true)
+                                <td class="text-end text-muted">{{ currency($item->cost) }}</td>
+                            @endif
+                            @if ($inventory_visible_column['total'] ?? true)
+                                <td class="text-end fw-bold text-primary">{{ currency($item->total) }}</td>
+                            @endif
+                            @if ($inventory_visible_column['barcode'] ?? true)
+                                <td>
+                                    @if ($item->barcode)
+                                        <code class="bg-light px-2 py-1 rounded">{{ $item->barcode }}</code>
+                                    @else
+                                        <span class="text-muted">-</span>
                                     @endif
-                                </a>
-                            </td>
-                            <td class="text-end fw-bold">{{ $item->quantity }}</td>
-                            <td class="text-end text-muted">{{ currency($item->cost) }}</td>
-                            <td class="text-end fw-bold text-primary">{{ currency($item->total) }}</td>
-                            <td>
-                                @if ($item->barcode)
-                                    <code class="bg-light px-2 py-1 rounded">{{ $item->barcode }}</code>
-                                @else
-                                    <span class="text-muted">-</span>
-                                @endif
-                            </td>
-                            <td>
-                                @if ($item->batch)
-                                    <span class="badge bg-info bg-opacity-10 text-info">{{ $item->batch }}</span>
-                                @else
-                                    <span class="text-muted">-</span>
-                                @endif
-                            </td>
+                                </td>
+                            @endif
+                            @if ($inventory_visible_column['batch'] ?? true)
+                                <td>
+                                    @if ($item->batch)
+                                        <span class="badge bg-info bg-opacity-10 text-info">{{ $item->batch }}</span>
+                                    @else
+                                        <span class="text-muted">-</span>
+                                    @endif
+                                </td>
+                            @endif
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="13" class="text-center py-4 text-muted">
+                            <td colspan="{{ count(array_filter($inventory_visible_column ?? [])) + 1 }}" class="text-center py-4 text-muted">
                                 <i class="demo-pli-warning-window fs-2 d-block mb-2"></i>
                                 No inventory items found
                             </td>
@@ -221,10 +289,13 @@
                 </tbody>
                 <tfoot class="table-group-divider bg-light">
                     <tr>
-                        <th colspan="10" class="text-end fw-bold">Total</th>
-                        <th class="text-end fw-bold text-primary">{{ currency($quantity) }}</th>
-                        <th></th>
-                        <th class="text-end fw-bold text-primary">{{ currency($total) }}</th>
+                        <th colspan="{{ count(array_filter($inventory_visible_column ?? [])) - 2 }}" class="text-end fw-bold">Total</th>
+                        @if ($inventory_visible_column['quantity'] ?? true)
+                            <th class="text-end fw-bold text-primary">{{ currency($quantity) }}</th>
+                        @endif
+                        @if ($inventory_visible_column['total'] ?? true)
+                            <th class="text-end fw-bold text-primary">{{ currency($total) }}</th>
+                        @endif
                         <th colspan="2"></th>
                     </tr>
                 </tfoot>

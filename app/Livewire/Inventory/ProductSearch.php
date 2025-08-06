@@ -28,6 +28,7 @@ class ProductSearch extends Component
     public $limit = 50;
 
     public $sortField = 'products.name';
+
     public $sortDirection = 'asc';
 
     protected $paginationTheme = 'bootstrap';

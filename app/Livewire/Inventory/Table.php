@@ -4,6 +4,7 @@ namespace App\Livewire\Inventory;
 
 use App\Exports\ProductExport;
 use App\Jobs\Export\ExportProductJob;
+use App\Models\Configuration;
 use App\Models\Inventory;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
@@ -46,11 +47,18 @@ class Table extends Component
 
     public $sortDirection = 'desc';
 
+    public $inventory_visible_column = [];
+
     protected $paginationTheme = 'bootstrap';
 
     protected $listeners = [
         'Inventory-Refresh-Component' => '$refresh',
     ];
+
+    public function mount()
+    {
+        $this->inventory_visible_column = json_decode(Configuration::where('key', 'inventory_visible_column')->value('value'), true);
+    }
 
     public function export()
     {
@@ -110,7 +118,7 @@ class Table extends Component
                         ->orWhere('sub_categories.name', 'like', "%{$value}%")
                         ->orWhere('inventories.barcode', 'like', "%{$value}%")
                         ->orWhere('inventories.batch', 'like', "%{$value}%")
-                        ->orWhere('products.size',$value)
+                        ->orWhere('products.size', $value)
                         ->orWhere('inventories.quantity', 'like', "%{$value}%")
                         ->orWhere('inventories.cost', 'like', "%{$value}%");
                 });
