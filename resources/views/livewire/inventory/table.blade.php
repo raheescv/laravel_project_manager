@@ -111,6 +111,12 @@
                     </label>
                     <input type="text" wire:model.live="size" class="form-control shadow-sm" placeholder="Search by size...">
                 </div>
+                <div class="col-12 col-md-3">
+                    <label class="form-label fw-semibold mb-2">
+                        <i class="demo-pli-folder me-1 text-warning"></i> Barcode
+                    </label>
+                    <input type="text" wire:model.live="barcode" class="form-control shadow-sm" placeholder="Search by barcode...">
+                </div>
             </div>
         </div>
     </div>

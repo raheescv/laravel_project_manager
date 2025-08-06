@@ -33,6 +33,8 @@ class Table extends Component
 
     public $size = '';
 
+    public $barcode = '';
+
     public $unit_id = '';
 
     public $limit = 100;
@@ -137,6 +139,9 @@ class Table extends Component
             })
             ->when($this->size ?? '', function ($query, $value) {
                 return $query->where('products.size', $value);
+            })
+            ->when($this->barcode ?? '', function ($query, $value) {
+                return $query->where('products.barcode', $value);
             })
             ->when($this->sub_category_id ?? '', function ($query, $value) {
                 return $query->where('sub_category_id', $value);
