@@ -107,9 +107,6 @@
                                                 <input v-model="barcodeKey" @input="searchByBarcode" type="text"
                                                     class="w-full pl-8 pr-3 py-2 sm:py-2.5 rounded-lg border-slate-200 shadow-sm focus:border-purple-500 focus:ring-purple-500/20 transition-all duration-200 bg-white/90 backdrop-blur-sm group-hover:shadow-md text-xs sm:text-sm min-h-[44px] sm:min-h-[40px]"
                                                     placeholder="Scan barcode" autocomplete="off">
-                                                <div class="absolute left-3 top-1/2 transform -translate-y-1/2 text-purple-500 group-focus-within:text-purple-600 transition-colors">
-                                                    <i class="fa fa-barcode text-xs"></i>
-                                                </div>
                                             </div>
                                         </div>
                                         <div class="space-y-1">
@@ -117,9 +114,6 @@
                                                 <input v-model="productKey" @input="searchProducts" type="text"
                                                     class="w-full pl-8 pr-3 py-2 sm:py-2.5 rounded-lg border-slate-200 shadow-sm focus:border-orange-500 focus:ring-orange-500/20 transition-all duration-200 bg-white/90 backdrop-blur-sm group-hover:shadow-md text-xs sm:text-sm min-h-[44px] sm:min-h-[40px]"
                                                     placeholder="Search products" autocomplete="off">
-                                                <div class="absolute left-3 top-1/2 transform -translate-y-1/2 text-orange-500 group-focus-within:text-orange-600 transition-colors">
-                                                    <i class="fa fa-search text-xs"></i>
-                                                </div>
                                             </div>
                                         </div>
                                         <button type="button" @click="viewDraftSales"
