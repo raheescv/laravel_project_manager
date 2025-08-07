@@ -224,12 +224,7 @@
                                 <li data-popper-arrow class="arrow"></li>
                                 @can('sale.create')
                                     <li class="nav-item">
-                                        <a href="{{ route('sale::create') }}" class="nav-link {{ request()->is(['sale/create']) ? 'active' : '' }}">Create</a>
-                                    </li>
-                                @endcan
-                                @can('sale.create')
-                                    <li class="nav-item">
-                                        <a href="{{ route('sale::pos') }}" class="nav-link {{ request()->is(['sale/pos']) ? 'active' : '' }}">POS Sale</a>
+                                        <a href="{{ route('sale::create') }}" class="nav-link {{ request()->is(['sale/create','sale/pos']) ? 'active' : '' }}">Create</a>
                                     </li>
                                 @endcan
                                 @can('sale.view')
