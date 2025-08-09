@@ -65,6 +65,11 @@
                                             <i class="fa fa-bar-chart fs-5 me-2"></i>Sales Overview
                                         </a>
                                     @endcan
+                                    @can('report.sale and sales return items')
+                                        <a href="{{ route('report::sale_mixed_items') }}" class="list-group-item list-group-item-action">
+                                            <i class="fa fa-bar-chart fs-5 me-2"></i>Sale & Sales Return Items
+                                        </a>
+                                    @endcan
                                     @can('report.sale calendar')
                                         <a href="{{ route('report::sale_calendar') }}" class="list-group-item list-group-item-action">
                                             <i class="fa fa-calendar fs-5 me-2"></i>Sales Calendar

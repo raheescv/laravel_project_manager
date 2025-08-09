@@ -54,6 +54,7 @@ return [
         'employee productivity',
         'customer callback reminder',
         'sale calendar',
+        'sale and sales return items',
     ],
     'log' => ['inventory'],
     'day close' => ['sync amount'],
