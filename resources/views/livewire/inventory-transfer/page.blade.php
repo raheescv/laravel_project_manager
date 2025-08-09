@@ -119,7 +119,7 @@
                                 <button type="button" wire:click='save("pending")' class="btn btn-success btn-icon flex-fill">Save</button>
                             @endif
                             &nbsp;
-                            <button type="submit" class="btn btn-primary btn-icon flex-fill">Transfer</button>
+                            <button type="button" wire:confirm="Are you sure to submit this?"  wire:click='save("completed")' class="btn btn-primary btn-icon flex-fill">Transfer</button>
                         </div>
                     </div>
                 </form>
