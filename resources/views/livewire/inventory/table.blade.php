@@ -295,10 +295,11 @@
                 </tbody>
                 <tfoot class="table-group-divider bg-light">
                     <tr>
-                        <th colspan="{{ count(array_filter($inventory_visible_column ?? [])) - 2 }}" class="text-end fw-bold">Total</th>
+                        <th colspan="{{ count(array_filter($inventory_visible_column ?? [])) - 3 }}" class="text-end fw-bold">Total</th>
                         @if ($inventory_visible_column['quantity'] ?? true)
                             <th class="text-end fw-bold text-primary">{{ $quantity }}</th>
                         @endif
+                        <th></th>
                         @if ($inventory_visible_column['total'] ?? true)
                             <th class="text-end fw-bold text-primary">{{ currency($total) }}</th>
                         @endif
