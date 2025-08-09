@@ -9,7 +9,7 @@
                 </ol>
             </nav>
             <h1 class="page-title mb-0 mt-2">Sale & Sale Return Items</h1>
-            <p class="lead">Mixed list of completed Sale Items and Sale Return Items with filters.</p>
+            <p class="lead">Mixed list of completed Sale Items and Sale Return Items.</p>
         </div>
     </div>
     <div class="content__boxed">
@@ -19,6 +19,7 @@
             </div>
         </div>
     </div>
+    <x-report.sale-mixed-item-column-visibility-canvas />
     @push('scripts')
         @include('components.select.productSelect')
         @include('components.select.employeeSelect')

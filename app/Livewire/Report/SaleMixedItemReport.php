@@ -4,6 +4,7 @@ namespace App\Livewire\Report;
 
 use App\Models\SaleItem;
 use App\Models\SaleReturnItem;
+use App\Models\Configuration;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Livewire\Component;
@@ -27,12 +28,16 @@ class SaleMixedItemReport extends Component
 
     public $sortDirection = 'desc';
 
+    public array $sale_mixed_item_report_visible_column = [];
+
     protected $paginationTheme = 'bootstrap';
 
     public function mount(): void
     {
         $this->from_date = date('Y-m-d');
         $this->to_date = date('Y-m-d');
+        $config = Configuration::where('key', 'sale_mixed_item_report_visible_column')->value('value');
+        $this->sale_mixed_item_report_visible_column = $config ? json_decode($config, true) : $this->getDefaultColumns();
     }
 
     public function updated($key, $value): void
@@ -48,6 +53,24 @@ class SaleMixedItemReport extends Component
             $this->sortField = $field;
             $this->sortDirection = 'desc';
         }
+    }
+
+    protected function getDefaultColumns(): array
+    {
+        return [
+            'type' => true,
+            'date' => true,
+            'reference' => true,
+            'product_name' => true,
+            'product_code' => true,
+            'unit_price' => true,
+            'quantity' => true,
+            'gross_amount' => true,
+            'discount' => true,
+            'net_amount' => true,
+            'tax_amount' => true,
+            'total' => true,
+        ];
     }
 
     public function render()
