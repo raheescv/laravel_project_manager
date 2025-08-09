@@ -4,6 +4,7 @@ namespace App\Livewire\Report;
 
 use App\Exports\PurchaseItemReportExport;
 use App\Jobs\Export\ExportPurchaseItemReportJob;
+use App\Models\Configuration;
 use App\Models\PurchaseItem;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
@@ -34,12 +35,16 @@ class PurchaseItemReport extends Component
 
     public $sortDirection = 'desc';
 
+    public array $purchase_item_report_visible_column = [];
+
     protected $paginationTheme = 'bootstrap';
 
     public function mount()
     {
         $this->from_date = date('Y-m-d');
         $this->to_date = date('Y-m-d');
+        $config = Configuration::where('key', 'purchase_item_report_visible_column')->value('value');
+        $this->purchase_item_report_visible_column = $config ? json_decode($config, true) : $this->getDefaultColumns();
     }
 
     public function export()
@@ -84,6 +89,23 @@ class PurchaseItemReport extends Component
             $this->sortField = $field;
             $this->sortDirection = 'desc';
         }
+    }
+
+    protected function getDefaultColumns(): array
+    {
+        return [
+            'id' => true,
+            'date' => true,
+            'invoice_no' => true,
+            'product_name' => true,
+            'unit_price' => true,
+            'quantity' => true,
+            'gross_amount' => true,
+            'discount' => true,
+            'net_amount' => true,
+            'tax_amount' => true,
+            'total' => true,
+        ];
     }
 
     public function updated($key, $value)

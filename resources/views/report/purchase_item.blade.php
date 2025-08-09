@@ -21,6 +21,7 @@
             </div>
         </div>
     </div>
+    <x-report.purchase-item-column-visibility-canvas />
     @push('scripts')
         @include('components.select.productSelect')
         @include('components.select.branchSelect')
