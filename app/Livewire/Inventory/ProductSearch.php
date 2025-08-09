@@ -6,6 +6,7 @@ use App\Models\Branch;
 use App\Models\Inventory;
 use Livewire\Component;
 use Livewire\WithPagination;
+use App\Models\Scopes\AssignedBranchScope;
 
 class ProductSearch extends Component
 {
@@ -73,7 +74,7 @@ class ProductSearch extends Component
 
     public function render()
     {
-        $query = Inventory::query()
+        $query = Inventory::withoutGlobalScope(AssignedBranchScope::class)
             ->join('products', 'inventories.product_id', '=', 'products.id')
             ->join('branches', 'inventories.branch_id', '=', 'branches.id')
             ->where('products.type', 'product');

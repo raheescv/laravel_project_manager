@@ -36,7 +36,7 @@
                 <label class="form-label fw-semibold mb-2">
                     <i class="fa fa-building me-1 text-success"></i> Branch
                 </label>
-                {{ html()->select('branch_id')->class('select-assigned-branch_id-list')->multiple()->id('branch_id') }}
+                {{ html()->select('branch_id')->class('select-branch_id-list')->multiple()->id('branch_id') }}
             </div>
 
             <!-- Non-Zero Filter -->
