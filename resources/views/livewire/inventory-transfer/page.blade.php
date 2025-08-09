@@ -2,7 +2,7 @@
     <div class="col-md-12 mb-3">
         <div class="card h-100">
             <div class="card-body">
-                <form wire:submit="save">
+                <form wire:submit="save" wire:confirm="Are you sure to submit this?">
                     <div class="row mb-2">
                         <div class="col-md-3">
                             <div wire:ignore>
@@ -119,7 +119,7 @@
                                 <button type="button" wire:click='save("pending")' class="btn btn-success btn-icon flex-fill">Save</button>
                             @endif
                             &nbsp;
-                            <button type="submit" wire:confirm="Are you sure to submit this?" class="btn btn-primary btn-icon flex-fill">Transfer</button>
+                            <button type="submit" class="btn btn-primary btn-icon flex-fill">Transfer</button>
                         </div>
                     </div>
                 </form>
