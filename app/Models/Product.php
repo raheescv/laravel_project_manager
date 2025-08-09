@@ -26,6 +26,7 @@ class Product extends Model implements AuditableContracts
         'department_id',
         'main_category_id',
         'sub_category_id',
+        'brand_id',
 
         'hsn_code',
         'tax',
@@ -44,7 +45,6 @@ class Product extends Model implements AuditableContracts
         'color',
         'size',
         'model',
-        'brand',
         'part_no',
 
         'min_stock',
@@ -130,6 +130,11 @@ class Product extends Model implements AuditableContracts
         return $this->belongsTo(Unit::class);
     }
 
+    public function brand()
+    {
+        return $this->belongsTo(Brand::class);
+    }
+
     public function department()
     {
         return $this->belongsTo(Department::class);
@@ -159,6 +164,8 @@ class Product extends Model implements AuditableContracts
         $data['unit'] = $data['unit'] ?? 'Nos';
         $unit = Unit::firstOrCreate(['name' => $data['unit']], ['code' => $data['unit']]);
         $data['unit_id'] = $unit->id;
+        $brand_id = Brand::selfCreate($data['brand_id']);
+        $data['brand_id'] = $brand_id;
         $department_id = Department::selfCreate($data['department']);
         $data['department_id'] = $department_id;
 

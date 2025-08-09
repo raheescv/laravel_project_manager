@@ -180,6 +180,11 @@
                                             <i class="fa fa-sitemap fs-5 me-2"></i>Department
                                         </a>
                                     @endcan
+                                    @can('brand.view')
+                                        <a href="{{ route('settings::brand::index') }}" class="list-group-item list-group-item-action">
+                                            <i class="fa fa-registered fs-5 me-2"></i>Brand
+                                        </a>
+                                    @endcan
                                     @can('configuration.barcode')
                                         <a href="{{ route('inventory::barcode::configuration') }}" class="list-group-item list-group-item-action">
                                             <i class="fa fa-barcode fs-5 me-2"></i>Barcode Configuration

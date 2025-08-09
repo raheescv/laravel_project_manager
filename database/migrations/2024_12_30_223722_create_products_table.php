@@ -22,6 +22,7 @@ return new class() extends Migration
             $table->unsignedBigInteger('department_id');
             $table->unsignedBigInteger('main_category_id');
             $table->unsignedBigInteger('sub_category_id')->nullable();
+            $table->unsignedBigInteger('brand_id')->references('id')->on('brands')->nullable()->index();
 
             $table->string('hsn_code')->nullable();
             $table->integer('tax')->default(0)->nullable();
@@ -40,7 +41,6 @@ return new class() extends Migration
             $table->string('color')->nullable();
             $table->string('size')->nullable();
             $table->string('model')->nullable();
-            $table->string('brand')->nullable();
             $table->string('part_no')->nullable();
 
             $table->integer('min_stock')->default(0)->nullable();

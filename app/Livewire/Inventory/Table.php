@@ -29,7 +29,7 @@ class Table extends Component
 
     public $branch_id = '';
 
-    public $brand = '';
+    public $brand_id = '';
 
     public $size = '';
 
@@ -71,7 +71,7 @@ class Table extends Component
             'main_category' => true,
             'sub_category' => true,
             'unit' => true,
-            'brand' => true,
+            'brand_id' => true,
             'size' => true,
             'code' => true,
             'product_name' => true,
@@ -125,6 +125,7 @@ class Table extends Component
             ->join('branches', 'inventories.branch_id', '=', 'branches.id')
             ->join('products', 'inventories.product_id', '=', 'products.id')
             ->join('departments', 'products.department_id', '=', 'departments.id')
+            ->join('brands', 'products.brand_id', '=', 'brands.id')
             ->join('units', 'products.unit_id', '=', 'units.id')
             ->join('categories as main_categories', 'products.main_category_id', '=', 'main_categories.id')
             ->leftJoin('categories as sub_categories', 'products.sub_category_id', '=', 'sub_categories.id')
@@ -137,6 +138,7 @@ class Table extends Component
                         ->orWhere('branches.name', 'like', "%{$value}%")
                         ->orWhere('departments.name', 'like', "%{$value}%")
                         ->orWhere('units.name', 'like', "%{$value}%")
+                        ->orWhere('brands.name', 'like', "%{$value}%")
                         ->orWhere('main_categories.name', 'like', "%{$value}%")
                         ->orWhere('sub_categories.name', 'like', "%{$value}%")
                         ->orWhere('inventories.barcode', 'like', "%{$value}%")
@@ -149,8 +151,8 @@ class Table extends Component
             ->when($this->code ?? '', function ($query, $value) {
                 return $query->where('products.code', $value);
             })
-            ->when($this->brand ?? '', function ($query, $value) {
-                return $query->where('brand', $value);
+            ->when($this->brand_id ?? '', function ($query, $value) {
+                return $query->where('brand_id', $value);
             })
             ->when($this->department_id ?? '', function ($query, $value) {
                 return $query->where('department_id', $value);
@@ -192,7 +194,7 @@ class Table extends Component
                 'product_id',
                 'products.name',
                 'products.code',
-                'products.brand',
+                'brands.name as brand_name',
                 'products.size',
                 'products.name_arabic',
                 'products.department_id',

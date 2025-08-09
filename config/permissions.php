@@ -34,6 +34,7 @@ return [
     'purchase return' => ['create', 'view', 'edit', 'edit completed', 'delete', 'cancel', 'export', 'view journal entries'],
     'unit' => ['create', 'view', 'edit', 'delete'],
     'department' => ['create', 'view', 'edit', 'delete'],
+    'brand' => ['create', 'view', 'edit', 'delete'],
     'whatsapp' => ['integration'],
     'report' => [
         'income vs expense dashboard pie chart',

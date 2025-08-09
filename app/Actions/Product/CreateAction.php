@@ -6,6 +6,7 @@ use App\Models\Category;
 use App\Models\Department;
 use App\Models\Inventory;
 use App\Models\Product;
+use App\Models\Brand;
 
 class CreateAction
 {
@@ -15,6 +16,11 @@ class CreateAction
             if (str_contains($data['department_id'], 'add ')) {
                 $name = str_replace('add ', '', $data['department_id']);
                 $data['department_id'] = Department::selfCreate($name);
+            }
+
+            if (str_contains($data['brand_id'], 'add ')) {
+                $name = str_replace('add ', '', $data['brand_id']);
+                $data['brand_id'] = Brand::selfCreate($name);
             }
 
             if (str_contains($data['main_category_id'], 'add ')) {

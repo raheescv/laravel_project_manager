@@ -4,27 +4,25 @@
             <nav aria-label="breadcrumb">
                 <ol class="breadcrumb">
                     <li class="breadcrumb-item"><a href="{{ route('dashboard') }}">Home</a></li>
-                    <li class="breadcrumb-item active" aria-current="page">Product</li>
+                    <li class="breadcrumb-item active" aria-current="page">Brand</li>
                 </ol>
             </nav>
-            <h1 class="page-title mb-0 mt-2"> Product Management</h1>
+            <h1 class="page-title mb-0 mt-2">Brand</h1>
             <p class="lead">
-                Manage your inventory products with advanced filtering
+                A table is an arrangement of Brand
             </p>
         </div>
     </div>
     <div class="content__boxed">
         <div class="content__wrap">
             <div class="card mb-3">
-                @livewire('product.table')
+                @livewire('settings.brand.table')
             </div>
         </div>
     </div>
-    <x-product.product-import-modal />
+    <x-settings.brand.brand-modal />
     @push('scripts')
-        @include('components.select.departmentSelect')
         @include('components.select.brandSelect')
-        @include('components.select.categorySelect')
-        @include('components.select.unitSelect')
     @endpush
 </x-app-layout>
+

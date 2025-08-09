@@ -48,6 +48,7 @@ Route::middleware('auth')->group(function (): void {
             Route::get('list', 'get')->name('list');
         });
         Route::name('brand::')->prefix('brand')->controller(BrandController::class)->group(function (): void {
+            Route::get('', 'index')->name('index')->can('brand.view');
             Route::get('list', 'get')->name('list');
         });
     });

@@ -86,6 +86,12 @@
                     </label>
                     <input type="text" wire:model.live="code" class="form-control shadow-sm" placeholder="Search by code...">
                 </div>
+                <div class="col-12 col-md-3" wire:ignore>
+                    <label class="form-label fw-semibold mb-2">
+                        <i class="demo-pli-folder me-1 text-info"></i> Brand
+                    </label>
+                    {{ html()->select('brand_id', [])->value('')->class('select-brand_id-list')->id('brand_id')->placeholder('All Brand') }}
+                </div>
                 <div class="col-12 col-md-3">
                     <div class="form-group mt-4">
                         <div class="form-check">
@@ -99,12 +105,6 @@
             </div>
             <hr class="my-4">
             <div class="row g-4">
-                <div class="col-12 col-md-3" wire:ignore>
-                    <label class="form-label fw-semibold mb-2">
-                        <i class="demo-pli-folder me-1 text-info"></i> Brand
-                    </label>
-                    {{ html()->select('brand', [])->value('')->class('select-brand-list')->id('brand')->placeholder('All Brand') }}
-                </div>
                 <div class="col-12 col-md-3">
                     <label class="form-label fw-semibold mb-2">
                         <i class="demo-pli-folder me-1 text-warning"></i> Size
@@ -334,9 +334,9 @@
                     const value = $(this).val() || null;
                     @this.set('product_id', value);
                 });
-                $('#brand').on('change', function(e) {
+                $('#brand_id').on('change', function(e) {
                     const value = $(this).val() || null;
-                    @this.set('brand', value);
+                    @this.set('brand_id', value);
                 });
             });
         </script>

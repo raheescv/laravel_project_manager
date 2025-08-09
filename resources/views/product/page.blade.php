@@ -34,6 +34,7 @@
     @endif
     @push('scripts')
         @include('components.select.departmentSelect')
+        @include('components.select.brandSelect')
         @include('components.select.categorySelect')
     @endpush
 </x-app-layout>

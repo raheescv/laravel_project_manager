@@ -40,6 +40,7 @@ class Page extends Component
     public $images = [];
 
     public $departments;
+    public $brands;
 
     public function refresh()
     {
@@ -52,6 +53,7 @@ class Page extends Component
         $this->table_id = $table_id;
         $this->type = $type;
         $this->departments = [];
+        $this->brands = [];
         if (! $this->table_id) {
             $faker = Factory::create();
             $name = '';
@@ -83,7 +85,7 @@ class Page extends Component
                 'color' => '',
                 'size' => '',
                 'model' => '',
-                'brand' => '',
+                'brand_id' => '',
                 'part_no' => '',
                 'min_stock' => 0,
                 'max_stock' => 0,
@@ -101,7 +103,7 @@ class Page extends Component
                 'images' => [],
             ];
         } else {
-            $this->product = Product::with('department', 'subCategory', 'mainCategory', 'images', 'unit', 'units.subUnit', 'prices')->find($this->table_id);
+            $this->product = Product::with('department', 'subCategory', 'mainCategory','brand', 'images', 'unit', 'units.subUnit', 'prices')->find($this->table_id);
             if (! $this->product) {
                 return redirect()->route('product::index');
             }
@@ -163,6 +165,10 @@ class Page extends Component
                 $selected['department'] = [
                     'id' => $this->products['department_id'],
                     'name' => $this->products['department_id'],
+                ];
+                $selected['brand'] = [
+                    'id' => $this->products['brand_id'],
+                    'name' => $this->products['brand_id'],
                 ];
                 $response = (new CreateAction())->execute($this->products, Auth::id());
             } else {

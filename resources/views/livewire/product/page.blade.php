@@ -102,19 +102,19 @@
                                     </label>
                                     {{ html()->select('unit_id', $units)->value('')->class('tomSelect border-primary-subtle shadow-sm')->placeholder('Select your unit')->id('unit_id')->attribute('wire:model', 'products.unit_id') }}
                                 </div>
-                                <div class="col-md-4">
+                                <div class="col-md-4" wire:ignore>
                                     <label for="unit_id" class="form-label fw-medium">
                                         <i class="fa fa-cube text-primary me-1 small"></i>
                                         Brand
                                     </label>
-                                    {{ html()->input('brand')->value('')->class('form-control')->placeholder('Enter your brand')->attribute('wire:model', 'products.brand') }}
+                                    {{ html()->select('brand_id', $brands)->value('')->class('select-brand_id border-secondary-subtle shadow-sm')->placeholder('Select Brand')->id('brand_id') }}
                                 </div>
                                 <div class="col-md-4">
                                     <label for="unit_id" class="form-label fw-medium">
                                         <i class="fa fa-cube text-primary me-1 small"></i>
                                         Size
                                     </label>
-                                    {{ html()->input('size')->value('')->class('form-control')->placeholder('Enter your size')->attribute('wire:model', 'products.size') }}
+                                    {{ html()->input('size')->value('')->class('form-control')->placeholder('Enter your size')->attribute('wire:model', 'products.size')->id('size') }}
                                 </div>
                                 @if ($type == 'product')
                                     <div class="col-12">
@@ -656,6 +656,11 @@
                     @this.set('products.department_id', value);
                     document.querySelector('#main_category_id').tomselect.open();
                 });
+                $('#brand_id').on('change', function(e) {
+                    const value = $(this).val() || null;
+                    @this.set('products.brand_id', value);
+                    $("#size").select();
+                });
                 $('#main_category_id').on('change', function(e) {
                     const value = $(this).val() || null;
                     @this.set('products.main_category_id', value);
@@ -684,6 +689,26 @@
                     }
                 }
 
+                var brandElement = document.querySelector('#brand_id');
+                if (brandElement && brandElement.tomselect) {
+                    try {
+                        var tomSelectInstance = brandElement.tomselect;
+                        if (product['brand_id']) {
+                            if (product['brand']) {
+                                var preselectedData = {
+                                    id: product['brand']['id'],
+                                    name: product['brand']['name'],
+                                };
+                                tomSelectInstance.addOption(preselectedData);
+                            }
+                            tomSelectInstance.addItem(product['brand_id']);
+                        } else {
+                            tomSelectInstance.clear();
+                        }
+                    } catch (error) {
+                        console.warn('Error handling brand_id:', error);
+                    }
+                }
                 var departmentElement = document.querySelector('#department_id');
                 if (departmentElement && departmentElement.tomselect) {
                     try {
