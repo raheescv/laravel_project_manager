@@ -11,6 +11,7 @@ Route::middleware('auth')->group(function (): void {
         Route::get('edit/{id}', 'page')->name('edit')->can('purchase.edit');
         Route::get('view/{id}', 'view')->name('view')->can('purchase.view');
         Route::get('payments', 'payments')->name('payments')->can('purchase.payments');
+        Route::get('barcode-print/{id}', 'barcodePrint')->name('barcode-print')->can('purchase.barcode print');
         Route::get('invoices', 'get')->name('invoice-list');
     });
 

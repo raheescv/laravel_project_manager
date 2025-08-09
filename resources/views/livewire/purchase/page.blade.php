@@ -405,6 +405,11 @@
                             </div>
 
                             <div class="d-flex justify-content-end gap-2">
+                                    @can('purchase.barcode print')
+                                        <a href="{{ route('purchase::barcode-print', $purchases['id']) }}" target="_blank" class="btn btn-info">
+                                            <i class="demo-psi-printer me-1"></i> Print
+                                        </a>
+                                    @endcan
                                 @if ($purchases['status'] == 'draft')
                                     <button type="button" wire:click='save("draft")' class="btn btn-light">
                                         <i class="demo-psi-file me-1"></i> Save Draft
