@@ -32,13 +32,15 @@ class SaleController extends Controller
     {
         $categories = Category::withCount('products')->get()->toArray();
         $employees = User::employee()->pluck('name', 'id')->toArray();
-        $customers = [
-            3 => [
+        $useDefaultCustomer = (Configuration::where('key', 'default_customer_enabled')->value('value') ?? 'yes') === 'yes';
+        $customers = [];
+        if ($useDefaultCustomer) {
+            $customers[3] = [
                 'id' => 3,
                 'name' => 'General Customer',
                 'mobile' => '',
-            ],
-        ];
+            ];
+        }
         $priceTypes = priceTypes();
         $customerTypes = CustomerType::pluck('name', 'id')->toArray();
         $countries = Country::pluck('name', 'name')->toArray();
@@ -58,8 +60,8 @@ class SaleController extends Controller
             'id' => null,
             'employee_id' => '',
             'sale_type' => 'normal',
-            'account_id' => 3,
-            'account_name' => 'General Customer',
+            'account_id' => $useDefaultCustomer ? 3 : null,
+            'account_name' => $useDefaultCustomer ? 'General Customer' : null,
             'customer_mobile' => '',
             'other_discount' => 0,
             'round_off' => 0,
@@ -250,6 +252,7 @@ class SaleController extends Controller
             'paymentMethods' => $paymentMethods,
             'saleData' => $saleData,
             'defaultProductType' => $defaultProductType,
+            'defaultCustomerEnabled' => $useDefaultCustomer,
         ];
 
         return inertia('Sale/POS', $data);

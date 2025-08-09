@@ -239,6 +239,7 @@ class POSController extends Controller
             }
             if (! $table_id) {
                 $response = (new CreateAction())->execute($saleData, $user_id);
+                info($response);
             } else {
                 $response = (new UpdateAction())->execute($saleData, $table_id, $user_id);
             }
@@ -264,7 +265,7 @@ class POSController extends Controller
             DB::rollback();
             Log::error('Error submitting sale: '.$e->getMessage());
 
-            return response()->json(['error' => 'Failed to submit sales'], 500);
+            return response()->json(['error' => 'Failed to submit sales :'.$e->getMessage()], 500);
         }
     }
 

@@ -364,6 +364,10 @@
             defaultProductType: {
                 type: String,
                 default: 'service'
+            },
+            defaultCustomerEnabled: {
+                type: Boolean,
+                default: true
             }
         },
 
@@ -375,11 +379,13 @@
             const products = ref([])
             // Initialize serverCustomers with default customer and props.customers
             const serverCustomers = ref({
-                3: {
-                    id: 3,
-                    name: 'General Customer',
-                    mobile: ''
-                },
+                ...(props.defaultCustomerEnabled ? {
+                    3: {
+                        id: 3,
+                        name: 'General Customer',
+                        mobile: ''
+                    }
+                } : {}),
                 ...props.customers || {}
             })
             const loadingCustomers = ref(false) // Track customer loading state
@@ -429,7 +435,7 @@
                 date: new Date().toISOString().split('T')[0],
                 employee_id: '',
                 sale_type: 'normal',
-                account_id: 3,
+                account_id: props.defaultCustomerEnabled ? 3 : null,
                 customer_mobile: '',
                 other_discount: 0,
                 round_off: 0,
@@ -560,13 +566,14 @@
                         const customerObj = {
                             ...serverCustomers.value
                         }
-
-                        // Ensure default customer is always present
-                        customerObj[3] = {
-                            id: 3,
-                            name: 'General Customer',
-                            mobile: '',
-                            phone: ''
+                        if (props.defaultCustomerEnabled) {
+                            // Ensure default customer is always present
+                            customerObj[3] = {
+                                id: 3,
+                                name: 'General Customer',
+                                mobile: '',
+                                phone: ''
+                            }
                         }
 
                         // Add props customers (excluding default to avoid duplicates)

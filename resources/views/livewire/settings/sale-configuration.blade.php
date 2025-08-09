@@ -16,6 +16,12 @@
                             </div>
                             <div class="col-md-6">
                                 <div class="form-group">
+                                    <label class="form-label fw-medium" for="default_customer_enabled">Default Customer</label>
+                                    {{ html()->select('default_customer_enabled', ['yes' => 'Yes', 'no' => 'No'])->value('')->class('form-select')->placeholder('Use General Customer by default?')->attribute('wire:model', 'default_customer_enabled') }}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
                                     <label class="form-label fw-medium" for="default_status">Default Status</label>
                                     {{ html()->select('default_status', saleStatuses())->value('')->class('form-select')->placeholder('Select Default Status')->attribute('wire:model', 'default_status') }}
                                 </div>

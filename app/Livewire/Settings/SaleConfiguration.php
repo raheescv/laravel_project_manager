@@ -24,6 +24,8 @@ class SaleConfiguration extends Component
 
     public $sale_type;
 
+    public $default_customer_enabled;
+
     public function mount()
     {
         $this->default_status = Configuration::where('key', 'default_status')->value('value');
@@ -34,6 +36,7 @@ class SaleConfiguration extends Component
         $this->enable_total_quantity_in_print = Configuration::where('key', 'enable_total_quantity_in_print')->value('value');
         $this->enable_logo_in_print = Configuration::where('key', 'enable_logo_in_print')->value('value');
         $this->sale_type = Configuration::where('key', 'sale_type')->value('value');
+        $this->default_customer_enabled = Configuration::where('key', 'default_customer_enabled')->value('value') ?? 'yes';
     }
 
     public function save()
@@ -46,6 +49,7 @@ class SaleConfiguration extends Component
         Configuration::updateOrCreate(['key' => 'enable_total_quantity_in_print'], ['value' => $this->enable_total_quantity_in_print]);
         Configuration::updateOrCreate(['key' => 'enable_logo_in_print'], ['value' => $this->enable_logo_in_print]);
         Configuration::updateOrCreate(['key' => 'sale_type'], ['value' => $this->sale_type]);
+        Configuration::updateOrCreate(['key' => 'default_customer_enabled'], ['value' => $this->default_customer_enabled]);
         $this->dispatch('success', ['message' => 'Updated Successfully']);
         Artisan::call('optimize:clear');
     }
