@@ -17,15 +17,25 @@
                         </div>
                         Categories
                     </h6>
-                    <button
-                        type="button"
-                        @click="toggleFullscreen"
-                        class="bg-white/25 hover:bg-white/35 backdrop-blur text-white px-2 py-1 rounded-full text-xs font-semibold shadow-lg border border-white/20 flex items-center gap-1"
-                        aria-label="Toggle fullscreen"
-                        title="Toggle fullscreen"
-                    >
-                        <i class="fa fa-arrows"></i>
-                    </button>
+                    <div class="flex items-center gap-1">
+                        <a
+                            href="/sale"
+                            class="bg-white/25 hover:bg-white/35 backdrop-blur text-white px-2 py-1 rounded-full text-xs font-semibold shadow-lg border border-white/20 flex items-center gap-1 d-print-none"
+                            aria-label="Open sale list"
+                            title="Sale list"
+                        >
+                            <i class="fa fa-list-ul"></i>
+                        </a>
+                        <button
+                            type="button"
+                            @click="toggleFullscreen"
+                            class="bg-white/25 hover:bg-white/35 backdrop-blur text-white px-2 py-1 rounded-full text-xs font-semibold shadow-lg border border-white/20 flex items-center gap-1 d-print-none"
+                            aria-label="Toggle fullscreen"
+                            title="Toggle fullscreen"
+                        >
+                            <i class="fa fa-arrows"></i>
+                        </button>
+                    </div>
                 </div>
                 <!-- Subtle decorative elements -->
                 <div class="absolute -right-2 -top-2 w-16 h-16 bg-white/5 rounded-full"></div>
