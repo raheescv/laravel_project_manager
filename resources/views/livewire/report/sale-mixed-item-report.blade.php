@@ -54,7 +54,6 @@
                         <th> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="reference" label="ref" /> </th>
                         <th> product </th>
                         <th> employee </th>
-                        <th> assistant </th>
                         <th class="text-end"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="unit_price" label="unit price" /> </th>
                         <th class="text-end"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="quantity" label="quantity" /> </th>
                         <th class="text-end"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="gross_amount" label="gross" /> </th>
@@ -80,7 +79,6 @@
                             </td>
                             <td class="text-nowrap">{{ $row->product_name }}</td>
                             <td class="text-nowrap">{{ $row->employee_name }}</td>
-                            <td class="text-nowrap">{{ $row->assistant_name }}</td>
                             <td class="text-end">{{ currency($row->unit_price) }}</td>
                             <td class="text-end">{{ currency($row->quantity) }}</td>
                             <td class="text-end">{{ currency($row->gross_amount) }}</td>
@@ -93,7 +91,7 @@
                 </tbody>
                 <tfoot>
                     <tr>
-                        <th colspan="7" class="text-end">Total</th>
+                        <th colspan="6" class="text-end">Total</th>
                         <th class="text-end">{{ currency($total['quantity'] ?? 0) }}</th>
                         <th class="text-end">{{ currency($total['gross_amount'] ?? 0) }}</th>
                         <th class="text-end">{{ currency($total['discount'] ?? 0) }}</th>

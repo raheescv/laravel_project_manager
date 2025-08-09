@@ -82,15 +82,13 @@ class SaleMixedItemReport extends Component
             ->join('sales', 'sales.id', '=', 'sale_items.sale_id')
             ->join('products', 'products.id', '=', 'sale_items.product_id')
             ->leftJoin('users as e', 'e.id', '=', 'sale_items.employee_id')
-            ->leftJoin('users as a', 'a.id', '=', 'sale_items.assistant_id')
             ->when($this->from_date, fn ($q) => $q->whereDate('sales.date', '>=', $this->from_date))
             ->when($this->to_date, fn ($q) => $q->whereDate('sales.date', '<=', $this->to_date))
             ->when($this->branch_id, fn ($q) => $q->where('sales.branch_id', $this->branch_id))
             ->when($this->product_id, fn ($q) => $q->where('sale_items.product_id', $this->product_id))
             ->when($this->employee_id, function ($q) {
                 $q->where(function ($qq) {
-                    $qq->where('sale_items.employee_id', $this->employee_id)
-                        ->orWhere('sale_items.assistant_id', $this->employee_id);
+                    $qq->where('sale_items.employee_id', $this->employee_id);
                 });
             })
             ->whereIn('sales.branch_id', $accessibleBranchIds)
@@ -102,7 +100,6 @@ class SaleMixedItemReport extends Component
                 'sales.date as date',
                 'sales.invoice_no as reference',
                 'e.name as employee_name',
-                'a.name as assistant_name',
                 'products.name as product_name',
                 'sale_items.unit_price',
                 'sale_items.quantity',
@@ -120,15 +117,13 @@ class SaleMixedItemReport extends Component
             ->leftJoin('sale_items', 'sale_items.id', '=', 'sale_return_items.sale_item_id')
             ->join('products', 'products.id', '=', 'sale_return_items.product_id')
             ->leftJoin('users as e', 'e.id', '=', 'sale_items.employee_id')
-            ->leftJoin('users as a', 'a.id', '=', 'sale_items.assistant_id')
             ->when($this->from_date, fn ($q) => $q->whereDate('sale_returns.date', '>=', $this->from_date))
             ->when($this->to_date, fn ($q) => $q->whereDate('sale_returns.date', '<=', $this->to_date))
             ->when($this->branch_id, fn ($q) => $q->where('sale_returns.branch_id', $this->branch_id))
             ->when($this->product_id, fn ($q) => $q->where('sale_return_items.product_id', $this->product_id))
             ->when($this->employee_id, function ($q) {
                 $q->where(function ($qq) {
-                    $qq->where('sale_items.employee_id', $this->employee_id)
-                        ->orWhere('sale_items.assistant_id', $this->employee_id);
+                    $qq->where('sale_items.employee_id', $this->employee_id);
                 });
             })
             ->whereIn('sale_returns.branch_id', $accessibleBranchIds)
@@ -140,7 +135,6 @@ class SaleMixedItemReport extends Component
                 'sale_returns.date as date',
                 'sale_returns.reference_no as reference',
                 'e.name as employee_name',
-                'a.name as assistant_name',
                 'products.name as product_name',
                 // Keep unit price as positive for readability; make quantities and amounts negative
                 'sale_return_items.unit_price',
