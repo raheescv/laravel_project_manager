@@ -68,7 +68,6 @@ class Page extends Component
             ];
             $this->items = $this->inventory_transfer->items->mapWithKeys(function ($item) {
                 $key = $item['inventory_id'];
-
                 return [
                     $key => [
                         'id' => $item['id'],
@@ -116,7 +115,7 @@ class Page extends Component
 
     public function getProductByBarcode($value)
     {
-        $inventory = Inventory::firstWhere('barcode', $value);
+        $inventory = Inventory::where('branch_id', $this->inventory_transfers['from_branch_id'])->where('barcode', $value)->first();
         if (! $inventory) {
             // $this->dispatch('error', ['message' => 'No Match Found']);
 
@@ -138,6 +137,7 @@ class Page extends Component
     {
         $key = $inventory->id;
         $product = $inventory->product;
+
         $single = [
             'key' => $key,
             'product_id' => $inventory->product_id,
