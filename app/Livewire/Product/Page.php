@@ -8,13 +8,12 @@ use App\Actions\Product\ProductPrice\DeleteAction as PriceDeleteAction;
 use App\Actions\Product\ProductUnit\DeleteAction as UnitDeleteAction;
 use App\Actions\Product\UpdateAction;
 use App\Models\Configuration;
-use App\Models\Product;
 use App\Models\Department;
+use App\Models\Product;
 use App\Models\Unit;
 use Faker\Factory;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Validation\Rule;
 use Livewire\Component;
 use Spatie\LivewireFilepond\WithFilePond;
 
@@ -96,7 +95,7 @@ class Page extends Component
                 'sub_category_id' => null,
                 'status' => 'active',
                 'department_id' => 1,
-                'department' => Department::first(['id','name'])->toArray(),
+                'department' => Department::first(['id', 'name'])->toArray(),
                 'sub_category' => [],
                 'main_category' => [],
                 'images' => [],

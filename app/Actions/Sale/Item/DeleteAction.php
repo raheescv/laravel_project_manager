@@ -20,7 +20,7 @@ class DeleteAction
                 if (! Auth::user()->can('sale.delete item after completed')) {
                     throw new Exception("You don't have permission to delete it.", 1);
                 }
-                (new StockUpdateAction())->singleItemDelete($model, $model->sale, 'delete_item', Auth::id());
+                (new StockUpdateAction())->singleItem($model, $model->sale, 'delete_item', Auth::id());
             }
             if (! $model->delete()) {
                 throw new Exception('Oops! Something went wrong while deleting the SaleItem. Please try again.', 1);

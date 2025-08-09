@@ -436,7 +436,9 @@
                     <td class="text-left"><b>Payment Mode</b></td>
                     <td class="text-left">
                         @if (isset($payments))
-                            <span class="payment-badge">{{ $payments }}</span>
+                            @foreach ($payments as $payment)
+                                <span class="payment-badge">{{ $payment['payment_method']['name'] }} : {{ currency($payment['amount']) }}</span>
+                            @endforeach
                         @endif
                     </td>
                 </tr>

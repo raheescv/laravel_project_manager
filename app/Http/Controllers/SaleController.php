@@ -24,6 +24,7 @@ class SaleController extends Controller
         if (cache('sale_type') == 'pos') {
             return redirect()->route('sale::pos', $id);
         }
+
         return view('sale.page', compact('id'));
     }
 

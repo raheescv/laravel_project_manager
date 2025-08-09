@@ -11,7 +11,7 @@ class StockUpdateAction
     {
         try {
             foreach ($sale->items as $item) {
-                $this->singleItemDelete($item, $sale, $sale_type, $user_id);
+                $this->singleItem($item, $sale, $sale_type, $user_id);
             }
             $return['success'] = true;
             $return['message'] = 'Successfully Updated Inventory';
@@ -24,7 +24,7 @@ class StockUpdateAction
         return $return;
     }
 
-    public function singleItemDelete($item, $sale, $sale_type, $user_id)
+    public function singleItem($item, $sale, $sale_type, $user_id)
     {
         $inventory = Inventory::find($item->inventory_id);
         if (! $inventory) {
