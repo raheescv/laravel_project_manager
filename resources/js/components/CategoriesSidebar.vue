@@ -17,10 +17,15 @@
                         </div>
                         Categories
                     </h6>
-                    <span
-                        class="bg-white/25 backdrop-blur text-white px-2 py-1 rounded-full text-xs font-semibold shadow-lg border border-white/20">
-                        {{ categories.length }}
-                    </span>
+                    <button
+                        type="button"
+                        @click="toggleFullscreen"
+                        class="bg-white/25 hover:bg-white/35 backdrop-blur text-white px-2 py-1 rounded-full text-xs font-semibold shadow-lg border border-white/20 flex items-center gap-1"
+                        aria-label="Toggle fullscreen"
+                        title="Toggle fullscreen"
+                    >
+                        <i class="fa fa-arrows"></i>
+                    </button>
                 </div>
                 <!-- Subtle decorative elements -->
                 <div class="absolute -right-2 -top-2 w-16 h-16 bg-white/5 rounded-full"></div>
@@ -210,6 +215,39 @@ export default {
             scrollToActiveCategory()
         }
 
+        const toggleFullscreen = () => {
+            if (typeof window !== 'undefined' && typeof window.toggleFullscreen === 'function') {
+                window.toggleFullscreen()
+                return
+            }
+
+            const doc = document
+            const elem = document.documentElement
+            const isNotFullscreen = !doc.fullscreenElement && !doc.mozFullScreenElement && !doc.webkitFullscreenElement && !doc.msFullscreenElement
+
+            if (isNotFullscreen) {
+                if (elem.requestFullscreen) {
+                    elem.requestFullscreen()
+                } else if (elem.msRequestFullscreen) {
+                    elem.msRequestFullscreen()
+                } else if (elem.mozRequestFullScreen) {
+                    elem.mozRequestFullScreen()
+                } else if (elem.webkitRequestFullscreen) {
+                    elem.webkitRequestFullscreen(Element.ALLOW_KEYBOARD_INPUT)
+                }
+            } else {
+                if (doc.exitFullscreen) {
+                    doc.exitFullscreen()
+                } else if (doc.msExitFullscreen) {
+                    doc.msExitFullscreen()
+                } else if (doc.mozCancelFullScreen) {
+                    doc.mozCancelFullScreen()
+                } else if (doc.webkitExitFullscreen) {
+                    doc.webkitExitFullscreen()
+                }
+            }
+        }
+
         // Watch for selected category changes to auto-scroll
         watch(() => props.selectedCategory, () => {
             scrollToActiveCategory()
@@ -248,7 +286,8 @@ export default {
             categoriesHeight,
             containerHeight,
             scrollContainer,
-            handleCategorySelect
+            handleCategorySelect,
+            toggleFullscreen
         }
     }
 }

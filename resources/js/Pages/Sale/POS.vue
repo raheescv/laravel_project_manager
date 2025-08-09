@@ -1341,6 +1341,7 @@
                 }
             }
 
+
             // Debounce function to limit the rate of function calls
             function debounce(func, wait) {
                 let timeout
