@@ -21,8 +21,6 @@ class SaleMixedItemReport extends Component
 
     public $product_id = '';
 
-    public $employee_id = '';
-
     public $limit = 10;
 
     public $sortField = 'date';
@@ -81,16 +79,10 @@ class SaleMixedItemReport extends Component
         $saleQuery = SaleItem::query()
             ->join('sales', 'sales.id', '=', 'sale_items.sale_id')
             ->join('products', 'products.id', '=', 'sale_items.product_id')
-            ->leftJoin('users as e', 'e.id', '=', 'sale_items.employee_id')
             ->when($this->from_date, fn ($q) => $q->whereDate('sales.date', '>=', $this->from_date))
             ->when($this->to_date, fn ($q) => $q->whereDate('sales.date', '<=', $this->to_date))
             ->when($this->branch_id, fn ($q) => $q->where('sales.branch_id', $this->branch_id))
             ->when($this->product_id, fn ($q) => $q->where('sale_items.product_id', $this->product_id))
-            ->when($this->employee_id, function ($q) {
-                $q->where(function ($qq) {
-                    $qq->where('sale_items.employee_id', $this->employee_id);
-                });
-            })
             ->whereIn('sales.branch_id', $accessibleBranchIds)
             ->where('sales.status', 'completed')
             ->select([
@@ -99,8 +91,8 @@ class SaleMixedItemReport extends Component
                 'sale_items.sale_id as parent_id',
                 'sales.date as date',
                 'sales.invoice_no as reference',
-                'e.name as employee_name',
                 'products.name as product_name',
+                'products.code as product_code',
                 'sale_items.unit_price',
                 'sale_items.quantity',
                 'sale_items.gross_amount',
@@ -116,16 +108,10 @@ class SaleMixedItemReport extends Component
             ->join('sale_returns', 'sale_returns.id', '=', 'sale_return_items.sale_return_id')
             ->leftJoin('sale_items', 'sale_items.id', '=', 'sale_return_items.sale_item_id')
             ->join('products', 'products.id', '=', 'sale_return_items.product_id')
-            ->leftJoin('users as e', 'e.id', '=', 'sale_items.employee_id')
             ->when($this->from_date, fn ($q) => $q->whereDate('sale_returns.date', '>=', $this->from_date))
             ->when($this->to_date, fn ($q) => $q->whereDate('sale_returns.date', '<=', $this->to_date))
             ->when($this->branch_id, fn ($q) => $q->where('sale_returns.branch_id', $this->branch_id))
             ->when($this->product_id, fn ($q) => $q->where('sale_return_items.product_id', $this->product_id))
-            ->when($this->employee_id, function ($q) {
-                $q->where(function ($qq) {
-                    $qq->where('sale_items.employee_id', $this->employee_id);
-                });
-            })
             ->whereIn('sale_returns.branch_id', $accessibleBranchIds)
             ->where('sale_returns.status', 'completed')
             ->select([
@@ -134,8 +120,8 @@ class SaleMixedItemReport extends Component
                 'sale_return_items.sale_return_id as parent_id',
                 'sale_returns.date as date',
                 'sale_returns.reference_no as reference',
-                'e.name as employee_name',
                 'products.name as product_name',
+                'products.code as product_code',
                 // Keep unit price as positive for readability; make quantities and amounts negative
                 'sale_return_items.unit_price',
                 DB::raw('(-1) * sale_return_items.quantity as quantity'),

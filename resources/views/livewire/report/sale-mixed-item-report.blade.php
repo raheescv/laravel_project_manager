@@ -36,12 +36,6 @@
                     {{ html()->select('product_id', [])->value('')->class('select-product_id-list')->attribute('type', '')->id('product_id')->placeholder('Product') }}
                 </div>
             </div>
-            <div class="row">
-                <div class="col-md-3" wire:ignore>
-                    <label for="employee_id">Employee</label>
-                    {{ html()->select('employee_id', [])->value('')->class('select-employee_id-list')->id('employee_id')->placeholder('Employee') }}
-                </div>
-            </div>
         </div>
     </div>
     <div class="card-body">
@@ -53,7 +47,7 @@
                         <th> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="date" label="date" /> </th>
                         <th> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="reference" label="ref" /> </th>
                         <th> product </th>
-                        <th> employee </th>
+                        <th> code </th>
                         <th class="text-end"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="unit_price" label="unit price" /> </th>
                         <th class="text-end"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="quantity" label="quantity" /> </th>
                         <th class="text-end"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="gross_amount" label="gross" /> </th>
@@ -78,7 +72,7 @@
                                 @endif
                             </td>
                             <td class="text-nowrap">{{ $row->product_name }}</td>
-                            <td class="text-nowrap">{{ $row->employee_name }}</td>
+                            <td class="text-nowrap">{{ $row->product_code }}</td>
                             <td class="text-end">{{ currency($row->unit_price) }}</td>
                             <td class="text-end">{{ currency($row->quantity) }}</td>
                             <td class="text-end">{{ currency($row->gross_amount) }}</td>
