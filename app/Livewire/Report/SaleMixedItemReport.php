@@ -22,6 +22,8 @@ class SaleMixedItemReport extends Component
 
     public $product_id = '';
 
+    public $type = '';
+
     public $limit = 10;
 
     public $sortField = 'date';
@@ -159,7 +161,9 @@ class SaleMixedItemReport extends Component
         $union = $saleQuery->unionAll($returnQuery);
 
         // Wrap union as a subquery to allow ordering and pagination
+        $selectedType = $this->type;
         $outer = DB::query()->fromSub($union, 't')
+            ->when($selectedType, fn ($q) => $q->where('type', $selectedType))
             ->orderBy($this->sortField, $this->sortDirection)
             ->orderBy('id', 'desc');
 

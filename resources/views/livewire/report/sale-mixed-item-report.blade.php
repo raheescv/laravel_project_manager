@@ -43,9 +43,17 @@
                     <label for="branch_id">Branch</label>
                     {{ html()->select('branch_id', [auth()->user()->default_branch_id => auth()->user()->branch?->name])->value(auth()->user()->default_branch_id)->class('select-assigned-branch_id-list')->id('branch_id')->placeholder('All') }}
                 </div>
-                <div class="col-md-5" wire:ignore>
+                <div class="col-md-3" wire:ignore>
                     <label for="product_id">Product</label>
                     {{ html()->select('product_id', [])->value('')->class('select-product_id-list')->attribute('type', '')->id('product_id')->placeholder('Product') }}
+                </div>
+                <div class="col-md-2">
+                    <label for="type">Type</label>
+                    <select wire:model.live="type" id="type" class="form-control">
+                        <option value="">All</option>
+                        <option value="sale">Sale</option>
+                        <option value="sale_return">Return</option>
+                    </select>
                 </div>
             </div>
         </div>
