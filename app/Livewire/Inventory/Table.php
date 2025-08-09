@@ -60,6 +60,8 @@ class Table extends Component
     public function mount()
     {
         $config = Configuration::where('key', 'inventory_visible_column')->value('value');
+        $this->branch_id = [session('branch_id')];
+
         $this->inventory_visible_column = $config ? json_decode($config, true) : $this->getDefaultColumns();
     }
 

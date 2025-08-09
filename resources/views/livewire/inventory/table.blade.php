@@ -150,7 +150,7 @@
                             <th class="border-bottom"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="units.name" label="Unit" /> </th>
                         @endif
                         @if ($inventory_visible_column['brand'] ?? true)
-                            <th class="border-bottom"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="brand" label="Brand" /> </th>
+                            <th class="border-bottom"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="brand_name" label="Brand" /> </th>
                         @endif
                         @if ($inventory_visible_column['size'] ?? true)
                             <th class="border-bottom"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="products.size" label="Size" /> </th>
@@ -233,7 +233,7 @@
                                 <td>{{ $item->unit_name }}</td>
                             @endif
                             @if ($inventory_visible_column['brand'] ?? true)
-                                <td class="text-nowrap">{{ $item->brand }}</td>
+                                <td class="text-nowrap">{{ $item->brand_name }}</td>
                             @endif
                             @if ($inventory_visible_column['size'] ?? true)
                                 <td class="text-nowrap">{{ $item->size }}</td>
