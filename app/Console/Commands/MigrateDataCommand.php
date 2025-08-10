@@ -812,7 +812,7 @@ class MigrateDataCommand extends Command
                 'sub_category' => '',
                 'cost' => $item->cost,
                 'unit' => ucfirst(strtolower($item->unit_name)),
-                'brand' => ucfirst(strtolower($item->brand_name)),
+                'brand_id' => ucfirst(strtolower($item->brand_name)),
                 'mrp' => $item->mrp ?: 0,
                 'tax' => $item->tax,
                 'priority' => $item->priority ? $item->priority : 0,
