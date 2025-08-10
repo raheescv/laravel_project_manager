@@ -177,7 +177,7 @@ if (! function_exists('generateBarcode')) {
     {
         $i = 0;
         do {
-            $barcode = '9900' + Inventory::count() + $i;
+            $barcode = '8000' + Inventory::count() + $i;
             $i++;
             $exists = Inventory::where('barcode', $barcode)->exists();
         } while ($exists);
