@@ -37,7 +37,7 @@ class Table extends Component
 
     public $status = 'draft';
 
-    public $limit = 10;
+    public $limit = 50;
 
     public $selected = [];
 
