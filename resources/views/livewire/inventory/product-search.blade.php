@@ -15,7 +15,7 @@
                 </div>
             </div>
             <!-- Product Code Filter -->
-            <div class="col-md-3">
+            <div class="col-md-2">
                 <label class="form-label fw-semibold mb-2">
                     <i class="fa fa-barcode me-1 text-info"></i> Product Code
                 </label>
@@ -23,16 +23,27 @@
                     <span class="input-group-text bg-white border-end-0">
                         <i class="fa fa-barcode text-muted"></i>
                     </span>
-                    <input type="text" wire:model.live.debounce.300ms="productCode" class="form-control border-start-0" placeholder="Enter product code..." autocomplete="off" id="productCodeInput">
-                    <button type="button" class="btn btn-outline-primary border-start-0" onclick="startBarcodeScanner()" title="Scan Barcode">
-                        <i class="fa fa-camera"></i>
-                    </button>
+                    <input type="text" wire:model.live.debounce.300ms="productCode" class="form-control border-start-0" placeholder="Enter  code..." autocomplete="off" id="productCodeInput">
                 </div>
-                <small class="text-muted">Click the camera icon to scan barcode</small>
+            </div>
+            <!-- Product Barcode Filter -->
+            <div class="col-md-2">
+                <label class="form-label fw-semibold mb-2">
+                    <i class="fa fa-barcode me-1 text-info"></i> Product Barcode
+                </label>
+                <div class="input-group">
+                    <span class="input-group-text bg-white border-end-0">
+                        <i class="fa fa-barcode text-muted"></i>
+                    </span>
+                    <input type="text" wire:model.live.debounce.300ms="productBarcode" class="form-control border-start-0 barcode-input" placeholder="Enter  barcode..." autocomplete="off" id="productBarcodeInput">
+                    {{-- <button type="button" class="btn btn-outline-primary border-start-0 scanner-button" onclick="startBarcodeScanner()" title="Scan Barcode">
+                        <i class="fa fa-camera"></i>
+                    </button> --}}
+                </div>
             </div>
 
             <!-- Branch Filter -->
-            <div class="col-md-3" wire:ignore>
+            <div class="col-md-2" wire:ignore>
                 <label class="form-label fw-semibold mb-2">
                     <i class="fa fa-building me-1 text-success"></i> Branch
                 </label>
@@ -48,14 +59,28 @@
                     <input class="form-check-input" type="checkbox" wire:model.live="showNonZeroOnly" id="showNonZeroOnly">
                     <br>
                     <br>
-                    <br>
                     <label class="form-check-label small" for="showNonZeroOnly">
                         In stock only
                     </label>
                 </div>
             </div>
-        </div>
 
+            <!-- Show Barcode Codes Filter -->
+            <div class="col-md-2">
+                <label class="form-label fw-semibold mb-2">
+                    <i class="fa fa-barcode me-1 text-info"></i> Barcode SKU
+                </label>
+                <div class="form-check form-switch">
+                    <input class="form-check-input" type="checkbox" wire:model.live="showBarcodeCodes" id="showBarcodeCodes">
+                    <br>
+                    <br>
+                    <label class="form-check-label small" for="showBarcodeCodes" title="Show products that have barcode code`s SKU">
+                        Show barcode SKU
+                        <i class="fa fa-info-circle ms-1 text-muted" title="Display products that have barcode code`s SKU"></i>
+                    </label>
+                </div>
+            </div>
+        </div>
         <!-- Filter Actions -->
         <div class="row mt-3">
             <div class="col-12">
@@ -63,6 +88,9 @@
                     <div class="d-flex gap-2">
                         <button wire:click="clearFilters" class="btn btn-outline-secondary btn-sm">
                             <i class="fa fa-times me-1"></i> Clear Filters
+                        </button>
+                        <button type="button" class="btn btn-outline-primary btn-sm scanner-button" onclick="startBarcodeScanner()" title="Quick Barcode Scan (Ctrl/Cmd + B)">
+                            <i class="fa fa-camera me-1"></i> Quick Scan
                         </button>
                         @if ($loading)
                             <div class="d-flex align-items-center text-muted">
@@ -108,7 +136,7 @@
                             </th>
                             <th class="border-0 text-end" style="cursor: pointer;">
                                 <i class="fa fa-barcode me-1 text-muted"></i>
-                                <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="inventories.barcode" label="Barcd" />
+                                <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="inventories.barcode" label="Barcode" />
                             </th>
                             <th class="border-0 text-end" style="cursor: pointer;">
                                 <i class="fa fa-money me-1 text-muted"></i>
@@ -179,24 +207,26 @@
     <div class="modal fade" id="barcodeScannerModal" tabindex="-1" aria-labelledby="barcodeScannerModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-lg">
             <div class="modal-content">
-                <div class="modal-header">
+                <div class="modal-header bg-primary text-white">
                     <h5 class="modal-title" id="barcodeScannerModalLabel">
                         <i class="fa fa-camera me-2"></i>Barcode Scanner
                     </h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
                     <div class="text-center mb-3">
                         <p class="text-muted">Position the barcode within the camera view</p>
                         <div class="alert alert-info small">
-                            <i class="fa fa-info-circle me-2"></i>Hold the barcode steady in the center of the view
+                            <i class="fa fa-info-circle me-2"></i>
+                            <strong>Tips:</strong> Hold the barcode steady in the center of the view.
+                            Use <kbd>Ctrl/Cmd + B</kbd> to quickly open the scanner.
                         </div>
                     </div>
                     <div class="d-flex justify-content-center">
                         <div id="scanner-container" style="width: 100%; max-width: 500px; position: relative;">
                             <video id="scanner-video" style="width: 100%; height: 300px; border: 2px solid #ddd; border-radius: 8px;"></video>
                             <!-- Scanning overlay -->
-                            <div style="position: absolute; top: 20%; left: 20%; right: 20%; bottom: 20%; border: 2px solid #28a745; border-radius: 4px; pointer-events: none;">
+                            <div class="scanner-overlay" style="position: absolute; top: 20%; left: 20%; right: 20%; bottom: 20%; border: 2px solid #28a745; border-radius: 4px; pointer-events: none;">
                                 <div style="position: absolute; top: -2px; left: -2px; width: 20px; height: 20px; border-top: 3px solid #28a745; border-left: 3px solid #28a745;"></div>
                                 <div style="position: absolute; top: -2px; right: -2px; width: 20px; height: 20px; border-top: 3px solid #28a745; border-right: 3px solid #28a745;"></div>
                                 <div style="position: absolute; bottom: -2px; left: -2px; width: 20px; height: 20px; border-bottom: 3px solid #28a745; border-left: 3px solid #28a745;"></div>
@@ -214,6 +244,9 @@
                         <div id="scanner-error" class="alert alert-warning" style="display: none;">
                             <i class="fa fa-exclamation-triangle me-2"></i>Adjust position and try again.
                         </div>
+                        <div class="small text-muted mt-2">
+                            <i class="fa fa-keyboard me-1"></i>Press <kbd>Enter</kbd> in the barcode field to quickly open scanner
+                        </div>
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -228,6 +261,53 @@
     </div>
 
     @push('scripts')
+        <style>
+            .scanner-button {
+                transition: all 0.3s ease;
+            }
+
+            .scanner-button:hover {
+                transform: scale(1.05);
+                box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            }
+
+            .scanner-button:active {
+                transform: scale(0.95);
+            }
+
+            .barcode-input:focus {
+                border-color: #007bff;
+                box-shadow: 0 0 0 0.2rem rgba(0,123,255,.25);
+            }
+
+            .scanner-overlay {
+                animation: pulse 2s infinite;
+            }
+
+            .form-check-input:checked {
+                background-color: #17a2b8;
+                border-color: #17a2b8;
+            }
+
+            .form-check-input:focus {
+                border-color: #17a2b8;
+                box-shadow: 0 0 0 0.2rem rgba(23, 162, 184, 0.25);
+            }
+
+            .filter-section {
+                background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+                border-radius: 8px;
+                padding: 1rem;
+                margin-bottom: 1rem;
+            }
+
+            @keyframes pulse {
+                0% { opacity: 1; }
+                50% { opacity: 0.7; }
+                100% { opacity: 1; }
+            }
+        </style>
+
         <script>
             $(document).ready(function() {
                 $('#branch_id').on('change', function(e) {
@@ -493,10 +573,10 @@
             function applyScannedCode() {
                 if (scannedBarcode) {
                     // Set the scanned barcode to the input field
-                    document.getElementById('productCodeInput').value = scannedBarcode;
+                    document.getElementById('productBarcodeInput').value = scannedBarcode;
 
-                    // Trigger Livewire update
-                    @this.set('productCode', scannedBarcode);
+                    // Trigger Livewire update using the new method
+                    @this.setBarcode(scannedBarcode);
 
                     // Close modal
                     const modal = bootstrap.Modal.getInstance(document.getElementById('barcodeScannerModal'));
@@ -505,7 +585,30 @@
                     // Reset
                     scannedBarcode = '';
                     document.getElementById('scanner-result').style.display = 'none';
+
+                    // Show success message
+                    showNotification('Barcode scanned successfully: ' + scannedBarcode, 'success');
                 }
+            }
+
+            function showNotification(message, type = 'info') {
+                // Create notification element
+                const notification = document.createElement('div');
+                notification.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
+                notification.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+                notification.innerHTML = `
+                    ${message}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                `;
+
+                document.body.appendChild(notification);
+
+                // Auto-remove after 5 seconds
+                setTimeout(() => {
+                    if (notification.parentNode) {
+                        notification.remove();
+                    }
+                }, 5000);
             }
 
 
@@ -562,6 +665,26 @@
                 if (resultDiv) {
                     resultDiv.style.display = 'none';
                 }
+            });
+
+            // Add keyboard shortcuts
+            document.addEventListener('keydown', function(e) {
+                // Ctrl/Cmd + B to open barcode scanner
+                if ((e.ctrlKey || e.metaKey) && e.key === 'b') {
+                    e.preventDefault();
+                    startBarcodeScanner();
+                }
+
+                // Enter key in barcode input to open scanner
+                if (e.target.id === 'productBarcodeInput' && e.key === 'Enter') {
+                    e.preventDefault();
+                    startBarcodeScanner();
+                }
+            });
+
+            // Add focus event to barcode input for better UX
+            document.getElementById('productBarcodeInput').addEventListener('focus', function() {
+                this.select(); // Select all text when focused
             });
         </script>
     @endpush

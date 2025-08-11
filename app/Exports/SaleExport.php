@@ -26,7 +26,7 @@ class SaleExport implements FromQuery, WithColumnFormatting, WithEvents, WithHea
                 'account:id,name',
                 'createdUser:id,name',
                 'updatedUser:id,name',
-                'cancelledUser:id,name'
+                'cancelledUser:id,name',
             ])
             ->when($this->filters['branch_id'] ?? null, function ($query, $value) {
                 return $query->where('branch_id', $value);
@@ -141,8 +141,8 @@ class SaleExport implements FromQuery, WithColumnFormatting, WithEvents, WithHea
                         'font' => ['bold' => true],
                         'fill' => [
                             'fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
-                            'startColor' => ['rgb' => 'E6E6E6']
-                        ]
+                            'startColor' => ['rgb' => 'E6E6E6'],
+                        ],
                     ]);
 
                     // Set total labels and formulas

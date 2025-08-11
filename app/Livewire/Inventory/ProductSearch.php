@@ -16,11 +16,15 @@ class ProductSearch extends Component
 
     public $productCode = '';
 
+    public $productBarcode = '';
+
     public $productName = '';
 
     public $branch_id = '';
 
     public $showNonZeroOnly = true;
+
+    public $showBarcodeCodes = false;
 
     public $branches = [];
 
@@ -37,9 +41,11 @@ class ProductSearch extends Component
     protected $queryString = [
         'search' => ['except' => ''],
         'productCode' => ['except' => ''],
+        'productBarcode' => ['except' => ''],
         'productName' => ['except' => ''],
         'branch_id' => ['except' => ''],
         'showNonZeroOnly' => ['except' => false],
+        'showBarcodeCodes' => ['except' => false],
         'limit' => ['except' => 25],
         'sortField' => ['except' => 'products.name'],
         'sortDirection' => ['except' => 'asc'],
@@ -57,7 +63,44 @@ class ProductSearch extends Component
 
     public function clearFilters()
     {
-        $this->reset(['search', 'productCode', 'productName', 'branch_id', 'showNonZeroOnly']);
+        $this->reset(['search', 'productCode', 'productBarcode', 'productName', 'branch_id', 'showNonZeroOnly', 'showBarcodeCodes']);
+    }
+
+    public function setBarcode($barcode)
+    {
+        $this->productBarcode = $barcode;
+        $this->resetPage();
+    }
+
+    public function setProductCode($code)
+    {
+        $this->productCode = $code;
+        $this->resetPage();
+    }
+
+    public function quickBarcodeSearch($barcode)
+    {
+        $this->productBarcode = $barcode;
+        $this->resetPage();
+
+        // Auto-search when barcode is set
+        $this->dispatch('barcode-scanned', barcode: $barcode);
+    }
+
+    public function clearBarcode()
+    {
+        $this->productBarcode = '';
+        $this->resetPage();
+    }
+
+    public function getBarcodeProductsCount()
+    {
+        return Inventory::withoutGlobalScope(AssignedBranchScope::class)
+            ->join('products', 'inventories.product_id', '=', 'products.id')
+            ->where('products.type', 'product')
+            ->where('inventories.barcode', '!=', '')
+            ->whereNotNull('inventories.barcode')
+            ->count();
     }
 
     public function sortBy($field)
@@ -87,10 +130,18 @@ class ProductSearch extends Component
         $query = $query->when($this->productCode, function ($query, $value) {
             return $query->where(function ($q) use ($value): void {
                 $value = trim($value);
-                $q->where('products.code', 'like', "%{$value}%")
-                    ->orWhere('inventories.barcode', 'like', "%{$value}%");
+                $q->where('products.code', 'like', "%{$value}%");
             });
         });
+
+        if (! $this->showBarcodeCodes) {
+            $query = $query->when($this->productBarcode, function ($query, $value) {
+                return $query->where(function ($q) use ($value): void {
+                    $value = trim($value);
+                    $q->where('inventories.barcode', 'like', "%{$value}%");
+                });
+            });
+        }
         $query = $query->when($this->productName, function ($query, $value) {
             return $query->where(function ($q) use ($value): void {
                 $value = trim($value);
@@ -104,6 +155,12 @@ class ProductSearch extends Component
         $query = $query->when($this->showNonZeroOnly, function ($query, $value) {
             return $query->where('inventories.quantity', '>', 0);
         });
+
+        if ($this->showBarcodeCodes && $this->productBarcode) {
+            $codes = clone $query;
+            $codes = $codes->where('inventories.barcode', $this->productBarcode)->pluck('products.code', 'products.code')->toArray();
+            $query = $query->whereIn('products.code', $codes);
+        }
 
         $query = $query->select(
             'inventories.id',
