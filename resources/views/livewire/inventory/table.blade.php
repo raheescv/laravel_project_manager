@@ -295,7 +295,7 @@
                 </tbody>
                 <tfoot class="table-group-divider bg-light">
                     <tr>
-                        <th colspan="{{ count(array_filter($inventory_visible_column ?? [])) - 3 }}" class="text-end fw-bold">Total</th>
+                        <th colspan="{{ count(array_filter($inventory_visible_column ?? [])) - 4 }}" class="text-end fw-bold">Total</th>
                         @if ($inventory_visible_column['quantity'] ?? true)
                             <th class="text-end fw-bold text-primary">{{ $quantity }}</th>
                         @endif

@@ -112,7 +112,7 @@ class Table extends Component
 
             // Get filtered count for better decision making
             $filteredCount = $this->getFilteredCount($filters);
-            
+
             if ($filteredCount > 2000) {
                 ExportInventoryJob::dispatch(Auth::user(), $filters);
                 $this->dispatch('success', ['message' => 'Export started! You will receive the file in your mailbox shortly.']);
@@ -129,7 +129,7 @@ class Table extends Component
     {
         // Cache the filtered count for better performance
         $cacheKey = 'inventory_filtered_count_' . md5(serialize($filters));
-        
+
         return cache()->remember($cacheKey, now()->addMinutes(5), function () use ($filters) {
             return Inventory::query()
                 ->join('products', 'inventories.product_id', '=', 'products.id')

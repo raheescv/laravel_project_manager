@@ -170,4 +170,4 @@ class InventoryExport implements FromQuery, WithHeadings, WithMapping, WithStyle
     {
         return 1000;
     }
-} 
+}
