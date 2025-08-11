@@ -20,6 +20,7 @@
                     <div class="form-group">
                         <select wire:model.live="limit" class="form-select form-select-sm">
                             <option value="10">10 rows</option>
+                            <option value="50">50 rows</option>
                             <option value="100">100 rows</option>
                             <option value="500">500 rows</option>
                         </select>
