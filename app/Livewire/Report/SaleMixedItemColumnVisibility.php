@@ -18,6 +18,7 @@ class SaleMixedItemColumnVisibility extends Component
     protected function getDefaultColumns(): array
     {
         return [
+            'created_at' => true,
             'type' => true,
             'date' => true,
             'reference' => true,

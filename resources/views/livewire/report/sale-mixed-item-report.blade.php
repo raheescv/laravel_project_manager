@@ -69,6 +69,9 @@
                         @if ($sale_mixed_item_report_visible_column['date'] ?? true)
                             <th> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="date" label="date" /> </th>
                         @endif
+                        @if ($sale_mixed_item_report_visible_column['created_at'] ?? true)
+                            <th> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="created_at" label="created at" /> </th>
+                        @endif
                         @if ($sale_mixed_item_report_visible_column['reference'] ?? true)
                             <th> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="reference" label="ref" /> </th>
                         @endif
@@ -111,6 +114,9 @@
                             @endif
                             @if ($sale_mixed_item_report_visible_column['date'] ?? true)
                                 <td class="text-nowrap">{{ systemDate($row->date) }}</td>
+                            @endif
+                            @if ($sale_mixed_item_report_visible_column['created_at'] ?? true)
+                                <td class="text-nowrap">{{ systemDateTime($row->created_at) }}</td>
                             @endif
                             @if ($sale_mixed_item_report_visible_column['reference'] ?? true)
                                 <td class="text-nowrap">
@@ -157,6 +163,7 @@
                             $colspan = 1;
                             $colspan += ($sale_mixed_item_report_visible_column['type'] ?? true) ? 1 : 0;
                             $colspan += ($sale_mixed_item_report_visible_column['date'] ?? true) ? 1 : 0;
+                            $colspan += ($sale_mixed_item_report_visible_column['created_at'] ?? true) ? 1 : 0;
                             $colspan += ($sale_mixed_item_report_visible_column['reference'] ?? true) ? 1 : 0;
                             $colspan += ($sale_mixed_item_report_visible_column['product_name'] ?? true) ? 1 : 0;
                             $colspan += ($sale_mixed_item_report_visible_column['product_code'] ?? true) ? 1 : 0;

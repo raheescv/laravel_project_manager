@@ -62,6 +62,7 @@ class SaleMixedItemReport extends Component
         return [
             'type' => true,
             'date' => true,
+            'created_at' => true,
             'reference' => true,
             'product_name' => true,
             'product_code' => true,
@@ -115,6 +116,7 @@ class SaleMixedItemReport extends Component
                 'sale_items.id as id',
                 'sale_items.sale_id as parent_id',
                 'sales.date as date',
+                'sales.created_at as created_at',
                 'sales.invoice_no as reference',
                 'products.name as product_name',
                 'products.code as product_code',
@@ -144,6 +146,7 @@ class SaleMixedItemReport extends Component
                 'sale_return_items.id as id',
                 'sale_return_items.sale_return_id as parent_id',
                 'sale_returns.date as date',
+                'sale_returns.created_at as created_at',
                 'sale_returns.reference_no as reference',
                 'products.name as product_name',
                 'products.code as product_code',
