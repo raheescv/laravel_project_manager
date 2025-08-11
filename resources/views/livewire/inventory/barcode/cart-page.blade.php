@@ -96,11 +96,14 @@
                                                             <img src="{{ $product['thumbnail'] ?? cache('logo') }}" alt="{{ $product['name'] }}" class="rounded"
                                                                 style="width: 50px; height: 50px; object-fit: cover;">
                                                         </div>
-                                                        <h6 class="mb-1 fw-semibold text-dark small text-truncate" title="{{ $product['name'] }}">
+                                                        <h6 class="mb-1 fw-semibold text-dark" title="{{ $product['name'] }}">
                                                             {{ $product['name'] }}
                                                         </h6>
                                                         <div class="text-muted small mb-2">
-                                                            <div class="badge bg-info badge-sm mb-1">{{ $product['barcode'] }}</div>
+                                                            <div class="badge bg-info badge-sm mb-1">Barcode : {{ $product['barcode'] }}</div>
+                                                            @if (isset($product['size']) && $product['size'])
+                                                                <div class="badge bg-warning badge-sm mb-1">Size : {{ $product['size'] }}</div>
+                                                            @endif
                                                             <div class="badge bg-success badge-sm">{{ currency($product['mrp']) }}</div>
                                                         </div>
                                                         <div class="d-flex justify-content-between align-items-center">
@@ -151,11 +154,14 @@
                                             <div class="flex-grow-1 min-w-0">
                                                 <div class="d-flex justify-content-between align-items-start">
                                                     <div class="min-w-0 flex-grow-1">
-                                                        <h6 class="mb-0 text-truncate small fw-semibold" title="{{ $item['name'] }}">
+                                                        <h6 class="mb-0 fw-semibold" title="{{ $item['name'] }}">
                                                             {{ $item['name'] }}
                                                         </h6>
                                                         <div class="text-muted small">
-                                                            <span class="badge bg-secondary badge-sm">{{ $item['barcode'] }}</span>
+                                                            <span class="badge bg-secondary badge-sm">Barcode : {{ $item['barcode'] }}</span>
+                                                            @if (isset($item['size']) && $item['size'])
+                                                                <span class="badge bg-warning badge-sm">Size : {{ $item['size'] }}</span>
+                                                            @endif
                                                             <span class="badge bg-primary badge-sm">{{ currency($item['mrp']) }}</span>
                                                         </div>
                                                     </div>
