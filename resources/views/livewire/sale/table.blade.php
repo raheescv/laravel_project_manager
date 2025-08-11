@@ -136,10 +136,10 @@
                                 <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="id" label="#" />
                             </div>
                         </th>
+                        <th> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="date" label="date" /> </th>
                         @if ($sale_visible_column['created_at'])
                             <th> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="created_at" label="created at" /> </th>
                         @endif
-                        <th> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="date" label="date" /> </th>
                         <th class="text-nowrap"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="invoice_no" label="invoice no" /> </th>
                         @if ($sale_visible_column['reference_no'])
                             <th> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="reference_no" label="reference no" /> </th>
