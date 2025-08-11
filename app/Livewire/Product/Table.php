@@ -133,6 +133,7 @@ class Table extends Component
                         ->orWhere('code', 'like', "%{$value}%")
                         ->orWhere('cost', 'like', "%{$value}%")
                         ->orWhere('barcode', 'like', "%{$value}%")
+                        ->orWhere('size', 'like', "%{$value}%")
                         ->orWhere('mrp', 'like', "%{$value}%");
                 });
             })

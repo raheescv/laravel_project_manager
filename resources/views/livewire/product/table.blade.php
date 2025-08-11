@@ -163,6 +163,12 @@
                         </th>
                         <th class="border-0">
                             <div class="d-flex align-items-center">
+                                <i class="demo-psi-cube me-2 text-secondary small"></i>
+                                <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="size" label="Size" />
+                            </div>
+                        </th>
+                        <th class="border-0">
+                            <div class="d-flex align-items-center">
                                 <i class="demo-psi-coding me-2 text-secondary small"></i>
                                 <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="code" label="Code" />
                             </div>
@@ -221,6 +227,9 @@
                             </td>
                             <td>
                                 <span class="badge bg-light text-dark border border-secondary-subtle">{{ $item->unit?->name ?? '-' }}</span>
+                            </td>
+                            <td>
+                                <span class="badge bg-light text-dark border border-secondary-subtle">{{ $item->size}}</span>
                             </td>
                             <td>
                                 <code class="bg-light rounded px-2 py-1 small">{{ $item->code }}</code>
