@@ -21,6 +21,9 @@ class ProductExport implements FromQuery, WithHeadings, WithMapping
             ->when($this->branch_id ?? '', function ($query, $value) {
                 return $query->where('branch_id', $value);
             })
+            ->when($this->brand_id ?? '', function ($query, $value) {
+                return $query->where('brand_id', $value);
+            })
             ->when($this->department_id ?? '', function ($query, $value) {
                 return $query->where('department_id', $value);
             })
