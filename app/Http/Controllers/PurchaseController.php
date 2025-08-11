@@ -2,12 +2,12 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Purchase;
-use Illuminate\Http\Request;
-use Barryvdh\DomPDF\Facade\Pdf;
-use Spatie\Browsershot\Browsershot;
 use App\Models\Configuration;
+use App\Models\Purchase;
 use App\Models\PurchaseItem;
+use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Http\Request;
+use Spatie\Browsershot\Browsershot;
 
 class PurchaseController extends Controller
 {
@@ -23,7 +23,7 @@ class PurchaseController extends Controller
 
     public function barcodePrint($id)
     {
-        $purchaseItems = PurchaseItem::with('product')->where('purchase_id',$id)->get();
+        $purchaseItems = PurchaseItem::with('product')->where('purchase_id', $id)->get();
 
         if (empty($purchaseItems)) {
             return redirect()->route('purchase::index')->with('error', 'No items to print. Please add products to cart first.');
@@ -58,7 +58,6 @@ class PurchaseController extends Controller
             ->header('Content-Type', 'application/pdf')
             ->header('Content-Disposition', 'inline; filename="cart-barcode-'.time().'.pdf"');
     }
-
 
     public function payments()
     {

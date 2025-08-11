@@ -50,4 +50,3 @@ class PurchaseItemColumnVisibility extends Component
         return view('livewire.report.purchase-item-column-visibility');
     }
 }
-

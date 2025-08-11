@@ -4,9 +4,9 @@ namespace App\Livewire\Inventory;
 
 use App\Models\Branch;
 use App\Models\Inventory;
+use App\Models\Scopes\AssignedBranchScope;
 use Livewire\Component;
 use Livewire\WithPagination;
-use App\Models\Scopes\AssignedBranchScope;
 
 class ProductSearch extends Component
 {

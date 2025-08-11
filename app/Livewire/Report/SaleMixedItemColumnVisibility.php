@@ -51,4 +51,3 @@ class SaleMixedItemColumnVisibility extends Component
         return view('livewire.report.sale-mixed-item-column-visibility');
     }
 }
-

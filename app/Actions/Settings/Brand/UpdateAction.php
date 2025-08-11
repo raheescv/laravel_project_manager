@@ -29,4 +29,3 @@ class UpdateAction
         return $return;
     }
 }
-

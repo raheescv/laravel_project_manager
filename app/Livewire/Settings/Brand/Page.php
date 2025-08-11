@@ -92,4 +92,3 @@ class Page extends Component
         return view('livewire.settings.brand.page');
     }
 }
-

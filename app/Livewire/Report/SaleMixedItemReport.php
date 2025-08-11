@@ -2,9 +2,9 @@
 
 namespace App\Livewire\Report;
 
+use App\Models\Configuration;
 use App\Models\SaleItem;
 use App\Models\SaleReturnItem;
-use App\Models\Configuration;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Livewire\Component;
@@ -170,4 +170,3 @@ class SaleMixedItemReport extends Component
         return $outer;
     }
 }
-

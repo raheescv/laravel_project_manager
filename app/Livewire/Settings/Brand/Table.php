@@ -98,4 +98,3 @@ class Table extends Component
         ]);
     }
 }
-

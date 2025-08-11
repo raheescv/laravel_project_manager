@@ -2,10 +2,10 @@
 
 namespace App\Models;
 
+use App\Actions\Settings\Brand\CreateAction;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Validation\Rule;
-use App\Actions\Settings\Brand\CreateAction;
 
 class Brand extends Model
 {
@@ -50,4 +50,3 @@ class Brand extends Model
         }
     }
 }
-

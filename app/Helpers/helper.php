@@ -1,6 +1,6 @@
 <?php
 
-use App\Models\Inventory;
+use App\Models\Product;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Storage;
@@ -177,9 +177,9 @@ if (! function_exists('generateBarcode')) {
     {
         $i = 0;
         do {
-            $barcode = '8000' + Inventory::count() + $i;
+            $barcode = 8000 + Product::count() + $i;
             $i++;
-            $exists = Inventory::where('barcode', $barcode)->exists();
+            $exists = Product::where('barcode', $barcode)->exists();
         } while ($exists);
 
         return $barcode;

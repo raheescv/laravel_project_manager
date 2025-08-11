@@ -68,6 +68,7 @@ class Page extends Component
             ];
             $this->items = $this->inventory_transfer->items->mapWithKeys(function ($item) {
                 $key = $item['inventory_id'];
+
                 return [
                     $key => [
                         'id' => $item['id'],

@@ -29,4 +29,3 @@ class DeleteAction
         return $return;
     }
 }
-

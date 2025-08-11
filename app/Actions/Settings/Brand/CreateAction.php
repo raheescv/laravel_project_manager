@@ -28,4 +28,3 @@ class CreateAction
         return $return;
     }
 }
-

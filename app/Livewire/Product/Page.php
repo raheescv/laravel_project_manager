@@ -40,6 +40,7 @@ class Page extends Component
     public $images = [];
 
     public $departments;
+
     public $brands;
 
     public function refresh()
@@ -103,7 +104,7 @@ class Page extends Component
                 'images' => [],
             ];
         } else {
-            $this->product = Product::with('department', 'subCategory', 'mainCategory','brand', 'images', 'unit', 'units.subUnit', 'prices')->find($this->table_id);
+            $this->product = Product::with('department', 'subCategory', 'mainCategory', 'brand', 'images', 'unit', 'units.subUnit', 'prices')->find($this->table_id);
             if (! $this->product) {
                 return redirect()->route('product::index');
             }

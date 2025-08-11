@@ -2,11 +2,11 @@
 
 namespace App\Actions\Product;
 
+use App\Models\Brand;
 use App\Models\Category;
 use App\Models\Department;
 use App\Models\Inventory;
 use App\Models\Product;
-use App\Models\Brand;
 
 class CreateAction
 {
