@@ -82,7 +82,7 @@ class SaleController extends Controller
                     'branch:id,name',
                     'items' => function ($query) {
                         $query->with([
-                            'product:id,name,mrp',
+                            'product:id,name,mrp,size,barcode',
                             'employee:id,name',
                             'assistant:id,name',
                         ]);
@@ -147,6 +147,7 @@ class SaleController extends Controller
                         'inventory_id' => $item->inventory_id,
                         'name' => $item->product->name,
                         'barcode' => $item->product->barcode,
+                        'size' => $item->product->size,
                         'category' => $item->product->category->name ?? 'N/A',
                         'unit_price' => (float) $item->unit_price,
                         'quantity' => (int) $item->quantity,

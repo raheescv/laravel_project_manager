@@ -68,6 +68,7 @@ class POSController extends Controller
                     'name' => $inventory->product->name,
                     'type' => $inventory->product->type,
                     'barcode' => $inventory->product->barcode,
+                    'size' => $inventory->product->size,
                     'mrp' => $price,
                     'stock' => $inventory->quantity ?? 0,
                     'category_id' => $inventory->product->main_category_id,
@@ -153,6 +154,8 @@ class POSController extends Controller
                 'product_id' => $inventory->product_id,
                 'employee_id' => $request->employee_id,
                 'name' => $inventory->product->name,
+                'barcode' => $inventory->product->barcode,
+                'size' => $inventory->product->size,
                 'quantity' => 1,
                 'unit_price' => $unitPrice,
                 'total' => $unitPrice,
@@ -214,7 +217,6 @@ class POSController extends Controller
 
             $saleData = $request->all();
             $table_id = $saleData['id'] ?? null;
-
             if ($saleData['status'] == 'completed') {
                 if ($table_id) {
                     $response = $this->removePayment($table_id);
@@ -239,7 +241,6 @@ class POSController extends Controller
             }
             if (! $table_id) {
                 $response = (new CreateAction())->execute($saleData, $user_id);
-                info($response);
             } else {
                 $response = (new UpdateAction())->execute($saleData, $table_id, $user_id);
             }

@@ -51,11 +51,10 @@ class UpdateAction
                 if ($model->total == $data['total']) {
                     $data['total'] = $model->total;
                 }
-                if ($model->paid == $data['paid'] ?? 0) {
+                if ($model->paid == ($data['paid'] ?? 0)) {
                     $data['paid'] = $model->paid;
                 }
             }
-
             $model->update($data);
 
             if ($data['status'] != 'cancelled') {

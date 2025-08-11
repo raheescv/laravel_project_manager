@@ -174,6 +174,10 @@
                     const value = $(this).val() || null;
                     @this.set('employee_id', value);
                 });
+                $('#branch_id').on('change', function(e) {
+                    const value = $(this).val() || null;
+                    @this.set('branch_id', value);
+                });
             });
         </script>
     @endpush

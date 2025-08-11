@@ -73,6 +73,17 @@
                                         :title="item.name">
                                         {{ item.name }}
                                     </h6>
+                                    <!-- Product Barcode and Size -->
+                                    <div class="flex items-center gap-2 text-xs text-indigo-600 leading-tight mb-1">
+                                        <span v-if="item.barcode" class="flex items-center">
+                                            <i class="fa fa-barcode text-violet-500 mr-1"></i>
+                                            {{ item.barcode }}
+                                        </span>
+                                        <span v-if="item.size" class="flex items-center">
+                                            <i class="fa fa-arrows-alt text-violet-500 mr-1"></i>
+                                            {{ item.size }}
+                                        </span>
+                                    </div>
                                     <div class="text-xs text-violet-500 leading-tight">
                                         {{ item.unit_price.toFixed(2) }} × {{ item.quantity }}
                                     </div>
