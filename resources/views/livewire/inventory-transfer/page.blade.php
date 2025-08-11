@@ -157,6 +157,9 @@
                     tomSelectInstance.clear();
                     document.querySelector('#inventory_id').tomselect.open();
                 });
+                window.addEventListener('Print', event => {
+                    window.open(event.detail[0].link, '_blank');
+                });
             });
         </script>
     @endpush

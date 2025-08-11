@@ -214,6 +214,7 @@ class Page extends Component
                 if ($this->table_id) {
                     return redirect(route('inventory::transfer::view', $this->table_id));
                 }
+                $this->dispatch('Print', ['link' => route('inventory::transfer::print', $response['data']['id'])]);
             }
             $this->mount($this->table_id);
             $this->dispatch('SelectDropDownValues', $this->inventory_transfers);
