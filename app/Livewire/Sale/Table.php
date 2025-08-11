@@ -106,6 +106,13 @@ class Table extends Component
 
     public function export()
     {
+        $filters = [
+            'branch_id' => $this->branch_id,
+            'customer_id' => $this->customer_id,
+            'status' => $this->status,
+            'from_date' => $this->from_date,
+            'to_date' => $this->to_date,
+        ];
         $count = $this->getBaseQuery()->count();
         if ($count > 2000) {
             ExportSaleJob::dispatch(Auth::user());
@@ -113,7 +120,7 @@ class Table extends Component
         } else {
             $exportFileName = 'Sale_'.now()->timestamp.'.xlsx';
 
-            return Excel::download(new SaleExport(), $exportFileName);
+            return Excel::download(new SaleExport($filters), $exportFileName);
         }
     }
 

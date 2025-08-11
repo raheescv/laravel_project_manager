@@ -21,21 +21,30 @@ class SaleExport implements FromQuery, WithColumnFormatting, WithEvents, WithHea
     public function query()
     {
         $query = Sale::query()
-            ->when($this->filter['branch_id'] ?? '', function ($query, $value) {
+            ->with([
+                'branch:id,name',
+                'account:id,name',
+                'createdUser:id,name',
+                'updatedUser:id,name',
+                'cancelledUser:id,name'
+            ])
+            ->when($this->filters['branch_id'] ?? null, function ($query, $value) {
                 return $query->where('branch_id', $value);
             })
-            ->when($this->filter['customer_id'] ?? '', function ($query, $value) {
+            ->when($this->filters['customer_id'] ?? null, function ($query, $value) {
                 return $query->where('account_id', $value);
             })
-            ->when($this->filter['status'] ?? '', function ($query, $value) {
+            ->when($this->filters['status'] ?? null, function ($query, $value) {
                 return $query->where('status', $value);
             })
-            ->when($this->filter['from_date'] ?? '', function ($query, $value) {
-                return $query->whereDate('date', '>=', date('Y-m-d', strtotime($value)));
+            ->when($this->filters['from_date'] ?? null, function ($query, $value) {
+                return $query->whereDate('date', '>=', $value);
             })
-            ->when($this->filter['to_date'] ?? '', function ($query, $value) {
-                return $query->whereDate('date', '<=', date('Y-m-d', strtotime($value)));
-            });
+            ->when($this->filters['to_date'] ?? null, function ($query, $value) {
+                return $query->whereDate('date', '<=', $value);
+            })
+            ->orderBy('date', 'desc')
+            ->orderBy('id', 'desc');
 
         return $query;
     }
@@ -70,7 +79,7 @@ class SaleExport implements FromQuery, WithColumnFormatting, WithEvents, WithHea
 
     public function chunkSize(): int
     {
-        return 2000;
+        return 1000; // Reduced from 2000 for better memory management
     }
 
     public function map($row): array
@@ -80,39 +89,39 @@ class SaleExport implements FromQuery, WithColumnFormatting, WithEvents, WithHea
             systemDate($row->date),
             $row->invoice_no,
             $row->reference_no,
-            $row->branch?->name,
-            $row->account?->name,
-            $row->gross_amount,
-            $row->item_discount,
-            $row->tax_amount,
-            $row->total,
-            $row->other_discount,
-            $row->freight,
-            $row->grand_total,
-            $row->paid,
-            $row->balance,
-            ucfirst($row->status),
-            $row->createdUser?->name,
+            $row->branch?->name ?? 'N/A',
+            $row->account?->name ?? 'N/A',
+            $row->gross_amount ?? 0,
+            $row->item_discount ?? 0,
+            $row->tax_amount ?? 0,
+            $row->total ?? 0,
+            $row->other_discount ?? 0,
+            $row->freight ?? 0,
+            $row->grand_total ?? 0,
+            $row->paid ?? 0,
+            $row->balance ?? 0,
+            ucfirst($row->status ?? ''),
+            $row->createdUser?->name ?? 'N/A',
             systemDateTime($row->created_at),
-            $row->updatedUser?->name,
+            $row->updatedUser?->name ?? 'N/A',
             systemDateTime($row->updated_at),
-            $row->cancelledUser?->name,
-            systemDateTime($row->cancelled_at),
+            $row->cancelledUser?->name ?? 'N/A',
+            $row->cancelled_at ? systemDateTime($row->cancelled_at) : 'N/A',
         ];
     }
 
     public function columnFormats(): array
     {
         return [
-            'G' => NumberFormat::FORMAT_NUMBER_00,
-            'H' => NumberFormat::FORMAT_NUMBER_00,
-            'I' => NumberFormat::FORMAT_NUMBER_00,
-            'J' => NumberFormat::FORMAT_NUMBER_00,
-            'K' => NumberFormat::FORMAT_NUMBER_00,
-            'L' => NumberFormat::FORMAT_NUMBER_00,
-            'M' => NumberFormat::FORMAT_NUMBER_00,
-            'N' => NumberFormat::FORMAT_NUMBER_00,
-            'O' => NumberFormat::FORMAT_NUMBER_00,
+            'G' => NumberFormat::FORMAT_NUMBER_00, // Gross Amount
+            'H' => NumberFormat::FORMAT_NUMBER_00, // Item Discount
+            'I' => NumberFormat::FORMAT_NUMBER_00, // Tax Amount
+            'J' => NumberFormat::FORMAT_NUMBER_00, // Total
+            'K' => NumberFormat::FORMAT_NUMBER_00, // Other Discount
+            'L' => NumberFormat::FORMAT_NUMBER_00, // Freight
+            'M' => NumberFormat::FORMAT_NUMBER_00, // Grand Total
+            'N' => NumberFormat::FORMAT_NUMBER_00, // Paid
+            'O' => NumberFormat::FORMAT_NUMBER_00, // Balance
         ];
     }
 
@@ -121,25 +130,38 @@ class SaleExport implements FromQuery, WithColumnFormatting, WithEvents, WithHea
         return [
             AfterSheet::class => function (AfterSheet $event): void {
                 $sheet = $event->sheet->getDelegate();
+                $highestRow = $sheet->getHighestRow();
 
-                $totalRows = $sheet->getHighestRow() + 1;
-                $sheet->getStyle("A{$totalRows}:O{$totalRows}")->applyFromArray([
-                    'font' => [
-                        'bold' => true,
-                    ],
-                ]);
+                // Only add totals if we have data rows
+                if ($highestRow > 1) {
+                    $totalRow = $highestRow + 1;
 
-                $endRow = $totalRows - 1;
-                $sheet->setCellValue("A{$totalRows}", 'Total');
-                $sheet->setCellValue("G{$totalRows}", "=SUM(G2:G{$endRow})");
-                $sheet->setCellValue("H{$totalRows}", "=SUM(H2:H{$endRow})");
-                $sheet->setCellValue("I{$totalRows}", "=SUM(I2:I{$endRow})");
-                $sheet->setCellValue("J{$totalRows}", "=SUM(J2:J{$endRow})");
-                $sheet->setCellValue("K{$totalRows}", "=SUM(K2:K{$endRow})");
-                $sheet->setCellValue("L{$totalRows}", "=SUM(L2:L{$endRow})");
-                $sheet->setCellValue("M{$totalRows}", "=SUM(M2:M{$endRow})");
-                $sheet->setCellValue("N{$totalRows}", "=SUM(N2:N{$endRow})");
-                $sheet->setCellValue("O{$totalRows}", "=SUM(O2:O{$endRow})");
+                    // Style the total row
+                    $sheet->getStyle("A{$totalRow}:V{$totalRow}")->applyFromArray([
+                        'font' => ['bold' => true],
+                        'fill' => [
+                            'fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
+                            'startColor' => ['rgb' => 'E6E6E6']
+                        ]
+                    ]);
+
+                    // Set total labels and formulas
+                    $sheet->setCellValue("A{$totalRow}", 'Total');
+                    $sheet->setCellValue("G{$totalRow}", "=SUM(G2:G{$highestRow})");
+                    $sheet->setCellValue("H{$totalRow}", "=SUM(H2:H{$highestRow})");
+                    $sheet->setCellValue("I{$totalRow}", "=SUM(I2:I{$highestRow})");
+                    $sheet->setCellValue("J{$totalRow}", "=SUM(J2:J{$highestRow})");
+                    $sheet->setCellValue("K{$totalRow}", "=SUM(K2:K{$highestRow})");
+                    $sheet->setCellValue("L{$totalRow}", "=SUM(L2:L{$highestRow})");
+                    $sheet->setCellValue("M{$totalRow}", "=SUM(M2:M{$highestRow})");
+                    $sheet->setCellValue("N{$totalRow}", "=SUM(N2:N{$highestRow})");
+                    $sheet->setCellValue("O{$totalRow}", "=SUM(O2:O{$highestRow})");
+
+                    // Auto-size columns for better readability
+                    foreach (range('A', 'V') as $column) {
+                        $sheet->getColumnDimension($column)->setAutoSize(true);
+                    }
+                }
             },
         ];
     }
