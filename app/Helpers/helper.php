@@ -175,12 +175,15 @@ if (! function_exists('fileUpload')) {
 if (! function_exists('generateBarcode')) {
     function generateBarcode()
     {
-        $i = 0;
-        do {
-            $barcode = 8000 + Product::count() + $i;
-            $i++;
-            $exists = Product::where('barcode', $barcode)->exists();
-        } while ($exists);
+        $maxBarcode = Product::max('barcode') ?? 0;
+        // Ensure we start from at least 8000
+        if ($maxBarcode < 8000) {
+            $maxBarcode = 8000;
+        }
+        $barcode = $maxBarcode + 1;
+        while (Product::where('barcode', $barcode)->exists()) {
+            $barcode++;
+        }
 
         return $barcode;
     }

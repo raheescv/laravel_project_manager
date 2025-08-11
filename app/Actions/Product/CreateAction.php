@@ -43,7 +43,6 @@ class CreateAction
             if (empty($data['barcode'])) {
                 $data['barcode'] = generateBarcode();
             }
-
             validationHelper(Product::rules($data), $data);
             $user_id = $data['created_by'] = $data['updated_by'] = $user_id;
             $trashedExists = Product::onlyTrashed()->firstWhere('name', $data['name']);
