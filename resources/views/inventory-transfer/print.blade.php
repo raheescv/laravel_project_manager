@@ -104,8 +104,8 @@
                 <tr>
                     <th>#</th>
                     <th>Product</th>
-                    <th>Barcode</th>
-                    <th>Batch</th>
+                    <th class="text-end">Barcode</th>
+                    <th class="text-end">SKU</th>
                     <th class="text-end">Quantity</th>
                 </tr>
             </thead>
@@ -117,8 +117,8 @@
                     <tr>
                         <td>{{ $loop->iteration }}</td>
                         <td>{{ $item['name'] }}</td>
-                        <td>{{ $item->inventory->batch }}</td>
-                        <td>{{ $item->inventory->barcode }}</td>
+                        <td class="text-end">{{ $item->inventory->barcode }}</td>
+                        <td class="text-end">{{ $item->product->code }}</td>
                         <td class="text-end">{{ $item['quantity'] }}</td>
                     </tr>
                 @endforeach
