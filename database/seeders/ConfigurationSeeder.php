@@ -25,6 +25,7 @@ class ConfigurationSeeder extends Seeder
         Configuration::updateOrCreate(['key' => 'sale_type'], ['value' => 'pos']);
         Configuration::updateOrCreate(['key' => 'default_product_type'], ['value' => 'service']);
         $saleVisibleColumns = [
+            'created_at' => false,
             'reference_no' => false,
             'branch_id' => false,
             'created_by' => true,
