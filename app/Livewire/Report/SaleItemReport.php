@@ -88,6 +88,7 @@ class SaleItemReport extends Component
         $data = $query->paginate($this->limit);
 
         $total = [
+            'quantity' => $totals->sum('sale_items.quantity'),
             'gross_amount' => $totals->sum('sale_items.gross_amount'),
             'discount' => $totals->sum('sale_items.discount'),
             'net_amount' => $totals->sum('sale_items.net_amount'),
