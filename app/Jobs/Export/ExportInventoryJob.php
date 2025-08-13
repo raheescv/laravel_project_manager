@@ -18,6 +18,7 @@ class ExportInventoryJob implements ShouldQueue
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     public $timeout = 300; // 5 minutes
+
     public $tries = 3;
 
     public function __construct(protected User $user, public array $filters) {}
@@ -35,14 +36,14 @@ class ExportInventoryJob implements ShouldQueue
             Log::info('Inventory export completed successfully', [
                 'user_id' => $this->user->id,
                 'filename' => $exportFileName,
-                'filters' => $this->filters
+                'filters' => $this->filters,
             ]);
 
         } catch (\Exception $e) {
             Log::error('Inventory export failed', [
                 'user_id' => $this->user->id,
                 'error' => $e->getMessage(),
-                'filters' => $this->filters
+                'filters' => $this->filters,
             ]);
 
             throw $e;
@@ -54,7 +55,7 @@ class ExportInventoryJob implements ShouldQueue
         Log::error('Inventory export job failed', [
             'user_id' => $this->user->id,
             'error' => $exception->getMessage(),
-            'filters' => $this->filters
+            'filters' => $this->filters,
         ]);
     }
 }

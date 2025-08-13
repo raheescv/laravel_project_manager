@@ -63,10 +63,11 @@ class Table extends Component
         $this->branch_id = [session('branch_id')];
 
         $this->inventory_visible_column = cache()->remember(
-            'inventory_visible_column_' . (Auth::user()?->id ?? 'guest'),
+            'inventory_visible_column_'.(Auth::user()?->id ?? 'guest'),
             now()->addHours(24),
             function () {
                 $config = Configuration::where('key', 'inventory_visible_column')->value('value');
+
                 return $config ? json_decode($config, true) : $this->getDefaultColumns();
             }
         );
@@ -117,18 +118,19 @@ class Table extends Component
                 ExportInventoryJob::dispatch(Auth::user(), $filters);
                 $this->dispatch('success', ['message' => 'Export started! You will receive the file in your mailbox shortly.']);
             } else {
-                $exportFileName = 'inventory_' . now()->format('Y-m-d_H-i-s') . '.xlsx';
+                $exportFileName = 'inventory_'.now()->format('Y-m-d_H-i-s').'.xlsx';
+
                 return Excel::download(new InventoryExport($filters), $exportFileName);
             }
         } catch (\Exception $e) {
-            $this->dispatch('error', ['message' => 'Export failed: ' . $e->getMessage()]);
+            $this->dispatch('error', ['message' => 'Export failed: '.$e->getMessage()]);
         }
     }
 
     protected function getFilteredCount($filters)
     {
         // Cache the filtered count for better performance
-        $cacheKey = 'inventory_filtered_count_' . md5(serialize($filters));
+        $cacheKey = 'inventory_filtered_count_'.md5(serialize($filters));
 
         return cache()->remember($cacheKey, now()->addMinutes(5), function () use ($filters) {
             return Inventory::query()
@@ -185,7 +187,7 @@ class Table extends Component
     public function clearCache()
     {
         // Clear all inventory-related cache when needed
-        cache()->forget('inventory_visible_column_' . (Auth::user()?->id ?? 'guest'));
+        cache()->forget('inventory_visible_column_'.(Auth::user()?->id ?? 'guest'));
         $this->dispatch('success', ['message' => 'Cache cleared successfully']);
     }
 
@@ -261,6 +263,7 @@ class Table extends Component
             ->where('products.type', 'product')
             ->when($this->search, function ($query, $value) {
                 $value = trim($value);
+
                 return $query->where(function ($q) use ($value) {
                     $q->where('products.name', 'like', "%{$value}%")
                         ->orWhere('products.name_arabic', 'like', "%{$value}%")

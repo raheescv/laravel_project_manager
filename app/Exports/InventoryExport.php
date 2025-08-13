@@ -160,8 +160,8 @@ class InventoryExport implements FromQuery, WithHeadings, WithMapping, WithStyle
                 'font' => ['bold' => true],
                 'fill' => [
                     'fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
-                    'startColor' => ['rgb' => 'E3F2FD']
-                ]
+                    'startColor' => ['rgb' => 'E3F2FD'],
+                ],
             ],
         ];
     }
