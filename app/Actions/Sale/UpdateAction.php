@@ -25,39 +25,38 @@ class UpdateAction
             if (! $model) {
                 throw new Exception("Sale not found with the specified ID: $saleId.", 1);
             }
-            $data['invoice_no'] = $model->invoice_no;
-            $data['branch_id'] = $model->branch_id;
-
-            if ($data['status'] == 'cancelled') {
-                $data['cancelled_by'] = $this->userId;
-            } else {
-                $data['updated_by'] = $this->userId;
-            }
-            // if it is edit after complete
-            $this->rollbackIfCompleted();
-
-            validationHelper(Sale::rules($saleId), $data);
-            // to avoid storing the audit log
-            if (true) {
-                if ($model->gross_amount == $data['gross_amount']) {
-                    $data['gross_amount'] = $model->gross_amount;
-                }
-                if ($model->item_discount == $data['item_discount']) {
-                    $data['item_discount'] = $model->item_discount;
-                }
-                if ($model->tax_amount == $data['tax_amount']) {
-                    $data['tax_amount'] = $model->tax_amount;
-                }
-                if ($model->total == $data['total']) {
-                    $data['total'] = $model->total;
-                }
-                if ($model->paid == ($data['paid'] ?? 0)) {
-                    $data['paid'] = $model->paid;
-                }
-            }
-            $model->update($data);
-
             if ($data['status'] != 'cancelled') {
+                $data['invoice_no'] = $model->invoice_no;
+                $data['branch_id'] = $model->branch_id;
+                $data['updated_by'] = $this->userId;
+
+                // if it is edit after complete
+                $this->rollbackIfCompleted();
+
+                validationHelper(Sale::rules($saleId), $data);
+                // to avoid storing the audit log
+                if (true) {
+                    if ($model->gross_amount == $data['gross_amount']) {
+                        $data['gross_amount'] = $model->gross_amount;
+                    }
+                    if ($model->item_discount == $data['item_discount']) {
+                        $data['item_discount'] = $model->item_discount;
+                    }
+                    if ($model->tax_amount == $data['tax_amount']) {
+                        $data['tax_amount'] = $model->tax_amount;
+                    }
+                    if ($model->total == $data['total']) {
+                        $data['total'] = $model->total;
+                    }
+                    if ($model->paid == ($data['paid'] ?? 0)) {
+                        $data['paid'] = $model->paid;
+                    }
+                }
+                if ($data['paid'] == $model->paid) {
+                    unset($model['paid']);
+                }
+                $model->update($data);
+
                 $this->items($data['items']);
 
                 $this->payments($data['payments']);
@@ -92,6 +91,11 @@ class UpdateAction
                     $this->completed();
                 }
             } else {
+                $model->update([
+                    'status' => 'cancelled',
+                    'cancelled_by' => $this->userId,
+                ]);
+                $this->model->refresh();
                 $this->cancel();
             }
 
@@ -125,13 +129,9 @@ class UpdateAction
         if (! $response['success']) {
             throw new Exception($response['message'], 1);
         }
-        if ($this->model->journals) {
-            foreach ($this->model->journals as $journal) {
-                $response = (new DeleteAction())->execute($journal->id, $this->userId);
-                if (! $response['success']) {
-                    throw new Exception($response['message'], 1);
-                }
-            }
+        $response = (new JournalDeleteAction())->execute($this->model, $this->userId);
+        if (! $response['success']) {
+            throw new Exception($response['message'], 1);
         }
     }
 
