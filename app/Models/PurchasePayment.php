@@ -53,4 +53,10 @@ class PurchasePayment extends Model implements AuditableContracts
     {
         return $this->paymentMethod?->name;
     }
+
+    public function purchase()
+    {
+        return $this->belongsTo(Purchase::class);
+    }
+
 }

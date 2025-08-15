@@ -130,4 +130,12 @@ class Purchase extends Model implements AuditableContracts
 
         return $return;
     }
+
+    public static function updatePurchasePaymentMethods(Purchase $purchase): void
+    {
+        $data = [
+            'paid' => $purchase->payments->sum('amount'),
+        ];
+        $purchase->update($data);
+    }
 }
