@@ -99,7 +99,7 @@ class UpdateAction
     {
         $oldStatus = $this->model->status;
         if ($oldStatus == 'completed') {
-            if (! Auth::user()->can('sale.edit completed')) {
+            if (! Auth::user()->can('purchase.edit completed')) {
                 throw new Exception("You don't have permission to edit it.", 1);
             }
             $response = (new JournalDeleteAction())->execute($this->model, $this->userId);
