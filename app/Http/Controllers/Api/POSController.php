@@ -69,6 +69,7 @@ class POSController extends Controller
                     'type' => $inventory->product->type,
                     'barcode' => $inventory->product->barcode,
                     'size' => $inventory->product->size,
+                    'code' => $inventory->product->code,
                     'mrp' => $price,
                     'stock' => $inventory->quantity ?? 0,
                     'category_id' => $inventory->product->main_category_id,

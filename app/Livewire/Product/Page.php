@@ -86,7 +86,7 @@ class Page extends Component
                 'color' => '',
                 'size' => '',
                 'model' => '',
-                'brand_id' => '',
+                'brand_id' => null,
                 'part_no' => '',
                 'min_stock' => 0,
                 'max_stock' => 0,

@@ -30,7 +30,7 @@ class Table extends Component
 
     public $status = '';
 
-    public $limit = 10;
+    public $limit = 100;
 
     public $selected = [];
 

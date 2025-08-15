@@ -23,6 +23,23 @@
 
         <div class="product-info-wrapper">
             <h3 class="product-name" :title="product.name">{{ product.name }}</h3>
+
+            <!-- Product Details Row -->
+            <div class="product-details-row">
+                <div v-if="product.code" class="product-code">
+                    <span class="detail-label">SKU:</span>
+                    <span class="detail-value">{{ product.code }}</span>
+                </div>
+                <div v-if="product.size" class="product-size">
+                    <span class="detail-label">Size:</span>
+                    <span class="detail-value">{{ product.size }}</span>
+                </div>
+                <div v-if="isProduct && product.barcode" class="product-barcode">
+                    <span class="detail-label">Barcode:</span>
+                    <span class="detail-value">{{ product.barcode }}</span>
+                </div>
+            </div>
+
             <div class="product-price-row">
                 <div v-if="isProduct" class="product-qty" :class="{ 'low': isLowStock }">
                     {{ product.stock }}
@@ -122,6 +139,7 @@ export default {
     flex-direction: column;
     cursor: pointer;
     min-height: 140px;
+    height: auto;
     /* Reduced height */
     border: 1px solid rgba(229, 231, 235, 0.5);
 }
@@ -214,7 +232,8 @@ export default {
     background: white;
     display: flex;
     flex-direction: column;
-    flex-grow: 0;
+    flex-grow: 1;
+    min-height: 0;
 }
 
 .product-name {
@@ -222,12 +241,50 @@ export default {
     font-weight: 600;
     margin: 0;
     color: #374151;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+    line-height: 1.3;
+    word-wrap: break-word;
+    hyphens: auto;
+    overflow: visible !important;
+    text-overflow: unset !important;
+    white-space: normal !important;
     padding-bottom: 4px;
     border-bottom: 1px solid #f3f4f6;
     margin-bottom: 4px;
+    display: -webkit-box;
+    -webkit-line-clamp: unset !important;
+    -webkit-box-orient: vertical;
+    max-height: none !important;
+}
+
+.product-details-row {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 4px;
+    padding-bottom: 4px;
+    border-bottom: 1px solid #f3f4f6;
+    flex-wrap: wrap;
+    visibility: visible !important;
+    opacity: 1 !important;
+    height: auto !important;
+    min-height: 20px;
+}
+
+.product-code, .product-size, .product-barcode {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.detail-label {
+    font-size: 0.65rem;
+    color: #6b7280;
+    font-weight: 500;
+}
+
+.detail-value {
+    font-size: 0.7rem;
+    color: #4b5563;
+    font-weight: 600;
 }
 
 .product-price-row {
@@ -291,6 +348,7 @@ export default {
 @media (min-width: 1280px) {
     .product-card {
         min-height: 150px;
+        height: auto;
     }
 
     .product-image-container {
@@ -300,11 +358,20 @@ export default {
     .product-name {
         font-size: 0.85rem;
     }
+
+    .detail-label {
+        font-size: 0.7rem;
+    }
+
+    .detail-value {
+        font-size: 0.75rem;
+    }
 }
 
 @media (max-width: 768px) {
     .product-card {
         min-height: 130px;
+        height: auto;
     }
 
     .product-image-container {
@@ -318,11 +385,24 @@ export default {
     .product-price {
         font-size: 0.85rem;
     }
+
+    .product-details-row {
+        gap: 8px;
+    }
+
+    .detail-label {
+        font-size: 0.6rem;
+    }
+
+    .detail-value {
+        font-size: 0.65rem;
+    }
 }
 
 @media (max-width: 480px) {
     .product-card {
         min-height: 125px;
+        height: auto;
     }
 
     .product-image-container {
@@ -344,6 +424,20 @@ export default {
     .product-qty {
         font-size: 0.65rem;
         padding: 1px 4px;
+    }
+
+    .product-details-row {
+        gap: 6px;
+        margin-bottom: 3px;
+        padding-bottom: 3px;
+    }
+
+    .detail-label {
+        font-size: 0.55rem;
+    }
+
+    .detail-value {
+        font-size: 0.6rem;
     }
 }
 </style>

@@ -2,7 +2,6 @@
 
 namespace App\Actions\Sale;
 
-use App\Actions\Journal\DeleteAction;
 use App\Models\Sale;
 use Exception;
 use Illuminate\Support\Facades\Auth;
