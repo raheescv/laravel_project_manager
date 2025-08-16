@@ -24,7 +24,7 @@ class SaleMixedItemReport extends Component
 
     public $type = '';
 
-    public $limit = 10;
+    public $limit = 100;
 
     public $sortField = 'date';
 
