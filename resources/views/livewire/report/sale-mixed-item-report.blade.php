@@ -3,7 +3,9 @@
         <div class="row">
             <div class="col-md-6 d-flex gap-1 align-items-center mb-3">
                 <div class="btn-group">
-                    {{-- Reserved for future export if needed --}}
+                    <button wire:click="export" class="btn btn-sm btn-outline-success">
+                        <i class="demo-pli-download me-1"></i> Export
+                    </button>
                 </div>
             </div>
             <div class="col-md-6 d-flex gap-2 align-items-center justify-content-md-end mb-3">

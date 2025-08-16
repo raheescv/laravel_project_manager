@@ -2,6 +2,8 @@
 
 namespace App\Livewire\Report;
 
+use App\Exports\SaleMixedItemReportExport;
+use App\Jobs\Export\ExportSaleMixedItemReportJob;
 use App\Models\Configuration;
 use App\Models\SaleItem;
 use App\Models\SaleReturnItem;
@@ -9,6 +11,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Livewire\Component;
 use Livewire\WithPagination;
+use Maatwebsite\Excel\Facades\Excel;
 
 class SaleMixedItemReport extends Component
 {
@@ -45,6 +48,26 @@ class SaleMixedItemReport extends Component
     public function updated($key, $value): void
     {
         $this->resetPage();
+    }
+
+    public function export()
+    {
+        $count = $this->baseQuery()->count();
+        $filter = [
+            'from_date' => $this->from_date,
+            'to_date' => $this->to_date,
+            'branch_id' => $this->branch_id,
+            'product_id' => $this->product_id,
+            'type' => $this->type,
+        ];
+
+        if ($count > 2000) {
+            ExportSaleMixedItemReportJob::dispatch(Auth::user(), $filter, $this->sale_mixed_item_report_visible_column);
+            $this->dispatch('success', ['message' => 'You will get your file in your mailbox.']);
+        } else {
+            $exportFileName = 'SaleAndReturnItemReport_'.now()->timestamp.'.xlsx';
+            return Excel::download(new SaleMixedItemReportExport($filter, $this->sale_mixed_item_report_visible_column), $exportFileName);
+        }
     }
 
     public function sortBy(string $field): void
