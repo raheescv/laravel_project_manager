@@ -39,7 +39,7 @@ class SaleMixedItemReport extends Component
 
     public function mount(): void
     {
-        $this->branch_id = Auth::user()->branch_id;
+        $this->branch_id = Auth::user()->default_branch_id;
         $this->from_date = date('Y-m-d');
         $this->to_date = date('Y-m-d');
         $config = Configuration::where('key', 'sale_mixed_item_report_visible_column')->value('value');
@@ -99,27 +99,6 @@ class SaleMixedItemReport extends Component
             'tax_amount' => true,
             'total' => true,
         ];
-    }
-
-    public function render()
-    {
-        $query = $this->baseQuery();
-        $totals = clone $query;
-        $data = $query->paginate($this->limit);
-
-        $total = [
-            'quantity' => (float) $totals->sum('quantity'),
-            'gross_amount' => (float) $totals->sum('gross_amount'),
-            'discount' => (float) $totals->sum('discount'),
-            'net_amount' => (float) $totals->sum('net_amount'),
-            'tax_amount' => (float) $totals->sum('tax_amount'),
-            'total' => (float) $totals->sum('total'),
-        ];
-
-        return view('livewire.report.sale-mixed-item-report', [
-            'data' => $data,
-            'total' => $total,
-        ]);
     }
 
     protected function baseQuery()
@@ -196,5 +175,26 @@ class SaleMixedItemReport extends Component
             ->orderBy('id', 'desc');
 
         return $outer;
+    }
+
+    public function render()
+    {
+        $query = $this->baseQuery();
+        $totals = clone $query;
+        $data = $query->paginate($this->limit);
+
+        $total = [
+            'quantity' => (float) $totals->sum('quantity'),
+            'gross_amount' => (float) $totals->sum('gross_amount'),
+            'discount' => (float) $totals->sum('discount'),
+            'net_amount' => (float) $totals->sum('net_amount'),
+            'tax_amount' => (float) $totals->sum('tax_amount'),
+            'total' => (float) $totals->sum('total'),
+        ];
+
+        return view('livewire.report.sale-mixed-item-report', [
+            'data' => $data,
+            'total' => $total,
+        ]);
     }
 }
