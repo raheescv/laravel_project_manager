@@ -83,6 +83,7 @@
                                         <tr>
                                             <th>#</th>
                                             <th style="width: 30%">Product</th>
+                                            <th>Barcode</th>
                                             <th class="text-end">Unit Price</th>
                                             <th class="text-end">Quantity</th>
                                             <th class="text-end">Discount</th>
@@ -99,6 +100,13 @@
                                                     <div class="d-flex align-items-center">
                                                         <div class="flex-grow-1">
                                                             <h6 class="mb-0">{{ $item['name'] }}</h6>
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                                <td>
+                                                    <div class="d-flex align-items-center">
+                                                        <div class="flex-grow-1">
+                                                            <h6 class="mb-0">{{ $item['barcode']??'' }}</h6>
                                                         </div>
                                                     </div>
                                                 </td>
@@ -135,7 +143,7 @@
                                         @endforeach
                                         @if (count($items) == 0)
                                             <tr>
-                                                <td colspan="8" class="text-center py-4 text-muted">
+                                                <td colspan="9" class="text-center py-4 text-muted">
                                                     <i class="demo-psi-cart-2 fs-1 mb-2 d-block"></i>
                                                     No items added yet
                                                 </td>
@@ -147,7 +155,7 @@
                                             $items = collect($items);
                                         @endphp
                                         <tr class="bg-light">
-                                            <th colspan="3" class="text-end py-3">Total</th>
+                                            <th colspan="4" class="text-end py-3">Total</th>
                                             <th class="text-end py-3"><b>{{ currency($items->sum('quantity')) }}</b></th>
                                             <th class="text-end py-3"><b>{{ currency($items->sum('discount')) }}</b></th>
                                             <th class="text-end py-3"><b>{{ currency($items->sum('tax_amount')) }}%</b></th>

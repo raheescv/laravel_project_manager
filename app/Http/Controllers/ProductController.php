@@ -33,8 +33,8 @@ class ProductController extends Controller
             ->when($request->search, function ($query, $search) {
                 return $query->where(function ($q) use ($search) {
                     $q->where('name', 'like', "%{$search}%")
-                        ->orWhere('code', 'like', "%{$search}%")
-                        ->orWhere('barcode', 'like', "%{$search}%");
+                        ->orWhere('code', '=', "%{$search}%")
+                        ->orWhere('barcode', '=', "%{$search}%");
                 });
             })
             ->when($request->type, function ($query, $type) {
