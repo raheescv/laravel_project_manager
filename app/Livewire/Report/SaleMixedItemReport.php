@@ -147,7 +147,7 @@ class SaleMixedItemReport extends Component
                 'sale_return_items.sale_return_id as parent_id',
                 'sale_returns.date as date',
                 'sale_returns.created_at as created_at',
-                'sale_returns.reference_no as reference',
+                DB::raw("COALESCE(sale_returns.reference_no, sale_returns.id) as reference"),
                 'products.name as product_name',
                 'products.code as product_code',
                 // Keep unit price as positive for readability; make quantities and amounts negative
