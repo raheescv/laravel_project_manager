@@ -76,10 +76,10 @@
                             <th> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="reference" label="ref" /> </th>
                         @endif
                         @if ($sale_mixed_item_report_visible_column['product_name'] ?? true)
-                            <th> product </th>
+                            <th> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="product_name" label="product" /> </th>
                         @endif
                         @if ($sale_mixed_item_report_visible_column['product_code'] ?? true)
-                            <th> code </th>
+                            <th> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="product_code" label="code" /> </th>
                         @endif
                         @if ($sale_mixed_item_report_visible_column['unit_price'] ?? true)
                             <th class="text-end"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="unit_price" label="unit price" /> </th>
