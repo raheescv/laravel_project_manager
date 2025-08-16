@@ -55,7 +55,7 @@ class Page extends Component
         ];
 
         if ($this->table_id) {
-            $this->purchase = Purchase::with('account:id,name', 'branch:id,name', 'items.product:id,name', 'createdUser:id,name', 'updatedUser:id,name', 'cancelledUser:id,name', 'payments.paymentMethod:id,name')->find($this->table_id);
+            $this->purchase = Purchase::with('account:id,name', 'branch:id,name', 'items.product:id,name,barcode', 'createdUser:id,name', 'updatedUser:id,name', 'cancelledUser:id,name', 'payments.paymentMethod:id,name')->find($this->table_id);
             if (! $this->purchase) {
                 return redirect()->route('purchase::index');
             }
