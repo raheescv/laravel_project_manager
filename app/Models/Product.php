@@ -198,8 +198,8 @@ class Product extends Model implements AuditableContracts
                 $value = trim($value);
 
                 return $q->where('name', 'like', "%{$value}%")
-                    ->orWhere('code', '=', "%{$value}%")
-                    ->orWhere('barcode', '=', "%{$value}%")
+                    ->orWhere('code', '=', $value)
+                    ->orWhere('barcode', '=', $value)
                     ->orWhere('color', 'like', "%{$value}%")
                     ->orWhere('size', 'like', "%{$value}%");
             });
