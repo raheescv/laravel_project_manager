@@ -39,6 +39,7 @@ class SaleMixedItemReport extends Component
 
     public function mount(): void
     {
+        $this->branch_id = Auth::user()->branch_id;
         $this->from_date = date('Y-m-d');
         $this->to_date = date('Y-m-d');
         $config = Configuration::where('key', 'sale_mixed_item_report_visible_column')->value('value');
@@ -66,6 +67,7 @@ class SaleMixedItemReport extends Component
             $this->dispatch('success', ['message' => 'You will get your file in your mailbox.']);
         } else {
             $exportFileName = 'SaleAndReturnItemReport_'.now()->timestamp.'.xlsx';
+
             return Excel::download(new SaleMixedItemReportExport($filter, $this->sale_mixed_item_report_visible_column), $exportFileName);
         }
     }
@@ -170,7 +172,7 @@ class SaleMixedItemReport extends Component
                 'sale_return_items.sale_return_id as parent_id',
                 'sale_returns.date as date',
                 'sale_returns.created_at as created_at',
-                DB::raw("COALESCE(sale_returns.reference_no, sale_returns.id) as reference"),
+                DB::raw('COALESCE(sale_returns.reference_no, sale_returns.id) as reference'),
                 'products.name as product_name',
                 'products.code as product_code',
                 // Keep unit price as positive for readability; make quantities and amounts negative

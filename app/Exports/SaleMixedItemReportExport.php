@@ -2,7 +2,6 @@
 
 namespace App\Exports;
 
-use App\Models\Configuration;
 use App\Models\SaleItem;
 use App\Models\SaleReturnItem;
 use Illuminate\Support\Facades\Auth;
@@ -72,7 +71,7 @@ class SaleMixedItemReportExport implements FromQuery, WithColumnFormatting, With
                 'sale_return_items.sale_return_id as parent_id',
                 'sale_returns.date as date',
                 'sale_returns.created_at as created_at',
-                DB::raw("COALESCE(sale_returns.reference_no, sale_returns.id) as reference"),
+                DB::raw('COALESCE(sale_returns.reference_no, sale_returns.id) as reference'),
                 'products.name as product_name',
                 'products.code as product_code',
                 'sale_return_items.unit_price',
@@ -100,7 +99,7 @@ class SaleMixedItemReportExport implements FromQuery, WithColumnFormatting, With
     public function headings(): array
     {
         $headings = [];
-        
+
         if ($this->visibleColumns['type'] ?? true) {
             $headings[] = 'Type';
         }
@@ -152,7 +151,7 @@ class SaleMixedItemReportExport implements FromQuery, WithColumnFormatting, With
     public function map($row): array
     {
         $data = [];
-        
+
         if ($this->visibleColumns['type'] ?? true) {
             $data[] = $row->type === 'sale' ? 'Sale' : 'Return';
         }
@@ -200,7 +199,7 @@ class SaleMixedItemReportExport implements FromQuery, WithColumnFormatting, With
     {
         $formats = [];
         $currentColumn = 'A';
-        
+
         // Skip non-numeric columns
         if ($this->visibleColumns['type'] ?? true) {
             $currentColumn++;
@@ -220,7 +219,7 @@ class SaleMixedItemReportExport implements FromQuery, WithColumnFormatting, With
         if ($this->visibleColumns['product_code'] ?? true) {
             $currentColumn++;
         }
-        
+
         // Format numeric columns
         if ($this->visibleColumns['unit_price'] ?? true) {
             $formats[$currentColumn] = NumberFormat::FORMAT_NUMBER_00;
@@ -269,7 +268,7 @@ class SaleMixedItemReportExport implements FromQuery, WithColumnFormatting, With
                 // Add totals row
                 $endRow = $totalRows - 1;
                 $currentColumn = 'A';
-                
+
                 // Skip non-numeric columns
                 if ($this->visibleColumns['type'] ?? true) {
                     $currentColumn++;
@@ -289,7 +288,7 @@ class SaleMixedItemReportExport implements FromQuery, WithColumnFormatting, With
                 if ($this->visibleColumns['product_code'] ?? true) {
                     $currentColumn++;
                 }
-                
+
                 // Add totals for numeric columns
                 if ($this->visibleColumns['unit_price'] ?? true) {
                     $sheet->setCellValue("{$currentColumn}{$totalRows}", "=SUM({$currentColumn}2:{$currentColumn}{$endRow})");
@@ -322,4 +321,4 @@ class SaleMixedItemReportExport implements FromQuery, WithColumnFormatting, With
             },
         ];
     }
-} 
+}
