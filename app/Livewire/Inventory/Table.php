@@ -62,15 +62,8 @@ class Table extends Component
         // Cache configuration to avoid repeated database queries
         $this->branch_id = [session('branch_id')];
 
-        $this->inventory_visible_column = cache()->remember(
-            'inventory_visible_column_'.(Auth::user()?->id ?? 'guest'),
-            now()->addHours(24),
-            function () {
-                $config = Configuration::where('key', 'inventory_visible_column')->value('value');
-
-                return $config ? json_decode($config, true) : $this->getDefaultColumns();
-            }
-        );
+        $config = Configuration::where('key', 'inventory_visible_column')->value('value');
+        $this->inventory_visible_column = $config ? json_decode($config, true) : $this->getDefaultColumns();
     }
 
     protected function getDefaultColumns()
