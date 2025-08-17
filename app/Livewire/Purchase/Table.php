@@ -95,7 +95,7 @@ class Table extends Component
     public function updatedSelectAll($value)
     {
         if ($value) {
-            $this->selected = $this->query()->limit(2000)->pluck('id')->toArray();
+            $this->selected = $this->query()->limit(2000)->pluck('purchases.id')->toArray();
         } else {
             $this->selected = [];
         }
