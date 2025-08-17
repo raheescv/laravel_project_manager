@@ -3,6 +3,7 @@
 namespace App\Livewire\Settings;
 
 use App\Models\Account;
+use App\Models\Branch;
 use App\Models\Configuration;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Cache;
@@ -18,7 +19,11 @@ class Configurations extends Component
 
     public $default_product_type;
 
+    public $default_purchase_branch_id;
+
     public $paymentMethods;
+
+    public $branches;
 
     public function mount()
     {
@@ -26,11 +31,15 @@ class Configurations extends Component
         $this->payment_methods = Configuration::where('key', 'payment_methods')->value('value');
         $this->default_payment_method_id = Configuration::where('key', 'default_payment_method_id')->value('value') ?? 1;
         $this->default_product_type = Configuration::where('key', 'default_product_type')->value('value') ?? 'service';
+        $this->default_purchase_branch_id = Configuration::where('key', 'default_purchase_branch_id')->value('value') ?? 1;
         $this->payment_methods = json_decode($this->payment_methods, 1);
         $this->paymentMethods = [];
         if ($this->payment_methods) {
             $this->paymentMethods = Account::whereIn('id', $this->payment_methods)->pluck('name', 'id')->toArray();
         }
+
+        // Load branches for dropdown
+        $this->branches = Branch::orderBy('name')->pluck('name', 'id')->toArray();
     }
 
     public function dbView()
@@ -44,6 +53,7 @@ class Configurations extends Component
         Configuration::updateOrCreate(['key' => 'barcode_type'], ['value' => $this->barcode_type]);
         Configuration::updateOrCreate(['key' => 'payment_methods'], ['value' => json_encode($this->payment_methods)]);
         Configuration::updateOrCreate(['key' => 'default_product_type'], ['value' => $this->default_product_type]);
+        Configuration::updateOrCreate(['key' => 'default_purchase_branch_id'], ['value' => $this->default_purchase_branch_id]);
         Cache::forget('payment_methods');
         $this->dispatch('success', ['message' => 'Updated Successfully']);
     }

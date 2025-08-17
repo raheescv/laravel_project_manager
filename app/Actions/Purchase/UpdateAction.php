@@ -27,11 +27,12 @@ class UpdateAction
                 $data['updated_by'] = $userId;
             }
 
-            $this->rollbackIfCompleted();
-
             validationHelper(Purchase::rules($purchase_id), $data);
             $model->update($data);
             if ($data['status'] != 'cancelled') {
+
+                $this->rollbackIfCompleted();
+
                 foreach ($data['items'] as $value) {
                     $value['purchase_id'] = $purchase_id;
 

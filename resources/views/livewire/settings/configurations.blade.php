@@ -39,6 +39,13 @@
                                     ])->value($default_product_type)->class('form-select')->placeholder('Select Default Product Type')->attribute('wire:model', 'default_product_type') }}
                                 </div>
                             </div>
+
+                            <div class="col-12">
+                                <div class="form-group">
+                                    <label class="form-label fw-medium" for="default_purchase_branch_id">Default Purchase Branch</label>
+                                    {{ html()->select('default_purchase_branch_id', $branches)->value($default_purchase_branch_id)->class('form-select')->placeholder('Select Default Purchase Branch')->attribute('wire:model', 'default_purchase_branch_id') }}
+                                </div>
+                            </div>
                         </div>
                     </div>
 
