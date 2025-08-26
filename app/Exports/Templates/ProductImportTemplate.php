@@ -30,7 +30,7 @@ class ProductImportTemplate implements FromArray, WithHeadings
                 'color' => 'Red',
                 'size' => 'Large',
                 'model' => 'XYZ123',
-                'brand' => 'Brand1',
+                'brand_id' => 'Brand1',
                 'part_no' => 'PT001',
                 'min_stock' => '10',
                 'max_stock' => '100',
