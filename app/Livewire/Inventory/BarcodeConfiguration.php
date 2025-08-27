@@ -157,6 +157,14 @@ class BarcodeConfiguration extends Component
         $this->dispatch('reloadIframe');
     }
 
+    public function resetToDefaults()
+    {
+        $barcode =  config('barcode_default_configuration');
+        $this->barcode = $barcode;
+        $this->save(false);
+        $this->dispatch('success', ['message' => 'Settings reset to default successfully']);
+    }
+
     public function render()
     {
         return view('livewire.inventory.barcode-configuration');

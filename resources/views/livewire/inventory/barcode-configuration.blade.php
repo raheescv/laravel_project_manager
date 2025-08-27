@@ -308,6 +308,10 @@
                                     <button type="button" class="btn btn-primary" wire:click="save">
                                         <i class="fa fa-save me-1"></i>Save
                                     </button>
+                                    <button type="button" class="btn btn-outline-secondary" wire:click="resetToDefaults"
+                                            onclick="return confirm('Are you sure you want to reset all settings to default? This action cannot be undone.')">
+                                        <i class="fa fa-undo me-1"></i>Reset
+                                    </button>
                                     <button type="button" class="btn btn-outline-primary" onclick="window.open('{{ route('inventory::barcode::print') }}', '_blank')">
                                         <i class="fa fa-print me-1"></i>Print
                                     </button>
