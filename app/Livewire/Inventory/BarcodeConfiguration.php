@@ -60,6 +60,12 @@ class BarcodeConfiguration extends Component
                 'align' => 'right',
                 'visible' => true,
             ],
+            'company_name' => [
+                'font_size' => 8,
+                'align' => 'center',
+                'visible' => true,
+                'char_limit' => 50,
+            ],
             'elements' => [
                 'product_name' => [
                     'top' => 1,
@@ -90,6 +96,12 @@ class BarcodeConfiguration extends Component
                     'left' => 95,
                     'width' => 85,
                     'height' => 18,
+                ],
+                'company_name' => [
+                    'top' => 98,
+                    'left' => 2,
+                    'width' => 180,
+                    'height' => 12,
                 ],
             ],
         ];

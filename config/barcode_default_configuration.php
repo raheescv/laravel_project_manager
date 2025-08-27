@@ -21,6 +21,12 @@ return [
         'show_value' => true,
         'scale' => 4,
     ],
+    'company_name' => [
+        'font_size' => 8,
+        'align' => 'center',
+        'visible' => false,
+        'char_limit' => 50,
+    ],
     'price' => [
         'font_size' => 16,
         'align' => 'left',
@@ -49,6 +55,12 @@ return [
             'left' => 2,
             'width' => 180,
             'height' => 42,
+        ],
+        'company_name' => [
+            'top' => 78,
+            'left' => 2,
+            'width' => 180,
+            'height' => 12,
         ],
         'price' => [
             'top' => 78,

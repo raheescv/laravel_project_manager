@@ -57,6 +57,10 @@
                                                     @case('price_arabic')
                                                         <span style="direction: rtl;">ق.ر ٩٩.٩٩ </span>
                                                     @break
+
+                                                    @case('company_name')
+                                                        <span>Your Company Name</span>
+                                                    @break
                                                 @endswitch
                                             </div>
                                         </div>
@@ -196,6 +200,7 @@
                                 $data = [
                                     'Product Name' => ['product_name', 'fa-font'],
                                     'Arabic Name' => ['product_name_arabic', 'fa-font'],
+                                    'Company Name' => ['company_name', 'fa-building'],
                                     'Price (English)' => ['price', 'fa-tag'],
                                     'Price (Arabic)' => ['price_arabic', 'fa-tag'],
                                 ];
@@ -240,7 +245,7 @@
                                                             <option value="right">Right</option>
                                                         </select>
                                                     </div>
-                                                    @if (in_array($element, ['product_name', 'product_name_arabic']))
+                                                    @if (in_array($element, ['product_name', 'product_name_arabic', 'company_name']))
                                                         <div class="col-md-4">
                                                             <label class="form-label">
                                                                 <i class="fa fa-text-width me-1"></i>
