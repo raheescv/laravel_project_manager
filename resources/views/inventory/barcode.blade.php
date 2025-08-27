@@ -89,6 +89,8 @@
         .company-name{
             font-size: {{ $settings['company_name']['font_size'] }}px;
             text-align: {{ $settings['company_name']['align'] }};
+            font-weight: bold;
+            letter-spacing: 0.5px;
         }
 
         .barcode-image img {
