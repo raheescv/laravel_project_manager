@@ -86,7 +86,7 @@
             text-orientation: mixed;
         }
 
-        .company-name{
+        .company-name {
             font-size: {{ $settings['company_name']['font_size'] }}px;
             text-align: {{ $settings['company_name']['align'] }};
             font-weight: bold;
@@ -195,9 +195,10 @@
                 <img src="data:image/png;base64,{{ DNS1D::getBarcodePNG($inventory->barcode, 'C128', $scale, $height, [0, 0, 0], $showCode) }}" alt="{{ $inventory->barcode }}">
             </div>
         @endif
+
         @if ($settings['company_name']['visible'] ?? true)
             <div class="barcode-element company-name" style="{{ getElementStyle('company_name', $settings) }}">
-                {{$company_name}}
+                {{ $company_name }}
             </div>
         @endif
 
