@@ -195,7 +195,7 @@
         @endif
         @if ($settings['company_name']['visible'] ?? true)
             <div class="barcode-element company-name" style="{{ getElementStyle('company_name', $settings) }}">
-                Size Run
+                {{$company_name}}
             </div>
         @endif
 

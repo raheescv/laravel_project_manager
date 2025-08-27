@@ -11,6 +11,12 @@
                         <div class="row g-4">
                             <div class="col-md-12">
                                 <div class="form-group">
+                                    <label class="form-label fw-medium" for="company_name">
+                                        <i class="fa fa-building me-2"></i>Company Name
+                                    </label>
+                                    {{ html()->input('company_name')->value('')->class('form-control')->placeholder('Enter your company name')->attribute('wire:model', 'company_name') }}
+                                </div><br>
+                                <div class="form-group">
                                     <label class="form-label fw-medium" for="mobile">
                                         <i class="fa fa-phone me-2"></i>Contact Number
                                     </label>

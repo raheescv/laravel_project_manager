@@ -11,6 +11,7 @@ class CompanyProfile extends Component
 {
     use WithFilePond;
 
+    public $company_name;
     public $mobile;
 
     public $logo;
@@ -21,6 +22,7 @@ class CompanyProfile extends Component
     {
         $this->uploaded_logo = Configuration::where('key', 'logo')->value('value');
         $this->mobile = Configuration::where('key', 'mobile')->value('value');
+        $this->company_name = Configuration::where('key', 'company_name')->value('value');
     }
 
     protected function rules()
@@ -48,6 +50,8 @@ class CompanyProfile extends Component
                 Cache::forget('logo');
             }
             Configuration::updateOrCreate(['key' => 'mobile'], ['value' => $this->mobile]);
+            Configuration::updateOrCreate(['key' => 'company_name'], ['value' => $this->company_name]);
+            Cache::forget('company_name');
             Cache::forget('mobile');
             $this->dispatch('success', ['message' => 'Updated Successfully']);
             $this->dispatch('filepond-reset-images');

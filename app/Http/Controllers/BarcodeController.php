@@ -26,7 +26,7 @@ class BarcodeController extends Controller
         $settings = Configuration::where('key', 'barcode_configurations')->value('value');
         $settings = json_decode($settings, true) ?? [];
 
-        $html = view('inventory.barcode', compact('settings', 'inventory'))->render();
+        $html = view('inventory.barcode', compact('settings', 'inventory', 'company_name'))->render();
 
         // Configure PDF with custom size from settings (50mm x 30mm)
         $pdf = Pdf::loadHTML($html);
@@ -51,7 +51,9 @@ class BarcodeController extends Controller
         $settings = Configuration::where('key', 'barcode_configurations')->value('value');
         $settings = json_decode($settings, true) ?? [];
 
-        $html = view('inventory.barcode', compact('settings', 'inventory'))->render();
+        $company_name = Configuration::where('key', 'company_name')->value('value')??config('app.name');
+
+        $html = view('inventory.barcode', compact('settings', 'inventory','company_name'))->render();
         // Configure Browsershot with optimized settings for faster rendering
         $pdf = Browsershot::html($html)
             ->paperSize($settings['width'], $settings['height'])
