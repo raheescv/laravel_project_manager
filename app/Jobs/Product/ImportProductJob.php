@@ -19,7 +19,10 @@ class ImportProductJob implements ShouldQueue
     public function handle()
     {
         $file = storage_path('app/public/'.$this->filePath);
-        $totalRows = Excel::toCollection(null, $file)->first()->count() - 1;
+        $collection = Excel::toCollection(null, $file)->first();
+        $totalRows = $collection->filter(function ($row) {
+            return $row->filter()->isNotEmpty();
+        })->count();
         Excel::import(new ProductImport($this->user_id, $totalRows), $file);
         unlink($file);
     }

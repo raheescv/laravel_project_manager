@@ -22,7 +22,10 @@ class ProductImport implements ToCollection, WithBatchInserts, WithChunkReading,
 
     public function collection(Collection $rows)
     {
-        foreach ($rows as $value) {
+        $filteredRows = $rows->filter(function ($row) {
+            return $row->filter()->isNotEmpty();
+        });
+        foreach ($filteredRows as $value) {
             try {
                 $data = Product::constructData($value->toArray(), $this->user_id);
                 $exists = Product::firstWhere('name', $data['name']);
@@ -44,7 +47,7 @@ class ProductImport implements ToCollection, WithBatchInserts, WithChunkReading,
                 $this->errors[] = $data;
             }
         }
-        $this->processedRows += count($rows);
+        $this->processedRows += count($filteredRows);
         $progress = ($this->processedRows / $this->totalRows) * 100;
         event(new FileImportProgress($this->user_id, 'Product', $progress));
     }
