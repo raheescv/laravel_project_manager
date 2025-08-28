@@ -22,7 +22,7 @@ class ImportProductJob implements ShouldQueue
         $collection = Excel::toCollection(null, $file)->first();
         $totalRows = $collection->filter(function ($row) {
             return $row->filter()->isNotEmpty();
-        })->count();
+        })->count()-1;
         Excel::import(new ProductImport($this->user_id, $totalRows), $file);
         unlink($file);
     }
