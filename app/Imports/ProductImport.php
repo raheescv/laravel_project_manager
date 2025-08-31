@@ -134,7 +134,6 @@ class ProductImport implements ToCollection, WithBatchInserts, WithChunkReading,
 
     public function __destruct()
     {
-        dd($this->errors);
         if (!empty($this->errors)) {
             event(new FileImportCompleted($this->user_id, 'Product', $this->errors));
         }
