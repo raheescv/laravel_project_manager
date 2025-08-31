@@ -36,8 +36,8 @@ class ProductImport implements ToCollection, WithBatchInserts, WithChunkReading,
 
         foreach ($filteredRows as $value) {
             try {
-                $this->processProductRow($value);
                 $processedInBatch++;
+                $this->processProductRow($value);
             } catch (\Throwable $th) {
                 $this->handleError($value, $th);
             }
