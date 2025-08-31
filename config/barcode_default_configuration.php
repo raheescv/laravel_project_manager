@@ -1,4 +1,5 @@
 <?php
+
 return [
     'width' => 50,
     'height' => 30,
@@ -76,4 +77,3 @@ return [
         ],
     ],
 ];
-?>

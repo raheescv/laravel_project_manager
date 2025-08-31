@@ -50,9 +50,9 @@ class BarcodeController extends Controller
 
         $settings = Configuration::where('key', 'barcode_configurations')->value('value');
         $settings = json_decode($settings, true) ?? [];
-        $company_name = Configuration::where('key', 'company_name')->value('value')??config('app.name');
+        $company_name = Configuration::where('key', 'company_name')->value('value') ?? config('app.name');
 
-        $html = view('inventory.barcode', compact('settings', 'inventory','company_name'))->render();
+        $html = view('inventory.barcode', compact('settings', 'inventory', 'company_name'))->render();
         // Configure Browsershot with optimized settings for faster rendering
         $pdf = Browsershot::html($html)
             ->paperSize($settings['width'], $settings['height'])
@@ -88,10 +88,10 @@ class BarcodeController extends Controller
         // Load barcode settings
         $settings = Configuration::where('key', 'barcode_configurations')->value('value');
         $settings = json_decode($settings, true) ?? [];
-        $company_name = Configuration::where('key', 'company_name')->value('value')??config('app.name');
+        $company_name = Configuration::where('key', 'company_name')->value('value') ?? config('app.name');
 
         // Generate HTML using Blade view
-        $html = view('inventory.barcode-cart-print', compact('cartItems', 'settings','company_name'))->render();
+        $html = view('inventory.barcode-cart-print', compact('cartItems', 'settings', 'company_name'))->render();
 
         // Use the same PDF settings as the existing barcode print method
         $pdf = Browsershot::html($html)

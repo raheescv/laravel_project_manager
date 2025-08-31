@@ -171,7 +171,7 @@ class BarcodeConfiguration extends Component
 
     public function resetToDefaults()
     {
-        $barcode =  config('barcode_default_configuration');
+        $barcode = config('barcode_default_configuration');
         $this->barcode = $barcode;
         $this->save(false);
         $this->dispatch('success', ['message' => 'Settings reset to default successfully']);

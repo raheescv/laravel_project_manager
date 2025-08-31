@@ -30,6 +30,7 @@ class ProductImport implements ToCollection, WithBatchInserts, WithChunkReading,
                 $data = Product::constructData($value->toArray(), $this->user_id);
                 $exists = Product::firstWhere('name', $data['name']);
                 if (! $exists) {
+                    validationHelper(Product::rules($data), $data, 'Product');
                     $trashedExists = Product::withTrashed()->firstWhere('name', $data['name']);
                     if ($trashedExists) {
                         $trashedExists->restore();

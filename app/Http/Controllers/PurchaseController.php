@@ -35,10 +35,10 @@ class PurchaseController extends Controller
         // Load barcode settings
         $settings = Configuration::where('key', 'barcode_configurations')->value('value');
         $settings = json_decode($settings, true) ?? [];
-        $company_name = Configuration::where('key', 'company_name')->value('value')??config('app.name');
+        $company_name = Configuration::where('key', 'company_name')->value('value') ?? config('app.name');
 
         // Generate HTML using Blade view
-        $html = view('purchase.barcode-print', compact('purchaseItems', 'settings','company_name'))->render();
+        $html = view('purchase.barcode-print', compact('purchaseItems', 'settings', 'company_name'))->render();
 
         // Use the same PDF settings as the existing barcode print method
         $pdf = Browsershot::html($html)

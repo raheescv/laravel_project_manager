@@ -98,8 +98,10 @@ class ConfigurationSeeder extends Seeder
         $this->barcode();
 
     }
-    public function barcode(){
-        $barcode =  config('barcode_default_configuration');
+
+    public function barcode()
+    {
+        $barcode = config('barcode_default_configuration');
         Configuration::updateOrCreate(['key' => 'barcode_configurations'], ['value' => json_encode($barcode)]);
     }
 }

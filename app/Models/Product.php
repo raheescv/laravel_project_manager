@@ -162,6 +162,7 @@ class Product extends Model implements AuditableContracts
         $value['is_selling'] = $value['is_selling'] ?? true;
         $data['is_selling'] = in_array($value['is_selling'], ['Yes', true]) ? true : false;
         $data['unit'] = $data['unit'] ?? 'Nos';
+        $data['type'] = $data['type'] ?? 'product';
         $unit = Unit::firstOrCreate(['name' => $data['unit']], ['code' => $data['unit']]);
         $data['unit_id'] = $unit->id;
         $brand_id = Brand::selfCreate($data['brand_id']);
