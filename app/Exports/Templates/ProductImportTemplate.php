@@ -64,7 +64,7 @@ class ProductImportTemplate implements FromArray, WithHeadings
             'color',
             'size',
             'model',
-            'brand',
+            'brand_id',
             'part_no',
             'min_stock',
             'max_stock',
