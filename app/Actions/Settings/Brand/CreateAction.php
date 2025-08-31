@@ -10,7 +10,7 @@ class CreateAction
     {
         try {
             $data['name'] = trim($data['name']);
-            validationHelper(Brand::rules(), $data);
+            validationHelper(Brand::rules(), $data, 'Brand');
             $exists = Brand::withTrashed()->firstWhere('name', $data['name']);
             if ($exists) {
                 $model = tap($exists)->restore();

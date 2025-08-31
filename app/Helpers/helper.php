@@ -139,9 +139,16 @@ if (! function_exists('orderTypes')) {
 }
 
 if (! function_exists('validationHelper')) {
-    function validationHelper($rules, $data)
+    function validationHelper($rules, $data, $tableName = null)
     {
-        $validator = Validator::make($data, $rules);
+        $messages = [];
+
+        if ($tableName) {
+            $messages['name.required'] = "The {$tableName} name field is required.";
+            $messages['name.unique'] = "The {$tableName} name has already been taken.";
+        }
+
+        $validator = Validator::make($data, $rules, $messages);
         if ($validator->fails()) {
             throw new \Exception($validator->errors()->first());
         }

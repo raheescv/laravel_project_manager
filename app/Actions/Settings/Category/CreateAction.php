@@ -14,7 +14,7 @@ class CreateAction
             $data['name'] = trim($data['name']);
             $this->data = $data;
             $this->parentCreate();
-            validationHelper(Category::rules(), $this->data);
+            validationHelper(Category::rules(), $this->data, 'Category');
             $model = Category::create($this->data);
             $return['success'] = true;
             $return['message'] = 'Successfully Created Category';

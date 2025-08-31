@@ -10,7 +10,7 @@ class CreateAction
     {
         try {
             $data['name'] = trim($data['name']);
-            validationHelper(Department::rules(), $data);
+            validationHelper(Department::rules(), $data, 'Department');
             $exists = Department::withTrashed()->firstWhere('name', $data['name']);
             if ($exists) {
                 $model = $exists->restore();
