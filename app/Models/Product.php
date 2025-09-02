@@ -157,25 +157,21 @@ class Product extends Model implements AuditableContracts
 
     public static function constructData($data, $user_id)
     {
-        $data['is_favorite'] = $data['is_favorite'] ?? true;
-        $data['is_favorite'] = in_array($data['is_favorite'], ['Yes', true]) ? true : false;
-        $data['is_selling'] = $data['is_selling'] ?? true;
-        $data['is_selling'] = in_array($data['is_selling'], ['Yes', true]) ? true : false;
-
+        $value['is_favorite'] = $value['is_favorite'] ?? true;
+        $data['is_favorite'] = in_array($value['is_favorite'], ['Yes', true]) ? true : false;
+        $value['is_selling'] = $value['is_selling'] ?? true;
+        $data['is_selling'] = in_array($value['is_selling'], ['Yes', true]) ? true : false;
         $data['unit'] = $data['unit'] ?? 'Nos';
         $data['type'] = $data['type'] ?? 'product';
-
         $unit = Unit::firstOrCreate(['name' => $data['unit']], ['code' => $data['unit']]);
         $data['unit_id'] = $unit->id;
-
-        $brand_id = Brand::selfCreate($data['brand_id'] ?? null);
+        $brand_id = Brand::selfCreate($data['brand_id']);
         $data['brand_id'] = $brand_id;
-
-        $department_id = Department::selfCreate($data['department'] ?? null);
+        $department_id = Department::selfCreate($data['department']);
         $data['department_id'] = $department_id;
 
         $mainCategoryData = [
-            'name' => $data['main_category'] ?? 'General',
+            'name' => $data['main_category'],
         ];
         $main_category_id = Category::selfCreate($mainCategoryData);
         $data['main_category_id'] = $main_category_id;

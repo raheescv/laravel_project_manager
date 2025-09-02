@@ -3,9 +3,9 @@
 namespace App\Livewire\Notification;
 
 use App\Models\Notification;
+use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
 use Livewire\WithPagination;
-use Illuminate\Support\Facades\Auth;
 
 class Table extends Component
 {

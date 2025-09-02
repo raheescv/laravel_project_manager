@@ -7,7 +7,6 @@ use App\Events\FileImportProgress;
 use App\Models\Inventory;
 use App\Models\Product;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Maatwebsite\Excel\Concerns\ToCollection;
 use Maatwebsite\Excel\Concerns\WithBatchInserts;
@@ -17,19 +16,21 @@ use Maatwebsite\Excel\Concerns\WithHeadingRow;
 class ProductImport implements ToCollection, WithBatchInserts, WithChunkReading, WithHeadingRow
 {
     private int $processedRows = 0;
+
     private array $errors = [];
+
     private array $existingProducts = [];
+
     private array $trashedProducts = [];
 
     public function __construct(private int $user_id, private int $totalRows) {}
 
     public function collection(Collection $rows)
     {
-        // Pre-load existing products for this batch to reduce database queries
         $this->preloadExistingProducts($rows);
 
         $filteredRows = $rows->filter(function ($row) {
-            return $row->filter()->isNotEmpty() && !empty($row['name']);
+            return $row->filter()->isNotEmpty() && ! empty($row['name']);
         });
 
         $processedInBatch = 0;
@@ -55,11 +56,9 @@ class ProductImport implements ToCollection, WithBatchInserts, WithChunkReading,
             return;
         }
 
-        // Load existing products
         $this->existingProducts = Product::whereIn('name', $productNames)->pluck('id', 'name')->toArray();
 
-        // Load trashed products
-        $this->trashedProducts = Product::withTrashed()->whereIn('name', $productNames)->whereNotNull('deleted_at')->pluck('id', 'name')->toArray();
+        $this->trashedProducts = Product::onlyTrashed()->whereIn('name', $productNames)->pluck('id', 'name')->toArray();
     }
 
     private function processProductRow($value): void
@@ -72,41 +71,36 @@ class ProductImport implements ToCollection, WithBatchInserts, WithChunkReading,
 
         $productName = $data['name'];
 
-        // Check if product already exists (using preloaded data)
         if (isset($this->existingProducts[$productName])) {
             return;
         }
 
-        // Validate data
         validationHelper(Product::rules($data), $data, 'Product');
 
-        // Create or restore product
         $model = $this->createOrRestoreProduct($data, $productName);
 
-        // Create inventory
         $quantity = $value['stock'] ?? 0;
         Inventory::selfCreateByProduct($model, $this->user_id, $quantity);
     }
 
     private function createOrRestoreProduct(array $data, string $productName): Product
     {
-        // Check if product exists in trashed products
         if (isset($this->trashedProducts[$productName])) {
             $trashedProduct = Product::withTrashed()->find($this->trashedProducts[$productName]);
             if ($trashedProduct) {
                 $trashedProduct->restore();
                 $trashedProduct->update($data);
+
                 return $trashedProduct;
             }
         }
 
-        // Create new product
         return Product::create($data);
     }
 
     private function handleError($value, \Throwable $th): void
     {
-        $errorData =  $value->toArray();
+        $errorData = $value->toArray();
         $errorData['message'] = $th->getMessage();
         $errorData['file'] = $th->getFile();
         $errorData['line'] = $th->getLine();
@@ -124,17 +118,17 @@ class ProductImport implements ToCollection, WithBatchInserts, WithChunkReading,
 
     public function batchSize(): int
     {
-        return 500; // Reduced from 1000 for better memory management
+        return 500;
     }
 
     public function chunkSize(): int
     {
-        return 500; // Reduced from 1000 for better memory management
+        return 500;
     }
 
     public function __destruct()
     {
-        if (!empty($this->errors)) {
+        if (! empty($this->errors)) {
             event(new FileImportCompleted($this->user_id, 'Product', $this->errors));
         }
     }
