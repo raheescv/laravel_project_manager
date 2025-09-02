@@ -93,6 +93,13 @@
             letter-spacing: 0.5px;
         }
 
+        .product-size {
+            font-size: {{ $settings['size']['font_size'] }}px;
+            text-align: {{ $settings['size']['align'] }};
+            font-weight: bold;
+            letter-spacing: 0.5px;
+        }
+
         .barcode-image img {
             width: {{ $settings['elements']['barcode']['width'] ?? 180 }};
             height: {{ $settings['elements']['barcode']['height'] ?? 40 }};
@@ -159,6 +166,12 @@
 
 <body style="margin:0;padding:0;">
     <div class="barcode-container">
+        @if (($settings['size']['visible'] ?? true) && !empty($inventory->product->size))
+            <div id="product-size" class="barcode-element"
+                style="{{ getElementStyle('size', $settings) }}; font-size: {{ $settings['size']['font_size'] ?? 10 }}px; text-align: {{ $settings['size']['align'] ?? 'left' }};">
+                Size: {{ $inventory->product->size }}
+            </div>
+        @endif
         @if ($settings['product_name']['visible'] ?? true)
             <div id="product-name" class="barcode-element product-name" draggable="true" style="{{ getElementStyle('product_name', $settings) }}">
                 <b>{{ substr($inventory->product->name, 0, (int) $settings['product_name']['char_limit']) }}</b>
@@ -193,6 +206,12 @@
                     $showCode = $settings['barcode']['show_value'] ?? true;
                 @endphp
                 <img src="data:image/png;base64,{{ DNS1D::getBarcodePNG($inventory->barcode, 'C128', $scale, $height, [0, 0, 0], $showCode) }}" alt="{{ $inventory->barcode }}">
+            </div>
+        @endif
+
+        @if ($settings['size']['visible'] ?? true && !empty($inventory->product->size))
+            <div class="barcode-element product-size" style="{{ getElementStyle('size', $settings) }}">
+                {{ $inventory->product->size }}
             </div>
         @endif
 

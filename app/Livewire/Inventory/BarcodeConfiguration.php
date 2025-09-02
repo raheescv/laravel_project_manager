@@ -37,6 +37,11 @@ class BarcodeConfiguration extends Component
                 'visible' => true,
                 'char_limit' => 40,
             ],
+            'size' => [
+                'font_size' => 10,
+                'align' => 'left',
+                'visible' => true,
+            ],
             'product_name_arabic' => [
                 'font_size' => 8,
                 'align' => 'right',
@@ -72,6 +77,12 @@ class BarcodeConfiguration extends Component
                     'left' => 2,
                     'width' => 180,
                     'height' => 15,
+                ],
+                'size' => [
+                    'top' => 16,
+                    'left' => 2,
+                    'width' => 60,
+                    'height' => 14,
                 ],
                 'product_name_arabic' => [
                     'top' => 16,

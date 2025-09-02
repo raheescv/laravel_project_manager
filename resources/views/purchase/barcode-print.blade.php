@@ -93,6 +93,13 @@
             letter-spacing: 0.5px;
         }
 
+        .product-size {
+            font-size: {{ $settings['size']['font_size'] }}px;
+            text-align: {{ $settings['size']['align'] }};
+            font-weight: bold;
+            letter-spacing: 0.5px;
+        }
+
         .barcode-image {
             text-align: {{ $settings['barcode']['align'] }};
         }
@@ -194,6 +201,12 @@
                                     $showCode = $settings['barcode']['show_value'] ?? true;
                                 @endphp
                                 <img src="data:image/png;base64,{{ DNS1D::getBarcodePNG($inventory->barcode, 'C128', $scale, $height, [0, 0, 0], $showCode) }}" alt="{{ $inventory->barcode }}">
+                            </div>
+                        @endif
+
+                        @if ($settings['size']['visible'] ?? true && !empty($inventory->product->size))
+                            <div class="barcode-element product-size" style="{{ getElementStyle('size', $settings) }}">
+                                {{ $inventory->product->size }}
                             </div>
                         @endif
 

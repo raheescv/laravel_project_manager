@@ -42,6 +42,10 @@
                                                         <span>Product Name</span>
                                                     @break
 
+                                                    @case('size')
+                                                        <span>Size: M</span>
+                                                    @break
+
                                                     @case('product_name_arabic')
                                                         <span style="direction: rtl;">اسم المنتج</span>
                                                     @break
@@ -201,6 +205,7 @@
                                     'Product Name' => ['product_name', 'fa-font'],
                                     'Arabic Name' => ['product_name_arabic', 'fa-font'],
                                     'Company Name' => ['company_name', 'fa-building'],
+                                    'Size' => ['size', 'fa-maximize'],
                                     'Price (English)' => ['price', 'fa-tag'],
                                     'Price (Arabic)' => ['price_arabic', 'fa-tag'],
                                 ];
