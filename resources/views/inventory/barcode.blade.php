@@ -211,7 +211,7 @@
 
         @if ($settings['size']['visible'] ?? true && !empty($inventory->product->size))
             <div class="barcode-element product-size" style="{{ getElementStyle('size', $settings) }}">
-                {{ $inventory->product->size }}
+                Size : {{ $inventory->product->size }}
             </div>
         @endif
 

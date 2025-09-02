@@ -31,7 +31,7 @@
                                             @continue
                                         @endif
                                         <div class="design-element" id="{{ $elementId }}" data-element="{{ $elementId }}"
-                                            style="top: {{ $position['top'] }}px; left: {{ $position['left'] }}px; width: {{ $position['width'] }}; height: {{ $position['height'] }};">
+                                            style="top: {{ $position['top']??0 }}px; left: {{ $position['left']??0 }}px; width: {{ $position['width']??0 }}; height: {{ $position['height']??0 }};">
                                             <div class="resize-handle nw"></div>
                                             <div class="resize-handle ne"></div>
                                             <div class="resize-handle sw"></div>
