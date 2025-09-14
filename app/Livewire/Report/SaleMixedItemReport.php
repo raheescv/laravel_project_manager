@@ -25,6 +25,10 @@ class SaleMixedItemReport extends Component
 
     public $product_id = '';
 
+    public $department_id = '';
+
+    public $main_category_id = '';
+
     public $type = '';
 
     public $limit = 100;
@@ -59,6 +63,8 @@ class SaleMixedItemReport extends Component
             'to_date' => $this->to_date,
             'branch_id' => $this->branch_id,
             'product_id' => $this->product_id,
+            'department_id' => $this->department_id,
+            'main_category_id' => $this->main_category_id,
             'type' => $this->type,
         ];
 
@@ -91,6 +97,8 @@ class SaleMixedItemReport extends Component
             'reference' => true,
             'product_name' => true,
             'product_code' => true,
+            'department_name' => true,
+            'main_category_name' => true,
             'unit_price' => true,
             'quantity' => true,
             'gross_amount' => true,
@@ -109,10 +117,14 @@ class SaleMixedItemReport extends Component
         $saleQuery = SaleItem::query()
             ->join('sales', 'sales.id', '=', 'sale_items.sale_id')
             ->join('products', 'products.id', '=', 'sale_items.product_id')
+            ->leftJoin('departments', 'departments.id', '=', 'products.department_id')
+            ->leftJoin('categories as main_categories', 'main_categories.id', '=', 'products.main_category_id')
             ->when($this->from_date, fn ($q) => $q->whereDate('sales.date', '>=', $this->from_date))
             ->when($this->to_date, fn ($q) => $q->whereDate('sales.date', '<=', $this->to_date))
             ->when($this->branch_id, fn ($q) => $q->where('sales.branch_id', $this->branch_id))
             ->when($this->product_id, fn ($q) => $q->where('sale_items.product_id', $this->product_id))
+            ->when($this->department_id, fn ($q) => $q->where('products.department_id', $this->department_id))
+            ->when($this->main_category_id, fn ($q) => $q->where('products.main_category_id', $this->main_category_id))
             ->whereIn('sales.branch_id', $accessibleBranchIds)
             ->where('sales.status', 'completed')
             ->select([
@@ -124,6 +136,8 @@ class SaleMixedItemReport extends Component
                 'sales.invoice_no as reference',
                 'products.name as product_name',
                 'products.code as product_code',
+                'departments.name as department_name',
+                'main_categories.name as main_category_name',
                 'sale_items.unit_price',
                 'sale_items.quantity',
                 'sale_items.gross_amount',
@@ -139,10 +153,14 @@ class SaleMixedItemReport extends Component
             ->join('sale_returns', 'sale_returns.id', '=', 'sale_return_items.sale_return_id')
             ->leftJoin('sale_items', 'sale_items.id', '=', 'sale_return_items.sale_item_id')
             ->join('products', 'products.id', '=', 'sale_return_items.product_id')
+            ->leftJoin('departments', 'departments.id', '=', 'products.department_id')
+            ->leftJoin('categories as main_categories', 'main_categories.id', '=', 'products.main_category_id')
             ->when($this->from_date, fn ($q) => $q->whereDate('sale_returns.date', '>=', $this->from_date))
             ->when($this->to_date, fn ($q) => $q->whereDate('sale_returns.date', '<=', $this->to_date))
             ->when($this->branch_id, fn ($q) => $q->where('sale_returns.branch_id', $this->branch_id))
             ->when($this->product_id, fn ($q) => $q->where('sale_return_items.product_id', $this->product_id))
+            ->when($this->department_id, fn ($q) => $q->where('products.department_id', $this->department_id))
+            ->when($this->main_category_id, fn ($q) => $q->where('products.main_category_id', $this->main_category_id))
             ->whereIn('sale_returns.branch_id', $accessibleBranchIds)
             ->where('sale_returns.status', 'completed')
             ->select([
@@ -154,6 +172,8 @@ class SaleMixedItemReport extends Component
                 DB::raw('COALESCE(sale_returns.reference_no, sale_returns.id) as reference'),
                 'products.name as product_name',
                 'products.code as product_code',
+                'departments.name as department_name',
+                'main_categories.name as main_category_name',
                 // Keep unit price as positive for readability; make quantities and amounts negative
                 'sale_return_items.unit_price',
                 DB::raw('(-1) * sale_return_items.quantity as quantity'),

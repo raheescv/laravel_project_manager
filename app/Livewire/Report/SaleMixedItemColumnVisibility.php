@@ -24,6 +24,8 @@ class SaleMixedItemColumnVisibility extends Component
             'reference' => true,
             'product_name' => true,
             'product_code' => true,
+            'department_name' => true,
+            'main_category_name' => true,
             'unit_price' => true,
             'quantity' => true,
             'gross_amount' => true,

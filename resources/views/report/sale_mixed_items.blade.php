@@ -24,6 +24,8 @@
         @include('components.select.productSelect')
         @include('components.select.employeeSelect')
         @include('components.select.branchSelect')
+        @include('components.select.departmentSelect')
+        @include('components.select.categorySelect')
     @endpush
 </x-app-layout>
 

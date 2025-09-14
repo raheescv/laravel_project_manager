@@ -45,10 +45,6 @@
                     <label for="branch_id">Branch</label>
                     {{ html()->select('branch_id', [auth()->user()->default_branch_id => auth()->user()->branch?->name])->value(auth()->user()->default_branch_id)->class('select-assigned-branch_id-list')->id('branch_id')->placeholder('All') }}
                 </div>
-                <div class="col-md-3" wire:ignore>
-                    <label for="product_id">Product</label>
-                    {{ html()->select('product_id', [])->value('')->class('select-product_id-list')->attribute('type', '')->id('product_id')->placeholder('Product') }}
-                </div>
                 <div class="col-md-2">
                     <label for="type">Type</label>
                     <select wire:model.live="type" id="type" class="form-control">
@@ -56,6 +52,20 @@
                         <option value="sale">Sale</option>
                         <option value="sale_return">Return</option>
                     </select>
+                </div>
+                <div class="col-md-3" wire:ignore>
+                    <label for="department_id">Department</label>
+                    {{ html()->select('department_id', [])->value('')->class('select-department_id-list')->id('department_id')->placeholder('Department') }}
+                </div>
+            </div>
+            <div class="row mb-2">
+                <div class="col-md-3" wire:ignore>
+                    <label for="product_id">Product</label>
+                    {{ html()->select('product_id', [])->value('')->class('select-product_id-list')->attribute('type', '')->id('product_id')->placeholder('Product') }}
+                </div>
+                <div class="col-md-2" wire:ignore>
+                    <label for="main_category_id">Category</label>
+                    {{ html()->select('main_category_id', [])->value('')->class('select-category_id-parent')->id('main_category_id')->placeholder('Category') }}
                 </div>
             </div>
         </div>
@@ -82,6 +92,12 @@
                         @endif
                         @if ($sale_mixed_item_report_visible_column['product_code'] ?? true)
                             <th> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="product_code" label="code" /> </th>
+                        @endif
+                        @if ($sale_mixed_item_report_visible_column['department_name'] ?? true)
+                            <th> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="department_name" label="department" /> </th>
+                        @endif
+                        @if ($sale_mixed_item_report_visible_column['main_category_name'] ?? true)
+                            <th> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="main_category_name" label="category" /> </th>
                         @endif
                         @if ($sale_mixed_item_report_visible_column['unit_price'] ?? true)
                             <th class="text-end"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="unit_price" label="unit price" /> </th>
@@ -135,6 +151,12 @@
                             @if ($sale_mixed_item_report_visible_column['product_code'] ?? true)
                                 <td class="text-nowrap">{{ $row->product_code }}</td>
                             @endif
+                            @if ($sale_mixed_item_report_visible_column['department_name'] ?? true)
+                                <td class="text-nowrap">{{ $row->department_name ?? '-' }}</td>
+                            @endif
+                            @if ($sale_mixed_item_report_visible_column['main_category_name'] ?? true)
+                                <td class="text-nowrap">{{ $row->main_category_name ?? '-' }}</td>
+                            @endif
                             @if ($sale_mixed_item_report_visible_column['unit_price'] ?? true)
                                 <td class="text-end">{{ currency($row->unit_price) }}</td>
                             @endif
@@ -169,6 +191,8 @@
                             $colspan += ($sale_mixed_item_report_visible_column['reference'] ?? true) ? 1 : 0;
                             $colspan += ($sale_mixed_item_report_visible_column['product_name'] ?? true) ? 1 : 0;
                             $colspan += ($sale_mixed_item_report_visible_column['product_code'] ?? true) ? 1 : 0;
+                            $colspan += ($sale_mixed_item_report_visible_column['department_name'] ?? true) ? 1 : 0;
+                            $colspan += ($sale_mixed_item_report_visible_column['main_category_name'] ?? true) ? 1 : 0;
                         @endphp
                         <th colspan="{{ max($colspan, 1) }}" class="text-end">Total</th>
                         @if ($sale_mixed_item_report_visible_column['quantity'] ?? true)
@@ -209,6 +233,14 @@
                 $('#employee_id').on('change', function(e) {
                     const value = $(this).val() || null;
                     @this.set('employee_id', value);
+                });
+                $('#department_id').on('change', function(e) {
+                    const value = $(this).val() || null;
+                    @this.set('department_id', value);
+                });
+                $('#main_category_id').on('change', function(e) {
+                    const value = $(this).val() || null;
+                    @this.set('main_category_id', value);
                 });
             });
         </script>
