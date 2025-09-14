@@ -49,6 +49,7 @@ class SaleMixedItemReportExport implements FromQuery, WithColumnFormatting, With
                 'sales.created_at as created_at',
                 'sales.invoice_no as reference',
                 'products.name as product_name',
+                'products.cost',
                 'products.code as product_code',
                 'departments.name as department_name',
                 'main_categories.name as main_category_name',
@@ -88,6 +89,7 @@ class SaleMixedItemReportExport implements FromQuery, WithColumnFormatting, With
                 'sale_returns.created_at as created_at',
                 DB::raw('COALESCE(sale_returns.reference_no, sale_returns.id) as reference'),
                 'products.name as product_name',
+                'products.cost',
                 'products.code as product_code',
                 'departments.name as department_name',
                 'main_categories.name as main_category_name',
@@ -144,6 +146,9 @@ class SaleMixedItemReportExport implements FromQuery, WithColumnFormatting, With
         }
         if ($this->visibleColumns['brand_name'] ?? true) {
             $headings[] = 'Brand';
+        }
+        if ($this->visibleColumns['cost'] ?? true) {
+            $headings[] = 'Cost';
         }
         if ($this->visibleColumns['unit_price'] ?? true) {
             $headings[] = 'Unit Price';
@@ -206,6 +211,9 @@ class SaleMixedItemReportExport implements FromQuery, WithColumnFormatting, With
         if ($this->visibleColumns['brand_name'] ?? true) {
             $data[] = $row->brand_name ?? '';
         }
+        if ($this->visibleColumns['cost'] ?? true) {
+            $data[] = $row->cost;
+        }
         if ($this->visibleColumns['unit_price'] ?? true) {
             $data[] = $row->unit_price;
         }
@@ -266,6 +274,10 @@ class SaleMixedItemReportExport implements FromQuery, WithColumnFormatting, With
         }
 
         // Format numeric columns
+        if ($this->visibleColumns['cost'] ?? true) {
+            $formats[$currentColumn] = NumberFormat::FORMAT_NUMBER_00;
+            $currentColumn++;
+        }
         if ($this->visibleColumns['unit_price'] ?? true) {
             $formats[$currentColumn] = NumberFormat::FORMAT_NUMBER_00;
             $currentColumn++;
@@ -344,6 +356,10 @@ class SaleMixedItemReportExport implements FromQuery, WithColumnFormatting, With
                 }
 
                 // Add totals for numeric columns
+                if ($this->visibleColumns['cost'] ?? true) {
+                    $sheet->setCellValue("{$currentColumn}{$totalRows}", "=SUM({$currentColumn}2:{$currentColumn}{$endRow})");
+                    $currentColumn++;
+                }
                 if ($this->visibleColumns['unit_price'] ?? true) {
                     $sheet->setCellValue("{$currentColumn}{$totalRows}", "=SUM({$currentColumn}2:{$currentColumn}{$endRow})");
                     $currentColumn++;
