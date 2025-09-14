@@ -376,7 +376,7 @@
                                         </div>
 
                                         <div class="d-flex justify-content-between align-items-center mt-4 pt-4 border-top">
-                                            <button type="submit" class="btn btn-danger">
+                                            <button type="button" class="btn btn-danger" onclick="confirmCloseSession()">
                                                 <i class="fa fa-lock me-2"></i>Close Session
                                             </button>
                                             <div class="d-flex gap-3">
@@ -524,3 +524,30 @@
         </div>
     </div>
 </div>
+@push('scripts')
+<script>
+function confirmCloseSession() {
+    Swal.fire({
+        title: 'Are you sure?',
+        html: "Are you sure you want to close the session? This action cannot be undone. @if($currentSession?->branch?->moq_sync) <br><i> The API sync amount is " + @this.get('sync_amount') + "</i> @endif ",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#dc3545',
+        cancelButtonColor: '#6c757d',
+        confirmButtonText: '<i class="fa fa-lock me-2"></i>Yes, Close Session',
+        cancelButtonText: '<i class="fa fa-times me-2"></i>Cancel',
+        reverseButtons: true,
+        focusCancel: true,
+        customClass: {
+            confirmButton: 'btn btn-danger',
+            cancelButton: 'btn btn-secondary'
+        }
+    }).then((result) => {
+        if (result.isConfirmed) {
+            // Submit the form
+            @this.call('closeDay');
+        }
+    });
+}
+</script>
+@endpush
