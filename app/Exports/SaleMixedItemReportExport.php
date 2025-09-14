@@ -31,12 +31,14 @@ class SaleMixedItemReportExport implements FromQuery, WithColumnFormatting, With
             ->join('products', 'products.id', '=', 'sale_items.product_id')
             ->leftJoin('departments', 'departments.id', '=', 'products.department_id')
             ->leftJoin('categories as main_categories', 'main_categories.id', '=', 'products.main_category_id')
+            ->leftJoin('brands', 'brands.id', '=', 'products.brand_id')
             ->when($this->filters['from_date'] ?? '', fn ($q) => $q->whereDate('sales.date', '>=', $this->filters['from_date']))
             ->when($this->filters['to_date'] ?? '', fn ($q) => $q->whereDate('sales.date', '<=', $this->filters['to_date']))
             ->when($this->filters['branch_id'] ?? '', fn ($q) => $q->where('sales.branch_id', $this->filters['branch_id']))
             ->when($this->filters['product_id'] ?? '', fn ($q) => $q->where('sale_items.product_id', $this->filters['product_id']))
             ->when($this->filters['department_id'] ?? '', fn ($q) => $q->where('products.department_id', $this->filters['department_id']))
             ->when($this->filters['main_category_id'] ?? '', fn ($q) => $q->where('products.main_category_id', $this->filters['main_category_id']))
+            ->when($this->filters['brand_id'] ?? '', fn ($q) => $q->where('products.brand_id', $this->filters['brand_id']))
             ->whereIn('sales.branch_id', $accessibleBranchIds)
             ->where('sales.status', 'completed')
             ->select([
@@ -50,6 +52,7 @@ class SaleMixedItemReportExport implements FromQuery, WithColumnFormatting, With
                 'products.code as product_code',
                 'departments.name as department_name',
                 'main_categories.name as main_category_name',
+                'brands.name as brand_name',
                 'sale_items.unit_price',
                 'sale_items.quantity',
                 'sale_items.gross_amount',
@@ -67,12 +70,14 @@ class SaleMixedItemReportExport implements FromQuery, WithColumnFormatting, With
             ->join('products', 'products.id', '=', 'sale_return_items.product_id')
             ->leftJoin('departments', 'departments.id', '=', 'products.department_id')
             ->leftJoin('categories as main_categories', 'main_categories.id', '=', 'products.main_category_id')
+            ->leftJoin('brands', 'brands.id', '=', 'products.brand_id')
             ->when($this->filters['from_date'] ?? '', fn ($q) => $q->whereDate('sale_returns.date', '>=', $this->filters['from_date']))
             ->when($this->filters['to_date'] ?? '', fn ($q) => $q->whereDate('sale_returns.date', '<=', $this->filters['to_date']))
             ->when($this->filters['branch_id'] ?? '', fn ($q) => $q->where('sale_returns.branch_id', $this->filters['branch_id']))
             ->when($this->filters['product_id'] ?? '', fn ($q) => $q->where('sale_return_items.product_id', $this->filters['product_id']))
             ->when($this->filters['department_id'] ?? '', fn ($q) => $q->where('products.department_id', $this->filters['department_id']))
             ->when($this->filters['main_category_id'] ?? '', fn ($q) => $q->where('products.main_category_id', $this->filters['main_category_id']))
+            ->when($this->filters['brand_id'] ?? '', fn ($q) => $q->where('products.brand_id', $this->filters['brand_id']))
             ->whereIn('sale_returns.branch_id', $accessibleBranchIds)
             ->where('sale_returns.status', 'completed')
             ->select([
@@ -86,6 +91,7 @@ class SaleMixedItemReportExport implements FromQuery, WithColumnFormatting, With
                 'products.code as product_code',
                 'departments.name as department_name',
                 'main_categories.name as main_category_name',
+                'brands.name as brand_name',
                 'sale_return_items.unit_price',
                 DB::raw('(-1) * sale_return_items.quantity as quantity'),
                 DB::raw('(-1) * sale_return_items.gross_amount as gross_amount'),
@@ -135,6 +141,9 @@ class SaleMixedItemReportExport implements FromQuery, WithColumnFormatting, With
         }
         if ($this->visibleColumns['main_category_name'] ?? true) {
             $headings[] = 'Category';
+        }
+        if ($this->visibleColumns['brand_name'] ?? true) {
+            $headings[] = 'Brand';
         }
         if ($this->visibleColumns['unit_price'] ?? true) {
             $headings[] = 'Unit Price';
@@ -194,6 +203,9 @@ class SaleMixedItemReportExport implements FromQuery, WithColumnFormatting, With
         if ($this->visibleColumns['main_category_name'] ?? true) {
             $data[] = $row->main_category_name ?? '';
         }
+        if ($this->visibleColumns['brand_name'] ?? true) {
+            $data[] = $row->brand_name ?? '';
+        }
         if ($this->visibleColumns['unit_price'] ?? true) {
             $data[] = $row->unit_price;
         }
@@ -247,6 +259,9 @@ class SaleMixedItemReportExport implements FromQuery, WithColumnFormatting, With
             $currentColumn++;
         }
         if ($this->visibleColumns['main_category_name'] ?? true) {
+            $currentColumn++;
+        }
+        if ($this->visibleColumns['brand_name'] ?? true) {
             $currentColumn++;
         }
 
@@ -322,6 +337,9 @@ class SaleMixedItemReportExport implements FromQuery, WithColumnFormatting, With
                     $currentColumn++;
                 }
                 if ($this->visibleColumns['main_category_name'] ?? true) {
+                    $currentColumn++;
+                }
+                if ($this->visibleColumns['brand_name'] ?? true) {
                     $currentColumn++;
                 }
 

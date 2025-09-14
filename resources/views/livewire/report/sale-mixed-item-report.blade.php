@@ -67,6 +67,10 @@
                     <label for="main_category_id">Category</label>
                     {{ html()->select('main_category_id', [])->value('')->class('select-category_id-parent')->id('main_category_id')->placeholder('Category') }}
                 </div>
+                <div class="col-md-2" wire:ignore>
+                    <label for="brand_id">Brand</label>
+                    {{ html()->select('brand_id', [])->value('')->class('select-brand_id-list')->id('brand_id')->placeholder('Brand') }}
+                </div>
             </div>
         </div>
     </div>
@@ -98,6 +102,12 @@
                         @endif
                         @if ($sale_mixed_item_report_visible_column['main_category_name'] ?? true)
                             <th> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="main_category_name" label="category" /> </th>
+                        @endif
+                        @if ($sale_mixed_item_report_visible_column['brand_name'] ?? true)
+                            <th> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="brand_name" label="brand" /> </th>
+                        @endif
+                        @if ($sale_mixed_item_report_visible_column['cost'] ?? true)
+                            <th class="text-end"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="cost" label="Cost" /> </th>
                         @endif
                         @if ($sale_mixed_item_report_visible_column['unit_price'] ?? true)
                             <th class="text-end"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="unit_price" label="unit price" /> </th>
@@ -157,6 +167,12 @@
                             @if ($sale_mixed_item_report_visible_column['main_category_name'] ?? true)
                                 <td class="text-nowrap">{{ $row->main_category_name ?? '-' }}</td>
                             @endif
+                            @if ($sale_mixed_item_report_visible_column['brand_name'] ?? true)
+                                <td class="text-nowrap">{{ $row->brand_name ?? '-' }}</td>
+                            @endif
+                            @if ($sale_mixed_item_report_visible_column['cost'] ?? true)
+                                <td class="text-end">{{ currency($row->cost) }}</td>
+                            @endif
                             @if ($sale_mixed_item_report_visible_column['unit_price'] ?? true)
                                 <td class="text-end">{{ currency($row->unit_price) }}</td>
                             @endif
@@ -193,6 +209,8 @@
                             $colspan += ($sale_mixed_item_report_visible_column['product_code'] ?? true) ? 1 : 0;
                             $colspan += ($sale_mixed_item_report_visible_column['department_name'] ?? true) ? 1 : 0;
                             $colspan += ($sale_mixed_item_report_visible_column['main_category_name'] ?? true) ? 1 : 0;
+                            $colspan += ($sale_mixed_item_report_visible_column['brand_name'] ?? true) ? 1 : 0;
+                            $colspan += ($sale_mixed_item_report_visible_column['cost'] ?? true) ? 1 : 0;
                         @endphp
                         <th colspan="{{ max($colspan, 1) }}" class="text-end">Total</th>
                         @if ($sale_mixed_item_report_visible_column['quantity'] ?? true)
@@ -241,6 +259,10 @@
                 $('#main_category_id').on('change', function(e) {
                     const value = $(this).val() || null;
                     @this.set('main_category_id', value);
+                });
+                $('#brand_id').on('change', function(e) {
+                    const value = $(this).val() || null;
+                    @this.set('brand_id', value);
                 });
             });
         </script>
