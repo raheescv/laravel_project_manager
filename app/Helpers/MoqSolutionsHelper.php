@@ -33,9 +33,10 @@ class MoqSolutionsHelper
     public function syncDayCloseAmount($dayCloseData)
     {
         try {
+            $dayCloseData['Revenue'] = intval($dayCloseData['Revenue'] ?? 0);
             // Prepare request data
             $requestData = [
-                'Revenue' => $dayCloseData['Revenue'] ?? 0,
+                'Revenue' => $dayCloseData['Revenue'],
                 'Date' => $dayCloseData['Date'] ?? date('Y-m-d'),
                 'Outlet' => $dayCloseData['Outlet'] ?? null,
             ];
