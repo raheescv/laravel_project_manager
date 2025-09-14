@@ -43,7 +43,8 @@ class BranchSaleDaySessionManager extends Component
 
     public function updatedClosingAmount()
     {
-        $this->sync_amount = $this->closing_amount;
+        // $this->sync_amount = $this->closing_amount;
+        // $this->sync_amount = 0;
     }
 
     public function loadOpenSessions()
@@ -86,7 +87,8 @@ class BranchSaleDaySessionManager extends Component
 
         // Set the default closing amount to the expected amount
         $this->closing_amount = $this->sessionStats['expected_amount'];
-        $this->sync_amount = $this->closing_amount;
+        // $this->sync_amount = $this->closing_amount;
+        // $this->sync_amount = 0;
     }
 
     public function openDay()
