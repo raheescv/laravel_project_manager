@@ -46,7 +46,7 @@ class MOQSettings extends Component
         $this->config['token'] = $this->config['token'] ?? '';
         $this->config['date'] = date('Y-m-d');
         $this->test_date = date('Y-m-d');
-        $this->test_outlet = config('app.name');
+        $this->test_outlet = config('app.name').' '.session('branch_name');
     }
 
     public function updated($propertyName)
