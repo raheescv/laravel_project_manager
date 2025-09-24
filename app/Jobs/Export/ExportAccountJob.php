@@ -27,7 +27,7 @@ class ExportAccountJob implements ShouldQueue
 
     public function handle()
     {
-        $exportFileName = 'storage/exports/account_'.now()->timestamp.'.xlsx';
+        $exportFileName = 'exports/account_'.now()->timestamp.'.xlsx';
         Excel::store(new AccountExport($this->filter), $exportFileName, 'public');
         $this->user->notify(new ExportCompleted('Account', $exportFileName));
     }

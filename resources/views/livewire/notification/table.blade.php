@@ -96,7 +96,7 @@
                                 <td>{{ $itemData['message'] ?? '' }}</td>
                                 <td>
                                     @if ($file_path)
-                                        <a href="{{ url($file_path) }}" download class="btn btn-sm btn-light">
+                                        <a href="{{ url('storage/'.$file_path) }}" download class="btn btn-sm btn-light">
                                             <i class="demo-psi-download-from-cloud fs-6"></i>
                                         </a>
                                     @endif
