@@ -69,15 +69,16 @@ class Table extends Component
     public function export()
     {
         $count = Account::count();
+        $filters = [
+            'account_type' => 'asset',
+            'model' => 'customer',
+        ];
         if ($count > 2000) {
-            ExportAccountJob::dispatch(Auth::user());
+            ExportAccountJob::dispatch(Auth::user(),$filters);
             $this->dispatch('success', ['message' => 'You will get your file in your mailbox.']);
         } else {
             $exportFileName = 'customer_'.now()->timestamp.'.xlsx';
-            $filters = [
-                'account_type' => 'asset',
-                'model' => 'customer',
-            ];
+
 
             return Excel::download(new AccountExport($filters), $exportFileName);
         }
