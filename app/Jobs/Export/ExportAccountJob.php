@@ -17,9 +17,10 @@ class ExportAccountJob implements ShouldQueue
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     protected $filter;
+
     protected $user;
 
-    public function __construct(User $user,$filter = [])
+    public function __construct(User $user, $filter = [])
     {
         $this->user = $user;
         $this->filter = $filter;

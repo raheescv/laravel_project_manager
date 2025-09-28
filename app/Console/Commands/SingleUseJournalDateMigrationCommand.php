@@ -14,7 +14,7 @@ class SingleUseJournalDateMigrationCommand extends Command
     public function handle()
     {
         $list = JournalEntry::with('journal')->whereNull('branch_id')->get();
-        $this->withProgressBar($list, function ($model) {
+        $this->withProgressBar($list, function ($model): void {
             $model->branch_id = $model->journal->branch_id;
             $model->date = $model->journal->date;
             $model->source = $model->journal->source;

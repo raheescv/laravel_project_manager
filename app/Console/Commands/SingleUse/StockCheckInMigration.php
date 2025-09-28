@@ -118,7 +118,7 @@ class StockCheckInMigration extends Command
         $progressBar->start();
 
         // Check each secondary stock record
-        foreach ($secondaryStock as $key => $secondaryItem) {
+        foreach ($secondaryStock as $secondaryItem) {
             $progressBar->advance();
 
             $primaryKey = $secondaryItem->product_id.'_'.$secondaryItem->branch_id;
@@ -215,7 +215,7 @@ class StockCheckInMigration extends Command
             ->get();
         $progressBar = $this->output->createProgressBar(count($secondaryStockLogQuery));
         $progressBar->start();
-        foreach ($secondaryStockLogQuery as $key => $value) {
+        foreach ($secondaryStockLogQuery as $value) {
             $progressBar->advance();
             $product = Product::where('second_reference_no', $value->product_id)->first();
             if ($product) {
@@ -241,7 +241,7 @@ class StockCheckInMigration extends Command
     {
         $progressBar = $this->output->createProgressBar(count($comparisonData['mismatches']));
         $progressBar->start();
-        foreach ($comparisonData['mismatches'] as $key => $value) {
+        foreach ($comparisonData['mismatches'] as $value) {
             $progressBar->advance();
             $inventory = Inventory::find($value['id'])->toArray();
             $inventory['quantity'] += $value['difference'];

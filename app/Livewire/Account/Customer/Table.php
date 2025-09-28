@@ -74,11 +74,10 @@ class Table extends Component
             'model' => 'customer',
         ];
         if ($count > 2000) {
-            ExportAccountJob::dispatch(Auth::user(),$filters);
+            ExportAccountJob::dispatch(Auth::user(), $filters);
             $this->dispatch('success', ['message' => 'You will get your file in your mailbox.']);
         } else {
             $exportFileName = 'customer_'.now()->timestamp.'.xlsx';
-
 
             return Excel::download(new AccountExport($filters), $exportFileName);
         }

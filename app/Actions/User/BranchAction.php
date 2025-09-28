@@ -11,7 +11,7 @@ class BranchAction
     {
         try {
             UserHasBranch::where('user_id', $user_id)->delete();
-            collect($branch_ids)->map(function ($branch_id) use ($user_id) {
+            collect($branch_ids)->map(function ($branch_id) use ($user_id): void {
                 $single = [
                     'user_id' => $user_id,
                     'branch_id' => $branch_id,

@@ -27,7 +27,7 @@ class UpdateInventoryLogsDateCommand extends Command
         $bar = $this->output->createProgressBar($count);
         $bar->start();
 
-        $query->chunk(100, function ($logs) use ($bar) {
+        $query->chunk(100, function ($logs) use ($bar): void {
             foreach ($logs as $log) {
                 try {
                     // Get the creation date of the associated model
