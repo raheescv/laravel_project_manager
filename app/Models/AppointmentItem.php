@@ -69,7 +69,7 @@ class AppointmentItem extends Model implements AuditableContracts
             ->when($filters['search'] ?? '', function ($q, $search) {
                 $search = trim($search);
 
-                return $q->where(function ($q) use ($search) {
+                return $q->where(function ($q) use ($search): void {
                     $q->where('accounts.name', 'like', "%{$search}%")
                         ->orWhere('users.name', 'like', "%{$search}%")
                         ->orWhere('products.name', 'like', "%{$search}%");

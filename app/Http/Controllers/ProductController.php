@@ -31,7 +31,7 @@ class ProductController extends Controller
     {
         $query = Product::with(['unit', 'mainCategory'])
             ->when($request->search, function ($query, $search) {
-                return $query->where(function ($q) use ($search) {
+                return $query->where(function ($q) use ($search): void {
                     $q->where('name', 'like', "%{$search}%")
                         ->orWhere('code', '=', $search)
                         ->orWhere('barcode', '=', $search);

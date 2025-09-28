@@ -128,7 +128,7 @@ class Page extends Component
     protected function loadInitialData()
     {
         // Load all initial data in parallel using Redis
-        $data = Redis::pipeline(function ($pipe) {
+        $data = Redis::pipeline(function ($pipe): void {
             $pipe->get($this->cachePrefix.'payment_methods');
             $pipe->get($this->cachePrefix.'employees');
             $pipe->get($this->cachePrefix.'default_payment_method_id');
@@ -243,7 +243,7 @@ class Page extends Component
             fn () => Sale::with([
                 'account:id,name,mobile',
                 'branch:id,name',
-                'items' => function ($query) {
+                'items' => function ($query): void {
                     $query->with([
                         'product:id,name,mrp',
                         'employee:id,name',

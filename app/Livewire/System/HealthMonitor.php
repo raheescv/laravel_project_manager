@@ -56,7 +56,7 @@ class HealthMonitor extends Component
     public function getOverallStatusProperty()
     {
         $latestResults = HealthCheckResultHistoryItem::select('check_name', 'status')
-            ->whereIn('id', function ($query) {
+            ->whereIn('id', function ($query): void {
                 $query->selectRaw('MAX(id)')
                     ->from('health_check_result_history_items')
                     ->groupBy('check_name');
@@ -82,7 +82,7 @@ class HealthMonitor extends Component
     public function getStatusCountsProperty()
     {
         $latestResults = HealthCheckResultHistoryItem::select('check_name', 'status')
-            ->whereIn('id', function ($query) {
+            ->whereIn('id', function ($query): void {
                 $query->selectRaw('MAX(id)')
                     ->from('health_check_result_history_items')
                     ->groupBy('check_name');

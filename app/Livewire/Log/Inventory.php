@@ -44,7 +44,7 @@ class Inventory extends Component
     {
         $count = InventoryLog::query()
             ->when($this->search, function ($query, $value) {
-                return $query->where(function ($q) use ($value) {
+                return $query->where(function ($q) use ($value): void {
                     $value = trim($value);
                     $q->where('batch', 'like', "%{$value}%")
                         ->orWhere('barcode', 'like', "%{$value}%")
@@ -108,7 +108,7 @@ class Inventory extends Component
             ->join('products', 'inventory_logs.product_id', '=', 'products.id')
             ->orderBy($this->sortField, $this->sortDirection)
             ->when($this->search, function ($query, $value) {
-                return $query->where(function ($q) use ($value) {
+                return $query->where(function ($q) use ($value): void {
                     $value = trim($value);
                     $q->where('batch', 'like', "%{$value}%")
                         ->orWhere('products.name', 'like', "%{$value}%")

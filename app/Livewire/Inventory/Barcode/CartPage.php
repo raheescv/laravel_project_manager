@@ -47,7 +47,7 @@ class CartPage extends Component
     public function loadProducts()
     {
         $this->products = Inventory::with('product')
-            ->whereHas('product', function ($query) {
+            ->whereHas('product', function ($query): void {
                 $query->where('name', 'LIKE', '%'.$this->searchQuery.'%')
                     ->orWhere('barcode', 'LIKE', '%'.$this->searchQuery.'%')
                     ->orWhere('code', 'LIKE', '%'.$this->searchQuery.'%');

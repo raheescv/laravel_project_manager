@@ -26,7 +26,7 @@ class BranchProductCreationJob implements ShouldQueue
                     return $query->where('id', $value);
                 })
                 ->pluck('id', 'id');
-            foreach ($branches as $key => $branchId) {
+            foreach ($branches as $branchId) {
                 BranchInventoryCreationJob::dispatch($product, $branchId, $this->userId);
             }
         }

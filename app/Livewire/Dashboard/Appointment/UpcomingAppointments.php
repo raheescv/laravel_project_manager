@@ -24,7 +24,7 @@ class UpcomingAppointments extends Component
                 'service:id,name',
                 'employee:id,name',
             ])
-            ->whereHas('appointment', function ($query) {
+            ->whereHas('appointment', function ($query): void {
                 $query->pending()
                     ->where('start_time', '>=', Carbon::now())
                     ->where('start_time', '<=', Carbon::now()->addDays(7));

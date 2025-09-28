@@ -167,11 +167,11 @@ class MigrateDataCommand extends Command
         DB::connection('mysql2')
             ->table('task_masters')
             ->orderBy('id')
-            ->chunk(100, function ($taskMasters) use ($progressBar) {
+            ->chunk(100, function ($taskMasters) use ($progressBar): void {
                 foreach ($taskMasters as $taskMaster) {
                     $progressBar->advance();
                     try {
-                        DB::transaction(function () use ($taskMaster) {
+                        DB::transaction(function () use ($taskMaster): void {
                             $tasks = DB::connection('mysql2')
                                 ->table('tasks')
                                 ->where('task_master_id', $taskMaster->id)
@@ -286,11 +286,11 @@ class MigrateDataCommand extends Command
             ->table('purchases')
             ->whereNull('purchases.deleted_at')
             ->orderBy('purchases.id')
-            ->chunk(100, function ($purchases) use ($progressBar) {
+            ->chunk(100, function ($purchases) use ($progressBar): void {
                 foreach ($purchases as $purchase) {
                     $progressBar->advance();
                     try {
-                        DB::transaction(function () use ($purchase) {
+                        DB::transaction(function () use ($purchase): void {
                             $account = Account::where('second_reference_no', $purchase->vendor_id)->first();
                             $created_by = User::where('type', 'user')->where('second_reference_no', $purchase->created_by)->value('id');
                             $updated_by = User::where('type', 'user')->where('second_reference_no', $purchase->updated_by)->value('id');
@@ -388,11 +388,11 @@ class MigrateDataCommand extends Command
             ->whereNull('sales.deleted_at')
             // ->where('invoice_no', '25-26/614')
             ->orderBy('sales.id')
-            ->chunk(100, function ($sales) use ($progressBar) {
+            ->chunk(100, function ($sales) use ($progressBar): void {
                 foreach ($sales as $sale) {
                     $progressBar->advance();
                     try {
-                        DB::transaction(function () use ($sale) {
+                        DB::transaction(function () use ($sale): void {
                             $account = Account::where('second_reference_no', $sale->customer_id)->first();
                             $created_by = User::where('type', 'user')->where('second_reference_no', $sale->created_by)->value('id');
                             $updated_by = User::where('type', 'user')->where('second_reference_no', $sale->updated_by)->value('id');
@@ -539,11 +539,11 @@ class MigrateDataCommand extends Command
             ->table('sale_returns')
             ->whereNull('sale_returns.deleted_at')
             ->orderBy('sale_returns.id')
-            ->chunk(100, function ($saleReturns) use ($progressBar) {
+            ->chunk(100, function ($saleReturns) use ($progressBar): void {
                 foreach ($saleReturns as $saleReturn) {
                     $progressBar->advance();
                     try {
-                        DB::transaction(function () use ($saleReturn) {
+                        DB::transaction(function () use ($saleReturn): void {
                             $account = Account::where('second_reference_no', $saleReturn->customer_id)->first();
                             $created_by = User::where('type', 'user')->where('second_reference_no', $saleReturn->created_by)->value('id');
                             $updated_by = User::where('type', 'user')->where('second_reference_no', $saleReturn->updated_by)->value('id');
@@ -663,10 +663,10 @@ class MigrateDataCommand extends Command
                 ->whereNull('users.deleted_at')
                 ->select(['users.*', 'user_types.name as user_type_name'])
                 ->orderBy('users.id')
-                ->chunk(100, function ($users) {
+                ->chunk(100, function ($users): void {
                     foreach ($users as $item) {
                         try {
-                            DB::transaction(function () use ($item) {
+                            DB::transaction(function () use ($item): void {
                                 $name = ucfirst(strtolower($item->name));
                                 $user = User::create([
                                     'type' => 'user',
@@ -718,10 +718,10 @@ class MigrateDataCommand extends Command
                 // ->whereNull('employees.deleted_at')
                 ->select(['employees.*', 'designations.name as designation_name'])
                 ->orderBy('employees.id')
-                ->chunk(100, function ($employees) {
+                ->chunk(100, function ($employees): void {
                     foreach ($employees as $item) {
                         try {
-                            DB::transaction(function () use ($item) {
+                            DB::transaction(function () use ($item): void {
                                 // Create user
                                 $name = ucfirst(strtolower($item->name));
                                 $user = User::create([

@@ -69,7 +69,7 @@ class User extends Authenticatable implements AuditableContracts
     {
         parent::boot();
 
-        static::updating(function ($user) {
+        static::updating(function ($user): void {
             if ($user->isDirty('default_branch_id')) {
                 // event(new BranchUpdated($user, $user->default_branch_id));
             }

@@ -53,7 +53,7 @@ class PageController extends Controller
 
     protected function loadInitialData()
     {
-        $data = Redis::pipeline(function ($pipe) {
+        $data = Redis::pipeline(function ($pipe): void {
             $pipe->get(self::CACHE_PREFIX.'payment_methods');
             $pipe->get(self::CACHE_PREFIX.'employees');
             $pipe->get(self::CACHE_PREFIX.'default_payment_method_id');
@@ -90,7 +90,7 @@ class PageController extends Controller
             fn () => Sale::with([
                 'account:id,name,mobile',
                 'branch:id,name',
-                'items' => function ($query) {
+                'items' => function ($query): void {
                     $query->select([
                         'id', 'employee_id', 'assistant_id', 'inventory_id',
                         'product_id', 'sale_combo_offer_id', 'name', 'employee_name',

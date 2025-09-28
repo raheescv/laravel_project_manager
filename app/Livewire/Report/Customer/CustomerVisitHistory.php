@@ -62,7 +62,7 @@ class CustomerVisitHistory extends Component
             ->completed()
             ->selectRaw('sum(sales.grand_total) as total')
             ->selectRaw('count(*) as visits')
-            ->selectSub(function ($query) {
+            ->selectSub(function ($query): void {
                 $query->from('sales')->select('date')->whereColumn('account_id', 'accounts.id')->orderBy('date', 'asc')->limit(1);
             }, 'first_sale_date')
             ->selectRaw('CASE WHEN (SELECT MIN(date) FROM sales WHERE account_id = accounts.id) BETWEEN ? AND ? THEN true ELSE false END as is_new_customer', [$this->from_date, $this->to_date])

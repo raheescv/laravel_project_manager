@@ -80,7 +80,7 @@ class SaleController extends Controller
                 $sale = Sale::with([
                     'account:id,name,mobile',
                     'branch:id,name',
-                    'items' => function ($query) {
+                    'items' => function ($query): void {
                         $query->with([
                             'product:id,name,mrp,size,barcode',
                             'employee:id,name',

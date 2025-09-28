@@ -55,16 +55,16 @@ class Table extends Component
         $data = User::query()
             ->select('users.*')
             ->employee()
-            ->with(['attendances' => function ($query) use ($startDate, $endDate) {
+            ->with(['attendances' => function ($query) use ($startDate, $endDate): void {
                 $query->whereBetween('date', [$startDate, $endDate]);
             }])
-            ->when($this->filter['search'], function ($query, $value) {
-                $query->where(function ($q) use ($value) {
+            ->when($this->filter['search'], function ($query, $value): void {
+                $query->where(function ($q) use ($value): void {
                     $q->where('users.name', 'like', '%'.$value.'%')
                         ->orWhere('users.email', 'like', '%'.$value.'%');
                 });
             })
-            ->when($this->filter['employee_id'], function ($query) {
+            ->when($this->filter['employee_id'], function ($query): void {
                 $query->where('id', $this->filter['employee_id']);
             })
             ->orderBy($this->sortField, $this->sortDirection)

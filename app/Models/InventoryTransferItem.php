@@ -30,7 +30,7 @@ class InventoryTransferItem extends Model implements AuditableContracts
     public static function boot()
     {
         parent::boot();
-        static::creating(function ($model) {
+        static::creating(function ($model): void {
             $model->product_id = $model->inventory?->product_id;
         });
     }

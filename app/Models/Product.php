@@ -209,14 +209,14 @@ class Product extends Model implements AuditableContracts
             return $query->where('type', $value);
         });
         $self = $self->when($request['invoice_id'] ?? '', function ($query, $value) {
-            return $query->whereIn('id', function ($subquery) use ($value) {
+            return $query->whereIn('id', function ($subquery) use ($value): void {
                 $subquery->select('product_id')->from('purchase_items')->where('purchase_id', $value);
             });
         });
         $self = $self->limit(10);
         $self = $self->select(['name', 'barcode', 'code', 'size', 'mrp', 'cost', 'id', 'type']);
         $self = $self->when($request['invoice_id'] ?? '', function ($query, $value) {
-            return $query->addSelect(['purchase_item_id' => function ($subquery) use ($value) {
+            return $query->addSelect(['purchase_item_id' => function ($subquery) use ($value): void {
                 $subquery->select('id')->from('purchase_items')
                     ->whereColumn('product_id', 'products.id')
                     ->where('purchase_id', $value)

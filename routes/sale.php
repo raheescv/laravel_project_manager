@@ -39,20 +39,20 @@ Route::middleware('auth')->group(function (): void {
         Route::get('payments', 'payments')->name('payments')->can('sales return.payments');
     });
 
-    Route::prefix('products')->name('api.products.')->group(function () {
+    Route::prefix('products')->name('api.products.')->group(function (): void {
         Route::get('/', [POSController::class, 'getProducts'])->name('index');
         Route::get('search', [ProductController::class, 'index'])->name('search');
         Route::get('by-barcode', [POSController::class, 'getProductByBarcode'])->name('by-barcode');
     });
 
     // Customer Management
-    Route::prefix('customers')->name('api.customers.')->group(function () {
+    Route::prefix('customers')->name('api.customers.')->group(function (): void {
         Route::post('/', [CustomerController::class, 'store'])->name('store');
         Route::put('/{id}', [CustomerController::class, 'store'])->name('edit');
         Route::get('check-mobile', [CustomerController::class, 'get'])->name('get');
     });
 
-    Route::prefix('pos')->name('api.pos.')->group(function () {
+    Route::prefix('pos')->name('api.pos.')->group(function (): void {
         Route::post('add-item', [POSController::class, 'addItem'])->name('add-item');
         Route::post('update-item', [POSController::class, 'updateItem'])->name('update-item');
         Route::post('remove-item', [POSController::class, 'removeItem'])->name('remove-item');
@@ -61,7 +61,7 @@ Route::middleware('auth')->group(function (): void {
     });
 
     // Combo Offer API Routes
-    Route::prefix('combo_offer')->name('api.combo_offer.')->group(function () {
+    Route::prefix('combo_offer')->name('api.combo_offer.')->group(function (): void {
         Route::get('list', [ComboOfferController::class, 'get'])->name('list');
     });
 });

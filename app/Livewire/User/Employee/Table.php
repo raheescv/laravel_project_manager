@@ -122,8 +122,8 @@ class Table extends Component
                         ->orWhere('nationality', 'like', "%{$value}%");
                 });
             })
-            ->when($this->role_id, function ($query) {
-                $query->whereHas('roles', function ($q) {
+            ->when($this->role_id, function ($query): void {
+                $query->whereHas('roles', function ($q): void {
                     $q->where('id', $this->role_id);
                 });
             })

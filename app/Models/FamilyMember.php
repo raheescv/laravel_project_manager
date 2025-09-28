@@ -69,8 +69,8 @@ class FamilyMember extends Model
             return new Collection();
         }
 
-        return static::where(function ($query) {
-            $query->where(function ($q) {
+        return static::where(function ($query): void {
+            $query->where(function ($q): void {
                 if ($this->father_id) {
                     $q->where('father_id', $this->father_id);
                 }

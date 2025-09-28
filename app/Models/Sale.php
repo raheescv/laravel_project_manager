@@ -78,7 +78,7 @@ class Sale extends Model implements AuditableContracts
     {
         static::addGlobalScope(new AssignedBranchScope());
 
-        static::creating(function ($sale) {
+        static::creating(function ($sale): void {
             // Check if sale needs to be associated with an open day session
             if ($sale->branch_id) {
                 // If no sale_day_session_id is provided, find the open session for the branch
@@ -153,7 +153,7 @@ class Sale extends Model implements AuditableContracts
             ->when($filters['search'] ?? '', function ($q, $search) {
                 $search = trim($search);
 
-                return $q->where(function ($q) use ($search) {
+                return $q->where(function ($q) use ($search): void {
                     $q->where('sales.id', 'like', "%{$search}%")
                         ->orWhere('sales.invoice_no', 'like', "%{$search}%");
                 });

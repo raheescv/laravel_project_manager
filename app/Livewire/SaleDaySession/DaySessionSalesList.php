@@ -60,7 +60,7 @@ class DaySessionSalesList extends Component
             ->where('sale_day_session_id', $this->sessionId);
 
         if ($this->search) {
-            $baseQuery->where(function ($q) {
+            $baseQuery->where(function ($q): void {
                 $search = '%'.$this->search.'%';
                 $q->where('invoice_no', 'like', $search)
                     ->orWhere('customer_name', 'like', $search)

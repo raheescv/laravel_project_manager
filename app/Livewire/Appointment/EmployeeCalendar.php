@@ -35,7 +35,7 @@ class EmployeeCalendar extends Component
                 'appointment:id,start_time,end_time,color',
             ])
             ->when($this->employee_id, fn ($query, $value) => $query->whereIn('employee_id', $value))
-            ->whereHas('appointment', function ($query) {
+            ->whereHas('appointment', function ($query): void {
                 $query->when($this->status, fn ($query, $value) => $query->where('status', $value));
             })
             ->get()

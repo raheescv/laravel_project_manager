@@ -152,19 +152,19 @@ class ProductReport extends Component
                 return $q->where('products.main_category_id', $this->main_category_id);
             })
             ->product()
-            ->leftJoinSub($inventoryQuery, 'inventory', function ($join) {
+            ->leftJoinSub($inventoryQuery, 'inventory', function ($join): void {
                 $join->on('products.id', '=', 'inventory.product_id');
             })
-            ->leftJoinSub($salesQuery, 'sales', function ($join) {
+            ->leftJoinSub($salesQuery, 'sales', function ($join): void {
                 $join->on('products.id', '=', 'sales.product_id');
             })
-            ->leftJoinSub($purchaseQuery, 'purchases', function ($join) {
+            ->leftJoinSub($purchaseQuery, 'purchases', function ($join): void {
                 $join->on('products.id', '=', 'purchases.product_id');
             })
-            ->leftJoinSub($transferInQuery, 'transfer_in', function ($join) {
+            ->leftJoinSub($transferInQuery, 'transfer_in', function ($join): void {
                 $join->on('products.id', '=', 'transfer_in.product_id');
             })
-            ->leftJoinSub($transferOutQuery, 'transfer_out', function ($join) {
+            ->leftJoinSub($transferOutQuery, 'transfer_out', function ($join): void {
                 $join->on('products.id', '=', 'transfer_out.product_id');
             })
             ->orderBy($this->sortField, $this->sortDirection)

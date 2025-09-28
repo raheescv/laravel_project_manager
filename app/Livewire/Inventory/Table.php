@@ -163,7 +163,7 @@ class Table extends Component
                     return $query->where('products.code', $value);
                 })
                 ->when($filters['search'] ?? null, function ($query, $value) {
-                    return $query->where(function ($q) use ($value) {
+                    return $query->where(function ($q) use ($value): void {
                         $value = trim($value);
                         $q->where('products.name', 'like', "%{$value}%")
                             ->orWhere('products.name_arabic', 'like', "%{$value}%")
@@ -257,7 +257,7 @@ class Table extends Component
             ->when($this->search, function ($query, $value) {
                 $value = trim($value);
 
-                return $query->where(function ($q) use ($value) {
+                return $query->where(function ($q) use ($value): void {
                     $q->where('products.name', 'like', "%{$value}%")
                         ->orWhere('products.name_arabic', 'like', "%{$value}%")
                         ->orWhere('products.code', 'like', "%{$value}%")

@@ -88,7 +88,7 @@ trait BuildsCustomerReminderQuery
                 'derived_sales.total_spent',
                 'derived_sales.last_purchase_date',
             ])
-            ->leftJoinSub($salesSubQuery, 'derived_sales', function ($join) {
+            ->leftJoinSub($salesSubQuery, 'derived_sales', function ($join): void {
                 $join->on('accounts.id', '=', 'derived_sales.account_id');
             })
             ->whereIn('accounts.id', $customerIdsNeedingReminders->all());
@@ -101,7 +101,7 @@ trait BuildsCustomerReminderQuery
         }
         if (! empty($filters['search'])) {
             $searchTerm = $filters['search'];
-            $query->where(function ($q) use ($searchTerm) {
+            $query->where(function ($q) use ($searchTerm): void {
                 $q->where('accounts.name', 'like', '%'.$searchTerm.'%')
                     ->orWhere('accounts.mobile', 'like', '%'.$searchTerm.'%')
                     ->orWhere('accounts.email', 'like', '%'.$searchTerm.'%');

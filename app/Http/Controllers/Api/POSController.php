@@ -29,16 +29,16 @@ class POSController extends Controller
 
             // Filter by category
             if ($request->type) {
-                $query->whereHas('product', function ($q) use ($request) {
+                $query->whereHas('product', function ($q) use ($request): void {
                     $q->where('type', $request->type);
                 });
             }
             if ($request->category_id && $request->category_id !== 'favorite') {
-                $query->whereHas('product', function ($q) use ($request) {
+                $query->whereHas('product', function ($q) use ($request): void {
                     $q->where('main_category_id', $request->category_id);
                 });
             } elseif ($request->category_id === 'favorite') {
-                $query->whereHas('product', function ($q) {
+                $query->whereHas('product', function ($q): void {
                     $q->where('is_favorite', true);
                 });
             }
@@ -46,7 +46,7 @@ class POSController extends Controller
             // Filter by search term
             if ($request->search) {
                 $search = $request->search;
-                $query->whereHas('product', function ($q) use ($search) {
+                $query->whereHas('product', function ($q) use ($search): void {
                     $q->where('name', 'LIKE', "%{$search}%")
                         ->orWhere('barcode', 'LIKE', "%{$search}%");
                 });
@@ -90,7 +90,7 @@ class POSController extends Controller
     {
         try {
             $inventory = Inventory::with(['product'])
-                ->whereHas('product', function ($q) use ($request) {
+                ->whereHas('product', function ($q) use ($request): void {
                     $q->where('barcode', $request->barcode)
                         ->where('status', 'active');
                 })

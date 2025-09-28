@@ -22,7 +22,7 @@ Route::get('/theme-settings', function () {
 })->middleware('throttle:60,1'); // Allow 60 requests per minute
 
 // Protected routes
-Route::middleware('auth:sanctum')->group(function () {
+Route::middleware('auth:sanctum')->group(function (): void {
     Route::post('/logout', [AuthController::class, 'logout']);
 
     Route::get('/user', function (Request $request) {

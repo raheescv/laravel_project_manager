@@ -60,7 +60,7 @@ Route::middleware('auth')->group(function (): void {
 });
 
 // Physical Visitor Management Routes
-Route::middleware(['auth'])->group(function () {
+Route::middleware(['auth'])->group(function (): void {
     Route::get('/visitors', [PhysicalVisitorController::class, 'index'])->name('visitors.index');
     Route::get('/visitors/create', [PhysicalVisitorController::class, 'create'])->name('visitors.create');
     Route::post('/visitors', [PhysicalVisitorController::class, 'store'])->name('visitors.store');

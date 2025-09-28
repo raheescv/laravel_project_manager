@@ -54,7 +54,7 @@ class StockAnalysisReport extends Component
                 FROM inventory_logs
                 WHERE (quantity_in > 0 OR quantity_out > 0)
                 GROUP BY product_id, branch_id
-            ) as last_movements'), function ($join) {
+            ) as last_movements'), function ($join): void {
                 $join->on('inventories.product_id', '=', 'last_movements.product_id')
                     ->on('inventories.branch_id', '=', 'last_movements.branch_id');
             })
@@ -65,7 +65,7 @@ class StockAnalysisReport extends Component
             });
 
         // If last movement is null or older than threshold days
-        $query->where(function ($q) {
+        $query->where(function ($q): void {
             $q->whereNull('last_movements.last_movement')
                 ->orWhere('last_movements.last_movement', '<=', now()->subDays(intval($this->days_threshold)));
         });

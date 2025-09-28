@@ -107,7 +107,7 @@ class OverviewReport extends Component
             ->join('sales', 'sales.id', '=', 'sale_items.sale_id')
             ->join('users', 'users.id', '=', 'sale_items.employee_id')
             ->tap($baseQuery)
-            ->where(function ($query) {
+            ->where(function ($query): void {
                 $query->where('users.name', 'like', '%'.$this->employeeSearch.'%');
             });
         $totalEmployees = clone $employees;
@@ -127,7 +127,7 @@ class OverviewReport extends Component
             ->join('sales', 'sales.id', '=', 'sale_items.sale_id')
             ->join('products', 'products.id', '=', 'sale_items.product_id')
             ->tap($baseQuery)
-            ->where(function ($query) {
+            ->where(function ($query): void {
                 $query->where('products.name', 'like', '%'.$this->productSearch.'%');
             });
         $totalProducts = clone $products;
