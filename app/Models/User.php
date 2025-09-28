@@ -48,6 +48,10 @@ class User extends Authenticatable implements AuditableContracts
         'remember_token',
     ];
 
+    protected $auditExclude = [
+        'remember_token',
+    ];
+
     public static function createRules($id = 0, $merge = [])
     {
         return array_merge([
