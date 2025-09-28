@@ -6,7 +6,7 @@ use App\Models\Account;
 
 class CreateAction
 {
-    public function execute($data)
+    public function execute($data) : array
     {
         try {
             $data['mobile'] = $data['mobile'] ?? null;

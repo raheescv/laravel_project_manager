@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "2c5eea7136fad3a771048be3020b6548",
+    "content-hash": "dd0aad1431473bb0d53f9c3a09fc9fae",
     "packages": [
         {
             "name": "barryvdh/laravel-dompdf",
@@ -5011,16 +5011,16 @@
         },
         {
             "name": "phpstan/phpstan",
-            "version": "2.1.7",
+            "version": "2.1.29",
             "source": {
                 "type": "git",
-                "url": "https://github.com/phpstan/phpstan.git",
-                "reference": "12567f91a74036d56ba0af6d56c8e73ac0e8d850"
+                "url": "https://github.com/phpstan/phpstan-phar-composer-source.git",
+                "reference": "git"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/phpstan/phpstan/zipball/12567f91a74036d56ba0af6d56c8e73ac0e8d850",
-                "reference": "12567f91a74036d56ba0af6d56c8e73ac0e8d850",
+                "url": "https://api.github.com/repos/phpstan/phpstan/zipball/d618573eed4a1b6b75e37b2e0b65ac65c885d88e",
+                "reference": "d618573eed4a1b6b75e37b2e0b65ac65c885d88e",
                 "shasum": ""
             },
             "require": {
@@ -5065,7 +5065,7 @@
                     "type": "github"
                 }
             ],
-            "time": "2025-03-05T13:43:55+00:00"
+            "time": "2025-09-25T06:58:18+00:00"
         },
         {
             "name": "predis/predis",
