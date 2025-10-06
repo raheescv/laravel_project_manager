@@ -28,7 +28,7 @@ export default defineConfig({
         strictPort: false,
         https: false,
         hmr: {
-            host: 'project_manager.test',
+            host: process.env.VITE_APP_URL || 'localhost',
             port: 5173,
         },
         cors: true,
