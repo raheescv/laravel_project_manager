@@ -57,7 +57,7 @@ class FlatTradeController extends Controller
             // TODO: Fetch user's trading account information
             // Make API calls to FlatTrade to get account details, balances, etc.
 
-            return redirect()->route('flat-trade.dashboard')
+            return redirect()->route('flat_trade::dashboard')
                 ->with('success', 'FlatTrade account connected successfully!');
 
         } catch (\Exception $e) {
@@ -67,7 +67,7 @@ class FlatTradeController extends Controller
                 'request_data' => $request->all(),
             ]);
 
-            return redirect()->route('flat-trade.dashboard')
+            return redirect()->route('flat_trade::dashboard')
                 ->with('error', 'Failed to process FlatTrade authorization. Please try again.');
         }
     }
@@ -170,7 +170,7 @@ class FlatTradeController extends Controller
         $oauthUrl = 'https://api.flattrade.in/oauth/authorize?'.http_build_query([
             'response_type' => 'code',
             'client_id' => config('services.flattrade.client_id'),
-            'redirect_uri' => route('flat-trade.oauth.redirect'),
+            'redirect_uri' => route('flat_trade::oauth.redirect'),
             'state' => $state,
             'scope' => 'read,write', // Adjust based on FlatTrade's available scopes
         ]);
@@ -187,7 +187,7 @@ class FlatTradeController extends Controller
         // TODO: Clear stored credentials
         // TODO: Log disconnection event
 
-        return redirect()->route('flat-trade.dashboard')
+        return redirect()->route('flat_trade::dashboard')
             ->with('success', 'FlatTrade account disconnected successfully.');
     }
 

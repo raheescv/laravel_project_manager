@@ -31,7 +31,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->use([TrustProxies::class]);
         $middleware->use([TrackVisitor::class]);
 
-        // Exclude FlatTrade webhook from CSRF token validation
+        // Exclude from CSRF token validation
         $middleware->validateCsrfTokens(except: [
             'flat_trade/webhook/post_back',
         ]);
