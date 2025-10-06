@@ -26,10 +26,11 @@ export default defineConfig({
         port: 5173,
         host: '0.0.0.0',
         strictPort: false,
-        https: false,
+        https: process.env.FORCE_HTTPS || false,
         hmr: {
             host: process.env.VITE_APP_URL || 'localhost',
             port: 5173,
+            protocol: 'wss',
         },
         cors: true,
     },

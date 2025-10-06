@@ -34,7 +34,7 @@ class FlatTradeController extends Controller
                     'user_agent' => $request->userAgent(),
                 ]);
 
-                return redirect()->route('flat-trade.dashboard')
+                return redirect()->route('flat_trade::dashboard')
                     ->with('error', 'Invalid authorization response from FlatTrade.');
             }
 
@@ -78,7 +78,7 @@ class FlatTradeController extends Controller
      * This endpoint receives real-time updates from FlatTrade about account changes,
      * trade executions, balance updates, and other important events.
      */
-    public function handlePostback(Request $request): JsonResponse
+    public function handlePostBack(Request $request): JsonResponse
     {
         try {
             // Validate webhook signature if FlatTrade provides one
