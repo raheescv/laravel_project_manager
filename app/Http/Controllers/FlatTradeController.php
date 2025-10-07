@@ -191,7 +191,7 @@ class FlatTradeController extends Controller
 
         try {
             // Check if user has a valid access token
-            $accessToken = Cache::get('flat_trade_access_token');
+            $accessToken = config('services.flat_trade.j_key');
             if ($accessToken) {
                 // Try to get user details to verify connection
                 $userProfile = $flatTradeService->getUserDetails();
