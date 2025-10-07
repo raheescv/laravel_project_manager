@@ -180,9 +180,6 @@ class FlatTradeController extends Controller
      */
     public function dashboard(): View
     {
-        // Cache::put('flat_trade_access_token', 'f46f17069e7a456ed181a52bf8914fd7107b921e9596ee069d838131ce0a4f6e', now()->addMinutes(55));
-        // Cache::put('flat_trade_client_id', 'FZ26087', now()->addDays(30));
-        // config(['services.flat_trade.j_key' => 'f46f17069e7a456ed181a52bf8914fd7107b921e9596ee069d838131ce0a4f6e']);
         $flatTradeService = new FlatTradeService();
         $accountConnected = false;
         $accountBalance = 0;
