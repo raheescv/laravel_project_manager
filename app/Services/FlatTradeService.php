@@ -5,6 +5,7 @@ namespace App\Services;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
 
 class FlatTradeService
@@ -17,15 +18,17 @@ class FlatTradeService
     protected string $clientSecret;
     protected ?string $accessToken = null;
     protected ?string $refreshToken = null;
+    protected ?string $jKey = null;
 
     public function __construct()
     {
-        $this->baseUrl = config('services.flat_trade.base_url', 'https://api.flattrade.in');
+        $this->baseUrl = config('services.flat_trade.base_url', 'https://piconnect.flattrade.in/PiConnectTP');
         $this->authApiUrl = config('services.flat_trade.auth_api_url', 'https://authapi.flattrade.in');
         $this->apiKey = config('services.flat_trade.api_key');
         $this->apiSecret = config('services.flat_trade.api_secret');
         $this->clientId = config('services.flat_trade.client_id');
         $this->clientSecret = config('services.flat_trade.client_secret');
+        $this->jKey = config('services.flat_trade.j_key');
     }
 
     /**
@@ -46,28 +49,35 @@ class FlatTradeService
         try {
             // Generate the SHA-256 hash for api_secret
             $apiSecretHash = $this->generateApiSecretHash($requestCode);
-
-            $response = Http::post($this->authApiUrl . '/trade/apitoken', [
+            $payload= [
                 'api_key' => $this->apiKey,
                 'request_code' => $requestCode,
                 'api_secret' => $apiSecretHash,
-            ]);
+            ];
+            
+            $url = $this->authApiUrl . '/trade/apitoken';
 
+            $response = Http::post($url, $payload);
             if ($response->successful()) {
                 $data = $response->json();
-
                 // Check if the response indicates success
-                if (isset($data['status']) && $data['status'] === 'Ok' && isset($data['token'])) {
+                if (isset($data['stat']) && $data['stat'] === 'Ok' && isset($data['token'])) {
                     $this->accessToken = $data['token'];
                     $this->clientId = $data['client'] ?? $this->clientId;
 
-                    // Store tokens securely
+                    // Store tokens securely in cache
                     Cache::put('flat_trade_access_token', $this->accessToken, now()->addMinutes(55));
                     Cache::put('flat_trade_client_id', $this->clientId, now()->addDays(30));
 
+                    config(['services.flat_trade.j_key' => $this->accessToken]);
+                    config(['services.flat_trade.client_id' => $this->clientId]);
+
+                    writeToEnv('FLAT_TRADE_J_KEY', $this->accessToken);
+
                     Log::info('FlatTrade authentication successful', [
                         'client' => $this->clientId,
-                        'token_received' => !empty($this->accessToken)
+                        'token_received' => !empty($this->accessToken),
+                        'user_id' => Auth::id()
                     ]);
                     return true;
                 } else {
@@ -123,34 +133,26 @@ class FlatTradeService
     }
 
     /**
-     * Make authenticated API request
+     * Make PiConnect API request with jData and jKey format
      */
-    protected function makeRequest(string $method, string $endpoint, array $data = []): array
+    protected function makePiConnectRequest(string $endpoint, array $jData): array
     {
-        $token = $this->getValidAccessToken();
-        if (!$token) {
-            throw new \Exception('No valid access token available. Please re-authenticate with FlatTrade.');
+        if (!$this->jKey) {
+            throw new \Exception('jKey not configured. Please set FLAT_TRADE_J_KEY in environment.');
         }
 
-        $response = Http::withHeaders([
-            'Authorization' => 'Bearer ' . $token,
-            'Accept' => 'application/json',
-            'Content-Type' => 'application/json',
-        ])->$method($this->baseUrl . $endpoint, $data);
+        $url = $this->baseUrl . '/' . $endpoint;
+        // Format data as jData=JSON&jKey=KEY
+        $jDataJson = json_encode($jData);
+        $postData = "jData={$jDataJson}&jKey={$this->jKey}";
 
-        if ($response->status() === 401) {
-            // Token expired or invalid
-            Log::warning('FlatTrade API token expired or invalid', [
-                'method' => $method,
-                'endpoint' => $endpoint,
-                'status' => $response->status()
-            ]);
-            throw new \Exception('Authentication failed. Please re-authenticate with FlatTrade.');
-        }
+        $headers= [
+            'Content-Type' => 'application/x-www-form-urlencoded'
+        ];
+        $response = Http::withHeaders($headers)->withBody($postData, 'application/x-www-form-urlencoded')->post($url);
 
         if (!$response->successful()) {
-            Log::error('FlatTrade API request failed', [
-                'method' => $method,
+            Log::error('PiConnect API request failed', [
                 'endpoint' => $endpoint,
                 'status' => $response->status(),
                 'response' => $response->body()
@@ -161,388 +163,905 @@ class FlatTradeService
         return $response->json();
     }
 
+    // ===========================================
+    // PLACE ORDER APIs
+    // ===========================================
+
     /**
-     * Get user profile and account information
+     * Place Market Order
      */
-    public function getUserProfile(): array
+    public function placeMarketOrder(string $exchange, string $symbol, int $quantity, string $transactionType = 'B', string $product = 'C', int $marketProtection = 5): array
     {
-        return $this->makeRequest('GET', '/user/profile');
-    }
-
-    /**
-     * Get account balance
-     */
-    public function getAccountBalance(): array
-    {
-        return $this->makeRequest('GET', '/user/balance');
-    }
-
-    /**
-     * Get holdings (current positions)
-     */
-    public function getHoldings(): array
-    {
-        return $this->makeRequest('GET', '/user/holdings');
-    }
-
-    /**
-     * Get order book for a symbol
-     */
-    public function getOrderBook(string $symbol): array
-    {
-        return $this->makeRequest('GET', "/market/orderbook/{$symbol}");
-    }
-
-    /**
-     * Get live market data for a symbol
-     */
-    public function getMarketData(string $symbol): array
-    {
-        return $this->makeRequest('GET', "/market/quote/{$symbol}");
-    }
-
-    /**
-     * Place a buy order
-     */
-    public function placeBuyOrder(array $orderData): array
-    {
-        $orderData['transaction_type'] = 'BUY';
-        return $this->placeOrder($orderData);
-    }
-
-    /**
-     * Place a sell order
-     */
-    public function placeSellOrder(array $orderData): array
-    {
-        $orderData['transaction_type'] = 'SELL';
-        return $this->placeOrder($orderData);
-    }
-
-    /**
-     * Place an order (buy or sell)
-     */
-    public function placeOrder(array $orderData): array
-    {
-        // Validate required fields
-        $requiredFields = ['symbol', 'quantity', 'transaction_type'];
-        foreach ($requiredFields as $field) {
-            if (!isset($orderData[$field])) {
-                throw new \InvalidArgumentException("Missing required field: {$field}");
-            }
-        }
-
-        // Set default values
-        $orderData['product'] = $orderData['product'] ?? 'CNC'; // Cash and Carry
-        $orderData['order_type'] = $orderData['order_type'] ?? 'MARKET';
-        $orderData['validity'] = $orderData['validity'] ?? 'DAY';
-
-        // Add timestamp
-        $orderData['timestamp'] = now()->timestamp;
-
-        Log::info('Placing FlatTrade order', $orderData);
-
-        return $this->makeRequest('POST', '/orders', $orderData);
-    }
-
-    /**
-     * Get order status
-     */
-    public function getOrderStatus(string $orderId): array
-    {
-        return $this->makeRequest('GET', "/orders/{$orderId}");
-    }
-
-    /**
-     * Cancel an order
-     */
-    public function cancelOrder(string $orderId): array
-    {
-        return $this->makeRequest('DELETE', "/orders/{$orderId}");
-    }
-
-    /**
-     * Get order history
-     */
-    public function getOrderHistory(array $filters = []): array
-    {
-        $queryParams = http_build_query($filters);
-        $endpoint = $queryParams ? "/orders?{$queryParams}" : '/orders';
-
-        return $this->makeRequest('GET', $endpoint);
-    }
-
-    /**
-     * Get trade history
-     */
-    public function getTradeHistory(array $filters = []): array
-    {
-        $queryParams = http_build_query($filters);
-        $endpoint = $queryParams ? "/trades?{$queryParams}" : '/trades';
-
-        return $this->makeRequest('GET', $endpoint);
-    }
-
-    /**
-     * Advanced Trading Methods
-     */
-
-    /**
-     * Place a limit order with price protection
-     */
-    public function placeLimitOrder(string $symbol, int $quantity, float $price, string $transactionType = 'BUY'): array
-    {
-        $orderData = [
-            'symbol' => $symbol,
-            'quantity' => $quantity,
-            'price' => $price,
-            'order_type' => 'LIMIT',
-            'transaction_type' => $transactionType,
-            'product' => 'CNC',
-            'validity' => 'DAY',
+        $jData = [
+            'uid' => $this->clientId,
+            'actid' => $this->clientId,
+            'exch' => $exchange,
+            'tsym' => $symbol,
+            'qty' => (string)$quantity,
+            'mkt_protection' => (string)$marketProtection,
+            'prc' => '0',
+            'dscqty' => '0',
+            'prd' => $product,
+            'trantype' => $transactionType,
+            'prctyp' => 'MKT',
+            'ret' => 'DAY',
+            'ordersource' => 'API'
         ];
 
-        return $this->placeOrder($orderData);
+        return $this->makePiConnectRequest('PlaceOrder', $jData);
     }
 
     /**
-     * Place a stop loss order
+     * Place Limit Order
      */
-    public function placeStopLossOrder(string $symbol, int $quantity, float $triggerPrice, string $transactionType = 'SELL'): array
+    public function placeLimitOrder(string $exchange, string $symbol, int $quantity, float $price, string $transactionType = 'B', string $product = 'C'): array
     {
-        $orderData = [
-            'symbol' => $symbol,
-            'quantity' => $quantity,
-            'trigger_price' => $triggerPrice,
-            'order_type' => 'SL',
-            'transaction_type' => $transactionType,
-            'product' => 'CNC',
-            'validity' => 'DAY',
+        $jData = [
+            'uid' => $this->clientId,
+            'actid' => $this->clientId,
+            'exch' => $exchange,
+            'tsym' => $symbol,
+            'qty' => (string)$quantity,
+            'prc' => (string)$price,
+            'dscqty' => '0',
+            'prd' => $product,
+            'trantype' => $transactionType,
+            'prctyp' => 'LMT',
+            'ret' => 'DAY',
+            'ordersource' => 'API'
         ];
 
-        return $this->placeOrder($orderData);
+        return $this->makePiConnectRequest('PlaceOrder', $jData);
     }
 
     /**
-     * Place a bracket order (entry + stop loss + target)
+     * Place Stop Loss Limit Order
      */
-    public function placeBracketOrder(string $symbol, int $quantity, float $entryPrice, float $stopLossPrice, float $targetPrice, string $transactionType = 'BUY'): array
+    public function placeStopLossLimitOrder(string $exchange, string $symbol, int $quantity, float $price, float $triggerPrice, string $transactionType = 'B', string $product = 'C'): array
     {
-        $orderData = [
-            'symbol' => $symbol,
-            'quantity' => $quantity,
-            'price' => $entryPrice,
-            'order_type' => 'BRACKET',
-            'transaction_type' => $transactionType,
-            'product' => 'CNC',
-            'validity' => 'DAY',
-            'stop_loss_price' => $stopLossPrice,
-            'target_price' => $targetPrice,
+        $jData = [
+            'uid' => $this->clientId,
+            'actid' => $this->clientId,
+            'exch' => $exchange,
+            'tsym' => $symbol,
+            'qty' => (string)$quantity,
+            'prc' => (string)$price,
+            'trgprc' => (string)$triggerPrice,
+            'dscqty' => '0',
+            'prd' => $product,
+            'trantype' => $transactionType,
+            'prctyp' => 'SL-LMT',
+            'ret' => 'DAY',
+            'ordersource' => 'API'
         ];
 
-        return $this->placeOrder($orderData);
+        return $this->makePiConnectRequest('PlaceOrder', $jData);
     }
 
     /**
-     * Smart Trading Logic Methods
+     * Place Stop Loss Market Order
      */
-
-    /**
-     * Execute a smart buy order with market analysis
-     */
-    public function smartBuy(string $symbol, int $quantity, array $options = []): array
+    public function placeStopLossMarketOrder(string $exchange, string $symbol, int $quantity, float $triggerPrice, string $transactionType = 'B', string $product = 'C', int $marketProtection = 5): array
     {
-        try {
-            // Get current market data
-            $marketData = $this->getMarketData($symbol);
+        $jData = [
+            'uid' => $this->clientId,
+            'actid' => $this->clientId,
+            'exch' => $exchange,
+            'tsym' => $symbol,
+            'qty' => (string)$quantity,
+            'mkt_protection' => (string)$marketProtection,
+            'prc' => '0',
+            'trgprc' => (string)$triggerPrice,
+            'dscqty' => '0',
+            'prd' => $product,
+            'trantype' => $transactionType,
+            'prctyp' => 'SL-MKT',
+            'ret' => 'DAY',
+            'ordersource' => 'API'
+        ];
 
-            if (!$marketData || !isset($marketData['last_price'])) {
-                throw new \Exception("Unable to get market data for {$symbol}");
-            }
-
-            $currentPrice = $marketData['last_price'];
-            $orderType = $options['order_type'] ?? 'MARKET';
-            $maxPrice = $options['max_price'] ?? null;
-
-            // Price protection
-            if ($maxPrice && $currentPrice > $maxPrice) {
-                throw new \Exception("Current price {$currentPrice} exceeds maximum allowed price {$maxPrice}");
-            }
-
-            // Check if we have sufficient balance
-            $balance = $this->getAccountBalance();
-            $requiredAmount = $quantity * $currentPrice;
-
-            if ($balance['available_cash'] < $requiredAmount) {
-                throw new \Exception("Insufficient balance. Required: {$requiredAmount}, Available: {$balance['available_cash']}");
-            }
-
-            $orderData = [
-                'symbol' => $symbol,
-                'quantity' => $quantity,
-                'order_type' => $orderType,
-                'product' => 'CNC',
-                'validity' => 'DAY',
-            ];
-
-            if ($orderType === 'LIMIT' && isset($options['price'])) {
-                $orderData['price'] = $options['price'];
-            }
-
-            Log::info('Executing smart buy order', [
-                'symbol' => $symbol,
-                'quantity' => $quantity,
-                'current_price' => $currentPrice,
-                'order_type' => $orderType
-            ]);
-
-            return $this->placeBuyOrder($orderData);
-
-        } catch (\Exception $e) {
-            Log::error('Smart buy order failed', [
-                'symbol' => $symbol,
-                'quantity' => $quantity,
-                'error' => $e->getMessage()
-            ]);
-            throw $e;
-        }
+        return $this->makePiConnectRequest('PlaceOrder', $jData);
     }
 
     /**
-     * Execute a smart sell order with position analysis
+     * Place Cover Order Limit
      */
-    public function smartSell(string $symbol, int $quantity, array $options = []): array
+    public function placeCoverOrderLimit(string $exchange, string $symbol, int $quantity, float $price, float $bookLossPrice, string $transactionType = 'B', string $product = 'H'): array
     {
-        try {
-            // Check current holdings
-            $holdings = $this->getHoldings();
-            $symbolHolding = collect($holdings)->firstWhere('symbol', $symbol);
+        $jData = [
+            'uid' => $this->clientId,
+            'actid' => $this->clientId,
+            'exch' => $exchange,
+            'tsym' => $symbol,
+            'qty' => (string)$quantity,
+            'prc' => (string)$price,
+            'prd' => $product,
+            'trantype' => $transactionType,
+            'prctyp' => 'LMT',
+            'ret' => 'DAY',
+            'blprc' => (string)$bookLossPrice,
+            'ordersource' => 'API'
+        ];
 
-            if (!$symbolHolding || $symbolHolding['quantity'] < $quantity) {
-                throw new \Exception("Insufficient holdings for {$symbol}. Available: " . ($symbolHolding['quantity'] ?? 0));
-            }
-
-            // Get current market data
-            $marketData = $this->getMarketData($symbol);
-            $currentPrice = $marketData['last_price'] ?? 0;
-
-            $orderType = $options['order_type'] ?? 'MARKET';
-            $minPrice = $options['min_price'] ?? null;
-
-            // Price protection for sell orders
-            if ($minPrice && $currentPrice < $minPrice) {
-                throw new \Exception("Current price {$currentPrice} is below minimum allowed price {$minPrice}");
-            }
-
-            $orderData = [
-                'symbol' => $symbol,
-                'quantity' => $quantity,
-                'order_type' => $orderType,
-                'product' => 'CNC',
-                'validity' => 'DAY',
-            ];
-
-            if ($orderType === 'LIMIT' && isset($options['price'])) {
-                $orderData['price'] = $options['price'];
-            }
-
-            Log::info('Executing smart sell order', [
-                'symbol' => $symbol,
-                'quantity' => $quantity,
-                'current_price' => $currentPrice,
-                'order_type' => $orderType
-            ]);
-
-            return $this->placeSellOrder($orderData);
-
-        } catch (\Exception $e) {
-            Log::error('Smart sell order failed', [
-                'symbol' => $symbol,
-                'quantity' => $quantity,
-                'error' => $e->getMessage()
-            ]);
-            throw $e;
-        }
+        return $this->makePiConnectRequest('PlaceOrder', $jData);
     }
 
     /**
-     * Execute a complete trade cycle (buy and sell with stop loss)
+     * Place Cover Order Market
      */
-    public function executeTradeCycle(string $symbol, int $quantity, float $entryPrice, float $stopLossPercent = 5, float $targetPercent = 10): array
+    public function placeCoverOrderMarket(string $exchange, string $symbol, int $quantity, float $bookLossPrice, string $transactionType = 'B', string $product = 'H', int $marketProtection = 5): array
     {
-        try {
-            $results = [];
+        $jData = [
+            'uid' => $this->clientId,
+            'actid' => $this->clientId,
+            'exch' => $exchange,
+            'tsym' => $symbol,
+            'qty' => (string)$quantity,
+            'mkt_protection' => (string)$marketProtection,
+            'prc' => '0',
+            'prd' => $product,
+            'trantype' => $transactionType,
+            'prctyp' => 'MKT',
+            'ret' => 'DAY',
+            'blprc' => (string)$bookLossPrice,
+            'ordersource' => 'API'
+        ];
 
-            // Calculate stop loss and target prices
-            $stopLossPrice = $entryPrice * (1 - $stopLossPercent / 100);
-            $targetPrice = $entryPrice * (1 + $targetPercent / 100);
-
-            // Place bracket order
-            $bracketOrder = $this->placeBracketOrder(
-                $symbol,
-                $quantity,
-                $entryPrice,
-                $stopLossPrice,
-                $targetPrice,
-                'BUY'
-            );
-
-            $results['bracket_order'] = $bracketOrder;
-
-            Log::info('Trade cycle initiated', [
-                'symbol' => $symbol,
-                'quantity' => $quantity,
-                'entry_price' => $entryPrice,
-                'stop_loss_price' => $stopLossPrice,
-                'target_price' => $targetPrice
-            ]);
-
-            return $results;
-
-        } catch (\Exception $e) {
-            Log::error('Trade cycle failed', [
-                'symbol' => $symbol,
-                'quantity' => $quantity,
-                'error' => $e->getMessage()
-            ]);
-            throw $e;
-        }
+        return $this->makePiConnectRequest('PlaceOrder', $jData);
     }
 
     /**
-     * Get market analysis for a symbol
+     * Place Cover Order Stop Loss Limit
      */
-    public function getMarketAnalysis(string $symbol): array
+    public function placeCoverOrderStopLossLimit(string $exchange, string $symbol, int $quantity, float $price, float $triggerPrice, float $bookLossPrice, string $transactionType = 'B', string $product = 'H'): array
     {
-        try {
-            $marketData = $this->getMarketData($symbol);
-            $orderBook = $this->getOrderBook($symbol);
+        $jData = [
+            'uid' => $this->clientId,
+            'actid' => $this->clientId,
+            'exch' => $exchange,
+            'tsym' => $symbol,
+            'qty' => (string)$quantity,
+            'prc' => (string)$price,
+            'trgprc' => (string)$triggerPrice,
+            'prd' => $product,
+            'trantype' => $transactionType,
+            'prctyp' => 'SL-LMT',
+            'ret' => 'DAY',
+            'blprc' => (string)$bookLossPrice,
+            'ordersource' => 'API'
+        ];
 
-            $analysis = [
-                'symbol' => $symbol,
-                'current_price' => $marketData['last_price'] ?? 0,
-                'change_percent' => $marketData['change_percent'] ?? 0,
-                'volume' => $marketData['volume'] ?? 0,
-                'bid_price' => $orderBook['bids'][0]['price'] ?? 0,
-                'ask_price' => $orderBook['asks'][0]['price'] ?? 0,
-                'spread' => 0,
-                'timestamp' => now(),
-            ];
-
-            if ($analysis['bid_price'] && $analysis['ask_price']) {
-                $analysis['spread'] = $analysis['ask_price'] - $analysis['bid_price'];
-            }
-
-            return $analysis;
-
-        } catch (\Exception $e) {
-            Log::error('Market analysis failed', [
-                'symbol' => $symbol,
-                'error' => $e->getMessage()
-            ]);
-            throw $e;
-        }
+        return $this->makePiConnectRequest('PlaceOrder', $jData);
     }
+
+    /**
+     * Place Bracket Order Limit
+     */
+    public function placeBracketOrderLimit(string $exchange, string $symbol, int $quantity, float $price, float $bookLossPrice, float $bookProfitPrice, float $trailPrice, string $transactionType = 'B', string $product = 'B'): array
+    {
+        $jData = [
+            'uid' => $this->clientId,
+            'actid' => $this->clientId,
+            'exch' => $exchange,
+            'tsym' => $symbol,
+            'qty' => (string)$quantity,
+            'prc' => (string)$price,
+            'prd' => $product,
+            'trantype' => $transactionType,
+            'prctyp' => 'LMT',
+            'ret' => 'DAY',
+            'blprc' => (string)$bookLossPrice,
+            'bpprc' => (string)$bookProfitPrice,
+            'trailprc' => (string)$trailPrice,
+            'ordersource' => 'API'
+        ];
+
+        return $this->makePiConnectRequest('PlaceOrder', $jData);
+    }
+
+    /**
+     * Place Bracket Order Market
+     */
+    public function placeBracketOrderMarket(string $exchange, string $symbol, int $quantity, float $bookLossPrice, float $bookProfitPrice, float $trailPrice, string $transactionType = 'B', string $product = 'B', int $marketProtection = 5): array
+    {
+        $jData = [
+            'uid' => $this->clientId,
+            'actid' => $this->clientId,
+            'exch' => $exchange,
+            'tsym' => $symbol,
+            'qty' => (string)$quantity,
+            'mkt_protection' => (string)$marketProtection,
+            'prc' => '0',
+            'prd' => $product,
+            'trantype' => $transactionType,
+            'prctyp' => 'MKT',
+            'ret' => 'DAY',
+            'blprc' => (string)$bookLossPrice,
+            'bpprc' => (string)$bookProfitPrice,
+            'trailprc' => (string)$trailPrice,
+            'ordersource' => 'API'
+        ];
+
+        return $this->makePiConnectRequest('PlaceOrder', $jData);
+    }
+
+    /**
+     * Place Bracket Order Stop Loss Limit
+     */
+    public function placeBracketOrderStopLossLimit(string $exchange, string $symbol, int $quantity, float $price, float $triggerPrice, float $bookLossPrice, float $bookProfitPrice, float $trailPrice, string $transactionType = 'B', string $product = 'B'): array
+    {
+        $jData = [
+            'uid' => $this->clientId,
+            'actid' => $this->clientId,
+            'exch' => $exchange,
+            'tsym' => $symbol,
+            'qty' => (string)$quantity,
+            'prc' => (string)$price,
+            'trgprc' => (string)$triggerPrice,
+            'prd' => $product,
+            'trantype' => $transactionType,
+            'prctyp' => 'SL-LMT',
+            'ret' => 'DAY',
+            'blprc' => (string)$bookLossPrice,
+            'bpprc' => (string)$bookProfitPrice,
+            'trailprc' => (string)$trailPrice,
+            'ordersource' => 'API'
+        ];
+
+        return $this->makePiConnectRequest('PlaceOrder', $jData);
+    }
+
+    // ===========================================
+    // HOLDINGS AND LIMITS APIs
+    // ===========================================
+
+    /**
+     * Get Holdings
+     */
+    public function getHoldings(string $product = 'C'): array
+    {
+        $jData = [
+            'uid' => $this->clientId,
+            'actid' => $this->clientId,
+            'prd' => $product
+        ];
+
+        return $this->makePiConnectRequest('Holdings', $jData);
+    }
+
+    /**
+     * Get Limits
+     */
+    public function getLimits(): array
+    {
+        $jData = [
+            'uid' => $this->clientId,
+            'actid' => $this->clientId
+        ];
+        return $this->makePiConnectRequest('Limits', $jData);
+    }
+
+    // ===========================================
+    // MARKET INFO APIs
+    // ===========================================
+
+    /**
+     * Get Index List
+     */
+    public function getIndexList(string $exchange): array
+    {
+        $jData = [
+            'uid' => $this->clientId,
+            'exch' => $exchange
+        ];
+
+        return $this->makePiConnectRequest('GetIndexList', $jData);
+    }
+
+    /**
+     * Get Top List Name
+     */
+    public function getTopListName(string $exchange): array
+    {
+        $jData = [
+            'uid' => $this->clientId,
+            'exch' => $exchange
+        ];
+
+        return $this->makePiConnectRequest('TopListName', $jData);
+    }
+
+    /**
+     * Get Top List
+     */
+    public function getTopList(string $exchange, string $topListType = 'T', string $basket = 'NSEALL', string $criteria = 'LTP'): array
+    {
+        $jData = [
+            'uid' => $this->clientId,
+            'exch' => $exchange,
+            'tb' => $topListType,
+            'bskt' => $basket,
+            'crt' => $criteria
+        ];
+
+        return $this->makePiConnectRequest('TopList', $jData);
+    }
+
+    /**
+     * Get Time Price Series
+     */
+    public function getTimePriceSeries(string $exchange, string $token, int $startTime, int $endTime, int $interval = 1): array
+    {
+        $jData = [
+            'uid' => $this->clientId,
+            'exch' => $exchange,
+            'token' => $token,
+            'st' => (string)$startTime,
+            'et' => (string)$endTime,
+            'intrv' => (string)$interval
+        ];
+
+        return $this->makePiConnectRequest('TPSeries', $jData);
+    }
+
+    /**
+     * Get EOD Chart Data
+     */
+    public function getEODChartData(string $symbol, int $fromDate, int $toDate): array
+    {
+        $jData = [
+            'sym' => $symbol,
+            'from' => (string)$fromDate,
+            'to' => (string)$toDate
+        ];
+
+        return $this->makePiConnectRequest('EODChartData', $jData);
+    }
+
+    /**
+     * Get Option Greek
+     */
+    public function getOptionGreek(string $expiryDate = '', string $strikePrice = '', string $spotPrice = '', string $interestRate = '', string $volatility = '', string $optionType = ''): array
+    {
+        $jData = [
+            'exd' => $expiryDate,
+            'strprc' => $strikePrice,
+            'sptprc' => $spotPrice,
+            'int_rate' => $interestRate,
+            'volatility' => $volatility,
+            'optt' => $optionType
+        ];
+
+        return $this->makePiConnectRequest('GetOptionGreek', $jData);
+    }
+
+    /**
+     * Get Exchange Message
+     */
+    public function getExchangeMessage(string $exchange): array
+    {
+        $jData = [
+            'uid' => $this->clientId,
+            'exch' => $exchange
+        ];
+
+        return $this->makePiConnectRequest('ExchMsg', $jData);
+    }
+
+    /**
+     * Get Broker Message
+     */
+    public function getBrokerMessage(): array
+    {
+        $jData = [
+            'uid' => $this->clientId
+        ];
+
+        return $this->makePiConnectRequest('GetBrokerMsg', $jData);
+    }
+
+    /**
+     * Calculate Span
+     */
+    public function calculateSpan(array $positions): array
+    {
+        $jData = [
+            'actid' => $this->clientId,
+            'pos' => $positions
+        ];
+
+        return $this->makePiConnectRequest('SpanCalc', $jData);
+    }
+
+    // ===========================================
+    // ALERTS APIs
+    // ===========================================
+
+    /**
+     * Set Alert
+     */
+    public function setAlert(string $symbol, string $exchange, string $alertType = '', string $validity = 'DAY', string $remarks = 'Testing'): array
+    {
+        $jData = [
+            'uid' => $this->clientId,
+            'tsym' => $symbol,
+            'exch' => $exchange,
+            'ai_t' => $alertType,
+            'validity' => $validity,
+            'remarks' => $remarks
+        ];
+
+        return $this->makePiConnectRequest('SetAlert', $jData);
+    }
+
+    /**
+     * Modify Alert
+     */
+    public function modifyAlert(string $symbol, string $exchange, string $alertId, string $alertType = '', string $validity = 'DAY', string $remarks = 'Testing'): array
+    {
+        $jData = [
+            'uid' => $this->clientId,
+            'tsym' => $symbol,
+            'exch' => $exchange,
+            'ai_t' => $alertType,
+            'al_id' => $alertId,
+            'validity' => $validity,
+            'remarks' => $remarks
+        ];
+
+        return $this->makePiConnectRequest('ModifyAlert', $jData);
+    }
+
+    /**
+     * Cancel Alert
+     */
+    public function cancelAlert(string $alertId): array
+    {
+        $jData = [
+            'uid' => $this->clientId,
+            'al_id' => $alertId
+        ];
+
+        return $this->makePiConnectRequest('CancelAlert', $jData);
+    }
+
+    /**
+     * Get Pending Alert
+     */
+    public function getPendingAlert(): array
+    {
+        $jData = [
+            'uid' => $this->clientId
+        ];
+
+        return $this->makePiConnectRequest('GetPendingAlert', $jData);
+    }
+
+    /**
+     * Get Enabled Alert Types
+     */
+    public function getEnabledAlertTypes(): array
+    {
+        $jData = [
+            'uid' => $this->clientId
+        ];
+
+        return $this->makePiConnectRequest('GetEnabledAlertTypes', $jData);
+    }
+
+    /**
+     * Get Unsettled Trading Date
+     */
+    public function getUnsettledTradingDate(): array
+    {
+        $jData = [
+            'uid' => $this->clientId
+        ];
+
+        return $this->makePiConnectRequest('GetUnStledTradingDate', $jData);
+    }
+
+    // ===========================================
+    // FUNDS APIs
+    // ===========================================
+
+    /**
+     * Get Max Payout Amount
+     */
+    public function getMaxPayoutAmount(): array
+    {
+        $jData = [
+            'uid' => $this->clientId,
+            'actid' => $this->clientId
+        ];
+
+        return $this->makePiConnectRequest('GetMaxPayoutAmount', $jData);
+    }
+
+    /**
+     * Request Funds Payout
+     */
+    public function requestFundsPayout(float $amount, string $remarks = ''): array
+    {
+        $jData = [
+            'uid' => $this->clientId,
+            'actid' => $this->clientId,
+            'payout' => (string)$amount,
+            'remarks' => $remarks
+        ];
+
+        return $this->makePiConnectRequest('FundsPayOutReq', $jData);
+    }
+
+    /**
+     * Get Payin Report
+     */
+    public function getPayinReport(string $fromDate = '', string $toDate = ''): array
+    {
+        $jData = [
+            'actid' => $this->clientId,
+            'from_date' => $fromDate,
+            'to_date' => $toDate
+        ];
+
+        return $this->makePiConnectRequest('GetPayinReport', $jData);
+    }
+
+    /**
+     * Get Payout Report
+     */
+    public function getPayoutReport(string $fromDate = '', string $toDate = ''): array
+    {
+        $jData = [
+            'actid' => $this->clientId,
+            'from_date' => $fromDate,
+            'to_date' => $toDate
+        ];
+
+        return $this->makePiConnectRequest('GetPayoutReport', $jData);
+    }
+
+    /**
+     * Cancel Payout
+     */
+    public function cancelPayout(string $transactionRefNumber, string $brokerName = ''): array
+    {
+        $jData = [
+            'actid' => $this->clientId,
+            'uid' => $this->clientId,
+            'trans_ref_num' => $transactionRefNumber,
+            'brkname' => $brokerName
+        ];
+
+        return $this->makePiConnectRequest('CancelPayout', $jData);
+    }
+
+    // ===========================================
+    // USER DETAILS APIs
+    // ===========================================
+
+    /**
+     * Get User Details
+     */
+    public function getUserDetails(): array
+    {
+        $jData = [
+            'uid' => $this->clientId
+        ];
+
+        return $this->makePiConnectRequest('UserDetails', $jData);
+    }
+
+    // ===========================================
+    // SCRIPS APIs
+    // ===========================================
+
+    /**
+     * Search Scrip
+     */
+    public function searchScrip(string $searchText, string $exchange): array
+    {
+        $jData = [
+            'uid' => $this->clientId,
+            'stext' => $searchText,
+            'exch' => $exchange
+        ];
+
+        return $this->makePiConnectRequest('SearchScrip', $jData);
+    }
+
+    /**
+     * Get Quotes
+     */
+    public function getQuotes(string $token, string $exchange): array
+    {
+        $jData = [
+            'uid' => $this->clientId,
+            'token' => $token,
+            'exch' => $exchange
+        ];
+
+        return $this->makePiConnectRequest('GetQuotes', $jData);
+    }
+
+    // ===========================================
+    // ORDERS AND TRADES APIs
+    // ===========================================
+
+    /**
+     * Get Order Margin
+     */
+    public function getOrderMargin(string $exchange, string $symbol, int $quantity, float $price, string $product = 'C', string $transactionType = 'B', string $priceType = 'LMT', int $originalQuantity = 0, float $originalPrice = 0): array
+    {
+        $jData = [
+            'uid' => $this->clientId,
+            'actid' => $this->clientId,
+            'exch' => $exchange,
+            'tsym' => $symbol,
+            'qty' => (string)$quantity,
+            'prc' => (string)$price,
+            'prd' => $product,
+            'trantype' => $transactionType,
+            'prctyp' => $priceType,
+            'rorgqty' => (string)$originalQuantity,
+            'rorgprc' => (string)$originalPrice
+        ];
+
+        return $this->makePiConnectRequest('GetOrderMargin', $jData);
+    }
+
+    /**
+     * Get Basket Margin
+     */
+    public function getBasketMargin(string $exchange, string $symbol, int $quantity, float $price, string $product = 'C', string $transactionType = 'B', string $priceType = 'LMT', int $originalQuantity = 0, float $originalPrice = 0): array
+    {
+        $jData = [
+            'uid' => $this->clientId,
+            'actid' => $this->clientId,
+            'exch' => $exchange,
+            'tsym' => $symbol,
+            'qty' => (string)$quantity,
+            'prc' => (string)$price,
+            'prd' => $product,
+            'trantype' => $transactionType,
+            'prctyp' => $priceType,
+            'rorgqty' => (string)$originalQuantity,
+            'rorgprc' => (string)$originalPrice
+        ];
+
+        return $this->makePiConnectRequest('GetBasketMargin', $jData);
+    }
+
+    /**
+     * Get Order Book
+     */
+    public function getOrderBook(): array
+    {
+        $jData = [
+            'uid' => $this->clientId
+        ];
+
+        return $this->makePiConnectRequest('OrderBook', $jData);
+    }
+
+    /**
+     * Get Multi Leg Order Book
+     */
+    public function getMultiLegOrderBook(): array
+    {
+        $jData = [
+            'uid' => $this->clientId
+        ];
+
+        return $this->makePiConnectRequest('MultiLegOrderBook', $jData);
+    }
+
+    /**
+     * Get Single Order History
+     */
+    public function getSingleOrderHistory(string $orderNumber): array
+    {
+        $jData = [
+            'uid' => $this->clientId,
+            'norenordno' => $orderNumber
+        ];
+
+        return $this->makePiConnectRequest('SingleOrdHist', $jData);
+    }
+
+    /**
+     * Get Trade Book
+     */
+    public function getTradeBook(): array
+    {
+        $jData = [
+            'uid' => $this->clientId,
+            'actid' => $this->clientId
+        ];
+
+        return $this->makePiConnectRequest('TradeBook', $jData);
+    }
+
+    /**
+     * Get Position Book
+     */
+    public function getPositionBook(string $exchange = 'NSE', string $symbol = 'INFY-EQ', int $quantity = 10, string $product = 'C', string $previousProduct = 'I', string $transactionType = 'B', string $positionType = 'DAY'): array
+    {
+        $jData = [
+            'uid' => $this->clientId,
+            'actid' => $this->clientId,
+            'exch' => $exchange,
+            'tsym' => $symbol,
+            'qty' => (string)$quantity,
+            'prd' => $product,
+            'prevprd' => $previousProduct,
+            'trantype' => $transactionType,
+            'postype' => $positionType,
+            'ordersource' => 'API'
+        ];
+
+        return $this->makePiConnectRequest('PositionBook', $jData);
+    }
+
+    /**
+     * Exit SNO Order
+     */
+    public function exitSNOOrder(string $product, string $orderNumber): array
+    {
+        $jData = [
+            'uid' => $this->clientId,
+            'prd' => $product,
+            'norenordno' => $orderNumber
+        ];
+
+        return $this->makePiConnectRequest('ExitSNOOrder', $jData);
+    }
+
+    // ===========================================
+    // GTT AND OCO APIs
+    // ===========================================
+
+    /**
+     * Place GTT Order
+     */
+    public function placeGTTOrder(string $symbol, string $exchange, string $alertType, string $validity, float $conditionValue, string $transactionType, string $priceType, string $product, string $retention, int $quantity, float $price): array
+    {
+        $jData = [
+            'uid' => $this->clientId,
+            'actid' => $this->clientId,
+            'tsym' => $symbol,
+            'exch' => $exchange,
+            'ai_t' => $alertType,
+            'validity' => $validity,
+            'd' => (string)$conditionValue,
+            'trantype' => $transactionType,
+            'prctyp' => $priceType,
+            'prd' => $product,
+            'ret' => $retention,
+            'qty' => (string)$quantity,
+            'prc' => (string)$price
+        ];
+
+        return $this->makePiConnectRequest('PlaceGTTOrder', $jData);
+    }
+
+    /**
+     * Modify GTT Order
+     */
+    public function modifyGTTOrder(string $symbol, string $exchange, string $alertId, string $alertType, string $validity, float $conditionValue, string $transactionType, string $priceType, string $product, string $retention, int $quantity, float $price): array
+    {
+        $jData = [
+            'uid' => $this->clientId,
+            'actid' => $this->clientId,
+            'exch' => $exchange,
+            'ai_t' => $alertType,
+            'validity' => $validity,
+            'al_id' => $alertId,
+            'd' => (string)$conditionValue,
+            'trantype' => $transactionType,
+            'prctyp' => $priceType,
+            'prd' => $product,
+            'ret' => $retention,
+            'tsym' => $symbol,
+            'qty' => (string)$quantity,
+            'prc' => (string)$price
+        ];
+
+        return $this->makePiConnectRequest('ModifyGTTOrder', $jData);
+    }
+
+    /**
+     * Cancel GTT Order
+     */
+    public function cancelGTTOrder(string $alertId): array
+    {
+        $jData = [
+            'uid' => $this->clientId,
+            'al_id' => $alertId
+        ];
+
+        return $this->makePiConnectRequest('CancelGTTOrder', $jData);
+    }
+
+    /**
+     * Place OCO Order
+     */
+    public function placeOCOOrder(string $symbol, string $exchange, string $alertType, string $validity, array $oiVariables, array $placeOrderParams, array $placeOrderParamsLeg2): array
+    {
+        $jData = [
+            'uid' => $this->clientId,
+            'ai_t' => $alertType,
+            'validity' => $validity,
+            'tsym' => $symbol,
+            'exch' => $exchange,
+            'oivariable' => $oiVariables,
+            'place_order_params' => $placeOrderParams,
+            'place_order_params_leg2' => $placeOrderParamsLeg2
+        ];
+
+        return $this->makePiConnectRequest('PlaceOCOOrder', $jData);
+    }
+
+    /**
+     * Modify OCO Order
+     */
+    public function modifyOCOOrder(string $symbol, string $exchange, string $alertId, string $alertType, string $validity, array $oiVariables, array $placeOrderParams, array $placeOrderParamsLeg2): array
+    {
+        $jData = [
+            'uid' => $this->clientId,
+            'ai_t' => $alertType,
+            'validity' => $validity,
+            'tsym' => $symbol,
+            'exch' => $exchange,
+            'al_id' => $alertId,
+            'oivariable' => $oiVariables,
+            'place_order_params' => $placeOrderParams,
+            'place_order_params_leg2' => $placeOrderParamsLeg2
+        ];
+
+        return $this->makePiConnectRequest('ModifyOCOOrder', $jData);
+    }
+
+    /**
+     * Cancel OCO Order
+     */
+    public function cancelOCOOrder(string $alertId): array
+    {
+        $jData = [
+            'uid' => $this->clientId,
+            'al_id' => $alertId
+        ];
+
+        return $this->makePiConnectRequest('CancelOCOOrder', $jData);
+    }
+
+    /**
+     * Get Pending GTT Order
+     */
+    public function getPendingGTTOrder(): array
+    {
+        $jData = [
+            'uid' => $this->clientId
+        ];
+
+        return $this->makePiConnectRequest('GetPendingGTTOrder', $jData);
+    }
+
+    /**
+     * Get Enabled GTTs
+     */
+    public function getEnabledGTTs(): array
+    {
+        $jData = [
+            'uid' => $this->clientId
+        ];
+
+        return $this->makePiConnectRequest('GetEnabledGTTs', $jData);
+    }
+
+    // ===========================================
+    // UTILITY METHODS
+    // ===========================================
 
     /**
      * Disconnect and clear tokens
@@ -550,18 +1069,33 @@ class FlatTradeService
     public function disconnect(): bool
     {
         try {
+            // Clear cache tokens
             Cache::forget('flat_trade_access_token');
             Cache::forget('flat_trade_client_id');
+
+            // Update user model
+            $user = Auth::user();
+            if ($user) {
+                $user->update([
+                    'flat_trade_connected' => false,
+                    'flat_trade_client_id' => null,
+                    'flat_trade_connected_at' => null,
+                    'flat_trade_token_expires_at' => null,
+                ]);
+            }
 
             $this->accessToken = null;
             $this->refreshToken = null;
 
-            Log::info('FlatTrade disconnected successfully');
+            Log::info('FlatTrade disconnected successfully', [
+                'user_id' => Auth::id()
+            ]);
             return true;
 
         } catch (\Exception $e) {
             Log::error('FlatTrade disconnect error', [
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
+                'user_id' => Auth::id()
             ]);
             return false;
         }

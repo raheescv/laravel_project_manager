@@ -36,6 +36,9 @@ Route::name('flat_trade::')->prefix('flat_trade')->group(function (): void {
 
         // View account status
         Route::get('/status', [FlatTradeController::class, 'status'])->name('status')->can('flat_trade.view');
+        
+        // Test API connection
+        Route::get('/test-api', [FlatTradeController::class, 'testApi'])->name('test_api')->can('flat_trade.view');
 
         // Trading operations
         Route::post('/buy', [FlatTradeController::class, 'placeBuyOrder'])->name('buy')->can('flat_trade.trade');
@@ -44,10 +47,27 @@ Route::name('flat_trade::')->prefix('flat_trade')->group(function (): void {
         Route::post('/cancel-order', [FlatTradeController::class, 'cancelOrder'])->name('cancel_order')->can('flat_trade.trade');
         Route::post('/trade-cycle', [FlatTradeController::class, 'executeTradeCycle'])->name('trade_cycle')->can('flat_trade.trade');
 
-        // Market data and account info
+        // Market data and quotes
         Route::get('/market-data', [FlatTradeController::class, 'getMarketData'])->name('market_data')->can('flat_trade.view');
+        Route::get('/search-scrip', [FlatTradeController::class, 'searchScrip'])->name('search_scrip')->can('flat_trade.view');
+        Route::get('/market-info', [FlatTradeController::class, 'getMarketInfo'])->name('market_info')->can('flat_trade.view');
+        Route::get('/time-series', [FlatTradeController::class, 'getTimePriceSeries'])->name('time_series')->can('flat_trade.view');
+        Route::get('/eod-chart', [FlatTradeController::class, 'getEODChartData'])->name('eod_chart')->can('flat_trade.view');
+
+        // Account and portfolio info
         Route::get('/balance', [FlatTradeController::class, 'getBalance'])->name('balance')->can('flat_trade.view');
         Route::get('/holdings', [FlatTradeController::class, 'getHoldings'])->name('holdings')->can('flat_trade.view');
+        Route::get('/user-details', [FlatTradeController::class, 'getUserDetails'])->name('user_details')->can('flat_trade.view');
+
+        // Orders and trades
+        Route::get('/order-book', [FlatTradeController::class, 'getOrderBook'])->name('order_book')->can('flat_trade.view');
+        Route::get('/trade-book', [FlatTradeController::class, 'getTradeBook'])->name('trade_book')->can('flat_trade.view');
+        Route::get('/position-book', [FlatTradeController::class, 'getPositionBook'])->name('position_book')->can('flat_trade.view');
+
+        // Alerts management
+        Route::post('/set-alert', [FlatTradeController::class, 'setAlert'])->name('set_alert')->can('flat_trade.trade');
+        Route::get('/pending-alerts', [FlatTradeController::class, 'getPendingAlerts'])->name('pending_alerts')->can('flat_trade.view');
+        Route::post('/cancel-alert', [FlatTradeController::class, 'cancelAlert'])->name('cancel_alert')->can('flat_trade.trade');
     });
 });
 
