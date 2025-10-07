@@ -64,4 +64,5 @@ return [
     'system health' => ['view'],
     'visitor analytics' => ['view'],
     'configuration' => ['barcode', 'settings'],
+    'flat_trade' => ['view', 'connect','trade'],
 ];

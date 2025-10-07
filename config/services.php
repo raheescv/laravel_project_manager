@@ -45,4 +45,10 @@ return [
     'id_scanner' => [
         'url' => env('ID_SCANNER_URL', 'http://localhost:5000'),
     ],
+    'flat_trade' => [
+        'base_url' => env('FLAT_TRADE_BASE_URL', 'https://api.flattrade.in'),
+        'api_key' => env('FLAT_TRADE_API_KEY'),
+        'client_id' => env('FLAT_TRADE_CLIENT_ID'),
+        'client_secret' => env('FLAT_TRADE_CLIENT_SECRET'),
+    ],
 ];
