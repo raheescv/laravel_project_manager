@@ -167,62 +167,62 @@
         .trade-table {
             font-size: 0.9rem;
         }
-        
+
         .trade-table th {
             background-color: #f8f9fa;
             border-bottom: 2px solid #dee2e6;
             font-weight: 600;
         }
-        
+
         .trade-status-complete {
             color: #28a745;
         }
-        
+
         .trade-status-pending {
             color: #ffc107;
         }
-        
+
         .trade-status-cancelled {
             color: #dc3545;
         }
-        
+
         .trade-status-rejected {
             color: #6c757d;
         }
-        
+
         .trade-type-buy {
             color: #28a745;
             font-weight: 600;
         }
-        
+
         .trade-type-sell {
             color: #dc3545;
             font-weight: 600;
         }
-        
+
         .pnl-positive {
             color: #28a745;
             font-weight: 600;
         }
-        
+
         .pnl-negative {
             color: #dc3545;
             font-weight: 600;
         }
-        
+
         .trade-row {
             cursor: pointer;
             transition: background-color 0.2s;
         }
-        
+
         .trade-row:hover {
             background-color: #f8f9fa;
         }
-        
+
         .summary-card {
             transition: transform 0.2s ease-in-out;
         }
-        
+
         .summary-card:hover {
             transform: translateY(-2px);
         }
@@ -238,17 +238,17 @@
             // Set default date range (last 30 days)
             const today = new Date();
             const thirtyDaysAgo = new Date(today.getTime() - (30 * 24 * 60 * 60 * 1000));
-            
+
             $('#filter-date-to').val(today.toISOString().split('T')[0]);
             $('#filter-date-from').val(thirtyDaysAgo.toISOString().split('T')[0]);
-            
+
             // Load initial data
             loadTrades();
         });
 
         function loadTrades() {
             $('#trades-container').html('<div class="text-center"><div class="spinner-border text-primary" role="status"></div><p class="mt-2 text-muted">Loading trade history...</p></div>');
-            
+
             // This would be implemented when the API endpoint is available
             // For now, show a placeholder
             setTimeout(function() {
@@ -273,7 +273,7 @@
                 date_to: $('#filter-date-to').val(),
                 status: $('#filter-status').val()
             };
-            
+
             loadTrades();
         }
 
@@ -293,7 +293,7 @@
             const successful = trades.filter(t => t.status === 'COMPLETE').length;
             const pending = trades.filter(t => t.status === 'PENDING').length;
             const failed = trades.filter(t => ['CANCELLED', 'REJECTED'].includes(t.status)).length;
-            
+
             $('#total-trades-count').text(total);
             $('#successful-trades').text(successful);
             $('#pending-trades').text(pending);
@@ -305,7 +305,7 @@
             // This would load detailed trade information
             $('#trade-details-content').html('<div class="text-center"><div class="spinner-border text-primary" role="status"></div><p class="mt-2">Loading trade details...</p></div>');
             $('#tradeDetailsModal').modal('show');
-            
+
             // Placeholder for trade details
             setTimeout(function() {
                 $('#trade-details-content').html(`
@@ -344,7 +344,7 @@
             if (trades.length === 0) {
                 return '<div class="text-center text-muted"><i class="fa fa-history fa-3x mb-3"></i><p>No trades found</p></div>';
             }
-            
+
             let html = '<div class="table-responsive"><table class="table table-hover trade-table">';
             html += '<thead><tr>';
             html += '<th>Date/Time</th>';
@@ -357,12 +357,12 @@
             html += '<th>P&L</th>';
             html += '<th>Actions</th>';
             html += '</tr></thead><tbody>';
-            
+
             trades.forEach(function(trade) {
                 const statusClass = 'trade-status-' + trade.status.toLowerCase();
                 const typeClass = 'trade-type-' + trade.type.toLowerCase();
                 const pnlClass = parseFloat(trade.pnl || 0) >= 0 ? 'pnl-positive' : 'pnl-negative';
-                
+
                 html += '<tr class="trade-row" onclick="showTradeDetails(\'' + trade.id + '\')">';
                 html += '<td>' + trade.timestamp + '</td>';
                 html += '<td><strong>' + trade.symbol + '</strong></td>';
@@ -379,7 +379,7 @@
                 html += '</td>';
                 html += '</tr>';
             });
-            
+
             html += '</tbody></table></div>';
             return html;
         }

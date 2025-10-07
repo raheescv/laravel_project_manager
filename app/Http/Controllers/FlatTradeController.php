@@ -15,20 +15,20 @@ class FlatTradeController extends Controller
     /**
      * Handle FlatTrade OAuth redirect callback
      *
-     * This endpoint receives the authorization code from FlatTrade after user authentication.
-     * The code and client parameters are sent by FlatTrade as mentioned in their documentation.
+     * This endpoint receives the request_code from FlatTrade after user authentication.
+     * The request_code is a one-time code that needs to be exchanged for a token.
      */
     public function handleOAuthRedirect(Request $request): RedirectResponse|JsonResponse
     {
         try {
             // Validate required parameters from FlatTrade
-            $code = $request->query('code');
+            $requestCode = $request->query('request_code');
             $client = $request->query('client');
             $state = $request->query('state');
 
-            if (! $code || ! $client) {
-                Log::warning('FlatTrade OAuth redirect missing required parameters', [
-                    'code' => $code,
+            if (! $requestCode) {
+                Log::warning('FlatTrade OAuth redirect missing request_code', [
+                    'request_code' => $requestCode,
                     'client' => $client,
                     'state' => $state,
                     'ip' => $request->ip(),
@@ -41,18 +41,17 @@ class FlatTradeController extends Controller
 
             // Log successful OAuth callback
             Log::info('FlatTrade OAuth redirect received', [
-                'code' => $code,
+                'request_code' => $requestCode,
                 'client' => $client,
                 'state' => $state,
                 'user_id' => Auth::id(),
                 'ip' => $request->ip(),
             ]);
 
-            // Use FlatTradeService to authenticate
+            // Use FlatTradeService to authenticate with request_code
             $flatTradeService = new FlatTradeService();
-            $redirectUri = route('flat_trade::oauth.redirect');
 
-            if ($flatTradeService->authenticate($code, $redirectUri)) {
+            if ($flatTradeService->authenticate($requestCode)) {
                 return redirect()->route('flat_trade::dashboard')
                     ->with('success', 'FlatTrade account connected successfully!');
             } else {
@@ -161,21 +160,22 @@ class FlatTradeController extends Controller
      */
     public function connect(): RedirectResponse
     {
-        // TODO: Generate OAuth state parameter for security
+        // Generate state parameter for security
         $state = bin2hex(random_bytes(16));
 
-        // TODO: Store state in session or cache for validation
+        // Store state in session for validation
+        session(['flat_trade_oauth_state' => $state]);
 
-        // TODO: Build FlatTrade OAuth URL with proper parameters
-        $oauthUrl = config('services.flat_trade.base_url') . '/oauth/authorize?' . http_build_query([
-            'response_type' => 'code',
-            'client_id' => config('services.flat_trade.client_id'),
-            'redirect_uri' => route('flat_trade::oauth.redirect'),
+        // Build FlatTrade authorization URL as per their documentation
+        $authUrl = config('services.flat_trade.auth_url') . '/?app_key=' . config('services.flat_trade.api_key');
+
+        Log::info('FlatTrade authorization initiated', [
+            'user_id' => Auth::id(),
             'state' => $state,
-            'scope' => 'read,write', // Adjust based on FlatTrade's available scopes
+            'auth_url' => $authUrl
         ]);
 
-        return redirect($oauthUrl);
+        return redirect($authUrl);
     }
 
     /**

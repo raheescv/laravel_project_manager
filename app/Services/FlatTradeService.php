@@ -10,7 +10,9 @@ use Carbon\Carbon;
 class FlatTradeService
 {
     protected string $baseUrl;
+    protected string $authApiUrl;
     protected string $apiKey;
+    protected string $apiSecret;
     protected string $clientId;
     protected string $clientSecret;
     protected ?string $accessToken = null;
@@ -19,38 +21,62 @@ class FlatTradeService
     public function __construct()
     {
         $this->baseUrl = config('services.flat_trade.base_url', 'https://api.flattrade.in');
+        $this->authApiUrl = config('services.flat_trade.auth_api_url', 'https://authapi.flattrade.in');
         $this->apiKey = config('services.flat_trade.api_key');
+        $this->apiSecret = config('services.flat_trade.api_secret');
         $this->clientId = config('services.flat_trade.client_id');
         $this->clientSecret = config('services.flat_trade.client_secret');
     }
 
     /**
-     * Authenticate with FlatTrade API using OAuth2
+     * Generate SHA-256 hash for api_secret as per FlatTrade documentation
+     * SHA-256 hash of (api_key + request_code + api_secret)
      */
-    public function authenticate(string $authorizationCode, string $redirectUri): bool
+    protected function generateApiSecretHash(string $requestCode): string
+    {
+        $stringToHash = $this->apiKey . $requestCode . $this->apiSecret;
+        return hash('sha256', $stringToHash);
+    }
+
+    /**
+     * Authenticate with FlatTrade API using request_code
+     */
+    public function authenticate(string $requestCode): bool
     {
         try {
-            $response = Http::asForm()->post($this->baseUrl . '/oauth/token', [
-                'grant_type' => 'authorization_code',
-                'client_id' => $this->clientId,
-                'client_secret' => $this->clientSecret,
-                'code' => $authorizationCode,
-                'redirect_uri' => $redirectUri,
+            // Generate the SHA-256 hash for api_secret
+            $apiSecretHash = $this->generateApiSecretHash($requestCode);
+
+            $response = Http::post($this->authApiUrl . '/trade/apitoken', [
+                'api_key' => $this->apiKey,
+                'request_code' => $requestCode,
+                'api_secret' => $apiSecretHash,
             ]);
 
             if ($response->successful()) {
                 $data = $response->json();
-                $this->accessToken = $data['access_token'];
-                $this->refreshToken = $data['refresh_token'] ?? null;
 
-                // Store tokens securely (consider using encrypted storage)
-                Cache::put('flat_trade_access_token', $this->accessToken, now()->addMinutes(55));
-                if ($this->refreshToken) {
-                    Cache::put('flat_trade_refresh_token', $this->refreshToken, now()->addDays(30));
+                // Check if the response indicates success
+                if (isset($data['status']) && $data['status'] === 'Ok' && isset($data['token'])) {
+                    $this->accessToken = $data['token'];
+                    $this->clientId = $data['client'] ?? $this->clientId;
+
+                    // Store tokens securely
+                    Cache::put('flat_trade_access_token', $this->accessToken, now()->addMinutes(55));
+                    Cache::put('flat_trade_client_id', $this->clientId, now()->addDays(30));
+
+                    Log::info('FlatTrade authentication successful', [
+                        'client' => $this->clientId,
+                        'token_received' => !empty($this->accessToken)
+                    ]);
+                    return true;
+                } else {
+                    Log::error('FlatTrade authentication failed - invalid response', [
+                        'response' => $data,
+                        'status_code' => $response->status()
+                    ]);
+                    return false;
                 }
-
-                Log::info('FlatTrade authentication successful');
-                return true;
             }
 
             Log::error('FlatTrade authentication failed', [
@@ -61,61 +87,36 @@ class FlatTradeService
 
         } catch (\Exception $e) {
             Log::error('FlatTrade authentication error', [
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
             ]);
             return false;
         }
     }
 
     /**
-     * Refresh access token using refresh token
+     * Refresh access token - FlatTrade tokens may need to be re-authenticated
+     * For now, we'll return false as FlatTrade doesn't seem to have a refresh token flow
      */
     public function refreshAccessToken(): bool
     {
-        try {
-            $refreshToken = Cache::get('flat_trade_refresh_token');
-            if (!$refreshToken) {
-                return false;
-            }
-
-            $response = Http::asForm()->post($this->baseUrl . '/oauth/token', [
-                'grant_type' => 'refresh_token',
-                'client_id' => $this->clientId,
-                'client_secret' => $this->clientSecret,
-                'refresh_token' => $refreshToken,
-            ]);
-
-            if ($response->successful()) {
-                $data = $response->json();
-                $this->accessToken = $data['access_token'];
-
-                Cache::put('flat_trade_access_token', $this->accessToken, now()->addMinutes(55));
-
-                Log::info('FlatTrade token refreshed successfully');
-                return true;
-            }
-
-            return false;
-
-        } catch (\Exception $e) {
-            Log::error('FlatTrade token refresh error', [
-                'error' => $e->getMessage()
-            ]);
-            return false;
-        }
+        // FlatTrade doesn't appear to have a refresh token mechanism
+        // Users will need to re-authenticate when token expires
+        Log::info('FlatTrade token refresh not supported - re-authentication required');
+        return false;
     }
 
     /**
-     * Get valid access token (refresh if needed)
+     * Get valid access token
      */
     protected function getValidAccessToken(): ?string
     {
         $this->accessToken = Cache::get('flat_trade_access_token');
+        $this->clientId = Cache::get('flat_trade_client_id', $this->clientId);
 
         if (!$this->accessToken) {
-            if (!$this->refreshAccessToken()) {
-                return null;
-            }
+            Log::warning('No FlatTrade access token available - re-authentication required');
+            return null;
         }
 
         return $this->accessToken;
@@ -128,7 +129,7 @@ class FlatTradeService
     {
         $token = $this->getValidAccessToken();
         if (!$token) {
-            throw new \Exception('No valid access token available');
+            throw new \Exception('No valid access token available. Please re-authenticate with FlatTrade.');
         }
 
         $response = Http::withHeaders([
@@ -138,15 +139,13 @@ class FlatTradeService
         ])->$method($this->baseUrl . $endpoint, $data);
 
         if ($response->status() === 401) {
-            // Token expired, try to refresh
-            if ($this->refreshAccessToken()) {
-                $token = $this->getValidAccessToken();
-                $response = Http::withHeaders([
-                    'Authorization' => 'Bearer ' . $token,
-                    'Accept' => 'application/json',
-                    'Content-Type' => 'application/json',
-                ])->$method($this->baseUrl . $endpoint, $data);
-            }
+            // Token expired or invalid
+            Log::warning('FlatTrade API token expired or invalid', [
+                'method' => $method,
+                'endpoint' => $endpoint,
+                'status' => $response->status()
+            ]);
+            throw new \Exception('Authentication failed. Please re-authenticate with FlatTrade.');
         }
 
         if (!$response->successful()) {
@@ -552,7 +551,7 @@ class FlatTradeService
     {
         try {
             Cache::forget('flat_trade_access_token');
-            Cache::forget('flat_trade_refresh_token');
+            Cache::forget('flat_trade_client_id');
 
             $this->accessToken = null;
             $this->refreshToken = null;

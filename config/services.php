@@ -47,7 +47,10 @@ return [
     ],
     'flat_trade' => [
         'base_url' => env('FLAT_TRADE_BASE_URL', 'https://api.flattrade.in'),
+        'auth_url' => env('FLAT_TRADE_AUTH_URL', 'https://auth.flattrade.in'),
+        'auth_api_url' => env('FLAT_TRADE_AUTH_API_URL', 'https://authapi.flattrade.in'),
         'api_key' => env('FLAT_TRADE_API_KEY'),
+        'api_secret' => env('FLAT_TRADE_API_SECRET'),
         'client_id' => env('FLAT_TRADE_CLIENT_ID'),
         'client_secret' => env('FLAT_TRADE_CLIENT_SECRET'),
     ],
