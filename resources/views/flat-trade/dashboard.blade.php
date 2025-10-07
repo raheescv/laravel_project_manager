@@ -497,8 +497,14 @@
             $.get('{{ route("flat_trade::balance") }}')
                 .done(function(response) {
                     if (response.success) {
-                        $('#account-balance').text('₹' + parseFloat(response.balance.available_cash || 0).toLocaleString('en-IN', {minimumFractionDigits: 2}));
+                        
+                        // Update account balance
+                        $('#account-balance').text('₹' + parseFloat(response.balance.cash || 0).toLocaleString('en-IN', {minimumFractionDigits: 2}));
+                        
+                        // Update holdings value (if available)
                         $('#total-holdings').text('₹' + parseFloat(response.balance.total_holdings || 0).toLocaleString('en-IN', {minimumFractionDigits: 2}));
+                        
+                        // Update P&L values (if available)
                         $('#day-pnl').text('₹' + parseFloat(response.balance.day_pnl || 0).toLocaleString('en-IN', {minimumFractionDigits: 2}));
                         $('#total-pnl').text('₹' + parseFloat(response.balance.total_pnl || 0).toLocaleString('en-IN', {minimumFractionDigits: 2}));
 
@@ -508,6 +514,14 @@
 
                         $('#day-pnl').removeClass('pnl-positive pnl-negative').addClass(dayPnl >= 0 ? 'pnl-positive' : 'pnl-negative');
                         $('#total-pnl').removeClass('pnl-positive pnl-negative').addClass(totalPnl >= 0 ? 'pnl-positive' : 'pnl-negative');
+                        
+                        // Update additional balance info if available
+                        if (response.balance.payin !== undefined) {
+                            $('#payin-amount').text('₹' + parseFloat(response.balance.payin || 0).toLocaleString('en-IN', {minimumFractionDigits: 2}));
+                        }
+                        if (response.balance.payout !== undefined) {
+                            $('#payout-amount').text('₹' + parseFloat(response.balance.payout || 0).toLocaleString('en-IN', {minimumFractionDigits: 2}));
+                        }
                     }
                 })
                 .fail(function() {
@@ -535,11 +549,11 @@
                             html += '</tr>';
                         });
 
-                        html += '</tbody></table></div>';
-                        $('#holdings-container').html(html);
-                    } else {
-                        $('#holdings-container').html('<div class="text-center text-muted"><i class="fa fa-briefcase fa-3x mb-3"></i><p>No holdings found</p></div>');
-                    }
+                            html += '</tbody></table></div>';
+                            $('#holdings-container').html(html);
+                        } else {
+                            $('#holdings-container').html('<div class="text-center text-muted"><i class="fa fa-briefcase fa-3x mb-3"></i><p>No holdings found</p></div>');
+                        }
                 })
                 .fail(function() {
                     $('#holdings-container').html('<div class="text-center text-danger"><i class="fa fa-exclamation-triangle fa-3x mb-3"></i><p>Failed to load holdings</p></div>');
