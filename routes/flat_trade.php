@@ -80,6 +80,7 @@ Route::name('flat_trade::')->prefix('flat_trade')->group(function (): void {
             Route::post('/execute-trading', [Nifty50TradingController::class, 'executeRealTrading'])->name('execute_trading')->can('flat_trade.trade');
             Route::get('/market-status', [Nifty50TradingController::class, 'getMarketStatus'])->name('market_status')->can('flat_trade.view');
             Route::get('/positions', [Nifty50TradingController::class, 'getUserPositions'])->name('positions')->can('flat_trade.view');
+            Route::post('/execute-sell-orders', [Nifty50TradingController::class, 'executeSellOrders'])->name('execute_sell_orders')->can('flat_trade.trade');
         });
     });
 });

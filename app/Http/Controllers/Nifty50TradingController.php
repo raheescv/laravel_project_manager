@@ -171,13 +171,79 @@ class Nifty50TradingController extends Controller
     {
         try {
             $holdings = $this->flatTradeService->getHoldings();
-            $positions = $this->flatTradeService->getPositions();
+            $positions = $this->flatTradeService->getPositionBook();
+            
+            // Process holdings data
+            $processedHoldings = [];
+            if (isset($holdings['stat']) && $holdings['stat'] === 'Ok' && isset($holdings['values'])) {
+                foreach ($holdings['values'] as $holding) {
+                    $symbol = $holding['tsym'] ?? '';
+                    $quantity = (int) ($holding['qty'] ?? 0);
+                    
+                    if ($quantity > 0) {
+                        $currentPrice = $this->getCurrentPrice($symbol);
+                        $avgPrice = (float) ($holding['avgprc'] ?? 0);
+                        $pnlPercent = 0;
+                        $pnlValue = 0;
+                        
+                        if ($avgPrice > 0 && $currentPrice > 0) {
+                            $pnlPercent = (($currentPrice - $avgPrice) / $avgPrice) * 100;
+                            $pnlValue = ($currentPrice - $avgPrice) * $quantity;
+                        }
+                        
+                        $processedHoldings[] = [
+                            'symbol' => $symbol,
+                            'quantity' => $quantity,
+                            'avg_price' => $avgPrice,
+                            'current_price' => $currentPrice,
+                            'pnl_percent' => $pnlPercent,
+                            'pnl_value' => $pnlValue,
+                            'type' => 'holding',
+                            'raw_data' => $holding
+                        ];
+                    }
+                }
+            }
+            
+            // Process positions data
+            $processedPositions = [];
+            if (isset($positions['stat']) && $positions['stat'] === 'Ok' && isset($positions['values'])) {
+                foreach ($positions['values'] as $position) {
+                    $symbol = $position['tsym'] ?? '';
+                    $quantity = (int) ($position['netqty'] ?? 0);
+                    
+                    if ($quantity > 0) { // Only long positions
+                        $currentPrice = $this->getCurrentPrice($symbol);
+                        $avgPrice = (float) ($position['netprice'] ?? 0);
+                        $pnlPercent = 0;
+                        $pnlValue = 0;
+                        
+                        if ($avgPrice > 0 && $currentPrice > 0) {
+                            $pnlPercent = (($currentPrice - $avgPrice) / $avgPrice) * 100;
+                            $pnlValue = ($currentPrice - $avgPrice) * $quantity;
+                        }
+                        
+                        $processedPositions[] = [
+                            'symbol' => $symbol,
+                            'quantity' => $quantity,
+                            'avg_price' => $avgPrice,
+                            'current_price' => $currentPrice,
+                            'pnl_percent' => $pnlPercent,
+                            'pnl_value' => $pnlValue,
+                            'type' => 'position',
+                            'raw_data' => $position
+                        ];
+                    }
+                }
+            }
             
             return response()->json([
                 'success' => true,
                 'data' => [
-                    'holdings' => $holdings,
-                    'positions' => $positions
+                    'holdings' => $processedHoldings,
+                    'positions' => $processedPositions,
+                    'raw_holdings' => $holdings,
+                    'raw_positions' => $positions
                 ]
             ]);
 
@@ -185,6 +251,90 @@ class Nifty50TradingController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to get positions: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Execute sell orders for positions
+     */
+    public function executeSellOrders(Request $request): JsonResponse
+    {
+        $validator = Validator::make($request->all(), [
+            'positions' => 'required|array|min:1',
+            'positions.*.symbol' => 'required|string|max:20',
+            'positions.*.quantity' => 'required|integer|min:1',
+            'order_type' => 'required|in:market,limit',
+            'product' => 'required|in:C,H,B',
+            'confirm_selling' => 'required|boolean'
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation failed',
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        if (!$request->confirm_selling) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Selling confirmation required'
+            ], 400);
+        }
+
+        try {
+            $results = [];
+            $totalPnl = 0;
+            $totalQuantity = 0;
+
+            foreach ($request->positions as $positionData) {
+                $result = $this->processSellOrder($positionData, $request->all());
+                $results[] = $result;
+                
+                if ($result['success']) {
+                    $totalPnl += $result['pnl_value'];
+                    $totalQuantity += $result['quantity'];
+                }
+            }
+
+            // Log the selling session
+            Log::info('Position Selling Session Executed', [
+                'user_id' => Auth::id(),
+                'total_positions' => count($request->positions),
+                'successful_orders' => count(array_filter($results, fn($r) => $r['success'])),
+                'total_quantity' => $totalQuantity,
+                'total_pnl' => $totalPnl,
+                'order_type' => $request->order_type,
+                'product' => $request->product
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Sell orders processed',
+                'data' => [
+                    'results' => $results,
+                    'summary' => [
+                        'total_positions' => count($request->positions),
+                        'successful_orders' => count(array_filter($results, fn($r) => $r['success'])),
+                        'failed_orders' => count(array_filter($results, fn($r) => !$r['success'])),
+                        'total_quantity' => $totalQuantity,
+                        'total_pnl' => $totalPnl
+                    ]
+                ]
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Position Selling Failed', [
+                'error' => $e->getMessage(),
+                'user_id' => Auth::id(),
+                'request_data' => $request->all()
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Selling execution failed: ' . $e->getMessage()
             ], 500);
         }
     }
@@ -474,5 +624,93 @@ class Nifty50TradingController extends Controller
         }
 
         return $score;
+    }
+
+    /**
+     * Get current market price for symbol
+     */
+    protected function getCurrentPrice(string $symbol): ?float
+    {
+        try {
+            $searchResult = $this->flatTradeService->searchScrip($symbol, 'NSE');
+            
+            if (!isset($searchResult['values']) || empty($searchResult['values'])) {
+                return null;
+            }
+
+            $token = $searchResult['values'][0]['token'] ?? null;
+            if (!$token) {
+                return null;
+            }
+
+            $quote = $this->flatTradeService->getQuotes($token, 'NSE');
+            
+            if (isset($quote['stat']) && $quote['stat'] === 'Ok') {
+                return (float) ($quote['lp'] ?? 0);
+            }
+
+            return null;
+
+        } catch (\Exception $e) {
+            Log::warning("Error getting price for {$symbol}", ['error' => $e->getMessage()]);
+            return null;
+        }
+    }
+
+    /**
+     * Process individual sell order
+     */
+    protected function processSellOrder(array $positionData, array $requestData): array
+    {
+        $symbol = $positionData['symbol'];
+        $quantity = $positionData['quantity'];
+        $orderType = $requestData['order_type'];
+        $product = $requestData['product'];
+
+        try {
+            // Get current market price
+            $currentPrice = $this->getCurrentPrice($symbol);
+            if (!$currentPrice) {
+                throw new \Exception("Unable to get current price for {$symbol}");
+            }
+
+            // Place sell order
+            $orderResult = $this->placeSellOrder($symbol, $quantity, $currentPrice, $orderType, $product);
+
+            return [
+                'symbol' => $symbol,
+                'success' => true,
+                'order_id' => $orderResult['norenordno'] ?? 'UNKNOWN',
+                'sell_price' => $currentPrice,
+                'quantity' => $quantity,
+                'pnl_value' => 0, // Will be calculated based on avg price
+                'order_result' => $orderResult
+            ];
+
+        } catch (\Exception $e) {
+            return [
+                'symbol' => $symbol,
+                'success' => false,
+                'error' => $e->getMessage(),
+                'pnl_value' => 0
+            ];
+        }
+    }
+
+    /**
+     * Place sell order based on type
+     */
+    protected function placeSellOrder(string $symbol, int $quantity, float $price, string $orderType, string $product): array
+    {
+        switch ($orderType) {
+            case 'market':
+                return $this->flatTradeService->placeMarketOrder('NSE', $symbol, $quantity, 'S', $product);
+                
+            case 'limit':
+                return $this->flatTradeService->placeLimitOrder('NSE', $symbol, $quantity, $price, 'S', $product);
+                
+            default:
+                throw new \Exception("Unsupported order type: {$orderType}");
+        }
     }
 }
