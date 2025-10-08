@@ -24,21 +24,7 @@ class FlatTradeController extends Controller
         try {
             // Validate required parameters from FlatTrade
             $code = $request->query('code');
-            $state = $request->query('state');
             $client = $request->query('client');
-
-            // Validate state parameter for security
-            $storedState = session('flat_trade_oauth_state');
-            if (!$state || $state !== $storedState) {
-                Log::warning('FlatTrade OAuth redirect - invalid state parameter', [
-                    'received_state' => $state,
-                    'stored_state' => $storedState,
-                    'ip' => $request->ip(),
-                ]);
-
-                return redirect()->route('flat_trade::dashboard')
-                    ->with('error', 'Invalid authorization response from FlatTrade.');
-            }
 
             if (! $code) {
                 Log::warning('FlatTrade OAuth redirect missing authorization code', [
@@ -217,10 +203,6 @@ class FlatTradeController extends Controller
                 'user_id' => Auth::id(),
                 'error' => $e->getMessage()
             ]);
-            
-            // Clear invalid token
-            Cache::forget('flat_trade_access_token');
-            Cache::forget('flat_trade_client_id');
         }
 
         $data = [
@@ -232,7 +214,6 @@ class FlatTradeController extends Controller
             'holdings' => $holdings,
             'limits' => $limits,
         ];
-
         return view('flat-trade.dashboard', $data);
     }
 
@@ -248,13 +229,7 @@ class FlatTradeController extends Controller
         session(['flat_trade_oauth_state' => $state]);
 
         // Build FlatTrade OAuth authorization URL as per the provided format
-        $authUrl = 'https://api.flattrade.in/oauth/authorize?' . http_build_query([
-            'response_type' => 'code',
-            'client_id' => config('services.flat_trade.client_id', 'FZ26087'),
-            'redirect_uri' => route('flat_trade::oauth.redirect'),
-            'state' => $state,
-            'scope' => 'read,write'
-        ]);
+        $authUrl = 'https://auth.flattrade.in/?app_key=' . config('services.flat_trade.api_key');
 
         Log::info('FlatTrade OAuth authorization initiated', [
             'user_id' => Auth::id(),

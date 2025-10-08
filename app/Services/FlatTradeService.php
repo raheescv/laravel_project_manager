@@ -54,25 +54,21 @@ class FlatTradeService
                 'request_code' => $requestCode,
                 'api_secret' => $apiSecretHash,
             ];
-            
             $url = $this->authApiUrl . '/trade/apitoken';
 
             $response = Http::post($url, $payload);
             if ($response->successful()) {
                 $data = $response->json();
+                info($data);
                 // Check if the response indicates success
                 if (isset($data['stat']) && $data['stat'] === 'Ok' && isset($data['token'])) {
                     $this->accessToken = $data['token'];
                     $this->clientId = $data['client'] ?? $this->clientId;
 
                     // Store tokens securely in cache
-                    Cache::put('flat_trade_access_token', $this->accessToken, now()->addMinutes(55));
-                    Cache::put('flat_trade_client_id', $this->clientId, now()->addDays(30));
-
                     config(['services.flat_trade.j_key' => $this->accessToken]);
-                    config(['services.flat_trade.client_id' => $this->clientId]);
 
-                    writeToEnv('FLAT_TRADE_J_KEY', $this->accessToken);
+                    // writeToEnv('FLAT_TRADE_J_KEY', $this->accessToken);
 
                     Log::info('FlatTrade authentication successful', [
                         'client' => $this->clientId,
@@ -122,7 +118,6 @@ class FlatTradeService
     protected function getValidAccessToken(): ?string
     {
         $this->accessToken = Cache::get('flat_trade_access_token');
-        $this->clientId = Cache::get('flat_trade_client_id', $this->clientId);
 
         if (!$this->accessToken) {
             Log::warning('No FlatTrade access token available - re-authentication required');
@@ -145,12 +140,10 @@ class FlatTradeService
         // Format data as jData=JSON&jKey=KEY
         $jDataJson = json_encode($jData);
         $postData = "jData={$jDataJson}&jKey={$this->jKey}";
-
         $headers= [
             'Content-Type' => 'application/x-www-form-urlencoded'
         ];
         $response = Http::withHeaders($headers)->withBody($postData, 'application/x-www-form-urlencoded')->post($url);
-
         if (!$response->successful()) {
             Log::error('PiConnect API request failed', [
                 'endpoint' => $endpoint,
@@ -1070,20 +1063,6 @@ class FlatTradeService
     {
         try {
             // Clear cache tokens
-            Cache::forget('flat_trade_access_token');
-            Cache::forget('flat_trade_client_id');
-
-            // Update user model
-            $user = Auth::user();
-            if ($user) {
-                $user->update([
-                    'flat_trade_connected' => false,
-                    'flat_trade_client_id' => null,
-                    'flat_trade_connected_at' => null,
-                    'flat_trade_token_expires_at' => null,
-                ]);
-            }
-
             $this->accessToken = null;
             $this->refreshToken = null;
 
