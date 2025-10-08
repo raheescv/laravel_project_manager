@@ -210,6 +210,11 @@
                     </div>
                 </div>
             </div>
+            <div class="row mb-4">
+                <div class="col-xl-12 mb-4">
+                    @livewire('dashboard.market-info')
+                </div>
+            </div>
         </div>
     </div>
 
@@ -357,7 +362,6 @@
             </div>
         </div>
     </div>
-
     <!-- Trade Cycle Modal -->
     <div class="modal fade" id="tradeCycleModal" tabindex="-1" aria-labelledby="tradeCycleModalLabel" aria-hidden="true">
         <div class="modal-dialog">

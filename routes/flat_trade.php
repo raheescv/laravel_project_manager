@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\FlatTradeController;
+use App\Http\Controllers\Nifty50TradingController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -68,6 +69,18 @@ Route::name('flat_trade::')->prefix('flat_trade')->group(function (): void {
         Route::post('/set-alert', [FlatTradeController::class, 'setAlert'])->name('set_alert')->can('flat_trade.trade');
         Route::get('/pending-alerts', [FlatTradeController::class, 'getPendingAlerts'])->name('pending_alerts')->can('flat_trade.view');
         Route::post('/cancel-alert', [FlatTradeController::class, 'cancelAlert'])->name('cancel_alert')->can('flat_trade.trade');
+
+        // Nifty 50 Real Trading Routes
+        Route::prefix('nifty50')->name('nifty50.')->group(function (): void {
+            Route::get('/', function () {
+                return view('nifty50-trading');
+            })->name('dashboard')->can('flat_trade.view');
+            
+            Route::get('/best-stocks', [Nifty50TradingController::class, 'getBestStocks'])->name('best_stocks')->can('flat_trade.view');
+            Route::post('/execute-trading', [Nifty50TradingController::class, 'executeRealTrading'])->name('execute_trading')->can('flat_trade.trade');
+            Route::get('/market-status', [Nifty50TradingController::class, 'getMarketStatus'])->name('market_status')->can('flat_trade.view');
+            Route::get('/positions', [Nifty50TradingController::class, 'getUserPositions'])->name('positions')->can('flat_trade.view');
+        });
     });
 });
 
