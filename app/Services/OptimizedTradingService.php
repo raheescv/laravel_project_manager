@@ -183,6 +183,11 @@ class OptimizedTradingService
         $profitThreshold = $config['profit_threshold'] ?? 5.0;
         $lossThreshold = $config['loss_threshold'] ?? 3.0;
 
+        // If profit threshold is 0, only sell losing positions
+        if ($profitThreshold == 0) {
+            return $pnlPercent <= -$lossThreshold;
+        }
+
         return $pnlPercent >= $profitThreshold || $pnlPercent <= -$lossThreshold;
     }
 

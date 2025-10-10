@@ -18,6 +18,9 @@ Schedule::command('visitors:process-batches')->everyFiveMinutes();
 Schedule::command(RunHealthChecksCommand::class)->daily();
 
 // Optimized unified trading commands
-Schedule::command('trade:unified --action=buy')->everyFiveMinutes()->between('05:10', '09:55');
-Schedule::command('trade:unified --action=sell')->everyFiveMinutes()->between('05:20', '09:55');
-Schedule::command('trade:unified --action=sell --sell-all')->dailyAt('09:55');
+// Schedule::command('trade:unified --action=buy')->everyFiveMinutes()->between('05:10', '09:55');
+// Schedule::command('trade:unified --action=sell')->everyFiveMinutes()->between('05:20', '09:55');
+// Schedule::command('trade:unified --action=sell --sell-all')->dailyAt('09:55');
+
+// Quick trading: Buy best stock and sell losing positions every 5 minutes
+Schedule::command('trade:quick')->everyFiveMinutes()->between('05:10', '09:55');
