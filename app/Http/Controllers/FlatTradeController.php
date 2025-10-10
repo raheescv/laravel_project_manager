@@ -92,13 +92,13 @@ class FlatTradeController extends Controller
 
             $data = $request->json()->all();
 
-            // Log webhook receipt
-            Log::info('FlatTrade webhook post back received', [
-                'event_type' => $data['event_type'] ?? 'unknown',
-                'timestamp' => $data['timestamp'] ?? now(),
-                'payload_size' => strlen($payload),
-                'ip' => $request->ip(),
-            ]);
+            // // Log webhook receipt
+            // Log::info('FlatTrade webhook post back received', [
+            //     'event_type' => $data['event_type'] ?? 'unknown',
+            //     'timestamp' => $data['timestamp'] ?? now(),
+            //     'payload_size' => strlen($payload),
+            //     'ip' => $request->ip(),
+            // ]);
 
             // Process different types of webhook events
             $eventType = $data['event_type'] ?? 'unknown';
@@ -121,10 +121,10 @@ class FlatTradeController extends Controller
                     break;
 
                 default:
-                    Log::info('FlatTrade webhook event type not handled', [
-                        'event_type' => $eventType,
-                        'data' => $data,
-                    ]);
+                    // Log::info('FlatTrade webhook event type not handled', [
+                    //     'event_type' => $eventType,
+                    //     'data' => $data,
+                    // ]);
             }
 
             return response()->json(['status' => 'success', 'message' => 'Webhook processed']);

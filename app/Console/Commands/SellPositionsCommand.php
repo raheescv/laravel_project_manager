@@ -4,6 +4,7 @@ namespace App\Console\Commands;
 
 use App\Services\FlatTradeService;
 use App\Services\RiskManagementService;
+use App\Services\UnifiedTradingStrategyService;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Cache;
@@ -23,12 +24,14 @@ class SellPositionsCommand extends Command
 
     protected FlatTradeService $flatTradeService;
     protected RiskManagementService $riskService;
+    protected UnifiedTradingStrategyService $strategyService;
 
-    public function __construct(FlatTradeService $flatTradeService, RiskManagementService $riskService)
+    public function __construct(FlatTradeService $flatTradeService, RiskManagementService $riskService, UnifiedTradingStrategyService $strategyService)
     {
         parent::__construct();
         $this->flatTradeService = $flatTradeService;
         $this->riskService = $riskService;
+        $this->strategyService = $strategyService;
     }
 
     public function handle()
@@ -62,9 +65,16 @@ class SellPositionsCommand extends Command
                 return;
             }
 
-            // Step 2: Analyze positions for selling opportunities
-            $this->info("\n🔍 Analyzing positions for selling opportunities...");
-            $sellCandidates = $this->analyzeSellCandidates($holdings, $positions, $symbol, $sellAll, $profitThreshold, $lossThreshold);
+            // Step 2: Analyze positions for selling opportunities using unified strategy
+            $this->info("\n🔍 Analyzing positions using unified trading strategy...");
+            $strategyOptions = [
+                'profit_threshold' => $profitThreshold,
+                'loss_threshold' => $lossThreshold,
+                'symbol' => $symbol,
+                'sell_all' => $sellAll
+            ];
+            
+            $sellCandidates = $this->strategyService->analyzePositionsForSelling($strategyOptions);
             
             if (empty($sellCandidates)) {
                 $this->info('No positions meet the selling criteria.');
@@ -73,7 +83,7 @@ class SellPositionsCommand extends Command
 
             $this->info("Found " . count($sellCandidates) . " positions to sell:");
             foreach ($sellCandidates as $candidate) {
-                $this->info("- {$candidate['symbol']}: {$candidate['quantity']} shares, P&L: {$candidate['pnl_percent']}%");
+                $this->info("- {$candidate['symbol']}: {$candidate['quantity']} shares, P&L: {$candidate['pnl_percent']}%, Reason: {$candidate['sell_reason']}, Priority: {$candidate['priority']}");
             }
 
             // Step 3: Execute sell orders
@@ -240,7 +250,6 @@ class SellPositionsCommand extends Command
                 $candidates[] = $this->prepareSellCandidate($holding, 'holding');
             }
         }
-
         // Process positions
         foreach ($positions as $position) {
             if ($this->shouldSellPosition($position, $symbol, $sellAll, $profitThreshold, $lossThreshold)) {
@@ -257,7 +266,12 @@ class SellPositionsCommand extends Command
     protected function shouldSellHolding(array $holding, ?string $symbol, bool $sellAll, float $profitThreshold, float $lossThreshold): bool
     {
         $holdingSymbol = $holding['tsym'] ?? '';
+        
+        info('holdingSymbol : '.$holdingSymbol);
+        
         $quantity = (int) ($holding['qty'] ?? 0);
+        
+        info('quantity : '.$quantity);
         
         // Skip if no quantity
         if ($quantity <= 0) return false;
@@ -267,6 +281,8 @@ class SellPositionsCommand extends Command
         
         // Get current market price
         $currentPrice = $this->getCurrentPrice($holdingSymbol);
+        info('currentPrice : '.$currentPrice);
+
         if (!$currentPrice) return false;
         
         $avgPrice = (float) ($holding['avgprc'] ?? 0);
@@ -279,6 +295,7 @@ class SellPositionsCommand extends Command
         if ($sellAll) return true;
         
         // Sell if profit threshold met
+        info('pnlPercent : '.$pnlPercent);
         if ($pnlPercent >= $profitThreshold) return true;
         
         // Sell if loss threshold exceeded
@@ -294,7 +311,6 @@ class SellPositionsCommand extends Command
     {
         $positionSymbol = $position['tsym'] ?? '';
         $quantity = (int) ($position['netqty'] ?? 0);
-        
         // Skip if no quantity or short position
         if ($quantity <= 0) return false;
         
@@ -303,16 +319,19 @@ class SellPositionsCommand extends Command
         
         // Use current price from position data (lp field) or get from API
         $currentPrice = (float) ($position['lp'] ?? 0);
+        info('currentPrice : '.$currentPrice);
         if ($currentPrice <= 0) {
             $currentPrice = $this->getCurrentPrice($positionSymbol);
             if (!$currentPrice) return false;
         }
         
         $avgPrice = (float) ($position['netavgprc'] ?? 0);
+        info('avgPrice : '.$avgPrice);
         if ($avgPrice <= 0) return false;
         
         // Calculate P&L percentage
         $pnlPercent = (($currentPrice - $avgPrice) / $avgPrice) * 100;
+        info('positionSymbol: '.$positionSymbol.' pnlPercent : '.$pnlPercent);
         
         // Check selling criteria
         if ($sellAll) return true;
@@ -352,7 +371,7 @@ class SellPositionsCommand extends Command
             'avg_price' => $avgPrice,
             'current_price' => $currentPrice,
             'pnl_percent' => $pnlPercent,
-            'pnl_value' => ($currentPrice - $avgPrice) * $quantity,
+            'pnl' => ($currentPrice - $avgPrice) * $quantity,
             'type' => $type,
             'raw_data' => $data
         ];
@@ -401,9 +420,8 @@ class SellPositionsCommand extends Command
         try {
             $this->info("  Current Price: ₹{$currentPrice}");
             $this->info("  Average Price: ₹{$candidate['avg_price']}");
-            $this->info("  P&L: {$candidate['pnl_percent']}% (₹{$candidate['pnl_value']})");
+            $this->info("  P&L: {$candidate['pnl_percent']}% (₹{$candidate['pnl']})");
             $this->info("  Quantity: {$quantity} shares");
-
             if ($dryRun) {
                 $this->info("  [DRY RUN] Would place {$orderType} sell order for {$quantity} shares");
                 return [
@@ -413,7 +431,7 @@ class SellPositionsCommand extends Command
                     'sell_price' => $currentPrice,
                     'quantity' => $quantity,
                     'pnl_percent' => $candidate['pnl_percent'],
-                    'pnl_value' => $candidate['pnl_value'],
+                    'pnl' => $candidate['pnl'],
                     'dry_run' => true
                 ];
             }
@@ -428,7 +446,7 @@ class SellPositionsCommand extends Command
                 'sell_price' => $currentPrice,
                 'avg_price' => $candidate['avg_price'],
                 'pnl_percent' => $candidate['pnl_percent'],
-                'pnl_value' => $candidate['pnl_value'],
+                'pnl' => $candidate['pnl'],
                 'order_type' => $orderType,
                 'product' => $product,
                 'order_result' => $orderResult
@@ -441,7 +459,7 @@ class SellPositionsCommand extends Command
                 'sell_price' => $currentPrice,
                 'quantity' => $quantity,
                 'pnl_percent' => $candidate['pnl_percent'],
-                'pnl_value' => $candidate['pnl_value'],
+                'pnl' => $candidate['pnl'],
                 'order_result' => $orderResult
             ];
 
@@ -483,7 +501,7 @@ class SellPositionsCommand extends Command
         $successful = array_filter($results, fn($r) => $r['success']);
         $failed = array_filter($results, fn($r) => !$r['success']);
         
-        $totalPnl = array_sum(array_column($successful, 'pnl_value'));
+        $totalPnl = array_sum(array_column($successful, 'pnl'));
         $totalQuantity = array_sum(array_column($successful, 'quantity'));
         
         $this->info("Total Positions Processed: " . count($results));
