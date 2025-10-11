@@ -114,6 +114,55 @@ if (! function_exists('systemDateTime')) {
         }
     }
 }
+
+
+/**
+ * Extract numeric value from string
+ * 
+ * @param mixed $value The value to extract numeric from
+ * @param float $default Default value if extraction fails
+ * @return float
+ */
+if (! function_exists('extractNumericValue')) {
+    function extractNumericValue($value, $default = 0)
+    {
+        // If already numeric, return as float
+        if (is_numeric($value)) {
+            return (float) $value;
+        }
+
+        // If not a string, return default
+        if (!is_string($value)) {
+            return $default;
+        }
+
+        // Remove common currency symbols and text
+        $cleaned = preg_replace('/[^\d.,\-]/', '', $value);
+        
+        // Handle different decimal separators
+        if (strpos($cleaned, ',') !== false && strpos($cleaned, '.') !== false) {
+            // Both comma and dot present - assume comma is thousands separator
+            $cleaned = str_replace(',', '', $cleaned);
+        } elseif (strpos($cleaned, ',') !== false) {
+            // Only comma - check if it's decimal separator
+            $parts = explode(',', $cleaned);
+            if (count($parts) == 2 && strlen($parts[1]) <= 2) {
+                // Likely decimal separator
+                $cleaned = str_replace(',', '.', $cleaned);
+            } else {
+                // Likely thousands separator
+                $cleaned = str_replace(',', '', $cleaned);
+            }
+        }
+
+        // Extract the first number found
+        if (preg_match('/-?\d+\.?\d*/', $cleaned, $matches)) {
+            return (float) $matches[0];
+        }
+
+        return $default;
+    }
+}
 if (! function_exists('currency')) {
     function currency($value, $decimal_count = 2)
     {
