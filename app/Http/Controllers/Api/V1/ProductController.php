@@ -17,6 +17,9 @@ class ProductController extends Controller
 
     /**
      * Display a listing of products with filtering and pagination.
+     *
+     * @group Product Filter
+     * @subgroup Products
      */
     public function index(GetProductsAction $action, GetProductRequest $request): JsonResponse
     {
@@ -33,6 +36,9 @@ class ProductController extends Controller
 
     /**
      * Display the specified product.
+     *
+     * @group Product Filter
+     * @subgroup Products
      */
     public function show(GetProductAction $action, Product $product): JsonResponse
     {

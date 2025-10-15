@@ -22,6 +22,11 @@ class Brand extends Model
         ], $merge);
     }
 
+    public function products()
+    {
+        return $this->hasMany(Product::class, 'brand_id');
+    }
+
     public function getDropDownList($request)
     {
         $self = self::orderBy('name');

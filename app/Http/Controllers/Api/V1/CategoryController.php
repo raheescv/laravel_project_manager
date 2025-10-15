@@ -1,0 +1,45 @@
+<?php
+
+namespace App\Http\Controllers\Api\V1;
+
+use App\Actions\V1\Category\GetMainCategoriesAction;
+use App\Http\Controllers\Controller;
+use App\Traits\ApiResponseTrait;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Validation\ValidationException;
+
+class CategoryController extends Controller
+{
+    use ApiResponseTrait;
+
+    /**
+     * Display a listing of main categories.
+     *
+     * @group Product Filter
+     * @subgroup Categories
+     *
+     * @response 200 {
+     *   "success": true,
+     *   "data": [
+     *     {
+     *       "id": 1,
+     *       "name": "Electronics",
+     *       "product_count": 150
+     *     }
+     *   ],
+     *   "message": "Main categories retrieved successfully"
+     * }
+     */
+    public function index(GetMainCategoriesAction $action): JsonResponse
+    {
+        try {
+            $result = $action->execute();
+
+            return $this->sendSuccess($result, 'Main categories retrieved successfully');
+        } catch (ValidationException $e) {
+            return $this->sendValidationError($e->errors(), 'Validation failed');
+        } catch (\Exception $e) {
+            return $this->sendServerError('Failed to retrieve main categories: '.$e->getMessage());
+        }
+    }
+}

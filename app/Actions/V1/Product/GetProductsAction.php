@@ -61,46 +61,41 @@ class GetProductsAction
     {
         $query
             // Category filters
-            ->when(! empty($filters['main_category_id']), function ($q) use ($filters) {
-                return $q->where('main_category_id', $filters['main_category_id']);
+            ->when($filters['main_category_id'] ?? null, function ($q, $value) {
+                return $q->where('main_category_id', $value);
             })
-            ->when(! empty($filters['sub_category_id']), function ($q) use ($filters) {
-                return $q->where('sub_category_id', $filters['sub_category_id']);
+            ->when($filters['sub_category_id'] ?? null, function ($q, $value) {
+                return $q->where('sub_category_id', $value);
             })
             // Brand filter
-            ->when(! empty($filters['brand_id']), function ($q) use ($filters) {
-                return $q->where('brand_id', $filters['brand_id']);
+            ->when($filters['brand_id'] ?? null, function ($q, $value) {
+                return $q->where('brand_id', $value);
             })
             // Size filter
-            ->when(! empty($filters['size']), function ($q) use ($filters) {
-                return $q->where('size', 'like', "%{$filters['size']}%");
+            ->when($filters['size'] ?? null, function ($q, $value) {
+                return $q->where('size', 'like', "%{$value}%");
             })
             // Color filter
-            ->when(! empty($filters['color']), function ($q) use ($filters) {
-                return $q->where('color', 'like', "%{$filters['color']}%");
-            })
-            // Type filter
-            ->when(! empty($filters['type']), function ($q) use ($filters) {
-                return $q->where('type', $filters['type']);
+            ->when($filters['color'] ?? null, function ($q, $value) {
+                return $q->where('color', 'like', "%{$value}%");
             })
             // Price range filters
-            ->when(! empty($filters['min_price']), function ($q) use ($filters) {
-                return $q->where('mrp', '>=', $filters['min_price']);
+            ->when($filters['min_price'] ?? null, function ($q, $value) {
+                return $q->where('mrp', '>=', $value);
             })
-            ->when(! empty($filters['max_price']), function ($q) use ($filters) {
-                return $q->where('mrp', '<=', $filters['max_price']);
+            ->when($filters['max_price'] ?? null, function ($q, $value) {
+                return $q->where('mrp', '<=', $value);
             })
             // General search filter
-            ->when(! empty($filters['search']), function ($q) use ($filters) {
-                $searchTerm = $filters['search'];
-                return $q->where(function ($subQuery) use ($searchTerm) {
-                    $subQuery->where('name', 'like', "%{$searchTerm}%")
-                        ->orWhere('code', 'like', "%{$searchTerm}%")
-                        ->orWhere('barcode', 'like', "%{$searchTerm}%")
-                        ->orWhere('description', 'like', "%{$searchTerm}%")
-                        ->orWhere('color', 'like', "%{$searchTerm}%")
-                        ->orWhere('size', 'like', "%{$searchTerm}%")
-                        ->orWhere('model', 'like', "%{$searchTerm}%");
+            ->when($filters['search'] ?? null, function ($q, $value) {
+                return $q->where(function ($subQuery) use ($value) {
+                    $subQuery->where('name', 'like', "%{$value}%")
+                        ->orWhere('code', 'like', "%{$value}%")
+                        ->orWhere('barcode', 'like', "%{$value}%")
+                        ->orWhere('description', 'like', "%{$value}%")
+                        ->orWhere('color', 'like', "%{$value}%")
+                        ->orWhere('size', 'like', "%{$value}%")
+                        ->orWhere('model', 'like', "%{$value}%");
                 });
             });
     }
