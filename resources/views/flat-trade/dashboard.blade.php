@@ -539,16 +539,21 @@
                     if (response.success && response.holdings.length > 0) {
                         let html = '<div class="table-responsive"><table class="table table-sm">';
                         html += '<thead><tr><th>Symbol</th><th>Quantity</th><th>Avg Price</th><th>Current Price</th><th>P&L</th></tr></thead><tbody>';
-
                         response.holdings.forEach(function(holding) {
-                            const pnl = parseFloat(holding.pnl || 0);
+                            // Extract data from the sample data structure
+                            const symbol = holding.exch_tsym && holding.exch_tsym[0] ? holding.exch_tsym[0].tsym.replace('-EQ', '') : 'N/A';
+                            const quantity = parseInt(holding.holdqty || 0);
+                            const avgPrice = parseFloat(holding.upldprc || 0);
+                            const currentPrice = parseFloat(holding.upldprc || 0); // Using upldprc as current price for sample
+                            const totalValue = parseFloat(holding.sell_amt || 0);
+                            const pnl = totalValue - (quantity * avgPrice);
                             const pnlClass = pnl >= 0 ? 'pnl-positive' : 'pnl-negative';
 
                             html += '<tr>';
-                            html += '<td><strong>' + holding.symbol + '</strong></td>';
-                            html += '<td>' + holding.quantity + '</td>';
-                            html += '<td>₹' + parseFloat(holding.avg_price || 0).toFixed(2) + '</td>';
-                            html += '<td>₹' + parseFloat(holding.current_price || 0).toFixed(2) + '</td>';
+                            html += '<td><strong>' + symbol + '</strong></td>';
+                            html += '<td>' + quantity + '</td>';
+                            html += '<td>₹' + avgPrice.toFixed(2) + '</td>';
+                            html += '<td>₹' + currentPrice.toFixed(2) + '</td>';
                             html += '<td class="' + pnlClass + '">₹' + pnl.toFixed(2) + '</td>';
                             html += '</tr>';
                         });
@@ -565,8 +570,109 @@
         }
 
         function loadOrders() {
-            // This would need to be implemented in the controller
-            $('#orders-container').html('<div class="text-center text-muted"><i class="fa fa-list fa-3x mb-3"></i><p>Order history not yet implemented</p></div>');
+            // Show loading state
+            $('#orders-container').html('<div class="text-center"><div class="spinner-border text-primary" role="status"></div><p class="mt-2 text-muted">Loading orders...</p></div>');
+
+            // Fetch order book and trade book from API
+            Promise.all([
+                $.get('{{ route("flat_trade::order_book") }}'),
+                $.get('{{ route("flat_trade::trade_book") }}')
+            ])
+            .then(function(responses) {
+                const orderBookResponse = responses[0];
+                const tradeBookResponse = responses[1];
+                let allOrders = [];
+                
+                // Process order book (pending/active orders)
+                if (orderBookResponse.success && orderBookResponse.order_book && orderBookResponse.order_book) {
+                    orderBookResponse.order_book.forEach(function(order) {
+                        allOrders.push({
+                            order_id: order.norenordno || order.orderno || 'N/A',
+                            symbol: order.tsym ? order.tsym.replace('-EQ', '') : 'N/A',
+                            transaction_type: order.trantype || 'BUY',
+                            quantity: parseInt(order.qty || 0),
+                            price: parseFloat(order.prc || 0),
+                            order_type: order.prctyp || 'MARKET',
+                            status: order.status || 'PENDING',
+                            timestamp: order.reqtime || order.ordtime || 'N/A',
+                            exchange: order.exch || 'NSE',
+                            type: 'order'
+                        });
+                    });
+                }
+                
+                // Process trade book (completed trades)
+                if (tradeBookResponse.success && tradeBookResponse.trade_book && tradeBookResponse.trade_book) {
+                    tradeBookResponse.trade_book.forEach(function(trade) {
+                        allOrders.push({
+                            order_id: trade.norenordno || trade.orderno || 'N/A',
+                            symbol: trade.tsym ? trade.tsym.replace('-EQ', '') : 'N/A',
+                            transaction_type: trade.trantype || 'BUY',
+                            quantity: parseInt(trade.qty || 0),
+                            price: parseFloat(trade.prc || 0),
+                            order_type: trade.prctyp || 'MARKET',
+                            status: 'COMPLETE',
+                            timestamp: trade.fltm || trade.ordtime || 'N/A',
+                            exchange: trade.exch || 'NSE',
+                            type: 'trade'
+                        });
+                    });
+                }
+                
+                // Sort orders by timestamp (newest first)
+                allOrders.sort(function(a, b) {
+                    return new Date(b.timestamp) - new Date(a.timestamp);
+                });
+                
+                // Display orders
+                if (allOrders.length > 0) {
+                    let html = '<div class="table-responsive"><table class="table table-sm">';
+                    html += '<thead><tr><th>Order ID</th><th>Symbol</th><th>Type</th><th>Qty</th><th>Price</th><th>Status</th><th>Time</th></tr></thead><tbody>';
+                    
+                    allOrders.forEach(function(order) {
+                        const statusClass = getOrderStatusClass(order.status);
+                        const typeClass = order.transaction_type === 'B' ? 'text-success' : 'text-danger';
+                        const typeIcon = order.transaction_type === 'B' ? 'fa-arrow-up' : 'fa-arrow-down';
+                        const typeText = order.transaction_type === 'B' ? 'BUY' : 'SELL';
+                        
+                        html += '<tr>';
+                        html += '<td><small class="text-muted">' + order.order_id + '</small></td>';
+                        html += '<td><strong>' + order.symbol + '</strong></td>';
+                        html += '<td><i class="fa ' + typeIcon + ' me-1 ' + typeClass + '"></i>' + typeText + '</td>';
+                        html += '<td>' + order.quantity + '</td>';
+                        html += '<td>₹' + parseFloat(order.price).toFixed(2) + '</td>';
+                        html += '<td><span class="badge ' + statusClass + '">' + order.status + '</span></td>';
+                        html += '<td><small class="text-muted">' + order.timestamp + '</small></td>';
+                        html += '</tr>';
+                    });
+                    
+                    html += '</tbody></table></div>';
+                    $('#orders-container').html(html);
+                } else {
+                    $('#orders-container').html('<div class="text-center text-muted"><i class="fa fa-list fa-3x mb-3"></i><p>No orders found</p></div>');
+                }
+            })
+            .catch(function(error) {
+                console.error('Failed to load orders:', error);
+                $('#orders-container').html('<div class="text-center text-danger"><i class="fa fa-exclamation-triangle fa-3x mb-3"></i><p>Failed to load orders</p></div>');
+            });
+        }
+
+        function getOrderStatusClass(status) {
+            switch(status.toUpperCase()) {
+                case 'COMPLETE':
+                    return 'bg-success';
+                case 'PENDING':
+                    return 'bg-warning';
+                case 'CANCELLED':
+                    return 'bg-danger';
+                case 'REJECTED':
+                    return 'bg-danger';
+                case 'PARTIAL':
+                    return 'bg-info';
+                default:
+                    return 'bg-secondary';
+            }
         }
 
         function getMarketData() {

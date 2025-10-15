@@ -23,4 +23,4 @@ Schedule::command(RunHealthChecksCommand::class)->daily();
 // Schedule::command('trade:unified --action=sell --sell-all')->dailyAt('09:55');
 
 // Quick trading: Buy best stock and sell losing positions every 5 minutes
-Schedule::command('trade:quick')->everyFiveMinutes()->between('05:10', '09:55');
+Schedule::command('trade:quick')->everyFiveMinutes()->between('04:30', '09:50');

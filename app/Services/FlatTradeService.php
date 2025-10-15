@@ -6,6 +6,7 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Artisan;
 use Carbon\Carbon;
 
 class FlatTradeService
@@ -68,8 +69,10 @@ class FlatTradeService
                     // Store tokens securely in cache
                     config(['services.flat_trade.j_key' => $this->accessToken]);
 
-                    // writeToEnv('FLAT_TRADE_J_KEY', $this->accessToken);
-
+                    writeToEnv('FLAT_TRADE_J_KEY', $this->accessToken);
+                    
+                    Artisan::call('optimize:clear');
+                    
                     Log::info('FlatTrade authentication successful', [
                         'client' => $this->clientId,
                         'token_received' => !empty($this->accessToken),

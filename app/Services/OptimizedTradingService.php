@@ -108,7 +108,6 @@ class OptimizedTradingService
             if (!isset($topGainers['values'])) {
                 return [];
             }
-
             $candidates = [];
             foreach ($topGainers['values'] as $stock) {
                 if (count($candidates) >= $limit) break;
@@ -118,7 +117,6 @@ class OptimizedTradingService
                     $candidates[] = $stock;
                 }
             }
-
             return $candidates;
         } catch (\Exception $e) {
             return [];
@@ -131,7 +129,6 @@ class OptimizedTradingService
     protected function isValidCandidate(string $symbol, string $filter, array $customSymbols): bool
     {
         if (strlen($symbol) < 3) return false;
-
         switch ($filter) {
             case 'nifty50':
                 return in_array($symbol, $this->getNifty50Symbols());
@@ -358,14 +355,14 @@ class OptimizedTradingService
     /**
      * Place order
      */
-    public function placeOrder(string $symbol, int $quantity, string $orderType, string $product): array
+    public function placeOrder(string $symbol, int $quantity, string $orderType, string $product, string $transactionType = 'B'): array
     {
         try {
             switch ($orderType) {
                 case 'market':
-                    return $this->flatTradeService->placeMarketOrder('NSE', $symbol, $quantity, 'B', $product);
+                    return $this->flatTradeService->placeMarketOrder('NSE', $symbol, $quantity, $transactionType, $product);
                 case 'limit':
-                    return $this->flatTradeService->placeLimitOrder('NSE', $symbol, $quantity, 0, 'B', $product);
+                    return $this->flatTradeService->placeLimitOrder('NSE', $symbol, $quantity, 0, $transactionType, $product);
                 default:
                     throw new \Exception("Unsupported order type: {$orderType}");
             }
