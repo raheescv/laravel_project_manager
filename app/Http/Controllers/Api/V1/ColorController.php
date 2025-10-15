@@ -17,9 +17,9 @@ class ColorController extends Controller
 
     /**
      * Display a listing of colors with optional product code filtering.
-     * 
+     *
      * @queryParam code string Filter colors by product code (partial match). Example: PRD
-     * 
+     *
      * @response 200 {
      *   "success": true,
      *   "data": [

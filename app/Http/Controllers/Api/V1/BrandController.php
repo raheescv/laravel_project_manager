@@ -16,7 +16,7 @@ class BrandController extends Controller
 
     /**
      * Display a listing of brands.
-     * 
+     *
      * @response 200 {
      *   "success": true,
      *   "data": [

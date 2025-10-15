@@ -16,7 +16,7 @@ class CategoryController extends Controller
 
     /**
      * Display a listing of main categories.
-     * 
+     *
      * @response 200 {
      *   "success": true,
      *   "data": [

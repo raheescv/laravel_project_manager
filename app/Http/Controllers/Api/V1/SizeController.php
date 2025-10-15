@@ -17,9 +17,9 @@ class SizeController extends Controller
 
     /**
      * Display a listing of sizes with optional product code filtering.
-     * 
+     *
      * @queryParam code string Filter sizes by product code (partial match). Example: PRD
-     * 
+     *
      * @response 200 {
      *   "success": true,
      *   "data": [
