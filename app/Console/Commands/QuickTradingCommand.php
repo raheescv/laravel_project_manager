@@ -13,7 +13,7 @@ use Carbon\Carbon;
 class QuickTradingCommand extends Command
 {
     protected $signature = 'trade:quick 
-                            {--loss-threshold=1.0 : Loss threshold for selling}
+                            {--loss-threshold=2.0 : Loss threshold for selling}
                             {--profit-threshold=2 : Profit threshold for selling}
                             {--max-profit-target=5 : Maximum profit target before selling}
                             {--min-profit-keep=1 : Minimum profit to keep position}
