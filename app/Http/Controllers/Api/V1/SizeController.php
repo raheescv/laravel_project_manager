@@ -6,21 +6,20 @@ use App\Actions\V1\Size\GetSizesAction;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\V1\GetSizesRequest;
 use App\Traits\ApiResponseTrait;
+use Dedoc\Scramble\Attributes\Group;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Validation\ValidationException;
 
+#[Group('Product Filter')]
 class SizeController extends Controller
 {
     use ApiResponseTrait;
 
     /**
      * Display a listing of sizes with optional product code filtering.
-     *
-     * @group Product Filter
-     * @subgroup Sizes
-     *
+     * 
      * @queryParam code string Filter sizes by product code (partial match). Example: PRD
-     *
+     * 
      * @response 200 {
      *   "success": true,
      *   "data": [

@@ -8,18 +8,17 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\V1\GetProductRequest;
 use App\Models\Product;
 use App\Traits\ApiResponseTrait;
+use Dedoc\Scramble\Attributes\Group;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Validation\ValidationException;
 
+#[Group('Product')]
 class ProductController extends Controller
 {
     use ApiResponseTrait;
 
     /**
      * Display a listing of products with filtering and pagination.
-     *
-     * @group Product Filter
-     * @subgroup Products
      */
     public function index(GetProductsAction $action, GetProductRequest $request): JsonResponse
     {
@@ -36,9 +35,6 @@ class ProductController extends Controller
 
     /**
      * Display the specified product.
-     *
-     * @group Product Filter
-     * @subgroup Products
      */
     public function show(GetProductAction $action, Product $product): JsonResponse
     {

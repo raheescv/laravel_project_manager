@@ -5,19 +5,18 @@ namespace App\Http\Controllers\Api\V1;
 use App\Actions\V1\Category\GetMainCategoriesAction;
 use App\Http\Controllers\Controller;
 use App\Traits\ApiResponseTrait;
+use Dedoc\Scramble\Attributes\Group;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Validation\ValidationException;
 
+#[Group('Product Filter')]
 class CategoryController extends Controller
 {
     use ApiResponseTrait;
 
     /**
      * Display a listing of main categories.
-     *
-     * @group Product Filter
-     * @subgroup Categories
-     *
+     * 
      * @response 200 {
      *   "success": true,
      *   "data": [

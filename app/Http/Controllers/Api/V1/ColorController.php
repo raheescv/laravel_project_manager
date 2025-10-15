@@ -6,21 +6,20 @@ use App\Actions\V1\Color\GetColorsAction;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\V1\GetColorsRequest;
 use App\Traits\ApiResponseTrait;
+use Dedoc\Scramble\Attributes\Group;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Validation\ValidationException;
 
+#[Group('Product Filter')]
 class ColorController extends Controller
 {
     use ApiResponseTrait;
 
     /**
      * Display a listing of colors with optional product code filtering.
-     *
-     * @group Product Filter
-     * @subgroup Colors
-     *
+     * 
      * @queryParam code string Filter colors by product code (partial match). Example: PRD
-     *
+     * 
      * @response 200 {
      *   "success": true,
      *   "data": [

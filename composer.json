@@ -24,7 +24,6 @@
         "livewire/livewire": "^3.5",
         "maatwebsite/excel": "^3.1",
         "milon/barcode": "^11.0",
-        "ollama/ollama-php-client": "^1.0",
         "openai-php/laravel": "^0.11.0",
         "owen-it/laravel-auditing": "^13.6",
         "peckphp/peck": "^0.1.2",

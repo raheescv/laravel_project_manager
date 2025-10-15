@@ -5,19 +5,18 @@ namespace App\Http\Controllers\Api\V1;
 use App\Actions\V1\Brand\GetBrandsAction;
 use App\Http\Controllers\Controller;
 use App\Traits\ApiResponseTrait;
+use Dedoc\Scramble\Attributes\Group;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Validation\ValidationException;
 
+#[Group('Product Filter')]
 class BrandController extends Controller
 {
     use ApiResponseTrait;
 
     /**
      * Display a listing of brands.
-     *
-     * @group Product Filter
-     * @subgroup Brands
-     *
+     * 
      * @response 200 {
      *   "success": true,
      *   "data": [
