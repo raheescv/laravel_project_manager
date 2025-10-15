@@ -21,7 +21,10 @@ return Application::configure(basePath: dirname(__DIR__))
             __DIR__.'/../routes/flat_trade.php',
             __DIR__.'/../routes/api_log.php',
         ],
-        api: __DIR__.'/../routes/api.php',
+        api: [
+            __DIR__.'/../routes/api.php',
+            __DIR__.'/../routes/api_v1.php',
+        ],
         commands: __DIR__.'/../routes/console.php',
         channels: __DIR__.'/../routes/channels.php',
         health: '/up',
