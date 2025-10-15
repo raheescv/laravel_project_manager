@@ -161,15 +161,15 @@ class Product extends Model implements AuditableContracts
 
     /**
      * Generate a unique product code
-     * 
-     * @param string $prefix Optional prefix for the code
-     * @param int $length Length of the random part
+     *
+     * @param  string  $prefix  Optional prefix for the code
+     * @param  int  $length  Length of the random part
      * @return string
      */
     public static function generateUniqueCode($prefix = 'PRD', $length = 6)
     {
         do {
-            $code = $prefix . str_pad(rand(0, pow(10, $length) - 1), $length, '0', STR_PAD_LEFT);
+            $code = $prefix.str_pad(rand(0, pow(10, $length) - 1), $length, '0', STR_PAD_LEFT);
         } while (self::where('code', $code)->exists());
 
         return $code;
@@ -177,26 +177,26 @@ class Product extends Model implements AuditableContracts
 
     /**
      * Generate a random product code
-     * 
-     * @param int $length Length of the code
+     *
+     * @param  int  $length  Length of the code
      * @return string
      */
     public static function generateRandomCode($length = 8)
     {
         $characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
         $code = '';
-        
+
         for ($i = 0; $i < $length; $i++) {
             $code .= $characters[rand(0, strlen($characters) - 1)];
         }
-        
+
         return $code;
     }
 
     /**
      * Generate a unique random product code
-     * 
-     * @param int $length Length of the code
+     *
+     * @param  int  $length  Length of the code
      * @return string
      */
     public static function generateUniqueRandomCode($length = 8)
@@ -210,13 +210,13 @@ class Product extends Model implements AuditableContracts
 
     /**
      * Generate a sequential product code
-     * 
-     * @param string $prefix Optional prefix for the code
+     *
+     * @param  string  $prefix  Optional prefix for the code
      * @return string
      */
     public static function generateSequentialCode($prefix = 'PRD')
     {
-        $lastProduct = self::where('code', 'like', $prefix . '%')
+        $lastProduct = self::where('code', 'like', $prefix.'%')
             ->orderBy('code', 'desc')
             ->first();
 
@@ -227,12 +227,12 @@ class Product extends Model implements AuditableContracts
             $nextNumber = 1;
         }
 
-        return $prefix . str_pad($nextNumber, 6, '0', STR_PAD_LEFT);
+        return $prefix.str_pad($nextNumber, 6, '0', STR_PAD_LEFT);
     }
 
     public static function constructData($data, $user_id)
     {
-        if(!isset($data['code']) || empty($data['code'])){
+        if (! isset($data['code']) || empty($data['code'])) {
             $data['code'] = self::generateUniqueCode();
         }
         $data['cost'] = extractNumericValue($data['cost'] ?? 0);
@@ -246,7 +246,7 @@ class Product extends Model implements AuditableContracts
         $unit = Unit::firstOrCreate(['name' => $data['unit']], ['code' => $data['unit']]);
         $data['unit_id'] = $unit->id;
         $brand_id = null;
-        if(isset($data['brand_id'])){
+        if (isset($data['brand_id'])) {
             $brand_id = Brand::selfCreate($data['brand_id']);
         }
         $data['brand_id'] = $brand_id;

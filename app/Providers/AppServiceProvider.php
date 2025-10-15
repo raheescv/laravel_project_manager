@@ -4,6 +4,9 @@ namespace App\Providers;
 
 use App\Models\Branch;
 use App\Models\Configuration;
+use Dedoc\Scramble\Scramble;
+use Dedoc\Scramble\Support\Generator\OpenApi;
+use Dedoc\Scramble\Support\Generator\SecurityScheme;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Schema;
@@ -18,6 +21,14 @@ class AppServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
+
+        // Configure Scramble for Bearer Token Authentication
+        Scramble::configure()
+            ->withDocumentTransformers(function (OpenApi $openApi) {
+                $openApi->secure(
+                    SecurityScheme::http('bearer')
+                );
+            });
         // Force HTTPS for assets when the app is served over HTTPS
         if (request()->isSecure() || env('FORCE_HTTPS', false) || env('APP_URL', '')->startsWith('https://')) {
             \Illuminate\Support\Facades\URL::forceScheme('https');

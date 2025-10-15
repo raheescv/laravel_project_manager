@@ -11,6 +11,7 @@
     "require": {
         "php": "^8.2",
         "barryvdh/laravel-dompdf": "^3.0",
+        "dedoc/scramble": "^0.12.35",
         "inertiajs/inertia-laravel": "^2.0",
         "irazasyed/telegram-bot-sdk": "^3.15",
         "jenssegers/agent": "^2.6",
