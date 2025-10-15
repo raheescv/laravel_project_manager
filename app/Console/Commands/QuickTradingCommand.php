@@ -24,6 +24,7 @@ class QuickTradingCommand extends Command
                             {--market-aware : Enable market condition awareness}
                             {--use-history : Use historical performance for decisions}
                             {--auto-trigger : Enable automatic trigger-based selling}
+                            {--sell-all : Force sell all positions regardless of profit/loss}
                             {--dry-run : Run in dry-run mode}';
 
     protected $description = 'Enhanced Quick Trading: Intelligent buy/sell with advanced profit checking and trading magic';
@@ -59,6 +60,7 @@ class QuickTradingCommand extends Command
         $marketAware = $this->option('market-aware');
         $useHistory = $this->option('use-history');
         $autoTrigger = $this->option('auto-trigger');
+        $sellAll = $this->option('sell-all');
         $dryRun = $this->option('dry-run');
 
         $this->info('🚀 Starting Enhanced Quick Trading Command');
@@ -74,6 +76,7 @@ class QuickTradingCommand extends Command
         $this->info("- Market aware: " . ($marketAware ? 'YES' : 'NO'));
         $this->info("- Use history: " . ($useHistory ? 'YES' : 'NO'));
         $this->info("- Auto trigger: " . ($autoTrigger ? 'YES' : 'NO'));
+        $this->info("- Sell all: " . ($sellAll ? 'YES' : 'NO'));
         $this->info("- Dry run: " . ($dryRun ? 'YES' : 'NO'));
 
         try {
@@ -81,9 +84,14 @@ class QuickTradingCommand extends Command
             $this->analyzeMarketAndPerformance($useHistory);
             
             // Step 2: Intelligent position analysis and selling with advanced profit logic
-            $this->handleAdvancedProfitSelling($lossThreshold, $profitThreshold, $maxProfitTarget, $minProfitKeep, $triggerProfit, $strategy, $marketAware, $autoTrigger, $dryRun);
-            // Step 3: Advanced stock selection and buying
-            $this->handleAdvancedBuying($maxStocks, $quantity, $strategy, $marketAware, $dryRun);
+            $this->handleAdvancedProfitSelling($lossThreshold, $profitThreshold, $maxProfitTarget, $minProfitKeep, $triggerProfit, $strategy, $marketAware, $autoTrigger, $sellAll, $dryRun);
+            
+            // Step 3: Advanced stock selection and buying (skip if sell-all mode)
+            if (!$sellAll) {
+                $this->handleAdvancedBuying($maxStocks, $quantity, $strategy, $marketAware, $dryRun);
+            } else {
+                $this->info("\n🔄 Sell-all mode: Skipping buying phase");
+            }
 
             // Step 4: Generate performance insights
             $this->generateTradingInsights();
@@ -133,7 +141,7 @@ class QuickTradingCommand extends Command
     /**
      * Handle advanced profit-based selling with intelligent triggers
      */
-    protected function handleAdvancedProfitSelling(float $lossThreshold, float $profitThreshold, float $maxProfitTarget, float $minProfitKeep, float $triggerProfit, string $strategy, bool $marketAware, bool $autoTrigger, bool $dryRun): void
+    protected function handleAdvancedProfitSelling(float $lossThreshold, float $profitThreshold, float $maxProfitTarget, float $minProfitKeep, float $triggerProfit, string $strategy, bool $marketAware, bool $autoTrigger, bool $sellAll, bool $dryRun): void
     {
         $this->info("\n🎯 Advanced Profit-Based Position Analysis...");
         
@@ -146,9 +154,14 @@ class QuickTradingCommand extends Command
             'strategy' => $strategy,
             'market_aware' => $marketAware,
             'auto_trigger' => $autoTrigger,
+            'sell_all' => $sellAll,
             'dry_run' => $dryRun
         ];
 
+        if ($sellAll) {
+            $this->info("🔄 Sell-all mode: Will sell all positions regardless of profit/loss");
+        }
+        
         $positions = $this->unifiedStrategyService->analyzePositionsForSelling($options);
         
         if (empty($positions)) {

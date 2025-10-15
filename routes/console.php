@@ -26,4 +26,4 @@ Schedule::command(RunHealthChecksCommand::class)->daily();
 Schedule::command('trade:quick')->everyTwoMinutes()->between('04:30', '09:30');
 
 // Force sell all stocks after 09:50
-Schedule::command('trade:unified --action=sell --sell-all')->dailyAt('09:31');
+Schedule::command('trade:quick --sell-all')->dailyAt('09:31');
