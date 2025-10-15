@@ -7,7 +7,6 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use Illuminate\View\View;
 
@@ -148,15 +147,15 @@ class FlatTradeController extends Controller
         try {
             $flatTradeService = new FlatTradeService();
             $result = $flatTradeService->getUserDetails();
-            
+
             return response()->json([
                 'success' => true,
-                'data' => $result
+                'data' => $result,
             ]);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => $e->getMessage()
+                'message' => $e->getMessage(),
             ], 400);
         }
     }
@@ -201,7 +200,7 @@ class FlatTradeController extends Controller
         } catch (\Exception $e) {
             Log::info('FlatTrade dashboard - account not connected or token expired', [
                 'user_id' => Auth::id(),
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ]);
         }
 
@@ -214,6 +213,7 @@ class FlatTradeController extends Controller
             'holdings' => $holdings,
             'limits' => $limits,
         ];
+
         return view('flat-trade.dashboard', $data);
     }
 
@@ -229,12 +229,12 @@ class FlatTradeController extends Controller
         session(['flat_trade_oauth_state' => $state]);
 
         // Build FlatTrade OAuth authorization URL as per the provided format
-        $authUrl = 'https://auth.flattrade.in/?app_key=' . config('services.flat_trade.api_key');
+        $authUrl = 'https://auth.flattrade.in/?app_key='.config('services.flat_trade.api_key');
 
         Log::info('FlatTrade OAuth authorization initiated', [
             'user_id' => Auth::id(),
             'state' => $state,
-            'auth_url' => $authUrl
+            'auth_url' => $authUrl,
         ]);
 
         return redirect($authUrl);
@@ -254,7 +254,7 @@ class FlatTradeController extends Controller
         } catch (\Exception $e) {
             Log::error('FlatTrade disconnect error', [
                 'error' => $e->getMessage(),
-                'user_id' => Auth::id()
+                'user_id' => Auth::id(),
             ]);
 
             return redirect()->route('flat_trade::dashboard')
@@ -296,7 +296,7 @@ class FlatTradeController extends Controller
         } catch (\Exception $e) {
             Log::error('FlatTrade status check failed', [
                 'error' => $e->getMessage(),
-                'user_id' => Auth::id()
+                'user_id' => Auth::id(),
             ]);
 
             return response()->json([
@@ -339,7 +339,7 @@ class FlatTradeController extends Controller
                     break;
 
                 case 'LIMIT':
-                    if (!$request->price) {
+                    if (! $request->price) {
                         throw new \Exception('Price is required for limit orders');
                     }
                     $result = $flatTradeService->placeLimitOrder(
@@ -348,7 +348,7 @@ class FlatTradeController extends Controller
                     break;
 
                 case 'SL-LMT':
-                    if (!$request->price || !$request->trigger_price) {
+                    if (! $request->price || ! $request->trigger_price) {
                         throw new \Exception('Price and trigger price are required for stop loss limit orders');
                     }
                     $result = $flatTradeService->placeStopLossLimitOrder(
@@ -357,7 +357,7 @@ class FlatTradeController extends Controller
                     break;
 
                 case 'SL-MKT':
-                    if (!$request->trigger_price) {
+                    if (! $request->trigger_price) {
                         throw new \Exception('Trigger price is required for stop loss market orders');
                     }
                     $result = $flatTradeService->placeStopLossMarketOrder(
@@ -372,7 +372,7 @@ class FlatTradeController extends Controller
             Log::info('Buy order placed successfully', [
                 'user_id' => Auth::id(),
                 'order_data' => $request->all(),
-                'result' => $result
+                'result' => $result,
             ]);
 
             return response()->json([
@@ -385,7 +385,7 @@ class FlatTradeController extends Controller
             Log::error('Buy order failed', [
                 'error' => $e->getMessage(),
                 'user_id' => Auth::id(),
-                'request_data' => $request->all()
+                'request_data' => $request->all(),
             ]);
 
             return response()->json([
@@ -426,7 +426,7 @@ class FlatTradeController extends Controller
                     break;
 
                 case 'LIMIT':
-                    if (!$request->price) {
+                    if (! $request->price) {
                         throw new \Exception('Price is required for limit orders');
                     }
                     $result = $flatTradeService->placeLimitOrder(
@@ -435,7 +435,7 @@ class FlatTradeController extends Controller
                     break;
 
                 case 'SL-LMT':
-                    if (!$request->price || !$request->trigger_price) {
+                    if (! $request->price || ! $request->trigger_price) {
                         throw new \Exception('Price and trigger price are required for stop loss limit orders');
                     }
                     $result = $flatTradeService->placeStopLossLimitOrder(
@@ -444,7 +444,7 @@ class FlatTradeController extends Controller
                     break;
 
                 case 'SL-MKT':
-                    if (!$request->trigger_price) {
+                    if (! $request->trigger_price) {
                         throw new \Exception('Trigger price is required for stop loss market orders');
                     }
                     $result = $flatTradeService->placeStopLossMarketOrder(
@@ -459,7 +459,7 @@ class FlatTradeController extends Controller
             Log::info('Sell order placed successfully', [
                 'user_id' => Auth::id(),
                 'order_data' => $request->all(),
-                'result' => $result
+                'result' => $result,
             ]);
 
             return response()->json([
@@ -472,7 +472,7 @@ class FlatTradeController extends Controller
             Log::error('Sell order failed', [
                 'error' => $e->getMessage(),
                 'user_id' => Auth::id(),
-                'request_data' => $request->all()
+                'request_data' => $request->all(),
             ]);
 
             return response()->json([
@@ -525,7 +525,7 @@ class FlatTradeController extends Controller
                     break;
 
                 case 'SL-LMT':
-                    if (!$request->trigger_price) {
+                    if (! $request->trigger_price) {
                         throw new \Exception('Trigger price is required for stop loss limit bracket orders');
                     }
                     $result = $flatTradeService->placeBracketOrderStopLossLimit(
@@ -542,7 +542,7 @@ class FlatTradeController extends Controller
             Log::info('Bracket order placed successfully', [
                 'user_id' => Auth::id(),
                 'order_data' => $request->all(),
-                'result' => $result
+                'result' => $result,
             ]);
 
             return response()->json([
@@ -555,7 +555,7 @@ class FlatTradeController extends Controller
             Log::error('Bracket order failed', [
                 'error' => $e->getMessage(),
                 'user_id' => Auth::id(),
-                'request_data' => $request->all()
+                'request_data' => $request->all(),
             ]);
 
             return response()->json([
@@ -581,7 +581,7 @@ class FlatTradeController extends Controller
             Log::info('Order cancelled successfully', [
                 'user_id' => Auth::id(),
                 'order_id' => $request->order_id,
-                'result' => $result
+                'result' => $result,
             ]);
 
             return response()->json([
@@ -594,7 +594,7 @@ class FlatTradeController extends Controller
             Log::error('Order cancellation failed', [
                 'error' => $e->getMessage(),
                 'user_id' => Auth::id(),
-                'order_id' => $request->order_id
+                'order_id' => $request->order_id,
             ]);
 
             return response()->json([
@@ -617,7 +617,7 @@ class FlatTradeController extends Controller
         try {
             $flatTradeService = new FlatTradeService();
             $exchange = $request->exchange ?? 'NSE';
-            
+
             $quotes = $flatTradeService->getQuotes($request->symbol, $exchange);
 
             return response()->json([
@@ -629,7 +629,7 @@ class FlatTradeController extends Controller
             Log::error('Market data fetch failed', [
                 'error' => $e->getMessage(),
                 'user_id' => Auth::id(),
-                'symbol' => $request->symbol
+                'symbol' => $request->symbol,
             ]);
 
             return response()->json([
@@ -652,7 +652,7 @@ class FlatTradeController extends Controller
         try {
             $flatTradeService = new FlatTradeService();
             $exchange = $request->exchange ?? 'NSE';
-            
+
             $results = $flatTradeService->searchScrip($request->search_text, $exchange);
 
             return response()->json([
@@ -664,7 +664,7 @@ class FlatTradeController extends Controller
             Log::error('Scrip search failed', [
                 'error' => $e->getMessage(),
                 'user_id' => Auth::id(),
-                'search_text' => $request->search_text
+                'search_text' => $request->search_text,
             ]);
 
             return response()->json([
@@ -691,7 +691,7 @@ class FlatTradeController extends Controller
         } catch (\Exception $e) {
             Log::error('Order book fetch failed', [
                 'error' => $e->getMessage(),
-                'user_id' => Auth::id()
+                'user_id' => Auth::id(),
             ]);
 
             return response()->json([
@@ -718,7 +718,7 @@ class FlatTradeController extends Controller
         } catch (\Exception $e) {
             Log::error('Trade book fetch failed', [
                 'error' => $e->getMessage(),
-                'user_id' => Auth::id()
+                'user_id' => Auth::id(),
             ]);
 
             return response()->json([
@@ -745,7 +745,7 @@ class FlatTradeController extends Controller
 
         try {
             $flatTradeService = new FlatTradeService();
-            
+
             $positionBook = $flatTradeService->getPositionBook(
                 $request->exchange ?? 'NSE',
                 $request->symbol ?? 'INFY-EQ',
@@ -764,7 +764,7 @@ class FlatTradeController extends Controller
         } catch (\Exception $e) {
             Log::error('Position book fetch failed', [
                 'error' => $e->getMessage(),
-                'user_id' => Auth::id()
+                'user_id' => Auth::id(),
             ]);
 
             return response()->json([
@@ -789,7 +789,7 @@ class FlatTradeController extends Controller
 
         try {
             $flatTradeService = new FlatTradeService();
-            
+
             $result = $flatTradeService->setAlert(
                 $request->symbol,
                 $request->exchange,
@@ -808,7 +808,7 @@ class FlatTradeController extends Controller
             Log::error('Alert setting failed', [
                 'error' => $e->getMessage(),
                 'user_id' => Auth::id(),
-                'request_data' => $request->all()
+                'request_data' => $request->all(),
             ]);
 
             return response()->json([
@@ -835,7 +835,7 @@ class FlatTradeController extends Controller
         } catch (\Exception $e) {
             Log::error('Pending alerts fetch failed', [
                 'error' => $e->getMessage(),
-                'user_id' => Auth::id()
+                'user_id' => Auth::id(),
             ]);
 
             return response()->json([
@@ -868,7 +868,7 @@ class FlatTradeController extends Controller
             Log::error('Alert cancellation failed', [
                 'error' => $e->getMessage(),
                 'user_id' => Auth::id(),
-                'alert_id' => $request->alert_id
+                'alert_id' => $request->alert_id,
             ]);
 
             return response()->json([
@@ -886,6 +886,7 @@ class FlatTradeController extends Controller
         try {
             $flatTradeService = new FlatTradeService();
             $limits = $flatTradeService->getLimits();
+
             return response()->json([
                 'success' => true,
                 'balance' => $limits,
@@ -894,7 +895,7 @@ class FlatTradeController extends Controller
         } catch (\Exception $e) {
             Log::error('Balance fetch failed', [
                 'error' => $e->getMessage(),
-                'user_id' => Auth::id()
+                'user_id' => Auth::id(),
             ]);
 
             return response()->json([
@@ -921,7 +922,7 @@ class FlatTradeController extends Controller
         } catch (\Exception $e) {
             Log::error('Holdings fetch failed', [
                 'error' => $e->getMessage(),
-                'user_id' => Auth::id()
+                'user_id' => Auth::id(),
             ]);
 
             return response()->json([
@@ -948,7 +949,7 @@ class FlatTradeController extends Controller
         } catch (\Exception $e) {
             Log::error('User details fetch failed', [
                 'error' => $e->getMessage(),
-                'user_id' => Auth::id()
+                'user_id' => Auth::id(),
             ]);
 
             return response()->json([
@@ -1006,7 +1007,7 @@ class FlatTradeController extends Controller
             Log::error('Market info fetch failed', [
                 'error' => $e->getMessage(),
                 'user_id' => Auth::id(),
-                'type' => $request->type
+                'type' => $request->type,
             ]);
 
             return response()->json([
@@ -1031,7 +1032,7 @@ class FlatTradeController extends Controller
 
         try {
             $flatTradeService = new FlatTradeService();
-            
+
             $result = $flatTradeService->getTimePriceSeries(
                 $request->exchange,
                 $request->token,
@@ -1049,7 +1050,7 @@ class FlatTradeController extends Controller
             Log::error('Time price series fetch failed', [
                 'error' => $e->getMessage(),
                 'user_id' => Auth::id(),
-                'request_data' => $request->all()
+                'request_data' => $request->all(),
             ]);
 
             return response()->json([
@@ -1072,7 +1073,7 @@ class FlatTradeController extends Controller
 
         try {
             $flatTradeService = new FlatTradeService();
-            
+
             $result = $flatTradeService->getEODChartData(
                 $request->symbol,
                 $request->from_date,
@@ -1088,7 +1089,7 @@ class FlatTradeController extends Controller
             Log::error('EOD chart data fetch failed', [
                 'error' => $e->getMessage(),
                 'user_id' => Auth::id(),
-                'request_data' => $request->all()
+                'request_data' => $request->all(),
             ]);
 
             return response()->json([
@@ -1147,9 +1148,9 @@ class FlatTradeController extends Controller
                 'calculated_prices' => [
                     'entry_price' => $entryPrice,
                     'stop_loss_price' => $stopLossPrice,
-                    'target_price' => $targetPrice
+                    'target_price' => $targetPrice,
                 ],
-                'result' => $result
+                'result' => $result,
             ]);
 
             return response()->json([
@@ -1159,15 +1160,15 @@ class FlatTradeController extends Controller
                 'calculated_prices' => [
                     'entry_price' => $entryPrice,
                     'stop_loss_price' => $stopLossPrice,
-                    'target_price' => $targetPrice
-                ]
+                    'target_price' => $targetPrice,
+                ],
             ]);
 
         } catch (\Exception $e) {
             Log::error('Trade cycle execution failed', [
                 'error' => $e->getMessage(),
                 'user_id' => Auth::id(),
-                'request_data' => $request->all()
+                'request_data' => $request->all(),
             ]);
 
             return response()->json([

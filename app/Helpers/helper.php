@@ -115,12 +115,11 @@ if (! function_exists('systemDateTime')) {
     }
 }
 
-
 /**
  * Extract numeric value from string
- * 
- * @param mixed $value The value to extract numeric from
- * @param float $default Default value if extraction fails
+ *
+ * @param  mixed  $value  The value to extract numeric from
+ * @param  float  $default  Default value if extraction fails
  * @return float
  */
 if (! function_exists('extractNumericValue')) {
@@ -132,13 +131,13 @@ if (! function_exists('extractNumericValue')) {
         }
 
         // If not a string, return default
-        if (!is_string($value)) {
+        if (! is_string($value)) {
             return $default;
         }
 
         // Remove common currency symbols and text
         $cleaned = preg_replace('/[^\d.,\-]/', '', $value);
-        
+
         // Handle different decimal separators
         if (strpos($cleaned, ',') !== false && strpos($cleaned, '.') !== false) {
             // Both comma and dot present - assume comma is thousands separator

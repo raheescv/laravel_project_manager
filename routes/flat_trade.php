@@ -37,7 +37,7 @@ Route::name('flat_trade::')->prefix('flat_trade')->group(function (): void {
 
         // View account status
         Route::get('/status', [FlatTradeController::class, 'status'])->name('status')->can('flat_trade.view');
-        
+
         // Test API connection
         Route::get('/test-api', [FlatTradeController::class, 'testApi'])->name('test_api')->can('flat_trade.view');
 
@@ -75,7 +75,7 @@ Route::name('flat_trade::')->prefix('flat_trade')->group(function (): void {
             Route::get('/', function () {
                 return view('nifty50-trading');
             })->name('dashboard')->can('flat_trade.view');
-            
+
             Route::get('/best-stocks', [Nifty50TradingController::class, 'getBestStocks'])->name('best_stocks')->can('flat_trade.view');
             Route::post('/execute-trading', [Nifty50TradingController::class, 'executeRealTrading'])->name('execute_trading')->can('flat_trade.trade');
             Route::get('/market-status', [Nifty50TradingController::class, 'getMarketStatus'])->name('market_status')->can('flat_trade.view');
@@ -84,5 +84,3 @@ Route::name('flat_trade::')->prefix('flat_trade')->group(function (): void {
         });
     });
 });
-
-

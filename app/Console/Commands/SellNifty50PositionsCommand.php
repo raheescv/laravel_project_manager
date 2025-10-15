@@ -28,32 +28,33 @@ class SellNifty50PositionsCommand extends Command
     public function handle()
     {
         $this->info('💰 Starting Nifty 50 Position Selling Command');
-        
+
         $profitThreshold = (float) $this->option('profit-threshold');
         $lossThreshold = (float) $this->option('loss-threshold');
         $dryRun = $this->option('dry-run');
         $orderType = $this->option('order-type');
         $sellAll = $this->option('all');
 
-        $this->info("Configuration:");
+        $this->info('Configuration:');
         $this->info("- Profit threshold: {$profitThreshold}%");
         $this->info("- Loss threshold: {$lossThreshold}%");
         $this->info("- Order type: {$orderType}");
-        $this->info("- Sell all: " . ($sellAll ? 'YES' : 'NO'));
-        $this->info("- Dry run: " . ($dryRun ? 'YES' : 'NO'));
+        $this->info('- Sell all: '.($sellAll ? 'YES' : 'NO'));
+        $this->info('- Dry run: '.($dryRun ? 'YES' : 'NO'));
 
         try {
             // Step 1: Get Nifty 50 positions
             $this->info("\n📊 Fetching Nifty 50 positions...");
             $nifty50Positions = $this->getNifty50Positions();
-            
+
             if (empty($nifty50Positions)) {
                 $this->warn('No Nifty 50 positions found.');
                 $this->info('💡 Tip: Run "php artisan trade:nifty50-real --dry-run" first to create positions');
+
                 return;
             }
 
-            $this->info("Found " . count($nifty50Positions) . " Nifty 50 positions:");
+            $this->info('Found '.count($nifty50Positions).' Nifty 50 positions:');
             foreach ($nifty50Positions as $position) {
                 $pnlColor = $position['pnl_percent'] >= 0 ? 'green' : 'red';
                 $this->info("- {$position['symbol']}: {$position['quantity']} shares, P&L: {$position['pnl_percent']}%");
@@ -61,9 +62,10 @@ class SellNifty50PositionsCommand extends Command
 
             // Step 2: Filter positions for selling
             $sellCandidates = $this->filterSellCandidates($nifty50Positions, $profitThreshold, $lossThreshold, $sellAll);
-            
+
             if (empty($sellCandidates)) {
                 $this->info('No positions meet the selling criteria.');
+
                 return;
             }
 
@@ -75,25 +77,25 @@ class SellNifty50PositionsCommand extends Command
             // Step 3: Execute sell orders
             $this->info("\n💸 Executing sell orders...");
             $results = [];
-            
+
             foreach ($sellCandidates as $candidate) {
                 $this->info("\n📉 Selling: {$candidate['symbol']}");
-                
+
                 try {
                     $result = $this->executeSellOrder($candidate, $orderType, $dryRun);
                     $results[] = $result;
-                    
+
                     if ($result['success']) {
                         $this->info("✅ Sell order placed successfully for {$candidate['symbol']}");
                     } else {
                         $this->warn("⚠️ Sell order failed for {$candidate['symbol']}: {$result['error']}");
                     }
                 } catch (\Exception $e) {
-                    $this->error("❌ Error selling {$candidate['symbol']}: " . $e->getMessage());
+                    $this->error("❌ Error selling {$candidate['symbol']}: ".$e->getMessage());
                     $results[] = [
                         'symbol' => $candidate['symbol'],
                         'success' => false,
-                        'error' => $e->getMessage()
+                        'error' => $e->getMessage(),
                     ];
                 }
             }
@@ -102,10 +104,10 @@ class SellNifty50PositionsCommand extends Command
             $this->displaySellingSummary($results, $dryRun);
 
         } catch (\Exception $e) {
-            $this->error("❌ Command failed: " . $e->getMessage());
+            $this->error('❌ Command failed: '.$e->getMessage());
             Log::error('SellNifty50PositionsCommand failed', [
                 'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
+                'trace' => $e->getTraceAsString(),
             ]);
         }
     }
@@ -125,18 +127,18 @@ class SellNifty50PositionsCommand extends Command
                 foreach ($holdings['values'] as $holding) {
                     $symbol = $holding['tsym'] ?? '';
                     $quantity = (int) ($holding['qty'] ?? 0);
-                    
+
                     if ($quantity > 0 && $this->isNifty50Symbol($symbol, $nifty50Symbols)) {
                         $currentPrice = $this->getCurrentPrice($symbol);
                         $avgPrice = (float) ($holding['avgprc'] ?? 0);
                         $pnlPercent = 0;
                         $pnlValue = 0;
-                        
+
                         if ($avgPrice > 0 && $currentPrice > 0) {
                             $pnlPercent = (($currentPrice - $avgPrice) / $avgPrice) * 100;
                             $pnlValue = ($currentPrice - $avgPrice) * $quantity;
                         }
-                        
+
                         $allPositions[] = [
                             'symbol' => $symbol,
                             'quantity' => $quantity,
@@ -145,13 +147,13 @@ class SellNifty50PositionsCommand extends Command
                             'pnl_percent' => $pnlPercent,
                             'pnl_value' => $pnlValue,
                             'type' => 'holding',
-                            'raw_data' => $holding
+                            'raw_data' => $holding,
                         ];
                     }
                 }
             }
         } catch (\Exception $e) {
-            $this->warn("Error fetching holdings: " . $e->getMessage());
+            $this->warn('Error fetching holdings: '.$e->getMessage());
         }
 
         // Get positions
@@ -161,18 +163,18 @@ class SellNifty50PositionsCommand extends Command
                 foreach ($positions['values'] as $position) {
                     $symbol = $position['tsym'] ?? '';
                     $quantity = (int) ($position['netqty'] ?? 0);
-                    
+
                     if ($quantity > 0 && $this->isNifty50Symbol($symbol, $nifty50Symbols)) {
                         $currentPrice = $this->getCurrentPrice($symbol);
                         $avgPrice = (float) ($position['netprice'] ?? 0);
                         $pnlPercent = 0;
                         $pnlValue = 0;
-                        
+
                         if ($avgPrice > 0 && $currentPrice > 0) {
                             $pnlPercent = (($currentPrice - $avgPrice) / $avgPrice) * 100;
                             $pnlValue = ($currentPrice - $avgPrice) * $quantity;
                         }
-                        
+
                         $allPositions[] = [
                             'symbol' => $symbol,
                             'quantity' => $quantity,
@@ -181,13 +183,13 @@ class SellNifty50PositionsCommand extends Command
                             'pnl_percent' => $pnlPercent,
                             'pnl_value' => $pnlValue,
                             'type' => 'position',
-                            'raw_data' => $position
+                            'raw_data' => $position,
                         ];
                     }
                 }
             }
         } catch (\Exception $e) {
-            $this->warn("Error fetching positions: " . $e->getMessage());
+            $this->warn('Error fetching positions: '.$e->getMessage());
         }
 
         return $allPositions;
@@ -200,6 +202,7 @@ class SellNifty50PositionsCommand extends Command
     {
         // Remove common suffixes
         $cleanSymbol = str_replace(['-EQ', '-BE', '-N1'], '', $symbol);
+
         return in_array($cleanSymbol, $nifty50Symbols);
     }
 
@@ -214,7 +217,7 @@ class SellNifty50PositionsCommand extends Command
             'WIPRO', 'NESTLEIND', 'ONGC', 'POWERGRID', 'NTPC', 'TECHM', 'TATAMOTORS', 'BAJFINANCE',
             'HCLTECH', 'BAJAJFINSV', 'DRREDDY', 'JSWSTEEL', 'TATASTEEL', 'COALINDIA', 'GRASIM', 'BRITANNIA',
             'EICHERMOT', 'HEROMOTOCO', 'DIVISLAB', 'CIPLA', 'APOLLOHOSP', 'ADANIPORTS', 'INDUSINDBK', 'TATACONSUM',
-            'BPCL', 'ICICIBANK', 'ADANIENT', 'HDFCLIFE', 'SBILIFE', 'BAJAJ-AUTO', 'UPL', 'SHREECEM'
+            'BPCL', 'ICICIBANK', 'ADANIENT', 'HDFCLIFE', 'SBILIFE', 'BAJAJ-AUTO', 'UPL', 'SHREECEM',
         ];
     }
 
@@ -230,7 +233,7 @@ class SellNifty50PositionsCommand extends Command
         $candidates = [];
         foreach ($positions as $position) {
             $pnlPercent = $position['pnl_percent'];
-            
+
             // Sell if profit threshold met
             if ($pnlPercent >= $profitThreshold) {
                 $candidates[] = $position;
@@ -251,18 +254,18 @@ class SellNifty50PositionsCommand extends Command
     {
         try {
             $searchResult = $this->flatTradeService->searchScrip($symbol, 'NSE');
-            
-            if (!isset($searchResult['values']) || empty($searchResult['values'])) {
+
+            if (! isset($searchResult['values']) || empty($searchResult['values'])) {
                 return null;
             }
 
             $token = $searchResult['values'][0]['token'] ?? null;
-            if (!$token) {
+            if (! $token) {
                 return null;
             }
 
             $quote = $this->flatTradeService->getQuotes($token, 'NSE');
-            
+
             if (isset($quote['stat']) && $quote['stat'] === 'Ok') {
                 return (float) ($quote['lp'] ?? 0);
             }
@@ -270,7 +273,8 @@ class SellNifty50PositionsCommand extends Command
             return null;
 
         } catch (\Exception $e) {
-            $this->warn("Error getting price for {$symbol}: " . $e->getMessage());
+            $this->warn("Error getting price for {$symbol}: ".$e->getMessage());
+
             return null;
         }
     }
@@ -283,7 +287,7 @@ class SellNifty50PositionsCommand extends Command
         $symbol = $candidate['symbol'];
         $quantity = $candidate['quantity'];
         $currentPrice = $candidate['current_price'];
-        
+
         try {
             $this->info("  Current Price: ₹{$currentPrice}");
             $this->info("  Average Price: ₹{$candidate['avg_price']}");
@@ -292,15 +296,16 @@ class SellNifty50PositionsCommand extends Command
 
             if ($dryRun) {
                 $this->info("  [DRY RUN] Would place {$orderType} sell order for {$quantity} shares");
+
                 return [
                     'symbol' => $symbol,
                     'success' => true,
-                    'order_id' => 'DRY_RUN_SELL_' . time(),
+                    'order_id' => 'DRY_RUN_SELL_'.time(),
                     'sell_price' => $currentPrice,
                     'quantity' => $quantity,
                     'pnl_percent' => $candidate['pnl_percent'],
                     'pnl_value' => $candidate['pnl_value'],
-                    'dry_run' => true
+                    'dry_run' => true,
                 ];
             }
 
@@ -316,7 +321,7 @@ class SellNifty50PositionsCommand extends Command
                 'pnl_percent' => $candidate['pnl_percent'],
                 'pnl_value' => $candidate['pnl_value'],
                 'order_type' => $orderType,
-                'order_result' => $orderResult
+                'order_result' => $orderResult,
             ]);
 
             return [
@@ -327,14 +332,14 @@ class SellNifty50PositionsCommand extends Command
                 'quantity' => $quantity,
                 'pnl_percent' => $candidate['pnl_percent'],
                 'pnl_value' => $candidate['pnl_value'],
-                'order_result' => $orderResult
+                'order_result' => $orderResult,
             ];
 
         } catch (\Exception $e) {
             return [
                 'symbol' => $symbol,
                 'success' => false,
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ];
         }
     }
@@ -347,10 +352,10 @@ class SellNifty50PositionsCommand extends Command
         switch ($orderType) {
             case 'market':
                 return $this->flatTradeService->placeMarketOrder('NSE', $symbol, $quantity, 'S', 'C');
-                
+
             case 'limit':
                 return $this->flatTradeService->placeLimitOrder('NSE', $symbol, $quantity, $price, 'S', 'C');
-                
+
             default:
                 throw new \Exception("Unsupported order type: {$orderType}");
         }
@@ -361,41 +366,41 @@ class SellNifty50PositionsCommand extends Command
      */
     protected function displaySellingSummary(array $results, bool $dryRun): void
     {
-        $this->info("\n" . str_repeat('=', 60));
-        $this->info("💰 NIFTY 50 SELLING SUMMARY");
+        $this->info("\n".str_repeat('=', 60));
+        $this->info('💰 NIFTY 50 SELLING SUMMARY');
         $this->info(str_repeat('=', 60));
-        
-        $successful = array_filter($results, fn($r) => $r['success']);
-        $failed = array_filter($results, fn($r) => !$r['success']);
-        
+
+        $successful = array_filter($results, fn ($r) => $r['success']);
+        $failed = array_filter($results, fn ($r) => ! $r['success']);
+
         $totalPnl = array_sum(array_column($successful, 'pnl_value'));
         $totalQuantity = array_sum(array_column($successful, 'quantity'));
-        
-        $this->info("Total Positions Processed: " . count($results));
-        $this->info("Successful Sell Orders: " . count($successful));
-        $this->info("Failed Sell Orders: " . count($failed));
-        $this->info("Total Quantity Sold: " . $totalQuantity . " shares");
-        $this->info("Total P&L Realized: ₹" . number_format($totalPnl, 2));
-        
+
+        $this->info('Total Positions Processed: '.count($results));
+        $this->info('Successful Sell Orders: '.count($successful));
+        $this->info('Failed Sell Orders: '.count($failed));
+        $this->info('Total Quantity Sold: '.$totalQuantity.' shares');
+        $this->info('Total P&L Realized: ₹'.number_format($totalPnl, 2));
+
         if ($dryRun) {
             $this->info("\n🔍 DRY RUN MODE - No actual orders were placed");
         }
-        
-        if (!empty($successful)) {
+
+        if (! empty($successful)) {
             $this->info("\n✅ SUCCESSFUL SELL ORDERS:");
             foreach ($successful as $result) {
                 $pnlColor = $result['pnl_percent'] >= 0 ? 'green' : 'red';
                 $this->info("  {$result['symbol']}: Order ID {$result['order_id']} - ₹{$result['sell_price']} - P&L: {$result['pnl_percent']}%");
             }
         }
-        
-        if (!empty($failed)) {
+
+        if (! empty($failed)) {
             $this->info("\n❌ FAILED SELL ORDERS:");
             foreach ($failed as $result) {
                 $this->info("  {$result['symbol']}: {$result['error']}");
             }
         }
-        
-        $this->info("\n" . str_repeat('=', 60));
+
+        $this->info("\n".str_repeat('=', 60));
     }
 }

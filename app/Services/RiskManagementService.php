@@ -2,13 +2,14 @@
 
 namespace App\Services;
 
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Auth;
 
 class RiskManagementService
 {
     protected array $riskLimits;
+
     protected array $userRiskProfiles;
 
     public function __construct()
@@ -42,7 +43,7 @@ class RiskManagementService
                 'max_position_size' => 100000,
                 'max_stocks_per_day' => 15,
                 'max_loss_per_trade' => 8.0,
-            ]
+            ],
         ];
     }
 
@@ -54,51 +55,51 @@ class RiskManagementService
         try {
             $userId = Auth::id();
             $userProfile = $this->getUserRiskProfile($userId);
-            
+
             // Check if market is open
-            if (!$this->isMarketOpen()) {
+            if (! $this->isMarketOpen()) {
                 return [
                     'approved' => false,
-                    'reason' => 'Market is currently closed'
+                    'reason' => 'Market is currently closed',
                 ];
             }
 
             // Check daily trading limits
             $dailyCheck = $this->checkDailyTradingLimits($userId, $requestData, $userProfile);
-            if (!$dailyCheck['approved']) {
+            if (! $dailyCheck['approved']) {
                 return $dailyCheck;
             }
 
             // Check individual stock risks
             foreach ($requestData['stocks'] as $stock) {
                 $stockRisk = $this->validateStockRisk($stock, $userProfile);
-                if (!$stockRisk['approved']) {
+                if (! $stockRisk['approved']) {
                     return $stockRisk;
                 }
             }
 
             // Check portfolio risk
             $portfolioRisk = $this->checkPortfolioRisk($userId, $requestData, $userProfile);
-            if (!$portfolioRisk['approved']) {
+            if (! $portfolioRisk['approved']) {
                 return $portfolioRisk;
             }
 
             return [
                 'approved' => true,
                 'reason' => 'All risk checks passed',
-                'risk_profile' => $userProfile['type']
+                'risk_profile' => $userProfile['type'],
             ];
 
         } catch (\Exception $e) {
             Log::error('Risk validation failed', [
                 'error' => $e->getMessage(),
                 'user_id' => Auth::id(),
-                'request_data' => $requestData
+                'request_data' => $requestData,
             ]);
 
             return [
                 'approved' => false,
-                'reason' => 'Risk validation error: ' . $e->getMessage()
+                'reason' => 'Risk validation error: '.$e->getMessage(),
             ];
         }
     }
@@ -109,10 +110,10 @@ class RiskManagementService
     protected function getUserRiskProfile(int $userId): array
     {
         $profileType = Cache::get("user_risk_profile_{$userId}", 'moderate');
-        
+
         $profile = $this->userRiskProfiles[$profileType] ?? $this->userRiskProfiles['moderate'];
         $profile['type'] = $profileType;
-        
+
         return $profile;
     }
 
@@ -123,18 +124,18 @@ class RiskManagementService
     {
         $now = now();
         $dayOfWeek = $now->dayOfWeek; // 0 = Sunday, 6 = Saturday
-        
+
         // Market is closed on weekends
         if ($dayOfWeek === 0 || $dayOfWeek === 6) {
             return false;
         }
 
         $currentTime = $now->format('H:i');
-        
+
         // Market hours: 9:15 AM to 3:30 PM IST
         $marketOpen = '09:15';
         $marketClose = '15:30';
-        
+
         return $currentTime >= $marketOpen && $currentTime <= $marketClose;
     }
 
@@ -145,11 +146,11 @@ class RiskManagementService
     {
         $today = now()->format('Y-m-d');
         $dailyKey = "daily_trading_{$userId}_{$today}";
-        
+
         $dailyData = Cache::get($dailyKey, [
             'total_investment' => 0,
             'stocks_traded' => 0,
-            'trades_count' => 0
+            'trades_count' => 0,
         ]);
 
         // Calculate total investment for this request
@@ -160,18 +161,18 @@ class RiskManagementService
         }
 
         // Check daily investment limit
-        if ($dailyData['total_investment'] + $requestInvestment > $userProfile['max_daily_investment']) {
+        if ($userProfile['max_daily_investment'] < $dailyData['total_investment'] + $requestInvestment) {
             return [
                 'approved' => false,
-                'reason' => "Daily investment limit exceeded. Max: ₹{$userProfile['max_daily_investment']}"
+                'reason' => "Daily investment limit exceeded. Max: ₹{$userProfile['max_daily_investment']}",
             ];
         }
 
         // Check daily stocks limit
-        if ($dailyData['stocks_traded'] + count($requestData['stocks']) > $userProfile['max_stocks_per_day']) {
+        if ($userProfile['max_stocks_per_day'] < $dailyData['stocks_traded'] + count($requestData['stocks'])) {
             return [
                 'approved' => false,
-                'reason' => "Daily stocks limit exceeded. Max: {$userProfile['max_stocks_per_day']}"
+                'reason' => "Daily stocks limit exceeded. Max: {$userProfile['max_stocks_per_day']}",
             ];
         }
 
@@ -190,7 +191,7 @@ class RiskManagementService
         if ($quantity > 1000) {
             return [
                 'approved' => false,
-                'reason' => "Quantity too high for {$symbol}. Max: 1000"
+                'reason' => "Quantity too high for {$symbol}. Max: 1000",
             ];
         }
 
@@ -198,7 +199,7 @@ class RiskManagementService
         if ($this->isStockRestricted($symbol)) {
             return [
                 'approved' => false,
-                'reason' => "Stock {$symbol} is restricted for trading"
+                'reason' => "Stock {$symbol} is restricted for trading",
             ];
         }
 
@@ -207,7 +208,7 @@ class RiskManagementService
         if ($estimatedValue > $userProfile['max_position_size']) {
             return [
                 'approved' => false,
-                'reason' => "Position size too large for {$symbol}. Max: ₹{$userProfile['max_position_size']}"
+                'reason' => "Position size too large for {$symbol}. Max: ₹{$userProfile['max_position_size']}",
             ];
         }
 
@@ -221,7 +222,7 @@ class RiskManagementService
     {
         // This would integrate with actual portfolio data
         // For now, we'll do basic checks
-        
+
         $totalRequestValue = 0;
         foreach ($requestData['stocks'] as $stock) {
             $totalRequestValue += $stock['quantity'] * 1000; // Rough estimate
@@ -231,7 +232,7 @@ class RiskManagementService
         if ($totalRequestValue > $userProfile['max_daily_investment'] * 0.5) {
             return [
                 'approved' => false,
-                'reason' => "Request would exceed portfolio risk limits"
+                'reason' => 'Request would exceed portfolio risk limits',
             ];
         }
 
@@ -244,7 +245,7 @@ class RiskManagementService
     protected function isStockRestricted(string $symbol): bool
     {
         $restrictedStocks = [
-            'PENNY', 'MICRO', 'SME' // Example restricted categories
+            'PENNY', 'MICRO', 'SME', // Example restricted categories
         ];
 
         // Check against restricted list
@@ -262,15 +263,15 @@ class RiskManagementService
      */
     public function updateUserRiskProfile(int $userId, string $profileType): bool
     {
-        if (!isset($this->userRiskProfiles[$profileType])) {
+        if (! isset($this->userRiskProfiles[$profileType])) {
             return false;
         }
 
         Cache::put("user_risk_profile_{$userId}", $profileType, 86400); // 24 hours
-        
+
         Log::info('User risk profile updated', [
             'user_id' => $userId,
-            'profile_type' => $profileType
+            'profile_type' => $profileType,
         ]);
 
         return true;
@@ -284,11 +285,11 @@ class RiskManagementService
         $profile = $this->getUserRiskProfile($userId);
         $today = now()->format('Y-m-d');
         $dailyKey = "daily_trading_{$userId}_{$today}";
-        
+
         $dailyData = Cache::get($dailyKey, [
             'total_investment' => 0,
             'stocks_traded' => 0,
-            'trades_count' => 0
+            'trades_count' => 0,
         ]);
 
         return [
@@ -299,12 +300,12 @@ class RiskManagementService
                 'remaining_investment' => $profile['max_daily_investment'] - $dailyData['total_investment'],
                 'max_stocks' => $profile['max_stocks_per_day'],
                 'used_stocks' => $dailyData['stocks_traded'],
-                'remaining_stocks' => $profile['max_stocks_per_day'] - $dailyData['stocks_traded']
+                'remaining_stocks' => $profile['max_stocks_per_day'] - $dailyData['stocks_traded'],
             ],
             'position_limits' => [
                 'max_position_size' => $profile['max_position_size'],
-                'max_loss_per_trade' => $profile['max_loss_per_trade']
-            ]
+                'max_loss_per_trade' => $profile['max_loss_per_trade'],
+            ],
         ];
     }
 
@@ -315,11 +316,11 @@ class RiskManagementService
     {
         $today = now()->format('Y-m-d');
         $dailyKey = "daily_trading_{$userId}_{$today}";
-        
+
         $dailyData = Cache::get($dailyKey, [
             'total_investment' => 0,
             'stocks_traded' => 0,
-            'trades_count' => 0
+            'trades_count' => 0,
         ]);
 
         $dailyData['total_investment'] += $tradeData['investment_amount'];
@@ -331,7 +332,7 @@ class RiskManagementService
         Log::info('Trade recorded for risk tracking', [
             'user_id' => $userId,
             'trade_data' => $tradeData,
-            'daily_data' => $dailyData
+            'daily_data' => $dailyData,
         ]);
     }
 
@@ -344,7 +345,7 @@ class RiskManagementService
             'market_status' => $this->isMarketOpen() ? 'open' : 'closed',
             'volatility_level' => $this->getVolatilityLevel(),
             'recommended_max_position' => $this->getRecommendedMaxPosition(),
-            'risk_warnings' => $this->getRiskWarnings()
+            'risk_warnings' => $this->getRiskWarnings(),
         ];
     }
 
@@ -364,7 +365,7 @@ class RiskManagementService
     protected function getRecommendedMaxPosition(): int
     {
         $volatilityLevel = $this->getVolatilityLevel();
-        
+
         switch ($volatilityLevel) {
             case 'low':
                 return 100000;
@@ -384,7 +385,7 @@ class RiskManagementService
     {
         $warnings = [];
 
-        if (!$this->isMarketOpen()) {
+        if (! $this->isMarketOpen()) {
             $warnings[] = 'Market is currently closed';
         }
 

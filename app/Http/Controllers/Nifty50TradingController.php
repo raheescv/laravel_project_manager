@@ -4,15 +4,16 @@ namespace App\Http\Controllers;
 
 use App\Services\FlatTradeService;
 use App\Services\RiskManagementService;
-use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
-use Illuminate\Support\Facades\Auth;
 
 class Nifty50TradingController extends Controller
 {
     protected FlatTradeService $flatTradeService;
+
     protected RiskManagementService $riskService;
 
     public function __construct(FlatTradeService $flatTradeService, RiskManagementService $riskService)
@@ -29,24 +30,24 @@ class Nifty50TradingController extends Controller
         try {
             $maxStocks = $request->get('max_stocks', 10);
             $minChangePercent = $request->get('min_change_percent', 1.0);
-            
+
             $stocks = $this->fetchBestNifty50Stocks($maxStocks, $minChangePercent);
-            
+
             return response()->json([
                 'success' => true,
                 'data' => $stocks,
-                'count' => count($stocks)
+                'count' => count($stocks),
             ]);
 
         } catch (\Exception $e) {
             Log::error('Error fetching best Nifty 50 stocks', [
                 'error' => $e->getMessage(),
-                'user_id' => Auth::id()
+                'user_id' => Auth::id(),
             ]);
 
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to fetch stocks: ' . $e->getMessage()
+                'message' => 'Failed to fetch stocks: '.$e->getMessage(),
             ], 500);
         }
     }
@@ -64,32 +65,32 @@ class Nifty50TradingController extends Controller
             'product' => 'required|in:C,H,B',
             'min_profit_percent' => 'nullable|numeric|min:0.1|max:50',
             'max_loss_percent' => 'nullable|numeric|min:0.1|max:50',
-            'confirm_trading' => 'required|boolean'
+            'confirm_trading' => 'required|boolean',
         ]);
 
         if ($validator->fails()) {
             return response()->json([
                 'success' => false,
                 'message' => 'Validation failed',
-                'errors' => $validator->errors()
+                'errors' => $validator->errors(),
             ], 422);
         }
 
-        if (!$request->confirm_trading) {
+        if (! $request->confirm_trading) {
             return response()->json([
                 'success' => false,
-                'message' => 'Trading confirmation required'
+                'message' => 'Trading confirmation required',
             ], 400);
         }
 
         try {
             // Risk management checks
             $riskCheck = $this->riskService->validateTradingRequest($request->all());
-            if (!$riskCheck['approved']) {
+            if (! $riskCheck['approved']) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Risk management check failed',
-                    'reason' => $riskCheck['reason']
+                    'reason' => $riskCheck['reason'],
                 ], 400);
             }
 
@@ -99,7 +100,7 @@ class Nifty50TradingController extends Controller
             foreach ($request->stocks as $stockData) {
                 $result = $this->processStockOrder($stockData, $request->all());
                 $results[] = $result;
-                
+
                 if ($result['success']) {
                     $totalInvestment += $result['investment_amount'];
                 }
@@ -109,10 +110,10 @@ class Nifty50TradingController extends Controller
             Log::info('Nifty50 Real Trading Session Executed', [
                 'user_id' => Auth::id(),
                 'total_stocks' => count($request->stocks),
-                'successful_orders' => count(array_filter($results, fn($r) => $r['success'])),
+                'successful_orders' => count(array_filter($results, fn ($r) => $r['success'])),
                 'total_investment' => $totalInvestment,
                 'order_type' => $request->order_type,
-                'product' => $request->product
+                'product' => $request->product,
             ]);
 
             return response()->json([
@@ -122,23 +123,23 @@ class Nifty50TradingController extends Controller
                     'results' => $results,
                     'summary' => [
                         'total_stocks' => count($request->stocks),
-                        'successful_orders' => count(array_filter($results, fn($r) => $r['success'])),
-                        'failed_orders' => count(array_filter($results, fn($r) => !$r['success'])),
-                        'total_investment' => $totalInvestment
-                    ]
-                ]
+                        'successful_orders' => count(array_filter($results, fn ($r) => $r['success'])),
+                        'failed_orders' => count(array_filter($results, fn ($r) => ! $r['success'])),
+                        'total_investment' => $totalInvestment,
+                    ],
+                ],
             ]);
 
         } catch (\Exception $e) {
             Log::error('Nifty50 Real Trading Failed', [
                 'error' => $e->getMessage(),
                 'user_id' => Auth::id(),
-                'request_data' => $request->all()
+                'request_data' => $request->all(),
             ]);
 
             return response()->json([
                 'success' => false,
-                'message' => 'Trading execution failed: ' . $e->getMessage()
+                'message' => 'Trading execution failed: '.$e->getMessage(),
             ], 500);
         }
     }
@@ -150,16 +151,16 @@ class Nifty50TradingController extends Controller
     {
         try {
             $marketStatus = $this->flatTradeService->getMarketStatus();
-            
+
             return response()->json([
                 'success' => true,
-                'data' => $marketStatus
+                'data' => $marketStatus,
             ]);
 
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to get market status: ' . $e->getMessage()
+                'message' => 'Failed to get market status: '.$e->getMessage(),
             ], 500);
         }
     }
@@ -172,25 +173,25 @@ class Nifty50TradingController extends Controller
         try {
             $holdings = $this->flatTradeService->getHoldings();
             $positions = $this->flatTradeService->getPositionBook();
-            
+
             // Process holdings data
             $processedHoldings = [];
             if (isset($holdings['stat']) && $holdings['stat'] === 'Ok' && isset($holdings['values'])) {
                 foreach ($holdings['values'] as $holding) {
                     $symbol = $holding['tsym'] ?? '';
                     $quantity = (int) ($holding['qty'] ?? 0);
-                    
+
                     if ($quantity > 0) {
                         $currentPrice = $this->getCurrentPrice($symbol);
                         $avgPrice = (float) ($holding['avgprc'] ?? 0);
                         $pnlPercent = 0;
                         $pnlValue = 0;
-                        
+
                         if ($avgPrice > 0 && $currentPrice > 0) {
                             $pnlPercent = (($currentPrice - $avgPrice) / $avgPrice) * 100;
                             $pnlValue = ($currentPrice - $avgPrice) * $quantity;
                         }
-                        
+
                         $processedHoldings[] = [
                             'symbol' => $symbol,
                             'quantity' => $quantity,
@@ -199,30 +200,30 @@ class Nifty50TradingController extends Controller
                             'pnl_percent' => $pnlPercent,
                             'pnl_value' => $pnlValue,
                             'type' => 'holding',
-                            'raw_data' => $holding
+                            'raw_data' => $holding,
                         ];
                     }
                 }
             }
-            
+
             // Process positions data
             $processedPositions = [];
             if (isset($positions['stat']) && $positions['stat'] === 'Ok' && isset($positions['values'])) {
                 foreach ($positions['values'] as $position) {
                     $symbol = $position['tsym'] ?? '';
                     $quantity = (int) ($position['netqty'] ?? 0);
-                    
+
                     if ($quantity > 0) { // Only long positions
                         $currentPrice = $this->getCurrentPrice($symbol);
                         $avgPrice = (float) ($position['netprice'] ?? 0);
                         $pnlPercent = 0;
                         $pnlValue = 0;
-                        
+
                         if ($avgPrice > 0 && $currentPrice > 0) {
                             $pnlPercent = (($currentPrice - $avgPrice) / $avgPrice) * 100;
                             $pnlValue = ($currentPrice - $avgPrice) * $quantity;
                         }
-                        
+
                         $processedPositions[] = [
                             'symbol' => $symbol,
                             'quantity' => $quantity,
@@ -231,26 +232,26 @@ class Nifty50TradingController extends Controller
                             'pnl_percent' => $pnlPercent,
                             'pnl_value' => $pnlValue,
                             'type' => 'position',
-                            'raw_data' => $position
+                            'raw_data' => $position,
                         ];
                     }
                 }
             }
-            
+
             return response()->json([
                 'success' => true,
                 'data' => [
                     'holdings' => $processedHoldings,
                     'positions' => $processedPositions,
                     'raw_holdings' => $holdings,
-                    'raw_positions' => $positions
-                ]
+                    'raw_positions' => $positions,
+                ],
             ]);
 
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to get positions: ' . $e->getMessage()
+                'message' => 'Failed to get positions: '.$e->getMessage(),
             ], 500);
         }
     }
@@ -266,21 +267,21 @@ class Nifty50TradingController extends Controller
             'positions.*.quantity' => 'required|integer|min:1',
             'order_type' => 'required|in:market,limit',
             'product' => 'required|in:C,H,B',
-            'confirm_selling' => 'required|boolean'
+            'confirm_selling' => 'required|boolean',
         ]);
 
         if ($validator->fails()) {
             return response()->json([
                 'success' => false,
                 'message' => 'Validation failed',
-                'errors' => $validator->errors()
+                'errors' => $validator->errors(),
             ], 422);
         }
 
-        if (!$request->confirm_selling) {
+        if (! $request->confirm_selling) {
             return response()->json([
                 'success' => false,
-                'message' => 'Selling confirmation required'
+                'message' => 'Selling confirmation required',
             ], 400);
         }
 
@@ -292,7 +293,7 @@ class Nifty50TradingController extends Controller
             foreach ($request->positions as $positionData) {
                 $result = $this->processSellOrder($positionData, $request->all());
                 $results[] = $result;
-                
+
                 if ($result['success']) {
                     $totalPnl += $result['pnl_value'];
                     $totalQuantity += $result['quantity'];
@@ -303,11 +304,11 @@ class Nifty50TradingController extends Controller
             Log::info('Position Selling Session Executed', [
                 'user_id' => Auth::id(),
                 'total_positions' => count($request->positions),
-                'successful_orders' => count(array_filter($results, fn($r) => $r['success'])),
+                'successful_orders' => count(array_filter($results, fn ($r) => $r['success'])),
                 'total_quantity' => $totalQuantity,
                 'total_pnl' => $totalPnl,
                 'order_type' => $request->order_type,
-                'product' => $request->product
+                'product' => $request->product,
             ]);
 
             return response()->json([
@@ -317,24 +318,24 @@ class Nifty50TradingController extends Controller
                     'results' => $results,
                     'summary' => [
                         'total_positions' => count($request->positions),
-                        'successful_orders' => count(array_filter($results, fn($r) => $r['success'])),
-                        'failed_orders' => count(array_filter($results, fn($r) => !$r['success'])),
+                        'successful_orders' => count(array_filter($results, fn ($r) => $r['success'])),
+                        'failed_orders' => count(array_filter($results, fn ($r) => ! $r['success'])),
                         'total_quantity' => $totalQuantity,
-                        'total_pnl' => $totalPnl
-                    ]
-                ]
+                        'total_pnl' => $totalPnl,
+                    ],
+                ],
             ]);
 
         } catch (\Exception $e) {
             Log::error('Position Selling Failed', [
                 'error' => $e->getMessage(),
                 'user_id' => Auth::id(),
-                'request_data' => $request->all()
+                'request_data' => $request->all(),
             ]);
 
             return response()->json([
                 'success' => false,
-                'message' => 'Selling execution failed: ' . $e->getMessage()
+                'message' => 'Selling execution failed: '.$e->getMessage(),
             ], 500);
         }
     }
@@ -347,22 +348,24 @@ class Nifty50TradingController extends Controller
         try {
             // Get top gainers from NSE
             $topGainers = $this->flatTradeService->getTopList('NSE', 'T', 'NSEALL', 'CHANGE');
-            
-            if (!isset($topGainers['values']) || empty($topGainers['values'])) {
+
+            if (! isset($topGainers['values']) || empty($topGainers['values'])) {
                 return [];
             }
 
             $nifty50Stocks = $this->getNifty50Symbols();
             $bestStocks = [];
-            
+
             foreach ($topGainers['values'] as $stock) {
-                if (count($bestStocks) >= $maxStocks) break;
-                
+                if (count($bestStocks) >= $maxStocks) {
+                    break;
+                }
+
                 $symbol = $stock['tsym'] ?? '';
-                
+
                 if (in_array($symbol, $nifty50Stocks)) {
                     $quote = $this->getStockQuote($symbol);
-                    
+
                     if ($quote && $this->isStockSuitableForTrading($quote, $minChangePercent)) {
                         $bestStocks[] = [
                             'symbol' => $symbol,
@@ -374,19 +377,20 @@ class Nifty50TradingController extends Controller
                             'open' => $quote['o'] ?? 0,
                             'previous_close' => $quote['pc'] ?? 0,
                             'market_cap' => $quote['mc'] ?? 0,
-                            'suitability_score' => $this->calculateSuitabilityScore($quote)
+                            'suitability_score' => $this->calculateSuitabilityScore($quote),
                         ];
                     }
                 }
             }
 
             // Sort by suitability score
-            usort($bestStocks, fn($a, $b) => $b['suitability_score'] <=> $a['suitability_score']);
+            usort($bestStocks, fn ($a, $b) => $b['suitability_score'] <=> $a['suitability_score']);
 
             return $bestStocks;
 
         } catch (\Exception $e) {
             Log::error('Error fetching best Nifty 50 stocks', ['error' => $e->getMessage()]);
+
             return [];
         }
     }
@@ -406,7 +410,7 @@ class Nifty50TradingController extends Controller
         try {
             // Get current quote
             $quote = $this->getStockQuote($symbol);
-            if (!$quote) {
+            if (! $quote) {
                 throw new \Exception("Unable to get quote for {$symbol}");
             }
 
@@ -428,7 +432,7 @@ class Nifty50TradingController extends Controller
                 'target' => $targetPrice,
                 'quantity' => $quantity,
                 'investment_amount' => $investmentAmount,
-                'order_result' => $orderResult
+                'order_result' => $orderResult,
             ];
 
         } catch (\Exception $e) {
@@ -436,7 +440,7 @@ class Nifty50TradingController extends Controller
                 'symbol' => $symbol,
                 'success' => false,
                 'error' => $e->getMessage(),
-                'investment_amount' => 0
+                'investment_amount' => 0,
             ];
         }
     }
@@ -449,15 +453,15 @@ class Nifty50TradingController extends Controller
         switch ($orderType) {
             case 'market':
                 return $this->flatTradeService->placeMarketOrder('NSE', $symbol, $quantity, 'B', $product);
-                
+
             case 'limit':
                 return $this->flatTradeService->placeLimitOrder('NSE', $symbol, $quantity, $entryPrice, 'B', $product);
-                
+
             case 'bracket':
                 return $this->flatTradeService->placeBracketOrderLimit(
                     'NSE', $symbol, $quantity, $entryPrice, $stopLossPrice, $targetPrice, 1, 'B', $product
                 );
-                
+
             default:
                 throw new \Exception("Unsupported order type: {$orderType}");
         }
@@ -474,7 +478,7 @@ class Nifty50TradingController extends Controller
             'WIPRO', 'NESTLEIND', 'ONGC', 'POWERGRID', 'NTPC', 'TECHM', 'TATAMOTORS', 'BAJFINANCE',
             'HCLTECH', 'BAJAJFINSV', 'DRREDDY', 'JSWSTEEL', 'TATASTEEL', 'COALINDIA', 'GRASIM', 'BRITANNIA',
             'EICHERMOT', 'HEROMOTOCO', 'DIVISLAB', 'CIPLA', 'APOLLOHOSP', 'ADANIPORTS', 'INDUSINDBK', 'TATACONSUM',
-            'BPCL', 'ICICIBANK', 'ADANIENT', 'HDFCLIFE', 'SBILIFE', 'BAJAJ-AUTO', 'UPL', 'SHREECEM'
+            'BPCL', 'ICICIBANK', 'ADANIENT', 'HDFCLIFE', 'SBILIFE', 'BAJAJ-AUTO', 'UPL', 'SHREECEM',
         ];
     }
 
@@ -485,29 +489,29 @@ class Nifty50TradingController extends Controller
     {
         try {
             $searchResult = $this->flatTradeService->searchScrip($symbol, 'NSE');
-            
-            if (!isset($searchResult['values']) || empty($searchResult['values'])) {
+
+            if (! isset($searchResult['values']) || empty($searchResult['values'])) {
                 return null;
             }
 
             $token = $searchResult['values'][0]['token'] ?? null;
-            if (!$token) {
+            if (! $token) {
                 return null;
             }
 
             $quote = $this->flatTradeService->getQuotes($token, 'NSE');
-            
+
             // Handle the actual FlatTrade API response format
             if (isset($quote['stat']) && $quote['stat'] === 'Ok') {
                 // Calculate change percentage from current price and previous close
                 $ltp = (float) ($quote['lp'] ?? 0);
                 $previousClose = (float) ($quote['c'] ?? 0);
                 $changePercent = 0;
-                
+
                 if ($previousClose > 0) {
                     $changePercent = (($ltp - $previousClose) / $previousClose) * 100;
                 }
-                
+
                 // Return formatted quote data
                 return [
                     'symbol' => $quote['tsym'] ?? $symbol,
@@ -539,7 +543,7 @@ class Nifty50TradingController extends Controller
                     'token' => $quote['token'] ?? $token,
                     'exchange' => $quote['exch'] ?? 'NSE',
                     'order_message' => $quote['ord_msg'] ?? '',
-                    'raw_data' => $quote // Keep raw data for debugging
+                    'raw_data' => $quote, // Keep raw data for debugging
                 ];
             }
 
@@ -547,6 +551,7 @@ class Nifty50TradingController extends Controller
 
         } catch (\Exception $e) {
             Log::warning("Error getting quote for {$symbol}", ['error' => $e->getMessage()]);
+
             return null;
         }
     }
@@ -566,18 +571,32 @@ class Nifty50TradingController extends Controller
         $orderMessage = $quote['order_message'] ?? '';
 
         // Basic filters
-        if ($ltp < 50 || $ltp > 10000) return false; // Price range
-        if ($changePercent < $minChangePercent) return false; // Minimum gain
-        if ($volume < 100000) return false; // Minimum volume
-        if ($high <= $low) return false; // Valid price range
-        if ($changePercent > 20) return false; // Avoid extremely volatile stocks
-        
+        if ($ltp < 50 || $ltp > 10000) {
+            return false;
+        } // Price range
+        if ($changePercent < $minChangePercent) {
+            return false;
+        } // Minimum gain
+        if ($volume < 100000) {
+            return false;
+        } // Minimum volume
+        if ($high <= $low) {
+            return false;
+        } // Valid price range
+        if ($changePercent > 20) {
+            return false;
+        } // Avoid extremely volatile stocks
+
         // Check for circuit limits (avoid stocks hitting upper/lower circuit)
-        if ($ltp >= $upperCircuit * 0.99) return false; // Near upper circuit
-        if ($ltp <= $lowerCircuit * 1.01) return false; // Near lower circuit
-        
+        if ($ltp >= $upperCircuit * 0.99) {
+            return false;
+        } // Near upper circuit
+        if ($ltp <= $lowerCircuit * 1.01) {
+            return false;
+        } // Near lower circuit
+
         // Check for warning messages
-        if (!empty($orderMessage) && (
+        if (! empty($orderMessage) && (
             strpos($orderMessage, 'Loss making') !== false ||
             strpos($orderMessage, 'under') !== false ||
             strpos($orderMessage, 'warning') !== false
@@ -633,18 +652,18 @@ class Nifty50TradingController extends Controller
     {
         try {
             $searchResult = $this->flatTradeService->searchScrip($symbol, 'NSE');
-            
-            if (!isset($searchResult['values']) || empty($searchResult['values'])) {
+
+            if (! isset($searchResult['values']) || empty($searchResult['values'])) {
                 return null;
             }
 
             $token = $searchResult['values'][0]['token'] ?? null;
-            if (!$token) {
+            if (! $token) {
                 return null;
             }
 
             $quote = $this->flatTradeService->getQuotes($token, 'NSE');
-            
+
             if (isset($quote['stat']) && $quote['stat'] === 'Ok') {
                 return (float) ($quote['lp'] ?? 0);
             }
@@ -653,6 +672,7 @@ class Nifty50TradingController extends Controller
 
         } catch (\Exception $e) {
             Log::warning("Error getting price for {$symbol}", ['error' => $e->getMessage()]);
+
             return null;
         }
     }
@@ -670,7 +690,7 @@ class Nifty50TradingController extends Controller
         try {
             // Get current market price
             $currentPrice = $this->getCurrentPrice($symbol);
-            if (!$currentPrice) {
+            if (! $currentPrice) {
                 throw new \Exception("Unable to get current price for {$symbol}");
             }
 
@@ -684,7 +704,7 @@ class Nifty50TradingController extends Controller
                 'sell_price' => $currentPrice,
                 'quantity' => $quantity,
                 'pnl_value' => 0, // Will be calculated based on avg price
-                'order_result' => $orderResult
+                'order_result' => $orderResult,
             ];
 
         } catch (\Exception $e) {
@@ -692,7 +712,7 @@ class Nifty50TradingController extends Controller
                 'symbol' => $symbol,
                 'success' => false,
                 'error' => $e->getMessage(),
-                'pnl_value' => 0
+                'pnl_value' => 0,
             ];
         }
     }
@@ -705,10 +725,10 @@ class Nifty50TradingController extends Controller
         switch ($orderType) {
             case 'market':
                 return $this->flatTradeService->placeMarketOrder('NSE', $symbol, $quantity, 'S', $product);
-                
+
             case 'limit':
                 return $this->flatTradeService->placeLimitOrder('NSE', $symbol, $quantity, $price, 'S', $product);
-                
+
             default:
                 throw new \Exception("Unsupported order type: {$orderType}");
         }

@@ -6,7 +6,6 @@ use App\Services\FlatTradeService;
 use App\Services\UnifiedTradingStrategyService;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Cache;
 
 class AllSymbolTradingCommand extends Command
 {
@@ -26,6 +25,7 @@ class AllSymbolTradingCommand extends Command
     protected $description = 'Execute real trading orders for best performing stocks from all symbols';
 
     protected FlatTradeService $flatTradeService;
+
     protected UnifiedTradingStrategyService $strategyService;
 
     public function __construct(FlatTradeService $flatTradeService, UnifiedTradingStrategyService $strategyService)
@@ -38,7 +38,7 @@ class AllSymbolTradingCommand extends Command
     public function handle()
     {
         $this->info('🚀 Starting All Symbols Trading Command');
-        
+
         $quantity = (int) $this->option('quantity');
         $maxStocks = (int) $this->option('max-stocks');
         $minProfit = (float) $this->option('min-profit');
@@ -46,39 +46,40 @@ class AllSymbolTradingCommand extends Command
         $maxInvestment = (float) $this->option('max-investment');
         $marginSafety = (float) $this->option('margin-safety');
         $symbolFilter = $this->option('symbol-filter');
-        $customSymbols = $this->option('custom-symbols') ? 
+        $customSymbols = $this->option('custom-symbols') ?
             array_map('trim', explode(',', $this->option('custom-symbols'))) : [];
         $dryRun = $this->option('dry-run');
         $orderType = $this->option('order-type');
         $product = $this->option('product');
 
-        $this->info("Configuration:");
+        $this->info('Configuration:');
         $this->info("- Quantity per stock: {$quantity}");
         $this->info("- Max stocks to trade: {$maxStocks}");
         $this->info("- Min profit required: {$minProfit}%");
         $this->info("- Max loss allowed: {$maxLoss}%");
-        $this->info("- Max investment: " . ($maxInvestment > 0 ? "₹{$maxInvestment}" : "No limit"));
-        $this->info("- Margin safety: " . ($marginSafety * 100) . "%");
+        $this->info('- Max investment: '.($maxInvestment > 0 ? "₹{$maxInvestment}" : 'No limit'));
+        $this->info('- Margin safety: '.($marginSafety * 100).'%');
         $this->info("- Symbol filter: {$symbolFilter}");
-        if ($symbolFilter === 'custom' && !empty($customSymbols)) {
-            $this->info("- Custom symbols: " . implode(', ', $customSymbols));
+        if ($symbolFilter === 'custom' && ! empty($customSymbols)) {
+            $this->info('- Custom symbols: '.implode(', ', $customSymbols));
         }
         $this->info("- Order type: {$orderType}");
         $this->info("- Product: {$product}");
-        $this->info("- Dry run: " . ($dryRun ? 'YES' : 'NO'));
+        $this->info('- Dry run: '.($dryRun ? 'YES' : 'NO'));
 
         try {
             // Step 1: Check available funds
             $this->info("\n💰 Checking available funds...");
             $maxPayoutAmount = $this->getMaxPayoutAmount();
-            if (!$maxPayoutAmount['success']) {
+            if (! $maxPayoutAmount['success']) {
                 $this->error("❌ Failed to get available funds: {$maxPayoutAmount['error']}");
+
                 return;
             }
-            
+
             $availableFunds = $maxPayoutAmount['data']['raw_response']['payout'] ?? 0;
             $this->info("Available funds: ₹{$availableFunds}");
-            
+
             // Apply max investment limit if set
             if ($maxInvestment > 0 && $maxInvestment < $availableFunds) {
                 $availableFunds = $maxInvestment;
@@ -94,20 +95,21 @@ class AllSymbolTradingCommand extends Command
                 'max_investment' => $maxInvestment,
                 'margin_safety' => $marginSafety,
                 'symbol_filter' => $symbolFilter,
-                'custom_symbols' => $customSymbols
+                'custom_symbols' => $customSymbols,
             ];
-            
+
             $bestStocks = $this->strategyService->selectOptimalStocksForPurchase($maxStocks, $strategyOptions);
             if (empty($bestStocks)) {
                 $this->error('No suitable stocks found for trading.');
+
                 return;
             }
 
-            $this->info("Found " . count($bestStocks) . " optimal stocks:");
+            $this->info('Found '.count($bestStocks).' optimal stocks:');
             foreach ($bestStocks as $stock) {
                 $this->info("- {$stock['symbol']}: Score {$stock['total_score']}, LTP: ₹{$stock['entry_price']}, Target: ₹{$stock['target_price']}, Stop Loss: ₹{$stock['stop_loss']}");
             }
-            
+
             // Apply margin safety factor
             $safeFunds = $availableFunds * (1 - $marginSafety);
             $this->info("Safe funds after margin buffer: ₹{$safeFunds}");
@@ -116,14 +118,14 @@ class AllSymbolTradingCommand extends Command
             $this->info("\n📈 Executing orders using unified strategy...");
             $results = [];
             $totalUsedFunds = 0;
-            
+
             foreach ($bestStocks as $stock) {
                 $this->info("\n📈 Processing: {$stock['symbol']}");
-                
+
                 try {
                     $result = $this->executeUnifiedOrder($stock, $orderType, $product, $dryRun);
                     $results[] = $result;
-                    
+
                     if ($result['success']) {
                         $this->info("✅ Order placed successfully for {$stock['symbol']}");
                         $totalUsedFunds += $result['required_funds'] ?? 0;
@@ -131,11 +133,11 @@ class AllSymbolTradingCommand extends Command
                         $this->warn("⚠️ Order failed for {$stock['symbol']}: {$result['error']}");
                     }
                 } catch (\Exception $e) {
-                    $this->error("❌ Error processing {$stock['symbol']}: " . $e->getMessage());
+                    $this->error("❌ Error processing {$stock['symbol']}: ".$e->getMessage());
                     $results[] = [
                         'symbol' => $stock['symbol'],
                         'success' => false,
-                        'error' => $e->getMessage()
+                        'error' => $e->getMessage(),
                     ];
                 }
             }
@@ -144,10 +146,10 @@ class AllSymbolTradingCommand extends Command
             $this->displaySummary($results, $dryRun);
 
         } catch (\Exception $e) {
-            $this->error("❌ Command failed: " . $e->getMessage());
+            $this->error('❌ Command failed: '.$e->getMessage());
             Log::error('All Symbols Trading Command failed', [
                 'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
+                'trace' => $e->getTraceAsString(),
             ]);
         }
     }
@@ -159,14 +161,15 @@ class AllSymbolTradingCommand extends Command
     {
         try {
             $response = $this->flatTradeService->getMaxPayoutAmount();
+
             return [
                 'success' => true,
-                'data' => $response
+                'data' => $response,
             ];
         } catch (\Exception $e) {
             return [
                 'success' => false,
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ];
         }
     }
@@ -182,7 +185,7 @@ class AllSymbolTradingCommand extends Command
         $stopLossPrice = $stock['stop_loss'];
         $targetPrice = $stock['target_price'];
         $totalValue = $stock['position_size']['total_value'];
-        
+
         try {
             $this->info("  Entry Price: ₹{$entryPrice}");
             $this->info("  Stop Loss: ₹{$stopLossPrice}");
@@ -193,16 +196,17 @@ class AllSymbolTradingCommand extends Command
 
             if ($dryRun) {
                 $this->info("  [DRY RUN] Would place {$orderType} order for {$quantity} shares");
+
                 return [
                     'symbol' => $symbol,
                     'success' => true,
-                    'order_id' => 'DRY_RUN_' . time(),
+                    'order_id' => 'DRY_RUN_'.time(),
                     'entry_price' => $entryPrice,
                     'stop_loss' => $stopLossPrice,
                     'target' => $targetPrice,
                     'quantity' => $quantity,
                     'required_funds' => $totalValue,
-                    'dry_run' => true
+                    'dry_run' => true,
                 ];
             }
 
@@ -219,7 +223,7 @@ class AllSymbolTradingCommand extends Command
                 'order_type' => $orderType,
                 'product' => $product,
                 'strategy_score' => $stock['total_score'],
-                'order_result' => $orderResult
+                'order_result' => $orderResult,
             ]);
 
             return [
@@ -231,14 +235,14 @@ class AllSymbolTradingCommand extends Command
                 'target' => $targetPrice,
                 'quantity' => $quantity,
                 'required_funds' => $totalValue,
-                'order_result' => $orderResult
+                'order_result' => $orderResult,
             ];
 
         } catch (\Exception $e) {
             return [
                 'symbol' => $symbol,
                 'success' => false,
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ];
         }
     }
@@ -251,15 +255,15 @@ class AllSymbolTradingCommand extends Command
         switch ($orderType) {
             case 'market':
                 return $this->flatTradeService->placeMarketOrder('NSE', $symbol, $quantity, 'B', $product);
-                
+
             case 'limit':
                 return $this->flatTradeService->placeLimitOrder('NSE', $symbol, $quantity, $entryPrice, 'B', $product);
-                
+
             case 'bracket':
                 return $this->flatTradeService->placeBracketOrderLimit(
                     'NSE', $symbol, $quantity, $entryPrice, $stopLossPrice, $targetPrice, 1, 'B', $product
                 );
-                
+
             default:
                 throw new \Exception("Unsupported order type: {$orderType}");
         }
@@ -271,16 +275,16 @@ class AllSymbolTradingCommand extends Command
     protected function displaySummary(array $results, bool $dryRun): void
     {
         $this->info("\n📊 Trading Summary:");
-        $this->info("==================");
-        
-        $successfulOrders = array_filter($results, fn($r) => $r['success']);
-        $failedOrders = array_filter($results, fn($r) => !$r['success']);
-        
-        $this->info("Total orders: " . count($results));
-        $this->info("Successful: " . count($successfulOrders));
-        $this->info("Failed: " . count($failedOrders));
-        
-        if (!empty($successfulOrders)) {
+        $this->info('==================');
+
+        $successfulOrders = array_filter($results, fn ($r) => $r['success']);
+        $failedOrders = array_filter($results, fn ($r) => ! $r['success']);
+
+        $this->info('Total orders: '.count($results));
+        $this->info('Successful: '.count($successfulOrders));
+        $this->info('Failed: '.count($failedOrders));
+
+        if (! empty($successfulOrders)) {
             $this->info("\n✅ Successful Orders:");
             foreach ($successfulOrders as $result) {
                 $this->info("- {$result['symbol']}: {$result['quantity']} shares @ ₹{$result['entry_price']}");
@@ -291,14 +295,14 @@ class AllSymbolTradingCommand extends Command
                 }
             }
         }
-        
-        if (!empty($failedOrders)) {
+
+        if (! empty($failedOrders)) {
             $this->info("\n❌ Failed Orders:");
             foreach ($failedOrders as $result) {
                 $this->info("- {$result['symbol']}: {$result['error']}");
             }
         }
-        
-        $this->info("\n" . ($dryRun ? "🔍 Dry run completed" : "🎯 Trading completed"));
+
+        $this->info("\n".($dryRun ? '🔍 Dry run completed' : '🎯 Trading completed'));
     }
 }

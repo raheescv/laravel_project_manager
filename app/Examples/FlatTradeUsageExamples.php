@@ -28,18 +28,18 @@ class FlatTradeUsageExamples
             // Place a market buy order for 10 shares of RELIANCE
             $result = $this->flatTradeService->smartBuy('RELIANCE', 10, [
                 'order_type' => 'MARKET',
-                'max_price' => 2500.00 // Price protection
+                'max_price' => 2500.00, // Price protection
             ]);
 
             return [
                 'success' => true,
                 'message' => 'Buy order placed successfully',
-                'order' => $result
+                'order' => $result,
             ];
         } catch (\Exception $e) {
             return [
                 'success' => false,
-                'message' => $e->getMessage()
+                'message' => $e->getMessage(),
             ];
         }
     }
@@ -71,12 +71,12 @@ class FlatTradeUsageExamples
                 'message' => 'Limit order placed successfully',
                 'analysis' => $analysis,
                 'limit_price' => $limitPrice,
-                'order' => $result
+                'order' => $result,
             ];
         } catch (\Exception $e) {
             return [
                 'success' => false,
-                'message' => $e->getMessage()
+                'message' => $e->getMessage(),
             ];
         }
     }
@@ -94,7 +94,7 @@ class FlatTradeUsageExamples
             $holdings = $this->flatTradeService->getHoldings();
             $symbolHolding = collect($holdings)->firstWhere('symbol', $symbol);
 
-            if (!$symbolHolding || $symbolHolding['quantity'] < $quantity) {
+            if (! $symbolHolding || $symbolHolding['quantity'] < $quantity) {
                 throw new \Exception("Insufficient holdings for {$symbol}");
             }
 
@@ -105,7 +105,7 @@ class FlatTradeUsageExamples
             // Place smart sell order with minimum price protection
             $result = $this->flatTradeService->smartSell($symbol, $quantity, [
                 'order_type' => 'MARKET',
-                'min_price' => $currentPrice * 0.98 // 2% below current price
+                'min_price' => $currentPrice * 0.98, // 2% below current price
             ]);
 
             return [
@@ -113,12 +113,12 @@ class FlatTradeUsageExamples
                 'message' => 'Sell order placed successfully',
                 'holdings' => $symbolHolding,
                 'current_price' => $currentPrice,
-                'order' => $result
+                'order' => $result,
             ];
         } catch (\Exception $e) {
             return [
                 'success' => false,
-                'message' => $e->getMessage()
+                'message' => $e->getMessage(),
             ];
         }
     }
@@ -153,12 +153,12 @@ class FlatTradeUsageExamples
                     'stop_loss_price' => $entryPrice * (1 - $stopLossPercent / 100),
                     'target_price' => $entryPrice * (1 + $targetPercent / 100),
                 ],
-                'order' => $result
+                'order' => $result,
             ];
         } catch (\Exception $e) {
             return [
                 'success' => false,
-                'message' => $e->getMessage()
+                'message' => $e->getMessage(),
             ];
         }
     }
@@ -178,7 +178,7 @@ class FlatTradeUsageExamples
                 'total_value' => collect($holdings)->sum('current_value'),
                 'available_cash' => $balance['available_cash'],
                 'total_portfolio_value' => $balance['available_cash'] + collect($holdings)->sum('current_value'),
-                'holdings' => $holdings
+                'holdings' => $holdings,
             ];
 
             // Calculate portfolio allocation
@@ -189,12 +189,12 @@ class FlatTradeUsageExamples
             return [
                 'success' => true,
                 'message' => 'Portfolio analysis completed',
-                'analysis' => $analysis
+                'analysis' => $analysis,
             ];
         } catch (\Exception $e) {
             return [
                 'success' => false,
-                'message' => $e->getMessage()
+                'message' => $e->getMessage(),
             ];
         }
     }
@@ -226,14 +226,14 @@ class FlatTradeUsageExamples
                     'quantity' => $quantity,
                     'current_price' => $currentPrice,
                     'stop_loss_price' => $stopLossPrice,
-                    'risk_amount' => ($currentPrice - $stopLossPrice) * $quantity
+                    'risk_amount' => ($currentPrice - $stopLossPrice) * $quantity,
                 ],
-                'order' => $result
+                'order' => $result,
             ];
         } catch (\Exception $e) {
             return [
                 'success' => false,
-                'message' => $e->getMessage()
+                'message' => $e->getMessage(),
             ];
         }
     }
@@ -247,13 +247,13 @@ class FlatTradeUsageExamples
             // Get order history for last 30 days
             $orderHistory = $this->flatTradeService->getOrderHistory([
                 'from_date' => now()->subDays(30)->format('Y-m-d'),
-                'to_date' => now()->format('Y-m-d')
+                'to_date' => now()->format('Y-m-d'),
             ]);
 
             // Get trade history
             $tradeHistory = $this->flatTradeService->getTradeHistory([
                 'from_date' => now()->subDays(30)->format('Y-m-d'),
-                'to_date' => now()->format('Y-m-d')
+                'to_date' => now()->format('Y-m-d'),
             ]);
 
             // Calculate performance metrics
@@ -268,18 +268,18 @@ class FlatTradeUsageExamples
                 'successful_trades' => $successfulTrades,
                 'success_rate' => round($successRate, 2),
                 'order_history' => $orderHistory,
-                'trade_history' => $tradeHistory
+                'trade_history' => $tradeHistory,
             ];
 
             return [
                 'success' => true,
                 'message' => 'Order history analysis completed',
-                'analysis' => $analysis
+                'analysis' => $analysis,
             ];
         } catch (\Exception $e) {
             return [
                 'success' => false,
-                'message' => $e->getMessage()
+                'message' => $e->getMessage(),
             ];
         }
     }
@@ -312,15 +312,14 @@ class FlatTradeUsageExamples
                 'market_data' => $marketAnalysis,
                 'recommendations' => [
                     'best_buy_opportunity' => $bestBuyOpportunity,
-                    'best_sell_opportunity' => $bestSellOpportunity
-                ]
+                    'best_sell_opportunity' => $bestSellOpportunity,
+                ],
             ];
         } catch (\Exception $e) {
             return [
                 'success' => false,
-                'message' => $e->getMessage()
+                'message' => $e->getMessage(),
             ];
         }
     }
 }
-

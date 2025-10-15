@@ -2,23 +2,30 @@
 
 namespace App\Services;
 
+use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Artisan;
-use Carbon\Carbon;
 
 class FlatTradeService
 {
     protected string $baseUrl;
+
     protected string $authApiUrl;
+
     protected string $apiKey;
+
     protected string $apiSecret;
+
     protected string $clientId;
+
     protected string $clientSecret;
+
     protected ?string $accessToken = null;
+
     protected ?string $refreshToken = null;
+
     protected ?string $jKey = null;
 
     public function __construct()
@@ -38,7 +45,8 @@ class FlatTradeService
      */
     protected function generateApiSecretHash(string $requestCode): string
     {
-        $stringToHash = $this->apiKey . $requestCode . $this->apiSecret;
+        $stringToHash = $this->apiKey.$requestCode.$this->apiSecret;
+
         return hash('sha256', $stringToHash);
     }
 
@@ -50,12 +58,12 @@ class FlatTradeService
         try {
             // Generate the SHA-256 hash for api_secret
             $apiSecretHash = $this->generateApiSecretHash($requestCode);
-            $payload= [
+            $payload = [
                 'api_key' => $this->apiKey,
                 'request_code' => $requestCode,
                 'api_secret' => $apiSecretHash,
             ];
-            $url = $this->authApiUrl . '/trade/apitoken';
+            $url = $this->authApiUrl.'/trade/apitoken';
 
             $response = Http::post($url, $payload);
             if ($response->successful()) {
@@ -70,35 +78,39 @@ class FlatTradeService
                     config(['services.flat_trade.j_key' => $this->accessToken]);
 
                     writeToEnv('FLAT_TRADE_J_KEY', $this->accessToken);
-                    
+
                     Artisan::call('optimize:clear');
-                    
+
                     Log::info('FlatTrade authentication successful', [
                         'client' => $this->clientId,
-                        'token_received' => !empty($this->accessToken),
-                        'user_id' => Auth::id()
+                        'token_received' => ! empty($this->accessToken),
+                        'user_id' => Auth::id(),
                     ]);
+
                     return true;
                 } else {
                     Log::error('FlatTrade authentication failed - invalid response', [
                         'response' => $data,
-                        'status_code' => $response->status()
+                        'status_code' => $response->status(),
                     ]);
+
                     return false;
                 }
             }
 
             Log::error('FlatTrade authentication failed', [
                 'status' => $response->status(),
-                'response' => $response->body()
+                'response' => $response->body(),
             ]);
+
             return false;
 
         } catch (\Exception $e) {
             Log::error('FlatTrade authentication error', [
                 'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
+                'trace' => $e->getTraceAsString(),
             ]);
+
             return false;
         }
     }
@@ -112,6 +124,7 @@ class FlatTradeService
         // FlatTrade doesn't appear to have a refresh token mechanism
         // Users will need to re-authenticate when token expires
         Log::info('FlatTrade token refresh not supported - re-authentication required');
+
         return false;
     }
 
@@ -122,8 +135,9 @@ class FlatTradeService
     {
         $this->accessToken = Cache::get('flat_trade_access_token');
 
-        if (!$this->accessToken) {
+        if (! $this->accessToken) {
             Log::warning('No FlatTrade access token available - re-authentication required');
+
             return null;
         }
 
@@ -135,25 +149,25 @@ class FlatTradeService
      */
     protected function makePiConnectRequest(string $endpoint, array $jData): array
     {
-        if (!$this->jKey) {
+        if (! $this->jKey) {
             throw new \Exception('jKey not configured. Please set FLAT_TRADE_J_KEY in environment.');
         }
 
-        $url = $this->baseUrl . '/' . $endpoint;
+        $url = $this->baseUrl.'/'.$endpoint;
         // Format data as jData=JSON&jKey=KEY
         $jDataJson = json_encode($jData);
         $postData = "jData={$jDataJson}&jKey={$this->jKey}";
-        $headers= [
-            'Content-Type' => 'application/x-www-form-urlencoded'
+        $headers = [
+            'Content-Type' => 'application/x-www-form-urlencoded',
         ];
         $response = Http::withHeaders($headers)->withBody($postData, 'application/x-www-form-urlencoded')->post($url);
-        if (!$response->successful()) {
+        if (! $response->successful()) {
             Log::error('PiConnect API request failed', [
                 'endpoint' => $endpoint,
                 'status' => $response->status(),
-                'response' => $response->body()
+                'response' => $response->body(),
             ]);
-            throw new \Exception('API request failed: ' . $response->body());
+            throw new \Exception('API request failed: '.$response->body());
         }
 
         return $response->json();
@@ -173,15 +187,15 @@ class FlatTradeService
             'actid' => $this->clientId,
             'exch' => $exchange,
             'tsym' => $symbol,
-            'qty' => (string)$quantity,
-            'mkt_protection' => (string)$marketProtection,
+            'qty' => (string) $quantity,
+            'mkt_protection' => (string) $marketProtection,
             'prc' => '0',
             'dscqty' => '0',
             'prd' => $product,
             'trantype' => $transactionType,
             'prctyp' => 'MKT',
             'ret' => 'DAY',
-            'ordersource' => 'API'
+            'ordersource' => 'API',
         ];
 
         return $this->makePiConnectRequest('PlaceOrder', $jData);
@@ -197,14 +211,14 @@ class FlatTradeService
             'actid' => $this->clientId,
             'exch' => $exchange,
             'tsym' => $symbol,
-            'qty' => (string)$quantity,
-            'prc' => (string)$price,
+            'qty' => (string) $quantity,
+            'prc' => (string) $price,
             'dscqty' => '0',
             'prd' => $product,
             'trantype' => $transactionType,
             'prctyp' => 'LMT',
             'ret' => 'DAY',
-            'ordersource' => 'API'
+            'ordersource' => 'API',
         ];
 
         return $this->makePiConnectRequest('PlaceOrder', $jData);
@@ -220,15 +234,15 @@ class FlatTradeService
             'actid' => $this->clientId,
             'exch' => $exchange,
             'tsym' => $symbol,
-            'qty' => (string)$quantity,
-            'prc' => (string)$price,
-            'trgprc' => (string)$triggerPrice,
+            'qty' => (string) $quantity,
+            'prc' => (string) $price,
+            'trgprc' => (string) $triggerPrice,
             'dscqty' => '0',
             'prd' => $product,
             'trantype' => $transactionType,
             'prctyp' => 'SL-LMT',
             'ret' => 'DAY',
-            'ordersource' => 'API'
+            'ordersource' => 'API',
         ];
 
         return $this->makePiConnectRequest('PlaceOrder', $jData);
@@ -244,16 +258,16 @@ class FlatTradeService
             'actid' => $this->clientId,
             'exch' => $exchange,
             'tsym' => $symbol,
-            'qty' => (string)$quantity,
-            'mkt_protection' => (string)$marketProtection,
+            'qty' => (string) $quantity,
+            'mkt_protection' => (string) $marketProtection,
             'prc' => '0',
-            'trgprc' => (string)$triggerPrice,
+            'trgprc' => (string) $triggerPrice,
             'dscqty' => '0',
             'prd' => $product,
             'trantype' => $transactionType,
             'prctyp' => 'SL-MKT',
             'ret' => 'DAY',
-            'ordersource' => 'API'
+            'ordersource' => 'API',
         ];
 
         return $this->makePiConnectRequest('PlaceOrder', $jData);
@@ -269,14 +283,14 @@ class FlatTradeService
             'actid' => $this->clientId,
             'exch' => $exchange,
             'tsym' => $symbol,
-            'qty' => (string)$quantity,
-            'prc' => (string)$price,
+            'qty' => (string) $quantity,
+            'prc' => (string) $price,
             'prd' => $product,
             'trantype' => $transactionType,
             'prctyp' => 'LMT',
             'ret' => 'DAY',
-            'blprc' => (string)$bookLossPrice,
-            'ordersource' => 'API'
+            'blprc' => (string) $bookLossPrice,
+            'ordersource' => 'API',
         ];
 
         return $this->makePiConnectRequest('PlaceOrder', $jData);
@@ -292,15 +306,15 @@ class FlatTradeService
             'actid' => $this->clientId,
             'exch' => $exchange,
             'tsym' => $symbol,
-            'qty' => (string)$quantity,
-            'mkt_protection' => (string)$marketProtection,
+            'qty' => (string) $quantity,
+            'mkt_protection' => (string) $marketProtection,
             'prc' => '0',
             'prd' => $product,
             'trantype' => $transactionType,
             'prctyp' => 'MKT',
             'ret' => 'DAY',
-            'blprc' => (string)$bookLossPrice,
-            'ordersource' => 'API'
+            'blprc' => (string) $bookLossPrice,
+            'ordersource' => 'API',
         ];
 
         return $this->makePiConnectRequest('PlaceOrder', $jData);
@@ -316,15 +330,15 @@ class FlatTradeService
             'actid' => $this->clientId,
             'exch' => $exchange,
             'tsym' => $symbol,
-            'qty' => (string)$quantity,
-            'prc' => (string)$price,
-            'trgprc' => (string)$triggerPrice,
+            'qty' => (string) $quantity,
+            'prc' => (string) $price,
+            'trgprc' => (string) $triggerPrice,
             'prd' => $product,
             'trantype' => $transactionType,
             'prctyp' => 'SL-LMT',
             'ret' => 'DAY',
-            'blprc' => (string)$bookLossPrice,
-            'ordersource' => 'API'
+            'blprc' => (string) $bookLossPrice,
+            'ordersource' => 'API',
         ];
 
         return $this->makePiConnectRequest('PlaceOrder', $jData);
@@ -340,16 +354,16 @@ class FlatTradeService
             'actid' => $this->clientId,
             'exch' => $exchange,
             'tsym' => $symbol,
-            'qty' => (string)$quantity,
-            'prc' => (string)$price,
+            'qty' => (string) $quantity,
+            'prc' => (string) $price,
             'prd' => $product,
             'trantype' => $transactionType,
             'prctyp' => 'LMT',
             'ret' => 'DAY',
-            'blprc' => (string)$bookLossPrice,
-            'bpprc' => (string)$bookProfitPrice,
-            'trailprc' => (string)$trailPrice,
-            'ordersource' => 'API'
+            'blprc' => (string) $bookLossPrice,
+            'bpprc' => (string) $bookProfitPrice,
+            'trailprc' => (string) $trailPrice,
+            'ordersource' => 'API',
         ];
 
         return $this->makePiConnectRequest('PlaceOrder', $jData);
@@ -365,17 +379,17 @@ class FlatTradeService
             'actid' => $this->clientId,
             'exch' => $exchange,
             'tsym' => $symbol,
-            'qty' => (string)$quantity,
-            'mkt_protection' => (string)$marketProtection,
+            'qty' => (string) $quantity,
+            'mkt_protection' => (string) $marketProtection,
             'prc' => '0',
             'prd' => $product,
             'trantype' => $transactionType,
             'prctyp' => 'MKT',
             'ret' => 'DAY',
-            'blprc' => (string)$bookLossPrice,
-            'bpprc' => (string)$bookProfitPrice,
-            'trailprc' => (string)$trailPrice,
-            'ordersource' => 'API'
+            'blprc' => (string) $bookLossPrice,
+            'bpprc' => (string) $bookProfitPrice,
+            'trailprc' => (string) $trailPrice,
+            'ordersource' => 'API',
         ];
 
         return $this->makePiConnectRequest('PlaceOrder', $jData);
@@ -391,17 +405,17 @@ class FlatTradeService
             'actid' => $this->clientId,
             'exch' => $exchange,
             'tsym' => $symbol,
-            'qty' => (string)$quantity,
-            'prc' => (string)$price,
-            'trgprc' => (string)$triggerPrice,
+            'qty' => (string) $quantity,
+            'prc' => (string) $price,
+            'trgprc' => (string) $triggerPrice,
             'prd' => $product,
             'trantype' => $transactionType,
             'prctyp' => 'SL-LMT',
             'ret' => 'DAY',
-            'blprc' => (string)$bookLossPrice,
-            'bpprc' => (string)$bookProfitPrice,
-            'trailprc' => (string)$trailPrice,
-            'ordersource' => 'API'
+            'blprc' => (string) $bookLossPrice,
+            'bpprc' => (string) $bookProfitPrice,
+            'trailprc' => (string) $trailPrice,
+            'ordersource' => 'API',
         ];
 
         return $this->makePiConnectRequest('PlaceOrder', $jData);
@@ -419,7 +433,7 @@ class FlatTradeService
         $jData = [
             'uid' => $this->clientId,
             'actid' => $this->clientId,
-            'prd' => $product
+            'prd' => $product,
         ];
 
         return $this->makePiConnectRequest('Holdings', $jData);
@@ -432,8 +446,9 @@ class FlatTradeService
     {
         $jData = [
             'uid' => $this->clientId,
-            'actid' => $this->clientId
+            'actid' => $this->clientId,
         ];
+
         return $this->makePiConnectRequest('Limits', $jData);
     }
 
@@ -448,7 +463,7 @@ class FlatTradeService
     {
         $jData = [
             'uid' => $this->clientId,
-            'exch' => $exchange
+            'exch' => $exchange,
         ];
 
         return $this->makePiConnectRequest('GetIndexList', $jData);
@@ -461,7 +476,7 @@ class FlatTradeService
     {
         $jData = [
             'uid' => $this->clientId,
-            'exch' => $exchange
+            'exch' => $exchange,
         ];
 
         return $this->makePiConnectRequest('TopListName', $jData);
@@ -477,7 +492,7 @@ class FlatTradeService
             'exch' => $exchange,
             'tb' => $topListType,
             'bskt' => $basket,
-            'crt' => $criteria
+            'crt' => $criteria,
         ];
 
         return $this->makePiConnectRequest('TopList', $jData);
@@ -492,9 +507,9 @@ class FlatTradeService
             'uid' => $this->clientId,
             'exch' => $exchange,
             'token' => $token,
-            'st' => (string)$startTime,
-            'et' => (string)$endTime,
-            'intrv' => (string)$interval
+            'st' => (string) $startTime,
+            'et' => (string) $endTime,
+            'intrv' => (string) $interval,
         ];
 
         return $this->makePiConnectRequest('TPSeries', $jData);
@@ -507,8 +522,8 @@ class FlatTradeService
     {
         $jData = [
             'sym' => $symbol,
-            'from' => (string)$fromDate,
-            'to' => (string)$toDate
+            'from' => (string) $fromDate,
+            'to' => (string) $toDate,
         ];
 
         return $this->makePiConnectRequest('EODChartData', $jData);
@@ -525,7 +540,7 @@ class FlatTradeService
             'sptprc' => $spotPrice,
             'int_rate' => $interestRate,
             'volatility' => $volatility,
-            'optt' => $optionType
+            'optt' => $optionType,
         ];
 
         return $this->makePiConnectRequest('GetOptionGreek', $jData);
@@ -538,7 +553,7 @@ class FlatTradeService
     {
         $jData = [
             'uid' => $this->clientId,
-            'exch' => $exchange
+            'exch' => $exchange,
         ];
 
         return $this->makePiConnectRequest('ExchMsg', $jData);
@@ -550,7 +565,7 @@ class FlatTradeService
     public function getBrokerMessage(): array
     {
         $jData = [
-            'uid' => $this->clientId
+            'uid' => $this->clientId,
         ];
 
         return $this->makePiConnectRequest('GetBrokerMsg', $jData);
@@ -563,7 +578,7 @@ class FlatTradeService
     {
         $jData = [
             'actid' => $this->clientId,
-            'pos' => $positions
+            'pos' => $positions,
         ];
 
         return $this->makePiConnectRequest('SpanCalc', $jData);
@@ -584,7 +599,7 @@ class FlatTradeService
             'exch' => $exchange,
             'ai_t' => $alertType,
             'validity' => $validity,
-            'remarks' => $remarks
+            'remarks' => $remarks,
         ];
 
         return $this->makePiConnectRequest('SetAlert', $jData);
@@ -602,7 +617,7 @@ class FlatTradeService
             'ai_t' => $alertType,
             'al_id' => $alertId,
             'validity' => $validity,
-            'remarks' => $remarks
+            'remarks' => $remarks,
         ];
 
         return $this->makePiConnectRequest('ModifyAlert', $jData);
@@ -615,7 +630,7 @@ class FlatTradeService
     {
         $jData = [
             'uid' => $this->clientId,
-            'al_id' => $alertId
+            'al_id' => $alertId,
         ];
 
         return $this->makePiConnectRequest('CancelAlert', $jData);
@@ -627,7 +642,7 @@ class FlatTradeService
     public function getPendingAlert(): array
     {
         $jData = [
-            'uid' => $this->clientId
+            'uid' => $this->clientId,
         ];
 
         return $this->makePiConnectRequest('GetPendingAlert', $jData);
@@ -639,7 +654,7 @@ class FlatTradeService
     public function getEnabledAlertTypes(): array
     {
         $jData = [
-            'uid' => $this->clientId
+            'uid' => $this->clientId,
         ];
 
         return $this->makePiConnectRequest('GetEnabledAlertTypes', $jData);
@@ -651,7 +666,7 @@ class FlatTradeService
     public function getUnsettledTradingDate(): array
     {
         $jData = [
-            'uid' => $this->clientId
+            'uid' => $this->clientId,
         ];
 
         return $this->makePiConnectRequest('GetUnStledTradingDate', $jData);
@@ -668,7 +683,7 @@ class FlatTradeService
     {
         $jData = [
             'uid' => $this->clientId,
-            'actid' => $this->clientId
+            'actid' => $this->clientId,
         ];
 
         return $this->makePiConnectRequest('GetMaxPayoutAmount', $jData);
@@ -682,8 +697,8 @@ class FlatTradeService
         $jData = [
             'uid' => $this->clientId,
             'actid' => $this->clientId,
-            'payout' => (string)$amount,
-            'remarks' => $remarks
+            'payout' => (string) $amount,
+            'remarks' => $remarks,
         ];
 
         return $this->makePiConnectRequest('FundsPayOutReq', $jData);
@@ -697,7 +712,7 @@ class FlatTradeService
         $jData = [
             'actid' => $this->clientId,
             'from_date' => $fromDate,
-            'to_date' => $toDate
+            'to_date' => $toDate,
         ];
 
         return $this->makePiConnectRequest('GetPayinReport', $jData);
@@ -711,7 +726,7 @@ class FlatTradeService
         $jData = [
             'actid' => $this->clientId,
             'from_date' => $fromDate,
-            'to_date' => $toDate
+            'to_date' => $toDate,
         ];
 
         return $this->makePiConnectRequest('GetPayoutReport', $jData);
@@ -726,7 +741,7 @@ class FlatTradeService
             'actid' => $this->clientId,
             'uid' => $this->clientId,
             'trans_ref_num' => $transactionRefNumber,
-            'brkname' => $brokerName
+            'brkname' => $brokerName,
         ];
 
         return $this->makePiConnectRequest('CancelPayout', $jData);
@@ -742,7 +757,7 @@ class FlatTradeService
     public function getUserDetails(): array
     {
         $jData = [
-            'uid' => $this->clientId
+            'uid' => $this->clientId,
         ];
 
         return $this->makePiConnectRequest('UserDetails', $jData);
@@ -760,7 +775,7 @@ class FlatTradeService
         $jData = [
             'uid' => $this->clientId,
             'stext' => $searchText,
-            'exch' => $exchange
+            'exch' => $exchange,
         ];
 
         return $this->makePiConnectRequest('SearchScrip', $jData);
@@ -774,7 +789,7 @@ class FlatTradeService
         $jData = [
             'uid' => $this->clientId,
             'token' => $token,
-            'exch' => $exchange
+            'exch' => $exchange,
         ];
 
         return $this->makePiConnectRequest('GetQuotes', $jData);
@@ -794,13 +809,13 @@ class FlatTradeService
             'actid' => $this->clientId,
             'exch' => $exchange,
             'tsym' => $symbol,
-            'qty' => (string)$quantity,
-            'prc' => (string)$price,
+            'qty' => (string) $quantity,
+            'prc' => (string) $price,
             'prd' => $product,
             'trantype' => $transactionType,
             'prctyp' => $priceType,
-            'rorgqty' => (string)$originalQuantity,
-            'rorgprc' => (string)$originalPrice
+            'rorgqty' => (string) $originalQuantity,
+            'rorgprc' => (string) $originalPrice,
         ];
 
         return $this->makePiConnectRequest('GetOrderMargin', $jData);
@@ -816,13 +831,13 @@ class FlatTradeService
             'actid' => $this->clientId,
             'exch' => $exchange,
             'tsym' => $symbol,
-            'qty' => (string)$quantity,
-            'prc' => (string)$price,
+            'qty' => (string) $quantity,
+            'prc' => (string) $price,
             'prd' => $product,
             'trantype' => $transactionType,
             'prctyp' => $priceType,
-            'rorgqty' => (string)$originalQuantity,
-            'rorgprc' => (string)$originalPrice
+            'rorgqty' => (string) $originalQuantity,
+            'rorgprc' => (string) $originalPrice,
         ];
 
         return $this->makePiConnectRequest('GetBasketMargin', $jData);
@@ -834,7 +849,7 @@ class FlatTradeService
     public function getOrderBook(): array
     {
         $jData = [
-            'uid' => $this->clientId
+            'uid' => $this->clientId,
         ];
 
         return $this->makePiConnectRequest('OrderBook', $jData);
@@ -846,7 +861,7 @@ class FlatTradeService
     public function getMultiLegOrderBook(): array
     {
         $jData = [
-            'uid' => $this->clientId
+            'uid' => $this->clientId,
         ];
 
         return $this->makePiConnectRequest('MultiLegOrderBook', $jData);
@@ -859,7 +874,7 @@ class FlatTradeService
     {
         $jData = [
             'uid' => $this->clientId,
-            'norenordno' => $orderNumber
+            'norenordno' => $orderNumber,
         ];
 
         return $this->makePiConnectRequest('SingleOrdHist', $jData);
@@ -872,7 +887,7 @@ class FlatTradeService
     {
         $jData = [
             'uid' => $this->clientId,
-            'actid' => $this->clientId
+            'actid' => $this->clientId,
         ];
 
         return $this->makePiConnectRequest('TradeBook', $jData);
@@ -888,12 +903,12 @@ class FlatTradeService
             'actid' => $this->clientId,
             'exch' => $exchange,
             'tsym' => $symbol,
-            'qty' => (string)$quantity,
+            'qty' => (string) $quantity,
             'prd' => $product,
             'prevprd' => $previousProduct,
             'trantype' => $transactionType,
             'postype' => $positionType,
-            'ordersource' => 'API'
+            'ordersource' => 'API',
         ];
 
         return $this->makePiConnectRequest('PositionBook', $jData);
@@ -907,7 +922,7 @@ class FlatTradeService
         $jData = [
             'uid' => $this->clientId,
             'prd' => $product,
-            'norenordno' => $orderNumber
+            'norenordno' => $orderNumber,
         ];
 
         return $this->makePiConnectRequest('ExitSNOOrder', $jData);
@@ -929,13 +944,13 @@ class FlatTradeService
             'exch' => $exchange,
             'ai_t' => $alertType,
             'validity' => $validity,
-            'd' => (string)$conditionValue,
+            'd' => (string) $conditionValue,
             'trantype' => $transactionType,
             'prctyp' => $priceType,
             'prd' => $product,
             'ret' => $retention,
-            'qty' => (string)$quantity,
-            'prc' => (string)$price
+            'qty' => (string) $quantity,
+            'prc' => (string) $price,
         ];
 
         return $this->makePiConnectRequest('PlaceGTTOrder', $jData);
@@ -953,14 +968,14 @@ class FlatTradeService
             'ai_t' => $alertType,
             'validity' => $validity,
             'al_id' => $alertId,
-            'd' => (string)$conditionValue,
+            'd' => (string) $conditionValue,
             'trantype' => $transactionType,
             'prctyp' => $priceType,
             'prd' => $product,
             'ret' => $retention,
             'tsym' => $symbol,
-            'qty' => (string)$quantity,
-            'prc' => (string)$price
+            'qty' => (string) $quantity,
+            'prc' => (string) $price,
         ];
 
         return $this->makePiConnectRequest('ModifyGTTOrder', $jData);
@@ -973,7 +988,7 @@ class FlatTradeService
     {
         $jData = [
             'uid' => $this->clientId,
-            'al_id' => $alertId
+            'al_id' => $alertId,
         ];
 
         return $this->makePiConnectRequest('CancelGTTOrder', $jData);
@@ -992,7 +1007,7 @@ class FlatTradeService
             'exch' => $exchange,
             'oivariable' => $oiVariables,
             'place_order_params' => $placeOrderParams,
-            'place_order_params_leg2' => $placeOrderParamsLeg2
+            'place_order_params_leg2' => $placeOrderParamsLeg2,
         ];
 
         return $this->makePiConnectRequest('PlaceOCOOrder', $jData);
@@ -1012,7 +1027,7 @@ class FlatTradeService
             'al_id' => $alertId,
             'oivariable' => $oiVariables,
             'place_order_params' => $placeOrderParams,
-            'place_order_params_leg2' => $placeOrderParamsLeg2
+            'place_order_params_leg2' => $placeOrderParamsLeg2,
         ];
 
         return $this->makePiConnectRequest('ModifyOCOOrder', $jData);
@@ -1025,7 +1040,7 @@ class FlatTradeService
     {
         $jData = [
             'uid' => $this->clientId,
-            'al_id' => $alertId
+            'al_id' => $alertId,
         ];
 
         return $this->makePiConnectRequest('CancelOCOOrder', $jData);
@@ -1037,7 +1052,7 @@ class FlatTradeService
     public function getPendingGTTOrder(): array
     {
         $jData = [
-            'uid' => $this->clientId
+            'uid' => $this->clientId,
         ];
 
         return $this->makePiConnectRequest('GetPendingGTTOrder', $jData);
@@ -1049,7 +1064,7 @@ class FlatTradeService
     public function getEnabledGTTs(): array
     {
         $jData = [
-            'uid' => $this->clientId
+            'uid' => $this->clientId,
         ];
 
         return $this->makePiConnectRequest('GetEnabledGTTs', $jData);
@@ -1070,17 +1085,18 @@ class FlatTradeService
             $this->refreshToken = null;
 
             Log::info('FlatTrade disconnected successfully', [
-                'user_id' => Auth::id()
+                'user_id' => Auth::id(),
             ]);
+
             return true;
 
         } catch (\Exception $e) {
             Log::error('FlatTrade disconnect error', [
                 'error' => $e->getMessage(),
-                'user_id' => Auth::id()
+                'user_id' => Auth::id(),
             ]);
+
             return false;
         }
     }
 }
-

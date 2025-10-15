@@ -2,14 +2,16 @@
 
 namespace App\Services;
 
-use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Cache;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Log;
 
 class UnifiedTradingStrategyService
 {
     protected FlatTradeService $flatTradeService;
+
     protected TradingStrategyService $strategyService;
+
     protected PerformanceTrackingService $performanceService;
 
     public function __construct(
@@ -45,7 +47,7 @@ class UnifiedTradingStrategyService
 
             // Get market conditions
             $marketConditions = $this->analyzeMarketConditions();
-            
+
             // Get stock candidates based on filter
             $stockCandidates = $this->getStockCandidates($symbolFilter, $customSymbols, $maxStocks * 3);
             if (empty($stockCandidates)) {
@@ -55,10 +57,12 @@ class UnifiedTradingStrategyService
             $scoredStocks = [];
 
             foreach ($stockCandidates as $stock) {
-                if (count($scoredStocks) >= $maxStocks * 2) break; // Get more candidates for scoring
-                
+                if (count($scoredStocks) >= $maxStocks * 2) {
+                    break;
+                } // Get more candidates for scoring
+
                 $symbol = $stock['tsym'] ?? $stock['symbol'] ?? '';
-                
+
                 if ($symbol) {
                     $score = $this->calculateStockScore($symbol, $marketConditions, $options);
                     if ($score['total_score'] > 0) {
@@ -68,7 +72,7 @@ class UnifiedTradingStrategyService
             }
 
             // Sort by score and select best ones
-            usort($scoredStocks, fn($a, $b) => $b['total_score'] <=> $a['total_score']);
+            usort($scoredStocks, fn ($a, $b) => $b['total_score'] <=> $a['total_score']);
             $selectedStocks = array_slice($scoredStocks, 0, $maxStocks);
 
             // Calculate position sizes and validate funds
@@ -77,9 +81,9 @@ class UnifiedTradingStrategyService
 
             foreach ($selectedStocks as $stock) {
                 $positionSize = $this->calculateOptimalPositionSize(
-                    $stock['symbol'], 
-                    $quantity, 
-                    $stock['quote']['ltp'], 
+                    $stock['symbol'],
+                    $quantity,
+                    $stock['quote']['ltp'],
                     $safeFunds - $usedFunds,
                     $marketConditions
                 );
@@ -89,7 +93,7 @@ class UnifiedTradingStrategyService
                         'position_size' => $positionSize,
                         'entry_price' => $stock['quote']['ltp'],
                         'stop_loss' => $stock['quote']['ltp'] * (1 - $maxLoss / 100),
-                        'target_price' => $stock['quote']['ltp'] * (1 + $minProfit / 100)
+                        'target_price' => $stock['quote']['ltp'] * (1 + $minProfit / 100),
                     ]);
                     $usedFunds += $positionSize['total_value'];
                 }
@@ -98,6 +102,7 @@ class UnifiedTradingStrategyService
             return $finalStocks;
         } catch (\Exception $e) {
             Log::error('Stock selection failed', ['error' => $e->getMessage()]);
+
             return [];
         }
     }
@@ -122,22 +127,23 @@ class UnifiedTradingStrategyService
                 }
 
                 $sellDecision = $this->analyzeSellDecision($position, $options);
-                
+
                 if ($sellDecision['should_sell'] || $sellAll) {
                     $sellCandidates[] = array_merge($position, [
                         'sell_reason' => $sellDecision['reason'],
                         'confidence' => $sellDecision['confidence'],
-                        'priority' => $sellDecision['priority']
+                        'priority' => $sellDecision['priority'],
                     ]);
                 }
             }
 
             // Sort by priority (high priority first)
-            usort($sellCandidates, fn($a, $b) => $b['priority'] <=> $a['priority']);
+            usort($sellCandidates, fn ($a, $b) => $b['priority'] <=> $a['priority']);
 
             return $sellCandidates;
         } catch (\Exception $e) {
             Log::error('Position analysis failed', ['error' => $e->getMessage()]);
+
             return [];
         }
     }
@@ -149,26 +155,28 @@ class UnifiedTradingStrategyService
     {
         try {
             $quote = $this->getStockQuote($symbol);
-            if (!$quote) return ['total_score' => 0];
+            if (! $quote) {
+                return ['total_score' => 0];
+            }
 
             // Technical analysis score
             $technicalScore = $this->calculateTechnicalScore($symbol);
-            
+
             // Fundamental score
             $fundamentalScore = $this->calculateFundamentalScore($quote);
-            
+
             // Momentum score
             $momentumScore = $this->calculateMomentumScore($quote);
-            
+
             // Risk score
             $riskScore = $this->calculateRiskScore($quote);
-            
+
             // Market condition adjustment
             $marketAdjustment = $this->getMarketConditionAdjustment($marketConditions, $quote);
-            
+
             // Volume and liquidity score
             $liquidityScore = $this->calculateLiquidityScore($quote);
-            
+
             // Price action score
             $priceActionScore = $this->calculatePriceActionScore($quote);
 
@@ -192,10 +200,11 @@ class UnifiedTradingStrategyService
                 'liquidity_score' => $liquidityScore,
                 'price_action_score' => $priceActionScore,
                 'market_adjustment' => $marketAdjustment,
-                'quote' => $quote
+                'quote' => $quote,
             ];
         } catch (\Exception $e) {
             Log::error("Stock score calculation failed for {$symbol}", ['error' => $e->getMessage()]);
+
             return ['total_score' => 0];
         }
     }
@@ -209,7 +218,7 @@ class UnifiedTradingStrategyService
         $pnlPercent = $position['pnl_percent'];
         $profitThreshold = $options['profit_threshold'] ?? 5.0;
         $lossThreshold = $options['loss_threshold'] ?? 3.0;
-        
+
         $reasons = [];
         $confidence = 0;
         $priority = 0;
@@ -238,7 +247,7 @@ class UnifiedTradingStrategyService
         // Time-based analysis
         $holdingDays = $position['entry_time']->diffInDays(now());
         if ($holdingDays > 5 && $pnlPercent < 0) {
-            $reasons[] = "Long holding period with loss";
+            $reasons[] = 'Long holding period with loss';
             $confidence += 0.2;
             $priority += 20;
         }
@@ -246,7 +255,7 @@ class UnifiedTradingStrategyService
         // Market condition analysis
         $marketConditions = $this->analyzeMarketConditions();
         if ($marketConditions['market_regime'] === 'bearish' && $pnlPercent < 0) {
-            $reasons[] = "Bearish market with loss";
+            $reasons[] = 'Bearish market with loss';
             $confidence += 0.3;
             $priority += 30;
         }
@@ -254,7 +263,7 @@ class UnifiedTradingStrategyService
         // Volume analysis
         $currentQuote = $this->getStockQuote($symbol);
         if ($currentQuote && $this->isVolumeDeclining($currentQuote)) {
-            $reasons[] = "Declining volume";
+            $reasons[] = 'Declining volume';
             $confidence += 0.1;
             $priority += 10;
         }
@@ -265,7 +274,7 @@ class UnifiedTradingStrategyService
             'should_sell' => $shouldSell,
             'reason' => implode(', ', $reasons),
             'confidence' => min(1.0, $confidence),
-            'priority' => $priority
+            'priority' => $priority,
         ];
     }
 
@@ -277,11 +286,13 @@ class UnifiedTradingStrategyService
         try {
             // Get historical data for technical analysis
             $historicalData = $this->getHistoricalData($symbol, 20);
-            if (empty($historicalData)) return 50;
+            if (empty($historicalData)) {
+                return 50;
+            }
 
             $prices = array_column($historicalData, 'close');
             $signal = $this->strategyService->generateTradeSignal($prices);
-            
+
             // Convert signal to score
             switch ($signal[0]) {
                 case 'BUY': return 85;
@@ -300,27 +311,36 @@ class UnifiedTradingStrategyService
     protected function calculateFundamentalScore(array $quote): float
     {
         $score = 50;
-        
+
         $ltp = $quote['ltp'] ?? 0;
         $volume = $quote['volume'] ?? 0;
         $upperCircuit = $quote['upper_circuit'] ?? 0;
         $lowerCircuit = $quote['lower_circuit'] ?? 0;
 
         // Price range check
-        if ($ltp >= 100 && $ltp <= 5000) $score += 15;
-        elseif ($ltp >= 50 && $ltp <= 10000) $score += 10;
-        
+        if ($ltp >= 100 && $ltp <= 5000) {
+            $score += 15;
+        } elseif ($ltp >= 50 && $ltp <= 10000) {
+            $score += 10;
+        }
+
         // Volume check
-        if ($volume > 1000000) $score += 20;
-        elseif ($volume > 500000) $score += 15;
-        elseif ($volume > 100000) $score += 10;
-        
+        if ($volume > 1000000) {
+            $score += 20;
+        } elseif ($volume > 500000) {
+            $score += 15;
+        } elseif ($volume > 100000) {
+            $score += 10;
+        }
+
         // Circuit limit check
         if ($upperCircuit > 0 && $lowerCircuit > 0) {
             $circuitRange = ($upperCircuit - $lowerCircuit) / $ltp;
-            if ($circuitRange > 0.1) $score += 15;
+            if ($circuitRange > 0.1) {
+                $score += 15;
+            }
         }
-        
+
         return min(100, max(0, $score));
     }
 
@@ -330,13 +350,21 @@ class UnifiedTradingStrategyService
     protected function calculateMomentumScore(array $quote): float
     {
         $changePercent = $quote['change_percent'] ?? 0;
-        
+
         // Optimal momentum range
-        if ($changePercent >= 1.0 && $changePercent <= 5.0) return 90;
-        if ($changePercent >= 0.5 && $changePercent <= 8.0) return 75;
-        if ($changePercent >= 0.0 && $changePercent <= 10.0) return 60;
-        if ($changePercent < 0) return max(0, 50 + $changePercent * 5);
-        
+        if ($changePercent >= 1.0 && $changePercent <= 5.0) {
+            return 90;
+        }
+        if ($changePercent >= 0.5 && $changePercent <= 8.0) {
+            return 75;
+        }
+        if ($changePercent >= 0.0 && $changePercent <= 10.0) {
+            return 60;
+        }
+        if ($changePercent < 0) {
+            return max(0, 50 + $changePercent * 5);
+        }
+
         return 30; // Too high momentum might be risky
     }
 
@@ -346,24 +374,31 @@ class UnifiedTradingStrategyService
     protected function calculateRiskScore(array $quote): float
     {
         $score = 50;
-        
+
         $ltp = $quote['ltp'] ?? 0;
         $high = $quote['high'] ?? 0;
         $low = $quote['low'] ?? 0;
         $volume = $quote['volume'] ?? 0;
-        
+
         // Price stability
         if ($high > 0 && $low > 0) {
             $dailyRange = ($high - $low) / $ltp;
-            if ($dailyRange < 0.05) $score += 25;
-            elseif ($dailyRange < 0.1) $score += 15;
-            elseif ($dailyRange > 0.2) $score -= 25;
+            if ($dailyRange < 0.05) {
+                $score += 25;
+            } elseif ($dailyRange < 0.1) {
+                $score += 15;
+            } elseif ($dailyRange > 0.2) {
+                $score -= 25;
+            }
         }
-        
+
         // Volume consistency
-        if ($volume > 500000) $score += 20;
-        elseif ($volume < 100000) $score -= 30;
-        
+        if ($volume > 500000) {
+            $score += 20;
+        } elseif ($volume < 100000) {
+            $score -= 30;
+        }
+
         return min(100, max(0, $score));
     }
 
@@ -375,18 +410,27 @@ class UnifiedTradingStrategyService
         $score = 50;
         $volume = $quote['volume'] ?? 0;
         $ltp = $quote['ltp'] ?? 0;
-        
+
         // Volume-based liquidity
-        if ($volume > 2000000) $score += 30;
-        elseif ($volume > 1000000) $score += 20;
-        elseif ($volume > 500000) $score += 10;
-        elseif ($volume < 100000) $score -= 20;
-        
+        if ($volume > 2000000) {
+            $score += 30;
+        } elseif ($volume > 1000000) {
+            $score += 20;
+        } elseif ($volume > 500000) {
+            $score += 10;
+        } elseif ($volume < 100000) {
+            $score -= 20;
+        }
+
         // Price-based liquidity (higher price = better liquidity)
-        if ($ltp > 1000) $score += 10;
-        elseif ($ltp > 500) $score += 5;
-        elseif ($ltp < 50) $score -= 10;
-        
+        if ($ltp > 1000) {
+            $score += 10;
+        } elseif ($ltp > 500) {
+            $score += 5;
+        } elseif ($ltp < 50) {
+            $score -= 10;
+        }
+
         return min(100, max(0, $score));
     }
 
@@ -400,18 +444,25 @@ class UnifiedTradingStrategyService
         $high = $quote['high'] ?? 0;
         $low = $quote['low'] ?? 0;
         $ltp = $quote['ltp'] ?? 0;
-        
+
         // Price position within daily range
         if ($high > 0 && $low > 0 && $ltp > 0) {
             $positionInRange = ($ltp - $low) / ($high - $low);
-            if ($positionInRange > 0.8) $score += 20; // Near high
-            elseif ($positionInRange < 0.2) $score -= 10; // Near low
+            if ($positionInRange > 0.8) {
+                $score += 20;
+            } // Near high
+            elseif ($positionInRange < 0.2) {
+                $score -= 10;
+            } // Near low
         }
-        
+
         // Change percentage
-        if ($changePercent > 0) $score += 10;
-        else $score -= 5;
-        
+        if ($changePercent > 0) {
+            $score += 10;
+        } else {
+            $score -= 5;
+        }
+
         return min(100, max(0, $score));
     }
 
@@ -423,23 +474,31 @@ class UnifiedTradingStrategyService
         $adjustment = 0;
         $marketRegime = $marketConditions['market_regime'] ?? 'neutral';
         $volatilityLevel = $marketConditions['volatility_level'] ?? 'moderate';
-        
+
         switch ($marketRegime) {
             case 'bullish':
-                if (($quote['change_percent'] ?? 0) > 0) $adjustment += 15;
+                if (($quote['change_percent'] ?? 0) > 0) {
+                    $adjustment += 15;
+                }
                 break;
             case 'bearish':
-                if (($quote['change_percent'] ?? 0) < 0) $adjustment += 10;
-                else $adjustment -= 15;
+                if (($quote['change_percent'] ?? 0) < 0) {
+                    $adjustment += 10;
+                } else {
+                    $adjustment -= 15;
+                }
                 break;
             case 'volatile':
                 $adjustment -= 20;
                 break;
         }
-        
-        if ($volatilityLevel === 'high') $adjustment -= 15;
-        elseif ($volatilityLevel === 'low') $adjustment += 10;
-        
+
+        if ($volatilityLevel === 'high') {
+            $adjustment -= 15;
+        } elseif ($volatilityLevel === 'low') {
+            $adjustment += 10;
+        }
+
         return $adjustment;
     }
 
@@ -450,17 +509,17 @@ class UnifiedTradingStrategyService
     {
         $riskMultiplier = $marketConditions['risk_multiplier'] ?? 0.5;
         $maxPositionValue = $availableFunds * 0.2 * $riskMultiplier;
-        
+
         $calculatedQuantity = min($quantity, floor($maxPositionValue / $price));
         $calculatedQuantity = max(1, $calculatedQuantity);
-        
+
         $totalValue = $calculatedQuantity * $price;
-        
+
         return [
             'quantity' => $calculatedQuantity,
             'total_value' => $totalValue,
             'price' => $price,
-            'risk_multiplier' => $riskMultiplier
+            'risk_multiplier' => $riskMultiplier,
         ];
     }
 
@@ -471,14 +530,16 @@ class UnifiedTradingStrategyService
     {
         try {
             $historicalData = $this->getHistoricalData($symbol, 20);
-            if (empty($historicalData)) return ['signal' => 'hold', 'confidence' => 0];
+            if (empty($historicalData)) {
+                return ['signal' => 'hold', 'confidence' => 0];
+            }
 
             $prices = array_column($historicalData, 'close');
             $signal = $this->strategyService->generateTradeSignal($prices);
-            
+
             return [
                 'signal' => $signal[0] === 'SELL' ? 'sell' : 'hold',
-                'confidence' => $signal[0] === 'SELL' ? 0.8 : 0.2
+                'confidence' => $signal[0] === 'SELL' ? 0.8 : 0.2,
             ];
         } catch (\Exception $e) {
             return ['signal' => 'hold', 'confidence' => 0];
@@ -503,24 +564,24 @@ class UnifiedTradingStrategyService
         try {
             // Get Nifty 50 index data for market sentiment
             $niftyData = $this->getNiftyIndexData();
-            
+
             // Analyze market volatility
             $volatility = $this->calculateMarketVolatility();
-            
+
             // Determine market regime
             $marketRegime = $this->determineMarketRegime($niftyData, $volatility);
-            
+
             return [
                 'market_regime' => $marketRegime,
                 'volatility_level' => $volatility,
                 'nifty_trend' => $niftyData['trend'] ?? 'neutral',
-                'risk_multiplier' => $this->getRiskMultiplier($marketRegime, $volatility)
+                'risk_multiplier' => $this->getRiskMultiplier($marketRegime, $volatility),
             ];
         } catch (\Exception $e) {
             return [
                 'market_regime' => 'neutral',
                 'volatility_level' => 'moderate',
-                'risk_multiplier' => 0.5
+                'risk_multiplier' => 0.5,
             ];
         }
     }
@@ -535,6 +596,7 @@ class UnifiedTradingStrategyService
             if (isset($response['stat']) && $response['stat'] === 'Ok') {
                 return (float) ($response['max_payout'] ?? 0);
             }
+
             return 0;
         } catch (\Exception $e) {
             return 0;
@@ -548,17 +610,17 @@ class UnifiedTradingStrategyService
     {
         try {
             $positions = $this->flatTradeService->getPositionBook('NSE', '', 0, '', '', '', '');
-            
-            if (is_array($positions) && !empty($positions)) {
+
+            if (is_array($positions) && ! empty($positions)) {
                 if (isset($positions[0]['stat']) && $positions[0]['stat'] === 'Ok') {
                     return $this->formatPositionsForAnalysis($positions);
                 }
             }
-            
+
             if (isset($positions['stat']) && $positions['stat'] === 'Ok' && isset($positions['netqty'])) {
                 return $this->formatPositionsForAnalysis([$positions]);
             }
-            
+
             return [];
         } catch (\Exception $e) {
             return [];
@@ -571,14 +633,14 @@ class UnifiedTradingStrategyService
     protected function formatPositionsForAnalysis(array $positions): array
     {
         $formattedPositions = [];
-        
+
         foreach ($positions as $position) {
             $symbol = $position['tsym'] ?? null;
             $quantity = (int) ($position['netqty'] ?? 0);
             $avgPrice = (float) ($position['netavgprc'] ?? 0);
             $currentPrice = (float) ($position['lp'] ?? 0);
-            
-            if (!$symbol || $quantity <= 0 || $avgPrice <= 0 || $currentPrice <= 0) {
+
+            if (! $symbol || $quantity <= 0 || $avgPrice <= 0 || $currentPrice <= 0) {
                 continue;
             }
 
@@ -593,10 +655,10 @@ class UnifiedTradingStrategyService
                 'pnl' => $pnl,
                 'pnl_percent' => $pnlPercent,
                 'entry_time' => Carbon::parse($position['entry_time'] ?? now()->subDays(1)),
-                'raw_data' => $position
+                'raw_data' => $position,
             ];
         }
-        
+
         return $formattedPositions;
     }
 
@@ -607,27 +669,27 @@ class UnifiedTradingStrategyService
     {
         try {
             $searchResult = $this->flatTradeService->searchScrip($symbol, 'NSE');
-            
-            if (!isset($searchResult['values']) || empty($searchResult['values'])) {
+
+            if (! isset($searchResult['values']) || empty($searchResult['values'])) {
                 return null;
             }
 
             $token = $searchResult['values'][0]['token'] ?? null;
-            if (!$token) {
+            if (! $token) {
                 return null;
             }
 
             $quote = $this->flatTradeService->getQuotes($token, 'NSE');
-            
+
             if (isset($quote['stat']) && $quote['stat'] === 'Ok') {
                 $ltp = (float) ($quote['lp'] ?? 0);
                 $previousClose = (float) ($quote['c'] ?? 0);
                 $changePercent = 0;
-                
+
                 if ($previousClose > 0) {
                     $changePercent = (($ltp - $previousClose) / $previousClose) * 100;
                 }
-                
+
                 return [
                     'symbol' => $quote['tsym'] ?? $symbol,
                     'ltp' => $ltp,
@@ -641,7 +703,7 @@ class UnifiedTradingStrategyService
                     'upper_circuit' => (float) ($quote['uc'] ?? 0),
                     'lower_circuit' => (float) ($quote['lc'] ?? 0),
                     'token' => $quote['token'] ?? $token,
-                    'raw_data' => $quote
+                    'raw_data' => $quote,
                 ];
             }
 
@@ -674,16 +736,17 @@ class UnifiedTradingStrategyService
             switch ($symbolFilter) {
                 case 'nifty50':
                     return $this->getNifty50Candidates($maxCandidates);
-                
+
                 case 'custom':
                     return $this->getCustomSymbolCandidates($customSymbols, $maxCandidates);
-                
+
                 case 'all':
                 default:
                     return $this->getAllSymbolCandidates($maxCandidates);
             }
         } catch (\Exception $e) {
             Log::error('Failed to get stock candidates', ['error' => $e->getMessage()]);
+
             return [];
         }
     }
@@ -695,7 +758,7 @@ class UnifiedTradingStrategyService
     {
         try {
             $topGainers = $this->flatTradeService->getTopList('NSE', 'T', 'NSEALL', 'CHANGE');
-            if (!isset($topGainers['values']) || empty($topGainers['values'])) {
+            if (! isset($topGainers['values']) || empty($topGainers['values'])) {
                 return [];
             }
 
@@ -703,8 +766,10 @@ class UnifiedTradingStrategyService
             $candidates = [];
 
             foreach ($topGainers['values'] as $stock) {
-                if (count($candidates) >= $maxCandidates) break;
-                
+                if (count($candidates) >= $maxCandidates) {
+                    break;
+                }
+
                 $symbol = $stock['tsym'] ?? '';
                 if (in_array($symbol, $nifty50Stocks)) {
                     $candidates[] = $stock;
@@ -723,16 +788,18 @@ class UnifiedTradingStrategyService
     protected function getCustomSymbolCandidates(array $customSymbols, int $maxCandidates): array
     {
         $candidates = [];
-        
+
         foreach ($customSymbols as $symbol) {
-            if (count($candidates) >= $maxCandidates) break;
-            
+            if (count($candidates) >= $maxCandidates) {
+                break;
+            }
+
             $quote = $this->getStockQuote($symbol);
             if ($quote) {
                 $candidates[] = [
                     'tsym' => $symbol,
                     'symbol' => $symbol,
-                    'quote' => $quote
+                    'quote' => $quote,
                 ];
             }
         }
@@ -748,14 +815,16 @@ class UnifiedTradingStrategyService
         try {
             // Get top gainers from all stocks
             $topGainers = $this->flatTradeService->getTopList('NSE', 'T', 'NSEALL', 'CHANGE');
-            if (!isset($topGainers['values']) || empty($topGainers['values'])) {
+            if (! isset($topGainers['values']) || empty($topGainers['values'])) {
                 return [];
             }
 
             $candidates = [];
             foreach ($topGainers['values'] as $stock) {
-                if (count($candidates) >= $maxCandidates) break;
-                
+                if (count($candidates) >= $maxCandidates) {
+                    break;
+                }
+
                 $symbol = $stock['tsym'] ?? '';
                 if ($symbol && $this->isValidStockSymbol($symbol)) {
                     $candidates[] = $stock;
@@ -793,7 +862,7 @@ class UnifiedTradingStrategyService
         }
 
         // Must contain at least one letter
-        if (!preg_match('/[A-Z]/', $symbol)) {
+        if (! preg_match('/[A-Z]/', $symbol)) {
             return false;
         }
 
@@ -805,14 +874,14 @@ class UnifiedTradingStrategyService
      */
     protected function getNifty50Symbols(): array
     {
-        return Cache::remember('nifty50_symbols', 3600, function() {
+        return Cache::remember('nifty50_symbols', 3600, function () {
             return [
                 'RELIANCE', 'TCS', 'HDFCBANK', 'INFY', 'HINDUNILVR', 'ITC', 'SBIN', 'BHARTIARTL',
                 'KOTAKBANK', 'LT', 'ASIANPAINT', 'AXISBANK', 'MARUTI', 'SUNPHARMA', 'TITAN', 'ULTRACEMCO',
                 'WIPRO', 'NESTLEIND', 'ONGC', 'POWERGRID', 'NTPC', 'TECHM', 'TATAMOTORS', 'BAJFINANCE',
                 'HCLTECH', 'BAJAJFINSV', 'DRREDDY', 'JSWSTEEL', 'TATASTEEL', 'COALINDIA', 'GRASIM', 'BRITANNIA',
                 'EICHERMOT', 'HEROMOTOCO', 'DIVISLAB', 'CIPLA', 'APOLLOHOSP', 'ADANIPORTS', 'INDUSINDBK', 'TATACONSUM',
-                'BPCL', 'ICICIBANK', 'ADANIENT', 'HDFCLIFE', 'SBILIFE', 'BAJAJ-AUTO', 'UPL', 'SHREECEM'
+                'BPCL', 'ICICIBANK', 'ADANIENT', 'HDFCLIFE', 'SBILIFE', 'BAJAJ-AUTO', 'UPL', 'SHREECEM',
             ];
         });
     }
@@ -826,7 +895,7 @@ class UnifiedTradingStrategyService
             // This would fetch actual Nifty 50 index data
             return [
                 'trend' => 'neutral',
-                'change_percent' => 0.5
+                'change_percent' => 0.5,
             ];
         } catch (\Exception $e) {
             return ['trend' => 'neutral', 'change_percent' => 0];
@@ -848,11 +917,17 @@ class UnifiedTradingStrategyService
     protected function determineMarketRegime(array $niftyData, string $volatility): string
     {
         $changePercent = $niftyData['change_percent'] ?? 0;
-        
-        if ($volatility === 'high') return 'volatile';
-        if ($changePercent > 1.0) return 'bullish';
-        if ($changePercent < -1.0) return 'bearish';
-        
+
+        if ($volatility === 'high') {
+            return 'volatile';
+        }
+        if ($changePercent > 1.0) {
+            return 'bullish';
+        }
+        if ($changePercent < -1.0) {
+            return 'bearish';
+        }
+
         return 'neutral';
     }
 
@@ -862,18 +937,23 @@ class UnifiedTradingStrategyService
     protected function getRiskMultiplier(string $marketRegime, string $volatility): float
     {
         $baseMultiplier = 1.0;
-        
+
         switch ($marketRegime) {
-            case 'bullish': $baseMultiplier = 1.2; break;
-            case 'bearish': $baseMultiplier = 0.6; break;
-            case 'volatile': $baseMultiplier = 0.4; break;
+            case 'bullish': $baseMultiplier = 1.2;
+                break;
+            case 'bearish': $baseMultiplier = 0.6;
+                break;
+            case 'volatile': $baseMultiplier = 0.4;
+                break;
         }
-        
+
         switch ($volatility) {
-            case 'high': $baseMultiplier *= 0.7; break;
-            case 'low': $baseMultiplier *= 1.1; break;
+            case 'high': $baseMultiplier *= 0.7;
+                break;
+            case 'low': $baseMultiplier *= 1.1;
+                break;
         }
-        
+
         return max(0.2, min(1.5, $baseMultiplier));
     }
 }

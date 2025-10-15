@@ -5,8 +5,8 @@ namespace App\Console\Commands;
 use App\Services\FlatTradeService;
 use App\Services\UnifiedTradingStrategyService;
 use Illuminate\Console\Command;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Log;
 
 class Nifty50RealTradingCommand extends Command
 {
@@ -26,6 +26,7 @@ class Nifty50RealTradingCommand extends Command
     protected $description = 'Execute real trading orders for best performing stocks (all symbols, Nifty 50, or custom)';
 
     protected FlatTradeService $flatTradeService;
+
     protected UnifiedTradingStrategyService $strategyService;
 
     public function __construct(FlatTradeService $flatTradeService, UnifiedTradingStrategyService $strategyService)
@@ -38,7 +39,7 @@ class Nifty50RealTradingCommand extends Command
     public function handle()
     {
         $this->info('🚀 Starting Nifty 50 Real Trading Command');
-        
+
         $quantity = (int) $this->option('quantity');
         $maxStocks = (int) $this->option('max-stocks');
         $minProfit = (float) $this->option('min-profit');
@@ -46,40 +47,41 @@ class Nifty50RealTradingCommand extends Command
         $maxInvestment = (float) $this->option('max-investment');
         $marginSafety = (float) $this->option('margin-safety');
         $symbolFilter = $this->option('symbol-filter');
-        $customSymbols = $this->option('custom-symbols') ? 
+        $customSymbols = $this->option('custom-symbols') ?
             array_map('trim', explode(',', $this->option('custom-symbols'))) : [];
         $dryRun = $this->option('dry-run');
         $orderType = $this->option('order-type');
         $product = $this->option('product');
 
-        $this->info("Configuration:");
+        $this->info('Configuration:');
         $this->info("- Quantity per stock: {$quantity}");
         $this->info("- Max stocks to trade: {$maxStocks}");
         $this->info("- Min profit required: {$minProfit}%");
         $this->info("- Max loss allowed: {$maxLoss}%");
-        $this->info("- Max investment: " . ($maxInvestment > 0 ? "₹{$maxInvestment}" : "No limit"));
-        $this->info("- Margin safety: " . ($marginSafety * 100) . "%");
+        $this->info('- Max investment: '.($maxInvestment > 0 ? "₹{$maxInvestment}" : 'No limit'));
+        $this->info('- Margin safety: '.($marginSafety * 100).'%');
         $this->info("- Symbol filter: {$symbolFilter}");
-        if ($symbolFilter === 'custom' && !empty($customSymbols)) {
-            $this->info("- Custom symbols: " . implode(', ', $customSymbols));
+        if ($symbolFilter === 'custom' && ! empty($customSymbols)) {
+            $this->info('- Custom symbols: '.implode(', ', $customSymbols));
         }
         $this->info("- Order type: {$orderType}");
         $this->info("- Product: {$product}");
-        $this->info("- Dry run: " . ($dryRun ? 'YES' : 'NO'));
+        $this->info('- Dry run: '.($dryRun ? 'YES' : 'NO'));
 
         try {
 
             // Step 1: Check available funds
             $this->info("\n💰 Checking available funds...");
             $maxPayoutAmount = $this->getMaxPayoutAmount();
-            if (!$maxPayoutAmount['success']) {
+            if (! $maxPayoutAmount['success']) {
                 $this->error("❌ Failed to get available funds: {$maxPayoutAmount['error']}");
+
                 return;
             }
-            
+
             $availableFunds = $maxPayoutAmount['data']['raw_response']['payout'] ?? 0;
             $this->info("Available funds: ₹{$availableFunds}");
-            
+
             // Apply max investment limit if set
             if ($maxInvestment > 0 && $maxInvestment < $availableFunds) {
                 $availableFunds = $maxInvestment;
@@ -95,20 +97,21 @@ class Nifty50RealTradingCommand extends Command
                 'max_investment' => $maxInvestment,
                 'margin_safety' => $marginSafety,
                 'symbol_filter' => $symbolFilter,
-                'custom_symbols' => $customSymbols
+                'custom_symbols' => $customSymbols,
             ];
-            
+
             $bestStocks = $this->strategyService->selectOptimalStocksForPurchase($maxStocks, $strategyOptions);
             if (empty($bestStocks)) {
                 $this->error('No suitable stocks found for trading.');
+
                 return;
             }
 
-            $this->info("Found " . count($bestStocks) . " optimal stocks:");
+            $this->info('Found '.count($bestStocks).' optimal stocks:');
             foreach ($bestStocks as $stock) {
                 $this->info("- {$stock['symbol']}: Score {$stock['total_score']}, LTP: ₹{$stock['entry_price']}, Target: ₹{$stock['target_price']}, Stop Loss: ₹{$stock['stop_loss']}");
             }
-            
+
             // Apply margin safety factor
             $safeFunds = $availableFunds * (1 - $marginSafety);
             $this->info("Safe funds after margin buffer: ₹{$safeFunds}");
@@ -117,14 +120,14 @@ class Nifty50RealTradingCommand extends Command
             $this->info("\n📈 Executing orders using unified strategy...");
             $results = [];
             $totalUsedFunds = 0;
-            
+
             foreach ($bestStocks as $stock) {
                 $this->info("\n📈 Processing: {$stock['symbol']}");
-                
+
                 try {
                     $result = $this->executeUnifiedOrder($stock, $orderType, $product, $dryRun);
                     $results[] = $result;
-                    
+
                     if ($result['success']) {
                         $this->info("✅ Order placed successfully for {$stock['symbol']}");
                         $totalUsedFunds += $result['required_funds'] ?? 0;
@@ -132,11 +135,11 @@ class Nifty50RealTradingCommand extends Command
                         $this->warn("⚠️ Order failed for {$stock['symbol']}: {$result['error']}");
                     }
                 } catch (\Exception $e) {
-                    $this->error("❌ Error processing {$stock['symbol']}: " . $e->getMessage());
+                    $this->error("❌ Error processing {$stock['symbol']}: ".$e->getMessage());
                     $results[] = [
                         'symbol' => $stock['symbol'],
                         'success' => false,
-                        'error' => $e->getMessage()
+                        'error' => $e->getMessage(),
                     ];
                 }
             }
@@ -145,10 +148,10 @@ class Nifty50RealTradingCommand extends Command
             $this->displaySummary($results, $dryRun);
 
         } catch (\Exception $e) {
-            $this->error("❌ Command failed: " . $e->getMessage());
+            $this->error('❌ Command failed: '.$e->getMessage());
             Log::error('Nifty50RealTradingCommand failed', [
                 'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
+                'trace' => $e->getTraceAsString(),
             ]);
         }
     }
@@ -161,8 +164,9 @@ class Nifty50RealTradingCommand extends Command
         try {
             // Get top gainers from NSE
             $topGainers = $this->flatTradeService->getTopList('NSE', 'T', 'NSEALL', 'CHANGE');
-            if (!isset($topGainers['values']) || empty($topGainers['values'])) {
+            if (! isset($topGainers['values']) || empty($topGainers['values'])) {
                 $this->warn('No top gainers data available');
+
                 return [];
             }
 
@@ -170,15 +174,17 @@ class Nifty50RealTradingCommand extends Command
             $nifty50Stocks = $this->getNifty50Symbols();
             $bestStocks = [];
             foreach ($topGainers['values'] as $stock) {
-                if (count($bestStocks) >= $maxStocks) break;
-                
+                if (count($bestStocks) >= $maxStocks) {
+                    break;
+                }
+
                 $symbol = $stock['tsym'] ?? '';
-                
+
                 // Check if it's a Nifty 50 stock
                 if (in_array($symbol, $nifty50Stocks) || true) {
                     // Get detailed quote for analysis
                     $quote = $this->getStockQuote($symbol);
-                    
+
                     if ($quote && $this->isStockSuitableForTrading($quote)) {
                         $bestStocks[] = [
                             'symbol' => $symbol,
@@ -187,15 +193,17 @@ class Nifty50RealTradingCommand extends Command
                             'volume' => $quote['volume'] ?? 0,
                             'high' => $quote['high'] ?? 0,
                             'low' => $quote['low'] ?? 0,
-                            'quote' => $quote
+                            'quote' => $quote,
                         ];
                     }
                 }
             }
+
             return $bestStocks;
 
         } catch (\Exception $e) {
-            $this->error("Error fetching best stocks: " . $e->getMessage());
+            $this->error('Error fetching best stocks: '.$e->getMessage());
+
             return [];
         }
     }
@@ -205,7 +213,7 @@ class Nifty50RealTradingCommand extends Command
      */
     protected function getNifty50Symbols(): array
     {
-        return Cache::remember('nifty50_symbols', 3600, function() {
+        return Cache::remember('nifty50_symbols', 3600, function () {
             // Nifty 50 stocks as of 2024
             return [
                 'RELIANCE', 'TCS', 'HDFCBANK', 'INFY', 'HINDUNILVR', 'ITC', 'SBIN', 'BHARTIARTL',
@@ -213,7 +221,7 @@ class Nifty50RealTradingCommand extends Command
                 'WIPRO', 'NESTLEIND', 'ONGC', 'POWERGRID', 'NTPC', 'TECHM', 'TATAMOTORS', 'BAJFINANCE',
                 'HCLTECH', 'BAJAJFINSV', 'DRREDDY', 'JSWSTEEL', 'TATASTEEL', 'COALINDIA', 'GRASIM', 'BRITANNIA',
                 'EICHERMOT', 'HEROMOTOCO', 'DIVISLAB', 'CIPLA', 'APOLLOHOSP', 'ADANIPORTS', 'INDUSINDBK', 'TATACONSUM',
-                'BPCL', 'ICICIBANK', 'ADANIENT', 'HDFCLIFE', 'SBILIFE', 'BAJAJ-AUTO', 'UPL', 'SHREECEM'
+                'BPCL', 'ICICIBANK', 'ADANIENT', 'HDFCLIFE', 'SBILIFE', 'BAJAJ-AUTO', 'UPL', 'SHREECEM',
             ];
         });
     }
@@ -226,30 +234,30 @@ class Nifty50RealTradingCommand extends Command
         try {
             // Search for the symbol to get token
             $searchResult = $this->flatTradeService->searchScrip($symbol, 'NSE');
-            
-            if (!isset($searchResult['values']) || empty($searchResult['values'])) {
+
+            if (! isset($searchResult['values']) || empty($searchResult['values'])) {
                 return null;
             }
 
             $token = $searchResult['values'][0]['token'] ?? null;
-            if (!$token) {
+            if (! $token) {
                 return null;
             }
 
             // Get quote using token
             $quote = $this->flatTradeService->getQuotes($token, 'NSE');
-            
+
             // Handle the actual FlatTrade API response format
             if (isset($quote['stat']) && $quote['stat'] === 'Ok') {
                 // Calculate change percentage from current price and previous close
                 $ltp = (float) ($quote['lp'] ?? 0);
                 $previousClose = (float) ($quote['c'] ?? 0);
                 $changePercent = 0;
-                
+
                 if ($previousClose > 0) {
                     $changePercent = (($ltp - $previousClose) / $previousClose) * 100;
                 }
-                
+
                 // Return formatted quote data
                 return [
                     'symbol' => $quote['tsym'] ?? $symbol,
@@ -281,14 +289,15 @@ class Nifty50RealTradingCommand extends Command
                     'token' => $quote['token'] ?? $token,
                     'exchange' => $quote['exch'] ?? 'NSE',
                     'order_message' => $quote['ord_msg'] ?? '',
-                    'raw_data' => $quote // Keep raw data for debugging
+                    'raw_data' => $quote, // Keep raw data for debugging
                 ];
             }
 
             return null;
 
         } catch (\Exception $e) {
-            $this->warn("Error getting quote for {$symbol}: " . $e->getMessage());
+            $this->warn("Error getting quote for {$symbol}: ".$e->getMessage());
+
             return null;
         }
     }
@@ -308,17 +317,29 @@ class Nifty50RealTradingCommand extends Command
         $orderMessage = $quote['order_message'] ?? '';
 
         // Basic filters
-        if ($ltp < 50 || $ltp > 10000) return false; // Price range
-        if ($changePercent < 1.0) return false; // Minimum 1% gain
-        if ($volume < 100000) return false; // Minimum volume
-        if ($high <= $low) return false; // Valid price range
-        
+        if ($ltp < 50 || $ltp > 10000) {
+            return false;
+        } // Price range
+        if ($changePercent < 1.0) {
+            return false;
+        } // Minimum 1% gain
+        if ($volume < 100000) {
+            return false;
+        } // Minimum volume
+        if ($high <= $low) {
+            return false;
+        } // Valid price range
+
         // Check for circuit limits (avoid stocks hitting upper/lower circuit)
-        if ($ltp >= $upperCircuit * 0.99) return false; // Near upper circuit
-        if ($ltp <= $lowerCircuit * 1.01) return false; // Near lower circuit
-        
+        if ($ltp >= $upperCircuit * 0.99) {
+            return false;
+        } // Near upper circuit
+        if ($ltp <= $lowerCircuit * 1.01) {
+            return false;
+        } // Near lower circuit
+
         // Check for warning messages
-        if (!empty($orderMessage) && (
+        if (! empty($orderMessage) && (
             strpos($orderMessage, 'Loss making') !== false ||
             strpos($orderMessage, 'under') !== false ||
             strpos($orderMessage, 'warning') !== false
@@ -336,26 +357,26 @@ class Nifty50RealTradingCommand extends Command
     {
         try {
             $response = $this->flatTradeService->getMaxPayoutAmount();
-            
+
             if (isset($response['stat']) && $response['stat'] === 'Ok') {
                 return [
                     'success' => true,
                     'data' => [
                         'max_payout' => (float) ($response['max_payout'] ?? 0),
-                        'raw_response' => $response
-                    ]
+                        'raw_response' => $response,
+                    ],
                 ];
             } else {
                 return [
                     'success' => false,
                     'error' => $response['emsg'] ?? 'Unknown error getting payout amount',
-                    'raw_response' => $response
+                    'raw_response' => $response,
                 ];
             }
         } catch (\Exception $e) {
             return [
                 'success' => false,
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ];
         }
     }
@@ -367,31 +388,31 @@ class Nifty50RealTradingCommand extends Command
     {
         try {
             $marginResponse = $this->flatTradeService->getOrderMargin('NSE', $symbol, $quantity, $price, $product, 'B', 'LMT');
-            
+
             if (isset($marginResponse['stat']) && $marginResponse['stat'] === 'Ok') {
                 $requiredMargin = (float) ($marginResponse['margin_required'] ?? 0);
                 $brokerage = (float) ($marginResponse['brokerage'] ?? 0);
                 $totalRequired = $requiredMargin + $brokerage;
-                
+
                 return [
                     'success' => true,
                     'required_funds' => $totalRequired,
                     'margin_required' => $requiredMargin,
                     'brokerage' => $brokerage,
-                    'raw_response' => $marginResponse
+                    'raw_response' => $marginResponse,
                 ];
             } else {
                 // Fallback calculation if margin API fails
                 $estimatedCost = $quantity * $price;
                 $estimatedBrokerage = $estimatedCost * 0.001; // 0.1% brokerage estimate
                 $totalRequired = $estimatedCost + $estimatedBrokerage;
-                
+
                 return [
                     'success' => true,
                     'required_funds' => $totalRequired,
                     'margin_required' => $estimatedCost,
                     'brokerage' => $estimatedBrokerage,
-                    'fallback' => true
+                    'fallback' => true,
                 ];
             }
         } catch (\Exception $e) {
@@ -399,14 +420,14 @@ class Nifty50RealTradingCommand extends Command
             $estimatedCost = $quantity * $price;
             $estimatedBrokerage = $estimatedCost * 0.001;
             $totalRequired = $estimatedCost + $estimatedBrokerage;
-            
+
             return [
                 'success' => true,
                 'required_funds' => $totalRequired,
                 'margin_required' => $estimatedCost,
                 'brokerage' => $estimatedBrokerage,
                 'fallback' => true,
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ];
         }
     }
@@ -418,7 +439,7 @@ class Nifty50RealTradingCommand extends Command
     {
         $symbol = $stock['symbol'];
         $ltp = $stock['ltp'];
-        
+
         try {
             // Calculate order parameters
             $entryPrice = $ltp;
@@ -440,27 +461,29 @@ class Nifty50RealTradingCommand extends Command
             // Check if sufficient funds are available
             if ($requiredFunds > $remainingFunds) {
                 $this->warn("  ⚠️ Insufficient funds: Need ₹{$requiredFunds}, have ₹{$remainingFunds}");
+
                 return [
                     'symbol' => $symbol,
                     'success' => false,
                     'error' => "Insufficient funds: Need ₹{$requiredFunds}, have ₹{$remainingFunds}",
                     'required_funds' => $requiredFunds,
-                    'available_funds' => $remainingFunds
+                    'available_funds' => $remainingFunds,
                 ];
             }
 
             if ($dryRun) {
                 $this->info("  [DRY RUN] Would place {$orderType} order for {$quantity} shares");
+
                 return [
                     'symbol' => $symbol,
                     'success' => true,
-                    'order_id' => 'DRY_RUN_' . time(),
+                    'order_id' => 'DRY_RUN_'.time(),
                     'entry_price' => $entryPrice,
                     'stop_loss' => $stopLossPrice,
                     'target' => $targetPrice,
                     'quantity' => $quantity,
                     'required_funds' => $requiredFunds,
-                    'dry_run' => true
+                    'dry_run' => true,
                 ];
             }
 
@@ -476,7 +499,7 @@ class Nifty50RealTradingCommand extends Command
                 'target' => $targetPrice,
                 'order_type' => $orderType,
                 'product' => $product,
-                'order_result' => $orderResult
+                'order_result' => $orderResult,
             ]);
 
             return [
@@ -488,14 +511,14 @@ class Nifty50RealTradingCommand extends Command
                 'target' => $targetPrice,
                 'quantity' => $quantity,
                 'required_funds' => $requiredFunds,
-                'order_result' => $orderResult
+                'order_result' => $orderResult,
             ];
 
         } catch (\Exception $e) {
             return [
                 'symbol' => $symbol,
                 'success' => false,
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ];
         }
     }
@@ -511,7 +534,7 @@ class Nifty50RealTradingCommand extends Command
         $stopLossPrice = $stock['stop_loss'];
         $targetPrice = $stock['target_price'];
         $totalValue = $stock['position_size']['total_value'];
-        
+
         try {
             $this->info("  Entry Price: ₹{$entryPrice}");
             $this->info("  Stop Loss: ₹{$stopLossPrice}");
@@ -522,16 +545,17 @@ class Nifty50RealTradingCommand extends Command
 
             if ($dryRun) {
                 $this->info("  [DRY RUN] Would place {$orderType} order for {$quantity} shares");
+
                 return [
                     'symbol' => $symbol,
                     'success' => true,
-                    'order_id' => 'DRY_RUN_' . time(),
+                    'order_id' => 'DRY_RUN_'.time(),
                     'entry_price' => $entryPrice,
                     'stop_loss' => $stopLossPrice,
                     'target' => $targetPrice,
                     'quantity' => $quantity,
                     'required_funds' => $totalValue,
-                    'dry_run' => true
+                    'dry_run' => true,
                 ];
             }
 
@@ -548,7 +572,7 @@ class Nifty50RealTradingCommand extends Command
                 'order_type' => $orderType,
                 'product' => $product,
                 'strategy_score' => $stock['total_score'],
-                'order_result' => $orderResult
+                'order_result' => $orderResult,
             ]);
 
             return [
@@ -560,14 +584,14 @@ class Nifty50RealTradingCommand extends Command
                 'target' => $targetPrice,
                 'quantity' => $quantity,
                 'required_funds' => $totalValue,
-                'order_result' => $orderResult
+                'order_result' => $orderResult,
             ];
 
         } catch (\Exception $e) {
             return [
                 'symbol' => $symbol,
                 'success' => false,
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ];
         }
     }
@@ -580,15 +604,15 @@ class Nifty50RealTradingCommand extends Command
         switch ($orderType) {
             case 'market':
                 return $this->flatTradeService->placeMarketOrder('NSE', $symbol, $quantity, 'B', $product);
-                
+
             case 'limit':
                 return $this->flatTradeService->placeLimitOrder('NSE', $symbol, $quantity, $entryPrice, 'B', $product);
-                
+
             case 'bracket':
                 return $this->flatTradeService->placeBracketOrderLimit(
                     'NSE', $symbol, $quantity, $entryPrice, $stopLossPrice, $targetPrice, 1, 'B', $product
                 );
-                
+
             default:
                 throw new \Exception("Unsupported order type: {$orderType}");
         }
@@ -599,22 +623,22 @@ class Nifty50RealTradingCommand extends Command
      */
     protected function displaySummary(array $results, bool $dryRun): void
     {
-        $this->info("\n" . str_repeat('=', 60));
-        $this->info("📊 TRADING SUMMARY");
+        $this->info("\n".str_repeat('=', 60));
+        $this->info('📊 TRADING SUMMARY');
         $this->info(str_repeat('=', 60));
-        
-        $successful = array_filter($results, fn($r) => $r['success']);
-        $failed = array_filter($results, fn($r) => !$r['success']);
-        
-        $this->info("Total Stocks Processed: " . count($results));
-        $this->info("Successful Orders: " . count($successful));
-        $this->info("Failed Orders: " . count($failed));
-        
+
+        $successful = array_filter($results, fn ($r) => $r['success']);
+        $failed = array_filter($results, fn ($r) => ! $r['success']);
+
+        $this->info('Total Stocks Processed: '.count($results));
+        $this->info('Successful Orders: '.count($successful));
+        $this->info('Failed Orders: '.count($failed));
+
         if ($dryRun) {
             $this->info("\n🔍 DRY RUN MODE - No actual orders were placed");
         }
-        
-        if (!empty($successful)) {
+
+        if (! empty($successful)) {
             $this->info("\n✅ SUCCESSFUL ORDERS:");
             $totalFundsUsed = 0;
             foreach ($successful as $result) {
@@ -624,14 +648,14 @@ class Nifty50RealTradingCommand extends Command
             }
             $this->info("  Total funds used: ₹{$totalFundsUsed}");
         }
-        
-        if (!empty($failed)) {
+
+        if (! empty($failed)) {
             $this->info("\n❌ FAILED ORDERS:");
             foreach ($failed as $result) {
                 $this->info("  {$result['symbol']}: {$result['error']}");
             }
         }
-        
-        $this->info("\n" . str_repeat('=', 60));
+
+        $this->info("\n".str_repeat('=', 60));
     }
 }
