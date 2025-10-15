@@ -360,6 +360,20 @@
                     @this.set('item.employee_id', value);
                     document.querySelector('#modal_service_id').tomselect.open();
                 });
+                window.addEventListener('AddToCustomerSelectBox', event => {
+                    var data = event.detail[0];
+                    var tomSelectInstance = document.querySelector('#account_id').tomselect;
+                    if (data['name']) {
+                        preselectedData = {
+                            id: data['id'],
+                            name: data['name'],
+                            mobile: data['mobile'],
+                        };
+                        tomSelectInstance.addOption(preselectedData);
+                    }
+                    tomSelectInstance.addItem(data['id']);
+                    @this.set('appointments.account_id', data['id']);
+                });
                 window.addEventListener('SelectDropDownValues', event => {
                     var data = event.detail[0];
                     @this.set('appointments.account_id', data.account_id);

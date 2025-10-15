@@ -13,19 +13,6 @@
     </div>
     <form wire:submit="save">
         <div class="modal-body p-4 bg-white">
-            @if ($this->getErrorBag()->count())
-                <div class="alert alert-danger p-3 border-start border-danger border-4 shadow-sm mb-4">
-                    <div class="d-flex align-items-center mb-2">
-                        <i class="fa fa-exclamation-triangle me-2 fs-4 text-danger"></i>
-                        <strong>Please correct the following errors:</strong>
-                    </div>
-                    <ul class="list-unstyled mb-0 ms-4">
-                        @foreach ($this->getErrorBag()->toArray() as $field => $errors)
-                            <li><i class="fa fa-times-circle me-1 text-danger"></i> {{ $errors[0] }}</li>
-                        @endforeach
-                    </ul>
-                </div>
-            @endif
 
             <div class="card shadow-sm mb-4 border-0">
                 <div class="card-header bg-light py-3">
@@ -175,6 +162,19 @@
                 </div>
             </div>
             <div class="modal-footer bg-light pt-4">
+                @if ($this->getErrorBag()->count())
+                    <div class="alert alert-danger p-3 border-start border-danger border-4 shadow-sm mb-4">
+                        <div class="d-flex align-items-center mb-2">
+                            <i class="fa fa-exclamation-triangle me-2 fs-4 text-danger"></i>
+                            <strong>Please correct the following errors:</strong>
+                        </div>
+                        <ul class="list-unstyled mb-0 ms-4">
+                            @foreach ($this->getErrorBag()->toArray() as $field => $errors)
+                                <li><i class="fa fa-times-circle me-1 text-danger"></i> {{ $errors[0] }}</li>
+                            @endforeach
+                        </ul>
+                    </div>
+                @endif
                 <button type="button" class="btn btn-outline-secondary px-4 py-2 d-flex align-items-center" data-bs-dismiss="modal">
                     <i class="fa fa-times me-2"></i>Cancel
                 </button>
