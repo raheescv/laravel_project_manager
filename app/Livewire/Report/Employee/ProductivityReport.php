@@ -186,7 +186,7 @@ class ProductivityReport extends Component
             'toDate' => $this->toDate,
         ];
 
-        $fileName = 'employee_productivity_report_(' . $this->fromDate . ' to ' . $this->toDate . ')' . date('Y-m-d_H-i-s') . '.xlsx';
+        $fileName = 'employee_productivity_report_(' . systemDate($this->fromDate) . ' to ' .systemDate($this->toDate) . ')' . date('Y-m-d_H-i-s') . '.xlsx';
 
         return Excel::download(
             new ProductivityReportExport($this->getFilters(), $employees, $topCategories, $summaryData),
