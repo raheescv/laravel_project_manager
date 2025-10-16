@@ -2,10 +2,12 @@
 
 namespace App\Livewire\Report\Employee;
 
+use App\Exports\ProductivityReportExport;
 use App\Models\SaleItem;
 use Illuminate\Support\Facades\DB;
 use Livewire\Component;
 use Livewire\WithPagination;
+use Maatwebsite\Excel\Facades\Excel;
 
 class ProductivityReport extends Component
 {
@@ -155,10 +157,12 @@ class ProductivityReport extends Component
             ->join('sales', 'sales.id', '=', 'sale_items.sale_id')
             ->join('products', 'products.id', '=', 'sale_items.product_id')
             ->join('categories', 'categories.id', '=', 'products.main_category_id')
+            ->join('users', 'users.id', '=', 'sale_items.employee_id')
             ->whereBetween('sales.date', [$this->fromDate, $this->toDate])
-            ->groupBy('sale_items.employee_id', 'categories.name')
+            ->groupBy('sale_items.employee_id', 'categories.name', 'users.name')
             ->select(
                 'sale_items.employee_id',
+                'users.name as employee_name',
                 'categories.name as category',
                 DB::raw('COUNT(*) as count'),
                 DB::raw('SUM(sale_items.total) as total')
@@ -166,5 +170,36 @@ class ProductivityReport extends Component
             ->orderBy('total', 'desc')
             ->get()
             ->groupBy('employee_id');
+    }
+
+    public function downloadReport()
+    {
+        $employees = $this->getEmployeesData();
+        $topCategories = $this->getTopCategories()->toArray();
+
+        $summaryData = [
+            'totalSales' => $this->totalSales,
+            'totalTransactions' => $this->totalTransactions,
+            'totalItems' => $this->totalItems,
+            'avgTransaction' => $this->avgTransaction,
+            'fromDate' => $this->fromDate,
+            'toDate' => $this->toDate,
+        ];
+
+        $fileName = 'employee_productivity_report_' . date('Y-m-d_H-i-s') . '.xlsx';
+
+        return Excel::download(
+            new ProductivityReportExport($this->getFilters(), $employees, $topCategories, $summaryData),
+            $fileName
+        );
+    }
+
+    private function getFilters()
+    {
+        return [
+            'fromDate' => $this->fromDate,
+            'toDate' => $this->toDate,
+            'branchId' => $this->branchId,
+        ];
     }
 }

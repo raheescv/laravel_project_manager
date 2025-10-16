@@ -238,9 +238,19 @@
     <!-- Top Categories -->
     <div class="card border-0 shadow-sm">
         <div class="card-header bg-white border-bottom-0">
-            <h5 class="card-title mb-0 fw-semibold">
-                <i class="fa fa-trophy me-2 text-primary"></i>Top Selling Categories by Employee
-            </h5>
+            <div class="d-flex justify-content-between align-items-center">
+                <h5 class="card-title mb-0 fw-semibold">
+                    <i class="fa fa-trophy me-2 text-primary"></i>Top Selling Categories by Employee
+                </h5>
+                <button wire:click="downloadReport" class="btn btn-success btn-sm d-flex align-items-center" wire:loading.attr="disabled">
+                    <span wire:loading.remove wire:target="downloadReport">
+                        <i class="fa fa-download me-2"></i>Download Report
+                    </span>
+                    <span wire:loading wire:target="downloadReport">
+                        <i class="fa fa-spinner fa-spin me-2"></i>Generating...
+                    </span>
+                </button>
+            </div>
         </div>
         <div class="card-body pt-0">
             <div class="row g-4">
