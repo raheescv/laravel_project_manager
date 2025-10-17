@@ -249,9 +249,9 @@ class Table extends Component
             ->join('branches', 'inventories.branch_id', '=', 'branches.id')
             ->join('products', 'inventories.product_id', '=', 'products.id')
             ->join('departments', 'products.department_id', '=', 'departments.id')
-            ->join('brands', 'products.brand_id', '=', 'brands.id')
             ->join('units', 'products.unit_id', '=', 'units.id')
             ->join('categories as main_categories', 'products.main_category_id', '=', 'main_categories.id')
+            ->leftJoin('brands', 'products.brand_id', '=', 'brands.id')
             ->leftJoin('categories as sub_categories', 'products.sub_category_id', '=', 'sub_categories.id')
             ->where('products.type', 'product')
             ->when($this->search, function ($query, $value) {
