@@ -841,6 +841,9 @@ class QuickTradingCommand extends Command
         $symbol = $stock['symbol'];
         $positionSize = $stock['position_size'] ?? [];
         $quantity = $positionSize['quantity'] ?? $options['quantity'];
+        if ($quantity < 10) {
+            $quantity = 10;
+        }
         $price = $positionSize['price'] ?? 0;
         $dryRun = $options['dry_run'] ?? false;
 
