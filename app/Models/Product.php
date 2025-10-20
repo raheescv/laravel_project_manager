@@ -73,7 +73,7 @@ class Product extends Model implements AuditableContracts
             'code' => [
                 'required',
                 'max:50',
-                Rule::unique('products')->whereNull('deleted_at')->ignore($id),
+                // Rule::unique('products')->whereNull('deleted_at')->ignore($id),
             ],
             'unit_id' => ['required'],
             'department_id' => ['required'],

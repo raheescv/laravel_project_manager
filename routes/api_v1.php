@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\V1\BranchController;
 use App\Http\Controllers\Api\V1\BrandController;
 use App\Http\Controllers\Api\V1\CategoryController;
 use App\Http\Controllers\Api\V1\ColorController;
@@ -44,5 +45,10 @@ Route::prefix('v1')->group(function () {
     // Color routes
     Route::prefix('colors')->group(function () {
         Route::get('/', [ColorController::class, 'index'])->name('api.v1.colors.index');
+    });
+
+    // Branch routes
+    Route::prefix('branches')->group(function () {
+        Route::get('/', [BranchController::class, 'index'])->name('api.v1.branches.index');
     });
 });

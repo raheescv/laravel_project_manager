@@ -2,8 +2,6 @@
 
 namespace App\Exports;
 
-use App\Models\SaleItem;
-use Illuminate\Support\Facades\DB;
 use Maatwebsite\Excel\Concerns\Exportable;
 use Maatwebsite\Excel\Concerns\FromCollection;
 use Maatwebsite\Excel\Concerns\WithColumnFormatting;
@@ -38,7 +36,7 @@ class ProductivityReportExport implements WithMultipleSheets
     }
 }
 
-class ProductivitySummarySheet implements FromCollection, WithHeadings, WithStyles, WithEvents, WithTitle
+class ProductivitySummarySheet implements FromCollection, WithEvents, WithHeadings, WithStyles, WithTitle
 {
     use Exportable;
 
@@ -55,27 +53,27 @@ class ProductivitySummarySheet implements FromCollection, WithHeadings, WithStyl
             [
                 'Metric' => 'Total Sales',
                 'Value' => $this->summaryData['totalSales'] ?? 0,
-                'Currency' => 'QAR'
+                'Currency' => 'QAR',
             ],
             [
                 'Metric' => 'Total Transactions',
                 'Value' => $this->summaryData['totalTransactions'] ?? 0,
-                'Currency' => 'Count'
+                'Currency' => 'Count',
             ],
             [
                 'Metric' => 'Total Items Sold',
                 'Value' => $this->summaryData['totalItems'] ?? 0,
-                'Currency' => 'Units'
+                'Currency' => 'Units',
             ],
             [
                 'Metric' => 'Average Transaction Value',
                 'Value' => $this->summaryData['avgTransaction'] ?? 0,
-                'Currency' => 'QAR'
+                'Currency' => 'QAR',
             ],
             [
                 'Metric' => 'Report Period',
-                'Value' => ($this->summaryData['fromDate'] ?? '') . ' to ' . ($this->summaryData['toDate'] ?? ''),
-                'Currency' => 'Date Range'
+                'Value' => ($this->summaryData['fromDate'] ?? '').' to '.($this->summaryData['toDate'] ?? ''),
+                'Currency' => 'Date Range',
             ],
         ]);
     }
@@ -126,7 +124,7 @@ class ProductivitySummarySheet implements FromCollection, WithHeadings, WithStyl
     }
 }
 
-class EmployeePerformanceSheet implements FromCollection, WithHeadings, WithColumnFormatting, WithEvents, WithMapping, WithTitle
+class EmployeePerformanceSheet implements FromCollection, WithColumnFormatting, WithEvents, WithHeadings, WithMapping, WithTitle
 {
     use Exportable;
 
@@ -197,7 +195,7 @@ class EmployeePerformanceSheet implements FromCollection, WithHeadings, WithColu
                 $totalRows = $sheet->getHighestRow() + 1;
                 $endRow = $totalRows - 1;
 
-                $sheet->setCellValue("A{$totalRows}", "TOTALS");
+                $sheet->setCellValue("A{$totalRows}", 'TOTALS');
                 $sheet->setCellValue("D{$totalRows}", "=SUM(D3:D{$endRow})");
                 $sheet->setCellValue("E{$totalRows}", "=SUM(E3:E{$endRow})");
                 $sheet->setCellValue("F{$totalRows}", "=SUM(F3:F{$endRow})");
@@ -237,7 +235,7 @@ class EmployeePerformanceSheet implements FromCollection, WithHeadings, WithColu
     }
 }
 
-class TopCategoriesSheet implements FromCollection, WithHeadings, WithColumnFormatting, WithEvents, WithMapping, WithTitle
+class TopCategoriesSheet implements FromCollection, WithColumnFormatting, WithEvents, WithHeadings, WithMapping, WithTitle
 {
     use Exportable;
 
@@ -252,7 +250,7 @@ class TopCategoriesSheet implements FromCollection, WithHeadings, WithColumnForm
     {
         $data = [];
         foreach ($this->topCategories as $employeeId => $categories) {
-        foreach ($categories as $category) {
+            foreach ($categories as $category) {
                 $data[] = [
                     'employee_id' => $category['employee_id'],
                     'employee_name' => $category['employee_name'],
@@ -262,6 +260,7 @@ class TopCategoriesSheet implements FromCollection, WithHeadings, WithColumnForm
                 ];
             }
         }
+
         return collect($data);
     }
 
