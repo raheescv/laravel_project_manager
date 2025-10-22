@@ -63,7 +63,11 @@ class ProductImport implements ToCollection, WithBatchInserts, WithChunkReading,
 
     private function processProductRow($value): void
     {
-        $data = Product::constructData($value->toArray(), $this->user_id);
+        $productData = $value->toArray();
+        if (empty($productData['barcode'])) {
+            $productData['barcode'] = generateBarcode();
+        }
+        $data = Product::constructData($productData, $this->user_id);
         $data['name'] = trim($data['name']);
         if (empty($data['name'])) {
             return;
