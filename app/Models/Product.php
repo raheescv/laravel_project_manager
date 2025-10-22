@@ -239,8 +239,8 @@ class Product extends Model implements AuditableContracts
         $data['mrp'] = extractNumericValue($data['mrp'] ?? 0);
         $value['is_favorite'] = $value['is_favorite'] ?? true;
         $data['is_favorite'] = in_array($value['is_favorite'], ['Yes', true]) ? true : false;
-        $value['is_selling'] = $value['is_selling'] ?? true;
-        $data['is_selling'] = in_array($value['is_selling'], ['Yes', true]) ? true : false;
+        $data['is_selling'] = $data['is_selling'] ?? true;
+        $data['is_selling'] = in_array($data['is_selling'], ['Yes', true], true);
         $data['unit'] = $data['unit'] ?? 'Nos';
         $data['type'] = $data['type'] ?? 'product';
         $unit = Unit::firstOrCreate(['name' => $data['unit']], ['code' => $data['unit']]);
