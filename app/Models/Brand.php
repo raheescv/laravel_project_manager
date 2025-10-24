@@ -63,7 +63,7 @@ class Brand extends Model
     public function deleteImage()
     {
         if ($this->image_path) {
-            $imagePath = storage_path('app/public/' . $this->image_path);
+            $imagePath = storage_path('app/public/'.$this->image_path);
             if (file_exists($imagePath)) {
                 unlink($imagePath);
             }

@@ -81,7 +81,7 @@ class Page extends Component
             if ($this->image) {
                 // Delete existing image if updating and old image exists
                 if ($this->table_id && isset($this->brands['image_path']) && $this->brands['image_path']) {
-                    $oldImagePath = storage_path('app/public/' . $this->brands['image_path']);
+                    $oldImagePath = storage_path('app/public/'.$this->brands['image_path']);
                     if (file_exists($oldImagePath)) {
                         unlink($oldImagePath);
                     }
