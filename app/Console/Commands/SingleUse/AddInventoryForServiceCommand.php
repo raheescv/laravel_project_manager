@@ -2,11 +2,9 @@
 
 namespace App\Console\Commands\SingleUse;
 
-use Illuminate\Console\Command;
-
 use App\Models\Inventory;
 use App\Models\Product;
-
+use Illuminate\Console\Command;
 
 class AddInventoryForServiceCommand extends Command
 {
@@ -33,7 +31,7 @@ class AddInventoryForServiceCommand extends Command
         $products = Product::service()->get();
         foreach ($products as $product) {
             $exists = Inventory::where('product_id', $product->id)->exists();
-            if (!$exists) {
+            if (! $exists) {
                 Inventory::selfCreateByProduct($product, $userId, $quantity = 0);
             }
         }

@@ -8,9 +8,12 @@ use App\Models\Brand;
 use Faker\Factory;
 use Illuminate\Validation\Rule;
 use Livewire\Component;
+use Livewire\WithFileUploads;
 
 class Page extends Component
 {
+    use WithFileUploads;
+
     protected $listeners = [
         'Brand-Page-Create-Component' => 'create',
         'Brand-Page-Update-Component' => 'edit',
@@ -19,6 +22,8 @@ class Page extends Component
     public $brands;
 
     public $table_id;
+
+    public $image;
 
     public function create()
     {
@@ -43,10 +48,13 @@ class Page extends Component
             }
             $this->brands = [
                 'name' => $name,
+                'image_path' => null,
             ];
+            $this->image = null;
         } else {
             $brand = Brand::find($this->table_id);
             $this->brands = $brand->toArray();
+            $this->image = null;
         }
     }
 
@@ -54,18 +62,34 @@ class Page extends Component
     {
         return [
             'brands.name' => Rule::unique('brands', 'name')->ignore($this->table_id)->whereNull('deleted_at'),
+            'image' => 'nullable|image|max:2048',
         ];
     }
 
     protected $messages = [
         'brands.name.required' => 'The name field is required',
         'brands.name.unique' => 'The name is already Registered',
+        'image.image' => 'The file must be an image',
+        'image.max' => 'The image size must not exceed 2MB',
     ];
 
     public function save($close = false)
     {
         $this->validate();
         try {
+            // Handle image upload
+            if ($this->image) {
+                // Delete existing image if updating and old image exists
+                if ($this->table_id && isset($this->brands['image_path']) && $this->brands['image_path']) {
+                    $oldImagePath = storage_path('app/public/' . $this->brands['image_path']);
+                    if (file_exists($oldImagePath)) {
+                        unlink($oldImagePath);
+                    }
+                }
+
+                $imagePath = $this->image->store('brands', 'public');
+                $this->brands['image_path'] = $imagePath;
+            }
             if (! $this->table_id) {
                 $response = (new CreateAction())->execute($this->brands);
             } else {

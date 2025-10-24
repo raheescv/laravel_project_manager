@@ -13,7 +13,7 @@ class GetBrandsAction
     public function execute(): array
     {
         $brands = Brand::orderBy('name')
-            ->get(['id', 'name']);
+            ->get(['id', 'name','image_path']);
 
         return $brands->map(function ($brand) {
             $productCount = Product::where('brand_id', $brand->id)->count();
@@ -21,6 +21,7 @@ class GetBrandsAction
             return [
                 'id' => $brand->id,
                 'name' => $brand->name,
+                'image_path' => url($brand->image_path),
                 'product_count' => $productCount,
             ];
         })->toArray();

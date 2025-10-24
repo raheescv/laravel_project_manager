@@ -13,12 +13,14 @@ class Brand extends Model
 
     protected $fillable = [
         'name',
+        'image_path',
     ];
 
     public static function rules($id = 0, $merge = [])
     {
         return array_merge([
             'name' => ['required', Rule::unique(self::class, 'name')->whereNull('deleted_at')->ignore($id)],
+            'image_path' => ['nullable', 'string'],
         ], $merge);
     }
 
@@ -52,6 +54,19 @@ class Brand extends Model
             return $response['data']['id'];
         } else {
             return $existing['id'];
+        }
+    }
+
+    /**
+     * Delete the associated image file from storage
+     */
+    public function deleteImage()
+    {
+        if ($this->image_path) {
+            $imagePath = storage_path('app/public/' . $this->image_path);
+            if (file_exists($imagePath)) {
+                unlink($imagePath);
+            }
         }
     }
 }

@@ -14,6 +14,9 @@ class DeleteAction
                 throw new \Exception("Brand not found with the specified ID: $id.", 1);
             }
 
+            // Delete associated image file if exists
+            $model->deleteImage();
+
             if (! $model->delete()) {
                 throw new \Exception('Oops! Something went wrong while deleting the Brand. Please try again.', 1);
             }

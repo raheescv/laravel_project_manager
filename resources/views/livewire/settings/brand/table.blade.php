@@ -52,6 +52,7 @@
                                 @endif
                             </a>
                         </th>
+                        <th width="15%">Logo</th>
                         <th width="10%">Action</th>
                     </tr>
                 </thead>
@@ -63,6 +64,13 @@
                                 {{ $item->id }}
                             </td>
                             <td>{{ $item->name }}</td>
+                            <td>
+                                @if ($item->image_path)
+                                    <img src="{{ asset('storage/' . $item->image_path) }}" alt="{{ $item->name }} Logo" class="img-thumbnail" style="max-width: 50px; max-height: 50px;">
+                                @else
+                                    <span class="text-muted">No Logo</span>
+                                @endif
+                            </td>
                             <td>
                                 @can('brand.edit')
                                     <i table_id="{{ $item->id }}" class="demo-psi-pencil fs-5 me-2 pointer edit"></i>
