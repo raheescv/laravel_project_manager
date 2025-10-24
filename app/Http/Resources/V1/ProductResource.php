@@ -4,6 +4,7 @@ namespace App\Http\Resources\V1;
 
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
+use App\Models\Product;
 
 class ProductResource extends JsonResource
 {
@@ -116,6 +117,21 @@ class ProductResource extends JsonResource
 
                 return $availableStock <= 0;
             }),
+            'available_sizes' => $this->getAvailableSizes(),
         ];
+    }
+
+    /**
+     * Get available sizes for products with the same base code.
+     */
+    private function getAvailableSizes(): array
+    {
+        $list = Product::query()
+            ->where('code', $this->code)
+            ->whereNotNull('size')
+            ->where('size', '!=', '')
+            ->pluck('size')->toArray();
+
+        return $list;
     }
 }
