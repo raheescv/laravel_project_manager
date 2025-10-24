@@ -21,7 +21,7 @@ class GetBrandsAction
             return [
                 'id' => $brand->id,
                 'name' => $brand->name,
-                'image_path' => url($brand->image_path),
+                'image_path' => url('storage/'.$brand->image_path),
                 'product_count' => $productCount,
             ];
         })->toArray();
