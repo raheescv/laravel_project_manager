@@ -11,10 +11,14 @@ return new class() extends Migration
         Schema::create('product_images', function (Blueprint $table) {
             $table->id();
             $table->unsignedBigInteger('product_id');
+            $table->enum('method', ['normal', 'angle'])->default('normal');
+            $table->integer('degree')->nullable();
+            $table->integer('sort_order')->default(0);
             $table->string('name')->nullable();
             $table->string('size')->nullable();
             $table->string('type')->nullable();
             $table->string('path');
+
             $table->timestamps();
         });
     }

@@ -396,6 +396,71 @@
                                     </div>
                                 </div>
                             </div>
+                            <div class="col-12">
+                                <div class="card bg-light border-0 rounded-3 mt-2">
+                                    <div class="card-body p-3">
+                                        <h6 class="card-subtitle mb-3 d-flex align-items-center">
+                                            <span class="badge bg-primary p-2 me-2">
+                                                <i class="fa fa-globe"></i>
+                                            </span>
+                                            360° Product View
+                                        </h6>
+                                        <div class="mb-2">
+                                            <x-filepond::upload wire:model="angles_360" multiple max-files="36" class="border border-dashed rounded-3" />
+                                            <div class="text-muted small text-center mt-2">
+                                                <i class="fa fa-info-circle me-1"></i>
+                                                Upload multiple images for 360° view (up to 36 images, JPG, PNG, GIF, BMP, WEBP, SVG - Max 10MB each)
+                                            </div>
+                                        </div>
+
+                                        @if (count($angles_360) > 0)
+                                            <div class="mt-3">
+                                                <h6 class="mb-2">Image Angles:</h6>
+                                                <div class="row">
+                                                    @foreach ($angles_360 as $index => $image)
+                                                        <div class="col-md-4 mb-2">
+                                                            <div class="input-group input-group-sm">
+                                                                <span class="input-group-text">Image {{ $index + 1 }}</span>
+                                                                <input type="number"
+                                                                       wire:model="degree.{{ $index }}"
+                                                                       class="form-control"
+                                                                       placeholder="Angle (0-359)"
+                                                                       min="0"
+                                                                       max="359">
+                                                                <span class="input-group-text">°</span>
+                                                            </div>
+                                                        </div>
+                                                    @endforeach
+                                                </div>
+                                            </div>
+                                        @endif
+
+                                        @if ($product && $product->angleImages()->count() > 0)
+                                            <div class="mt-3">
+                                                <div class="alert alert-info">
+                                                    <h6 class="mb-2">
+                                                        <i class="fa fa-check-circle me-2"></i>
+                                                        Current 360° Images ({{ $product->angleImages()->count() }})
+                                                    </h6>
+                                                    <div class="row">
+                                                        @foreach ($product->angleImages()->orderedByAngle()->get() as $image)
+                                                            <div class="col-md-2 mb-2">
+                                                                <div class="text-center">
+                                                                    <img src="{{ $image->path }}"
+                                                                         alt="{{ $image->alt_text ?? '360° Image' }}"
+                                                                         class="img-thumbnail"
+                                                                         style="width: 60px; height: 60px; object-fit: cover;">
+                                                                    <div class="small text-muted">{{ $image->degree }}°</div>
+                                                                </div>
+                                                            </div>
+                                                        @endforeach
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        @endif
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>

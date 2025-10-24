@@ -39,6 +39,10 @@ class Page extends Component
 
     public $images = [];
 
+    public $angles_360 = [];
+
+    public $degree = [];
+
     public $departments;
 
     public $brands;
@@ -102,6 +106,8 @@ class Page extends Component
                 'sub_category' => [],
                 'main_category' => [],
                 'images' => [],
+                'angles_360' => [],
+                'degree' => [],
             ];
         } else {
             $this->product = Product::with('department', 'subCategory', 'mainCategory', 'brand', 'images', 'unit', 'units.subUnit', 'prices')->find($this->table_id);
@@ -127,6 +133,8 @@ class Page extends Component
             'products.cost' => ['required'],
             'products.mrp' => ['required'],
             'images.*' => 'mimes:jpg,jpeg,png,gif,bmp,webp,svg|max:3100',
+            'angles_360.*' => 'nullable|file|mimes:jpg,jpeg,png,gif,bmp,webp,svg|max:10240',
+            'degree.*' => 'nullable|integer|min:0|max:359',
         ];
 
         return $rules;
@@ -146,6 +154,11 @@ class Page extends Component
         'products.mrp' => 'The mrp field is required.',
         'images.mimetypes' => 'The images field must be a file of type: image.',
         'images.*.max' => 'The images field must not be greater than 3100 KB',
+        'angles_360.*.mimes' => 'The 360-degree images must be files of type: jpg, jpeg, png, gif, bmp, webp, svg.',
+        'angles_360.*.max' => 'The 360-degree images must not be greater than 10240 KB',
+        'degree.*.integer' => 'The angle must be a number.',
+        'degree.*.min' => 'The angle must be at least 0 degrees.',
+        'degree.*.max' => 'The angle must not be greater than 359 degrees.',
     ];
 
     public function save($edit = false)
@@ -154,6 +167,8 @@ class Page extends Component
         try {
             DB::beginTransaction();
             $this->products['images'] = $this->images;
+            $this->products['angles_360'] = $this->angles_360;
+            $this->products['degree'] = $this->degree;
             if (! $this->table_id) {
                 $selected['mainCategory'] = [
                     'id' => $this->products['main_category_id'],

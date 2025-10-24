@@ -49,13 +49,30 @@ class UpdateAction
                         'name' => $file->getClientOriginalName(),
                         'size' => $file->getSize(),
                         'type' => $file->getClientOriginalExtension(),
+                        'method' => 'normal',
                         'path' => url('storage/'.$file->store('products/'.$model->id, 'public')),
                     ];
                     $model->images()->create($imageData);
                 }
                 if (! $model->thumbnail) {
-                    $path = $model->images()?->first()?->path;
+                    $path = $model->images()->normal()->first()?->path;
                     $model->update(['thumbnail' => $path]);
+                }
+            }
+
+            // Handle 360-degree images
+            if (isset($data['angles_360']) && is_array($data['angles_360'])) {
+                foreach ($data['angles_360'] as $index => $file) {
+                    $imageData = [
+                        'name' => $file->getClientOriginalName(),
+                        'size' => $file->getSize(),
+                        'type' => $file->getClientOriginalExtension(),
+                        'method' => 'angle',
+                        'path' => url('storage/'.$file->store('products/'.$model->id.'/360', 'public')),
+                        'degree' => $data['degree'][$index] ?? $index * (360 / count($data['angles_360'])),
+                        'sort_order' => $index,
+                    ];
+                    $model->images()->create($imageData);
                 }
             }
 

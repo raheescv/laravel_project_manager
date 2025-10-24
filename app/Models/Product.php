@@ -124,6 +124,16 @@ class Product extends Model implements AuditableContracts
         return $this->hasMany(ProductImage::class);
     }
 
+    public function angleImages()
+    {
+        return $this->hasMany(ProductImage::class)->angle()->orderedByAngle();
+    }
+
+    public function normalImages()
+    {
+        return $this->hasMany(ProductImage::class)->normal();
+    }
+
     public function units()
     {
         return $this->hasMany(ProductUnit::class);
