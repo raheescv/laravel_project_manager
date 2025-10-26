@@ -78,10 +78,31 @@ class ProductResource extends JsonResource
             }),
 
             'images' => $this->whenLoaded('images', function () {
-                return $this->images->map(function ($image) {
+                return $this->normalImages()->get()->map(function ($image) {
                     return [
                         'id' => $image->id,
                         'path' => $image->path,
+                        'url' => $image->url,
+                        'name' => $image->name,
+                        'size' => $image->size,
+                        'type' => $image->type,
+                        'method' => $image->method,
+                    ];
+                });
+            }),
+
+            'images360' => $this->whenLoaded('images', function () {
+                return $this->angleImages()->orderedByAngle()->get()->map(function ($image) {
+                    return [
+                        'id' => $image->id,
+                        'path' => $image->path,
+                        'url' => $image->url,
+                        'name' => $image->name,
+                        'size' => $image->size,
+                        'type' => $image->type,
+                        'method' => $image->method,
+                        'degree' => $image->degree,
+                        'sort_order' => $image->sort_order,
                     ];
                 });
             }),

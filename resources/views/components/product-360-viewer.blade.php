@@ -1,6 +1,10 @@
-@props(['product'])
+@props(['product', 'images' => null])
 
-@if($product && $product->images360()->count() > 0)
+@php
+    $angleImages = $images ?? $product->angleImages()->orderedByAngle()->get();
+@endphp
+
+@if($angleImages->count() > 0)
     <div class="product-360-section mb-4">
         <div class="card">
             <div class="card-header">
@@ -11,7 +15,7 @@
             </div>
             <div class="card-body">
                 <div id="product-360-viewer"
-                     data-images="{{ json_encode($product->angleImages()->orderedByAngle()->get()->map(function($img) {
+                     data-images="{{ json_encode($angleImages->map(function($img) {
                          return [
                              'path' => $img->path,
                              'url' => $img->url,
@@ -25,7 +29,7 @@
                     <!-- Fallback for when Vue component isn't loaded -->
                     <div class="fallback-viewer">
                         <div class="row">
-                            @foreach($product->angleImages()->orderedByAngle()->get() as $index => $image)
+                            @foreach($angleImages as $index => $image)
                                 <div class="col-md-2 col-sm-3 col-4 mb-2">
                                     <div class="text-center">
                                         <img src="{{ $image->path }}"
