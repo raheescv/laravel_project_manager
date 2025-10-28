@@ -14,23 +14,23 @@
         h1,
         h2,
         h3 {
-            margin: 10px 0;
+            margin: 5px 0;
             text-align: center;
-            font-size: 15px;
+            font-size: 12px;
             font-weight: 700;
             text-transform: uppercase;
-            letter-spacing: 0.8px;
+            letter-spacing: 0.3px;
             color: #000;
         }
 
         body {
             font-family: 'Arial', 'Courier New', monospace;
-            line-height: 1.5;
-            font-size: 12px;
+            line-height: 1.2;
+            font-size: 10px;
             margin: 0 auto;
             width: 80mm;
             background-color: #fff;
-            padding: 10px 15px;
+            padding: 5px 10px;
             color: #000;
         }
 
@@ -42,44 +42,44 @@
         .receipt-container {
             background-color: #fff;
             width: 100%;
-            padding: 15px 8px;
+            padding: 5px 5px;
         }
 
         h1,
         h2,
         h3 {
-            margin: 10px 0;
+            margin: 3px 0;
             text-align: center;
-            font-size: 15px;
+            font-size: 12px;
             font-weight: 700;
             text-transform: uppercase;
-            letter-spacing: 0.8px;
+            letter-spacing: 0.3px;
             color: black;
         }
 
         .divider {
             border-top: 1px dashed #000;
-            margin: 10px 0;
+            margin: 5px 0;
         }
 
         .store-info {
             text-align: center;
-            margin-bottom: 15px;
+            margin-bottom: 8px;
         }
 
         .invoice-header {
             background-color: transparent;
-            border-radius: 6px;
-            padding: 8px;
-            margin-bottom: 12px;
-            border-left: 3px solid #000;
+            border-radius: 4px;
+            padding: 5px;
+            margin-bottom: 8px;
+            border-left: 2px solid #000;
         }
 
         .table {
             width: 100%;
             border-collapse: collapse;
-            margin: 15px 0;
-            font-size: 11px;
+            margin: 8px 0;
+            font-size: 9px;
         }
 
         .nowrap {
@@ -89,16 +89,16 @@
         .table th,
         .table td {
             border: 1px solid #000;
-            padding: 7px 5px;
+            padding: 3px 3px;
             text-align: center;
         }
 
         .table th {
             background-color: transparent;
-            font-size: 11px;
+            font-size: 9px;
             font-weight: bold;
             text-transform: uppercase;
-            letter-spacing: 0.8px;
+            letter-spacing: 0.3px;
             color: #000;
         }
 
@@ -109,13 +109,14 @@
         .item-name {
             font-weight: 700;
             color: #000;
+            font-size: 9px;
         }
 
         .item-description {
-            font-size: 9px;
+            font-size: 7px;
             color: #000;
             font-style: italic;
-            margin-top: 2px;
+            margin-top: 1px;
         }
 
         .text-left {
@@ -136,8 +137,8 @@
 
         .barcode {
             text-align: center;
-            margin: 18px 0;
-            padding: 12px;
+            margin: 8px 0;
+            padding: 5px;
             background: transparent;
             border: 1px solid #000;
         }
@@ -148,19 +149,19 @@
         }
 
         .barcode p {
-            margin: 5px 0 0;
-            font-size: 10px;
+            margin: 2px 0 0;
+            font-size: 8px;
             color: #000;
-            letter-spacing: 0.5px;
+            letter-spacing: 0.3px;
         }
 
         .qrcode {
             text-align: center;
-            margin: 15px 0;
+            margin: 8px 0;
         }
 
         .qrcode img {
-            max-width: 120px;
+            max-width: 80px;
             height: auto;
         }
 
@@ -168,69 +169,69 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin: 15px 0;
+            margin: 8px 0;
         }
 
         .codes-container .barcode {
             flex: 1;
-            margin: 0 5px;
+            margin: 0 3px;
         }
 
         .codes-container .qrcode {
-            max-width: 35%;
-            margin: 0 5px;
+            max-width: 30%;
+            margin: 0 3px;
         }
 
         .footer {
             text-align: center;
-            font-size: 10px;
-            margin-top: 15px;
-            padding: 12px 0;
+            font-size: 8px;
+            margin-top: 8px;
+            padding: 6px 0;
             border-top: 1px dashed #000;
             color: #000;
         }
 
         .thank-you {
             text-align: center;
-            font-size: 14px;
+            font-size: 10px;
             font-weight: 700;
-            margin: 15px 0 10px;
+            margin: 8px 0 5px;
             color: #000;
         }
 
         .policies {
-            font-size: 9px;
+            font-size: 7px;
             color: #000;
             text-align: center;
-            margin: 10px 0;
-            padding: 8px;
+            margin: 5px 0;
+            padding: 5px;
             background-color: transparent;
             border: 1px solid #000;
-            line-height: 1.3;
+            line-height: 1.2;
         }
 
         .meta-info {
-            font-size: 10px;
+            font-size: 8px;
             color: #000;
             text-align: right;
-            margin-top: 5px;
+            margin-top: 3px;
         }
 
         .highlight-box {
             background-color: transparent;
             border: 1px solid #000;
-            padding: 8px;
-            margin: 10px 0;
+            padding: 5px;
+            margin: 5px 0;
         }
 
         .payment-badge {
             display: inline-block;
             background-color: transparent;
             color: #000;
-            font-size: 11px;
-            padding: 3px 8px;
+            font-size: 8px;
+            padding: 2px 5px;
             border: 1px solid #000;
-            margin: 2px;
+            margin: 1px;
         }
 
         .payment-badge.cash {
@@ -332,12 +333,12 @@
     <div class="receipt-container">
         <div class="store-info">
             @if ($enable_logo_in_print == 'yes')
-                <img src="{{ cache('logo') }}" alt="Logo" style="width: 80%; max-width: 100px; margin-bottom: 10px;">
+                <img src="{{ cache('logo') }}" alt="Logo" style="width: 60%; max-width: 70px; margin-bottom: 3px;">
             @endif
             <h3>
                 {{ $sale->branch?->location }}
             </h3>
-            <div style="font-size: 12px; margin-top: 5px;">
+            <div style="font-size: 9px; margin-top: 2px;">
                 <strong>Tel:</strong> {{ $sale->branch?->mobile }}
                 @if ($sale->branch?->email)
                     <br><strong>Email:</strong> {{ $sale->branch?->email }}
@@ -348,7 +349,7 @@
         <div class="divider"></div>
 
         <div class="invoice-header">
-            <h3 style="margin: 5px 0;">
+            <h3 style="margin: 2px 0;">
                 Invoice
                 @if ($thermal_printer_style == 'with_arabic')
                     | {{ __('lang.invoice', [], 'ar') }}
@@ -625,7 +626,7 @@
                 <p> <b>{{ $barcode_string }}</b> </p>
             </div>
             <div class="qrcode">
-                <img src="data:image/png;base64,{{ DNS2D::getBarcodePNG(url('/') . '/invoice/' . $sale->id, 'QRCODE', 3, 3) }}" alt="QR Code" />
+                <img src="data:image/png;base64,{{ DNS2D::getBarcodePNG(url('/') . '/invoice/' . $sale->id, 'QRCODE', 2, 2) }}" alt="QR Code" />
             </div>
         </div>
         <div class="highlight-box">
@@ -637,20 +638,20 @@
                     </span>
                 @endif
             </div>
-            <div style="margin-top: 5px;">
-                <b><?= date('D d-M-Y h:i A', strtotime($sale->updated_at)) ?></b>
+            <div style="margin-top: 2px;">
+                <b><?= date('d-M-Y h:i A', strtotime($sale->updated_at)) ?></b>
             </div>
         </div>
 
         <div class="footer">
-            <p style="font-weight: bold; margin-bottom: 10px;">{!! $thermal_printer_footer_english !!}</p>
+            <p style="font-weight: bold; margin-bottom: 5px;">{!! $thermal_printer_footer_english !!}</p>
             @if ($thermal_printer_style == 'with_arabic')
                 <b>
                     <p dir="rtl">{!! $thermal_printer_footer_arabic !!}</p>
                 </b>
             @endif
-            <div style="margin-top: 8px; font-size: 9px; color: #777;">
-                Invoice generated on {{ date('d/m/Y') }} at {{ date('h:i A') }}
+            <div style="margin-top: 4px; font-size: 7px; color: #777;">
+                {{ date('d/m/Y h:i A') }}
             </div>
         </div>
     </div>
@@ -664,12 +665,12 @@
     // Auto close after printing or after 60 seconds
     window.addEventListener('afterprint', function() {
         setTimeout(function() {
-            window.close();
+            // window.close();
         }, 5000);
     });
 
     setTimeout(function() {
-        window.close();
+        // window.close();
     }, 60000);
 </script>
 
