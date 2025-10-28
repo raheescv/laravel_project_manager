@@ -665,12 +665,12 @@
     // Auto close after printing or after 60 seconds
     window.addEventListener('afterprint', function() {
         setTimeout(function() {
-            // window.close();
+            window.close();
         }, 5000);
     });
 
     setTimeout(function() {
-        // window.close();
+        window.close();
     }, 60000);
 </script>
 
