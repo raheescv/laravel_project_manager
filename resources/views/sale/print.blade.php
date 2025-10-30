@@ -329,7 +329,7 @@
     </style>
 </head>
 
-<body onload="window.prsint();">
+<body onload="window.print();">
     <div class="receipt-container">
         <div class="store-info">
             @if ($enable_logo_in_print == 'yes')
@@ -682,12 +682,12 @@
     // Auto close after printing or after 60 seconds
     window.addEventListener('afterprint', function() {
         setTimeout(function() {
-            // window.close();
+            window.close();
         }, 5000);
     });
 
     setTimeout(function() {
-        // window.close();
+        window.close();
     }, 60000);
 </script>
 
