@@ -15,15 +15,25 @@ class GetProductsAction
     {
         $filters = $request->validatedWithDefaults();
 
-        $query = Product::query()
-            ->with([
-                'unit:id,name,code',
-                'brand:id,name',
-                'department:id,name',
-                'mainCategory:id,name',
-                'subCategory:id,name',
-                'inventories.branch:id,name',
-            ]);
+        $with = [
+            'unit:id,name,code',
+            'brand:id,name',
+            'department:id,name',
+            'mainCategory:id,name',
+            'subCategory:id,name',
+        ];
+
+        if (! empty($filters['branch_id'])) {
+            $branchId = $filters['branch_id'];
+            $with['inventories'] = function ($q) use ($branchId) {
+                $q->where('branch_id', $branchId)
+                    ->with('branch:id,name');
+            };
+        } else {
+            $with[] = 'inventories.branch:id,name';
+        }
+
+        $query = Product::query()->with($with);
 
         // Apply filters
         $this->applyFilters($query, $filters);
@@ -70,6 +80,12 @@ class GetProductsAction
             // Brand filter
             ->when($filters['brand_id'] ?? null, function ($q, $value) {
                 return $q->where('brand_id', $value);
+            })
+            // Inventory branch filter
+            ->when($filters['branch_id'] ?? null, function ($q, $value) {
+                return $q->whereHas('inventories', function ($invQ) use ($value) {
+                    $invQ->where('branch_id', $value);
+                });
             })
             // Size filter
             ->when($filters['size'] ?? null, function ($q, $value) {
