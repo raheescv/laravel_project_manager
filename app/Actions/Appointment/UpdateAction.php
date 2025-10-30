@@ -4,6 +4,7 @@ namespace App\Actions\Appointment;
 
 use App\Models\Appointment;
 use Illuminate\Support\Facades\Auth;
+use Exception;
 
 class UpdateAction
 {
@@ -11,12 +12,15 @@ class UpdateAction
     {
         try {
             if (Auth::user()->cannot('appointment.edit')) {
-                throw new \Exception('You do not have permission to update this appointment.', 1);
+                throw new Exception('You do not have permission to update this appointment.', 1);
             }
             $return = [];
             $model = Appointment::find($id);
             if (! $model) {
-                throw new \Exception("Appointment not found with the specified ID: $id.", 1);
+                throw new Exception("Appointment not found with the specified ID: $id.", 1);
+            }
+            if(in_array($model->status,['pending','no response'])){
+                throw new Exception("You Cant Edit this Appointment Because Its Not in Pending or No Response Status.", 1);
             }
             $data['updated_by'] = $userId;
             validationHelper(Appointment::rules($id), $data);
@@ -32,14 +36,14 @@ class UpdateAction
                     $response = (new Item\CreateAction())->execute($item, $userId);
                 }
                 if (! $response['success']) {
-                    throw new \Exception($response['message'], 1);
+                    throw new Exception($response['message'], 1);
                 }
             }
 
             $return['success'] = true;
-            $return['message'] = 'Successfully Update Appointment';
+            $return['message'] = 'Successfully Update Appointment.';
             $return['data'] = $model;
-        } catch (\Throwable $th) {
+        } catch (Exception $th) {
             $return['success'] = false;
             $return['message'] = $th->getMessage();
         }
