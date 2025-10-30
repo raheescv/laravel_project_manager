@@ -63,6 +63,9 @@ class AppServiceProvider extends ServiceProvider
             Cache::remember('mobile', now()->addYear(), function () {
                 return Configuration::where('key', 'mobile')->value('value');
             });
+            Cache::remember('country_id', now()->addYear(), function () {
+                return Configuration::where('key', 'country_id')->value('value');
+            });
         }
         // Gate::after(function ($user, $ability) {
         //     return $user->hasRole('Super Admin') || $user->hasPermissionTo($ability);

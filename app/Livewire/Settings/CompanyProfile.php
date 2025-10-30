@@ -15,6 +15,8 @@ class CompanyProfile extends Component
 
     public $mobile;
 
+    public $gst_no;
+
     public $logo;
 
     public $uploaded_logo;
@@ -24,6 +26,7 @@ class CompanyProfile extends Component
         $this->uploaded_logo = Configuration::where('key', 'logo')->value('value');
         $this->mobile = Configuration::where('key', 'mobile')->value('value');
         $this->company_name = Configuration::where('key', 'company_name')->value('value');
+        $this->gst_no = Configuration::where('key', 'gst_no')->value('value');
     }
 
     protected function rules()
@@ -52,8 +55,10 @@ class CompanyProfile extends Component
             }
             Configuration::updateOrCreate(['key' => 'mobile'], ['value' => $this->mobile]);
             Configuration::updateOrCreate(['key' => 'company_name'], ['value' => $this->company_name]);
+            Configuration::updateOrCreate(['key' => 'gst_no'], ['value' => $this->gst_no]);
             Cache::forget('company_name');
             Cache::forget('mobile');
+            Cache::forget('gst_no');
             $this->dispatch('success', ['message' => 'Updated Successfully']);
             $this->dispatch('filepond-reset-images');
         } catch (\Throwable $e) {

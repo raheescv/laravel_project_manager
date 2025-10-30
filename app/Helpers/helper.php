@@ -5,6 +5,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
+use App\Models\Country;
 
 if (! function_exists('writeToEnv')) {
     function writeToEnv($key, $value)
@@ -218,7 +219,8 @@ if (! function_exists('fileUpload')) {
             File::makeDirectory($path, $mode = 777, true, true);
         }
         $disk->putFileAs($path, $file, $fileName);
-        $uploaded_path = $disk->url($path.$fileName);
+        $relativePath = rtrim($path, '/').'/'.$fileName;
+        $uploaded_path = Storage::url($relativePath);
 
         return [
             'file_name' => $fileName,
@@ -392,7 +394,17 @@ if (! function_exists('getNextSaleInvoiceNo')) {
             $prefix .= $branch_code.'-';
         }
 
-        $year = now()->format('y');
+        $country_id = cache('country_id', Country::QATAR);
+
+        if ($country_id == Country::INDIA) {
+            $year = now()->format('y').'/'.(now()->addYear()->format('y'));
+            if (now()->lt(now()->copy()->month(3)->day(31))) {
+                $year = now()->subYear()->format('y').'/'.now()->format('y');
+            }
+        } else {
+            $year = now()->format('y');
+        }
+
         $invoicePrefix = $prefix.$year.'-';
 
         // Fetch the latest invoice for the branch and year

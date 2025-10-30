@@ -46,6 +46,13 @@
                                     {{ html()->select('default_purchase_branch_id', $branches)->value($default_purchase_branch_id)->class('form-select')->placeholder('Select Default Purchase Branch')->attribute('wire:model', 'default_purchase_branch_id') }}
                                 </div>
                             </div>
+
+                            <div class="col-12">
+                                <div class="form-group">
+                                    <label class="form-label fw-medium" for="country_id">Country</label>
+                                    {{ html()->select('country_id', $countries)->value($country_id)->class('form-select')->placeholder('Select Country')->attribute('wire:model', 'country_id') }}
+                                </div>
+                            </div>
                         </div>
                     </div>
 

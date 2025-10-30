@@ -15,12 +15,20 @@
                                         <i class="fa fa-building me-2"></i>Company Name
                                     </label>
                                     {{ html()->input('company_name')->value('')->class('form-control')->placeholder('Enter your company name')->attribute('wire:model', 'company_name') }}
-                                </div><br>
+                                </div>
+                                <br>
                                 <div class="form-group">
                                     <label class="form-label fw-medium" for="mobile">
                                         <i class="fa fa-phone me-2"></i>Contact Number
                                     </label>
                                     {{ html()->input('mobile')->value('')->class('form-control')->placeholder('Enter your company contact number')->attribute('wire:model', 'mobile') }}
+                                </div>
+                                <br>
+                                <div class="form-group">
+                                    <label class="form-label fw-medium" for="gst">
+                                        <i class="fa fa-receipt me-2"></i>GST Number
+                                    </label>
+                                    {{ html()->input('gst_no')->value('')->class('form-control')->placeholder('Enter your GST number')->attribute('wire:model', 'gst_no') }}
                                 </div>
                             </div>
 

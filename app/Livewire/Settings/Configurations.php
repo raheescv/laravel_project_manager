@@ -5,6 +5,7 @@ namespace App\Livewire\Settings;
 use App\Models\Account;
 use App\Models\Branch;
 use App\Models\Configuration;
+use App\Models\Country;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Cache;
 use Livewire\Component;
@@ -25,6 +26,10 @@ class Configurations extends Component
 
     public $branches;
 
+    public $country_id;
+
+    public $countries;
+
     public function mount()
     {
         $this->barcode_type = Configuration::where('key', 'barcode_type')->value('value');
@@ -32,6 +37,7 @@ class Configurations extends Component
         $this->default_payment_method_id = Configuration::where('key', 'default_payment_method_id')->value('value') ?? 1;
         $this->default_product_type = Configuration::where('key', 'default_product_type')->value('value') ?? 'service';
         $this->default_purchase_branch_id = Configuration::where('key', 'default_purchase_branch_id')->value('value') ?? 1;
+        $this->country_id = Configuration::where('key', 'country_id')->value('value');
         $this->payment_methods = json_decode($this->payment_methods, 1);
         $this->paymentMethods = [];
         if ($this->payment_methods) {
@@ -40,6 +46,9 @@ class Configurations extends Component
 
         // Load branches for dropdown
         $this->branches = Branch::orderBy('name')->pluck('name', 'id')->toArray();
+
+        // Load countries for dropdown
+        $this->countries = Country::orderBy('name')->pluck('name', 'id')->toArray();
     }
 
     public function dbView()
@@ -54,6 +63,7 @@ class Configurations extends Component
         Configuration::updateOrCreate(['key' => 'payment_methods'], ['value' => json_encode($this->payment_methods)]);
         Configuration::updateOrCreate(['key' => 'default_product_type'], ['value' => $this->default_product_type]);
         Configuration::updateOrCreate(['key' => 'default_purchase_branch_id'], ['value' => $this->default_purchase_branch_id]);
+        Configuration::updateOrCreate(['key' => 'country_id'], ['value' => $this->country_id]);
         Cache::forget('payment_methods');
         $this->dispatch('success', ['message' => 'Updated Successfully']);
     }

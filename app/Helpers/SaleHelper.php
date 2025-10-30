@@ -23,6 +23,7 @@ class SaleHelper
         $barcode_string .= $checkDigit;
 
         $thermal_printer_style = Configuration::where('key', 'thermal_printer_style')->value('value') ?? 'with_arabic';
+        $gst_no = Configuration::where('key', 'gst_no')->value('value') ?? null;
         $thermal_printer_footer_english = Configuration::where('key', 'thermal_printer_footer_english')->value('value');
         $thermal_printer_footer_arabic = Configuration::where('key', 'thermal_printer_footer_arabic')->value('value');
         $enable_discount_in_print = Configuration::where('key', 'enable_discount_in_print')->value('value');
@@ -32,6 +33,7 @@ class SaleHelper
         $data = compact(
             'payments',
             'sale',
+            'gst_no',
             'thermal_printer_style',
             'thermal_printer_footer_english',
             'thermal_printer_footer_arabic',

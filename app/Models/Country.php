@@ -11,6 +11,9 @@ class Country extends Model
 {
     use HasFactory, SoftDeletes;
 
+    Const INDIA = 105;
+    Const QATAR = 187;
+
     protected $fillable = [
         'name',
         'code',
