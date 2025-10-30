@@ -33,7 +33,7 @@ class CheckoutAction
                 'grand_total' => 0,
                 'paid' => 0,
                 'address' => null,
-                'status' => 'completed',
+                'status' => 'draft',
                 'created_by' => $userId,
                 'updated_by' => $userId,
             ];
