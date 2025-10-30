@@ -29,6 +29,9 @@ class SaleHelper
         $enable_discount_in_print = Configuration::where('key', 'enable_discount_in_print')->value('value');
         $enable_total_quantity_in_print = Configuration::where('key', 'enable_total_quantity_in_print')->value('value');
         $enable_logo_in_print = Configuration::where('key', 'enable_logo_in_print')->value('value');
+        $enable_barcode_in_print = Configuration::where('key', 'enable_barcode_in_print')->value('value') ?? 'yes';
+        $print_item_label = Configuration::where('key', 'print_item_label')->value('value') ?? 'product';
+        $print_quantity_label = Configuration::where('key', 'print_quantity_label')->value('value') ?? 'quantity';
         $payments = $sale->payments()->with('paymentMethod:id,name')->get(['amount', 'payment_method_id'])->toArray();
         $data = compact(
             'payments',
@@ -40,6 +43,9 @@ class SaleHelper
             'enable_discount_in_print',
             'enable_total_quantity_in_print',
             'enable_logo_in_print',
+            'enable_barcode_in_print',
+            'print_item_label',
+            'print_quantity_label',
             'barcode_string',
         );
         $htmlContent = View::make('sale.print', $data)->render();

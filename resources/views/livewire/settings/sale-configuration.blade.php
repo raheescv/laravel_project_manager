@@ -50,6 +50,24 @@
                                     {{ html()->select('enable_logo_in_print', ['yes' => 'Yes', 'no' => 'No'])->value('')->class('form-select')->placeholder('Select Option')->attribute('wire:model', 'enable_logo_in_print') }}
                                 </div>
                             </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label class="form-label fw-medium" for="enable_barcode_in_print">Enable Barcode In Print</label>
+                                    {{ html()->select('enable_barcode_in_print', ['yes' => 'Yes', 'no' => 'No'])->value('')->class('form-select')->placeholder('Select Option')->attribute('wire:model', 'enable_barcode_in_print') }}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label class="form-label fw-medium" for="print_item_label">Item Label In Print</label>
+                                    {{ html()->select('print_item_label', ['product' => 'Product Name', 'category' => 'Category Name'])->value('')->class('form-select')->placeholder('Select what to print per item')->attribute('wire:model', 'print_item_label') }}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label class="form-label fw-medium" for="print_quantity_label">Quantity Label In Print</label>
+                                    {{ html()->select('print_quantity_label', ['quantity' => 'Quantity', 'weight' => 'Weight'])->value('')->class('form-select')->placeholder('Select label for item quantity')->attribute('wire:model', 'print_quantity_label') }}
+                                </div>
+                            </div>
                             <div class="col-12">
                                 <div class="form-group">
                                     <label class="form-label fw-medium" for="thermal_printer_footer_english">Thermal Printer Footer (English)</label>

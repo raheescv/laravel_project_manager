@@ -329,7 +329,7 @@
     </style>
 </head>
 
-<body onload="window.print();">
+<body onload="window.prsint();">
     <div class="receipt-container">
         <div class="store-info">
             @if ($enable_logo_in_print == 'yes')
@@ -339,9 +339,12 @@
                 {{ $sale->branch?->location }}
             </h3>
             <div style="font-size: 9px; margin-top: 2px;">
-                <strong>Tel:</strong> {{ $sale->branch?->mobile }}
+                <strong>Mobile:</strong> {{ $sale->branch?->mobile }}
                 @if ($sale->branch?->email)
                     <br><strong>Email:</strong> {{ $sale->branch?->email }}
+                @endif
+                @if ($gst_no)
+                    <br><strong>GST:</strong> {{ $gst_no }}
                 @endif
             </div>
         </div>
@@ -452,16 +455,16 @@
                     <tr>
                         <th>#</th>
                         <th class="text-right"> Price <br> {{ __('lang.price', [], 'ar') }} </th>
-                        <th class="text-right"> Qty <br> {{ __('lang.quantity', [], 'ar') }} </th>
+                        <th class="text-right"> {{ $print_quantity_label == 'quantity' ? 'Qty' : 'Weight' }} <br> {{ __('lang.quantity', [], 'ar') }} </th>
                         <th class="text-right"> Amount <br> {{ __('lang.amount', [], 'ar') }} </th>
                     </tr>
                 @endif
                 @if ($thermal_printer_style == 'english_only')
                     <tr>
                         <th>#</th>
-                        <th>Price</th>
-                        <th>Qty</th>
-                        <th>Amount</th>
+                        <th class="text-right">Price</th>
+                        <th class="text-right">{{ $print_quantity_label == 'quantity' ? 'Qty' : 'Weight' }}</th>
+                        <th class="text-right">Amount</th>
                     </tr>
                 @endif
             </thead>
@@ -498,16 +501,28 @@
                 @foreach ($sale->items()->whereNull('sale_combo_offer_id')->get() as $item)
                     <tr>
                         <td colspan="4" class="text-left">
-                            <div class="item-name">{{ $item->product->name }}</div>
+                            <div class="item-name">
+                                @if ($print_item_label == 'product')
+                                     {{ $item->product->name }}
+                                @else
+                                    {{ $item->product->code }}) {{ $item->product->mainCategory->name }}
+                                @endif
+                            </div>
                             @if ($item->product->description)
                                 <div class="item-description">{{ Str::limit($item->product->description, 30) }}</div>
                             @endif
                         </td>
                     </tr>
-                    @if ($item->product->name_arabic)
-                        <tr>
-                            <td colspan="4" class="text-right"><b>{{ $item->product->name_arabic }}</b></td>
-                        </tr>
+                    @if ($thermal_printer_style == 'with_arabic')
+                        @if ($print_item_label == 'product' && $item->product->name_arabic)
+                            <tr>
+                                <td colspan="4" class="text-right"><b>{{ $item->product->name_arabic }}</b></td>
+                            </tr>
+                        @elseif ($print_item_label == 'category' && optional($item->product->mainCategory)->name_arabic)
+                            <tr>
+                                <td colspan="4" class="text-right"><b>{{ optional($item->product->mainCategory)->name_arabic }}</b></td>
+                            </tr>
+                        @endif
                     @endif
                     <tr>
                         <td class="text-right"> <b>{{ $sale->comboOffers->count() + $loop->iteration }}</b> </td>
@@ -536,7 +551,7 @@
         <table class="table">
             @if ($enable_total_quantity_in_print == 'yes')
                 <tr>
-                    <td class="text-left"><b>Total Qty</b></td>
+                    <td class="text-left"><b>{{ $print_quantity_label == 'quantity' ? 'Total Qty' : 'Total Weight' }}</b></td>
                     <td class="text-right"><b>{{ round($sale->items()->sum('quantity'), 3) }}</b></td>
                     @if ($thermal_printer_style == 'with_arabic')
                         <td width="39%" class="text-right"> <b>{{ __('lang.total_quantity', [], 'ar') }}</b> </td>
@@ -620,15 +635,17 @@
                 </tr>
             @endif
         </table>
-        <div class="codes-container">
-            <div class="barcode">
-                <img src="data:image/png;base64,{{ DNS1D::getBarcodePNG($barcode_string, 'C128') }}" alt="barcode" />
-                <p> <b>{{ $barcode_string }}</b> </p>
+        @if ($enable_barcode_in_print == 'yes')
+            <div class="codes-container">
+                <div class="barcode">
+                    <img src="data:image/png;base64,{{ DNS1D::getBarcodePNG($barcode_string, 'C128') }}" alt="barcode" />
+                    <p> <b>{{ $barcode_string }}</b> </p>
+                </div>
+                <div class="qrcode">
+                    <img src="data:image/png;base64,{{ DNS2D::getBarcodePNG(url('/') . '/invoice/' . $sale->id, 'QRCODE', 2, 2) }}" alt="QR Code" />
+                </div>
             </div>
-            <div class="qrcode">
-                <img src="data:image/png;base64,{{ DNS2D::getBarcodePNG(url('/') . '/invoice/' . $sale->id, 'QRCODE', 2, 2) }}" alt="QR Code" />
-            </div>
-        </div>
+        @endif
         <div class="highlight-box">
             <div>
                 <span class="text-left"> <b>Served By</b> </span>: <b>{!! $sale->employeeNames() !!}</b>
@@ -665,12 +682,12 @@
     // Auto close after printing or after 60 seconds
     window.addEventListener('afterprint', function() {
         setTimeout(function() {
-            window.close();
+            // window.close();
         }, 5000);
     });
 
     setTimeout(function() {
-        window.close();
+        // window.close();
     }, 60000);
 </script>
 
