@@ -28,6 +28,7 @@ return [
         'audit view',
         'combo offer',
         'feedback',
+        'change day session',
     ],
     'sales return' => ['create', 'view', 'edit', 'edit completed', 'delete', 'export', 'payments', 'view journal entries'],
     'purchase' => ['create', 'view', 'edit', 'edit completed', 'delete', 'cancel', 'export', 'payments', 'view journal entries', 'delete item after completed', 'delete payment after completed', 'barcode print'],

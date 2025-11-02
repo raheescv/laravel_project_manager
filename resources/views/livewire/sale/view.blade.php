@@ -578,7 +578,7 @@
                                 <i class="demo-psi-whatsapp me-2"></i>Whatsapp
                             </button>
                         @endcan
-                        @can('sale.edit completed')
+                        @can('sale.change day session')
                             <button type="button" wire:click="openChangeSessionModal" class="btn btn-warning">
                                 <i class="demo-psi-time-restore me-2"></i>Change Day Session
                             </button>
