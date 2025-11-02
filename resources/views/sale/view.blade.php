@@ -15,6 +15,7 @@
             @livewire('sale.view', ['table_id' => $id])
         </div>
     </div>
+    <x-sale.change-session-modal :id="$id" />
     @push('styles')
         <style>
             .backdrop-blur-card {

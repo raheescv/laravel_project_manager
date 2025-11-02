@@ -103,6 +103,11 @@ class View extends Component
         }
     }
 
+    public function openChangeSessionModal(): void
+    {
+        $this->dispatch('ToggleChangeSessionModal');
+    }
+
     public function render()
     {
         return view('livewire.sale.view');

@@ -199,6 +199,14 @@
                                         @endforeach
                                     </select>
                                 </div>
+                                <div class="d-flex align-items-center">
+                                    <div class="rounded-circle p-2 me-2" style="background-color: rgba(255,255,255,0.2);">
+                                        <i class="fa fa-calendar text-white"></i>
+                                    </div>
+                                    <input type="date" class="form-control"
+                                           wire:model="date"
+                                           style="background-color: rgba(255,255,255,0.2); color: white; border: 1px solid rgba(255,255,255,0.3);">
+                                </div>
                             </div>
                         </div>
                     </div>

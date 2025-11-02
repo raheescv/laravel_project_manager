@@ -410,7 +410,7 @@
                                                 </div>
                                                 <div class="text-end">
                                                     <h5 class="mb-1 text-success">{{ currency($item['amount']) }}</h5>
-                                                    <small class="text-muted">{{ now()->format('d M Y') }}</small>
+                                                    <small class="text-muted">{{ systemDate($item['date']) }}</small>
                                                 </div>
                                             </div>
                                             @if (isset($item['reference']))
@@ -576,6 +576,11 @@
                         @can('sale.cancel')
                             <button type="button" wire:click='sendToWhatsapp' class="btn btn-success">
                                 <i class="demo-psi-whatsapp me-2"></i>Whatsapp
+                            </button>
+                        @endcan
+                        @can('sale.edit completed')
+                            <button type="button" wire:click="openChangeSessionModal" class="btn btn-warning">
+                                <i class="demo-psi-time-restore me-2"></i>Change Day Session
                             </button>
                         @endcan
                     @endif

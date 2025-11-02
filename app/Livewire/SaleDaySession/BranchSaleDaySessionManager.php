@@ -14,6 +14,8 @@ class BranchSaleDaySessionManager extends Component
 {
     public $branch_id;
 
+    public $date;
+
     public $opening_amount = 0;
 
     public $closing_amount = 0;
@@ -37,6 +39,7 @@ class BranchSaleDaySessionManager extends Component
     public function mount()
     {
         $this->branch_id = Auth::user()->default_branch_id;
+        $this->date = now()->toDateString();
         $this->loadOpenSessions();
         $this->loadCurrentSession();
     }
@@ -110,11 +113,22 @@ class BranchSaleDaySessionManager extends Component
             return;
         }
 
+        // Ensure no open session already exists for the selected date
+        $existsForDate = SaleDaySession::where('branch_id', $this->branch_id)
+            ->whereDate('opened_at', $this->date)
+            ->exists();
+
+        if ($existsForDate) {
+            session()->flash('error', 'This branch already has an opened a session for the selected date.');
+
+            return;
+        }
+
         // Create new day session
-        $session = SaleDaySession::create([
+        SaleDaySession::create([
             'branch_id' => $this->branch_id,
             'opened_by' => Auth::id(),
-            'opened_at' => now(),
+            'opened_at' => date('Y-m-d H:i:s', strtotime($this->date)),
             'opening_amount' => $this->opening_amount,
             'status' => 'open',
         ]);

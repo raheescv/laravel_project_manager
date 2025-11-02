@@ -3,8 +3,8 @@
 namespace App\Actions\Appointment;
 
 use App\Models\Appointment;
-use Illuminate\Support\Facades\Auth;
 use Exception;
+use Illuminate\Support\Facades\Auth;
 
 class UpdateAction
 {
@@ -19,8 +19,8 @@ class UpdateAction
             if (! $model) {
                 throw new Exception("Appointment not found with the specified ID: $id.", 1);
             }
-            if(in_array($model->status,['pending','no response'])){
-                throw new Exception("You Cant Edit this Appointment Because Its Not in Pending or No Response Status.", 1);
+            if (in_array($model->status, ['pending', 'no response'])) {
+                throw new Exception('You Cant Edit this Appointment Because Its Not in Pending or No Response Status.', 1);
             }
             $data['updated_by'] = $userId;
             validationHelper(Appointment::rules($id), $data);

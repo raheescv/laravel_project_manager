@@ -72,4 +72,9 @@ class SalePayment extends Model implements AuditableContracts
     {
         return $this->paymentMethod?->name;
     }
+
+    public function journalEntries()
+    {
+        return $this->hasMany(JournalEntry::class, 'model_id')->where('model', 'SalePayment');
+    }
 }

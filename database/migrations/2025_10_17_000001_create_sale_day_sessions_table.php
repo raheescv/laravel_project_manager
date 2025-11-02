@@ -17,9 +17,10 @@ return new class() extends Migration
                 $table->dateTime('opened_at');
                 $table->dateTime('closed_at')->nullable();
                 $table->decimal('opening_amount', 15, 2)->default(0);
-                $table->decimal('closing_amount', 15, 2)->nullable();
-                $table->decimal('expected_amount', 15, 2)->nullable();
-                $table->decimal('difference_amount', 15, 2)->nullable();
+                $table->decimal('closing_amount', 15, 2)->default(0)->nullable();
+                $table->decimal('expected_amount', 15, 2)->default(0)->nullable();
+                $table->decimal('difference_amount', 16, 2)->storedAs('(closing_amount - expected_amount)');
+
                 $table->enum('status', ['open', 'closed'])->default('open'); // open, closed
                 $table->text('notes')->nullable();
                 $table->timestamps();

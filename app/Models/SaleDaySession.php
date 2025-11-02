@@ -21,7 +21,7 @@ class SaleDaySession extends Model implements AuditableContracts
         'opening_amount',
         'closing_amount',
         'expected_amount',
-        'difference_amount',
+
         'sync_amount',
         'status',
         'notes',
@@ -33,7 +33,6 @@ class SaleDaySession extends Model implements AuditableContracts
         'opening_amount' => 'decimal:2',
         'closing_amount' => 'decimal:2',
         'expected_amount' => 'decimal:2',
-        'difference_amount' => 'decimal:2',
     ];
 
     protected static function booted()
@@ -101,7 +100,6 @@ class SaleDaySession extends Model implements AuditableContracts
         // Calculate total sales amount for this session
         $totalSalesAmount = $this->sales->sum('paid');
         $this->expected_amount = $this->opening_amount + $totalSalesAmount;
-        $this->difference_amount = $closingAmount - $this->expected_amount;
 
         $this->status = 'closed';
         $this->notes = $notes;
