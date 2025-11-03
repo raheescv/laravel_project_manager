@@ -335,7 +335,7 @@
             <tbody>
                 @forelse($sales as $sale)
                     <tr>
-                        <td><b>{{ Carbon::parse($sale->created_at)->format('d/m') }}</b></td>
+                        <td><b>{{ Carbon::parse($sale->date)->format('d/m') }}</b></td>
                         <td><b>{{ $sale->invoice_no ?? 'N/A' }}</b></td>
                         <td>
                             <b>{{ $sale->payment_method_name }}</b>
