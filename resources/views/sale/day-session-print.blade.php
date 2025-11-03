@@ -303,7 +303,7 @@
         <div class="header-info">
             <h1>{{ strtoupper($session->branch->name ?? 'STORE') }}</h1>
             <h2>SALE BILL REPORT</h2>
-            <b>{{ Carbon::parse($session->created_at)->format('d-m-Y') }} TO {{ Carbon::parse($session->updated_at ?? $session->created_at)->format('d-m-Y') }}</b>
+            <b>{{ Carbon::parse($session->opened_at)->format('d-m-Y') }} TO {{ Carbon::parse($session->closed_at)->format('d-m-Y') }}</b>
         </div>
 
         <div class="divider"></div>
