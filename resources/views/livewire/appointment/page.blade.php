@@ -167,6 +167,15 @@
                         </h5>
                         <p class="appointment-subtitle">
                             {{ isset($appointments['id']) ? 'Modify existing appointment details' : 'Schedule a new appointment' }}
+                            @if (isset($appointments['id']))
+                                <span class="ms-2">
+                                    <select class="form-select form-select-sm d-inline-block status-select" style="width: auto; background: rgba(255, 255, 255, 0.2); border: 1px solid rgba(255, 255, 255, 0.3); color: #fff; font-size: 0.75rem; padding: 0.25rem 0.75rem; border-radius: 1rem; cursor: pointer;">
+                                        @foreach (appointmentStatuses() as $value => $label)
+                                            <option value="{{ $value }}" style="color: #000;" {{ ($appointments['status'] ?? 'pending') == $value ? 'selected' : '' }}>{{ $label }}</option>
+                                        @endforeach
+                                    </select>
+                                </span>
+                            @endif
                         </p>
                     </div>
                 </div>
@@ -360,6 +369,15 @@
                     @this.set('item.employee_id', value);
                     document.querySelector('#modal_service_id').tomselect.open();
                 });
+
+                // Handle status change
+                $(document).on('change', '.status-select', function(e) {
+                    const value = $(this).val();
+                    if (value) {
+                        @this.call('updateStatus', value);
+                    }
+                });
+
                 window.addEventListener('AddToCustomerSelectBox', event => {
                     var data = event.detail[0];
                     var tomSelectInstance = document.querySelector('#account_id').tomselect;

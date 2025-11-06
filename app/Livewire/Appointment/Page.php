@@ -189,6 +189,38 @@ class Page extends Component
         }
     }
 
+    public function updateStatus($status)
+    {
+        try {
+            if (! $this->table_id) {
+                throw new Exception('Appointment ID is required', 1);
+            }
+
+            DB::beginTransaction();
+            $appointment = Appointment::find($this->table_id);
+            if (! $appointment) {
+                throw new Exception('Appointment not found', 1);
+            }
+            $appointment->update([ 'status' => $status, 'updated_by' => Auth::id(), ]);
+
+            DB::commit();
+
+            // Reload appointment data
+            $this->mount($this->table_id);
+
+            // If status is completed, disable edit mode
+            if ($status == 'completed') {
+                $this->editMode = false;
+            }
+
+            $this->dispatch('success', ['message' => 'Status updated successfully']);
+            $this->dispatch('Refresh-EmployeeCalendar-Component');
+        } catch (\Throwable $e) {
+            DB::rollback();
+            $this->dispatch('error', ['message' => $e->getMessage()]);
+        }
+    }
+
     public function save($close = false)
     {
         $this->validate();
