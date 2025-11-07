@@ -40,10 +40,10 @@
                                 </div>
                             </div>
 
-                            <div class="col-12">
+                            <div class="col-12" wire:ignore>
                                 <div class="form-group">
                                     <label class="form-label fw-medium" for="default_purchase_branch_id">Default Purchase Branch</label>
-                                    {{ html()->select('default_purchase_branch_id', $branches)->value($default_purchase_branch_id)->class('form-select')->placeholder('Select Default Purchase Branch')->attribute('wire:model', 'default_purchase_branch_id') }}
+                                    {{ html()->select('default_purchase_branch_id', $branches)->value($default_purchase_branch_id)->class('form-select tomSelect')->id('default_purchase_branch_id')->multiple()->placeholder('Select Default Purchase Branch')->attribute('wire:model', 'default_purchase_branch_id') }}
                                 </div>
                             </div>
 
@@ -81,6 +81,11 @@
             $('#default_payment_method_id').on('change', function(e) {
                 const value = $(this).val() || null;
                 @this.set('default_payment_method_id', value);
+            });
+
+            $('#default_purchase_branch_id').on('change', function(e) {
+                const value = $(this).val() || null;
+                @this.set('default_purchase_branch_id', value);
             });
 
             window.addEventListener('SelectPaymentMethodDropDownValues', event => {

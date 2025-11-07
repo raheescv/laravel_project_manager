@@ -18,7 +18,9 @@ class PurchaseController extends Controller
 
     public function page($id = null)
     {
-        if (session('branch_id') != Configuration::where('key', 'default_purchase_branch_id')->value('value') ?? 1) {
+        $defaultPurchaseBranchIds = Configuration::where('key', 'default_purchase_branch_id')->value('value');
+        $defaultPurchaseBranchIds = $defaultPurchaseBranchIds ? json_decode($defaultPurchaseBranchIds, true) : [1];
+        if (!in_array(session('branch_id'), $defaultPurchaseBranchIds)) {
             return redirect()->route('purchase::index')->with('error', 'You are not in the default purchase branch');
         }
 

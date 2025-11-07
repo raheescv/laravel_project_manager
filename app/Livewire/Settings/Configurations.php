@@ -36,7 +36,8 @@ class Configurations extends Component
         $this->payment_methods = Configuration::where('key', 'payment_methods')->value('value');
         $this->default_payment_method_id = Configuration::where('key', 'default_payment_method_id')->value('value') ?? 1;
         $this->default_product_type = Configuration::where('key', 'default_product_type')->value('value') ?? 'service';
-        $this->default_purchase_branch_id = Configuration::where('key', 'default_purchase_branch_id')->value('value') ?? 1;
+        $default_purchase_branch_id_value = Configuration::where('key', 'default_purchase_branch_id')->value('value');
+        $this->default_purchase_branch_id = $default_purchase_branch_id_value ? json_decode($default_purchase_branch_id_value, true) : [1];
         $this->country_id = Configuration::where('key', 'country_id')->value('value');
         $this->payment_methods = json_decode($this->payment_methods, 1);
         $this->paymentMethods = [];
@@ -62,7 +63,7 @@ class Configurations extends Component
         Configuration::updateOrCreate(['key' => 'barcode_type'], ['value' => $this->barcode_type]);
         Configuration::updateOrCreate(['key' => 'payment_methods'], ['value' => json_encode($this->payment_methods)]);
         Configuration::updateOrCreate(['key' => 'default_product_type'], ['value' => $this->default_product_type]);
-        Configuration::updateOrCreate(['key' => 'default_purchase_branch_id'], ['value' => $this->default_purchase_branch_id]);
+        Configuration::updateOrCreate(['key' => 'default_purchase_branch_id'], ['value' => json_encode($this->default_purchase_branch_id)]);
         Configuration::updateOrCreate(['key' => 'country_id'], ['value' => $this->country_id]);
         Cache::forget('payment_methods');
         $this->dispatch('success', ['message' => 'Updated Successfully']);
