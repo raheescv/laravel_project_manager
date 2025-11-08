@@ -8,6 +8,7 @@ use App\Actions\Sale\Payment\DeleteAction as PaymentDeleteAction;
 use App\Actions\Sale\UpdateAction;
 use App\Http\Controllers\Controller;
 use App\Models\Category;
+use App\Models\Configuration;
 use App\Models\Inventory;
 use App\Models\Sale;
 use App\Models\SalePayment;
@@ -154,8 +155,8 @@ class POSController extends Controller
                 // return response()->json(['error' => 'Insufficient stock'], 400);
             }
 
-            // Default quantity
-            $quantity = 0.001;
+            // Get default quantity from sale configuration
+            $quantity = (float) (Configuration::where('key', 'default_quantity')->value('value') ?? '0.001');
 
             // Calculate initial totals
             $grossAmount = $unitPrice * $quantity;

@@ -68,6 +68,12 @@
                                     {{ html()->select('print_quantity_label', ['quantity' => 'Quantity', 'weight' => 'Weight'])->value('')->class('form-select')->placeholder('Select label for item quantity')->attribute('wire:model', 'print_quantity_label') }}
                                 </div>
                             </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label class="form-label fw-medium" for="default_quantity">Default Quantity</label>
+                                    {{ html()->input('number', 'default_quantity')->value('')->class('form-control')->attribute('step','0.001')->placeholder('Enter default quantity (e.g., 0.001)')->attribute('wire:model', 'default_quantity') }}
+                                </div>
+                            </div>
                             <div class="col-12">
                                 <div class="form-group">
                                     <label class="form-label fw-medium" for="thermal_printer_footer_english">Thermal Printer Footer (English)</label>

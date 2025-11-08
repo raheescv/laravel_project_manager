@@ -32,6 +32,8 @@ class SaleConfiguration extends Component
 
     public $print_quantity_label; // 'quantity' or 'weight'
 
+    public $default_quantity;
+
     public function mount()
     {
         $this->default_status = Configuration::where('key', 'default_status')->value('value');
@@ -46,6 +48,7 @@ class SaleConfiguration extends Component
         $this->default_customer_enabled = Configuration::where('key', 'default_customer_enabled')->value('value') ?? 'yes';
         $this->print_item_label = Configuration::where('key', 'print_item_label')->value('value') ?? 'product';
         $this->print_quantity_label = Configuration::where('key', 'print_quantity_label')->value('value') ?? 'quantity';
+        $this->default_quantity = Configuration::where('key', 'default_quantity')->value('value') ?? '0.001';
     }
 
     public function save()
@@ -62,6 +65,7 @@ class SaleConfiguration extends Component
         Configuration::updateOrCreate(['key' => 'default_customer_enabled'], ['value' => $this->default_customer_enabled]);
         Configuration::updateOrCreate(['key' => 'print_item_label'], ['value' => $this->print_item_label]);
         Configuration::updateOrCreate(['key' => 'print_quantity_label'], ['value' => $this->print_quantity_label]);
+        Configuration::updateOrCreate(['key' => 'default_quantity'], ['value' => $this->default_quantity]);
         $this->dispatch('success', ['message' => 'Updated Successfully']);
         Artisan::call('optimize:clear');
     }
