@@ -146,10 +146,23 @@ class POSController extends Controller
             // Get pricing based on sale type
             $unitPrice = $inventory->product->saleTypePrice($saleType);
 
+            // Get tax from product
+            $taxRate = $inventory->product->tax ?? 0;
+
             // Check stock availability
             if ($inventory->quantity <= 0) {
                 // return response()->json(['error' => 'Insufficient stock'], 400);
             }
+
+            // Default quantity
+            $quantity = 0.001;
+
+            // Calculate initial totals
+            $grossAmount = $unitPrice * $quantity;
+            $discount = 0;
+            $netAmount = $grossAmount - $discount;
+            $taxAmount = $netAmount * ($taxRate / 100);
+            $total = $netAmount + $taxAmount;
 
             // Create item data with guaranteed id
             $item = [
@@ -160,12 +173,14 @@ class POSController extends Controller
                 'name' => $inventory->product->name,
                 'barcode' => $inventory->product->barcode,
                 'size' => $inventory->product->size,
-                'quantity' => 1,
+                'quantity' => $quantity,
                 'unit_price' => $unitPrice,
-                'total' => $unitPrice,
-                'discount' => 0,
-                'tax_amount' => 0,
-                'gross_amount' => $unitPrice,
+                'tax' => $taxRate,
+                'discount' => $discount,
+                'gross_amount' => $grossAmount,
+                'net_amount' => $netAmount,
+                'tax_amount' => $taxAmount,
+                'total' => $total,
                 'employee_name' => User::find($request->employee_id)->name ?? '',
             ];
 

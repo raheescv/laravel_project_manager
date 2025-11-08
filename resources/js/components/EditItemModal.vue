@@ -67,7 +67,7 @@
                     <div class="grid grid-cols-2 gap-2">
                         <div>
                             <label class="block text-xs font-semibold text-slate-600 mb-1">Qty</label>
-                            <input v-model.number="localItem.quantity" type="number" min="1"
+                            <input v-model.number="localItem.quantity" type="number" min="0.001"
                                 class="w-full border border-slate-300 rounded px-2 py-1 text-xs focus:border-blue-500 focus:ring-blue-500/20 transition-all duration-200"
                                 @input="updateItemField('quantity', $event.target.value)" />
                         </div>
@@ -182,7 +182,7 @@ export default {
 
             // Ensure quantity is at least 1
             if (field === 'quantity' && processedValue < 1) {
-                processedValue = 1;
+                // processedValue = 1;
             }
 
             // Ensure non-negative values for price, discount, and tax

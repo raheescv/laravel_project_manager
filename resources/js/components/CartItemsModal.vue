@@ -109,7 +109,7 @@
                                         <td class="py-2 px-3 text-right">
                                             <input :value="item.quantity"
                                                 @input="updateItemField(item.key, 'quantity', $event.target.value)"
-                                                @change="$emit('update-item-quantity', item.key)" type="number" min="1"
+                                                @change="$emit('update-item-quantity', item.key)" type="number" min="0.001"
                                                 class="w-full px-2 py-1 text-xs border border-sky-200 rounded-md focus:ring-1 focus:ring-sky-500 focus:border-sky-500 text-right bg-white font-semibold text-sky-800 transition-colors">
                                         </td>
 
@@ -212,7 +212,7 @@ export default {
 
             // Ensure quantity is at least 1
             if (field === 'quantity' && processedValue < 1) {
-                processedValue = 1;
+                // processedValue = 1;
             }
 
             // Ensure non-negative values for price, discount, and tax

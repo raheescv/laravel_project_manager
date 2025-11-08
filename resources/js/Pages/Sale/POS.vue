@@ -686,7 +686,7 @@
                     const key = `${item.employee_id}-${item.inventory_id}`
 
                     if (form.items[key]) {
-                        form.items[key].quantity += 1
+                        form.items[key].quantity = (parseFloat(form.items[key].quantity) || 0) + 0.001
                         await updateItemQuantity(key)
                     } else {
                         form.items[key] = item
