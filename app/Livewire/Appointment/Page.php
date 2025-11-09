@@ -201,7 +201,7 @@ class Page extends Component
             if (! $appointment) {
                 throw new Exception('Appointment not found', 1);
             }
-            $appointment->update([ 'status' => $status, 'updated_by' => Auth::id(), ]);
+            $appointment->update(['status' => $status, 'updated_by' => Auth::id()]);
 
             DB::commit();
 

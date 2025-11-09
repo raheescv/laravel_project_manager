@@ -37,11 +37,16 @@ class UpdateAction
             if ($data['type'] == 'service') {
                 $data['cost'] = $data['mrp'];
             }
+            if ($data['type'] == 'service') {
+                unset($data['barcode']);
+            }
             validationHelper(Product::rules($data, $id), $data);
             $data['updated_by'] = $user_id;
             $model->update($data);
 
-            $model->inventories()->update(['barcode' => $data['barcode']]);
+            if ($data['type'] == 'product') {
+                $model->inventories()->update(['barcode' => $data['barcode']]);
+            }
 
             if ($data['images']) {
                 foreach ($data['images'] as $file) {

@@ -154,15 +154,15 @@
                                         <div class="col-12">
                                             <label for="barcode" class="form-label fw-medium">
                                                 <i class="fa fa-barcode text-primary me-1 small"></i>
-                                                Barcode
+                                                Barcode <span class="text-danger">*</span>
                                             </label>
                                             <div class="input-group">
                                                 <span class="input-group-text bg-light border-primary-subtle">
                                                     <i class="fa fa-qrcode"></i>
                                                 </span>
-                                                {{ html()->input('barcode')->value('')->class('form-control border-primary-subtle shadow-sm')->placeholder('Enter a unique barcode here, or leave it blank to auto-generate one')->attribute('wire:model', 'products.barcode') }}
+                                                {{ html()->input('barcode')->value('')->class('form-control border-primary-subtle shadow-sm')->required(true)->placeholder('Enter a unique barcode here')->attribute('wire:model', 'products.barcode') }}
                                             </div>
-                                            <small class="text-muted mt-1 d-block">Enter a unique barcode identifier for this product</small>
+                                            <small class="text-muted mt-1 d-block">Enter a unique barcode identifier for this product (required)</small>
                                         </div>
                                     @endif
                                 @endif
