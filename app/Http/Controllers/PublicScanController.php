@@ -22,8 +22,7 @@ class PublicScanController extends Controller
    public function search(Request $request)
 {
     $barcode = $request->input('barcode');
-    a
-    \Log::info('Received barcode: '.$barcode);
+   
 
     $product = Product::where('barcode', $barcode)->first();
 
