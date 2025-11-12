@@ -57,6 +57,7 @@ export default function Scanner() {
             </div>
 
             {!barcode && <p style={{ textAlign: 'center', marginTop: '10px' }}>🔴 Scanning...</p>}
+            
 
             <input
                 type="text"

@@ -33,6 +33,7 @@ export default defineConfig({
         protocol: 'ws',      // ✅ Changed from 'wss' to 'ws' for local dev
     },
     cors: true,
+    
 },
 
     build: {

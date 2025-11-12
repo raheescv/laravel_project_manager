@@ -26,4 +26,5 @@ export default defineConfig({
         outDir: 'public/react/build',
         emptyOutDir: true,
     },
+    
 });
