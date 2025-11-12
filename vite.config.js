@@ -1,50 +1,18 @@
-import vue from '@vitejs/plugin-vue';
-import laravel from 'laravel-vite-plugin';
 import { defineConfig } from 'vite';
+import laravel from 'laravel-vite-plugin';
+import react from '@vitejs/plugin-react';
 
 export default defineConfig({
     plugins: [
         laravel({
-            input: ['resources/css/app.css', 'resources/js/app.js'],
+            input: ['resources/js/app.jsx'],
             refresh: true,
         }),
-        vue({
-            template: {
-                transformAssetUrls: {
-                    base: null,
-                    includeAbsolute: false,
-                },
-            },
-        }),
+        react(),
     ],
-    resolve: {
-        alias: {
-            '@': '/resources/js',
-        },
-    },
-    server: {
-        port: 5173,
-        host: '0.0.0.0',
-        strictPort: false,
-        https: process.env.FORCE_HTTPS || false,
-        hmr: {
-            host: process.env.VITE_APP_URL || 'localhost',
-            port: 5173,
-            protocol: 'wss',
-        },
-        cors: true,
-    },
     build: {
-        chunkSizeWarningLimit: 1000,
-        rollupOptions: {
-            output: {
-                manualChunks: {
-                    vendor: ['vue', 'alpinejs'],
-                },
-            },
-        },
+        outDir: 'public/build',
+        emptyOutDir: true,
     },
-    optimizeDeps: {
-        include: ['vue', 'alpinejs'],
-    },
+    base: './',
 });

@@ -503,6 +503,12 @@ if (! function_exists('https_asset')) {
     {
         $url = asset($path);
 
-        return str_replace('http://', 'https://', $url);
+        // If production → force HTTPS
+        if (App::environment('production')) {
+            return str_replace('http://', 'https://', $url);
+        }
+
+        // Otherwise (local/staging/dev) → keep HTTP
+        return str_replace('https://', 'http://', $url);
     }
 }
