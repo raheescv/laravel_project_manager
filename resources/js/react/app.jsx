@@ -1,13 +1,19 @@
 import React from "react";
 import { createRoot } from "react-dom/client";
 import { createInertiaApp } from "@inertiajs/react";
-import Scanner from "./Pages/Scan/Scanner.jsx";
-import Home from "./Pages/Home.jsx";
 
 createInertiaApp({
   resolve: (name) => {
-    if (name === "Scan/Scanner") return Scanner;
-    if (name === "Home") return Home;
+    // Dynamically import pages by name
+    const pages = {
+      "Scan/Scanner": () => import("./Pages/Scan/Scanner.jsx"),
+      Home: () => import("./Pages/Home.jsx"),
+    };
+
+    if (pages[name]) {
+      return pages[name]();
+    }
+
     throw new Error(`Page ${name} not found`);
   },
   setup({ el, App, props }) {

@@ -15,6 +15,7 @@ class PublicScanController extends Controller
     public function index()
     {
         // Render the React/Inertia page
+         Inertia::setRootView('app-react');
         return Inertia::render('Scan/Scanner');
     }
 
