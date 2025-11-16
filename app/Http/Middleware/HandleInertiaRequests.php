@@ -8,18 +8,14 @@ use Inertia\Middleware;
 class HandleInertiaRequests extends Middleware
 {
     /**
-     * The root template that's loaded on the first page visit.
-     *
-     * @see https://inertiajs.com/server-side-setup#root-template
+     * The default root template loaded on first page visit.
      *
      * @var string
      */
-    protected $rootView = 'app';
+    protected $rootView = 'app'; // default Vue root
 
     /**
-     * Determines the current asset version.
-     *
-     * @see https://inertiajs.com/asset-versioning
+     * Determine the current asset version.
      */
     public function version(Request $request): ?string
     {
@@ -28,16 +24,30 @@ class HandleInertiaRequests extends Middleware
 
     /**
      * Define the props that are shared by default.
-     *
-     * @see https://inertiajs.com/shared-data
-     *
-     * @return array<string, mixed>
      */
     public function share(Request $request): array
     {
         return [
             ...parent::share($request),
-            //
         ];
+    }
+
+    /**
+     * Dynamically change the root view for React pages.
+     */
+    public function rootView(Request $request): string
+    {
+        // For inventory React pages
+        if ($request->is('inventory*')) {
+            return 'app-react';
+        }
+
+        // For scan React pages
+        if ($request->is('scan*')) {
+            return 'app-react';
+        }
+
+        // Default root
+        return $this->rootView;
     }
 }

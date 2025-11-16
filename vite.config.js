@@ -19,34 +19,19 @@ export default defineConfig({
     ],
     resolve: {
         alias: {
-            '@': '/resources/js',
+            '@': '/resources/js',   // Vue root folder
         },
     },
     server: {
-    port: 5173,
-    host: '0.0.0.0',
-    strictPort: true,       // ✅ Changed to true, so it will fail if port 5173 is busy instead of auto-choosing another
-    https: false,           // ✅ Force HTTPS removed (was using env variable)
-    hmr: {
-        host: process.env.VITE_APP_URL || 'localhost',
         port: 5173,
-        protocol: 'ws',      // ✅ Changed from 'wss' to 'ws' for local dev
-    },
-    cors: true,
-    
-},
-
-    build: {
-        chunkSizeWarningLimit: 1000,
-        rollupOptions: {
-            output: {
-                manualChunks: {
-                    vendor: ['vue', 'alpinejs'],
-                },
-            },
+        host: '0.0.0.0',
+        strictPort: true,
+        https: false,
+        hmr: {
+            host: process.env.VITE_APP_URL || 'localhost',
+            port: 5173,
+            protocol: 'ws',
         },
-    },
-    optimizeDeps: {
-        include: ['vue', 'alpinejs'],
+        cors: true,
     },
 });

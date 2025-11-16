@@ -1,0 +1,1 @@
+import{j as e}from"./app-D-NgpXf2.js";function i(){return e.jsxs("div",{style:{padding:"2rem",textAlign:"center"},children:[e.jsx("h1",{children:"Welcome to the Home Page!"}),e.jsx("p",{children:"This is a plain Inertia + React page using Laravel + Vite."})]})}export{i as default};
