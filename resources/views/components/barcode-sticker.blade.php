@@ -12,7 +12,10 @@
     @endif
 
     <div class="barcode-container">
-        <img src="data:image/png;base64,{{ DNS1D::getBarcodePNG($inventory->barcode, 'C128', $settings['barcode_image']['width'] ?? 3, $settings['barcode_image']['height'] ?? 40) }}"
+        @php
+            $barcodeType = $settings['barcode']['type'] ?? ($settings['barcode_image']['type'] ?? 'C128');
+        @endphp
+        <img src="data:image/png;base64,{{ DNS1D::getBarcodePNG($inventory->barcode, $barcodeType, $settings['barcode_image']['width'] ?? 3, $settings['barcode_image']['height'] ?? 40) }}"
             alt="Sample Barcode">
     </div>
 
