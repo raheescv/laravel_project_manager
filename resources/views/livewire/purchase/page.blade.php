@@ -476,5 +476,16 @@
                 });
             });
         </script>
+        <script>
+document.addEventListener('livewire:init', () => {
+
+    Livewire.on('redirect-to-print', (data) => {
+        let id = data.id;
+        window.location.href = "/purchase/barcode-print/" + id;
+    });
+
+});
+</script>
+
     @endpush
 </div>
