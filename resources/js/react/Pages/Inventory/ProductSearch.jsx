@@ -444,7 +444,7 @@ async function applyScannedCode(code) {
 
       {/* Pagination */}
       <div className="card-footer d-flex justify-content-between align-items-center">
-        <small>Total Quantity: <strong>{totalQuantity}</strong></small>
+        <small>Total: <strong>{totalQuantity}</strong></small>
         {renderPagination()}
       </div>
 
