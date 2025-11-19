@@ -8,6 +8,13 @@
                             <i class="demo-pli-file-excel me-1"></i> Export
                         </button>
                     @endcan
+                     @can('sales return.create')
+            <a href="{{ route('sale_return::create') }}" 
+               class="btn btn-sm btn-outline-warning ms-2"
+               title="Create Sale Return">
+               <i class="demo-pli-recycling"></i> Return
+            </a>
+        @endcan
                     @can('sale.delete')
                         <button class="btn btn-sm btn-outline-danger" title="Delete selected items" wire:click="delete()" wire:confirm="Are you sure you want to delete the selected items?">
                             <i class="demo-pli-recycling me-1"></i> Delete

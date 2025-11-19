@@ -74,6 +74,17 @@
                     </label>
                     {{ html()->select('main_category_id', [])->value('')->class('select-category_id-list')->id('main_category_id')->placeholder('All Main Categories') }}
                 </div>
+
+                <div class="col-12 col-md-3" wire:ignore>
+    <label class="form-label fw-semibold mb-2">
+        <i class="demo-pli-tag me-1 text-primary"></i> Product Name
+    </label>
+    <input type="text" 
+           wire:model.live="product_name" 
+           class="form-control shadow-sm" 
+           placeholder="Search by product name...">
+</div>
+
                 <div class="col-12 col-md-3" wire:ignore>
                     <label class="form-label fw-semibold mb-2">
                         <i class="demo-pli-folder-with-document me-1 text-success"></i> Sub Category
