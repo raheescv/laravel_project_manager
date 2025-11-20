@@ -31,6 +31,7 @@ class PurchaseController extends Controller
     }
 
     return view('purchase.page', compact('id'));
+    
 }
 
 
