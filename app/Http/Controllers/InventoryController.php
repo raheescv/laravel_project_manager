@@ -5,8 +5,9 @@ namespace App\Http\Controllers;
 use App\Models\Inventory;
 use App\Models\Product;
 use Illuminate\Http\Request;
-use Inertia\Inertia;
 use Illuminate\Support\Facades\DB;
+use Inertia\Inertia;
+
 class InventoryController extends Controller
 {
     public function index()
@@ -14,16 +15,14 @@ class InventoryController extends Controller
         return view('inventory.index');
     }
 
-
-//  public function search()
-//     {
-//         return view('inventory.product-search');
-//     }
-     public function search()
+    //  public function search()
+    //     {
+    //         return view('inventory.product-search');
+    //     }
+    public function search()
     {
-       return Inertia::render('Inventory/ProductSearch');
+        return Inertia::render('Inventory/ProductSearch');
     }
-
 
     public function view($product_id)
     {
@@ -39,7 +38,7 @@ class InventoryController extends Controller
     //     return response()->json($list);
     // }
 
-     public function get(Request $request)
+    public function get(Request $request)
     {
         $limit = intval($request->input('limit', 10));
         $page = intval($request->input('page', 1));
@@ -68,8 +67,8 @@ class InventoryController extends Controller
             $query->where('inventories.barcode', 'like', "%{$productBarcode}%");
         }
 
-        if (!empty($branchIds)) {
-            if (!is_array($branchIds)) {
+        if (! empty($branchIds)) {
+            if (! is_array($branchIds)) {
                 // Accept comma-separated string
                 $branchIds = explode(',', $branchIds);
             }
@@ -97,7 +96,7 @@ class InventoryController extends Controller
             'inventories.id' => 'inventories.id',
         ];
 
-        if (!array_key_exists($sortField, $allowedSorts)) {
+        if (! array_key_exists($sortField, $allowedSorts)) {
             $sortField = 'products.code';
         }
         $sortDirection = strtolower($sortDirection) === 'asc' ? 'asc' : 'desc';
@@ -134,7 +133,7 @@ class InventoryController extends Controller
             ->when($productBarcode !== '', function ($q) use ($productBarcode) {
                 $q->where('inventories.barcode', 'like', "%{$productBarcode}%");
             })
-            ->when(!empty($branchIds), function ($q) use ($branchIds) {
+            ->when(! empty($branchIds), function ($q) use ($branchIds) {
                 $q->whereIn('inventories.branch_id', $branchIds);
             })
             ->when($showNonZero, function ($q) {
