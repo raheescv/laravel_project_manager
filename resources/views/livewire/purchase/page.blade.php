@@ -106,7 +106,7 @@
                                                 <td>
                                                     <div class="d-flex align-items-center">
                                                         <div class="flex-grow-1">
-                                                            <h6 class="mb-0">{{ $item['barcode']??'' }}</h6>
+                                                            <h6 class="mb-0">{{ $item['barcode'] ?? '' }}</h6>
                                                         </div>
                                                     </div>
                                                 </td>
@@ -477,15 +477,12 @@
             });
         </script>
         <script>
-document.addEventListener('livewire:init', () => {
-
-    Livewire.on('redirect-to-print', (data) => {
-        let id = data.id;
-        window.location.href = "/purchase/barcode-print/" + id;
-    });
-
-});
-</script>
-
+            document.addEventListener('livewire:init', () => {
+                Livewire.on('redirect-to-print', (data) => {
+                    let id = data.id;
+                    window.location.href = "/purchase/barcode-print/" + id;
+                });
+            });
+        </script>
     @endpush
 </div>

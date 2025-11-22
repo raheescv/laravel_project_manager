@@ -2,9 +2,9 @@
 
 namespace Database\Seeders;
 
+use Faker\Factory;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
-use Faker\Factory;
 
 class ProductSeeder extends Seeder
 {
@@ -22,8 +22,8 @@ class ProductSeeder extends Seeder
             $data[] = [
                 'type' => 'product',
                 'name' => ucfirst($faker->unique()->word),
-                'department_id' => !empty($departmentIds) ? $faker->randomElement($departmentIds) : null,
-                'main_category_id' => !empty($mainCategoryIds) ? $faker->randomElement($mainCategoryIds) : null,
+                'department_id' => ! empty($departmentIds) ? $faker->randomElement($departmentIds) : null,
+                'main_category_id' => ! empty($mainCategoryIds) ? $faker->randomElement($mainCategoryIds) : null,
                 'code' => strtoupper($faker->bothify('??###')),
                 'barcode' => strtoupper($faker->bothify('##??##')),
                 'unit_id' => 1,
