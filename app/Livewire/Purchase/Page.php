@@ -375,7 +375,6 @@ class Page extends Component
             if (! count($this->items)) {
                 throw new \Exception('Please add any item', 1);
             }
-
             $this->purchases['status'] = $type;
             $this->purchases['items'] = $this->items;
             $this->purchases['payments'] = $this->payments;
@@ -406,7 +405,6 @@ class Page extends Component
             $this->dispatch('redirect-to-print', id: $table_id);
 
         } catch (\Throwable $th) {
-
             DB::rollback();
             $this->dispatch('error', ['message' => $th->getMessage()]);
             $this->purchases['status'] = $oldStatus;
