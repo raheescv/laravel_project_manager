@@ -53,6 +53,8 @@ class Table extends Component
 
     protected $paginationTheme = 'bootstrap';
 
+    public $product_name = '';   // <— Missing property FIXED
+
     protected $listeners = [
         'Inventory-Refresh-Component' => '$refresh',
     ];
@@ -102,6 +104,8 @@ class Table extends Component
                 'code' => $this->code,
                 'non_zero' => $this->non_zero,
                 'search' => $this->search,
+                'product_name' => $this->product_name,
+
             ];
 
             // Get filtered count for better decision making
@@ -162,6 +166,12 @@ class Table extends Component
                 ->when($filters['code'] ?? null, function ($query, $value) {
                     return $query->where('products.code', $value);
                 })
+                ->when($filters['product_name'] ?? null, function ($query, $value) {
+                    $value = trim($value);
+
+                    return $query->where('products.name', 'like', "%{$value}%");
+                })
+
                 ->when($filters['search'] ?? null, function ($query, $value) {
                     return $query->where(function ($q) use ($value): void {
                         $value = trim($value);
@@ -289,6 +299,12 @@ class Table extends Component
             ->when($this->size, function ($query, $value) {
                 return $query->where('products.size', $value);
             })
+            ->when($this->product_name, function ($query, $value) {
+                $value = trim($value);
+
+                return $query->where('products.name', 'like', "%{$value}%");
+            })
+
             ->when($this->barcode, function ($query, $value) {
                 return $query->where('inventories.barcode', $value);
             })

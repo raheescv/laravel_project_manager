@@ -19,21 +19,22 @@ export default defineConfig({
     ],
     resolve: {
         alias: {
-            '@': '/resources/js',
+            '@': '/resources/js',   // Vue root folder
         },
     },
     server: {
         port: 5173,
         host: '0.0.0.0',
-        strictPort: false,
+        strictPort: true,
         https: process.env.FORCE_HTTPS || false,
         hmr: {
             host: process.env.VITE_APP_URL || 'localhost',
             port: 5173,
-            protocol: 'wss',
+            protocol: 'ws',
         },
         cors: true,
     },
+
     build: {
         chunkSizeWarningLimit: 1000,
         rollupOptions: {

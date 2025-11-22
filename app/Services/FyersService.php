@@ -19,15 +19,16 @@ class FyersService
 
     public function __construct()
     {
-        $this->clientId = config('services.fyers.client_id');
-        $this->accessToken = config('services.fyers.access_token');
-        $this->apiUrl = config('services.fyers.url');
+        $this->clientId = config('services.fyers.client_id') ?? '';
+        $this->accessToken = config('services.fyers.access_token') ?? '';
+        $this->apiUrl = config('services.fyers.url') ?? 'https://api.fyers.in/api/v2';
+
         $this->headers = [
-            'Authorization' => "$this->clientId:$this->accessToken",
+            'Authorization' => "{$this->clientId}:{$this->accessToken}",
             'Accept' => 'application/json',
         ];
-        $this->http = Http::withHeaders($this->headers);
 
+        $this->http = Http::withHeaders($this->headers);
     }
 
     public function fetchStockData($symbol)

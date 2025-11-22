@@ -206,7 +206,7 @@
                                     <span>{{ systemDate($item->date) }}</span>
                                 </div>
                             </td>
-                            @if ($sale_visible_column['created_at']??'')
+                            @if ($sale_visible_column['created_at'] ?? '')
                                 <td>{{ systemDateTime($item->created_at) }}</td>
                             @endif
                             <td class="text-nowrap">
@@ -308,7 +308,7 @@
                 <tfoot class="table-group-divider">
                     <tr class="bg-light">
                         <th colspan="3" class="ps-3"><strong>TOTALS</strong></th>
-                        @if ($sale_visible_column['created_at']??'')
+                        @if ($sale_visible_column['created_at'] ?? '')
                             <th></th>
                         @endif
                         @if ($sale_visible_column['reference_no'])

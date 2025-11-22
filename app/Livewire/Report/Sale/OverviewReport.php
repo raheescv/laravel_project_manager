@@ -132,11 +132,34 @@ class OverviewReport extends Component
             });
         $totalProducts = clone $products;
 
-        $products = $products->select('products.name as product', 'products.type')
-            ->selectRaw('sum(sale_items.total) as total')
-            ->selectRaw('sum(sale_items.quantity) as quantity')
+        // $products = $products->select('products.name as product', 'products.type')
+        //     ->selectRaw('sum(sale_items.total) as total')
+        //     ->selectRaw('sum(sale_items.quantity) as quantity')
+        //     ->orderBy($this->productSortField, $this->productSortDirection)
+        //     ->groupBy('sale_items.product_id')
+        //     ->paginate($this->productPerPage, ['*'], 'products-page');
+        $products = SaleItem::query()
+            ->join('sales', 'sales.id', '=', 'sale_items.sale_id')
+            ->join('products', 'products.id', '=', 'sale_items.product_id')
+            ->leftJoin('sale_return_items', 'sale_return_items.product_id', '=', 'products.id')
+            ->leftJoin('sale_returns', function ($join) {
+                $join->on('sale_returns.id', '=', 'sale_return_items.sale_return_id')
+                    ->where('sale_returns.status', 'completed');
+            })
+            ->tap($baseQuery)
+            ->where(function ($query) {
+                $query->where('products.name', 'like', '%'.$this->productSearch.'%');
+            })
+            ->groupBy('products.id')
+            ->select(
+                'products.id',
+                'products.name as product',
+                'products.type'
+            )
+            ->selectRaw('SUM(sale_items.quantity) as sales_quantity')
+            ->selectRaw('SUM(sale_return_items.quantity) as return_quantity')
+            ->selectRaw('SUM(sale_items.total) as total')
             ->orderBy($this->productSortField, $this->productSortDirection)
-            ->groupBy('sale_items.product_id')
             ->paginate($this->productPerPage, ['*'], 'products-page');
 
         $sales = Sale::query()->customerSearch($this->branchId, $from, $to);

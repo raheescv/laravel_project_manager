@@ -10,6 +10,7 @@ use App\Http\Controllers\ImageGenComfyController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\PhysicalVisitorController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\PublicScanController;
 use App\Http\Controllers\UserAttendanceController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\VisitorAnalyticsController;
@@ -17,6 +18,9 @@ use Illuminate\Support\Facades\Route;
 
 require __DIR__.'/auth.php';
 
+Route::get('/home', [PublicScanController::class, 'home'])->name('home');
+Route::get('/scan', [PublicScanController::class, 'index'])->name('scan.index');
+Route::post('/scan/search', [PublicScanController::class, 'search'])->name('scan.search');
 Route::middleware('auth')->group(function (): void {
     Route::get('/dashboard', [HomeController::class, 'index'])->name('dashboard');
     Route::get('/', [HomeController::class, 'index'])->name('home');

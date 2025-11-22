@@ -503,6 +503,12 @@ if (! function_exists('https_asset')) {
     {
         $url = asset($path);
 
-        return str_replace('http://', 'https://', $url);
+        // If production → force HTTPS
+        if (in_array(config('app.env'), ['production', 'staging'])) {
+            return str_replace('http://', 'https://', $url);
+        } else {
+            // Otherwise (local/staging/dev) → keep HTTP
+            return str_replace('https://', 'http://', $url);
+        }
     }
 }

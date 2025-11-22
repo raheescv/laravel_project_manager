@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Middleware\HandleInertiaRequests;
 use App\Http\Middleware\TrackVisitor;
 use App\Http\Middleware\TrustProxies;
 use Illuminate\Foundation\Application;
@@ -30,15 +31,26 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        // Trust hosts
         $middleware->trustHosts();
-        $middleware->use([TrustProxies::class]);
-        $middleware->use([TrackVisitor::class]);
 
-        // Exclude from CSRF token validation
+        // Global middleware
+        $middleware->use([
+            TrustProxies::class,
+            TrackVisitor::class,
+        ]);
+
+        // Add Inertia middleware to the web group
+        $middleware->web(append: [
+            HandleInertiaRequests::class,
+        ]);
+
+        // Exclude routes from CSRF verification
         $middleware->validateCsrfTokens(except: [
             'flat_trade/webhook/post_back',
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //
-    })->create();
+    })
+    ->create();

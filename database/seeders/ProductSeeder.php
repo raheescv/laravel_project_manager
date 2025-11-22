@@ -2,7 +2,6 @@
 
 namespace Database\Seeders;
 
-use App\Actions\Product\CreateAction;
 use Faker\Factory;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
@@ -12,29 +11,33 @@ class ProductSeeder extends Seeder
     public function run(): void
     {
         // DB::table('products')->truncate();
-        $data = [];
+
         $faker = Factory::create();
+        $data = [];
+
+        $departmentIds = DB::table('departments')->pluck('id')->toArray();
+        $mainCategoryIds = DB::table('categories')->pluck('id')->toArray();
+
         for ($i = 0; $i < 100; $i++) {
             $data[] = [
                 'type' => 'product',
-                'name' => $faker->name,
-                'department_id' => 'add '.$faker->name,
-                'main_category_id' => 'add '.$faker->name,
-                'sub_category_id' => 'add '.$faker->name,
-                'code' => $faker->hexcolor,
-                'barcode' => $faker->hexcolor,
+                'name' => ucfirst($faker->unique()->word),
+                'department_id' => ! empty($departmentIds) ? $faker->randomElement($departmentIds) : null,
+                'main_category_id' => ! empty($mainCategoryIds) ? $faker->randomElement($mainCategoryIds) : null,
+                'code' => strtoupper($faker->bothify('??###')),
+                'barcode' => strtoupper($faker->bothify('##??##')),
                 'unit_id' => 1,
                 'cost' => rand(99, 999),
                 'mrp' => rand(999, 9999),
                 'created_by' => 1,
                 'updated_by' => 1,
+                'created_at' => now(),
+                'updated_at' => now(),
             ];
         }
-        foreach ($data as $value) {
-            $response = (new CreateAction())->execute($value, 1);
-            if (! $response['success']) {
-                throw new \Exception($response['message'], 1);
-            }
-        }
+
+        DB::table('products')->insert($data);
+
+        $this->command->info('✅ Seeded 100 unique products successfully.');
     }
 }

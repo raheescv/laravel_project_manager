@@ -60,6 +60,8 @@
                                     <tr>
                                         <th class="text-left py-2 px-3 font-semibold text-teal-700 text-xs">Item
                                         </th>
+                                        <th class="text-left py-2 px-3 font-semibold text-teal-700 text-xs">Barcode
+                                        </th>
                                         <th class="text-right py-2 px-3 font-semibold text-teal-700 text-xs">Price
                                         </th>
                                         <th class="text-right py-2 px-3 font-semibold text-teal-700 text-xs">Qty
@@ -95,6 +97,18 @@
                                                 </div>
                                             </div>
                                         </td>
+                                        <td class="py-2 px-3">
+                                            <div class="flex items-center space-x-2">
+                                                
+                                                <div class="min-w-0">
+                                                    <div class="font-medium text-teal-800 text-xs truncate">
+                                                        {{ item.barcode }}
+                                                    </div>
+                                                   
+                                                </div>
+                                            </div>
+                                        </td>
+
 
                                         <!-- Price -->
                                         <td class="py-2 px-3 text-right">

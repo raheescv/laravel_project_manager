@@ -491,24 +491,27 @@
                 <div class="card-body p-0">
                     <div class="table-responsive">
                         <table class="table table-hover align-middle mb-0">
-                            <thead class="bg-light">
-                                <tr>
-                                    <th class="ps-3"><x-sortable-header :direction="$productSortDirection" :sortField="$productSortField" field="product.name" label="#" /></th>
-                                    <th><x-sortable-header :direction="$productSortDirection" :sortField="$productSortField" field="product.name" label="Name" /></th>
-                                    <th class="text-end"><x-sortable-header :direction="$productSortDirection" :sortField="$productSortField" field="product.quantity" label="Quantity" /></th>
-                                    <th class="text-end pe-3"><x-sortable-header :direction="$productSortDirection" :sortField="$productSortField" field="product.total" label="Total" /></th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @foreach ($products as $item)
-                                    <tr wire:key="{{ $item->id }}">
-                                        <td class="ps-3">{{ $loop->iteration }}</td>
-                                        <td>{{ $item->product }}</td>
-                                        <td class="text-end">{{ number_format($item->quantity) }}</td>
-                                        <td class="text-end pe-3">{{ currency($item->total) }}</td>
-                                    </tr>
-                                @endforeach
-                            </tbody>
+                          <thead class="bg-light">
+    <tr>
+        <th class="ps-3">#</th>
+        <th>Name</th>
+        <th class="text-end">Sold Qty</th>
+        <th class="text-end">Returned Qty</th>
+        <th class="text-end pe-3">Total</th>
+    </tr>
+</thead>
+<tbody>
+    @foreach ($products as $item)
+        <tr wire:key="{{ $item->id }}">
+            <td class="ps-3">{{ $loop->iteration }}</td>
+            <td>{{ $item->product }}</td>
+            <td class="text-end">{{ number_format($item->sales_quantity) }}</td>
+            <td class="text-end">{{ number_format($item->return_quantity) }}</td>
+            <td class="text-end pe-3">{{ currency($item->total) }}</td>
+        </tr>
+    @endforeach
+</tbody>
+
                             <tfoot class="bg-light">
                                 <tr>
                                     <td colspan="2" class="ps-3 fw-bold">Total</td>
