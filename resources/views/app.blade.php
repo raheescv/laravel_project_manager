@@ -13,7 +13,7 @@
     <link rel="stylesheet" href="{{ https_asset('assets/vendors/font-awesome/font-awesome.min.css') }}">
     <link rel="stylesheet" href="{{ https_asset('assets/css/nifty.min.css') }}">
     <link rel="stylesheet" href="{{ https_asset('assets/css/demo-purpose/demo-icons.min.css') }}">
-    <link rel="stylesheet" href="{{ ahttps_assetsset('assets/premium/icon-sets/line-icons/premium-line-icons.css') }}">
+    <link rel="stylesheet" href="{{ https_asset('assets/premium/icon-sets/line-icons/premium-line-icons.css') }}">
     <link rel="stylesheet" href="{{ https_asset('assets/css/demo-purpose/demo-settings.min.css') }}">
     <link rel="stylesheet" href="{{ https_asset('css/theme-helper.css') }}"><!-- Theme persistence helper -->
     <link rel="stylesheet" href="{{ https_asset('assets/vendors/tom-select/tom-select.min.css') }}">
@@ -35,7 +35,7 @@
     <script src="{{ https_asset('assets/vendors/bootstrap/bootstrap.min.js') }}"></script>
     <script src="{{ https_asset('assets/js/nifty.js') }}"></script>
     {{-- <script src="{{ https_asset('assets/js/demo-purpose-only.js') }}"></script> --}}
-    
+
 </body>
 
 </html>
