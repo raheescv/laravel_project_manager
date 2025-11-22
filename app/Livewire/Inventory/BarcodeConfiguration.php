@@ -13,6 +13,32 @@ class BarcodeConfiguration extends Component
 
     public $showGrid = true;
 
+    public array $barcodeTypes = [
+        'C128' => 'Code 128',
+        'C128A' => 'Code 128 A',
+        'C128B' => 'Code 128 B',
+        // 'C128C' => 'Code 128 C',
+        'C39' => 'Code 39',
+        'C39+' => 'Code 39+',
+        'C39E' => 'Code 39 Extended',
+        'C39E+' => 'Code 39 Extended +',
+        'C93' => 'Code 93',
+        // 'S25' => 'Standard 2 of 5',
+        // 'S25+' => 'Standard 2 of 5 +',
+        // 'I25' => 'Interleaved 2 of 5',
+        // 'I25+' => 'Interleaved 2 of 5 +',
+        // 'EAN8' => 'EAN-8',
+        // 'EAN13' => 'EAN-13',
+        // 'UPCA' => 'UPC-A',
+        // 'UPCE' => 'UPC-E',
+        // 'MSI' => 'MSI',
+        // 'MSI+' => 'MSI+',
+        // 'POSTNET' => 'Postnet',
+        // 'PHARMA' => 'Pharmacode',
+        'PHARMA2T' => 'Pharmacode Two-Track',
+        'CODABAR' => 'Codabar',
+    ];
+
     protected $listeners = [
         'elementMoved' => 'updateElementPosition',
         'elementResized' => 'updateElementSize',
@@ -22,8 +48,14 @@ class BarcodeConfiguration extends Component
 
     public function mount()
     {
-        $barcode = Configuration::where('key', 'barcode_configurations')->value('value') ?? '';
-        $this->barcode = json_decode($barcode, true) ?? $this->getDefaultSettings();
+        $saved = Configuration::where('key', 'barcode_configurations')->value('value');
+        $defaults = $this->getDefaultSettings();
+        if ($saved) {
+            $decoded = json_decode($saved, true);
+            $this->barcode = is_array($decoded) ? array_replace_recursive($defaults, $decoded) : $defaults;
+        } else {
+            $this->barcode = $defaults;
+        }
     }
 
     protected function getDefaultSettings()
@@ -54,6 +86,7 @@ class BarcodeConfiguration extends Component
                 'visible' => true,
                 'show_value' => true,
                 'scale' => 3,
+                'type' => 'C128',
             ],
             'price' => [
                 'font_size' => 16,
@@ -172,6 +205,11 @@ class BarcodeConfiguration extends Component
 
     public function save($showMessage = true)
     {
+        $selectedType = $this->barcode['barcode']['type'] ?? 'C128';
+        if (! array_key_exists($selectedType, $this->barcodeTypes)) {
+            $this->barcode['barcode']['type'] = 'C128';
+        }
+
         Configuration::updateOrCreate(['key' => 'barcode_configurations'], ['value' => json_encode($this->barcode)]);
         if ($showMessage) {
             $this->dispatch('success', ['message' => 'Settings saved successfully']);
