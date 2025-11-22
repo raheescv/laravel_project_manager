@@ -283,136 +283,139 @@
     <!-- Payment Method Wise Summary -->
     <div class="row g-4 mt-4">
         <!-- Sales Payment Methods -->
-        <div class="col-md-6">
-            <div class="card border-0 shadow-sm">
-                <div class="card-header bg-transparent py-3">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <h6 class="card-title mb-0 fw-bold">
-                            <i class="fa fa-credit-card text-success me-2"></i>
-                            Sales Payment Methods
-                        </h6>
-                        <span class="badge bg-success rounded-pill">{{ $salePayments->count() }} Methods</span>
-                    </div>
-                </div>
-                <div class="card-body p-0">
-                    <div class="table-responsive">
-                        <table class="table table-hover align-middle mb-0">
-                            <thead class="bg-light">
-                                <tr>
-                                    <th class="ps-3">#</th>
-                                    <th>Payment Method</th>
-                                    <th class="text-center">Transactions</th>
-                                    <th class="text-end pe-3">Amount</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @forelse ($salePayments as $index => $payment)
-                                    <tr wire:key="sale-payment-{{ $index }}">
-                                        <td class="ps-3">{{ $index + 1 }}</td>
-                                        <td>
-                                            <div class="d-flex align-items-center">
-                                                <div class="payment-method-icon me-2">
-                                                    @php
-                                                        $method = strtolower($payment->payment_method);
-                                                        $iconData = $paymentIcons[$method] ?? $paymentIcons['default'];
-                                                    @endphp
-                                                    <i class="fa {{ $iconData['icon'] }} {{ $iconData['color'] }}"></i>
-                                                </div>
-                                                <span class="fw-medium">{{ $payment->payment_method }}</span>
-                                            </div>
-                                        </td>
-                                        <td class="text-center">
-                                            <span class="badge bg-light text-dark">{{ $payment->transaction_count }}</span>
-                                        </td>
-                                        <td class="text-end pe-3 fw-bold">{{ currency($payment->total) }}</td>
-                                    </tr>
-                                @empty
-                                    <tr>
-                                        <td colspan="4" class="text-center py-4 text-muted">
-                                            <i class="fa fa-info-circle me-2"></i>
-                                            No payment data available
-                                        </td>
-                                    </tr>
-                                @endforelse
-                            </tbody>
-                            <tfoot class="bg-light">
-                                <tr>
-                                    <td colspan="2" class="ps-3 fw-bold">Total</td>
-                                    <td class="text-center fw-bold">{{ $salePayments->sum('transaction_count') }}</td>
-                                    <td class="text-end pe-3 fw-bold">{{ currency($salePayments->sum('total')) }}</td>
-                                </tr>
-                            </tfoot>
-                        </table>
-                    </div>
-                </div>
+      <div class="col-md-6">
+    <div class="card border-0 shadow-sm">
+        <div class="card-header bg-transparent py-3">
+            <div class="d-flex justify-content-between align-items-center">
+                <h6 class="card-title mb-0 fw-bold">
+                    <i class="fa fa-credit-card text-success me-2"></i>
+                    Sales Payment Summary
+                </h6>
+                <span class="badge bg-success rounded-pill">{{ $salePayments->count() }}</span>
             </div>
         </div>
 
-        <!-- Sale Returns Payment Methods -->
-        <div class="col-md-6">
-            <div class="card border-0 shadow-sm">
-                <div class="card-header bg-transparent py-3">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <h6 class="card-title mb-0 fw-bold">
-                            <i class="fa fa-undo text-warning me-2"></i>
-                            Returns Payment Methods
-                        </h6>
-                        <span class="badge bg-warning rounded-pill">{{ $saleReturnPayments->count() }} Methods</span>
-                    </div>
-                </div>
-                <div class="card-body p-0">
-                    <div class="table-responsive">
-                        <table class="table table-hover align-middle mb-0">
-                            <thead class="bg-light">
-                                <tr>
-                                    <th class="ps-3">#</th>
-                                    <th>Payment Method</th>
-                                    <th class="text-center">Returns</th>
-                                    <th class="text-end pe-3">Amount</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @forelse ($saleReturnPayments as $index => $payment)
-                                    <tr wire:key="return-payment-{{ $index }}">
-                                        <td class="ps-3">{{ $index + 1 }}</td>
-                                        <td>
-                                            <div class="d-flex align-items-center">
-                                                <div class="payment-method-icon me-2">
-                                                    @php
-                                                        $method = strtolower($payment->payment_method);
-                                                        $iconData = $paymentIcons[$method] ?? $paymentIcons['default'];
-                                                    @endphp
-                                                    <i class="fa {{ $iconData['icon'] }} {{ $iconData['color'] }}"></i>
-                                                </div>
-                                                <span class="fw-medium">{{ $payment->payment_method }}</span>
-                                            </div>
-                                        </td>
-                                        <td class="text-center">
-                                            <span class="badge bg-light text-dark">{{ $payment->transaction_count }}</span>
-                                        </td>
-                                        <td class="text-end pe-3 fw-bold text-danger">{{ currency($payment->total) }}</td>
-                                    </tr>
-                                @empty
-                                    <tr>
-                                        <td colspan="4" class="text-center py-4 text-muted">
-                                            <i class="fa fa-info-circle me-2"></i>
-                                            No return payment data available
-                                        </td>
-                                    </tr>
-                                @endforelse
-                            </tbody>
-                            <tfoot class="bg-light">
-                                <tr>
-                                    <td colspan="2" class="ps-3 fw-bold">Total</td>
-                                    <td class="text-center fw-bold">{{ $saleReturnPayments->sum('transaction_count') }}</td>
-                                    <td class="text-end pe-3 fw-bold text-danger">{{ currency($saleReturnPayments->sum('total')) }}</td>
-                                </tr>
-                            </tfoot>
-                        </table>
-                    </div>
-                </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="bg-light">
+                        <tr>
+                            <th class="ps-3">#</th>
+                            <th>Branch</th>
+                            <th>Payment Type</th>
+                            <th class="text-end pe-3">Amount</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        @forelse ($salePayments as $index => $payment)
+                            <tr wire:key="sale-payment-{{ $index }}">
+                                <td class="ps-3">{{ $index + 1 }}</td>
+
+                                <td>{{ $payment->branch_name }}</td>
+
+                                <td>{{ $payment->payment_method }}</td>
+
+                                <td class="text-end pe-3 fw-bold">
+                                    {{ currency($payment->total) }}
+                                </td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="4" class="text-center py-4 text-muted">
+                                    <i class="fa fa-info-circle me-2"></i>
+                                    No payment data available
+                                </td>
+                            </tr>
+                        @endforelse
+                    </tbody>
+
+                    <tfoot class="bg-light">
+                        <tr>
+                            <td colspan="3" class="ps-3 fw-bold">Total</td>
+                            <td class="text-end pe-3 fw-bold">
+                                {{ currency($salePayments->sum('total')) }}
+                            </td>
+                        </tr>
+                    </tfoot>
+
+                </table>
             </div>
         </div>
+    </div>
+</div>
+
+
+        <!-- Sale Returns Payment Methods -->
+        <div class="col-md-6">
+    <div class="card border-0 shadow-sm">
+        <div class="card-header bg-transparent py-3">
+            <div class="d-flex justify-content-between align-items-center">
+                <h6 class="card-title mb-0 fw-bold">
+                    Returns Payment Methods
+                </h6>
+                <span class="badge bg-warning rounded-pill">
+                    {{ $saleReturnPayments->count() }} Methods
+                </span>
+            </div>
+        </div>
+
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="bg-light">
+                        <tr>
+                            <th class="ps-3">#</th>
+                            <th>Branch</th>
+                            <th>Payment Method</th>
+                            <th class="text-center">Returns</th>
+                            <th class="text-end pe-3">Amount</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        @forelse ($saleReturnPayments as $index => $payment)
+                            <tr wire:key="return-payment-{{ $index }}">
+                                <td class="ps-3">{{ $index + 1 }}</td>
+
+                                <td>{{ $payment->branch_name }}</td>
+
+                                <td>
+                                    <span class="fw-medium">{{ $payment->payment_method }}</span>
+                                </td>
+
+                                <td class="text-center">
+                                    <span class="badge bg-light text-dark">
+                                        {{ $payment->transaction_count }}
+                                    </span>
+                                </td>
+
+                                <td class="text-end pe-3 fw-bold text-danger">
+                                    {{ currency($payment->total) }}
+                                </td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="5" class="text-center py-4 text-muted">
+                                    No return payment data available
+                                </td>
+                            </tr>
+                        @endforelse
+                    </tbody>
+
+                    <tfoot class="bg-light">
+                        <tr>
+                            <td colspan="3" class="ps-3 fw-bold">Total</td>
+                            <td class="text-center fw-bold">{{ $saleReturnPayments->sum('transaction_count') }}</td>
+                            <td class="text-end pe-3 fw-bold text-danger">{{ currency($saleReturnPayments->sum('total')) }}</td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
     </div>
 
     <!-- Sales Details Tables -->
