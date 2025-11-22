@@ -31,14 +31,14 @@ class InventoryController extends Controller
         return view('inventory.view', compact('product_id', 'product'));
     }
 
-    // public function get(Request $request)
-    // {
-    //     $list = (new Inventory())->getDropDownList($request->all());
-
-    //     return response()->json($list);
-    // }
-
     public function get(Request $request)
+    {
+        $list = (new Inventory())->getDropDownList($request->all());
+
+        return response()->json($list);
+}
+
+    public function getProduct(Request $request)
     {
         $limit = intval($request->input('limit', 10));
         $page = intval($request->input('page', 1));

@@ -7,6 +7,7 @@ export default defineConfig({
         laravel({
             input: ['resources/js/react/app.jsx'],
             refresh: true,
+            buildDirectory: 'react/build',
         }),
         react(),
     ],
@@ -19,11 +20,11 @@ export default defineConfig({
 
     server: {
         port: 5174,
-        host: 'localhost',
+        host: '0.0.0.0',
         strictPort: true,
-        https: false,
+        https: process.env.FORCE_HTTPS || false,
         hmr: {
-            host: process.env.VITE_REACT_APP_URL || 'localhost',
+            host: process.env.VITE_REACT_APP_URL || '0.0.0.0',
             port: 5174,
             protocol: 'ws',
         },
