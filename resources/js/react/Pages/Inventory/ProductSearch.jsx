@@ -231,25 +231,7 @@ async function applyScannedCode(code) {
 }
 
 // Optional: raw onScan debug (if using direct scanner)
-function onScan(result) {
-  console.log("📸 SCANNER RESULT RAW:", result);
 
-  if (!result?.rawValue) {
-    console.log("❌ No rawValue from scanner");
-    return;
-  }
-
-  const code = result.rawValue.replace(/[^a-zA-Z0-9]/g, '');
-  console.log("🔎 CLEAN BARCODE:", code);
-
-  if (code.length >= 4 && code.length <= 30) {
-    console.log("✅ Valid barcode scanned:", code);
-    applyScannedCode(code);
-    closeScanner();
-  } else {
-    console.log("❌ Barcode invalid length:", code.length);
-  }
-}
 
 
  function onScan(result) {
