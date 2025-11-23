@@ -38,6 +38,19 @@ class InventoryController extends Controller
         return response()->json($list);
 }
 
+public function getProductBySaleId($sale_id)
+{
+    $product = \App\Models\Inventory::getProductBySaleId($sale_id);
+
+    if (!$product) {
+        return response()->json(['items' => []], 404);
+    }
+
+    return response()->json(['items' => [$product]]);
+}
+
+
+
     public function getProduct(Request $request)
     {
         $limit = intval($request->input('limit', 10));

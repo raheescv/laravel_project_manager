@@ -131,54 +131,69 @@
             url += '?query=' + encodeURIComponent(query);
             url += '&model=customer';
             fetch(url, {
-                    headers: {
-                        'Cache-Control': 'no-cache',
-                    }
-                })
-                .then(response => {
-                    if (!response.ok) throw new Error('Network response was not ok');
-                    return response.json();
-                })
-                .then(json => callback(json.items))
-                .catch(err => {
-                    console.error('Error loading data:', err);
-                    callback();
-                });
+                headers: { 'Cache-Control': 'no-cache' }
+            })
+            .then(response => {
+                if (!response.ok) throw new Error('Network response was not ok');
+                return response.json();
+            })
+            .then(json => callback(json.items))
+            .catch(err => { console.error('Error loading data:', err); callback(); });
         },
-        onFocus: function() {
-            this.load('');
-        },
+        onFocus: function() { this.load(''); },
         render: {
             option: function(item, escape) {
                 return `
                     <div class="customer-option">
                         <div class="customer-name">${escape(item.name || item.text || '')}</div>
-                        ${item.mobile ? `
-                            <div class="customer-mobile">
-                                <i class="fa fa-phone"></i>
-                                ${escape(item.mobile)}
-                            </div>
-                        ` : ''}
+                        ${item.mobile ? `<div class="customer-mobile"><i class="fa fa-phone"></i> ${escape(item.mobile)}</div>` : ''}
                     </div>
                 `;
             },
             item: function(item, escape) {
                 return `<div>${escape(item.name || item.text || '')}</div>`;
-            },
+            }
         }
     };
 
+    // Single select
     $('.select-customer_id').each(function() {
-        new TomSelect(this, {
+        const select = new TomSelect(this, {
             ...customerSelectConfig,
             create: function(input, callback) {
-                Livewire.dispatch("Customer-Page-Create-Component", {
-                    'name': input
-                });
+                Livewire.dispatch("Customer-Page-Create-Component", { 'name': input });
             },
         });
+
+        // Preselect by customer ID if provided
+        @if(isset($selectedCustomerId) && $selectedCustomerId)
+            fetch("{{ route('account::list') }}?id={{ $selectedCustomerId }}&model=customer")
+                .then(res => res.json())
+                .then(json => {
+                    if(json.items && json.items.length) {
+                        const cust = json.items[0];
+                        select.addOption({ id: cust.id, name: cust.name });
+                        select.setValue(cust.id);
+                    }
+                });
+        @endif
+
+        // Preselect by sale ID if provided
+        @if(isset($saleId) && $saleId)
+            fetch("{{ route('account.customerBySale', ['sale_id' => $saleId]) }}")
+                .then(res => res.json())
+                .then(data => {
+                    if(data.success && data.customer) {
+                        const cust = data.customer;
+                        select.addOption({ id: cust.id, name: cust.name });
+                        select.setValue(cust.id);
+                    }
+                })
+                .catch(err => console.error('Error fetching customer by sale:', err));
+        @endif
     });
-    // Initialize for list select
+
+    // Multi-select
     $('.select-customer_id-list').each(function() {
         new TomSelect(this, {
             ...customerSelectConfig,

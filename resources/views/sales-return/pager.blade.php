@@ -22,6 +22,7 @@
     <x-sale-return.custom-payment-modal />
     @push('scripts')
        @include('components.select.customerSelectr', ['selectedCustomerId' => $id ?? null])
+
         @include('components.select.inventoryProductSelect')
          @include('components.select.customerSaleSelect')
         @include('components.select.paymentMethodSelect') 

@@ -147,4 +147,29 @@ class Inventory extends Model implements AuditableContracts
 
         return $return;
     }
+
+
+    public static function getProductBySaleId($sale_id)
+    {
+        $saleProduct = \App\Models\SaleProduct::with('product')
+            ->where('sale_id', $sale_id)
+            ->first();
+
+        if (!$saleProduct) {
+            return null;
+        }
+
+        return [
+            'id' => $saleProduct->product->id,
+            'name' => $saleProduct->product->name,
+            'barcode' => $saleProduct->product->barcode ?? '',
+            'batch' => $saleProduct->batch ?? '',
+            'size' => $saleProduct->product->size ?? '',
+            'code' => $saleProduct->product->code ?? '',
+            'color' => $saleProduct->product->color ?? '',
+            'mrp' => $saleProduct->product->mrp ?? '',
+            'image' => $saleProduct->product->image ?? cache('logo'),
+            'type' => $saleProduct->product->type ?? 'product',
+        ];
+    }
 }
