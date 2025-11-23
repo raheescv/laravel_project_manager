@@ -468,26 +468,28 @@ function onScan(result) {
       {/* Scanner Modal */}
     {/* Scanner Modal */}
 {/* Scanner Modal */}
+{/* Scanner Modal */}
 {scannerOpen && (
   <div className="scanner-modal position-fixed top-0 start-0 w-100 h-100 bg-dark bg-opacity-75 d-flex justify-content-center align-items-center zindex-tooltip">
     <div className="position-relative bg-white rounded p-2" style={{ width: '400px', maxWidth: '90%' }}>
+      
+      {/* Scanner Video */}
       <div style={{ width: '100%', height: '300px', overflow: 'hidden' }}>
-       <BarcodeScanner
-  onSuccess={(result) => {
-    if (!result?.rawValue) return;
-    const code = result.rawValue.replace(/[^a-zA-Z0-9]/g, '');
-    if (!code) return;
-    setProductBarcode(code);       // update input immediately
-    applyScannedCode(code);        // fetch product & highlight
-    closeScanner();
-  }}
-  containerStyle={{ width: '100%', height: '100%' }}
-  constraints={{ video: { facingMode: 'environment' } }} // rear camera
-/>
-
+        <BarcodeScanner
+          onSuccess={(result) => {
+            if (!result?.rawValue) return;
+            const code = result.rawValue.replace(/[^a-zA-Z0-9]/g, '');
+            if (!code) return;
+            setProductBarcode(code);   // update input immediately
+            applyScannedCode(code);    // fetch product & highlight
+            closeScanner();            // stop scanning
+          }}
+          containerStyle={{ width: '100%', height: '100%' }}
+          constraints={{ video: { facingMode: 'environment' } }} // rear camera
+        />
       </div>
 
-      {/* Test Mode Input */}
+      {/* Test Mode Manual Input */}
       <div className="mt-2">
         <label className="form-label small">Test Mode: Enter barcode manually</label>
         <div className="input-group">
@@ -497,7 +499,8 @@ function onScan(result) {
             placeholder="Type barcode and press Enter"
             onKeyDown={(e) => {
               if (e.key === 'Enter' && e.target.value.trim()) {
-                const code = e.target.value.trim();
+                const code = e.target.value.trim().replace(/[^a-zA-Z0-9]/g, '');
+                if (!code) return;
                 setProductBarcode(code);
                 applyScannedCode(code);
                 closeScanner();
@@ -511,6 +514,7 @@ function onScan(result) {
     </div>
   </div>
 )}
+
 
 
 
