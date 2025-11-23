@@ -157,7 +157,9 @@ class User extends Authenticatable implements AuditableContracts
         }
 
         $discountPercentage = round(($totalDiscount / $grossAmount) * 100, 2);
-
+        if($this->max_discount_per_sale==0){
+            throw new Exception("You don't have the permission to give discount");
+        }
         if ($discountPercentage > $this->max_discount_per_sale) {
             throw new Exception("Total discount percentage ({$discountPercentage}%) exceeds your maximum allowed discount per sale ({$this->max_discount_per_sale}%).");
         }
