@@ -482,20 +482,21 @@ function onScan(result) {
       padding: '10px'
     }}>
       {/* Barcode Scanner */}
-      <BarcodeScanner
-        onSuccess={(result) => {
-          if (!result?.rawValue) return;
-          const code = result.rawValue.replace(/[^a-zA-Z0-9]/g, '');
-          if (!code) return;
-          setProductBarcode(code);       // update input immediately
-          applyScannedCode(code);        // fetch product & highlight
-          closeScanner();
-        }}
-        onError={(err) => console.error(err)}
-        containerStyle={{ width: '100%', height: '400px' }}
-        constraints={{ video: { facingMode: "environment" } }} // mobile rear camera
-        stopStreamOnUnmount={true}
-      />
+     <BarcodeScanner
+    onSuccess={(result) => {
+        if (!result?.rawValue) return;
+        const code = result.rawValue.replace(/[^a-zA-Z0-9]/g, '');
+        if (!code) return;
+        setProductBarcode(code);
+        applyScannedCode(code);
+        closeScanner();
+    }}
+    onError={(err) => console.error(err)}
+    containerStyle={{ width: '100%', height: '400px' }}
+    constraints={{ video: { facingMode: { exact: "environment" } } }} // Force back camera
+    stopStreamOnUnmount={true}
+/>
+
 
       {/* Overlay Frame */}
       <div style={{
