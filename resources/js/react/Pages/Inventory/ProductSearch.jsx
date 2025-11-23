@@ -477,15 +477,16 @@ function onScan(result) {
             if (!result?.rawValue) return;
             const code = result.rawValue.replace(/[^a-zA-Z0-9]/g, '');
             if (!code) return;
-            setProductBarcode(code);       // update input immediately
-            applyScannedCode(code);        // fetch product & highlight
+            setProductBarcode(code); // update input immediately
+            applyScannedCode(code);  // fetch product & highlight
             closeScanner();
           }}
           containerStyle={{ width: '100%', height: '100%' }}
+          constraints={{ video: { facingMode: 'environment' } }} // <--- important for mobile back camera
+          stopStreamOnUnmount={true} // stop camera after close
         />
       </div>
 
-      {/* Test Mode Input */}
       <div className="mt-2">
         <label className="form-label small">Test Mode: Enter barcode manually</label>
         <div className="input-group">
@@ -509,6 +510,7 @@ function onScan(result) {
     </div>
   </div>
 )}
+
 
 
 
