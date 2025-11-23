@@ -476,18 +476,28 @@ function onScan(result) {
       {/* Scanner Video */}
       <div style={{ width: '100%', height: '300px', overflow: 'hidden' }}>
         <BarcodeScanner
+        
           onSuccess={(result) => {
-            if (!result?.rawValue) return;
-            const code = result.rawValue.replace(/[^a-zA-Z0-9]/g, '');
-            if (!code) return;
+            
             setProductBarcode(code);   // update input immediately
             applyScannedCode(code);    // fetch product & highlight
             closeScanner();            // stop scanning
           }}
           containerStyle={{ width: '100%', height: '100%' }}
-          constraints={{ video: { facingMode: 'environment' } }} // rear camera
+          // rear camera
         />
-      </div>
+        <div style={{
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
+                        width: '100%',
+                        height: '100%',
+                        border: '2px dashed red',
+                        boxSizing: 'border-box',
+                        pointerEvents: 'none'
+                    }}></div>
+                </div>
+      
 
       {/* Test Mode Manual Input */}
       <div className="mt-2">
