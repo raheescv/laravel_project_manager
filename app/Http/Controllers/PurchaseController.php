@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use App\Models\Configuration;
 use App\Models\Purchase;
 use App\Models\PurchaseItem;
-use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Spatie\Browsershot\Browsershot;
 
