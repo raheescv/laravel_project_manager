@@ -180,7 +180,7 @@ async function applyScannedCode(code) {
   console.log("📡 CHECKING BARCODE WITH API:", checkParams);
 
   try {
-    const checkRes = await axios.get('/inventory/product/list', { params: checkParams });
+    const checkRes = await axios.get('/inventory/product/getproduct', { params: checkParams });
 
     console.log("📥 API CHECK RESPONSE:", checkRes.data);
 
@@ -196,7 +196,7 @@ async function applyScannedCode(code) {
 
     console.log("✅ BARCODE FOUND. Fetching full product list…");
 
-    const resFull = await axios.get('/inventory/product/list', {
+    const resFull = await axios.get('/inventory/product/getProduct', {
       params: {
         productBarcode: code,
         branch_id: branchIds.map(b => b.value).join(','),
