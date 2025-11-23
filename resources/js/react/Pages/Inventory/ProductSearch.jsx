@@ -468,63 +468,33 @@ function onScan(result) {
       {/* Scanner Modal */}
     {/* Scanner Modal */}
 {/* Scanner Modal */}
-{/* Scanner Modal */}
 {scannerOpen && (
   <div className="scanner-modal position-fixed top-0 start-0 w-100 h-100 bg-dark bg-opacity-75 d-flex justify-content-center align-items-center zindex-tooltip">
-    <div style={{
-      width: '100%',
-      maxWidth: '500px',
-      position: 'relative',
-      border: '2px solid #333',
-      borderRadius: '8px',
-      overflow: 'hidden',
-      background: '#fff',
-      padding: '10px'
-    }}>
-      {/* Barcode Scanner */}
-     <BarcodeScanner
-    onSuccess={(result) => {
-        if (!result?.rawValue) return;
-        const code = result.rawValue.replace(/[^a-zA-Z0-9]/g, '');
-        if (!code) return;
-        setProductBarcode(code);
-        applyScannedCode(code);
-        closeScanner();
-    }}
-    onError={(err) => console.error(err)}
-    containerStyle={{ width: '100%', height: '400px' }}
-    stopStreamOnUnmount={true}
-    constraints={{
-        video: {
-            facingMode: { ideal: "environment" } // use ideal instead of exact
-        }
-    }}
+    <div className="position-relative bg-white rounded p-2" style={{ width: '400px', maxWidth: '90%' }}>
+      <div style={{ width: '100%', height: '300px', overflow: 'hidden' }}>
+       <BarcodeScanner
+  onSuccess={(result) => {
+    if (!result?.rawValue) return;
+    const code = result.rawValue.replace(/[^a-zA-Z0-9]/g, '');
+    if (!code) return;
+    setProductBarcode(code);       // update input immediately
+    applyScannedCode(code);        // fetch product & highlight
+    closeScanner();
+  }}
+  containerStyle={{ width: '100%', height: '100%' }}
+  constraints={{ video: { facingMode: 'environment' } }} // rear camera
 />
 
+      </div>
 
-
-      {/* Overlay Frame */}
-      <div style={{
-        position: 'absolute',
-        top: 0,
-        left: 0,
-        width: '100%',
-        height: '100%',
-        border: '2px dashed red',
-        boxSizing: 'border-box',
-        pointerEvents: 'none'
-      }}></div>
-
-      {/* Manual Input */}
+      {/* Test Mode Input */}
       <div className="mt-2">
-        <label className="form-label small">Manual Barcode Input</label>
+        <label className="form-label small">Test Mode: Enter barcode manually</label>
         <div className="input-group">
           <input
             type="text"
             className="form-control"
             placeholder="Type barcode and press Enter"
-            value={productBarcode}
-            onChange={(e) => setProductBarcode(e.target.value)}
             onKeyDown={(e) => {
               if (e.key === 'Enter' && e.target.value.trim()) {
                 const code = e.target.value.trim();
@@ -534,28 +504,13 @@ function onScan(result) {
               }
             }}
           />
-          <button
-            className="btn btn-primary"
-            onClick={() => {
-              if (productBarcode.trim()) {
-                applyScannedCode(productBarcode.trim());
-                closeScanner();
-              }
-            }}
-          >
-            Search
-          </button>
         </div>
       </div>
 
-      {/* Close Button */}
-      <button className="btn btn-danger btn-sm mt-2 w-100" onClick={closeScanner}>
-        Close Scanner
-      </button>
+      <button className="btn btn-danger btn-sm mt-2 w-100" onClick={closeScanner}>Close Scanner</button>
     </div>
   </div>
 )}
-
 
 
 
