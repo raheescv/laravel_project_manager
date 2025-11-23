@@ -38,12 +38,8 @@ class InventoryController extends Controller
         return response()->json($list);
     }
 
-    public function getProduct(Request $request)
+  public function getProduct(Request $request)
 {
-    $limit = intval($request->input('limit', 10));
-    $page = intval($request->input('page', 1));
-    $productName = trim($request->input('productName', ''));
-    $productCode = trim($request->input('productCode', ''));
     $productBarcode = trim($request->input('productBarcode', ''));
     $branchIds = $request->input('branch_id', null);
     $showNonZero = intval($request->input('show_non_zero', 0));
@@ -57,36 +53,52 @@ class InventoryController extends Controller
         ->join('branches', 'inventories.branch_id', '=', 'branches.id')
         ->where('products.type', '=', 'product');
 
+    // If barcode scanned, return exact match
     if ($productBarcode !== '') {
-        // Exact match if barcode is provided
         $query->where('inventories.barcode', '=', $productBarcode);
-    } else {
-        // Normal filters when barcode is not scanned
-        if ($productName !== '') {
-            $query->where('products.name', 'like', "%{$productName}%");
+        if (!empty($branchIds)) {
+            if (!is_array($branchIds)) $branchIds = explode(',', $branchIds);
+            $branchIds = array_map('intval', $branchIds);
+            $query->whereIn('inventories.branch_id', $branchIds);
         }
-        if ($productCode !== '') {
-            $query->where('products.code', 'like', "%{$productCode}%");
+        if ($showNonZero) $query->where('inventories.quantity', '>', 0);
+        if ($showBarcodeSku) $query->whereNotNull('inventories.barcode')->where('inventories.barcode', '<>', '');
+
+        $product = $query->select(
+            'inventories.id as inventory_id',
+            'products.id as id',
+            'products.code',
+            'products.name',
+            'products.size',
+            'inventories.barcode',
+            'products.mrp',
+            'branches.name as branch_name',
+            'inventories.quantity'
+        )->first();
+
+        if (!$product) {
+            return response()->json(['message' => 'Product not found'], 404);
         }
+
+        return response()->json($product); // Return single product object
     }
 
+    // If no barcode, use normal filters/pagination
+    $productName = trim($request->input('productName', ''));
+    $productCode = trim($request->input('productCode', ''));
+
+    if ($productName !== '') $query->where('products.name', 'like', "%{$productName}%");
+    if ($productCode !== '') $query->where('products.code', 'like', "%{$productCode}%");
+
     if (!empty($branchIds)) {
-        if (!is_array($branchIds)) {
-            $branchIds = explode(',', $branchIds);
-        }
+        if (!is_array($branchIds)) $branchIds = explode(',', $branchIds);
         $branchIds = array_map('intval', $branchIds);
         $query->whereIn('inventories.branch_id', $branchIds);
     }
 
-    if ($showNonZero) {
-        $query->where('inventories.quantity', '>', 0);
-    }
+    if ($showNonZero) $query->where('inventories.quantity', '>', 0);
+    if ($showBarcodeSku) $query->whereNotNull('inventories.barcode')->where('inventories.barcode', '<>', '');
 
-    if ($showBarcodeSku) {
-        $query->whereNotNull('inventories.barcode')->where('inventories.barcode', '<>', '');
-    }
-
-    // Allowed sort map
     $allowedSorts = [
         'products.code' => 'products.code',
         'products.name' => 'products.name',
@@ -97,10 +109,7 @@ class InventoryController extends Controller
         'inventories.quantity' => 'inventories.quantity',
         'inventories.id' => 'inventories.id',
     ];
-
-    if (!array_key_exists($sortField, $allowedSorts)) {
-        $sortField = 'products.code';
-    }
+    if (!array_key_exists($sortField, $allowedSorts)) $sortField = 'products.code';
     $sortDirection = strtolower($sortDirection) === 'asc' ? 'asc' : 'desc';
 
     $query->select(
@@ -115,12 +124,11 @@ class InventoryController extends Controller
         'inventories.quantity'
     )->orderBy($allowedSorts[$sortField], $sortDirection);
 
+    $limit = intval($request->input('limit', 10));
+    $page = intval($request->input('page', 1));
+
     $total = (clone $query)->count();
-
-    // Fetch paginated results
     $rows = $query->forPage($page, $limit)->get();
-
-    // Total quantity
     $totalQuantity = (clone $query)->sum('inventories.quantity');
 
     $data = $rows->map(fn($r) => [
@@ -148,5 +156,6 @@ class InventoryController extends Controller
         'total' => $total,
     ]);
 }
+
 
 }
