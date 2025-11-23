@@ -64,8 +64,10 @@ class InventoryController extends Controller
             $query->where('products.code', 'like', "%{$productCode}%");
         }
         if ($productBarcode !== '') {
-            $query->where('inventories.barcode', 'like', "%{$productBarcode}%");
-        }
+        // Exact match for barcode (faster for scanner)
+        $query->where('inventories.barcode', $productBarcode)
+              ->limit(1); // return only one row for scanned barcode
+    }
 
         if (! empty($branchIds)) {
             if (! is_array($branchIds)) {
