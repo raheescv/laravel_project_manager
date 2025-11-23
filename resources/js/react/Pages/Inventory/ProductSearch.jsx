@@ -161,7 +161,7 @@ async function applyScannedCode(code) {
   if (!code) return;
 
   setScannedCode(code);
-  // setHighlightedSKU(code);
+  setHighlightedSKU(code);
   setPage(1);
 
   const checkParams = {
@@ -452,33 +452,62 @@ async function applyScannedCode(code) {
 {/* Scanner Modal */}
 {/* Scanner Modal */}
 {scannerOpen && (
-  <div className="position-fixed top-0 start-0 w-100 h-100 bg-dark bg-opacity-75 d-flex justify-content-center align-items-center" style={{ zIndex: 9999 }}>
-    <div className="bg-white p-3 rounded shadow" style={{ width: "95%", maxWidth: "500px" }}>
+  <div className="scanner-modal position-fixed top-0 start-0 w-100 h-100 bg-dark bg-opacity-75 d-flex justify-content-center align-items-center zindex-tooltip">
+    <div className="position-relative bg-white rounded p-2" style={{ width: '400px', maxWidth: '90%' }}>
+      
+      {/* Scanner Video */}
+      <div style={{ width: '100%', height: '300px', overflow: 'hidden' }}>
+        <BarcodeScanner
+  onUpdate={(err, result) => {
+    if (result && result.text) {
+      const code = result.text.replace(/[^a-zA-Z0-9]/g, '');
+      if (code.length >= 4 && code.length <= 30) {
+        setProductBarcode(code);
+        applyScannedCode(code);
+        closeScanner();
+      }
+    }
+  }}
+  containerStyle={{ width: '100%', height: '100%' }}
+  constraints={{ facingMode: 'environment' }} // <-- rear camera
+/>
 
-      <BarcodeScanner
-        onUpdate={(err, result) => {
-          if (result?.text) {
-            const code = result.text.replace(/[^a-zA-Z0-9]/g, '');
+        <div style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          width: '100%',
+          height: '100%',
+          border: '2px dashed red',
+          boxSizing: 'border-box',
+          pointerEvents: 'none'
+        }}></div>
+      </div>
 
-            console.log("SCAN RESULT:", code);
+      {/* Manual Input */}
+      <div className="mt-2">
+        <label className="form-label small">Enter barcode manually</label>
+        <div className="input-group">
+          <input
+            type="text"
+            className="form-control"
+            placeholder="Type barcode and press Enter"
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && e.target.value.trim()) {
+                const code = e.target.value.trim().replace(/[^a-zA-Z0-9]/g, '');
+                setProductBarcode(code);
+                applyScannedCode(code);
+                closeScanner();
+              }
+            }}
+          />
+        </div>
+      </div>
 
-            if (code.length >= 4 && code.length <= 30) {
-              applyScannedCode(code);
-              closeScanner();
-            }
-          }
-        }}
-        containerStyle={{ width: '100%', height: '350px' }}
-        constraints={{ facingMode: 'environment' }} // rear camera
-      />
-
-      <button className="btn btn-danger w-100 mt-3" onClick={closeScanner}>
-        Close
-      </button>
+      <button className="btn btn-danger btn-sm mt-2 w-100" onClick={closeScanner}>Close Scanner</button>
     </div>
   </div>
 )}
-
 
 
 
