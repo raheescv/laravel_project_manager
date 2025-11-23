@@ -12,7 +12,7 @@
                     <i class="demo-pli-monitor-2 display-1 text-white" style="font-size: 8rem;"></i>
                 </div>
                 <div class="position-relative">
-                    <h1 class="display-5 fw-bold text-white mb-2">Welcome back,, {{ auth()->user()->name }}</h1>
+                    <h1 class="display-5 fw-bold text-white mb-2">Welcome back,,, {{ auth()->user()->name }}</h1>
                     <p class="lead mb-0 text-white text-opacity-75">Here's what's happening with your business today.</p>
                 </div>
             </div>
