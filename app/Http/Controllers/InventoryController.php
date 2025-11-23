@@ -36,7 +36,7 @@ class InventoryController extends Controller
         $list = (new Inventory())->getDropDownList($request->all());
 
         return response()->json($list);
-}
+    }
 
     public function getProduct(Request $request)
     {
