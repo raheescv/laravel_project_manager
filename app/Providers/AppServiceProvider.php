@@ -34,9 +34,9 @@ class AppServiceProvider extends ServiceProvider
                 );
             });
         // Force HTTPS for assets when the app is served over HTTPS
-        if (request()->isSecure() || env('FORCE_HTTPS', false) || env('APP_URL', '')->startsWith('https://')) {
-            URL::forceScheme('https');
-        }
+        // if (request()->isSecure() || env('FORCE_HTTPS', false) || env('APP_URL', '')->startsWith('https://')) {
+        //     URL::forceScheme('https');
+        // }
 
         if (Schema::hasTable('branches')) {
             Cache::remember('branches', now()->addYear(), function () {

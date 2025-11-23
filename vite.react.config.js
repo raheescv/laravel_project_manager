@@ -1,6 +1,6 @@
-import react from '@vitejs/plugin-react';
-import laravel from 'laravel-vite-plugin';
 import { defineConfig } from 'vite';
+import laravel from 'laravel-vite-plugin';
+import react from '@vitejs/plugin-react';
 
 export default defineConfig({
     plugins: [
@@ -23,11 +23,10 @@ export default defineConfig({
         host: '0.0.0.0',
         strictPort: true,
         https: process.env.FORCE_HTTPS || false,
-        origin: `${process.env.VITE_APP_URL || 'localhost'}:5174`,
         hmr: {
-            host: process.env.VITE_APP_URL || '0.0.0.0',
+            host: process.env.VITE_REACT_APP_URL || '0.0.0.0',
             port: 5174,
-            protocol: process.env.FORCE_HTTPS ? 'wss' : 'ws',
+            protocol: 'ws',
         },
     },
 
