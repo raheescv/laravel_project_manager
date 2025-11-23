@@ -28,6 +28,14 @@
             @endif
             <div class="row">
                 <div class="col-md-12 mb-2">
+                    <div class="form-group" wire:ignore>
+                        <b><label for="account_category_id" class="text-capitalize">Account Category</label></b>
+                        {{ html()->select('account_category_id', $accountCategories ?? [])->value(old('account_category_id', $accounts['account_category_id'] ?? ''))->class('select-account_category_id form-control')->id('modal_account_category_id')->placeholder('Select account category')->attribute('wire:model.live', 'accounts.account_category_id') }}
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-12 mb-2">
                     <div class="form-group">
                         <b><label for="name" class="text-capitalize">Name *</label></b>
                         {{ html()->input('name')->value('')->class('form-control')->attribute('wire:model', 'accounts.name') }}
@@ -66,6 +74,25 @@
                                 tomSelectInstance.addItem(data['id']);
                             }
                         });
+                    }
+                });
+                $('#modal_account_category_id').on('change', function(e) {
+                    const value = $(this).val() || null;
+                    @this.set('accounts.account_category_id', value);
+                });
+                window.addEventListener('SelectDropDownValues', event => {
+                    var data = event.detail[0];
+                    if (data && data.account_category_id) {
+                        @this.set('accounts.account_category_id', data.account_category_id);
+                        var accountCategoryTomSelectInstance = document.querySelector('#modal_account_category_id').tomselect;
+                        if (accountCategoryTomSelectInstance && data.account_category) {
+                            var preselectedData = {
+                                id: data.account_category_id,
+                                name: data.account_category['name'],
+                            };
+                            accountCategoryTomSelectInstance.addOption(preselectedData);
+                            accountCategoryTomSelectInstance.addItem(preselectedData.id);
+                        }
                     }
                 });
             });

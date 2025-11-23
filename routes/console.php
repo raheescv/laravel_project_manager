@@ -12,8 +12,6 @@ Artisan::command('inspire', function (): void {
 Schedule::command('backup:run --only-db')->daily();
 Schedule::command('backup:clean')->daily();
 
-Schedule::command('git:auto-pull main --force --build')->everyMinute()->withoutOverlapping();
-
 if (config('constants.auto_pull_enabled')) {
     Schedule::command('git:auto-pull '.config('constants.auto_pull_branch').' --force --build')->everyMinute()->withoutOverlapping();
 }

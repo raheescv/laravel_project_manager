@@ -6,6 +6,7 @@
     </div>
 </div>
 @push('scripts')
+    <x-select.accountCategorySelect />
     <script>
         window.addEventListener('ToggleAccountModal', event => {
             $('#AccountModal').modal('toggle');

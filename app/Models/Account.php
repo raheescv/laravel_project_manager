@@ -17,6 +17,7 @@ class Account extends Model implements AuditableContracts
     protected $fillable = [
         'account_type',
         'customer_type_id',
+        'account_category_id',
         'name',
         'mobile',
         'whatsapp_mobile',
@@ -71,6 +72,9 @@ class Account extends Model implements AuditableContracts
         $self = $self->when($request['customer_type_id'] ?? '', function ($query, $value) {
             return $query->where('customer_type_id', $value);
         });
+        $self = $self->when($request['account_category_id'] ?? '', function ($query, $value) {
+            return $query->where('account_category_id', $value);
+        });
         $self = $self->when($request['is_payment_method'] ?? '', function ($query, $value) {
             return $query->whereIn('id', cache('payment_methods', []));
         });
@@ -112,6 +116,11 @@ class Account extends Model implements AuditableContracts
     public function customerType()
     {
         return $this->belongsTo(CustomerType::class);
+    }
+
+    public function accountCategory()
+    {
+        return $this->belongsTo(AccountCategory::class);
     }
 
     public function sales()

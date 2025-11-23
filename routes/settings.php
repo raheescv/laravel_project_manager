@@ -5,6 +5,7 @@ use App\Http\Controllers\ComboOfferController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\ServiceController;
+use App\Http\Controllers\Settings\AccountCategoryController;
 use App\Http\Controllers\Settings\BranchController;
 use App\Http\Controllers\Settings\CategoryController;
 use App\Http\Controllers\Settings\CountryController;
@@ -20,6 +21,10 @@ Route::middleware('auth')->group(function (): void {
         Route::get('', 'index')->name('index')->can('configuration.settings');
         Route::name('category::')->prefix('category')->controller(CategoryController::class)->group(function (): void {
             Route::get('', 'index')->name('index')->can('category.view');
+            Route::get('list', 'get')->name('list');
+        });
+        Route::name('account_category::')->prefix('account_category')->controller(AccountCategoryController::class)->group(function (): void {
+            Route::get('', 'index')->name('index')->can('account category.view');
             Route::get('list', 'get')->name('list');
         });
         Route::name('unit::')->prefix('unit')->controller(UnitController::class)->group(function (): void {
