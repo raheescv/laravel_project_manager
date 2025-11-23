@@ -476,32 +476,35 @@ function onScan(result) {
       {/* Scanner Video */}
       <div style={{ width: '100%', height: '300px', overflow: 'hidden' }}>
         <BarcodeScanner
-        
-          onSuccess={(result) => {
-            
-            setProductBarcode(code);   // update input immediately
-            applyScannedCode(code);    // fetch product & highlight
-            closeScanner();            // stop scanning
+          onUpdate={(err, result) => {
+            if (result && result.text) {
+              const code = result.text.replace(/[^a-zA-Z0-9]/g, '');
+              if (code.length >= 4 && code.length <= 30) {
+                setProductBarcode(code);
+                applyScannedCode(code);
+                closeScanner();
+              }
+            }
           }}
-          containerStyle={{ width: '100%', height: '100%' }}
           // rear camera
+          constraints={{ video: { facingMode: { exact: "environment" } } }}
+          containerStyle={{ width: '100%', height: '100%' }}
         />
         <div style={{
-                        position: 'absolute',
-                        top: 0,
-                        left: 0,
-                        width: '100%',
-                        height: '100%',
-                        border: '2px dashed red',
-                        boxSizing: 'border-box',
-                        pointerEvents: 'none'
-                    }}></div>
-                </div>
-      
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          width: '100%',
+          height: '100%',
+          border: '2px dashed red',
+          boxSizing: 'border-box',
+          pointerEvents: 'none'
+        }}></div>
+      </div>
 
-      {/* Test Mode Manual Input */}
+      {/* Manual Input */}
       <div className="mt-2">
-        <label className="form-label small"> Enter barcode manually</label>
+        <label className="form-label small">Enter barcode manually</label>
         <div className="input-group">
           <input
             type="text"
@@ -510,7 +513,6 @@ function onScan(result) {
             onKeyDown={(e) => {
               if (e.key === 'Enter' && e.target.value.trim()) {
                 const code = e.target.value.trim().replace(/[^a-zA-Z0-9]/g, '');
-                if (!code) return;
                 setProductBarcode(code);
                 applyScannedCode(code);
                 closeScanner();
@@ -524,7 +526,6 @@ function onScan(result) {
     </div>
   </div>
 )}
-
 
 
 
