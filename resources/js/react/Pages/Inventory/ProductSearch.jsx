@@ -155,83 +155,48 @@ export default function ProductSearch() {
 
   // ---------- applyScannedCode: check first, only replace list when barcode found ----------
 async function applyScannedCode(code) {
-  console.log("🚀 applyScannedCode() START", code);
-
-  if (!code) {
-    console.log("❌ applyScannedCode(): empty code");
-    return;
-  }
+  if (!code) return;
 
   setScannedCode(code);
-  setHighlightedSKU(code);
+  setLoading(true);
   setPage(1);
 
-  const checkParams = {
-    productBarcode: code,
-    branch_id: branchIds.map(b => b.value).join(','),
-    show_non_zero: showNonZeroOnly ? 1 : 0,
-    show_barcode_sku: showBarcodeCodes ? 1 : 0,
-    limit: 1,
-    page: 1,
-    sortField,
-    sortDirection,
-  };
-
-  console.log("📡 CHECKING BARCODE WITH API:", checkParams);
-
   try {
-    const checkRes = await axios.get('/inventory/product/getproduct', { params: checkParams });
-
-    console.log("📥 API CHECK RESPONSE:", checkRes.data);
-
-    const found = Array.isArray(checkRes.data.data) && checkRes.data.data.length > 0;
-
-    if (!found) {
-      console.log("❌ NO PRODUCT FOUND FOR BARCODE:", code);
-      showNotification(`❌ Barcode not found: ${code}`, 'danger');
-      setScannedCode('');
-      setHighlightedSKU('');
-      return;
-    }
-
-    console.log("✅ BARCODE FOUND. Fetching full product list…");
-
-    const resFull = await axios.get('/inventory/product/getProduct', {
+    const res = await axios.get('/inventory/product/getProduct', {
       params: {
         productBarcode: code,
-        branch_id: branchIds.map(b => b.value).join(','),
+        branch_id: branchIds.map(b => b.value).join(','), // optional branch filter
         show_non_zero: showNonZeroOnly ? 1 : 0,
         show_barcode_sku: showBarcodeCodes ? 1 : 0,
-        limit,
+        limit: 1,
         page: 1,
-        sortField,
-        sortDirection,
       },
     });
 
-    console.log("📥 FULL DATA RESPONSE:", resFull.data);
+    const data = res.data.data || [];
 
-    const { data, total_quantity, links, per_page, total } = resFull.data;
-
-    setProducts(data || []);
-    setTotalQuantity(total_quantity || 0);
-    setMeta({
-      current_page: (links && links.current_page) || 1,
-      last_page: (links && links.last_page) || 1,
-      per_page: per_page || limit,
-      total: total || 0,
-    });
-
-    setProductBarcode(code);
-
-    setTimeout(() => setHighlightedSKU(''), 1500);
-
-    console.log("🎯 applyScannedCode() DONE");
+    if (data.length === 0) {
+      showNotification(`❌ Product not found for barcode: ${code}`, 'danger');
+      setProducts([]);
+      setHighlightedSKU('');
+    } else {
+      setProducts(data);
+      setTotalQuantity(res.data.total_quantity || 0);
+      setMeta({
+        current_page: 1,
+        last_page: 1,
+        per_page: 1,
+        total: 1,
+      });
+      setHighlightedSKU(data[0].barcode);
+    }
   } catch (err) {
-    console.error("🔥 ERROR IN applyScannedCode():", err);
-    showNotification("Error checking barcode", "danger");
-    setScannedCode('');
+    console.error("Error fetching barcode product:", err);
+    showNotification("Error fetching product", "danger");
+    setProducts([]);
     setHighlightedSKU('');
+  } finally {
+    setLoading(false);
   }
 }
 
@@ -448,27 +413,29 @@ async function applyScannedCode(code) {
         {renderPagination()}
       </div>
 
-      {/* Scanner Modal */}
-      {scannerOpen && (
-        <div className="scanner-modal position-fixed top-0 start-0 w-100 h-100 bg-dark bg-opacity-75 d-flex justify-content-center align-items-center zindex-tooltip">
-          <div className="position-relative bg-white rounded p-2" style={{ width: '400px', maxWidth: '90%' }}>
+    
+{scannerOpen && (
+  <div className="scanner-modal position-fixed top-0 start-0 w-100 h-100 bg-dark bg-opacity-75 d-flex justify-content-center align-items-center zindex-tooltip">
+    <div className="position-relative bg-white rounded p-2" style={{ width: '400px', maxWidth: '90%' }}>
+      <div style={{ width: '100%', height: '300px', overflow: 'hidden' }}>
+        <BarcodeScanner
+  containerStyle={{ width: '100%', height: '300px' }}
+  onSuccess={(text) => {       // <- rename 'code' to 'text'
+    console.log("✅ Scanned barcode:", text);  // text is the scanned barcode
+    applyScannedCode(text);    // fetch & show product using the scanned text
+    closeScanner();
+  }}
+  onError={(err) => console.error(err)}
+/>
 
-            {/* NEW BARCODE SCANNER */}
-            <div style={{ width: '100%', height: '300px', overflow: 'hidden' }}>
-              <BarcodeScanner
-                onCapture={onScan}
-                fps={30}
-                qrbox={250}
-                disableFlip={false}
-              />
-            </div>
+      </div>
+      <button className="btn btn-danger btn-sm mt-2 w-100" onClick={closeScanner}>
+        Close Scanner
+      </button>
+    </div>
+  </div>
+)}
 
-            <button className="btn btn-danger btn-sm mt-2 w-100" onClick={closeScanner}>
-              Close Scanner
-            </button>
-          </div>
-        </div>
-      )}
 
     </div>
   );
