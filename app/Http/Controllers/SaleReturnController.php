@@ -14,6 +14,13 @@ class SaleReturnController extends Controller
         return view('sales-return.page', compact('id'));
     }
 
+
+     public function pager($id = null)
+    {
+
+        
+        return view('sales-return.pager', compact('id'));
+    }
     public function view($id)
     {
 

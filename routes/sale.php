@@ -37,6 +37,8 @@ Route::middleware('auth')->group(function (): void {
         Route::get('edit/{id}', 'page')->name('edit')->can('sales return.edit');
         Route::get('view/{id}', 'view')->name('view')->can('sales return.view');
         Route::get('payments', 'payments')->name('payments')->can('sales return.payments');
+       Route::get('creater/{id}', 'pager')->name('creater')->can('sales return.create');
+
     });
 
     Route::prefix('products')->name('api.products.')->group(function (): void {

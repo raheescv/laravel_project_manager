@@ -308,6 +308,24 @@ class Sale extends Model implements AuditableContracts
         return $return;
     }
 
+    public function saleReturns()
+{
+    return $this->hasMany(SaleReturn::class, 'sale_id');
+}
+
+public function saleReturnItemBySaleItem($sale_item_id)
+{
+    return $this->saleReturns()
+        ->whereHas('items', function($q) use ($sale_item_id) {
+            $q->where('sale_item_id', $sale_item_id);
+        })
+        ->with(['items' => function($q) use ($sale_item_id) {
+            $q->where('sale_item_id', $sale_item_id);
+        }])
+        ->first();
+}
+
+
     public static function updateSalePaymentMethods(Sale $sale): void
     {
         $payment_method_ids = $sale->payments->pluck('payment_method_id')->toArray();

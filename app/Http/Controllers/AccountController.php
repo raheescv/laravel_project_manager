@@ -90,4 +90,58 @@ class AccountController extends Controller
             ], 404);
         }
     }
+
+    public function getCustomerBySaleId($sale_id)
+{
+    try {
+        // Fetch the sale
+        $sale = \App\Models\Sale::findOrFail($sale_id);
+
+        // Get the account_id from the sale
+        $customerId = $sale->account_id;
+
+        // Fetch the customer details
+        $customer = Account::with('customerType')->findOrFail($customerId);
+
+        // Sales statistics for this customer
+        $totalSales = \App\Models\Sale::where('account_id', $customerId)->count();
+        $totalAmount = \App\Models\Sale::where('account_id', $customerId)->sum('grand_total');
+        $lastPurchase = \App\Models\Sale::where('account_id', $customerId)
+            ->orderBy('date', 'desc')
+            ->value('date');
+
+        // Recent sales (last 5)
+        $recentSales = \App\Models\Sale::where('account_id', $customerId)
+            ->select('id', 'invoice_no', 'date', 'grand_total', 'status')
+            ->withCount('items')
+            ->orderBy('date', 'desc')
+            ->limit(5)
+            ->get()
+            ->map(function ($sale) {
+                return [
+                    'id' => $sale->id,
+                    'invoice_no' => $sale->invoice_no,
+                    'date' => $sale->date,
+                    'total' => $sale->grand_total,
+                    'status' => $sale->status,
+                    'items_count' => $sale->items_count,
+                ];
+            });
+
+        return response()->json([
+            'success' => true,
+            'customer' => $customer,
+            'total_sales' => $totalSales,
+            'total_amount' => $totalAmount,
+            'last_purchase' => $lastPurchase,
+            'recent_sales' => $recentSales,
+        ]);
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Sale or customer not found',
+        ], 404);
+    }
+}
+
 }

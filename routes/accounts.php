@@ -10,6 +10,8 @@ Route::middleware('auth')->group(function (): void {
         Route::get('', 'index')->name('index')->can('account.view');
         Route::get('list', 'get')->name('list');
         Route::get('view/{id}', 'view')->name('view')->can('expense.view');
+        Route::get('customer-by-sale/{sale_id}', [AccountController::class, 'getCustomerBySaleId'])
+            ->name('account.customerBySale');
         Route::name('customer::')->prefix('customer')->group(function (): void {
             Route::get('', 'customer')->name('index')->can('customer.view');
             Route::get('view/{id}', 'customer')->name('view')->can('customer.view');

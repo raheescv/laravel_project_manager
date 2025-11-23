@@ -375,6 +375,13 @@
                             <th>
                             </th>
                         @endif
+                        <td>
+                        <a href="{{ route('sale_return::creater', $item->id) }}"
+   class="btn btn-sm btn-outline-warning"
+   title="Create Sales Return">
+   <i class="fa fa-undo"></i> Return
+</a>
+</td>
                     </tr>
                 </tfoot>
             </table>
