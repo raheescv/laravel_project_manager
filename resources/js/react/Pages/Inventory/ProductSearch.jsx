@@ -454,20 +454,31 @@ async function applyScannedCode(code) {
 {scannerOpen && (
   <div className="position-fixed top-0 start-0 w-100 h-100 bg-dark bg-opacity-75 d-flex justify-content-center align-items-center" style={{ zIndex: 9999 }}>
     <div className="bg-white p-3 rounded shadow" style={{ width: "95%", maxWidth: "500px" }}>
-        
-        <BarcodeScanner
-            onSuccess={(text) => {
-                applyScannedCode(text); 
-                closeScanner();
-            }}
-            onError={(err) => console.error(err)}
-            containerStyle={{ width: '100%', height: '350px' }}
-        />
 
-        <button className="btn btn-danger w-100 mt-3" onClick={closeScanner}>Close</button>
+      <BarcodeScanner
+        onUpdate={(err, result) => {
+          if (result?.text) {
+            const code = result.text.replace(/[^a-zA-Z0-9]/g, '');
+
+            console.log("SCAN RESULT:", code);
+
+            if (code.length >= 4 && code.length <= 30) {
+              applyScannedCode(code);
+              closeScanner();
+            }
+          }
+        }}
+        containerStyle={{ width: '100%', height: '350px' }}
+        constraints={{ facingMode: 'environment' }} // rear camera
+      />
+
+      <button className="btn btn-danger w-100 mt-3" onClick={closeScanner}>
+        Close
+      </button>
     </div>
   </div>
 )}
+
 
 
 
