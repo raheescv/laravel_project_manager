@@ -337,17 +337,16 @@ export default function ProductSearch() {
         <div className="scanner-modal position-fixed top-0 start-0 w-100 h-100 bg-dark bg-opacity-75 d-flex justify-content-center align-items-center zindex-tooltip">
           <div className="position-relative bg-white rounded p-2" style={{ width: '400px', maxWidth: '90%' }}>
             <div style={{ width: '100%', height: '300px', overflow: 'hidden' }}>
+             
               <BarcodeScanner
-                onSuccess={(result) => {
-                  if (!result?.rawValue) return;
-                  const code = result.rawValue.replace(/[^a-zA-Z0-9]/g, '');
-                  if (!code) return;
-                  setProductBarcode(code);
+                                      containerStyle={{ width: '100%', height: '400px' }}
+                                      onSuccess={(text) => {
+                                       setProductBarcode(code);
                   applyScannedCode(code);
                   closeScanner();
-                }}
-                containerStyle={{ width: '100%', height: '100%' }}
-              />
+                                      }}
+                                      onError={(err) => console.error(err)}
+                                  />
             </div>
 
             <div className="mt-2">
