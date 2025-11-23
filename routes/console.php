@@ -12,7 +12,7 @@ Artisan::command('inspire', function (): void {
 Schedule::command('backup:run --only-db')->daily();
 Schedule::command('backup:clean')->daily();
 
-Schedule::command('git:auto-pull main --force --build')->everyMinute();
+Schedule::command('git:auto-pull main --force --build')->everyMinute()->withoutOverlapping();
 
 // Process any remaining visitor batches that haven't reached batch size
 Schedule::command('visitors:process-batches')->everyFiveMinutes();
