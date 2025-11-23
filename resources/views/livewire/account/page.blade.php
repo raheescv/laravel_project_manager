@@ -30,7 +30,7 @@
                 <div class="col-md-12 mb-2">
                     <div class="form-group" wire:ignore>
                         <b><label for="account_category_id" class="text-capitalize">Account Category</label></b>
-                        {{ html()->select('account_category_id', $accountCategories ?? [])->value(old('account_category_id', $accounts['account_category_id'] ?? ''))->class('select-account_category_id form-control')->id('modal_account_category_id')->placeholder('Select account category')->attribute('wire:model.live', 'accounts.account_category_id') }}
+                        {{ html()->select('account_category_id', $accountCategories ?? [])->value(old('account_category_id', $accounts['account_category_id'] ?? ''))->class('select-account_category_id')->id('modal_account_category_id')->placeholder('Select account category')->attribute('wire:model.live', 'accounts.account_category_id') }}
                     </div>
                 </div>
             </div>
