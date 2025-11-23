@@ -5,22 +5,34 @@ import axios from 'axios';
 export default function ProductScanner({ onProductFound }) {
     const [barcode, setBarcode] = useState('');
     const [error, setError] = useState('');
+    const [product, setProduct] = useState(null); // Added to display product
     const [scanning, setScanning] = useState(true);
     const scannerRef = useRef(null);
 
     const searchProduct = async (code) => {
+        if (!code) {
+            setError("Barcode is required");
+            setProduct(null);
+            return;
+        }
+
         try {
-            if (!code) return;
-            const res = await axios.get('/inventory/product/getProduct', { params: { productBarcode: code } });
-            if (res.data.data?.length > 0) {
-                onProductFound(res.data.data[0]); // Pass product back to parent
+            const res = await axios.get('/inventory/product/getProduct', { params: { barcode: code } });
+
+            const productData = Array.isArray(res.data.data) ? res.data.data[0] : res.data.data;
+
+            if (productData) {
+                setProduct(productData);  // Show product locally
                 setError('');
+                if (onProductFound) onProductFound(productData); // Call parent if function exists
             } else {
                 setError(`Product not found: ${code}`);
+                setProduct(null);
             }
         } catch (err) {
             console.error(err);
             setError(err.response?.data?.message || 'Error searching barcode');
+            setProduct(null);
         }
     };
 
@@ -43,7 +55,7 @@ export default function ProductScanner({ onProductFound }) {
                         onSuccess={(text) => {
                             setBarcode(text);
                             searchProduct(text);
-                            setScanning(false); // Stop scanning after success
+                            setScanning(false);
                         }}
                         onError={(err) => console.error(err)}
                     />
@@ -77,6 +89,15 @@ export default function ProductScanner({ onProductFound }) {
             </button>
 
             {error && <p style={{ color: 'red', textAlign: 'center' }}>{error}</p>}
+
+            {product && (
+                <div style={{ marginTop: '20px', textAlign: 'center', border: '1px solid #ddd', padding: '10px', borderRadius: '8px' }}>
+                    <h3>{product.name}</h3>
+                    <p><strong>Code:</strong> {product.code}</p>
+                    <p><strong>Barcode:</strong> {product.barcode}</p>
+                    <p><strong>MRP:</strong> {product.mrp}</p>
+                </div>
+            )}
         </div>
     );
 }

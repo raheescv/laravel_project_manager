@@ -47,19 +47,14 @@ class InventoryController extends Controller
     }
 
     // Fetch product directly from products table
-    $product = Product::where('barcode', $barcode)->first();
+    $product = Product::where('barcode', $request->input('barcode'))->first();
 
-    if (!$product) {
-        return response()->json(['message' => 'Product not found'], 404);
-    }
+if ($product) {
+    return response()->json(['data' => [$product]]); // Wrap in array
+} else {
+    return response()->json(['data' => []], 404);
+}
 
-    return response()->json([
-        'id' => $product->id,
-        'code' => $product->code,
-        'name' => $product->name,
-        'barcode' => $product->barcode,
-        'mrp' => $product->mrp,
-    ]);
 }
 
 }
