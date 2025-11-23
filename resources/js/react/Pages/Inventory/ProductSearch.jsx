@@ -449,26 +449,30 @@ async function applyScannedCode(code) {
       </div>
 
       {/* Scanner Modal */}
-      {scannerOpen && (
-        <div className="scanner-modal position-fixed top-0 start-0 w-100 h-100 bg-dark bg-opacity-75 d-flex justify-content-center align-items-center zindex-tooltip">
-          <div className="position-relative bg-white rounded p-2" style={{ width: '400px', maxWidth: '90%' }}>
+      {/* Scanner Modal */}
+{scannerOpen && (
+  <div className="scanner-modal position-fixed top-0 start-0 w-100 h-100 bg-dark bg-opacity-75 d-flex justify-content-center align-items-center zindex-tooltip">
+    <div className="position-relative bg-white rounded p-2" style={{ width: '400px', maxWidth: '90%' }}>
+      
+      {/* FIXED BARCODE SCANNER */}
+      <div style={{ width: '100%', height: '300px', overflow: 'hidden' }}>
+        <BarcodeScanner
+          key={scannerOpen ? 'open' : 'closed'} // forces re-mount on open
+          onCapture={onScan}
+          onError={(err) => console.error('Scanner error', err)}
+          fps={30}
+          qrbox={250} // scanning area
+          disableFlip={false}
+          constraints={{ facingMode: 'environment' }} // use rear camera
+        />
+      </div>
 
-            {/* NEW BARCODE SCANNER */}
-            <div style={{ width: '100%', height: '300px', overflow: 'hidden' }}>
-              <BarcodeScanner
-                onCapture={onScan}
-                fps={30}
-                qrbox={250}
-                disableFlip={false}
-              />
-            </div>
-
-            <button className="btn btn-danger btn-sm mt-2 w-100" onClick={closeScanner}>
-              Close Scanner
-            </button>
-          </div>
-        </div>
-      )}
+      <button className="btn btn-danger btn-sm mt-2 w-100" onClick={closeScanner}>
+        Close Scanner
+      </button>
+    </div>
+  </div>
+)}
 
     </div>
   );
