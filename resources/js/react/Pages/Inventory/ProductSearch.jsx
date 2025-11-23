@@ -458,20 +458,20 @@ async function applyScannedCode(code) {
       {/* Scanner Video */}
       <div style={{ width: '100%', height: '300px', overflow: 'hidden' }}>
         <BarcodeScanner
-          onUpdate={(err, result) => {
-            if (result && result.text) {
-              const code = result.text.replace(/[^a-zA-Z0-9]/g, '');
-              if (code.length >= 4 && code.length <= 30) {
-                setProductBarcode(code);
-                applyScannedCode(code);
-                closeScanner();
-              }
-            }
-          }}
-          // rear camera
-         
-          containerStyle={{ width: '100%', height: '100%' }}
-        />
+  onUpdate={(err, result) => {
+    if (result && result.text) {
+      const code = result.text.replace(/[^a-zA-Z0-9]/g, '');
+      if (code.length >= 4 && code.length <= 30) {
+        setProductBarcode(code);
+        applyScannedCode(code);
+        closeScanner();
+      }
+    }
+  }}
+  containerStyle={{ width: '100%', height: '100%' }}
+  constraints={{ facingMode: 'environment' }} // <-- rear camera
+/>
+
         <div style={{
           position: 'absolute',
           top: 0,
