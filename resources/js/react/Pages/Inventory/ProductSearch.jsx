@@ -487,7 +487,7 @@ function onScan(result) {
             }
           }}
           // rear camera
-          constraints={{ video: { facingMode: { exact: "environment" } } }}
+         
           containerStyle={{ width: '100%', height: '100%' }}
         />
         <div style={{
