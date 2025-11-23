@@ -493,9 +493,14 @@ function onScan(result) {
     }}
     onError={(err) => console.error(err)}
     containerStyle={{ width: '100%', height: '400px' }}
-    constraints={{ video: { facingMode: { exact: "environment" } } }} // Force back camera
     stopStreamOnUnmount={true}
+    constraints={{
+        video: {
+            facingMode: { ideal: "environment" } // use ideal instead of exact
+        }
+    }}
 />
+
 
 
       {/* Overlay Frame */}
