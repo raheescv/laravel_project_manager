@@ -64,11 +64,10 @@ public function getProduct(Request $request)
     if ($productCode !== '') {
         $query->where('products.code', 'like', "%{$productCode}%");
     }
+    
     if ($productBarcode !== '') {
-        // Exact match for barcode (faster for scanner)
-        $query->where('inventories.barcode', $productBarcode)
-              ->limit(1); // return only one row for scanned barcode
-    }
+    $query->where('inventories.barcode', $productBarcode);
+}
 
     if (!empty($branchIds)) {
         if (!is_array($branchIds)) {
