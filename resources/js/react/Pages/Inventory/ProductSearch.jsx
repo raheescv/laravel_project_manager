@@ -501,7 +501,7 @@ function onScan(result) {
 
       {/* Test Mode Manual Input */}
       <div className="mt-2">
-        <label className="form-label small">Test Mode: Enter barcode manually</label>
+        <label className="form-label small"> Enter barcode manually</label>
         <div className="input-group">
           <input
             type="text"
