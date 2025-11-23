@@ -5,34 +5,34 @@ import axios from 'axios';
 export default function ProductScanner({ onProductFound }) {
     const [barcode, setBarcode] = useState('');
     const [error, setError] = useState('');
-    const [product, setProduct] = useState(null); // Added to display product
+    const [product, setProduct] = useState(null);
     const [scanning, setScanning] = useState(true);
     const scannerRef = useRef(null);
 
     const searchProduct = async (code) => {
-        if (!code) {
-            setError("Barcode is required");
+        const trimmedCode = code?.trim();
+        if (!trimmedCode) {
+            setError(''); // Don't show error for scanning yet
             setProduct(null);
             return;
         }
 
         try {
-            const res = await axios.get('/inventory/product/getProduct', { params: { barcode: code } });
-
+            const res = await axios.get('/inventory/product/getProduct', { params: { barcode: trimmedCode } });
             const productData = Array.isArray(res.data.data) ? res.data.data[0] : res.data.data;
 
             if (productData) {
-                setProduct(productData);  // Show product locally
+                setProduct(productData);
                 setError('');
-                if (onProductFound) onProductFound(productData); // Call parent if function exists
+                if (onProductFound) onProductFound(productData);
             } else {
-                setError(`Product not found: ${code}`);
                 setProduct(null);
+                setError(`Product not found: ${trimmedCode}`);
             }
         } catch (err) {
             console.error(err);
-            setError(err.response?.data?.message || 'Error searching barcode');
             setProduct(null);
+            setError(err.response?.data?.message || 'Error searching barcode');
         }
     };
 
@@ -72,7 +72,10 @@ export default function ProductScanner({ onProductFound }) {
             )}
 
             {!scanning && (
-                <button onClick={() => setScanning(true)} style={{ display: 'block', margin: '10px auto' }}>
+                <button
+                    onClick={() => setScanning(true)}
+                    style={{ display: 'block', margin: '10px auto' }}
+                >
                     🔄 Scan Again
                 </button>
             )}
@@ -84,18 +87,28 @@ export default function ProductScanner({ onProductFound }) {
                 placeholder="Enter barcode manually"
                 style={{ padding: '8px', width: '100%', maxWidth: '500px', display: 'block', margin: '10px auto' }}
             />
-            <button onClick={() => searchProduct(barcode)} style={{ display: 'block', margin: '10px auto' }}>
+            <button
+                onClick={() => searchProduct(barcode)}
+                style={{ display: 'block', margin: '10px auto' }}
+            >
                 Search
             </button>
 
             {error && <p style={{ color: 'red', textAlign: 'center' }}>{error}</p>}
 
             {product && (
-                <div style={{ marginTop: '20px', textAlign: 'center', border: '1px solid #ddd', padding: '10px', borderRadius: '8px' }}>
+                <div style={{
+                    marginTop: '20px',
+                    textAlign: 'center',
+                    border: '1px solid #ddd',
+                    padding: '10px',
+                    borderRadius: '8px',
+                    background: '#f9f9f9'
+                }}>
                     <h3>{product.name}</h3>
                     <p><strong>Code:</strong> {product.code}</p>
                     <p><strong>Barcode:</strong> {product.barcode}</p>
-                    <p><strong>MRP:</strong> {product.mrp}</p>
+                    <p><strong>MRP:</strong> ₹{product.mrp}</p>
                 </div>
             )}
         </div>
