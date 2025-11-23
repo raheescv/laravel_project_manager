@@ -27,10 +27,11 @@ export default defineConfig({
         host: '0.0.0.0',
         strictPort: true,
         https: process.env.FORCE_HTTPS || false,
+        origin: `${process.env.VITE_APP_URL || 'localhost'}:5174`,
         hmr: {
             host: process.env.VITE_APP_URL || 'localhost',
             port: 5173,
-            protocol: 'ws',
+            protocol: process.env.FORCE_HTTPS ? 'wss' : 'ws',
         },
         cors: true,
     },
