@@ -52,7 +52,8 @@ class Table extends Component
     public $inventory_visible_column = [];
 
     protected $paginationTheme = 'bootstrap';
-      public $product_name = '';   // <— Missing property FIXED
+
+    public $product_name = '';   // <— Missing property FIXED
 
     protected $listeners = [
         'Inventory-Refresh-Component' => '$refresh',
@@ -166,9 +167,10 @@ class Table extends Component
                     return $query->where('products.code', $value);
                 })
                 ->when($filters['product_name'] ?? null, function ($query, $value) {
-    $value = trim($value);
-    return $query->where('products.name', 'like', "%{$value}%");
-})
+                    $value = trim($value);
+
+                    return $query->where('products.name', 'like', "%{$value}%");
+                })
 
                 ->when($filters['search'] ?? null, function ($query, $value) {
                     return $query->where(function ($q) use ($value): void {
@@ -298,9 +300,10 @@ class Table extends Component
                 return $query->where('products.size', $value);
             })
             ->when($this->product_name, function ($query, $value) {
-    $value = trim($value);
-    return $query->where('products.name', 'like', "%{$value}%");
-})
+                $value = trim($value);
+
+                return $query->where('products.name', 'like', "%{$value}%");
+            })
 
             ->when($this->barcode, function ($query, $value) {
                 return $query->where('inventories.barcode', $value);

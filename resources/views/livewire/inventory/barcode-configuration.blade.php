@@ -51,7 +51,11 @@
                                                     @break
 
                                                     @case('barcode')
-                                                        <img src="data:image/png;base64,{{ DNS1D::getBarcodePNG('SAMPLE', 'C128', 1.5, 30) }}" alt="Sample Barcode">
+                                                        @php
+                                                            $barcodeType = $barcode['barcode']['type'] ?? 'C128';
+                                                            $scale = $barcode['barcode']['scale'] ?? 1.5;
+                                                        @endphp
+                                                        <img src="data:image/png;base64,{{ DNS1D::getBarcodePNG('SAMPLE', $barcodeType, $scale, 30) }}" alt="Sample Barcode">
                                                     @break
 
                                                     @case('price')
@@ -136,7 +140,18 @@
                                             <div class="border rounded p-3 bg-light bg-opacity-50">
                                                 <h6 class="mb-3"><i class="fa fa-paint-brush me-2"></i>Appearance</h6>
                                                 <div class="row g-3">
-                                                    <div class="col-md-6">
+                                                    <div class="col-md-4">
+                                                        <label class="form-label">
+                                                            <i class="fa fa-barcode me-1"></i>Barcode Type
+                                                        </label>
+                                                        <select class="form-select" wire:model.live="barcode.barcode.type"
+                                                            data-bs-toggle="tooltip" title="Select the barcode type">
+                                                            @foreach ($barcodeTypes as $type => $label)
+                                                                <option value="{{ $type }}">{{ $label }}</option>
+                                                            @endforeach
+                                                        </select>
+                                                    </div>
+                                                    <div class="col-md-4">
                                                         <label class="form-label">
                                                             <i class="fa fa-magnifying-glass me-1"></i>Scale Factor
                                                         </label>
@@ -147,7 +162,7 @@
                                                             <span class="input-group-text">x</span>
                                                         </div>
                                                     </div>
-                                                    <div class="col-md-6">
+                                                    <div class="col-md-4">
                                                         <label class="form-label">
                                                             <i class="fa fa-text-height me-1"></i>Font Size
                                                         </label>

@@ -191,21 +191,12 @@
         @if ($settings['barcode']['visible'] ?? true)
             <div class="barcode-element barcode-image" style="{{ getElementStyle('barcode', $settings) }}">
                 @php
+                    $barcodeType = $settings['barcode']['type'] ?? 'C128';
                     $scale = $settings['barcode']['scale'];
                     $height = $settings['elements']['barcode']['height'] ?? 40;
                     $showCode = $settings['barcode']['show_value'] ?? true;
                 @endphp
-                <img src="data:image/png;base64,{{ DNS1D::getBarcodePNG($inventory->barcode, 'C128', $scale, $height, [0, 0, 0], $showCode) }}" alt="{{ $inventory->barcode }}">
-            </div>
-        @endif
-        @if ($settings['barcode']['visible'] ?? true)
-            <div class="barcode-element barcode-image" style="{{ getElementStyle('barcode', $settings) }}">
-                @php
-                    $scale = $settings['barcode']['scale'];
-                    $height = $settings['elements']['barcode']['height'] ?? 40;
-                    $showCode = $settings['barcode']['show_value'] ?? true;
-                @endphp
-                <img src="data:image/png;base64,{{ DNS1D::getBarcodePNG($inventory->barcode, 'C128', $scale, $height, [0, 0, 0], $showCode) }}" alt="{{ $inventory->barcode }}">
+                <img src="data:image/png;base64,{{ DNS1D::getBarcodePNG($inventory->barcode, $barcodeType, $scale, $height, [0, 0, 0], $showCode) }}" alt="{{ $inventory->barcode }}">
             </div>
         @endif
 

@@ -26,12 +26,26 @@ export default defineConfig({
         port: 5173,
         host: '0.0.0.0',
         strictPort: true,
-        https: false,
+        https: process.env.FORCE_HTTPS || false,
         hmr: {
             host: process.env.VITE_APP_URL || 'localhost',
             port: 5173,
             protocol: 'ws',
         },
         cors: true,
+    },
+
+    build: {
+        chunkSizeWarningLimit: 1000,
+        rollupOptions: {
+            output: {
+                manualChunks: {
+                    vendor: ['vue', 'alpinejs'],
+                },
+            },
+        },
+    },
+    optimizeDeps: {
+        include: ['vue', 'alpinejs'],
     },
 });

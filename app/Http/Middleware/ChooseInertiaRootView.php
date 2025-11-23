@@ -12,7 +12,7 @@ class ChooseInertiaRootView
         // All inventory pages use React
         if ($request->routeIs('inventory.*')) {
             Inertia::setRootView('app-react');
-        } 
+        }
         // Everything else uses Vue
         else {
             Inertia::setRootView('app');

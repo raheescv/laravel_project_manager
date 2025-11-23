@@ -30,7 +30,7 @@ class AppServiceProvider extends ServiceProvider
                 );
             });
         // Force HTTPS for assets when the app is served over HTTPS
-        if (request()->isSecure() || env('FORCE_HTTPS', false) || env('APP_URL', '')->startsWith('https://')) {
+        if (request()->isSecure() || env('FORCE_HTTPS', false) || str_starts_with(env('APP_URL', ''), 'https://')) {
             \Illuminate\Support\Facades\URL::forceScheme('https');
         }
 

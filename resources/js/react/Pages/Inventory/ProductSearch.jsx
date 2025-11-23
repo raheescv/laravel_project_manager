@@ -84,7 +84,7 @@ export default function ProductSearch() {
         sortDirection,
       };
 
-      const res = await axios.get('/inventory/product/list', { params });
+      const res = await axios.get('/inventory/product/getProduct', { params });
       const { data, total_quantity, links, per_page, total } = res.data;
 
       setProducts(data || []);
