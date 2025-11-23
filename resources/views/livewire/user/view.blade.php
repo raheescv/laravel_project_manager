@@ -80,7 +80,11 @@
                                         <span><i class="fa fa-home fa-fw me-2 text-muted"></i>HRA</span>
                                         <span class="text-end">{{ currency($user->hra) }}</span>
                                     </li>
-                                @endif
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    <span><i class="fa fa-tag fa-fw me-2 text-muted"></i>Max Discount Per Sale</span>
+                                    <span class="text-end">{{ ($user->max_discount_per_sale) }}%</span>
+                                </li>
+                            @endif
                             </ul>
                         </div>
                     </div>
