@@ -74,7 +74,7 @@ git log -1 --oneline
 if [ "$BUILD" = true ]; then
     echo ""
     echo -e "${BLUE}📦 Installing npm dependencies...${NC}"
-    npm ci --prefer-offline --no-audit || npm install --prefer-offline --no-audit
+    npm install
 
     echo -e "${BLUE}🔨 Building assets...${NC}"
     npm run build
