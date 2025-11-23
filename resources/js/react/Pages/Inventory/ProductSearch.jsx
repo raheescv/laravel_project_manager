@@ -12,7 +12,7 @@ export default function ProductScanner() {
   const searchProduct = async (code) => {
     try {
       if (!code) return;
-      const res = await axios.get('/inventory/product/getproduct', { params: { productBarcode: code } });
+      const res = await axios.get('/inventory/product/getProduct', { params: { productBarcode: code } });
       if (res.data.data?.length > 0) {
         const product = res.data.data[0];
         setProducts(prev => {
