@@ -5,14 +5,15 @@ import AsyncSelect from 'react-select/async';
 import { BarcodeScanner } from '@thewirv/react-barcode-scanner';
 
 export default function ProductSearch() {
-  // ---------------- State ----------------
+  // Filters
   const [productName, setProductName] = useState('');
   const [productCode, setProductCode] = useState('');
   const [productBarcode, setProductBarcode] = useState('');
-  const [branchIds, setBranchIds] = useState([]);
+  const [branchIds, setBranchIds] = useState([]); // array of {value,label}
   const [showNonZeroOnly, setShowNonZeroOnly] = useState(true);
   const [showBarcodeCodes, setShowBarcodeCodes] = useState(false);
 
+  // Data & pagination / sort
   const [products, setProducts] = useState([]);
   const [totalQuantity, setTotalQuantity] = useState(0);
   const [meta, setMeta] = useState({ current_page: 1, last_page: 1, per_page: 10, total: 0 });
@@ -20,24 +21,44 @@ export default function ProductSearch() {
   const [page, setPage] = useState(1);
   const [sortField, setSortField] = useState('products.code');
   const [sortDirection, setSortDirection] = useState('desc');
+
   const [loading, setLoading] = useState(false);
 
+  // Barcode scanner
   const [scannerOpen, setScannerOpen] = useState(false);
+  const [scannedCode, setScannedCode] = useState('');
+  const videoRef = useRef(null);
+  const quaggaLoaded = useRef(false);
+
+  // Highlighting
   const [highlightedSKU, setHighlightedSKU] = useState('');
   const rowRefs = useRef({});
+
+  // debounce
   const debounceRef = useRef(null);
 
-  // ---------------- Effects ----------------
-  useEffect(() => fetchProducts(page), [page]);
-  
+  // initial & dependencies fetch
+  useEffect(() => {
+    fetchProducts(1);
+    // eslint-disable-next-line
+  }, [page, limit, sortField, sortDirection]);
+
   useEffect(() => {
     clearTimeout(debounceRef.current);
     debounceRef.current = setTimeout(() => {
       setPage(1);
       fetchProducts(1);
     }, 250);
+
     return () => clearTimeout(debounceRef.current);
+    // eslint-disable-next-line
   }, [productName, productCode, productBarcode, branchIds, showNonZeroOnly, showBarcodeCodes, limit]);
+
+
+  useEffect(() => {
+    fetchProducts(page);
+  }, [page]);
+
 
   useEffect(() => {
     if (highlightedSKU && rowRefs.current[highlightedSKU]) {
@@ -45,11 +66,11 @@ export default function ProductSearch() {
     }
   }, [highlightedSKU, products]);
 
-  // ---------------- Functions ----------------
   async function fetchProducts(customPage = null) {
     setLoading(true);
     const p = customPage || page;
     try {
+      // Only include productBarcode if non-empty — prevents blocking normal listing
       const params = {
         productName,
         productCode,
@@ -125,57 +146,119 @@ export default function ProductSearch() {
 
   function openScanner() {
     setScannerOpen(true);
+    setScannedCode('');
   }
 
   function closeScanner() {
     setScannerOpen(false);
   }
 
-  async function applyScannedCode(code) {
-    if (!code) return;
+  // ---------- applyScannedCode: check first, only replace list when barcode found ----------
+async function applyScannedCode(code) {
+  console.log("🚀 applyScannedCode() START", code);
 
-    setHighlightedSKU(code);
-    setPage(1);
-
-    const params = {
-      productBarcode: code,
-      branch_id: branchIds.map(b => b.value).join(','),
-      show_non_zero: showNonZeroOnly ? 1 : 0,
-      show_barcode_sku: showBarcodeCodes ? 1 : 0,
-      limit,
-      page: 1,
-      sortField,
-      sortDirection,
-    };
-
-    try {
-      const res = await axios.get('/inventory/product/getProduct', { params });
-      const found = Array.isArray(res.data.data) && res.data.data.length > 0;
-
-      if (!found) {
-        showNotification(`❌ Barcode not found: ${code}`, 'danger');
-        setHighlightedSKU('');
-        return;
-      }
-
-      setProducts(res.data.data);
-      setTotalQuantity(res.data.total_quantity || 0);
-      setMeta({
-        current_page: res.data.links?.current_page || 1,
-        last_page: res.data.links?.last_page || 1,
-        per_page: res.data.per_page || limit,
-        total: res.data.total || 0,
-      });
-
-      setProductBarcode(code);
-      showNotification(`✅ Barcode found: ${code}`, 'success');
-      setTimeout(() => setHighlightedSKU(''), 1500);
-    } catch (err) {
-      console.error(err);
-      showNotification(`❌ Error checking barcode: ${code}`, 'danger');
-      setHighlightedSKU('');
-    }
+  if (!code) {
+    console.log("❌ applyScannedCode(): empty code");
+    return;
   }
+
+  setScannedCode(code);
+  setHighlightedSKU(code);
+  setPage(1);
+
+  const checkParams = {
+    productBarcode: code,
+    branch_id: branchIds.map(b => b.value).join(','),
+    show_non_zero: showNonZeroOnly ? 1 : 0,
+    show_barcode_sku: showBarcodeCodes ? 1 : 0,
+    limit: 1,
+    page: 1,
+    sortField,
+    sortDirection,
+  };
+
+  console.log("📡 CHECKING BARCODE WITH API:", checkParams);
+
+  try {
+    const checkRes = await axios.get('/inventory/product/list', { params: checkParams });
+
+    console.log("📥 API CHECK RESPONSE:", checkRes.data);
+
+    const found = Array.isArray(checkRes.data.data) && checkRes.data.data.length > 0;
+
+    if (!found) {
+      console.log("❌ NO PRODUCT FOUND FOR BARCODE:", code);
+      showNotification(`❌ Barcode not found: ${code}`, 'danger');
+      setScannedCode('');
+      setHighlightedSKU('');
+      return;
+    }
+
+    console.log("✅ BARCODE FOUND. Fetching full product list…");
+
+    const resFull = await axios.get('/inventory/product/list', {
+      params: {
+        productBarcode: code,
+        branch_id: branchIds.map(b => b.value).join(','),
+        show_non_zero: showNonZeroOnly ? 1 : 0,
+        show_barcode_sku: showBarcodeCodes ? 1 : 0,
+        limit,
+        page: 1,
+        sortField,
+        sortDirection,
+      },
+    });
+
+    console.log("📥 FULL DATA RESPONSE:", resFull.data);
+
+    const { data, total_quantity, links, per_page, total } = resFull.data;
+
+    setProducts(data || []);
+    setTotalQuantity(total_quantity || 0);
+    setMeta({
+      current_page: (links && links.current_page) || 1,
+      last_page: (links && links.last_page) || 1,
+      per_page: per_page || limit,
+      total: total || 0,
+    });
+
+    setProductBarcode(code);
+
+    setTimeout(() => setHighlightedSKU(''), 1500);
+
+    console.log("🎯 applyScannedCode() DONE");
+  } catch (err) {
+    console.error("🔥 ERROR IN applyScannedCode():", err);
+    showNotification("Error checking barcode", "danger");
+    setScannedCode('');
+    setHighlightedSKU('');
+  }
+}
+
+ function onScan(result) {
+  console.log("📸 SCANNER RESULT RAW:", result);
+
+  if (!result?.rawValue) {
+    console.log("❌ No rawValue from scanner");
+    return;
+  }
+
+  const code = result.rawValue;
+  console.log("📦 RAW BARCODE:", code);
+
+  const clean = code.replace(/[^a-zA-Z0-9]/g, '');
+  console.log("🔎 CLEAN BARCODE:", clean);
+
+  if (clean.length >= 4 && clean.length <= 30) {
+    console.log("✅ Valid barcode scanned:", clean);
+    applyScannedCode(clean);
+    closeScanner();
+  } else {
+    console.log("❌ Barcode invalid length:", clean.length);
+  }
+}
+
+
 
   function showNotification(message, type = 'info') {
     const el = document.createElement('div');
@@ -190,26 +273,54 @@ export default function ProductSearch() {
     const pages = [];
     const current = meta.current_page;
     const last = meta.last_page;
-    if (last <= 1) return null;
 
-    const totalPagesToShow = 10;
+    if (last <= 1) return null; // no pagination if only 1 page
+
+    const totalPagesToShow = 10; // maximum buttons we show
     let start = Math.max(1, current - Math.floor(totalPagesToShow / 2));
     let end = start + totalPagesToShow - 1;
-    if (end > last) { end = last; start = Math.max(1, end - totalPagesToShow + 1); }
 
-    if (current > 1) pages.push(<button key="prev" className="btn btn-sm btn-outline-primary me-1" onClick={() => goToPage(current - 1)}>Prev</button>);
+    if (end > last) {
+      end = last;
+      start = Math.max(1, end - totalPagesToShow + 1);
+    }
+
+    // Previous button
+    if (current > 1) {
+      pages.push(
+        <button key="prev" className="btn btn-sm btn-outline-primary me-1" onClick={() => goToPage(current - 1)}>
+          Prev
+        </button>
+      );
+    }
+
+    // Page buttons
     for (let p = start; p <= end; p++) {
       pages.push(
-        <button key={p} className={`btn btn-sm ${p === current ? 'btn-primary' : 'btn-outline-primary'} me-1`} onClick={() => goToPage(p)}>
+        <button
+          key={p}
+          className={`btn btn-sm ${p === current ? 'btn-primary' : 'btn-outline-primary'} me-1`}
+          onClick={() => goToPage(p)}
+        >
           {p}
         </button>
       );
     }
-    if (current < last) pages.push(<button key="next" className="btn btn-sm btn-outline-primary" onClick={() => goToPage(current + 1)}>Next</button>);
+
+    // Next button
+    if (current < last) {
+      pages.push(
+        <button key="next" className="btn btn-sm btn-outline-primary" onClick={() => goToPage(current + 1)}>
+          Next
+        </button>
+      );
+    }
+
     return <div className="d-flex flex-wrap">{pages}</div>;
   }
 
-  // ---------------- JSX ----------------
+
+
   return (
     <div className="card shadow-sm border-0">
       <div className="card-body bg-light">
@@ -238,7 +349,7 @@ export default function ProductSearch() {
             <label className="form-label fw-semibold mb-2">Product Barcode</label>
             <div className="input-group">
               <span className="input-group-text bg-white border-end-0"><i className="fa fa-barcode text-muted" /></span>
-              <input className="form-control border-start-0" value={productBarcode} onChange={(e) => setProductBarcode(e.target.value)} placeholder="Enter barcode..." />
+              <input id="productBarcodeInput" className="form-control border-start-0 barcode-input" value={productBarcode} onChange={(e) => setProductBarcode(e.target.value)} placeholder="Enter barcode..." />
             </div>
           </div>
 
@@ -304,11 +415,12 @@ export default function ProductSearch() {
                   <th className="border-0 text-end" style={{ cursor: 'pointer' }} onClick={() => changeSort('inventories.quantity')}><i className="fa fa-cubes me-1 text-muted" />QTY {sortField === 'inventories.quantity' ? (sortDirection === 'asc' ? '▲' : '▼') : null}</th>
                 </tr>
               </thead>
+
               <tbody>
                 {products.map(item => (
                   <tr
-                    key={item.inventory_id}
                     className={`align-middle ${item.barcode === highlightedSKU ? 'table-success' : ''}`}
+                    key={item.inventory_id}
                     ref={el => { if (el) rowRefs.current[item.barcode] = el }}
                   >
                     <td className="text-end"><code className="text-primary">{item.code}</code></td>
@@ -317,13 +429,17 @@ export default function ProductSearch() {
                     <td className="text-end"><code className="text-primary">{item.barcode}</code></td>
                     <td className="text-end"><code className="text-primary">{item.mrp}</code></td>
                     <td><span className="fw-medium">{item.branch_name}</span></td>
-                    <td className="text-end"><span className={`badge ${item.quantity > 0 ? 'bg-success' : 'bg-danger'} fs-6`}>{item.quantity}</span></td>
+                    <td className="text-end">
+                      <span className={`badge ${item.quantity > 0 ? 'bg-success' : 'bg-danger'} fs-6`}>{item.quantity}</span>
+                    </td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
-        ) : <div className="text-center p-3 text-muted">No products found.</div>}
+        ) : (
+          <div className="text-center p-3 text-muted">No products found.</div>
+        )}
       </div>
 
       {/* Pagination */}
@@ -336,43 +452,24 @@ export default function ProductSearch() {
       {scannerOpen && (
         <div className="scanner-modal position-fixed top-0 start-0 w-100 h-100 bg-dark bg-opacity-75 d-flex justify-content-center align-items-center zindex-tooltip">
           <div className="position-relative bg-white rounded p-2" style={{ width: '400px', maxWidth: '90%' }}>
+
+            {/* NEW BARCODE SCANNER */}
             <div style={{ width: '100%', height: '300px', overflow: 'hidden' }}>
-             
               <BarcodeScanner
-                                      containerStyle={{ width: '100%', height: '400px' }}
-                                      onSuccess={(text) => {
-                                       setProductBarcode(code);
-                  applyScannedCode(code);
-                  closeScanner();
-                                      }}
-                                      onError={(err) => console.error(err)}
-                                  />
+                onCapture={onScan}
+                fps={30}
+                qrbox={250}
+                disableFlip={false}
+              />
             </div>
 
-            <div className="mt-2">
-              <label className="form-label small">Test Mode: Enter barcode manually</label>
-              <div className="input-group">
-                <input
-                  type="text"
-                  className="form-control"
-                  placeholder="Enter barcode and press Enter"
-                  autoFocus
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' && e.target.value.trim()) {
-                      const code = e.target.value.trim();
-                      setProductBarcode(code);
-                      applyScannedCode(code);
-                      closeScanner();
-                    }
-                  }}
-                />
-              </div>
-            </div>
-
-            <button className="btn btn-sm btn-outline-danger position-absolute top-0 end-0 m-2" onClick={closeScanner}><i className="fa fa-times"></i></button>
+            <button className="btn btn-danger btn-sm mt-2 w-100" onClick={closeScanner}>
+              Close Scanner
+            </button>
           </div>
         </div>
       )}
+
     </div>
   );
 }
