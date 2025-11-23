@@ -19,6 +19,7 @@ class Table extends Component
     public $search = '';
 
     public $account_type = '';
+
     public $account_category_id = '';
 
     public $limit = 10;

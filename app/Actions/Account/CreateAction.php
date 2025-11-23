@@ -12,7 +12,7 @@ class CreateAction
         try {
             $data['mobile'] = $data['mobile'] ?? null;
 
-            if (str_contains($data['account_category_id'], 'add ')) {
+            if (isset($data['account_category_id']) && str_contains($data['account_category_id'], 'add ')) {
                 $name = str_replace('add ', '', $data['account_category_id']);
                 $data['account_category_id'] = AccountCategory::selfCreate($name);
             }
