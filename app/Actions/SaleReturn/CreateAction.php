@@ -13,7 +13,6 @@ class CreateAction
         try {
             $data['branch_id'] = $data['branch_id'] ?? session('branch_id');
             $data['created_by'] = $user_id;
-            $data['invoice_no'] = getNextSaleInvoiceNo();
             validationHelper(SaleReturn::rules(), $data);
             $model = SaleReturn::create($data);
 

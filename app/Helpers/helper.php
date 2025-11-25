@@ -386,18 +386,17 @@ if (! function_exists('thermalPrinterStyle')) {
 if (! function_exists('getNextSaleInvoiceNo')) {
     function getNextSaleInvoiceNo()
     {
-        $branch_code = session('branch_code');
-        $branch_id = session('branch_id');
+        $branchCode = session('branch_code', 'M');
         $prefix = 'INV-';
 
-        if ($branch_code) {
-            $prefix .= $branch_code.'-';
+        if ($branchCode) {
+            $prefix .= $branchCode.'-';
         }
 
         $country_id = cache('country_id', Country::QATAR);
 
         if ($country_id == Country::INDIA) {
-            $year = now()->format('y').'/'.(now()->addYear()->format('y'));
+            $year = now()->format('y').'/'.now()->addYear()->format('y');
             if (now()->lt(now()->copy()->month(3)->day(31))) {
                 $year = now()->subYear()->format('y').'/'.now()->format('y');
             }
@@ -407,29 +406,36 @@ if (! function_exists('getNextSaleInvoiceNo')) {
 
         $invoicePrefix = $prefix.$year.'-';
 
-        // Fetch the latest invoice for the branch and year
-        $lastInvoice = DB::table('sales')
-            ->where('branch_id', $branch_id)
-            ->whereYear('created_at', now()->year)
-            ->where('invoice_no', 'like', $invoicePrefix.'%')
-            ->orderByDesc('id')
-            ->value('invoice_no');
-
-        // Extract the numeric sequence or start from 1
-        $newSequence = $lastInvoice ? ((int) substr($lastInvoice, strlen($invoicePrefix))) + 1 : 1;
+        $number = getNextUniqueNumber('Sale');
 
         // Generate the invoice number
-        $invoice = $invoicePrefix.str_pad($newSequence, 4, '0', STR_PAD_LEFT);
-
-        // Ensure uniqueness (if concurrency is high, a lock mechanism should be used)
-        while (DB::table('sales')->where('branch_id', $branch_id)->where('invoice_no', $invoice)->exists()) {
-            $newSequence++;
-            $invoice = $invoicePrefix.str_pad($newSequence, 4, '0', STR_PAD_LEFT);
-        }
+        $invoice = $invoicePrefix.str_pad($number, 4, '0', STR_PAD_LEFT);
 
         return $invoice;
     }
+}
+if (! function_exists('getNextUniqueNumber')) {
+    function getNextUniqueNumber($segment = 'Sale')
+    {
+        $branchCode = session('branch_code', 'M');
+        $country_id = cache('country_id', Country::QATAR);
 
+        if ($country_id == Country::INDIA) {
+            $year = now()->format('y').'/'.now()->addYear()->format('y');
+            if (now()->lt(now()->copy()->month(3)->day(31))) {
+                $year = now()->subYear()->format('y').'/'.now()->format('y');
+            }
+        } else {
+            $year = now()->format('y');
+        }
+
+        DB::statement('SET @out_unique_no = 0;');
+        DB::statement("CALL getNextUniqueNumber($year, '$branchCode', '$segment', @out_unique_no);");
+
+        $result = DB::select('SELECT @out_unique_no as unique_no');
+
+        return $result[0]->unique_no;
+    }
 }
 
 if (! function_exists('TableView')) {
