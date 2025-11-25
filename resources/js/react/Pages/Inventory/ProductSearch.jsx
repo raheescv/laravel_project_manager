@@ -152,12 +152,16 @@ export default function ProductSearch() {
   function closeScanner() {
     setScannerOpen(false);
   }
+function beep() {
+  const audio = new Audio("https://actions.google.com/sounds/v1/alarms/beep_short.ogg");
+  audio.play();
+}
 
   // ---------- applyScannedCode: check first, only replace list when barcode found ----------
 // ---------- applyScannedCode: check first, only replace list when barcode found ----------
 async function applyScannedCode(code) {
   console.log("🚀 applyScannedCode() START:", code);
-
+   beep();
   if (!code) return;
 
   setScannedCode(code);
