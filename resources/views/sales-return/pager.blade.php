@@ -21,10 +21,12 @@
     <x-sale-return.view-items-modal />
     <x-sale-return.custom-payment-modal />
     @push('scripts')
-       @include('components.select.customerSelectr', ['selectedCustomerId' => $id ?? null])
+   @include('components.select.customerSelectr',['sale_id' => $id ?? 0])
 
-        @include('components.select.inventoryProductSelect')
-         @include('components.select.customerSaleSelect')
+
+
+        @include('components.select.inventoryProductSelectr',['sale_id' => $id ?? 0])
+         @include('components.select.customerSaleSelectr',['sale_id' => $id ?? 0])
         @include('components.select.paymentMethodSelect') 
         <script>
             document.addEventListener('DOMContentLoaded', function() {

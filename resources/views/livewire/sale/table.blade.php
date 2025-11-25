@@ -187,6 +187,7 @@
                         @if ($sale_visible_column['status'])
                             <th> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="status" label="status" /> </th>
                         @endif
+                       
                     </tr>
                 </thead>
                 <tbody>
@@ -302,6 +303,15 @@
                                     </div>
                                 </td>
                             @endif
+                            <td>
+                                   <td>
+        <a href="{{ route('sale_return::creater', $item->id) }}"
+           class="btn btn-sm btn-outline-warning"
+           title="Create Sales Return">
+           <i class="fa fa-undo"></i> Return
+        </a>
+    </td>
+</td>
                         </tr>
                     @endforeach
                 </tbody>
@@ -375,13 +385,9 @@
                             <th>
                             </th>
                         @endif
-                        <td>
-                        <a href="{{ route('sale_return::creater', $item->id) }}"
-   class="btn btn-sm btn-outline-warning"
-   title="Create Sales Return">
-   <i class="fa fa-undo"></i> Return
-</a>
-</td>
+                        <th>
+                            
+                 
                     </tr>
                 </tfoot>
             </table>

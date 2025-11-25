@@ -15,7 +15,7 @@ Route::middleware('auth')->group(function (): void {
             Route::get('list', [InventoryController::class, 'get'])->name('list');
             Route::get('getProduct', [InventoryController::class, 'getProduct'])->name('getProduct');
             Route::get('product-by-sale/{sale_id}', [InventoryController::class, 'getProductBySaleId'])
-    ->name('inventory.productBySale');
+             ->name('pro.productBySale')->can('inventory.view');
 
         });
         Route::name('transfer::')->prefix('transfer')->controller(InventoryTransferController::class)->group(function (): void {

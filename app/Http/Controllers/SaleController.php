@@ -276,6 +276,31 @@ class SaleController extends Controller
         return response()->json($list);
     }
 
+
+public function getInvoiceBySaleId($sale_id)
+{
+    if (!$sale_id) {
+        return response()->json(['items' => []]);
+    }
+
+    $sale = \App\Models\Sale::where('id', $sale_id)
+        ->select('id', 'invoice_no', 'reference_no')
+        ->first();
+
+    if (!$sale) {
+        return response()->json(['items' => []]);
+    }
+
+    return response()->json([
+        'items' => [[
+            'id' => $sale->id,
+            'invoice_no' => $sale->invoice_no,
+            'reference_no' => $sale->reference_no,
+        ]]
+    ]);
+}
+
+
     public function dayManagement(Request $request)
     {
         return view('sale.day-management');

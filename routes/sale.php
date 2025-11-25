@@ -26,6 +26,7 @@ Route::middleware('auth')->group(function (): void {
         Route::get('view/{id}', 'view')->name('view')->can('sale.view');
         Route::get('invoices', 'get')->name('invoice-list');
         Route::get('receipts', 'receipts')->name('receipts')->can('sale.receipts');
+        Route::get('single-invoice/{sale_id}', 'getInvoiceBySaleId')->name('single.invoice-list')->can('sale.view');
 
         Route::get('day-management', 'dayManagement')->name('day-management')->can('sale.view');
         Route::get('day-session/{id}', 'daySession')->name('day-session')->can('sale.view');

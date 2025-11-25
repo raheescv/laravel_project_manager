@@ -112,69 +112,36 @@
 
 <script type="text/javascript">
     function initInventoryProductSelect(saleId = null) {
-        $('.select-inventory-product_id-list').each(function() {
-            new TomSelect(this, {
-                persist: false,
-                valueField: 'id',
-                nameField: 'name',
-                searchField: ['name', 'barcode', 'code', 'batch', 'size', 'color', 'id'],
-                load: function(query, callback) {
-                    let url;
-                    if (saleId) {
-                        // Load single product by sale_id
-                        url = "{{ route('inventory::product::by-sale') }}" + '/' + encodeURIComponent(saleId);
-                    } else {
-                        // Load all products
-                        url = "{{ route('inventory::product::list') }}?query=" + encodeURIComponent(query);
-                    }
+    $('.select-inventory-product_id-list').each(function() {
+        const ts = new TomSelect(this, {
+            persist: false,
+            valueField: 'id',
+            labelField: 'name',
+            searchField: ['name', 'barcode', 'code', 'batch', 'size', 'color', 'id'],
+            load: function(query, callback) {
+                let url;
+                if (saleId) {
+                    // Load products by sale ID
+                    url = "{{ route('inventory::product::pro.productBySale', '') }}/" + encodeURIComponent(saleId);
+                } 
 
-                    fetch(url, { headers: { 'Cache-Control': 'no-cache' } })
-                        .then(response => {
-                            if (!response.ok) throw new Error('Network response was not ok');
-                            return response.json();
-                        })
-                        .then(json => callback(json.items))
-                        .catch(err => {
-                            console.error('Error loading data:', err);
-                            callback();
-                        });
-                },
-                onFocus: function() {
-                    this.load('');
-                },
-                render: {
-                    option: function(item, escape) {
-                        var option = `
-                            <div class="dropdown-item d-flex align-items-center">
-                                <div class="item-icon">
-                                    <img src="${escape(item.image || '{{ cache('logo') }}')}" width="100%" height="100%" alt="${escape(item.name)}" class="item-image">
-                                </div>
-                                <div class="item-content">
-                                    <div class="item-name">${escape(item.name)}</div>`;
-                        if (item.type == 'product') {
-                            option += `<div class="item-details">
-                                <span><strong>MRP:</strong> ${escape(item.mrp)}</span>
-                                <span><strong>Barcode:</strong> ${escape(item.barcode)}</span>
-                                ${item.size ? `<span><strong>Size:</strong> ${escape(item.size)}</span>` : ''}
-                                ${item.code ? `<span><strong>Code:</strong> ${escape(item.code)}</span>` : ''}
-                                ${item.color ? `<span><strong>Color:</strong> ${escape(item.color)}</span>` : ''}
-                                ${item.batch ? `<span><strong>Batch:</strong> ${escape(item.batch)}</span>` : ''}
-                            </div>`;
-                        } else {
-                            option += `<div class="item-details">
-                                <span><strong>Price:</strong> ${escape(item.mrp)}</span>
-                            </div>`;
+                fetch(url, { headers: { 'Cache-Control': 'no-cache' } })
+                    .then(res => res.json())
+                    .then(json => {
+                        callback(json.items);
+
+                        // Auto-select first product if saleId provided
+                        if (saleId && json.items.length > 0) {
+                            ts.setValue(json.items[0].id);
                         }
-                        option += `</div></div>`;
-                        return option;
-                    },
-                    item: function(item, escape) {
-                        return `<div class="selected-item">${escape(item.name || item.text || '')}</div>`;
-                    },
-                },
-            });
+                    })
+                    .catch(err => callback());
+            },
+            onFocus: function() { this.load(''); },
+            render: { /* keep your render code */ }
         });
-    }
+    });
+}
 
     // Call this without saleId for all products
     initInventoryProductSelect();
