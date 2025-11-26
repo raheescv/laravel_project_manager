@@ -259,6 +259,9 @@ class Product extends Model implements AuditableContracts
         if (isset($data['brand_id'])) {
             $brand_id = Brand::selfCreate($data['brand_id']);
         }
+        if (isset($data['brand'])) {
+            $brand_id = Brand::selfCreate($data['brand']);
+        }
         $data['brand_id'] = $brand_id;
         $data['department'] = $data['department'] ?? 'Dummy Department';
         $data['department'] = trim($data['department']);

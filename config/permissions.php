@@ -2,6 +2,7 @@
 
 return [
     'account' => ['create', 'view', 'edit', 'delete', 'export'],
+    'account category' => ['create', 'view', 'edit', 'delete', 'export'],
     'account note' => ['create', 'view', 'edit', 'delete'],
     'expense' => ['create', 'view', 'edit', 'delete', 'export'],
     'income' => ['create', 'view', 'edit', 'delete', 'export'],

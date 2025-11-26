@@ -166,6 +166,20 @@
                                 </div>
                             </div>
                         </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label for="max_discount_per_sale" class="form-label small fw-medium">
+                                    <i class="fa fa-percent me-1 text-muted"></i>
+                                    Max Discount Per Sale
+                                </label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-light border-secondary-subtle">
+                                        <i class="fa fa-percent"></i>
+                                    </span>
+                                    {{ html()->number('max_discount_per_sale')->value('')->class('form-control border-secondary-subtle shadow-sm number')->attribute('wire:model', 'users.max_discount_per_sale')->placeholder('0.00')->attribute('step', '0.01')->attribute('min', '0')->attribute('max', '100') }}
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>

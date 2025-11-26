@@ -20,6 +20,8 @@ class Table extends Component
 
     public $account_type = '';
 
+    public $account_category_id = '';
+
     public $limit = 10;
 
     public $selected = [];
@@ -103,7 +105,7 @@ class Table extends Component
 
     public function render()
     {
-        $data = Account::orderBy($this->sortField, $this->sortDirection)
+        $data = Account::with('accountCategory:id,name')->orderBy($this->sortField, $this->sortDirection)
             ->when($this->search, function ($query, $value) {
                 return $query->where(function ($q) use ($value): void {
                     $value = trim($value);
@@ -115,6 +117,9 @@ class Table extends Component
             })
             ->when($this->account_type ?? '', function ($query, $value) {
                 return $query->where('account_type', $value);
+            })
+            ->when($this->account_category_id ?? '', function ($query, $value) {
+                return $query->where('account_category_id', $value);
             })
             ->when($this->model ?? '', function ($query, $value) {
                 return $query->where('model', $value);

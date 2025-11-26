@@ -3,6 +3,7 @@
 namespace App\Actions\Account;
 
 use App\Models\Account;
+use App\Models\AccountCategory;
 
 class CreateAction
 {
@@ -10,6 +11,12 @@ class CreateAction
     {
         try {
             $data['mobile'] = $data['mobile'] ?? null;
+
+            if (isset($data['account_category_id']) && str_contains($data['account_category_id'], 'add ')) {
+                $name = str_replace('add ', '', $data['account_category_id']);
+                $data['account_category_id'] = AccountCategory::selfCreate($name);
+            }
+
             $name = $data['account_type'].'-'.$data['name'].'-'.$data['mobile'];
             $existing = Account::where('account_type', $data['account_type'])
                 ->where('name', $data['name'])

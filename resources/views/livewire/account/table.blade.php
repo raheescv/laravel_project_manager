@@ -48,7 +48,10 @@
         <hr class="my-3">
         <div class="row">
             <div class="col-md-4" wire:ignore>
-                {{ html()->select('account_type', accountTypes())->value('')->class('tomSelect')->id('account_type')->placeholder('Account Type') }}
+                {{ html()->select('account_type', accountTypes())->value('')->class('tomSelect')->id('account_type')->placeholder('Select Account Type') }}
+            </div>
+            <div class="col-md-4" wire:ignore>
+                {{ html()->select('account_category_id', [])->value('')->class('select-account_category_id')->id('account_category_id')->placeholder('Select account category') }}
             </div>
         </div>
     </div>
@@ -64,6 +67,7 @@
                             </div>
                         </th>
                         <th width="10%" class="text-nowrap"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="account_type" label="account type" /> </th>
+                        <th width="10%" class="text-nowrap"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="account_category_id" label="account category" /> </th>
                         <th width="30%" class="text-nowrap"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="name" label="name" /> </th>
                         <th width="40%" class="text-nowrap"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="description" label="description" /> </th>
                         <th class="text-nowrap"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="model" label="model" /> </th>
@@ -82,6 +86,7 @@
                             <td>
                                 <span class="badge bg-light text-dark">{{ ucFirst($item->account_type) }}</span>
                             </td>
+                            <td> {{ $item->accountCategory?->name }} </td>
                             <td>
                                 <a href="{{ route('account::view', $item->id) }}" class="text-decoration-none">{{ $item->name }}</a>
                             </td>
@@ -113,6 +118,10 @@
             $('#account_type').on('change', function(e) {
                 const value = $(this).val() || null;
                 @this.set('account_type', value);
+            });
+            $('#account_category_id').on('change', function(e) {
+                const value = $(this).val() || null;
+                @this.set('account_category_id', value);
             });
 
             $(document).on('click', '.edit', function() {

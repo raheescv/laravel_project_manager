@@ -39,20 +39,22 @@ class AutoPullCommand extends Command
         $projectDir = base_path();
 
         // Check if we're in a git repository
-        if (!is_dir($projectDir . '/.git')) {
+        if (! is_dir($projectDir.'/.git')) {
             $this->error('❌ Not a git repository');
             Log::error('Auto-pull: Not a git repository');
+
             return Command::FAILURE;
         }
 
         // Check for local changes
         $statusProcess = new Process(['git', 'status', '--porcelain'], $projectDir);
         $statusProcess->run();
-        $hasChanges = !empty(trim($statusProcess->getOutput()));
+        $hasChanges = ! empty(trim($statusProcess->getOutput()));
 
-        if ($hasChanges && !$force) {
+        if ($hasChanges && ! $force) {
             $this->warn('⚠️  Local changes detected. Use --force to pull anyway.');
             Log::warning('Auto-pull: Local changes detected, skipping pull');
+
             return Command::FAILURE;
         }
 
@@ -109,7 +111,7 @@ class AutoPullCommand extends Command
             // Build if requested
             if ($build) {
                 $this->info('🔨 Building assets...');
-                $buildScript = $projectDir . '/pull-and-build.sh';
+                $buildScript = $projectDir.'/pull-and-build.sh';
                 if (file_exists($buildScript)) {
                     $buildProcess = new Process(['bash', $buildScript, $branch, '--build'], $projectDir);
                     $buildProcess->setTimeout(300);
@@ -127,8 +129,9 @@ class AutoPullCommand extends Command
             return Command::SUCCESS;
 
         } catch (\Exception $e) {
-            $this->error('❌ Error: ' . $e->getMessage());
-            Log::error('Auto-pull failed: ' . $e->getMessage());
+            $this->error('❌ Error: '.$e->getMessage());
+            Log::error('Auto-pull failed: '.$e->getMessage());
+
             return Command::FAILURE;
         }
     }
@@ -169,4 +172,3 @@ class AutoPullCommand extends Command
         }
     }
 }
-
