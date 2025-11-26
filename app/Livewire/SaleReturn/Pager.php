@@ -475,6 +475,17 @@ class Pager extends Component
         }
     }
 
+      public function viewItems()
+    {
+        $this->dispatch('SaleReturn-View-Items-Component', $this->sale_returns['status'], $this->items);
+    }
+
+    public function editItem($index)
+    {
+        $this->dispatch('SaleReturn-Edit-Item-Component', $index, $this->items[$index]);
+    }
+
+
     public function render()
     {
         return view('livewire.sale-return.pager');

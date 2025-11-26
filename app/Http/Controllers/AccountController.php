@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Account;
 use Illuminate\Http\Request;
+use App\Actions\Account\CustomerAction;
 
 class AccountController extends Controller
 {
@@ -93,28 +94,9 @@ class AccountController extends Controller
 
 public function getCustomerBySaleId($sale_id)
 {
-    try {
-        $sale = \App\Models\Sale::findOrFail($sale_id);
-        $customer = \App\Models\Account::findOrFail($sale->account_id);
+    $response = (new CustomerAction())->getCustomerBySaleId($sale_id);
 
-        return response()->json([
-            'success' => true,
-            'items' => [
-                [
-                    'id' => $customer->id,
-                    'name' => $customer->name,
-                    'mobile' => $customer->mobile,
-                    'email' => $customer->email,
-                ]
-            ]
-        ]);
-    } catch (\Exception $e) {
-        return response()->json([
-            'success' => false,
-            'items' => [],
-            'message' => 'Sale or customer not found',
-        ], 404);
-    }
+    return response()->json($response, $response['success'] ? 200 : 404);
 }
 
 

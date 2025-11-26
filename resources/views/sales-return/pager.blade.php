@@ -25,7 +25,7 @@
 
 
 
-        @include('components.select.inventoryProductSelectr',['sale_id' => $id ?? 0])
+        @include('components.select.inventoryProductSelect')
          @include('components.select.customerSaleSelectr',['sale_id' => $id ?? 0])
         @include('components.select.paymentMethodSelect') 
         <script>

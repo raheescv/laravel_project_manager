@@ -1,7 +1,7 @@
 <?php
 
 namespace App\Http\Controllers;
-
+use App\Actions\Sale\InventoryAction;
 use App\Models\Account;
 use App\Models\Category;
 use App\Models\Configuration;
@@ -277,28 +277,15 @@ class SaleController extends Controller
     }
 
 
-public function getInvoiceBySaleId($sale_id)
+
+
+    public function getInvoiceBySaleId($sale_id)
 {
-    if (!$sale_id) {
-        return response()->json(['items' => []]);
-    }
+    $response = (new InventoryAction())->getInvoiceBySaleId($sale_id);
 
-    $sale = \App\Models\Sale::where('id', $sale_id)
-        ->select('id', 'invoice_no', 'reference_no')
-        ->first();
-
-    if (!$sale) {
-        return response()->json(['items' => []]);
-    }
-
-    return response()->json([
-        'items' => [[
-            'id' => $sale->id,
-            'invoice_no' => $sale->invoice_no,
-            'reference_no' => $sale->reference_no,
-        ]]
-    ]);
+    return response()->json($response, $response['success'] ? 200 : 404);
 }
+
 
 
     public function dayManagement(Request $request)
