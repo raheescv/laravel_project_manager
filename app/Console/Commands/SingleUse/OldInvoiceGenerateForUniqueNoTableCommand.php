@@ -24,6 +24,9 @@ class OldInvoiceGenerateForUniqueNoTableCommand extends Command
         $branches = Branch::pluck('id', 'id');
         foreach ($branches as $branchId) {
             $sale = Sale::withTrashed()->where('branch_id', $branchId)->latest('id')->first();
+            if (! $sale) {
+                continue;
+            }
             $parsed = $this->parseInvoiceNumber($sale->date, $sale->invoice_no, $sale->branch->code);
             if (! $parsed) {
                 $this->warn("Skipping malformed invoice number: {$sale->invoice_no}");
