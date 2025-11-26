@@ -38,35 +38,54 @@ class InventoryController extends Controller
         return response()->json($list);
 }
 
-public function getProduct(Request $request)
-{
-    $limit = intval($request->input('limit', 10));
-    $page = intval($request->input('page', 1));
-    $productName = trim($request->input('productName', ''));
-    $productCode = trim($request->input('productCode', ''));
-    $productBarcode = trim($request->input('productBarcode', ''));
-    $branchIds = $request->input('branch_id', null);
-    $showNonZero = intval($request->input('show_non_zero', 0));
-    $showBarcodeSku = intval($request->input('show_barcode_sku', 0));
-    $sortField = $request->input('sortField', 'products.code');
-    $sortDirection = $request->input('sortDirection', 'desc');
+    public function getProduct(Request $request)
+    {
+        $limit = intval($request->input('limit', 10));
+        $page = intval($request->input('page', 1));
+        $productName = trim($request->input('productName', ''));
+        $productCode = trim($request->input('productCode', ''));
+        $productBarcode = trim($request->input('productBarcode', ''));
+        $branchIds = $request->input('branch_id', null);
+        $showNonZero = intval($request->input('show_non_zero', 0));
+        $showBarcodeSku = intval($request->input('show_barcode_sku', 0));
+        $sortField = $request->input('sortField', 'products.code');
+        $sortDirection = $request->input('sortDirection', 'desc');
 
-    // Build base query
-    $query = DB::table('inventories')
-        ->join('products', 'inventories.product_id', '=', 'products.id')
-        ->join('branches', 'inventories.branch_id', '=', 'branches.id')
-        ->where('products.type', '=', 'product');
+        // Build base query
+        $query = DB::table('inventories')
+            ->join('products', 'inventories.product_id', '=', 'products.id')
+            ->join('branches', 'inventories.branch_id', '=', 'branches.id')
+            ->where('products.type', '=', 'product');
 
-    // Filters
-    if ($productName !== '') {
-        $query->where('products.name', 'like', "%{$productName}%");
+        // Filters
+        if ($productName !== '') {
+            $query->where('products.name', 'like', "%{$productName}%");
+        }
+        if ($productCode !== '') {
+            $query->where('products.code', 'like', "%{$productCode}%");
+        }
+        
+    //     if ($productBarcode !== '') {
+    //     $query->where('inventories.barcode', $productBarcode);
+    // }
+if ($productBarcode !== '') {
+
+    if ($showBarcodeSku == 1) {
+        // First fetch the product SKU
+        $sku = DB::table('inventories')
+            ->join('products', 'inventories.product_id', '=', 'products.id')
+            ->where('inventories.barcode', $productBarcode)
+            ->value('products.code');
+
+        // If found, return all products with same SKU
+        if ($sku) {
+            $query->where('products.code', $sku);
+        }
+
+    } else {
+        // Default behavior: match exact barcode
+        $query->where('inventories.barcode', $productBarcode);
     }
-    if ($productCode !== '') {
-        $query->where('products.code', 'like', "%{$productCode}%");
-    }
-    
-    if ($productBarcode !== '') {
-    $query->where('inventories.barcode', $productBarcode);
 }
 
     if (!empty($branchIds)) {
