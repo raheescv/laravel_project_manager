@@ -57,19 +57,39 @@ class InventoryController extends Controller
             ->join('branches', 'inventories.branch_id', '=', 'branches.id')
             ->where('products.type', '=', 'product');
 
+        // Filters
         if ($productName !== '') {
             $query->where('products.name', 'like', "%{$productName}%");
         }
         if ($productCode !== '') {
             $query->where('products.code', 'like', "%{$productCode}%");
         }
+
+        //     if ($productBarcode !== '') {
+        //     $query->where('inventories.barcode', $productBarcode);
+        // }
         if ($productBarcode !== '') {
-            $query->where('inventories.barcode', 'like', "%{$productBarcode}%");
+
+            if ($showBarcodeSku == 1) {
+                // First fetch the product SKU
+                $sku = DB::table('inventories')
+                    ->join('products', 'inventories.product_id', '=', 'products.id')
+                    ->where('inventories.barcode', $productBarcode)
+                    ->value('products.code');
+
+                // If found, return all products with same SKU
+                if ($sku) {
+                    $query->where('products.code', $sku);
+                }
+
+            } else {
+                // Default behavior: match exact barcode
+                $query->where('inventories.barcode', $productBarcode);
+            }
         }
 
         if (! empty($branchIds)) {
             if (! is_array($branchIds)) {
-                // Accept comma-separated string
                 $branchIds = explode(',', $branchIds);
             }
             $branchIds = array_map('intval', $branchIds);
@@ -84,7 +104,7 @@ class InventoryController extends Controller
             $query->whereNotNull('inventories.barcode')->where('inventories.barcode', '<>', '');
         }
 
-        // Allowed sort map to avoid injection
+        // Allowed sort fields
         $allowedSorts = [
             'products.code' => 'products.code',
             'products.name' => 'products.name',
@@ -115,55 +135,47 @@ class InventoryController extends Controller
 
         $query->orderBy($allowedSorts[$sortField], $sortDirection);
 
-        // total (filtered) count for pagination
-        $total = (clone $query)->count();
+        // Total count for pagination (only if not barcode scan)
+        $total = $productBarcode === '' ? (clone $query)->count() : 1;
 
-        // fetch paginated rows
-        $rows = $query->forPage($page, $limit)->get();
+        // Fetch paginated rows
+        $rows = $productBarcode === ''
+            ? $query->forPage($page, $limit)->get()
+            : $query->get();
 
-        // total quantity across filtered set (not just page)
-        $quantityQuery = DB::table('inventories')
-            ->join('products', 'inventories.product_id', '=', 'products.id')
-            ->when($productName !== '', function ($q) use ($productName) {
-                $q->where('products.name', 'like', "%{$productName}%");
-            })
-            ->when($productCode !== '', function ($q) use ($productCode) {
-                $q->where('products.code', 'like', "%{$productCode}%");
-            })
-            ->when($productBarcode !== '', function ($q) use ($productBarcode) {
-                $q->where('inventories.barcode', 'like', "%{$productBarcode}%");
-            })
-            ->when(! empty($branchIds), function ($q) use ($branchIds) {
-                $q->whereIn('inventories.branch_id', $branchIds);
-            })
-            ->when($showNonZero, function ($q) {
-                $q->where('inventories.quantity', '>', 0);
-            })
-            ->when($showBarcodeSku, function ($q) {
-                $q->whereNotNull('inventories.barcode')->where('inventories.barcode', '<>', '');
-            })
-            ->where('products.type', '=', 'product');
+        // Total quantity (sum all filtered rows)
+        if ($productBarcode === '') {
+            $quantityQuery = DB::table('inventories')
+                ->join('products', 'inventories.product_id', '=', 'products.id')
+                ->when($productName !== '', fn ($q) => $q->where('products.name', 'like', "%{$productName}%"))
+                ->when($productCode !== '', fn ($q) => $q->where('products.code', 'like', "%{$productCode}%"))
+                ->when(! empty($branchIds), fn ($q) => $q->whereIn('inventories.branch_id', $branchIds))
+                ->when($showNonZero, fn ($q) => $q->where('inventories.quantity', '>', 0))
+                ->when($showBarcodeSku, fn ($q) => $q->whereNotNull('inventories.barcode')->where('inventories.barcode', '<>', ''))
+                ->where('products.type', '=', 'product');
 
-        $totalQuantity = (int) $quantityQuery->sum('inventories.quantity');
+            $totalQuantity = (int) $quantityQuery->sum('inventories.quantity');
+        } else {
+            // Sum only scanned row(s)
+            $totalQuantity = (int) $rows->sum('quantity');
+        }
 
-        // transform rows to simple arrays
-        $data = $rows->map(function ($r) {
-            return [
-                'inventory_id' => $r->inventory_id,
-                'id' => $r->id,
-                'code' => $r->code,
-                'name' => $r->name,
-                'size' => $r->size,
-                'barcode' => $r->barcode,
-                'mrp' => $r->mrp,
-                'branch_name' => $r->branch_name,
-                'quantity' => (int) $r->quantity,
-            ];
-        })->toArray();
+        // Transform rows
+        $data = $rows->map(fn ($r) => [
+            'inventory_id' => $r->inventory_id,
+            'id' => $r->id,
+            'code' => $r->code,
+            'name' => $r->name,
+            'size' => $r->size,
+            'barcode' => $r->barcode,
+            'mrp' => $r->mrp,
+            'branch_name' => $r->branch_name,
+            'quantity' => (int) $r->quantity,
+        ])->toArray();
 
         $lastPage = (int) ceil($total / max(1, $limit));
 
-        // Return JSON in the confirmed shape
+        // Return JSON
         return response()->json([
             'data' => $data,
             'total_quantity' => $totalQuantity,
