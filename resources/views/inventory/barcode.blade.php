@@ -71,18 +71,26 @@
         } */
 
 
-           .product-name {
+.product-name {
     font-size: {{ $settings['product_name']['font_size'] }}px;
     text-align: {{ $settings['product_name']['align'] }};
-    line-height: 1.1;
+    line-height: 1.2;
     font-weight: 600;
     white-space: normal;
-    overflow: hidden;
+    overflow: visible;
     word-break: break-word;
-    margin-bottom: 8px; /* <-- Increase space here */
 }
 
-
+.product-row {
+  display: table;
+  width: 100%;
+  table-layout: fixed;
+}
+.product-barcode {
+  display: table-cell;
+  width: 30%;
+  text-align: right;
+}
         .product-name-arabic {
             font-size: {{ $settings['product_name_arabic']['font_size'] }}px;
             text-align: right;
@@ -191,12 +199,13 @@
                 <div class="element-handle top-left"></div>
                 <div class="element-handle top-right"></div>
             </div> -->
-            <div id="product-name"
+          <div id="product-name"
      class="barcode-element product-name"
      draggable="true"
-     style="{{ getElementStyle('product_name', $settings) }}; height:auto; margin-bottom:6px;">
+     style="{{ getElementStyle('product_name', $settings) }}; height:auto; margin-bottom:8px;">
     <b>{{ $inventory->product->name }}</b>
 </div>
+
 
 
         @endif
