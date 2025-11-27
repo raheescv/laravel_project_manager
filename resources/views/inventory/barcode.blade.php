@@ -71,16 +71,17 @@
         } */
 
 
-            .product-name {
+           .product-name {
     font-size: {{ $settings['product_name']['font_size'] }}px;
     text-align: {{ $settings['product_name']['align'] }};
     line-height: 1.1;
     font-weight: 600;
-    white-space: normal; /* allow line break */
+    white-space: normal;
     overflow: hidden;
-    margin-bottom: 3px; /* small space under text */
-    word-break: break-word; /* break if long single word */
+    word-break: break-word;
+    margin-bottom: 8px; /* <-- Increase space here */
 }
+
 
         .product-name-arabic {
             font-size: {{ $settings['product_name_arabic']['font_size'] }}px;
