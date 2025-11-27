@@ -179,7 +179,7 @@
             </div>
         @endif -->
 
-       @if ($settings['product_name']['visible'] ?? true)
+      @if ($settings['product_name']['visible'] ?? true)
     <div id="product-name"
          class="barcode-element product-name"
          draggable="true"
@@ -192,6 +192,7 @@
         <div class="element-handle top-right"></div>
     </div>
 @endif
+
 
 
 
