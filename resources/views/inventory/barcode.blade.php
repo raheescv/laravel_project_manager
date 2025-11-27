@@ -76,12 +76,10 @@
     text-align: {{ $settings['product_name']['align'] }};
     line-height: 1.2;
     font-weight: 600;
-    white-space: normal;
-    word-break: break-word;
-    overflow: hidden;
-    display: -webkit-box;
-    -webkit-line-clamp: 2;   /* LIMIT TO 2 LINES */
-    -webkit-box-orient: vertical;
+    white-space: normal;       /* Allow wrapping */
+    word-break: break-word;    /* Break long words */
+    overflow: visible;         /* Show full content */
+    display: block;            /* Use normal block display */
 }
 
 
@@ -222,6 +220,8 @@
         <b>{{ $inventory->product->name }}</b>
     </div>
 @endif
+
+
 
 
 
