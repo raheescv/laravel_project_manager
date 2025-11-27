@@ -68,6 +68,7 @@ class Page extends Component
         $rules = [
             'users.name' => ['required'],
             'users.email' => ['required', 'unique:users,email,'.$this->table_id],
+            'users.max_discount_per_sale' => ['nullable', 'numeric', 'min:0', 'max:100'],
         ];
         if (! $this->table_id) {
             $rules['users.password'] = ['required'];

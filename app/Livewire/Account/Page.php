@@ -17,6 +17,8 @@ class Page extends Component
 
     public $accounts;
 
+    public $accountCategories;
+
     public $parents;
 
     public $table_id;
@@ -57,9 +59,13 @@ class Page extends Component
                 'name' => $name,
             ];
         } else {
-            $account = Account::find($this->table_id);
+            $account = Account::with('accountCategory:id,name')->find($this->table_id);
             $this->accounts = $account->toArray();
+            if ($account->account_category_id) {
+                $this->accountCategories[$account->accountCategory->id] = $account->accountCategory->name;
+            }
         }
+        $this->dispatch('SelectDropDownValues', $this->accounts);
     }
 
     protected function rules()

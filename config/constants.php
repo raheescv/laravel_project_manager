@@ -1,6 +1,8 @@
 <?php
 
 return [
+    'auto_pull_enabled' => env('AUTO_PULL_ENABLED', false),
+    'auto_pull_branch' => env('AUTO_PULL_BRANCH', 'main'),
     'whatsapp_port' => env('WHATSAPP_PORT'),
     'whatsapp_server_url' => env('WHATSAPP_SERVER_URL'),
     'data_depth' => [

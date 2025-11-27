@@ -3,6 +3,7 @@
 namespace App\Actions\Account;
 
 use App\Models\Account;
+use App\Models\AccountCategory;
 
 class UpdateAction
 {
@@ -13,6 +14,12 @@ class UpdateAction
             if (! $model) {
                 throw new \Exception("Account not found with the specified ID: $id.", 1);
             }
+
+            if (isset($data['account_category_id']) && str_contains($data['account_category_id'], 'add ')) {
+                $name = str_replace('add ', '', $data['account_category_id']);
+                $data['account_category_id'] = AccountCategory::selfCreate($name);
+            }
+
             $data['mobile'] = $data['mobile'] ?? null;
             $name = $data['account_type'].'-'.$data['name'].'-'.$data['mobile'];
             $existing = Account::where('account_type', $data['account_type'])

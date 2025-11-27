@@ -20,8 +20,7 @@
     <link rel="stylesheet" href="{{ https_asset('assets/css/demo-purpose/demo-settings.min.css') }}">
     <link rel="stylesheet" href="{{ https_asset('css/theme-helper.css') }}"><!-- Theme persistence helper -->
     <link rel="apple-touch-icon" sizes="180x180" href="{{ https_asset('apple-touch-icon.png') }}">
-    <link rel="icon" type="image/png" sizes="32x32" href="{{ https_asset('favicon-32x32.png') }}">
-    <link rel="icon" type="image/png" sizes="16x16" href="{{ https_asset('favicon-16x16.png') }}">
+    <link rel="icon" type="image/png" href="{{ https_asset('favicon.png') }}">
     {{-- <link rel="manifest" href="{{ https_asset('site.webmanifest') }}"> --}}
     <link rel="stylesheet" href="{{ https_asset('assets/vendors/tom-select/tom-select.min.css') }}">
     <link rel="stylesheet" href="{{ https_asset('assets/vendors/toaster/toastr.min.css') }}">
