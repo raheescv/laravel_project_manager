@@ -73,7 +73,7 @@
 
 .product-name {
     font-size: {{ $settings['product_name']['font_size'] }}px;
-    text-align: {{ $settings['product_name']['align'] }}; 
+    text-align: {{ $settings['product_name']['align'] }};
     line-height: 1.2;
     font-weight: 600;
     white-space: normal;
@@ -197,18 +197,31 @@
                 Size: {{ $inventory->product->size }}
             </div>
         @endif
-        @if ($settings['product_name']['visible'] ?? true)
+        <!-- @if ($settings['product_name']['visible'] ?? true) -->
             <!-- <div id="product-name" class="barcode-element product-name" draggable="true" style="{{ getElementStyle('product_name', $settings) }}">
                 <b>{{ substr($inventory->product->name, 0, (int) $settings['product_name']['char_limit']) }}</b>
                 <div class="element-handle top-left"></div>
                 <div class="element-handle top-right"></div>
             </div> -->
-          <div id="product-name"
+          <!-- <div id="product-name"
      class="barcode-element product-name"
      draggable="true"
      style="{{ getElementStyle('product_name', $settings) }}; height:auto; margin-bottom:8px;">
-    <!-- <b>{{ $inventory->product->name }}</b> -->
-</div>
+    <b>{{ $inventory->product->name }}</b>
+</div> -->
+
+
+@if ($settings['product_name']['visible'] ?? true)
+    <div id="product-name"
+         class="barcode-element product-name"
+         draggable="true"
+         style="{{ getElementStyle('product_name', $settings) }};
+                width: {{ $settings['elements']['product_name']['width'] ?? 100 }}px;
+                height: auto;
+                margin-bottom:8px;">
+        <b>{{ $inventory->product->name }}</b>
+    </div>
+@endif
 
 
 
