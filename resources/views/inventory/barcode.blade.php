@@ -59,14 +59,15 @@
             transition: all 0.3s ease;
         }
 
-      .product-name {
+     .product-name {
     font-size: {{ $settings['product_name']['font_size'] }}px;
     text-align: {{ $settings['product_name']['align'] }};
     line-height: 1.2;
     font-weight: 600;
-    white-space: nowrap;       /* single line */
-    overflow: hidden;          /* hide overflow */
-    text-overflow: ellipsis;   /* show ... */
+    white-space: normal;       /* allow wrapping */
+    overflow: visible;         /* show full text */
+    word-break: break-word;    /* break long words if needed */
+    display: block;
 }
 
         .product-name-arabic {
