@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Account;
 use Illuminate\Http\Request;
+use App\Actions\Account\CustomerAction;
 use App\Models\Sale;
 
 class AccountController extends Controller
