@@ -95,7 +95,7 @@
   width: 30%;
   text-align: right;
 }
-        .product-name-arabic {
+       .product-name-arabic {
             font-size: {{ $settings['product_name_arabic']['font_size'] }}px;
             text-align: right;
             line-height: 1.1;
@@ -228,18 +228,18 @@
         @endif
 
         @if ($settings['product_name_arabic']['visible'] ?? true)
-            <!-- <div id="product-name-arabic" class="barcode-element product-name-arabic" draggable="true" style="{{ getElementStyle('product_name_arabic', $settings) }}">
+            <div id="product-name-arabic" class="barcode-element product-name-arabic" draggable="true" style="{{ getElementStyle('product_name_arabic', $settings) }}">
                 <bdo dir="rtl">{{ substr($inventory->product->name_arabic, 0, (int) $settings['product_name_arabic']['char_limit']) }}</bdo>
                 <div class="element-handle top-left"></div>
                 <div class="element-handle top-right"></div>
-            </div> -->
+            </div>
 
-            <div id="product-name-arabic"
+            <!-- <div id="product-name-arabic"
      class="barcode-element product-name-arabic"
      draggable="true"
      style="{{ getElementStyle('product_name_arabic', $settings) }}; height:auto; margin-bottom:6px;">
     <bdo dir="rtl">{{ $inventory->product->name_arabic }}</bdo>
-</div>
+</div> -->
 
         @endif
 
