@@ -59,7 +59,7 @@
             transition: all 0.3s ease;
         }
 
-        .product-name {
+        /* .product-name {
             font-size: {{ $settings['product_name']['font_size'] }}px;
             text-align: {{ $settings['product_name']['align'] }};
             line-height: 1.1;
@@ -68,7 +68,18 @@
             overflow: hidden;
             text-overflow: ellipsis;
             margin-bottom: 2px;
-        }
+        } */
+
+
+            .product-name {
+    font-size: {{ $settings['product_name']['font_size'] }}px;
+    text-align: {{ $settings['product_name']['align'] }};
+    line-height: 1.1;
+    font-weight: 600;
+    white-space: normal; /* allow wrapping */
+    overflow: visible;
+    margin-bottom: 6px; /* spacing */
+}
 
         .product-name-arabic {
             font-size: {{ $settings['product_name_arabic']['font_size'] }}px;
@@ -179,7 +190,9 @@
                     <div class="barcode-container">
                         @if ($settings['product_name']['visible'] ?? true)
                             <div id="product-name" class="barcode-element product-name" draggable="true" style="{{ getElementStyle('product_name', $settings) }}">
-                                <b>{{ substr($item->product->name, 0, (int) $settings['product_name']['char_limit']) }}</b>
+                                <!-- <b>{{ substr($item->product->name, 0, (int) $settings['product_name']['char_limit']) }}</b> -->
+
+                                {{ $item->product->name }}
                                 <div class="element-handle top-left"></div>
                                 <div class="element-handle top-right"></div>
                             </div>
