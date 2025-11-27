@@ -167,22 +167,22 @@ class SaleController extends Controller
                 $saleData['items'] = $cartItems;
 
                 // Handle payment method
-                if ($sale->payments->count() === 1) {
+                if ($sale->payments->count() === 1 && $sale->balance == 0) {
                     $payment = $sale->payments->first();
                     $saleData['payment_method'] = $payment->payment_method_id;
-                } elseif ($sale->payments->count() > 1) {
+                } elseif ($sale->payments->count() > 1 || $sale->balance != 0) {
                     $saleData['payment_method'] = 'custom';
                     $saleData['custom_payment_data'] = [
                         'payments' => $sale->payments->map(function ($payment) {
                             return [
                                 'id' => $payment->id,
-                                'amount' => $payment->amount,
+                                'amount' => (float) $payment->amount,
                                 'payment_method_id' => $payment->payment_method_id,
-                                'payment_method_name' => $payment->paymentMethod->name ?? 'Unknown',
+                                'name' => $payment->paymentMethod->name ?? 'Unknown',
                             ];
                         })->toArray(),
-                        'totalPaid' => $sale->payments->sum('amount'),
-                        'balanceDue' => $sale->grand_total - $sale->payments->sum('amount'),
+                        'totalPaid' => (float) $sale->payments->sum('amount'),
+                        'balanceDue' => (float) ($sale->grand_total - $sale->payments->sum('amount')),
                     ];
                 }
 

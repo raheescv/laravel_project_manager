@@ -262,6 +262,9 @@ class POSController extends Controller
             } else {
                 $saleData['payments'] = [];
             }
+
+            $saleData['payments'] = array_map(function ($payment) { unset($payment['id']); return $payment; }, $saleData['payments']);
+
             if (! $table_id) {
                 $response = (new CreateAction())->execute($saleData, $user_id);
             } else {
