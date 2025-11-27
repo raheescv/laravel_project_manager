@@ -187,7 +187,7 @@
                 width: {{ $settings['elements']['product_name']['width'] ?? 100 }}px;
                 height: auto;
                 margin-bottom:8px;">
-        <b>{{ $name }}</b>
+        <b>{{ $inventory->product->name }}</b>
         <div class="element-handle top-left"></div>
         <div class="element-handle top-right"></div>
     </div>
