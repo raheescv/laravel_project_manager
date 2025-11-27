@@ -59,7 +59,7 @@
             transition: all 0.3s ease;
         }
 
-        /* .product-name {
+        .product-name {
             font-size: {{ $settings['product_name']['font_size'] }}px;
             text-align: {{ $settings['product_name']['align'] }};
             line-height: 1.1;
@@ -68,32 +68,9 @@
             overflow: hidden;
             text-overflow: ellipsis;
             margin-bottom: 2px;
-        } */
+        }
 
-
-.product-name {
-    font-size: {{ $settings['product_name']['font_size'] }}px;
-    text-align: {{ $settings['product_name']['align'] }};
-    line-height: 1.2;
-    font-weight: 600;
-    white-space: normal;       /* Allow wrapping */
-    word-break: break-word;    /* Break long words */
-    overflow: visible;         /* Show full content */
-    display: block;            /* Use normal block display */
-}
-
-
-.product-row {
-  display: table;
-  width: 100%;
-  table-layout: fixed;
-}
-.product-barcode {
-  display: table-cell;
-  width: 30%;
-  text-align: right;
-}
-       .product-name-arabic {
+        .product-name-arabic {
             font-size: {{ $settings['product_name_arabic']['font_size'] }}px;
             text-align: right;
             line-height: 1.1;
@@ -195,21 +172,7 @@
                 Size: {{ $inventory->product->size }}
             </div>
         @endif
-        <!-- @if ($settings['product_name']['visible'] ?? true) -->
-            <!-- <div id="product-name" class="barcode-element product-name" draggable="true" style="{{ getElementStyle('product_name', $settings) }}">
-                <b>{{ substr($inventory->product->name, 0, (int) $settings['product_name']['char_limit']) }}</b>
-                <div class="element-handle top-left"></div>
-                <div class="element-handle top-right"></div>
-            </div> -->
-          <!-- <div id="product-name"
-     class="barcode-element product-name"
-     draggable="true"
-     style="{{ getElementStyle('product_name', $settings) }}; height:auto; margin-bottom:8px;">
-    <b>{{ $inventory->product->name }}</b>
-</div> -->
-
-
-@if ($settings['product_name']['visible'] ?? true)
+       @if ($settings['product_name']['visible'] ?? true)
     <div id="product-name"
          class="barcode-element product-name"
          draggable="true"
@@ -222,25 +185,12 @@
 @endif
 
 
-
-
-
-        @endif
-
         @if ($settings['product_name_arabic']['visible'] ?? true)
             <div id="product-name-arabic" class="barcode-element product-name-arabic" draggable="true" style="{{ getElementStyle('product_name_arabic', $settings) }}">
                 <bdo dir="rtl">{{ substr($inventory->product->name_arabic, 0, (int) $settings['product_name_arabic']['char_limit']) }}</bdo>
                 <div class="element-handle top-left"></div>
                 <div class="element-handle top-right"></div>
             </div>
-
-            <!-- <div id="product-name-arabic"
-     class="barcode-element product-name-arabic"
-     draggable="true"
-     style="{{ getElementStyle('product_name_arabic', $settings) }}; height:auto; margin-bottom:6px;">
-    <bdo dir="rtl">{{ $inventory->product->name_arabic }}</bdo>
-</div> -->
-
         @endif
 
         @if ($settings['barcode']['visible'] ?? true)
