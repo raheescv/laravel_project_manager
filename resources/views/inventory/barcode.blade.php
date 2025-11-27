@@ -64,10 +64,9 @@
     text-align: {{ $settings['product_name']['align'] }};
     line-height: 1.2;
     font-weight: 600;
-    white-space: normal;       /* allow wrapping */
-    overflow: visible;         /* show full text */
-    word-break: break-word;    /* break long words if needed */
-    display: block;
+    white-space: nowrap;       /* single line */
+    overflow: hidden;          /* hide overflow */
+    text-overflow: ellipsis;   /* show ... at end */
 }
 
         .product-name-arabic {
@@ -180,7 +179,7 @@
             </div>
         @endif -->
 
-      @if ($settings['product_name']['visible'] ?? true)
+     @if ($settings['product_name']['visible'] ?? true)
     <div id="product-name"
          class="barcode-element product-name"
          draggable="true"
@@ -188,11 +187,12 @@
                 width: {{ $settings['elements']['product_name']['width'] ?? 100 }}px;
                 height: auto;
                 margin-bottom:8px;">
-        <b>{{ $inventory->product->name }}</b>
+        <b>{{ $name }}</b>
         <div class="element-handle top-left"></div>
         <div class="element-handle top-right"></div>
     </div>
 @endif
+
 
 
 
