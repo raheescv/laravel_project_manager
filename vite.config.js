@@ -22,19 +22,24 @@ export default defineConfig({
             '@': '/resources/js',   // Vue root folder
         },
     },
-    server: {
-        port: 5173,
-        host: '0.0.0.0',
-        strictPort: true,
-        https: process.env.FORCE_HTTPS || false,
-        origin: `${process.env.VITE_APP_URL || 'localhost'}:5173`,
-        hmr: {
-            host: process.env.VITE_APP_URL || 'localhost',
-            port: 5173,
-            protocol: process.env.FORCE_HTTPS ? 'wss' : 'ws',
-        },
-        cors: true,
+server: {
+    port: 5173,
+    host: '0.0.0.0',
+    strictPort: true,
+    https: process.env.FORCE_HTTPS === 'true',
+    origin: process.env.VITE_APP_URL || 'http://localhost:5173',
+    cors: {
+        origin: ['http://localhost:8000', 'http://127.0.0.1:8000'],
+        credentials: true,
     },
+    hmr: {
+        host: 'localhost',
+        port: 5173,
+        protocol: process.env.FORCE_HTTPS === 'true' ? 'wss' : 'ws',
+    },
+},
+
+
 
     build: {
         chunkSizeWarningLimit: 1000,
