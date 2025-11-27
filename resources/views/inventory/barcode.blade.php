@@ -73,13 +73,17 @@
 
 .product-name {
     font-size: {{ $settings['product_name']['font_size'] }}px;
-    text-align: {{ $settings['product_name']['align'] }};
+    text-align: {{ $settings['product_name']['align'] }}; 
     line-height: 1.2;
     font-weight: 600;
     white-space: normal;
-    overflow: visible;
     word-break: break-word;
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;   /* LIMIT TO 2 LINES */
+    -webkit-box-orient: vertical;
 }
+
 
 .product-row {
   display: table;
