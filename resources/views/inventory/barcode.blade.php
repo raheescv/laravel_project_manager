@@ -179,19 +179,20 @@
             </div>
         @endif -->
 
-        @if ($settings['product_name']['visible'] ?? true)
-    <div id="product-name" 
-         class="barcode-element product-name" 
-         draggable="true" 
+       @if ($settings['product_name']['visible'] ?? true)
+    <div id="product-name"
+         class="barcode-element product-name"
+         draggable="true"
          style="{{ getElementStyle('product_name', $settings) }};
                 width: {{ $settings['elements']['product_name']['width'] ?? 100 }}px;
                 height: auto;
                 margin-bottom:8px;">
-        <b>{{ substr($inventory->product->name, 0, (int) $settings['product_name']['char_limit']) }}</b>
+        <b>{{ $name }}</b>
         <div class="element-handle top-left"></div>
         <div class="element-handle top-right"></div>
     </div>
 @endif
+
 
 
         @if ($settings['product_name_arabic']['visible'] ?? true)
