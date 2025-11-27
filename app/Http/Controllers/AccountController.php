@@ -3,8 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\Account;
-use Illuminate\Http\Request;
 use App\Models\Sale;
+use Illuminate\Http\Request;
 
 class AccountController extends Controller
 {

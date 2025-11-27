@@ -56,7 +56,7 @@
                                 <span class="font-medium text-green-700">WhatsApp</span>
                             </label>
                         </div>
-                        <div class="grid grid-cols-3 gap-1.5">
+                        <div class="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
                             <!-- Cash Payment -->
                             <div class="payment-option">
                                 <button type="button" @click="$emit('update:paymentMethod', 1)" :class="[
@@ -66,23 +66,10 @@
                                         : 'bg-white border-slate-200 text-slate-700 hover:shadow-md hover:border-green-300 hover:bg-green-50'
                                 ]">
                                     <div class="icon-wrapper mb-0.5">
-                                        <i :class="[
-                                            'fa fa-money text-sm',
-                                            localPaymentMethod === 1 || localPaymentMethod === ''
-                                                ? 'text-white'
-                                                : 'text-green-500'
-                                        ]"></i>
+                                        <i :class="[ 'fa fa-money text-sm', localPaymentMethod === 1 || localPaymentMethod === '' ? 'text-white' : 'text-green-500' ]"></i>
                                     </div>
-                                    <span :class="[
-                                        'text-xs font-bold',
-                                        localPaymentMethod === 1 || localPaymentMethod === ''
-                                            ? 'text-white'
-                                            : 'text-slate-700'
-                                    ]">Cash</span>
-                                    <div v-if="localPaymentMethod === 1 || localPaymentMethod === ''"
-                                        class="absolute top-0.5 right-0.5">
-                                        <i class="fa fa-check-circle text-white bg-green-600 rounded-full text-xs"></i>
-                                    </div>
+                                    <span :class="[ 'text-xs font-bold', localPaymentMethod === 1 || localPaymentMethod === '' ? 'text-white' : 'text-slate-700' ]">Cash</span>
+                                    <div v-if="localPaymentMethod === 1 || localPaymentMethod === ''" class="absolute top-0.5 right-0.5"> <i class="fa fa-check-circle text-white bg-green-600 rounded-full text-xs"></i> </div>
                                 </button>
                             </div>
                             <!-- Card Payment -->
@@ -110,6 +97,34 @@
                                     <div v-if="localPaymentMethod === 2"
                                         class="absolute top-0.5 right-0.5">
                                         <i class="fa fa-check-circle text-white bg-blue-600 rounded-full text-xs"></i>
+                                    </div>
+                                </button>
+                            </div>
+                            <!-- Credit Payment -->
+                            <div class="payment-option">
+                                <button type="button" @click="$emit('update:paymentMethod', 'credit')" :class="[
+                                    'w-full h-12 flex flex-col items-center justify-center p-1 border-2 relative transition-all duration-300 rounded-lg hover:scale-105',
+                                    localPaymentMethod === 'credit'
+                                        ? 'bg-gradient-to-r from-purple-500 to-pink-600 border-purple-500 shadow-lg text-white'
+                                        : 'bg-white border-slate-200 text-slate-700 hover:shadow-md hover:border-purple-300 hover:bg-purple-50'
+                                ]">
+                                    <div class="icon-wrapper mb-0.5">
+                                        <i :class="[
+                                            'fa fa-file-text-o text-sm',
+                                            localPaymentMethod === 'credit'
+                                                ? 'text-white'
+                                                : 'text-purple-500'
+                                        ]"></i>
+                                    </div>
+                                    <span :class="[
+                                        'text-xs font-bold',
+                                        localPaymentMethod === 'credit'
+                                            ? 'text-white'
+                                            : 'text-slate-700'
+                                    ]">Credit</span>
+                                    <div v-if="localPaymentMethod === 'credit'"
+                                        class="absolute top-0.5 right-0.5">
+                                        <i class="fa fa-check-circle text-white bg-purple-600 rounded-full text-xs"></i>
                                     </div>
                                 </button>
                             </div>
@@ -311,11 +326,15 @@ export default {
         })
 
         const paidAmount = computed(() => {
-            // For cash/card payment, the paid amount equals the grand total
+            // For credit payment (no payment), the paid amount is 0
+            if (props.saleData.payment_method === 'credit' || props.paymentMethod === 'credit') {
+                return 0
+            }
             // For custom payment, use the total paid from custom payment data
             if (props.saleData.payment_method === 'custom' && props.saleData.custom_payment_data) {
                 return parseFloat(props.saleData.custom_payment_data.totalPaid) || 0
             }
+            // For cash/card payment, the paid amount equals the grand total
             return grandTotal.value
         })
 
@@ -365,8 +384,9 @@ export default {
                     .map(p => `${p.name}: ₹${parseFloat(p.amount).toFixed(2)}`)
                     .join(', ')
             }
-            if (props.saleData.payment_method === 1) return 'Cash Payment'
-            if (props.saleData.payment_method === 2) return 'Card Payment'
+            if (props.saleData.payment_method === 1 || props.paymentMethod === 1) return 'Cash Payment'
+            if (props.saleData.payment_method === 2 || props.paymentMethod === 2) return 'Card Payment'
+            if (props.saleData.payment_method === 'credit' || props.paymentMethod === 'credit') return 'Credit Payment (No Payment)'
             return null
         })
 

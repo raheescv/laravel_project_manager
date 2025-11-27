@@ -133,7 +133,7 @@ class SaleController extends Controller
                     'status' => $sale->status,
                     'items' => [],
                     'comboOffers' => [],
-                    'payment_method' => 1, // Default, will be overridden if needed
+                    'payment_method' => 'credit', // Default, will be overridden if needed
                     'custom_payment_data' => null,
                 ];
 
