@@ -207,7 +207,7 @@
      class="barcode-element product-name"
      draggable="true"
      style="{{ getElementStyle('product_name', $settings) }}; height:auto; margin-bottom:8px;">
-    <b>{{ $inventory->product->name }}</b>
+    <!-- <b>{{ $inventory->product->name }}</b> -->
 </div>
 
 
