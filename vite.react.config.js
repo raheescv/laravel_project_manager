@@ -18,24 +18,18 @@ export default defineConfig({
         },
     },
 
-   server: {
-    port: 5174,
-    host: '0.0.0.0',
-    strictPort: true,
-    https: process.env.FORCE_HTTPS === 'true',
-    origin: process.env.VITE_REACT_APP_URL || 'http://localhost:5174',
-    cors: {
-        origin: ['http://localhost:8000', 'http://127.0.0.1:8000'],
-        credentials: true,
-    },
-    hmr: {
-        host: 'localhost',
+    server: {
         port: 5174,
-        protocol: process.env.FORCE_HTTPS === 'true' ? 'wss' : 'ws',
+        host: '0.0.0.0',
+        strictPort: true,
+        https: process.env.FORCE_HTTPS || false,
+        origin: `${process.env.VITE_APP_URL || 'localhost'}:5174`,
+        hmr: {
+            host: process.env.VITE_APP_URL || '0.0.0.0',
+            port: 5174,
+            protocol: process.env.FORCE_HTTPS ? 'wss' : 'ws',
+        },
     },
-},
-
-
 
     build: {
         outDir: 'public/react/build',
