@@ -437,7 +437,7 @@
             const form = useForm({
                 id: null,
                 date: new Date().toISOString().split('T')[0],
-                employee_id: '',
+                employee_id: props.saleData.employee_id || '',
                 sale_type: 'normal',
                 account_id: props.defaultCustomerEnabled ? 3 : null,
                 customer_mobile: '',

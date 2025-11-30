@@ -11,6 +11,7 @@ use App\Models\Sale;
 use App\Models\SaleDaySession;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class SaleController extends Controller
 {
@@ -76,7 +77,9 @@ class SaleController extends Controller
             'custom_payment_data' => null,
             'status' => null,
         ];
-
+        if(Auth::user()->type=='employee'){
+            $saleData['employee_id'] = Auth::id();
+        }
         // If ID is provided, load the sale data
         if ($id) {
             try {
@@ -246,6 +249,7 @@ class SaleController extends Controller
                 $saleData['load_error'] = 'Sale not found or could not be loaded';
             }
         }
+
         $data = [
             'categories' => $categories,
             'employees' => $employees,
