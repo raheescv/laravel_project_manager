@@ -18,7 +18,7 @@ export default defineConfig({
         },
     },
 
-   sserver: {
+   server: {
     port: 5174,
     host: '0.0.0.0',
     strictPort: true,
