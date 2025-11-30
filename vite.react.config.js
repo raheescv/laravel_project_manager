@@ -16,6 +16,7 @@ export default defineConfig({
         alias: {
             '@react': '/resources/js/react',   // react alias
         },
+        
     },
 
     server: {
