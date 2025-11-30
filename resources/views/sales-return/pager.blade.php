@@ -12,7 +12,7 @@
     </div>
     <div class="content__boxed">
         <div class="content__wrap">
-            @livewire('sale-return.pager', ['table_id' => $id])
+            @livewire('sale-return.pager', ['sale_id' => $id,])
         </div>
     </div>
     <x-account.customer-modal />

@@ -56,86 +56,49 @@ class Pager extends Component
         'name' => null,
     ];
 
-    if ($sale_id) {
-        // Step 1: fetch Sale Return ID for this Sale ID
-        $sale_return = SaleReturn::where('sale_id', $sale_id)->latest()->first();
-
-        if (!$sale_return) {
-            return redirect()->route('sale_return::index');
-        }
-
-        $this->table_id = $sale_return->id; // assign correct Sale Return ID
-
-        // Step 2: continue existing logic
-        $this->sale_return = SaleReturn::with([
-            'account:id,name,mobile',
-            'branch:id,name',
-            'items.product:id,name,mrp,tax',
-            'createdUser:id,name',
-            'updatedUser:id,name',
-            'payments.paymentMethod:id,name'
-        ])->find($this->table_id);
-
-        $this->sale_returns = $this->sale_return->toArray();
-        $this->accounts = Account::where('id', $this->sale_returns['account_id'])->pluck('name', 'id')->toArray();
-
-        $this->items = $this->sale_return->items->mapWithKeys(function ($item) {
-            $key = $item['inventory_id'];
-            return [
-                $key => [
-                    'id' => $item['id'],
-                    'key' => $key,
-                    'inventory_id' => $item['inventory_id'],
-                    'sale_item_id' => $item['sale_item_id'],
-                    'product_id' => $item['product_id'],
-                    'name' => $item['name'],
-                    'tax_amount' => $item['tax_amount'],
-                    'unit_price' => $item['unit_price'],
-                    'quantity' => round($item['quantity'], 3),
-                    'gross_amount' => $item['gross_amount'],
-                    'discount' => $item['discount'],
-                    'tax' => $item['tax'],
-                    'total' => $item['total'],
-                    'effective_total' => $item['effective_total'],
-                    'created_by' => $item['created_by'],
-                ]
-            ];
-        })->toArray();
-
-        $this->payments = $this->sale_return->payments->map->only(['id', 'amount', 'date', 'payment_method_id', 'created_by', 'name'])->toArray();
-
-        if (count($this->payments) > 1) {
-            $this->payment_method_name = 'custom';
-        } elseif (count($this->payments) == 1) {
-            $this->payment_method_name = strtolower($this->payments[0]['name']);
-            if (!in_array($this->payment_method_name, ['cash', 'card'])) {
-                $this->payment_method_name = 'custom';
-            }
-        }
-
-        $this->mainCalculator();
-    } else {
-        $this->accounts = Account::where('id', 3)->pluck('name', 'id')->toArray();
-        $this->items = [];
-        $this->payments = [];
-        $this->sale_returns = [
-            'date' => date('Y-m-d'),
-            'account_id' => 3,
-            'gross_amount' => 0,
-            'total_quantity' => 0,
-            'item_discount' => 0,
-            'tax_amount' => 0,
-            'total' => 0,
-            'other_discount' => 0,
-            'grand_total' => 0,
-            'paid' => 0,
-            'balance' => 0,
-            'status' => 'draft',
-        ];
+   if ($sale_id) {
+    // Fetch the sale
+    $sale = Sale::find($sale_id);
+    if (!$sale) {
+        return redirect()->route('sale_return::index');
     }
+
+    $this->sale_return = $sale;
+    $this->table_id = $sale->id;
+
+    // Initialize sale_returns array to prevent undefined keys
+    $this->sale_returns = [
+        'date' => $sale->date,
+        'account_id' => $sale->account_id,
+        'gross_amount' => 0,
+        'total_quantity' => 0,
+        'item_discount' => 0,
+        'tax_amount' => 0,
+        'total' => 0,
+        'other_discount' => $sale->other_discount ?? 0,
+        'grand_total' => 0,
+        'paid' => 0,
+        'balance' => 0,
+        'status' => $sale->status ?? 'draft',
+    ];
+
+    // Fetch sale items manually
+    $saleItems = SaleItem::where('sale_id', $sale->id)->get();
+
+    foreach ($saleItems as $item) {
+        $this->selectItem($item->inventory_id, $item->id);
+    }
+
+    // Set account info
+    $this->accounts = Account::where('id', $sale->account_id)->pluck('name', 'id')->toArray();
+
+    $this->mainCalculator();
+}
+
 
     $this->dispatch('SelectDropDownValues', $this->sale_returns);
 }
+
 
 
     public function updated($key, $value)
@@ -221,6 +184,24 @@ class Pager extends Component
         }
     }
 
+    public function calculateTotals()
+{
+    $this->sub_total = $this->items->sum(function ($item) {
+        return $item['quantity'] * $item['price'];
+    });
+
+    // Recalculate discount based on updated subtotal
+    if (!empty($this->discount_percentage)) {
+        $this->discount_amount = ($this->sub_total * $this->discount_percentage) / 100;
+    } else {
+        $this->discount_amount = 0;
+    }
+
+    // Final total
+    $this->total = $this->sub_total - $this->discount_amount;
+}
+
+
     public function mainCalculator()
     {
         $items = collect($this->items);
@@ -297,6 +278,8 @@ class Pager extends Component
             unset($this->items[$index]);
             $this->mainCalculator();
             $this->dispatch('success', ['message' => 'Item removed successfully']);
+
+            
         } catch (\Throwable $th) {
             $this->dispatch('error', ['message' => $th->getMessage()]);
         }
@@ -449,11 +432,9 @@ class Pager extends Component
             }
 
             $user_id = Auth::id();
-            if (! $this->table_id) {
+           
                 $response = (new CreateAction())->execute($this->sale_returns, $user_id);
-            } else {
-                $response = (new UpdateAction())->execute($this->sale_returns, $this->table_id, $user_id);
-            }
+            
 
             if (! $response['success']) {
                 throw new Exception($response['message']);

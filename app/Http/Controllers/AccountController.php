@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Actions\Account\CustomerAction;
 use App\Models\Account;
 use App\Models\Sale;
 use Illuminate\Http\Request;

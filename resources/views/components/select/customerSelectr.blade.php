@@ -120,72 +120,70 @@
     }
 </style>
 
-<script type="text/javascript">
+<<script type="text/javascript">
+document.addEventListener("DOMContentLoaded", function() {
+
+    const defaultCustomerId = "{{ $defaultCustomerId ?? '' }}"; // Optional: preselected from backend
+
     const customerSelectConfig = {
-    persist: false,
-    valueField: 'id',
-    nameField: 'name',
-    searchField: ['name', 'mobile', 'email', 'id'],
-    load: function(query, callback) {
-        var url = "{{ route('account::customerd.customerBySale', ['sale_id' => $sale_id]) }}";
-        url += '?query=' + encodeURIComponent(query);
-        url += '&model=customer';
-        fetch(url, {
-                headers: {
-                    'Cache-Control': 'no-cache',
-                }
-            })
-            .then(response => {
-                if (!response.ok) throw new Error('Network response was not ok');
-                return response.json();
-            })
-            .then(json => {
-                const items = json.items || [];
-                callback(items);
+        persist: false,
+        valueField: 'id',
+        nameField: 'name',
+        searchField: ['name', 'mobile', 'email', 'id'],
+        load: function(query, callback) {
+            var url = "{{ route('account::customerd.customerBySale', ['sale_id' => $sale_id]) }}";
+            url += '?query=' + encodeURIComponent(query);
+            url += '&model=customer';
+            fetch(url, { headers: { 'Cache-Control': 'no-cache' } })
+                .then(response => response.json())
+                .then(json => {
+                    const items = json.items || [];
+                    callback(items);
 
-                // Auto-select the first customer (if exists)
-                if (items.length > 0) {
-                    this.setValue(items[0].id);
-                }
-            })
-            .catch(err => {
-                console.error('Error loading data:', err);
-                callback();
-            });
-    },
-    onFocus: function() {
-        this.load('');
-    },
-    render: {
-        option: function(item, escape) {
-            return `
-                <div class="customer-option">
-                    <div class="customer-name">${escape(item.name || item.text || '')}</div>
-                    ${item.mobile ? `
-                        <div class="customer-mobile">
-                            <i class="fa fa-phone"></i>
-                            ${escape(item.mobile)}
-                        </div>
-                    ` : ''}
-                </div>
-            `;
+                    // Auto-select first item if no default
+                    if (!defaultCustomerId && items.length > 0) {
+                        this.setValue(items[0].id);
+                    }
+                })
+                .catch(err => { console.error(err); callback(); });
         },
-        item: function(item, escape) {
-            return `<div>${escape(item.name || item.text || '')}</div>`;
-        },
-    }
-};
+        render: {
+            option: function(item, escape) {
+                return `
+                    <div class="customer-option">
+                        <div class="customer-name">${escape(item.name || item.text || '')}</div>
+                        ${item.mobile ? `
+                            <div class="customer-mobile">
+                                <i class="fa fa-phone"></i>
+                                ${escape(item.mobile)}
+                            </div>
+                        ` : ''}
+                    </div>
+                `;
+            },
+            item: function(item, escape) {
+                return `<div>${escape(item.name || item.text || '')}</div>`;
+            },
+        }
+    };
 
-// Initialize TomSelect
-$('.select-customer_id').each(function() {
-    new TomSelect(this, {
+    // Initialize TomSelect
+    const select = new TomSelect('.select-customer_id', {
         ...customerSelectConfig,
         create: function(input, callback) {
-            Livewire.dispatch("Customer-Page-Create-Component", {
-                'name': input
-            });
+            Livewire.dispatch("Customer-Page-Create-Component", { name: input });
         },
+        onInitialize: function() {
+            // If backend passed a default customer, set it here
+            if (defaultCustomerId) {
+                this.setValue(defaultCustomerId);
+            } else {
+                // Otherwise, fetch and auto-select first item
+                this.load('');
+            }
+        }
     });
-});
 
+});
 </script>
+
