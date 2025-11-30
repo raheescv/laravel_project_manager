@@ -55,6 +55,9 @@ class SaleController extends Controller
         // Get default product type from configuration
         $defaultProductType = Configuration::where('key', 'default_product_type')->value('value') ?? 'service';
 
+        // Get default quantity from configuration
+        $defaultQuantity = (float) (Configuration::where('key', 'default_quantity')->value('value') ?? '0.001');
+
         // Default sale data
         $saleData = [
             'id' => null,
@@ -254,6 +257,7 @@ class SaleController extends Controller
             'saleData' => $saleData,
             'defaultProductType' => $defaultProductType,
             'defaultCustomerEnabled' => $useDefaultCustomer,
+            'defaultQuantity' => $defaultQuantity,
         ];
 
         return inertia('Sale/POS', $data);
