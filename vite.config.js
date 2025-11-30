@@ -33,7 +33,7 @@ export default defineConfig({
             credentials: true,
         },
         hmr: {
-            host: "localhost",
+            host: process.env.VITE_APP_URL || 'localhost',
             port: 5173,
             protocol: process.env.FORCE_HTTPS === "true" ? "wss" : "ws",
         },
