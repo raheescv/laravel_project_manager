@@ -68,7 +68,7 @@
                                 class="bg-white p-4 rounded-lg shadow cursor-pointer hover:shadow-md transition-shadow"
                                 @click="addItem(product)">
                                 <h3 class="text-sm font-medium text-gray-900">{{ product.name }}</h3>
-                                <p class="text-sm text-gray-500">₹{{ product.mrp }}</p>
+                                <p class="text-sm text-gray-500">{{ product.mrp }}</p>
                             </div>
                         </div>
 
@@ -108,8 +108,8 @@
                                                 <div class="text-sm text-gray-500">{{ item.employee_name }}</div>
                                             </td>
                                             <td class="px-6 py-4 whitespace-nowrap">
-                                                <div class="text-sm text-gray-900">₹{{ item.unit_price }}</div>
-                                                <div class="text-sm text-gray-500" v-if="item.discount">-₹{{
+                                                <div class="text-sm text-gray-900">{{ item.unit_price }}</div>
+                                                <div class="text-sm text-gray-500" v-if="item.discount">-{{
                                                     item.discount }}</div>
                                             </td>
                                             <td class="px-6 py-4 whitespace-nowrap">
@@ -124,7 +124,7 @@
                                                 </div>
                                             </td>
                                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                                ₹{{ item.total }}
+                                                {{ item.total }}
                                             </td>
                                             <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                                 <button class="text-red-600 hover:text-red-900"
@@ -167,37 +167,37 @@
                                     <div class="space-y-2">
                                         <div class="flex justify-between">
                                             <span class="text-gray-600">Gross Amount:</span>
-                                            <span class="font-medium">₹{{ saleData.gross_amount }}</span>
+                                            <span class="font-medium">{{ saleData.gross_amount }}</span>
                                         </div>
                                         <div class="flex justify-between">
                                             <span class="text-gray-600">Item Discount:</span>
-                                            <span class="font-medium">₹{{ saleData.item_discount }}</span>
+                                            <span class="font-medium">{{ saleData.item_discount }}</span>
                                         </div>
                                         <div class="flex justify-between">
                                             <span class="text-gray-600">Other Discount:</span>
-                                            <span class="font-medium">₹{{ saleData.other_discount }}</span>
+                                            <span class="font-medium">{{ saleData.other_discount }}</span>
                                         </div>
                                         <div class="flex justify-between">
                                             <span class="text-gray-600">Tax Amount:</span>
-                                            <span class="font-medium">₹{{ saleData.tax_amount }}</span>
+                                            <span class="font-medium">{{ saleData.tax_amount }}</span>
                                         </div>
                                         <div class="flex justify-between">
                                             <span class="text-gray-600">Freight:</span>
-                                            <span class="font-medium">₹{{ saleData.freight }}</span>
+                                            <span class="font-medium">{{ saleData.freight }}</span>
                                         </div>
                                         <div class="border-t border-gray-200 pt-2 mt-2">
                                             <div class="flex justify-between">
                                                 <span class="text-lg font-medium">Grand Total:</span>
-                                                <span class="text-lg font-medium">₹{{ saleData.grand_total }}</span>
+                                                <span class="text-lg font-medium">{{ saleData.grand_total }}</span>
                                             </div>
                                         </div>
                                         <div class="flex justify-between">
                                             <span class="text-gray-600">Paid Amount:</span>
-                                            <span class="font-medium">₹{{ saleData.paid }}</span>
+                                            <span class="font-medium">{{ saleData.paid }}</span>
                                         </div>
                                         <div class="flex justify-between">
                                             <span class="text-gray-600">Balance:</span>
-                                            <span class="font-medium">₹{{ saleData.balance }}</span>
+                                            <span class="font-medium">{{ saleData.balance }}</span>
                                         </div>
                                     </div>
                                 </div>

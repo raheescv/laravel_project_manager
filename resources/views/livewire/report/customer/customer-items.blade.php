@@ -167,7 +167,7 @@
                             innerRadius: "50%",
                             showInLegend: true,
                             legendText: "{label}",
-                            indexLabel: "{label}: ₹{y}",
+                            indexLabel: "{label}: {y}",
                             indexLabelFontSize: 12,
                             indexLabelFontFamily: "Helvetica Neue",
                             dataPoints: data.product
@@ -184,7 +184,7 @@
                             innerRadius: "50%",
                             showInLegend: true,
                             legendText: "{label}",
-                            indexLabel: "{label}: ₹{y}",
+                            indexLabel: "{label}: {y}",
                             indexLabelFontSize: 12,
                             indexLabelFontFamily: "Helvetica Neue",
                             dataPoints: data.employee

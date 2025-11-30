@@ -140,7 +140,7 @@
                                             class="px-2 py-3 whitespace-nowrap text-xs font-bold text-right text-slate-900">
                                             <div
                                                 class="bg-gradient-to-r from-emerald-50 to-green-50 px-2 py-1 rounded-lg border border-green-200">
-                                                ₹{{ parseFloat(draft.grand_total || 0).toFixed(2) }}
+                                                {{ parseFloat(draft.grand_total || 0).toFixed(2) }}
                                             </div>
                                         </td>
                                         <td class="px-2 py-3 whitespace-nowrap text-center">

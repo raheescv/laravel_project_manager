@@ -31,7 +31,7 @@
                                 ${item.description ? `<div class="text-muted text-sm mt-1">${escape(item.description)}</div>` : ''}
                             </div>
                             <div class="ml-4 text-right">
-                                <div class="text-success font-weight-bold text-lg">${escape(item.amount ? '₹' + item.amount : '')}</div>
+                                <div class="text-success font-weight-bold text-lg">${escape(item.amount ? '' + item.amount : '')}</div>
                                 ${item.count ? `<div class="badge bg-primary text-white rounded-pill px-3 py-1 mt-1">${escape(item.count)} services</div>` : ''}
                             </div>
                         </div>`;
@@ -42,7 +42,7 @@
                             <span class="font-medium text-indigo-600">${escape(item.name || '')}</span>
                             ${item.amount ? `
                                 <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800">
-                                    ₹${escape(item.amount)}
+                                    ${escape(item.amount)}
                                 </span>` : ''}
                         </div>`;
                 },

@@ -179,7 +179,7 @@
                                         Grand Total
                                     </span>
                                     <span class="font-bold text-sm text-emerald-600">
-                                        ₹{{ grandTotal.toFixed(2) }}
+                                        {{ grandTotal.toFixed(2) }}
                                     </span>
                                 </div>
                                 <div class="flex justify-between items-center py-0.5 border-b border-slate-200">
@@ -188,7 +188,7 @@
                                         Paid Amount
                                     </span>
                                     <span class="font-bold text-sm text-blue-600">
-                                        ₹{{ paidAmount.toFixed(2) }}
+                                        {{ paidAmount.toFixed(2) }}
                                     </span>
                                 </div>
                                 <div class="flex justify-between items-center py-0.5" :class="{
@@ -201,7 +201,7 @@
                                         {{ balanceText }}
                                     </span>
                                     <span class="font-bold text-sm" :style="`color: ${balanceColor}`">
-                                        ₹{{ Math.abs(balanceAmount).toFixed(2) }}
+                                        {{ Math.abs(balanceAmount).toFixed(2) }}
                                     </span>
                                 </div>
                             </div>
@@ -381,7 +381,7 @@ export default {
         const paymentMethods = computed(() => {
             if (props.saleData.payment_method === 'custom' && props.saleData.custom_payment_data?.payments) {
                 return props.saleData.custom_payment_data.payments
-                    .map(p => `${p.name}: ₹${parseFloat(p.amount).toFixed(2)}`)
+                    .map(p => `${p.name}: ${parseFloat(p.amount).toFixed(2)}`)
                     .join(', ')
             }
             if (props.saleData.payment_method === 1 || props.paymentMethod === 1) return 'Cash Payment'

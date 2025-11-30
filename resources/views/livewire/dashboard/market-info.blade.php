@@ -7,18 +7,18 @@
             </h6>
             <div class="d-flex gap-2">
                 <div class="btn-group btn-group-sm" role="group">
-                    <button type="button" 
+                    <button type="button"
                             class="btn {{ $exchange === 'NSE' ? 'btn-light' : 'btn-outline-light' }} btn-sm"
                             wire:click="changeExchange('NSE')">
                         NSE
                     </button>
-                    <button type="button" 
+                    <button type="button"
                             class="btn {{ $exchange === 'BSE' ? 'btn-light' : 'btn-outline-light' }} btn-sm"
                             wire:click="changeExchange('BSE')">
                         BSE
                     </button>
                 </div>
-                <button type="button" 
+                <button type="button"
                         class="btn btn-outline-light btn-sm"
                         wire:click="refreshMarketData"
                         @if($loading) disabled @endif>
@@ -27,7 +27,7 @@
             </div>
         </div>
     </div>
-    
+
     <div class="card-body p-0">
         @if($loading)
             <div class="d-flex justify-content-center align-items-center py-5">
@@ -68,7 +68,7 @@
                                                 <small class="text-muted">{{ $index['symbol'] ?? 'N/A' }}</small>
                                             </div>
                                             <div class="text-end">
-                                                <div class="fw-semibold">₹{{ number_format($index['ltp'] ?? 0, 2) }}</div>
+                                                <div class="fw-semibold">{{ number_format($index['ltp'] ?? 0, 2) }}</div>
                                                 <small class="{{ ($index['change'] ?? 0) >= 0 ? 'text-success' : 'text-danger' }}">
                                                     {{ ($index['change'] ?? 0) >= 0 ? '+' : '' }}{{ number_format($index['change'] ?? 0, 2) }}
                                                     ({{ ($index['change_percent'] ?? 0) >= 0 ? '+' : '' }}{{ number_format($index['change_percent'] ?? 0, 2) }}%)
@@ -104,7 +104,7 @@
                                                 <small class="text-muted">{{ $gainer['name'] ?? 'N/A' }}</small>
                                             </div>
                                             <div class="text-end">
-                                                <div class="fw-semibold small">₹{{ number_format($gainer['ltp'] ?? 0, 2) }}</div>
+                                                <div class="fw-semibold small">{{ number_format($gainer['ltp'] ?? 0, 2) }}</div>
                                                 <small class="text-success">
                                                     +{{ number_format($gainer['change'] ?? 0, 2) }}
                                                     (+{{ number_format($gainer['change_percent'] ?? 0, 2) }}%)
@@ -135,7 +135,7 @@
                                                 <small class="text-muted">{{ $loser['name'] ?? 'N/A' }}</small>
                                             </div>
                                             <div class="text-end">
-                                                <div class="fw-semibold small">₹{{ number_format($loser['ltp'] ?? 0, 2) }}</div>
+                                                <div class="fw-semibold small">{{ number_format($loser['ltp'] ?? 0, 2) }}</div>
                                                 <small class="text-danger">
                                                     {{ number_format($loser['change'] ?? 0, 2) }}
                                                     ({{ number_format($loser['change_percent'] ?? 0, 2) }}%)
@@ -171,7 +171,7 @@
                                             <small class="text-muted">{{ number_format($volume['volume'] ?? 0) }}</small>
                                         </div>
                                         <div class="text-end">
-                                            <div class="fw-semibold small">₹{{ number_format($volume['ltp'] ?? 0, 2) }}</div>
+                                            <div class="fw-semibold small">{{ number_format($volume['ltp'] ?? 0, 2) }}</div>
                                             <small class="{{ ($volume['change'] ?? 0) >= 0 ? 'text-success' : 'text-danger' }}">
                                                 {{ ($volume['change'] ?? 0) >= 0 ? '+' : '' }}{{ number_format($volume['change_percent'] ?? 0, 2) }}%
                                             </small>
@@ -185,7 +185,7 @@
             </div>
         @endif
     </div>
-    
+
     <div class="card-footer bg-light border-0 text-center">
         <small class="text-muted">
             <i class="demo-pli-clock me-1"></i>

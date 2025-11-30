@@ -205,7 +205,7 @@
                                                     <span class="sm:hidden">Round</span>
                                                 </span>
                                                 <span
-                                                    class="font-bold bg-blue-50 px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-lg shadow-sm text-xs sm:text-sm">₹{{ Number(form . round_off) . toFixed(2) }}</span>
+                                                    class="font-bold bg-blue-50 px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-lg shadow-sm text-xs sm:text-sm">{{ Number(form . round_off) . toFixed(2) }}</span>
                                             </div>
                                             <div class="border-t border-slate-300/60 pt-1.5 sm:pt-2 flex justify-between items-center">
                                                 <span class="font-bold text-base sm:text-lg text-slate-800 flex items-center">
@@ -1339,7 +1339,7 @@
                         // Recalculate totals
                         calculateTotals()
 
-                        toast.success(`Converted ${currentValue}% to ₹${discountAmount.toFixed(2)} discount`)
+                        toast.success(`Converted ${currentValue}% to ${discountAmount.toFixed(2)} discount`)
                     } else {
                         toast.error('No items in cart to calculate discount percentage')
                     }

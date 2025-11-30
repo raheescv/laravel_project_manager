@@ -128,7 +128,7 @@
                                     </div>
                                     <div class="text-right">
                                         <div class="font-bold text-sm text-green-600">
-                                            ₹{{ sale.total }}
+                                            {{ sale.total }}
                                         </div>
                                         <div class="text-xs text-gray-500">
                                             {{ sale.status }}

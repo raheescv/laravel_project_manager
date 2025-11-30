@@ -102,19 +102,19 @@
                     <div class="grid grid-cols-2 gap-2 text-xs">
                         <div class="flex justify-between items-center">
                             <span class="text-slate-600">Gross:</span>
-                            <span class="font-bold text-slate-800">₹{{ Number(localItem.gross_amount || 0).toFixed(2) }}</span>
+                            <span class="font-bold text-slate-800">{{ Number(localItem.gross_amount || 0).toFixed(2) }}</span>
                         </div>
                         <div class="flex justify-between items-center">
                             <span class="text-slate-600">Net:</span>
-                            <span class="font-bold text-slate-800">₹{{ Number(localItem.net_amount || 0).toFixed(2) }}</span>
+                            <span class="font-bold text-slate-800">{{ Number(localItem.net_amount || 0).toFixed(2) }}</span>
                         </div>
                         <div class="flex justify-between items-center">
                             <span class="text-slate-600">Tax:</span>
-                            <span class="font-bold text-purple-600">₹{{ Number(localItem.tax_amount || 0).toFixed(2) }}</span>
+                            <span class="font-bold text-purple-600">{{ Number(localItem.tax_amount || 0).toFixed(2) }}</span>
                         </div>
                         <div class="flex justify-between items-center">
                             <span class="text-slate-600">Total:</span>
-                            <span class="font-bold text-emerald-600">₹{{ Number(localItem.total || 0).toFixed(2) }}</span>
+                            <span class="font-bold text-emerald-600">{{ Number(localItem.total || 0).toFixed(2) }}</span>
                         </div>
                     </div>
                 </div>
