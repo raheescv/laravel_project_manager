@@ -27,6 +27,12 @@ class Pager extends Component
         'SaleReturn-Delete-Sync-Items-Component' => 'removeSyncItemFromViewItem',
     ];
 
+
+
+    // new: store derived percentage and original sale total
+public $discount_percentage = null;
+public $original_total = 0;
+
     public $product_key;
     public $products;
     public $table_id;
@@ -91,6 +97,29 @@ class Pager extends Component
 
     // Set account info
     $this->accounts = Account::where('id', $sale->account_id)->pluck('name', 'id')->toArray();
+
+    // compute original sale total from sale items (same logic as mainCalculator uses)
+$original_total = 0;
+foreach ($saleItems as $item) {
+    $lineGross = ($item->unit_price ?? 0) * ($item->quantity ?? 1);
+    $lineNet = $lineGross - ($item->discount ?? 0);
+    $lineTax = ($lineNet * ($item->tax ?? 0)) / 100;
+    $lineTotal = round($lineNet + $lineTax, 2);
+    $original_total += $lineTotal;
+}
+$this->original_total = round($original_total, 2);
+
+// derive percentage from DB-stored other_discount (if present)
+if (! empty($this->sale_returns['other_discount']) && $this->original_total > 0) {
+    $this->discount_percentage = round(($this->sale_returns['other_discount'] / $this->original_total) * 100, 6);
+} else {
+    $this->discount_percentage = null;
+}
+
+// optional: keep a copy in sale_returns for blade use (not required but convenient)
+$this->sale_returns['original_total'] = $this->original_total;
+$this->sale_returns['discount_percentage'] = $this->discount_percentage;
+
 
     $this->mainCalculator();
 }
@@ -202,24 +231,47 @@ class Pager extends Component
 }
 
 
-    public function mainCalculator()
-    {
-        $items = collect($this->items);
-        $payments = collect($this->payments);
+public function mainCalculator()
+{
+    $items = collect($this->items);
+    $payments = collect($this->payments);
 
-        $this->sale_returns['gross_amount'] = round($items->sum('gross_amount'), 2);
-        $this->sale_returns['total_quantity'] = round($items->sum('quantity'), 2);
-        $this->sale_returns['item_discount'] = round($items->sum('discount'), 2);
-        $this->sale_returns['tax_amount'] = round($items->sum('tax_amount'), 2);
-        $this->sale_returns['total'] = round($items->sum('total'), 2);
+    $this->sale_returns['gross_amount'] = round($items->sum('gross_amount'), 2);
+    $this->sale_returns['total_quantity'] = round($items->sum('quantity'), 2);
+    $this->sale_returns['item_discount'] = round($items->sum('discount'), 2);
+    $this->sale_returns['tax_amount'] = round($items->sum('tax_amount'), 2);
 
-        $this->sale_returns['grand_total'] = $this->sale_returns['total'] - $this->sale_returns['other_discount'];
-        $this->sale_returns['grand_total'] = round($this->sale_returns['grand_total'], 2);
+    // total as the sum of line totals (your code already sets each item.total)
+    $this->sale_returns['total'] = round($items->sum('total'), 2);
 
-        $this->sale_returns['paid'] = round($payments->sum('amount'), 2);
-        $this->sale_returns['balance'] = round($this->sale_returns['grand_total'] - $this->sale_returns['paid'], 2);
-        $this->payment['amount'] = round($this->sale_returns['balance'], 2);
+    // If discount_percentage wasn't set earlier but a numeric other_discount exists,
+    // try deriving percentage from original_total as fallback
+    if ($this->discount_percentage === null && !empty($this->sale_returns['other_discount']) && $this->original_total > 0) {
+        $this->discount_percentage = ($this->sale_returns['other_discount'] / $this->original_total) * 100;
     }
+
+    // If we have a discount percentage, always recalculate other_discount from current total
+    if (!empty($this->discount_percentage) && is_numeric($this->discount_percentage)) {
+        $this->sale_returns['other_discount'] = round(($this->sale_returns['total'] * $this->discount_percentage) / 100, 2);
+    } else {
+        // ensure other_discount is numeric fallback
+        $this->sale_returns['other_discount'] = round($this->sale_returns['other_discount'] ?? 0, 2);
+    }
+
+    $this->sale_returns['grand_total'] = round($this->sale_returns['total'] - $this->sale_returns['other_discount'], 2);
+
+    $this->sale_returns['paid'] = round($payments->sum('amount'), 2);
+    $this->sale_returns['balance'] = round($this->sale_returns['grand_total'] - $this->sale_returns['paid'], 2);
+
+    // keep payment default amount in sync
+    $this->payment['amount'] = round($this->sale_returns['balance'], 2);
+
+    // keep sale_returns cache for blade (optional convenience)
+    $this->sale_returns['discount_percentage'] = $this->discount_percentage;
+    $this->sale_returns['original_total'] = $this->original_total;
+}
+
+
 
     public function selectItem($inventory_id, $sale_item_id = null)
     {
