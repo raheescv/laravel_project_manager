@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Account;
+use App\Models\Sale;
 use Illuminate\Http\Request;
 
 class AccountController extends Controller
@@ -51,14 +52,14 @@ class AccountController extends Controller
             $customer = Account::with('customerType')->findOrFail($id);
 
             // Get sales statistics
-            $totalSales = \App\Models\Sale::where('account_id', $id)->count();
-            $totalAmount = \App\Models\Sale::where('account_id', $id)->sum('grand_total');
-            $lastPurchase = \App\Models\Sale::where('account_id', $id)
+            $totalSales = Sale::where('account_id', $id)->count();
+            $totalAmount = Sale::where('account_id', $id)->sum('grand_total');
+            $lastPurchase = Sale::where('account_id', $id)
                 ->orderBy('date', 'desc')
                 ->value('date');
 
             // Get recent sales (last 5)
-            $recentSales = \App\Models\Sale::where('account_id', $id)
+            $recentSales = Sale::where('account_id', $id)
                 ->select('id', 'invoice_no', 'date', 'grand_total', 'status')
                 ->withCount('items')
                 ->orderBy('date', 'desc')

@@ -51,36 +51,38 @@ class POSController extends Controller
             if ($request->search) {
                 $search = $request->search;
                 $query->whereHas('product', function ($q) use ($search): void {
-                    $q->where('name', 'LIKE', "%{$search}%")
-                        ->orWhere('barcode', 'LIKE', "%{$search}%");
+                    $q->where('name', 'LIKE', "%{$search}%")->orWhere('barcode', 'LIKE', "%{$search}%");
                 });
             }
 
             // Filter by sale type for pricing
             $saleType = $request->sale_type ?? 'normal';
 
-            $products = $query->limit(50)->get()->map(function ($inventory) use ($saleType) {
-                $price = $inventory->product->saleTypePrice($saleType);
+            $products = $query
+                ->limit(50)
+                ->get()
+                ->map(function ($inventory) use ($saleType) {
+                    $price = $inventory->product->saleTypePrice($saleType);
 
-                $imageUrl = cache('logo');
-                if ($inventory->product->thumbnail) {
-                    $imageUrl = $inventory->product->thumbnail;
-                }
+                    $imageUrl = cache('logo');
+                    if ($inventory->product->thumbnail) {
+                        $imageUrl = $inventory->product->thumbnail;
+                    }
 
-                return [
-                    'id' => $inventory->id,
-                    'name' => $inventory->product->name,
-                    'type' => $inventory->product->type,
-                    'barcode' => $inventory->product->barcode,
-                    'size' => $inventory->product->size,
-                    'code' => $inventory->product->code,
-                    'mrp' => $price,
-                    'stock' => $inventory->quantity ?? 0,
-                    'category_id' => $inventory->product->main_category_id,
-                    'product_id' => $inventory->product_id,
-                    'image' => $imageUrl,
-                ];
-            });
+                    return [
+                        'id' => $inventory->id,
+                        'name' => $inventory->product->name,
+                        'type' => $inventory->product->type,
+                        'barcode' => $inventory->product->barcode,
+                        'size' => $inventory->product->size,
+                        'code' => $inventory->product->code,
+                        'mrp' => $price,
+                        'stock' => $inventory->quantity ?? 0,
+                        'category_id' => $inventory->product->main_category_id,
+                        'product_id' => $inventory->product_id,
+                        'image' => $imageUrl,
+                    ];
+                });
 
             return response()->json($products);
         } catch (\Exception $e) {
@@ -95,8 +97,7 @@ class POSController extends Controller
         try {
             $inventory = Inventory::with(['product'])
                 ->whereHas('product', function ($q) use ($request): void {
-                    $q->where('barcode', $request->barcode)
-                        ->where('status', 'active');
+                    $q->where('barcode', $request->barcode)->where('status', 'active');
                 })
                 ->where('inventories.branch_id', session('branch_id'))
                 ->first();
@@ -247,7 +248,7 @@ class POSController extends Controller
                 if ($saleData['payment_method'] == 'custom') {
                     $saleData['payments'] = $saleData['custom_payment_data']['payments'];
                     $saleData['paid'] = array_sum(array_column($saleData['payments'], 'amount'));
-                } else {
+                } elseif ($saleData['payment_method'] && $saleData['payment_method'] != 'credit') {
                     $saleData['paid'] = $saleData['grand_total'];
                     $saleData['payments'] = [
                         [
@@ -255,10 +256,15 @@ class POSController extends Controller
                             'payment_method_id' => $saleData['payment_method'],
                         ],
                     ];
+                } else {
+                    $saleData['payments'] = [];
                 }
             } else {
                 $saleData['payments'] = [];
             }
+
+            $saleData['payments'] = array_map(function ($payment) { unset($payment['id']); return $payment; }, $saleData['payments']);
+
             if (! $table_id) {
                 $response = (new CreateAction())->execute($saleData, $user_id);
             } else {

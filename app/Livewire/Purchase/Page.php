@@ -363,41 +363,6 @@ class Page extends Component
         ]);
     }
 
-    // public function save($type = 'completed')
-    // {
-    //     $this->validate();
-    //     try {
-    //         $account_id = $this->purchases['account_id'];
-    //         $oldStatus = $this->purchases['status'];
-    //         DB::beginTransaction();
-    //         if (! count($this->items)) {
-    //             throw new \Exception('Please add any item', 1);
-    //         }
-    //         $this->purchases['status'] = $type;
-    //         $this->purchases['items'] = $this->items;
-    //         $this->purchases['payments'] = $this->payments;
-
-    //         $user_id = Auth::id();
-    //         if (! $this->table_id) {
-    //             $response = (new CreateAction())->execute($this->purchases, $user_id);
-    //         } else {
-    //             $response = (new UpdateAction())->execute($this->purchases, $this->table_id, $user_id);
-    //         }
-    //         if (! $response['success']) {
-    //             throw new \Exception($response['message'], 1);
-    //         }
-    //         $table_id = $response['data']['id'];
-    //         $this->mount($this->table_id);
-    //         $this->purchases['account_id'] = $account_id;
-    //         DB::commit();
-    //         $this->dispatch('ResetSelectBox', ['type' => $type]);
-    //         $this->dispatch('success', ['message' => $response['message']]);
-    //     } catch (\Throwable $th) {
-    //         DB::rollback();
-    //         $this->dispatch('error', ['message' => $th->getMessage()]);
-    //         $this->purchases['status'] = $oldStatus;
-    //     }
-    // }
     public function save($type = 'completed')
     {
         $this->validate();
@@ -410,7 +375,6 @@ class Page extends Component
             if (! count($this->items)) {
                 throw new \Exception('Please add any item', 1);
             }
-
             $this->purchases['status'] = $type;
             $this->purchases['items'] = $this->items;
             $this->purchases['payments'] = $this->payments;
@@ -441,7 +405,6 @@ class Page extends Component
             $this->dispatch('redirect-to-print', id: $table_id);
 
         } catch (\Throwable $th) {
-
             DB::rollback();
             $this->dispatch('error', ['message' => $th->getMessage()]);
             $this->purchases['status'] = $oldStatus;

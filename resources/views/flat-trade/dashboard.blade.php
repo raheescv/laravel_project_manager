@@ -53,25 +53,25 @@
                             <div class="row">
                                 <div class="col-md-3">
                                     <div class="text-center">
-                                        <h4 class="text-primary mb-1" id="account-balance">₹{{ number_format($account_balance, 2) }}</h4>
+                                        <h4 class="text-primary mb-1" id="account-balance">{{ number_format($account_balance, 2) }}</h4>
                                         <small class="text-muted">Available Balance</small>
                                     </div>
                                 </div>
                                 <div class="col-md-3">
                                     <div class="text-center">
-                                        <h4 class="text-info mb-1" id="total-holdings">₹0.00</h4>
+                                        <h4 class="text-info mb-1" id="total-holdings">0.00</h4>
                                         <small class="text-muted">Total Holdings</small>
                                     </div>
                                 </div>
                                 <div class="col-md-3">
                                     <div class="text-center">
-                                        <h4 class="text-success mb-1" id="day-pnl">₹0.00</h4>
+                                        <h4 class="text-success mb-1" id="day-pnl">0.00</h4>
                                         <small class="text-muted">Day P&L</small>
                                     </div>
                                 </div>
                                 <div class="col-md-3">
                                     <div class="text-center">
-                                        <h4 class="text-warning mb-1" id="total-pnl">₹0.00</h4>
+                                        <h4 class="text-warning mb-1" id="total-pnl">0.00</h4>
                                         <small class="text-muted">Total P&L</small>
                                     </div>
                                 </div>
@@ -501,16 +501,16 @@
             $.get('{{ route("flat_trade::balance") }}')
                 .done(function(response) {
                     if (response.success) {
-                        
+
                         // Update account balance
-                        $('#account-balance').text('₹' + parseFloat(response.balance.cash || 0).toLocaleString('en-IN', {minimumFractionDigits: 2}));
-                        
+                        $('#account-balance').text('' + parseFloat(response.balance.cash || 0).toLocaleString('en-IN', {minimumFractionDigits: 2}));
+
                         // Update holdings value (if available)
-                        $('#total-holdings').text('₹' + parseFloat(response.balance.total_holdings || 0).toLocaleString('en-IN', {minimumFractionDigits: 2}));
-                        
+                        $('#total-holdings').text('' + parseFloat(response.balance.total_holdings || 0).toLocaleString('en-IN', {minimumFractionDigits: 2}));
+
                         // Update P&L values (if available)
-                        $('#day-pnl').text('₹' + parseFloat(response.balance.day_pnl || 0).toLocaleString('en-IN', {minimumFractionDigits: 2}));
-                        $('#total-pnl').text('₹' + parseFloat(response.balance.total_pnl || 0).toLocaleString('en-IN', {minimumFractionDigits: 2}));
+                        $('#day-pnl').text('' + parseFloat(response.balance.day_pnl || 0).toLocaleString('en-IN', {minimumFractionDigits: 2}));
+                        $('#total-pnl').text('' + parseFloat(response.balance.total_pnl || 0).toLocaleString('en-IN', {minimumFractionDigits: 2}));
 
                         // Add color classes for P&L
                         const dayPnl = parseFloat(response.balance.day_pnl || 0);
@@ -518,13 +518,13 @@
 
                         $('#day-pnl').removeClass('pnl-positive pnl-negative').addClass(dayPnl >= 0 ? 'pnl-positive' : 'pnl-negative');
                         $('#total-pnl').removeClass('pnl-positive pnl-negative').addClass(totalPnl >= 0 ? 'pnl-positive' : 'pnl-negative');
-                        
+
                         // Update additional balance info if available
                         if (response.balance.payin !== undefined) {
-                            $('#payin-amount').text('₹' + parseFloat(response.balance.payin || 0).toLocaleString('en-IN', {minimumFractionDigits: 2}));
+                            $('#payin-amount').text('' + parseFloat(response.balance.payin || 0).toLocaleString('en-IN', {minimumFractionDigits: 2}));
                         }
                         if (response.balance.payout !== undefined) {
-                            $('#payout-amount').text('₹' + parseFloat(response.balance.payout || 0).toLocaleString('en-IN', {minimumFractionDigits: 2}));
+                            $('#payout-amount').text('' + parseFloat(response.balance.payout || 0).toLocaleString('en-IN', {minimumFractionDigits: 2}));
                         }
                     }
                 })
@@ -552,9 +552,9 @@
                             html += '<tr>';
                             html += '<td><strong>' + symbol + '</strong></td>';
                             html += '<td>' + quantity + '</td>';
-                            html += '<td>₹' + avgPrice.toFixed(2) + '</td>';
-                            html += '<td>₹' + currentPrice.toFixed(2) + '</td>';
-                            html += '<td class="' + pnlClass + '">₹' + pnl.toFixed(2) + '</td>';
+                            html += '<td>' + avgPrice.toFixed(2) + '</td>';
+                            html += '<td>' + currentPrice.toFixed(2) + '</td>';
+                            html += '<td class="' + pnlClass + '">' + pnl.toFixed(2) + '</td>';
                             html += '</tr>';
                         });
 
@@ -582,7 +582,7 @@
                 const orderBookResponse = responses[0];
                 const tradeBookResponse = responses[1];
                 let allOrders = [];
-                
+
                 // Process order book (pending/active orders)
                 if (orderBookResponse.success && orderBookResponse.order_book && orderBookResponse.order_book) {
                     orderBookResponse.order_book.forEach(function(order) {
@@ -600,7 +600,7 @@
                         });
                     });
                 }
-                
+
                 // Process trade book (completed trades)
                 if (tradeBookResponse.success && tradeBookResponse.trade_book && tradeBookResponse.trade_book) {
                     tradeBookResponse.trade_book.forEach(function(trade) {
@@ -618,34 +618,34 @@
                         });
                     });
                 }
-                
+
                 // Sort orders by timestamp (newest first)
                 allOrders.sort(function(a, b) {
                     return new Date(b.timestamp) - new Date(a.timestamp);
                 });
-                
+
                 // Display orders
                 if (allOrders.length > 0) {
                     let html = '<div class="table-responsive"><table class="table table-sm">';
                     html += '<thead><tr><th>Order ID</th><th>Symbol</th><th>Type</th><th>Qty</th><th>Price</th><th>Status</th><th>Time</th></tr></thead><tbody>';
-                    
+
                     allOrders.forEach(function(order) {
                         const statusClass = getOrderStatusClass(order.status);
                         const typeClass = order.transaction_type === 'B' ? 'text-success' : 'text-danger';
                         const typeIcon = order.transaction_type === 'B' ? 'fa-arrow-up' : 'fa-arrow-down';
                         const typeText = order.transaction_type === 'B' ? 'BUY' : 'SELL';
-                        
+
                         html += '<tr>';
                         html += '<td><small class="text-muted">' + order.order_id + '</small></td>';
                         html += '<td><strong>' + order.symbol + '</strong></td>';
                         html += '<td><i class="fa ' + typeIcon + ' me-1 ' + typeClass + '"></i>' + typeText + '</td>';
                         html += '<td>' + order.quantity + '</td>';
-                        html += '<td>₹' + parseFloat(order.price).toFixed(2) + '</td>';
+                        html += '<td>' + parseFloat(order.price).toFixed(2) + '</td>';
                         html += '<td><span class="badge ' + statusClass + '">' + order.status + '</span></td>';
                         html += '<td><small class="text-muted">' + order.timestamp + '</small></td>';
                         html += '</tr>';
                     });
-                    
+
                     html += '</tbody></table></div>';
                     $('#orders-container').html(html);
                 } else {
@@ -694,7 +694,7 @@
                         html += '<h6 class="mb-3">' + symbol + '</h6>';
                         html += '<div class="row">';
                         html += '<div class="col-6"><strong>Current Price:</strong></div>';
-                        html += '<div class="col-6">₹' + parseFloat(data.last_price || 0).toFixed(2) + '</div>';
+                        html += '<div class="col-6">' + parseFloat(data.last_price || 0).toFixed(2) + '</div>';
                         html += '</div>';
                         html += '<div class="row">';
                         html += '<div class="col-6"><strong>Change:</strong></div>';
@@ -708,15 +708,15 @@
                         html += '</div>';
                         html += '<div class="row">';
                         html += '<div class="col-6"><strong>Bid:</strong></div>';
-                        html += '<div class="col-6">₹' + parseFloat(analysis.bid_price || 0).toFixed(2) + '</div>';
+                        html += '<div class="col-6">' + parseFloat(analysis.bid_price || 0).toFixed(2) + '</div>';
                         html += '</div>';
                         html += '<div class="row">';
                         html += '<div class="col-6"><strong>Ask:</strong></div>';
-                        html += '<div class="col-6">₹' + parseFloat(analysis.ask_price || 0).toFixed(2) + '</div>';
+                        html += '<div class="col-6">' + parseFloat(analysis.ask_price || 0).toFixed(2) + '</div>';
                         html += '</div>';
                         html += '<div class="row">';
                         html += '<div class="col-6"><strong>Spread:</strong></div>';
-                        html += '<div class="col-6">₹' + parseFloat(analysis.spread || 0).toFixed(2) + '</div>';
+                        html += '<div class="col-6">' + parseFloat(analysis.spread || 0).toFixed(2) + '</div>';
                         html += '</div>';
                         html += '</div>';
 

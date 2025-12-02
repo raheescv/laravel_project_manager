@@ -205,7 +205,7 @@
                                                     <span class="sm:hidden">Round</span>
                                                 </span>
                                                 <span
-                                                    class="font-bold bg-blue-50 px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-lg shadow-sm text-xs sm:text-sm">₹{{ Number(form . round_off) . toFixed(2) }}</span>
+                                                    class="font-bold bg-blue-50 px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-lg shadow-sm text-xs sm:text-sm">{{ Number(form . round_off) . toFixed(2) }}</span>
                                             </div>
                                             <div class="border-t border-slate-300/60 pt-1.5 sm:pt-2 flex justify-between items-center">
                                                 <span class="font-bold text-base sm:text-lg text-slate-800 flex items-center">
@@ -368,6 +368,10 @@
             defaultCustomerEnabled: {
                 type: Boolean,
                 default: true
+            },
+            defaultQuantity: {
+                type: Number,
+                default: 0.001
             }
         },
 
@@ -433,7 +437,7 @@
             const form = useForm({
                 id: null,
                 date: new Date().toISOString().split('T')[0],
-                employee_id: '',
+                employee_id: props.saleData.employee_id || '',
                 sale_type: 'normal',
                 account_id: props.defaultCustomerEnabled ? 3 : null,
                 customer_mobile: '',
@@ -686,7 +690,8 @@
                     const key = `${item.employee_id}-${item.inventory_id}`
 
                     if (form.items[key]) {
-                        form.items[key].quantity = (parseFloat(form.items[key].quantity) || 0) + 0.001
+                        // default quantity taken from the settings
+                        form.items[key].quantity = (parseFloat(form.items[key].quantity) || 0) + props.defaultQuantity
                         await updateItemQuantity(key)
                     } else {
                         form.items[key] = item
@@ -1339,7 +1344,7 @@
                         // Recalculate totals
                         calculateTotals()
 
-                        toast.success(`Converted ${currentValue}% to ₹${discountAmount.toFixed(2)} discount`)
+                        toast.success(`Converted ${currentValue}% to ${discountAmount.toFixed(2)} discount`)
                     } else {
                         toast.error('No items in cart to calculate discount percentage')
                     }

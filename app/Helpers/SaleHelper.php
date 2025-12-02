@@ -32,6 +32,9 @@ class SaleHelper
         $enable_barcode_in_print = Configuration::where('key', 'enable_barcode_in_print')->value('value') ?? 'yes';
         $print_item_label = Configuration::where('key', 'print_item_label')->value('value') ?? 'product';
         $print_quantity_label = Configuration::where('key', 'print_quantity_label')->value('value') ?? 'quantity';
+        $barcodeSettings = Configuration::where('key', 'barcode_configurations')->value('value');
+        $barcodeSettings = $barcodeSettings ? json_decode($barcodeSettings, true) : [];
+        $barcodeType = $barcodeSettings['barcode']['type'] ?? 'C128';
         $payments = $sale->payments()->with('paymentMethod:id,name')->get(['amount', 'payment_method_id'])->toArray();
         $data = compact(
             'payments',
@@ -47,6 +50,7 @@ class SaleHelper
             'print_item_label',
             'print_quantity_label',
             'barcode_string',
+            'barcodeType',
         );
         $htmlContent = View::make('sale.print', $data)->render();
 

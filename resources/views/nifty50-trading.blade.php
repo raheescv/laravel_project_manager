@@ -275,7 +275,7 @@ function loadUserPositions() {
             if (response.success) {
                 // Update balance info if available
                 if (response.data.balance) {
-                    $('#available-balance').text('₹' + response.data.balance);
+                    $('#available-balance').text('' + response.data.balance);
                 }
             }
         })
@@ -286,10 +286,10 @@ function loadUserPositions() {
 
 function loadBestStocks() {
     const formData = $('#trading-config-form').serialize();
-    
+
     $('#stocks-loading').show();
     $('#stocks-table-container').hide();
-    
+
     $.get('/flat_trade/nifty50/best-stocks?' + formData)
         .done(function(response) {
             if (response.success) {
@@ -311,32 +311,32 @@ function loadBestStocks() {
 function displayStocks(stocks) {
     const tbody = $('#stocks-tbody');
     tbody.empty();
-    
+
     if (stocks.length === 0) {
         tbody.append('<tr><td colspan="8" class="text-center">No suitable stocks found</td></tr>');
         return;
     }
-    
+
     stocks.forEach(function(stock, index) {
         const changeClass = stock.change_percent >= 0 ? 'text-success' : 'text-danger';
         const changeIcon = stock.change_percent >= 0 ? 'fa-arrow-up' : 'fa-arrow-down';
-        
+
         const row = `
             <tr>
                 <td><strong>${stock.symbol}</strong></td>
-                <td>₹${stock.ltp.toFixed(2)}</td>
+                <td>${stock.ltp.toFixed(2)}</td>
                 <td class="${changeClass}">
                     <i class="fa ${changeIcon}"></i> ${stock.change_percent.toFixed(2)}%
                 </td>
                 <td>${formatNumber(stock.volume)}</td>
-                <td>₹${stock.high.toFixed(2)}</td>
-                <td>₹${stock.low.toFixed(2)}</td>
+                <td>${stock.high.toFixed(2)}</td>
+                <td>${stock.low.toFixed(2)}</td>
                 <td>
                     <span class="badge badge-info">${stock.suitability_score.toFixed(1)}</span>
                 </td>
                 <td>
                     <div class="form-check">
-                        <input type="checkbox" class="form-check-input stock-checkbox" 
+                        <input type="checkbox" class="form-check-input stock-checkbox"
                                value="${stock.symbol}" data-stock='${JSON.stringify(stock)}'>
                         <label class="form-check-label">Select</label>
                     </div>
@@ -345,7 +345,7 @@ function displayStocks(stocks) {
         `;
         tbody.append(row);
     });
-    
+
     // Update selected stocks when checkboxes change
     $('.stock-checkbox').change(function() {
         updateSelectedStocks();
@@ -371,22 +371,22 @@ function executeDryRun() {
         showAlert('Please select at least one stock', 'warning');
         return;
     }
-    
+
     const formData = $('#trading-config-form').serializeArray();
     const config = {};
     formData.forEach(function(item) {
         config[item.name] = item.value;
     });
-    
+
     const requestData = {
         stocks: selectedStocks,
         ...config,
         confirm_trading: true,
         dry_run: true
     };
-    
+
     showAlert('Executing dry run...', 'info');
-    
+
     $.post('/flat_trade/nifty50/execute-trading', requestData)
         .done(function(response) {
             if (response.success) {
@@ -405,24 +405,24 @@ function executeRealTrading() {
         showAlert('Please select at least one stock', 'warning');
         return;
     }
-    
+
     if (marketStatus !== 'open') {
         showAlert('Market is currently closed. Trading is not allowed.', 'warning');
         return;
     }
-    
+
     // Show confirmation modal
     showConfirmationModal();
 }
 
 function showConfirmationModal() {
     const totalInvestment = selectedStocks.reduce((sum, stock) => sum + (stock.ltp * stock.quantity), 0);
-    
+
     const details = `
         <div class="row">
             <div class="col-md-6">
                 <strong>Selected Stocks:</strong> ${selectedStocks.length}<br>
-                <strong>Total Investment:</strong> ₹${totalInvestment.toFixed(2)}<br>
+                <strong>Total Investment:</strong> ${totalInvestment.toFixed(2)}<br>
                 <strong>Order Type:</strong> ${$('#order-type').val()}<br>
                 <strong>Product:</strong> ${$('#product').val()}
             </div>
@@ -448,18 +448,18 @@ function showConfirmationModal() {
                         <tr>
                             <td>${stock.symbol}</td>
                             <td>${stock.quantity}</td>
-                            <td>₹${stock.ltp.toFixed(2)}</td>
-                            <td>₹${(stock.ltp * stock.quantity).toFixed(2)}</td>
+                            <td>${stock.ltp.toFixed(2)}</td>
+                            <td>${(stock.ltp * stock.quantity).toFixed(2)}</td>
                         </tr>
                     `).join('')}
                 </tbody>
             </table>
         </div>
     `;
-    
+
     $('#confirm-details').html(details);
     $('#confirmModal').modal('show');
-    
+
     $('#confirm-execute').off('click').on('click', function() {
         $('#confirmModal').modal('hide');
         executeRealTradingConfirmed();
@@ -472,15 +472,15 @@ function executeRealTradingConfirmed() {
     formData.forEach(function(item) {
         config[item.name] = item.value;
     });
-    
+
     const requestData = {
         stocks: selectedStocks,
         ...config,
         confirm_trading: true
     };
-    
+
     showAlert('Executing real trading orders...', 'info');
-    
+
     $.post('/flat_trade/nifty50/execute-trading', requestData)
         .done(function(response) {
             if (response.success) {
@@ -500,7 +500,7 @@ function displayResults(data, isDryRun) {
         <div class="alert ${isDryRun ? 'alert-info' : 'alert-success'}">
             <h5><i class="fa fa-chart-line"></i> ${isDryRun ? 'Dry Run Results' : 'Trading Results'}</h5>
         </div>
-        
+
         <div class="row">
             <div class="col-md-3">
                 <div class="info-box">
@@ -534,12 +534,12 @@ function displayResults(data, isDryRun) {
                     <span class="info-box-icon bg-warning"><i class="fa fa-rupee-sign"></i></span>
                     <div class="info-box-content">
                         <span class="info-box-text">Total Investment</span>
-                        <span class="info-box-number">₹${data.summary.total_investment.toFixed(2)}</span>
+                        <span class="info-box-number">${data.summary.total_investment.toFixed(2)}</span>
                     </div>
                 </div>
             </div>
         </div>
-        
+
         <div class="table-responsive">
             <table class="table table-striped">
                 <thead>
@@ -563,17 +563,17 @@ function displayResults(data, isDryRun) {
                                 </span>
                             </td>
                             <td>${result.order_id || 'N/A'}</td>
-                            <td>₹${result.entry_price ? result.entry_price.toFixed(2) : 'N/A'}</td>
-                            <td>₹${result.stop_loss ? result.stop_loss.toFixed(2) : 'N/A'}</td>
-                            <td>₹${result.target ? result.target.toFixed(2) : 'N/A'}</td>
-                            <td>₹${result.investment_amount ? result.investment_amount.toFixed(2) : '0.00'}</td>
+                            <td>${result.entry_price ? result.entry_price.toFixed(2) : 'N/A'}</td>
+                            <td>${result.stop_loss ? result.stop_loss.toFixed(2) : 'N/A'}</td>
+                            <td>${result.target ? result.target.toFixed(2) : 'N/A'}</td>
+                            <td>${result.investment_amount ? result.investment_amount.toFixed(2) : '0.00'}</td>
                         </tr>
                     `).join('')}
                 </tbody>
             </table>
         </div>
     `;
-    
+
     $('#results-content').html(resultsHtml);
     $('#results-section').show();
 }
@@ -596,10 +596,10 @@ function formatNumber(num) {
 }
 
 function showAlert(message, type) {
-    const alertClass = type === 'error' ? 'alert-danger' : 
-                     type === 'warning' ? 'alert-warning' : 
+    const alertClass = type === 'error' ? 'alert-danger' :
+                     type === 'warning' ? 'alert-warning' :
                      type === 'success' ? 'alert-success' : 'alert-info';
-    
+
     const alertHtml = `
         <div class="alert ${alertClass} alert-dismissible fade show" role="alert">
             ${message}
@@ -608,13 +608,13 @@ function showAlert(message, type) {
             </button>
         </div>
     `;
-    
+
     // Remove existing alerts
     $('.alert').remove();
-    
+
     // Add new alert at the top
     $('.card-body').prepend(alertHtml);
-    
+
     // Auto-dismiss after 5 seconds
     setTimeout(function() {
         $('.alert').fadeOut();

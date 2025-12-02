@@ -65,13 +65,16 @@ class Sale extends Model implements AuditableContracts
 
     public static function rules($id = 0, $merge = [])
     {
-        return array_merge([
-            'invoice_no' => ['required', Rule::unique(self::class, 'invoice_no')->ignore($id)],
-            'branch_id' => ['required'],
-            'account_id' => ['required'],
-            'sale_type' => ['required'],
-            'date' => ['required'],
-        ], $merge);
+        return array_merge(
+            [
+                'invoice_no' => ['required', Rule::unique(self::class, 'invoice_no')->ignore($id)],
+                'branch_id' => ['required'],
+                'account_id' => ['required'],
+                'sale_type' => ['required'],
+                'date' => ['required'],
+            ],
+            $merge,
+        );
     }
 
     protected static function booted()
@@ -86,16 +89,10 @@ class Sale extends Model implements AuditableContracts
                     $openSession = SaleDaySession::getOpenSessionForBranch($sale->branch_id);
                     if ($openSession) {
                         $sale->sale_day_session_id = $openSession->id;
-
-                        // If no date is provided, use the session's opened_at date
-                        if (empty($sale->date)) {
-                            $sale->date = $openSession->opened_at->format('Y-m-d');
-                        }
+                        $sale->date = $openSession->opened_at->format('Y-m-d');
                     }
-                }
-
-                // If a session ID is provided, ensure it's valid and open
-                else {
+                } else {
+                    // If a session ID is provided, ensure it's valid and open
                     $session = SaleDaySession::find($sale->sale_day_session_id);
                     if (! $session || $session->status !== 'open' || $session->branch_id !== $sale->branch_id) {
                         throw new \Exception('Invalid or closed day session provided.');
@@ -154,8 +151,7 @@ class Sale extends Model implements AuditableContracts
                 $search = trim($search);
 
                 return $q->where(function ($q) use ($search): void {
-                    $q->where('sales.id', 'like', "%{$search}%")
-                        ->orWhere('sales.invoice_no', 'like', "%{$search}%");
+                    $q->where('sales.id', 'like', "%{$search}%")->orWhere('sales.invoice_no', 'like', "%{$search}%");
                 });
             })
             ->when($filters['sale_type'] ?? '', fn ($q, $value) => $q->where('sales.sale_type', $value))
@@ -248,8 +244,7 @@ class Sale extends Model implements AuditableContracts
         $self = $self->when($request['query'] ?? '', function ($query, $value) {
             return $query->where(function ($q) use ($value): void {
                 $value = trim($value);
-                $q->where('sales.invoice_no', 'like', "%{$value}%")
-                    ->orWhere('sales.reference_no', 'like', "%{$value}%");
+                $q->where('sales.invoice_no', 'like', "%{$value}%")->orWhere('sales.reference_no', 'like', "%{$value}%");
             });
         });
         $self = $self->when($request['account_id'] ?? '', function ($query, $value) {
@@ -311,9 +306,7 @@ class Sale extends Model implements AuditableContracts
     public static function updateSalePaymentMethods(Sale $sale): void
     {
         $payment_method_ids = $sale->payments->pluck('payment_method_id')->toArray();
-        $payment_method_name = Account::whereIn('id', $payment_method_ids)
-            ->pluck('name')
-            ->toArray();
+        $payment_method_name = Account::whereIn('id', $payment_method_ids)->pluck('name')->toArray();
 
         $data = [
             'payment_method_ids' => implode(',', $payment_method_ids),

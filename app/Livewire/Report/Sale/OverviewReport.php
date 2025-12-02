@@ -166,26 +166,53 @@ class OverviewReport extends Component
         $saleReturns = SaleReturn::query()->customerSearch($this->branchId, $from, $to);
 
         // Payment methods for sales
+        // $salePayments = SalePayment::query()
+        //     ->join('sales', 'sales.id', '=', 'sale_payments.sale_id')
+        //     ->join('accounts', 'accounts.id', '=', 'sale_payments.payment_method_id')
+        //     ->tap($baseQuery)
+        //     ->select('accounts.name as payment_method')
+        //     ->selectRaw('sum(sale_payments.amount) as total')
+        //     ->selectRaw('count(distinct sale_payments.sale_id) as transaction_count')
+        //     ->groupBy('sale_payments.payment_method_id')
+        //     ->orderBy('total', 'desc')
+        //     ->get();
         $salePayments = SalePayment::query()
             ->join('sales', 'sales.id', '=', 'sale_payments.sale_id')
             ->join('accounts', 'accounts.id', '=', 'sale_payments.payment_method_id')
+            ->join('branches', 'branches.id', '=', 'sales.branch_id') // <-- added
             ->tap($baseQuery)
-            ->select('accounts.name as payment_method')
-            ->selectRaw('sum(sale_payments.amount) as total')
-            ->selectRaw('count(distinct sale_payments.sale_id) as transaction_count')
-            ->groupBy('sale_payments.payment_method_id')
+            ->select(
+                'accounts.name as payment_method',
+                'branches.name as branch_name' // <-- added
+            )
+            ->selectRaw("'sale' as payment_type")
+            ->selectRaw('SUM(sale_payments.amount) as total')
+            ->groupBy('sale_payments.payment_method_id', 'branches.name') // <-- added branch
             ->orderBy('total', 'desc')
             ->get();
 
-        // Payment methods for sale returns
+        // $saleReturnPayments = SaleReturnPayment::query()
+        //     ->join('sale_returns', 'sale_returns.id', '=', 'sale_return_payments.sale_return_id')
+        //     ->join('accounts', 'accounts.id', '=', 'sale_return_payments.payment_method_id')
+        //     ->tap($baseReturnQuery)
+        //     ->select('accounts.name as payment_method')
+        //     ->selectRaw('sum(sale_return_payments.amount) as total')
+        //     ->selectRaw('count(distinct sale_return_payments.sale_return_id) as transaction_count')
+        //     ->groupBy('sale_return_payments.payment_method_id')
+        //     ->orderBy('total', 'desc')
+        //     ->get();
         $saleReturnPayments = SaleReturnPayment::query()
             ->join('sale_returns', 'sale_returns.id', '=', 'sale_return_payments.sale_return_id')
             ->join('accounts', 'accounts.id', '=', 'sale_return_payments.payment_method_id')
+            ->join('branches', 'branches.id', '=', 'sale_returns.branch_id') // <-- added
             ->tap($baseReturnQuery)
-            ->select('accounts.name as payment_method')
-            ->selectRaw('sum(sale_return_payments.amount) as total')
-            ->selectRaw('count(distinct sale_return_payments.sale_return_id) as transaction_count')
-            ->groupBy('sale_return_payments.payment_method_id')
+            ->select(
+                'accounts.name as payment_method',
+                'branches.name as branch_name' // <-- added
+            )
+            ->selectRaw('SUM(sale_return_payments.amount) as total')
+            ->selectRaw('COUNT(DISTINCT sale_return_payments.sale_return_id) as transaction_count')
+            ->groupBy('sale_return_payments.payment_method_id', 'branches.name') // <-- added
             ->orderBy('total', 'desc')
             ->get();
 

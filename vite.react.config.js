@@ -1,12 +1,13 @@
-import { defineConfig } from 'vite';
-import laravel from 'laravel-vite-plugin';
 import react from '@vitejs/plugin-react';
+import laravel from 'laravel-vite-plugin';
+import { defineConfig } from 'vite';
 
 export default defineConfig({
     plugins: [
         laravel({
             input: ['resources/js/react/app.jsx'],
             refresh: true,
+            buildDirectory: 'react/build',
         }),
         react(),
     ],
@@ -19,13 +20,14 @@ export default defineConfig({
 
     server: {
         port: 5174,
-        host: 'localhost',
+        host: '0.0.0.0',
         strictPort: true,
-        https: false,
+        https: process.env.FORCE_HTTPS || false,
+        origin: `${process.env.VITE_APP_URL || 'localhost'}:5174`,
         hmr: {
-            host: process.env.VITE_REACT_APP_URL || 'localhost',
+            host: process.env.VITE_APP_URL || '0.0.0.0',
             port: 5174,
-            protocol: 'ws',
+            protocol: process.env.FORCE_HTTPS ? 'wss' : 'ws',
         },
     },
 

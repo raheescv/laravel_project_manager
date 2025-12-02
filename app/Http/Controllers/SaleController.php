@@ -11,6 +11,7 @@ use App\Models\Sale;
 use App\Models\SaleDaySession;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class SaleController extends Controller
 {
@@ -55,6 +56,9 @@ class SaleController extends Controller
         // Get default product type from configuration
         $defaultProductType = Configuration::where('key', 'default_product_type')->value('value') ?? 'service';
 
+        // Get default quantity from configuration
+        $defaultQuantity = (float) (Configuration::where('key', 'default_quantity')->value('value') ?? '0.001');
+
         // Default sale data
         $saleData = [
             'id' => null,
@@ -73,7 +77,9 @@ class SaleController extends Controller
             'custom_payment_data' => null,
             'status' => null,
         ];
-
+        if(Auth::user()->type=='employee'){
+            $saleData['employee_id'] = Auth::id();
+        }
         // If ID is provided, load the sale data
         if ($id) {
             try {
@@ -133,7 +139,7 @@ class SaleController extends Controller
                     'status' => $sale->status,
                     'items' => [],
                     'comboOffers' => [],
-                    'payment_method' => 1, // Default, will be overridden if needed
+                    'payment_method' => 'credit', // Default, will be overridden if needed
                     'custom_payment_data' => null,
                 ];
 
@@ -167,22 +173,22 @@ class SaleController extends Controller
                 $saleData['items'] = $cartItems;
 
                 // Handle payment method
-                if ($sale->payments->count() === 1) {
+                if ($sale->payments->count() === 1 && $sale->balance == 0) {
                     $payment = $sale->payments->first();
                     $saleData['payment_method'] = $payment->payment_method_id;
-                } elseif ($sale->payments->count() > 1) {
+                } elseif ($sale->payments->count() > 1 || $sale->balance != 0) {
                     $saleData['payment_method'] = 'custom';
                     $saleData['custom_payment_data'] = [
                         'payments' => $sale->payments->map(function ($payment) {
                             return [
                                 'id' => $payment->id,
-                                'amount' => $payment->amount,
+                                'amount' => (float) $payment->amount,
                                 'payment_method_id' => $payment->payment_method_id,
-                                'payment_method_name' => $payment->paymentMethod->name ?? 'Unknown',
+                                'name' => $payment->paymentMethod->name ?? 'Unknown',
                             ];
                         })->toArray(),
-                        'totalPaid' => $sale->payments->sum('amount'),
-                        'balanceDue' => $sale->grand_total - $sale->payments->sum('amount'),
+                        'totalPaid' => (float) $sale->payments->sum('amount'),
+                        'balanceDue' => (float) ($sale->grand_total - $sale->payments->sum('amount')),
                     ];
                 }
 
@@ -243,6 +249,7 @@ class SaleController extends Controller
                 $saleData['load_error'] = 'Sale not found or could not be loaded';
             }
         }
+
         $data = [
             'categories' => $categories,
             'employees' => $employees,
@@ -254,6 +261,7 @@ class SaleController extends Controller
             'saleData' => $saleData,
             'defaultProductType' => $defaultProductType,
             'defaultCustomerEnabled' => $useDefaultCustomer,
+            'defaultQuantity' => $defaultQuantity,
         ];
 
         return inertia('Sale/POS', $data);

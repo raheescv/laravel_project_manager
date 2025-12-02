@@ -21,6 +21,7 @@ return [
         'visible' => true,
         'show_value' => true,
         'scale' => 4,
+        'type' => 'C128',
     ],
     'size' => [
         'font_size' => 8,

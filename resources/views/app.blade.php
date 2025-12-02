@@ -35,7 +35,7 @@
     <script src="{{ https_asset('assets/vendors/bootstrap/bootstrap.min.js') }}"></script>
     <script src="{{ https_asset('assets/js/nifty.js') }}"></script>
     {{-- <script src="{{ https_asset('assets/js/demo-purpose-only.js') }}"></script> --}}
-    
+
 </body>
 
 </html>

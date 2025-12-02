@@ -3,6 +3,7 @@
 namespace App\Actions\Sale;
 
 use App\Models\Sale;
+use App\Models\User;
 use Exception;
 
 class CreateAction
@@ -48,6 +49,14 @@ class CreateAction
             }
             if ($updateData) {
                 $this->model->update($updateData);
+            }
+
+            $this->model->refresh();
+            $totalDiscount = ($this->model->item_discount ?? 0) + ($this->model->other_discount ?? 0);
+            // Validate max_discount_per_sale
+            $user = User::find($this->userId);
+            if ($totalDiscount) {
+                $user->validateMaxDiscount($this->model->gross_amount, $totalDiscount);
             }
 
             if ($this->model['status'] == 'completed') {

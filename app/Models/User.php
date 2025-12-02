@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Events\BranchUpdated;
+use Exception;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -35,6 +36,7 @@ class User extends Authenticatable implements AuditableContracts
         'allowance',
         'salary',
         'hra',
+        'max_discount_per_sale',
         'is_locked',
         'is_active',
         'is_whatsapp_enabled',
@@ -142,5 +144,24 @@ class User extends Authenticatable implements AuditableContracts
         $return['items'] = $self;
 
         return $return;
+    }
+
+    public function validateMaxDiscount($grossAmount, $totalDiscount)
+    {
+        if (! $this->max_discount_per_sale) {
+            return; // No limit set, allow any discount
+        }
+
+        if ($grossAmount <= 0) {
+            return; // No gross amount, nothing to validate
+        }
+
+        $discountPercentage = round(($totalDiscount / $grossAmount) * 100, 2);
+        if ($this->max_discount_per_sale == 0) {
+            throw new Exception("You don't have the permission to give discount");
+        }
+        if ($discountPercentage > $this->max_discount_per_sale) {
+            throw new Exception("Total discount percentage ({$discountPercentage}%) exceeds your maximum allowed discount per sale ({$this->max_discount_per_sale}%).");
+        }
     }
 }

@@ -42,25 +42,26 @@
                                         <i class="fa fa-tag text-primary me-1 small"></i>
                                         Product Name <span class="text-danger">*</span>
                                     </label>
-                                    <div class="input-group">
+                                    <div class="input-group mb-3">
                                         <span class="input-group-text bg-light border-primary-subtle">
                                             <i class="fa fa-pencil"></i>
                                         </span>
                                         {{ html()->input('name')->value('')->class('form-control border-primary-subtle shadow-sm')->required(true)->placeholder('Enter product name')->id('name')->autofocus()->attribute('wire:model', 'products.name') }}
                                     </div>
-                                </div>
 
-                                <div class="col-md-8">
-                                    <label for="name_arabic" class="form-label fw-medium">
-                                        <i class="fa fa-pencil text-primary me-1 small"></i>
-                                        Arabic Name
-                                    </label>
-                                    <div class="input-group">
-                                        <span class="input-group-text bg-light border-secondary-subtle">
-                                            <i class="fa fa-flag"></i>
-                                        </span>
-                                        {{ html()->input('name_arabic')->value('')->class('form-control border-secondary-subtle shadow-sm')->attribute('dir', 'rtl')->placeholder('Enter arabic name')->attribute('wire:model', 'products.name_arabic') }}
+                                    <div class="col-md-12">
+                                        <label for="name_arabic" class="form-label fw-medium">
+                                            <i class="fa fa-pencil text-primary me-1 small"></i>
+                                            Arabic Name
+                                        </label>
+                                        <div class="input-group">
+                                            <span class="input-group-text bg-light border-secondary-subtle">
+                                                <i class="fa fa-flag"></i>
+                                            </span>
+                                            {{ html()->input('name_arabic')->value('')->class('form-control shadow-sm')->attribute('dir', 'rtl')->placeholder('Enter arabic name')->id('name_arabic')->attribute('wire:model', 'products.name_arabic') }}
+                                        </div>
                                     </div>
+
                                 </div>
 
                                 <div class="col-md-4">
@@ -421,12 +422,8 @@
                                                         <div class="col-md-4 mb-2">
                                                             <div class="input-group input-group-sm">
                                                                 <span class="input-group-text">Image {{ $index + 1 }}</span>
-                                                                <input type="number"
-                                                                       wire:model="degree.{{ $index }}"
-                                                                       class="form-control"
-                                                                       placeholder="Angle (0-359)"
-                                                                       min="0"
-                                                                       max="359">
+                                                                <input type="number" wire:model="degree.{{ $index }}" class="form-control" placeholder="Angle (0-359)" min="0"
+                                                                    max="359">
                                                                 <span class="input-group-text">°</span>
                                                             </div>
                                                         </div>
@@ -446,10 +443,8 @@
                                                         @foreach ($product->angleImages()->orderedByAngle()->get() as $image)
                                                             <div class="col-md-2 mb-2">
                                                                 <div class="text-center">
-                                                                    <img src="{{ $image->path }}"
-                                                                         alt="{{ $image->alt_text ?? '360° Image' }}"
-                                                                         class="img-thumbnail"
-                                                                         style="width: 60px; height: 60px; object-fit: cover;">
+                                                                    <img src="{{ $image->path }}" alt="{{ $image->alt_text ?? '360° Image' }}" class="img-thumbnail"
+                                                                        style="width: 60px; height: 60px; object-fit: cover;">
                                                                     <div class="small text-muted">{{ $image->degree }}°</div>
                                                                 </div>
                                                             </div>
@@ -857,6 +852,27 @@
                 Livewire.dispatch("Product-Prices-Update-Component", {
                     id: $(this).attr('table_id')
                 });
+            });
+        </script>
+        <script>
+            document.getElementById("name").addEventListener("keyup", function() {
+                const text = this.value;
+
+                if (!text) {
+                    document.getElementById("name_arabic").value = "";
+                    @this.set('products.name_arabic', '');
+                    return;
+                }
+
+                // Free Google Translate API
+                fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=ar&dt=t&q=${encodeURI(text)}`)
+                    .then(res => res.json())
+                    .then(data => {
+                        const translated = data[0][0][0];
+                        document.getElementById("name_arabic").value = translated;
+                        @this.set('products.name_arabic', translated); // Update Livewire
+                    })
+                    .catch(err => console.error("Translation error:", err));
             });
         </script>
     @endpush
