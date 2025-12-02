@@ -22,6 +22,7 @@ class Page extends Component
     public $table_id;
 
     public function create($name = null, $mobile = null, $place = null)
+    
     {
         $this->mount();
         if ($name) {
