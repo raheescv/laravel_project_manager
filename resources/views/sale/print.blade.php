@@ -16,7 +16,7 @@
         h3 {
             margin: 5px 0;
             text-align: center;
-            font-size: 12px;
+            font-size: 14px;
             font-weight: 700;
             text-transform: uppercase;
             letter-spacing: 0.3px;
@@ -26,7 +26,7 @@
         body {
             font-family: 'Arial', 'Courier New', monospace;
             line-height: 1.2;
-            font-size: 10px;
+            font-size: 14px;
             margin: 0 auto;
             width: 80mm;
             background-color: #fff;
@@ -50,7 +50,7 @@
         h3 {
             margin: 3px 0;
             text-align: center;
-            font-size: 12px;
+            font-size: 14px;
             font-weight: 700;
             text-transform: uppercase;
             letter-spacing: 0.3px;
@@ -79,7 +79,7 @@
             width: 100%;
             border-collapse: collapse;
             margin: 8px 0;
-            font-size: 9px;
+            font-size: 11px;
         }
 
         .nowrap {
@@ -95,7 +95,7 @@
 
         .table th {
             background-color: transparent;
-            font-size: 9px;
+            font-size: 11px;
             font-weight: bold;
             text-transform: uppercase;
             letter-spacing: 0.3px;
@@ -109,11 +109,11 @@
         .item-name {
             font-weight: 700;
             color: #000;
-            font-size: 9px;
+            font-size: 11px;
         }
 
         .item-description {
-            font-size: 7px;
+            font-size: 9px;
             color: #000;
             font-style: italic;
             margin-top: 1px;
@@ -150,7 +150,7 @@
 
         .barcode p {
             margin: 2px 0 0;
-            font-size: 8px;
+            font-size: 10px;
             color: #000;
             letter-spacing: 0.3px;
         }
@@ -184,7 +184,7 @@
 
         .footer {
             text-align: center;
-            font-size: 8px;
+            font-size: 10px;
             margin-top: 8px;
             padding: 6px 0;
             border-top: 1px dashed #000;
@@ -193,14 +193,14 @@
 
         .thank-you {
             text-align: center;
-            font-size: 10px;
+            font-size: 12px;
             font-weight: 700;
             margin: 8px 0 5px;
             color: #000;
         }
 
         .policies {
-            font-size: 7px;
+            font-size: 11px;
             color: #000;
             text-align: center;
             margin: 5px 0;
@@ -211,7 +211,7 @@
         }
 
         .meta-info {
-            font-size: 8px;
+            font-size: 10px;
             color: #000;
             text-align: right;
             margin-top: 3px;
@@ -228,7 +228,7 @@
             display: inline-block;
             background-color: transparent;
             color: #000;
-            font-size: 8px;
+            font-size: 10px;
             padding: 2px 5px;
             border: 1px solid #000;
             margin: 1px;
@@ -338,7 +338,7 @@
             <h3>
                 {{ $sale->branch?->location }}
             </h3>
-            <div style="font-size: 9px; margin-top: 2px;">
+            <div style="font-size: 11px; margin-top: 2px;">
                 <strong>Mobile:</strong> {{ $sale->branch?->mobile }}
                 @if ($sale->branch?->email)
                     <br><strong>Email:</strong> {{ $sale->branch?->email }}
@@ -667,7 +667,7 @@
                     <p dir="rtl">{!! $thermal_printer_footer_arabic !!}</p>
                 </b>
             @endif
-            <div style="margin-top: 4px; font-size: 7px; color: #777;">
+            <div style="margin-top: 4px; font-size: 9px; color: #777;">
                 {{ date('d/m/Y h:i A') }}
             </div>
         </div>
@@ -676,18 +676,18 @@
 
 <script>
     window.onFocus = function() {
-        window.close();
+        // window.close();
     };
 
     // Auto close after printing or after 60 seconds
     window.addEventListener('afterprint', function() {
         setTimeout(function() {
-            window.close();
+            // window.close();
         }, 5000);
     });
 
     setTimeout(function() {
-        window.close();
+        // window.close();
     }, 60000);
 </script>
 
