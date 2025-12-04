@@ -16,7 +16,7 @@
         h3 {
             margin: 5px 0;
             text-align: center;
-            font-size: 14px;
+            font-size: 15px;
             font-weight: 700;
             text-transform: uppercase;
             letter-spacing: 0.3px;
@@ -338,7 +338,7 @@
             <h3>
                 {{ $sale->branch?->location }}
             </h3>
-            <div style="font-size: 11px; margin-top: 2px;">
+            <div style="font-size: 13px; margin-top: 2px;">
                 <strong>Mobile:</strong> {{ $sale->branch?->mobile }}
                 @if ($sale->branch?->email)
                     <br><strong>Email:</strong> {{ $sale->branch?->email }}
