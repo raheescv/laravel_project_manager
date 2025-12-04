@@ -141,6 +141,13 @@
             </ul>
             <div class="mainnav__categoriy py-3">
                 <ul class="mainnav__menu nav flex-column">
+                    @if (
+                        auth()->user()->can('inventory.view') ||
+                        auth()->user()->can('inventory.product search') ||
+                        auth()->user()->can('inventory.barcode cart') ||
+                        auth()->user()->can('inventory transfer.create') ||
+                        auth()->user()->can('report.product')
+                        )
                     <li class="nav-item has-sub">
                         <a href="#"
                             class="mininav-toggle nav-link {{ request()->is(['inventory', 'inventory/product/*', 'inventory/search', 'inventory/transfer','inventory/barcode/cart', 'inventory/transfer/edit/*', 'inventory/transfer/create', 'inventory/transfer/view/*', 'report/product']) ? 'active' : '' }}"><i
@@ -181,6 +188,7 @@
                             @endcan
                         </ul>
                     </li>
+                    @endif
 
                     @if (auth()->user()->can('appointment.view'))
                         <li class="nav-item has-sub">
