@@ -21,7 +21,8 @@ class Page extends Component
 
     public $table_id;
 
-    public function create($name = null, $mobile = null)
+    public function create($name = null, $mobile = null, $place = null)
+    
     {
         $this->mount();
         if ($name) {
@@ -29,6 +30,9 @@ class Page extends Component
         }
         if ($mobile) {
             $this->accounts['mobile'] = $mobile;
+        }
+        if ($place) {
+            $this->accounts['place'] = $place;
         }
         $this->dispatch('ToggleVendorModal');
     }
@@ -59,7 +63,7 @@ class Page extends Component
                 'mobile' => $mobile,
                 'email' => $email,
                 'model' => 'Vendor',
-                'place' => '',
+                'place' => $place ?? '',
             ];
         } else {
             $account = Account::find($this->table_id);
@@ -76,6 +80,8 @@ class Page extends Component
             'accounts.name' => ['required', 'max:100'],
             'accounts.email' => ['email', 'max:50'],
             'accounts.mobile' => ['required', 'max:15'],
+            'accounts.place' => ['nullable', 'max:100'],
+
         ];
     }
 
@@ -86,6 +92,8 @@ class Page extends Component
         'accounts.mobile.max' => 'The name field must not be greater than 15 characters',
         'accounts.email.max' => 'The name field must not be greater than 50 characters',
         'accounts.email.email' => 'The email field must be a valid email address.',
+        'accounts.place.max' => 'The place must not be greater than 100 characters.',
+
     ];
 
     public function selectVendor($id)
