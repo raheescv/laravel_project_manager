@@ -333,13 +333,13 @@
     <div class="receipt-container">
         <div class="store-info">
             @if ($enable_logo_in_print == 'yes')
-                <img src="{{ cache('logo') }}" alt="Logo" style="width: 60%; max-width: 70px; margin-bottom: 3px;">
+                <img src="{{ cache('logo') }}" alt="Logo" style="width: 70%; max-width: 80px; margin-bottom: 3px;">
             @endif
             <h3>
                 {{ $sale->branch?->location }}
             </h3>
             <div style="font-size: 13px; margin-top: 2px;">
-                <strong>Mobile:</strong> {{ $sale->branch?->mobile }}
+                <strong>Mobile: {{ $sale->branch?->mobile }} </strong>
                 @if ($sale->branch?->email)
                     <br><strong>Email:</strong> {{ $sale->branch?->email }}
                 @endif
