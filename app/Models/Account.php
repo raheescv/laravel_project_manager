@@ -23,6 +23,7 @@ class Account extends Model implements AuditableContracts
         'whatsapp_mobile',
         'model',
         'email',
+        'place',
 
         'dob',
         'id_no',

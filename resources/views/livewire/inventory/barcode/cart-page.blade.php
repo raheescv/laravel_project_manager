@@ -104,7 +104,8 @@
                                                             @if (isset($product['size']) && $product['size'])
                                                                 <div class="badge bg-warning badge-sm mb-1">Size : {{ $product['size'] }}</div>
                                                             @endif
-                                                            <div class="badge bg-success badge-sm">{{ currency($product['mrp']) }}</div>
+                                                          <div class="badge bg-success badge-sm me-1 mt-1">{{ currency($product['mrp']) }}</div>
+
                                                         </div>
                                                         <div class="d-flex justify-content-between align-items-center">
                                                             <small class="text-muted">
@@ -278,6 +279,16 @@
             padding: 8px;
             margin: -8px;
         }
+
+.product-card-pos .badge {
+    margin: 2px 4px;
+}
+
+.badge-sm {
+    margin-right: 4px;
+    margin-bottom: 4px;
+}
+
 
         .quantity-controls {
             display: flex;
