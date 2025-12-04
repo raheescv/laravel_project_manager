@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Actions\Account\CustomerAction;
 use App\Models\Account;
 use App\Models\Sale;
 use Illuminate\Http\Request;
@@ -91,4 +92,14 @@ class AccountController extends Controller
             ], 404);
         }
     }
+
+public function getCustomerBySaleId($sale_id)
+{
+    $response = (new CustomerAction())->getCustomerBySaleId($sale_id);
+
+    return response()->json($response, $response['success'] ? 200 : 404);
+}
+
+
+
 }

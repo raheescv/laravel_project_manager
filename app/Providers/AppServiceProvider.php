@@ -10,10 +10,8 @@ use Dedoc\Scramble\Support\Generator\SecurityScheme;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Schema;
-use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
-use Inertia\Inertia;
-
+use Illuminate\Support\Facades\URL;
 class AppServiceProvider extends ServiceProvider
 {
     public function register(): void
@@ -24,8 +22,6 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
 
-        Inertia::setRootView('app-react');
-
         // Configure Scramble for Bearer Token Authentication
         Scramble::configure()
             ->withDocumentTransformers(function (OpenApi $openApi) {
@@ -34,9 +30,12 @@ class AppServiceProvider extends ServiceProvider
                 );
             });
         // Force HTTPS for assets when the app is served over HTTPS
-        if (request()->isSecure() || env('FORCE_HTTPS', false) || env('APP_URL', '')->startsWith('https://')) {
-            URL::forceScheme('https');
-        }
+        if (
+           app()->environment('production') ||
+                 env('FORCE_HTTPS', false)
+                        ) {
+                          URL::forceScheme('https');
+                  }
 
         if (Schema::hasTable('branches')) {
             Cache::remember('branches', now()->addYear(), function () {

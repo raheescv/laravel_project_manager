@@ -147,4 +147,7 @@ class Inventory extends Model implements AuditableContracts
 
         return $return;
     }
+
+
+ 
 }

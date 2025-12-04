@@ -14,6 +14,9 @@ Route::middleware('auth')->group(function (): void {
             Route::get('view/{id}', [InventoryController::class, 'view'])->name('view')->can('inventory.view');
             Route::get('list', [InventoryController::class, 'get'])->name('list');
             Route::get('getProduct', [InventoryController::class, 'getProduct'])->name('getProduct');
+            Route::get('product-by-sale/{sale_id}', [InventoryController::class, 'getProductBySaleId'])
+             ->name('pro.productBySale')->can('inventory.view');
+
         });
         Route::name('transfer::')->prefix('transfer')->controller(InventoryTransferController::class)->group(function (): void {
             Route::get('', 'index')->name('index')->can('inventory transfer.view');
