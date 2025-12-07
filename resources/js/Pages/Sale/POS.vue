@@ -77,9 +77,15 @@
                                         <label class="text-xs font-bold text-slate-700 flex items-center">
                                             Employee
                                         </label>
-                                        <SearchableSelect v-model="form.employee_id" :options="employees" placeholder="Select employee..." filter-placeholder="Search employees..."
-                                            :visibleItems="8"
-                                            input-class="w-full rounded-lg border-slate-200 shadow-sm focus:border-purple-500 focus:ring-purple-500/20 transition-all duration-200 bg-white/90 backdrop-blur-sm hover:shadow-md text-xs py-2" />
+                                        <SearchableSelect
+        :model-value="form.employee_id"
+        @update:modelValue="val => form.employee_id = val"
+        :options="employees"
+        placeholder="Select employee..."
+        filter-placeholder="Search employees..."
+        :visibleItems="8"
+        input-class="w-full rounded-lg border-slate-200 shadow-sm focus:border-purple-500 focus:ring-purple-500/20 transition-all duration-200 bg-white/90 backdrop-blur-sm hover:shadow-md text-xs py-2"
+    />
                                     </div>
                                     <div class="space-y-1">
                                         <label class="text-xs font-bold text-slate-700 flex items-center">
@@ -1371,6 +1377,15 @@
                 calculateTotals()
             })
 
+
+watch(() => form.employee_id, (newVal) => {
+    console.log('Selected Employee ID:', newVal)
+    
+    // Access employee name from props
+    if (props.employees && props.employees[newVal]) {
+        console.log('Selected Employee Name:', props.employees[newVal])
+    }
+})
             // Watch for customer selection to auto-populate mobile
             watch(() => form.account_id, (newCustomerId) => {
                 if (newCustomerId) {

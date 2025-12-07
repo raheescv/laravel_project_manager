@@ -136,6 +136,7 @@ class POSController extends Controller
     public function addItem(Request $request)
     {
         try {
+            
             $request->validate([
                 'inventory_id' => 'required|exists:inventories,id',
                 'employee_id' => 'required|exists:users,id',
@@ -237,6 +238,7 @@ class POSController extends Controller
             DB::beginTransaction();
 
             $saleData = $request->all();
+
             $table_id = $saleData['id'] ?? null;
             if ($saleData['status'] == 'completed') {
                 if ($table_id) {
