@@ -255,7 +255,7 @@ class Page extends Component
             'unit_price' => $inventory->product->mrp,
             'discount' => 0,
             'quantity' => 1,
-            'tax' => $inventory->product->tax,
+            'tax' => $inventory->product->tax ?? 0,
         ];
         if ($saleItem) {
             $single['sale_item_id'] = $saleItem->id;

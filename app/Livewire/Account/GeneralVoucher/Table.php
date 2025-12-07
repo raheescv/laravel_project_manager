@@ -5,11 +5,11 @@ namespace App\Livewire\Account\GeneralVoucher;
 use App\Actions\Journal\DeleteAction;
 use App\Models\Configuration;
 use App\Models\JournalEntry;
+use Exception;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Livewire\Component;
 use Livewire\WithPagination;
-use Exception;
 
 class Table extends Component
 {

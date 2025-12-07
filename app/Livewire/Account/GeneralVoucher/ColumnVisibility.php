@@ -41,4 +41,3 @@ class ColumnVisibility extends Component
         return view('livewire.account.general-voucher.column-visibility');
     }
 }
-

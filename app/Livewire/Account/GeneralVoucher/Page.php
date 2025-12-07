@@ -5,10 +5,10 @@ namespace App\Livewire\Account\GeneralVoucher;
 use App\Actions\Journal\GeneralVoucherJournalEntryAction;
 use App\Models\Account;
 use App\Models\JournalEntry;
+use Exception;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Livewire\Component;
-use Exception;
 
 class Page extends Component
 {

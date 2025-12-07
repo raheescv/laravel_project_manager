@@ -33,6 +33,7 @@ class EditItem extends Component
 
     public function singleCartCalculator()
     {
+        $this->item['tax'] = $this->item['tax'] ?? 0;
         $gross_amount = $this->item['unit_price'] * $this->item['quantity'];
         $net_amount = $gross_amount - $this->item['discount'];
         $tax_amount = $net_amount * $this->item['tax'] / 100;
