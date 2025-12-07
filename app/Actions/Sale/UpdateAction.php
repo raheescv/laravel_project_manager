@@ -17,11 +17,7 @@ class UpdateAction
     public function execute($data, $saleId, $userId)
     {
         try {
-            Log::info('🔍 SALE UPDATE DEBUG', [
-                'sale_id' => $saleId,
-                'user_id' => $userId,
-                'data' => $data
-            ]);
+            
 
             $this->userId = $userId;
             $this->saleId = $saleId;
