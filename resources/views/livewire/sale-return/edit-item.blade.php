@@ -8,7 +8,7 @@
                 <div class="col-md-6">
                     <div class="form-group">
                         <b><label for="unit_price" class="text-capitalize text-end">Unit Price</label></b>
-                        {{ html()->number('unit_price')->value('')->class('form-control number select_on_focus')->attribute('wire:model.live', 'item.unit_price') }}
+                        {{ html()->number('unit_price')->value('')->class('form-control number select_on_focus')->attribute('step','any')->attribute('wire:model.live', 'item.unit_price') }}
                     </div>
                 </div>
                 <div class="col-md-6">
