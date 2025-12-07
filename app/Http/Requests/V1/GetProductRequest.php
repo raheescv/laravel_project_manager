@@ -35,6 +35,7 @@ class GetProductRequest extends FormRequest
             'sort_direction' => ['nullable', 'string', 'in:asc,desc'],
             'per_page' => ['nullable', 'integer', 'min:1', 'max:100'],
             'page' => ['nullable', 'integer', 'min:1'],
+            'in_stock_only' => ['nullable', 'boolean'],
         ];
     }
 
@@ -70,6 +71,7 @@ class GetProductRequest extends FormRequest
             'sort_direction' => 'asc',
             'per_page' => 15,
             'page' => 1,
+            'in_stock_only' => true,
         ], $validated);
     }
 }

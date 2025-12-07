@@ -87,6 +87,12 @@ class GetProductsAction
                     $invQ->where('branch_id', $value);
                 });
             })
+            // In stock only filter
+            ->when($filters['in_stock_only'] ?? false, function ($q) use ($filters) {
+                return $q->whereHas('inventories', function ($invQ) use ($filters) {
+                    $invQ->where('quantity', '>', 0);
+                });
+            })
             // Size filter
             ->when($filters['size'] ?? null, function ($q, $value) {
                 return $q->where('size', 'like', "%{$value}%");
