@@ -23,6 +23,7 @@
     </div>
     <x-account.account-modal />
     <x-account.general-voucher.general-voucher-modal />
+    <x-account.general-voucher.column-visibility-canvas />
     @push('scripts')
         <x-select.branchSelect />
         <x-select.accountSelect />

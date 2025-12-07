@@ -3,6 +3,7 @@
 namespace App\Livewire\Account\GeneralVoucher;
 
 use App\Actions\Journal\DeleteAction;
+use App\Models\Configuration;
 use App\Models\JournalEntry;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -31,6 +32,8 @@ class Table extends Component
     public $sortField = 'id';
 
     public $sortDirection = 'desc';
+
+    public $general_voucher_visible_column = [];
 
     protected $paginationTheme = 'bootstrap';
 
@@ -73,6 +76,24 @@ class Table extends Component
             'to_date' => now()->format('Y-m-d'),
             'search' => null,
             'branch_id' => session('branch_id'),
+        ];
+
+        $config = Configuration::where('key', 'general_voucher_visible_column')->value('value');
+        $this->general_voucher_visible_column = $config ? json_decode($config, true) : $this->getDefaultColumns();
+    }
+
+    protected function getDefaultColumns()
+    {
+        return [
+            'date' => true,
+            'account' => true,
+            'debit' => true,
+            'credit' => true,
+            'person_name' => true,
+            'reference_number' => true,
+            'description' => true,
+            'remarks' => true,
+            'created_by' => true,
         ];
     }
 
@@ -141,7 +162,7 @@ class Table extends Component
         $totalCredit = $totalRow->sum('credit');
 
         $data = $query
-            ->with(['journal.entries.account', 'journal.createdBy', 'account', 'counterAccount'])
+            ->with(['journal.entries.account', 'journal.createdBy', 'account'])
             ->orderBy($sortField, $this->sortDirection)
             ->paginate($this->limit);
 

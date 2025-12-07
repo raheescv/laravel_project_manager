@@ -32,6 +32,18 @@
                     </span>
                     <input type="text" wire:model.live="filter.search" class="form-control border-start-0" placeholder="Search vouchers..." autofocus>
                 </div>
+                <div class="dropdown">
+                    <button class="btn btn-sm btn-outline-primary" data-bs-toggle="dropdown" aria-expanded="false">
+                        <i class="demo-pli-layout-grid me-1"></i> Columns
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end shadow-sm">
+                        <li>
+                            <a class="dropdown-item" data-bs-toggle="offcanvas" data-bs-target="#generalVoucherColumnVisibility" aria-controls="generalVoucherColumnVisibility">
+                                <i class="demo-pli-column-width me-2"></i>Column Visibility
+                            </a>
+                        </li>
+                    </ul>
+                </div>
             </div>
         </div>
 
@@ -88,60 +100,78 @@
                                 <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="id" label="ID" />
                             </div>
                         </th>
-                        <th class="border-bottom py-3">
-                            <div class="d-flex align-items-center gap-2">
-                                <i class="fa fa-calendar text-primary"></i>
-                                <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="date" label="Date" />
-                            </div>
-                        </th>
-                        <th class="border-bottom py-3">
-                            <div class="d-flex align-items-center gap-2">
-                                <i class="fa fa-arrow-up text-danger"></i>
-                                <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="account_id" label="Account" />
-                            </div>
-                        </th>
-                        <th class="border-bottom py-3 text-end">
-                            <div class="d-flex align-items-center justify-content-end gap-2">
-                                <i class="fa fa-money text-primary"></i>
-                                <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="debit" label="Debit" />
-                            </div>
-                        </th>
-                        <th class="border-bottom py-3 text-end">
-                            <div class="d-flex align-items-center justify-content-end gap-2">
-                                <i class="fa fa-money text-primary"></i>
-                                <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="credit" label="Credit" />
-                            </div>
-                        </th>
-                        <th class="border-bottom py-3">
-                            <div class="d-flex align-items-center gap-2">
-                                <i class="fa fa-user text-primary"></i>
-                                <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="person_name" label="Person Name" />
-                            </div>
-                        </th>
-                        <th class="border-bottom py-3">
-                            <div class="d-flex align-items-center gap-2">
-                                <i class="fa fa-tag text-primary"></i>
-                                <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="reference_number" label="Reference" />
-                            </div>
-                        </th>
+                        @if ($general_voucher_visible_column['date'] ?? true)
+                            <th class="border-bottom py-3">
+                                <div class="d-flex align-items-center gap-2">
+                                    <i class="fa fa-calendar text-primary"></i>
+                                    <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="date" label="Date" />
+                                </div>
+                            </th>
+                        @endif
+                        @if ($general_voucher_visible_column['account'] ?? true)
+                            <th class="border-bottom py-3">
+                                <div class="d-flex align-items-center gap-2">
+                                    <i class="fa fa-arrow-up text-danger"></i>
+                                    <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="account_id" label="Account" />
+                                </div>
+                            </th>
+                        @endif
+                        @if ($general_voucher_visible_column['debit'] ?? true)
+                            <th class="border-bottom py-3 text-end">
+                                <div class="d-flex align-items-center justify-content-end gap-2">
+                                    <i class="fa fa-money text-primary"></i>
+                                    <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="debit" label="Debit" />
+                                </div>
+                            </th>
+                        @endif
+                        @if ($general_voucher_visible_column['credit'] ?? true)
+                            <th class="border-bottom py-3 text-end">
+                                <div class="d-flex align-items-center justify-content-end gap-2">
+                                    <i class="fa fa-money text-primary"></i>
+                                    <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="credit" label="Credit" />
+                                </div>
+                            </th>
+                        @endif
+                        @if ($general_voucher_visible_column['person_name'] ?? true)
+                            <th class="border-bottom py-3">
+                                <div class="d-flex align-items-center gap-2">
+                                    <i class="fa fa-user text-primary"></i>
+                                    <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="person_name" label="Person Name" />
+                                </div>
+                            </th>
+                        @endif
+                        @if ($general_voucher_visible_column['reference_number'] ?? true)
+                            <th class="border-bottom py-3">
+                                <div class="d-flex align-items-center gap-2">
+                                    <i class="fa fa-tag text-primary"></i>
+                                    <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="reference_number" label="Reference" />
+                                </div>
+                            </th>
+                        @endif
+                        @if ($general_voucher_visible_column['description'] ?? true)
+                            <th class="border-bottom py-3">
+                                <div class="d-flex align-items-center gap-2">
+                                    <i class="fa fa-align-left text-primary"></i>
+                                    <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="description" label="Description" />
+                                </div>
+                            </th>
+                        @endif
+                        @if ($general_voucher_visible_column['remarks'] ?? true)
+                            <th class="border-bottom py-3">
+                                <div class="d-flex align-items-center gap-2">
+                                    <i class="fa fa-comment text-primary"></i>
+                                    Remarks
+                                </div>
+                            </th>
+                        @endif
+                        @if ($general_voucher_visible_column['created_by'] ?? true)
                         <th class="border-bottom py-3">
                             <div class="d-flex align-items-center gap-2">
                                 <i class="fa fa-align-left text-primary"></i>
-                                <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="description" label="Description" />
+                                <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="created_by" label="Created By" />
                             </div>
                         </th>
-                        <th class="border-bottom py-3">
-                            <div class="d-flex align-items-center gap-2">
-                                <i class="fa fa-comment text-primary"></i>
-                                Remarks
-                            </div>
-                        </th>
-                        <th class="border-bottom py-3">
-                            <div class="d-flex align-items-center gap-2">
-                                <i class="fa fa-user text-primary"></i>
-                                Created By
-                            </div>
-                        </th>
+                        @endif
                         <th class="border-bottom py-3 text-center">Actions</th>
                     </tr>
                 </thead>
@@ -156,63 +186,81 @@
                                     <span class="text-muted">#{{ $item->journal_id }}</span>
                                 </div>
                             </td>
-                            <td class="align-middle">
-                                <span class="badge bg-light text-dark">
-                                    <i class="fa fa-calendar me-1"></i>
-                                    {{ systemDate($item->date) }}
-                                </span>
-                            </td>
-                            <td class="align-middle">
-                                @if ($item->account)
-                                    <a href="{{ route('account::view', $item->account_id) }}" class="text-decoration-none">
-                                        <div class="d-flex align-items-center gap-2">
-                                            <i class="fa fa-university text-danger"></i>
-                                            <span class="fw-medium">{{ $item->account->name }}</span>
-                                        </div>
-                                    </a>
-                                @else
-                                    <span class="text-muted">-</span>
-                                @endif
-                            </td>
-                            <td class="text-end align-middle fw-medium text-primary">
-                                {{ currency($item->debit) }}
-                            </td>
-                            <td class="text-end align-middle fw-medium text-primary">
-                                {{ currency($item->credit) }}
-                            </td>
-                            <td class="align-middle">
-                                <div class="d-flex align-items-center gap-2">
-                                    <i class="fa fa-user text-muted"></i>
-                                    <span>{{ $item->person_name ?? '-' }}</span>
-                                </div>
-                            </td>
-                            <td class="align-middle">
-                                @if ($item->reference_number)
-                                    <code class="bg-light px-2 py-1 rounded">{{ $item->reference_number }}</code>
-                                @else
-                                    <span class="text-muted">-</span>
-                                @endif
-                            </td>
-                            <td class="align-middle">
-                                <div class="d-flex align-items-center gap-2">
-                                    <i class="fa fa-file-alt text-muted"></i>
-                                    <span>{{ $item->description }}</span>
-                                </div>
-                            </td>
-                            <td class="align-middle">
-                                @if ($item->journal_remarks)
-                                    <span class="text-muted small">{{ Str::limit($item->journal_remarks ?? '', 30) }}</span>
-                                @elseif ($item->remarks)
-                                    <span class="text-muted small">{{ Str::limit($item->remarks ?? '', 30) }}</span>
-                                @else
-                                    <span class="text-muted">-</span>
-                                @endif
-                            </td>
-                            <td class="align-middle">
-                                <span class="badge bg-light text-dark">
-                                    {{ $item->journal->createdBy->name ?? '-' }}
-                                </span>
-                            </td>
+                            @if ($general_voucher_visible_column['date'] ?? true)
+                                <td class="align-middle">
+                                    <span class="badge bg-light text-dark">
+                                        <i class="fa fa-calendar me-1"></i>
+                                        {{ systemDate($item->date) }}
+                                    </span>
+                                </td>
+                            @endif
+                            @if ($general_voucher_visible_column['account'] ?? true)
+                                <td class="align-middle">
+                                    @if ($item->account)
+                                        <a href="{{ route('account::view', $item->account_id) }}" class="text-decoration-none">
+                                            <div class="d-flex align-items-center gap-2">
+                                                <i class="fa fa-university text-danger"></i>
+                                                <span class="fw-medium">{{ $item->account->name }}</span>
+                                            </div>
+                                        </a>
+                                    @else
+                                        <span class="text-muted">-</span>
+                                    @endif
+                                </td>
+                            @endif
+                            @if ($general_voucher_visible_column['debit'] ?? true)
+                                <td class="text-end align-middle fw-medium text-primary">
+                                    {{ currency($item->debit) }}
+                                </td>
+                            @endif
+                            @if ($general_voucher_visible_column['credit'] ?? true)
+                                <td class="text-end align-middle fw-medium text-primary">
+                                    {{ currency($item->credit) }}
+                                </td>
+                            @endif
+                            @if ($general_voucher_visible_column['person_name'] ?? true)
+                                <td class="align-middle">
+                                    <div class="d-flex align-items-center gap-2">
+                                        <i class="fa fa-user text-muted"></i>
+                                        <span>{{ $item->person_name ?? '-' }}</span>
+                                    </div>
+                                </td>
+                            @endif
+                            @if ($general_voucher_visible_column['reference_number'] ?? true)
+                                <td class="align-middle">
+                                    @if ($item->reference_number)
+                                        <code class="bg-light px-2 py-1 rounded">{{ $item->reference_number }}</code>
+                                    @else
+                                        <span class="text-muted">-</span>
+                                    @endif
+                                </td>
+                            @endif
+                            @if ($general_voucher_visible_column['description'] ?? true)
+                                <td class="align-middle">
+                                    <div class="d-flex align-items-center gap-2">
+                                        <i class="fa fa-file-alt text-muted"></i>
+                                        <span>{{ $item->description }}</span>
+                                    </div>
+                                </td>
+                            @endif
+                            @if ($general_voucher_visible_column['remarks'] ?? true)
+                                <td class="align-middle">
+                                    @if ($item->journal_remarks)
+                                        <span class="text-muted small">{{ Str::limit($item->journal_remarks ?? '', 30) }}</span>
+                                    @elseif ($item->remarks)
+                                        <span class="text-muted small">{{ Str::limit($item->remarks ?? '', 30) }}</span>
+                                    @else
+                                        <span class="text-muted">-</span>
+                                    @endif
+                                </td>
+                            @endif
+                            @if ($general_voucher_visible_column['created_by'] ?? true)
+                                <td class="align-middle">
+                                    <span class="badge bg-light text-dark">
+                                        {{ $item->journal->createdBy->name ?? '-' }}
+                                    </span>
+                                </td>
+                            @endif
                             <td class="align-middle text-center">
                                 @can('general voucher.edit')
                                     <button class="btn btn-sm btn-outline-primary edit" table_id="{{ $item->journal_id }}" title="Edit">
@@ -223,7 +271,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="11" class="text-center py-4 text-muted">
+                            <td colspan="{{ 2 + count(array_filter($general_voucher_visible_column ?? [])) }}" class="text-center py-4 text-muted">
                                 <i class="fa fa-file-invoice fs-2 mb-2"></i>
                                 <p class="mb-0">No general vouchers found</p>
                             </td>
@@ -233,19 +281,47 @@
                 @if ($data->count() > 0)
                     <tfoot class="bg-light">
                         <tr>
-                            <td class="align-middle fw-bold" colspan="3">
-                                <div class="d-flex align-items-center gap-2">
-                                    <i class="fa fa-calculator text-primary"></i>
-                                    <span>Total</span>
-                                </div>
-                            </td>
-                            <td class="text-end align-middle fw-bold text-primary">
-                                {{ currency($totalDebit) }}
-                            </td>
-                            <td class="text-end align-middle fw-bold text-primary">
-                                {{ currency($totalCredit) }}
-                            </td>
-                            <td colspan="6"></td>
+                            <td class="align-middle fw-bold" colspan="1"></td>
+                            @if ($general_voucher_visible_column['date'] ?? true)
+                                <td class="align-middle fw-bold"></td>
+                            @endif
+                            @if ($general_voucher_visible_column['account'] ?? true)
+                                <td class="align-middle fw-bold">
+                                    <div class="d-flex align-items-center gap-2">
+                                        <i class="fa fa-calculator text-primary"></i>
+                                        <span>Total</span>
+                                    </div>
+                                </td>
+                            @else
+                                <td class="align-middle fw-bold" colspan="{{ ($general_voucher_visible_column['date'] ?? true) ? 1 : 2 }}">
+                                    <div class="d-flex align-items-center gap-2">
+                                        <i class="fa fa-calculator text-primary"></i>
+                                        <span>Total</span>
+                                    </div>
+                                </td>
+                            @endif
+                            @if ($general_voucher_visible_column['debit'] ?? true)
+                                <td class="text-end align-middle fw-bold text-primary">
+                                    {{ currency($totalDebit) }}
+                                </td>
+                            @endif
+                            @if ($general_voucher_visible_column['credit'] ?? true)
+                                <td class="text-end align-middle fw-bold text-primary">
+                                    {{ currency($totalCredit) }}
+                                </td>
+                            @endif
+                            @php
+                                $remainingCols = 0;
+                                if ($general_voucher_visible_column['person_name'] ?? true) $remainingCols++;
+                                if ($general_voucher_visible_column['reference_number'] ?? true) $remainingCols++;
+                                if ($general_voucher_visible_column['description'] ?? true) $remainingCols++;
+                                if ($general_voucher_visible_column['remarks'] ?? true) $remainingCols++;
+                                if ($general_voucher_visible_column['created_by'] ?? true) $remainingCols++;
+                                $remainingCols++; // Actions column
+                            @endphp
+                            @if ($remainingCols > 0)
+                                <td colspan="{{ $remainingCols }}"></td>
+                            @endif
                         </tr>
                     </tfoot>
                 @endif
