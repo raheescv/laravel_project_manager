@@ -166,7 +166,7 @@
                                             </div>
                                         </td>
                                         <td class="text-end">{{ currency($item['unit_price']) }}</td>
-                                        <td class="text-end">{{ currency($item['quantity']) }}</td>
+                                        <td class="text-end">{{ currency($item['quantity'],3) }}</td>
                                         <td class="text-end">
                                             @if ($item['discount'] != 0)
                                                 {{ currency($item['discount']) }}
@@ -194,7 +194,7 @@
                                 @endphp
                                 <tr class="fw-bold">
                                     <td colspan="4" class="text-end">Total</td>
-                                    <td class="text-end">{{ currency($items->sum('quantity')) }}</td>
+                                    <td class="text-end">{{ currency($items->sum('quantity'),3) }}</td>
                                     <td class="text-end">{{ currency($items->sum('discount')) }}</td>
                                     <td class="text-end">{{ currency($items->sum('tax_amount')) }}</td>
                                     <td class="text-end">{{ currency($items->sum('total')) }}</td>
