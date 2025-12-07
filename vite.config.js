@@ -1,11 +1,11 @@
-import vue from '@vitejs/plugin-vue';
-import laravel from 'laravel-vite-plugin';
-import { defineConfig } from 'vite';
+import vue from "@vitejs/plugin-vue";
+import laravel from "laravel-vite-plugin";
+import { defineConfig } from "vite";
 
 export default defineConfig({
     plugins: [
         laravel({
-            input: ['resources/css/app.css', 'resources/js/app.js'],
+            input: ["resources/css/app.css", "resources/js/app.js"],
             refresh: true,
         }),
         vue({
@@ -19,21 +19,24 @@ export default defineConfig({
     ],
     resolve: {
         alias: {
-            '@': '/resources/js',   // Vue root folder
+            "@": "/resources/js", // Vue root folder
         },
     },
     server: {
         port: 5173,
-        host: '0.0.0.0',
+        host: "0.0.0.0",
         strictPort: true,
-        https: process.env.FORCE_HTTPS || false,
-        origin: `${process.env.VITE_APP_URL || 'localhost'}:5173`,
+        https: process.env.FORCE_HTTPS === "true",
+        origin: process.env.VITE_APP_URL || "http://localhost:5173",
+        cors: {
+            origin: ["http://localhost:8000", "http://127.0.0.1:8000"],
+            credentials: true,
+        },
         hmr: {
             host: process.env.VITE_APP_URL || 'localhost',
             port: 5173,
-            protocol: process.env.FORCE_HTTPS ? 'wss' : 'ws',
+            protocol: process.env.FORCE_HTTPS === "true" ? "wss" : "ws",
         },
-        cors: true,
     },
 
     build: {
@@ -41,12 +44,12 @@ export default defineConfig({
         rollupOptions: {
             output: {
                 manualChunks: {
-                    vendor: ['vue', 'alpinejs'],
+                    vendor: ["vue", "alpinejs"],
                 },
             },
         },
     },
     optimizeDeps: {
-        include: ['vue', 'alpinejs'],
+        include: ["vue", "alpinejs"],
     },
 });

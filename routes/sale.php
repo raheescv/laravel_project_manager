@@ -26,6 +26,7 @@ Route::middleware('auth')->group(function (): void {
         Route::get('view/{id}', 'view')->name('view')->can('sale.view');
         Route::get('invoices', 'get')->name('invoice-list');
         Route::get('receipts', 'receipts')->name('receipts')->can('sale.receipts');
+        Route::get('single-invoice/{sale_id}', 'getInvoiceBySaleId')->name('single.invoice-list')->can('sale.view');
 
         Route::get('day-management', 'dayManagement')->name('day-management')->can('sale.view');
         Route::get('day-session/{id}', 'daySession')->name('day-session')->can('sale.view');
@@ -37,6 +38,8 @@ Route::middleware('auth')->group(function (): void {
         Route::get('edit/{id}', 'page')->name('edit')->can('sales return.edit');
         Route::get('view/{id}', 'view')->name('view')->can('sales return.view');
         Route::get('payments', 'payments')->name('payments')->can('sales return.payments');
+       Route::get('creater/{id}', 'pager')->name('creater')->can('sales return.create');
+
     });
 
     Route::prefix('products')->name('api.products.')->group(function (): void {

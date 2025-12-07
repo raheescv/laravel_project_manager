@@ -10,6 +10,7 @@ Route::middleware('auth')->group(function (): void {
         Route::get('', 'index')->name('index')->can('account.view');
         Route::get('list', 'get')->name('list');
         Route::get('view/{id}', 'view')->name('view')->can('expense.view');
+       
         Route::name('customer::')->prefix('customer')->group(function (): void {
             Route::get('', 'customer')->name('index')->can('customer.view');
             Route::get('view/{id}', 'customer')->name('view')->can('customer.view');
@@ -17,6 +18,11 @@ Route::middleware('auth')->group(function (): void {
 
         // API route for customer details
         Route::get('customer/{id}/details', 'getCustomerDetails')->name('customer.details')->can('customer.view');
+
+       Route::get('customer-by-sale/{sale_id}', 'getCustomerBySaleId')->name('customerd.customerBySale')->can('customer.view');
+
+
+        
         Route::name('vendor::')->prefix('vendor')->group(function (): void {
             Route::get('', 'vendor')->name('index')->can('vendor.view');
         });

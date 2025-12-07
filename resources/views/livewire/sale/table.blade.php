@@ -184,9 +184,13 @@
                         @if ($sale_visible_column['balance'])
                             <th class="text-nowrap text-end"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="balance" label="balance" /> </th>
                         @endif
+                      
+                            <th class="text-nowrap text-end"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="balance" label="Salereturn" /> </th>
+                        
                         @if ($sale_visible_column['status'])
                             <th> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="status" label="status" /> </th>
                         @endif
+
                     </tr>
                 </thead>
                 <tbody>
@@ -294,6 +298,12 @@
                                     <div class="text-end text-danger fw-semibold">{{ currency($item->balance) }}</div>
                                 </td>
                             @endif
+
+                            <td>
+                                <a href="{{ route('sale_return::creater', $item->id) }}" class="btn btn-sm btn-outline-warning" title="Create Sales Return">
+                                    <i class="fa fa-undo"></i> Return
+                                </a>
+                            </td>
                             @if ($sale_visible_column['status'])
                                 <td>
                                     <div
@@ -302,6 +312,9 @@
                                     </div>
                                 </td>
                             @endif
+                            <td>
+                            
+                            </td>
                         </tr>
                     @endforeach
                 </tbody>
@@ -375,6 +388,9 @@
                             <th>
                             </th>
                         @endif
+                        <th>
+
+
                     </tr>
                 </tfoot>
             </table>
