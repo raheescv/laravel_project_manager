@@ -370,7 +370,7 @@
                     @if (auth()->user()->can('account.view'))
                         <li class="nav-item has-sub">
                             <a href="#"
-                                class="mininav-toggle nav-link {{ request()->is(['account', 'account/expense', 'account/income', 'account/view/*', 'report/day_book']) ? 'active' : '' }}"><i
+                                class="mininav-toggle nav-link {{ request()->is(['account', 'account/expense', 'account/income', 'account/general-voucher', 'account/view/*', 'report/day_book']) ? 'active' : '' }}"><i
                                     class="fa fa-bank fs-5 me-2"></i>
                                 <span class="nav-label mininav-content ms-1 collapse show" style="">Account</span>
                             </a>
@@ -389,6 +389,11 @@
                                 @can('income.view')
                                     <li class="nav-item">
                                         <a href="{{ route('account::income::index') }}" class="nav-link {{ request()->is(['account/income']) ? 'active' : '' }}">Income</a>
+                                    </li>
+                                @endcan
+                                @can('general voucher.view')
+                                    <li class="nav-item">
+                                        <a href="{{ route('account::general-voucher::index') }}" class="nav-link {{ request()->is(['account/general-voucher']) ? 'active' : '' }}">General Voucher</a>
                                     </li>
                                 @endcan
                                 @can('report.day book')

@@ -46,7 +46,9 @@
             load: function(query, callback) {
                 var url = "{{ route('account::list') }}";
                 url += '?query=' + encodeURIComponent(query);
-                url += '&account_type=' + account_type;
+                if (account_type) {
+                    url += '&account_type=' + account_type;
+                }
                 fetch(url)
                     .then(response => {
                         if (!response.ok) throw new Error('Network response was not ok');

@@ -6,6 +6,7 @@ return [
     'account note' => ['create', 'view', 'edit', 'delete'],
     'expense' => ['create', 'view', 'edit', 'delete', 'export'],
     'income' => ['create', 'view', 'edit', 'delete', 'export'],
+    'general voucher' => ['create', 'view', 'edit', 'delete', 'export'],
     'customer' => ['create', 'view', 'edit', 'delete', 'export'],
     'customer type' => ['create', 'view', 'edit', 'delete'],
     'country' => ['create', 'view', 'edit', 'delete'],

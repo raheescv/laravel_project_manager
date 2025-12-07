@@ -77,7 +77,7 @@ class SaleController extends Controller
             'custom_payment_data' => null,
             'status' => null,
         ];
-        if(Auth::user()->type=='employee'){
+        if (Auth::user()->type == 'employee') {
             $saleData['employee_id'] = Auth::id();
         }
         // If ID is provided, load the sale data

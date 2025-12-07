@@ -88,8 +88,8 @@ class GetProductsAction
                 });
             })
             // In stock only filter
-            ->when($filters['in_stock_only'] ?? false, function ($q) use ($filters) {
-                return $q->whereHas('inventories', function ($invQ) use ($filters) {
+            ->when($filters['in_stock_only'] ?? false, function ($q) {
+                return $q->whereHas('inventories', function ($invQ) {
                     $invQ->where('quantity', '>', 0);
                 });
             })

@@ -61,4 +61,9 @@ class Journal extends Model implements AuditableContracts
     {
         return $this->belongsTo(SaleReturn::class, 'model_id');
     }
+
+    public function createdBy()
+    {
+        return $this->belongsTo(User::class, 'created_by');
+    }
 }

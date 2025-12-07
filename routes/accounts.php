@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AccountController;
 use App\Http\Controllers\ExpenseController;
+use App\Http\Controllers\GeneralVoucherController;
 use App\Http\Controllers\IncomeController;
 use Illuminate\Support\Facades\Route;
 
@@ -25,6 +26,9 @@ Route::middleware('auth')->group(function (): void {
         });
         Route::name('income::')->prefix('income')->controller(IncomeController::class)->group(function (): void {
             Route::get('', 'index')->name('index')->can('income.view');
+        });
+        Route::name('general-voucher::')->prefix('general-voucher')->controller(GeneralVoucherController::class)->group(function (): void {
+            Route::get('', 'index')->name('index')->can('general voucher.view');
         });
         Route::name('notes::')->prefix('notes')->controller(AccountController::class)->group(function (): void {
             Route::get('/{id?}', 'notes')->name('index')->can('account note.view');
