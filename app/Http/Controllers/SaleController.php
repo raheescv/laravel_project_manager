@@ -83,7 +83,7 @@ class SaleController extends Controller
         // If ID is provided, load the sale data
         if ($id) {
             try {
-                $sale = Sale::with([
+               $sale = Sale::with([
                     'account:id,name,mobile',
                     'branch:id,name',
                     'items' => function ($query): void {
@@ -147,6 +147,11 @@ class SaleController extends Controller
                 $cartItems = [];
                 foreach ($sale->items as $item) {
                     $key = $item->employee_id.'-'.$item->inventory_id;
+                     \Log::info('Sale Item Employee ID:', [
+        'sale_item_id' => $item->id,
+        'employee_id_from_db' => $item->employee_id,
+        'employee_name_from_db' => $item->employee->name ?? 'Unknown'
+    ]);
                     $cartItems[$key] = [
                         'id' => $item->id,
                         'product_id' => $item->product_id,
