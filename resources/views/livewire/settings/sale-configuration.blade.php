@@ -74,6 +74,12 @@
                                     {{ html()->input('number', 'default_quantity')->value('')->class('form-control')->attribute('step','0.001')->placeholder('Enter default quantity (e.g., 0.001)')->attribute('wire:model', 'default_quantity') }}
                                 </div>
                             </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label class="form-label fw-medium" for="validate_unit_price_against_mrp">Validate Unit Price Against MRP</label>
+                                    {{ html()->select('validate_unit_price_against_mrp', ['yes' => 'Yes', 'no' => 'No'])->value('')->class('form-select')->placeholder('Validate unit price against MRP?')->attribute('wire:model', 'validate_unit_price_against_mrp') }}
+                                </div>
+                            </div>
                             <div class="col-12">
                                 <div class="form-group">
                                     <label class="form-label fw-medium" for="thermal_printer_footer_english">Thermal Printer Footer (English)</label>
