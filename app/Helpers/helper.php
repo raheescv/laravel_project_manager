@@ -430,7 +430,10 @@ if (! function_exists('getNextUniqueNumber')) {
         }
 
         DB::statement('SET @out_unique_no = 0;');
-        DB::statement("CALL getNextUniqueNumber($year, '$branchCode', '$segment', @out_unique_no);");
+        $yearEscaped = DB::getPdo()->quote($year);
+        $branchCodeEscaped = DB::getPdo()->quote($branchCode);
+        $segmentEscaped = DB::getPdo()->quote($segment);
+        DB::statement("CALL getNextUniqueNumber($yearEscaped, $branchCodeEscaped, $segmentEscaped, @out_unique_no);");
 
         $result = DB::select('SELECT @out_unique_no as unique_no');
 
