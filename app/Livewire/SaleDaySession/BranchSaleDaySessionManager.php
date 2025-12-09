@@ -38,7 +38,7 @@ class BranchSaleDaySessionManager extends Component
 
     public function mount()
     {
-        $this->branch_id = Auth::user()->default_branch_id;
+        $this->branch_id = session('branch_id');
         $this->date = now()->toDateString();
         $this->loadOpenSessions();
         $this->loadCurrentSession();
@@ -112,7 +112,6 @@ class BranchSaleDaySessionManager extends Component
 
             return;
         }
-
         // Ensure no open session already exists for the selected date
         $existsForDate = SaleDaySession::where('branch_id', $this->branch_id)
             ->whereDate('opened_at', $this->date)
