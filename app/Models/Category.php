@@ -74,4 +74,13 @@ class Category extends Model
             return $existing['id'];
         }
     }
+
+    public function measurementFields()
+{
+    return $this->hasMany(MeasurementField::class);
+}
+
+
+
+
 }

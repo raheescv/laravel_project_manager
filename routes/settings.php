@@ -22,6 +22,24 @@ Route::middleware('auth')->group(function (): void {
         Route::name('category::')->prefix('category')->controller(CategoryController::class)->group(function (): void {
             Route::get('', 'index')->name('index')->can('category.view');
             Route::get('list', 'get')->name('list');
+
+            // Measurement Routes inside Category group
+
+           Route::get('measurements', 'measurements')
+        ->name('measurements')
+        ->can('category.view');
+
+        Route::get('measurements/data', 'measurementdata')
+       ->name('measurements.data')
+       ->can('category.view');
+
+        Route::post('measurements/save', 'storeMeasurements')
+        ->name('measurements.save')
+        ->can('category.edit'); // adjust permission if needed
+
+            
+
+            
         });
         Route::name('account_category::')->prefix('account_category')->controller(AccountCategoryController::class)->group(function (): void {
             Route::get('', 'index')->name('index')->can('account category.view');

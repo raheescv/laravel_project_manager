@@ -160,6 +160,12 @@
                                             <i class="fa fa-folder fs-5 me-2"></i>Category
                                         </a>
                                     @endcan
+
+                                     @can('category.view')
+                                        <a href="{{ route('settings::category::measurements.data') }}" class="list-group-item list-group-item-action">
+                                            <i class="fa fa-folder fs-5 me-2"></i>Tailor measurement
+                                        </a>
+                                    @endcan
                                     @can('account category.view')
                                         <a href="{{ route('settings::account_category::index') }}" class="list-group-item list-group-item-action">
                                             <i class="fa fa-folder-open fs-5 me-2"></i>Account Category

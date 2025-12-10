@@ -8,6 +8,14 @@
                         <span class="vr"></span>
                         Add New
                     </button>
+
+                    <a href="{{ route('settings::category::measurements') }}"
+   class="btn btn-primary hstack gap-2 align-self-center">
+    <i class="demo-psi-add fs-5"></i>
+    <span class="vr"></span>
+   Add Measurement Field
+</a>
+
                 @endcan
                 <div class="btn-group">
                     @can('category.export')
