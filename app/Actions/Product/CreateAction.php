@@ -41,7 +41,7 @@ class CreateAction
             }
 
             // Only auto-generate barcode for services, products require manual barcode entry
-            if ($data['type'] == 'service' && empty($data['barcode'])) {
+            if ($data['type'] == 'service' || empty($data['barcode'])) {
                 $data['barcode'] = generateBarcode();
             }
             validationHelper(Product::rules($data), $data);
