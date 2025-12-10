@@ -24,7 +24,7 @@
 
                     <div class="card-body p-4">
                         <div class="row g-3">
-                            <div class="row g-3">
+                            <div class="row g-1">
                                 <div class="col-md-4">
                                     <label for="code" class="form-label fw-medium">
                                         <i class="fa fa-code text-primary me-1 small"></i>
@@ -48,22 +48,21 @@
                                         </span>
                                         {{ html()->input('name')->value('')->class('form-control border-primary-subtle shadow-sm')->required(true)->placeholder('Enter product name')->id('name')->autofocus()->attribute('wire:model', 'products.name') }}
                                     </div>
-
-                                    <div class="col-md-12">
-                                        <label for="name_arabic" class="form-label fw-medium">
-                                            <i class="fa fa-pencil text-primary me-1 small"></i>
-                                            Arabic Name
-                                        </label>
-                                        <div class="input-group">
-                                            <span class="input-group-text bg-light border-secondary-subtle">
-                                                <i class="fa fa-flag"></i>
-                                            </span>
-                                            {{ html()->input('name_arabic')->value('')->class('form-control shadow-sm')->attribute('dir', 'rtl')->placeholder('Enter arabic name')->id('name_arabic')->attribute('wire:model', 'products.name_arabic') }}
-                                        </div>
-                                    </div>
-
                                 </div>
-
+                            </div>
+                            <div class="row g-1">
+                                <div class="col-md-8">
+                                    <label for="name_arabic" class="form-label fw-medium">
+                                        <i class="fa fa-pencil text-primary me-1 small"></i>
+                                        Arabic Name
+                                    </label>
+                                    <div class="input-group">
+                                        <span class="input-group-text bg-light border-secondary-subtle">
+                                            <i class="fa fa-flag"></i>
+                                        </span>
+                                        {{ html()->input('name_arabic')->value('')->class('form-control shadow-sm')->attribute('dir', 'rtl')->placeholder('Enter arabic name')->id('name_arabic')->attribute('wire:model', 'products.name_arabic') }}
+                                    </div>
+                                </div>
                                 <div class="col-md-4">
                                     <label for="status" class="form-label fw-medium">
                                         <i class="fa fa-toggle-on text-primary me-1 small"></i>
@@ -71,7 +70,9 @@
                                     </label>
                                     {{ html()->select('status', activeOrDisabled())->value('')->class('form-select border-primary-subtle shadow-sm')->placeholder('Select Status')->id('status')->attribute('wire:model', 'products.status') }}
                                 </div>
+                            </div>
 
+                            <div class="row g-2">
                                 <div class="col-md-4" wire:ignore>
                                     <label for="department_id" class="form-label fw-medium">
                                         <i class="fa fa-building text-primary me-1 small"></i>
@@ -161,9 +162,9 @@
                                                 <span class="input-group-text bg-light border-primary-subtle">
                                                     <i class="fa fa-qrcode"></i>
                                                 </span>
-                                                {{ html()->input('barcode')->value('')->class('form-control border-primary-subtle shadow-sm')->required(true)->placeholder('Enter a unique barcode here')->attribute('wire:model', 'products.barcode') }}
+                                                {{ html()->input('barcode')->value('')->class('form-control border-primary-subtle shadow-sm')->placeholder('Enter a unique barcode here')->attribute('wire:model', 'products.barcode') }}
                                             </div>
-                                            <small class="text-muted mt-1 d-block">Enter a unique barcode identifier for this product (required)</small>
+                                            <small class="text-muted mt-1 d-block">Enter a unique barcode identifier for this product</small>
                                         </div>
                                     @endif
                                 @endif
