@@ -1,4 +1,5 @@
 import React from "react";
+import { router } from "@inertiajs/react";
 
 export default function SavedMeasurements({ saved, limit, search }) {
     const filtered = saved
@@ -8,6 +9,16 @@ export default function SavedMeasurements({ saved, limit, search }) {
                 m.template?.name.toLowerCase().includes(search.toLowerCase())
         )
         .slice(0, limit);
+
+        const handleDelete = (id) => {
+        if (!window.confirm("Delete this measurement?")) return;
+
+        router.delete(`/settings/category/measurement/delete/${id}`, {
+    onSuccess: () => console.log("Deleted!"),
+});
+
+    };
+
 
     return (
         <div className="table-responsive mt-4">
@@ -42,9 +53,7 @@ export default function SavedMeasurements({ saved, limit, search }) {
                                 <td>
                                     <button
                                         className="btn btn-danger btn-sm"
-                                        onClick={() =>
-                                            window.confirm("Delete this?") && console.log("delete", m.id)
-                                        }
+                                        onClick={() => handleDelete(m.id)}
                                     >
                                         Delete
                                     </button>

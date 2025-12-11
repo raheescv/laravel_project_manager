@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Category;
 use Illuminate\Http\Request;
 use App\Models\User;
+use App\Models\Account;
 use App\Models\MeasurementTemplate;
 use App\Models\MeasurementValue;
 
@@ -35,7 +36,22 @@ class CategoryController extends Controller
          Inertia::setRootView('app-react');
 
 
-        $customers = User::select('id', 'name')->get();
+   $customers = Account::with('customerType')
+    ->where('model', "customer")   // ONLY CUSTOMERS
+    ->get()
+    ->map(function ($acc) {
+        return [
+            'id' => $acc->id,
+            'name' => $acc->name,
+            'mobile' => $acc->mobile,
+            'customer_type_id' => $acc->customer_type_id,
+            'customer_type_name' => $acc->customerType->name ?? null,
+        ];
+    })
+    ->toArray();
+;
+
+        
         $categories = Category::select('id', 'name')->get();
 
          $templates = MeasurementTemplate::get();
@@ -80,6 +96,20 @@ public function storeMeasurements(Request $request)
 
     return redirect()->back()->with('success', 'Measurements saved!');
 }
+
+public function deleteMeasurement($id)
+{
+    $row = MeasurementValue::find($id);
+
+    if (!$row) {
+        return back()->with('error', 'Not found');
+    }
+
+    $row->delete();
+
+    return back()->with('success', 'Deleted successfully');
+}
+
 
 
 

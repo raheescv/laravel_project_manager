@@ -37,7 +37,11 @@ Route::middleware('auth')->group(function (): void {
         ->name('measurements.save')
         ->can('category.edit'); // adjust permission if needed
 
-            
+          Route::delete('measurement/delete/{id}', 'deleteMeasurement')
+    ->name('measurement.delete')
+    ->can('category.delete');
+
+
 
             
         });
