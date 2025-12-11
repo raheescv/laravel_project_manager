@@ -253,7 +253,7 @@ if (! function_exists('generateBarcode')) {
                 $numericPart++;
 
                 // Reconstruct barcode with same prefix and padding
-                $barcode = $prefix . str_pad($numericPart, $paddingLength, '0', STR_PAD_LEFT);
+                $barcode = $prefix.str_pad($numericPart, $paddingLength, '0', STR_PAD_LEFT);
             }
         }
 
@@ -267,7 +267,7 @@ if (! function_exists('generateBarcode')) {
                     $prefix = $matches[1];
                     $numericPart = (int) $matches[2] + 1;
                     $paddingLength = strlen($matches[2]);
-                    $barcode = $prefix . str_pad($numericPart, $paddingLength, '0', STR_PAD_LEFT);
+                    $barcode = $prefix.str_pad($numericPart, $paddingLength, '0', STR_PAD_LEFT);
                 } else {
                     $barcode = (int) $barcode + 1;
                 }
