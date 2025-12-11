@@ -59,6 +59,7 @@ return [
         'customer callback reminder',
         'sale calendar',
         'sale and sales return items',
+        'day wise sale',
     ],
     'log' => ['inventory'],
     'day close' => ['sync amount'],
