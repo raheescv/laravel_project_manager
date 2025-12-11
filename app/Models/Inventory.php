@@ -74,7 +74,7 @@ class Inventory extends Model implements AuditableContracts
         return CurrentBranchScope::apply($query);
     }
 
-    public static function selfCreateByProduct($product, $userId, $quantity = 0, $current_branch = 1)
+    public static function selfCreateByProduct($product, $userId, $quantity = 0, $currentBranch = 1)
     {
         $barcode_type = cache('barcode_type', '');
         $branches = cache('branches', []);
@@ -82,7 +82,7 @@ class Inventory extends Model implements AuditableContracts
             $data['product_id'] = $product->id;
             $data['cost'] = $product->cost;
             $data['branch_id'] = $branch->id;
-            if ($current_branch == $data['branch_id']) {
+            if ($currentBranch == $data['branch_id']) {
                 $data['quantity'] = $quantity;
             } else {
                 $data['quantity'] = 0;

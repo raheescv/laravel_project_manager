@@ -35,7 +35,7 @@ class Import extends Component
             'file' => 'required|file|mimes:csv,xlsx|max:10240',
         ]);
         $filePath = $this->file->store('imports', 'public');
-        ImportProductJob::dispatch(Auth::id(), $filePath);
+        ImportProductJob::dispatch(Auth::id(), $filePath, session('branch_id'));
     }
 
     public function render()

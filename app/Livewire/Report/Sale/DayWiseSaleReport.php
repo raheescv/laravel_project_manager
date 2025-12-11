@@ -130,7 +130,7 @@ class DayWiseSaleReport extends Component
         // Add dates that have returns but no sales
         foreach ($saleReturns as $return) {
             $key = $return->date;
-            if (!isset($summary[$key])) {
+            if (! isset($summary[$key])) {
                 $summary[$key] = [
                     'date' => $return->date,
                     'count' => 0,
@@ -217,4 +217,3 @@ class DayWiseSaleReport extends Component
         ]);
     }
 }
-

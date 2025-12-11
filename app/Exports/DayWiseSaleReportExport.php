@@ -124,7 +124,7 @@ class DayWiseSaleReportExport implements FromCollection, WithColumnFormatting, W
                 }
 
                 // Add title if filters are provided
-                if (!empty($this->filters)) {
+                if (! empty($this->filters)) {
                     $sheet->insertNewRowBefore(1, 2);
                     $sheet->mergeCells('A1:H1');
                     $title = 'DAY WISE SALE REPORT';
@@ -141,4 +141,3 @@ class DayWiseSaleReportExport implements FromCollection, WithColumnFormatting, W
         ];
     }
 }
-
