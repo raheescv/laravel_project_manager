@@ -41,6 +41,9 @@ Route::middleware('auth')->group(function (): void {
     ->name('measurement.delete')
     ->can('category.delete');
 
+    Route::get('measurement/edit/{customer}/{category}', 
+    'editMeasurement')->name('measurement.edit')->can('category.edit');;
+
 
 
             

@@ -73,28 +73,29 @@ class CategoryController extends Controller
     }
 
 
-public function storeMeasurements(Request $request)
+ public function storeMeasurements(Request $request)
 {
     $data = $request->validate([
-        'customer_id' => 'required|exists:users,id',
+        'customer_id' => 'required|exists:accounts,id',
         'category_id' => 'required|exists:categories,id',
         'values' => 'required|array',
     ]);
 
     foreach ($data['values'] as $templateId => $value) {
+
         MeasurementValue::updateOrCreate(
             [
                 'customer_id' => $data['customer_id'],
-                'measurement_template_id' => $templateId
+                'category_id' => $data['category_id'],
+                'measurement_template_id' => $templateId,
             ],
             [
-                'category_id' => $data['category_id'],
-                'values' => ['value' => $value], // wrap as array
+                'values' => ['value' => $value],
             ]
         );
     }
 
-    return redirect()->back()->with('success', 'Measurements saved!');
+    return redirect()->back()->with('success', 'Measurement updated successfully.');
 }
 
 public function deleteMeasurement($id)
@@ -109,6 +110,58 @@ public function deleteMeasurement($id)
 
     return back()->with('success', 'Deleted successfully');
 }
+
+public function editMeasurement($customerId, $categoryId)
+{
+    Inertia::setRootView('app-react');
+
+    // Get all values for this customer + category
+    $allValues = MeasurementValue::where('customer_id', $customerId)
+        ->where('category_id', $categoryId)
+        ->get()
+        ->mapWithKeys(function ($row) {
+            return [$row->measurement_template_id => $row->values['value'] ?? ""];
+        });
+
+    // Load SAME DATA AS measurementdata()
+    $customers = Account::with('customerType')
+        ->where('model', 'customer')
+        ->get()
+        ->map(function ($acc) {
+            return [
+                'id' => $acc->id,
+                'name' => $acc->name,
+                'mobile' => $acc->mobile,
+                'customer_type_id' => $acc->customer_type_id,
+                'customer_type_name' => $acc->customerType->name ?? null,
+            ];
+        });
+
+    $categories = Category::select('id', 'name')->get();
+    $templates  = MeasurementTemplate::get();
+
+    $saved = MeasurementValue::with([
+        'template:id,name,category_id',
+        'template.category:id,name',
+        'customer:id,name'
+    ])->get();
+
+    return Inertia::render('Measurements/Index', [
+        'customers' => $customers,
+        'categories' => $categories,
+        'templates' => $templates,
+        'savedMeasurements' => $saved,
+
+        'editItem' => [
+            'customer_id' => $customerId,
+            'category_id' => $categoryId,
+            'values' => $allValues,
+        ],
+
+        'flash' => ['success' => session('success')],
+    ]);
+}
+
 
 
 
