@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Report;
 
+use App\Exports\ProductReportExport;
 use App\Models\Inventory;
 use App\Models\InventoryTransferItem;
 use App\Models\Product;
@@ -10,6 +11,8 @@ use App\Models\SaleItem;
 use Illuminate\Support\Facades\DB;
 use Livewire\Component;
 use Livewire\WithPagination;
+use Maatwebsite\Excel\Facades\Excel;
+use App\Actions\Product\ProductReportAction;
 
 class ProductReport extends Component
 {
@@ -59,116 +62,44 @@ class ProductReport extends Component
         $this->resetPage();
     }
 
+    public function export()
+    {
+        $filter = [
+            'search' => $this->search,
+            'barcode' => $this->barcode,
+            'branch_id' => $this->branch_id,
+            'from_date' => $this->from_date,
+            'to_date' => $this->to_date,
+            'main_category_id' => $this->main_category_id,
+            'sortField' => $this->sortField,
+            'sortDirection' => $this->sortDirection,
+        ];
+        $count = Product::product()->count();
+        if ($count > 2000) {
+            // For large exports, you might want to create ExportProductReportJob similar to ExportProductJob
+            // For now, we'll use direct export
+            $this->dispatch('success', ['message' => 'Export started. This may take a few moments.']);
+        }
+        $exportFileName = 'Product_Report_'.now()->timestamp.'.xlsx';
+
+        return Excel::download(new ProductReportExport($filter), $exportFileName);
+    }
+
     public function render()
     {
-        $query = Product::query()
-            ->leftJoin('categories', 'products.main_category_id', '=', 'categories.id');
+        $filter = [
+            'search' => $this->search,
+            'barcode' => $this->barcode,
+            'branch_id' => $this->branch_id,
+            'from_date' => $this->from_date,
+            'to_date' => $this->to_date,
+            'main_category_id' => $this->main_category_id,
+            'sortField' => $this->sortField,
+            'sortDirection' => $this->sortDirection,
+        ];
 
-        // Get current inventory
-        $inventoryQuery = Inventory::select('product_id', DB::raw('SUM(quantity) as current_stock'))
-            ->when($this->branch_id, function ($q) {
-                return $q->where('branch_id', $this->branch_id);
-            })
-            ->groupBy('product_id');
-
-        // Get sales count
-        $salesQuery = SaleItem::select('product_id', DB::raw('SUM(quantity) as total_sold'))
-            ->join('sales', 'sales.id', '=', 'sale_items.sale_id')
-            ->where('sales.status', 'completed')
-            ->when($this->from_date, function ($q) {
-                return $q->whereDate('sales.date', '>=', $this->from_date);
-            })
-            ->when($this->to_date, function ($q) {
-                return $q->whereDate('sales.date', '<=', $this->to_date);
-            })
-            ->when($this->branch_id, function ($q) {
-                return $q->where('sales.branch_id', $this->branch_id);
-            })
-            ->groupBy('product_id');
-
-        // Get purchase count
-        $purchaseQuery = PurchaseItem::select('product_id', DB::raw('SUM(quantity) as total_purchased'))
-            ->join('purchases', 'purchases.id', '=', 'purchase_items.purchase_id')
-            ->where('purchases.status', 'completed')
-            ->when($this->from_date, function ($q) {
-                return $q->whereDate('purchases.date', '>=', $this->from_date);
-            })
-            ->when($this->to_date, function ($q) {
-                return $q->whereDate('purchases.date', '<=', $this->to_date);
-            })
-            ->when($this->branch_id, function ($q) {
-                return $q->where('purchases.branch_id', $this->branch_id);
-            })
-            ->groupBy('product_id');
-
-        $inventoryTransferItemQuery = InventoryTransferItem::query()
-            ->join('inventory_transfers', 'inventory_transfers.id', '=', 'inventory_transfer_items.inventory_transfer_id')
-            ->where('inventory_transfers.status', 'completed')
-            ->when($this->from_date, function ($q) {
-                return $q->whereDate('inventory_transfers.date', '>=', $this->from_date);
-            })
-            ->when($this->to_date, function ($q) {
-                return $q->whereDate('inventory_transfers.date', '<=', $this->to_date);
-            });
-        $transferInQuery = clone $inventoryTransferItemQuery;
-        // Get inventory transfer count
-        $transferInQuery = $transferInQuery
-            ->select('product_id', DB::raw('SUM(quantity) as transfer_in'))
-            ->when($this->branch_id, function ($q) {
-                return $q->where('inventory_transfers.to_branch_id', $this->branch_id);
-            })
-            ->groupBy('product_id');
-
-        $transferOutQuery = clone $inventoryTransferItemQuery;
-        $transferOutQuery = $transferOutQuery
-            ->select('product_id', DB::raw('SUM(quantity) as transfer_out'))
-            ->when($this->branch_id, function ($q) {
-                return $q->where('inventory_transfers.from_branch_id', $this->branch_id);
-            })
-            ->groupBy('product_id');
-
-        $products = $query
-            ->select(
-                'products.id',
-                'products.name',
-                'products.code',
-                'products.barcode',
-                'categories.name as category_name',
-                'inventory.current_stock',
-                'sales.total_sold',
-                'purchases.total_purchased',
-                'transfer_in.transfer_in',
-                'transfer_out.transfer_out'
-            )
-            ->when($this->search, function ($q, $value) {
-                return $q
-                    ->where('products.name', 'like', '%'.trim($value).'%')
-                    ->orWhere('products.code', 'like', '%'.trim($value).'%');
-            })
-            ->when($this->barcode, function ($q, $value) {
-                return $q->where('products.barcode', 'like', '%'.trim($value).'%');
-            })
-            ->when($this->main_category_id, function ($q) {
-                return $q->where('products.main_category_id', $this->main_category_id);
-            })
-            ->product()
-            ->leftJoinSub($inventoryQuery, 'inventory', function ($join): void {
-                $join->on('products.id', '=', 'inventory.product_id');
-            })
-            ->leftJoinSub($salesQuery, 'sales', function ($join): void {
-                $join->on('products.id', '=', 'sales.product_id');
-            })
-            ->leftJoinSub($purchaseQuery, 'purchases', function ($join): void {
-                $join->on('products.id', '=', 'purchases.product_id');
-            })
-            ->leftJoinSub($transferInQuery, 'transfer_in', function ($join): void {
-                $join->on('products.id', '=', 'transfer_in.product_id');
-            })
-            ->leftJoinSub($transferOutQuery, 'transfer_out', function ($join): void {
-                $join->on('products.id', '=', 'transfer_out.product_id');
-            })
-            ->orderBy($this->sortField, $this->sortDirection)
-            ->paginate($this->limit);
+        $query  = (new ProductReportAction())->execute($filter);
+        $products = $query ->paginate($this->limit);
 
         return view('livewire.report.product-report', [
             'products' => $products,
