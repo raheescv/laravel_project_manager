@@ -10,11 +10,11 @@ use App\Jobs\Export\ExportInventoryJob;
 use App\Jobs\Export\ExportInventoryProductWiseJob;
 use App\Models\Configuration;
 use App\Models\Inventory;
+use Exception;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
 use Livewire\WithPagination;
 use Maatwebsite\Excel\Facades\Excel;
-use Exception;
 
 class Table extends Component
 {
@@ -172,9 +172,7 @@ class Table extends Component
         $cacheKey = 'inventory_product_wise_filtered_count_'.md5(serialize($filters));
 
         return cache()->remember($cacheKey, now()->addMinutes(5), function () use ($filters) {
-            $query = (new InventoryProductWiseAction())->execute($filters);
-
-            return $query->count();
+            return (new InventoryProductWiseAction())->execute($filters)->get()->count();
         });
     }
 
