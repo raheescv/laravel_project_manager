@@ -2,17 +2,11 @@
 
 namespace App\Exports;
 
-use App\Models\Inventory;
-use App\Models\InventoryTransferItem;
-use App\Models\Product;
-use App\Models\PurchaseItem;
-use App\Models\SaleItem;
-use Illuminate\Support\Facades\DB;
+use App\Actions\Product\ProductReportAction;
 use Maatwebsite\Excel\Concerns\Exportable;
 use Maatwebsite\Excel\Concerns\FromQuery;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithMapping;
-use App\Actions\Product\ProductReportAction;
 
 class ProductReportExport implements FromQuery, WithHeadings, WithMapping
 {

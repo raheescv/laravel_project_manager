@@ -2,14 +2,19 @@
 
 namespace App\Livewire\Inventory;
 
+use App\Actions\Product\Inventory\GetAction;
+use App\Actions\Product\InventoryProductWiseAction;
 use App\Exports\InventoryExport;
+use App\Exports\InventoryProductWiseExport;
 use App\Jobs\Export\ExportInventoryJob;
+use App\Jobs\Export\ExportInventoryProductWiseJob;
 use App\Models\Configuration;
 use App\Models\Inventory;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
 use Livewire\WithPagination;
 use Maatwebsite\Excel\Facades\Excel;
+use Exception;
 
 class Table extends Component
 {
@@ -91,22 +96,7 @@ class Table extends Component
     public function export()
     {
         try {
-            $filters = [
-                'branch_id' => $this->branch_id,
-                'department_id' => $this->department_id,
-                'main_category_id' => $this->main_category_id,
-                'sub_category_id' => $this->sub_category_id,
-                'product_id' => $this->product_id,
-                'unit_id' => $this->unit_id,
-                'brand_id' => $this->brand_id,
-                'size' => $this->size,
-                'barcode' => $this->barcode,
-                'code' => $this->code,
-                'non_zero' => $this->non_zero,
-                'search' => $this->search,
-                'product_name' => $this->product_name,
-
-            ];
+            $filters = $this->getFilters();
 
             // Get filtered count for better decision making
             $filteredCount = $this->getFilteredCount($filters);
@@ -119,9 +109,51 @@ class Table extends Component
 
                 return Excel::download(new InventoryExport($filters), $exportFileName);
             }
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             $this->dispatch('error', ['message' => 'Export failed: '.$e->getMessage()]);
         }
+    }
+
+    public function exportProductWise()
+    {
+        try {
+            $filters = $this->getFilters();
+
+            // Get filtered count for better decision making
+            $filteredCount = $this->getProductWiseFilteredCount($filters);
+
+            if ($filteredCount > 2000) {
+                ExportInventoryProductWiseJob::dispatch(Auth::user(), $filters);
+                $this->dispatch('success', ['message' => 'Product Wise Export started! You will receive the file in your mailbox shortly.']);
+            } else {
+                $exportFileName = 'inventory_product_wise_'.now()->format('Y-m-d_H-i-s').'.xlsx';
+
+                return Excel::download(new InventoryProductWiseExport($filters), $exportFileName);
+            }
+        } catch (Exception $e) {
+            $this->dispatch('error', ['message' => 'Product Wise Export failed: '.$e->getMessage()]);
+        }
+    }
+
+    protected function getFilters()
+    {
+        return [
+            'branch_id' => $this->branch_id,
+            'department_id' => $this->department_id,
+            'main_category_id' => $this->main_category_id,
+            'sub_category_id' => $this->sub_category_id,
+            'product_id' => $this->product_id,
+            'unit_id' => $this->unit_id,
+            'brand_id' => $this->brand_id,
+            'size' => $this->size,
+            'barcode' => $this->barcode,
+            'code' => $this->code,
+            'non_zero' => $this->non_zero,
+            'search' => $this->search,
+            'product_name' => $this->product_name,
+            'sortField' => $this->sortField,
+            'sortDirection' => $this->sortDirection,
+        ];
     }
 
     protected function getFilteredCount($filters)
@@ -129,61 +161,20 @@ class Table extends Component
         // Cache the filtered count for better performance
         $cacheKey = 'inventory_filtered_count_'.md5(serialize($filters));
 
+        return cache()->remember($cacheKey, now()->addMinutes(5), function () {
+            return (new GetAction())->execute($this->getFilters())->count();
+        });
+    }
+
+    protected function getProductWiseFilteredCount($filters)
+    {
+        // Cache the filtered count for better performance
+        $cacheKey = 'inventory_product_wise_filtered_count_'.md5(serialize($filters));
+
         return cache()->remember($cacheKey, now()->addMinutes(5), function () use ($filters) {
-            return Inventory::query()
-                ->join('products', 'inventories.product_id', '=', 'products.id')
-                ->where('products.type', 'product')
-                ->when($filters['branch_id'] ?? null, function ($query, $value) {
-                    return $query->whereIn('branch_id', $value);
-                })
-                ->when($filters['department_id'] ?? null, function ($query, $value) {
-                    return $query->where('department_id', $value);
-                })
-                ->when($filters['main_category_id'] ?? null, function ($query, $value) {
-                    return $query->where('main_category_id', $value);
-                })
-                ->when($filters['sub_category_id'] ?? null, function ($query, $value) {
-                    return $query->where('sub_category_id', $value);
-                })
-                ->when($filters['product_id'] ?? null, function ($query, $value) {
-                    return $query->where('product_id', $value);
-                })
-                ->when($filters['unit_id'] ?? null, function ($query, $value) {
-                    return $query->where('unit_id', $value);
-                })
-                ->when($filters['brand_id'] ?? null, function ($query, $value) {
-                    return $query->where('brand_id', $value);
-                })
-                ->when($filters['non_zero'] ?? false, function ($query, $value) {
-                    return $query->where('quantity', '!=', 0);
-                })
-                ->when($filters['size'] ?? null, function ($query, $value) {
-                    return $query->where('products.size', $value);
-                })
-                ->when($filters['barcode'] ?? null, function ($query, $value) {
-                    return $query->where('inventories.barcode', $value);
-                })
-                ->when($filters['code'] ?? null, function ($query, $value) {
-                    return $query->where('products.code', $value);
-                })
-                ->when($filters['product_name'] ?? null, function ($query, $value) {
-                    $value = trim($value);
+            $query = (new InventoryProductWiseAction())->execute($filters);
 
-                    return $query->where('products.name', 'like', "%{$value}%");
-                })
-
-                ->when($filters['search'] ?? null, function ($query, $value) {
-                    return $query->where(function ($q) use ($value): void {
-                        $value = trim($value);
-                        $q->where('products.name', 'like', "%{$value}%")
-                            ->orWhere('products.name_arabic', 'like', "%{$value}%")
-                            ->orWhere('products.code', 'like', "%{$value}%")
-                            ->orWhere('products.size', $value)
-                            ->orWhere('inventories.barcode', 'like', "%{$value}%")
-                            ->orWhere('inventories.batch', 'like', "%{$value}%");
-                    });
-                })
-                ->count();
+            return $query->count();
         });
     }
 
@@ -230,7 +221,7 @@ class Table extends Component
 
     protected function buildQuery()
     {
-        return Inventory::query()
+        return (new GetAction())->execute($this->getFilters())
             ->select([
                 'inventories.id',
                 'inventories.cost',
@@ -255,74 +246,6 @@ class Table extends Component
                 'units.name as unit_name',
                 'branch_id',
                 'branches.name as branch_name',
-            ])
-            ->join('branches', 'inventories.branch_id', '=', 'branches.id')
-            ->join('products', 'inventories.product_id', '=', 'products.id')
-            ->join('departments', 'products.department_id', '=', 'departments.id')
-            ->join('units', 'products.unit_id', '=', 'units.id')
-            ->join('categories as main_categories', 'products.main_category_id', '=', 'main_categories.id')
-            ->leftJoin('brands', 'products.brand_id', '=', 'brands.id')
-            ->leftJoin('categories as sub_categories', 'products.sub_category_id', '=', 'sub_categories.id')
-            ->where('products.type', 'product')
-            ->when($this->search, function ($query, $value) {
-                $value = trim($value);
-
-                return $query->where(function ($q) use ($value): void {
-                    $q->where('products.name', 'like', "%{$value}%")
-                        ->orWhere('products.name_arabic', 'like', "%{$value}%")
-                        ->orWhere('products.code', 'like', "%{$value}%")
-                        ->orWhere('branches.name', 'like', "%{$value}%")
-                        ->orWhere('departments.name', 'like', "%{$value}%")
-                        ->orWhere('units.name', 'like', "%{$value}%")
-                        ->orWhere('brands.name', 'like', "%{$value}%")
-                        ->orWhere('main_categories.name', 'like', "%{$value}%")
-                        ->orWhere('sub_categories.name', 'like', "%{$value}%")
-                        ->orWhere('inventories.barcode', 'like', "%{$value}%")
-                        ->orWhere('inventories.batch', 'like', "%{$value}%")
-                        ->orWhere('products.size', $value)
-                        ->orWhere('inventories.quantity', 'like', "%{$value}%")
-                        ->orWhere('inventories.cost', 'like', "%{$value}%");
-                });
-            })
-            ->when($this->code, function ($query, $value) {
-                return $query->where('products.code', $value);
-            })
-            ->when($this->brand_id, function ($query, $value) {
-                return $query->where('products.brand_id', $value);
-            })
-            ->when($this->department_id, function ($query, $value) {
-                return $query->where('products.department_id', $value);
-            })
-            ->when($this->main_category_id, function ($query, $value) {
-                return $query->where('products.main_category_id', $value);
-            })
-            ->when($this->size, function ($query, $value) {
-                return $query->where('products.size', $value);
-            })
-            ->when($this->product_name, function ($query, $value) {
-                $value = trim($value);
-
-                return $query->where('products.name', 'like', "%{$value}%");
-            })
-
-            ->when($this->barcode, function ($query, $value) {
-                return $query->where('inventories.barcode', $value);
-            })
-            ->when($this->sub_category_id, function ($query, $value) {
-                return $query->where('products.sub_category_id', $value);
-            })
-            ->when($this->unit_id, function ($query, $value) {
-                return $query->where('products.unit_id', $value);
-            })
-            ->when($this->non_zero, function ($query, $value) {
-                return $query->where('inventories.quantity', '!=', 0);
-            })
-            ->when($this->branch_id, function ($query, $value) {
-                return $query->whereIn('inventories.branch_id', $value);
-            })
-            ->when($this->product_id, function ($query, $value) {
-                return $query->where('inventories.product_id', $value);
-            })
-            ->orderBy($this->sortField, $this->sortDirection);
+            ]);
     }
 }

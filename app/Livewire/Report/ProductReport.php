@@ -2,17 +2,12 @@
 
 namespace App\Livewire\Report;
 
+use App\Actions\Product\ProductReportAction;
 use App\Exports\ProductReportExport;
-use App\Models\Inventory;
-use App\Models\InventoryTransferItem;
 use App\Models\Product;
-use App\Models\PurchaseItem;
-use App\Models\SaleItem;
-use Illuminate\Support\Facades\DB;
 use Livewire\Component;
 use Livewire\WithPagination;
 use Maatwebsite\Excel\Facades\Excel;
-use App\Actions\Product\ProductReportAction;
 
 class ProductReport extends Component
 {
@@ -98,8 +93,8 @@ class ProductReport extends Component
             'sortDirection' => $this->sortDirection,
         ];
 
-        $query  = (new ProductReportAction())->execute($filter);
-        $products = $query ->paginate($this->limit);
+        $query = (new ProductReportAction())->execute($filter);
+        $products = $query->paginate($this->limit);
 
         return view('livewire.report.product-report', [
             'products' => $products,
