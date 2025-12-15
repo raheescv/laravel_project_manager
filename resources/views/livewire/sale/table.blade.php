@@ -256,7 +256,8 @@
                             @endif
                             @if ($sale_visible_column['item_discount'])
                                 <td>
-                                    <div class="text-end text-danger fw-medium">{{ $item->item_discount != 0 ? '-' : '' }}{{ $item->item_discount != 0 ? currency($item->item_discount) : '_' }}</div>
+                                    <div class="text-end text-danger fw-medium">{{ $item->item_discount != 0 ? '-' : '' }}{{ $item->item_discount != 0 ? currency($item->item_discount) : '_' }}
+                                    </div>
                                 </td>
                             @endif
                             @if ($sale_visible_column['tax_amount'])
@@ -271,7 +272,8 @@
                             @endif
                             @if ($sale_visible_column['other_discount'])
                                 <td>
-                                    <div class="text-end text-danger fw-medium">{{ $item->other_discount != 0 ? '-' : '' }}{{ $item->other_discount != 0 ? currency($item->other_discount) : '_' }}</div>
+                                    <div class="text-end text-danger fw-medium">{{ $item->other_discount != 0 ? '-' : '' }}{{ $item->other_discount != 0 ? currency($item->other_discount) : '_' }}
+                                    </div>
                                 </td>
                             @endif
                             @if ($sale_visible_column['freight'])
