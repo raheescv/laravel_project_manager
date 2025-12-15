@@ -256,12 +256,12 @@
                             @endif
                             @if ($sale_visible_column['item_discount'])
                                 <td>
-                                    <div class="text-end text-danger fw-medium">-{{ currency($item->item_discount) }}</div>
+                                    <div class="text-end text-danger fw-medium">{{ $item->item_discount != 0 ? '-' : '' }}{{ $item->item_discount != 0 ? currency($item->item_discount) : '_' }}</div>
                                 </td>
                             @endif
                             @if ($sale_visible_column['tax_amount'])
                                 <td>
-                                    <div class="text-end fw-medium">{{ currency($item->tax_amount) }}</div>
+                                    <div class="text-end fw-medium">{{ $item->tax_amount != 0 ? currency($item->tax_amount) : '_' }}</div>
                                 </td>
                             @endif
                             @if ($sale_visible_column['total'])
@@ -271,12 +271,12 @@
                             @endif
                             @if ($sale_visible_column['other_discount'])
                                 <td>
-                                    <div class="text-end text-danger fw-medium">-{{ currency($item->other_discount) }}</div>
+                                    <div class="text-end text-danger fw-medium">{{ $item->other_discount != 0 ? '-' : '' }}{{ $item->other_discount != 0 ? currency($item->other_discount) : '_' }}</div>
                                 </td>
                             @endif
                             @if ($sale_visible_column['freight'])
                                 <td>
-                                    <div class="text-end fw-medium">{{ currency($item->freight) }}</div>
+                                    <div class="text-end fw-medium">{{ $item->freight != 0 ? currency($item->freight) : '_' }}</div>
                                 </td>
                             @endif
                             @if ($sale_visible_column['grand_total'])
@@ -291,7 +291,7 @@
                             @endif
                             @if ($sale_visible_column['balance'])
                                 <td>
-                                    <div class="text-end text-danger fw-semibold">{{ currency($item->balance) }}</div>
+                                    <div class="text-end text-danger fw-semibold">{{ $item->balance != 0 ? currency($item->balance) : '_' }}</div>
                                 </td>
                             @endif
                             @if ($sale_visible_column['status'])
