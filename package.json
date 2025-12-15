@@ -29,6 +29,7 @@
   "dependencies": {
     "@ericblade/quagga2": "^1.8.4",
     "@inertiajs/progress": "^0.1.2",
+    "@tanstack/react-table": "^8.21.3",
     "@thewirv/react-barcode-scanner": "^3.4.0",
     "dotenv": "^16.4.7",
     "html5-qrcode": "^2.3.8",

@@ -35,25 +35,24 @@
             <div class="row mb-3">
 
                 <div class="col-md-6">
-                    <label>Category</label>
-                    <select wire:model="category_id" class="form-control">
-                        <option value="">-- Select Category --</option>
-                        @foreach($categories as $cat)
-                            <option value="{{ $cat->id }}">{{ $cat->name }}</option>
-                        @endforeach
-                    </select>
+                    <label for="category">Measurement Category</label>
+                    <input type="text" id="category" class="form-control" value="{{ $category->name }}" disabled>
                     @error('category_id') <span class="text-danger">{{ $message }}</span> @enderror
                 </div>
 
                 <div class="col-md-6">
-                    <label>Field Name</label>
-                    <input type="text" wire:model="template_name" class="form-control" placeholder="Template name">
+                    <label for="template_name">Field Name</label>
+                    <input type="text" id="template_name" wire:model="template_name" class="form-control" placeholder="Template name">
                     @error('template_name') <span class="text-danger">{{ $message }}</span> @enderror
                 </div>
 
             </div>
 
-            <button wire:click="save" class="btn btn-primary mb-3">Save</button>
+            <div class="mb-3">
+                <button wire:click="save" class="btn btn-primary">
+                    @if($template_id) Update @else Save @endif
+                </button>
+            </div>
 
             <hr>
 
@@ -82,7 +81,7 @@
                             @endif
                         </th>
 
-                        <th width="120">Action</th>
+                        <th width="140">Action</th>
                     </tr>
                     </thead>
 
@@ -93,7 +92,10 @@
                             <td>{{ $t->category?->name }}</td>
                             <td>{{ $t->name }}</td>
                             <td>
-                                <button class="btn btn-danger btn-sm"
+                                <button class="btn btn-sm btn-primary me-1" wire:click="editTemplate({{ $t->id }})">
+                                    Edit
+                                </button>
+                                <button class="btn btn-sm btn-danger"
                                         onclick="confirm('Delete this?') || event.stopImmediatePropagation()"
                                         wire:click="deleteTemplate({{ $t->id }})">
                                     Delete

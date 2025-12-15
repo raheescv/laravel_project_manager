@@ -162,6 +162,14 @@
                                     @endcan
 
                                      @can('category.view')
+                                        <a href="{{ route('settings::measurement_category::index') }}" class="list-group-item list-group-item-action">
+                                            <i class="fa fa-folder fs-5 me-2"></i>Measurement Category
+                                        </a>
+                                    @endcan
+
+                                  
+
+                                     @can('category.view')
                                         <a href="{{ route('settings::category::measurements.data') }}" class="list-group-item list-group-item-action">
                                             <i class="fa fa-folder fs-5 me-2"></i>Tailor measurement
                                         </a>

@@ -87,6 +87,16 @@
                                     </label>
                                     {{ html()->select('main_category_id', [])->value('')->class('select-category_id-parent border-primary-subtle shadow-sm')->placeholder('Select Main Category')->id('main_category_id') }}
                                 </div>
+                                
+
+                              
+
+                 
+
+
+
+
+                                
 
                                 <div class="col-md-4" wire:ignore>
                                     <label for="sub_category_id" class="form-label fw-medium">
@@ -103,6 +113,21 @@
                                     </label>
                                     {{ html()->select('unit_id', $units)->value('')->class('tomSelect border-primary-subtle shadow-sm')->placeholder('Select your unit')->id('unit_id')->attribute('wire:model', 'products.unit_id') }}
                                 </div>
+
+
+                              <div class="col-md-4" wire:ignore>
+    <label for="measurement_category_id" class="form-label fw-medium">
+        <i class="fa fa-folder text-primary me-1 small"></i>
+        Measurement Category <span class="text-danger">*</span>
+    </label>
+    {{ html()->select('measurement_category_id', ['' => 'Select Measurement Category'] + $measurementCategories)
+        ->value($products['measurement_category_id'] ?? '')
+        ->class('form-select border-primary-subtle shadow-sm')
+        ->id('measurement_category_id')
+        ->attribute('wire:model.defer', 'products.measurement_category_id') }}
+</div>
+
+
                                 @if ($type == 'product')
                                     <div class="col-md-4" wire:ignore>
                                         <label for="unit_id" class="form-label fw-medium">
@@ -149,6 +174,82 @@
                                         </div>
                                     </div>
                                 @endif
+                                {{-- RAW MATERIALS SECTION --}}
+@if($type == 'product')
+<div class="col-12">
+    <div class="card bg-light border-0 rounded-3 mt-3">
+        <div class="card-body p-3">
+            <h6 class="card-subtitle mb-3 d-flex align-items-center justify-content-between">
+                <span class="d-flex align-items-center">
+                    <span class="badge bg-warning p-2 me-2">
+                        <i class="fa fa-industry"></i>
+                    </span>
+                    Raw Materials
+                </span>
+
+                <button type="button"
+                        wire:click="addRawMaterial"
+                        class="btn btn-sm btn-outline-primary">
+                    <i class="fa fa-plus"></i> Add
+                </button>
+            </h6>
+
+            <div class="table-responsive">
+                <table class="table table-bordered table-sm align-middle mb-0">
+                    <thead class="table-secondary">
+                        <tr>
+                            <th>Material Name</th>
+                          
+                            <th width="140">Price</th>
+                            <th width="80" class="text-center">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @forelse($raw_materials as $index => $rm)
+                            <tr>
+                                <td>
+                                    <input type="text"
+                                           class="form-control form-control-sm"
+                                           placeholder="Raw material name"
+                                           wire:model="raw_materials.{{ $index }}.name">
+                                </td>
+
+                               
+                                <td>
+                                    <input type="number"
+                                           class="form-control form-control-sm"
+                                           wire:model="raw_materials.{{ $index }}.price"
+                                           step="any">
+                                </td>
+
+                                <td class="text-center">
+                                    <button type="button"
+                                            class="btn btn-sm btn-danger"
+                                            wire:click="removeRawMaterial({{ $index }})">
+                                        <i class="fa fa-trash"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="4" class="text-center text-muted">
+                                    No raw materials added
+                                </td>
+                            </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+
+            <small class="text-muted d-block mt-2">
+                <i class="fa fa-info-circle"></i>
+                You can add multiple raw materials for this product.
+            </small>
+        </div>
+    </div>
+</div>
+@endif
+
 
                                 @if ($type == 'product')
                                     @if ($barcode_type == 'product_wise')
