@@ -177,7 +177,7 @@
                                 <td class="text-end">{{ currency($row->unit_price) }}</td>
                             @endif
                             @if ($sale_mixed_item_report_visible_column['quantity'] ?? true)
-                                <td class="text-end">{{ currency($row->quantity) }}</td>
+                                <td class="text-end">{{ currency($row->quantity,3) }}</td>
                             @endif
                             @if ($sale_mixed_item_report_visible_column['gross_amount'] ?? true)
                                 <td class="text-end">{{ currency($row->gross_amount) }}</td>
@@ -214,7 +214,7 @@
                         @endphp
                         <th colspan="{{ max($colspan, 1) }}" class="text-end">Total</th>
                         @if ($sale_mixed_item_report_visible_column['quantity'] ?? true)
-                            <th class="text-end">{{ currency($total['quantity'] ?? 0) }}</th>
+                            <th class="text-end">{{ currency($total['quantity'] ?? 0,3) }}</th>
                         @endif
                         @if ($sale_mixed_item_report_visible_column['gross_amount'] ?? true)
                             <th class="text-end">{{ currency($total['gross_amount'] ?? 0) }}</th>
