@@ -110,6 +110,7 @@ class Table extends Component
                 return $query->where(function ($q) use ($value): void {
                     $value = trim($value);
                     $q->where('accounts.name', 'like', "%{$value}%")
+                        ->orWhere('accounts.alias_name', 'like', "%{$value}%")
                         ->orWhere('accounts.mobile', 'like', "%{$value}%")
                         ->orWhere('accounts.email', 'like', "%{$value}%")
                         ->orWhere('accounts.model', 'like', "%{$value}%");

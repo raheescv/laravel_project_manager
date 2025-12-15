@@ -19,6 +19,7 @@ class Account extends Model implements AuditableContracts
         'customer_type_id',
         'account_category_id',
         'name',
+        'alias_name',
         'mobile',
         'whatsapp_mobile',
         'model',

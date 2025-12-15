@@ -35,7 +35,7 @@ class SaleHelper
         $barcodeSettings = Configuration::where('key', 'barcode_configurations')->value('value');
         $barcodeSettings = $barcodeSettings ? json_decode($barcodeSettings, true) : [];
         $barcodeType = $barcodeSettings['barcode']['type'] ?? 'C128';
-        $payments = $sale->payments()->with('paymentMethod:id,name')->get(['amount', 'payment_method_id'])->toArray();
+        $payments = $sale->payments()->with('paymentMethod:id,name,alias_name')->get(['amount', 'payment_method_id'])->toArray();
         $data = compact(
             'payments',
             'sale',
