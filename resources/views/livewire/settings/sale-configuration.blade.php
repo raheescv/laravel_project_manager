@@ -80,6 +80,12 @@
                                     {{ html()->select('validate_unit_price_against_mrp', ['yes' => 'Yes', 'no' => 'No'])->value('')->class('form-select')->placeholder('Validate unit price against MRP?')->attribute('wire:model', 'validate_unit_price_against_mrp') }}
                                 </div>
                             </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label class="form-label fw-medium" for="show_colleague">Show Colleague</label>
+                                    {{ html()->select('show_colleague', ['yes' => 'Yes', 'no' => 'No'])->value('')->class('form-select')->placeholder('Do You want to show colleague?')->attribute('wire:model', 'show_colleague') }}
+                                </div>
+                            </div>
                             <div class="col-12">
                                 <div class="form-group">
                                     <label class="form-label fw-medium" for="thermal_printer_footer_english">Thermal Printer Footer (English)</label>
