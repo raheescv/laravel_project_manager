@@ -33,8 +33,9 @@ class SaleController extends Controller
     {
         $showColleague = Configuration::where('key', 'show_colleague')->value('value') ?? 'yes';
         $categories = Category::withCount('products')->get()->toArray();
+
         $employees = User::employee();
-        if($showColleague == 'yes' && Auth::user()->type == 'employee'){
+        if($showColleague == 'no' && Auth::user()->type == 'employee'){
             $employees = $employees->where('id', Auth::id());
         }
         $employees = $employees->pluck('name', 'id')->toArray();
