@@ -40,7 +40,7 @@ class Page extends Component
     /** 🔥 RAW MATERIALS (NEW – SAFE) */
     public $raw_materials = [];
 
-    /** EXISTING PROPS (DO NOT TOUCH) */
+
     public $departments;
     public $brands;
 
@@ -224,6 +224,16 @@ class Page extends Component
     $measurementCategories = MeasurementCategory::pluck('name','id')->toArray();
 
         $units = Unit::pluck('name', 'id')->toArray();
-        return view('livewire.product.page', compact('units','measurementCategories'));
+       $allProducts = Product::where('status', 'active')
+        ->pluck('name', 'id')
+        ->toArray();
+
+    return view('livewire.product.page', compact(
+        'units',
+        'measurementCategories',
+        'allProducts'
+    ));
+
+    
     }
 }

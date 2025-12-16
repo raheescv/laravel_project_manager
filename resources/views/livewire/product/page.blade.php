@@ -178,74 +178,7 @@
 @if($type == 'product')
 <div class="col-12">
     <div class="card bg-light border-0 rounded-3 mt-3">
-        <div class="card-body p-3">
-            <h6 class="card-subtitle mb-3 d-flex align-items-center justify-content-between">
-                <span class="d-flex align-items-center">
-                    <span class="badge bg-warning p-2 me-2">
-                        <i class="fa fa-industry"></i>
-                    </span>
-                    Raw Materials
-                </span>
-
-                <button type="button"
-                        wire:click="addRawMaterial"
-                        class="btn btn-sm btn-outline-primary">
-                    <i class="fa fa-plus"></i> Add
-                </button>
-            </h6>
-
-            <div class="table-responsive">
-                <table class="table table-bordered table-sm align-middle mb-0">
-                    <thead class="table-secondary">
-                        <tr>
-                            <th>Material Name</th>
-                          
-                            <th width="140">Price</th>
-                            <th width="80" class="text-center">Action</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @forelse($raw_materials as $index => $rm)
-                            <tr>
-                                <td>
-                                    <input type="text"
-                                           class="form-control form-control-sm"
-                                           placeholder="Raw material name"
-                                           wire:model="raw_materials.{{ $index }}.name">
-                                </td>
-
-                               
-                                <td>
-                                    <input type="number"
-                                           class="form-control form-control-sm"
-                                           wire:model="raw_materials.{{ $index }}.price"
-                                           step="any">
-                                </td>
-
-                                <td class="text-center">
-                                    <button type="button"
-                                            class="btn btn-sm btn-danger"
-                                            wire:click="removeRawMaterial({{ $index }})">
-                                        <i class="fa fa-trash"></i>
-                                    </button>
-                                </td>
-                            </tr>
-                        @empty
-                            <tr>
-                                <td colspan="4" class="text-center text-muted">
-                                    No raw materials added
-                                </td>
-                            </tr>
-                        @endforelse
-                    </tbody>
-                </table>
-            </div>
-
-            <small class="text-muted d-block mt-2">
-                <i class="fa fa-info-circle"></i>
-                You can add multiple raw materials for this product.
-            </small>
-        </div>
+       
     </div>
 </div>
 @endif
@@ -589,6 +522,22 @@
                                                         </button>
                                                     </li>
                                                 @endif
+
+                                                @if ($type == 'product')
+<li class="nav-item" role="presentation">
+    <button
+        class="nav-link @if ($selectedTab == 'RelatedProducts') active show @endif d-flex align-items-center gap-2"
+        data-bs-toggle="tab"
+        wire:click="tabSelect('RelatedProducts')"
+        data-bs-target="#tabRelatedProducts"
+        type="button"
+        role="tab">
+        <i class="fa fa-link text-secondary"></i>
+        Raw materials
+    </button>
+</li>
+@endif
+
                                                 @if ($type == 'product')
                                                     <li class="nav-item" role="presentation">
                                                         <button class="nav-link @if ($selectedTab == 'Attributes') active @endif d-flex align-items-center gap-2" data-bs-toggle="tab"
@@ -681,6 +630,84 @@
                                                         </div>
                                                     </div>
                                                 @endif
+                                                @if ($type == 'product')
+<div id="tabRelatedProducts"
+     class="tab-pane fade @if ($selectedTab == 'RelatedProducts') active show @endif"
+     role="tabpanel">
+
+    <div class="row g-2 mb-3">
+        <h5 class="card-title">Raw materials</h5>
+
+        <div class="col-md-2">
+            <button type="button"
+                    class="btn btn-primary w-100"
+                    wire:click="addRawMaterial">
+                <i class="fa fa-plus"></i> Add
+            </button>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-body">
+            <div class="table-responsive">
+
+                <table class="table table-bordered align-middle">
+                    <thead>
+                        <tr>
+                            <th width="50%">Product</th>
+                            <th width="25%">Quantity</th>
+                            <th width="10%">Action</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        @forelse ($raw_materials as $index => $rm)
+                            <tr>
+                                <!-- PRODUCT DROPDOWN -->
+                                <td>
+                                    <select class="form-select"
+                                        wire:model="raw_materials.{{ $index }}.name">
+                                        <option value="">Select Product</option>
+                                        @foreach ($allProducts as $id => $name)
+                                            <option value="{{ $id }}">
+                                                {{ $name }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                </td>
+
+                                <!-- QUANTITY -->
+                                <td>
+                                    <input type="number"
+                                           min="1"
+                                           class="form-control"
+                                           wire:model="raw_materials.{{ $index }}.price">
+                                </td>
+
+                                <!-- DELETE -->
+                                <td class="text-center">
+                                    <i class="fa fa-trash text-danger pointer"
+                                       wire:click="removeRawMaterial({{ $index }})">
+                                    </i>
+                                </td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="3" class="text-center text-muted">
+                                    No raw material  added
+                                </td>
+                            </tr>
+                        @endforelse
+                    </tbody>
+
+                </table>
+
+            </div>
+        </div>
+    </div>
+</div>
+@endif
+
                                                 @if ($type == 'product')
                                                     <div id="tabAttributes" class="tab-pane fade @if ($selectedTab == 'Attributes') active show @endif" role="tabpanel">
                                                         <div class="row g-3 ">
