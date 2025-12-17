@@ -8,6 +8,7 @@ use App\Traits\ApiResponseTrait;
 use Dedoc\Scramble\Attributes\Group;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Validation\ValidationException;
+use App\Http\Requests\V1\GetBrandsRequest;
 
 #[Group('Product Filter')]
 class BrandController extends Controller
@@ -29,10 +30,10 @@ class BrandController extends Controller
      *   "message": "Brands retrieved successfully"
      * }
      */
-    public function index(GetBrandsAction $action): JsonResponse
+    public function index(GetBrandsAction $action,GetBrandsRequest $request): JsonResponse
     {
         try {
-            $result = $action->execute();
+            $result = $action->execute($request);
 
             return $this->sendSuccess($result, 'Brands retrieved successfully');
         } catch (ValidationException $e) {
