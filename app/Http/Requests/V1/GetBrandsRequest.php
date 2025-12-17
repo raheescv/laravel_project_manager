@@ -51,7 +51,8 @@ class GetBrandsRequest extends FormRequest
 
         return array_merge([
             'query' => null,
-            'in_stock_only' => true,
+            'size' => null,
+            'available_products_only' => true,
         ], $validated);
     }
 }
