@@ -21,7 +21,7 @@ class GetSizesAction
             ->whereNotNull('size')
             ->where('size', '!=', '')
             ->groupBy('size')
-            ->orderBy('size');
+            ->orderByDesc('size');
 
         $sizes = $query->get()->pluck('size')->filter()->values();
 
@@ -63,13 +63,18 @@ class GetSizesAction
                 $others[] = $item;
             }
         }
+        $others = array_merge($others, $kids);
 
-        // Sort both arrays by size
-        usort($kids, function ($a, $b) {
-            return strnatcmp($a['size'], $b['size']);
-        });
+        // for temporary emptying the kids array
+        $kids = [];
+
+        // Sort both arrays by size (descending)
+        // usort($kids, function ($a, $b) {
+        //     return strnatcmp($b['size'], $a['size']);
+        // });
+
         usort($others, function ($a, $b) {
-            return strnatcmp($a['size'], $b['size']);
+            return strnatcmp($b['size'], $a['size']);
         });
 
         return [
