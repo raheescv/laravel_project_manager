@@ -52,7 +52,7 @@ class POSController extends Controller
 
             // Filter by search term
             if ($request->search) {
-                $search = $request->search;
+                $search = trim($request->search);
                 $query->whereHas('product', function ($q) use ($search): void {
                     $q->where('name', 'LIKE', "%{$search}%")->orWhere('barcode', 'LIKE', "%{$search}%");
                 });
