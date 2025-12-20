@@ -20,9 +20,15 @@ class GetBrandsAction
                 return $query->where('name', 'like', "%{$value}%");
             })
             ->withCount([
-                'products' => function ($query) use ($filters) {
+                'products' => function ($query) use ($filters, $availableProductsOnly) {
                     if ($filters['size'] ?? null) {
                         $query->where('size', $filters['size']);
+                    }
+                    // When availableProductsOnly is true, only count products with inventory stock
+                    if ($availableProductsOnly) {
+                        $query->whereHas('inventories', function ($invQ) {
+                            $invQ->where('quantity', '>', 0);
+                        });
                     }
                 }
             ])
