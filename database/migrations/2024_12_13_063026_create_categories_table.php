@@ -12,6 +12,8 @@ return new class() extends Migration
             $table->id();
             $table->unsignedBigInteger('parent_id')->nullable();
             $table->string('name')->unique();
+            $table->boolean('sale_visibility_flag')->default(true);
+            $table->boolean('online_visibility_flag')->default(true);
             $table->timestamps();
         });
     }

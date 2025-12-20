@@ -54,12 +54,14 @@
             <table class="table table-striped">
                 <thead>
                     <tr>
-                        <th width="20%">
+                        <th>
                             <input type="checkbox" wire:model.live="selectAll" />
                             <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="id" label="ID" />
                         </th>
-                        <th> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="parent_id" label="parent" /> </th>
-                        <th> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="name" label="name" /> </th>
+                        <th width='25%'> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="parent_id" label="parent" /> </th>
+                        <th width='25%'> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="name" label="name" /> </th>
+                        <th> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="sale_visibility_flag" label="Sale Visibility" /> </th>
+                        <th> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="online_visibility_flag" label="Online Visibility" /> </th>
                         <th width="10%">Action</th>
                     </tr>
                 </thead>
@@ -72,6 +74,32 @@
                             </td>
                             <td>{{ $item->parent?->name }}</td>
                             <td>{{ $item->name }}</td>
+                            <td>
+                                @if($item->sale_visibility_flag ?? true)
+                                    <span class="badge bg-success">
+                                        <i class="fa fa-eye me-1"></i>
+                                        Visible
+                                    </span>
+                                @else
+                                    <span class="badge bg-secondary">
+                                        <i class="fa fa-eye-slash me-1"></i>
+                                        Hidden
+                                    </span>
+                                @endif
+                            </td>
+                            <td>
+                                @if($item->online_visibility_flag ?? true)
+                                    <span class="badge bg-info">
+                                        <i class="fa fa-globe me-1"></i>
+                                        Visible
+                                    </span>
+                                @else
+                                    <span class="badge bg-secondary">
+                                        <i class="fa fa-globe me-1"></i>
+                                        Hidden
+                                    </span>
+                                @endif
+                            </td>
                             <td>
                                 @can('category.edit')
                                     <i table_id="{{ $item->id }}" class="demo-psi-pencil fs-5 me-2 pointer edit"></i>

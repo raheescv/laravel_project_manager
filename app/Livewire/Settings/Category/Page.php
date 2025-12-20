@@ -45,10 +45,19 @@ class Page extends Component
             $this->categories = [
                 'parent_id' => null,
                 'name' => $name,
+                'sale_visibility_flag' => true,
+                'online_visibility_flag' => true,
             ];
         } else {
             $category = Category::with('parent')->find($this->table_id);
             $this->categories = $category->toArray();
+            // Ensure visibility flags have default values if null
+            if (! isset($this->categories['sale_visibility_flag'])) {
+                $this->categories['sale_visibility_flag'] = true;
+            }
+            if (! isset($this->categories['online_visibility_flag'])) {
+                $this->categories['online_visibility_flag'] = true;
+            }
         }
         $this->dispatch('SelectDropDownValues');
     }

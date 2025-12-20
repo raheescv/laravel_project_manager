@@ -32,7 +32,11 @@ class SaleController extends Controller
     public function posPage($id = null)
     {
         $showColleague = Configuration::where('key', 'show_colleague')->value('value') ?? 'yes';
-        $categories = Category::withCount('products')->get()->toArray();
+        $categories = Category::withCount('products')
+            ->where('sale_visibility_flag', true)
+            ->having('products_count', '>', 0)
+            ->get()
+            ->toArray();
 
         $employees = User::employee();
         if($showColleague == 'no' && Auth::user()->type == 'employee'){
