@@ -64,6 +64,14 @@ class GetSizesAction
             }
         }
 
+        // Sort both arrays by size
+        usort($kids, function ($a, $b) {
+            return strnatcmp($a['size'], $b['size']);
+        });
+        usort($others, function ($a, $b) {
+            return strnatcmp($a['size'], $b['size']);
+        });
+
         return [
             'kids_sizes' => $kids,
             'other_sizes' => $others,
