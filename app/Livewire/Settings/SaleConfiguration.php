@@ -35,6 +35,7 @@ class SaleConfiguration extends Component
     public $default_quantity;
 
     public $validate_unit_price_against_mrp;
+
     public $show_colleague;
 
     public function mount()

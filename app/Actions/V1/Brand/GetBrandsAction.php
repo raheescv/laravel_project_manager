@@ -2,8 +2,8 @@
 
 namespace App\Actions\V1\Brand;
 
-use App\Models\Brand;
 use App\Http\Requests\V1\GetBrandsRequest;
+use App\Models\Brand;
 
 class GetBrandsAction
 {
@@ -30,20 +30,20 @@ class GetBrandsAction
                             $invQ->where('quantity', '>', 0);
                         });
                     }
-                }
+                },
             ])
             ->orderBy('name')
             ->get(['id', 'name', 'image_path']);
 
         return $brands
             ->filter(function ($brand) use ($availableProductsOnly) {
-                return !$availableProductsOnly || $brand->products_count > 0;
+                return ! $availableProductsOnly || $brand->products_count > 0;
             })
             ->map(function ($brand) {
                 return [
                     'id' => $brand->id,
                     'name' => $brand->name,
-                    'image_path' => $brand->image_path ? url('storage/' . $brand->image_path) : null,
+                    'image_path' => $brand->image_path ? url('storage/'.$brand->image_path) : null,
                     'product_count' => $brand->products_count,
                 ];
             })

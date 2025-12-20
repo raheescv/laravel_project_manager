@@ -39,7 +39,7 @@ class SaleController extends Controller
             ->toArray();
 
         $employees = User::employee();
-        if($showColleague == 'no' && Auth::user()->type == 'employee'){
+        if ($showColleague == 'no' && Auth::user()->type == 'employee') {
             $employees = $employees->where('id', Auth::id());
         }
         $employees = $employees->pluck('name', 'id')->toArray();

@@ -24,6 +24,8 @@ class Table extends Component
 
     public $sub_category_id = '';
 
+    public $brand_id = '';
+
     public $is_selling = '';
 
     public $unit_id = '';
@@ -97,6 +99,7 @@ class Table extends Component
             'department_id' => $this->department_id,
             'main_category_id' => $this->main_category_id,
             'sub_category_id' => $this->sub_category_id,
+            'brand_id' => $this->brand_id,
             'is_selling' => $this->is_selling,
             'unit_id' => $this->unit_id,
             'status' => $this->status,
@@ -136,6 +139,9 @@ class Table extends Component
                         ->orWhere('size', 'like', "%{$value}%")
                         ->orWhere('mrp', 'like', "%{$value}%");
                 });
+            })
+            ->when($this->brand_id ?? '', function ($query, $value) {
+                return $query->where('brand_id', $value);
             })
             ->when($this->department_id ?? '', function ($query, $value) {
                 return $query->where('department_id', $value);

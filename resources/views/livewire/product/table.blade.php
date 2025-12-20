@@ -89,6 +89,16 @@
 
                 <div class="col-lg-4 col-md-6" wire:ignore>
                     <div>
+                        <label for="brand_id" class="form-label small fw-medium text-capitalize">
+                            <i class="demo-psi-tag me-1 text-muted"></i>
+                            Brand
+                        </label>
+                        {{ html()->select('brand_id', [])->value('')->class('select-brand_id-list shadow-sm border-secondary-subtle')->id('brand_id')->placeholder('All Brands') }}
+                    </div>
+                </div>
+
+                <div class="col-lg-4 col-md-6" wire:ignore>
+                    <div>
                         <label for="unit_id" class="form-label small fw-medium text-capitalize">
                             <i class="demo-psi-cube me-1 text-muted"></i>
                             Unit
@@ -355,6 +365,10 @@
                 $('#sub_category_id').on('change', function(e) {
                     const value = $(this).val() || null;
                     @this.set('sub_category_id', value);
+                });
+                $('#brand_id').on('change', function(e) {
+                    const value = $(this).val() || null;
+                    @this.set('brand_id', value);
                 });
                 $('#status').on('change', function(e) {
                     const value = $(this).val() || null;
