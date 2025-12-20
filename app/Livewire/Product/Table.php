@@ -5,6 +5,7 @@ namespace App\Livewire\Product;
 use App\Actions\Product\DeleteAction;
 use App\Exports\ProductExport;
 use App\Jobs\Export\ExportProductJob;
+use App\Models\Configuration;
 use App\Models\Product;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -42,11 +43,38 @@ class Table extends Component
 
     public $sortDirection = 'desc';
 
+    public $product_visible_column = [];
+
     protected $paginationTheme = 'bootstrap';
 
     protected $listeners = [
         'Product-Refresh-Component' => '$refresh',
     ];
+
+    public function mount()
+    {
+        $config = Configuration::where('key', 'product_visible_column')->value('value');
+        $this->product_visible_column = $config ? json_decode($config, true) : $this->getDefaultColumns();
+    }
+
+    protected function getDefaultColumns()
+    {
+        return [
+            'id' => true,
+            'department' => true,
+            'main_category' => true,
+            'sub_category' => true,
+            'unit' => true,
+            'brand' => true,
+            'size' => true,
+            'code' => true,
+            'product_name' => true,
+            'name_arabic' => true,
+            'barcode' => true,
+            'cost' => true,
+            'mrp' => true,
+        ];
+    }
 
     public function delete()
     {
@@ -127,7 +155,8 @@ class Table extends Component
 
     public function render()
     {
-        $data = Product::orderBy($this->sortField, $this->sortDirection)
+        $data = Product::with('brand')
+            ->orderBy($this->sortField, $this->sortDirection)
             ->when($this->search ?? '', function ($query, $value) {
                 return $query->where(function ($q) use ($value): void {
                     $value = trim($value);
@@ -162,6 +191,7 @@ class Table extends Component
                 return $query->where('is_selling', $value);
             })
             ->product()
+            ->with(['brand', 'department', 'mainCategory', 'subCategory', 'unit'])
             ->latest()
             ->paginate($this->limit);
 
