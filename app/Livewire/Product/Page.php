@@ -47,6 +47,8 @@ class Page extends Component
 
     public $brands;
 
+    public $relatedProducts = [];
+
     public function refresh()
     {
         $this->mount($this->type, $this->table_id, $dropdownValues = false);
@@ -116,9 +118,24 @@ class Page extends Component
             }
             $this->products = $this->product->toArray();
             $this->type = $this->product->type;
+            $this->loadRelatedProducts();
         }
         if ($dropdownValues) {
             $this->dispatch('SelectDropDownValues', $this->products);
+        }
+    }
+
+    public function loadRelatedProducts()
+    {
+        if ($this->table_id && isset($this->products['code']) && !empty($this->products['code'])) {
+            $this->relatedProducts = Product::where('code', $this->products['code'])
+                ->where('id', '!=', $this->table_id)
+                ->with(['department', 'mainCategory', 'subCategory', 'brand', 'unit'])
+                ->orderBy('name')
+                ->get()
+                ->toArray();
+        } else {
+            $this->relatedProducts = [];
         }
     }
 
@@ -212,6 +229,9 @@ class Page extends Component
             }
             $this->dispatch('SelectDropDownValues', $this->products);
             $this->dispatch('filepond-reset-images');
+            if ($this->table_id) {
+                $this->loadRelatedProducts();
+            }
         } catch (\Throwable $e) {
             DB::rollback();
             $this->dispatch('error', ['message' => $e->getMessage()]);
@@ -221,6 +241,9 @@ class Page extends Component
     public function tabSelect($key)
     {
         $this->selectedTab = $key;
+        if ($key == 'Related' && $this->table_id) {
+            $this->loadRelatedProducts();
+        }
     }
 
     public function deleteImage($id)

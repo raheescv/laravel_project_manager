@@ -529,6 +529,16 @@
                                                         Images
                                                     </button>
                                                 </li>
+                                                @if (isset($table_id) && $type == 'product')
+                                                    <li class="nav-item" role="presentation">
+                                                        <button class="nav-link @if ($selectedTab == 'Related') active show @endif d-flex align-items-center gap-2" data-bs-toggle="tab"
+                                                            wire:click="tabSelect('Related')" data-bs-target="#tabRelated" type="button" role="tab" aria-controls="profile" aria-selected="false"
+                                                            tabindex="-1">
+                                                            <i class="fa fa-link text-info"></i>
+                                                            Related Products
+                                                        </button>
+                                                    </li>
+                                                @endif
                                             </ul>
                                             <div class="tab-content">
                                                 @if (isset($table_id))
@@ -694,6 +704,88 @@
                                                         </div>
                                                     </div>
                                                 </div>
+                                                @if (isset($table_id) && $type == 'product')
+                                                    <div id="tabRelated" class="tab-pane fade @if ($selectedTab == 'Related') active show @endif" role="tabpanel">
+                                                        <div class="row g-2">
+                                                            <h5 class="card-title">Related Products (Same Code: <code>{{ $products['code'] ?? '-' }}</code>)</h5>
+                                                        </div>
+                                                        @if (count($relatedProducts) > 0)
+                                                            <div class="card mb-3">
+                                                                <div class="card-body">
+                                                                    <div class="table-responsive">
+                                                                        <table class="table table-striped">
+                                                                            <thead>
+                                                                                <tr>
+                                                                                    <th>ID</th>
+                                                                                    <th>Name</th>
+                                                                                    <th>Department</th>
+                                                                                    <th>Category</th>
+                                                                                    <th>Brand</th>
+                                                                                    <th>Size</th>
+                                                                                    <th>Barcode</th>
+                                                                                    <th class="text-end">Cost</th>
+                                                                                    <th class="text-end">Price</th>
+                                                                                    <th>Status</th>
+                                                                                </tr>
+                                                                            </thead>
+                                                                            <tbody>
+                                                                                @foreach ($relatedProducts as $item)
+                                                                                    <tr>
+                                                                                        <td>
+                                                                                            <span class="badge bg-secondary rounded-pill">{{ $item['id'] }}</span>
+                                                                                        </td>
+                                                                                        <td>
+                                                                                            <a href="{{ route('product::edit', $item['id']) }}" class="text-decoration-none fw-semibold link-primary">
+                                                                                                {{ $item['name'] }}
+                                                                                            </a>
+                                                                                        </td>
+                                                                                        <td>
+                                                                                            <span class="fw-medium text-primary">{{ $item['department']['name'] ?? '-' }}</span>
+                                                                                        </td>
+                                                                                        <td>
+                                                                                            <span class="text-secondary">{{ $item['main_category']['name'] ?? '-' }}</span>
+                                                                                        </td>
+                                                                                        <td>
+                                                                                            @if (isset($item['brand']['name']))
+                                                                                                <span class="badge bg-info bg-opacity-10 text-info border border-info-subtle">{{ $item['brand']['name'] }}</span>
+                                                                                            @else
+                                                                                                <span class="text-muted">-</span>
+                                                                                            @endif
+                                                                                        </td>
+                                                                                        <td>
+                                                                                            <span class="badge bg-light text-dark border border-secondary-subtle">{{ $item['size'] ?? '-' }}</span>
+                                                                                        </td>
+                                                                                        <td>
+                                                                                            @if (isset($item['barcode']) && $item['barcode'])
+                                                                                                <code class="bg-light rounded px-2 py-1 small">{{ $item['barcode'] }}</code>
+                                                                                            @else
+                                                                                                <span class="text-muted">-</span>
+                                                                                            @endif
+                                                                                        </td>
+                                                                                        <td class="text-end fw-semibold">
+                                                                                            <span class="text-success">{{ currency($item['cost'] ?? 0) }}</span>
+                                                                                        </td>
+                                                                                        <td class="text-end fw-bold">
+                                                                                            <span class="text-dark">{{ currency($item['mrp'] ?? 0) }}</span>
+                                                                                        </td>
+                                                                                        <td>
+                                                                                            <span class="badge bg-{{ $item['status'] == 'active' ? 'success' : 'secondary' }}">{{ ucFirst($item['status'] ?? 'active') }}</span>
+                                                                                        </td>
+                                                                                    </tr>
+                                                                                @endforeach
+                                                                            </tbody>
+                                                                        </table>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        @else
+                                                            <div class="alert alert-info">
+                                                                <i class="fa fa-info-circle me-2"></i>
+                                                                No related products found with the same code.
+                                                            </div>
+                                                        @endif
+                                                    </div>
+                                                @endif
                                             </div>
                                         </div>
                                     </div>
