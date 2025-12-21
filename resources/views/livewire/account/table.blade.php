@@ -56,91 +56,267 @@
         </div>
     </div>
     <div class="card-body p-0">
-        <div class="table-responsive">
-            <table class="table table-hover align-middle mb-0">
-                <thead class="bg-light">
-                    <tr class="text-capitalize">
-                        <th width="5%" class="text-nowrap">
-                            <div class="form-check">
-                                <input type="checkbox" class="form-check-input" wire:model.live="selectAll">
-                                <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="id" label="#" />
-                            </div>
-                        </th>
-                        <th width="10%" class="text-nowrap"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="account_type" label="account type" /> </th>
-                        <th width="20%" class="text-nowrap"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="account_category_id" label="account category" /> </th>
-                        <th width="30%" class="text-nowrap"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="name" label="name" /> </th>
-                        <th width="10%" class="text-nowrap"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="alias_name" label="alias name" /> </th>
-                        <th width="30%" class="text-nowrap"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="description" label="description" /> </th>
-                        <th class="text-nowrap"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="model" label="model" /> </th>
-                        <th class="text-end px-3"> Action </th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach ($data as $item)
-                        <tr>
-                            <td class="px-3 text-nowrap">
-                                <div class="form-check">
-                                    <input type="checkbox" class="form-check-input" value="{{ $item->id }}" wire:model.live="selected">
-                                    <label class="form-check-label">{{ $item->id }}</label>
+        <div class="row g-0">
+            {{-- Tree Structure - 30% width --}}
+            <div class="col-3 border-end" style="max-height: 70vh; overflow-y: auto;">
+                <div class="p-3">
+                    <h6 class="mb-3 fw-semibold">Account Tree</h6>
+                    <div class="account-tree">
+                        @foreach ($treeData as $typeKey => $typeData)
+                            @php
+                                $isTypeExpanded = $this->isTypeExpanded($typeKey);
+                            @endphp
+                            <div class="tree-item mb-2">
+                                <div class="tree-type d-flex align-items-center gap-1 py-1 px-2 rounded {{ $account_type === $typeKey ? 'bg-primary text-white' : 'bg-light' }}"
+                                    style="cursor: pointer;">
+                                    <span wire:click.stop="toggleType('{{ $typeKey }}')" class="tree-toggle me-1">
+                                        <i class="demo-psi-arrow-{{ $isTypeExpanded ? 'down' : 'right' }} fs-6"></i>
+                                    </span>
+                                    <span wire:click="filterByType('{{ $typeKey }}')" class="d-flex align-items-center gap-2 flex-grow-1">
+                                        <i class="demo-psi-folder fs-6"></i>
+                                        <span class="fw-semibold">{{ $typeData['label'] }}</span>
+                                        <span class="badge bg-secondary ms-auto">{{ count($typeData['categories']) + (count($typeData['uncategorized']) > 0 ? 1 : 0) }}</span>
+                                    </span>
                                 </div>
-                            </td>
-                            <td>
-                                <span class="badge bg-light text-dark">{{ ucFirst($item->account_type) }}</span>
-                            </td>
-                            <td> {{ $item->accountCategory?->name }} </td>
-                            <td>
-                                <a href="{{ route('account::view', $item->id) }}" class="text-decoration-none">{{ $item->name }}</a>
-                            </td>
-                            <td>
-                                <a href="{{ route('account::view', $item->id) }}" class="text-decoration-none">{{ $item->alias_name }}</a>
-                            </td>
-                            <td class="text-muted">{{ $item->description }}</td>
-                            <td>
-                                <span class="badge bg-light text-dark">{{ ucFirst($item->model) }}</span>
-                            </td>
-                            <td class="text-end px-3">
-                                @can('account.edit')
-                                    <button class="btn btn-light btn-sm edit" title="Edit" table_id="{{ $item->id }}">
-                                        <i class="demo-psi-pencil fs-5"></i>
-                                    </button>
-                                @endcan
-                            </td>
-                        </tr>
-                    @endforeach
-                </tbody>
-            </table>
-        </div>
-        <div class="p-3 border-top">
-            {{ $data->links() }}
+
+                                @if ($isTypeExpanded)
+                                <div class="tree-categories ms-3 mt-1">
+                                    @foreach ($typeData['categories'] as $categoryId => $category)
+                                        @php
+                                            $isCategoryExpanded = $this->isCategoryExpanded($categoryId);
+                                        @endphp
+                                        <div class="tree-item mb-1">
+                                            <div class="tree-category d-flex align-items-center gap-1 py-1 px-2 rounded {{ $account_category_id == $categoryId ? 'bg-info text-white' : 'bg-light-subtle' }}"
+                                                style="cursor: pointer;">
+                                                <span wire:click.stop="toggleCategory({{ $categoryId }})" class="tree-toggle me-1">
+                                                    <i class="demo-psi-arrow-{{ $isCategoryExpanded ? 'down' : 'right' }} fs-6"></i>
+                                                </span>
+                                                <span wire:click.stop="filterByCategory({{ $categoryId }})" class="d-flex align-items-center gap-2 flex-grow-1">
+                                                    <i class="demo-psi-folder-2 fs-6"></i>
+                                                    <span class="small">{{ $category['name'] }}</span>
+                                                    <span class="badge bg-secondary ms-auto">{{ count($category['accounts']) }}</span>
+                                                </span>
+                                            </div>
+
+                                            @if ($isCategoryExpanded)
+                                            <div class="tree-accounts ms-3 mt-1">
+                                                @foreach ($category['accounts'] as $account)
+                                                    <div class="tree-account py-1 px-2 rounded mb-1 cursor-pointer {{ $selectedAccountId == $account['id'] ? 'bg-warning text-dark' : 'hover-bg-light' }}"
+                                                        wire:click.stop="filterByAccount({{ $account['id'] }})" style="cursor: pointer;">
+                                                        <div class="d-flex align-items-center gap-2">
+                                                            <i class="demo-psi-file fs-6"></i>
+                                                            <span class="small text-truncate" title="{{ $account['name'] }}">
+                                                                {{ $account['name'] }}
+                                                            </span>
+                                                        </div>
+                                                        @if ($account['alias_name'])
+                                                            <div class="ms-4 small text-muted text-truncate" title="{{ $account['alias_name'] }}">
+                                                                {{ $account['alias_name'] }}
+                                                            </div>
+                                                        @endif
+                                                    </div>
+                                                @endforeach
+                                            </div>
+                                            @endif
+                                        </div>
+                                    @endforeach
+
+                                    @if (!empty($typeData['uncategorized']))
+                                        @php
+                                            $isUncategorizedExpanded = $this->isCategoryExpanded(0);
+                                        @endphp
+                                        <div class="tree-item mb-1">
+                                            <div class="tree-category d-flex align-items-center gap-1 py-1 px-2 rounded bg-light-subtle" style="cursor: pointer;">
+                                                <span wire:click.stop="toggleCategory(0)" class="tree-toggle me-1">
+                                                    <i class="demo-psi-arrow-{{ $isUncategorizedExpanded ? 'down' : 'right' }} fs-6"></i>
+                                                </span>
+                                                <span class="d-flex align-items-center gap-2 flex-grow-1">
+                                                    <i class="demo-psi-folder-2 fs-6"></i>
+                                                    <span class="small">Uncategorized</span>
+                                                    <span class="badge bg-secondary ms-auto">{{ count($typeData['uncategorized']) }}</span>
+                                                </span>
+                                            </div>
+
+                                            @if ($isUncategorizedExpanded)
+                                            <div class="tree-accounts ms-3 mt-1">
+                                                @foreach ($typeData['uncategorized'] as $account)
+                                                    <div class="tree-account py-1 px-2 rounded mb-1 cursor-pointer {{ $selectedAccountId == $account['id'] ? 'bg-warning text-dark' : 'hover-bg-light' }}"
+                                                        wire:click.stop="filterByAccount({{ $account['id'] }})" style="cursor: pointer;">
+                                                        <div class="d-flex align-items-center gap-2">
+                                                            <i class="demo-psi-file fs-6"></i>
+                                                            <span class="small text-truncate" title="{{ $account['name'] }}">
+                                                                {{ $account['name'] }}
+                                                            </span>
+                                                        </div>
+                                                        @if ($account['alias_name'])
+                                                            <div class="ms-4 small text-muted text-truncate" title="{{ $account['alias_name'] }}">
+                                                                {{ $account['alias_name'] }}
+                                                            </div>
+                                                        @endif
+                                                    </div>
+                                                @endforeach
+                                            </div>
+                                            @endif
+                                        </div>
+                                    @endif
+                                </div>
+                                @endif
+                            </div>
+                        @endforeach
+                    </div>
+                </div>
+            </div>
+
+            {{-- Table - 70% width --}}
+            <div class="col-9">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="bg-light">
+                            <tr class="text-capitalize">
+                                <th width="5%" class="text-nowrap">
+                                    <div class="form-check">
+                                        <input type="checkbox" class="form-check-input" wire:model.live="selectAll">
+                                        <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="id" label="#" />
+                                    </div>
+                                </th>
+                                <th width="10%" class="text-nowrap"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="account_type" label="account type" /> </th>
+                                <th width="20%" class="text-nowrap"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="account_category_id" label="account category" /> </th>
+                                <th width="30%" class="text-nowrap"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="name" label="name" /> </th>
+                                <th width="10%" class="text-nowrap"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="alias_name" label="alias name" /> </th>
+                                <th width="30%" class="text-nowrap"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="description" label="description" /> </th>
+                                <th class="text-nowrap"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="model" label="model" /> </th>
+                                <th class="text-end px-3"> Action </th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach ($data as $item)
+                                <tr>
+                                    <td class="px-3 text-nowrap">
+                                        <div class="form-check">
+                                            <input type="checkbox" class="form-check-input" value="{{ $item->id }}" wire:model.live="selected">
+                                            <label class="form-check-label">{{ $item->id }}</label>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-light text-dark">{{ ucFirst($item->account_type) }}</span>
+                                    </td>
+                                    <td> {{ $item->accountCategory?->name }} </td>
+                                    <td>
+                                        <a href="{{ route('account::view', $item->id) }}" class="text-decoration-none">{{ $item->name }}</a>
+                                    </td>
+                                    <td>
+                                        <a href="{{ route('account::view', $item->id) }}" class="text-decoration-none">{{ $item->alias_name }}</a>
+                                    </td>
+                                    <td class="text-muted">{{ $item->description }}</td>
+                                    <td>
+                                        <span class="badge bg-light text-dark">{{ ucFirst($item->model) }}</span>
+                                    </td>
+                                    <td class="text-end px-3">
+                                        @can('account.edit')
+                                            <button class="btn btn-light btn-sm edit" title="Edit" table_id="{{ $item->id }}">
+                                                <i class="demo-psi-pencil fs-5"></i>
+                                            </button>
+                                        @endcan
+                                    </td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+                <div class="p-3 border-top">
+                    {{ $data->links() }}
+                </div>
+            </div>
         </div>
     </div>
-</div>
 
-@push('scripts')
-    <script>
-        $(document).ready(function() {
-            $('#account_type').on('change', function(e) {
-                const value = $(this).val() || null;
-                @this.set('account_type', value);
-            });
-            $('#account_category_id').on('change', function(e) {
-                const value = $(this).val() || null;
-                @this.set('account_category_id', value);
-            });
+    <style>
+        .account-tree {
+            font-size: 0.875rem;
+        }
 
-            $(document).on('click', '.edit', function() {
-                Livewire.dispatch("Account-Page-Update-Component", {
-                    id: $(this).attr('table_id')
+        .tree-item {
+            user-select: none;
+        }
+
+        .tree-type,
+        .tree-category,
+        .tree-account {
+            transition: all 0.2s ease;
+        }
+
+        .tree-type:hover,
+        .tree-category:hover,
+        .tree-account:hover {
+            transform: translateX(2px);
+        }
+
+        .hover-bg-light:hover {
+            background-color: #f8f9fa !important;
+        }
+
+        .cursor-pointer {
+            cursor: pointer;
+        }
+
+        .tree-accounts {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .tree-categories {
+            max-height: 500px;
+            overflow-y: auto;
+        }
+
+        .tree-toggle {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+            transition: transform 0.2s ease;
+        }
+
+        .tree-toggle:hover {
+            background-color: rgba(0, 0, 0, 0.1);
+            border-radius: 3px;
+        }
+
+        .tree-type > span,
+        .tree-category > span {
+            display: flex;
+            align-items: center;
+        }
+    </style>
+
+    @push('scripts')
+        <script>
+            $(document).ready(function() {
+                $('#account_type').on('change', function(e) {
+                    const value = $(this).val() || null;
+                    @this.set('account_type', value);
+                });
+                $('#account_category_id').on('change', function(e) {
+                    const value = $(this).val() || null;
+                    @this.set('account_category_id', value);
+                });
+
+                $(document).on('click', '.edit', function() {
+                    Livewire.dispatch("Account-Page-Update-Component", {
+                        id: $(this).attr('table_id')
+                    });
+                });
+
+                $('#AccountAdd').click(function() {
+                    Livewire.dispatch("Account-Page-Create-Component");
+                });
+
+                window.addEventListener('RefreshAccountTable', event => {
+                    Livewire.dispatch("Account-Refresh-Component");
                 });
             });
-
-            $('#AccountAdd').click(function() {
-                Livewire.dispatch("Account-Page-Create-Component");
-            });
-
-            window.addEventListener('RefreshAccountTable', event => {
-                Livewire.dispatch("Account-Refresh-Component");
-            });
-        });
-    </script>
-@endpush
+        </script>
+    @endpush
+</div>
