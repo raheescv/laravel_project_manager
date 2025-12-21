@@ -9,6 +9,7 @@ use App\Models\Country;
 use App\Models\CustomerType;
 use Faker\Factory;
 use Livewire\Component;
+use App\Models\AccountCategory;
 
 class Page extends Component
 {
@@ -59,6 +60,7 @@ class Page extends Component
             $account_type = 'asset';
             $mobile = '';
             $email = '';
+            $account_category_id = AccountCategory::firstOrCreate(['name' => 'Account Receivable'])->id;
             if (! app()->isProduction()) {
                 $name = $faker->name;
                 $mobile = rand(90000000, 99999999);
@@ -66,6 +68,7 @@ class Page extends Component
             }
             $this->accounts = [
                 'account_type' => $account_type,
+                'account_category_id' => $account_category_id,
                 'name' => $name,
                 'mobile' => $mobile,
                 'whatsapp_mobile' => '',

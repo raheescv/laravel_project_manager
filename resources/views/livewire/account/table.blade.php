@@ -67,10 +67,10 @@
                             </div>
                         </th>
                         <th width="10%" class="text-nowrap"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="account_type" label="account type" /> </th>
-                        <th width="10%" class="text-nowrap"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="account_category_id" label="account category" /> </th>
+                        <th width="20%" class="text-nowrap"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="account_category_id" label="account category" /> </th>
                         <th width="30%" class="text-nowrap"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="name" label="name" /> </th>
                         <th width="10%" class="text-nowrap"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="alias_name" label="alias name" /> </th>
-                        <th width="40%" class="text-nowrap"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="description" label="description" /> </th>
+                        <th width="30%" class="text-nowrap"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="description" label="description" /> </th>
                         <th class="text-nowrap"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="model" label="model" /> </th>
                         <th class="text-end px-3"> Action </th>
                     </tr>
