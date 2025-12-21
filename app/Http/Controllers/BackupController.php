@@ -18,7 +18,7 @@ class BackupController extends Controller
                 'size' => round(Storage::size($file) / (1024 * 1024), 2).' MB',
                 'last_modified' => Storage::lastModified($file),
             ];
-        });
+        })->sortByDesc('last_modified')->values();
 
         return view('backups.index', compact('files'));
     }
