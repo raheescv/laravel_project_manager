@@ -3,12 +3,12 @@
         <div class="card-body">
             <!-- Filter Section -->
             <div class="row mb-4 g-3">
-                <div class="col-md-3">
+                <div class="col-md-2">
                     <div class="form-group">
                         <label for="branch_id" class="form-label fw-bold text-secondary mb-2">
                             <i class="pli-building me-1"></i>Branch
                         </label>
-                        <select wire:model.live="branch_id" class="form-select shadow-sm border-light" id="branch_id">
+                        <select wire:model="branch_id" class="form-select shadow-sm border-light" id="branch_id">
                             <option value="">All Branches</option>
                             @foreach ($branches as $id => $name)
                                 <option value="{{ $id }}">{{ $name }}</option>
@@ -16,12 +16,12 @@
                         </select>
                     </div>
                 </div>
-                <div class="col-md-3">
+                <div class="col-md-2">
                     <div class="form-group">
                         <label for="period" class="form-label fw-bold text-secondary mb-2">
                             <i class="pli-time-clock me-1"></i>Period
                         </label>
-                        <select wire:model.live="period" class="form-select shadow-sm border-light" id="period">
+                        <select wire:model="period" class="form-select shadow-sm border-light" id="period">
                             <option value="monthly">Current Month</option>
                             <option value="quarterly">Current Quarter</option>
                             <option value="yearly">Current Year</option>
@@ -29,20 +29,36 @@
                         </select>
                     </div>
                 </div>
-                <div class="col-md-3">
+                <div class="col-md-2">
                     <div class="form-group">
                         <label for="start_date" class="form-label fw-bold text-secondary mb-2">
                             <i class="pli-calendar-4 me-1"></i>Start Date
                         </label>
-                        <input type="date" wire:model.live="start_date" class="form-control shadow-sm border-light" id="start_date">
+                        <input type="date" wire:model="start_date" class="form-control shadow-sm border-light" id="start_date">
                     </div>
                 </div>
-                <div class="col-md-3">
+                <div class="col-md-2">
                     <div class="form-group">
                         <label for="end_date" class="form-label fw-bold text-secondary mb-2">
                             <i class="pli-calendar-4 me-1"></i>End Date
                         </label>
-                        <input type="date" wire:model.live="end_date" class="form-control shadow-sm border-light" id="end_date">
+                        <input type="date" wire:model="end_date" class="form-control shadow-sm border-light" id="end_date">
+                    </div>
+                </div>
+                <div class="col-md-2">
+                    <div class="form-group">
+                        <label class="form-label fw-bold text-secondary mb-2 d-block">&nbsp;</label>
+                        <button type="button" wire:click="fetchData" class="btn btn-primary w-100 shadow-sm">
+                            <i class="pli-reload me-1"></i>Fetch
+                        </button>
+                    </div>
+                </div>
+                <div class="col-md-2">
+                    <div class="form-group">
+                        <label class="form-label fw-bold text-secondary mb-2 d-block">&nbsp;</label>
+                        <button type="button" wire:click="resetFilters" class="btn btn-outline-secondary w-100 shadow-sm">
+                            <i class="pli-cross me-1"></i>Reset
+                        </button>
                     </div>
                 </div>
             </div>

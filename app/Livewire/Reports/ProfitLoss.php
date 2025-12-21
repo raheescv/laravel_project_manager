@@ -55,6 +55,26 @@ class ProfitLoss extends Component
     }
 
     /**
+     * Fetch data - triggers re-render with current filter values
+     */
+    public function fetchData()
+    {
+        // This method triggers a re-render with current filter values
+        // No additional logic needed as render() will use current property values
+    }
+
+    /**
+     * Reset filters to default values
+     */
+    public function resetFilters()
+    {
+        $this->start_date = Carbon::now()->startOfMonth()->format('Y-m-d');
+        $this->end_date = Carbon::now()->endOfMonth()->format('Y-m-d');
+        $this->branch_id = '';
+        $this->period = 'monthly';
+    }
+
+    /**
      * Apply branch filter to query
      */
     protected function applyBranchFilter($query)
