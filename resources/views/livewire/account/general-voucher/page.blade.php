@@ -57,21 +57,7 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="col-md-3">
-                            <div class="form-group">
-                                <label for="voucher_type" class="form-label small fw-medium">
-                                    <i class="fa fa-file-invoice me-1 text-muted"></i>
-                                    Voucher Type
-                                </label>
-                                <div class="input-group">
-                                    <span class="input-group-text bg-light border-secondary-subtle">
-                                        <i class="fa fa-file-invoice"></i>
-                                    </span>
-                                    {{ html()->select('voucher_type', ['receipt' => 'Receipt', 'payment' => 'Payment Voucher', 'general' => 'General Voucher'])->value('general')->class('form-select border-secondary-subtle shadow-sm')->attribute('wire:model', 'journals.voucher_type') }}
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-3">
+                        <div class="col-md-6">
                             <div class="form-group">
                                 <label for="description" class="form-label small fw-medium">
                                     <i class="fa fa-comment me-1 text-muted"></i>
