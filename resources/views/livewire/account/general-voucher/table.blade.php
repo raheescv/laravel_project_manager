@@ -262,11 +262,16 @@
                                 </td>
                             @endif
                             <td class="align-middle text-center">
-                                @can('general voucher.edit')
-                                    <button class="btn btn-sm btn-outline-primary edit" table_id="{{ $item->journal_id }}" title="Edit">
-                                        <i class="fa fa-edit"></i>
-                                    </button>
-                                @endcan
+                                <div class="btn-group" role="group">
+                                    @can('general voucher.edit')
+                                        <button class="btn btn-sm btn-outline-primary edit" table_id="{{ $item->journal_id }}" title="Edit">
+                                            <i class="fa fa-edit"></i>
+                                        </button>
+                                    @endcan
+                                    <a href="{{ route('account::general-voucher::print', $item->journal_id) }}" target="_blank" class="btn btn-sm btn-outline-success" title="Print Voucher">
+                                        <i class="fa fa-print"></i>
+                                    </a>
+                                </div>
                             </td>
                         </tr>
                     @empty

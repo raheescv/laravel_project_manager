@@ -1,5 +1,5 @@
 <div class="modal" id="GeneralVoucherModal" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
+    <div class="modal-dialog modal-xl">
         <div class="modal-content">
             @livewire('account.general-voucher.page')
         </div>

@@ -20,8 +20,8 @@ class CreateAction
                 $single['date'] = $model->date;
                 $single['branch_id'] = $model->branch_id;
                 $single['source'] = $model->source;
-                $single['person_name'] = $model->person_name;
-                $single['description'] = $model->description;
+                $single['person_name'] = $value['person_name'] ?? $model->person_name;
+                $single['description'] = $value['description'] ?? $model->description;
                 $single['journal_remarks'] = $model->remarks;
                 $single['reference_number'] = $model->reference_number;
 
