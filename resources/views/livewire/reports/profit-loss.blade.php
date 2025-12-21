@@ -95,11 +95,11 @@
                         </tr>
                         <tr>
                             @if ($grossProfit > 0)
-                                <td class="ps-3"><strong class="text-primary">GROSS PROFIT C/D</strong></td>
-                                <td class="text-end pe-3 text-primary"><strong class="text-primary">{{ currency($grossProfit) }}</strong></td>
+                                <td class="ps-3"><strong class="text-success">GROSS PROFIT C/D</strong></td>
+                                <td class="text-end pe-3 text-success"><strong class="text-success">{{ currency($grossProfit) }}</strong></td>
                                 <td class="ps-3" style="border-right: 2px solid #dee2e6;"></td>
                                 <td class="text-end pe-3" style="border-right: 2px solid #dee2e6;"></td>
-                            @else
+                            @elseif($grossLoss > 0)
                                 <td class="ps-3" style="border-right: 2px solid #dee2e6;"></td>
                                 <td class="text-end pe-3" style="border-right: 2px solid #dee2e6;"></td>
                                 <td class="ps-3"><strong class="text-danger">GROSS LOSS C/D</strong></td>
@@ -129,8 +129,8 @@
                                 <td class="ps-3"></td>
                                 <td class="text-end pe-3"></td>
                                 <!-- Left: Gross Profit B/D -->
-                                <td class="ps-3" style="border-right: 2px solid #dee2e6;"><strong class="text-primary">GROSS PROFIT B/D</strong></td>
-                                <td class="text-end pe-3 text-primary" style="border-right: 2px solid #dee2e6;"><strong class="text-primary">{{ currency($grossProfit) }}</strong></td>
+                                <td class="ps-3" style="border-right: 2px solid #dee2e6;"><strong class="text-success">GROSS PROFIT B/D</strong></td>
+                                <td class="text-end pe-3 text-success" style="border-right: 2px solid #dee2e6;"><strong class="text-success">{{ currency($grossProfit) }}</strong></td>
                             @endif
                         </tr>
                         <tr>
@@ -144,8 +144,8 @@
                         <tr>
                             @if ($netProfitAmount > 0)
                                 <!-- Left: Net Profit C/D -->
-                                <td class="ps-3" style="border-right: 2px solid #dee2e6;"><strong class="text-primary">NET PROFIT C/D</strong></td>
-                                <td class="text-end pe-3 text-primary" style="border-right: 2px solid #dee2e6;"><strong class="text-primary">{{ currency($netProfitAmount) }}</strong></td>
+                                <td class="ps-3" style="border-right: 2px solid #dee2e6;"><strong class="text-success">NET PROFIT C/D</strong></td>
+                                <td class="text-end pe-3 text-success" style="border-right: 2px solid #dee2e6;"><strong class="text-success">{{ currency($netProfitAmount) }}</strong></td>
                                 <!-- Right: Empty -->
                                 <td class="ps-3"></td>
                                 <td class="text-end pe-3"></td>
