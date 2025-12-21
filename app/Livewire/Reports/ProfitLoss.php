@@ -3,6 +3,7 @@
 namespace App\Livewire\Reports;
 
 use App\Models\Account;
+use App\Models\AccountCategory;
 use App\Models\Branch;
 use App\Models\JournalEntry;
 use Carbon\Carbon;
@@ -20,6 +21,8 @@ class ProfitLoss extends Component
     public $branches = [];
 
     public $period = 'monthly';
+
+    public $expandedGroups = []; // Track which groups are expanded
 
     public function mount()
     {
@@ -55,6 +58,18 @@ class ProfitLoss extends Component
     }
 
     /**
+     * Toggle group expansion
+     */
+    public function toggleGroup($groupId)
+    {
+        if (in_array($groupId, $this->expandedGroups)) {
+            $this->expandedGroups = array_values(array_diff($this->expandedGroups, [$groupId]));
+        } else {
+            $this->expandedGroups[] = $groupId;
+        }
+    }
+
+    /**
      * Fetch data - triggers re-render with current filter values
      */
     public function fetchData()
@@ -72,6 +87,7 @@ class ProfitLoss extends Component
         $this->end_date = Carbon::now()->endOfMonth()->format('Y-m-d');
         $this->branch_id = '';
         $this->period = 'monthly';
+        $this->expandedGroups = [];
     }
 
     /**
@@ -83,9 +99,7 @@ class ProfitLoss extends Component
     }
 
     /**
-     * Calculate inventory stock value from Inventory Account and Cost of Goods Sold account
-     * Inventory Account (asset): debit increases, credit decreases
-     * Stock value = Inventory Account balance (debit - credit) up to the given date
+     * Calculate inventory stock value from Inventory Account
      */
     protected function calculateStockValue(?string $date = null): float
     {
@@ -222,101 +236,113 @@ class ProfitLoss extends Component
     }
 
     /**
-     * Calculate journal entry amounts for accounts using optimized aggregation
-     * Returns array with account_id as key and net amount as value
+     * Calculate journal entry amount for a single account
      */
-    protected function calculateJournalAmounts(array $accountIds, string $accountType): array
+    protected function calculateAccountAmount(int $accountId, string $accountType): float
     {
-        if (empty($accountIds)) {
-            return [];
+        $query = JournalEntry::query()
+            ->where('account_id', $accountId)
+            ->whereBetween('date', [$this->start_date, $this->end_date])
+            ->selectRaw('COALESCE(SUM(debit), 0) as total_debit')
+            ->selectRaw('COALESCE(SUM(credit), 0) as total_credit');
+
+        $this->applyBranchFilter($query);
+
+        $result = $query->first();
+
+        if (! $result) {
+            return 0.0;
         }
 
-        $baseQuery = JournalEntry::query()
-            ->whereBetween('date', [$this->start_date, $this->end_date])
-            ->whereIn('account_id', $accountIds)
-            ->select('account_id')
-            ->selectRaw('SUM(debit) as total_debit')
-            ->selectRaw('SUM(credit) as total_credit')
-            ->groupBy('account_id');
+        $netAmount = $accountType === 'expense'
+            ? (float) $result->total_debit - (float) $result->total_credit
+            : (float) $result->total_credit - (float) $result->total_debit;
 
-        $this->applyBranchFilter($baseQuery);
-
-        $results = $baseQuery->get()->mapWithKeys(function ($entry) use ($accountType) {
-            $netAmount = $accountType === 'expense'
-                ? (float) $entry->total_debit - (float) $entry->total_credit
-                : (float) $entry->total_credit - (float) $entry->total_debit;
-
-            return [$entry->account_id => max(0, $netAmount)];
-        });
-
-        return $results->toArray();
+        return max(0, $netAmount);
     }
 
     /**
-     * Calculate direct expenses (COGS, Freight, Discount)
+     * Build hierarchical structure for income/expense categories
      */
-    protected function calculateDirectExpense(): float
+    protected function buildCategoryStructure(string $accountType): array
     {
-        $accountIds = Account::whereIn('name', ['Cost of Goods Sold', 'Freight', 'Discount'])
-            ->where('account_type', 'expense')
-            ->pluck('id')
-            ->toArray();
+        // Get master categories based on account type
+        $masterCategoryNames = $accountType === 'income'
+            ? ['Direct Income', 'Indirect Income']
+            : ['Direct Expense', 'Indirect Expense'];
 
-        $amounts = $this->calculateJournalAmounts($accountIds, 'expense');
+        $structure = [];
 
-        return array_sum($amounts);
-    }
+        foreach ($masterCategoryNames as $masterName) {
+            $masterCategory = AccountCategory::where('name', $masterName)
+                ->whereNull('parent_id')
+                ->with(['children.accounts' => function ($query) use ($accountType) {
+                    $query->where('account_type', $accountType);
+                }, 'accounts' => function ($query) use ($accountType) {
+                    $query->where('account_type', $accountType);
+                }])
+                ->first();
 
-    /**
-     * Calculate direct income (Purchase Discount)
-     */
-    protected function calculateDirectIncome(): float
-    {
-        $accountIds = Account::whereIn('name', ['Purchase Discount'])
-            ->where('account_type', 'income')
-            ->pluck('id')
-            ->toArray();
+            if (! $masterCategory) {
+                continue;
+            }
 
-        $amounts = $this->calculateJournalAmounts($accountIds, 'income');
+            $masterTotal = 0.0;
+            $groups = [];
+            $directAccounts = [];
 
-        return array_sum($amounts);
-    }
+            // Get accounts directly under master category (without a group)
+            foreach ($masterCategory->accounts as $account) {
+                $amount = $this->calculateAccountAmount($account->id, $accountType);
+                $masterTotal += $amount;
 
-    /**
-     * Calculate indirect expenses (all expenses except direct ones)
-     */
-    protected function calculateIndirectExpense(): float
-    {
-        $accountIds = Account::where('account_type', 'expense')
-            ->whereNotIn('name', ['Cost of Goods Sold', 'Freight', 'Discount', 'Purchase'])
-            ->pluck('id')
-            ->toArray();
+                $directAccounts[] = [
+                    'id' => $account->id,
+                    'name' => $account->name,
+                    'amount' => $amount,
+                ];
+            }
 
-        $amounts = $this->calculateJournalAmounts($accountIds, 'expense');
+            // Get accounts under groups
+            foreach ($masterCategory->children as $group) {
+                $groupTotal = 0.0;
+                $accounts = [];
 
-        return array_sum($amounts);
-    }
+                foreach ($group->accounts as $account) {
+                    $amount = $this->calculateAccountAmount($account->id, $accountType);
+                    $groupTotal += $amount;
 
-    /**
-     * Calculate indirect income (all income except direct ones)
-     */
-    protected function calculateIndirectIncome(): float
-    {
-        $accountIds = Account::where('account_type', 'income')
-            ->whereNotIn('name', ['Sale', 'Purchase Discount'])
-            ->pluck('id')
-            ->toArray();
+                    $accounts[] = [
+                        'id' => $account->id,
+                        'name' => $account->name,
+                        'amount' => $amount,
+                    ];
+                }
 
-        $amounts = $this->calculateJournalAmounts($accountIds, 'income');
+                $masterTotal += $groupTotal;
 
-        return array_sum($amounts);
+                $groups[] = [
+                    'id' => $group->id,
+                    'name' => $group->name,
+                    'total' => $groupTotal,
+                    'accounts' => $accounts,
+                ];
+            }
+            $structure[] = [
+                'id' => $masterCategory->id,
+                'name' => $masterCategory->name,
+                'total' => $masterTotal,
+                'groups' => $groups,
+                'directAccounts' => $directAccounts,
+            ];
+        }
+
+        return $structure;
     }
 
     public function render()
     {
-        // Calculate stock values from Inventory Account in Journal Entries
-        // Opening stock = Inventory Account balance at start_date
-        // Closing stock = Inventory Account balance at end_date
+        // Calculate stock values
         $openingStock = $this->calculateStockValue($this->start_date);
         $closingStock = $this->calculateStockValue($this->end_date);
 
@@ -324,9 +350,31 @@ class ProfitLoss extends Component
         $netPurchase = $this->calculateNetPurchase();
         $netSale = $this->calculateNetSale();
 
-        // Calculate direct expenses and income
-        $directExpense = $this->calculateDirectExpense();
-        $directIncome = $this->calculateDirectIncome();
+        // Build hierarchical structures
+        $directIncomeStructure = $this->buildCategoryStructure('income');
+        $directExpenseStructure = $this->buildCategoryStructure('expense');
+
+        // Extract direct income/expense totals
+        $directIncome = 0.0;
+        $directExpense = 0.0;
+        $indirectIncome = 0.0;
+        $indirectExpense = 0.0;
+
+        foreach ($directIncomeStructure as $master) {
+            if ($master['name'] === 'Direct Income') {
+                $directIncome = $master['total'];
+            } elseif ($master['name'] === 'Indirect Income') {
+                $indirectIncome = $master['total'];
+            }
+        }
+// dd($directExpenseStructure);
+        foreach ($directExpenseStructure as $master) {
+            if ($master['name'] === 'Direct Expense') {
+                $directExpense = $master['total'];
+            } elseif ($master['name'] === 'Indirect Expense') {
+                $indirectExpense = $master['total'];
+            }
+        }
 
         // Calculate Gross Profit/Loss (Top Section)
         $leftTotal1 = $openingStock + $netPurchase + $directExpense;
@@ -336,10 +384,6 @@ class ProfitLoss extends Component
         $grossProfit = $grossDifference > 0 ? $grossDifference : 0;
         $leftTotal1 += $grossProfit;
         $rightTotal1 += $grossLoss;
-
-        // Calculate indirect expenses and income
-        $indirectExpense = $this->calculateIndirectExpense();
-        $indirectIncome = $this->calculateIndirectIncome();
 
         // Calculate Net Profit/Loss (Bottom Section)
         $leftTotal2BeforeProfit = $grossLoss + $indirectExpense;
@@ -359,10 +403,12 @@ class ProfitLoss extends Component
             'netSale' => $netSale,
             'directExpense' => $directExpense,
             'directIncome' => $directIncome,
-            'grossLoss' => $grossLoss,
-            'grossProfit' => $grossProfit,
             'indirectExpense' => $indirectExpense,
             'indirectIncome' => $indirectIncome,
+            'directIncomeStructure' => $directIncomeStructure,
+            'directExpenseStructure' => $directExpenseStructure,
+            'grossLoss' => $grossLoss,
+            'grossProfit' => $grossProfit,
             'netProfitAmount' => $netProfitAmount,
             'netLossAmount' => $netLossAmount,
             'leftTotal1' => $leftTotal1,
