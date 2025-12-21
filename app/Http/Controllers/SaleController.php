@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use Inertia\Inertia;
 use App\Models\Account;
 use App\Models\Category;
 use App\Models\Configuration;
@@ -20,6 +21,11 @@ class SaleController extends Controller
         return view('sale.index');
     }
 
+     public function booking()
+    {
+        return view('sale.booking');
+    }
+
     public function page($id = null)
     {
         if (cache('sale_type') == 'pos') {
@@ -27,6 +33,17 @@ class SaleController extends Controller
         }
 
         return view('sale.page', compact('id'));
+    }
+
+         public function create_booking()
+    {
+
+          Inertia::setRootView('app-react');
+          
+        return Inertia::render('SaleReturn/Create', [
+            'today' => now()->format('Y-m-d'),
+            'booking' => true,
+        ]);
     }
 
     public function posPage($id = null)
@@ -270,6 +287,12 @@ class SaleController extends Controller
     public function view($id)
     {
         return view('sale.view', compact('id'));
+    }
+
+
+       public function view_booking($id)
+    {
+        return view('sale.viewbook', compact('id'));
     }
 
     public function receipts()

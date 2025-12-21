@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Http\Controllers\Api;
+use App\Models\CustomerMeasurement;
 
 use App\Actions\Sale\CreateAction;
 use App\Actions\Sale\Item\DeleteAction as ItemDeleteAction;
@@ -8,11 +9,14 @@ use App\Actions\Sale\Payment\DeleteAction as PaymentDeleteAction;
 use App\Actions\Sale\UpdateAction;
 use App\Http\Controllers\Controller;
 use App\Models\Category;
+use App\Models\MeasurementCategory;
 use App\Models\Configuration;
 use App\Models\Inventory;
 use App\Models\Sale;
+use App\Models\Product;
 use App\Models\SalePayment;
 use App\Models\User;
+use App\Models\MeasurementTemplate;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -91,6 +95,142 @@ class POSController extends Controller
             return response()->json(['error' => 'Failed to load products'], 500);
         }
     }
+
+    public function getProductsbook(Request $request)
+{
+    // 🔍 Log incoming request (for debugging)
+    Log::info('POS getProducts request', [
+        'category_id' => $request->category_id,
+        'type'        => $request->type,
+        'search'      => $request->search,
+    ]);
+
+    try {
+        $query = Product::query()
+            ->where('is_selling', true);
+
+        /* -------------------- Filters -------------------- */
+
+        // Type filter
+        if ($request->filled('type')) {
+            $query->where('type', $request->type);
+        }
+
+        // Category filter
+        if ($request->filled('category_id') && $request->category_id !== 'favorite') {
+            $query->where('main_category_id', $request->category_id);
+        } elseif ($request->category_id === 'favorite') {
+            $query->where('is_favorite', true);
+        }
+
+        // Search filter
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->where('name', 'LIKE', "%{$search}%")
+                  ->orWhere('barcode', 'LIKE', "%{$search}%");
+            });
+        }
+
+        /* -------------------- Fetch & Format -------------------- */
+
+        $products = $query
+            ->limit(50)
+            ->get()
+            ->map(function ($product) {
+
+                return [
+                    // React POS uses this as inventory_id
+                    'id'          => $product->id,
+                    'product_id'  => $product->id,
+
+                    'name'        => $product->name,
+                    'type'        => $product->type,
+                    'barcode'     => $product->barcode,
+                    'size'        => $product->size,
+                    'code'        => $product->code,
+
+                    // Simple pricing
+                    'mrp'         => $product->mrp,
+
+                    // Stock fallback (no inventory table)
+                    'stock'       => $product->stock ?? 9999,
+
+                    'category_id' => $product->main_category_id,
+
+                    // Image fallback
+                    'image'       => $product->thumbnail ?: cache('logo'),
+                ];
+            });
+
+        return response()->json($products);
+
+    } catch (\Throwable $e) {
+        Log::error('POS product load failed', [
+            'error' => $e->getMessage(),
+        ]);
+
+        return response()->json([
+            'error' => 'Failed to load products'
+        ], 500);
+    }
+}
+
+public function getCustomerMeasurements($customerId, $categoryId)
+{
+    return CustomerMeasurement::where('customer_id', $customerId)
+        ->where('category_id', $categoryId)
+        ->get()
+        ->mapWithKeys(function ($row) {
+            return [
+                $row->measurement_template_id => $row->value
+            ];
+        });
+}
+ public function getEmployee(Request $request)
+{
+    try {
+        $employees = User::employee()
+            ->select('id', 'name')
+            ->orderBy('name')
+            ->get();
+
+        return response()->json($employees);
+    } catch (\Exception $e) {
+        Log::error('Error loading employees: ' . $e->getMessage());
+        return response()->json(['error' => 'Failed to load employees'], 500);
+    }
+}
+
+public function getmeasuremetcategory(Request $request)
+{
+    try {
+        $categories = MeasurementCategory::select('id', 'name')
+            ->orderBy('name')
+            ->get();
+
+        return response()->json($categories);
+    } catch (\Exception $e) {
+        \Log::error('Error loading categories: ' . $e->getMessage());
+        return response()->json(['error' => 'Failed to load categories'], 500);
+    }
+}
+
+public function getMeasurementTemplates($categoryId)
+{
+    try {
+        $templates = MeasurementTemplate::where('category_id', $categoryId)
+            ->select('id', 'name')
+            ->orderBy('id')
+            ->get();
+
+        return response()->json($templates);
+    } catch (\Exception $e) {
+        \Log::error($e->getMessage());
+        return response()->json([], 500);
+    }
+}
+
 
     public function getProductByBarcode(Request $request)
     {
@@ -230,75 +370,113 @@ class POSController extends Controller
         }
     }
 
-    public function submitSale(Request $request)
-    {
-        try {
-            $user_id = Auth::id();
-            DB::beginTransaction();
+   public function submitSale(Request $request)
+{
+    try {
+        $user_id = Auth::id();
+        DB::beginTransaction();
 
-            $saleData = $request->all();
-            $table_id = $saleData['id'] ?? null;
-            if ($saleData['status'] == 'completed') {
-                if ($table_id) {
-                    $response = $this->removePayment($table_id);
-                    if (! $response['success']) {
-                        throw new Exception($response['message'], 1);
-                    }
+        $saleData = $request->all();
+        Log::info('Sale Data:', $saleData);
+
+        $table_id = $saleData['id'] ?? null;
+        $saleData['type'] = $saleData['type'] ?? 'sale';
+
+
+        /* ---------------- Existing payment logic ---------------- */
+        if ($saleData['status'] == 'completed') {
+            if ($table_id) {
+                $response = $this->removePayment($table_id);
+                if (! $response['success']) {
+                    throw new Exception($response['message'], 1);
                 }
-                if ($saleData['payment_method'] == 'custom') {
-                    $saleData['payments'] = $saleData['custom_payment_data']['payments'];
-                    $saleData['paid'] = array_sum(array_column($saleData['payments'], 'amount'));
-                } elseif ($saleData['payment_method'] && $saleData['payment_method'] != 'credit') {
-                    $saleData['paid'] = $saleData['grand_total'];
-                    $saleData['payments'] = [
-                        [
-                            'amount' => $saleData['grand_total'],
-                            'payment_method_id' => $saleData['payment_method'],
-                        ],
-                    ];
-                } else {
-                    $saleData['payments'] = [];
-                }
+            }
+
+            if ($saleData['payment_method'] == 'custom') {
+                $saleData['payments'] = $saleData['custom_payment_data']['payments'];
+                $saleData['paid'] = array_sum(array_column($saleData['payments'], 'amount'));
+            } elseif ($saleData['payment_method'] && $saleData['payment_method'] != 'credit') {
+                $saleData['paid'] = $saleData['grand_total'];
+                $saleData['payments'] = [
+                    [
+                        'amount' => $saleData['grand_total'],
+                        'payment_method_id' => $saleData['payment_method'],
+                    ],
+                ];
             } else {
                 $saleData['payments'] = [];
             }
+        } else {
+            $saleData['payments'] = [];
+        }
 
-            $saleData['payments'] = array_map(function ($payment) {
-                unset($payment['id']);
+        $saleData['payments'] = array_map(function ($payment) {
+            unset($payment['id']);
+            return $payment;
+        }, $saleData['payments']);
 
-                return $payment;
-            }, $saleData['payments']);
+        /* ---------------- Create / Update Sale ---------------- */
+        if (! $table_id) {
+            $response = (new CreateAction())->execute($saleData, $user_id);
+        } else {
+            $response = (new UpdateAction())->execute($saleData, $table_id, $user_id);
+        }
 
-            if (! $table_id) {
-                $response = (new CreateAction())->execute($saleData, $user_id);
-            } else {
-                $response = (new UpdateAction())->execute($saleData, $table_id, $user_id);
-            }
-            if (! $response['success']) {
-                throw new Exception($response['message'], 1);
-            }
-            $sale = $response['data'];
+        if (! $response['success']) {
+            throw new Exception($response['message'], 1);
+        }
 
-            if ($saleData['status'] == 'completed') {
-                if ($saleData['send_to_whatsapp']) {
-                    $this->sendToWhatsapp($sale->id);
+        $sale = $response['data'];
+
+        /* ======================================================
+           ✅ ADD THIS BLOCK — SAVE CUSTOMER MEASUREMENTS
+        ====================================================== */
+        if (
+            !empty($saleData['measurements']) &&
+            !empty($saleData['category_id'])
+        ) {
+            // Optional: delete old measurements for same sale
+            CustomerMeasurement::where('sale_id', $sale->id)->delete();
+
+            foreach ($saleData['measurements'] as $m) {
+                if (!empty($m['value'])) {
+                    CustomerMeasurement::create([
+                        'sale_id' => $sale->id,
+                        'customer_id' => $sale->account_id,
+                        'category_id' => $saleData['category_id'],
+                        'measurement_template_id' => $m['measurement_template_id'],
+                        'value' => $m['value'],
+                        'created_by' => $user_id,
+                    ]);
                 }
             }
-            DB::commit();
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Sale submitted successfully',
-                'sale_id' => $sale->id,
-                'redirect' => route('sale::pos'),
-            ]);
-        } catch (\Exception $e) {
-            DB::rollback();
-            Log::error('Error submitting sale: '.$e->getMessage());
-
-            return response()->json(['error' => 'Failed to submit sales :'.$e->getMessage()], 500);
         }
+        /* ================= END ADD ================= */
+
+        if ($saleData['status'] == 'completed') {
+            if ($saleData['send_to_whatsapp']) {
+                $this->sendToWhatsapp($sale->id);
+            }
+        }
+
+        DB::commit();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Sale submitted successfully',
+            'sale_id' => $sale->id,
+            'redirect' => route('sale::pos'),
+        ]);
+
+    } catch (\Exception $e) {
+        DB::rollback();
+        Log::error('Error submitting sale: '.$e->getMessage());
+
+        return response()->json([
+            'error' => 'Failed to submit sales : '.$e->getMessage()
+        ], 500);
     }
+}
 
     public function sendToWhatsapp($table_id)
     {

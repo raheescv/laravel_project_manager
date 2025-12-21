@@ -56,6 +56,7 @@ class Sale extends Model implements AuditableContracts
         'feedback',
 
         'status',
+        'type', 
 
         'created_by',
         'updated_by',

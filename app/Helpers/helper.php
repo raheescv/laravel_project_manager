@@ -2,6 +2,7 @@
 
 use App\Models\Country;
 use App\Models\Product;
+use App\Models\Sale;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Storage;
@@ -383,6 +384,37 @@ if (! function_exists('thermalPrinterStyle')) {
         ];
     }
 }
+// if (! function_exists('getNextSaleInvoiceNo')) {
+//     function getNextSaleInvoiceNo()
+//     {
+//         $branchCode = session('branch_code', 'M');
+//         $prefix = 'INV-';
+
+//         if ($branchCode) {
+//             $prefix .= $branchCode.'-';
+//         }
+
+//         $country_id = cache('country_id', Country::QATAR);
+
+//         if ($country_id == Country::INDIA) {
+//             $year = now()->format('y').'/'.now()->addYear()->format('y');
+//             if (now()->lt(now()->copy()->month(3)->day(31))) {
+//                 $year = now()->subYear()->format('y').'/'.now()->format('y');
+//             }
+//         } else {
+//             $year = now()->format('y');
+//         }
+
+//         $invoicePrefix = $prefix.$year.'-';
+
+//         $number = getNextUniqueNumber('Sale');
+
+//         // Generate the invoice number
+//         $invoice = $invoicePrefix.str_pad($number, 4, '0', STR_PAD_LEFT);
+
+//         return $invoice;
+//     }
+// }
 if (! function_exists('getNextSaleInvoiceNo')) {
     function getNextSaleInvoiceNo()
     {
@@ -406,14 +438,25 @@ if (! function_exists('getNextSaleInvoiceNo')) {
 
         $invoicePrefix = $prefix.$year.'-';
 
-        $number = getNextUniqueNumber('Sale');
+        // ✅ Fetch last invoice from DB
+        $lastInvoice = Sale::where('invoice_no', 'like', $invoicePrefix.'%')
+            ->orderBy('id', 'desc')
+            ->first();
 
-        // Generate the invoice number
-        $invoice = $invoicePrefix.str_pad($number, 4, '0', STR_PAD_LEFT);
+        if ($lastInvoice) {
+            $parts = explode('-', $lastInvoice->invoice_no);
+            $lastNumber = (int) end($parts);
+            $nextNumber = $lastNumber + 1;
+        } else {
+            $nextNumber = 1; // Starting number
+        }
+
+        $invoice = $invoicePrefix.str_pad($nextNumber, 4, '0', STR_PAD_LEFT);
 
         return $invoice;
     }
 }
+
 if (! function_exists('getNextUniqueNumber')) {
     function getNextUniqueNumber($segment = 'Sale')
     {
@@ -430,10 +473,7 @@ if (! function_exists('getNextUniqueNumber')) {
         }
 
         DB::statement('SET @out_unique_no = 0;');
-        $yearEscaped = DB::getPdo()->quote($year);
-        $branchCodeEscaped = DB::getPdo()->quote($branchCode);
-        $segmentEscaped = DB::getPdo()->quote($segment);
-        DB::statement("CALL getNextUniqueNumber($yearEscaped, $branchCodeEscaped, $segmentEscaped, @out_unique_no);");
+        DB::statement("CALL getNextUniqueNumber($year, '$branchCode', '$segment', @out_unique_no);");
 
         $result = DB::select('SELECT @out_unique_no as unique_no');
 

@@ -1,7 +1,9 @@
 <?php
 
 namespace App\Http\Controllers;
+use App\Models\Account;
 
+use Inertia\Inertia;
 class SaleReturnController extends Controller
 {
     public function index()
@@ -24,4 +26,10 @@ class SaleReturnController extends Controller
     {
         return view('sales-return.payments');
     }
+    
+
+       
+   
+
+
 }

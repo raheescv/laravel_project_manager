@@ -170,8 +170,8 @@
                                   
 
                                      @can('category.view')
-                                        <a href="{{ route('settings::category::measurements.data') }}" class="list-group-item list-group-item-action">
-                                            <i class="fa fa-folder fs-5 me-2"></i>Tailor measurement
+                                        <a href="{{ route('sale::booking') }}" class="list-group-item list-group-item-action">
+                                            <i class="fa fa-folder fs-5 me-2"></i>Bookings
                                         </a>
                                     @endcan
                                     @can('account category.view')
