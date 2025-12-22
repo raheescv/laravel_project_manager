@@ -14,6 +14,13 @@ class Category extends Model
     protected $fillable = [
         'parent_id',
         'name',
+        'sale_visibility_flag',
+        'online_visibility_flag',
+    ];
+
+    protected $casts = [
+        'sale_visibility_flag' => 'boolean',
+        'online_visibility_flag' => 'boolean',
     ];
 
     public static function rules($id = 0, $merge = [])

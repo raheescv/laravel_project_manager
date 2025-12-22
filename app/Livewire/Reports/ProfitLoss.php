@@ -3,17 +3,15 @@
 namespace App\Livewire\Reports;
 
 use App\Models\Account;
+use App\Models\AccountCategory;
 use App\Models\Branch;
 use App\Models\JournalEntry;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
-use Livewire\WithPagination;
 
 class ProfitLoss extends Component
 {
-    use WithPagination;
-
     public $start_date;
 
     public $end_date;
@@ -22,9 +20,9 @@ class ProfitLoss extends Component
 
     public $branches = [];
 
-    public $search = '';
-
     public $period = 'monthly';
+
+    public $expandedGroups = []; // Track which groups are expanded
 
     public function mount()
     {
@@ -59,101 +57,364 @@ class ProfitLoss extends Component
         }
     }
 
-    public function render()
+    /**
+     * Toggle group expansion
+     */
+    public function toggleGroup($groupId)
+    {
+        if (in_array($groupId, $this->expandedGroups)) {
+            $this->expandedGroups = array_values(array_diff($this->expandedGroups, [$groupId]));
+        } else {
+            $this->expandedGroups[] = $groupId;
+        }
+    }
+
+    /**
+     * Fetch data - triggers re-render with current filter values
+     */
+    public function fetchData()
+    {
+        // This method triggers a re-render with current filter values
+        // No additional logic needed as render() will use current property values
+    }
+
+    /**
+     * Reset filters to default values
+     */
+    public function resetFilters()
+    {
+        $this->start_date = Carbon::now()->startOfMonth()->format('Y-m-d');
+        $this->end_date = Carbon::now()->endOfMonth()->format('Y-m-d');
+        $this->branch_id = '';
+        $this->period = 'monthly';
+        $this->expandedGroups = [];
+    }
+
+    /**
+     * Apply branch filter to query
+     */
+    protected function applyBranchFilter($query)
+    {
+        return $query->when($this->branch_id, fn ($q) => $q->where('branch_id', $this->branch_id));
+    }
+
+    /**
+     * Calculate inventory stock value from Inventory Account
+     */
+    protected function calculateStockValue(?string $date = null): float
+    {
+        $inventoryAccount = Account::where('name', 'Inventory')
+            ->where('account_type', 'asset')
+            ->first();
+
+        if (! $inventoryAccount) {
+            return 0.0;
+        }
+
+        $query = JournalEntry::query()
+            ->where('account_id', $inventoryAccount->id)
+            ->when($date, function ($q) use ($date) {
+                return $q->where('date', '<=', $date);
+            })
+            ->selectRaw('COALESCE(SUM(debit), 0) as total_debit')
+            ->selectRaw('COALESCE(SUM(credit), 0) as total_credit');
+
+        $this->applyBranchFilter($query);
+
+        $result = $query->first();
+
+        if (! $result) {
+            return 0.0;
+        }
+
+        // For asset accounts, balance = debit - credit
+        $balance = (float) $result->total_debit - (float) $result->total_credit;
+
+        return max(0, $balance);
+    }
+
+    /**
+     * Calculate net purchase from Journal Entries (Purchase account - Purchase Returns account)
+     */
+    protected function calculateNetPurchase(): float
+    {
+        $purchaseAccount = Account::where('name', 'Purchase')
+            ->where('account_type', 'expense')
+            ->first();
+
+        $purchaseReturnAccount = Account::where('name', 'Purchase Returns')
+            ->where('account_type', 'income')
+            ->first();
+
+        $totalPurchase = 0.0;
+        $totalPurchaseReturn = 0.0;
+
+        if ($purchaseAccount) {
+            $query = JournalEntry::query()
+                ->where('account_id', $purchaseAccount->id)
+                ->whereBetween('date', [$this->start_date, $this->end_date])
+                ->selectRaw('COALESCE(SUM(debit), 0) as total_debit')
+                ->selectRaw('COALESCE(SUM(credit), 0) as total_credit');
+
+            $this->applyBranchFilter($query);
+
+            $result = $query->first();
+            if ($result) {
+                // For expense accounts, net = debit - credit
+                $totalPurchase = max(0, (float) $result->total_debit - (float) $result->total_credit);
+            }
+        }
+
+        if ($purchaseReturnAccount) {
+            $query = JournalEntry::query()
+                ->where('account_id', $purchaseReturnAccount->id)
+                ->whereBetween('date', [$this->start_date, $this->end_date])
+                ->selectRaw('COALESCE(SUM(debit), 0) as total_debit')
+                ->selectRaw('COALESCE(SUM(credit), 0) as total_credit');
+
+            $this->applyBranchFilter($query);
+
+            $result = $query->first();
+            if ($result) {
+                // For income accounts, net = credit - debit
+                $totalPurchaseReturn = max(0, (float) $result->total_credit - (float) $result->total_debit);
+            }
+        }
+
+        return max(0, $totalPurchase - $totalPurchaseReturn);
+    }
+
+    /**
+     * Calculate net sale from Journal Entries (Sale account - Sales Returns account)
+     */
+    protected function calculateNetSale(): float
+    {
+        $saleAccount = Account::where('name', 'Sale')
+            ->where('account_type', 'income')
+            ->first();
+
+        $saleReturnAccount = Account::where('name', 'Sales Returns')
+            ->where('account_type', 'expense')
+            ->first();
+
+        $totalSale = 0.0;
+        $totalSaleReturn = 0.0;
+
+        if ($saleAccount) {
+            $query = JournalEntry::query()
+                ->where('account_id', $saleAccount->id)
+                ->whereBetween('date', [$this->start_date, $this->end_date])
+                ->selectRaw('COALESCE(SUM(debit), 0) as total_debit')
+                ->selectRaw('COALESCE(SUM(credit), 0) as total_credit');
+
+            $this->applyBranchFilter($query);
+
+            $result = $query->first();
+            if ($result) {
+                // For income accounts, net = credit - debit
+                $totalSale = max(0, (float) $result->total_credit - (float) $result->total_debit);
+            }
+        }
+
+        if ($saleReturnAccount) {
+            $query = JournalEntry::query()
+                ->where('account_id', $saleReturnAccount->id)
+                ->whereBetween('date', [$this->start_date, $this->end_date])
+                ->selectRaw('COALESCE(SUM(debit), 0) as total_debit')
+                ->selectRaw('COALESCE(SUM(credit), 0) as total_credit');
+
+            $this->applyBranchFilter($query);
+
+            $result = $query->first();
+            if ($result) {
+                // For expense accounts, net = debit - credit
+                $totalSaleReturn = max(0, (float) $result->total_debit - (float) $result->total_credit);
+            }
+        }
+
+        return max(0, $totalSale - $totalSaleReturn);
+    }
+
+    /**
+     * Calculate journal entry amount for a single account
+     */
+    protected function calculateAccountAmount(int $accountId, string $accountType): float
     {
         $query = JournalEntry::query()
+            ->where('account_id', $accountId)
             ->whereBetween('date', [$this->start_date, $this->end_date])
-            ->when($this->branch_id, function ($q) {
-                return $q->where('branch_id', $this->branch_id);
-            });
+            ->selectRaw('COALESCE(SUM(debit), 0) as total_debit')
+            ->selectRaw('COALESCE(SUM(credit), 0) as total_credit');
 
-        // Get detailed income breakdown
-        $incomeAccounts = Account::where('account_type', 'income')->get();
-        $incomeDetails = [];
-        $totalIncome = 0;
+        $this->applyBranchFilter($query);
 
-        // Income types from AccountSeeder:
-        // - Sale
-        // - Purchase Discount
-        foreach ($incomeAccounts as $account) {
-            $amount = $query->clone()
-                ->where('account_id', $account->id)
-                ->sum('credit') - $query->clone()
-                ->where('account_id', $account->id)
-                ->sum('debit');
+        $result = $query->first();
 
-            if ($amount != 0) {
-                $incomeDetails[$account->name] = $amount;
-                $totalIncome += $amount;
-            }
+        if (! $result) {
+            return 0.0;
         }
 
-        // Get detailed expense breakdown
-        $expenseAccounts = Account::where('account_type', 'expense')->get();
-        $expenseDetails = [];
-        $totalExpenses = 0;
+        $netAmount = $accountType === 'expense'
+            ? (float) $result->total_debit - (float) $result->total_credit
+            : (float) $result->total_credit - (float) $result->total_debit;
 
-        // Expense types from AccountSeeder:
-        // - Sales Returns
-        // - Purchase
-        // - Discount
-        // - Cost of Goods Sold
-        // - Freight
-        foreach ($expenseAccounts as $account) {
-            $amount = $query->clone()
-                ->where('account_id', $account->id)
-                ->sum('debit') - $query->clone()
-                ->where('account_id', $account->id)
-                ->sum('credit');
+        return max(0, $netAmount);
+    }
 
-            if ($amount != 0) {
-                $expenseDetails[$account->name] = $amount;
-                $totalExpenses += $amount;
+    /**
+     * Build hierarchical structure for income/expense categories
+     */
+    protected function buildCategoryStructure(string $accountType): array
+    {
+        // Get master categories based on account type
+        $masterCategoryNames = $accountType === 'income'
+            ? ['Direct Income', 'Indirect Income']
+            : ['Direct Expense', 'Indirect Expense'];
+
+        $structure = [];
+
+        foreach ($masterCategoryNames as $masterName) {
+            $masterCategory = AccountCategory::where('name', $masterName)
+                ->whereNull('parent_id')
+                ->with(['children.accounts' => function ($query) use ($accountType) {
+                    $query->where('account_type', $accountType);
+                }, 'accounts' => function ($query) use ($accountType) {
+                    $query->where('account_type', $accountType);
+                }])
+                ->first();
+
+            if (! $masterCategory) {
+                continue;
             }
-        }
 
-        // Get gross profit
-        $grossProfit = $totalIncome - $totalExpenses;
+            $masterTotal = 0.0;
+            $groups = [];
+            $directAccounts = [];
 
-        // Calculate net profit/loss
-        $netProfitLoss = $grossProfit;
+            // Get accounts directly under master category (without a group)
+            foreach ($masterCategory->accounts as $account) {
+                $amount = $this->calculateAccountAmount($account->id, $accountType);
+                $masterTotal += $amount;
 
-        // Prepare chart data
-        $incomeChartData = [];
-        foreach ($incomeDetails as $name => $amount) {
-            if ($amount > 0) {
-                $incomeChartData[] = [
-                    'name' => $name,
-                    'y' => abs($amount),
+                $directAccounts[] = [
+                    'id' => $account->id,
+                    'name' => $account->name,
+                    'amount' => $amount,
                 ];
             }
+
+            // Get accounts under groups
+            foreach ($masterCategory->children as $group) {
+                $groupTotal = 0.0;
+                $accounts = [];
+
+                foreach ($group->accounts as $account) {
+                    $amount = $this->calculateAccountAmount($account->id, $accountType);
+                    $groupTotal += $amount;
+
+                    $accounts[] = [
+                        'id' => $account->id,
+                        'name' => $account->name,
+                        'amount' => $amount,
+                    ];
+                }
+
+                $masterTotal += $groupTotal;
+
+                $groups[] = [
+                    'id' => $group->id,
+                    'name' => $group->name,
+                    'total' => $groupTotal,
+                    'accounts' => $accounts,
+                ];
+            }
+            $structure[] = [
+                'id' => $masterCategory->id,
+                'name' => $masterCategory->name,
+                'total' => $masterTotal,
+                'groups' => $groups,
+                'directAccounts' => $directAccounts,
+            ];
         }
 
-        $expenseChartData = [];
-        foreach ($expenseDetails as $name => $amount) {
-            if ($amount > 0) {
-                $expenseChartData[] = [
-                    'name' => $name,
-                    'y' => abs($amount),
-                ];
+        return $structure;
+    }
+
+    public function render()
+    {
+        // Calculate stock values
+        $openingStock = $this->calculateStockValue($this->start_date);
+        $closingStock = $this->calculateStockValue($this->end_date);
+
+        // Calculate net purchase and sale
+        $netPurchase = $this->calculateNetPurchase();
+        $netSale = $this->calculateNetSale();
+
+        // Build hierarchical structures
+        $directIncomeStructure = $this->buildCategoryStructure('income');
+        $directExpenseStructure = $this->buildCategoryStructure('expense');
+
+        // Extract direct income/expense totals
+        $directIncome = 0.0;
+        $directExpense = 0.0;
+        $indirectIncome = 0.0;
+        $indirectExpense = 0.0;
+
+        foreach ($directIncomeStructure as $master) {
+            if ($master['name'] === 'Direct Income') {
+                $directIncome = $master['total'];
+            } elseif ($master['name'] === 'Indirect Income') {
+                $indirectIncome = $master['total'];
+            }
+        }
+// dd($directExpenseStructure);
+        foreach ($directExpenseStructure as $master) {
+            if ($master['name'] === 'Direct Expense') {
+                $directExpense = $master['total'];
+            } elseif ($master['name'] === 'Indirect Expense') {
+                $indirectExpense = $master['total'];
             }
         }
 
-        // Dispatch event to update charts
-        $this->dispatch('refreshCharts', [
-            'incomeData' => array_values($incomeChartData), // Convert to indexed array
-            'expenseData' => array_values($expenseChartData), // Convert to indexed array
-        ]);
+        // Calculate Gross Profit/Loss (Top Section)
+        $leftTotal1 = $openingStock + $netPurchase + $directExpense;
+        $rightTotal1 = $netSale + $closingStock + $directIncome;
+        $grossDifference = $rightTotal1 - $leftTotal1;
+        $grossLoss = $grossDifference < 0 ? abs($grossDifference) : 0;
+        $grossProfit = $grossDifference > 0 ? $grossDifference : 0;
+        $leftTotal1 += $grossProfit;
+        $rightTotal1 += $grossLoss;
+
+        // Calculate Net Profit/Loss (Bottom Section)
+        $leftTotal2BeforeProfit = $grossLoss + $indirectExpense;
+        $rightTotal2 = $grossProfit + $indirectIncome;
+        $netDifference = $rightTotal2 - $leftTotal2BeforeProfit;
+        $netProfitAmount = $netDifference > 0 ? $netDifference : 0;
+        $netLossAmount = $netDifference < 0 ? abs($netDifference) : 0;
+        $rightTotal2 += $netLossAmount;
+
+        // Calculate final totals
+        $leftTotal2 = $leftTotal2BeforeProfit + $netProfitAmount;
 
         return view('livewire.reports.profit-loss', [
-            'incomeDetails' => $incomeDetails,
-            'totalIncome' => $totalIncome,
-            'expenseDetails' => $expenseDetails,
-            'totalExpenses' => $totalExpenses,
+            'openingStock' => $openingStock,
+            'closingStock' => $closingStock,
+            'netPurchase' => $netPurchase,
+            'netSale' => $netSale,
+            'directExpense' => $directExpense,
+            'directIncome' => $directIncome,
+            'indirectExpense' => $indirectExpense,
+            'indirectIncome' => $indirectIncome,
+            'directIncomeStructure' => $directIncomeStructure,
+            'directExpenseStructure' => $directExpenseStructure,
+            'grossLoss' => $grossLoss,
             'grossProfit' => $grossProfit,
-            'netProfitLoss' => $netProfitLoss,
-            'incomeChartData' => json_encode($incomeChartData),
-            'expenseChartData' => json_encode($expenseChartData),
+            'netProfitAmount' => $netProfitAmount,
+            'netLossAmount' => $netLossAmount,
+            'leftTotal1' => $leftTotal1,
+            'rightTotal1' => $rightTotal1,
+            'leftTotal2' => $leftTotal2,
+            'rightTotal2' => $rightTotal2,
             'branches' => $this->branches,
         ]);
     }

@@ -72,6 +72,7 @@ class Page extends Component
     {
         return [
             'accounts.name' => ['required', 'max:100'],
+            'accounts.alias_name' => ['max:100'],
             'accounts.account_type' => ['required'],
         ];
     }
@@ -79,6 +80,7 @@ class Page extends Component
     protected $messages = [
         'accounts.name.required' => 'The name field is required',
         'accounts.name.max' => 'The name field must not be greater than 100 characters',
+        'accounts.alias_name.max' => 'The alias name field must not be greater than 100 characters',
         'accounts.account_type.required' => 'The account type field is required',
     ];
 

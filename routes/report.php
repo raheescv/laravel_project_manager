@@ -31,5 +31,6 @@ Route::middleware('auth')->group(function (): void {
             Route::get('ai_generated', 'ai_generated')->name('ollama');
             Route::get('employee_productivity', 'employee_productivity')->name('employee_productivity')->can('report.employee productivity');
             Route::get('customer_callback_reminder', 'customer_callback_reminder')->name('customer_callback_reminder')->can('report.customer callback reminder');
+            Route::get('day_wise_sale', 'day_wise_sale')->name('day_wise_sale')->can('report.day wise sale');
         });
 });

@@ -27,4 +27,5 @@
         @include('components.select.categorySelect')
         @include('components.select.unitSelect')
     @endpush
+    <x-product.column-visibility-canvas />
 </x-app-layout>

@@ -9,6 +9,7 @@ use Exception;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Livewire\Component;
+use App\Models\Journal;
 
 class Page extends Component
 {
@@ -18,6 +19,8 @@ class Page extends Component
     ];
 
     public $journals;
+
+    public $entries = [];
 
     public $table_id;
 
@@ -41,99 +44,196 @@ class Page extends Component
         if (! $this->table_id) {
             $this->journals = [
                 'branch_id' => session('branch_id'),
-                'debit_id' => null,
-                'debit_name' => null,
-                'credit_id' => null,
-                'credit_name' => null,
                 'source' => 'General Voucher',
-                'amount' => 0,
                 'date' => date('Y-m-d'),
                 'person_name' => null,
                 'reference_number' => null,
-                'description' => '',
                 'remarks' => null,
             ];
+            $this->entries = [
+                [
+                    'key' => uniqid(),
+                    'account_id' => null,
+                    'debit' => 0,
+                    'credit' => 0,
+                    'description' => '',
+                    'person_name' => null,
+                ],
+                [
+                    'key' => uniqid(),
+                    'account_id' => null,
+                    'debit' => 0,
+                    'credit' => 0,
+                    'description' => '',
+                    'person_name' => null,
+                ]
+            ];
         } else {
-            // Load JournalEntry with debit > 0 to get the main entry
-            $debitEntry = JournalEntry::where('journal_id', $this->table_id)
+            // Load Journal with all entries
+            $journal = Journal::where('id', $this->table_id)
                 ->where('source', 'General Voucher')
-                ->where('debit', '>', 0)
-                ->with(['account', 'journal.entries.account'])
+                ->with(['entries.account'])
                 ->first();
 
-            if ($debitEntry && $debitEntry->journal) {
-                $journal = $debitEntry->journal;
+            if ($journal) {
                 $this->journals = $journal->toArray();
+                $this->entries = [];
 
-                // Get debit and credit account IDs from entries
-                $creditEntry = $journal->entries->where('credit', '>', 0)->first();
-
-                if ($debitEntry) {
-                    $this->journals['debit_id'] = $debitEntry->account_id;
-                    $this->journals['debit_name'] = $debitEntry->account->name ?? null;
-                }
-                if ($creditEntry) {
-                    $this->journals['credit_id'] = $creditEntry->account_id;
-                    $this->journals['credit_name'] = $creditEntry->account->name ?? null;
-                }
-                if ($debitEntry) {
-                    $this->journals['amount'] = $debitEntry->debit;
+                foreach ($journal->entries as $entry) {
+                    $this->entries[] = [
+                        'key' => uniqid(),
+                        'account_id' => $entry->account_id,
+                        'account_name' => $entry->account->name ?? null,
+                        'debit' => $entry->debit,
+                        'credit' => $entry->credit,
+                        'description' => $entry->description ?? '',
+                        'person_name' => $entry->person_name ?? null,
+                    ];
                 }
             }
         }
     }
 
+    public function addEntry()
+    {
+        $this->entries[] = [
+            'key' => uniqid(),
+            'account_id' => null,
+            'debit' => 0,
+            'credit' => 0,
+            'description' => $this->journals['description'] ?? '',
+            'name' => null,
+        ];
+        $this->dispatch('reinitialize-selects');
+    }
+
+    public function removeEntry($key)
+    {
+        $this->entries = array_filter($this->entries, function ($entry) use ($key) {
+            return $entry['key'] !== $key;
+        });
+        $this->entries = array_values($this->entries);
+    }
+
     public function updated($key, $value)
     {
-        if ($key == 'journals.debit_id') {
-            $this->journals['debit_name'] = Account::find($value)?->name;
+        // Update account name when account_id changes in entries
+        if (str_starts_with($key, 'entries.')) {
+            $parts = explode('.', $key);
+            if (count($parts) === 3 && $parts[2] === 'account_id') {
+                $index = (int) $parts[1];
+                if (isset($this->entries[$index])) {
+                    $account = Account::find($value);
+                }
+            }
         }
-        if ($key == 'journals.credit_id') {
-            $this->journals['credit_name'] = Account::find($value)?->name;
+
+        // Sync description to all entries when main description changes
+        if ($key === 'journals.description') {
+            foreach ($this->entries as $index => &$entry) {
+                if (empty($entry['description'])) {
+                    $entry['description'] = $value;
+                }
+            }
         }
     }
 
     protected function rules()
     {
-        return [
-            'journals.debit_id' => ['required'],
-            'journals.credit_id' => ['required'],
-            'journals.amount' => ['required', 'numeric', 'min:1', 'max:999999'],
+        $rules = [
             'journals.date' => ['required', 'date'],
             'journals.person_name' => ['max:100'],
             'journals.reference_number' => ['max:100'],
-            'journals.description' => ['required', 'max:255'],
             'journals.remarks' => ['max:255'],
+            'entries' => ['required', 'array', 'min:2'],
+            'entries.*.account_id' => ['required'],
+            'entries.*.debit' => ['required', 'numeric', 'min:0'],
+            'entries.*.credit' => ['required', 'numeric', 'min:0'],
+            'entries.*.person_name' => ['max:100'],
+            'entries.*.description' => ['max:255'],
         ];
+
+        return $rules;
     }
 
     protected function messages()
     {
         return [
-            'journals.debit_id.required' => 'The Debit Head field is required.',
-            'journals.credit_id.required' => 'The Credit Head field is required.',
             'journals.date.required' => 'The Date field is required.',
             'journals.description.required' => 'The Description field is required.',
-            'journals.amount.required' => 'The Amount field is required.',
-            'journals.amount.min' => 'The Amount must be at least 1.',
-            'journals.amount.max' => 'The Amount may not be greater than '.currency('999999').'.',
+            'entries.required' => 'At least two journal entries are required.',
+            'entries.min' => 'At least two journal entries are required.',
+            'entries.*.account_id.required' => 'The Account field is required for all entries.',
+            'entries.*.debit.required' => 'The Debit field is required.',
+            'entries.*.credit.required' => 'The Credit field is required.',
         ];
     }
 
     public function save($close = false)
     {
+        // Custom validation: each entry cannot have both debit and credit > 0
+        foreach ($this->entries as $index => $entry) {
+            if ($entry['debit'] > 0 && $entry['credit'] > 0) {
+                $this->dispatch('error', ['message' => 'Entry #' . ($index + 1) . ' cannot have both debit and credit amounts. Each entry must be either a debit or a credit, not both.']);
+                return;
+            }
+        }
+
+        // Custom validation: total debits must equal total credits
+        $totalDebits = array_sum(array_column($this->entries, 'debit'));
+        $totalCredits = array_sum(array_column($this->entries, 'credit'));
+
+        if (abs($totalDebits - $totalCredits) > 0.01) {
+            $this->dispatch('error', ['message' => 'Total debits must equal total credits.']);
+            return;
+        }
+
+        // Custom validation: at least one entry with debit > 0 and one with credit > 0
+        $hasDebit = false;
+        $hasCredit = false;
+        foreach ($this->entries as $entry) {
+            if ($entry['debit'] > 0) {
+                $hasDebit = true;
+            }
+            if ($entry['credit'] > 0) {
+                $hasCredit = true;
+            }
+        }
+
+        if (!$hasDebit || !$hasCredit) {
+            $this->dispatch('error', ['message' => 'At least one entry must have a debit amount and one must have a credit amount.']);
+            return;
+        }
+
         $this->validate();
         try {
             DB::beginTransaction();
             $userId = Auth::id();
-            $journals = $this->journals;
+
+            // Prepare entries data for the action
+            $entriesData = [];
+            foreach ($this->entries as $entry) {
+                if ($entry['account_id'] && ($entry['debit'] > 0 || $entry['credit'] > 0)) {
+                    $entriesData[] = [
+                        'account_id' => $entry['account_id'],
+                        'counter_account_id' => null, // Will be set based on other entries
+                        'debit' => $entry['debit'] ?? 0,
+                        'credit' => $entry['credit'] ?? 0,
+                        'created_by' => $userId,
+                        'description' => $entry['description'] ?? null,
+                        'person_name' => $entry['person_name'] ?? null,
+                    ];
+                }
+            }
+
+            $this->journals['entries'] = $entriesData;
             $response = (new GeneralVoucherJournalEntryAction())->execute($userId, $this->journals, $this->table_id);
             if (! $response['success']) {
                 throw new Exception($response['message'], 1);
             }
             $this->dispatch('success', ['message' => $response['message']]);
             $this->mount($this->table_id);
-            $this->dispatch('SelectDropDownValues', $journals);
+            $this->dispatch('SelectDropDownValues', $this->journals);
             DB::commit();
             if (! $close) {
                 $this->dispatch('ToggleGeneralVoucherModal');

@@ -26,7 +26,9 @@ class ProductList extends Component
 
     public function getProducts($sale_type = 'normal', $category_id = null, $product_key = null)
     {
-        $this->products = Inventory::with('product')->join('products', 'product_id', 'products.id')
+        $this->products = Inventory::with('product')
+            ->join('products', 'product_id', 'products.id')
+            ->join('categories', 'products.main_category_id', '=', 'categories.id')
             ->when($product_key, function ($query, $value) {
                 return $query->where('products.name', 'LIKE', '%'.$value.'%');
             })
@@ -39,6 +41,7 @@ class ProductList extends Component
             })
             ->where('inventories.branch_id', session('branch_id'))
             ->where('products.is_selling', true)
+            ->where('categories.sale_visibility_flag', true)
             ->orderBy('products.name')
             ->select(
                 'inventories.id',

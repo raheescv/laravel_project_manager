@@ -201,6 +201,7 @@ class DayWiseReport extends Component
             ->when($from, fn ($q) => $q->where('sale_payments.date', '>=', $from))
             ->when($to, fn ($q) => $q->where('sale_payments.date', '<=', $to))
             ->when($this->branch_id, fn ($q) => $q->where('sales.branch_id', $this->branch_id))
+            ->where('sales.status', 'completed')
             ->select(
                 'sale_payments.date',
                 'sales.branch_id',

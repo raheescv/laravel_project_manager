@@ -102,4 +102,9 @@ class ReportController extends Controller
     {
         return view('report.customer.customer-callback-reminder');
     }
+
+    public function day_wise_sale()
+    {
+        return view('report.day_wise_sale');
+    }
 }

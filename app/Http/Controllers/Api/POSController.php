@@ -33,7 +33,10 @@ class POSController extends Controller
             $query = $query->where('inventories.branch_id', session('branch_id'));
 
             $query->whereHas('product', function ($q): void {
-                $q->where('is_selling', true);
+                $q->where('is_selling', true)
+                    ->whereHas('mainCategory', function ($categoryQuery): void {
+                        $categoryQuery->where('sale_visibility_flag', true);
+                    });
             });
             // Filter by category
             if ($request->type) {
@@ -53,7 +56,7 @@ class POSController extends Controller
 
             // Filter by search term
             if ($request->search) {
-                $search = $request->search;
+                $search = trim($request->search);
                 $query->whereHas('product', function ($q) use ($search): void {
                     $q->where('name', 'LIKE', "%{$search}%")->orWhere('barcode', 'LIKE', "%{$search}%");
                 });

@@ -1,10 +1,18 @@
 <div>
     <div class="card shadow-sm">
         <div class="card-header bg-white py-3">
-            <div class="d-flex align-items-center mb-4">
+            <div class="d-flex align-items-center justify-content-between mb-4">
                 <div>
                     <h5 class="mb-0">Product Report</h5>
                     <small class="text-muted">Analyze your product inventory and movements</small>
+                </div>
+                <div class="btn-group">
+                    @can('product.export')
+                        <button class="btn btn-success btn-sm d-flex align-items-center" title="Export to Excel" data-bs-toggle="tooltip" wire:click="export()">
+                            <i class="demo-pli-file-excel me-md-1 fs-5"></i>
+                            <span class="d-none d-md-inline">Export</span>
+                        </button>
+                    @endcan
                 </div>
             </div>
 

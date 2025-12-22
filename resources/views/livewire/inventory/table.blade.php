@@ -9,6 +9,10 @@
                             <i class="demo-pli-file-excel me-1"></i>
                             <span>Export</span>
                         </button>
+                        <button class="btn btn-sm btn-outline-info" title="Product Wise Export" wire:click="exportProductWise()">
+                            <i class="demo-pli-file-excel me-1"></i>
+                            <span>Product Wise Export</span>
+                        </button>
                     @endcan
                     @can('inventory.import')
                         <button class="btn btn-sm btn-outline-success" data-bs-toggle="modal" data-bs-target="#ProductImportModal">
@@ -76,14 +80,11 @@
                 </div>
 
                 <div class="col-12 col-md-3" wire:ignore>
-    <label class="form-label fw-semibold mb-2">
-        <i class="demo-pli-tag me-1 text-primary"></i> Product Name
-    </label>
-    <input type="text" 
-           wire:model.live="product_name" 
-           class="form-control shadow-sm" 
-           placeholder="Search by product name...">
-</div>
+                    <label class="form-label fw-semibold mb-2">
+                        <i class="demo-pli-tag me-1 text-primary"></i> Product Name
+                    </label>
+                    <input type="text" wire:model.live="product_name" class="form-control shadow-sm" placeholder="Search by product name...">
+                </div>
 
                 <div class="col-12 col-md-3" wire:ignore>
                     <label class="form-label fw-semibold mb-2">
@@ -306,7 +307,33 @@
                 </tbody>
                 <tfoot class="table-group-divider bg-light">
                     <tr>
-                        <th colspan="{{ count(array_filter($inventory_visible_column ?? [])) - 4 }}" class="text-end fw-bold">Total</th>
+                        @if ($inventory_visible_column['branch'] ?? true)
+                            <th></th>
+                        @endif
+                        @if ($inventory_visible_column['department'] ?? true)
+                            <th></th>
+                        @endif
+                        @if ($inventory_visible_column['main_category'] ?? true)
+                            <th></th>
+                        @endif
+                        @if ($inventory_visible_column['sub_category'] ?? true)
+                            <th></th>
+                        @endif
+                        @if ($inventory_visible_column['unit'] ?? true)
+                            <th></th>
+                        @endif
+                        @if ($inventory_visible_column['brand'] ?? true)
+                            <th></th>
+                        @endif
+                        @if ($inventory_visible_column['size'] ?? true)
+                            <th></th>
+                        @endif
+                        @if ($inventory_visible_column['code'] ?? true)
+                            <th></th>
+                        @endif
+                        @if ($inventory_visible_column['product_name'] ?? true)
+                        @endif
+                        <th colspan="2" class="text-end fw-bold">Total</th>
                         @if ($inventory_visible_column['quantity'] ?? true)
                             <th class="text-end fw-bold text-primary">{{ $quantity }}</th>
                         @endif

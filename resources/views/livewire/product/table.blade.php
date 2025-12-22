@@ -52,6 +52,20 @@
                                     aria-label="Search products">
                             </div>
                         </div>
+                        <div class="col-auto">
+                            <div class="dropdown">
+                                <button class="btn btn-sm btn-outline-primary shadow-sm" data-bs-toggle="dropdown" aria-expanded="false" title="Column Visibility">
+                                    <i class="demo-pli-layout-grid"></i>
+                                </button>
+                                <ul class="dropdown-menu dropdown-menu-end shadow-sm">
+                                    <li>
+                                        <a class="dropdown-item" data-bs-toggle="offcanvas" data-bs-target="#productColumnVisibility" aria-controls="productColumnVisibility">
+                                            <i class="demo-pli-column-width me-2"></i>Column Visibility
+                                        </a>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -84,6 +98,16 @@
                             Sub Category
                         </label>
                         {{ html()->select('sub_category_id', [])->value('')->class('select-category_id-list shadow-sm border-secondary-subtle')->id('sub_category_id')->placeholder('All Sub Categories') }}
+                    </div>
+                </div>
+
+                <div class="col-lg-4 col-md-6" wire:ignore>
+                    <div>
+                        <label for="brand_id" class="form-label small fw-medium text-capitalize">
+                            <i class="demo-psi-tag me-1 text-muted"></i>
+                            Brand
+                        </label>
+                        {{ html()->select('brand_id', [])->value('')->class('select-brand_id-list shadow-sm border-secondary-subtle')->id('brand_id')->placeholder('All Brands') }}
                     </div>
                 </div>
 
@@ -129,136 +153,197 @@
             <table class="table table-hover align-middle border-bottom mb-0">
                 <thead class="table-light text-capitalize">
                     <tr>
-                        <th class="border-0">
-                            <div class="form-check ms-1">
-                                <input class="form-check-input" type="checkbox" wire:model.live="selectAll" id="selectAll" />
-                                <label class="form-check-label" for="selectAll">
-                                    <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="id" label="ID" />
-                                </label>
-                            </div>
-                        </th>
-                        <th class="border-0">
-                            <div class="d-flex align-items-center">
-                                <i class="demo-psi-building me-2 text-secondary small"></i>
-                                <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="department_id" label="Department" />
-                            </div>
-                        </th>
-                        <th class="border-0">
-                            <div class="d-flex align-items-center">
-                                <i class="demo-psi-folder me-2 text-secondary small"></i>
-                                <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="main_category_id" label="Main Category" />
-                            </div>
-                        </th>
-                        <th class="border-0">
-                            <div class="d-flex align-items-center">
-                                <i class="demo-psi-folder-open me-2 text-secondary small"></i>
-                                <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="sub_category_id" label="Sub Category" />
-                            </div>
-                        </th>
-                        <th class="border-0">
-                            <div class="d-flex align-items-center">
-                                <i class="demo-psi-cube me-2 text-secondary small"></i>
-                                <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="unit_id" label="Unit" />
-                            </div>
-                        </th>
-                        <th class="border-0">
-                            <div class="d-flex align-items-center">
-                                <i class="demo-psi-cube me-2 text-secondary small"></i>
-                                <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="size" label="Size" />
-                            </div>
-                        </th>
-                        <th class="border-0">
-                            <div class="d-flex align-items-center">
-                                <i class="demo-psi-coding me-2 text-secondary small"></i>
-                                <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="code" label="Code" />
-                            </div>
-                        </th>
-                        <th class="border-0">
-                            <div class="d-flex align-items-center">
-                                <i class="demo-psi-tag me-2 text-secondary small"></i>
-                                <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="name" label="Product Name" />
-                            </div>
-                        </th>
-                        <th class="border-0">
-                            <div class="d-flex align-items-center">
-                                <i class="demo-psi-tag me-2 text-secondary small"></i>
-                                <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="name_arabic" label="Arabic Name" />
-                            </div>
-                        </th>
-                        <th class="border-0">
-                            <div class="d-flex align-items-center">
-                                <i class="demo-psi-barcode me-2 text-secondary small"></i>
-                                <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="barcode" label="Barcode" />
-                            </div>
-                        </th>
-                        <th class="border-0 text-end">
-                            <div class="d-flex align-items-center justify-content-end">
-                                <i class="demo-psi-dollar me-2 text-secondary small"></i>
-                                <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="cost" label="Cost" />
-                            </div>
-                        </th>
-                        <th class="border-0 text-end">
-                            <div class="d-flex align-items-center justify-content-end">
-                                <i class="demo-psi-coin me-2 text-secondary small"></i>
-                                <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="mrp" label="MRP" />
-                            </div>
-                        </th>
+                        @if ($product_visible_column['id'] ?? true)
+                            <th class="border-0">
+                                <div class="form-check ms-1">
+                                    <input class="form-check-input" type="checkbox" wire:model.live="selectAll" id="selectAll" />
+                                    <label class="form-check-label" for="selectAll">
+                                        <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="id" label="ID" />
+                                    </label>
+                                </div>
+                            </th>
+                        @endif
+                        @if ($product_visible_column['department'] ?? true)
+                            <th class="border-0">
+                                <div class="d-flex align-items-center">
+                                    <i class="demo-psi-building me-2 text-secondary small"></i>
+                                    <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="department_id" label="Department" />
+                                </div>
+                            </th>
+                        @endif
+                        @if ($product_visible_column['main_category'] ?? true)
+                            <th class="border-0">
+                                <div class="d-flex align-items-center">
+                                    <i class="demo-psi-folder me-2 text-secondary small"></i>
+                                    <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="main_category_id" label="Main Category" />
+                                </div>
+                            </th>
+                        @endif
+                        @if ($product_visible_column['sub_category'] ?? true)
+                            <th class="border-0">
+                                <div class="d-flex align-items-center">
+                                    <i class="demo-psi-folder-open me-2 text-secondary small"></i>
+                                    <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="sub_category_id" label="Sub Category" />
+                                </div>
+                            </th>
+                        @endif
+                        @if ($product_visible_column['unit'] ?? true)
+                            <th class="border-0">
+                                <div class="d-flex align-items-center">
+                                    <i class="demo-psi-cube me-2 text-secondary small"></i>
+                                    <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="unit_id" label="Unit" />
+                                </div>
+                            </th>
+                        @endif
+                        @if ($product_visible_column['brand'] ?? true)
+                            <th class="border-0">
+                                <div class="d-flex align-items-center">
+                                    <i class="demo-psi-tag me-2 text-secondary small"></i>
+                                    <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="brand_id" label="Brand" />
+                                </div>
+                            </th>
+                        @endif
+                        @if ($product_visible_column['size'] ?? true)
+                            <th class="border-0">
+                                <div class="d-flex align-items-center">
+                                    <i class="demo-psi-cube me-2 text-secondary small"></i>
+                                    <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="size" label="Size" />
+                                </div>
+                            </th>
+                        @endif
+                        @if ($product_visible_column['code'] ?? true)
+                            <th class="border-0">
+                                <div class="d-flex align-items-center">
+                                    <i class="demo-psi-coding me-2 text-secondary small"></i>
+                                    <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="code" label="Code" />
+                                </div>
+                            </th>
+                        @endif
+                        @if ($product_visible_column['product_name'] ?? true)
+                            <th class="border-0">
+                                <div class="d-flex align-items-center">
+                                    <i class="demo-psi-tag me-2 text-secondary small"></i>
+                                    <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="name" label="Product Name" />
+                                </div>
+                            </th>
+                        @endif
+                        @if ($product_visible_column['name_arabic'] ?? true)
+                            <th class="border-0">
+                                <div class="d-flex align-items-center">
+                                    <i class="demo-psi-tag me-2 text-secondary small"></i>
+                                    <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="name_arabic" label="Arabic Name" />
+                                </div>
+                            </th>
+                        @endif
+                        @if ($product_visible_column['barcode'] ?? true)
+                            <th class="border-0">
+                                <div class="d-flex align-items-center">
+                                    <i class="demo-psi-barcode me-2 text-secondary small"></i>
+                                    <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="barcode" label="Barcode" />
+                                </div>
+                            </th>
+                        @endif
+                        @if ($product_visible_column['cost'] ?? true)
+                            <th class="border-0 text-end">
+                                <div class="d-flex align-items-center justify-content-end">
+                                    <i class="demo-psi-dollar me-2 text-secondary small"></i>
+                                    <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="cost" label="Cost" />
+                                </div>
+                            </th>
+                        @endif
+                        @if ($product_visible_column['mrp'] ?? true)
+                            <th class="border-0 text-end">
+                                <div class="d-flex align-items-center justify-content-end">
+                                    <i class="demo-psi-coin me-2 text-secondary small"></i>
+                                    <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="mrp" label="MRP" />
+                                </div>
+                            </th>
+                        @endif
                     </tr>
                 </thead>
                 <tbody>
                     @forelse ($data as $item)
                         <tr class="align-middle">
-                            <td>
-                                <div class="d-flex align-items-center gap-2">
-                                    <div class="form-check ms-1">
-                                        <input class="form-check-input" type="checkbox" value="{{ $item->id }}" wire:model.live="selected" id="product-{{ $item->id }}" />
+                            @if ($product_visible_column['id'] ?? true)
+                                <td>
+                                    <div class="d-flex align-items-center gap-2">
+                                        <div class="form-check ms-1">
+                                            <input class="form-check-input" type="checkbox" value="{{ $item->id }}" wire:model.live="selected" id="product-{{ $item->id }}" />
+                                        </div>
+                                        <span class="badge bg-secondary rounded-pill">{{ $item->id }}</span>
                                     </div>
-                                    <span class="badge bg-secondary rounded-pill">{{ $item->id }}</span>
-                                </div>
-                            </td>
-                            <td>
-                                <span class="fw-medium text-primary">{{ $item->department?->name ?? '-' }}</span>
-                            </td>
-                            <td>
-                                <span class="text-secondary">{!! $item->mainCategory?->name ?? '-' !!}</span>
-                            </td>
-                            <td>
-                                <span class="text-secondary">{{ $item->subCategory?->name ?? '-' }}</span>
-                            </td>
-                            <td>
-                                <span class="badge bg-light text-dark border border-secondary-subtle">{{ $item->unit?->name ?? '-' }}</span>
-                            </td>
-                            <td>
-                                <span class="badge bg-light text-dark border border-secondary-subtle">{{ $item->size}}</span>
-                            </td>
-                            <td>
-                                <code class="bg-light rounded px-2 py-1 small">{{ $item->code }}</code>
-                            </td>
-                            <td>
-                                <a href="{{ route('product::edit', $item->id) }}" class="text-decoration-none fw-semibold link-primary d-block">
-                                    {{ $item->name }}
-                                </a>
-                            </td>
-                            <td dir="rtl">
-                                <span class="text-secondary">{{ $item->name_arabic }}</span>
-                            </td>
-                            <td>
-                                @if ($item->barcode)
-                                    <code class="bg-light rounded px-2 py-1 small">{{ $item->barcode }}</code>
-                                @else
-                                    <span class="text-muted">-</span>
-                                @endif
-                            </td>
-                            <td class="text-end fw-semibold">
-                                <span class="text-success">{{ currency($item->cost) }}</span>
-                            </td>
-                            <td class="text-end fw-bold">
-                                <span class="text-dark">{{ currency($item->mrp) }}</span>
-                            </td>
+                                </td>
+                            @endif
+                            @if ($product_visible_column['department'] ?? true)
+                                <td>
+                                    <span class="fw-medium text-primary">{{ $item->department?->name ?? '-' }}</span>
+                                </td>
+                            @endif
+                            @if ($product_visible_column['main_category'] ?? true)
+                                <td>
+                                    <span class="text-secondary">{!! $item->mainCategory?->name ?? '-' !!}</span>
+                                </td>
+                            @endif
+                            @if ($product_visible_column['sub_category'] ?? true)
+                                <td>
+                                    <span class="text-secondary">{{ $item->subCategory?->name ?? '-' }}</span>
+                                </td>
+                            @endif
+                            @if ($product_visible_column['unit'] ?? true)
+                                <td>
+                                    <span class="badge bg-light text-dark border border-secondary-subtle">{{ $item->unit?->name ?? '-' }}</span>
+                                </td>
+                            @endif
+                            @if ($product_visible_column['brand'] ?? true)
+                                <td>
+                                    <span class="badge bg-info bg-opacity-10 text-info border border-info-subtle">{{ $item->brand?->name ?? '-' }}</span>
+                                </td>
+                            @endif
+                            @if ($product_visible_column['size'] ?? true)
+                                <td>
+                                    <span class="badge bg-light text-dark border border-secondary-subtle">{{ $item->size}}</span>
+                                </td>
+                            @endif
+                            @if ($product_visible_column['code'] ?? true)
+                                <td>
+                                    <code class="bg-light rounded px-2 py-1 small">{{ $item->code }}</code>
+                                </td>
+                            @endif
+                            @if ($product_visible_column['product_name'] ?? true)
+                                <td>
+                                    <a href="{{ route('product::edit', $item->id) }}" class="text-decoration-none fw-semibold link-primary d-block">
+                                        {{ $item->name }}
+                                    </a>
+                                </td>
+                            @endif
+                            @if ($product_visible_column['name_arabic'] ?? true)
+                                <td dir="rtl">
+                                    <span class="text-secondary">{{ $item->name_arabic }}</span>
+                                </td>
+                            @endif
+                            @if ($product_visible_column['barcode'] ?? true)
+                                <td>
+                                    @if ($item->barcode)
+                                        <code class="bg-light rounded px-2 py-1 small">{{ $item->barcode }}</code>
+                                    @else
+                                        <span class="text-muted">-</span>
+                                    @endif
+                                </td>
+                            @endif
+                            @if ($product_visible_column['cost'] ?? true)
+                                <td class="text-end fw-semibold">
+                                    <span class="text-success">{{ currency($item->cost) }}</span>
+                                </td>
+                            @endif
+                            @if ($product_visible_column['mrp'] ?? true)
+                                <td class="text-end fw-bold">
+                                    <span class="text-dark">{{ currency($item->mrp) }}</span>
+                                </td>
+                            @endif
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="11" class="text-center py-5">
+                            <td colspan="{{ count(array_filter($product_visible_column ?? [])) + 1 }}" class="text-center py-5">
                                 <div class="text-muted my-4">
                                     <i class="demo-psi-exclamation-circle fs-1 d-block mb-3 text-secondary-emphasis opacity-50"></i>
                                     <h5 class="fw-semibold mb-2">No Products Found</h5>
@@ -355,6 +440,10 @@
                 $('#sub_category_id').on('change', function(e) {
                     const value = $(this).val() || null;
                     @this.set('sub_category_id', value);
+                });
+                $('#brand_id').on('change', function(e) {
+                    const value = $(this).val() || null;
+                    @this.set('brand_id', value);
                 });
                 $('#status').on('change', function(e) {
                     const value = $(this).val() || null;

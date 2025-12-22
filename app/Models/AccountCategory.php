@@ -28,6 +28,16 @@ class AccountCategory extends Model
         return $this->belongsTo(AccountCategory::class, 'parent_id');
     }
 
+    public function children()
+    {
+        return $this->hasMany(AccountCategory::class, 'parent_id');
+    }
+
+    public function accounts()
+    {
+        return $this->hasMany(Account::class, 'account_category_id');
+    }
+
     public static function parentCreate($parent)
     {
         $model = self::firstOrCreate(['name' => $parent]);

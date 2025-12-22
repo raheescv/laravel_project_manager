@@ -14,7 +14,7 @@ class ImportProductJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-    public function __construct(protected $user_id, protected $filePath) {}
+    public function __construct(protected $user_id, protected $filePath, protected $branchId = null) {}
 
     public function handle()
     {
@@ -25,8 +25,7 @@ class ImportProductJob implements ShouldQueue
         })->count();
 
         $totalRows--;
-
-        Excel::import(new ProductImport($this->user_id, $totalRows), $file);
+        Excel::import(new ProductImport($this->user_id, $totalRows, $this->branchId), $file);
         unlink($file);
     }
 }

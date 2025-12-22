@@ -52,9 +52,7 @@ class BranchSaleDaySessionManager extends Component
 
     public function loadOpenSessions()
     {
-        $this->openSessions = SaleDaySession::with(['branch', 'opener'])
-            ->where('status', 'open')
-            ->get();
+        $this->openSessions = SaleDaySession::with(['branch', 'opener'])->open()->get();
     }
 
     public function loadCurrentSession()
@@ -62,9 +60,8 @@ class BranchSaleDaySessionManager extends Component
         if ($this->branch_id) {
             $this->currentSession = SaleDaySession::with(['branch', 'opener'])
                 ->where('branch_id', $this->branch_id)
-                ->where('status', 'open')
+                ->open()
                 ->first();
-
             if ($this->currentSession) {
                 $this->calculateSessionStats();
             }
@@ -114,23 +111,29 @@ class BranchSaleDaySessionManager extends Component
         }
         // Ensure no open session already exists for the selected date
         $existsForDate = SaleDaySession::where('branch_id', $this->branch_id)
+            ->open()
             ->whereDate('opened_at', $this->date)
             ->exists();
-
         if ($existsForDate) {
             session()->flash('error', 'This branch already has an opened a session for the selected date.');
 
             return;
         }
-
-        // Create new day session
-        SaleDaySession::create([
-            'branch_id' => $this->branch_id,
-            'opened_by' => Auth::id(),
-            'opened_at' => date('Y-m-d H:i:s', strtotime($this->date)),
-            'opening_amount' => $this->opening_amount,
-            'status' => 'open',
-        ]);
+        $existsForDate = SaleDaySession::where('branch_id', $this->branch_id)
+            ->whereDate('opened_at', $this->date)
+            ->first();
+        if (! empty($existsForDate)) {
+            $existsForDate->update(['closed_at' => null, 'closed_by' => null, 'status' => 'open']);
+        } else {
+            // Create new day session
+            SaleDaySession::create([
+                'branch_id' => $this->branch_id,
+                'opened_by' => Auth::id(),
+                'opened_at' => date('Y-m-d H:i:s', strtotime($this->date)),
+                'opening_amount' => $this->opening_amount,
+                'status' => 'open',
+            ]);
+        }
 
         session()->flash('success', 'Day opened successfully.');
 

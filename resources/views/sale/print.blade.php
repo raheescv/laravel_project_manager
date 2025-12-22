@@ -403,7 +403,7 @@
                     <td colspan="2" class="text-center">
                         @if (isset($payments))
                             @foreach ($payments as $payment)
-                                <span class="payment-badge">{{ $payment['payment_method']['name'] }} : {{ currency($payment['amount']) }}</span>
+                                <span class="payment-badge">{{ $payment['payment_method']['alias_name'] ?? $payment['payment_method']['name'] }} : {{ currency($payment['amount']) }}</span>
                             @endforeach
                         @endif
                     </td>

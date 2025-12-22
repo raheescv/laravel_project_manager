@@ -12,7 +12,9 @@ class GetMainCategoriesAction
      */
     public function execute(): array
     {
-        $categories = Category::whereNull('parent_id')
+        $categories = Category::withCount('products')->whereNull('parent_id')
+            ->where('online_visibility_flag', true)
+            ->having('products_count', '>', 0)
             ->orderBy('name')
             ->get(['id', 'name']);
 

@@ -32,6 +32,12 @@ class Table extends Component
 
     public $sortDirection = 'desc';
 
+    public $selectedAccountId = null;
+
+    public $expandedTypes = [];
+
+    public $expandedCategories = [];
+
     protected $paginationTheme = 'bootstrap';
 
     protected $listeners = [
@@ -100,7 +106,155 @@ class Table extends Component
 
     public function updated($key, $value)
     {
+        if ($key !== 'selectedAccountId') {
+            $this->selectedAccountId = null;
+        }
         $this->resetPage();
+    }
+
+    public function toggleType($typeKey)
+    {
+        if (in_array($typeKey, $this->expandedTypes)) {
+            $this->expandedTypes = array_values(array_diff($this->expandedTypes, [$typeKey]));
+        } else {
+            $this->expandedTypes[] = $typeKey;
+        }
+    }
+
+    public function toggleCategory($categoryId)
+    {
+        $key = (string) $categoryId;
+        if (in_array($key, $this->expandedCategories)) {
+            $this->expandedCategories = array_values(array_diff($this->expandedCategories, [$key]));
+        } else {
+            $this->expandedCategories[] = $key;
+        }
+    }
+
+    public function isTypeExpanded($typeKey)
+    {
+        return in_array($typeKey, $this->expandedTypes);
+    }
+
+    public function isCategoryExpanded($categoryId)
+    {
+        return in_array((string) $categoryId, $this->expandedCategories);
+    }
+
+    public function filterByType($type)
+    {
+        $this->account_type = $this->account_type === $type ? '' : $type;
+        $this->account_category_id = '';
+        $this->selectedAccountId = null;
+
+        // Auto-expand when filtering
+        if ($this->account_type && !in_array($type, $this->expandedTypes)) {
+            $this->expandedTypes[] = $type;
+        }
+
+        $this->resetPage();
+    }
+
+    public function filterByCategory($categoryId)
+    {
+        $this->account_category_id = $this->account_category_id == $categoryId ? '' : $categoryId;
+        $this->selectedAccountId = null;
+
+        // Auto-expand when filtering
+        if ($this->account_category_id) {
+            $account = Account::where('account_category_id', $categoryId)->first();
+            if ($account && !in_array($account->account_type, $this->expandedTypes)) {
+                $this->expandedTypes[] = $account->account_type;
+            }
+            $key = (string) $categoryId;
+            if (!in_array($key, $this->expandedCategories)) {
+                $this->expandedCategories[] = $key;
+            }
+        }
+
+        $this->resetPage();
+    }
+
+    public function filterByAccount($accountId)
+    {
+        $account = Account::find($accountId);
+        if ($account) {
+            $this->account_type = $account->account_type;
+            $this->account_category_id = $account->account_category_id;
+            $this->selectedAccountId = $accountId;
+
+            // Auto-expand when filtering
+            if (!in_array($account->account_type, $this->expandedTypes)) {
+                $this->expandedTypes[] = $account->account_type;
+            }
+            if ($account->account_category_id) {
+                $key = (string) $account->account_category_id;
+                if (!in_array($key, $this->expandedCategories)) {
+                    $this->expandedCategories[] = $key;
+                }
+            }
+        } else {
+            $this->selectedAccountId = null;
+        }
+        $this->resetPage();
+    }
+
+    public function getTreeData()
+    {
+        $accounts = Account::with('accountCategory:id,name')
+            ->orderBy('account_type')
+            ->orderBy('name')
+            ->get();
+
+        $tree = [];
+        $accountTypes = accountTypes();
+
+        foreach ($accountTypes as $typeKey => $typeLabel) {
+            $typeAccounts = $accounts->where('account_type', $typeKey);
+
+            if ($typeAccounts->isEmpty()) {
+                continue;
+            }
+
+            $categories = [];
+            $uncategorized = [];
+
+            foreach ($typeAccounts as $account) {
+                $categoryName = $account->accountCategory?->name ?? 'Uncategorized';
+                $categoryId = $account->account_category_id ?? 0;
+
+                if ($categoryId) {
+                    if (!isset($categories[$categoryId])) {
+                        $categories[$categoryId] = [
+                            'id' => $categoryId,
+                            'name' => $categoryName,
+                            'accounts' => [],
+                        ];
+                    }
+                    $categories[$categoryId]['accounts'][] = [
+                        'id' => $account->id,
+                        'name' => $account->name,
+                        'alias_name' => $account->alias_name,
+                    ];
+                } else {
+                    $uncategorized[] = [
+                        'id' => $account->id,
+                        'name' => $account->name,
+                        'alias_name' => $account->alias_name,
+                    ];
+                }
+            }
+
+            if (!empty($categories) || !empty($uncategorized)) {
+                $tree[$typeKey] = [
+                    'label' => $typeLabel,
+                    'categories' => $categories,
+                    'uncategorized' => $uncategorized,
+                ];
+            }
+        }
+
+        return $tree;
     }
 
     public function render()
@@ -110,6 +264,7 @@ class Table extends Component
                 return $query->where(function ($q) use ($value): void {
                     $value = trim($value);
                     $q->where('accounts.name', 'like', "%{$value}%")
+                        ->orWhere('accounts.alias_name', 'like', "%{$value}%")
                         ->orWhere('accounts.mobile', 'like', "%{$value}%")
                         ->orWhere('accounts.email', 'like', "%{$value}%")
                         ->orWhere('accounts.model', 'like', "%{$value}%");
@@ -121,14 +276,20 @@ class Table extends Component
             ->when($this->account_category_id ?? '', function ($query, $value) {
                 return $query->where('account_category_id', $value);
             })
+            ->when($this->selectedAccountId ?? '', function ($query, $value) {
+                return $query->where('accounts.id', $value);
+            })
             ->when($this->model ?? '', function ($query, $value) {
                 return $query->where('model', $value);
             })
             ->latest()
             ->paginate($this->limit);
 
+        $treeData = $this->getTreeData();
+
         return view('livewire.account.table', [
             'data' => $data,
+            'treeData' => $treeData,
         ]);
     }
 }

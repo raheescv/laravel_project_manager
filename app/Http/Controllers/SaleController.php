@@ -48,8 +48,19 @@ class SaleController extends Controller
 
     public function posPage($id = null)
     {
-        $categories = Category::withCount('products')->get()->toArray();
-        $employees = User::employee()->pluck('name', 'id')->toArray();
+        $showColleague = Configuration::where('key', 'show_colleague')->value('value') ?? 'yes';
+        $categories = Category::withCount('products')
+            ->where('sale_visibility_flag', true)
+            ->having('products_count', '>', 0)
+            ->get()
+            ->toArray();
+
+        $employees = User::employee();
+        if ($showColleague == 'no' && Auth::user()->type == 'employee') {
+            $employees = $employees->where('id', Auth::id());
+        }
+        $employees = $employees->pluck('name', 'id')->toArray();
+
         $useDefaultCustomer = (Configuration::where('key', 'default_customer_enabled')->value('value') ?? 'yes') === 'yes';
         $customers = [];
         if ($useDefaultCustomer) {

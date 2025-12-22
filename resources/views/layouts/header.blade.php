@@ -105,6 +105,11 @@
                                             <i class="fa fa-phone fs-5 me-2"></i>Customer Callback Reminder
                                         </a>
                                     @endcan
+                                    @can('report.day wise sale')
+                                        <a href="{{ route('report::day_wise_sale') }}" class="list-group-item list-group-item-action">
+                                            <i class="fa fa-calendar fs-5 me-2"></i>Day Wise Sale Report
+                                        </a>
+                                    @endcan
                                 </div>
                             </div>
                         </div>

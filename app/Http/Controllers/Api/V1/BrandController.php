@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Actions\V1\Brand\GetBrandsAction;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\V1\GetBrandsRequest;
 use App\Traits\ApiResponseTrait;
 use Dedoc\Scramble\Attributes\Group;
 use Illuminate\Http\JsonResponse;
@@ -29,10 +30,10 @@ class BrandController extends Controller
      *   "message": "Brands retrieved successfully"
      * }
      */
-    public function index(GetBrandsAction $action): JsonResponse
+    public function index(GetBrandsAction $action, GetBrandsRequest $request): JsonResponse
     {
         try {
-            $result = $action->execute();
+            $result = $action->execute($request);
 
             return $this->sendSuccess($result, 'Brands retrieved successfully');
         } catch (ValidationException $e) {

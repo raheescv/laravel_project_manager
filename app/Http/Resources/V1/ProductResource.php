@@ -139,6 +139,7 @@ class ProductResource extends JsonResource
                 return $availableStock <= 0;
             }),
             'available_sizes' => $this->getAvailableSizes(),
+            'related_sizes' => $this->getRelatedSizes(),
         ];
     }
 
@@ -154,5 +155,62 @@ class ProductResource extends JsonResource
             ->pluck('size')->toArray();
 
         return $list;
+    }
+
+    /**
+     * Get related product sizes from products with names containing the base name.
+     */
+    private function getRelatedSizes(): array
+    {
+        // Extract base name by removing trailing numbers and spaces
+        $baseName = preg_replace('/\s+\d+$/', '', trim($this->name));
+
+        // If base name is too short, use the full name
+        if (strlen($baseName) < 3) {
+            $baseName = $this->name;
+        }
+
+        // Get related products with their inventories and branches
+        $relatedProducts = Product::query()
+            ->where('name', 'like', $baseName . '%')
+            ->whereNotNull('size')
+            ->where('size', '!=', '')
+            ->with('inventories.branch:id,name')
+            ->get();
+
+        // Group by size and calculate stock by branch for each size
+        $sizesWithStock = $relatedProducts->groupBy('size')->map(function ($products, $size) {
+            // Collect all inventories for products with this size
+            $allInventories = $products->flatMap(function ($product) {
+                return $product->inventories;
+            });
+
+            // Group inventories by branch and sum quantities
+            $branchStock = $allInventories->groupBy('branch_id')->map(function ($inventories, $branchId) {
+                $firstInventory = $inventories->first();
+                $branch = $firstInventory->branch;
+
+                if (! $branch) {
+                    return null;
+                }
+
+                return [
+                    'id' => $branch->id,
+                    'name' => $branch->name,
+                    'quantity' => $inventories->sum('quantity'),
+                ];
+            })->filter()->values()->toArray();
+
+            $totalStock = $allInventories->sum('quantity');
+
+            return [
+                'size' => $size,
+                'total_stock' => $totalStock,
+                'is_out_of_stock' => $totalStock <= 0,
+                'branches' => $branchStock,
+            ];
+        })->values()->toArray();
+
+        return $sizesWithStock;
     }
 }
