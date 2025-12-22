@@ -312,7 +312,16 @@
                     @endif
                 </div>
             @endif
-            <div class="voucher-title">General Voucher</div>
+            <div class="voucher-title">
+                @php
+                    $voucherTypes = [
+                        'receipt' => 'Receipt Voucher',
+                        'payment' => 'Payment Voucher',
+                        'general' => 'General Voucher',
+                    ];
+                @endphp
+                {{ $voucherTypes[$voucherType] ?? 'General Voucher' }}
+            </div>
             <div class="voucher-number">
                 @if ($journal->reference_number)
                     Voucher No: {{ $journal->reference_number }}
@@ -437,6 +446,10 @@
             // Uncomment the line below if you want auto-print
             window.print();
         };
+
+        setTimeout(function() {
+            window.close();
+        }, 6000);
     </script>
 </body>
 
