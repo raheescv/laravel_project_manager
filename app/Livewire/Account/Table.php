@@ -148,7 +148,7 @@ class Table extends Component
         $this->selectedAccountId = null;
 
         // Auto-expand when filtering
-        if ($this->account_type && !in_array($type, $this->expandedTypes)) {
+        if ($this->account_type && ! in_array($type, $this->expandedTypes)) {
             $this->expandedTypes[] = $type;
         }
 
@@ -163,11 +163,11 @@ class Table extends Component
         // Auto-expand when filtering
         if ($this->account_category_id) {
             $account = Account::where('account_category_id', $categoryId)->first();
-            if ($account && !in_array($account->account_type, $this->expandedTypes)) {
+            if ($account && ! in_array($account->account_type, $this->expandedTypes)) {
                 $this->expandedTypes[] = $account->account_type;
             }
             $key = (string) $categoryId;
-            if (!in_array($key, $this->expandedCategories)) {
+            if (! in_array($key, $this->expandedCategories)) {
                 $this->expandedCategories[] = $key;
             }
         }
@@ -184,12 +184,12 @@ class Table extends Component
             $this->selectedAccountId = $accountId;
 
             // Auto-expand when filtering
-            if (!in_array($account->account_type, $this->expandedTypes)) {
+            if (! in_array($account->account_type, $this->expandedTypes)) {
                 $this->expandedTypes[] = $account->account_type;
             }
             if ($account->account_category_id) {
                 $key = (string) $account->account_category_id;
-                if (!in_array($key, $this->expandedCategories)) {
+                if (! in_array($key, $this->expandedCategories)) {
                     $this->expandedCategories[] = $key;
                 }
             }
@@ -224,7 +224,7 @@ class Table extends Component
                 $categoryId = $account->account_category_id ?? 0;
 
                 if ($categoryId) {
-                    if (!isset($categories[$categoryId])) {
+                    if (! isset($categories[$categoryId])) {
                         $categories[$categoryId] = [
                             'id' => $categoryId,
                             'name' => $categoryName,
@@ -245,7 +245,7 @@ class Table extends Component
                 }
             }
 
-            if (!empty($categories) || !empty($uncategorized)) {
+            if (! empty($categories) || ! empty($uncategorized)) {
                 $tree[$typeKey] = [
                     'label' => $typeLabel,
                     'categories' => $categories,

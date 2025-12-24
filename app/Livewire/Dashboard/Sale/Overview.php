@@ -143,7 +143,6 @@ class Overview extends Component
         foreach ($paymentData as $key => $item) {
             $paymentData[$key]['percentage'] = $totalAmount ? round(($item['amount'] / $totalAmount) * 100, 2) : 0;
         }
-        // dd($this->getMonthlyData()->toArray());
         // Get chart data based on selected period
         $data = match ($this->period) {
             'week' => $this->getWeeklyData(),

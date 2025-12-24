@@ -4,12 +4,11 @@ namespace App\Livewire\Account\GeneralVoucher;
 
 use App\Actions\Journal\GeneralVoucherJournalEntryAction;
 use App\Models\Account;
-use App\Models\JournalEntry;
+use App\Models\Journal;
 use Exception;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Livewire\Component;
-use App\Models\Journal;
 
 class Page extends Component
 {
@@ -66,7 +65,7 @@ class Page extends Component
                     'credit' => 0,
                     'description' => '',
                     'person_name' => null,
-                ]
+                ],
             ];
         } else {
             // Load Journal with all entries
@@ -174,7 +173,8 @@ class Page extends Component
         // Custom validation: each entry cannot have both debit and credit > 0
         foreach ($this->entries as $index => $entry) {
             if ($entry['debit'] > 0 && $entry['credit'] > 0) {
-                $this->dispatch('error', ['message' => 'Entry #' . ($index + 1) . ' cannot have both debit and credit amounts. Each entry must be either a debit or a credit, not both.']);
+                $this->dispatch('error', ['message' => 'Entry #'.($index + 1).' cannot have both debit and credit amounts. Each entry must be either a debit or a credit, not both.']);
+
                 return;
             }
         }
@@ -185,6 +185,7 @@ class Page extends Component
 
         if (abs($totalDebits - $totalCredits) > 0.01) {
             $this->dispatch('error', ['message' => 'Total debits must equal total credits.']);
+
             return;
         }
 
@@ -200,8 +201,9 @@ class Page extends Component
             }
         }
 
-        if (!$hasDebit || !$hasCredit) {
+        if (! $hasDebit || ! $hasCredit) {
             $this->dispatch('error', ['message' => 'At least one entry must have a debit amount and one must have a credit amount.']);
+
             return;
         }
 

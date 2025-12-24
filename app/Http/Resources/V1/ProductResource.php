@@ -172,7 +172,7 @@ class ProductResource extends JsonResource
 
         // Get related products with their inventories and branches
         $relatedProducts = Product::query()
-            ->where('name', 'like', $baseName . '%')
+            ->where('name', 'like', $baseName.'%')
             ->whereNotNull('size')
             ->where('size', '!=', '')
             ->with('inventories.branch:id,name')
@@ -191,7 +191,7 @@ class ProductResource extends JsonResource
                 $branch = $firstInventory->branch;
 
                 if (! $branch) {
-                    return null;
+                    return;
                 }
 
                 return [

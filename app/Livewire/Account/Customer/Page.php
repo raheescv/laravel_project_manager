@@ -5,11 +5,11 @@ namespace App\Livewire\Account\Customer;
 use App\Actions\Account\CreateAction;
 use App\Actions\Account\UpdateAction;
 use App\Models\Account;
+use App\Models\AccountCategory;
 use App\Models\Country;
 use App\Models\CustomerType;
 use Faker\Factory;
 use Livewire\Component;
-use App\Models\AccountCategory;
 
 class Page extends Component
 {

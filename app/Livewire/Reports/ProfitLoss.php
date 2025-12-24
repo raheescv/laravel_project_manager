@@ -367,7 +367,6 @@ class ProfitLoss extends Component
                 $indirectIncome = $master['total'];
             }
         }
-// dd($directExpenseStructure);
         foreach ($directExpenseStructure as $master) {
             if ($master['name'] === 'Direct Expense') {
                 $directExpense = $master['total'];

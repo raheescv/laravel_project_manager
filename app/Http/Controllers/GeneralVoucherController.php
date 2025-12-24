@@ -2,8 +2,8 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Journal;
 use App\Models\Configuration;
+use App\Models\Journal;
 
 class GeneralVoucherController extends Controller
 {
