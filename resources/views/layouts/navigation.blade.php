@@ -269,6 +269,26 @@
                             </ul>
                         </li>
                     @endif
+
+                        @php
+                            $bookingActive = request()->routeIs('sale::booking', 'sale::create_booking', 'sale::edit_booking*', 'sale::view_booking*');
+                        @endphp
+
+                        <li class="nav-item has-sub">
+                            <a href="#" class="mininav-toggle nav-link {{ $bookingActive ? 'active' : '' }}" aria-expanded="{{ $bookingActive ? 'true' : 'false' }}"><i class="fa fa-shopping-cart fs-5 me-2"></i>
+                                <span class="nav-label mininav-content ms-1 collapse show" style="">Booking</span>
+                            </a>
+                            <ul class="mininav-content nav collapse {{ $bookingActive ? 'show' : '' }}">
+                                <li data-popper-arrow class="arrow"></li>
+                                <li class="nav-item">
+                                    <a href="{{ route('sale::create_booking') }}" class="nav-link {{ request()->routeIs('sale::create_booking') ? 'active' : '' }}">Create</a>
+                                </li>
+                                <li class="nav-item">
+                                    <a href="{{ route('sale::booking') }}" class="nav-link {{ request()->routeIs('sale::booking') ? 'active' : '' }}">List</a>
+                                </li>
+                            </ul>
+                        </li>
+                    
                     @if (auth()->user()->can('sales return.view') || auth()->user()->can('report.sale return item'))
                         <li class="nav-item has-sub">
                             <a href="#"

@@ -3,6 +3,8 @@ import axios from "axios";
 import CustomerSelect from "./Components/CustomerSelect";
 import EmployeeSelect from "./Components/EmployeeSelect";
 import CategorySelect from "./Components/CategorySelect";
+import CategorySidebar from "./Components/CategorySidebar";
+import TopMenu from "./Components/TopMenu";
 import { toast } from "react-toastify"; 
 import ProductGrid from "./ProductGrid";
 import ViewItemsModal from "./Components/ViewItemsModal";
@@ -285,18 +287,22 @@ const buildMeasurementPayload = () => {
     return (
         <div className="main-wrapper">
             <div className="page-wrapper pos-pg-wrapper ms-0">
+                <TopMenu onHomeClick={() => window.location.href = '/'} />
                 <div className="content pos-design p-0">
                     <div className="row pos-wrapper align-items-start">
 
-                        {/* LEFT SIDE: Product Grid */}
-                        <div className="col-md-12 col-lg-7">
-                            <CustomerSelect onChange={setCustomerId} />
+                        {/* LEFT SIDEBAR: Categories */}
+                        <div className="col-12 col-lg-2 pe-0">
+                            <CategorySidebar selectedId={categoryId} onSelect={(id) => setCategoryId(id)} />
+                        </div>
 
-                                            <div className="mb-2">
-                    <label className="fw-bold mb-1"></label>
-                   <CategorySelect onChange={(value) => setCategoryId(Number(value))} />
-
-                    </div>
+                        {/* CENTER: Product Grid */}
+                            <div className="col-md-12 col-lg-7">
+                                
+                                <div className="mb-2">
+                                    <label className="fw-bold mb-1">Customer</label>
+                                    <CustomerSelect value={customerId} onChange={setCustomerId} />
+                                </div>
 
                     {measurements.length > 0 && (
     <div className="card mt-2 p-2">
@@ -324,10 +330,10 @@ const buildMeasurementPayload = () => {
 
 
 
-                            <EmployeeSelect
-                           
-                            onChange={setEmployeeId}
-                        />
+                            <div className="mb-2">
+                                <label className="fw-bold mb-1">Employee</label>
+                                <EmployeeSelect value={employeeId} onChange={setEmployeeId} />
+                            </div>
                             <div
                                 className="tabs_container"
                                 style={{ height: "80vh", overflow: "auto", overflowX: "hidden", paddingRight: "10px" }}
@@ -339,7 +345,7 @@ const buildMeasurementPayload = () => {
                         </div>
 
                         {/* RIGHT SIDE: Cart + Order Summary */}
-                        <div className="col-md-12 col-lg-5 ps-0">
+                        <div className="col-md-12 col-lg-3 ps-0">
                             <aside className="product-order-list">
                                 {/* Cart Header */}
                                 <div className="cart-summary mb-3">

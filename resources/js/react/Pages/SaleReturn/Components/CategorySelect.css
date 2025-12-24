@@ -1,14 +1,60 @@
-.category-select {
-    width: 100%;
-    height: 36px;
-    padding: 6px 10px;
-    font-size: 13px;
-    border-radius: 10px;
-    border: 1px solid #e2e6ef;
-    background: #fff;
+.pos-category-sidebar {
+    width: 240px;
+    background: #ffffff;
+    border-radius: 16px;
+    padding: 14px;
 }
 
-.category-select:focus {
-    border-color: #6f7afc;
-    outline: none;
+.sidebar-title {
+    font-size: 18px;
+    font-weight: 600;
+    margin-bottom: 14px;
+}
+
+/* Category item */
+.pos-category-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 14px;
+    margin-bottom: 8px;
+    border-radius: 14px;
+    cursor: pointer;
+    font-size: 15px;
+    color: #111;
+    transition: all 0.2s ease;
+}
+
+/* Hover */
+.pos-category-item:hover {
+    background: #f3f4f8;
+}
+
+/* ACTIVE – exact POS gradient */
+.pos-category-item.active {
+    background: linear-gradient(90deg, #ff5ea8, #b66cff);
+    color: #fff;
+}
+
+/* Name */
+.cat-name {
+    font-weight: 500;
+}
+
+/* Count badge */
+.cat-count {
+    min-width: 34px;
+    text-align: center;
+    padding: 3px 8px;
+    border-radius: 20px;
+    background: #eef0f7;
+    font-size: 13px;
+    font-weight: 500;
+    color: #333;
+}
+
+/* Count when active */
+.pos-category-item.active .cat-count {
+    background: rgba(255, 255, 255, 0.25);
+    color: #fff;
 }
