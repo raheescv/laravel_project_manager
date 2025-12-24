@@ -62,7 +62,7 @@ class ChangeSession extends Component
             $oldSession = $this->sale->saleDaySession;
 
             if ($newSession->id == $oldSession->id) {
-                throw new Exception('Please Select Different session.');
+                // throw new Exception('Please Select Different session.');
             }
             $this->sale->update($data);
             $this->sale->journals()->update(['date' => $data['date']]);
