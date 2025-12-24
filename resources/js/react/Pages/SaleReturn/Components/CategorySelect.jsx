@@ -1,42 +1,66 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import TomSelect from "tom-select";
-import "tom-select/dist/css/tom-select.css";
 import axios from "axios";
+import "./CategorySelect.css";
 
-export default function CategorySelect({ onChange }) {
+export default function CategorySelect({ value, onChange }) {
+    const selectRef = useRef(null);
+    const tomRef = useRef(null);
+    const [options, setOptions] = useState([]);
+
     useEffect(() => {
-        const select = document.getElementById("category_id");
-        if (!select) return;
+        let mounted = true;
 
-        // Fetch all categories once
-        axios.get("/categories/categorie")
-            .then(res => {
-                const options = res.data.map(c => ({
-                    id: c.id,
-                    name: c.name
-                }));
+        // Fetch categories from API
+        axios.get("/categories/categorie").then((res) => {
+            if (!mounted) return;
 
-                const tom = new TomSelect(select, {
-                    valueField: "id",
-                    labelField: "name",
-                    searchField: ["name"], // search enabled
-                    maxItems: 1,
-                    options: options,      // preload all
-                    onChange(value) {
-                        onChange?.(value);
-                    },
-                });
+            const categories = (res.data || []).map((c) => ({
+                id: String(c.id),
+                name: c.name,
+            }));
 
-                return () => tom.destroy();
-            })
-            .catch(err => {
-                console.error("Failed to load categories:", err);
-            });
+            setOptions(categories);
+        });
+
+        return () => {
+            mounted = false;
+            tomRef.current?.destroy();
+            tomRef.current = null;
+        };
     }, []);
 
+    useEffect(() => {
+        if (!selectRef.current || options.length === 0) return;
+
+        // Destroy previous instance
+        tomRef.current?.destroy();
+
+        // Initialize TomSelect
+        tomRef.current = new TomSelect(selectRef.current, {
+            valueField: "id",
+            labelField: "name",
+            searchField: ["name"],
+            options,
+            maxItems: 1,
+            create: false,
+            onChange(val) {
+                if (val) onChange?.(Number(val));
+                else onChange?.(null);
+            },
+        });
+
+        // Auto-select value (edit mode)
+        if (value) {
+            tomRef.current.setValue(String(value), true);
+        }
+    }, [options, value]);
+
     return (
-        <select id="category_id" className="form-control">
-            <option value="">Select Category</option>
-        </select>
+        <select
+            ref={selectRef}
+            className="form-control"
+            placeholder="Select category"
+        />
     );
 }

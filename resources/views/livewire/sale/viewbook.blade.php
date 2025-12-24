@@ -574,12 +574,12 @@
                                 <i class="demo-psi-cross me-2"></i>Cancel
                             </button>
                         @endcan
-                        <!-- @can('sale.edit completed')
-                            <a href="{{ route('sale::edit', $sales['id']) }}" type="button" class="btn btn-primary">
+                        @can('sale.edit completed')
+                            <a href="{{ route('sale::edit_booking', $sales['id']) }}" type="button" class="btn btn-primary">
                                 <i class="demo-psi-pen-5 me-2"></i>Edit
                             </a>
                         @endcan
-                        @can('sale.cancel')
+                        <!-- @can('sale.cancel')
                             <button type="button" wire:click='sendToWhatsapp' class="btn btn-success">
                                 <i class="demo-psi-whatsapp me-2"></i>Whatsapp
                             </button>

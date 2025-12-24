@@ -25,6 +25,10 @@ Route::middleware('auth')->group(function (): void {
              Route::get('create-booking', 'create_booking')
             ->name('create_booking') // ✅ unique name
             ->can('sales return.create');
+
+              Route::get('edit-booking/{id}', 'edit_booking')
+            ->name('edit_booking') // ✅ unique name
+            ->can('sales return.edit');
         });
 
         Route::get('view/{id}', 'view')->name('view')->can('sale.view');
@@ -59,6 +63,7 @@ Route::middleware('auth')->group(function (): void {
 
      Route::prefix('employees')->name('api.employees.')->group(function (): void {
         Route::get('/employee', [POSController::class, 'getEmployee'])->name('emploeelist');
+        Route::get('/employeeedit', [POSController::class, 'getEmployeeedit'])->name('emploeelistedit');
       
     });
       Route::prefix('categories')->name('api.categories.')->group(function () {

@@ -26,6 +26,8 @@ class Sale extends Model implements AuditableContracts
         'invoice_no',
         'reference_no',
         'sale_type',
+        'category_id',
+        'service_charge',
 
         'branch_id',
         'account_id',

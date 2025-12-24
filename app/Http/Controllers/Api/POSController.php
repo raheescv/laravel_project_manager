@@ -204,6 +204,22 @@ public function getCustomerMeasurements($customerId, $categoryId)
         return response()->json(['error' => 'Failed to load employees'], 500);
     }
 }
+ public function getEmployeeedit(Request $request)
+{
+    
+   try {
+    $employees = User::select('id', 'name')
+        ->orderBy('name')
+        ->get();
+
+    return response()->json($employees);
+} catch (\Exception $e) {
+    Log::error('Error loading employees: ' . $e->getMessage());
+    return response()->json(['error' => 'Failed to load employees'], 500);
+}
+
+
+}
 
 public function getmeasuremetcategory(Request $request)
 {
@@ -375,6 +391,7 @@ public function getMeasurementTemplates($categoryId)
 
    public function submitSale(Request $request)
 {
+      Log::info('REQUEST DATA', $request->all());
     try {
         $user_id = Auth::id();
         DB::beginTransaction();
@@ -385,9 +402,12 @@ public function getMeasurementTemplates($categoryId)
         $table_id = $saleData['id'] ?? null;
         $saleData['type'] = $saleData['type'] ?? 'sale';
 
+        $saleData['service_charge'] = $request->input('service_charge', 0);
+
+       $saleData['category_id'] = $request->input('category_id', 0);
 
         /* ---------------- Existing payment logic ---------------- */
-        if ($saleData['status'] == 'completed') {
+        if ($saleData['status'] == "draft" || $saleData['status'] == "completed") {
             if ($table_id) {
                 $response = $this->removePayment($table_id);
                 if (! $response['success']) {

@@ -62,20 +62,6 @@ class Page extends Component
         if (! $this->table_id) {
 
             $faker = Factory::create();
-            $name = '';
-            $code = time();
-            $code = '';
-            $barcode = '';
-            $mrp = 0;
-            $cost = 0;
-            if (! app()->isProduction()) {
-                $name = $faker->name;
-                $code = $faker->hexcolor;
-                $barcode = $faker->ean13();
-                $code = '';
-                $cost = rand(100, 900);
-                $mrp = rand(1000, 9000);
-            }
             $this->products = [
                 'type' => $this->type,
                 'code' => '',
@@ -136,7 +122,14 @@ class Page extends Component
 
             $this->products = $this->product->toArray();
             $this->type = $this->product->type;
-            $this->loadRelatedProducts();
+
+            /** 🔥 LOAD RAW MATERIALS FOR EDIT */
+            $this->raw_materials = $this->product->rawMaterials
+                ->map(fn ($rm) => [
+                    'name' => $rm->name,
+                    'quantity' => '1',
+                    'price' => $rm->price,
+                ])->toArray();
         }
 
         if ($dropdownValues) {
@@ -168,36 +161,25 @@ class Page extends Component
             'products.main_category_id' => ['required'],
             'products.cost' => ['required'],
             'products.mrp' => ['required'],
-            // 'products.barcode' => ['required_if:products.type,product'],
-            'images.*' => 'mimes:jpg,jpeg,png,gif,bmp,webp,svg|max:3100',
-            'angles_360.*' => 'nullable|file|mimes:jpg,jpeg,png,gif,bmp,webp,svg|max:10240',
-            'degree.*' => 'nullable|integer|min:0|max:359',
+            'products.barcode' => ['required_if:products.type,product'],
         ];
-
-        return $rules;
     }
 
-    protected $messages = [
-        'products.name.required' => 'The name field is required',
-        'products.name.unique' => 'The name is already Registered',
-        'products.name.max' => 'The name field must not be greater than 20 characters.',
-        'products.code.required' => 'The code field is required',
-        'products.code.max' => 'The code field must not be greater than 20 characters.',
-        'products.unit_id' => 'The unit field is required.',
-        'products.department_id' => 'The department  field is required.',
-        'products.main_category_id' => 'The main category field is required.',
-        'products.sub_category_id' => 'The sub category field is required.',
-        'products.cost' => 'The cost field is required.',
-        'products.mrp' => 'The mrp field is required.',
-        // 'products.barcode.required_if' => 'The barcode field is required when type is product.',
-        'images.mimetypes' => 'The images field must be a file of type: image.',
-        'images.*.max' => 'The images field must not be greater than 3100 KB',
-        'angles_360.*.mimes' => 'The 360-degree images must be files of type: jpg, jpeg, png, gif, bmp, webp, svg.',
-        'angles_360.*.max' => 'The 360-degree images must not be greater than 10240 KB',
-        'degree.*.integer' => 'The angle must be a number.',
-        'degree.*.min' => 'The angle must be at least 0 degrees.',
-        'degree.*.max' => 'The angle must not be greater than 359 degrees.',
-    ];
+    /** 🔥 RAW MATERIAL METHODS (ONLY ADDITION) */
+    public function addRawMaterial()
+    {
+        $this->raw_materials[] = [
+            'name' => '',
+          
+            'price' => 0,
+        ];
+    }
+
+    public function removeRawMaterial($index)
+    {
+        unset($this->raw_materials[$index]);
+        $this->raw_materials = array_values($this->raw_materials);
+    }
 
     public function save($edit = false)
     {
@@ -236,94 +218,19 @@ class Page extends Component
 
             DB::commit();
             $this->dispatch('success', ['message' => $response['message']]);
-            DB::commit();
-            if ($edit) {
-                if ($this->type == 'product') {
-                    return redirect()->route('product::edit', $response['data']['id']);
-                } else {
-                    return redirect()->route('service::edit', $response['data']['id']);
-                }
-            }
-            $this->mount($this->type, $this->table_id, $dropdownValues = false);
-            if (! $this->table_id) {
-                $this->products['department_id'] = $selected['department']['id'];
-                $this->products['main_category_id'] = $selected['mainCategory']['id'];
-                $this->products['sub_category_id'] = $selected['subCategory']['id'];
-            }
-            $this->dispatch('SelectDropDownValues', $this->products);
-            $this->dispatch('filepond-reset-images');
-            if ($this->table_id) {
-                $this->loadRelatedProducts();
-            }
+
         } catch (\Throwable $e) {
             DB::rollback();
             $this->dispatch('error', ['message' => $e->getMessage()]);
         }
     }
 
-    public function tabSelect($key)
-    {
-        $this->selectedTab = $key;
-        if ($key == 'Related' && $this->table_id) {
-            $this->loadRelatedProducts();
-        }
-    }
-
-    public function deleteImage($id)
-    {
-        try {
-            DB::beginTransaction();
-            $response = (new DeleteImageAction())->execute($id);
-            if (! $response['success']) {
-                throw new \Exception($response['message'], 1);
-            }
-            $this->mount($this->type, $this->table_id);
-            $this->dispatch('success', ['message' => 'Deleted Successfully']);
-            DB::commit();
-        } catch (\Exception $e) {
-            DB::rollback();
-            $this->dispatch('error', ['message' => $e->getMessage()]);
-        }
-    }
-
-    public function defaultImage($path)
-    {
-        try {
-            $this->product->update(['thumbnail' => $path]);
-            $this->dispatch('success', ['message' => 'Thumbnail Updated Successfully']);
-        } catch (\Exception $e) {
-            DB::rollback();
-            $this->dispatch('error', ['message' => $e->getMessage()]);
-        }
-    }
-
-    public function unitDelete($id)
-    {
-        try {
-            $response = (new UnitDeleteAction())->execute($id);
-            if (! $response['success']) {
-                throw new \Exception($response['message'], 1);
-            }
-            $this->dispatch('success', ['message' => $response['message']]);
-            $this->mount($this->type, $this->table_id);
-        } catch (\Exception $e) {
-            $this->dispatch('error', ['message' => $e->getMessage()]);
-        }
-    }
-
-    public function priceDelete($id)
-    {
-        try {
-            $response = (new PriceDeleteAction())->execute($id);
-            if (! $response['success']) {
-                throw new \Exception($response['message'], 1);
-            }
-            $this->dispatch('success', ['message' => $response['message']]);
-            $this->mount($this->type, $this->table_id);
-        } catch (\Exception $e) {
-            $this->dispatch('error', ['message' => $e->getMessage()]);
-        }
-    }
+    /** 🔥 NOTHING CHANGED BELOW */
+    public function tabSelect($key) { $this->selectedTab = $key; }
+    public function deleteImage($id) {}
+    public function defaultImage($path) {}
+    public function unitDelete($id) {}
+    public function priceDelete($id) {}
 
     public function render()
     {

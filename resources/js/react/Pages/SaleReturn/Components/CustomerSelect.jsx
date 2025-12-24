@@ -1,42 +1,61 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import TomSelect from "tom-select";
-import "tom-select/dist/css/tom-select.css";
 import axios from "axios";
 
-export default function CustomerSelect({ onChange }) {
+export default function CustomerSelect({ value, onChange }) {
+    const selectRef = useRef(null);
+    const tomRef = useRef(null);
+    const [options, setOptions] = useState([]);
+
     useEffect(() => {
-        const select = document.getElementById("customer_id");
-        if (!select) return;
+        let mounted = true;
 
-        // Fetch all customers once
-        axios.get("/account/list") // make sure your endpoint returns all customers
-            .then(res => {
-                const options = (res.data.items ?? []).map(c => ({
-                    id: c.id,
-                    name: c.name,
-                    mobile: c.mobile,
-                    email: c.email,
-                }));
+        // Fetch all customers from API
+        axios.get("/account/list").then((res) => {
+            if (!mounted) return;
 
-                const tom = new TomSelect(select, {
-                    valueField: "id",
-                    labelField: "name",
-                    searchField: ["name", "mobile", "email"], // search works
-                    maxItems: 1,
-                    options: options, // preload all customers
-                    onChange(value) {
-                        onChange?.(value);
-                    },
-                });
+            const customers = (res.data.items || []).map((c) => ({
+                id: String(c.id),
+                name: c.name,
+                mobile: c.mobile ?? "",
+                email: c.email ?? "",
+            }));
 
-                return () => tom.destroy();
-            })
-            .catch(err => console.error("Failed to load customers:", err));
+            setOptions(customers);
+        });
+
+        return () => {
+            mounted = false;
+            tomRef.current?.destroy();
+            tomRef.current = null;
+        };
     }, []);
 
-    return (
-        <select id="customer_id" className="form-control">
-            <option value="">Select Customer</option>
-        </select>
-    );
+    useEffect(() => {
+        if (!selectRef.current || options.length === 0) return;
+
+        // Destroy previous instance
+        tomRef.current?.destroy();
+
+        // Initialize TomSelect
+        tomRef.current = new TomSelect(selectRef.current, {
+            valueField: "id",
+            labelField: "name",
+            searchField: ["name", "mobile", "email"],
+            options,
+            maxItems: 1,
+            create: true, // allows typing new customer
+            onChange(val) {
+                if (val) onChange?.(Number(val));
+                else onChange?.(null);
+            },
+        });
+
+        // Auto-select value only if editing
+        if (value) {
+            tomRef.current.setValue(String(value), true);
+        }
+    }, [options, value]);
+
+    return <select ref={selectRef} className="form-control" placeholder="Select  customer"></select>;
 }

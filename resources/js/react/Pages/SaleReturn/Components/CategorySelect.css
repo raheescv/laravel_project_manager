@@ -1,0 +1,14 @@
+.category-select {
+    width: 100%;
+    height: 36px;
+    padding: 6px 10px;
+    font-size: 13px;
+    border-radius: 10px;
+    border: 1px solid #e2e6ef;
+    background: #fff;
+}
+
+.category-select:focus {
+    border-color: #6f7afc;
+    outline: none;
+}

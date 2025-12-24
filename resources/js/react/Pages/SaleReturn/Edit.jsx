@@ -1,15 +1,16 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import CustomerSelect from "./Components/CustomerSelect";
-import EmployeeSelect from "./Components/EmployeeSelect";
+import EmployeeSelectedit from "./Components/EmployeeSelectedit";
 import CategorySelect from "./Components/CategorySelect";
 import { toast } from "react-toastify"; 
 import ProductGrid from "./ProductGrid";
 import ViewItemsModal from "./Components/ViewItemsModal";
 import AdvancePaymentModal from "../../Components/Booking/AdvancePaymentModal";
+import { usePage } from "@inertiajs/react";
 
 
-export default function Create() {
+export default function Edit() {
     const [customerId, setCustomerId] = useState(null);
     const [products, setProducts] = useState([]);
     const [cartItems, setCartItems] = useState([]);
@@ -37,6 +38,58 @@ export default function Create() {
     const grandTotal = subTotal - discount + serviceCharge;
 
     const totalQty = cartItems.reduce((s, i) => s + i.quantity, 0);
+
+
+      const { saleData, customers, employees, categories, priceTypes, customerTypes, countries, paymentMethods, defaultProductType, defaultCustomerEnabled, defaultQuantity,service_charge } = usePage().props;
+     useEffect(() => {
+    if (!saleData) return;
+
+   
+
+    setSaleId(saleData.id);
+
+    // Auto-select customer
+    setCustomerId(saleData.account_id || null);
+
+    // Auto-select employee
+    setEmployeeId(Number(saleData.employee_id));
+
+    // Auto-select category
+    if (saleData.category_id) {
+        setCategoryId(Number(saleData.category_id));
+    }
+
+    setDiscount(Number(saleData.other_discount || 0));
+    setReferenceNo(saleData.reference_no || "");
+
+    if (saleData.service_charge) {
+        setServiceCharge(Number(saleData.service_charge));
+    }
+    // Load cart items
+    if (saleData.items) {
+        const items = Object.values(saleData.items).map(i => ({
+            ...i,
+            total: i.total,
+        }));
+        setCartItems(items);
+    }
+
+    // ✅ FIX PAYMENT METHOD
+if (saleData.payment_method === 1) {
+    setPaymentMethod("cash");
+} else if (saleData.payment_method === 2) {
+    setPaymentMethod("card");
+} else if (saleData.payment_method === "custom") {
+    setPaymentMethod("custom");
+    setCustomPaymentData(saleData.custom_payment_data);
+}
+
+
+    console.log("SALE DATA 👉", saleData);
+}, [saleData]);
+
+
+
 
     useEffect(() => {
         axios.get("/products/book").then((res) => {
@@ -215,7 +268,6 @@ const buildMeasurementPayload = () => {
         employee_id: employeeId,
         sale_type: "normal",
         account_id: customerId,
-       
         customer_mobile: "",
         other_discount: discount,
         round_off: grandTotal - (subTotal - discount),
@@ -290,11 +342,18 @@ const buildMeasurementPayload = () => {
 
                         {/* LEFT SIDE: Product Grid */}
                         <div className="col-md-12 col-lg-7">
-                            <CustomerSelect onChange={setCustomerId} />
+                            <CustomerSelect
+                                value={customerId}
+                                onChange={setCustomerId}
+                            />
 
                                             <div className="mb-2">
                     <label className="fw-bold mb-1"></label>
-                   <CategorySelect onChange={(value) => setCategoryId(Number(value))} />
+                   <CategorySelect 
+    value={categoryId}           // pass existing sale category
+    onChange={(value) => setCategoryId(Number(value))} 
+/>
+
 
                     </div>
 
@@ -323,11 +382,12 @@ const buildMeasurementPayload = () => {
 )}
 
 
+<EmployeeSelectedit
+    value={employeeId ?? null}
+    onChange={setEmployeeId}
+/>
 
-                            <EmployeeSelect
-                           
-                            onChange={setEmployeeId}
-                        />
+
                             <div
                                 className="tabs_container"
                                 style={{ height: "80vh", overflow: "auto", overflowX: "hidden", paddingRight: "10px" }}
