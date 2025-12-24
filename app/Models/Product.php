@@ -26,6 +26,7 @@ class Product extends Model implements AuditableContracts
         'department_id',
         'main_category_id',
         'sub_category_id',
+        'measurement_category_id',
         'brand_id',
 
         'hsn_code',
@@ -326,6 +327,12 @@ class Product extends Model implements AuditableContracts
 
         return $return;
     }
+
+            public function rawMaterials()
+        {
+            return $this->hasMany(ProductRawMaterial::class);
+        }
+
 
     public function getBrandDropDownList($request)
     {
