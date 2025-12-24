@@ -313,6 +313,16 @@ class Sale extends Model implements AuditableContracts
             'payment_method_name' => implode(', ', $payment_method_name),
             'paid' => $sale->payments->sum('amount'),
         ];
+        // to avoid storing the audit log
+        if ($data['payment_method_ids'] == $sale->payment_method_ids) {
+            unset($data['payment_method_ids']);
+        }
+        if ($data['payment_method_name'] == $sale->payment_method_name) {
+            unset($data['payment_method_name']);
+        }
+        if ($data['paid'] == $sale->paid) {
+            unset($data['paid']);
+        }
         $sale->update($data);
     }
 }

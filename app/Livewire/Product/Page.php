@@ -127,7 +127,7 @@ class Page extends Component
 
     public function loadRelatedProducts()
     {
-        if ($this->table_id && isset($this->products['code']) && !empty($this->products['code'])) {
+        if ($this->table_id && isset($this->products['code']) && ! empty($this->products['code'])) {
             $this->relatedProducts = Product::where('code', $this->products['code'])
                 ->where('id', '!=', $this->table_id)
                 ->with(['department', 'mainCategory', 'subCategory', 'brand', 'unit'])
