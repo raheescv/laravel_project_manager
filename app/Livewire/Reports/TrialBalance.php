@@ -264,7 +264,7 @@ class TrialBalance extends Component
 
         // Get all categories for this account type
         $categoryIds = $typeAccounts->pluck('account_category_id')->filter()->unique();
-        
+
         if ($categoryIds->isEmpty()) {
             // No categories, return flat list
             $uncategorized = [];
@@ -278,6 +278,7 @@ class TrialBalance extends Component
                     'credit' => $credit,
                 ];
             }
+
             return ['uncategorized' => $uncategorized];
         }
 
@@ -293,7 +294,7 @@ class TrialBalance extends Component
 
         foreach ($categories as $category) {
             $categoryMap[$category->id] = $category;
-            
+
             if ($category->parent_id) {
                 $subCategories[$category->parent_id][] = $category;
             } else {
@@ -303,7 +304,7 @@ class TrialBalance extends Component
 
         // Build tree structure
         $tree = [];
-        
+
         // Process master categories
         foreach ($masterCategories as $masterId => $masterCategory) {
             $masterDebit = 0;
@@ -318,7 +319,7 @@ class TrialBalance extends Component
                 $credit = round((float) ($account->total_credit ?? 0), 2);
                 $masterDebit += $debit;
                 $masterCredit += $credit;
-                
+
                 $directAccounts[] = [
                     'id' => $account->account_id,
                     'name' => $account->account_name,
@@ -342,7 +343,7 @@ class TrialBalance extends Component
                         $groupCredit += $credit;
                         $masterDebit += $debit;
                         $masterCredit += $credit;
-                        
+
                         $groupAccounts[] = [
                             'id' => $account->account_id,
                             'name' => $account->account_name,
@@ -351,7 +352,7 @@ class TrialBalance extends Component
                         ];
                     }
 
-                    if (!empty($groupAccounts)) {
+                    if (! empty($groupAccounts)) {
                         $groups[] = [
                             'id' => $subCategory->id,
                             'name' => $subCategory->name,
@@ -363,7 +364,7 @@ class TrialBalance extends Component
                 }
             }
 
-            if (!empty($directAccounts) || !empty($groups)) {
+            if (! empty($directAccounts) || ! empty($groups)) {
                 $tree[] = [
                     'id' => $masterCategory->id,
                     'name' => $masterCategory->name,
@@ -378,7 +379,7 @@ class TrialBalance extends Component
         // Handle uncategorized accounts (accounts without category_id or with invalid category_id)
         $uncategorized = [];
         $categorizedAccountIds = [];
-        
+
         // Collect all account IDs that are in categories
         foreach ($tree as $item) {
             if (isset($item['directAccounts'])) {
@@ -396,13 +397,13 @@ class TrialBalance extends Component
                 }
             }
         }
-        
+
         // Find accounts that are not in any category or have invalid category
         foreach ($typeAccounts as $account) {
-            if (!in_array($account->account_id, $categorizedAccountIds)) {
+            if (! in_array($account->account_id, $categorizedAccountIds)) {
                 $debit = round((float) ($account->total_debit ?? 0), 2);
                 $credit = round((float) ($account->total_credit ?? 0), 2);
-                
+
                 $uncategorized[] = [
                     'id' => $account->account_id,
                     'name' => $account->account_name,
@@ -412,7 +413,7 @@ class TrialBalance extends Component
             }
         }
 
-        if (!empty($uncategorized)) {
+        if (! empty($uncategorized)) {
             $tree['uncategorized'] = $uncategorized;
         }
 

@@ -3,11 +3,10 @@
         <div class="row">
             <div class="col-md-6 d-flex gap-1 align-items-center mb-3">
                 <div class="btn-group">
-                    @can('account.delete')
-                        <button class="btn btn-icon btn-outline-light" title="To delete the selected items" wire:click="delete()" wire:confirm="Are you sure you want to delete the selected items?">
-                            <i class="demo-pli-recycling fs-5"></i>
-                        </button>
-                    @endcan
+                    <button class="btn btn-success btn-sm d-flex align-items-center" title="Export to Excel" data-bs-toggle="tooltip" wire:click="export()">
+                        <i class="fa fa-file-excel-o me-md-1 fs-5"></i>
+                        <span class="d-none d-md-inline">Export</span>
+                    </button>
                 </div>
             </div>
             <div class="col-md-6 d-flex gap-1 align-items-center justify-content-md-end mb-3">
@@ -138,8 +137,8 @@
                                         // Format display values: show currency if not zero, otherwise show dash
                                         $displayTotalDebit = $totalDebit != 0 ? currency($totalDebit) : '_';
                                         $displayTotalCredit = $totalCredit != 0 ? currency($totalCredit) : '_';
-                                        $displayBalanceDebit = ($finalBalance > 0) ? currency($finalBalance) : '_';
-                                        $displayBalanceCredit = ($finalBalance < 0) ? currency(abs($finalBalance)) : '_';
+                                        $displayBalanceDebit = $finalBalance > 0 ? currency($finalBalance) : '_';
+                                        $displayBalanceCredit = $finalBalance < 0 ? currency(abs($finalBalance)) : '_';
                                     @endphp
 
                                     {{-- Total Row --}}

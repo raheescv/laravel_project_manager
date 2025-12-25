@@ -2,14 +2,13 @@
 
 namespace App\Livewire\Account;
 
-use App\Actions\Journal\DeleteAction;
+use App\Exports\AccountViewExport;
 use App\Models\Account;
 use App\Models\JournalEntry;
 use App\Models\Models\Views\Ledger;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
 use Livewire\Component;
 use Livewire\WithPagination;
+use Maatwebsite\Excel\Facades\Excel;
 
 class View extends Component
 {
@@ -52,7 +51,7 @@ class View extends Component
             'account_id' => $this->accountId,
             'branch_id' => session('branch_id'),
         ];
-        if(in_array($this->account->account_type,['income','expense'])){
+        if (in_array($this->account->account_type, ['income', 'expense'])) {
             $this->excludeOpeningFromTotal = true;
         }
         $this->lineChartData();
@@ -66,7 +65,7 @@ class View extends Component
         $this->lineChartData = Ledger::monthly_summary($start, $end, $this->accountId);
     }
 
-    public function groupedChartData()
+    public function groupedChartData(): void
     {
         $this->groupedChartData = $this->dataFunction()
             ->select('account_id')
@@ -103,75 +102,85 @@ class View extends Component
         $this->dispatch('propertyUpdated');
     }
 
-    public function delete()
-    {
-        try {
-            DB::beginTransaction();
-            if (! count($this->selected)) {
-                throw new \Exception('Please select any item to delete.', 1);
-            }
-            foreach ($this->selected as $id) {
-                $response = (new DeleteAction())->execute($id, Auth::id());
-                if (! $response['success']) {
-                    throw new \Exception($response['message'], 1);
-                }
-            }
-            $this->dispatch('success', ['message' => 'Successfully Deleted '.count($this->selected).' items']);
-            DB::commit();
-            if (count($this->selected) > 10) {
-                $this->resetPage();
-            }
-            $this->selected = [];
-
-            $this->selectAll = false;
-            $this->dispatch('RefreshAccountTable');
-        } catch (\Exception $e) {
-            DB::rollback();
-            $this->dispatch('error', ['message' => $e->getMessage()]);
-        }
-    }
-
     private function dataFunction()
     {
-        return JournalEntry::with('account')->where('counter_account_id', $this->accountId)
-            ->when($this->filter['search'], function ($query, $value) {
-                return $query->where(function ($q) use ($value) {
-                    $value = trim($value);
-
-                    return $q->where('description', 'like', "%{$value}%")
-                        ->orWhere('journal_entries.reference_number', 'like', "%{$value}%")
-                        ->orWhere('journal_entries.journal_remarks', 'like', "%{$value}%")
-                        ->orWhere('journal_entries.remarks', 'like', "%{$value}%");
-                });
-            })
-            ->when($this->filter['from_date'] ?? '', function ($query, $value) {
-                return $query->where('date', '>=', date('Y-m-d', strtotime($value)));
-            })
-            ->when($this->filter['to_date'] ?? '', function ($query, $value) {
-                return $query->where('date', '<=', date('Y-m-d', strtotime($value)));
-            });
+        return $this->baseQuery()
+            ->when($this->filter['search'] ?? '', fn($query, $value) => $this->applySearchFilter($query, $value))
+            ->when($this->filter['from_date'] ?? '', fn($query, $value) => $this->applyFromDateFilter($query, $value))
+            ->when($this->filter['to_date'] ?? '', fn($query, $value) => $this->applyToDateFilter($query, $value));
     }
 
-    public function getOpeningBalance()
+    private function baseQuery()
     {
-        if($this->excludeOpeningFromTotal){
-            return [
-                'debit' => 0,
-                'credit' => 0,
-            ];
+        return JournalEntry::with('account')
+            ->where('counter_account_id', $this->accountId);
+    }
+
+    private function applySearchFilter($query, string $value)
+    {
+        $value = trim($value);
+
+        return $query->where(function ($q) use ($value) {
+            return $q->where('description', 'like', "%{$value}%")
+                ->orWhere('journal_entries.reference_number', 'like', "%{$value}%")
+                ->orWhere('journal_entries.journal_remarks', 'like', "%{$value}%")
+                ->orWhere('journal_entries.remarks', 'like', "%{$value}%");
+        });
+    }
+
+    private function applyFromDateFilter($query, string $value)
+    {
+        return $query->where('date', '>=', date('Y-m-d', strtotime($value)));
+    }
+
+    private function applyToDateFilter($query, string $value)
+    {
+        return $query->where('date', '<=', date('Y-m-d', strtotime($value)));
+    }
+
+    public function getOpeningBalance(): array
+    {
+        if ($this->excludeOpeningFromTotal) {
+            return ['debit' => 0, 'credit' => 0];
         }
-        $openingBalance = JournalEntry::with('account')
-            ->where('counter_account_id', $this->accountId)
-            ->when($this->filter['from_date'] ?? '', function ($query, $value) {
-                return $query->where('date', '<', date('Y-m-d', strtotime($value)));
-            })
-            ->selectRaw('ROUND(SUM(debit),2) as debit, ROUND(SUM(credit),2) as credit')
-            ->first();
+
+        $openingBalance = $this->getOpeningBalanceQuery()->first();
 
         return [
-            'debit' => $openingBalance->debit ?? $this->account->opening_debit ?? 0,
-            'credit' => $openingBalance->credit ?? $this->account->opening_credit ?? 0,
+            'debit' => $openingBalance->debit ?? ($this->account->opening_debit ?? 0),
+            'credit' => $openingBalance->credit ?? ($this->account->opening_credit ?? 0),
         ];
+    }
+
+    private function getOpeningBalanceQuery()
+    {
+        return $this->baseQuery()
+            ->when($this->filter['from_date'] ?? '', fn($query, $value) =>
+                $query->where('date', '<', date('Y-m-d', strtotime($value)))
+            )
+            ->selectRaw('ROUND(SUM(debit),2) as debit, ROUND(SUM(credit),2) as credit');
+    }
+
+    public function export()
+    {
+        try {
+            $fileName = $this->generateExportFileName();
+
+            return Excel::download(
+                new AccountViewExport($this->account, $this->filter, $this->excludeOpeningFromTotal),
+                $fileName
+            );
+        } catch (\Exception $e) {
+            $this->dispatch('error', ['message' => 'Export failed: '.$e->getMessage()]);
+        }
+    }
+
+    private function generateExportFileName(): string
+    {
+        $accountName = str_replace(' ', '_', $this->account->name);
+        $timestamp = now()->format('Y-m-d_H-i-s');
+
+        return "Account_Ledger_{$accountName}_{$timestamp}.xlsx";
     }
 
     public function render()
@@ -179,14 +188,25 @@ class View extends Component
         $data = $this->dataFunction();
         $totalRow = clone $data;
 
-        $data = $data->orderBy('date','ASC')->paginate($this->limit);
+        $data = $data->orderBy('date', 'ASC')->paginate($this->limit);
 
-        $totalRow = $totalRow->selectRaw('ROUND(SUM(debit),2) as debit, ROUND(SUM(credit),2) as credit')->first();
-        $total['debit'] = $totalRow->debit;
-        $total['credit'] = $totalRow->credit;
-
+        $total = $this->calculateTotals($totalRow);
         $openingBalance = $this->getOpeningBalance();
 
-        return view('livewire.account.view', ['data' => $data, 'total' => $total, 'openingBalance' => $openingBalance]);
+        return view('livewire.account.view', [
+            'data' => $data,
+            'total' => $total,
+            'openingBalance' => $openingBalance,
+        ]);
+    }
+
+    private function calculateTotals($query): array
+    {
+        $totalRow = $query->selectRaw('ROUND(SUM(debit),2) as debit, ROUND(SUM(credit),2) as credit')->first();
+
+        return [
+            'debit' => $totalRow->debit ?? 0,
+            'credit' => $totalRow->credit ?? 0,
+        ];
     }
 }

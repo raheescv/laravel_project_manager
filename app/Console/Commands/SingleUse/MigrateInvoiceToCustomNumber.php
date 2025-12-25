@@ -3,8 +3,8 @@
 namespace App\Console\Commands\SingleUse;
 
 use App\Models\JournalEntry;
-use Illuminate\Console\Command;
 use App\Models\Sale;
+use Illuminate\Console\Command;
 
 class MigrateInvoiceToCustomNumber extends Command
 {
@@ -42,11 +42,11 @@ class MigrateInvoiceToCustomNumber extends Command
 
                 $sale->update(['invoice_no' => $newInvoiceNo]);
 
-                $sale->journals()->update(['description' => 'Sale:' . $newInvoiceNo]);
+                $sale->journals()->update(['description' => 'Sale:'.$newInvoiceNo]);
 
-                JournalEntry::where('description', 'Sale:' . $oldInvoice)->update(['description' => 'Sale:' . $newInvoiceNo]);
+                JournalEntry::where('description', 'Sale:'.$oldInvoice)->update(['description' => 'Sale:'.$newInvoiceNo]);
 
-                echo $newInvoiceNo . "\n";
+                echo $newInvoiceNo."\n";
             }
         }
     }

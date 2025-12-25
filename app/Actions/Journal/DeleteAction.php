@@ -2,6 +2,7 @@
 
 namespace App\Actions\Journal;
 
+use App\Events\PurchaseReturnUpdatedEvent;
 use App\Events\PurchaseUpdatedEvent;
 use App\Events\SaleReturnUpdatedEvent;
 use App\Events\SaleUpdatedEvent;
@@ -23,14 +24,19 @@ class DeleteAction
                         throw new Exception("You can't delete the Sale Journal without deleting the Sale", 1);
                     }
                     break;
+                case 'SaleReturn':
+                    if ($model->source == 'saleReturn' && $model->saleReturn) {
+                        throw new Exception("You can't delete the sales return Journal without deleting the Sales Return", 1);
+                    }
+                    break;
                 case 'Purchase':
                     if ($model->source == 'purchase' && $model->purchase) {
                         throw new Exception("You can't delete the Purchase Journal without deleting the Purchase", 1);
                     }
                     break;
-                case 'SaleReturn':
-                    if ($model->source == 'saleReturn' && $model->saleReturn) {
-                        throw new Exception("You can't delete the sales return Journal without deleting the Sales Return", 1);
+                case 'PurchaseReturn':
+                    if ($model->source == 'purchaseReturn' && $model->purchaseReturn) {
+                        throw new Exception("You can't delete the purchase return Journal without deleting the Purchase Return", 1);
                     }
                     break;
             }
@@ -94,13 +100,17 @@ class DeleteAction
                 event(new SaleUpdatedEvent('payment', $model->sale));
                 event(new SaleUpdatedEvent('discount', $model->sale));
                 break;
+            case 'SaleReturn':
+                event(new SaleReturnUpdatedEvent('payment', $model->saleReturn));
+                event(new SaleReturnUpdatedEvent('discount', $model->saleReturn));
+                break;
             case 'Purchase':
                 event(new PurchaseUpdatedEvent('payment', $model->purchase));
                 event(new PurchaseUpdatedEvent('discount', $model->purchase));
                 break;
-            case 'SaleReturn':
-                event(new SaleReturnUpdatedEvent('payment', $model->saleReturn));
-                event(new SaleReturnUpdatedEvent('discount', $model->saleReturn));
+            case 'PurchaseReturn':
+                event(new PurchaseReturnUpdatedEvent('payment', $model->purchaseReturn));
+                event(new PurchaseReturnUpdatedEvent('discount', $model->purchaseReturn));
                 break;
         }
     }
