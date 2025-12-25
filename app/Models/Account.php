@@ -131,4 +131,9 @@ class Account extends Model implements AuditableContracts
     {
         return $this->hasMany(Sale::class);
     }
+
+    public function getNameAttribute($value)
+    {
+        return ucwords($value);
+    }
 }
