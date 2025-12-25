@@ -72,7 +72,7 @@
                                             placeholder="Select Customer"
                                             filter-placeholder="Search by name or mobile..." :visibleItems="8"
                                             @search="searchCustomers" @change="handleCustomerChange"
-                                            input-class="w-full rounded-lg border-slate-200 shadow-sm focus:border-blue-500 focus:ring-blue-500/20 transition-all duration-200 bg-white/90 backdrop-blur-sm hover:shadow-md text-xs py-2" />
+                                            input-class="w-full rounded-lg border-slate-200 shadow-sm focus:border-blue-500 focus:ring-blue-500/20 transition-all duration-200 bg-white/90 backdrop-blur-sm hover:shadow-md text-xs py-2 px-2" />
                                     </div>
                                     <div class="space-y-1">
                                         <label class="text-xs font-bold text-slate-700 flex items-center">
@@ -93,7 +93,7 @@
                                         <SearchableSelect v-model="form.employee_id" :options="employees"
                                             placeholder="Select employee..." filter-placeholder="Search employees..."
                                             :visibleItems="8"
-                                            input-class="w-full rounded-lg border-slate-200 shadow-sm focus:border-purple-500 focus:ring-purple-500/20 transition-all duration-200 bg-white/90 backdrop-blur-sm hover:shadow-md text-xs py-2" />
+                                            input-class="w-full rounded-lg border-slate-200 shadow-sm focus:border-purple-500 focus:ring-purple-500/20 transition-all duration-200 bg-white/90 backdrop-blur-sm hover:shadow-md text-xs py-2 px-2" />
                                     </div>
                                     <div class="space-y-1">
                                         <label class="text-xs font-bold text-slate-700 flex items-center">
@@ -102,7 +102,7 @@
                                         <SearchableSelect v-model="form.sale_type" :options="priceTypes"
                                             placeholder="Select type..." filter-placeholder="Search sale types..."
                                             :visibleItems="8"
-                                            input-class="w-full rounded-lg border-slate-200 shadow-sm focus:border-orange-500 focus:ring-orange-500/20 transition-all duration-200 bg-white/90 backdrop-blur-sm hover:shadow-md text-xs py-2"
+                                            input-class="w-full rounded-lg border-slate-200 shadow-sm focus:border-orange-500 focus:ring-orange-500/20 transition-all duration-200 bg-white/90 backdrop-blur-sm hover:shadow-md text-xs py-2 px-2"
                                             @change="loadProducts" />
                                     </div>
                                 </div>

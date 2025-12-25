@@ -85,7 +85,7 @@
                                         </span>
                                     </div>
                                     <div class="text-xs text-violet-500 leading-tight">
-                                        {{ formatNumber(item.unit_price) }} × {{ item.quantity }}
+                                        {{ formatNumber(item.unit_price) }} × {{ formatNumber(item.quantity) }}
                                     </div>
                                 </div>
 
