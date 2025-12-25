@@ -1,6 +1,5 @@
 <?php
 
-use App\Models\Configuration;
 use Illuminate\Support\Facades\Schedule;
 use Spatie\Health\Commands\RunHealthChecksCommand;
 
@@ -23,13 +22,14 @@ Schedule::command('visitors:process-batches')->everyFiveMinutes();
 
 Schedule::command(RunHealthChecksCommand::class)->daily();
 
-// Close all open sale day sessions daily at start of day (if enabled)
+// Close any sale day session left open from an earlier day, in the first hour
+// of the new day. The command gates itself per tenant and only ever closes a
+// session from a previous day, so no ->when() here: a single tenant's setting
+// must not decide whether the command runs for everyone.
 Schedule::command('sale-day-sessions:close-daily')
     ->everyFiveMinutes()
     ->between('00:00', '01:00')
-    ->when(function () {
-        return Configuration::where('key', 'auto_close_day_sessions_enabled')->value('value') === 'yes';
-    });
+    ->withoutOverlapping();
 
 // Open a day session for every branch at the Working Day opening time (if
 // enabled). Every minute so a session starts on the configured minute; the

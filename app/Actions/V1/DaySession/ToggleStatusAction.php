@@ -59,10 +59,15 @@ class ToggleStatusAction
             ->first();
 
         if ($existingForDate) {
+            // Reopening the same day: the closing details go, notes with them.
+            // A note left over from the close ("Auto-closed by daily scheduled
+            // command") describes an event that no longer holds.
             $existingForDate->update([
                 'closed_at' => null,
                 'closed_by' => null,
+                'closing_amount' => 0,
                 'status' => 'open',
+                'notes' => 'null',
             ]);
 
             return $existingForDate;
