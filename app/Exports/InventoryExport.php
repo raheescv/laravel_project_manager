@@ -2,7 +2,7 @@
 
 namespace App\Exports;
 
-use App\Models\Inventory;
+use App\Actions\Product\Inventory\GetAction;
 use Maatwebsite\Excel\Concerns\Exportable;
 use Maatwebsite\Excel\Concerns\FromQuery;
 use Maatwebsite\Excel\Concerns\WithHeadings;
@@ -18,67 +18,7 @@ class InventoryExport implements FromQuery, WithHeadings, WithMapping, WithStyle
 
     public function query()
     {
-        return Inventory::query()
-            ->join('branches', 'inventories.branch_id', '=', 'branches.id')
-            ->join('products', 'inventories.product_id', '=', 'products.id')
-            ->join('departments', 'products.department_id', '=', 'departments.id')
-            ->join('brands', 'products.brand_id', '=', 'brands.id')
-            ->join('units', 'products.unit_id', '=', 'units.id')
-            ->join('categories as main_categories', 'products.main_category_id', '=', 'main_categories.id')
-            ->leftJoin('categories as sub_categories', 'products.sub_category_id', '=', 'sub_categories.id')
-            ->where('products.type', 'product')
-            ->when($this->filters['branch_id'] ?? null, function ($query, $value) {
-                return $query->whereIn('branch_id', $value);
-            })
-            ->when($this->filters['department_id'] ?? null, function ($query, $value) {
-                return $query->where('department_id', $value);
-            })
-            ->when($this->filters['main_category_id'] ?? null, function ($query, $value) {
-                return $query->where('main_category_id', $value);
-            })
-            ->when($this->filters['sub_category_id'] ?? null, function ($query, $value) {
-                return $query->where('sub_category_id', $value);
-            })
-            ->when($this->filters['product_id'] ?? null, function ($query, $value) {
-                return $query->where('product_id', $value);
-            })
-            ->when($this->filters['unit_id'] ?? null, function ($query, $value) {
-                return $query->where('unit_id', $value);
-            })
-            ->when($this->filters['brand_id'] ?? null, function ($query, $value) {
-                return $query->where('brand_id', $value);
-            })
-            ->when($this->filters['non_zero'] ?? false, function ($query, $value) {
-                return $query->where('quantity', '!=', 0);
-            })
-            ->when($this->filters['size'] ?? null, function ($query, $value) {
-                return $query->where('products.size', $value);
-            })
-            ->when($this->filters['barcode'] ?? null, function ($query, $value) {
-                return $query->where('inventories.barcode', $value);
-            })
-            ->when($this->filters['code'] ?? null, function ($query, $value) {
-                return $query->where('products.code', $value);
-            })
-            ->when($this->filters['search'] ?? null, function ($query, $value) {
-                return $query->where(function ($q) use ($value): void {
-                    $value = trim($value);
-                    $q->where('products.name', 'like', "%{$value}%")
-                        ->orWhere('products.name_arabic', 'like', "%{$value}%")
-                        ->orWhere('products.code', 'like', "%{$value}%")
-                        ->orWhere('branches.name', 'like', "%{$value}%")
-                        ->orWhere('departments.name', 'like', "%{$value}%")
-                        ->orWhere('units.name', 'like', "%{$value}%")
-                        ->orWhere('brands.name', 'like', "%{$value}%")
-                        ->orWhere('main_categories.name', 'like', "%{$value}%")
-                        ->orWhere('sub_categories.name', 'like', "%{$value}%")
-                        ->orWhere('inventories.barcode', 'like', "%{$value}%")
-                        ->orWhere('inventories.batch', 'like', "%{$value}%")
-                        ->orWhere('products.size', $value)
-                        ->orWhere('inventories.quantity', 'like', "%{$value}%")
-                        ->orWhere('inventories.cost', 'like', "%{$value}%");
-                });
-            })
+        return (new GetAction())->execute($this->filters)
             ->select(
                 'inventories.id',
                 'inventories.cost',
@@ -90,6 +30,7 @@ class InventoryExport implements FromQuery, WithHeadings, WithMapping, WithStyle
                 'product_id',
                 'products.name',
                 'products.code',
+                'products.mrp',
                 'brands.name as brand_name',
                 'products.size',
                 'products.name_arabic',
@@ -126,6 +67,7 @@ class InventoryExport implements FromQuery, WithHeadings, WithMapping, WithStyle
             'Quantity',
             'Cost',
             'Total Value',
+            'MRP',
             'Created At',
         ];
     }
@@ -147,8 +89,9 @@ class InventoryExport implements FromQuery, WithHeadings, WithMapping, WithStyle
             $row->barcode,
             $row->batch,
             $row->quantity,
-            number_format($row->cost, 2),
-            number_format($row->total, 2),
+            $row->cost,
+            $row->total,
+            $row->mrp,
             $row->created_at ? $row->created_at->format('Y-m-d H:i:s') : '',
         ];
     }

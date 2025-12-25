@@ -182,6 +182,9 @@
                         @if ($inventory_visible_column['total'] ?? true)
                             <th class="text-end border-bottom"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="inventories.total" label="Total" /> </th>
                         @endif
+                        @if ($inventory_visible_column['mrp'] ?? true)
+                            <th class="text-end border-bottom"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="products.mrp" label="MRP" /> </th>
+                        @endif
                         @if ($inventory_visible_column['barcode'] ?? true)
                             <th class="border-bottom"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="inventories.barcode" label="Barcode" /> </th>
                         @endif
@@ -277,6 +280,9 @@
                             @if ($inventory_visible_column['total'] ?? true)
                                 <td class="text-end fw-bold text-primary">{{ currency($item->total) }}</td>
                             @endif
+                            @if ($inventory_visible_column['mrp'] ?? true)
+                                <td class="text-end text-muted">{{ currency($item->mrp) }}</td>
+                            @endif
                             @if ($inventory_visible_column['barcode'] ?? true)
                                 <td>
                                     @if ($item->barcode)
@@ -341,7 +347,15 @@
                         @if ($inventory_visible_column['total'] ?? true)
                             <th class="text-end fw-bold text-primary">{{ currency($total) }}</th>
                         @endif
-                        <th colspan="2"></th>
+                        @if ($inventory_visible_column['mrp'] ?? true)
+                            <th class="text-end fw-bold text-primary"></th>
+                        @endif
+                        @if ($inventory_visible_column['barcode'] ?? true)
+                            <th class="text-end fw-bold text-primary"></th>
+                        @endif
+                        @if ($inventory_visible_column['batch'] ?? true)
+                            <th class="text-end fw-bold text-primary"></th>
+                        @endif
                     </tr>
                 </tfoot>
             </table>
