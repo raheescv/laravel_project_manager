@@ -7,6 +7,7 @@ return [
     'expense' => ['create', 'view', 'edit', 'delete', 'export'],
     'income' => ['create', 'view', 'edit', 'delete', 'export'],
     'general voucher' => ['create', 'view', 'edit', 'delete', 'export'],
+    'cheque' => ['create', 'view', 'edit', 'delete', 'print'],
     'customer' => ['create', 'view', 'edit', 'delete', 'export'],
     'customer type' => ['create', 'view', 'edit', 'delete'],
     'country' => ['create', 'view', 'edit', 'delete'],
@@ -25,6 +26,7 @@ return [
     'appointment' => ['create', 'view', 'edit', 'delete', 'export', 'checkout', 'dashboard'],
     'sale' => [
         'create', 'view', 'edit', 'edit completed', 'delete item after completed', 'delete', 'cancel', 'export', 'receipts', 'view journal entries', 'dashboard bar chart',
+        'item price edit',
         'dashboard weekly summary',
         'dashboard top items',
         'audit view',
@@ -67,5 +69,5 @@ return [
     'backup' => ['create', 'view', 'download'],
     'system health' => ['view'],
     'visitor analytics' => ['view'],
-    'configuration' => ['barcode', 'settings'],
+    'configuration' => ['barcode', 'settings', 'cheque'],
 ];
