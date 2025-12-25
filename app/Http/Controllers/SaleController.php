@@ -177,6 +177,8 @@ class SaleController extends Controller
                         'stock_available' => $item->inventory->quantity ?? 0,
                         'employee_id' => $item->employee_id,
                         'employee_name' => $item->employee->name ?? 'Unknown Employee',
+                        'assistant_id' => $item->assistant_id,
+                        'assistant_name' => $item->assistant->name ?? 'Unknown Assistant',
                         'combo_offer_price' => 0,
                         'combo_offer_id' => null,
                     ];
