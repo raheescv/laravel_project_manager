@@ -70,7 +70,7 @@ class View extends Component
     {
         $this->groupedChartData = $this->dataFunction()
             ->select('account_id')
-            ->selectRaw('account_id, SUM(debit) as debit, SUM(credit) as credit')
+            ->selectRaw('account_id, ROUND(SUM(debit),2) as debit, ROUND(SUM(credit),2) as credit')
             ->groupBy('account_id')
             ->orderBy('account_id')
             ->get();
@@ -165,7 +165,7 @@ class View extends Component
             ->when($this->filter['from_date'] ?? '', function ($query, $value) {
                 return $query->where('date', '<', date('Y-m-d', strtotime($value)));
             })
-            ->selectRaw('SUM(debit) as debit, SUM(credit) as credit')
+            ->selectRaw('ROUND(SUM(debit),2) as debit, ROUND(SUM(credit),2) as credit')
             ->first();
 
         return [
@@ -181,7 +181,7 @@ class View extends Component
 
         $data = $data->orderBy('date','ASC')->paginate($this->limit);
 
-        $totalRow = $totalRow->selectRaw('SUM(debit) as debit, SUM(credit) as credit')->first();
+        $totalRow = $totalRow->selectRaw('ROUND(SUM(debit),2) as debit, ROUND(SUM(credit),2) as credit')->first();
         $total['debit'] = $totalRow->debit;
         $total['credit'] = $totalRow->credit;
 
