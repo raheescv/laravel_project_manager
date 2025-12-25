@@ -80,29 +80,28 @@ class ProfitLossExport implements FromCollection, WithColumnFormatting, WithEven
         $rows = [];
 
         // Top Section: Gross Profit/Loss
-        $rows[] = ['section' => 'GROSS PROFIT/LOSS CALCULATION', 'particulars' => '', 'amount' => '', 'particulars_right' => '', 'amount_right' => ''];
-        $rows[] = ['section' => '', 'particulars' => 'OPENING STOCK', 'amount' => $this->data['openingStock'], 'particulars_right' => 'NET SALE', 'amount_right' => $this->data['netSale']];
-        $rows[] = ['section' => '', 'particulars' => 'NET PURCHASE', 'amount' => $this->data['netPurchase'], 'particulars_right' => 'CLOSING STOCK', 'amount_right' => $this->data['closingStock']];
+        $rows[] = ['particulars' => 'OPENING STOCK', 'amount' => $this->data['openingStock'], 'particulars_right' => 'NET SALE', 'amount_right' => $this->data['netSale']];
+        $rows[] = ['particulars' => 'NET PURCHASE', 'amount' => $this->data['netPurchase'], 'particulars_right' => 'CLOSING STOCK', 'amount_right' => $this->data['closingStock']];
 
         // Direct Expense
-        $rows[] = ['section' => '', 'particulars' => 'DIRECT EXPENSE', 'amount' => $this->data['directExpense'], 'particulars_right' => 'DIRECT INCOME', 'amount_right' => $this->data['directIncome']];
+        $rows[] = ['particulars' => 'DIRECT EXPENSE', 'amount' => $this->data['directExpense'], 'particulars_right' => 'DIRECT INCOME', 'amount_right' => $this->data['directIncome']];
 
         // Add Direct Expense details
         $directExpenseMaster = collect($this->data['directExpenseStructure'])->firstWhere('name', 'Direct Expense');
         if ($directExpenseMaster) {
             foreach ($directExpenseMaster['groups'] as $group) {
                 if ($group['total'] > 0) {
-                    $rows[] = ['section' => '', 'particulars' => '  '.$group['name'], 'amount' => $group['total'], 'particulars_right' => '', 'amount_right' => ''];
+                    $rows[] = ['particulars' => '  '.$group['name'], 'amount' => $group['total'], 'particulars_right' => '', 'amount_right' => ''];
                     foreach ($group['accounts'] as $account) {
                         if ($account['amount'] > 0) {
-                            $rows[] = ['section' => '', 'particulars' => '    '.$account['name'], 'amount' => $account['amount'], 'particulars_right' => '', 'amount_right' => ''];
+                            $rows[] = ['particulars' => '    '.$account['name'], 'amount' => $account['amount'], 'particulars_right' => '', 'amount_right' => ''];
                         }
                     }
                 }
             }
             foreach ($directExpenseMaster['directAccounts'] as $account) {
                 if ($account['amount'] > 0) {
-                    $rows[] = ['section' => '', 'particulars' => '  '.$account['name'], 'amount' => $account['amount'], 'particulars_right' => '', 'amount_right' => ''];
+                    $rows[] = ['particulars' => '  '.$account['name'], 'amount' => $account['amount'], 'particulars_right' => '', 'amount_right' => ''];
                 }
             }
         }
@@ -112,60 +111,60 @@ class ProfitLossExport implements FromCollection, WithColumnFormatting, WithEven
         if ($directIncomeMaster) {
             foreach ($directIncomeMaster['groups'] as $group) {
                 if ($group['total'] > 0) {
-                    $rows[] = ['section' => '', 'particulars' => '', 'amount' => '', 'particulars_right' => '  '.$group['name'], 'amount_right' => $group['total']];
+                    $rows[] = ['particulars' => '', 'amount' => '', 'particulars_right' => '  '.$group['name'], 'amount_right' => $group['total']];
                     foreach ($group['accounts'] as $account) {
                         if ($account['amount'] > 0) {
-                            $rows[] = ['section' => '', 'particulars' => '', 'amount' => '', 'particulars_right' => '    '.$account['name'], 'amount_right' => $account['amount']];
+                            $rows[] = ['particulars' => '', 'amount' => '', 'particulars_right' => '    '.$account['name'], 'amount_right' => $account['amount']];
                         }
                     }
                 }
             }
             foreach ($directIncomeMaster['directAccounts'] as $account) {
                 if ($account['amount'] > 0) {
-                    $rows[] = ['section' => '', 'particulars' => '', 'amount' => '', 'particulars_right' => '  '.$account['name'], 'amount_right' => $account['amount']];
+                    $rows[] = ['particulars' => '', 'amount' => '', 'particulars_right' => '  '.$account['name'], 'amount_right' => $account['amount']];
                 }
             }
         }
 
         // Gross Profit/Loss
         if ($this->data['grossProfit'] > 0) {
-            $rows[] = ['section' => '', 'particulars' => 'GROSS PROFIT C/D', 'amount' => $this->data['grossProfit'], 'particulars_right' => '', 'amount_right' => ''];
+            $rows[] = ['particulars' => 'GROSS PROFIT C/D', 'amount' => $this->data['grossProfit'], 'particulars_right' => '', 'amount_right' => ''];
         } elseif ($this->data['grossLoss'] > 0) {
-            $rows[] = ['section' => '', 'particulars' => '', 'amount' => '', 'particulars_right' => 'GROSS LOSS C/D', 'amount_right' => $this->data['grossLoss']];
+            $rows[] = ['particulars' => '', 'amount' => '', 'particulars_right' => 'GROSS LOSS C/D', 'amount_right' => $this->data['grossLoss']];
         }
 
-        $rows[] = ['section' => '', 'particulars' => 'TOTAL', 'amount' => $this->data['leftTotal1'], 'particulars_right' => 'TOTAL', 'amount_right' => $this->data['rightTotal1']];
+        $rows[] = ['particulars' => 'TOTAL', 'amount' => $this->data['leftTotal1'], 'particulars_right' => 'TOTAL', 'amount_right' => $this->data['rightTotal1']];
 
         // Bottom Section: Net Profit/Loss
-        $rows[] = ['section' => '', 'particulars' => '', 'amount' => '', 'particulars_right' => '', 'amount_right' => ''];
-        $rows[] = ['section' => 'NET PROFIT/LOSS CALCULATION', 'particulars' => '', 'amount' => '', 'particulars_right' => '', 'amount_right' => ''];
+        $rows[] = ['particulars' => '', 'amount' => '', 'particulars_right' => '', 'amount_right' => ''];
+        $rows[] = ['particulars' => 'NET PROFIT/LOSS CALCULATION', 'amount' => '', 'particulars_right' => '', 'amount_right' => ''];
 
         if ($this->data['grossLoss'] > 0) {
-            $rows[] = ['section' => '', 'particulars' => 'GROSS LOSS B/D', 'amount' => $this->data['grossLoss'], 'particulars_right' => '', 'amount_right' => ''];
+            $rows[] = ['particulars' => 'GROSS LOSS B/D', 'amount' => $this->data['grossLoss'], 'particulars_right' => '', 'amount_right' => ''];
         }
         if ($this->data['grossProfit'] > 0) {
-            $rows[] = ['section' => '', 'particulars' => '', 'amount' => '', 'particulars_right' => 'GROSS PROFIT B/D', 'amount_right' => $this->data['grossProfit']];
+            $rows[] = ['particulars' => '', 'amount' => '', 'particulars_right' => 'GROSS PROFIT B/D', 'amount_right' => $this->data['grossProfit']];
         }
 
         // Indirect Expense
-        $rows[] = ['section' => '', 'particulars' => 'INDIRECT EXPENSE', 'amount' => $this->data['indirectExpense'], 'particulars_right' => 'INDIRECT INCOME', 'amount_right' => $this->data['indirectIncome']];
+        $rows[] = ['particulars' => 'INDIRECT EXPENSE', 'amount' => $this->data['indirectExpense'], 'particulars_right' => 'INDIRECT INCOME', 'amount_right' => $this->data['indirectIncome']];
 
         // Add Indirect Expense details
         $indirectExpenseMaster = collect($this->data['directExpenseStructure'])->firstWhere('name', 'Indirect Expense');
         if ($indirectExpenseMaster) {
             foreach ($indirectExpenseMaster['groups'] as $group) {
                 if ($group['total'] > 0) {
-                    $rows[] = ['section' => '', 'particulars' => '  '.$group['name'], 'amount' => $group['total'], 'particulars_right' => '', 'amount_right' => ''];
+                    $rows[] = ['particulars' => '  '.$group['name'], 'amount' => $group['total'], 'particulars_right' => '', 'amount_right' => ''];
                     foreach ($group['accounts'] as $account) {
                         if ($account['amount'] > 0) {
-                            $rows[] = ['section' => '', 'particulars' => '    '.$account['name'], 'amount' => $account['amount'], 'particulars_right' => '', 'amount_right' => ''];
+                            $rows[] = ['particulars' => '    '.$account['name'], 'amount' => $account['amount'], 'particulars_right' => '', 'amount_right' => ''];
                         }
                     }
                 }
             }
             foreach ($indirectExpenseMaster['directAccounts'] as $account) {
                 if ($account['amount'] > 0) {
-                    $rows[] = ['section' => '', 'particulars' => '  '.$account['name'], 'amount' => $account['amount'], 'particulars_right' => '', 'amount_right' => ''];
+                    $rows[] = ['particulars' => '  '.$account['name'], 'amount' => $account['amount'], 'particulars_right' => '', 'amount_right' => ''];
                 }
             }
         }
@@ -175,42 +174,41 @@ class ProfitLossExport implements FromCollection, WithColumnFormatting, WithEven
         if ($indirectIncomeMaster) {
             foreach ($indirectIncomeMaster['groups'] as $group) {
                 if ($group['total'] > 0) {
-                    $rows[] = ['section' => '', 'particulars' => '', 'amount' => '', 'particulars_right' => '  '.$group['name'], 'amount_right' => $group['total']];
+                    $rows[] = ['particulars' => '', 'amount' => '', 'particulars_right' => '  '.$group['name'], 'amount_right' => $group['total']];
                     foreach ($group['accounts'] as $account) {
                         if ($account['amount'] > 0) {
-                            $rows[] = ['section' => '', 'particulars' => '', 'amount' => '', 'particulars_right' => '    '.$account['name'], 'amount_right' => $account['amount']];
+                            $rows[] = ['particulars' => '', 'amount' => '', 'particulars_right' => '    '.$account['name'], 'amount_right' => $account['amount']];
                         }
                     }
                 }
             }
             foreach ($indirectIncomeMaster['directAccounts'] as $account) {
                 if ($account['amount'] > 0) {
-                    $rows[] = ['section' => '', 'particulars' => '', 'amount' => '', 'particulars_right' => '  '.$account['name'], 'amount_right' => $account['amount']];
+                    $rows[] = ['particulars' => '', 'amount' => '', 'particulars_right' => '  '.$account['name'], 'amount_right' => $account['amount']];
                 }
             }
         }
 
         // Net Profit/Loss
         if ($this->data['netProfitAmount'] > 0) {
-            $rows[] = ['section' => '', 'particulars' => 'NET PROFIT C/D', 'amount' => $this->data['netProfitAmount'], 'particulars_right' => '', 'amount_right' => ''];
+            $rows[] = ['particulars' => 'NET PROFIT C/D', 'amount' => $this->data['netProfitAmount'], 'particulars_right' => '', 'amount_right' => ''];
         } elseif ($this->data['netLossAmount'] > 0) {
-            $rows[] = ['section' => '', 'particulars' => '', 'amount' => '', 'particulars_right' => 'NET LOSS C/D', 'amount_right' => $this->data['netLossAmount']];
+            $rows[] = ['particulars' => '', 'amount' => '', 'particulars_right' => 'NET LOSS C/D', 'amount_right' => $this->data['netLossAmount']];
         }
 
-        $rows[] = ['section' => '', 'particulars' => 'TOTAL', 'amount' => $this->data['leftTotal2'], 'particulars_right' => 'TOTAL', 'amount_right' => $this->data['rightTotal2']];
+        $rows[] = ['particulars' => 'TOTAL', 'amount' => $this->data['leftTotal2'], 'particulars_right' => 'TOTAL', 'amount_right' => $this->data['rightTotal2']];
 
         return new Collection($rows);
     }
 
     public function headings(): array
     {
-        return ['Section', 'Particulars', 'Amount', 'Particulars', 'Amount'];
+        return ['Particulars', 'Amount', 'Particulars', 'Amount'];
     }
 
     public function map($row): array
     {
         return [
-            $row['section'] ?? '',
             $row['particulars'] ?? '',
             $row['amount'] ?? '',
             $row['particulars_right'] ?? '',
@@ -221,8 +219,8 @@ class ProfitLossExport implements FromCollection, WithColumnFormatting, WithEven
     public function columnFormats(): array
     {
         return [
-            'C' => NumberFormat::FORMAT_NUMBER_00,
-            'E' => NumberFormat::FORMAT_NUMBER_00,
+            'B' => NumberFormat::FORMAT_NUMBER_00,
+            'D' => NumberFormat::FORMAT_NUMBER_00,
         ];
     }
 
@@ -307,15 +305,13 @@ class ProfitLossExport implements FromCollection, WithColumnFormatting, WithEven
         $dataStartRow = self::HEADER_ROW_COUNT + 2;
 
         for ($row = $dataStartRow; $row <= $highestRow; $row++) {
-            $sectionValue = $sheet->getCell("A{$row}")->getValue();
-            $particularsValue = $sheet->getCell("B{$row}")->getValue();
-            $particularsRightValue = $sheet->getCell("D{$row}")->getValue();
-            $amountValue = $sheet->getCell("C{$row}")->getValue();
-            $amountRightValue = $sheet->getCell("E{$row}")->getValue();
+            $particularsValue = $sheet->getCell("A{$row}")->getValue();
+            $particularsRightValue = $sheet->getCell("C{$row}")->getValue();
 
-            // Style section headers (GROSS PROFIT/LOSS CALCULATION, NET PROFIT/LOSS CALCULATION)
-            if (! empty($sectionValue) && str_contains($sectionValue, 'CALCULATION')) {
-                $bgColor = str_contains($sectionValue, 'GROSS') ? self::GROSS_SECTION_BG : self::NET_SECTION_BG;
+            // Style section headers (NET PROFIT/LOSS CALCULATION)
+            if (! empty($particularsValue) && str_contains($particularsValue, 'CALCULATION')) {
+                $bgColor = str_contains($particularsValue, 'GROSS') ? self::GROSS_SECTION_BG : self::NET_SECTION_BG;
+                $sheet->mergeCells("A{$row}:".self::LAST_COLUMN."{$row}");
                 $sheet->getStyle("A{$row}:".self::LAST_COLUMN."{$row}")->applyFromArray([
                     'font' => ['bold' => true, 'size' => 12, 'color' => ['rgb' => '000000']],
                     'fill' => [
@@ -335,7 +331,7 @@ class ProfitLossExport implements FromCollection, WithColumnFormatting, WithEven
 
             // Style major categories (DIRECT EXPENSE, DIRECT INCOME, INDIRECT EXPENSE, INDIRECT INCOME)
             if ($particularsValue === 'DIRECT EXPENSE') {
-                $sheet->getStyle("B{$row}:C{$row}")->applyFromArray([
+                $sheet->getStyle("A{$row}:B{$row}")->applyFromArray([
                     'font' => ['bold' => true, 'size' => 11, 'color' => ['rgb' => '000000']],
                     'fill' => [
                         'fillType' => Fill::FILL_SOLID,
@@ -343,7 +339,7 @@ class ProfitLossExport implements FromCollection, WithColumnFormatting, WithEven
                     ],
                 ]);
             } elseif ($particularsValue === 'INDIRECT EXPENSE') {
-                $sheet->getStyle("B{$row}:C{$row}")->applyFromArray([
+                $sheet->getStyle("A{$row}:B{$row}")->applyFromArray([
                     'font' => ['bold' => true, 'size' => 11, 'color' => ['rgb' => '000000']],
                     'fill' => [
                         'fillType' => Fill::FILL_SOLID,
@@ -353,7 +349,7 @@ class ProfitLossExport implements FromCollection, WithColumnFormatting, WithEven
             }
 
             if ($particularsRightValue === 'DIRECT INCOME') {
-                $sheet->getStyle("D{$row}:E{$row}")->applyFromArray([
+                $sheet->getStyle("C{$row}:D{$row}")->applyFromArray([
                     'font' => ['bold' => true, 'size' => 11, 'color' => ['rgb' => '000000']],
                     'fill' => [
                         'fillType' => Fill::FILL_SOLID,
@@ -361,7 +357,7 @@ class ProfitLossExport implements FromCollection, WithColumnFormatting, WithEven
                     ],
                 ]);
             } elseif ($particularsRightValue === 'INDIRECT INCOME') {
-                $sheet->getStyle("D{$row}:E{$row}")->applyFromArray([
+                $sheet->getStyle("C{$row}:D{$row}")->applyFromArray([
                     'font' => ['bold' => true, 'size' => 11, 'color' => ['rgb' => '000000']],
                     'fill' => [
                         'fillType' => Fill::FILL_SOLID,
@@ -372,26 +368,26 @@ class ProfitLossExport implements FromCollection, WithColumnFormatting, WithEven
 
             // Style profit amounts (green) - both label and amount
             if (in_array($particularsValue, ['GROSS PROFIT C/D', 'NET PROFIT C/D'])) {
-                $sheet->getStyle("B{$row}:C{$row}")->applyFromArray([
+                $sheet->getStyle("A{$row}:B{$row}")->applyFromArray([
                     'font' => ['bold' => true, 'color' => ['rgb' => self::PROFIT_COLOR]],
                 ]);
             }
 
             if (in_array($particularsRightValue, ['GROSS PROFIT B/D'])) {
-                $sheet->getStyle("D{$row}:E{$row}")->applyFromArray([
+                $sheet->getStyle("C{$row}:D{$row}")->applyFromArray([
                     'font' => ['bold' => true, 'color' => ['rgb' => self::PROFIT_COLOR]],
                 ]);
             }
 
             // Style loss amounts (red) - both label and amount
             if (in_array($particularsRightValue, ['GROSS LOSS C/D', 'NET LOSS C/D'])) {
-                $sheet->getStyle("D{$row}:E{$row}")->applyFromArray([
+                $sheet->getStyle("C{$row}:D{$row}")->applyFromArray([
                     'font' => ['bold' => true, 'color' => ['rgb' => self::LOSS_COLOR]],
                 ]);
             }
 
             if (in_array($particularsValue, ['GROSS LOSS B/D'])) {
-                $sheet->getStyle("B{$row}:C{$row}")->applyFromArray([
+                $sheet->getStyle("A{$row}:B{$row}")->applyFromArray([
                     'font' => ['bold' => true, 'color' => ['rgb' => self::LOSS_COLOR]],
                 ]);
             }
@@ -402,7 +398,7 @@ class ProfitLossExport implements FromCollection, WithColumnFormatting, WithEven
     {
         $highestRow = $sheet->getHighestRow();
         for ($row = self::HEADER_ROW_COUNT + 2; $row <= $highestRow; $row++) {
-            $particularsValue = $sheet->getCell("B{$row}")->getValue();
+            $particularsValue = $sheet->getCell("A{$row}")->getValue();
             if ($particularsValue === 'TOTAL') {
                 $sheet->getStyle("A{$row}:".self::LAST_COLUMN."{$row}")->applyFromArray([
                     'font' => ['bold' => true, 'size' => 12, 'color' => ['rgb' => self::TOTAL_TEXT]],
@@ -459,7 +455,7 @@ class ProfitLossExport implements FromCollection, WithColumnFormatting, WithEven
         ]);
 
         // Add thicker border between left and right sections
-        $sheet->getStyle("C{$dataStartRow}:C{$highestRow}")->applyFromArray([
+        $sheet->getStyle("B{$dataStartRow}:B{$highestRow}")->applyFromArray([
             'borders' => [
                 'right' => [
                     'borderStyle' => Border::BORDER_MEDIUM,
@@ -476,10 +472,9 @@ class ProfitLossExport implements FromCollection, WithColumnFormatting, WithEven
         }
 
         // Set minimum column widths
-        $sheet->getColumnDimension('A')->setWidth(30);
-        $sheet->getColumnDimension('B')->setWidth(35);
-        $sheet->getColumnDimension('C')->setWidth(18);
-        $sheet->getColumnDimension('D')->setWidth(35);
-        $sheet->getColumnDimension('E')->setWidth(18);
+        $sheet->getColumnDimension('A')->setWidth(35);
+        $sheet->getColumnDimension('B')->setWidth(18);
+        $sheet->getColumnDimension('C')->setWidth(35);
+        $sheet->getColumnDimension('D')->setWidth(18);
     }
 }
