@@ -483,6 +483,20 @@
                     window.location.href = "/purchase/barcode-print/" + id;
                 });
             });
+            window.addEventListener('SelectDropDownValues', event => {
+                var data = event.detail[0];
+                if (data && data['account_id']) {
+                    var accountTomSelectInstance = document.querySelector('#account_id').tomselect;
+                    if (accountTomSelectInstance && data['account_id']) {
+                        var preselectedData = {
+                            id: data['account_id'],
+                            name: data['account']['name'],
+                        };
+                        accountTomSelectInstance.addOption(preselectedData);
+                        accountTomSelectInstance.addItem(preselectedData.id);
+                    }
+                }
+            });
         </script>
     @endpush
 </div>
