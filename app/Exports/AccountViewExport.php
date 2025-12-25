@@ -32,9 +32,13 @@ class AccountViewExport implements FromCollection, WithColumnFormatting, WithEve
     protected float $runningBalance;
 
     private const HEADER_ROW_COUNT = 3;
+
     private const HEADER_ROW = 1;
+
     private const OPENING_BALANCE_ROW = 5;
+
     private const GRAY_FILL = 'E9ECEF';
+
     private const LAST_COLUMN = 'I';
 
     public function __construct(Account $account, array $filters = [], bool $excludeOpeningFromTotal = false)
@@ -197,10 +201,10 @@ class AccountViewExport implements FromCollection, WithColumnFormatting, WithEve
         $sheet->insertNewRowBefore(self::HEADER_ROW, self::HEADER_ROW_COUNT);
 
         $sheet->setCellValue('A1', 'Account Ledger Report');
-        $sheet->setCellValue('A2', 'Account: ' . $this->account->name);
+        $sheet->setCellValue('A2', 'Account: '.$this->account->name);
         $sheet->setCellValue('A3', $this->getPeriodString());
 
-        $sheet->getStyle('A1:' . self::LAST_COLUMN . '1')->applyFromArray([
+        $sheet->getStyle('A1:'.self::LAST_COLUMN.'1')->applyFromArray([
             'font' => ['bold' => true, 'size' => 14],
         ]);
 
@@ -208,9 +212,9 @@ class AccountViewExport implements FromCollection, WithColumnFormatting, WithEve
             'font' => ['bold' => true],
         ]);
 
-        $sheet->mergeCells('A1:' . self::LAST_COLUMN . '1');
-        $sheet->mergeCells('A2:' . self::LAST_COLUMN . '2');
-        $sheet->mergeCells('A3:' . self::LAST_COLUMN . '3');
+        $sheet->mergeCells('A1:'.self::LAST_COLUMN.'1');
+        $sheet->mergeCells('A2:'.self::LAST_COLUMN.'2');
+        $sheet->mergeCells('A3:'.self::LAST_COLUMN.'3');
     }
 
     protected function getPeriodString(): string
@@ -223,7 +227,7 @@ class AccountViewExport implements FromCollection, WithColumnFormatting, WithEve
 
     protected function styleOpeningBalanceRow(Worksheet $sheet): void
     {
-        $sheet->getStyle('A' . self::OPENING_BALANCE_ROW . ':' . self::LAST_COLUMN . self::OPENING_BALANCE_ROW)->applyFromArray([
+        $sheet->getStyle('A'.self::OPENING_BALANCE_ROW.':'.self::LAST_COLUMN.self::OPENING_BALANCE_ROW)->applyFromArray([
             'font' => ['bold' => true],
             'fill' => [
                 'fillType' => Fill::FILL_SOLID,
@@ -267,7 +271,7 @@ class AccountViewExport implements FromCollection, WithColumnFormatting, WithEve
 
     protected function applyRowStyle(Worksheet $sheet, int $row): void
     {
-        $sheet->getStyle("A{$row}:" . self::LAST_COLUMN . "{$row}")->applyFromArray([
+        $sheet->getStyle("A{$row}:".self::LAST_COLUMN."{$row}")->applyFromArray([
             'font' => ['bold' => true],
             'fill' => [
                 'fillType' => Fill::FILL_SOLID,

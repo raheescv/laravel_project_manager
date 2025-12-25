@@ -45,7 +45,7 @@
                         <input type="date" wire:model="end_date" class="form-control shadow-sm border-light" id="end_date">
                     </div>
                 </div>
-                <div class="col-md-2">
+                <div class="col-md-1">
                     <div class="form-group">
                         <label class="form-label fw-bold text-secondary mb-2 d-block">&nbsp;</label>
                         <button type="button" wire:click="fetchData" class="btn btn-primary w-100 shadow-sm">
@@ -53,7 +53,7 @@
                         </button>
                     </div>
                 </div>
-                <div class="col-md-2">
+                <div class="col-md-1">
                     <div class="form-group">
                         <label class="form-label fw-bold text-secondary mb-2 d-block">&nbsp;</label>
                         <button type="button" wire:click="resetFilters" class="btn btn-outline-secondary w-100 shadow-sm">
@@ -61,7 +61,16 @@
                         </button>
                     </div>
                 </div>
+                <div class="col-2">
+                    <div class="form-group">
+                        <label class="form-label fw-bold text-secondary mb-2 d-block">&nbsp;</label>
+                        <button type="button" wire:click="export" class="btn btn-success shadow-sm">
+                            <i class="pli-file-excel me-1"></i>Export to Excel
+                        </button>
+                    </div>
+                </div>
             </div>
+            <!-- Export Button -->
             <!-- Profit & Loss Report - T-Account Format -->
             <div class="table-responsive">
                 <table class="table table-bordered table-sm mb-0" id="profitLossTable" style="font-size: 0.9rem;">

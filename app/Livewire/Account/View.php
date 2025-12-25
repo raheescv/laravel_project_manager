@@ -105,9 +105,9 @@ class View extends Component
     private function dataFunction()
     {
         return $this->baseQuery()
-            ->when($this->filter['search'] ?? '', fn($query, $value) => $this->applySearchFilter($query, $value))
-            ->when($this->filter['from_date'] ?? '', fn($query, $value) => $this->applyFromDateFilter($query, $value))
-            ->when($this->filter['to_date'] ?? '', fn($query, $value) => $this->applyToDateFilter($query, $value));
+            ->when($this->filter['search'] ?? '', fn ($query, $value) => $this->applySearchFilter($query, $value))
+            ->when($this->filter['from_date'] ?? '', fn ($query, $value) => $this->applyFromDateFilter($query, $value))
+            ->when($this->filter['to_date'] ?? '', fn ($query, $value) => $this->applyToDateFilter($query, $value));
     }
 
     private function baseQuery()
@@ -155,8 +155,7 @@ class View extends Component
     private function getOpeningBalanceQuery()
     {
         return $this->baseQuery()
-            ->when($this->filter['from_date'] ?? '', fn($query, $value) =>
-                $query->where('date', '<', date('Y-m-d', strtotime($value)))
+            ->when($this->filter['from_date'] ?? '', fn ($query, $value) => $query->where('date', '<', date('Y-m-d', strtotime($value)))
             )
             ->selectRaw('ROUND(SUM(debit),2) as debit, ROUND(SUM(credit),2) as credit');
     }
