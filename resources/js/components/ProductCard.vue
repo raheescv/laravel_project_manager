@@ -139,9 +139,11 @@ export default {
     flex-direction: column;
     cursor: pointer;
     min-height: 140px;
-    height: auto;
-    /* Reduced height */
+    height: 100%;
+    width: 100%;
+    max-width: 100%;
     border: 1px solid rgba(229, 231, 235, 0.5);
+    box-sizing: border-box;
 }
 
 .product-card:active {
@@ -234,6 +236,9 @@ export default {
     flex-direction: column;
     flex-grow: 1;
     min-height: 0;
+    width: 100%;
+    box-sizing: border-box;
+    overflow: hidden;
 }
 
 .product-name {
@@ -243,22 +248,26 @@ export default {
     color: #374151;
     line-height: 1.3;
     word-wrap: break-word;
+    overflow-wrap: break-word;
     hyphens: auto;
-    overflow: visible !important;
-    text-overflow: unset !important;
-    white-space: normal !important;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: normal;
     padding-bottom: 4px;
     border-bottom: 1px solid #f3f4f6;
     margin-bottom: 4px;
     display: -webkit-box;
-    -webkit-line-clamp: unset !important;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
     -webkit-box-orient: vertical;
-    max-height: none !important;
+    max-height: 2.6em;
+    width: 100%;
+    box-sizing: border-box;
 }
 
 .product-details-row {
     display: flex;
-    gap: 10px;
+    gap: 6px;
     margin-bottom: 4px;
     padding-bottom: 4px;
     border-bottom: 1px solid #f3f4f6;
@@ -267,12 +276,20 @@ export default {
     opacity: 1 !important;
     height: auto !important;
     min-height: 20px;
+    width: 100%;
+    box-sizing: border-box;
+    overflow: hidden;
 }
 
-.product-code, .product-size, .product-barcode {
+.product-code,
+.product-size,
+.product-barcode {
     display: flex;
     align-items: center;
     gap: 4px;
+    flex-shrink: 0;
+    max-width: 100%;
+    overflow: hidden;
 }
 
 .detail-label {
@@ -285,12 +302,21 @@ export default {
     font-size: 0.7rem;
     color: #4b5563;
     font-weight: 600;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 60px;
 }
 
 .product-price-row {
     display: flex;
     justify-content: space-between;
     align-items: center;
+    width: 100%;
+    box-sizing: border-box;
+    gap: 4px;
+    flex-wrap: nowrap;
+    min-width: 0;
 }
 
 .product-qty {
@@ -300,6 +326,11 @@ export default {
     font-weight: 600;
     padding: 1px 6px;
     border-radius: 4px;
+    flex-shrink: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 50%;
 }
 
 .product-qty.low {
@@ -312,6 +343,12 @@ export default {
     color: #047857;
     font-size: 0.9rem;
     padding: 1px 0;
+    flex-shrink: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    text-align: right;
+    min-width: fit-content;
 }
 
 /* Low stock styling */
@@ -372,14 +409,20 @@ export default {
     .product-card {
         min-height: 130px;
         height: auto;
+        width: 100%;
+        max-width: 100%;
     }
 
     .product-image-container {
         height: 80px;
+        width: 100%;
     }
 
     .product-name {
         font-size: 0.75rem;
+        -webkit-line-clamp: 2;
+        line-clamp: 2;
+        max-height: 2.4em;
     }
 
     .product-price {
@@ -387,7 +430,7 @@ export default {
     }
 
     .product-details-row {
-        gap: 8px;
+        gap: 6px;
     }
 
     .detail-label {
@@ -396,6 +439,13 @@ export default {
 
     .detail-value {
         font-size: 0.65rem;
+        max-width: 50px;
+    }
+
+    .product-qty {
+        font-size: 0.65rem;
+        padding: 1px 4px;
+        max-width: 45%;
     }
 }
 
@@ -403,31 +453,42 @@ export default {
     .product-card {
         min-height: 125px;
         height: auto;
+        width: 100%;
+        max-width: 100%;
     }
 
     .product-image-container {
         height: 75px;
+        width: 100%;
     }
 
     .product-info-wrapper {
-        padding: 5px 7px 7px;
+        padding: 5px 6px 6px;
+        width: 100%;
+        box-sizing: border-box;
     }
 
     .product-name {
         font-size: 0.7rem;
+        -webkit-line-clamp: 2;
+        line-clamp: 2;
+        max-height: 2.2em;
+        padding-bottom: 3px;
+        margin-bottom: 3px;
     }
 
     .product-price {
-        font-size: 0.8rem;
+        font-size: 0.75rem;
     }
 
     .product-qty {
-        font-size: 0.65rem;
-        padding: 1px 4px;
+        font-size: 0.6rem;
+        padding: 1px 3px;
+        max-width: 40%;
     }
 
     .product-details-row {
-        gap: 6px;
+        gap: 4px;
         margin-bottom: 3px;
         padding-bottom: 3px;
     }
@@ -438,6 +499,11 @@ export default {
 
     .detail-value {
         font-size: 0.6rem;
+        max-width: 45px;
+    }
+
+    .product-price-row {
+        gap: 2px;
     }
 }
 </style>

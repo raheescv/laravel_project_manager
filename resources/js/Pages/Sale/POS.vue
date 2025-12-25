@@ -265,7 +265,7 @@
         </div>
 
         <!-- Cart Items Modal -->
-        <CartItemsModal :show="showCartModal" :cart-items-by-employee="cartItemsByEmployee" :total-items="Object.keys(form.items).length" :total-quantity="totalQuantity"
+        <CartItemsModal :show="showCartModal" :cart-items-by-employee="cartItemsByEmployee" :total-items="Object.keys(form.items).length" :total-quantity="totalQuantity" :can-edit-item-price="canEditItemPrice"
             @close="showCartModal = false" @update-item-quantity="updateItemQuantity" @remove-cart-item="removeCartItem" @update-item-field="updateItemField" />
 
         <!-- Customer Modal -->
@@ -291,7 +291,7 @@
         <DraftSalesModal :show="showDraftSalesModal" @close="closeDraftSalesModal" @draft-loaded="handleDraftLoaded" />
 
         <!-- Edit Item Modal as a component -->
-        <EditItemModal :show="showEditItemModal" :item="editItemData" :employees="employees" @close="showEditItemModal = false" @save="onEditItemSave" />
+        <EditItemModal :show="showEditItemModal" :item="editItemData" :employees="employees" :can-edit-item-price="canEditItemPrice" @close="showEditItemModal = false" @save="onEditItemSave" />
 
         <!-- Combo Offer Modal -->
         <ComboOfferModal :show="showComboOfferModal" :cart-items="form.items" :initial-combo-offers="form.comboOffers" @close="closeComboOfferModal" @save="handleComboOfferSave"
@@ -372,6 +372,10 @@
             defaultQuantity: {
                 type: Number,
                 default: 0.001
+            },
+            canEditItemPrice: {
+                type: Boolean,
+                default: false
             }
         },
 

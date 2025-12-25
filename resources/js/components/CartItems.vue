@@ -6,9 +6,9 @@
             class="p-2 border-b border-indigo-100 bg-gradient-to-r from-indigo-50/80 via-violet-50/60 to-indigo-50/80 flex-shrink-0">
             <div class="flex items-center justify-between">
                 <div class="flex items-center">
-                    <div
-                        class="flex items-center justify-center h-6 w-6 bg-gradient-to-br from-violet-500 to-indigo-600 text-white rounded-md shadow-sm mr-1.5">
-                        <span class="font-bold text-xs">{{ totalQuantity }}</span>
+                    <div class="flex items-center justify-center h-6 bg-gradient-to-br from-violet-500 to-indigo-600 text-white rounded-md shadow-sm mr-1.5 px-1"
+                        :style="{ width: badgeWidth }">
+                        <span class="font-bold text-xs">{{ totalQuantity.toFixed(3) }}</span>
                     </div>
                     <div>
                         <h6 class="font-medium text-indigo-900 text-xs flex items-center">
@@ -16,7 +16,7 @@
                             Cart Items
                         </h6>
                         <small class="text-xs text-indigo-500">
-                            {{ totalQuantity === 1 ? '1 item' : `${totalQuantity} items` }}
+                            {{ totalQuantity === 1 ? '1 item' : `${totalQuantity.toFixed(3)} items` }}
                         </small>
                     </div>
                 </div>
@@ -93,7 +93,7 @@
                                 <div class="flex-shrink-0">
                                     <span
                                         class="font-medium text-teal-600 text-xs bg-teal-50/70 px-1.5 py-0.5 rounded-md border border-teal-100/50">
-                                        {{ (item.quantity * item.unit_price).toFixed(2) }}
+                                        {{ item.quantity * item.unit_price.toFixed(2) }}
                                     </span>
                                 </div>
                             </div>
@@ -105,19 +105,19 @@
                                     class="flex items-center bg-violet-50 rounded-md border border-violet-100 overflow-hidden">
                                     <button type="button" :disabled="item.quantity <= 1"
                                         @click="item.quantity > 1 ? decreaseQuantity(key) : null"
-                                        class="flex items-center justify-center h-6 w-6 transition-colors"
+                                        class="flex items-center justify-center h-7 w-7 sm:h-6 sm:w-6 transition-colors touch-manipulation"
                                         :class="item.quantity <= 1 ? 'text-violet-200 cursor-not-allowed' : 'text-violet-600 hover:text-indigo-500 active:bg-violet-100'">
-                                        <i class="fa fa-minus text-xs"></i>
+                                        <i class="fa fa-minus text-xs sm:text-xs"></i>
                                     </button>
 
                                     <input v-model.number="item.quantity" @change="updateItemQuantity(key)"
                                         @blur="updateItemQuantity(key)" type="number" min="1"
-                                        class="w-8 h-6 text-center text-xs bg-transparent border-0 focus:outline-none focus:ring-0 p-0 text-indigo-800"
+                                        class="w-16 sm:w-14 h-7 sm:h-6 text-center text-sm sm:text-xs bg-transparent border-0 focus:outline-none focus:ring-0 p-0 text-indigo-800 touch-manipulation"
                                         style="appearance: textfield">
 
                                     <button type="button" @click="increaseQuantity(key)"
-                                        class="flex items-center justify-center h-6 w-6 text-violet-600 hover:text-indigo-500 active:bg-violet-100 transition-colors">
-                                        <i class="fa fa-plus text-xs"></i>
+                                        class="flex items-center justify-center h-7 w-7 sm:h-6 sm:w-6 text-violet-600 hover:text-indigo-500 active:bg-violet-100 transition-colors touch-manipulation">
+                                        <i class="fa fa-plus text-xs sm:text-xs"></i>
                                     </button>
                                 </div>
 
@@ -187,6 +187,16 @@ export default {
         'decrease-quantity',
         'manage-combo-offer'
     ],
+    computed: {
+        badgeWidth() {
+            const formattedValue = this.totalQuantity.toFixed(3);
+            // Calculate width based on character count: min 24px (w-6), ~8px per character
+            const minWidth = 24;
+            const charWidth = 8;
+            const calculatedWidth = Math.max(minWidth, formattedValue.length * charWidth + 8); // +8 for padding
+            return `${calculatedWidth}px`;
+        }
+    },
     methods: {
         updateItemQuantity(key) {
             this.$emit('update-item-quantity', key);

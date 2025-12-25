@@ -273,6 +273,7 @@ class SaleController extends Controller
             'defaultProductType' => $defaultProductType,
             'defaultCustomerEnabled' => $useDefaultCustomer,
             'defaultQuantity' => $defaultQuantity,
+            'canEditItemPrice' => Auth::user()->can('sale.item price edit'),
         ];
 
         return inertia('Sale/POS', $data);

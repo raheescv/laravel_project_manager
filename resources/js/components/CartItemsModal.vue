@@ -58,20 +58,15 @@
                             <table class="w-full cart-table">
                                 <thead class="bg-teal-50/70 border-b-2 border-teal-100">
                                     <tr>
-                                        <th class="text-left py-2 px-3 font-semibold text-teal-700 text-xs">Item
-                                        </th>
+                                        <th class="text-left py-2 px-3 font-semibold text-teal-700 text-xs">Item </th>
                                         <th class="text-left py-2 px-3 font-semibold text-teal-700 text-xs">Barcode
                                         </th>
-                                        <th class="text-right py-2 px-3 font-semibold text-teal-700 text-xs">Price
-                                        </th>
-                                        <th class="text-right py-2 px-3 font-semibold text-teal-700 text-xs">Qty
-                                        </th>
+                                        <th class="text-right py-2 px-3 font-semibold text-teal-700 text-xs">Price </th>
+                                        <th class="text-right py-2 px-3 font-semibold text-teal-700 text-xs">Qty </th>
                                         <th class="text-right py-2 px-3 font-semibold text-teal-700 text-xs">Discount
                                         </th>
-                                        <th class="text-right py-2 px-3 font-semibold text-teal-700 text-xs">Tax %
-                                        </th>
-                                        <th class="text-right py-2 px-3 font-semibold text-teal-700 text-xs">Total
-                                        </th>
+                                        <th class="text-right py-2 px-3 font-semibold text-teal-700 text-xs">Tax % </th>
+                                        <th class="text-right py-2 px-3 font-semibold text-teal-700 text-xs">Total </th>
                                         <th class="text-right py-2 px-3 font-semibold text-teal-700 text-xs">Action
                                         </th>
                                     </tr>
@@ -79,7 +74,6 @@
                                 <tbody>
                                     <tr v-for="item in items" :key="item.key"
                                         class="border-b border-teal-50 hover:bg-teal-50/30 transition-colors">
-
                                         <!-- Item Name & Code -->
                                         <td class="py-2 px-3">
                                             <div class="flex items-center space-x-2">
@@ -99,12 +93,12 @@
                                         </td>
                                         <td class="py-2 px-3">
                                             <div class="flex items-center space-x-2">
-                                                
+
                                                 <div class="min-w-0">
                                                     <div class="font-medium text-teal-800 text-xs truncate">
                                                         {{ item.barcode }}
                                                     </div>
-                                                   
+
                                                 </div>
                                             </div>
                                         </td>
@@ -115,15 +109,20 @@
                                             <input :value="item.unit_price"
                                                 @input="updateItemField(item.key, 'unit_price', $event.target.value)"
                                                 @change="$emit('update-item-quantity', item.key)" type="number" step="1"
-                                                min="0"
-                                                class="w-full px-2 py-1 text-xs border border-teal-200 rounded-md focus:ring-1 focus:ring-teal-500 focus:border-teal-500 text-right bg-white text-teal-800 transition-colors">
+                                                min="0" :disabled="!canEditItemPrice" :class="[
+                                                    'w-full px-2 py-1 text-xs border rounded-md text-right transition-colors',
+                                                    canEditItemPrice
+                                                        ? 'border-teal-200 focus:ring-1 focus:ring-teal-500 focus:border-teal-500 bg-white text-teal-800'
+                                                        : 'border-teal-100 bg-slate-100 text-slate-500 cursor-not-allowed'
+                                                ]">
                                         </td>
 
                                         <!-- Quantity -->
                                         <td class="py-2 px-3 text-right">
                                             <input :value="item.quantity"
                                                 @input="updateItemField(item.key, 'quantity', $event.target.value)"
-                                                @change="$emit('update-item-quantity', item.key)" type="number" min="0.001"
+                                                @change="$emit('update-item-quantity', item.key)" type="number"
+                                                min="0.001"
                                                 class="w-full px-2 py-1 text-xs border border-sky-200 rounded-md focus:ring-1 focus:ring-sky-500 focus:border-sky-500 text-right bg-white font-semibold text-sky-800 transition-colors">
                                         </td>
 
@@ -215,6 +214,10 @@ export default {
         totalQuantity: {
             type: Number,
             default: 0
+        },
+        canEditItemPrice: {
+            type: Boolean,
+            default: false
         }
     },
     emits: ['close', 'update-item-quantity', 'remove-cart-item', 'update-item-field'],
