@@ -294,7 +294,7 @@ class ProfitLoss extends Component
             : ['Direct Expense', 'Indirect Expense'];
 
         $structure = [];
-
+        $sale_id = Account::where('name', 'Sale')->first()->id;
         foreach ($masterCategoryNames as $masterName) {
             $masterCategory = AccountCategory::where('name', $masterName)
                 ->whereNull('parent_id')
@@ -312,7 +312,6 @@ class ProfitLoss extends Component
             $masterTotal = 0.0;
             $groups = [];
             $directAccounts = [];
-
             // Get accounts directly under master category (without a group)
             foreach ($masterCategory->accounts as $account) {
                 $amount = $this->calculateAccountAmount($account->id, $accountType);
@@ -329,8 +328,10 @@ class ProfitLoss extends Component
             foreach ($masterCategory->children as $group) {
                 $groupTotal = 0.0;
                 $accounts = [];
-
                 foreach ($group->accounts as $account) {
+                    if ($account->id === $sale_id) {
+                        continue;
+                    }
                     $amount = $this->calculateAccountAmount($account->id, $accountType);
                     $groupTotal += $amount;
 
