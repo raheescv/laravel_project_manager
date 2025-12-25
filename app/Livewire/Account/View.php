@@ -44,9 +44,10 @@ class View extends Component
         if ($this->accountId) {
             $this->account = Account::findOrFail($this->accountId);
         }
+
         $this->filter = [
-            'from_date' => date('Y-m-01'),
-            'to_date' => date('Y-m-d'),
+            'from_date' => request()->get('from_date',date('Y-m-01')),
+            'to_date' => request()->get('to_date',date('Y-m-d')),
             'search' => '',
             'account_id' => $this->accountId,
             'branch_id' => session('branch_id'),
