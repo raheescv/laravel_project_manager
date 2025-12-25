@@ -119,6 +119,9 @@
                             <button @click="collapseAll()" class="btn btn-light border-0 shadow-sm hover:bg-light/80 transition-colors">
                                 <i class="pli-arrow-up fs-5 me-2"></i>Collapse All
                             </button>
+                            <button wire:click="export" class="btn btn-success border-0 shadow-sm hover:bg-success/80 transition-colors">
+                                <i class="pli-file-excel fs-5 me-2"></i>Export Excel
+                            </button>
                             <button class="btn btn-light border-0 shadow-sm hover:bg-light/80 transition-colors" onclick="window.print()">
                                 <i class="pli-printer fs-5 me-2"></i>Print
                             </button>
