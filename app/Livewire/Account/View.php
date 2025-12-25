@@ -35,6 +35,8 @@ class View extends Component
 
     public $sortDirection = 'desc';
 
+    public $excludeOpeningFromTotal = false;
+
     protected $paginationTheme = 'bootstrap';
 
     public function mount($account_id)
@@ -50,6 +52,9 @@ class View extends Component
             'account_id' => $this->accountId,
             'branch_id' => session('branch_id'),
         ];
+        if(in_array($this->account->account_type,['income','expense'])){
+            $this->excludeOpeningFromTotal = true;
+        }
         $this->lineChartData();
         $this->groupedChartData();
     }
@@ -147,17 +152,41 @@ class View extends Component
             });
     }
 
+    public function getOpeningBalance()
+    {
+        if($this->excludeOpeningFromTotal){
+            return [
+                'debit' => 0,
+                'credit' => 0,
+            ];
+        }
+        $openingBalance = JournalEntry::with('account')
+            ->where('counter_account_id', $this->accountId)
+            ->when($this->filter['from_date'] ?? '', function ($query, $value) {
+                return $query->where('date', '<', date('Y-m-d', strtotime($value)));
+            })
+            ->selectRaw('SUM(debit) as debit, SUM(credit) as credit')
+            ->first();
+
+        return [
+            'debit' => $openingBalance->debit ?? $this->account->opening_debit ?? 0,
+            'credit' => $openingBalance->credit ?? $this->account->opening_credit ?? 0,
+        ];
+    }
+
     public function render()
     {
         $data = $this->dataFunction();
         $totalRow = clone $data;
 
-        $data = $data->orderBy($this->sortField, $this->sortDirection)->paginate($this->limit);
+        $data = $data->orderBy('date','ASC')->paginate($this->limit);
 
         $totalRow = $totalRow->selectRaw('SUM(debit) as debit, SUM(credit) as credit')->first();
         $total['debit'] = $totalRow->debit;
         $total['credit'] = $totalRow->credit;
 
-        return view('livewire.account.view', ['data' => $data, 'total' => $total]);
+        $openingBalance = $this->getOpeningBalance();
+
+        return view('livewire.account.view', ['data' => $data, 'total' => $total, 'openingBalance' => $openingBalance]);
     }
 }

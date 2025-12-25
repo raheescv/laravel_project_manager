@@ -32,6 +32,8 @@ class Account extends Model implements AuditableContracts
         'company',
 
         'description',
+        'opening_debit',
+        'opening_credit',
         'second_reference_no',
     ];
 

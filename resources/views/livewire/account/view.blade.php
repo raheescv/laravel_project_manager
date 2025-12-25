@@ -34,6 +34,15 @@
                     <label for="to_date">To Date</label>
                     {{ html()->date('to_date')->value('')->class('form-control')->id('to_date')->attribute('wire:model.live', 'filter.to_date') }}
                 </div>
+                <div class="col-md-3 d-flex align-items-end">
+                    <div class="form-check mt-3">
+                        <input class="form-check-input" type="checkbox" id="excludeOpeningFromTotal" wire:model.live="excludeOpeningFromTotal">
+                        <label class="form-check-label" for="excludeOpeningFromTotal">
+                            <i class="fa fa-filter me-1 text-muted"></i>
+                            Exclude Opening from Total
+                        </label>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -62,31 +71,33 @@
                             <table class="table table-striped table-sm">
                                 <thead>
                                     <tr class="text-capitalize">
-                                        <th>
-                                            <input type="checkbox" wire:model.live="selectAll" />
-                                            <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="id" label="id" />
-                                        </th>
-                                        <th> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="date" label="date" /> </th>
-                                        <th> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="account_id" label="account name" /> </th>
-                                        <th> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="person_name" label="payee" /> </th>
-                                        <th> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="reference_number" label="reference No" /> </th>
-                                        <th> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="description" label="description" /> </th>
-                                        <th class="text-end"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="debit" label="debit" /> </th>
-                                        <th class="text-end"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="credit" label="credit" /> </th>
+                                        <th> # </th>
+                                        <th> date </th>
+                                        <th> account name </th>
+                                        <th> payee </th>
+                                        <th> reference No </th>
+                                        <th> description </th>
+                                        <th width="8%" class="text-end"> debit </th>
+                                        <th width="8%" class="text-end"> credit </th>
+                                        <th width="8%" class="text-end"> balance </th>
                                     </tr>
-                                    <tr>
-                                        <th class="text-end" colspan="6">Total</th>
-                                        <th class="text-end">{{ currency($total['debit']) }}</th>
-                                        <th class="text-end">{{ currency($total['credit']) }}</th>
+                                    <tr class="bg-light">
+                                        <td colspan="6" class="fw-bold"> <span class="pull-right">Opening Balance</span> </td>
+                                        <td class="text-end fw-bold">{{ currency($openingBalance['debit']) }}</td>
+                                        <td class="text-end fw-bold">{{ currency($openingBalance['credit']) }}</td>
+                                        <td class="text-end fw-bold">0</td>
                                     </tr>
                                 </thead>
                                 <tbody>
+                                    @php
+                                        $runningBalance = $openingBalance['debit'] - $openingBalance['credit'];
+                                    @endphp
                                     @foreach ($data as $item)
+                                        @php
+                                            $runningBalance += $item->debit - $item->credit;
+                                        @endphp
                                         <tr>
-                                            <td>
-                                                <input type="checkbox" value="{{ $item->journal_id }}" wire:model.live="selected" />
-                                                {{ $item->journal_id }}
-                                            </td>
+                                            <td> {{ $item->journal_id }} </td>
                                             <td>{{ systemDate($item->journal->date) }}</td>
                                             <td>{{ $item->account->name }}</td>
                                             <td>{{ $item->person_name }}</td>
@@ -107,9 +118,27 @@
                                             </td>
                                             <td class="text-end">{{ currency($item->debit) }}</td>
                                             <td class="text-end">{{ currency($item->credit) }}</td>
+                                            <td class="text-end">{{ currency($runningBalance) }}</td>
                                         </tr>
                                     @endforeach
                                 </tbody>
+                                <tfoot>
+                                    <tr class="bg-light">
+                                        <td colspan="6" class="fw-bold"> <span class="pull-right">Total</span> </td>
+                                        <th class="text-end">{{ currency($total['debit'] + $openingBalance['debit']) }}</th>
+                                        <th class="text-end">{{ currency($total['credit'] + $openingBalance['credit']) }}</th>
+                                        <td class="text-end fw-bold">-</td>
+                                    </tr>
+                                    <tr class="bg-light">
+                                        <td colspan="6" class="fw-bold"> <span class="pull-right">Balance</span> </td>
+                                        @php
+                                            $balance = $total['debit'] - $total['credit'] + $openingBalance['debit'] - $openingBalance['credit'];
+                                        @endphp
+                                        <th class="text-end">{{ currency($balance > 0 ? $balance : 0) }}</th>
+                                        <th class="text-end">{{ currency($balance < 0 ? $balance * -1 : 0) }}</th>
+                                        <td class="text-end fw-bold">-</td>
+                                    </tr>
+                                </tfoot>
                             </table>
                         </div>
                         {{ $data->links() }}

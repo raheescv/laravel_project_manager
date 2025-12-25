@@ -92,6 +92,60 @@
                 </div>
             </div>
 
+            {{-- Opening Balance Fields --}}
+            <div class="mb-4">
+                <div class="card border-0 bg-light-subtle shadow-sm">
+                    <div class="card-body p-3">
+                        <div class="d-flex align-items-center mb-3">
+                            <i class="fa fa-balance-scale me-2 text-primary fs-5"></i>
+                            <h6 class="mb-0 fw-semibold text-muted">Opening Balance</h6>
+                        </div>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label for="opening_debit" class="form-label fw-semibold mb-2">
+                                    <i class="fa fa-arrow-up me-1 text-success"></i>
+                                    Opening Debit
+                                </label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-white border-end-0">
+                                        <i class="fa fa-money-bill-wave text-success"></i>
+                                    </span>
+                                    {{ html()->input('opening_debit')->type('number')->value('')->class('form-control border-start-0')->attribute('wire:model', 'accounts.opening_debit')->placeholder('0.00')->id('opening_debit') }}
+                                </div>
+                                @error('accounts.opening_debit')
+                                    <div class="text-danger small mt-1">
+                                        <i class="fa fa-exclamation-circle me-1"></i>{{ $message }}
+                                    </div>
+                                @enderror
+                            </div>
+                            <div class="col-md-6">
+                                <label for="opening_credit" class="form-label fw-semibold mb-2">
+                                    <i class="fa fa-arrow-down me-1 text-danger"></i>
+                                    Opening Credit
+                                </label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-white border-end-0">
+                                        <i class="fa fa-money-bill-wave text-danger"></i>
+                                    </span>
+                                    {{ html()->input('opening_credit')->type('number')->value('')->class('form-control border-start-0')->attribute('wire:model', 'accounts.opening_credit')->placeholder('0.00')->id('opening_credit') }}
+                                </div>
+                                @error('accounts.opening_credit')
+                                    <div class="text-danger small mt-1">
+                                        <i class="fa fa-exclamation-circle me-1"></i>{{ $message }}
+                                    </div>
+                                @enderror
+                            </div>
+                        </div>
+                        <div class="mt-2">
+                            <small class="text-muted">
+                                <i class="fa fa-info-circle me-1"></i>
+                                Enter the initial balance when creating this account. Leave blank if not applicable.
+                            </small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             {{-- Description Field --}}
             <div class="mb-3">
                 <label for="description" class="form-label fw-semibold mb-2">
