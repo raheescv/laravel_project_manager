@@ -122,7 +122,7 @@
                                 </tr>
                                 <tr>
                                     <th>Brand</th>
-                                    <td>{{ $product->brand?->name }}</td>
+                                    <td>{{ $product->brand?->name ?? 'N/A' }}</td>
                                 </tr>
                                 <tr>
                                     <th>Part No</th>

@@ -54,9 +54,13 @@ class TrialBalanceExport implements FromCollection, WithColumnFormatting, WithEv
 
     // Section colors
     private const ASSETS_COLOR = '3498DB'; // Blue
+
     private const LIABILITIES_COLOR = 'F39C12'; // Orange
+
     private const EQUITY_COLOR = '27AE60'; // Green
+
     private const INCOME_COLOR = '27AE60'; // Green
+
     private const EXPENSES_COLOR = 'E74C3C'; // Red
 
     public function __construct(array $data, string $startDate, string $endDate, ?string $branchName = null)
@@ -133,7 +137,7 @@ class TrialBalanceExport implements FromCollection, WithColumnFormatting, WithEv
         };
 
         // Assets Section
-        if (!empty($this->data['assetsTree'])) {
+        if (! empty($this->data['assetsTree'])) {
             $rows[] = ['account_name' => 'ASSETS', 'debit' => '', 'credit' => ''];
             $flattenTree($this->data['assetsTree'], 'assets');
             $rows[] = [
@@ -145,7 +149,7 @@ class TrialBalanceExport implements FromCollection, WithColumnFormatting, WithEv
         }
 
         // Liabilities Section
-        if (!empty($this->data['liabilitiesTree'])) {
+        if (! empty($this->data['liabilitiesTree'])) {
             $rows[] = ['account_name' => 'LIABILITIES', 'debit' => '', 'credit' => ''];
             $flattenTree($this->data['liabilitiesTree'], 'liabilities');
             $rows[] = [
@@ -157,7 +161,7 @@ class TrialBalanceExport implements FromCollection, WithColumnFormatting, WithEv
         }
 
         // Equity Section
-        if (!empty($this->data['equityTree'])) {
+        if (! empty($this->data['equityTree'])) {
             $rows[] = ['account_name' => 'EQUITY', 'debit' => '', 'credit' => ''];
             $flattenTree($this->data['equityTree'], 'equity');
             $rows[] = [
@@ -169,7 +173,7 @@ class TrialBalanceExport implements FromCollection, WithColumnFormatting, WithEv
         }
 
         // Income Section
-        if (!empty($this->data['incomeTree'])) {
+        if (! empty($this->data['incomeTree'])) {
             $rows[] = ['account_name' => 'INCOME', 'debit' => '', 'credit' => ''];
             $flattenTree($this->data['incomeTree'], 'income');
             $rows[] = [
@@ -181,7 +185,7 @@ class TrialBalanceExport implements FromCollection, WithColumnFormatting, WithEv
         }
 
         // Expenses Section
-        if (!empty($this->data['expensesTree'])) {
+        if (! empty($this->data['expensesTree'])) {
             $rows[] = ['account_name' => 'EXPENSES', 'debit' => '', 'credit' => ''];
             $flattenTree($this->data['expensesTree'], 'expenses');
             $rows[] = [
@@ -414,4 +418,3 @@ class TrialBalanceExport implements FromCollection, WithColumnFormatting, WithEv
         $sheet->getColumnDimension('C')->setWidth(18);
     }
 }
-
