@@ -289,12 +289,17 @@ class ProfitLoss extends Component
     protected function buildCategoryStructure(string $accountType): array
     {
         // Get master categories based on account type
-        $masterCategoryNames = $accountType === 'income'
-            ? ['Direct Income', 'Indirect Income']
-            : ['Direct Expense', 'Indirect Expense'];
+        $masterCategoryNames = $accountType === 'income' ? ['Direct Income', 'Indirect Income'] : ['Direct Expense', 'Indirect Expense'];
 
         $structure = [];
-        $sale_id = Account::where('name', 'Sale')->first()->id;
+        $sale_id = Account::where('name', 'Sale')->first()?->id;
+
+        // Get IDs of special accounts that are handled separately
+        $specialAccountIds = Account::whereIn('name', ['Sale', 'Purchase', 'Purchase Returns', 'Sales Returns'])
+            ->where('account_type', $accountType)
+            ->pluck('id')
+            ->toArray();
+
         foreach ($masterCategoryNames as $masterName) {
             $masterCategory = AccountCategory::where('name', $masterName)
                 ->whereNull('parent_id')
@@ -359,6 +364,63 @@ class ProfitLoss extends Component
                 'directAccounts' => $directAccounts,
             ];
         }
+
+        // Add un categorized accounts to Direct Expense/Direct Income
+        $directCategoryName = $accountType === 'income' ? 'Indirect Income' : 'Indirect Expense';
+
+        // Find un categorized accounts (accounts with null account_category_id)
+        $unCategorizedAccounts = Account::where('account_type', $accountType)
+            ->whereNull('account_category_id')
+            ->whereNotIn('id', $specialAccountIds)
+            ->get();
+
+        $unCategorizedTotal = 0.0;
+        $unCategorizedAccountsList = [];
+
+        foreach ($unCategorizedAccounts as $account) {
+            $amount = $this->calculateAccountAmount($account->id, $accountType);
+            $unCategorizedTotal += $amount;
+
+            $unCategorizedAccountsList[] = [
+                'id' => $account->id,
+                'name' => $account->name,
+                'amount' => $amount,
+            ];
+        }
+
+        // Add un categorized accounts to Direct Expense/Direct Income structure
+        if (count($unCategorizedAccountsList) > 0) {
+            // Find or create the Direct Expense/Direct Income entry in structure
+            $directCategoryFound = false;
+            foreach ($structure as $index => $category) {
+                if ($category['name'] === $directCategoryName) {
+                    // Add un categorized accounts to directAccounts
+                    $structure[$index]['directAccounts'] = array_merge(
+                        $structure[$index]['directAccounts'],
+                        $unCategorizedAccountsList
+                    );
+                    // Update total
+                    $structure[$index]['total'] += $unCategorizedTotal;
+                    $directCategoryFound = true;
+                    break;
+                }
+            }
+
+                // If Direct Expense/Direct Income category doesn't exist in structure, create it
+                if (! $directCategoryFound) {
+                    $directCategory = AccountCategory::where('name', $directCategoryName)
+                        ->whereNull('parent_id')
+                        ->first();
+
+                    $structure[] = [
+                        'id' => $directCategory?->id ?? 0,
+                        'name' => $directCategoryName,
+                        'total' => $unCategorizedTotal,
+                        'groups' => [],
+                        'directAccounts' => $unCategorizedAccountsList,
+                    ];
+                }
+            }
 
         return $structure;
     }
