@@ -128,13 +128,9 @@
                                 <tfoot>
                                     @php
                                         // Calculate totals with or without opening balance based on exclude flag
-                                        $totalDebit = $excludeOpeningFromTotal
-                                            ? $total['debit']
-                                            : ($total['debit'] + $openingBalance['debit']);
+                                        $totalDebit = $total['debit'] + $openingBalance['debit'];
 
-                                        $totalCredit = $excludeOpeningFromTotal
-                                            ? $total['credit']
-                                            : ($total['credit'] + $openingBalance['credit']);
+                                        $totalCredit = $total['credit'] + $openingBalance['credit'];
 
                                         // Calculate final balance
                                         $finalBalance = $totalDebit - $totalCredit;
