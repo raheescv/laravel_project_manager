@@ -8,7 +8,7 @@
                 <div class="flex items-center">
                     <div class="flex items-center justify-center h-6 bg-gradient-to-br from-violet-500 to-indigo-600 text-white rounded-md shadow-sm mr-1.5 px-1"
                         :style="{ width: badgeWidth }">
-                        <span class="font-bold text-xs">{{ totalQuantity.toFixed(3) }}</span>
+                        <span class="font-bold text-xs">{{ formatNumber(totalQuantity, 3) }}</span>
                     </div>
                     <div>
                         <h6 class="font-medium text-indigo-900 text-xs flex items-center">
@@ -16,7 +16,7 @@
                             Cart Items
                         </h6>
                         <small class="text-xs text-indigo-500">
-                            {{ totalQuantity === 1 ? '1 item' : `${totalQuantity.toFixed(3)} items` }}
+                            {{ totalQuantity === 1 ? '1 item' : `${formatNumber(totalQuantity, 3)} items` }}
                         </small>
                     </div>
                 </div>
@@ -85,7 +85,7 @@
                                         </span>
                                     </div>
                                     <div class="text-xs text-violet-500 leading-tight">
-                                        {{ item.unit_price.toFixed(2) }} × {{ item.quantity }}
+                                        {{ formatNumber(item.unit_price) }} × {{ item.quantity }}
                                     </div>
                                 </div>
 
@@ -93,7 +93,7 @@
                                 <div class="flex-shrink-0">
                                     <span
                                         class="font-medium text-teal-600 text-xs bg-teal-50/70 px-1.5 py-0.5 rounded-md border border-teal-100/50">
-                                        {{ item.quantity * item.unit_price.toFixed(2) }}
+                                        {{ formatNumber(item.quantity * item.unit_price) }}
                                     </span>
                                 </div>
                             </div>
@@ -189,7 +189,7 @@ export default {
     ],
     computed: {
         badgeWidth() {
-            const formattedValue = this.totalQuantity.toFixed(3);
+            const formattedValue = this.formatNumber(this.totalQuantity, 3);
             // Calculate width based on character count: min 24px (w-6), ~8px per character
             const minWidth = 24;
             const charWidth = 8;
@@ -198,6 +198,13 @@ export default {
         }
     },
     methods: {
+        formatNumber(value, decimals = 2) {
+            const num = parseFloat(value) || 0;
+            return num.toLocaleString('en-US', {
+                minimumFractionDigits: decimals,
+                maximumFractionDigits: decimals
+            });
+        },
         updateItemQuantity(key) {
             this.$emit('update-item-quantity', key);
         },

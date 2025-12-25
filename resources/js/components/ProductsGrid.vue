@@ -77,7 +77,8 @@ export default {
     max-width: 100%;
     padding: 4px;
     box-sizing: border-box;
-    overflow: hidden;
+    overflow-x: hidden;
+    overflow-y: visible;
 }
 
 .products-grid {
@@ -85,13 +86,20 @@ export default {
     grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
     gap: 8px;
     width: 100%;
+    max-width: 100%;
     box-sizing: border-box;
+    align-items: start;
+    overflow: visible;
 }
 
 .products-grid>* {
     width: 100%;
     max-width: 100%;
+    min-width: 0;
     box-sizing: border-box;
+    overflow: hidden;
+    position: relative;
+    contain: layout style paint;
 }
 
 /* Responsive grid layouts for different screen sizes */

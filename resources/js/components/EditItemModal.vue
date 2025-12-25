@@ -98,23 +98,19 @@
                     <div class="grid grid-cols-2 gap-2 text-xs">
                         <div class="flex justify-between items-center">
                             <span class="text-slate-600">Gross:</span>
-                            <span class="font-bold text-slate-800">{{ Number(localItem.gross_amount || 0).toFixed(2)
-                                }}</span>
+                            <span class="font-bold text-slate-800">{{ formatNumber(localItem.gross_amount || 0) }}</span>
                         </div>
                         <div class="flex justify-between items-center">
                             <span class="text-slate-600">Net:</span>
-                            <span class="font-bold text-slate-800">{{ Number(localItem.net_amount || 0).toFixed(2)
-                                }}</span>
+                            <span class="font-bold text-slate-800">{{ formatNumber(localItem.net_amount || 0) }}</span>
                         </div>
                         <div class="flex justify-between items-center">
                             <span class="text-slate-600">Tax:</span>
-                            <span class="font-bold text-purple-600">{{ Number(localItem.tax_amount || 0).toFixed(2)
-                                }}</span>
+                            <span class="font-bold text-purple-600">{{ formatNumber(localItem.tax_amount || 0) }}</span>
                         </div>
                         <div class="flex justify-between items-center">
                             <span class="text-slate-600">Total:</span>
-                            <span class="font-bold text-emerald-600">{{ Number(localItem.total || 0).toFixed(2)
-                                }}</span>
+                            <span class="font-bold text-emerald-600">{{ formatNumber(localItem.total || 0) }}</span>
                         </div>
                     </div>
                 </div>
@@ -183,6 +179,13 @@ export default {
         }
     },
     methods: {
+        formatNumber(value, decimals = 2) {
+            const num = parseFloat(value) || 0;
+            return num.toLocaleString('en-US', {
+                minimumFractionDigits: decimals,
+                maximumFractionDigits: decimals
+            });
+        },
         updateItemField(field, value) {
             // Convert to number for numeric fields
             const numericFields = ['unit_price', 'quantity', 'discount', 'tax'];

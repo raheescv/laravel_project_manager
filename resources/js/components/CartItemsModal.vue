@@ -59,16 +59,13 @@
                                 <thead class="bg-teal-50/70 border-b-2 border-teal-100">
                                     <tr>
                                         <th class="text-left py-2 px-3 font-semibold text-teal-700 text-xs">Item </th>
-                                        <th class="text-left py-2 px-3 font-semibold text-teal-700 text-xs">Barcode
-                                        </th>
+                                        <th class="text-left py-2 px-3 font-semibold text-teal-700 text-xs">Barcode </th>
                                         <th class="text-right py-2 px-3 font-semibold text-teal-700 text-xs">Price </th>
                                         <th class="text-right py-2 px-3 font-semibold text-teal-700 text-xs">Qty </th>
-                                        <th class="text-right py-2 px-3 font-semibold text-teal-700 text-xs">Discount
-                                        </th>
+                                        <th class="text-right py-2 px-3 font-semibold text-teal-700 text-xs">Discount </th>
                                         <th class="text-right py-2 px-3 font-semibold text-teal-700 text-xs">Tax % </th>
                                         <th class="text-right py-2 px-3 font-semibold text-teal-700 text-xs">Total </th>
-                                        <th class="text-right py-2 px-3 font-semibold text-teal-700 text-xs">Action
-                                        </th>
+                                        <th class="text-right py-2 px-3 font-semibold text-teal-700 text-xs">Action </th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -150,7 +147,7 @@
                                         <td class="py-2 px-3 text-right">
                                             <div
                                                 class="bg-gradient-to-r from-teal-50 to-emerald-100 text-teal-700 font-bold text-xs px-2.5 py-1 rounded-md border border-emerald-200 inline-block shadow-sm">
-                                                {{ parseFloat(item.total).toFixed(2) }}
+                                                {{ formatNumber(item.total, 3) }}
                                             </div>
                                         </td>
 
@@ -181,7 +178,7 @@
                     </div>
                     <div class="modal-footer-stats bg-white px-3 py-1.5 rounded-lg shadow-sm border border-emerald-100">
                         <div class="text-xs text-emerald-600 uppercase tracking-wide">Quantity</div>
-                        <div class="text-sm font-bold text-teal-700">{{ totalQuantity }}</div>
+                        <div class="text-sm font-bold text-teal-700">{{ formatNumber(totalQuantity, 3) }}</div>
                     </div>
                 </div>
 
@@ -222,6 +219,13 @@ export default {
     },
     emits: ['close', 'update-item-quantity', 'remove-cart-item', 'update-item-field'],
     methods: {
+        formatNumber(value, decimals = 2) {
+            const num = parseFloat(value) || 0;
+            return num.toLocaleString('en-US', {
+                minimumFractionDigits: decimals,
+                maximumFractionDigits: decimals
+            });
+        },
         updateItemField(itemKey, field, value) {
             // Convert to number for numeric fields
             const numericFields = ['unit_price', 'quantity', 'discount', 'tax'];

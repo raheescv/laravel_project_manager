@@ -1,7 +1,5 @@
 <template>
-    <div class="product-card group relative overflow-hidden" :class="{ 'low-stock': isLowStock }" @click="handleClick"
-        @mouseenter="$event.currentTarget.style.transform = 'translateY(-2px) scale(1.02)'"
-        @mouseleave="$event.currentTarget.style.transform = 'translateY(0) scale(1)'">
+    <div class="product-card group relative overflow-hidden" :class="{ 'low-stock': isLowStock }" @click="handleClick">
 
         <!-- Type Badge -->
         <div class="type-badge" :class="{ 'product': isProduct, 'service': !isProduct }">
@@ -133,41 +131,52 @@ export default {
     border-radius: 12px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
     overflow: hidden;
-    transition: all 0.25s ease;
+    transition: box-shadow 0.25s ease;
     position: relative;
     display: flex;
     flex-direction: column;
     cursor: pointer;
     min-height: 140px;
-    height: 100%;
+    height: auto;
     width: 100%;
     max-width: 100%;
     border: 1px solid rgba(229, 231, 235, 0.5);
     box-sizing: border-box;
+    contain: layout style paint;
+    margin: 0;
+    padding: 0;
+}
+
+.product-card:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    z-index: 1;
 }
 
 .product-card:active {
     transform: scale(0.98);
 }
 
-.product-card:hover {
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-}
-
 /* Image styling */
 .product-image-container {
     position: relative;
     width: 100%;
+    max-width: 100%;
     height: 90px;
     overflow: hidden;
     background-color: #f1f5f9;
+    box-sizing: border-box;
+    flex-shrink: 0;
 }
 
 .product-image {
     width: 100%;
     height: 100%;
+    max-width: 100%;
+    max-height: 100%;
     object-fit: cover;
     transition: transform 0.3s ease;
+    display: block;
+    box-sizing: border-box;
 }
 
 .fallback-icon {
@@ -237,8 +246,10 @@ export default {
     flex-grow: 1;
     min-height: 0;
     width: 100%;
+    max-width: 100%;
     box-sizing: border-box;
     overflow: hidden;
+    min-width: 0;
 }
 
 .product-name {
@@ -249,6 +260,7 @@ export default {
     line-height: 1.3;
     word-wrap: break-word;
     overflow-wrap: break-word;
+    word-break: break-word;
     hyphens: auto;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -262,7 +274,9 @@ export default {
     -webkit-box-orient: vertical;
     max-height: 2.6em;
     width: 100%;
+    max-width: 100%;
     box-sizing: border-box;
+    min-width: 0;
 }
 
 .product-details-row {
@@ -277,8 +291,10 @@ export default {
     height: auto !important;
     min-height: 20px;
     width: 100%;
+    max-width: 100%;
     box-sizing: border-box;
     overflow: hidden;
+    min-width: 0;
 }
 
 .product-code,
@@ -287,9 +303,11 @@ export default {
     display: flex;
     align-items: center;
     gap: 4px;
-    flex-shrink: 0;
+    flex-shrink: 1;
     max-width: 100%;
+    min-width: 0;
     overflow: hidden;
+    box-sizing: border-box;
 }
 
 .detail-label {
@@ -306,6 +324,8 @@ export default {
     text-overflow: ellipsis;
     white-space: nowrap;
     max-width: 60px;
+    min-width: 0;
+    box-sizing: border-box;
 }
 
 .product-price-row {
@@ -313,6 +333,7 @@ export default {
     justify-content: space-between;
     align-items: center;
     width: 100%;
+    max-width: 100%;
     box-sizing: border-box;
     gap: 4px;
     flex-wrap: nowrap;
@@ -326,11 +347,13 @@ export default {
     font-weight: 600;
     padding: 1px 6px;
     border-radius: 4px;
-    flex-shrink: 0;
+    flex-shrink: 1;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    max-width: 50%;
+    max-width: 45%;
+    min-width: 0;
+    box-sizing: border-box;
 }
 
 .product-qty.low {
@@ -343,12 +366,14 @@ export default {
     color: #047857;
     font-size: 0.9rem;
     padding: 1px 0;
-    flex-shrink: 0;
+    flex-shrink: 1;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
     text-align: right;
-    min-width: fit-content;
+    max-width: 55%;
+    min-width: 0;
+    box-sizing: border-box;
 }
 
 /* Low stock styling */
