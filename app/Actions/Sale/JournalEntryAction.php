@@ -4,7 +4,7 @@ namespace App\Actions\Sale;
 
 use App\Actions\Journal\CreateAction;
 use App\Models\Sale;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Cache;
 
 class JournalEntryAction
 {
@@ -25,7 +25,7 @@ class JournalEntryAction
                 'created_by' => $this->userId,
             ];
 
-            $accounts = $this->getAccountIds(['Sale', 'Inventory', 'Cost of Goods Sold', 'Tax Amount', 'Discount', 'Freight', 'Round Off']);
+            $accounts = Cache::get('accounts_slug_id_map', []);
 
             $entries = [];
 
@@ -34,7 +34,7 @@ class JournalEntryAction
                 $remarks = 'Sale to '.$sale->account->name;
                 $debit = 0;
                 $credit = $sale->gross_amount;
-                $entries[] = $this->makeEntryPair($accounts['Sale'], $sale->account_id, $debit, $credit, $remarks);
+                $entries[] = $this->makeEntryPair($accounts['sale'], $sale->account_id, $debit, $credit, $remarks);
             }
 
             // Cost of Goods Sold
@@ -47,7 +47,7 @@ class JournalEntryAction
                 $remarks = 'Cost of goods sold (Inventory transfer)';
                 $debit = $totalCost;
                 $credit = 0;
-                $entries[] = $this->makeEntryPair($accounts['Cost of Goods Sold'], $accounts['Inventory'], $debit, $credit, $remarks);
+                $entries[] = $this->makeEntryPair($accounts['cost_of_goods_sold'], $accounts['inventory'], $debit, $credit, $remarks);
             }
 
             // Tax Entries
@@ -55,7 +55,7 @@ class JournalEntryAction
                 $remarks = 'Sales tax collected on sale';
                 $debit = 0;
                 $credit = $sale->tax_amount;
-                $entries[] = $this->makeEntryPair($accounts['Tax Amount'], $sale->account_id, $debit, $credit, $remarks);
+                $entries[] = $this->makeEntryPair($accounts['tax_amount'], $sale->account_id, $debit, $credit, $remarks);
             }
 
             // Discounts
@@ -63,14 +63,14 @@ class JournalEntryAction
                 $remarks = 'Discount on individual product on sale';
                 $debit = $sale->item_discount;
                 $credit = 0;
-                $entries[] = $this->makeEntryPair($accounts['Discount'], $sale->account_id, $debit, $credit, $remarks);
+                $entries[] = $this->makeEntryPair($accounts['discount'], $sale->account_id, $debit, $credit, $remarks);
             }
 
             if ($sale->other_discount > 0) {
                 $remarks = Sale::ADDITIONAL_DISCOUNT_DESCRIPTION;
                 $debit = $sale->other_discount;
                 $credit = 0;
-                $entries[] = $this->makeEntryPair($accounts['Discount'], $sale->account_id, $debit, $credit, $remarks);
+                $entries[] = $this->makeEntryPair($accounts['discount'], $sale->account_id, $debit, $credit, $remarks);
             }
 
             // Freight
@@ -78,7 +78,7 @@ class JournalEntryAction
                 $remarks = 'Freight Charge provided on sale';
                 $debit = 0;
                 $credit = $sale->freight;
-                $entries[] = $this->makeEntryPair($accounts['Freight'], $sale->account_id, $debit, $credit, $remarks);
+                $entries[] = $this->makeEntryPair($accounts['freight'], $sale->account_id, $debit, $credit, $remarks);
             }
 
             // Round Off
@@ -92,7 +92,7 @@ class JournalEntryAction
                     $debit = abs($sale->round_off);
                     $credit = 0;
                 }
-                $entries[] = $this->makeEntryPair($accounts['Round Off'], $sale->account_id, $debit, $credit, $remarks);
+                $entries[] = $this->makeEntryPair($accounts['round_off'], $sale->account_id, $debit, $credit, $remarks);
             }
             // Payments
             foreach ($sale->payments as $payment) {
@@ -117,11 +117,6 @@ class JournalEntryAction
         }
 
         return $return;
-    }
-
-    protected function getAccountIds(array $names)
-    {
-        return DB::table('accounts')->whereIn('name', $names)->pluck('id', 'name')->toArray();
     }
 
     protected function makeEntryPair($accountId1, $accountId2, $debit, $credit, $remarks, $model = null, $modelId = null)

@@ -406,21 +406,21 @@ class ProfitLoss extends Component
                 }
             }
 
-                // If Direct Expense/Direct Income category doesn't exist in structure, create it
-                if (! $directCategoryFound) {
-                    $directCategory = AccountCategory::where('name', $directCategoryName)
-                        ->whereNull('parent_id')
-                        ->first();
+            // If Direct Expense/Direct Income category doesn't exist in structure, create it
+            if (! $directCategoryFound) {
+                $directCategory = AccountCategory::where('name', $directCategoryName)
+                    ->whereNull('parent_id')
+                    ->first();
 
-                    $structure[] = [
-                        'id' => $directCategory?->id ?? 0,
-                        'name' => $directCategoryName,
-                        'total' => $unCategorizedTotal,
-                        'groups' => [],
-                        'directAccounts' => $unCategorizedAccountsList,
-                    ];
-                }
+                $structure[] = [
+                    'id' => $directCategory?->id ?? 0,
+                    'name' => $directCategoryName,
+                    'total' => $unCategorizedTotal,
+                    'groups' => [],
+                    'directAccounts' => $unCategorizedAccountsList,
+                ];
             }
+        }
 
         return $structure;
     }

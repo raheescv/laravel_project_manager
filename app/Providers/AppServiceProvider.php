@@ -8,6 +8,7 @@ use Dedoc\Scramble\Scramble;
 use Dedoc\Scramble\Support\Generator\OpenApi;
 use Dedoc\Scramble\Support\Generator\SecurityScheme;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\URL;
@@ -41,6 +42,11 @@ class AppServiceProvider extends ServiceProvider
         if (Schema::hasTable('branches')) {
             Cache::remember('branches', now()->addYear(), function () {
                 return Branch::select('id', 'name')->get();
+            });
+        }
+        if (Schema::hasTable('accounts')) {
+            Cache::remember('accounts_slug_id_map', now()->addYear(), function () {
+                return DB::table('accounts')->where('is_locked', 1)->pluck('id', 'slug')->toArray();
             });
         }
         if (Schema::hasTable('configurations')) {
