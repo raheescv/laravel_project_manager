@@ -199,6 +199,45 @@
         letter-spacing: 0.01em;
     }
 
+    /* Customer section buttons - full width split on mobile only */
+    .mobile-search-area .grid.grid-cols-2 {
+        width: 100%;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.5rem;
+    }
+
+    /* Ensure buttons take full width of their grid cell on mobile */
+    .mobile-search-area .grid.grid-cols-2 button {
+        width: 100%;
+        flex: 1;
+    }
+
+    /* Better button text sizing on mobile */
+    .mobile-search-area .grid.grid-cols-2 button span {
+        font-size: 0.875rem;
+    }
+
+    /* On tablet and above, buttons should be inline with label */
+    @media (min-width: 640px) {
+        .mobile-search-area .flex.flex-col.sm\:flex-row {
+            flex-direction: row;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .mobile-search-area .grid.grid-cols-2.sm\:grid-cols-none {
+            display: flex;
+            flex-direction: row;
+            gap: 0.5rem;
+        }
+
+        .mobile-search-area .grid.grid-cols-2.sm\:grid-cols-none button {
+            width: auto;
+            flex: none;
+        }
+    }
+
     /* Enhanced input focus states on mobile */
     .mobile-search-area input:focus,
     .mobile-search-area select:focus {
