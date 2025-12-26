@@ -6,34 +6,27 @@
             style="background: linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(248,250,252,0.98) 50%, rgba(255,255,255,0.95) 100%);">
             <!-- Categories Header -->
             <div
-                class="bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-500 p-3 relative overflow-hidden flex-shrink-0">
+                class="bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-500 p-2 sm:p-2.5 relative overflow-hidden flex-shrink-0">
                 <div class="absolute inset-0 bg-gradient-to-r from-white/15 to-transparent"></div>
                 <div class="absolute inset-0 opacity-20 bg-gradient-to-r from-yellow-300 via-transparent to-pink-300">
                 </div>
                 <div class="relative flex items-center justify-between z-10">
-                    <h6 class="text-white font-bold text-sm flex items-center drop-shadow-sm">
-                        <div class="bg-white/25 p-1.5 rounded-lg mr-2 border border-white/20 backdrop-blur-sm">
-                            <i class="fa fa-th-large text-white text-sm drop-shadow-sm"></i>
+                    <h6 class="text-white font-bold text-xs sm:text-sm flex items-center drop-shadow-sm">
+                        <div class="bg-white/25 p-1 rounded-md mr-1.5 border border-white/20 backdrop-blur-sm">
+                            <i class="fa fa-th-large text-white text-xs drop-shadow-sm"></i>
                         </div>
                         Categories
                     </h6>
                     <div class="flex items-center gap-1">
-                        <a
-                            href="/sale"
-                            class="bg-white/25 hover:bg-white/35 backdrop-blur text-white px-2 py-1 rounded-full text-xs font-semibold shadow-lg border border-white/20 flex items-center gap-1 d-print-none"
-                            aria-label="Open sale list"
-                            title="Sale list"
-                        >
-                            <i class="fa fa-list-ul"></i>
+                        <a href="/sale"
+                            class="bg-white/25 hover:bg-white/35 backdrop-blur text-white px-1.5 py-0.5 rounded-full text-xs font-semibold shadow-md border border-white/20 flex items-center gap-1 d-print-none"
+                            aria-label="Open sale list" title="Sale list">
+                            <i class="fa fa-list-ul text-xs"></i>
                         </a>
-                        <button
-                            type="button"
-                            @click="toggleFullscreen"
-                            class="bg-white/25 hover:bg-white/35 backdrop-blur text-white px-2 py-1 rounded-full text-xs font-semibold shadow-lg border border-white/20 flex items-center gap-1 d-print-none"
-                            aria-label="Toggle fullscreen"
-                            title="Toggle fullscreen"
-                        >
-                            <i class="fa fa-arrows"></i>
+                        <button type="button" @click="toggleFullscreen"
+                            class="bg-white/25 hover:bg-white/35 backdrop-blur text-white px-1.5 py-0.5 rounded-full text-xs font-semibold shadow-md border border-white/20 flex items-center gap-1 d-print-none"
+                            aria-label="Toggle fullscreen" title="Toggle fullscreen">
+                            <i class="fa fa-arrows text-xs"></i>
                         </button>
                     </div>
                 </div>
@@ -44,51 +37,51 @@
 
             <!-- Fixed Categories (Favorites & All Products) -->
             <div
-                class="fixed-categories flex-shrink-0 bg-gradient-to-b from-emerald-50/40 via-white/60 to-rose-50/40 backdrop-blur-sm border-b border-emerald-200/60 flex flex-row lg:flex-col">
+                class="fixed-categories flex-shrink-0 bg-gradient-to-b from-emerald-50/40 via-white/60 to-rose-50/40 backdrop-blur-sm border-b border-emerald-200/60 flex flex-row md:flex-col w-full">
                 <!-- Favorites -->
                 <button type="button" @click="handleCategorySelect('favorite')" :class="[
-                    'category-btn fixed-category-btn flex-1 lg:flex-none lg:w-full flex items-center justify-center lg:justify-start px-3 py-2.5 border-r lg:border-r-0 lg:border-b border-white/20 transition-all duration-300 group relative overflow-hidden whitespace-nowrap',
+                    'category-btn fixed-category-btn flex-1 md:w-full md:flex-shrink-0 flex items-center justify-center md:justify-start px-2 sm:px-2 md:px-2.5 py-2 md:py-2 border-r md:border-r-0 md:border-b border-white/20 transition-all duration-300 group relative',
                     selectedCategory === 'favorite'
-                        ? 'bg-gradient-to-r from-rose-400 via-pink-500 to-purple-500 text-white shadow-lg transform scale-[1.02] ring-2 ring-white/30'
-                        : 'bg-white/70 hover:bg-gradient-to-r hover:from-rose-50 hover:via-pink-50 hover:to-purple-50 text-slate-700 hover:text-rose-600 hover:shadow-md backdrop-blur-sm border border-rose-100/50'
+                        ? 'bg-gradient-to-r from-rose-400 via-pink-500 to-purple-500 text-white shadow-md transform scale-[1.01] ring-1 ring-white/30'
+                        : 'bg-white/70 hover:bg-gradient-to-r hover:from-rose-50 hover:via-pink-50 hover:to-purple-50 text-slate-700 hover:text-rose-600 hover:shadow-sm backdrop-blur-sm border border-rose-100/50'
                 ]">
                     <div class="absolute inset-0 bg-gradient-to-r from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"
                         v-if="selectedCategory !== 'favorite'"></div>
                     <div :class="[
-                        'p-1.5 rounded-lg mr-2 lg:mr-3 transition-all duration-300 relative z-10 flex-shrink-0',
-                        selectedCategory === 'favorite' ? 'bg-white/25 shadow-md backdrop-blur-sm border border-white/20' : 'bg-rose-100 group-hover:bg-rose-200 group-hover:shadow-sm'
+                        'p-1 rounded-md mr-1 sm:mr-1 md:mr-1.5 lg:mr-2 transition-all duration-300 relative z-10 flex-shrink-0',
+                        selectedCategory === 'favorite' ? 'bg-white/25 shadow-sm backdrop-blur-sm border border-white/20' : 'bg-rose-100 group-hover:bg-rose-200 group-hover:shadow-sm'
                     ]">
                         <i :class="[
-                            'fa fa-star text-sm drop-shadow-sm',
+                            'fa fa-star text-xs drop-shadow-sm',
                             selectedCategory === 'favorite' ? 'text-white' : 'text-rose-600'
                         ]"></i>
                     </div>
-                    <span class="font-semibold relative z-10 text-sm text-center lg:text-left">Favorites</span>
+                    <span class="font-semibold relative z-10 text-xs md:text-sm text-center md:text-left whitespace-nowrap">Favorites</span>
                     <div v-if="selectedCategory === 'favorite'"
-                        class="w-1.5 h-1.5 bg-white rounded-full animate-pulse shadow-sm ml-2 lg:ml-auto"></div>
+                        class="w-1 h-1 bg-white rounded-full animate-pulse shadow-sm ml-1 sm:ml-1.5 lg:ml-auto flex-shrink-0"></div>
                 </button>
 
                 <!-- All Products -->
                 <button type="button" @click="handleCategorySelect('')" :class="[
-                    'category-btn fixed-category-btn flex-1 lg:flex-none lg:w-full flex items-center justify-center lg:justify-start px-3 py-2.5 border-r-0 transition-all duration-300 group relative overflow-hidden whitespace-nowrap',
+                    'category-btn fixed-category-btn flex-1 md:w-full md:flex-shrink-0 flex items-center justify-center md:justify-start px-2 sm:px-2 md:px-2.5 py-2 md:py-2 border-r-0 md:border-r-0 md:border-b border-white/20 transition-all duration-300 group relative',
                     selectedCategory === ''
-                        ? 'bg-gradient-to-r from-emerald-400 via-teal-500 to-cyan-500 text-white shadow-lg transform scale-[1.02] ring-2 ring-white/30'
-                        : 'bg-white/70 hover:bg-gradient-to-r hover:from-emerald-50 hover:via-teal-50 hover:to-cyan-50 text-slate-700 hover:text-emerald-600 hover:shadow-md backdrop-blur-sm border border-emerald-100/50'
+                        ? 'bg-gradient-to-r from-emerald-400 via-teal-500 to-cyan-500 text-white shadow-md transform scale-[1.01] ring-1 ring-white/30'
+                        : 'bg-white/70 hover:bg-gradient-to-r hover:from-emerald-50 hover:via-teal-50 hover:to-cyan-50 text-slate-700 hover:text-emerald-600 hover:shadow-sm backdrop-blur-sm border border-emerald-100/50'
                 ]">
                     <div class="absolute inset-0 bg-gradient-to-r from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"
                         v-if="selectedCategory !== ''"></div>
                     <div :class="[
-                        'p-1.5 rounded-lg mr-2 lg:mr-3 transition-all duration-300 relative z-10 flex-shrink-0',
-                        selectedCategory === '' ? 'bg-white/25 shadow-md backdrop-blur-sm border border-white/20' : 'bg-emerald-100 group-hover:bg-emerald-200 group-hover:shadow-sm'
+                        'p-1 rounded-md mr-1 sm:mr-1 md:mr-1.5 lg:mr-2 transition-all duration-300 relative z-10 flex-shrink-0',
+                        selectedCategory === '' ? 'bg-white/25 shadow-sm backdrop-blur-sm border border-white/20' : 'bg-emerald-100 group-hover:bg-emerald-200 group-hover:shadow-sm'
                     ]">
                         <i :class="[
-                            'fa fa-th-large text-sm drop-shadow-sm',
+                            'fa fa-th-large text-xs drop-shadow-sm',
                             selectedCategory === '' ? 'text-white' : 'text-emerald-600'
                         ]"></i>
                     </div>
-                    <span class="font-semibold relative z-10 text-sm text-center lg:text-left">All Products</span>
+                    <span class="font-semibold relative z-10 text-xs md:text-sm text-center md:text-left whitespace-nowrap">All Products</span>
                     <div v-if="selectedCategory === ''"
-                        class="w-1.5 h-1.5 bg-white rounded-full animate-pulse shadow-sm ml-2 lg:ml-auto"></div>
+                        class="w-1 h-1 bg-white rounded-full animate-pulse shadow-sm ml-1 sm:ml-1.5 lg:ml-auto flex-shrink-0"></div>
                 </button>
             </div>
 
@@ -105,27 +98,27 @@
                 <!-- Category Items -->
                 <button v-for="category in categories" :key="category.id" type="button"
                     @click="handleCategorySelect(category.id)" :class="[
-                        'category-btn flex-shrink-0 lg:w-full flex items-center px-3 py-2.5 border-b border-white/20 transition-all duration-300 group relative overflow-hidden whitespace-nowrap lg:whitespace-normal',
+                        'category-btn flex-shrink-0 lg:w-full flex items-center px-2.5 py-2 border-b border-white/20 transition-all duration-300 group relative overflow-hidden whitespace-nowrap lg:whitespace-normal',
                         selectedCategory === category.id
-                            ? 'bg-gradient-to-r from-violet-400 via-purple-500 to-indigo-500 text-white shadow-lg transform scale-[1.02] ring-2 ring-white/30'
-                            : 'bg-white/60 hover:bg-gradient-to-r hover:from-violet-50 hover:via-purple-50 hover:to-indigo-50 text-slate-700 hover:text-violet-600 hover:shadow-md backdrop-blur-sm border border-violet-100/50'
+                            ? 'bg-gradient-to-r from-violet-400 via-purple-500 to-indigo-500 text-white shadow-md transform scale-[1.01] ring-1 ring-white/30'
+                            : 'bg-white/60 hover:bg-gradient-to-r hover:from-violet-50 hover:via-purple-50 hover:to-indigo-50 text-slate-700 hover:text-violet-600 hover:shadow-sm backdrop-blur-sm border border-violet-100/50'
                     ]">
                     <div class="absolute inset-0 bg-gradient-to-r from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"
                         v-if="selectedCategory !== category.id"></div>
                     <div :class="[
-                        'p-1.5 rounded-lg mr-3 transition-all duration-300 relative z-10',
-                        selectedCategory === category.id ? 'bg-white/25 shadow-md backdrop-blur-sm border border-white/20' : 'bg-violet-100/80 group-hover:bg-violet-200 group-hover:shadow-sm'
+                        'p-1 rounded-md mr-2 transition-all duration-300 relative z-10',
+                        selectedCategory === category.id ? 'bg-white/25 shadow-sm backdrop-blur-sm border border-white/20' : 'bg-violet-100/80 group-hover:bg-violet-200 group-hover:shadow-sm'
                     ]">
                         <i :class="[
-                            'fa fa-tag text-sm drop-shadow-sm',
+                            'fa fa-tag text-xs drop-shadow-sm',
                             selectedCategory === category.id ? 'text-white' : 'text-violet-600'
                         ]"></i>
                     </div>
                     <div class="flex-1 text-left relative z-10 min-w-0">
-                        <span class="font-semibold block text-sm truncate" :title="category.name">{{
+                        <span class="font-semibold block text-xs lg:text-sm truncate" :title="category.name">{{
                             category.name }}</span>
                     </div>
-                    <div class="flex items-center gap-1.5 relative z-10">
+                    <div class="flex items-center gap-1 relative z-10">
                         <span :class="[
                             'px-1.5 py-0.5 rounded-full text-xs font-bold shadow-sm',
                             selectedCategory === category.id
@@ -135,7 +128,7 @@
                             {{ category.products_count || 0 }}
                         </span>
                         <div v-if="selectedCategory === category.id"
-                            class="w-1.5 h-1.5 bg-white rounded-full animate-pulse shadow-sm"></div>
+                            class="w-1 h-1 bg-white rounded-full animate-pulse shadow-sm"></div>
                     </div>
                 </button>
             </div>

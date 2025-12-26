@@ -20,7 +20,7 @@
                 <div
                     class="flex flex-col md:flex-row lg:flex-row flex-1 gap-1 sm:gap-2 md:gap-3 lg:gap-4 xl:gap-6 p-1 sm:p-2 md:p-3 lg:p-4 xl:p-6 min-h-0 md:overflow-hidden">
                     <!-- Categories Sidebar Component - Mobile: Collapsible, Tablet: Sidebar, Desktop: Always visible -->
-                    <div class="order-1 md:order-1 w-full md:w-64 lg:w-auto md:h-full flex-shrink-0">
+                    <div class="order-1 md:order-1 w-full md:w-72 lg:w-auto md:h-full flex-shrink-0">
                         <CategoriesSidebar :categories="categories" :selected-category="selectedCategory"
                             @category-selected="selectCategory" />
                     </div>
@@ -33,7 +33,7 @@
                             class="flex-1 md:flex-[0.7] lg:flex-[0.6] xl:flex-[0.55] flex flex-col order-1 md:order-1 min-h-0 md:overflow-hidden pb-0 md:pb-0">
                                 <!-- Compact customer - employee-product search area -->
                             <div
-                                class="bg-gradient-to-br from-white via-indigo-50/40 to-purple-50/30 backdrop-blur-xl rounded-2xl shadow-2xl border-2 border-indigo-200/50 mb-2 sm:mb-3 p-3 sm:p-4 md:p-3 relative overflow-hidden flex-shrink-0 mobile-search-area">
+                                class="bg-gradient-to-br from-white via-indigo-50/40 to-purple-50/30 backdrop-blur-xl rounded-2xl shadow-2xl border-2 border-indigo-200/50 mb-2 sm:mb-2 p-2.5 sm:p-3 md:p-2.5 relative overflow-hidden flex-shrink-0 mobile-search-area">
                                 <!-- Enhanced background elements -->
                                 <div class="absolute inset-0 overflow-hidden">
                                     <div
@@ -48,18 +48,18 @@
                                 </div>
 
                                 <!-- Customer and Mobile - Enhanced responsive grid -->
-                                <div class="relative grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-3 sm:gap-3 mb-3 sm:mb-4">
-                                    <div class="space-y-2">
+                                <div class="relative grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-2 sm:gap-2.5 mb-2 sm:mb-2.5">
+                                    <div class="space-y-1.5">
                                         <!-- Mobile: Buttons below label, Tablet+: Buttons next to label -->
-                                        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-2">
+                                        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1.5 mb-1.5">
                                             <label class="text-sm sm:text-sm font-bold text-slate-800 flex items-center">
                                                 <i class="fa fa-user-circle text-indigo-600 mr-2 text-base"></i>
                                                 <span>Customer</span>
                                             </label>
-                                            <div class="grid grid-cols-2 gap-2 sm:grid-cols-none sm:gap-2 sm:flex sm:flex-row">
+                                            <div class="grid grid-cols-2 gap-1.5 sm:grid-cols-none sm:gap-1.5 sm:flex sm:flex-row">
                                                 <button type="button" @click="viewCustomerDetails"
                                                     :disabled="!form.account_id || form.account_id === 3" :class="[
-                                                        'w-full sm:w-auto px-3 py-2.5 sm:py-1.5 rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl transform active:scale-95 font-semibold text-xs sm:text-xs flex items-center justify-center min-h-[44px] sm:min-h-[32px] touch-manipulation border-2',
+                                                        'w-full sm:w-auto px-2.5 py-2 sm:py-1 rounded-lg transition-all duration-200 shadow-md hover:shadow-lg transform active:scale-95 font-semibold text-xs sm:text-xs flex items-center justify-center min-h-[40px] sm:min-h-[28px] touch-manipulation border-2',
                                                         (!form.account_id || form.account_id === 3) ?
                                                             'bg-gray-200 text-gray-500 cursor-not-allowed border-gray-300/50' :
                                                             'bg-gradient-to-r from-purple-500 via-pink-500 to-rose-500 text-white hover:from-purple-600 hover:via-pink-600 hover:to-rose-600 border-purple-400/30'
@@ -68,7 +68,7 @@
                                                     <span class="text-sm sm:text-xs">View</span>
                                                 </button>
                                                 <button type="button" @click="addNewCustomer"
-                                                    class="w-full sm:w-auto bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-500 text-white px-3 py-2.5 sm:py-1.5 rounded-xl hover:from-blue-600 hover:via-indigo-600 hover:to-purple-600 transition-all duration-200 shadow-lg hover:shadow-xl transform active:scale-95 font-semibold text-xs sm:text-xs flex items-center justify-center min-h-[44px] sm:min-h-[32px] touch-manipulation border-2 border-blue-400/30">
+                                                    class="w-full sm:w-auto bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-500 text-white px-2.5 py-2 sm:py-1 rounded-lg hover:from-blue-600 hover:via-indigo-600 hover:to-purple-600 transition-all duration-200 shadow-md hover:shadow-lg transform active:scale-95 font-semibold text-xs sm:text-xs flex items-center justify-center min-h-[40px] sm:min-h-[28px] touch-manipulation border-2 border-blue-400/30">
                                                     <i class="fa fa-plus text-sm mr-1.5 sm:mr-1"></i>
                                                     <span class="text-sm sm:text-xs">Add</span>
                                                 </button>
@@ -78,41 +78,41 @@
                                             placeholder="Select Customer"
                                             filter-placeholder="Search by name or mobile..." :visibleItems="8"
                                             @search="searchCustomers" @change="handleCustomerChange"
-                                            input-class="w-full rounded-xl border-2 border-indigo-200/60 shadow-lg focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/30 transition-all duration-200 bg-white/95 backdrop-blur-sm hover:shadow-xl hover:border-indigo-300 text-sm sm:text-sm py-3 sm:py-2.5 px-4 min-h-[48px] sm:min-h-[44px] font-medium" />
+                                            input-class="w-full rounded-lg border-2 border-indigo-200/60 shadow-md focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/30 transition-all duration-200 bg-white/95 backdrop-blur-sm hover:shadow-lg hover:border-indigo-300 text-sm sm:text-sm py-2 sm:py-2 px-3 min-h-[40px] sm:min-h-[36px] font-medium" />
                                     </div>
-                                    <div class="space-y-2">
+                                    <div class="space-y-1.5">
                                         <!-- Mobile: Label aligned, Tablet+: Same alignment as Customer section -->
-                                        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-2">
+                                        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1.5 mb-1.5">
                                             <label class="text-sm sm:text-sm font-bold text-slate-800 flex items-center">
-                                                <span> <i class="fa fa-phone text-emerald-600 mr-2 text-base"></i> Mobile</span>
+                                                <span> <i class="fa fa-phone text-emerald-600 mr-2 text-sm"></i> Mobile</span>
                                             </label>
                                         </div>
                                         <input v-model="form.customer_mobile" type="tel"
-                                            class="w-full rounded-xl border-2 border-emerald-200/60 shadow-lg focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/30 transition-all duration-200 bg-white/95 backdrop-blur-sm hover:shadow-xl hover:border-emerald-300 text-sm sm:text-sm py-3 sm:py-2.5 px-4 min-h-[48px] sm:min-h-[44px] font-medium placeholder:text-slate-400"
+                                            class="w-full rounded-lg border-2 border-emerald-200/60 shadow-md focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/30 transition-all duration-200 bg-white/95 backdrop-blur-sm hover:shadow-lg hover:border-emerald-300 text-sm sm:text-sm py-2 sm:py-2 px-3 min-h-[40px] sm:min-h-[36px] font-medium placeholder:text-slate-400"
                                             placeholder="Enter mobile number">
                                     </div>
                                 </div>
 
                                 <!-- Employee and Sale Type - Enhanced responsive grid -->
-                                <div class="relative grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-3 sm:gap-3 mb-3 sm:mb-4">
-                                    <div class="space-y-2">
-                                        <label class="text-sm sm:text-sm font-bold text-slate-800 flex items-center mb-2">
-                                            <i class="fa fa-user-tie text-purple-600 mr-2 text-base"></i>
+                                <div class="relative grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-2 sm:gap-2.5 mb-2 sm:mb-2.5">
+                                    <div class="space-y-1.5">
+                                        <label class="text-sm sm:text-sm font-bold text-slate-800 flex items-center mb-1.5">
+                                            <i class="fa fa-user-tie text-purple-600 mr-2 text-sm"></i>
                                             <span>Employee</span>
                                         </label>
                                         <SearchableSelect v-model="form.employee_id" :options="employees"
                                             placeholder="Select employee..." filter-placeholder="Search employees..."
                                             :visibleItems="8"
-                                            input-class="w-full rounded-xl border-2 border-purple-200/60 shadow-lg focus:border-purple-500 focus:ring-2 focus:ring-purple-500/30 transition-all duration-200 bg-white/95 backdrop-blur-sm hover:shadow-xl hover:border-purple-300 text-sm sm:text-sm py-3 sm:py-2.5 px-4 min-h-[48px] sm:min-h-[44px] font-medium" />
+                                            input-class="w-full rounded-lg border-2 border-purple-200/60 shadow-md focus:border-purple-500 focus:ring-2 focus:ring-purple-500/30 transition-all duration-200 bg-white/95 backdrop-blur-sm hover:shadow-lg hover:border-purple-300 text-sm sm:text-sm py-2 sm:py-2 px-3 min-h-[40px] sm:min-h-[36px] font-medium" />
                                     </div>
-                                    <div class="space-y-2">
-                                        <label class="text-sm sm:text-sm font-bold text-slate-800 flex items-center mb-2">
-                                            <span> <i class="fa fa-tags text-orange-600 mr-2 text-base"></i> Sale Type</span>
+                                    <div class="space-y-1.5">
+                                        <label class="text-sm sm:text-sm font-bold text-slate-800 flex items-center mb-1.5">
+                                            <span> <i class="fa fa-tags text-orange-600 mr-2 text-sm"></i> Sale Type</span>
                                         </label>
                                         <SearchableSelect v-model="form.sale_type" :options="priceTypes"
                                             placeholder="Select type..." filter-placeholder="Search sale types..."
                                             :visibleItems="8"
-                                            input-class="w-full rounded-xl border-2 border-orange-200/60 shadow-lg focus:border-orange-500 focus:ring-2 focus:ring-orange-500/30 transition-all duration-200 bg-white/95 backdrop-blur-sm hover:shadow-xl hover:border-orange-300 text-sm sm:text-sm py-3 sm:py-2.5 px-4 min-h-[48px] sm:min-h-[44px] font-medium"
+                                            input-class="w-full rounded-lg border-2 border-orange-200/60 shadow-md focus:border-orange-500 focus:ring-2 focus:ring-orange-500/30 transition-all duration-200 bg-white/95 backdrop-blur-sm hover:shadow-lg hover:border-orange-300 text-sm sm:text-sm py-2 sm:py-2 px-3 min-h-[40px] sm:min-h-[36px] font-medium"
                                             @change="loadProducts" />
                                     </div>
                                 </div>
@@ -120,10 +120,10 @@
                                 <!-- Search Section - Enhanced responsive grid -->
                                 <div class="relative">
                                     <div
-                                        class="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2.5 sm:gap-3">
+                                        class="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-2">
                                         <div class="space-y-1">
                                             <select v-model="selectedProductType" @change="filterByProductType"
-                                                class="w-full rounded-xl border-2 border-indigo-200/60 shadow-lg focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/30 transition-all duration-200 bg-white/95 backdrop-blur-sm hover:shadow-xl hover:border-indigo-300 text-sm py-3 sm:py-2.5 px-4 min-h-[48px] sm:min-h-[44px] font-medium">
+                                                class="w-full rounded-lg border-2 border-indigo-200/60 shadow-md focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/30 transition-all duration-200 bg-white/95 backdrop-blur-sm hover:shadow-lg hover:border-indigo-300 text-sm py-2 sm:py-2 px-3 min-h-[40px] sm:min-h-[36px] font-medium">
                                                 <option v-for="option in productTypeOptions" :key="option.value"
                                                     :value="option.value">
                                                     {{ option.label }}
@@ -133,20 +133,20 @@
                                         <div class="space-y-1">
                                             <div class="relative group">
                                                 <input v-model="barcodeKey" @input="searchByBarcode" type="text"
-                                                    class="w-full pl-10 pr-4 py-3 sm:py-2.5 rounded-xl border-2 border-purple-200/60 shadow-lg focus:border-purple-500 focus:ring-2 focus:ring-purple-500/30 transition-all duration-200 bg-white/95 backdrop-blur-sm group-hover:shadow-xl group-hover:border-purple-300 text-sm min-h-[48px] sm:min-h-[44px] font-medium placeholder:text-slate-400"
+                                                    class="w-full pl-9 pr-3 py-2 sm:py-2 rounded-lg border-2 border-purple-200/60 shadow-md focus:border-purple-500 focus:ring-2 focus:ring-purple-500/30 transition-all duration-200 bg-white/95 backdrop-blur-sm group-hover:shadow-lg group-hover:border-purple-300 text-sm min-h-[40px] sm:min-h-[36px] font-medium placeholder:text-slate-400"
                                                     placeholder="Scan barcode" autocomplete="off">
                                             </div>
                                         </div>
                                         <div class="space-y-1">
                                             <div class="relative group">
                                                 <input v-model="productKey" @input="searchProducts" type="text"
-                                                    class="w-full pl-10 pr-4 py-3 sm:py-2.5 rounded-xl border-2 border-orange-200/60 shadow-lg focus:border-orange-500 focus:ring-2 focus:ring-orange-500/30 transition-all duration-200 bg-white/95 backdrop-blur-sm group-hover:shadow-xl group-hover:border-orange-300 text-sm min-h-[48px] sm:min-h-[44px] font-medium placeholder:text-slate-400"
+                                                    class="w-full pl-9 pr-3 py-2 sm:py-2 rounded-lg border-2 border-orange-200/60 shadow-md focus:border-orange-500 focus:ring-2 focus:ring-orange-500/30 transition-all duration-200 bg-white/95 backdrop-blur-sm group-hover:shadow-lg group-hover:border-orange-300 text-sm min-h-[40px] sm:min-h-[36px] font-medium placeholder:text-slate-400"
                                                     placeholder="Search products" autocomplete="off">
                                             </div>
                                         </div>
                                         <button type="button" @click="viewDraftSales"
-                                            class="bg-gradient-to-r from-slate-500 via-slate-600 to-gray-600 text-white py-3 sm:py-2.5 px-3 sm:px-4 rounded-xl hover:from-slate-600 hover:via-slate-700 hover:to-gray-700 transition-all duration-200 shadow-lg hover:shadow-xl transform active:scale-95 font-semibold text-sm sm:text-sm flex items-center justify-center min-h-[48px] sm:min-h-[44px] border-2 border-slate-400/30">
-                                            <i class="fa fa-file-alt mr-2 text-sm"></i>
+                                            class="bg-gradient-to-r from-slate-500 via-slate-600 to-gray-600 text-white py-2 sm:py-2 px-3 sm:px-3 rounded-lg hover:from-slate-600 hover:via-slate-700 hover:to-gray-700 transition-all duration-200 shadow-md hover:shadow-lg transform active:scale-95 font-semibold text-sm sm:text-sm flex items-center justify-center min-h-[40px] sm:min-h-[36px] border-2 border-slate-400/30">
+                                            <i class="fa fa-file-alt mr-1.5 text-sm"></i>
                                             <span>Drafts</span>
                                         </button>
                                     </div>
@@ -200,7 +200,7 @@
                                         </label>
                                         <div class="relative">
                                             <input v-model.number="form.other_discount" @input="calculateTotals"
-                                                type="number" step="0.01"
+                                                type="number" step="0.01" min="0"
                                                 class="w-full text-xs sm:text-sm py-2 sm:py-2.5 rounded border-slate-300 focus:border-blue-500 focus:ring-blue-500 min-h-[44px] sm:min-h-[40px] pr-12"
                                                 placeholder="0">
                                             <button type="button" @click="convertDiscountToPercentage"
@@ -1420,6 +1420,12 @@ export default {
             const currentValue = parseFloat(form.other_discount) || 0
 
             if (currentValue > 0) {
+                // Validate that percentage doesn't exceed 100
+                if (currentValue > 100) {
+                    toast.error('Discount percentage cannot exceed 100%')
+                    return
+                }
+
                 // Calculate the total before discount
                 const totalBeforeDiscount = parseFloat(form.total) || 0
 
