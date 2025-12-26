@@ -81,10 +81,12 @@
                                             input-class="w-full rounded-xl border-2 border-indigo-200/60 shadow-lg focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/30 transition-all duration-200 bg-white/95 backdrop-blur-sm hover:shadow-xl hover:border-indigo-300 text-sm sm:text-sm py-3 sm:py-2.5 px-4 min-h-[48px] sm:min-h-[44px] font-medium" />
                                     </div>
                                     <div class="space-y-2">
-                                        <label class="text-sm sm:text-sm font-bold text-slate-800 flex items-center mb-2">
-                                            <i class="fa fa-phone text-emerald-600 mr-2 text-base"></i>
-                                            <span>Mobile</span>
-                                        </label>
+                                        <!-- Mobile: Label aligned, Tablet+: Same alignment as Customer section -->
+                                        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-2">
+                                            <label class="text-sm sm:text-sm font-bold text-slate-800 flex items-center">
+                                                <span> <i class="fa fa-phone text-emerald-600 mr-2 text-base"></i> Mobile</span>
+                                            </label>
+                                        </div>
                                         <input v-model="form.customer_mobile" type="tel"
                                             class="w-full rounded-xl border-2 border-emerald-200/60 shadow-lg focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/30 transition-all duration-200 bg-white/95 backdrop-blur-sm hover:shadow-xl hover:border-emerald-300 text-sm sm:text-sm py-3 sm:py-2.5 px-4 min-h-[48px] sm:min-h-[44px] font-medium placeholder:text-slate-400"
                                             placeholder="Enter mobile number">
@@ -105,8 +107,7 @@
                                     </div>
                                     <div class="space-y-2">
                                         <label class="text-sm sm:text-sm font-bold text-slate-800 flex items-center mb-2">
-                                            <i class="fa fa-tags text-orange-600 mr-2 text-base"></i>
-                                            <span>Sale Type</span>
+                                            <span> <i class="fa fa-tags text-orange-600 mr-2 text-base"></i> Sale Type</span>
                                         </label>
                                         <SearchableSelect v-model="form.sale_type" :options="priceTypes"
                                             placeholder="Select type..." filter-placeholder="Search sale types..."
@@ -131,7 +132,6 @@
                                         </div>
                                         <div class="space-y-1">
                                             <div class="relative group">
-                                                <i class="fa fa-barcode absolute left-3 top-1/2 transform -translate-y-1/2 text-purple-500 text-sm z-10 pointer-events-none"></i>
                                                 <input v-model="barcodeKey" @input="searchByBarcode" type="text"
                                                     class="w-full pl-10 pr-4 py-3 sm:py-2.5 rounded-xl border-2 border-purple-200/60 shadow-lg focus:border-purple-500 focus:ring-2 focus:ring-purple-500/30 transition-all duration-200 bg-white/95 backdrop-blur-sm group-hover:shadow-xl group-hover:border-purple-300 text-sm min-h-[48px] sm:min-h-[44px] font-medium placeholder:text-slate-400"
                                                     placeholder="Scan barcode" autocomplete="off">
@@ -139,7 +139,6 @@
                                         </div>
                                         <div class="space-y-1">
                                             <div class="relative group">
-                                                <i class="fa fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-orange-500 text-sm z-10 pointer-events-none"></i>
                                                 <input v-model="productKey" @input="searchProducts" type="text"
                                                     class="w-full pl-10 pr-4 py-3 sm:py-2.5 rounded-xl border-2 border-orange-200/60 shadow-lg focus:border-orange-500 focus:ring-2 focus:ring-orange-500/30 transition-all duration-200 bg-white/95 backdrop-blur-sm group-hover:shadow-xl group-hover:border-orange-300 text-sm min-h-[48px] sm:min-h-[44px] font-medium placeholder:text-slate-400"
                                                     placeholder="Search products" autocomplete="off">
@@ -221,9 +220,8 @@
                                         <div class="relative z-10 space-y-2.5 sm:space-y-3">
                                             <div class="flex justify-between items-center py-1.5 px-2 bg-white/60 backdrop-blur-sm rounded-lg border border-slate-100">
                                                 <span class="text-slate-700 font-semibold flex items-center text-sm">
-                                                    <i class="fa fa-calculator text-indigo-600 mr-2 text-sm"></i>
-                                                    <span class="hidden sm:inline">Sub Total</span>
-                                                    <span class="sm:hidden">Subtotal</span>
+                                                    <span class="hidden sm:inline"><i class="fa fa-calculator text-indigo-600 mr-2 text-sm"></i> Sub Total</span>
+                                                    <span class="sm:hidden"><i class="fa fa-calculator text-indigo-600 mr-2 text-sm"></i> Subtotal</span>
                                                 </span>
                                                 <span
                                                     class="font-bold text-slate-900 bg-gradient-to-r from-indigo-50 to-blue-50 px-3 py-1.5 rounded-lg shadow-md text-sm border border-indigo-100">
@@ -232,12 +230,14 @@
                                             </div>
                                             <div class="flex justify-between items-center py-1.5 px-2 bg-white/60 backdrop-blur-sm rounded-lg border border-red-100" v-if="form.other_discount > 0">
                                                 <span class="font-semibold flex items-center text-sm text-red-700">
-                                                    <i class="fa fa-tag text-red-600 mr-2 text-sm"></i>
+
                                                     <span class="hidden sm:inline">
+                                                        <i class="fa fa-tag text-red-600 mr-2 text-sm"></i>
                                                         Discount
                                                         <span v-if="!isNaN(discountPercentage) && isFinite(discountPercentage)">({{ discountPercentage }}%)</span>
                                                     </span>
                                                     <span class="sm:hidden">
+                                                        <i class="fa fa-tag text-red-600 mr-2 text-sm"></i>
                                                         Disc<span v-if="!isNaN(discountPercentage) && isFinite(discountPercentage)"> ({{ discountPercentage }}%)</span>
                                                     </span>
                                                 </span>
