@@ -30,10 +30,6 @@ class View extends Component
 
     public $account;
 
-    public $sortField = 'journal_entries.id';
-
-    public $sortDirection = 'desc';
-
     public $excludeOpeningFromTotal = false;
 
     protected $paginationTheme = 'bootstrap';
@@ -82,16 +78,6 @@ class View extends Component
             $this->selected = $this->dataFunction()->limit(2000)->pluck('journal_id')->toArray();
         } else {
             $this->selected = [];
-        }
-    }
-
-    public function sortBy($field)
-    {
-        if ($this->sortField === $field) {
-            $this->sortDirection = $this->sortDirection === 'asc' ? 'desc' : 'asc';
-        } else {
-            $this->sortField = $field;
-            $this->sortDirection = 'desc';
         }
     }
 
