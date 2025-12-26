@@ -44,10 +44,10 @@
 
             <!-- Fixed Categories (Favorites & All Products) -->
             <div
-                class="fixed-categories flex-shrink-0 bg-gradient-to-b from-emerald-50/40 via-white/60 to-rose-50/40 backdrop-blur-sm border-b border-emerald-200/60">
+                class="fixed-categories flex-shrink-0 bg-gradient-to-b from-emerald-50/40 via-white/60 to-rose-50/40 backdrop-blur-sm border-b border-emerald-200/60 flex flex-row lg:flex-col">
                 <!-- Favorites -->
                 <button type="button" @click="handleCategorySelect('favorite')" :class="[
-                    'category-btn fixed-category-btn flex-shrink-0 lg:w-full flex items-center px-3 py-2.5 border-b border-white/20 transition-all duration-300 group relative overflow-hidden whitespace-nowrap lg:whitespace-normal',
+                    'category-btn fixed-category-btn flex-1 lg:flex-none lg:w-full flex items-center justify-center lg:justify-start px-3 py-2.5 border-r lg:border-r-0 lg:border-b border-white/20 transition-all duration-300 group relative overflow-hidden whitespace-nowrap',
                     selectedCategory === 'favorite'
                         ? 'bg-gradient-to-r from-rose-400 via-pink-500 to-purple-500 text-white shadow-lg transform scale-[1.02] ring-2 ring-white/30'
                         : 'bg-white/70 hover:bg-gradient-to-r hover:from-rose-50 hover:via-pink-50 hover:to-purple-50 text-slate-700 hover:text-rose-600 hover:shadow-md backdrop-blur-sm border border-rose-100/50'
@@ -55,7 +55,7 @@
                     <div class="absolute inset-0 bg-gradient-to-r from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"
                         v-if="selectedCategory !== 'favorite'"></div>
                     <div :class="[
-                        'p-1.5 rounded-lg mr-3 transition-all duration-300 relative z-10',
+                        'p-1.5 rounded-lg mr-2 lg:mr-3 transition-all duration-300 relative z-10 flex-shrink-0',
                         selectedCategory === 'favorite' ? 'bg-white/25 shadow-md backdrop-blur-sm border border-white/20' : 'bg-rose-100 group-hover:bg-rose-200 group-hover:shadow-sm'
                     ]">
                         <i :class="[
@@ -63,14 +63,14 @@
                             selectedCategory === 'favorite' ? 'text-white' : 'text-rose-600'
                         ]"></i>
                     </div>
-                    <span class="flex-1 text-left font-semibold relative z-10 text-sm">Favorites</span>
+                    <span class="font-semibold relative z-10 text-sm text-center lg:text-left">Favorites</span>
                     <div v-if="selectedCategory === 'favorite'"
-                        class="w-1.5 h-1.5 bg-white rounded-full animate-pulse shadow-sm"></div>
+                        class="w-1.5 h-1.5 bg-white rounded-full animate-pulse shadow-sm ml-2 lg:ml-auto"></div>
                 </button>
 
                 <!-- All Products -->
                 <button type="button" @click="handleCategorySelect('')" :class="[
-                    'category-btn fixed-category-btn flex-shrink-0 lg:w-full flex items-center px-3 py-2.5 border-b border-white/20 transition-all duration-300 group relative overflow-hidden whitespace-nowrap lg:whitespace-normal',
+                    'category-btn fixed-category-btn flex-1 lg:flex-none lg:w-full flex items-center justify-center lg:justify-start px-3 py-2.5 border-r-0 transition-all duration-300 group relative overflow-hidden whitespace-nowrap',
                     selectedCategory === ''
                         ? 'bg-gradient-to-r from-emerald-400 via-teal-500 to-cyan-500 text-white shadow-lg transform scale-[1.02] ring-2 ring-white/30'
                         : 'bg-white/70 hover:bg-gradient-to-r hover:from-emerald-50 hover:via-teal-50 hover:to-cyan-50 text-slate-700 hover:text-emerald-600 hover:shadow-md backdrop-blur-sm border border-emerald-100/50'
@@ -78,7 +78,7 @@
                     <div class="absolute inset-0 bg-gradient-to-r from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"
                         v-if="selectedCategory !== ''"></div>
                     <div :class="[
-                        'p-1.5 rounded-lg mr-3 transition-all duration-300 relative z-10',
+                        'p-1.5 rounded-lg mr-2 lg:mr-3 transition-all duration-300 relative z-10 flex-shrink-0',
                         selectedCategory === '' ? 'bg-white/25 shadow-md backdrop-blur-sm border border-white/20' : 'bg-emerald-100 group-hover:bg-emerald-200 group-hover:shadow-sm'
                     ]">
                         <i :class="[
@@ -86,9 +86,9 @@
                             selectedCategory === '' ? 'text-white' : 'text-emerald-600'
                         ]"></i>
                     </div>
-                    <span class="flex-1 text-left font-semibold relative z-10 text-sm">All Products</span>
+                    <span class="font-semibold relative z-10 text-sm text-center lg:text-left">All Products</span>
                     <div v-if="selectedCategory === ''"
-                        class="w-1.5 h-1.5 bg-white rounded-full animate-pulse shadow-sm"></div>
+                        class="w-1.5 h-1.5 bg-white rounded-full animate-pulse shadow-sm ml-2 lg:ml-auto"></div>
                 </button>
             </div>
 
