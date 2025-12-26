@@ -112,8 +112,8 @@ class ProductResource extends JsonResource
                     return [
                         'id' => $inventory->id,
                         'branch' => [
-                            'id' => $inventory->branch->id,
-                            'name' => $inventory->branch->name,
+                            'id' => $inventory->branch?->id,
+                            'name' => $inventory->branch?->name,
                         ],
                         'quantity' => $inventory->quantity,
                         'is_low_stock' => $inventory->quantity <= $this->reorder_level,
