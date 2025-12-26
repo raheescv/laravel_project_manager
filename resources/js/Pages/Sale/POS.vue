@@ -14,26 +14,26 @@
             </div>
         </div>
 
-        <div class="container-fluid h-screen relative z-10 flex flex-col">
-            <form class="flex-1 flex flex-col min-h-0">
+        <div class="container-fluid h-screen relative z-10 flex flex-col overflow-hidden">
+            <form class="flex-1 flex flex-col min-h-0 overflow-hidden">
                 <!-- Enhanced Mobile-first responsive layout -->
                 <div
-                    class="flex flex-col md:flex-row lg:flex-row flex-1 gap-1 sm:gap-2 md:gap-3 lg:gap-4 xl:gap-6 p-1 sm:p-2 md:p-3 lg:p-4 xl:p-6 min-h-0">
+                    class="flex flex-col md:flex-row lg:flex-row flex-1 gap-1 sm:gap-2 md:gap-3 lg:gap-4 xl:gap-6 p-1 sm:p-2 md:p-3 lg:p-4 xl:p-6 min-h-0 overflow-hidden">
                     <!-- Categories Sidebar Component - Mobile: Collapsible, Tablet: Sidebar, Desktop: Always visible -->
-                    <div class="order-1 md:order-1 w-full md:w-64 lg:w-auto md:h-full">
+                    <div class="order-1 md:order-1 w-full md:w-64 lg:w-auto md:h-full flex-shrink-0">
                         <CategoriesSidebar :categories="categories" :selected-category="selectedCategory"
                             @category-selected="selectCategory" />
                     </div>
 
                     <!-- Main Content Area - Products and Cart -->
                     <div
-                        class="flex-1 flex flex-col md:flex-row lg:flex-row gap-1 sm:gap-2 md:gap-3 lg:gap-4 order-2 md:order-2 min-h-0 md:h-full">
+                        class="flex-1 flex flex-col md:flex-row lg:flex-row gap-1 sm:gap-2 md:gap-3 lg:gap-4 order-2 md:order-2 min-h-0 md:h-full overflow-hidden">
                         <!-- Products Section - Enhanced responsive layout -->
                         <div
-                            class="flex-1 md:flex-[0.7] lg:flex-[0.6] xl:flex-[0.55] flex flex-col order-1 md:order-1 min-h-0">
+                            class="flex-1 md:flex-[0.7] lg:flex-[0.6] xl:flex-[0.55] flex flex-col order-1 md:order-1 min-h-0 overflow-hidden">
                             <!-- Compact customer - employee-product search area -->
                             <div
-                                class="bg-gradient-to-br from-white/95 via-blue-50/30 to-indigo-50/20 backdrop-blur-xl rounded-lg shadow-lg border border-white/60 mb-2 p-3 relative overflow-hidden">
+                                class="bg-gradient-to-br from-white/95 via-blue-50/30 to-indigo-50/20 backdrop-blur-xl rounded-lg shadow-lg border border-white/60 mb-1 sm:mb-2 p-2 sm:p-3 relative overflow-hidden flex-shrink-0">
                                 <!-- Subtle background elements -->
                                 <div class="absolute inset-0 overflow-hidden">
                                     <div
@@ -48,23 +48,23 @@
                                 <div class="relative grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-2 mb-2 sm:mb-3">
                                     <div class="space-y-1">
                                         <label
-                                            class="text-xs font-bold text-slate-700 flex items-center justify-between">
-                                            <span>Customer</span>
-                                            <div class="flex items-center space-x-1">
+                                            class="text-xs sm:text-sm font-bold text-slate-700 flex items-center justify-between flex-wrap gap-1">
+                                            <span class="flex-1 min-w-0">Customer</span>
+                                            <div class="flex items-center space-x-1 flex-shrink-0">
                                                 <button type="button" @click="viewCustomerDetails"
                                                     :disabled="!form.account_id || form.account_id === 3" :class="[
-                                                        'px-2 py-1 rounded-md transition-all duration-200 shadow-sm hover:shadow-md transform hover:-translate-y-0.5 font-semibold text-xs flex items-center',
+                                                        'px-2 sm:px-2.5 py-1.5 sm:py-1 rounded-md transition-all duration-200 shadow-sm hover:shadow-md transform hover:-translate-y-0.5 font-semibold text-xs flex items-center min-h-[36px] sm:min-h-[32px] touch-manipulation',
                                                         (!form.account_id || form.account_id === 3) ?
                                                             'bg-gray-300 text-gray-500 cursor-not-allowed' :
-                                                            'bg-gradient-to-r from-purple-500 to-pink-600 text-white hover:from-purple-600 hover:to-pink-700'
+                                                            'bg-gradient-to-r from-purple-500 to-pink-600 text-white hover:from-purple-600 hover:to-pink-700 active:scale-95'
                                                     ]">
                                                     <i class="fa fa-eye mr-1 text-xs"></i>
-                                                    View
+                                                    <span class="hidden sm:inline">View</span>
                                                 </button>
                                                 <button type="button" @click="addNewCustomer"
-                                                    class="bg-gradient-to-r from-blue-500 to-indigo-600 text-white px-2 py-1 rounded-md hover:from-blue-600 hover:to-indigo-700 transition-all duration-200 shadow-sm hover:shadow-md transform hover:-translate-y-0.5 font-semibold text-xs flex items-center">
+                                                    class="bg-gradient-to-r from-blue-500 to-indigo-600 text-white px-2 sm:px-2.5 py-1.5 sm:py-1 rounded-md hover:from-blue-600 hover:to-indigo-700 transition-all duration-200 shadow-sm hover:shadow-md transform hover:-translate-y-0.5 active:scale-95 font-semibold text-xs flex items-center min-h-[36px] sm:min-h-[32px] touch-manipulation">
                                                     <i class="fa fa-plus mr-1 text-xs"></i>
-                                                    Add
+                                                    <span class="hidden sm:inline">Add</span>
                                                 </button>
                                             </div>
                                         </label>
@@ -72,14 +72,14 @@
                                             placeholder="Select Customer"
                                             filter-placeholder="Search by name or mobile..." :visibleItems="8"
                                             @search="searchCustomers" @change="handleCustomerChange"
-                                            input-class="w-full rounded-lg border-slate-200 shadow-sm focus:border-blue-500 focus:ring-blue-500/20 transition-all duration-200 bg-white/90 backdrop-blur-sm hover:shadow-md text-xs py-2 px-2" />
+                                            input-class="w-full rounded-lg border-slate-200 shadow-sm focus:border-blue-500 focus:ring-blue-500/20 transition-all duration-200 bg-white/90 backdrop-blur-sm hover:shadow-md text-sm sm:text-xs py-2.5 sm:py-2 px-2 min-h-[44px] sm:min-h-[40px]" />
                                     </div>
                                     <div class="space-y-1">
-                                        <label class="text-xs font-bold text-slate-700 flex items-center">
+                                        <label class="text-xs sm:text-sm font-bold text-slate-700 flex items-center">
                                             Mobile
                                         </label>
-                                        <input v-model="form.customer_mobile" type="text"
-                                            class="w-full rounded-lg border-slate-200 shadow-sm focus:border-emerald-500 focus:ring-emerald-500/20 transition-all duration-200 bg-white/90 backdrop-blur-sm hover:shadow-md text-xs py-2"
+                                        <input v-model="form.customer_mobile" type="tel"
+                                            class="w-full rounded-lg border-slate-200 shadow-sm focus:border-emerald-500 focus:ring-emerald-500/20 transition-all duration-200 bg-white/90 backdrop-blur-sm hover:shadow-md text-sm sm:text-xs py-2.5 sm:py-2 px-3 min-h-[44px] sm:min-h-[40px]"
                                             placeholder="Mobile">
                                     </div>
                                 </div>
@@ -87,22 +87,22 @@
                                 <!-- Employee and Sale Type - Enhanced responsive grid -->
                                 <div class="relative grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-2 mb-2 sm:mb-3">
                                     <div class="space-y-1">
-                                        <label class="text-xs font-bold text-slate-700 flex items-center">
+                                        <label class="text-xs sm:text-sm font-bold text-slate-700 flex items-center">
                                             Employee
                                         </label>
                                         <SearchableSelect v-model="form.employee_id" :options="employees"
                                             placeholder="Select employee..." filter-placeholder="Search employees..."
                                             :visibleItems="8"
-                                            input-class="w-full rounded-lg border-slate-200 shadow-sm focus:border-purple-500 focus:ring-purple-500/20 transition-all duration-200 bg-white/90 backdrop-blur-sm hover:shadow-md text-xs py-2 px-2" />
+                                            input-class="w-full rounded-lg border-slate-200 shadow-sm focus:border-purple-500 focus:ring-purple-500/20 transition-all duration-200 bg-white/90 backdrop-blur-sm hover:shadow-md text-sm sm:text-xs py-2.5 sm:py-2 px-2 min-h-[44px] sm:min-h-[40px]" />
                                     </div>
                                     <div class="space-y-1">
-                                        <label class="text-xs font-bold text-slate-700 flex items-center">
+                                        <label class="text-xs sm:text-sm font-bold text-slate-700 flex items-center">
                                             Sale Type
                                         </label>
                                         <SearchableSelect v-model="form.sale_type" :options="priceTypes"
                                             placeholder="Select type..." filter-placeholder="Search sale types..."
                                             :visibleItems="8"
-                                            input-class="w-full rounded-lg border-slate-200 shadow-sm focus:border-orange-500 focus:ring-orange-500/20 transition-all duration-200 bg-white/90 backdrop-blur-sm hover:shadow-md text-xs py-2 px-2"
+                                            input-class="w-full rounded-lg border-slate-200 shadow-sm focus:border-orange-500 focus:ring-orange-500/20 transition-all duration-200 bg-white/90 backdrop-blur-sm hover:shadow-md text-sm sm:text-xs py-2.5 sm:py-2 px-2 min-h-[44px] sm:min-h-[40px]"
                                             @change="loadProducts" />
                                     </div>
                                 </div>
