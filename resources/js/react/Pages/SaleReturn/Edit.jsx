@@ -10,7 +10,7 @@ import ProductGrid from "./ProductGrid";
 import ViewItemsModal from "./Components/ViewItemsModal";
 import AdvancePaymentModal from "../../Components/Booking/AdvancePaymentModal";
 import { usePage } from "@inertiajs/react";
-
+import { FaPen } from "react-icons/fa";
 
 export default function Edit() {
     const [customerId, setCustomerId] = useState(null);
@@ -29,6 +29,9 @@ export default function Edit() {
     const [employeeId, setEmployeeId] = useState(null);
      const [saleId, setSaleId] = useState(null); // null for new, or set existing sale id for update
     const [errors, setErrors] = useState({});
+
+    const [employeesList, setEmployeesList] = useState([]);
+    const [selectedEmployee, setSelectedEmployee] = useState(null);
 
     // Inline edit modal state (no new component)
     const [editingModalOpen, setEditingModalOpen] = useState(false);
@@ -110,6 +113,26 @@ if (saleData.payment_method === 1) {
             );
         });
     }, []);
+
+    useEffect(() => {
+        let mounted = true;
+        axios.get('/employees/employee')
+            .then(res => {
+                if (!mounted) return;
+                setEmployeesList(res.data || []);
+            })
+            .catch(() => setEmployeesList([]));
+        return () => { mounted = false };
+    }, []);
+
+    useEffect(() => {
+        if (!employeeId) {
+            setSelectedEmployee(null);
+            return;
+        }
+        const emp = employeesList.find(e => Number(e.id) === Number(employeeId)) || null;
+        setSelectedEmployee(emp ? { name: emp.name, email: emp.email } : null);
+    }, [employeeId, employeesList]);
 
   useEffect(() => {
     if (!categoryId) {
@@ -446,25 +469,30 @@ const buildMeasurementPayload = () => {
                                                 <div className="d-flex gap-1">
                                                     <button
                                                         type="button"
-                                                        className="btn btn-sm btn-outline-primary"
+                                                        className="btn btn-outline-secondary btn-sm d-inline-flex align-items-center justify-content-center"
+                                                        title="Edit item"
+                                                        aria-label="Edit item"
+                                                        style={{ width: 28, height: 28, padding: 0 }}
                                                         onClick={() => {
                                                             setEditingItem(item);
                                                             setEditingValues({ quantity: item.quantity, unit_price: item.unit_price });
                                                             setEditingModalOpen(true);
                                                         }}
                                                     >
-                                                        Edit
+                                                       <FaPen size={12} />
                                                     </button>
                                                     <button
                                                         type="button"
-                                                        className="btn btn-sm btn-outline-danger"
+                                                        className="btn btn-sm btn-outline-danger p-1"
+                                                        title="Delete item"
+                                                        aria-label="Delete item"
                                                         onClick={() => {
                                                             if (window.confirm('Remove this item from cart?')) {
                                                                 setCartItems((prev) => prev.filter((i) => i.id !== item.id));
                                                             }
                                                         }}
                                                     >
-                                                        Delete
+                                                        <i className="fa fa-trash"></i>
                                                     </button>
                                                 </div>
                                             </div>
@@ -520,7 +548,9 @@ const buildMeasurementPayload = () => {
                                                             <div>
                                                                 <button
                                                                     type="button"
-                                                                    className="btn btn-danger me-2"
+                                                                    className="btn btn-danger btn-sm p-1 me-2"
+                                                                    title="Delete item"
+                                                                    aria-label="Delete item"
                                                                     onClick={() => {
                                                                         if (!editingItem) return;
                                                                         if (window.confirm('Remove this item from cart?')) {
@@ -530,7 +560,7 @@ const buildMeasurementPayload = () => {
                                                                         }
                                                                     }}
                                                                 >
-                                                                    Delete
+                                                                    <i className="fa fa-trash"></i>
                                                                 </button>
                                                             </div>
                                                             <div>
@@ -685,6 +715,7 @@ const buildMeasurementPayload = () => {
                     onClose={() => setViewModalOpen(false)}
                     onUpdate={(item) => setCartItems((prev) => prev.map((i) => (i.id === item.id ? item : i)))}
                     onRemove={(id) => setCartItems((prev) => prev.filter((i) => i.id !== id))}
+                    employee={selectedEmployee}
                 />
             )}
            <AdvancePaymentModal

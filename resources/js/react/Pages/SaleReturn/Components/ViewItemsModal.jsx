@@ -21,10 +21,19 @@ export default function ViewItemsModal({ items, onClose, onUpdate, onRemove, emp
             <div className="modal-dialog modal-xl">
                 <div className="modal-content">
                     <div className="modal-header">
-                        <div>
-                            <h5 className="mb-0">Cart Items</h5>
-                            {employee && (
-                                <small className="text-muted">{employee.name}{employee.email ? ` — ${employee.email}` : ''}</small>
+                        <div className="d-flex flex-column w-100">
+                            <div className="d-flex align-items-center justify-content-between w-100">
+                                <h5 className="mb-0">Cart Items</h5>
+                                {employee && (
+                                    <div className="ms-2">
+                                        <div className="badge bg-primary text-white" style={{ fontSize: '0.9rem', padding: '0.45rem 0.7rem', borderRadius: 6 }}>
+                                            {employee.name}
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                            {employee && employee.email && (
+                                <small className="text-white-50 mt-1">{employee.email}</small>
                             )}
                         </div>
                         <button className="btn-close" onClick={onClose}></button>
