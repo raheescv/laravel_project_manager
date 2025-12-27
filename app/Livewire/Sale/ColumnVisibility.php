@@ -2,9 +2,7 @@
 
 namespace App\Livewire\Sale;
 
-use App\Models\Account;
 use App\Models\Configuration;
-use Illuminate\Support\Facades\Cache;
 use Livewire\Component;
 
 class ColumnVisibility extends Component

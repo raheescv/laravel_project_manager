@@ -235,7 +235,7 @@ class DayWiseReport extends Component
 
         foreach ($payments as $payment) {
             $key = "{$payment->date}_{$payment->branch_id}";
-            $methodName = ucWords(strtolower($payment->payment_method_name));
+            $methodName = ucwords(strtolower($payment->payment_method_name));
 
             // Create default row if not exists
             if (! isset($summary[$key])) {

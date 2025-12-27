@@ -98,6 +98,7 @@
                             <th class="fw-semibold"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="id_no" label="ID No." /> </th>
                             <th class="fw-semibold"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="nationality" label="Nationality" /> </th>
                             <th class="fw-semibold"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="company" label="Company" /> </th>
+                            <th class="fw-semibold text-center">Actions</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -157,6 +158,18 @@
                                     @else
                                         -
                                     @endif
+                                </td>
+                                <td class="text-center">
+                                    <div class="btn-group btn-group-sm" role="group">
+                                        <a href="{{ route('account::customer::view', $item->id) }}" class="btn btn-light btn-sm" title="View Customer" data-bs-toggle="tooltip">
+                                            <i class="fa fa-eye"></i>
+                                        </a>
+                                        @can('customer.view')
+                                            <a href="{{ route('account::customer::statement', $item->id) }}" target="_blank" class="btn btn-info btn-sm text-white" title="Generate Statement PDF" data-bs-toggle="tooltip">
+                                                <i class="fa fa-file-pdf-o"></i>
+                                            </a>
+                                        @endcan
+                                    </div>
                                 </td>
                             </tr>
                         @endforeach

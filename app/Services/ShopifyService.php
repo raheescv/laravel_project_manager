@@ -25,7 +25,7 @@ class ShopifyService
         $this->apiVersion = config('services.shopify.api_version', '2024-10');
 
         // Build base URL: https://yourstore.myshopify.com/admin/api/2024-10
-        $this->baseUrl = rtrim($this->storeUrl, '/') . '/admin/api/' . $this->apiVersion;
+        $this->baseUrl = rtrim($this->storeUrl, '/').'/admin/api/'.$this->apiVersion;
         $headers = [
             'X-Shopify-Access-Token' => $this->accessToken,
             'Content-Type' => 'application/json',
@@ -37,9 +37,9 @@ class ShopifyService
     /**
      * Get products from Shopify store
      *
-     * @param int $limit Number of products to retrieve (default: 10)
-     * @param array $params Additional query parameters (e.g., ['page' => 1, 'fields' => 'id,title'])
-     * @return array
+     * @param  int  $limit  Number of products to retrieve (default: 10)
+     * @param  array  $params  Additional query parameters (e.g., ['page' => 1, 'fields' => 'id,title'])
+     *
      * @throws Exception
      */
     public function getProducts(int $limit = 10, array $params = []): array
@@ -53,17 +53,17 @@ class ShopifyService
                 $params,
             );
 
-            $url = $this->baseUrl . '/products.json';
+            $url = $this->baseUrl.'/products.json';
             $response = $this->http->get($url, $queryParams);
 
-            if (!$response->successful()) {
+            if (! $response->successful()) {
                 Log::error('Shopify API request failed', [
                     'url' => $url,
                     'status' => $response->status(),
                     'response' => $response->body(),
                 ]);
 
-                throw new Exception('Shopify API request failed: ' . $response->body(), $response->status());
+                throw new Exception('Shopify API request failed: '.$response->body(), $response->status());
             }
 
             $data = $response->json();
@@ -83,25 +83,25 @@ class ShopifyService
     /**
      * Get a single product by ID
      *
-     * @param int|string $productId
-     * @return array
+     * @param  int|string  $productId
+     *
      * @throws Exception
      */
     public function getProduct($productId): array
     {
         try {
-            $url = $this->baseUrl . '/products/' . $productId . '.json';
+            $url = $this->baseUrl.'/products/'.$productId.'.json';
 
             $response = $this->http->get($url);
 
-            if (!$response->successful()) {
+            if (! $response->successful()) {
                 Log::error('Shopify API request failed', [
                     'url' => $url,
                     'status' => $response->status(),
                     'response' => $response->body(),
                 ]);
 
-                throw new Exception('Shopify API request failed: ' . $response->body(), $response->status());
+                throw new Exception('Shopify API request failed: '.$response->body(), $response->status());
             }
 
             $data = $response->json();
@@ -120,18 +120,17 @@ class ShopifyService
     /**
      * Get products count
      *
-     * @return int
      * @throws Exception
      */
     public function getProductsCount(): int
     {
         try {
-            $url = $this->baseUrl . '/products/count.json';
+            $url = $this->baseUrl.'/products/count.json';
 
             $response = $this->http->get($url);
 
-            if (!$response->successful()) {
-                throw new Exception('Shopify API request failed: ' . $response->body(), $response->status());
+            if (! $response->successful()) {
+                throw new Exception('Shopify API request failed: '.$response->body(), $response->status());
             }
 
             $data = $response->json();

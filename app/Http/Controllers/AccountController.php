@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Actions\Account\Customer\GenerateStatementAction;
 use App\Models\Account;
 use App\Models\Sale;
 use Illuminate\Http\Request;
@@ -54,9 +55,7 @@ class AccountController extends Controller
             // Get sales statistics
             $totalSales = Sale::where('account_id', $id)->count();
             $totalAmount = Sale::where('account_id', $id)->sum('grand_total');
-            $lastPurchase = Sale::where('account_id', $id)
-                ->orderBy('date', 'desc')
-                ->value('date');
+            $lastPurchase = Sale::where('account_id', $id)->orderBy('date', 'desc')->value('date');
 
             // Get recent sales (last 5)
             $recentSales = Sale::where('account_id', $id)
@@ -86,9 +85,17 @@ class AccountController extends Controller
             ]);
         } catch (\Exception $e) {
             return response()->json([
-                'success' => false,
-                'message' => 'Customer not found',
-            ], 404);
+                    'success' => false,
+                    'message' => 'Customer not found',
+                ], 404, );
         }
+    }
+
+    public function statement($id, Request $request)
+    {
+        $fromDate = $request->input('from_date');
+        $toDate = $request->input('to_date');
+
+        return (new GenerateStatementAction())->execute($id, $fromDate, $toDate);
     }
 }

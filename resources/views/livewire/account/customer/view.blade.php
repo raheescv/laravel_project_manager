@@ -8,13 +8,22 @@
             </div>
 
             <div class="card-body position-relative" id="customer-details" style="padding: 2rem;">
-                <!-- Edit Button - Premium positioning -->
+                <!-- Action Buttons - Premium positioning -->
                 <div class="position-absolute top-0 end-0 me-4 mt-3" style="z-index: 10;">
-                    <button type="button" id="CustomerEdit" class="btn btn-premium btn-sm d-flex align-items-center gap-2 shadow-lg hover-lift rounded-pill px-4 py-2" data-bs-toggle="tooltip"
-                        data-bs-placement="left" title="Edit Customer Details">
-                        <i class="fa fa-edit"></i>
-                        <span class="d-none d-lg-inline fw-semibold">Edit Customer</span>
-                    </button>
+                    <div class="d-flex gap-2">
+                        @can('customer.view')
+                            <a href="{{ route('account::customer::statement', $accounts['id'] ?? '') }}" target="_blank" class="btn btn-info btn-sm d-flex align-items-center gap-2 shadow-lg hover-lift rounded-pill px-4 py-2" data-bs-toggle="tooltip"
+                                data-bs-placement="left" title="Generate Customer Statement PDF">
+                                <i class="fa fa-file-pdf-o"></i>
+                                <span class="d-none d-lg-inline fw-semibold">Statement</span>
+                            </a>
+                        @endcan
+                        <button type="button" id="CustomerEdit" class="btn btn-premium btn-sm d-flex align-items-center gap-2 shadow-lg hover-lift rounded-pill px-4 py-2" data-bs-toggle="tooltip"
+                            data-bs-placement="left" title="Edit Customer Details">
+                            <i class="fa fa-edit"></i>
+                            <span class="d-none d-lg-inline fw-semibold">Edit Customer</span>
+                        </button>
+                    </div>
                 </div>
 
                 <div class="row align-items-center g-4">
@@ -220,6 +229,14 @@
                                 </select>
                             </div>
                         </div>
+                        <div class="col-md-4 d-flex align-items-end">
+                            @can('customer.view')
+                                <a href="{{ route('account::customer::statement', $accounts['id'] ?? '') }}@if($sale_from_date || $sale_to_date)?from_date={{ $sale_from_date }}&to_date={{ $sale_to_date }}@endif" target="_blank" class="btn btn-info btn-sm d-flex align-items-center gap-2 shadow-sm" title="Generate Statement PDF">
+                                    <i class="fa fa-file-pdf-o"></i>
+                                    <span>Generate Statement</span>
+                                </a>
+                            @endcan
+                        </div>
                     </div>
                     <table class="table table-striped table-sm table-bordered">
                         <thead>
@@ -279,7 +296,7 @@
                                         </div>
                                     </div>
                                     @php
-                                        $percentage = $total_sale_returns?->grand_total ? round(($total_sale_returns?->paid / $total_sale_returns?->grand_total) * 100) : 0;
+                                        $percentage = $total_sale_returns?->grand_total!=0 ? round(($total_sale_returns?->paid / $total_sale_returns?->grand_total) * 100) : 0;
                                     @endphp
                                     <div class="progress progress-md mb-2">
                                         <div class="progress-bar bg-white" role="progressbar" style="width: {{ $percentage }}%;" aria-valuenow="{{ $percentage }}" aria-valuemin="0"
@@ -323,7 +340,7 @@
                                     </div>
                                     <div class="progress progress-md mb-2">
                                         @php
-                                            $percentage = $total_sale_returns?->grand_total ? round(($total_sale_returns?->balance / $total_sale_returns?->grand_total) * 100) : 0;
+                                            $percentage = $total_sale_returns?->grand_total!=0 ? round(($total_sale_returns?->balance / $total_sale_returns?->grand_total) * 100) : 0;
                                         @endphp
                                         <div class="progress-bar bg-white" role="progressbar" style="width: {{ $percentage }}%;" aria-valuenow="{{ $percentage }}" aria-valuemin="0"
                                             aria-valuemax="100">
