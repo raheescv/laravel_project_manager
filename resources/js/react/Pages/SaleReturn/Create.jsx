@@ -29,6 +29,11 @@ export default function Create() {
      const [saleId, setSaleId] = useState(null); // null for new, or set existing sale id for update
     const [errors, setErrors] = useState({});
 
+    // Edit modal state (kept inside this file per request)
+    const [editingModalOpen, setEditingModalOpen] = useState(false);
+    const [editingItem, setEditingItem] = useState(null);
+    const [editingValues, setEditingValues] = useState({ quantity: 1, unit_price: 0 });
+
      const [categoryId, setCategoryId] = useState(null);
      const [measurements, setMeasurements] = useState([]);
      const [measurementValues, setMeasurementValues] = useState({});
@@ -381,12 +386,126 @@ const buildMeasurementPayload = () => {
                                                 <h6>{item.name}</h6>
                                                 <p className="text-success">₹{item.total.toFixed(2)}</p>
                                             </div>
-                                            <div className="qty-item">
-                                                <span>{item.quantity}</span>
+                                            <div className="d-flex align-items-center gap-2">
+                                                <div className="qty-item me-2">
+                                                    <span>{item.quantity}</span>
+                                                </div>
+                                                <div className="d-flex gap-1">
+                                                    <button
+                                                        type="button"
+                                                        className="btn btn-sm btn-outline-primary"
+                                                        onClick={() => {
+                                                            setEditingItem(item);
+                                                            setEditingValues({ quantity: item.quantity, unit_price: item.unit_price });
+                                                            setEditingModalOpen(true);
+                                                        }}
+                                                    >
+                                                        Edit
+                                                    </button>
+                                                    <button
+                                                        type="button"
+                                                        className="btn btn-sm btn-outline-danger"
+                                                        onClick={() => {
+                                                            if (window.confirm('Remove this item from cart?')) {
+                                                                setCartItems((prev) => prev.filter((i) => i.id !== item.id));
+                                                            }
+                                                        }}
+                                                    >
+                                                        Delete
+                                                    </button>
+                                                </div>
                                             </div>
                                         </div>
                                     ))}
                                 </div>
+
+                                {/* Edit Item Modal (rendered inline) */}
+                                {editingModalOpen && (
+                                    <>
+                                        <div className="modal show d-block" tabIndex="-1" role="dialog">
+                                            <div className="modal-dialog" role="document">
+                                                <div className="modal-content">
+                                                    <div className="modal-header">
+                                                        <h5 className="modal-title">Edit Item</h5>
+                                                        <button type="button" className="btn-close" aria-label="Close" onClick={() => setEditingModalOpen(false)}></button>
+                                                    </div>
+                                                    <div className="modal-body">
+                                                        {editingItem && (
+                                                            <div>
+                                                                <div className="mb-2">
+                                                                    <label className="form-label">Product</label>
+                                                                    <input type="text" className="form-control form-control-sm" value={editingItem.name} readOnly />
+                                                                </div>
+                                                                <div className="row g-2">
+                                                                    <div className="col-6">
+                                                                        <label className="form-label">Quantity</label>
+                                                                        <input
+                                                                            type="number"
+                                                                            className="form-control form-control-sm"
+                                                                            min={1}
+                                                                            value={editingValues.quantity}
+                                                                            onChange={(e) => setEditingValues((v) => ({ ...v, quantity: Number(e.target.value) || 1 }))}
+                                                                        />
+                                                                    </div>
+                                                                    <div className="col-6">
+                                                                        <label className="form-label">Unit Price</label>
+                                                                        <input
+                                                                            type="number"
+                                                                            className="form-control form-control-sm"
+                                                                            min={0}
+                                                                            step="0.01"
+                                                                            value={editingValues.unit_price}
+                                                                            onChange={(e) => setEditingValues((v) => ({ ...v, unit_price: Number(e.target.value) || 0 }))}
+                                                                        />
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                    <div className="modal-footer">
+                                                        <div className="d-flex w-100 justify-content-between">
+                                                            <div>
+                                                                <button
+                                                                    type="button"
+                                                                    className="btn btn-danger me-2"
+                                                                    onClick={() => {
+                                                                        if (!editingItem) return;
+                                                                        if (window.confirm('Remove this item from cart?')) {
+                                                                            setCartItems((prev) => prev.filter((i) => i.id !== editingItem.id));
+                                                                            setEditingModalOpen(false);
+                                                                            setEditingItem(null);
+                                                                        }
+                                                                    }}
+                                                                >
+                                                                    Delete
+                                                                </button>
+                                                            </div>
+                                                            <div>
+                                                                <button type="button" className="btn btn-secondary me-2" onClick={() => setEditingModalOpen(false)}>Cancel</button>
+                                                                <button
+                                                                    type="button"
+                                                                    className="btn btn-primary"
+                                                                    onClick={() => {
+                                                                        // Save changes
+                                                                        if (!editingItem) return;
+                                                                        const q = Number(editingValues.quantity) || 1;
+                                                                        const up = Number(editingValues.unit_price) || 0;
+                                                                        setCartItems((prev) => prev.map((i) => i.id === editingItem.id ? { ...i, quantity: q, unit_price: up, total: q * up } : i));
+                                                                        setEditingModalOpen(false);
+                                                                        setEditingItem(null);
+                                                                    }}
+                                                                >
+                                                                    Save changes
+                                                                </button>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div className="modal-backdrop fade show"></div>
+                                    </>
+                                )}
 
                                 {/* Reference & Discount */}
                                 <div className="mb-2">

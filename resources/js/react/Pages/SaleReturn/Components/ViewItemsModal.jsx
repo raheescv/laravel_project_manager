@@ -1,6 +1,6 @@
 import React from "react";
 
-export default function ViewItemsModal({ items, onClose, onUpdate, onRemove }) {
+export default function ViewItemsModal({ items, onClose, onUpdate, onRemove, employee = null }) {
     const handleChange = (id, field, value) => {
         const item = items.find(i => i.id === id);
         const updated = {
@@ -21,7 +21,12 @@ export default function ViewItemsModal({ items, onClose, onUpdate, onRemove }) {
             <div className="modal-dialog modal-xl">
                 <div className="modal-content">
                     <div className="modal-header">
-                        <h5>Cart Items</h5>
+                        <div>
+                            <h5 className="mb-0">Cart Items</h5>
+                            {employee && (
+                                <small className="text-muted">{employee.name}{employee.email ? ` — ${employee.email}` : ''}</small>
+                            )}
+                        </div>
                         <button className="btn-close" onClick={onClose}></button>
                     </div>
                     <div className="modal-body">
