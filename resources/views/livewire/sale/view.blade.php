@@ -110,7 +110,7 @@
                                                 <div class="ps-1">
                                                     <div class="mb-2">
                                                         <small class="text-muted d-block">Name</small>
-                                                        <span class="fw-medium">{{ $sale->account?->name }}</span>
+                                                        <span class="fw-medium"> <a href="{{ route('account::customer::view', $sale->account_id) }}">{{ $sale->account?->name }}</a> </span>
                                                     </div>
                                                     @if ($sale->customer_name)
                                                         <div>

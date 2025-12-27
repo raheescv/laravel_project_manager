@@ -10,11 +10,15 @@ use App\Models\SaleReturn;
 use App\Models\SaleReturnPayment;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Collection;
+
 class GenerateStatementAction
 {
     protected $customerId;
+
     protected $fromDate;
+
     protected $toDate;
+
     protected $customer;
 
     public function execute($customerId, $fromDate = null, $toDate = null)
@@ -29,6 +33,7 @@ class GenerateStatementAction
         $ledgerEntries = $this->sortAndCalculateBalances($ledgerEntries);
         $totals = $this->calculateTotals($ledgerEntries, $openingBalance);
         $companyInfo = $this->getCompanyInfo();
+
         return $this->generatePdf($ledgerEntries, $totals, $companyInfo);
     }
 
@@ -155,7 +160,7 @@ class GenerateStatementAction
 
     protected function createOpeningBalanceEntry($openingBalance): object
     {
-        $openingDate = $this->fromDate ? date('Y-m-d', strtotime($this->fromDate . ' -1 day')) : '1900-01-01';
+        $openingDate = $this->fromDate ? date('Y-m-d', strtotime($this->fromDate.' -1 day')) : '1900-01-01';
 
         return (object) [
             'date' => 'Opening',
@@ -179,7 +184,7 @@ class GenerateStatementAction
             'debit' => $sale->grand_total,
             'credit' => 0,
             'type' => 'sale',
-            'group_key' => 'sale_' . $sale->id, // Group key to keep related entries together
+            'group_key' => 'sale_'.$sale->id, // Group key to keep related entries together
             'sort_order' => 1, // Sale comes first in group
             'model' => $sale,
         ];
@@ -198,7 +203,7 @@ class GenerateStatementAction
             'debit' => 0,
             'credit' => $payment->amount,
             'type' => 'payment',
-            'group_key' => 'sale_' . $saleId, // Same group as parent sale
+            'group_key' => 'sale_'.$saleId, // Same group as parent sale
             'sort_order' => 2, // Payment comes after sale
             'model' => $payment,
         ];
@@ -206,7 +211,7 @@ class GenerateStatementAction
 
     protected function createSaleReturnEntry($saleReturn): object
     {
-        $reference = $saleReturn->reference_no ?: 'SR-' . $saleReturn->id;
+        $reference = $saleReturn->reference_no ?: 'SR-'.$saleReturn->id;
 
         return (object) [
             'date' => $saleReturn->date,
@@ -215,7 +220,7 @@ class GenerateStatementAction
             'debit' => 0,
             'credit' => $saleReturn->grand_total,
             'type' => 'sale_return',
-            'group_key' => 'return_' . $saleReturn->id, // Group key to keep related entries together
+            'group_key' => 'return_'.$saleReturn->id, // Group key to keep related entries together
             'sort_order' => 1, // Return comes first in group
             'model' => $saleReturn,
         ];
@@ -223,7 +228,7 @@ class GenerateStatementAction
 
     protected function createReturnPaymentEntry($payment, $saleReturn): object
     {
-        $reference = $saleReturn->reference_no ?: 'SR-' . $saleReturn->id;
+        $reference = $saleReturn->reference_no ?: 'SR-'.$saleReturn->id;
         $returnId = $payment->sale_return_id ?? $payment->saleReturn->id ?? $saleReturn->id;
         // Use return date for sorting to keep payment near return, but display actual payment date
         $sortDate = $saleReturn->date;
@@ -235,7 +240,7 @@ class GenerateStatementAction
             'debit' => $payment->amount,
             'credit' => 0,
             'type' => 'return_payment',
-            'group_key' => 'return_' . $returnId, // Same group as parent return
+            'group_key' => 'return_'.$returnId, // Same group as parent return
             'sort_order' => 2, // Payment comes after return
             'model' => $payment,
         ];
@@ -246,7 +251,8 @@ class GenerateStatementAction
         // Sort by sort_date (or date if sort_date not set), then by group_key (to keep related entries together), then by sort_order
         $sortedEntries = $ledgerEntries->sortBy(function ($entry) {
             $sortDate = $entry->sort_date ?? $entry->date;
-            return $sortDate . '_' . $entry->group_key . '_' . str_pad($entry->sort_order, 2, '0', STR_PAD_LEFT);
+
+            return $sortDate.'_'.$entry->group_key.'_'.str_pad($entry->sort_order, 2, '0', STR_PAD_LEFT);
         })->values();
 
         // Calculate running balance starting from 0
@@ -298,7 +304,7 @@ class GenerateStatementAction
         $pdf->setOption('margin-bottom', 10);
         $pdf->setOption('margin-left', 10);
 
-        $filename = 'customer_statement_' . $this->customer->name . '_' . now()->format('Y-m-d') . '.pdf';
+        $filename = 'customer_statement_'.$this->customer->name.'_'.now()->format('Y-m-d').'.pdf';
 
         return $pdf->stream($filename);
     }

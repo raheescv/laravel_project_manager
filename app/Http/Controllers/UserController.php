@@ -18,6 +18,11 @@ class UserController extends Controller
         return view('user.employee');
     }
 
+    public function employeeCommission(): View
+    {
+        return view('user.employee-commission');
+    }
+
     public function view($id): View
     {
         return view('user.view', compact('id'));

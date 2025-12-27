@@ -36,6 +36,7 @@ Route::middleware('auth')->group(function (): void {
             Route::get('', 'employee')->name('index')->can('employee.view');
             Route::get('view/{id}', 'view')->name('view')->can('employee.edit');
             Route::get('attendance', [UserAttendanceController::class, 'index'])->name('attendance')->can('employee attendance.view');
+            Route::get('commission', 'employeeCommission')->name('commission')->can('employee commission.view');
         });
     });
 
