@@ -96,6 +96,7 @@ class Table extends Component
             ->orderBy($this->sortField, $this->sortDirection)
             ->when($this->search ?? '', function ($query, $value) {
                 $value = trim($value);
+
                 return $query->where('users.name', 'like', "%{$value}%")
                     ->orWhere('products.name', 'like', "%{$value}%");
             })
@@ -105,6 +106,7 @@ class Table extends Component
             ->when($this->product_id, function ($query) {
                 return $query->where('product_id', $this->product_id);
             })
+            ->select('employee_commissions.*', 'users.name as employee_name', 'products.name as product_name')
             ->paginate($this->limit);
 
         return view('livewire.user.employee-commission.table', ['data' => $data]);
