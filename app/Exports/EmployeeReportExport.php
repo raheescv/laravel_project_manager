@@ -2,8 +2,7 @@
 
 namespace App\Exports;
 
-use App\Models\SaleItem;
-use App\Models\SaleReturnItem;
+use App\Traits\Report\EmployeeReportQueryBuilder;
 use Illuminate\Support\Facades\DB;
 use Maatwebsite\Excel\Concerns\Exportable;
 use Maatwebsite\Excel\Concerns\FromCollection;
@@ -33,46 +32,17 @@ class EmployeeReportExport implements WithMultipleSheets
 
 class EmployeeDetailSheet implements FromCollection, WithColumnFormatting, WithEvents, WithHeadings, WithMapping, WithTitle
 {
-    use Exportable;
+    use Exportable, EmployeeReportQueryBuilder;
 
     public function __construct(public array $filters = []) {}
 
     public function collection()
     {
-        // Build return subquery
-        $returnSubquery = SaleReturnItem::query()
-            ->join('sale_returns', 'sale_return_items.sale_return_id', '=', 'sale_returns.id')
-            ->where('sale_returns.status', 'completed')
-            ->when($this->filters['branch_id'] ?? null, fn ($q) => $q->where('sale_returns.branch_id', $this->filters['branch_id']))
-            ->when($this->filters['product_id'] ?? null, fn ($q) => $q->where('sale_return_items.product_id', $this->filters['product_id']))
-            ->when($this->filters['employee_id'] ?? null, fn ($q) => $q->where('sale_return_items.employee_id', $this->filters['employee_id']))
-            ->when($this->filters['from_date'] ?? null, fn ($q) => $q->whereDate('sale_returns.date', '>=', $this->filters['from_date']))
-            ->when($this->filters['to_date'] ?? null, fn ($q) => $q->whereDate('sale_returns.date', '<=', $this->filters['to_date']))
-            ->whereNotNull('sale_return_items.employee_id')
-            ->where('sale_return_items.employee_id', '!=', 0)
-            ->groupBy('sale_return_items.employee_id', 'sale_return_items.product_id')
-            ->select('sale_return_items.employee_id', 'sale_return_items.product_id')
-            ->selectRaw('SUM(sale_return_items.total) as return_amount');
-
-        // Build main query
-        $query = SaleItem::query()
-            ->join('sales', 'sale_items.sale_id', '=', 'sales.id')
-            ->join('users', 'sale_items.employee_id', '=', 'users.id')
-            ->join('products', 'sale_items.product_id', '=', 'products.id')
-            ->leftJoin('employee_commissions', function ($join) {
-                $join->on('employee_commissions.employee_id', '=', 'sale_items.employee_id')
-                    ->on('employee_commissions.product_id', '=', 'sale_items.product_id');
-            })
-            ->leftJoinSub($returnSubquery, 'returns', function ($join) {
+        return $this->buildBaseQuery($this->filters)
+            ->leftJoinSub($this->buildReturnSubqueryByEmployeeAndProduct($this->filters), 'returns', function ($join) {
                 $join->on('returns.employee_id', '=', 'sale_items.employee_id')
                     ->on('returns.product_id', '=', 'sale_items.product_id');
             })
-            ->where('sales.status', 'completed')
-            ->when($this->filters['branch_id'] ?? null, fn ($q) => $q->where('sales.branch_id', $this->filters['branch_id']))
-            ->when($this->filters['product_id'] ?? null, fn ($q) => $q->where('sale_items.product_id', $this->filters['product_id']))
-            ->when($this->filters['employee_id'] ?? null, fn ($q) => $q->where('sale_items.employee_id', $this->filters['employee_id']))
-            ->when($this->filters['from_date'] ?? null, fn ($q) => $q->whereDate('sales.date', '>=', $this->filters['from_date']))
-            ->when($this->filters['to_date'] ?? null, fn ($q) => $q->whereDate('sales.date', '<=', $this->filters['to_date']))
             ->groupBy('sale_items.employee_id', 'sale_items.product_id', 'employee_commissions.commission_percentage')
             ->select(
                 'users.name as employee',
@@ -86,8 +56,6 @@ class EmployeeDetailSheet implements FromCollection, WithColumnFormatting, WithE
             )
             ->orderBy('total_amount', 'desc')
             ->get();
-
-        return $query;
     }
 
     public function headings(): array
@@ -113,7 +81,7 @@ class EmployeeDetailSheet implements FromCollection, WithColumnFormatting, WithE
             $row->total_amount,
             $row->return_amount ?? 0,
             $row->net_amount ?? ($row->total_amount - ($row->return_amount ?? 0)),
-            round($row->commission_percentage ?? 0),
+            round($row->commission_percentage ?? 0,2),
             $row->total_commission ?? 0,
         ];
         return $data;
@@ -166,7 +134,7 @@ class EmployeeDetailSheet implements FromCollection, WithColumnFormatting, WithE
 
 class EmployeeSummarySheet implements FromCollection, WithColumnFormatting, WithEvents, WithHeadings, WithMapping, WithTitle
 {
-    use Exportable;
+    use Exportable, EmployeeReportQueryBuilder;
 
     public function __construct(public array $filters = []) {}
 
@@ -177,80 +145,14 @@ class EmployeeSummarySheet implements FromCollection, WithColumnFormatting, With
 
     public function collection()
     {
-        // Build return subquery for employee and product grouping (needed for commission calculation)
-        $returnSubqueryByProduct = SaleReturnItem::query()
-            ->join('sale_returns', 'sale_return_items.sale_return_id', '=', 'sale_returns.id')
-            ->where('sale_returns.status', 'completed')
-            ->when($this->filters['branch_id'] ?? null, fn ($q) => $q->where('sale_returns.branch_id', $this->filters['branch_id']))
-            ->when($this->filters['product_id'] ?? null, fn ($q) => $q->where('sale_return_items.product_id', $this->filters['product_id']))
-            ->when($this->filters['employee_id'] ?? null, fn ($q) => $q->where('sale_return_items.employee_id', $this->filters['employee_id']))
-            ->when($this->filters['from_date'] ?? null, fn ($q) => $q->whereDate('sale_returns.date', '>=', $this->filters['from_date']))
-            ->when($this->filters['to_date'] ?? null, fn ($q) => $q->whereDate('sale_returns.date', '<=', $this->filters['to_date']))
-            ->whereNotNull('sale_return_items.employee_id')
-            ->where('sale_return_items.employee_id', '!=', 0)
-            ->groupBy('sale_return_items.employee_id', 'sale_return_items.product_id')
-            ->select('sale_return_items.employee_id', 'sale_return_items.product_id')
-            ->selectRaw('SUM(sale_return_items.total) as return_amount');
-
-        // Build return subquery for employee grouping
-        $returnSubquery = SaleReturnItem::query()
-            ->join('sale_returns', 'sale_return_items.sale_return_id', '=', 'sale_returns.id')
-            ->where('sale_returns.status', 'completed')
-            ->when($this->filters['branch_id'] ?? null, fn ($q) => $q->where('sale_returns.branch_id', $this->filters['branch_id']))
-            ->when($this->filters['employee_id'] ?? null, fn ($q) => $q->where('sale_return_items.employee_id', $this->filters['employee_id']))
-            ->when($this->filters['from_date'] ?? null, fn ($q) => $q->whereDate('sale_returns.date', '>=', $this->filters['from_date']))
-            ->when($this->filters['to_date'] ?? null, fn ($q) => $q->whereDate('sale_returns.date', '<=', $this->filters['to_date']))
-            ->whereNotNull('sale_return_items.employee_id')
-            ->where('sale_return_items.employee_id', '!=', 0)
-            ->groupBy('sale_return_items.employee_id')
-            ->select('sale_return_items.employee_id')
-            ->selectRaw('SUM(sale_return_items.total) as return_amount');
-
-        // Get detailed data to calculate commission per employee
-        $detailedData = SaleItem::query()
-            ->join('sales', 'sale_items.sale_id', '=', 'sales.id')
-            ->join('users', 'sale_items.employee_id', '=', 'users.id')
-            ->join('products', 'sale_items.product_id', '=', 'products.id')
-            ->leftJoin('employee_commissions', function ($join) {
-                $join->on('employee_commissions.employee_id', '=', 'sale_items.employee_id')
-                    ->on('employee_commissions.product_id', '=', 'sale_items.product_id');
-            })
-            ->leftJoinSub($returnSubqueryByProduct, 'returns', function ($join) {
-                $join->on('returns.employee_id', '=', 'sale_items.employee_id')
-                    ->on('returns.product_id', '=', 'sale_items.product_id');
-            })
-            ->where('sales.status', 'completed')
-            ->when($this->filters['branch_id'] ?? null, fn ($q) => $q->where('sales.branch_id', $this->filters['branch_id']))
-            ->when($this->filters['product_id'] ?? null, fn ($q) => $q->where('sale_items.product_id', $this->filters['product_id']))
-            ->when($this->filters['employee_id'] ?? null, fn ($q) => $q->where('sale_items.employee_id', $this->filters['employee_id']))
-            ->when($this->filters['from_date'] ?? null, fn ($q) => $q->whereDate('sales.date', '>=', $this->filters['from_date']))
-            ->when($this->filters['to_date'] ?? null, fn ($q) => $q->whereDate('sales.date', '<=', $this->filters['to_date']))
-            ->groupBy('sale_items.employee_id', 'sale_items.product_id', 'employee_commissions.commission_percentage')
-            ->select(
-                'sale_items.employee_id',
-                DB::raw('SUM(sale_items.total) - COALESCE(MAX(returns.return_amount), 0) as net_amount'),
-                DB::raw('COALESCE(MAX(employee_commissions.commission_percentage), 0) as commission_percentage')
-            )
-            ->get()
-            ->groupBy('employee_id')
-            ->map(function ($items) {
-                return $items->sum(function ($item) {
-                    return ($item->net_amount * $item->commission_percentage) / 100;
-                });
-            });
+        // Calculate commissions per employee
+        $commissions = $this->calculateEmployeeCommissions($this->filters);
 
         // Build main query grouped by employee only
-        $query = SaleItem::query()
-            ->join('sales', 'sale_items.sale_id', '=', 'sales.id')
-            ->join('users', 'sale_items.employee_id', '=', 'users.id')
-            ->leftJoinSub($returnSubquery, 'returns', function ($join) {
+        return $this->buildBaseQuery($this->filters)
+            ->leftJoinSub($this->buildReturnSubqueryByEmployee($this->filters), 'returns', function ($join) {
                 $join->on('returns.employee_id', '=', 'sale_items.employee_id');
             })
-            ->where('sales.status', 'completed')
-            ->when($this->filters['branch_id'] ?? null, fn ($q) => $q->where('sales.branch_id', $this->filters['branch_id']))
-            ->when($this->filters['employee_id'] ?? null, fn ($q) => $q->where('sale_items.employee_id', $this->filters['employee_id']))
-            ->when($this->filters['from_date'] ?? null, fn ($q) => $q->whereDate('sales.date', '>=', $this->filters['from_date']))
-            ->when($this->filters['to_date'] ?? null, fn ($q) => $q->whereDate('sales.date', '<=', $this->filters['to_date']))
             ->groupBy('sale_items.employee_id')
             ->select(
                 'sale_items.employee_id',
@@ -262,12 +164,10 @@ class EmployeeSummarySheet implements FromCollection, WithColumnFormatting, With
             )
             ->orderBy('total_amount', 'desc')
             ->get()
-            ->map(function ($item) use ($detailedData) {
-                $item->total_commission = $detailedData->get($item->employee_id) ?? 0;
+            ->map(function ($item) use ($commissions) {
+                $item->total_commission = $commissions->get($item->employee_id) ?? 0;
                 return $item;
             });
-
-        return $query;
     }
 
     public function headings(): array
