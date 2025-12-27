@@ -137,8 +137,30 @@ export default {
     }
 
     .products-grid {
-        grid-template-columns: repeat(auto-fill, minmax(95px, 1fr));
+        grid-template-columns: repeat(2, 1fr);
         gap: 6px;
+        max-height: 500px;
+        overflow-y: auto;
+        overflow-x: hidden;
+        scrollbar-width: thin;
+        scrollbar-color: rgba(0, 0, 0, 0.3) transparent;
+    }
+
+    .products-grid::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    .products-grid::-webkit-scrollbar-track {
+        background: transparent;
+    }
+
+    .products-grid::-webkit-scrollbar-thumb {
+        background-color: rgba(0, 0, 0, 0.3);
+        border-radius: 3px;
+    }
+
+    .products-grid::-webkit-scrollbar-thumb:hover {
+        background-color: rgba(0, 0, 0, 0.5);
     }
 }
 
@@ -148,8 +170,30 @@ export default {
     }
 
     .products-grid {
-        grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
+        grid-template-columns: repeat(2, 1fr);
         gap: 6px;
+        max-height: 500px;
+        overflow-y: auto;
+        overflow-x: hidden;
+        scrollbar-width: thin;
+        scrollbar-color: rgba(0, 0, 0, 0.3) transparent;
+    }
+
+    .products-grid::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    .products-grid::-webkit-scrollbar-track {
+        background: transparent;
+    }
+
+    .products-grid::-webkit-scrollbar-thumb {
+        background-color: rgba(0, 0, 0, 0.3);
+        border-radius: 3px;
+    }
+
+    .products-grid::-webkit-scrollbar-thumb:hover {
+        background-color: rgba(0, 0, 0, 0.5);
     }
 }
 
