@@ -55,4 +55,9 @@ return [
         'client_secret' => env('FLAT_TRADE_CLIENT_SECRET'),
         'j_key' => env('FLAT_TRADE_J_KEY'),
     ],
+    'shopify' => [
+        'store_url' => env('SHOPIFY_STORE_URL', 'https://ahlanfun.myshopify.com'),
+        'access_token' => env('SHOPIFY_ACCESS_TOKEN'),
+        'api_version' => env('SHOPIFY_API_VERSION', '2024-10'),
+    ],
 ];
