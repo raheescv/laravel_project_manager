@@ -29,7 +29,7 @@
         .container {
             max-width: 1200px;
             margin: 0 auto;
-            background: #ffffff;
+            background: #f8fafc;
             box-shadow: 0 2px 20px rgba(0, 0, 0, 0.06);
             border-radius: 8px;
             overflow: hidden;
@@ -37,12 +37,12 @@
         }
 
         .header {
-            background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
-            color: #2c3e50;
+            background: linear-gradient(135deg, #475569 0%, #64748b 100%);
+            color: #ffffff;
             padding: 15px 20px;
             position: relative;
             overflow: hidden;
-            border-bottom: 2px solid #cbd5e1;
+            border-bottom: 2px solid #475569;
         }
 
         .header::before {
@@ -52,7 +52,7 @@
             right: -50%;
             width: 200%;
             height: 200%;
-            background: radial-gradient(circle, rgba(148, 163, 184, 0.05) 0%, transparent 70%);
+            background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
             animation: pulse 20s ease-in-out infinite;
         }
 
@@ -82,12 +82,12 @@
             font-weight: 700;
             margin-bottom: 4px;
             letter-spacing: -0.5px;
-            color: #1e293b;
+            color: #ffffff;
         }
 
         .company-details {
             font-size: 11px;
-            color: #64748b;
+            color: rgba(255, 255, 255, 0.95);
             font-weight: 400;
             line-height: 1.5;
         }
@@ -101,7 +101,7 @@
             letter-spacing: 1px;
             position: relative;
             z-index: 1;
-            color: #475569;
+            color: #ffffff;
         }
 
         .content-section {
@@ -157,16 +157,16 @@
             border-collapse: separate;
             border-spacing: 0;
             margin-bottom: 15px;
-            background: #ffffff;
+            background: #f8fafc;
             border-radius: 6px;
             overflow: hidden;
             box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
         }
 
         table thead {
-            background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
-            color: #475569;
-            border-bottom: 2px solid #cbd5e1;
+            background: linear-gradient(135deg, #475569 0%, #64748b 100%);
+            color: #ffffff;
+            border-bottom: 2px solid #475569;
         }
 
         table th {
@@ -177,7 +177,7 @@
             text-transform: uppercase;
             letter-spacing: 0.5px;
             border: none;
-            color: #475569;
+            color: #ffffff;
         }
 
         table th.text-right {
@@ -197,7 +197,7 @@
         }
 
         table tbody tr:hover {
-            background: #f8fafc;
+            background: #f1f5f9;
             transform: translateY(-1px);
             box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
         }
@@ -207,21 +207,21 @@
         }
 
         .ledger-row {
-            background: #ffffff;
+            background: #f8fafc;
         }
 
         .debit-row {
-            background: linear-gradient(90deg, rgba(148, 163, 184, 0.08) 0%, #ffffff 100%);
+            background: linear-gradient(90deg, rgba(148, 163, 184, 0.12) 0%, #f1f5f9 100%);
             border-left: 3px solid #94a3b8;
         }
 
         .credit-row {
-            background: linear-gradient(90deg, rgba(203, 213, 225, 0.08) 0%, #ffffff 100%);
+            background: linear-gradient(90deg, rgba(203, 213, 225, 0.12) 0%, #f1f5f9 100%);
             border-left: 3px solid #cbd5e1;
         }
 
         .sale-return-row {
-            background: linear-gradient(90deg, rgba(239, 68, 68, 0.08) 0%, #ffffff 100%);
+            background: linear-gradient(90deg, rgba(239, 68, 68, 0.12) 0%, #fef2f2 100%);
             border-left: 3px solid #ef4444;
         }
 
@@ -233,8 +233,21 @@
             color: #dc2626;
         }
 
+        .payment-row {
+            background: linear-gradient(90deg, rgba(16, 185, 129, 0.12) 0%, #f0fdf4 100%);
+            border-left: 3px solid #10b981;
+        }
+
+        .payment-row td {
+            color: #059669;
+        }
+
+        .payment-row .reference-no {
+            color: #059669;
+        }
+
         .opening-balance-row {
-            background: linear-gradient(90deg, rgba(226, 232, 240, 0.5) 0%, #ffffff 100%);
+            background: linear-gradient(90deg, rgba(226, 232, 240, 0.6) 0%, #f1f5f9 100%);
             font-weight: 600;
             border-left: 3px solid #94a3b8;
         }
@@ -368,7 +381,7 @@
         }
 
         .mobile-card {
-            background: #ffffff;
+            background: #f8fafc;
             border-radius: 6px;
             padding: 10px 12px;
             margin-bottom: 10px;
@@ -436,7 +449,7 @@
 
         .mobile-card-balance {
             padding: 8px;
-            background: linear-gradient(135deg, #f8fafc 0%, #ffffff 100%);
+            background: linear-gradient(135deg, #f1f5f9 0%, #f8fafc 100%);
             border-radius: 4px;
             text-align: center;
         }
@@ -638,7 +651,8 @@
             }
 
             .header {
-                background: #f1f5f9 !important;
+                background: #64748b !important;
+                color: #ffffff !important;
                 padding: 12px 15px;
                 -webkit-print-color-adjust: exact;
                 print-color-adjust: exact;
@@ -711,11 +725,11 @@
         /* High Contrast Mode Support */
         @media (prefers-contrast: high) {
             .header {
-                background: #000000;
+                background: #475569;
             }
 
             table thead {
-                background: #000000;
+                background: #475569;
             }
 
             .balance-positive {
@@ -824,10 +838,15 @@
                             @foreach ($ledgerEntries as $entry)
                                 @php
                                     $rowClass = 'ledger-row ';
+                                    $isPayment = $entry->type === 'payment';
+                                    $isSaleReturn = $entry->type === 'sale_return' || $entry->type === 'return_payment';
+
                                     if ($entry->type === 'opening_balance') {
                                         $rowClass .= 'opening-balance-row';
-                                    } elseif ($entry->type === 'sale_return' || $entry->type === 'return_payment') {
+                                    } elseif ($isSaleReturn) {
                                         $rowClass .= 'sale-return-row';
+                                    } elseif ($isPayment) {
+                                        $rowClass .= 'payment-row';
                                     } elseif ($entry->debit > 0) {
                                         $rowClass .= 'debit-row';
                                     } else {
@@ -839,23 +858,20 @@
                                     <td class="reference-no">{{ $entry->reference }}</td>
                                     <td class="text-right">
                                         @if ($entry->debit > 0)
-                                            <span
-                                                style="color: {{ $entry->type === 'sale_return' || $entry->type === 'return_payment' ? '#dc2626' : '#475569' }}; font-weight: 500;">{{ currency($entry->debit) }}</span>
+                                            <span style="color: {{ $isSaleReturn ? '#dc2626' : ($isPayment ? '#059669' : '#475569') }}; font-weight: 500;">{{ currency($entry->debit) }}</span>
                                         @else
                                             <span style="color: #cbd5e0;">-</span>
                                         @endif
                                     </td>
                                     <td class="text-right">
                                         @if ($entry->credit > 0)
-                                            <span
-                                                style="color: {{ $entry->type === 'sale_return' || $entry->type === 'return_payment' ? '#dc2626' : '#64748b' }}; font-weight: 500;">{{ currency($entry->credit) }}</span>
+                                            <span style="color: {{ $isSaleReturn ? '#dc2626' : ($isPayment ? '#059669' : '#64748b') }}; font-weight: 500;">{{ currency($entry->credit) }}</span>
                                         @else
                                             <span style="color: #cbd5e0;">-</span>
                                         @endif
                                     </td>
                                     <td class="text-right">
-                                        <span
-                                            style="color: {{ $entry->type === 'sale_return' || $entry->type === 'return_payment' ? '#dc2626' : ($entry->balance >= 0 ? '#475569' : '#64748b') }}; font-weight: 600;">
+                                        <span style="color: {{ $isSaleReturn ? '#dc2626' : ($isPayment ? '#059669' : ($entry->balance >= 0 ? '#475569' : '#64748b')) }}; font-weight: 600;">
                                             {{ currency($entry->balance) }}
                                         </span>
                                     </td>
@@ -879,20 +895,26 @@
                 <div class="mobile-card-view">
                     @foreach ($ledgerEntries as $entry)
                         @php
+                            $isPayment = $entry->type === 'payment';
                             $isSaleReturn = $entry->type === 'sale_return' || $entry->type === 'return_payment';
-                            $borderColor = $entry->type === 'opening_balance' ? '#94a3b8' : ($isSaleReturn ? '#ef4444' : ($entry->debit > 0 ? '#94a3b8' : '#cbd5e1'));
-                            $textColor = $isSaleReturn ? '#dc2626' : '#475569';
-                            $creditColor = $isSaleReturn ? '#dc2626' : '#64748b';
+                            $borderColor = $entry->type === 'opening_balance' ? '#94a3b8' : ($isSaleReturn ? '#ef4444' : ($isPayment ? '#10b981' : ($entry->debit > 0 ? '#94a3b8' : '#cbd5e1')));
+                            $textColor = $isSaleReturn ? '#dc2626' : ($isPayment ? '#059669' : '#475569');
+                            $creditColor = $isSaleReturn ? '#dc2626' : ($isPayment ? '#059669' : '#64748b');
+                            $bgStyle = $isSaleReturn
+                                ? 'background: linear-gradient(90deg, rgba(239, 68, 68, 0.12) 0%, #fef2f2 100%);'
+                                : ($isPayment
+                                    ? 'background: linear-gradient(90deg, rgba(16, 185, 129, 0.12) 0%, #f0fdf4 100%);'
+                                    : '');
                         @endphp
-                        <div class="mobile-card"
-                            style="border-left-color: {{ $borderColor }}; {{ $isSaleReturn ? 'background: linear-gradient(90deg, rgba(239, 68, 68, 0.08) 0%, #ffffff 100%);' : '' }}">
+                        <div class="mobile-card" style="border-left-color: {{ $borderColor }}; {{ $bgStyle }}">
                             <div class="mobile-card-header">
                                 <span class="mobile-card-date"
-                                    style="color: {{ $isSaleReturn ? '#dc2626' : 'inherit' }};">{{ $entry->date === 'Opening' ? 'Opening' : date('d M Y', strtotime($entry->date)) }}</span>
-                                <span class="mobile-card-reference" style="color: {{ $isSaleReturn ? '#dc2626' : 'inherit' }};">{{ $entry->reference }}</span>
+                                    style="color: {{ $isSaleReturn ? '#dc2626' : ($isPayment ? '#059669' : 'inherit') }};">{{ $entry->date === 'Opening' ? 'Opening' : date('d M Y', strtotime($entry->date)) }}</span>
+                                <span class="mobile-card-reference" style="color: {{ $isSaleReturn ? '#dc2626' : ($isPayment ? '#059669' : 'inherit') }};">{{ $entry->reference }}</span>
                             </div>
                             <div class="mobile-card-body">
-                                <div class="mobile-card-description" style="color: {{ $isSaleReturn ? '#dc2626' : 'inherit' }};">{{ $entry->description ?? 'Opening Balance' }}</div>
+                                <div class="mobile-card-description" style="color: {{ $isSaleReturn ? '#dc2626' : ($isPayment ? '#059669' : 'inherit') }};">
+                                    {{ $entry->description ?? 'Opening Balance' }}</div>
                                 <div class="mobile-card-amounts">
                                     <div class="mobile-card-amount">
                                         <div class="mobile-card-amount-label">Debit</div>
@@ -910,7 +932,7 @@
                             </div>
                             <div class="mobile-card-balance">
                                 <div class="mobile-card-balance-label">Balance</div>
-                                <div class="mobile-card-balance-value" style="color: {{ $isSaleReturn ? '#dc2626' : ($entry->balance >= 0 ? '#475569' : '#64748b') }};">
+                                <div class="mobile-card-balance-value" style="color: {{ $isSaleReturn ? '#dc2626' : ($isPayment ? '#059669' : ($entry->balance >= 0 ? '#475569' : '#64748b')) }};">
                                     {{ currency($entry->balance) }}
                                 </div>
                             </div>
@@ -922,17 +944,17 @@
                         </div>
                         <div class="mobile-card-body">
                             <div class="mobile-card-amounts">
-                                <div class="mobile-card-amount" style="background: rgba(255,255,255,0.5);">
+                                <div class="mobile-card-amount" style="background: rgba(241, 245, 249, 0.8);">
                                     <div class="mobile-card-amount-label" style="color: #64748b;">Total Debit</div>
                                     <div class="mobile-card-amount-value" style="color: #475569; font-size: 16px;">{{ currency($totalDebit) }}</div>
                                 </div>
-                                <div class="mobile-card-amount" style="background: rgba(255,255,255,0.5);">
+                                <div class="mobile-card-amount" style="background: rgba(241, 245, 249, 0.8);">
                                     <div class="mobile-card-amount-label" style="color: #64748b;">Total Credit</div>
                                     <div class="mobile-card-amount-value" style="color: #475569; font-size: 16px;">{{ currency($totalCredit) }}</div>
                                 </div>
                             </div>
                         </div>
-                        <div class="mobile-card-balance" style="background: rgba(255,255,255,0.6);">
+                        <div class="mobile-card-balance" style="background: rgba(241, 245, 249, 0.9);">
                             <div class="mobile-card-balance-label" style="color: #64748b;">Closing Balance</div>
                             <div class="mobile-card-balance-value" style="color: #1e293b; font-size: 20px;">
                                 {{ currency(abs($closingBalance)) }}
