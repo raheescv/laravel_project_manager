@@ -346,6 +346,11 @@
 
                             <div class="d-flex justify-content-end gap-2">
                                 @if (isset($purchases['id']))
+                                    @if ($purchases['status'] != 'cancelled')
+                                        <a href="{{ route('purchase::print', $purchases['id']) }}" target="_blank" class="btn btn-light">
+                                            <i class="demo-psi-printer me-1"></i> Purchase Note Print
+                                        </a>
+                                    @endif
                                     @can('purchase.barcode print')
                                         <a href="{{ route('purchase::barcode-print', $purchases['id']) }}" target="_blank" class="btn btn-info">
                                             <i class="demo-psi-printer me-1"></i> Print
