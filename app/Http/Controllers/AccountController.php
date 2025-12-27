@@ -98,4 +98,9 @@ class AccountController extends Controller
 
         return (new GenerateStatementAction())->execute($id, $fromDate, $toDate);
     }
+
+    public function bankReconciliation()
+    {
+        return view('accounts.bank_reconciliation');
+    }
 }

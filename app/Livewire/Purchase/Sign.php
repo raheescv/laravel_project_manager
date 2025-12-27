@@ -3,9 +3,9 @@
 namespace App\Livewire\Purchase;
 
 use App\Models\Purchase;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use Livewire\Component;
-use Illuminate\Support\Facades\Auth;
 
 class Sign extends Component
 {
@@ -36,7 +36,7 @@ class Sign extends Component
         $image = str_replace(' ', '+', $image);
         Storage::disk('public')->put($path, base64_decode($image));
 
-        $this->model->update(['signature' => $path,'updated_by' => Auth::id()]);
+        $this->model->update(['signature' => $path, 'updated_by' => Auth::id()]);
 
         return redirect(route('purchase::print', $this->model->id));
     }
@@ -46,4 +46,3 @@ class Sign extends Component
         return view('livewire.purchase.sign');
     }
 }
-

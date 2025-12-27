@@ -20,6 +20,7 @@ class JournalEntry extends Model implements AuditableContracts
         'counter_account_id',
 
         'date',
+        'delivered_date',
 
         'debit',
         'credit',

@@ -10,7 +10,7 @@ use Maatwebsite\Excel\Facades\Excel;
 
 class EmployeeReport extends Component
 {
-    use WithPagination, EmployeeReportQueryBuilder;
+    use EmployeeReportQueryBuilder, WithPagination;
 
     public $branch_id;
 
@@ -40,7 +40,6 @@ class EmployeeReport extends Component
             $this->resetPage();
         }
     }
-
 
     /**
      * Get detailed items with commission information
@@ -89,6 +88,7 @@ class EmployeeReport extends Component
             ->get()
             ->map(function ($item) use ($commissions) {
                 $item->total_commission = $commissions->get($item->employee_id) ?? 0;
+
                 return $item;
             });
     }
@@ -140,7 +140,7 @@ class EmployeeReport extends Component
      */
     public function export()
     {
-        $fileName = 'Employee_Report_' . now()->format('Y-m-d_His') . '.xlsx';
+        $fileName = 'Employee_Report_'.now()->format('Y-m-d_His').'.xlsx';
 
         return Excel::download(new EmployeeReportExport($this->getFilters()), $fileName);
     }

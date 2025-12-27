@@ -22,14 +22,14 @@ class View extends Component
         $this->table_id = $table_id;
         if ($this->table_id) {
             $this->sale_return = SaleReturn::with('account:id,name', 'branch:id,name', 'items.product:id,name', 'items.employee:id,name', 'createdUser:id,name', 'updatedUser:id,name')->find($this->table_id);
-            if (!$this->sale_return) {
+            if (! $this->sale_return) {
                 return redirect()->route('sale_return::index');
             }
             $this->sale_returns = $this->sale_return->toArray();
             $item_ids = [];
             $this->items = $this->sale_return->items
                 ->mapWithKeys(function ($item) use (&$item_ids) {
-                    $key = $item['employee_id'] . '-' . $item['inventory_id'];
+                    $key = $item['employee_id'].'-'.$item['inventory_id'];
                     $item_ids[] = $item['id'];
 
                     return [

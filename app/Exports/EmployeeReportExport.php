@@ -32,7 +32,7 @@ class EmployeeReportExport implements WithMultipleSheets
 
 class EmployeeDetailSheet implements FromCollection, WithColumnFormatting, WithEvents, WithHeadings, WithMapping, WithTitle
 {
-    use Exportable, EmployeeReportQueryBuilder;
+    use EmployeeReportQueryBuilder, Exportable;
 
     public function __construct(public array $filters = []) {}
 
@@ -74,16 +74,17 @@ class EmployeeDetailSheet implements FromCollection, WithColumnFormatting, WithE
 
     public function map($row): array
     {
-       $data= [
-            $row->employee,
-            $row->product,
-            $row->total_quantity,
-            $row->total_amount,
-            $row->return_amount ?? 0,
-            $row->net_amount ?? ($row->total_amount - ($row->return_amount ?? 0)),
-            round($row->commission_percentage ?? 0,2),
-            $row->total_commission ?? 0,
-        ];
+        $data = [
+             $row->employee,
+             $row->product,
+             $row->total_quantity,
+             $row->total_amount,
+             $row->return_amount ?? 0,
+             $row->net_amount ?? ($row->total_amount - ($row->return_amount ?? 0)),
+             round($row->commission_percentage ?? 0, 2),
+             $row->total_commission ?? 0,
+         ];
+
         return $data;
     }
 
@@ -112,12 +113,12 @@ class EmployeeDetailSheet implements FromCollection, WithColumnFormatting, WithE
                 $totalRows = $sheet->getHighestRow() + 1;
 
                 // Add totals row
-                $sheet->setCellValue("A{$totalRows}", "Total");
-                $sheet->setCellValue("C{$totalRows}", "=SUM(C2:C" . ($totalRows - 1) . ")");
-                $sheet->setCellValue("D{$totalRows}", "=SUM(D2:D" . ($totalRows - 1) . ")");
-                $sheet->setCellValue("E{$totalRows}", "=SUM(E2:E" . ($totalRows - 1) . ")");
-                $sheet->setCellValue("F{$totalRows}", "=SUM(F2:F" . ($totalRows - 1) . ")");
-                $sheet->setCellValue("H{$totalRows}", "=SUM(H2:H" . ($totalRows - 1) . ")");
+                $sheet->setCellValue("A{$totalRows}", 'Total');
+                $sheet->setCellValue("C{$totalRows}", '=SUM(C2:C'.($totalRows - 1).')');
+                $sheet->setCellValue("D{$totalRows}", '=SUM(D2:D'.($totalRows - 1).')');
+                $sheet->setCellValue("E{$totalRows}", '=SUM(E2:E'.($totalRows - 1).')');
+                $sheet->setCellValue("F{$totalRows}", '=SUM(F2:F'.($totalRows - 1).')');
+                $sheet->setCellValue("H{$totalRows}", '=SUM(H2:H'.($totalRows - 1).')');
 
                 // Style totals row
                 $sheet->getStyle("A{$totalRows}:H{$totalRows}")->applyFromArray([
@@ -134,7 +135,7 @@ class EmployeeDetailSheet implements FromCollection, WithColumnFormatting, WithE
 
 class EmployeeSummarySheet implements FromCollection, WithColumnFormatting, WithEvents, WithHeadings, WithMapping, WithTitle
 {
-    use Exportable, EmployeeReportQueryBuilder;
+    use EmployeeReportQueryBuilder, Exportable;
 
     public function __construct(public array $filters = []) {}
 
@@ -166,6 +167,7 @@ class EmployeeSummarySheet implements FromCollection, WithColumnFormatting, With
             ->get()
             ->map(function ($item) use ($commissions) {
                 $item->total_commission = $commissions->get($item->employee_id) ?? 0;
+
                 return $item;
             });
     }
@@ -213,12 +215,12 @@ class EmployeeSummarySheet implements FromCollection, WithColumnFormatting, With
                 $totalRows = $sheet->getHighestRow() + 1;
 
                 // Add totals row
-                $sheet->setCellValue("A{$totalRows}", "Total");
-                $sheet->setCellValue("B{$totalRows}", "=SUM(B2:B" . ($totalRows - 1) . ")");
-                $sheet->setCellValue("C{$totalRows}", "=SUM(C2:C" . ($totalRows - 1) . ")");
-                $sheet->setCellValue("D{$totalRows}", "=SUM(D2:D" . ($totalRows - 1) . ")");
-                $sheet->setCellValue("E{$totalRows}", "=SUM(E2:E" . ($totalRows - 1) . ")");
-                $sheet->setCellValue("F{$totalRows}", "=SUM(F2:F" . ($totalRows - 1) . ")");
+                $sheet->setCellValue("A{$totalRows}", 'Total');
+                $sheet->setCellValue("B{$totalRows}", '=SUM(B2:B'.($totalRows - 1).')');
+                $sheet->setCellValue("C{$totalRows}", '=SUM(C2:C'.($totalRows - 1).')');
+                $sheet->setCellValue("D{$totalRows}", '=SUM(D2:D'.($totalRows - 1).')');
+                $sheet->setCellValue("E{$totalRows}", '=SUM(E2:E'.($totalRows - 1).')');
+                $sheet->setCellValue("F{$totalRows}", '=SUM(F2:F'.($totalRows - 1).')');
 
                 // Style totals row
                 $sheet->getStyle("A{$totalRows}:F{$totalRows}")->applyFromArray([

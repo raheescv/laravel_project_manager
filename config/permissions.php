@@ -44,7 +44,7 @@ return [
         'delete item after completed',
         'delete payment after completed',
         'barcode print',
-        'purchase note print'
+        'purchase note print',
     ],
     'purchase return' => ['create', 'view', 'edit', 'edit completed', 'delete', 'cancel', 'export', 'view journal entries'],
     'unit' => ['create', 'view', 'edit', 'delete'],
@@ -72,6 +72,7 @@ return [
         'sale calendar',
         'sale and sales return items',
         'day wise sale',
+        'bank reconciliation report',
     ],
     'log' => ['inventory'],
     'day close' => ['sync amount'],

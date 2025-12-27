@@ -370,7 +370,7 @@
                     @if (auth()->user()->can('account.view'))
                         <li class="nav-item has-sub">
                             <a href="#"
-                                class="mininav-toggle nav-link {{ request()->is(['account', 'account/expense', 'account/income', 'account/general-voucher', 'account/view/*', 'report/day_book']) ? 'active' : '' }}"><i
+                                class="mininav-toggle nav-link {{ request()->is(['account', 'account/expense', 'account/income', 'account/general-voucher', 'account/cheque*', 'account/view/*', 'report/day_book','account/bank-reconciliation']) ? 'active' : '' }}"><i
                                     class="fa fa-bank fs-5 me-2"></i>
                                 <span class="nav-label mininav-content ms-1 collapse show" style="">Account</span>
                             </a>
@@ -396,9 +396,19 @@
                                         <a href="{{ route('account::general-voucher::index') }}" class="nav-link {{ request()->is(['account/general-voucher']) ? 'active' : '' }}">General Voucher</a>
                                     </li>
                                 @endcan
+                                @can('cheque.view')
+                                    <li class="nav-item">
+                                        <a href="{{ route('account::cheque::index') }}" class="nav-link {{ request()->is(['account/cheque*']) ? 'active' : '' }}">Cheque Print</a>
+                                    </li>
+                                @endcan
                                 @can('report.day book')
                                     <li class="nav-item">
                                         <a href="{{ route('report::day_book') }}" class="nav-link {{ request()->is(['report/day_book']) ? 'active' : '' }}">Day Book</a>
+                                    </li>
+                                @endcan
+                                @can('report.bank reconciliation report')
+                                    <li class="nav-item">
+                                        <a href="{{ route('account::bank-reconciliation::index') }}" class="nav-link {{ request()->is(['account/bank-reconciliation']) ? 'active' : '' }}">Bank Reconciliation Report</a>
                                     </li>
                                 @endcan
                             </ul>
@@ -406,7 +416,7 @@
                     @endif
                     @if (auth()->user()->can('employee.view'))
                         <li class="nav-item has-sub">
-                            <a href="#" class="mininav-toggle nav-link {{ request()->is(['users/employee', 'users/employee/attendance']) ? 'active' : '' }}"><i
+                            <a href="#" class="mininav-toggle nav-link {{ request()->is(['users/employee', 'users/employee/attendance','users/employee/commission']) ? 'active' : '' }}"><i
                                     class="fa fa-users fs-5 me-2"></i>
                                 <span class="nav-label mininav-content ms-1 collapse show" style="">Employee</span>
                             </a>
@@ -415,6 +425,11 @@
                                 @can('employee.view')
                                     <li class="nav-item">
                                         <a href="{{ route('users::employee::index') }}" class="nav-link {{ request()->is(['users/employee']) ? 'active' : '' }}">List</a>
+                                    </li>
+                                @endcan
+                                @can('employee commission.view')
+                                    <li class="nav-item">
+                                        <a href="{{ route('users::employee::commission') }}" class="nav-link {{ request()->is(['users/employee/commission']) ? 'active' : '' }}">Commission</a>
                                     </li>
                                 @endcan
                                 @can('employee attendance.view')
