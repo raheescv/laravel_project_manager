@@ -279,11 +279,25 @@ class BankReconciliationReport extends Component
         }
     }
 
+    public function getSummaryProperty()
+    {
+        $query = $this->getBaseQuery();
+
+        return (object) [
+            'total_debit' => (clone $query)->sum('journal_entries.debit'),
+            'total_credit' => (clone $query)->sum('journal_entries.credit'),
+            'total_count' => (clone $query)->count(),
+            'delivered_count' => (clone $query)->whereNotNull('journal_entries.delivered_date')->count(),
+            'pending_count' => (clone $query)->whereNull('journal_entries.delivered_date')->count(),
+        ];
+    }
+
     public function render()
     {
         return view('livewire.account.bank-reconciliation-report', [
             'items' => $this->items,
             'bankAccounts' => $this->bankAccounts,
+            'summary' => $this->summary,
         ]);
     }
 }

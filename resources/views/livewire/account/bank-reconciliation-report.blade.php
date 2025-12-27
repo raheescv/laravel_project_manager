@@ -104,6 +104,70 @@
         </div>
     @endif
 
+    <!-- Summary Cards -->
+    <div class="row mb-3">
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm bg-gradient-primary text-white">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-grow-1">
+                            <small class="opacity-75">Total Transactions</small>
+                            <h4 class="mb-0 fw-bold">{{ number_format($summary->total_count) }}</h4>
+                        </div>
+                        <div class="fs-1 opacity-50">
+                            <i class="fa fa-list"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm bg-gradient-danger text-white">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-grow-1">
+                            <small class="opacity-75">Total Debit</small>
+                            <h4 class="mb-0 fw-bold">{{ currency($summary->total_debit) }}</h4>
+                        </div>
+                        <div class="fs-1 opacity-50">
+                            <i class="fa fa-arrow-down"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm bg-gradient-success text-white">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-grow-1">
+                            <small class="opacity-75">Total Credit</small>
+                            <h4 class="mb-0 fw-bold">{{ currency($summary->total_credit) }}</h4>
+                        </div>
+                        <div class="fs-1 opacity-50">
+                            <i class="fa fa-arrow-up"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm bg-gradient-warning text-white">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-grow-1">
+                            <small class="opacity-75">Pending</small>
+                            <h4 class="mb-0 fw-bold">{{ number_format($summary->pending_count) }}</h4>
+                        </div>
+                        <div class="fs-1 opacity-50">
+                            <i class="fa fa-clock"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Report Table -->
     <div class="card shadow-sm">
         <div class="card-header bg-light py-3">
@@ -522,6 +586,23 @@
             th[style*="cursor: pointer"]:hover .fa-sort {
                 opacity: 1 !important;
                 color: #667eea !important;
+            }
+
+            /* Summary card gradients */
+            .bg-gradient-primary {
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            }
+
+            .bg-gradient-danger {
+                background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            }
+
+            .bg-gradient-success {
+                background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            }
+
+            .bg-gradient-warning {
+                background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
             }
         </style>
     @endpush
