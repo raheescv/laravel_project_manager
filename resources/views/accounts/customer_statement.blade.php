@@ -109,9 +109,8 @@
         }
 
         .customer-info {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 20px;
+            display: flex;
+            justify-content: space-between;
             margin-bottom: 15px;
             padding: 12px 15px;
             background: linear-gradient(135deg, #f8fafc 0%, #ffffff 100%);
@@ -122,7 +121,7 @@
         }
 
         .customer-details {
-            width: 100%;
+            flex: 1;
         }
 
         .customer-details h3 {
@@ -148,31 +147,9 @@
         }
 
         .statement-period {
-            text-align: right;
+            text-align: center;
+            text-color: white;
             font-size: 11px;
-            background: #ffffff;
-            padding: 10px 12px;
-            border-radius: 6px;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-            border: 1px solid #e2e8f0;
-            display: flex;
-            flex-direction: column;
-            justify-content: flex-start;
-        }
-
-        .statement-period strong {
-            display: block;
-            margin-bottom: 4px;
-            color: #64748b;
-            font-weight: 600;
-            font-size: 10px;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        .statement-period span {
-            color: #475569;
-            font-weight: 500;
         }
 
         table {
@@ -528,7 +505,7 @@
             }
 
             .customer-info {
-                grid-template-columns: 1fr;
+                flex-direction: column;
                 padding: 10px 12px;
                 gap: 10px;
             }
@@ -774,14 +751,14 @@
 
 <body>
     <div class="container">
-    <div class="header">
-        <div class="company-info">
-            <div class="company-name">{{ $companyName }}</div>
+        <div class="header">
+            <div class="company-info">
+                <div class="company-name">{{ $companyName }}</div>
                 @if ($companyAddress)
-                <div class="company-details">{{ $companyAddress }}</div>
-            @endif
+                    <div class="company-details">{{ $companyAddress }}</div>
+                @endif
                 @if ($companyPhone || $companyEmail)
-                <div class="company-details">
+                    <div class="company-details">
                         @if ($companyPhone)
                             {{ $companyPhone }}
                         @endif
@@ -791,59 +768,59 @@
                         @if ($companyEmail)
                             {{ $companyEmail }}
                         @endif
-                </div>
-            @endif
+                    </div>
+                @endif
+            </div>
+            <div class="statement-title">Customer Statement</div>
+            <div class="statement-period">
+                <strong>Statement Period</strong>
+                <span>
+                    @if ($fromDate && $toDate)
+                        {{ date('d M Y', strtotime($fromDate)) }} - {{ date('d M Y', strtotime($toDate)) }}
+                    @elseif($fromDate)
+                        From: {{ date('d M Y', strtotime($fromDate)) }}
+                    @elseif($toDate)
+                        Until: {{ date('d M Y', strtotime($toDate)) }}
+                    @else
+                        All Time
+                    @endif
+                </span>
+            </div>
         </div>
-        <div class="statement-title">Customer Statement</div>
-    </div>
 
         <div class="content-section">
-    <div class="customer-info">
-        <div class="customer-details">
-            <h3>{{ $customer->name }}</h3>
+            <div class="customer-info">
+                <div class="customer-details">
+                    <h3>{{ $customer->name }}</h3>
                     @if ($customer->mobile)
                         <p><strong>Mobile:</strong> <span>{{ $customer->mobile }}</span></p>
-            @endif
+                    @endif
                     @if ($customer->email)
                         <p><strong>Email:</strong> <span>{{ $customer->email }}</span></p>
-            @endif
+                    @endif
                     @if ($customer->place)
                         <p><strong>Address:</strong> <span>{{ $customer->place }}</span></p>
-            @endif
+                    @endif
                     @if ($customer->customerType)
                         <p><strong>Customer Type:</strong> <span>{{ $customer->customerType->name }}</span></p>
-            @endif
-        </div>
-        <div class="statement-period">
-                    <strong>Statement Period</strong>
-                    <span>
-                        @if ($fromDate && $toDate)
-                {{ date('d M Y', strtotime($fromDate)) }} - {{ date('d M Y', strtotime($toDate)) }}
-            @elseif($fromDate)
-                From: {{ date('d M Y', strtotime($fromDate)) }}
-            @elseif($toDate)
-                Until: {{ date('d M Y', strtotime($toDate)) }}
-            @else
-                All Time
-            @endif
-                    </span>
-        </div>
-    </div>
+                    @endif
+                </div>
+            </div>
 
             @if ($ledgerEntries->count() > 0)
                 <!-- Desktop Table View -->
                 <div class="table-wrapper">
-        <table>
-            <thead>
-                <tr>
-                    <th>Date</th>
-                    <th>Reference</th>
-                    <th class="text-right">Debit</th>
-                    <th class="text-right">Credit</th>
-                    <th class="text-right">Balance</th>
-                </tr>
-            </thead>
-            <tbody>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Reference</th>
+                                <th class="text-right">Debit</th>
+                                <th class="text-right">Credit</th>
+                                <th class="text-right">Balance</th>
+                            </tr>
+                        </thead>
+                        <tbody>
                             @foreach ($ledgerEntries as $entry)
                                 @php
                                     $rowClass = 'ledger-row ';
@@ -859,43 +836,43 @@
                                 @endphp
                                 <tr class="{{ $rowClass }}">
                                     <td>{{ $entry->date === 'Opening' ? 'Opening' : date('d M Y', strtotime($entry->date)) }}</td>
-                        <td class="reference-no">{{ $entry->reference }}</td>
-                        <td class="text-right">
+                                    <td class="reference-no">{{ $entry->reference }}</td>
+                                    <td class="text-right">
                                         @if ($entry->debit > 0)
                                             <span
                                                 style="color: {{ $entry->type === 'sale_return' || $entry->type === 'return_payment' ? '#dc2626' : '#475569' }}; font-weight: 500;">{{ currency($entry->debit) }}</span>
-                            @else
+                                        @else
                                             <span style="color: #cbd5e0;">-</span>
-                            @endif
-                        </td>
-                        <td class="text-right">
+                                        @endif
+                                    </td>
+                                    <td class="text-right">
                                         @if ($entry->credit > 0)
                                             <span
                                                 style="color: {{ $entry->type === 'sale_return' || $entry->type === 'return_payment' ? '#dc2626' : '#64748b' }}; font-weight: 500;">{{ currency($entry->credit) }}</span>
-                            @else
+                                        @else
                                             <span style="color: #cbd5e0;">-</span>
-                            @endif
-                        </td>
+                                        @endif
+                                    </td>
                                     <td class="text-right">
                                         <span
                                             style="color: {{ $entry->type === 'sale_return' || $entry->type === 'return_payment' ? '#dc2626' : ($entry->balance >= 0 ? '#475569' : '#64748b') }}; font-weight: 600;">
                                             {{ currency($entry->balance) }}
                                         </span>
-                        </td>
-                    </tr>
-                @endforeach
-                <tr class="closing-balance-row">
+                                    </td>
+                                </tr>
+                            @endforeach
+                            <tr class="closing-balance-row">
                                 <td colspan="2" class="text-right"><strong>Closing Balance</strong></td>
-                    <td class="text-right"><strong>{{ currency($totalDebit) }}</strong></td>
-                    <td class="text-right"><strong>{{ currency($totalCredit) }}</strong></td>
+                                <td class="text-right"><strong>{{ currency($totalDebit) }}</strong></td>
+                                <td class="text-right"><strong>{{ currency($totalCredit) }}</strong></td>
                                 <td class="text-right">
                                     <strong>
                                         {{ currency($closingBalance) }}
                                     </strong>
-                    </td>
-                </tr>
-            </tbody>
-        </table>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
                 </div>
 
                 <!-- Mobile Card View -->
@@ -952,34 +929,34 @@
                                 <div class="mobile-card-amount" style="background: rgba(255,255,255,0.5);">
                                     <div class="mobile-card-amount-label" style="color: #64748b;">Total Credit</div>
                                     <div class="mobile-card-amount-value" style="color: #475569; font-size: 16px;">{{ currency($totalCredit) }}</div>
-            </div>
-            </div>
-            </div>
+                                </div>
+                            </div>
+                        </div>
                         <div class="mobile-card-balance" style="background: rgba(255,255,255,0.6);">
                             <div class="mobile-card-balance-label" style="color: #64748b;">Closing Balance</div>
                             <div class="mobile-card-balance-value" style="color: #1e293b; font-size: 20px;">
                                 {{ currency(abs($closingBalance)) }}
                                 <span class="badge" style="background: rgba(148, 163, 184, 0.2); color: #475569; margin-left: 8px;">
                                     {{ $closingBalance >= 0 ? 'Dr' : 'Cr' }}
-                </span>
+                                </span>
                             </div>
                         </div>
-            </div>
-        </div>
-    @else
-        <div class="no-data">
+                    </div>
+                </div>
+            @else
+                <div class="no-data">
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                     </svg>
-            <p>No transactions found for this customer in the selected period.</p>
-        </div>
-    @endif
+                    <p>No transactions found for this customer in the selected period.</p>
+                </div>
+            @endif
         </div>
 
-    <div class="footer">
-        <p>This is a computer-generated statement. No signature is required.</p>
-        <p>Generated on {{ now()->format('d M Y, h:i A') }}</p>
+        <div class="footer">
+            <p>This is a computer-generated statement. No signature is required.</p>
+            <p>Generated on {{ now()->format('d M Y, h:i A') }}</p>
         </div>
     </div>
 </body>
