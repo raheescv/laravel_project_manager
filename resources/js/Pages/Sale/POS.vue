@@ -18,9 +18,9 @@
             <form class="flex-1 flex flex-col min-h-0 md:overflow-hidden">
                 <!-- Enhanced Mobile-first responsive layout -->
                 <div
-                    class="flex flex-col md:flex-row lg:flex-row flex-1 gap-1 sm:gap-2 md:gap-3 lg:gap-4 xl:gap-6 p-1 sm:p-2 md:p-3 lg:p-4 xl:p-6 min-h-0 md:overflow-hidden">
+                    class="flex flex-col md:flex-row lg:flex-row flex-1 gap-1 sm:gap-2 md:gap-3 lg:gap-4 xl:gap-6 p-1 sm:p-2 md:p-3 lg:p-4 xl:p-6 min-h-0 md:overflow-hidden md:items-stretch">
                     <!-- Categories Sidebar Component - Mobile: Collapsible, Tablet: Sidebar, Desktop: Always visible -->
-                    <div class="order-1 md:order-1 w-full md:w-72 lg:w-auto md:h-full flex-shrink-0">
+                    <div class="order-1 md:order-1 w-full md:w-72 lg:w-auto flex flex-col flex-shrink-0 md:h-full md:min-h-0">
                         <CategoriesSidebar :categories="categories" :selected-category="selectedCategory"
                             @category-selected="selectCategory" />
                     </div>
@@ -276,7 +276,7 @@
 
                                     <!-- Action Buttons - Enhanced mobile/tablet optimized -->
                                     <div class="space-y-3 sm:space-y-3 mobile-action-buttons">
-                                        <button type="button" @click="openFeedback"
+                                        <button v-if="canFeedback" type="button" @click="openFeedback"
                                             class="w-full bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-500 text-white py-3.5 sm:py-3 md:py-2.5 px-4 rounded-2xl text-sm sm:text-sm font-bold hover:from-blue-600 hover:via-indigo-600 hover:to-purple-600 transition-all duration-300 shadow-xl hover:shadow-2xl transform active:scale-95 relative overflow-hidden group min-h-[52px] sm:min-h-[48px] border-2 border-blue-400/30">
                                             <div
                                                 class="absolute inset-0 bg-gradient-to-r from-white/30 via-white/10 to-transparent opacity-0 group-active:opacity-100 transition-opacity duration-200">
@@ -449,6 +449,10 @@ export default {
             default: 0.001
         },
         canEditItemPrice: {
+            type: Boolean,
+            default: false
+        },
+        canFeedback: {
             type: Boolean,
             default: false
         }
@@ -1095,6 +1099,10 @@ export default {
         }
 
         const openFeedback = () => {
+            if (!props.canFeedback) {
+                toast.error('You do not have permission to access feedback')
+                return
+            }
             showFeedbackModal.value = true
         }
 

@@ -276,6 +276,7 @@ class SaleController extends Controller
             'defaultCustomerEnabled' => $useDefaultCustomer,
             'defaultQuantity' => $defaultQuantity,
             'canEditItemPrice' => Auth::user()->can('sale.item price edit'),
+            'canFeedback' => Auth::user()->can('sale.feedback'),
         ];
 
         return inertia('Sale/POS', $data);

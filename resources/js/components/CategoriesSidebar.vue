@@ -1,8 +1,7 @@
 <template>
     <!-- Categories Sidebar - Mobile: top bar, Desktop: left sidebar -->
-    <div class="w-full lg:w-60 flex flex-col order-1 lg:order-1 h-auto lg:h-full categories-container"
-        :style="{ height: containerHeight }">
-        <div class="bg-white/95 backdrop-blur-lg rounded-xl shadow-xl border border-emerald-100/60 h-full flex flex-col overflow-hidden min-h-0"
+    <div class="w-full lg:w-60 flex flex-col order-1 lg:order-1 h-full md:h-full categories-container">
+        <div class="bg-white/95 backdrop-blur-lg rounded-xl shadow-xl border border-emerald-100/60 h-full flex flex-col overflow-hidden min-h-0 rounded-b-none md:rounded-b-xl md:justify-start"
             style="background: linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(248,250,252,0.98) 50%, rgba(255,255,255,0.95) 100%);">
             <!-- Categories Header -->
             <div
@@ -87,18 +86,18 @@
 
             <!-- Scrollable Categories List -->
             <div ref="scrollContainer"
-                class="flex lg:flex-col overflow-x-auto lg:overflow-x-hidden lg:overflow-y-auto bg-gradient-to-b from-violet-50/30 via-white/60 to-indigo-50/40 backdrop-blur-sm custom-scrollbar flex-1 min-h-0 scroll-smooth categories-scroll-container"
+                class="flex md:flex-col md:items-start overflow-x-auto md:overflow-x-hidden md:overflow-y-auto custom-scrollbar flex-1 min-h-0 scroll-smooth categories-scroll-container"
                 :style="{
                     scrollBehavior: 'smooth',
                     WebkitOverflowScrolling: 'touch',
-                    maxHeight: windowWidth >= 1024 ? categoriesHeight : '120px',
-                    height: windowWidth >= 1024 ? categoriesHeight : 'auto'
+                    maxHeight: windowWidth >= 768 ? categoriesHeight : '120px'
                 }">
-
+                <div class="flex md:flex-col bg-gradient-to-b from-violet-50/30 via-white/60 to-indigo-50/40 backdrop-blur-sm w-full">
                 <!-- Category Items -->
-                <button v-for="category in categories" :key="category.id" type="button"
+                <button v-for="(category, index) in categories" :key="category.id" type="button"
                     @click="handleCategorySelect(category.id)" :class="[
-                        'category-btn flex-shrink-0 lg:w-full flex items-center px-2.5 py-2 border-b border-white/20 transition-all duration-300 group relative overflow-hidden whitespace-nowrap lg:whitespace-normal',
+                        'category-btn flex-shrink-0 md:w-full flex items-center px-2.5 py-2 transition-all duration-300 group relative whitespace-nowrap md:whitespace-normal',
+                        index < categories.length - 1 ? 'border-b border-white/20' : '',
                         selectedCategory === category.id
                             ? 'bg-gradient-to-r from-violet-400 via-purple-500 to-indigo-500 text-white shadow-md transform scale-[1.01] ring-1 ring-white/30'
                             : 'bg-white/60 hover:bg-gradient-to-r hover:from-violet-50 hover:via-purple-50 hover:to-indigo-50 text-slate-700 hover:text-violet-600 hover:shadow-sm backdrop-blur-sm border border-violet-100/50'
@@ -114,8 +113,8 @@
                             selectedCategory === category.id ? 'text-white' : 'text-violet-600'
                         ]"></i>
                     </div>
-                    <div class="flex-1 text-left relative z-10 min-w-0">
-                        <span class="font-semibold block text-xs lg:text-sm truncate" :title="category.name">{{
+                    <div class="flex-1 text-left relative z-10 min-w-0 overflow-visible">
+                        <span class="font-semibold block text-xs md:text-sm" :title="category.name">{{
                             category.name }}</span>
                     </div>
                     <div class="flex items-center gap-1 relative z-10">
@@ -131,6 +130,7 @@
                             class="w-1 h-1 bg-white rounded-full animate-pulse shadow-sm"></div>
                     </div>
                 </button>
+                </div>
             </div>
         </div>
     </div>
@@ -160,10 +160,17 @@ export default {
         const scrollContainer = ref(null)
 
         const categoriesHeight = computed(() => {
-            if (windowWidth.value >= 1024) {
-                // Desktop: Calculate height based on screen size minus header and padding
-                const availableHeight = windowHeight.value - 200 // Reserve space for header, padding, etc.
-                return `${Math.max(400, availableHeight)}px`
+            if (windowWidth.value >= 768) {
+                // Tablet and Desktop: Calculate height based on actual screen height
+                // Account for: header (~50px), fixed categories (~90px), container padding (~24px), and some buffer
+                const headerHeight = 50
+                const fixedCategoriesHeight = 90
+                const containerPadding = 24
+                const buffer = 20
+                const totalReserved = headerHeight + fixedCategoriesHeight + containerPadding + buffer
+                const availableHeight = windowHeight.value - totalReserved
+                // Ensure minimum height of 200px for usability
+                return `${Math.max(200, availableHeight)}px`
             } else {
                 // Mobile: Fixed height for horizontal scroll
                 return '120px'
@@ -176,9 +183,15 @@ export default {
 
             // Update container height on next tick
             nextTick(() => {
-                if (windowWidth.value >= 1024) {
-                    // Desktop: Set max height based on screen size
-                    const maxHeight = Math.max(400, windowHeight.value - 200)
+                if (windowWidth.value >= 768) {
+                    // Tablet and Desktop: Calculate based on actual screen height
+                    const headerHeight = 50
+                    const fixedCategoriesHeight = 90
+                    const containerPadding = 24
+                    const buffer = 20
+                    const totalReserved = headerHeight + fixedCategoriesHeight + containerPadding + buffer
+                    const availableHeight = windowHeight.value - totalReserved
+                    const maxHeight = Math.max(200, availableHeight)
                     containerHeight.value = `${maxHeight}px`
                 } else {
                     // Mobile: Auto height for content
@@ -194,8 +207,8 @@ export default {
                 // Look for active category button with updated color selectors
                 const activeButton = scrollContainer.value.querySelector('.category-btn[class*="from-purple-500"], .category-btn[class*="from-indigo-500"], .category-btn[class*="from-cyan-500"]')
                 if (activeButton) {
-                    if (windowWidth.value >= 1024) {
-                        // Desktop: vertical scroll
+                    if (windowWidth.value >= 768) {
+                        // Tablet and Desktop: vertical scroll
                         activeButton.scrollIntoView({
                             behavior: 'smooth',
                             block: 'center',
@@ -271,8 +284,14 @@ export default {
 
             // Initial height setup
             nextTick(() => {
-                if (windowWidth.value >= 1024) {
-                    const maxHeight = Math.max(400, windowHeight.value - 200)
+                if (windowWidth.value >= 768) {
+                    const headerHeight = 50
+                    const fixedCategoriesHeight = 90
+                    const containerPadding = 24
+                    const buffer = 20
+                    const totalReserved = headerHeight + fixedCategoriesHeight + containerPadding + buffer
+                    const availableHeight = windowHeight.value - totalReserved
+                    const maxHeight = Math.max(200, availableHeight)
                     containerHeight.value = `${maxHeight}px`
                 }
             })
