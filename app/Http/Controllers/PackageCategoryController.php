@@ -19,4 +19,3 @@ class PackageCategoryController extends Controller
         return response()->json($list);
     }
 }
-

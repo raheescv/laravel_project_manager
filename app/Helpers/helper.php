@@ -530,6 +530,27 @@ if (! function_exists('feedbackTypes')) {
     }
 }
 
+if (! function_exists('packageItemStatuses')) {
+    function packageItemStatuses()
+    {
+        return [
+            'pending' => 'Pending',
+            'visited' => 'Visited',
+            'rescheduled' => 'Rescheduled',
+        ];
+    }
+}
+if (! function_exists('packageStatuses')) {
+    function packageStatuses()
+    {
+        return [
+            'in_progress' => 'In Progress',
+            'completed' => 'Completed',
+            'cancelled' => 'Cancelled',
+        ];
+    }
+}
+
 if (! function_exists('arabicNumber')) {
     function arabicNumber($value)
     {

@@ -108,4 +108,3 @@ class Page extends Component
         return view('livewire.package-category.page');
     }
 }
-

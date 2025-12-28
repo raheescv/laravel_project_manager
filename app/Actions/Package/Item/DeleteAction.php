@@ -1,8 +1,8 @@
 <?php
 
-namespace App\Actions\PackageCategory;
+namespace App\Actions\Package\Item;
 
-use App\Models\PackageCategory;
+use App\Models\PackageItem;
 use Exception;
 
 class DeleteAction
@@ -10,16 +10,16 @@ class DeleteAction
     public function execute($id)
     {
         try {
-            $model = PackageCategory::find($id);
+            $model = PackageItem::find($id);
             if (! $model) {
-                throw new Exception("Package Category not found with the specified ID: $id.", 1);
+                throw new Exception("Package Item not found with the specified ID: $id.", 1);
             }
             if (! $model->delete()) {
-                throw new Exception('Oops! Something went wrong while deleting the Package Category. Please try again.', 1);
+                throw new Exception('Oops! Something went wrong while deleting the Package Item. Please try again.', 1);
             }
 
             $return['success'] = true;
-            $return['message'] = 'Successfully Deleted Package Category';
+            $return['message'] = 'Successfully Deleted Package Item';
             $return['data'] = [];
         } catch (\Throwable $th) {
             $return['success'] = false;

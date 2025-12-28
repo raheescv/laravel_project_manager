@@ -47,4 +47,3 @@ class PackageCategory extends Model
         return $return;
     }
 }
-

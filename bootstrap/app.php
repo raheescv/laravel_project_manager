@@ -19,6 +19,7 @@ return Application::configure(basePath: dirname(__DIR__))
             __DIR__.'/../routes/print.php',
             __DIR__.'/../routes/report.php',
             __DIR__.'/../routes/settings.php',
+            __DIR__.'/../routes/package.php',
             __DIR__.'/../routes/flat_trade.php',
             __DIR__.'/../routes/api_log.php',
         ],

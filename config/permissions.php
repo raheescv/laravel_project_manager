@@ -22,6 +22,9 @@ return [
     'service' => ['create', 'view', 'edit', 'delete', 'import', 'export'],
     'combo offer' => ['create', 'view', 'edit', 'delete'],
     'package category' => ['create', 'view', 'edit', 'delete'],
+    'package' => [
+        'create', 'view', 'edit', 'delete',
+    ],
     'inventory' => ['view', 'edit', 'delete', 'import', 'export', 'dashboard status', 'product search', 'barcode cart'],
     'inventory transfer' => ['create', 'view', 'edit', 'edit completed', 'delete', 'import', 'export'],
     'category' => ['create', 'view', 'edit', 'delete', 'import', 'export'],

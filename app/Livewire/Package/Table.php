@@ -1,9 +1,9 @@
 <?php
 
-namespace App\Livewire\PackageCategory;
+namespace App\Livewire\Package;
 
-use App\Actions\PackageCategory\DeleteAction;
-use App\Models\PackageCategory;
+use App\Actions\Package\DeleteAction;
+use App\Models\Package;
 use Exception;
 use Illuminate\Support\Facades\DB;
 use Livewire\Component;
@@ -15,7 +15,7 @@ class Table extends Component
 
     public $search = '';
 
-    public $parent_id = null;
+    public $status = '';
 
     public $limit = 10;
 
@@ -30,7 +30,7 @@ class Table extends Component
     protected $paginationTheme = 'bootstrap';
 
     protected $listeners = [
-        'PackageCategory-Refresh-Component' => '$refresh',
+        'Package-Refresh-Component' => '$refresh',
     ];
 
     public function delete()
@@ -54,7 +54,7 @@ class Table extends Component
             $this->selected = [];
 
             $this->selectAll = false;
-            $this->dispatch('RefreshPackageCategoryTable');
+            $this->dispatch('RefreshPackageTable');
         } catch (Exception $e) {
             DB::rollback();
             $this->dispatch('error', ['message' => $e->getMessage()]);
@@ -71,7 +71,7 @@ class Table extends Component
     public function updatedSelectAll($value)
     {
         if ($value) {
-            $this->selected = PackageCategory::latest()->limit(2000)->pluck('id')->toArray();
+            $this->selected = Package::latest()->limit(2000)->pluck('id')->toArray();
         } else {
             $this->selected = [];
         }
@@ -89,15 +89,28 @@ class Table extends Component
 
     public function render()
     {
-        $data = PackageCategory::orderBy($this->sortField, $this->sortDirection)
+        $data = Package::with(['packageCategory', 'account'])
+            ->orderBy($this->sortField, $this->sortDirection)
             ->when($this->search ?? '', function ($query, $value) {
-                return $query->where('name', 'like', '%'.trim($value).'%')
-                    ->orWhere('price', 'like', '%'.trim($value).'%');
+                return $query->where(function ($q) use ($value) {
+                    $value = trim($value);
+                    $q->where('id', 'like', "%{$value}%")
+                        ->orWhereHas('packageCategory', function ($q) use ($value) {
+                            $q->where('name', 'like', "%{$value}%");
+                        })
+                        ->orWhereHas('account', function ($q) use ($value) {
+                            $q->where('name', 'like', "%{$value}%")
+                                ->orWhere('mobile', 'like', "%{$value}%");
+                        });
+                });
+            })
+            ->when($this->status ?? '', function ($query, $value) {
+                return $query->where('status', $value);
             })
             ->latest()
             ->paginate($this->limit);
 
-        return view('livewire.package-category.table', [
+        return view('livewire.package.table', [
             'data' => $data,
         ]);
     }
