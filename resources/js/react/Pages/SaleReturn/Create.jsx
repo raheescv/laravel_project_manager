@@ -30,6 +30,7 @@ export default function Create() {
     const [serviceCharge, setServiceCharge] = useState(0);
     const [showAddCustomerModal, setShowAddCustomerModal] = useState(false);
     const [refreshCustomerKey, setRefreshCustomerKey] = useState(0);
+   const [addedCustomer, setAddedCustomer] = useState(null);
 
 
 
@@ -378,7 +379,13 @@ const buildMeasurementPayload = () => {
                                     <label className="fw-bold mb-1">Customer</label>
                                     <div className="d-flex gap-2 align-items-center">
                                         <div style={{ flex: 1 }}>
-                                            <CustomerSelect key={refreshCustomerKey} value={customerId} onChange={setCustomerId} />
+                                      <CustomerSelect
+    value={customerId}
+    onChange={setCustomerId}
+    newCustomer={addedCustomer} // <-- use this instead of customerDetails
+/>
+
+
                                         </div>
                                         <div>
                                             <button type="button"  className="btn btn-sm btn-outline-success" title="Add new customer" onClick={() => setShowAddCustomerModal(true)}>+ Add New customer</button>
@@ -753,16 +760,18 @@ const buildMeasurementPayload = () => {
             )}
 
             {showAddCustomerModal && (
-    <AddCustomerModal
-        open={showAddCustomerModal}
-        onClose={() => setShowAddCustomerModal(false)}
-        onSaved={(customer) => {
-            if (customer?.id) {
-                setCustomerId(customer.id);               // ✅ auto select
-                setRefreshCustomerKey(prev => prev + 1);  // ✅ reload dropdown
-            }
-        }}
-    />
+ <AddCustomerModal
+    open={showAddCustomerModal}
+    onClose={() => setShowAddCustomerModal(false)}
+    onSaved={(customer) => {
+        setCustomerId(customer.id);         // Select the new customer
+        setAddedCustomer(customer);         // Trigger CustomerSelect to add it
+        setShowAddCustomerModal(false);     // Close modal
+    }}
+/>
+
+
+
 )}
 
            <AdvancePaymentModal

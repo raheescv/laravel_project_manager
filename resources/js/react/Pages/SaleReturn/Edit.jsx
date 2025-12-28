@@ -11,7 +11,7 @@ import ViewItemsModal from "./Components/ViewItemsModal";
 import AdvancePaymentModal from "../../Components/Booking/AdvancePaymentModal";
 import { usePage } from "@inertiajs/react";
 import CustomerDetailsModal from "./Components/CustomerDetailsModal";
-
+import AddCustomerModal from "./Components/AddCustomerModal";
 // customer details card
 import { FaPen } from "react-icons/fa";
 
@@ -26,6 +26,10 @@ export default function Edit() {
     const [showAdvanceModal, setShowAdvanceModal] = useState(false);
     const [customPaymentData, setCustomPaymentData] = useState(null);
     const [serviceCharge, setServiceCharge] = useState(0);
+    const [showAddCustomerModal, setShowAddCustomerModal] = useState(false);
+    const [refreshCustomerKey, setRefreshCustomerKey] = useState(0);
+      const [addedCustomer, setAddedCustomer] = useState(null);
+
 
 
 
@@ -403,19 +407,23 @@ const buildMeasurementPayload = () => {
                     </div>
 
                         {/* CENTER: Product Grid */}
-                        <div className="col-md-12 col-lg-7">
-                              <label className="fw-bold mb-1">Customer</label>
-                            <div className="d-flex gap-2 align-items-center">
-                                <div style={{ flex: 1 }}>
-                                    <CustomerSelect
-                                        value={customerId}
-                                        onChange={setCustomerId}
-                                    />
-                                </div>
-                                <div>
-                                    <button type="button" className="btn btn-sm btn-outline-success" title="Add new customer" onClick={() => setShowCustomerModal(true)}>+ Add</button>
-                                </div>
-                            </div>
+                       <div className="col-md-12 col-lg-7">
+                                                       
+                                                       <div className="mb-2">
+                                                           <label className="fw-bold mb-1">Customer</label>
+                                                           <div className="d-flex gap-2 align-items-center">
+                                                               <div style={{ flex: 1 }}>
+                                                                    <CustomerSelect
+                                                                       value={customerId}
+                                                                       onChange={setCustomerId}
+                                                                       newCustomer={addedCustomer} // <-- use this instead of customerDetails
+                                                                   />
+                                                               </div>
+                                                               <div>
+                                                                   <button type="button"  className="btn btn-sm btn-outline-success" title="Add new customer" onClick={() => setShowAddCustomerModal(true)}>+ Add New customer</button>
+                                                               </div>
+                                                           </div>
+                                                       </div>
 
                     {measurements.length > 0 && (
     <div className="card mt-2 p-2">
@@ -779,6 +787,18 @@ const buildMeasurementPayload = () => {
                     onRemove={(id) => setCartItems((prev) => prev.filter((i) => i.id !== id))}
                     employee={selectedEmployee}
                 />
+            )}
+
+             {showAddCustomerModal && (
+                <AddCustomerModal
+                   open={showAddCustomerModal}
+                   onClose={() => setShowAddCustomerModal(false)}
+                   onSaved={(customer) => {
+                       setCustomerId(customer.id);         // Select the new customer
+                       setAddedCustomer(customer);         // Trigger CustomerSelect to add it
+                       setShowAddCustomerModal(false);     // Close modal
+                   }}
+               />
             )}
            <AdvancePaymentModal
     open={showAdvanceModal}

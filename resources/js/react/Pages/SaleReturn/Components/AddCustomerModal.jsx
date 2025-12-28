@@ -76,7 +76,8 @@ export default function AddCustomerModal({ open, onClose, customerId, onSaved })
             return;
         }
 
-        onSaved?.(res.data.data);
+        onSaved?.(res.data.customer);
+     console.log("Full API response 👉", res.data.customer);
 
         if (addNew) {
             setForm({ ...form, name: "", mobile: "" });
@@ -170,9 +171,8 @@ export default function AddCustomerModal({ open, onClose, customerId, onSaved })
                     {/* FOOTER */}
                     <div className="modal-footer bg-light">
                         <button className="btn btn-secondary" onClick={onClose}>Cancel</button>
-                        <button className="btn btn-success" onClick={() => save(true)} disabled={loading}>
-                            Save & Add New
-                        </button>
+                        
+                        
                         <button className="btn btn-primary" onClick={() => save(false)} disabled={loading}>
                             Save Customer
                         </button>
