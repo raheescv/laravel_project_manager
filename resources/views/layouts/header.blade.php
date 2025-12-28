@@ -185,6 +185,11 @@
                                             <i class="fa fa-globe fs-5 me-2"></i>Country
                                         </a>
                                     @endcan
+                                    @can('package.view')
+                                        <a href="{{ route('settings::package::index') }}" class="list-group-item list-group-item-action">
+                                            <i class="fa fa-globe fs-5 me-2"></i>Package
+                                        </a>
+                                    @endcan
                                     @can('customer type.view')
                                         <a href="{{ route('settings::customer_type::index') }}" class="list-group-item list-group-item-action">
                                             <i class="fa fa-tags fs-5 me-2"></i>Customer Type
