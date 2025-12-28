@@ -78,6 +78,7 @@ class Page extends Component
                 'id_no' => '',
                 'nationality' => null,
                 'company' => '',
+                'credit_period_days' => null,
                 'model' => 'customer',
             ];
         } else {
