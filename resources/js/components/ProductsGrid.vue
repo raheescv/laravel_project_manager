@@ -54,8 +54,6 @@ export default {
     },
     methods: {
         handleCardClick(product) {
-            console.log('ProductsGrid received click with product:', product);
-
             // Validate product before passing it up
             if (!product) {
                 console.error('ProductsGrid received undefined or null product');

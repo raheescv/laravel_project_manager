@@ -81,8 +81,6 @@ export default {
 
     methods: {
         handleClick() {
-            console.log('ProductCard clicked with product:', this.product);
-
             // Enhanced product validation
             if (!this.product) {
                 console.error('ProductCard: Product is undefined or null');

@@ -103,7 +103,24 @@
 
                                         <!-- Price -->
                                         <td class="py-2 px-3 text-right">
-                                            <input :value="item.unit_price"
+                                            <div v-if="item.combo_offer_price && item.combo_offer_price > 0" class="flex flex-col items-end gap-1">
+                                                <div class="text-xs text-gray-400 line-through">
+                                                    {{ formatNumber(item.unit_price) }}
+                                                </div>
+                                                <div class="flex items-center gap-1">
+                                                    <input :value="item.combo_offer_price"
+                                                        @input="updateItemField(item.key, 'combo_offer_price', $event.target.value)"
+                                                        @change="$emit('update-item-quantity', item.key)" type="number" step="0.01"
+                                                        min="0" :disabled="!canEditItemPrice" :class="[
+                                                            'w-full px-2 py-1 text-xs border rounded-md text-right transition-colors',
+                                                            canEditItemPrice
+                                                                ? 'border-emerald-200 focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500 bg-emerald-50 text-emerald-800'
+                                                                : 'border-emerald-100 bg-emerald-50/50 text-emerald-700 cursor-not-allowed'
+                                                        ]">
+                                                    <span class="text-xs bg-emerald-100 text-emerald-700 px-1 rounded">Combo</span>
+                                                </div>
+                                            </div>
+                                            <input v-else :value="item.unit_price"
                                                 @input="updateItemField(item.key, 'unit_price', $event.target.value)"
                                                 @change="$emit('update-item-quantity', item.key)" type="number" step="1"
                                                 min="0" :disabled="!canEditItemPrice" :class="[

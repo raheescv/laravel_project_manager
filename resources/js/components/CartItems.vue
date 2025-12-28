@@ -85,15 +85,26 @@
                                         </span>
                                     </div>
                                     <div class="text-xs text-violet-500 leading-tight">
-                                        {{ formatNumber(item.unit_price) }} × {{ formatNumber(item.quantity) }}
+                                        <span v-if="item.combo_offer_price && item.combo_offer_price > 0" class="flex items-center gap-1">
+                                            <span class="line-through text-gray-400">{{ formatNumber(item.unit_price) }}</span>
+                                            <span class="text-emerald-600 font-semibold">{{ formatNumber(item.combo_offer_price) }}</span>
+                                            <span class="text-xs bg-emerald-100 text-emerald-700 px-1 rounded">Combo</span>
+                                        </span>
+                                        <span v-else>{{ formatNumber(item.unit_price) }}</span>
+                                        <span> × {{ formatNumber(item.quantity) }}</span>
                                     </div>
                                 </div>
 
                                 <!-- Total Price - more compact -->
                                 <div class="flex-shrink-0">
                                     <span
-                                        class="font-medium text-teal-600 text-xs bg-teal-50/70 px-1.5 py-0.5 rounded-md border border-teal-100/50">
-                                        {{ formatNumber(item.quantity * item.unit_price) }}
+                                        :class="[
+                                            'font-medium text-xs px-1.5 py-0.5 rounded-md border',
+                                            item.combo_offer_price && item.combo_offer_price > 0
+                                                ? 'text-emerald-600 bg-emerald-50/70 border-emerald-100/50'
+                                                : 'text-teal-600 bg-teal-50/70 border-teal-100/50'
+                                        ]">
+                                        {{ formatNumber(item.total || (item.quantity * (item.combo_offer_price || item.unit_price))) }}
                                     </span>
                                 </div>
                             </div>

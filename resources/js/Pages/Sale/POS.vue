@@ -401,6 +401,12 @@ import {
 import {
     useToast
 } from 'vue-toastification'
+import {
+    calculateItemTotals,
+    calculateCartTotals,
+    applyComboOfferPricing,
+    resetComboOfferPricing
+} from '@/utils/itemCalculations'
 
 export default {
     components: {
@@ -836,27 +842,19 @@ export default {
             if (!item) return
 
             // Update field with proper type conversion
-            if (['quantity', 'unit_price', 'discount', 'tax'].includes(field)) {
+            if (['quantity', 'unit_price', 'discount', 'tax', 'combo_offer_price'].includes(field)) {
                 item[field] = Number(value) || 0
             } else {
                 item[field] = value
             }
 
-            // Recalculate item totals
-            const quantity = Number(item.quantity) || 1
-            const unitPrice = Number(item.unit_price) || 0
-            const discountAmount = Number(item.discount) || 0
-            const taxRate = Number(item.tax) || 0
-
-            item.gross_amount = unitPrice * quantity
-            item.net_amount = item.gross_amount - discountAmount
-            item.tax_amount = Math.round(item.net_amount * (taxRate / 100) * 100) / 100
-            item.total = Math.round((item.net_amount + item.tax_amount) * 100) / 100
+            // Recalculate item totals using utility function
+            form.items[key] = calculateItemTotals(item)
 
             calculateTotals()
 
             // Update server for critical fields
-            if (['quantity', 'unit_price', 'discount', 'tax'].includes(field)) {
+            if (['quantity', 'unit_price', 'discount', 'tax', 'combo_offer_price'].includes(field)) {
                 updateItemQuantity(key)
             }
         }
@@ -898,42 +896,21 @@ export default {
         }
 
         const calculateTotals = () => {
-            let tax_amount = 0;
-            let item_discount = 0;
-            let gross_amount = 0;
-            let total = 0;
-
-            Object.values(form.items).forEach(item => {
-                const quantity = Number(item.quantity) || 1
-                const unitPrice = Number(item.unit_price) || 0
-                const discountAmount = Number(item.discount) || 0
-                const taxRate = Number(item.tax) || 0
-
-                item.gross_amount = unitPrice * quantity
-                item.net_amount = item.gross_amount - discountAmount
-                item.tax_amount = Math.round(item.net_amount * (taxRate / 100) * 100) / 100
-
-                // Use combo offer price if available, otherwise use regular total
-                if (item.combo_offer_price && item.combo_offer_price > 0) {
-                    item.total = Math.round(item.combo_offer_price * quantity * 100) / 100
-                } else {
-                    item.total = Math.round((item.net_amount + item.tax_amount) * 100) / 100
-                }
-
-                total += item.total
-                gross_amount += item.gross_amount
-                item_discount += item.discount
-                tax_amount += item.tax_amount
+            // Calculate item totals for each item
+            Object.keys(form.items).forEach(key => {
+                form.items[key] = calculateItemTotals(form.items[key])
             })
 
-            form.gross_amount = parseFloat(gross_amount).toFixed(2);
-            form.item_discount = parseFloat(item_discount).toFixed(2);
-            form.tax_amount = parseFloat(tax_amount).toFixed(2);
-            form.total = parseFloat(total).toFixed(2);
+            // Calculate cart totals
+            const totals = calculateCartTotals(form.items)
+            form.gross_amount = totals.gross_amount
+            form.item_discount = totals.item_discount
+            form.tax_amount = totals.tax_amount
+            form.total = totals.total
 
             // Calculate grand total with discount and round off
             const otherDiscount = Number(form.other_discount) || 0
-            const grandTotal = total - otherDiscount
+            const grandTotal = parseFloat(form.total) - otherDiscount
             const roundedTotal = Math.round(grandTotal)
 
             form.round_off = Math.round((roundedTotal - grandTotal) * 100) / 100
@@ -968,9 +945,7 @@ export default {
 
         // Handler for saving from EditItemModal
         const onEditItemSave = (updatedItem) => {
-            console.log('Saving edited item:', updatedItem)
             if (editItemKey.value && form.items[editItemKey.value]) {
-                console.log('Saving edited item:', updatedItem)
                 // Use Object.assign to preserve reactivity
                 Object.assign(form.items[editItemKey.value], updatedItem)
                 calculateTotals()
@@ -1395,25 +1370,21 @@ export default {
         }
 
         const handleComboOfferSave = (comboData) => {
-            // Update cart items with combo offer pricing
-            Object.entries(comboData.comboOfferItems).forEach(([key, item]) => {
-                if (form.items[key]) {
-                    // Update the cart item with combo offer pricing
-                    form.items[key] = {
-                        ...form.items[key],
-                        combo_offer_price: item.combo_offer_price || 0,
-                        discount: item.discount || 0,
-                        combo_offer_id: item.combo_offer_id || null
-                    }
-                }
-            })
+            // Get all item keys that are in combo offers
+            const comboOfferItemKeys = new Set(Object.keys(comboData.comboOfferItems))
+            // Reset combo offer prices for items no longer in any combo offer
+            // This updates items in place to maintain reactivity
+            resetComboOfferPricing(form.items, comboOfferItemKeys)
+
+            // Apply combo offer pricing to cart items
+            // This updates items in place to maintain reactivity
+            applyComboOfferPricing(form.items, comboData.comboOfferItems)
 
             // Store combo offers data for submission
             form.comboOffers = comboData.selectedComboOffers
 
-            // Recalculate totals
+            // Recalculate totals - this will use the updated combo offer prices
             calculateTotals()
-
             toast.success('Combo offers applied successfully')
         }
 
