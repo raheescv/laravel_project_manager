@@ -10,6 +10,9 @@ import ProductGrid from "./ProductGrid";
 import ViewItemsModal from "./Components/ViewItemsModal";
 import AdvancePaymentModal from "../../Components/Booking/AdvancePaymentModal";
 import { usePage } from "@inertiajs/react";
+import CustomerDetailsModal from "./Components/CustomerDetailsModal";
+
+// customer details card
 import { FaPen } from "react-icons/fa";
 
 export default function Edit() {
@@ -32,6 +35,8 @@ export default function Edit() {
 
     const [employeesList, setEmployeesList] = useState([]);
     const [selectedEmployee, setSelectedEmployee] = useState(null);
+    const [customerDetails, setCustomerDetails] = useState(null);
+    const [showCustomerModal, setShowCustomerModal] = useState(false);
 
     // Inline edit modal state (no new component)
     const [editingModalOpen, setEditingModalOpen] = useState(false);
@@ -133,6 +138,27 @@ if (saleData.payment_method === 1) {
         const emp = employeesList.find(e => Number(e.id) === Number(employeeId)) || null;
         setSelectedEmployee(emp ? { name: emp.name, email: emp.email } : null);
     }, [employeeId, employeesList]);
+
+    // load selected customer details
+    useEffect(() => {
+        let mounted = true;
+        if (!customerId) {
+            setCustomerDetails(null);
+            return;
+        }
+        axios.get(`/account/customer/${customerId}/details`)
+            .then((res) => {
+                if (!mounted) return;
+                if (res.data && res.data.success) {
+                    setCustomerDetails(res.data);
+                } else {
+                    setCustomerDetails(null);
+                }
+            })
+            .catch(() => setCustomerDetails(null));
+
+        return () => { mounted = false };
+    }, [customerId]);
 
   useEffect(() => {
     if (!categoryId) {
@@ -379,10 +405,17 @@ const buildMeasurementPayload = () => {
                         {/* CENTER: Product Grid */}
                         <div className="col-md-12 col-lg-7">
                               <label className="fw-bold mb-1">Customer</label>
-                            <CustomerSelect
-                                value={customerId}
-                                onChange={setCustomerId}
-                            />
+                            <div className="d-flex gap-2 align-items-center">
+                                <div style={{ flex: 1 }}>
+                                    <CustomerSelect
+                                        value={customerId}
+                                        onChange={setCustomerId}
+                                    />
+                                </div>
+                                <div>
+                                    <button type="button" className="btn btn-sm btn-outline-success" title="Add new customer" onClick={() => setShowCustomerModal(true)}>+ Add</button>
+                                </div>
+                            </div>
 
                     {measurements.length > 0 && (
     <div className="card mt-2 p-2">
@@ -591,6 +624,35 @@ const buildMeasurementPayload = () => {
                                 )}
 
                                 {/* Reference & Discount */}
+                                    {customerDetails && (
+                                        <div className="card mb-2 p-2">
+                                            <div className="d-flex justify-content-between align-items-start">
+                                                <div>
+                                                    <h6 className="mb-0">{customerDetails.customer.name}</h6>
+                                                    <small className="text-muted">{customerDetails.customer.mobile}</small>
+                                                    <div className="mt-1">
+                                                        <small className="text-muted">Orders: {customerDetails.total_sales} — Total: ₹{Number(customerDetails.total_amount || 0).toFixed(2)}</small>
+                                                    </div>
+                                                </div>
+                                                <div>
+                                                    <button className="btn btn-sm btn-outline-primary" onClick={() => setShowCustomerModal(true)}>View / Edit</button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )}
+                                    {showCustomerModal && (
+                                        <CustomerDetailsModal
+                                            open={showCustomerModal}
+                                            onClose={() => setShowCustomerModal(false)}
+                                            customerId={customerId}
+                                            initialDetails={customerDetails}
+                                            onSaved={(updated) => {
+                                                if (updated && updated.id) setCustomerId(updated.id);
+                                                setCustomerDetails((prev) => ({ ...prev, customer: updated }));
+                                                setShowCustomerModal(false);
+                                            }}
+                                        />
+                                    )}
                                 <div className="mb-2">
                                     <label className="fw-bold mb-1">Reference No</label>
                                     <input

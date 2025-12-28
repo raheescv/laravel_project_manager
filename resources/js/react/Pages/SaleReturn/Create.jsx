@@ -9,7 +9,11 @@ import { toast } from "react-toastify";
 import ProductGrid from "./ProductGrid";
 import ViewItemsModal from "./Components/ViewItemsModal";
 import AdvancePaymentModal from "../../Components/Booking/AdvancePaymentModal";
+import { usePage } from "@inertiajs/react";
 import { FaPen } from "react-icons/fa";
+import CustomerDetailsModal from "./Components/CustomerDetailsModal";
+
+// show selected customer details (from server) in create page
 
 export default function Create() {
     const [customerId, setCustomerId] = useState(null);
@@ -30,6 +34,10 @@ export default function Create() {
     const [errors, setErrors] = useState({});
     const [employeesList, setEmployeesList] = useState([]);
     const [selectedEmployee, setSelectedEmployee] = useState(null);
+    const [customerDetails, setCustomerDetails] = useState(null);
+    const [showCustomerModal, setShowCustomerModal] = useState(false);
+
+    const { props } = usePage();
 
     // Edit modal state (kept inside this file per request)
     const [editingModalOpen, setEditingModalOpen] = useState(false);
@@ -81,6 +89,38 @@ export default function Create() {
         const emp = employeesList.find(e => Number(e.id) === Number(employeeId)) || null;
         setSelectedEmployee(emp ? { name: emp.name, email: emp.email } : null);
     }, [employeeId, employeesList]);
+
+    // set initial customer id from server props if provided
+    useEffect(() => {
+        if (props?.saleData?.account_id) {
+            setCustomerId(props.saleData.account_id);
+        } else if (props?.customers && Object.keys(props.customers).length > 0 && !customerId) {
+            // if default customer provided in props, pick it
+            const firstKey = Object.keys(props.customers)[0];
+            setCustomerId(props.customers[firstKey].id ?? null);
+        }
+    }, [props]);
+
+    // load selected customer details for side-card
+    useEffect(() => {
+        let mounted = true;
+        if (!customerId) {
+            setCustomerDetails(null);
+            return;
+        }
+        axios.get(`/account/customer/${customerId}/details`)
+            .then((res) => {
+                if (!mounted) return;
+                if (res.data && res.data.success) {
+                    setCustomerDetails(res.data);
+                } else {
+                    setCustomerDetails(null);
+                }
+            })
+            .catch(() => setCustomerDetails(null));
+
+        return () => { mounted = false };
+    }, [customerId]);
 
   useEffect(() => {
     if (!categoryId) {
@@ -330,7 +370,14 @@ const buildMeasurementPayload = () => {
                                 
                                 <div className="mb-2">
                                     <label className="fw-bold mb-1">Customer</label>
-                                    <CustomerSelect value={customerId} onChange={setCustomerId} />
+                                    <div className="d-flex gap-2 align-items-center">
+                                        <div style={{ flex: 1 }}>
+                                            <CustomerSelect value={customerId} onChange={setCustomerId} />
+                                        </div>
+                                        <div>
+                                            <button type="button" className="btn btn-sm btn-outline-success" title="Add new customer" onClick={() => setShowCustomerModal(true)}>+ Add</button>
+                                        </div>
+                                    </div>
                                 </div>
 
                     {measurements.length > 0 && (
@@ -540,6 +587,21 @@ const buildMeasurementPayload = () => {
                                 )}
 
                                 {/* Reference & Discount */}
+                                {customerDetails && (
+                                    <div className="card mb-2 p-2">
+                                        <div className="d-flex justify-content-between align-items-start">
+                                            <div>
+                                                <h6 className="mb-0">{customerDetails.customer.name}</h6>
+                                                <small className="text-muted">{customerDetails.customer.mobile}</small>
+                                                        <div>
+                                                            <button className="btn btn-sm btn-outline-primary" onClick={() => setShowCustomerModal(true)}>View / Edit</button>
+                                                        </div>
+                                            </div>
+                                            
+                                        </div>
+                                    </div>
+                                )}
+
                                 <div className="mb-2">
                                     <label className="fw-bold mb-1">Reference No</label>
                                     <input
@@ -665,6 +727,22 @@ const buildMeasurementPayload = () => {
                     onUpdate={(item) => setCartItems((prev) => prev.map((i) => (i.id === item.id ? item : i)))}
                     onRemove={(id) => setCartItems((prev) => prev.filter((i) => i.id !== id))}
                     employee={selectedEmployee}
+                />
+            )}
+            {showCustomerModal && (
+                <CustomerDetailsModal
+                    open={showCustomerModal}
+                    onClose={() => setShowCustomerModal(false)}
+                    customerId={customerId}
+                    initialDetails={customerDetails}
+                    onSaved={(updated) => {
+                        // set newly created/updated customer as selected and refresh details
+                        if (updated && updated.id) {
+                            setCustomerId(updated.id);
+                        }
+                        setCustomerDetails((prev) => ({ ...prev, customer: updated }));
+                        setShowCustomerModal(false);
+                    }}
                 />
             )}
            <AdvancePaymentModal

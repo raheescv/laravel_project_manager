@@ -42,10 +42,76 @@ class SaleController extends Controller
 
           Inertia::setRootView('app-react');
           
-        return Inertia::render('SaleReturn/Create', [
-            'today' => now()->format('Y-m-d'),
-            'booking' => true,
-        ]);
+            $showColleague = Configuration::where('key', 'show_colleague')->value('value') ?? 'yes';
+            $categories = MeasurementCategory::select('id', 'name')
+                ->orderBy('name')
+                ->get();
+
+            $employees = User::employee();
+            if ($showColleague == 'no' && Auth::user()->type == 'employee') {
+                $employees = $employees->where('id', Auth::id());
+            }
+            $employees = $employees->pluck('name', 'id')->toArray();
+
+            $useDefaultCustomer = (Configuration::where('key', 'default_customer_enabled')->value('value') ?? 'yes') === 'yes';
+            $customers = [];
+            if ($useDefaultCustomer) {
+                $customers[3] = [
+                    'id' => 3,
+                    'name' => 'General Customer',
+                    'mobile' => '',
+                ];
+            }
+
+            $priceTypes = priceTypes();
+            $customerTypes = CustomerType::pluck('name', 'id')->toArray();
+            $countries = Country::pluck('name', 'name')->toArray();
+
+            // Get payment methods from configuration
+            $paymentMethodIds = json_decode(Configuration::where('key', 'payment_methods')->value('value'), true);
+            $paymentMethods = [];
+            if ($paymentMethodIds) {
+                $paymentMethods = Account::whereIn('id', $paymentMethodIds)->get(['name', 'id'])->toArray();
+            }
+
+            // Get default product type and quantity
+            $defaultProductType = Configuration::where('key', 'default_product_type')->value('value') ?? 'service';
+            $defaultQuantity = (float) (Configuration::where('key', 'default_quantity')->value('value') ?? '0.001');
+
+            // Default sale data for create
+            $saleData = [
+                'id' => null,
+                'employee_id' => Auth::user()->type == 'employee' ? Auth::id() : '',
+                'sale_type' => 'normal',
+                'account_id' => $useDefaultCustomer ? 3 : null,
+                'account_name' => $useDefaultCustomer ? 'General Customer' : null,
+                'customer_mobile' => '',
+                'other_discount' => 0,
+                'round_off' => 0,
+                'total' => 0,
+                'grand_total' => 0,
+                'items' => [],
+                'comboOffers' => [],
+                'payment_method' => 1,
+                'custom_payment_data' => null,
+                'status' => null,
+            ];
+
+            return Inertia::render('SaleReturn/Create', [
+                'today' => now()->format('Y-m-d'),
+                'booking' => true,
+                'saleData' => $saleData,
+                'customers' => $customers,
+                'employees' => $employees,
+                'categories' => $categories,
+                'priceTypes' => $priceTypes,
+                'customerTypes' => $customerTypes,
+                'countries' => $countries,
+                'paymentMethods' => $paymentMethods,
+                'defaultProductType' => $defaultProductType,
+                'defaultCustomerEnabled' => $useDefaultCustomer,
+                'defaultQuantity' => $defaultQuantity,
+            ]);
     }
 
       public function edit_booking($id = null)
