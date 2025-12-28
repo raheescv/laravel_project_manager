@@ -63,6 +63,7 @@ class Page extends Component
                 'email' => $email,
                 'model' => 'Vendor',
                 'place' => $place ?? '',
+                'credit_period_days' => null,
             ];
         } else {
             $account = Account::find($this->table_id);
@@ -80,7 +81,7 @@ class Page extends Component
             'accounts.email' => ['email', 'max:50'],
             'accounts.mobile' => ['required', 'max:15'],
             'accounts.place' => ['nullable', 'max:100'],
-
+            'accounts.credit_period_days' => ['nullable', 'integer', 'min:0'],
         ];
     }
 

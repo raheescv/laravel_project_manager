@@ -33,5 +33,6 @@ Route::middleware('auth')->group(function (): void {
             Route::get('customer_callback_reminder', 'customer_callback_reminder')->name('customer_callback_reminder')->can('report.customer callback reminder');
             Route::get('customer_aging', 'customer_aging')->name('customer_aging')->can('report.customer aging');
             Route::get('day_wise_sale', 'day_wise_sale')->name('day_wise_sale')->can('report.day wise sale');
+            Route::get('vendor_aging', 'vendor_aging')->name('vendor_aging')->can('report.vendor aging');
         });
 });
