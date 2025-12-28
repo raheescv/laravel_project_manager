@@ -1,19 +1,19 @@
 <?php
 
-namespace App\Actions\Package;
+namespace App\Actions\PackageCategory;
 
-use App\Models\Package;
+use App\Models\PackageCategory;
 
 class CreateAction
 {
     public function execute($data)
     {
         try {
-            validationHelper(Package::rules(), $data);
-            $model = Package::create($data);
+            validationHelper(PackageCategory::rules(), $data);
+            $model = PackageCategory::create($data);
 
             $return['success'] = true;
-            $return['message'] = 'Successfully Created Package';
+            $return['message'] = 'Successfully Created Package Category';
             $return['data'] = $model;
         } catch (\Throwable $th) {
             $return['success'] = false;

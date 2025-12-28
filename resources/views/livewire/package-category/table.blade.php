@@ -2,7 +2,7 @@
     <div class="card-header -4 mb-3">
         <div class="row">
             <div class="col-md-6 d-flex gap-1 align-items-center mb-3">
-                @can('package.create')
+                @can('package category.create')
                     <button class="btn btn-primary hstack gap-2 align-self-center" id="pageAdd">
                         <i class="demo-psi-add fs-5"></i>
                         <span class="vr"></span>
@@ -10,7 +10,7 @@
                     </button>
                 @endcan
                 <div class="btn-group">
-                    @can('package.delete')
+                    @can('package category.delete')
                         <button class="btn btn-icon btn-outline-light" wire:click="delete()" wire:confirm="Are you sure you want to delete the selected items?">
                             <i class="demo-pli-recycling fs-5"></i>
                         </button>
@@ -55,7 +55,7 @@
                             <td>{{ $item->name }}</td>
                             <td class="text-end">{{ $item->price }}</td>
                             <td>
-                                @can('package.edit')
+                                @can('package category.edit')
                                     <i table_id="{{ $item->id }}" class="demo-psi-pencil fs-5 me-2 pointer edit"></i>
                                 @endcan
                             </td>
@@ -70,15 +70,15 @@
         <script>
             $(document).ready(function() {
                 $(document).on('click', '.edit', function() {
-                    Livewire.dispatch("Package-Page-Update-Component", {
+                    Livewire.dispatch("PackageCategory-Page-Update-Component", {
                         id: $(this).attr('table_id')
                     });
                 });
                 $('#pageAdd').click(function() {
-                    Livewire.dispatch("Package-Page-Create-Component");
+                    Livewire.dispatch("PackageCategory-Page-Create-Component");
                 });
-                window.addEventListener('RefreshPackageTable', event => {
-                    Livewire.dispatch("Package-Refresh-Component");
+                window.addEventListener('RefreshPackageCategoryTable', event => {
+                    Livewire.dispatch("PackageCategory-Refresh-Component");
                 });
             });
         </script>

@@ -5,7 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Validation\Rule;
 
-class Package extends Model
+class PackageCategory extends Model
 {
     protected $fillable = [
         'name',

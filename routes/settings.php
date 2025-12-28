@@ -2,7 +2,7 @@
 
 use App\Http\Controllers\BrandController;
 use App\Http\Controllers\ComboOfferController;
-use App\Http\Controllers\PackageController;
+use App\Http\Controllers\PackageCategoryController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\ServiceController;
@@ -57,8 +57,8 @@ Route::middleware('auth')->group(function (): void {
             Route::get('', 'index')->name('index')->can('brand.view');
             Route::get('list', 'get')->name('list');
         });
-        Route::name('package::')->prefix('package')->controller(PackageController::class)->group(function (): void {
-            Route::get('', 'index')->name('index')->can('package.view');
+        Route::name('package_category::')->prefix('package-category')->controller(PackageCategoryController::class)->group(function (): void {
+            Route::get('', 'index')->name('index')->can('package category.view');
             Route::get('list', 'get')->name('list');
         });
     });

@@ -4,23 +4,23 @@
             <nav aria-label="breadcrumb">
                 <ol class="breadcrumb">
                     <li class="breadcrumb-item"><a href="{{ route('dashboard') }}">Home</a></li>
-                    <li class="breadcrumb-item active" aria-current="page">Package</li>
+                    <li class="breadcrumb-item active" aria-current="page">Package Category</li>
                 </ol>
             </nav>
-            <h1 class="page-title mb-0 mt-2">Package</h1>
+            <h1 class="page-title mb-0 mt-2">Package Category</h1>
             <p class="lead">
-                A table is an arrangement of Packages
+                A table is an arrangement of Package Categories
             </p>
         </div>
     </div>
     <div class="content__boxed">
         <div class="content__wrap">
             <div class="card mb-3">
-                @livewire('package.table')
+                @livewire('package-category.table')
             </div>
         </div>
     </div>
-    <x-package.package-modal />
+    <x-package-category.package-category-modal />
     @push('scripts')
     @endpush
 </x-app-layout>
