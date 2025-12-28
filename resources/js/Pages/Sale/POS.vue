@@ -849,8 +849,8 @@ export default {
 
             item.gross_amount = unitPrice * quantity
             item.net_amount = item.gross_amount - discountAmount
-            item.tax_amount = item.net_amount * (taxRate / 100)
-            item.total = item.net_amount + item.tax_amount
+            item.tax_amount = Math.round(item.net_amount * (taxRate / 100) * 100) / 100
+            item.total = Math.round((item.net_amount + item.tax_amount) * 100) / 100
 
             calculateTotals()
 
@@ -910,13 +910,13 @@ export default {
 
                 item.gross_amount = unitPrice * quantity
                 item.net_amount = item.gross_amount - discountAmount
-                item.tax_amount = item.net_amount * (taxRate / 100)
+                item.tax_amount = Math.round(item.net_amount * (taxRate / 100) * 100) / 100
 
                 // Use combo offer price if available, otherwise use regular total
                 if (item.combo_offer_price && item.combo_offer_price > 0) {
-                    item.total = item.combo_offer_price * quantity
+                    item.total = Math.round(item.combo_offer_price * quantity * 100) / 100
                 } else {
-                    item.total = item.net_amount + item.tax_amount
+                    item.total = Math.round((item.net_amount + item.tax_amount) * 100) / 100
                 }
 
                 total += item.total
@@ -935,7 +935,7 @@ export default {
             const grandTotal = total - otherDiscount
             const roundedTotal = Math.round(grandTotal)
 
-            form.round_off = parseFloat((roundedTotal - grandTotal).toFixed(2))
+            form.round_off = Math.round((roundedTotal - grandTotal) * 100) / 100
             form.grand_total = roundedTotal
         }
 
@@ -996,8 +996,8 @@ export default {
                 const item = editItemData.value
                 item.gross_amount = item.unit_price * item.quantity
                 item.net_amount = item.gross_amount - item.discount
-                item.tax_amount = item.net_amount * (item.tax / 100)
-                item.total = item.net_amount + item.tax_amount
+                item.tax_amount = Math.round(item.net_amount * (item.tax / 100) * 100) / 100
+                item.total = Math.round((item.net_amount + item.tax_amount) * 100) / 100
 
                 // Save back to cart
                 form.items[editItemKey.value] = {
