@@ -555,6 +555,7 @@ export default {
                 form.sale_type = props.saleData.sale_type || 'normal'
                 form.account_id = props.saleData.account_id || 3
                 form.customer_mobile = props.saleData.customer_mobile || ''
+                form.account_id = props.saleData.account_id || 3
                 form.other_discount = props.saleData.other_discount || 0
                 form.round_off = props.saleData.round_off || 0
                 form.total = props.saleData.total || 0
@@ -677,7 +678,7 @@ export default {
 
                     // Update mobile if default customer is selected
                     if (form.account_id === 3 && customerObj[3]) {
-                        form.customer_mobile = customerObj[3].mobile || customerObj[3].phone || ''
+                        form.customer_mobile = customerObj[3].mobile || customerObj[3].phone || form.customer_mobile || ''
                     }
                 }
             } catch (error) {
@@ -1057,7 +1058,8 @@ export default {
         const handleCustomerSelected = (customer) => {
             // Select the existing customer
             form.account_id = customer.id
-            form.customer_mobile = customer.mobile || ''
+            // Use customer mobile if available, otherwise preserve existing (from sale data)
+            form.customer_mobile = customer.mobile || customer.phone || form.customer_mobile || ''
 
             toast.success('Customer selected successfully')
         }
