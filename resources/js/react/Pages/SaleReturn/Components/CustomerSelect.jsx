@@ -3,7 +3,6 @@ import TomSelect from "tom-select";
 import axios from "axios";
 
 export default function CustomerSelect({ value, onChange, newCustomer }) {
-
     const selectRef = useRef(null);
     const tomRef = useRef(null);
     const [options, setOptions] = useState([]);
@@ -11,7 +10,6 @@ export default function CustomerSelect({ value, onChange, newCustomer }) {
     // Load initial customers
     useEffect(() => {
         let mounted = true;
-
         axios.get("/account/list").then(res => {
             if (!mounted) return;
             const customers = (res.data.items || []).map(c => ({
@@ -20,16 +18,12 @@ export default function CustomerSelect({ value, onChange, newCustomer }) {
             }));
             setOptions(customers);
         });
-
         return () => { mounted = false; };
     }, []);
 
-    // Initialize TomSelect
+    // Initialize TomSelect only once
     useEffect(() => {
         if (!selectRef.current) return;
-
-        // Destroy previous instance
-        tomRef.current?.destroy();
 
         tomRef.current = new TomSelect(selectRef.current, {
             valueField: "id",
@@ -51,31 +45,55 @@ export default function CustomerSelect({ value, onChange, newCustomer }) {
                     .catch(() => callback());
             },
             onChange(val) {
-                if (val) onChange?.(Number(val));
-                else onChange?.(null);
+                onChange?.(val ? Number(val) : null);
             },
         });
 
-        
-
-        // Auto-select in edit mode
-        if (value) {
-            const existing = options.find(o => o.id === String(value));
-            if (existing) {
-                tomRef.current.setValue(existing.id, true);
-            } else {
-                // Fetch the customer and add to options
-                axios.get(`/account/${value}`).then(res => {
-                    const sel = { id: String(res.data.id), name: `${res.data.name} (${res.data.mobile || "-"})` };
-                    setOptions(prev => [sel, ...prev]); // prepend to options
-                    tomRef.current.addOption(sel);
-                    tomRef.current.setValue(sel.id, true);
-                });
-            }
-        }
-
         return () => { tomRef.current?.destroy(); tomRef.current = null; };
-    }, [options, value]);
+    }, []);
+
+    // Update options in TomSelect when they change
+    useEffect(() => {
+        if (!tomRef.current) return;
+        tomRef.current.clearOptions();
+        options.forEach(o => tomRef.current.addOption(o));
+        tomRef.current.refreshOptions(false);
+    }, [options]);
+
+    // Auto-select existing value
+    useEffect(() => {
+        if (!tomRef.current || !value) return;
+
+        const existing = options.find(o => o.id === String(value));
+        if (existing) {
+            tomRef.current.setValue(existing.id, true);
+        } else {
+            // Fetch customer if not in options
+            axios.get(`/account/${value}`).then(res => {
+                const sel = { id: String(res.data.id), name: `${res.data.name} (${res.data.mobile || "-"})` };
+                setOptions(prev => [sel, ...prev]); // prepend
+                tomRef.current.addOption(sel);
+                tomRef.current.setValue(sel.id, true);
+            });
+        }
+    }, [value, options]);
+
+    // Auto-select newly added customer
+  useEffect(() => {
+    if (!newCustomer || !newCustomer.id) return;
+
+    const sel = {
+        id: String(newCustomer.id),
+        name: `${newCustomer.name} (${newCustomer.mobile || "-"})`
+    };
+
+    setOptions(prev => [sel, ...prev]);
+
+    if (tomRef.current) {
+        tomRef.current.addOption(sel);
+        tomRef.current.setValue(sel.id, true);
+    }
+}, [newCustomer]);
 
     return <select ref={selectRef} className="form-control" placeholder="Select customer"></select>;
 }
