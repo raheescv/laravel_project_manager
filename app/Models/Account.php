@@ -60,38 +60,36 @@ class Account extends Model implements AuditableContracts
         ], $merge);
     }
 
-    public function getDropDownList($request)
-    {
-        $self = self::orderBy('name');
-        $self = $self->when($request['query'] ?? '', function ($query, $value) {
-            return $query->where(function ($q) use ($value): void {
-                $value = trim($value);
-                $q->where('accounts.name', 'like', "%{$value}%")
-                    ->orWhere('accounts.mobile', 'like', "%{$value}%")
-                    ->orWhere('accounts.email', 'like', "%{$value}%");
-            });
-        });
-        $self = $self->when($request['account_type'] ?? '', function ($query, $value) {
-            return $query->where('account_type', $value);
-        });
-        $self = $self->when($request['customer_type_id'] ?? '', function ($query, $value) {
-            return $query->where('customer_type_id', $value);
-        });
-        $self = $self->when($request['account_category_id'] ?? '', function ($query, $value) {
-            return $query->where('account_category_id', $value);
-        });
-        $self = $self->when($request['is_payment_method'] ?? '', function ($query, $value) {
-            return $query->whereIn('id', cache('payment_methods', []));
-        });
-        $self = $self->when($request['model'] ?? '', function ($query, $value) {
-            return $query->where('model', $value);
-        });
-        $self = $self->limit(10);
-        $self = $self->get(['name', 'mobile', 'email', 'id'])->toArray();
-        $return['items'] = $self;
+   public function getDropDownList($request)
+{
+    $self = self::orderBy('name');
 
-        return $return;
+    // 🔍 Search
+    $self = $self->when($request['query'] ?? '', function ($query, $value) {
+        $value = trim($value);
+        $query->where(function ($q) use ($value) {
+            $q->where('accounts.name', 'like', "%{$value}%")
+              ->orWhere('accounts.mobile', 'like', "%{$value}%")
+              ->orWhere('accounts.email', 'like', "%{$value}%");
+        });
+    });
+
+    // 🔹 Filters
+    $self = $self->when($request['account_type'] ?? '', fn ($q, $v) => $q->where('account_type', $v));
+    $self = $self->when($request['customer_type_id'] ?? '', fn ($q, $v) => $q->where('customer_type_id', $v));
+    $self = $self->when($request['account_category_id'] ?? '', fn ($q, $v) => $q->where('account_category_id', $v));
+    $self = $self->when($request['is_payment_method'] ?? '', fn ($q) => $q->whereIn('id', cache('payment_methods', [])));
+    $self = $self->when($request['model'] ?? '', fn ($q, $v) => $q->where('model', $v));
+
+    // ✅ LIMIT ONLY WHEN SEARCHING
+    if (!empty($request['query'])) {
+        $self->limit(10);
     }
+
+    $return['items'] = $self->get(['id', 'name', 'mobile', 'email']);
+
+    return $return;
+}
 
     public function scopeVendor($query)
     {

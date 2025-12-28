@@ -11,11 +11,16 @@
             <p class="lead">
                 A table is an arrangement of Category
             </p>
+   
+
+
         </div>
     </div>
     <div class="content__boxed">
         <div class="content__wrap">
             <div class="card mb-3">
+                 
+
                 @livewire('settings.category.table')
             </div>
         </div>
