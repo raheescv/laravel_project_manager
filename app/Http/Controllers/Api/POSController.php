@@ -16,6 +16,8 @@ use App\Models\Sale;
 use App\Models\Product;
 use App\Models\SalePayment;
 use App\Models\User;
+use App\Models\Country;
+
 use App\Models\MeasurementTemplate;
 use Exception;
 use Illuminate\Http\Request;
@@ -526,6 +528,15 @@ public function getMeasurementTemplates($categoryId)
         $item['total'] = round($net_amount + $tax_amount, 2);
 
         return $item;
+    }
+
+    public function getCountries()
+    {
+        $countries = Country::select('name', 'code')->get(); // select name and code
+        return response()->json([
+            'success' => true,
+            'countries' => $countries,
+        ]);
     }
 
     public function getDraftSales(Request $request)

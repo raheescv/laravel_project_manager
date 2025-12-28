@@ -365,6 +365,17 @@ if (! function_exists('purchaseStatuses')) {
         ];
     }
 }
+
+if (! function_exists('purchaseStatusess')) {
+    function purchaseStatusess()
+    {
+        return [
+            'draft' => 'Draft',
+            'completed' => 'Delivered',
+            'cancelled' => 'Cancelled',
+        ];
+    }
+}
 if (! function_exists('purchaseReturnStatuses')) {
     function purchaseReturnStatuses()
     {

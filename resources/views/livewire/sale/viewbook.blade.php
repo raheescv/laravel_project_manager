@@ -72,7 +72,7 @@
 
        <select wire:model.live="status" class="form-select form-select-sm">
     <option value="draft">Draft</option>
-    <option value="completed">Completed</option>
+    <option value="completed">Delivered</option>
     <option value="started">Started</option>
     <option value="stitched">Stitched</option>
 </select>

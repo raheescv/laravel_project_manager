@@ -122,7 +122,7 @@
                                 <label class="form-label text-muted fw-semibold small mb-2" for="status">
                                     <i class="fa fa-flag me-1"></i> Status
                                 </label>
-                                {{ html()->select('status', purchaseStatuses())->value($status)->class('form-select form-select-sm')->id('status')->placeholder('All Statuses') }}
+                                {{ html()->select('status', purchaseStatusess())->value($status)->class('form-select form-select-sm')->id('status')->placeholder('All Statuses') }}
                             </div>
                         </div>
                     </div>

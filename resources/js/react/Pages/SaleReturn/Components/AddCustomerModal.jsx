@@ -22,8 +22,11 @@ export default function AddCustomerModal({ open, onClose, customerId, onSaved })
     useEffect(() => {
         if (!open) return;
 
-        axios.get("/customers/meta").then(res => {
-            setCountries(res.data.countries || []);
+        axios.get("/categories/countries") // match the new route
+        .then(res => {
+            if (res.data.success) {
+                setCountries(res.data.countries || []);
+            }
         });
 
         if (customerId) {
@@ -161,7 +164,8 @@ export default function AddCustomerModal({ open, onClose, customerId, onSaved })
                                     {countries.map(c => (
                                         <option key={c.code} value={c.code}>{c.name}</option>
                                     ))}
-                                </select>
+                                    </select>
+
                             </div>
                         </div>
 

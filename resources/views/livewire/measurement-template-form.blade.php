@@ -1,14 +1,14 @@
 <div>
     <div class="card">
 
+        {{-- HEADER --}}
         <div class="card-header">
             <div class="row align-items-center">
 
-                <div class="col-md-4">
+                <div class="col-md-3">
                     <h4 class="mb-0">Measurement Fields</h4>
                 </div>
 
-                <!-- Limit Dropdown -->
                 <div class="col-md-2">
                     <select wire:model.live="limit" class="form-control">
                         <option value="10">10</option>
@@ -17,97 +17,100 @@
                     </select>
                 </div>
 
-                <!-- Search Input -->
-                <div class="col-md-4">
-                    <input type="text" wire:model.live="search" 
-                           class="form-control" placeholder="Search..." autocomplete="off">
+                <div class="col-md-3">
+                    <input type="text"
+                           wire:model.live="search"
+                           class="form-control"
+                           placeholder="Search...">
+                </div>
+
+                <div class="col-md-4 text-end">
+                    <button class="btn btn-success"
+                            wire:click="openModal">
+                        + Add Field
+                    </button>
+
+                 
+                  
+                        <button class="btn btn-danger ms-2"
+                                onclick="confirm('Delete selected items?') || event.stopImmediatePropagation()"
+                                wire:click="bulkDelete">
+                            Delete 
+                        </button>
+                   
                 </div>
 
             </div>
         </div>
 
+        {{-- BODY --}}
         <div class="card-body">
 
             @if(session('success'))
-                <div class="alert alert-success">{{ session('success') }}</div>
+                <div class="alert alert-success">
+                    {{ session('success') }}
+                </div>
             @endif
 
-            <div class="row mb-3">
-
-                <div class="col-md-6">
-                    <label for="category">Measurement Category</label>
-                    <input type="text" id="category" class="form-control" value="{{ $category->name }}" disabled>
-                    @error('category_id') <span class="text-danger">{{ $message }}</span> @enderror
-                </div>
-
-                <div class="col-md-6">
-                    <label for="template_name">Field Name</label>
-                    <input type="text" id="template_name" wire:model="template_name" class="form-control" placeholder="Template name">
-                    @error('template_name') <span class="text-danger">{{ $message }}</span> @enderror
-                </div>
-
-            </div>
-
             <div class="mb-3">
-                <button wire:click="save" class="btn btn-primary">
-                    @if($template_id) Update @else Save @endif
-                </button>
+                <label>Measurement Category</label>
+                <input type="text"
+                       class="form-control"
+                       value="{{ $category->name }}"
+                       disabled>
             </div>
-
-            <hr>
 
             <div class="table-responsive">
-                <table class="table table-striped table-bordered">
+                <table class="table table-bordered table-striped">
+
                     <thead>
-                    <tr>
-                        <th width="80" wire:click="sortBy('id')" style="cursor:pointer;">
-                            ID
-                            @if ($sortField === 'id')
-                                @if ($sortDirection === 'asc') ▲ @else ▼ @endif
-                            @endif
-                        </th>
-
-                        <th wire:click="sortBy('category_id')" style="cursor:pointer;">
-                            Category
-                            @if ($sortField === 'category_id')
-                                @if ($sortDirection === 'asc') ▲ @else ▼ @endif
-                            @endif
-                        </th>
-
-                        <th wire:click="sortBy('name')" style="cursor:pointer;">
-                            Field Name
-                            @if ($sortField === 'name')
-                                @if ($sortDirection === 'asc') ▲ @else ▼ @endif
-                            @endif
-                        </th>
-
-                        <th width="140">Action</th>
-                    </tr>
+                        <tr>
+                            <th width="40">
+                                <input type="checkbox"
+                                       wire:model="selectAll">
+                            </th>
+                            <th>ID</th>
+                            <th>Category</th>
+                            <th>Field Name</th>
+                            <th width="140">Action</th>
+                        </tr>
                     </thead>
 
                     <tbody>
-                    @forelse($templates as $i => $t)
-                        <tr>
-                            <td>{{ $templates->firstItem() + $i }}</td>
-                            <td>{{ $t->category?->name }}</td>
-                            <td>{{ $t->name }}</td>
-                            <td>
-                                <button class="btn btn-sm btn-primary me-1" wire:click="editTemplate({{ $t->id }})">
-                                    Edit
-                                </button>
-                                <button class="btn btn-sm btn-danger"
-                                        onclick="confirm('Delete this?') || event.stopImmediatePropagation()"
-                                        wire:click="deleteTemplate({{ $t->id }})">
-                                    Delete
-                                </button>
-                            </td>
-                        </tr>
-                    @empty
-                        <tr>
-                            <td colspan="4" class="text-center">No templates found</td>
-                        </tr>
-                    @endforelse
+                        @forelse($templates as $i => $t)
+                            <tr>
+                                <td>
+                                    <input type="checkbox"
+                                           wire:model="selectedTemplates"
+                                           value="{{ $t->id }}">
+                                </td>
+
+                                <td>{{ $templates->firstItem() + $i }}</td>
+                                <td>{{ $t->category?->name }}</td>
+                                <td>{{ $t->name }}</td>
+
+                                <td>
+                                    <button class="btn btn-sm btn-primary"
+                                            wire:click="editTemplate({{ $t->id }})">
+                                        Edit
+                                    </button>
+
+                                    <button class="btn btn-sm btn-danger"
+                                            onclick="confirm('Delete this?') || event.stopImmediatePropagation()"
+                                            wire:click="deleteTemplate({{ $t->id }})">
+                                        Delete
+                                    </button>
+                                </td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="5" class="text-center">
+                                    No templates found
+                                </td>
+                            </tr>
+                        @endforelse
                     </tbody>
+
                 </table>
             </div>
 
@@ -116,6 +119,48 @@
             </div>
 
         </div>
-
     </div>
+
+    {{-- MODAL --}}
+    @if($showModal)
+        <div class="modal fade show d-block" style="background:rgba(0,0,0,.5)">
+            <div class="modal-dialog">
+                <div class="modal-content">
+
+                    <div class="modal-header">
+                        <h5 class="modal-title">
+                            {{ $template_id ? 'Edit Field' : 'Add Field' }}
+                        </h5>
+                        <button class="btn-close"
+                                wire:click="closeModal"></button>
+                    </div>
+
+                    <div class="modal-body">
+                        <label>Field Name</label>
+                        <input type="text"
+                               wire:model.defer="template_name"
+                               class="form-control">
+                    </div>
+
+                    <div class="modal-footer">
+                        <button class="btn btn-secondary"
+                                wire:click="closeModal">
+                            Cancel
+                        </button>
+
+                        <button class="btn btn-primary"
+                                wire:click="save(false)">
+                            Save
+                        </button>
+
+                        <button class="btn btn-success"
+                                wire:click="save(true)">
+                            Save & New
+                        </button>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    @endif
 </div>
