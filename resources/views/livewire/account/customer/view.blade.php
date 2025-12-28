@@ -1,5 +1,5 @@
-<div>
-    <div class="customer-details-hero mb-4">
+<div class="customer-view-container">
+    <div class="customer-details-hero mb-2 mb-md-3">
         <div class="card border-0 shadow-lg overflow-hidden">
             <!-- Decorative Background -->
             <div class="position-absolute top-0 start-0 w-100 h-100 opacity-25">
@@ -7,51 +7,51 @@
                 <div class="position-absolute top-0 end-0 w-50 h-100 bg-gradient-secondary opacity-50"></div>
             </div>
 
-            <div class="card-body position-relative" id="customer-details" style="padding: 2rem;">
-                <!-- Action Buttons - Premium positioning -->
-                <div class="position-absolute top-0 end-0 me-4 mt-3" style="z-index: 10;">
-                    <div class="d-flex gap-2">
+            <div class="card-body position-relative p-3 p-md-3" id="customer-details">
+                <!-- Action Buttons - Responsive positioning -->
+                <div class="action-buttons-wrapper mb-2 mb-md-2">
+                    <div class="d-flex flex-wrap gap-1 justify-content-end">
                         @can('customer.view')
-                            <a href="{{ route('account::customer::statement', $accounts['id'] ?? '') }}" target="_blank" class="btn btn-info btn-sm d-flex align-items-center gap-2 shadow-lg hover-lift rounded-pill px-4 py-2" data-bs-toggle="tooltip"
-                                data-bs-placement="left" title="Generate Customer Statement PDF">
+                            <a href="{{ route('account::customer::statement', $accounts['id'] ?? '') }}" target="_blank"
+                                class="btn btn-info btn-sm d-flex align-items-center gap-1 shadow-lg hover-lift rounded-pill px-2 px-md-3 py-1" data-bs-toggle="tooltip" data-bs-placement="left"
+                                title="Generate Customer Statement PDF">
                                 <i class="fa fa-file-pdf-o"></i>
-                                <span class="d-none d-lg-inline fw-semibold">Statement</span>
+                                <span class="d-none d-md-inline fw-semibold">Statement</span>
                             </a>
                         @endcan
-                        <button type="button" id="CustomerEdit" class="btn btn-premium btn-sm d-flex align-items-center gap-2 shadow-lg hover-lift rounded-pill px-4 py-2" data-bs-toggle="tooltip"
-                            data-bs-placement="left" title="Edit Customer Details">
+                        <button type="button" id="CustomerEdit" class="btn btn-premium btn-sm d-flex align-items-center gap-1 shadow-lg hover-lift rounded-pill px-2 px-md-3 py-1"
+                            data-bs-toggle="tooltip" data-bs-placement="left" title="Edit Customer Details">
                             <i class="fa fa-edit"></i>
-                            <span class="d-none d-lg-inline fw-semibold">Edit Customer</span>
+                            <span class="d-none d-md-inline fw-semibold">Edit</span>
                         </button>
                     </div>
                 </div>
 
-                <div class="row align-items-center g-4">
+                <div class="row align-items-center g-2 g-md-2">
                     <!-- Customer Profile Section -->
-                    <div class="col-lg-6">
-                        <div class="d-flex align-items-center">
-                            <div class="flex-shrink-0 me-4">
+                    <div class="col-12 col-lg-6">
+                        <div class="d-flex align-items-center flex-column flex-sm-row">
+                            <div class="flex-shrink-0 me-0 me-sm-3 mb-2 mb-sm-0">
                                 <div class="position-relative customer-avatar">
                                     <div class="avatar-ring"></div>
-                                                                         <img class="img-fluid rounded-circle shadow-lg" src="{{ secure_asset('assets/img/profile-photos/1.png') }}" alt="Profile Picture"
-                                        style="width: 80px; height: 80px; object-fit: cover; border: 4px solid rgba(255,255,255,0.9);">
+                                    <img class="img-fluid rounded-circle shadow-lg customer-avatar-img" src="{{ secure_asset('assets/img/profile-photos/1.png') }}" alt="Profile Picture">
 
                                     <!-- Status Indicator -->
-                                    <div class="position-absolute bottom-0 end-0 bg-success rounded-circle border-3 border-white shadow-sm pulse-animation" style="width: 22px; height: 22px;"
+                                    <div class="position-absolute bottom-0 end-0 bg-success rounded-circle border-3 border-white shadow-sm pulse-animation status-indicator"
                                         data-bs-toggle="tooltip" title="Active Customer">
-                                        <i class="fa fa-check text-white" style="font-size: 8px; line-height: 22px;"></i>
+                                        <i class="fa fa-check text-white"></i>
                                     </div>
                                 </div>
                             </div>
 
-                            <div class="flex-grow-1">
+                            <div class="flex-grow-1 text-center text-sm-start">
                                 <div class="customer-info">
-                                    <h2 class="customer-name mb-2 text-dark fw-bold display-6">
+                                    <h2 class="customer-name mb-1 text-dark fw-bold" style="font-size: 1.5rem;">
                                         {{ $accounts['name'] ?? 'Customer Name' }}
                                     </h2>
-                                    <div class="customer-meta d-flex flex-wrap gap-3 align-items-center">
-                                        <span class="badge bg-light text-dark px-3 py-2 rounded-pill shadow-sm">
-                                            <i class="fa fa-id-card me-2 text-primary"></i>
+                                    <div class="customer-meta d-flex flex-wrap gap-1 gap-md-2 align-items-center justify-content-center justify-content-sm-start">
+                                        <span class="badge bg-light text-dark px-2 py-1 rounded-pill shadow-sm" style="font-size: 0.7rem;">
+                                            <i class="fa fa-id-card me-1 text-primary"></i>
                                             ID: #{{ $accounts['id'] ?? '000' }}
                                         </span>
                                         @if ($accounts)
@@ -59,8 +59,8 @@
                                                 $customer_type = $accounts['customer_type']['name'] ?? '';
                                             @endphp
                                             @if ($customer_type)
-                                                <span class="badge bg-success bg-gradient px-3 py-2 rounded-pill shadow-sm">
-                                                    <i class="fa fa-star me-2"></i>
+                                                <span class="badge bg-success bg-gradient px-2 py-1 rounded-pill shadow-sm" style="font-size: 0.7rem;">
+                                                    <i class="fa fa-star me-1"></i>
                                                     {{ $customer_type }}
                                                 </span>
                                             @endif
@@ -72,33 +72,53 @@
                     </div>
 
                     <!-- Contact Information Cards -->
-                    <div class="col-lg-6">
+                    <div class="col-12 col-lg-6">
                         <div class="contact-cards">
-                            <div class="row g-3">
-                                <div class="col-sm-6">
-                                    <div class="contact-card text-center p-4 rounded-4 shadow-sm h-100 hover-card">
-                                        <div class="contact-icon mb-3">
-                                            <div class="icon-circle bg-primary bg-gradient d-inline-flex align-items-center justify-content-center rounded-circle shadow">
-                                                <i class="fa fa-mobile text-white fs-5"></i>
+                            <div class="row g-1 g-md-2">
+                                <div class="col-6 col-sm-4 col-lg-6">
+                                    <div class="contact-card text-center p-2 rounded-3 shadow-sm h-100 hover-card">
+                                        <div class="contact-icon mb-1">
+                                            <div class="icon-circle bg-primary bg-gradient d-inline-flex align-items-center justify-content-center rounded-circle shadow" style="width: 40px; height: 40px;">
+                                                <i class="fa fa-mobile text-white" style="font-size: 0.9rem;"></i>
                                             </div>
                                         </div>
                                         <div class="contact-info">
-                                            <h6 class="text-muted mb-2 fw-semibold">Mobile Number</h6>
-                                            <div class="fw-bold text-dark fs-6">{{ $accounts['mobile'] ?? 'Not provided' }}</div>
+                                            <h6 class="text-muted mb-0 fw-semibold" style="font-size: 0.7rem;">Mobile</h6>
+                                            <div class="fw-bold text-dark" style="font-size: 0.75rem;">{{ $accounts['mobile'] ?? 'N/A' }}</div>
                                         </div>
                                     </div>
                                 </div>
 
-                                <div class="col-sm-6">
-                                    <div class="contact-card text-center p-4 rounded-4 shadow-sm h-100 hover-card">
-                                        <div class="contact-icon mb-3">
-                                            <div class="icon-circle bg-success bg-gradient d-inline-flex align-items-center justify-content-center rounded-circle shadow">
-                                                <i class="fa fa-envelope text-white fs-5"></i>
+                                <div class="col-6 col-sm-4 col-lg-6">
+                                    <div class="contact-card text-center p-2 rounded-3 shadow-sm h-100 hover-card">
+                                        <div class="contact-icon mb-1">
+                                            <div class="icon-circle bg-success bg-gradient d-inline-flex align-items-center justify-content-center rounded-circle shadow" style="width: 40px; height: 40px;">
+                                                <i class="fa fa-envelope text-white" style="font-size: 0.9rem;"></i>
                                             </div>
                                         </div>
                                         <div class="contact-info">
-                                            <h6 class="text-muted mb-2 fw-semibold">Email Address</h6>
-                                            <div class="fw-bold text-dark fs-6 text-truncate">{{ $accounts['email'] ?? 'Not provided' }}</div>
+                                            <h6 class="text-muted mb-0 fw-semibold" style="font-size: 0.7rem;">Email</h6>
+                                            <div class="fw-bold text-dark text-truncate" style="font-size: 0.75rem;">{{ $accounts['email'] ?? 'N/A' }}</div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="col-12 col-sm-4 col-lg-12">
+                                    <div class="contact-card text-center p-2 rounded-3 shadow-sm h-100 hover-card">
+                                        <div class="contact-icon mb-1">
+                                            <div class="icon-circle bg-warning bg-gradient d-inline-flex align-items-center justify-content-center rounded-circle shadow" style="width: 40px; height: 40px;">
+                                                <i class="fa fa-calendar text-white" style="font-size: 0.9rem;"></i>
+                                            </div>
+                                        </div>
+                                        <div class="contact-info">
+                                            <h6 class="text-muted mb-0 fw-semibold" style="font-size: 0.7rem;">Credit Period</h6>
+                                            <div class="fw-bold text-dark" style="font-size: 0.75rem;">
+                                                @if (isset($accounts['credit_period_days']) && $accounts['credit_period_days'])
+                                                    {{ $accounts['credit_period_days'] }} {{ $accounts['credit_period_days'] == 1 ? 'Day' : 'Days' }}
+                                                @else
+                                                    Not set
+                                                @endif
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -111,30 +131,38 @@
     </div>
     <div class="row">
         <div class="tab-base">
-            <ul class="nav nav-underline nav-component border-bottom" role="tablist">
-                <li class="nav-item" role="presentation">
-                    <button class="nav-link px-3 @if ($selected_tab === 'Sales') active @endif" data-bs-toggle="tab" data-bs-target="#tab-Sales" type="button" role="tab" aria-controls="home"
-                        aria-selected="true" wire:click="$set('selected_tab', 'Sales')">Sales</button>
+            <ul class="nav nav-underline nav-component border-bottom flex-nowrap overflow-x-auto" role="tablist" style="scrollbar-width: thin;">
+                <li class="nav-item flex-shrink-0" role="presentation">
+                    <button class="nav-link px-2 px-md-3 @if ($selected_tab === 'Sales') active @endif" data-bs-toggle="tab" data-bs-target="#tab-Sales" type="button" role="tab" aria-controls="home"
+                        aria-selected="true" wire:click="$set('selected_tab', 'Sales')">
+                        <span class="d-none d-sm-inline">Sales</span>
+                        <span class="d-sm-none">Sales</span>
+                    </button>
                 </li>
-                <li class="nav-item" role="presentation">
-                    <button class="nav-link px-3 @if ($selected_tab === 'SaleReturn') active @endif" data-bs-toggle="tab" data-bs-target="#tab-SaleReturn" type="button" role="tab"
+                <li class="nav-item flex-shrink-0" role="presentation">
+                    <button class="nav-link px-2 px-md-3 @if ($selected_tab === 'SaleReturn') active @endif" data-bs-toggle="tab" data-bs-target="#tab-SaleReturn" type="button" role="tab"
                         aria-controls="home" aria-selected="true" wire:click="$set('selected_tab', 'SaleReturn')">
-                        Sales Return
+                        <span class="d-none d-sm-inline">Sales Return</span>
+                        <span class="d-sm-none">Returns</span>
                     </button>
                 </li>
-                <li class="nav-item" role="presentation">
-                    <button class="nav-link px-3 @if ($selected_tab === 'SaleItems') active @endif" data-bs-toggle="tab" data-bs-target="#tab-SaleItems" type="button" role="tab"
+                <li class="nav-item flex-shrink-0" role="presentation">
+                    <button class="nav-link px-2 px-md-3 @if ($selected_tab === 'SaleItems') active @endif" data-bs-toggle="tab" data-bs-target="#tab-SaleItems" type="button" role="tab"
                         aria-controls="home" aria-selected="true" wire:click="$set('selected_tab', 'SaleItems')">
-                        Sale Items
+                        <span class="d-none d-sm-inline">Sale Items</span>
+                        <span class="d-sm-none">Items</span>
                     </button>
                 </li>
-                <li class="nav-item" role="presentation">
-                    <button class="nav-link px-3 @if ($selected_tab === 'SaleProductSummary') active @endif" data-bs-toggle="tab" data-bs-target="#tab-SaleProductSummary" type="button" role="tab"
-                        aria-controls="profile" aria-selected="false" tabindex="-1" wire:click="$set('selected_tab', 'SaleProductSummary')">Sale Item Summary</button>
+                <li class="nav-item flex-shrink-0" role="presentation">
+                    <button class="nav-link px-2 px-md-3 @if ($selected_tab === 'SaleProductSummary') active @endif" data-bs-toggle="tab" data-bs-target="#tab-SaleProductSummary" type="button" role="tab"
+                        aria-controls="profile" aria-selected="false" tabindex="-1" wire:click="$set('selected_tab', 'SaleProductSummary')">
+                        <span class="d-none d-md-inline">Sale Item Summary</span>
+                        <span class="d-md-none">Summary</span>
+                    </button>
                 </li>
                 @can('account note.view')
-                    <li class="nav-item" role="presentation">
-                        <button class="nav-link px-3" data-bs-toggle="tab" data-bs-target="#tab-Notes" type="button" role="tab" aria-controls="contact" aria-selected="false" tabindex="-1">
+                    <li class="nav-item flex-shrink-0" role="presentation">
+                        <button class="nav-link px-2 px-md-3" data-bs-toggle="tab" data-bs-target="#tab-Notes" type="button" role="tab" aria-controls="contact" aria-selected="false" tabindex="-1">
                             Notes
                         </button>
                     </li>
@@ -231,7 +259,8 @@
                         </div>
                         <div class="col-md-4 d-flex align-items-end">
                             @can('customer.view')
-                                <a href="{{ route('account::customer::statement', $accounts['id'] ?? '') }}@if($sale_from_date || $sale_to_date)?from_date={{ $sale_from_date }}&to_date={{ $sale_to_date }}@endif" target="_blank" class="btn btn-info btn-sm d-flex align-items-center gap-2 shadow-sm" title="Generate Statement PDF">
+                                <a href="{{ route('account::customer::statement', $accounts['id'] ?? '') }}@if ($sale_from_date || $sale_to_date) ?from_date={{ $sale_from_date }}&to_date={{ $sale_to_date }} @endif"
+                                    target="_blank" class="btn btn-info btn-sm d-flex align-items-center gap-2 shadow-sm" title="Generate Statement PDF">
                                     <i class="fa fa-file-pdf-o"></i>
                                     <span>Generate Statement</span>
                                 </a>
@@ -296,7 +325,7 @@
                                         </div>
                                     </div>
                                     @php
-                                        $percentage = $total_sale_returns?->grand_total!=0 ? round(($total_sale_returns?->paid / $total_sale_returns?->grand_total) * 100) : 0;
+                                        $percentage = $total_sale_returns?->grand_total != 0 ? round(($total_sale_returns?->paid / $total_sale_returns?->grand_total) * 100) : 0;
                                     @endphp
                                     <div class="progress progress-md mb-2">
                                         <div class="progress-bar bg-white" role="progressbar" style="width: {{ $percentage }}%;" aria-valuenow="{{ $percentage }}" aria-valuemin="0"
@@ -340,7 +369,7 @@
                                     </div>
                                     <div class="progress progress-md mb-2">
                                         @php
-                                            $percentage = $total_sale_returns?->grand_total!=0 ? round(($total_sale_returns?->balance / $total_sale_returns?->grand_total) * 100) : 0;
+                                            $percentage = $total_sale_returns?->grand_total != 0 ? round(($total_sale_returns?->balance / $total_sale_returns?->grand_total) * 100) : 0;
                                         @endphp
                                         <div class="progress-bar bg-white" role="progressbar" style="width: {{ $percentage }}%;" aria-valuenow="{{ $percentage }}" aria-valuemin="0"
                                             aria-valuemax="100">
@@ -563,20 +592,20 @@
                 border-radius: 15px;
             }
 
-            .card:hover {
+            /* .card:hover {
                 transform: translateY(-2px);
                 box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1) !important;
-            }
+            } */
 
             .bg-light {
                 background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%) !important;
                 transition: all 0.3s ease;
             }
 
-            .bg-light:hover {
+            /* .bg-light:hover {
                 transform: translateY(-2px);
                 box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-            }
+            } */
 
             /* Customer Details Hero Section */
             .customer-details-hero .card {
@@ -604,12 +633,12 @@
                 transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             }
 
-            .btn-premium:hover {
+            /* .btn-premium:hover {
                 background: linear-gradient(135deg, #5a2d91 0%, #d63384 100%);
                 transform: translateY(-3px);
                 box-shadow: 0 10px 30px rgba(111, 66, 193, 0.5);
                 color: white;
-            }
+            } */
 
             /* Customer Avatar */
             .customer-avatar {
@@ -677,17 +706,17 @@
                 backdrop-filter: blur(10px);
                 transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             }
-
+/*
             .hover-card:hover {
                 transform: translateY(-8px) scale(1.02);
                 box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
                 background: rgba(255, 255, 255, 0.95);
-            }
+            } */
 
             /* Icon Circles */
             .icon-circle {
-                width: 50px;
-                height: 50px;
+                width: 40px;
+                height: 40px;
                 transition: all 0.3s ease;
             }
 
@@ -703,22 +732,22 @@
                 transition: all 0.3s ease;
             }
 
-            .badge:hover {
+            /* .badge:hover {
                 transform: scale(1.05);
-            }
+            } */
 
             /* Responsive Enhancements */
             @media (max-width: 768px) {
                 .customer-details-hero .card-body {
-                    padding: 1.5rem !important;
+                    padding: 1rem !important;
                 }
 
                 .customer-name {
-                    font-size: 1.75rem !important;
+                    font-size: 1.5rem !important;
                 }
 
                 .contact-cards .col-sm-6 {
-                    margin-bottom: 1rem;
+                    margin-bottom: 0.5rem;
                 }
             }
 

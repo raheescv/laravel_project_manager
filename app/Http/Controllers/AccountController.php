@@ -55,6 +55,8 @@ class AccountController extends Controller
             // Get sales statistics
             $totalSales = Sale::where('account_id', $id)->count();
             $totalAmount = Sale::where('account_id', $id)->sum('grand_total');
+            $totalPaid = Sale::where('account_id', $id)->sum('paid');
+            $totalBalance = Sale::where('account_id', $id)->sum('balance');
             $lastPurchase = Sale::where('account_id', $id)->orderBy('date', 'desc')->value('date');
 
             // Get recent sales (last 5)
@@ -80,6 +82,8 @@ class AccountController extends Controller
                 'customer' => $customer,
                 'total_sales' => $totalSales,
                 'total_amount' => $totalAmount,
+                'total_paid' => $totalPaid,
+                'total_balance' => $totalBalance,
                 'last_purchase' => $lastPurchase,
                 'recent_sales' => $recentSales,
             ]);
