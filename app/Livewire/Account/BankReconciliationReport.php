@@ -103,9 +103,9 @@ class BankReconciliationReport extends Component
             ->leftJoin('account_categories', 'accounts.account_category_id', '=', 'account_categories.id')
             ->where($this->getBankAccountFilter())
             ->whereBetween('journal_entries.date', [$this->from_date, $this->to_date])
-            ->when($this->account_id, fn($q) => $q->where('journal_entries.account_id', $this->account_id))
-            ->when($this->delivered_date_filter === 'delivered', fn($q) => $q->whereNotNull('journal_entries.delivered_date'))
-            ->when($this->delivered_date_filter === 'pending', fn($q) => $q->whereNull('journal_entries.delivered_date'))
+            ->when($this->account_id, fn ($q) => $q->where('journal_entries.account_id', $this->account_id))
+            ->when($this->delivered_date_filter === 'delivered', fn ($q) => $q->whereNotNull('journal_entries.delivered_date'))
+            ->when($this->delivered_date_filter === 'pending', fn ($q) => $q->whereNull('journal_entries.delivered_date'))
             ->select('journal_entries.*', 'accounts.name as account_name', 'account_categories.name as category_name');
     }
 

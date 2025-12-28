@@ -73,6 +73,7 @@ return [
         'sale and sales return items',
         'day wise sale',
         'bank reconciliation report',
+        'customer aging',
     ],
     'log' => ['inventory'],
     'day close' => ['sync amount'],
