@@ -12,6 +12,8 @@ import AdvancePaymentModal from "../../Components/Booking/AdvancePaymentModal";
 import { usePage } from "@inertiajs/react";
 import { FaPen } from "react-icons/fa";
 import CustomerDetailsModal from "./Components/CustomerDetailsModal";
+import AddCustomerModal from "./Components/AddCustomerModal";
+
 
 // show selected customer details (from server) in create page
 
@@ -26,6 +28,10 @@ export default function Create() {
     const [showAdvanceModal, setShowAdvanceModal] = useState(false);
     const [customPaymentData, setCustomPaymentData] = useState(null);
     const [serviceCharge, setServiceCharge] = useState(0);
+    const [showAddCustomerModal, setShowAddCustomerModal] = useState(false);
+    const [refreshCustomerKey, setRefreshCustomerKey] = useState(0);
+
+
 
 
 
@@ -372,10 +378,10 @@ const buildMeasurementPayload = () => {
                                     <label className="fw-bold mb-1">Customer</label>
                                     <div className="d-flex gap-2 align-items-center">
                                         <div style={{ flex: 1 }}>
-                                            <CustomerSelect value={customerId} onChange={setCustomerId} />
+                                            <CustomerSelect key={refreshCustomerKey} value={customerId} onChange={setCustomerId} />
                                         </div>
                                         <div>
-                                            <button type="button" className="btn btn-sm btn-outline-success" title="Add new customer" onClick={() => setShowCustomerModal(true)}>+ Add</button>
+                                            <button type="button"  className="btn btn-sm btn-outline-success" title="Add new customer" onClick={() => setShowAddCustomerModal(true)}>+ Add New customer</button>
                                         </div>
                                     </div>
                                 </div>
@@ -745,6 +751,20 @@ const buildMeasurementPayload = () => {
                     }}
                 />
             )}
+
+            {showAddCustomerModal && (
+    <AddCustomerModal
+        open={showAddCustomerModal}
+        onClose={() => setShowAddCustomerModal(false)}
+        onSaved={(customer) => {
+            if (customer?.id) {
+                setCustomerId(customer.id);               // ✅ auto select
+                setRefreshCustomerKey(prev => prev + 1);  // ✅ reload dropdown
+            }
+        }}
+    />
+)}
+
            <AdvancePaymentModal
     open={showAdvanceModal}
     onClose={() => setShowAdvanceModal(false)}
