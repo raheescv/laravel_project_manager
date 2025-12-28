@@ -269,7 +269,7 @@
                             </ul>
                         </li>
                     @endif
-
+ @if (auth()->user()->can('sale.booking.view'))
                         @php
                             $bookingActive = request()->routeIs('sale::booking', 'sale::create_booking', 'sale::edit_booking*', 'sale::view_booking*');
                         @endphp
@@ -288,6 +288,7 @@
                                 </li>
                             </ul>
                         </li>
+                         @endif
                     
                     @if (auth()->user()->can('sales return.view') || auth()->user()->can('report.sale return item'))
                         <li class="nav-item has-sub">
