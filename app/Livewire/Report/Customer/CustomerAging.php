@@ -2,10 +2,13 @@
 
 namespace App\Livewire\Report\Customer;
 
+use App\Exports\CustomerAgingExport;
 use App\Models\Sale;
 use Carbon\Carbon;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Livewire\Component;
 use Livewire\WithPagination;
+use Maatwebsite\Excel\Facades\Excel;
 
 class CustomerAging extends Component
 {
@@ -109,6 +112,53 @@ class CustomerAging extends Component
         }
     }
 
+    protected function getBaseQuery()
+    {
+        return Sale::query()
+            ->join('accounts', 'sales.account_id', '=', 'accounts.id')
+            ->completed()
+            ->where('sales.balance', '>', 0) // Only show sales with outstanding balance
+            ->when($this->branch_id, fn ($q, $value) => $q->where('sales.branch_id', $value))
+            ->when($this->customer_id, fn ($q, $value) => $q->where('sales.account_id', $value))
+            ->when($this->from_date ?? '', fn ($q, $value) => $q->whereDate('sales.date', '>=', date('Y-m-d', strtotime($value))))
+            ->when($this->to_date ?? '', fn ($q, $value) => $q->whereDate('sales.date', '<=', date('Y-m-d', strtotime($value))))
+            ->select('accounts.id as account_id', 'accounts.name as customer_name', 'accounts.mobile as customer_mobile', 'accounts.credit_period_days', 'sales.id', 'sales.invoice_no', 'sales.date as invoice_date', 'sales.due_date as sale_due_date', 'sales.grand_total as invoice_amount', 'sales.paid as amount_paid', 'sales.balance as outstanding_balance');
+    }
+
+    protected function getProcessedSales($applySorting = true)
+    {
+        // Get all data for calculations
+        $allSales = $this->getBaseQuery()->get();
+
+        // Process each sale to add calculated fields
+        $processedSales = $allSales->map(function ($sale) {
+            // Calculate due date
+            $dueDate = $this->calculateDueDate($sale->invoice_date, $sale->credit_period_days, $sale->sale_due_date ?? null);
+
+            // Calculate days overdue
+            $daysOverdue = $this->calculateDaysOverdue($dueDate);
+
+            // Get aging buckets
+            $aging = $this->getAgingBucket($daysOverdue, $sale->outstanding_balance);
+
+            return (object) array_merge($sale->toArray(), [
+                'due_date' => $dueDate,
+                'days_overdue' => $daysOverdue,
+                'aging_0_30' => $aging['0-30'],
+                'aging_31_60' => $aging['31-60'],
+                'aging_61_90' => $aging['61-90'],
+                'aging_90_plus' => $aging['90+'],
+            ]);
+        });
+
+        // Apply sorting if requested
+        if ($applySorting) {
+            $processedSales = $this->applySorting($processedSales);
+        }
+
+        return $processedSales;
+    }
+
     protected function applySorting($collection)
     {
         $field = $this->sortField;
@@ -136,77 +186,59 @@ class CustomerAging extends Component
 
         $property = $fieldMap[$field] ?? $field;
 
-        $sorted = $collection->sortBy(function ($item) use ($property) {
-            $value = $item->{$property} ?? null;
+        $sorted = $collection->sortBy(
+            function ($item) use ($property) {
+                $value = $item->{$property} ?? null;
 
-            // Convert dates to timestamps for proper sorting
-            if (in_array($property, ['invoice_date', 'due_date']) && $value) {
-                return strtotime($value);
-            }
+                // Convert dates to timestamps for proper sorting
+                if (in_array($property, ['invoice_date', 'due_date']) && $value) {
+                    return strtotime($value);
+                }
 
-            // Handle numeric values
-            if (in_array($property, ['invoice_amount', 'amount_paid', 'outstanding_balance', 'days_overdue', 'credit_period_days', 'aging_0_30', 'aging_31_60', 'aging_61_90', 'aging_90_plus'])) {
-                return (float) ($value ?? 0);
-            }
+                // Handle numeric values
+                if (in_array($property, ['invoice_amount', 'amount_paid', 'outstanding_balance', 'days_overdue', 'credit_period_days', 'aging_0_30', 'aging_31_60', 'aging_61_90', 'aging_90_plus'])) {
+                    return (float) ($value ?? 0);
+                }
 
-            return $value ?? '';
-        }, SORT_REGULAR, $direction === 'desc');
+                return $value ?? '';
+            },
+            SORT_REGULAR,
+            $direction === 'desc',
+        );
 
         return $sorted->values();
     }
 
+    public function export()
+    {
+        $processedSales = $this->getProcessedSales();
+
+        $totals = [
+            'totalInvoiceAmount' => $processedSales->sum('invoice_amount'),
+            'totalAmountPaid' => $processedSales->sum('amount_paid'),
+            'totalOutstanding' => $processedSales->sum('outstanding_balance'),
+            'total0to30' => $processedSales->sum('aging_0_30'),
+            'total31to60' => $processedSales->sum('aging_31_60'),
+            'total61to90' => $processedSales->sum('aging_61_90'),
+            'total90Plus' => $processedSales->sum('aging_90_plus'),
+        ];
+
+        $filters = [
+            'from_date' => $this->from_date,
+            'to_date' => $this->to_date,
+            'customer_id' => $this->customer_id,
+            'branch_id' => $this->branch_id,
+        ];
+
+        $exportFileName = 'Customer_Aging_Report_'.now()->timestamp.'.xlsx';
+
+        return Excel::download(new CustomerAgingExport($processedSales, $totals, $filters), $exportFileName);
+    }
+
     public function render()
     {
-        $today = Carbon::today();
-
-        $query = Sale::query()
-            ->join('accounts', 'sales.account_id', '=', 'accounts.id')
-            ->completed()
-            ->where('sales.balance', '>', 0) // Only show sales with outstanding balance
-            ->when($this->branch_id, fn ($q, $value) => $q->where('sales.branch_id', $value))
-            ->when($this->customer_id, fn ($q, $value) => $q->where('sales.account_id', $value))
-            ->when($this->from_date ?? '', fn ($q, $value) => $q->whereDate('sales.date', '>=', date('Y-m-d', strtotime($value))))
-            ->when($this->to_date ?? '', fn ($q, $value) => $q->whereDate('sales.date', '<=', date('Y-m-d', strtotime($value))))
-            ->select(
-                'accounts.id as account_id',
-                'accounts.name as customer_name',
-                'accounts.mobile as customer_mobile',
-                'accounts.credit_period_days',
-                'sales.id',
-                'sales.invoice_no',
-                'sales.date as invoice_date',
-                'sales.due_date as sale_due_date',
-                'sales.grand_total as invoice_amount',
-                'sales.paid as amount_paid',
-                'sales.balance as outstanding_balance'
-            );
-
-        // Get all data for calculations
-        $allSales = $query->get();
-
-        // Process each sale to add calculated fields
-        $processedSales = $allSales->map(function ($sale) {
-            // Calculate due date
-            $dueDate = $this->calculateDueDate($sale->invoice_date, $sale->credit_period_days, $sale->sale_due_date ?? null);
-
-            // Calculate days overdue
-            $daysOverdue = $this->calculateDaysOverdue($dueDate);
-
-            // Get aging buckets
-            $aging = $this->getAgingBucket($daysOverdue, $sale->outstanding_balance);
-
-            return (object) array_merge($sale->toArray(), [
-                'due_date' => $dueDate,
-                'days_overdue' => $daysOverdue,
-                'aging_0_30' => $aging['0-30'],
-                'aging_31_60' => $aging['31-60'],
-                'aging_61_90' => $aging['61-90'],
-                'aging_90_plus' => $aging['90+'],
-            ]);
-        });
-
-        // Apply sorting
-        $processedSales = $this->applySorting($processedSales);
+        // Get processed sales with sorting
+        $processedSales = $this->getProcessedSales();
 
         // Calculate totals
         $this->totalInvoiceAmount = $processedSales->sum('invoice_amount');
@@ -224,16 +256,10 @@ class CustomerAging extends Component
         $total = $processedSales->count();
 
         // Create paginator manually
-        $sales = new \Illuminate\Pagination\LengthAwarePaginator(
-            $items,
-            $total,
-            $perPage,
-            $currentPage,
-            [
-                'path' => request()->url(),
-                'pageName' => 'page',
-            ]
-        );
+        $sales = new LengthAwarePaginator($items, $total, $perPage, $currentPage, [
+            'path' => request()->url(),
+            'pageName' => 'page',
+        ]);
 
         return view('livewire.report.customer.customer-aging', [
             'sales' => $sales,

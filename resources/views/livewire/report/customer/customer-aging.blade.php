@@ -1,4 +1,17 @@
 <div>
+    <div class="card-header bg-white">
+        <div class="row g-3">
+            <div class="col-md-4 d-flex align-items-center">
+                <div class="btn-group">
+                    @can('report.customer aging')
+                        <button class="btn btn-sm btn-outline-primary" title="Export as Excel" wire:click="export()">
+                            <i class="demo-pli-file-excel me-1"></i> Export
+                        </button>
+                    @endcan
+                </div>
+            </div>
+        </div>
+    </div>
     <div class="card-body px-0 pb-0">
         <div class="table-responsive">
             <table class="table table-striped table-hover align-middle mb-0 border-bottom">
