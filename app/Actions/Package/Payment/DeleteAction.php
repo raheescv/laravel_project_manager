@@ -30,7 +30,7 @@ class DeleteAction
 
             $return['success'] = true;
             $return['message'] = 'Successfully Deleted Package Payment';
-            $return['data'] = $package;
+            $return['data'] = [];
         } catch (Exception $e) {
             $return['success'] = false;
             $return['message'] = $e->getMessage();
