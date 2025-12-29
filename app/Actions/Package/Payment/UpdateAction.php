@@ -21,12 +21,6 @@ class UpdateAction
 
             $model->update($data);
 
-            // Update package paid amount
-            $package = Package::find($model->package_id);
-            if ($package) {
-                $package->updatePaidAmount();
-            }
-
             $return['success'] = true;
             $return['message'] = 'Successfully Updated Package Payment';
             $return['data'] = $model;

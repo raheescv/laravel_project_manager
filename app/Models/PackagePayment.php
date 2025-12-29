@@ -44,4 +44,21 @@ class PackagePayment extends Model
     {
         return $this->belongsTo(User::class, 'updated_by');
     }
+
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::saved(function ($payment) {
+            if ($payment->package) {
+                $payment->package->updatePaidAmount();
+            }
+        });
+
+        static::deleted(function ($payment) {
+            if ($payment->package) {
+                $payment->package->updatePaidAmount();
+            }
+        });
+    }
 }

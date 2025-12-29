@@ -16,12 +16,6 @@ class CreateAction
 
             $model = PackagePayment::create($data);
 
-            // Update package paid amount
-            $package = Package::find($data['package_id']);
-            if ($package) {
-                $package->updatePaidAmount();
-            }
-
             $return['success'] = true;
             $return['message'] = 'Successfully Created Package Payment';
             $return['data'] = $model;

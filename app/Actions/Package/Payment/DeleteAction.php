@@ -15,17 +15,8 @@ class DeleteAction
             if (! $model) {
                 throw new Exception("Package Payment not found with the specified ID: $id.", 1);
             }
-
-            $packageId = $model->package_id;
-
             if (! $model->delete()) {
                 throw new Exception('Oops! Something went wrong while deleting the Package Payment. Please try again.', 1);
-            }
-
-            // Update package paid amount
-            $package = Package::find($packageId);
-            if ($package) {
-                $package->updatePaidAmount();
             }
 
             $return['success'] = true;
