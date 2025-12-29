@@ -28,9 +28,14 @@
 
     <div class="d-flex justify-content-between align-items-center mb-3">
         <div></div>
+        <div>
+            <button class="btn btn-success btn-sm me-2" wire:click="openGenerateModal">
+                <i class="demo-psi-calendar-4 me-2"></i>Generate Terms
+            </button>
         <button class="btn btn-primary btn-sm" wire:click="openModal">
-            <i class="demo-psi-add me-2"></i>Add Terms
+                <i class="demo-psi-add me-2"></i>Add Terms
         </button>
+        </div>
     </div>
 
     @if (count($items) > 0)
@@ -87,6 +92,93 @@
         <div class="text-center py-5">
             <i class="demo-psi-calendar-4 fs-1 text-muted mb-3 d-block"></i>
             <p class="text-muted">No terms added yet. Click "Add Term" to get started.</p>
+        </div>
+    @endif
+
+    <!-- Generate Modal -->
+    @if ($showGenerateModal)
+        <div class="modal show d-block" style="background-color: rgba(0,0,0,0.5);" wire:click="closeGenerateModal">
+            <div class="modal-dialog modal-xl" wire:click.stop>
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Generate Terms</h5>
+                        <button type="button" class="btn-close" wire:click="closeGenerateModal"></button>
+                    </div>
+                    <form wire:submit.prevent="generateAndSave">
+                        <div class="modal-body">
+                            <div class="row mb-3">
+                                <div class="col-md-3">
+                                    <label class="form-label">From Date <span class="text-danger">*</span></label>
+                                    <input type="date" wire:model="generateForm.from_date" class="form-control">
+                                    @error('generateForm.from_date')
+                                        <span class="text-danger small">{{ $message }}</span>
+                                    @enderror
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label">Number of Terms <span class="text-danger">*</span></label>
+                                    <input type="number" wire:model="generateForm.number_of_terms" class="form-control" min="1" step="1">
+                                    @error('generateForm.number_of_terms')
+                                        <span class="text-danger small">{{ $message }}</span>
+                                    @enderror
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label">Frequency <span class="text-danger">*</span></label>
+                                    <select wire:model="generateForm.frequency" class="form-control" required>
+                                        <option value="">Select Frequency</option>
+                                        <option value="daily">Daily</option>
+                                        <option value="weekly">Weekly</option>
+                                        <option value="bi_weekly">Bi-Weekly</option>
+                                        <option value="thrice_monthly">Thrice a Month</option>
+                                        <option value="monthly">Monthly</option>
+                                    </select>
+                                    @error('generateForm.frequency')
+                                        <span class="text-danger small">{{ $message }}</span>
+                                    @enderror
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label">Default Status <span class="text-danger">*</span></label>
+                                    <select wire:model="generateForm.status" class="form-control" required>
+                                        @foreach (packageItemStatuses() as $key => $label)
+                                            <option value="{{ $key }}">{{ $label }}</option>
+                                        @endforeach
+                                    </select>
+                                    @error('generateForm.status')
+                                        <span class="text-danger small">{{ $message }}</span>
+                                    @enderror
+                                </div>
+                            </div>
+                            @if (!empty($previewDates))
+                                <div class="mb-3">
+                                    <label class="form-label fw-semibold">
+                                        <i class="demo-psi-calendar-4 me-2 text-primary"></i>Preview Dates
+                                        <span class="badge bg-primary ms-2">{{ count($previewDates) }} {{ count($previewDates) == 1 ? 'term' : 'terms' }}</span>
+                                    </label>
+                                    <div class="border rounded p-3 bg-light" style="max-height: 300px; overflow-y: auto; background-color: #f8f9fa !important;">
+                                        <div class="row g-2">
+                                            @foreach ($previewDates as $index => $date)
+                                                <div class="col-md-4 col-sm-6">
+                                                    <div class="d-flex align-items-center p-2 bg-white rounded border shadow-sm">
+                                                        <div class="badge bg-info me-2" style="min-width: 30px;">{{ $index + 1 }}</div>
+                                                        <div class="flex-grow-1">
+                                                            <i class="demo-psi-calendar-2 me-1 text-muted small"></i>
+                                                            <span class="fw-medium">{{ systemDate($date) }}</span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            @endforeach
+                                        </div>
+                                    </div>
+                                </div>
+                            @endif
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" wire:click="closeGenerateModal">Cancel</button>
+                            <button type="button" class="btn btn-info" wire:click="previewGenerationDates">Preview</button>
+                            <button type="submit" class="btn btn-primary">Generate & Save</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
         </div>
     @endif
 
