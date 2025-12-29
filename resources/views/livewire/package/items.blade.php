@@ -27,7 +27,13 @@
     </style>
 
     <div class="d-flex justify-content-between align-items-center mb-3">
-        <div></div>
+        <div>
+            @if (count($selectedItems) > 0)
+                <button class="btn btn-danger btn-sm" wire:click="deleteSelected" wire:confirm="Are you sure you want to delete {{ count($selectedItems) }} selected item(s)?">
+                    <i class="demo-pli-recycling me-2"></i>Delete Selected ({{ count($selectedItems) }})
+                </button>
+            @endif
+        </div>
         <div>
             <button class="btn btn-success btn-sm me-2" wire:click="openGenerateModal">
                 <i class="demo-psi-calendar-4 me-2"></i>Generate Terms
@@ -38,11 +44,21 @@
         </div>
     </div>
 
-    @if (count($items) > 0)
+    @if ($items->count() > 0)
         <div class="table-responsive">
-            <table class="table table-striped table-hover">
+            <table class="table table-striped table-sm table-hover">
                 <thead>
                     <tr>
+                        <th width="5%">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox"
+                                    wire:click="toggleSelectAll"
+                                    id="selectAll">
+                                <label class="form-check-label" for="selectAll" style="cursor: pointer;">
+                                    All
+                                </label>
+                            </div>
+                        </th>
                         <th width="15%">Date</th>
                         <th width="15%">Rescheduled Date</th>
                         <th width="15%">Status</th>
@@ -52,34 +68,43 @@
                 <tbody>
                     @foreach ($items as $index => $item)
                         <tr>
-                            <td>{{ systemDate($item['date']) }}</td>
                             <td>
-                                @if ($item['rescheduled_date'])
-                                    {{ systemDate($item['rescheduled_date']) }}
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox"
+                                        wire:click="toggleSelectItem({{ $item->id }})"
+                                        @if(in_array($item->id, $selectedItems)) checked @endif
+                                        id="item_{{ $item->id }}">
+                                    <label class="form-check-label" for="item_{{ $item->id }}" style="cursor: pointer;"></label>
+                                </div>
+                            </td>
+                            <td>{{ systemDate($item->date) }}</td>
+                            <td>
+                                @if ($item->rescheduled_date)
+                                    {{ systemDate($item->rescheduled_date) }}
                                 @else
                                     <span class="text-muted">-</span>
                                 @endif
                             </td>
                             <td>
-                                <span class="status-badge status-{{ $item['status'] }}">
-                                    {{ ucfirst($item['status']) }}
+                                <span class="status-badge status-{{ $item->status }}">
+                                    {{ ucfirst($item->status) }}
                                 </span>
                             </td>
                             <td class="text-end">
-                                <button class="btn btn-sm btn-outline-primary" wire:click="openModal({{ $item['id'] }})" title="Edit">
+                                <button class="btn btn-xs btn-outline-primary" wire:click="openModal({{ $item->id }})" title="Edit">
                                     <i class="demo-psi-pencil"></i>
                                 </button>
-                                <button class="btn btn-sm btn-outline-danger" wire:click="delete({{ $item['id'] }})" wire:confirm="Are you sure you want to delete this item?" title="Delete">
+                                <button class="btn btn-xs btn-outline-danger" wire:click="delete({{ $item->id }})" wire:confirm="Are you sure you want to delete this item?" title="Delete">
                                     <i class="demo-pli-recycling"></i>
                                 </button>
                             </td>
                         </tr>
                         <tr>
-                            @if ($item['notes'])
+                            @if ($item->notes)
                                 <td></td>
-                                <td colspan="2">
-                                    <span class="text-truncate d-inline-block" style="max-width: 300px;" title="{{ $item['notes'] }}">
-                                        <b>Note :</b> <i>{{ $item['notes'] }}</i>
+                                <td colspan="4">
+                                    <span class="text-truncate d-inline-block" style="max-width: 300px;" title="{{ $item->notes }}">
+                                        <b>Note :</b> <i>{{ $item->notes }}</i>
                                     </span>
                                 </td>
                             @endif
@@ -88,6 +113,11 @@
                 </tbody>
             </table>
         </div>
+        @if ($items->hasPages())
+            <div class="d-flex justify-content-center mt-3">
+                {{ $items->links() }}
+            </div>
+        @endif
     @else
         <div class="text-center py-5">
             <i class="demo-psi-calendar-4 fs-1 text-muted mb-3 d-block"></i>
@@ -123,13 +153,11 @@
                                 </div>
                                 <div class="col-md-3">
                                     <label class="form-label">Frequency <span class="text-danger">*</span></label>
-                                    <select wire:model="generateForm.frequency" class="form-control" required>
+                                    <select wire:model="generateForm.frequency" class="form-control" value='daily' required>
                                         <option value="">Select Frequency</option>
-                                        <option value="daily">Daily</option>
-                                        <option value="weekly">Weekly</option>
-                                        <option value="bi_weekly">Bi-Weekly</option>
-                                        <option value="thrice_monthly">Thrice a Month</option>
-                                        <option value="monthly">Monthly</option>
+                                        @foreach (packageFrequency() as $key => $label)
+                                            <option value="{{ $key }}">{{ $label }}</option>
+                                        @endforeach
                                     </select>
                                     @error('generateForm.frequency')
                                         <span class="text-danger small">{{ $message }}</span>
@@ -147,26 +175,63 @@
                                     @enderror
                                 </div>
                             </div>
-                            @if (!empty($previewDates))
+                            @if (!empty($previewDates) && !empty($calendarData))
                                 <div class="mb-3">
                                     <label class="form-label fw-semibold">
-                                        <i class="demo-psi-calendar-4 me-2 text-primary"></i>Preview Dates
+                                        <i class="demo-psi-calendar-4 me-2 text-primary"></i>Year View Calendar
                                         <span class="badge bg-primary ms-2">{{ count($previewDates) }} {{ count($previewDates) == 1 ? 'term' : 'terms' }}</span>
                                     </label>
-                                    <div class="border rounded p-3 bg-light" style="max-height: 300px; overflow-y: auto; background-color: #f8f9fa !important;">
-                                        <div class="row g-2">
-                                            @foreach ($previewDates as $index => $date)
-                                                <div class="col-md-4 col-sm-6">
-                                                    <div class="d-flex align-items-center p-2 bg-white rounded border shadow-sm">
-                                                        <div class="badge bg-info me-2" style="min-width: 30px;">{{ $index + 1 }}</div>
-                                                        <div class="flex-grow-1">
-                                                            <i class="demo-psi-calendar-2 me-1 text-muted small"></i>
-                                                            <span class="fw-medium">{{ systemDate($date) }}</span>
+                                    <div class="border rounded p-2 bg-light shadow-sm" style="max-height: 400px; overflow-y: auto; background-color: #f8f9fa !important;">
+                                        @foreach ($calendarData as $yearData)
+                                            <div class="mb-3">
+                                                <h6 class="text-center mb-2 fw-bold text-primary bg-white p-1 rounded">
+                                                    <i class="demo-psi-calendar-4 me-2"></i>{{ $yearData['year'] }}
+                                                </h6>
+                                                <div class="row g-2">
+                                                    @foreach ($yearData['months'] as $month)
+                                                        <div class="col-lg-3 col-md-4 col-sm-6 mb-2">
+                                                            <div class="bg-white rounded border shadow-sm p-1">
+                                                                <div class="text-center fw-semibold small mb-1 text-primary" style="font-size: 0.75rem;">
+                                                                    {{ $month['month'] }}
+                                                                </div>
+                                                                <table class="table table-bordered mb-0" style="font-size: 0.65rem; margin: 0;">
+                                                                    <thead>
+                                                                        <tr style="background-color: #e7f3ff;">
+                                                                            <th class="text-center p-1" style="font-size: 0.6rem; padding: 2px !important;">S</th>
+                                                                            <th class="text-center p-1" style="font-size: 0.6rem; padding: 2px !important;">M</th>
+                                                                            <th class="text-center p-1" style="font-size: 0.6rem; padding: 2px !important;">T</th>
+                                                                            <th class="text-center p-1" style="font-size: 0.6rem; padding: 2px !important;">W</th>
+                                                                            <th class="text-center p-1" style="font-size: 0.6rem; padding: 2px !important;">T</th>
+                                                                            <th class="text-center p-1" style="font-size: 0.6rem; padding: 2px !important;">F</th>
+                                                                            <th class="text-center p-1" style="font-size: 0.6rem; padding: 2px !important;">S</th>
+                                                                        </tr>
+                                                                    </thead>
+                                                                    <tbody>
+                                                                        @foreach ($month['weeks'] as $week)
+                                                                            <tr>
+                                                                                @foreach ($week as $day)
+                                                                                    @if ($day === null)
+                                                                                        <td class="text-center p-1" style="padding: 2px !important; background-color: #f8f9fa; border: 1px solid #dee2e6;"></td>
+                                                                                    @elseif (!$day['isTerm'])
+                                                                                        <td class="text-center p-1" style="padding: 2px !important; border: 1px solid #dee2e6;">
+                                                                                            <span class="text-muted" style="font-size: 0.7rem;">{{ $day['day'] }}</span>
+                                                                                        </td>
+                                                                                    @else
+                                                                                        <td class="text-center p-1" style="padding: 2px !important; background-color: #0dcaf0; border: 1px solid #0dcaf0; color: white;">
+                                                                                            <span class="fw-bold" style="font-size: 0.7rem;">{{ $day['day'] }}</span>
+                                                                                        </td>
+                                                                                    @endif
+                                                                                @endforeach
+                                                                            </tr>
+                                                                        @endforeach
+                                                                    </tbody>
+                                                                </table>
+                                                            </div>
                                                         </div>
-                                                    </div>
+                                                    @endforeach
                                                 </div>
-                                            @endforeach
-                                        </div>
+                                            </div>
+                                        @endforeach
                                     </div>
                                 </div>
                             @endif

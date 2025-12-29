@@ -11,7 +11,7 @@
 
     @if (count($payments) > 0)
         <div class="table-responsive">
-            <table class="table table-striped table-hover">
+            <table class="table table-striped table-hover table-sm">
                 <thead>
                     <tr>
                         <th width="20%">Date</th>
@@ -33,10 +33,10 @@
                             </td>
                             <td class="text-end fw-bold">{{ currency($payment['amount']) }}</td>
                             <td class="text-end">
-                                <button class="btn btn-sm btn-outline-primary" wire:click="openModal({{ $payment['id'] }})" title="Edit">
+                                <button class="btn btn-xs btn-outline-primary" wire:click="openModal({{ $payment['id'] }})" title="Edit">
                                     <i class="demo-psi-pencil"></i>
                                 </button>
-                                <button class="btn btn-sm btn-outline-danger" wire:click="delete({{ $payment['id'] }})" wire:confirm="Are you sure you want to delete this payment?" title="Delete">
+                                <button class="btn btn-xs btn-outline-danger" wire:click="delete({{ $payment['id'] }})" wire:confirm="Are you sure you want to delete this payment?" title="Delete">
                                     <i class="demo-pli-recycling"></i>
                                 </button>
                             </td>
