@@ -160,17 +160,9 @@ class ProfitLoss extends Component
      */
     protected function calculateNetPurchase(): float
     {
-        $purchaseAccount = Account::where('name', 'Purchase')
-            ->where('account_type', 'expense')
-            ->first();
-
-        $purchaseReturnAccount = Account::where('name', 'Purchase Returns')
-            ->where('account_type', 'income')
-            ->first();
 
         $totalPurchase = 0.0;
-        $totalPurchaseReturn = 0.0;
-
+        $purchaseAccount = Account::where('name', 'Purchase') ->where('account_type', 'expense') ->first();
         if ($purchaseAccount) {
             $query = JournalEntry::query()
                 ->where('account_id', $purchaseAccount->id)
@@ -187,6 +179,25 @@ class ProfitLoss extends Component
             }
         }
 
+        $inventoryAccount = Account::where('name', 'Inventory') ->where('account_type', 'asset') ->first();
+        if ($inventoryAccount) {
+            $query = JournalEntry::query()
+                ->where('account_id', $inventoryAccount->id)
+                ->whereBetween('date', [$this->start_date, $this->end_date])
+                ->selectRaw('COALESCE(SUM(debit), 0) as total_debit')
+                ->selectRaw('COALESCE(SUM(credit), 0) as total_credit');
+
+            $this->applyBranchFilter($query);
+
+            $result = $query->first();
+            if ($result) {
+                // For expense accounts, net = debit - credit
+                $totalPurchase += $result->total_debit;
+            }
+        }
+
+        $totalPurchaseReturn = 0.0;
+        $purchaseReturnAccount = Account::where('name', 'Purchase Returns') ->where('account_type', 'income') ->first();
         if ($purchaseReturnAccount) {
             $query = JournalEntry::query()
                 ->where('account_id', $purchaseReturnAccount->id)
@@ -335,6 +346,9 @@ class ProfitLoss extends Component
                 $accounts = [];
                 foreach ($group->accounts as $account) {
                     if ($account->id === $sale_id) {
+                        continue;
+                    }
+                    if ($account->id === 10) {
                         continue;
                     }
                     $amount = $this->calculateAccountAmount($account->id, $accountType);
