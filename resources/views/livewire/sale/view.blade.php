@@ -648,7 +648,7 @@
                                                 @foreach ($journal->entries as $entry)
                                                     <tr>
                                                         <td class="text-end">{{ $entry->id }}</td>
-                                                        <td>{{ systemDate($journal->date) }}</td>
+                                                        <td>{{ systemDate($entry->date) }}</td>
                                                         <td>
                                                             <a href="{{ route('account::view', $entry->account_id) }}" class="text-primary">
                                                                 {{ $entry->account?->name }}
