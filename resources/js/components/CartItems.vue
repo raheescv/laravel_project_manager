@@ -20,7 +20,7 @@
                         </small>
                     </div>
                 </div>
-                <div v-if="totalQuantity > 0" class="flex gap-1">
+                <div class="flex gap-1">
                     <button type="button" @click="$emit('view-cart-items')"
                         class="h-6 w-6 flex items-center justify-center bg-indigo-100 text-indigo-600 rounded-md hover:bg-indigo-600 hover:text-white transition-all duration-200"
                         title="View Items">
