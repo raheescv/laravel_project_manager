@@ -138,9 +138,51 @@ class ProductResource extends JsonResource
 
                 return $availableStock <= 0;
             }),
+
+            'stock_quantity_availability_status' => $this->when($this->relationLoaded('inventories'), function () {
+                return $this->getStockQuantityAvailabilityStatus();
+            }),
+
             'available_sizes' => $this->getAvailableSizes(),
             'related_sizes' => $this->getRelatedSizes(),
         ];
+    }
+
+    /**
+     * Get stock quantity availability status based on selected branch.
+     *
+     * @return string
+     */
+    private function getStockQuantityAvailabilityStatus(): string
+    {
+        if (! $this->relationLoaded('inventories') || $this->inventories->isEmpty()) {
+            return 'out_of_stock';
+        }
+
+        $selectedBranchId = session('branch_id');
+        $selectedBranchStock = 0;
+        $otherBranchesStock = 0;
+
+        foreach ($this->inventories as $inventory) {
+            if ($inventory->branch_id == $selectedBranchId) {
+                $selectedBranchStock += $inventory->quantity;
+            } else {
+                $otherBranchesStock += $inventory->quantity;
+            }
+        }
+
+        // If available in selected branch
+        if ($selectedBranchStock > 0) {
+            return 'in_stock';
+        }
+
+        // If available in other branches but not in selected branch
+        if ($otherBranchesStock > 0) {
+            return 'available_in_other_branches';
+        }
+
+        // Not available anywhere
+        return 'out_of_stock';
     }
 
     /**
