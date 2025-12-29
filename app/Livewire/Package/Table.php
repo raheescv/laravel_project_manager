@@ -127,7 +127,7 @@ class Table extends Component
     public function render()
     {
         $needsJoin = str_contains($this->sortField, 'package_categories.') || str_contains($this->sortField, 'accounts.');
-        
+
         $query = Package::query();
 
         // Join tables for sorting on related fields
@@ -151,30 +151,35 @@ class Table extends Component
                     });
             });
         })
-        ->when($this->status ?? '', function ($query, $value) use ($needsJoin) {
-            $statusField = $needsJoin ? 'packages.status' : 'status';
-            return $query->where($statusField, $value);
-        })
-        ->when($this->package_category_id ?? '', function ($query, $value) use ($needsJoin) {
-            $field = $needsJoin ? 'packages.package_category_id' : 'package_category_id';
-            return $query->where($field, $value);
-        })
-        ->when($this->account_id ?? '', function ($query, $value) use ($needsJoin) {
-            $field = $needsJoin ? 'packages.account_id' : 'account_id';
-            return $query->where($field, $value);
-        })
-        ->when($this->from_date ?? '', function ($query, $value) use ($needsJoin) {
-            $field = $needsJoin ? 'packages.end_date' : 'end_date';
-            return $query->where($field, '>=', $value);
-        })
-        ->when($this->to_date ?? '', function ($query, $value) use ($needsJoin) {
-            $field = $needsJoin ? 'packages.start_date' : 'start_date';
-            return $query->where($field, '<=', $value);
-        });
+            ->when($this->status ?? '', function ($query, $value) use ($needsJoin) {
+                $statusField = $needsJoin ? 'packages.status' : 'status';
+
+                return $query->where($statusField, $value);
+            })
+            ->when($this->package_category_id ?? '', function ($query, $value) use ($needsJoin) {
+                $field = $needsJoin ? 'packages.package_category_id' : 'package_category_id';
+
+                return $query->where($field, $value);
+            })
+            ->when($this->account_id ?? '', function ($query, $value) use ($needsJoin) {
+                $field = $needsJoin ? 'packages.account_id' : 'account_id';
+
+                return $query->where($field, $value);
+            })
+            ->when($this->from_date ?? '', function ($query, $value) use ($needsJoin) {
+                $field = $needsJoin ? 'packages.end_date' : 'end_date';
+
+                return $query->where($field, '>=', $value);
+            })
+            ->when($this->to_date ?? '', function ($query, $value) use ($needsJoin) {
+                $field = $needsJoin ? 'packages.start_date' : 'start_date';
+
+                return $query->where($field, '<=', $value);
+            });
 
         // Handle sorting - use packages table prefix for direct fields
         $sortField = $this->sortField;
-        if (!str_contains($sortField, '.')) {
+        if (! str_contains($sortField, '.')) {
             $sortField = ($needsJoin ? 'packages.' : '').$sortField;
         }
 

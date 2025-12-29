@@ -37,12 +37,13 @@ class SaleImport implements ToCollection, WithBatchInserts, WithChunkReading, Wi
     public function collection(Collection $rows)
     {
         $filteredRows = $rows->filter(function ($row) {
-            return $row->filter()->isNotEmpty() && !empty($row['date']);
+            return $row->filter()->isNotEmpty() && ! empty($row['date']);
         });
 
         // Group rows by reference_no (or use a unique key if reference_no is empty)
         $groupedRows = $filteredRows->groupBy(function ($row) {
             $referenceNo = $row['reference_no'] ?? null;
+
             // If no reference_no, use a unique identifier based on row index
             // This ensures rows without reference_no are treated as separate sales
             return $referenceNo ?? 'unique_'.md5(serialize($row));
@@ -87,7 +88,7 @@ class SaleImport implements ToCollection, WithBatchInserts, WithChunkReading, Wi
         ];
         // Get employee ID from first row (or use default)
         $employeeId = $this->getUserId($firstRow['employee_name'] ?? ($firstRow['employee_id'] ?? null));
-        if (!$employeeId) {
+        if (! $employeeId) {
             $employeeId = $this->userId;
         }
 
@@ -103,16 +104,16 @@ class SaleImport implements ToCollection, WithBatchInserts, WithChunkReading, Wi
             $items = array_merge($items, $rowItems);
 
             // Aggregate payment information (use first non-zero payment found)
-            if (empty($paymentMethodId) && !empty($rowData['payment_method_id'])) {
+            if (empty($paymentMethodId) && ! empty($rowData['payment_method_id'])) {
                 $paymentMethodId = $rowData['payment_method_id'];
             }
-            if (!empty($rowData['paid']) || !empty($rowData['amount'])) {
+            if (! empty($rowData['paid']) || ! empty($rowData['amount'])) {
                 $totalPaid += (float) ($rowData['paid'] ?? $rowData['amount'] ?? 0);
             }
         }
 
         if (empty($items)) {
-            throw new Exception('No valid items found for sale with reference: ' . ($data['reference_no'] ?? 'N/A'));
+            throw new Exception('No valid items found for sale with reference: '.($data['reference_no'] ?? 'N/A'));
         }
 
         $data['items'] = $items;
@@ -124,7 +125,7 @@ class SaleImport implements ToCollection, WithBatchInserts, WithChunkReading, Wi
                 'payment_method_id' => $paymentMethodId,
                 'amount' => $totalPaid,
             ];
-        } elseif (!empty($firstRow['payment_method_id']) && !empty($firstRow['paid'])) {
+        } elseif (! empty($firstRow['payment_method_id']) && ! empty($firstRow['paid'])) {
             // Fallback to first row payment if no aggregation
             $payments = $this->preparePayments($firstRow);
         }
@@ -133,7 +134,7 @@ class SaleImport implements ToCollection, WithBatchInserts, WithChunkReading, Wi
 
         // Create sale using CreateAction
         $response = (new CreateAction())->execute($data, $this->userId);
-        if (!$response['success']) {
+        if (! $response['success']) {
             throw new Exception($response['message']);
         }
     }
@@ -143,7 +144,7 @@ class SaleImport implements ToCollection, WithBatchInserts, WithChunkReading, Wi
         $items = [];
 
         // Handle single product row
-        if (!empty($saleData['product_name']) || !empty($saleData['product_id']) || !empty($saleData['barcode']) || !empty($saleData['product_code'])) {
+        if (! empty($saleData['product_name']) || ! empty($saleData['product_id']) || ! empty($saleData['barcode']) || ! empty($saleData['product_code'])) {
             $item = $this->createItemFromRow($saleData, $employeeId);
             if ($item) {
                 $items[] = $item;
@@ -157,24 +158,24 @@ class SaleImport implements ToCollection, WithBatchInserts, WithChunkReading, Wi
     {
         // Get product
         $productId = null;
-        if (!empty($row['product_id'])) {
+        if (! empty($row['product_id'])) {
             $productId = $row['product_id'];
-        } elseif (!empty($row['product_code'])) {
+        } elseif (! empty($row['product_code'])) {
             $productId = $this->getProductIdByCode($row['product_code']);
-        } elseif (!empty($row['product_name'])) {
+        } elseif (! empty($row['product_name'])) {
             $productId = $this->getProductIdByName($row['product_name']);
-        } elseif (!empty($row['barcode'])) {
+        } elseif (! empty($row['barcode'])) {
             $productId = $this->getProductIdByBarcode($row['barcode']);
         }
 
-        if (!$productId) {
-            throw new Exception('Product not found: ' . ($row['product_name'] ?? ($row['barcode'] ?? 'N/A')));
+        if (! $productId) {
+            throw new Exception('Product not found: '.($row['product_name'] ?? ($row['barcode'] ?? 'N/A')));
         }
 
         // Get inventory
         $inventoryId = $this->getInventoryId($productId, $this->branchId);
-        if (!$inventoryId) {
-            throw new Exception('Inventory not found for product ID: ' . $productId);
+        if (! $inventoryId) {
+            throw new Exception('Inventory not found for product ID: '.$productId);
         }
 
         $quantity = $row['quantity'] ?? 1;
@@ -208,6 +209,7 @@ class SaleImport implements ToCollection, WithBatchInserts, WithChunkReading, Wi
                 'amount' => $amount,
             ];
         }
+
         return $payments;
     }
 
@@ -353,7 +355,7 @@ class SaleImport implements ToCollection, WithBatchInserts, WithChunkReading, Wi
 
     public function __destruct()
     {
-        if (!empty($this->errors)) {
+        if (! empty($this->errors)) {
             event(new FileImportCompleted($this->userId, 'Sale', $this->errors));
         }
     }
