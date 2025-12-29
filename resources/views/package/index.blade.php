@@ -21,6 +21,8 @@
         </div>
     </div>
     @push('scripts')
+        @include('components.select.accountSelect')
+        @include('components.select.packageCategorySelect')
     @endpush
 </x-app-layout>
 
