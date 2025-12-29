@@ -29,7 +29,7 @@
     <div class="d-flex justify-content-between align-items-center mb-3">
         <div></div>
         <button class="btn btn-primary btn-sm" wire:click="openModal">
-            <i class="demo-psi-add me-2"></i>Add Term
+            <i class="demo-psi-add me-2"></i>Add Terms
         </button>
     </div>
 
@@ -86,7 +86,7 @@
     @else
         <div class="text-center py-5">
             <i class="demo-psi-calendar-4 fs-1 text-muted mb-3 d-block"></i>
-            <p class="text-muted">No items added yet. Click "Add Term" to get started.</p>
+            <p class="text-muted">No terms added yet. Click "Add Term" to get started.</p>
         </div>
     @endif
 
@@ -111,7 +111,7 @@
                                 </div>
                                 <div class="col-md-6">
                                     <label class="form-label">Status <span class="text-danger">*</span></label>
-                                    {{ html()->select('status', packageItemStatuses())->class('form-control')->id('status')->attribute('wire:model', 'item.status')->required(true)->attribute('style', 'width:100%')->placeholder('Select Status') }}
+                                    {{ html()->select('status', packageItemStatuses())->class('form-control')->id('status')->attributes(['wire:model' => 'item.status'])->required(true)->attribute('style', 'width:100%')->placeholder('Select Status') }}
                                     @error('item.status')
                                         <span class="text-danger small">{{ $message }}</span>
                                     @enderror

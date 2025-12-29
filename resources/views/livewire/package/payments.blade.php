@@ -70,17 +70,9 @@
                     </div>
                     <form wire:submit.prevent="save">
                         <div class="modal-body">
-                            <div class="mb-3">
+                            <div class="mb-3" wire:ignore>
                                 <label class="form-label">Payment Method <span class="text-danger">*</span></label>
-                                <select wire:model="payment.payment_method_id" class="form-control select-payment_method_id" id="payment_method_id_{{ $editingId ?? 'new' }}">
-                                    <option value="">Select Payment Method</option>
-                                    @foreach ($paymentMethods as $method)
-                                        <option value="{{ $method->id }}">{{ $method->name }}</option>
-                                    @endforeach
-                                </select>
-                                @error('payment.payment_method_id')
-                                    <span class="text-danger small">{{ $message }}</span>
-                                @enderror
+                                {{ html()->select('payment_method_id', $paymentMethods)->class('form-control')->id('payment_method_id')->attribute('wire:model.live', 'payment.payment_method_id')->required(true)->attribute('style', 'width:100%')->placeholder('Select Payment Method') }}
                             </div>
                             <div class="row">
                                 <div class="col-md-6">

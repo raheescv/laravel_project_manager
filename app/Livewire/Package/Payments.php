@@ -42,7 +42,7 @@ class Payments extends Component
     public function loadPaymentMethods()
     {
         // Load payment methods from accounts (where is_payment_method = true or from cache)
-        $this->paymentMethods = Account::whereIn('id', cache('payment_methods', []))->get();
+        $this->paymentMethods = Account::whereIn('id', cache('payment_methods', []))->pluck('name', 'id')->toArray();
     }
 
     public function openModal($id = null)
