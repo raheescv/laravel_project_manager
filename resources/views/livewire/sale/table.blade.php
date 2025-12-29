@@ -3,6 +3,11 @@
         <div class="row g-3">
             <div class="col-md-4 d-flex align-items-center">
                 <div class="btn-group">
+                    @can('sale.import')
+                        <button class="btn btn-sm btn-outline-info" title="Import Sales" data-bs-toggle="modal" data-bs-target="#SaleImportModal">
+                            <i class="demo-psi-file-import me-1"></i> Import
+                        </button>
+                    @endcan
                     @can('sale.export')
                         <button class="btn btn-sm btn-outline-primary" title="Export as Excel" wire:click="export()">
                             <i class="demo-pli-file-excel me-1"></i> Export

@@ -21,6 +21,7 @@
         </div>
     </div>
     <x-sale.column-visibility-canvas />
+    <x-sale.sale-import-modal />
     @push('scripts')
         @include('components.select.customerSelect')
         @include('components.select.userSelect')

@@ -151,7 +151,11 @@ class Sale extends Model implements AuditableContracts
                 $search = trim($search);
 
                 return $q->where(function ($q) use ($search): void {
-                    $q->where('sales.id', 'like', "%{$search}%")->orWhere('sales.invoice_no', 'like', "%{$search}%");
+                    $q->where('sales.id', 'like', "%{$search}%")
+                    ->orWhere('sales.invoice_no', 'like', "%{$search}%")
+                    ->orWhere('sales.reference_no', 'like', "%{$search}%")
+                    ->orWhere('sales.customer_name', 'like', "%{$search}%")
+                    ->orWhere('sales.customer_mobile', 'like', "%{$search}%");
                 });
             })
             ->when($filters['sale_type'] ?? '', fn ($q, $value) => $q->where('sales.sale_type', $value))

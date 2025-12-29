@@ -83,6 +83,14 @@ if (! function_exists('orderSegments')) {
     }
 }
 
+if (! function_exists('excelDateConversion')) {
+    function excelDateConversion($excelDate)
+    {
+        $unixDate = ($excelDate - 25569) * 86400;
+
+        return gmdate('Y-m-d', $unixDate);
+    }
+}
 if (! function_exists('systemDate')) {
     function systemDate($value)
     {

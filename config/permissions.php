@@ -30,7 +30,7 @@ return [
     'category' => ['create', 'view', 'edit', 'delete', 'import', 'export'],
     'appointment' => ['create', 'view', 'edit', 'delete', 'export', 'checkout', 'dashboard'],
     'sale' => [
-        'create', 'view', 'edit', 'edit completed', 'delete item after completed', 'delete', 'cancel', 'export', 'receipts', 'view journal entries', 'dashboard bar chart',
+        'create', 'view', 'edit', 'edit completed', 'delete item after completed', 'delete', 'cancel', 'import', 'export', 'receipts', 'view journal entries', 'dashboard bar chart',
         'item price edit',
         'dashboard weekly summary',
         'dashboard top items',
