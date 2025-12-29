@@ -255,10 +255,6 @@
                     </div>
                 </div>
             </div>
-
-            <div class="form-section-divider"></div>
-
-            <!-- Status, Amount and Summary Row -->
             <div class="row g-3">
                 <div class="col-md-8">
                     <div class="row g-3">
@@ -333,7 +329,7 @@
             <div class="col-7">
                 <div class="content-section">
                     <h4 class="section-title">
-                        <i class="demo-psi-calendar-4 me-2"></i>Package Items
+                        <i class="demo-psi-calendar-4 me-2"></i>Package Terms
                     </h4>
                     @livewire('package.items', ['package_id' => $table_id])
                 </div>

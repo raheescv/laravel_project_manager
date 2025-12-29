@@ -29,7 +29,7 @@
     <div class="d-flex justify-content-between align-items-center mb-3">
         <div></div>
         <button class="btn btn-primary btn-sm" wire:click="openModal">
-            <i class="demo-psi-add me-2"></i>Add Item
+            <i class="demo-psi-add me-2"></i>Add Term
         </button>
     </div>
 
@@ -86,7 +86,7 @@
     @else
         <div class="text-center py-5">
             <i class="demo-psi-calendar-4 fs-1 text-muted mb-3 d-block"></i>
-            <p class="text-muted">No items added yet. Click "Add Item" to get started.</p>
+            <p class="text-muted">No items added yet. Click "Add Term" to get started.</p>
         </div>
     @endif
 
@@ -96,7 +96,7 @@
             <div class="modal-dialog" wire:click.stop>
                 <div class="modal-content">
                     <div class="modal-header">
-                        <h5 class="modal-title">{{ $editingId ? 'Edit Item' : 'Add Item' }}</h5>
+                        <h5 class="modal-title">{{ $editingId ? 'Edit Term' : 'Add Term' }}</h5>
                         <button type="button" class="btn-close" wire:click="closeModal"></button>
                     </div>
                     <form wire:submit.prevent="save">
