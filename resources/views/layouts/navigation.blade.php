@@ -269,9 +269,9 @@
                             </ul>
                         </li>
                     @endif
- @if (auth()->user()->can('sale.booking.view'))
+                    @if (auth()->user()->can('sale.booking'))
                         @php
-                            $bookingActive = request()->routeIs('sale::booking', 'sale::create_booking', 'sale::edit_booking*', 'sale::view_booking*');
+                            $bookingActive = request()->routeIs('sale::booking', 'sale::create_booking', 'sale::edit_booking*', 'sale::view_booking*','report::sale_booking_item','sale::booking_receipts',);
                         @endphp
 
                         <li class="nav-item has-sub">
@@ -286,6 +286,17 @@
                                 <li class="nav-item">
                                     <a href="{{ route('sale::booking') }}" class="nav-link {{ request()->routeIs('sale::booking') ? 'active' : '' }}">List</a>
                                 </li>
+                                
+                                    <li class="nav-item">
+                                        <a href="{{ route('report::sale_booking_item') }}" class="nav-link {{ request()->is(['report/sale_booking_item']) ? 'active' : '' }}">Item Wise Report</a>
+                                    </li>
+
+                                 
+                                    <li class="nav-item">
+                                        <a href="{{ route('sale::booking_receipts') }}" class="nav-link {{ request()->is(['sale/booking_receipts']) ? 'active' : '' }}">Booking Receipts</a>
+                                    </li>
+                               
+                               
                             </ul>
                         </li>
                          @endif

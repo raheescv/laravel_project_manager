@@ -17,5 +17,17 @@ class CustomerMeasurement extends Model
         'measurement_template_id',
         'value',
     ];
+
+
+    public function template()
+    {
+        return $this->belongsTo(MeasurementTemplate::class, 'measurement_template_id');
+    }
+
+    // Optional: relation to MeasurementCategory via template
+    public function category()
+    {
+        return $this->belongsTo(MeasurementCategory::class, 'category_id');
+    }
 }
 

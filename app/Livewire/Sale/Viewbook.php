@@ -5,10 +5,11 @@ namespace App\Livewire\Sale;
 use App\Actions\Sale\UpdateAction;
 use App\Models\Sale;
 use App\Models\SaleReturnItem;
+use App\Models\CustomerMeasurement;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use Livewire\Component;
 use Illuminate\Support\Facades\Log;
+use Livewire\Component;
 
 class Viewbook extends Component
 {
@@ -26,7 +27,9 @@ class Viewbook extends Component
 
     public $status;
 
-   public function mount($table_id = null)
+    public $customer_measurements = []; // ✅ New property
+
+    public function mount($table_id = null)
     {
         $this->table_id = $table_id;
 
@@ -34,7 +37,7 @@ class Viewbook extends Component
             return;
         }
 
-        // ✅ Only booking sales
+        // Load sale with relations
         $this->sale = Sale::with(
                 'account:id,name,mobile',
                 'branch:id,name',
@@ -52,13 +55,13 @@ class Viewbook extends Component
             return redirect()->route('sale::index');
         }
 
-        // ✅ Default selected value
+        // Default selected value
         $this->status = $this->sale->status;
-
         $this->sales = $this->sale->toArray();
 
         $item_ids = [];
 
+        // Map sale items
         $this->items = $this->sale->items->mapWithKeys(function ($item) use (&$item_ids) {
             $key = $item['employee_id'] . '-' . $item['inventory_id'];
             $item_ids[] = $item['id'];
@@ -87,6 +90,7 @@ class Viewbook extends Component
             ];
         })->toArray();
 
+        // Sale return items
         $this->sale_return_items = SaleReturnItem::with(
                 'saleReturn:id,other_discount,total',
                 'product:id,name'
@@ -94,48 +98,72 @@ class Viewbook extends Component
             ->whereIn('sale_item_id', $item_ids)
             ->get();
 
+        // Payments
         $this->payments = $this->sale->payments
             ->map
             ->only(['id', 'amount', 'date', 'payment_method_id', 'created_by', 'name'])
             ->toArray();
 
-        }
- public function updatedStatus($value)
-{
-    Log::info('Status changed', ['value' => $value]);
+        // Customer measurements
+        // Customer measurements
+        $this->customer_measurements = CustomerMeasurement::with(
+            'category',   // your category() relation
+            'template'    // use the correct method name
+        )
+        ->where('sale_id', $this->table_id)
+        ->get()
+        ->map(function ($cm) {
+            return [
+                'id' => $cm->id,
+                'customer_id' => $cm->customer_id,
+                'category_id' => $cm->category_id,
+                'measurement_template_id' => $cm->measurement_template_id,
+                'value' => $cm->value,
+                'category_name' => $cm->category->name ?? null,
+                'template_name' => $cm->template->name ?? null, // updated here
+            ];
+        })->toArray();
 
-    $this->sale->status = $value;
-    $this->sale->updated_by = Auth::id();
-    $this->sale->save();
+            }
 
-    // ✅ KEEP BOTH IN SYNC
-    $this->status = $value;
-    $this->sales['status'] = $value;
+    public function updatedStatus($value)
+    {
+        Log::info('Status changed', ['value' => $value]);
 
-    $this->dispatch('success', [
-        'message' => 'Status updated successfully'
-    ]);
-}
+        $this->sale->status = $value;
+        $this->sale->updated_by = Auth::id();
+        $this->sale->save();
 
+        // Keep both in sync
+        $this->status = $value;
+        $this->sales['status'] = $value;
 
+        $this->dispatch('success', [
+            'message' => 'Status updated successfully'
+        ]);
+    }
 
     public function save($type = 'completed')
     {
         try {
             $oldStatus = $this->sales['status'];
             DB::beginTransaction();
+
             if (! count($this->items)) {
                 throw new \Exception('Please add any item', 1);
             }
+
             $this->sales['status'] = $type;
             $this->sales['items'] = $this->items;
             $this->sales['payments'] = $this->payments;
 
             $user_id = Auth::id();
             $response = (new UpdateAction())->execute($this->sales, $this->table_id, $user_id);
+
             if (! $response['success']) {
                 throw new \Exception($response['message'], 1);
             }
+
             $this->mount($this->table_id);
 
             DB::commit();
@@ -150,6 +178,7 @@ class Viewbook extends Component
     public function sendToWhatsapp()
     {
         $response = Sale::sendToWhatsapp($this->table_id);
+
         if (! $response['success']) {
             $this->dispatch('error', ['message' => $response['message']]);
         } else {

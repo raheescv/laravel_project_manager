@@ -10,6 +10,10 @@ class ReportController extends Controller
     {
         return view('report.sale_item');
     }
+    public function sale_booking_item()
+    {
+        return view('report.sale_booking_item');
+    }
 
     public function sale_return_item()
     {

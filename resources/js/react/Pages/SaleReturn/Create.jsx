@@ -331,10 +331,10 @@ const buildMeasurementPayload = () => {
     };
 
     payload.status =
-        customPaymentData.balanceDue > 0 ? "draft" : "completed";
+        customPaymentData.balanceDue > 0 ? "draft" : "draft";
 } else {
     payload.custom_payment_data = null;
-    payload.status = "completed";
+    payload.status = "draft";
 }
 
 

@@ -322,6 +322,17 @@ if (! function_exists('saleStatuses')) {
         ];
     }
 }
+
+if (! function_exists('saleStatusesbooking')) {
+    function saleStatusesbooking()
+    {
+        return [
+            'draft' => 'Draft',
+            'completed' => 'Delivered',
+            'cancelled' => 'Cancelled',
+        ];
+    }
+}
 if (! function_exists('appointmentStatuses')) {
     function appointmentStatuses()
     {

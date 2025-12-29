@@ -24,17 +24,18 @@ Route::middleware('auth')->group(function (): void {
             Route::get('edit/{id}', 'page')->name('edit')->can('sale.edit');
              Route::get('create-booking', 'create_booking')
             ->name('create_booking') // ✅ unique name
-            ->can('sale.booking.create');
+            ->can('sale.booking_create');
 
               Route::get('edit-booking/{id}', 'edit_booking')
             ->name('edit_booking') // ✅ unique name
-            ->can('sale.booking.edit');
+            ->can('sale.booking_edit');
         });
 
         Route::get('view/{id}', 'view')->name('view')->can('sale.view');
-         Route::get('view-booking/{id}', 'view_booking')->name('view_booking')->can('sale.booking.view');
+         Route::get('view-booking/{id}', 'view_booking')->name('view_booking')->can('sale.booking_view');
         Route::get('invoices', 'get')->name('invoice-list');
         Route::get('receipts', 'receipts')->name('receipts')->can('sale.receipts');
+         Route::get('booking-receipts', 'booking_receipts')->name('booking_receipts')->can('sale.booking_receipts');
 
         Route::get('day-management', 'dayManagement')->name('day-management')->can('sale.view');
         Route::get('day-session/{id}', 'daySession')->name('day-session')->can('sale.view');

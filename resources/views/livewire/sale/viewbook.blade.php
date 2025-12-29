@@ -155,6 +155,67 @@
                             </div>
                         </div>
                     </div>
+@if(!empty($customer_measurements))
+<div class="mb-4">
+    <h5 class="card-title d-flex align-items-center mb-3">
+        <i class="fa fa-ruler-combined me-2"></i>
+        Customer Measurements
+    </h5>
+
+    <div class="table-responsive">
+        <table class="table table-striped table-hover table-sm align-middle">
+            <thead>
+                <tr class="bg-primary text-white">
+                    <th class="text-white rounded-start">SL No</th>
+                    <th class="text-white">Measurement Category</th>
+                    <th class="text-white">Measurement</th>
+                    <th class="text-white text-end rounded-end">Value</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                @php
+                    // Group measurements by category
+                    $groupedMeasurements = collect($customer_measurements)
+                        ->groupBy('category_name');
+                @endphp
+
+                @foreach ($groupedMeasurements as $category => $measurements)
+                    {{-- Category Header --}}
+                    <tr>
+                        <th colspan="4" class="bg-light">
+                            <i class="fa fa-tags me-2"></i>
+                            {{ $category ?? 'General' }}
+                        </th>
+                    </tr>
+
+                    {{-- Measurements --}}
+                    @foreach ($measurements as $measurement)
+                        <tr>
+                            <td>{{ $loop->iteration }}</td>
+                            <td>
+                                <span class="fw-semibold text-primary">
+                                    {{ $measurement['category_name'] ?? '-' }}
+                                </span>
+                            </td>
+                            <td>
+                                <i class="fa fa-ruler me-1 text-secondary"></i>
+                                {{ $measurement['template_name'] ?? '-' }}
+                            </td>
+                            <td class="text-end fw-bold">
+                                {{ $measurement['value'] ?? '-' }}
+                            </td>
+                        </tr>
+                    @endforeach
+                @endforeach
+            </tbody>
+        </table>
+    </div>
+</div>
+@else
+    <p class="text-muted mt-3">No measurements found for this sale.</p>
+@endif
+
 
                     <!-- Customer Feedback Section -->
                     @if ($sale->rating || $sale->feedback)

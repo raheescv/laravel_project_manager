@@ -590,6 +590,11 @@ class SaleController extends Controller
         return view('sale.receipts');
     }
 
+     public function booking_receipts()
+    {
+        return view('sale.booking_receipts');
+    }
+
     public function get(Request $request)
     {
         $list = (new Sale())->getDropDownList($request->all());

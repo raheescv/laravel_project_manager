@@ -24,13 +24,17 @@ return [
     'category' => ['create', 'view', 'edit', 'delete', 'import', 'export'],
     'appointment' => ['create', 'view', 'edit', 'delete', 'export', 'checkout', 'dashboard'],
     'sale' => [
-        'create', 'view', 'edit', 'edit completed', 'delete item after completed', 'delete', 'cancel', 'export', 'receipts', 'view journal entries', 'dashboard bar chart',
+        'create', 'view', 'edit', 'edit completed', 'delete item after completed', 'delete', 'cancel', 'export', 'receipts', 'booking_receipts','booking',
+    'booking_create',
+    'booking_view',
+    'booking_edit', 'view journal entries', 'dashboard bar chart',
         'dashboard weekly summary',
         'dashboard top items',
         'audit view',
         'combo offer',
         'feedback',
         'change day session',
+
     ],
     'sales return' => ['create', 'view', 'edit', 'edit completed', 'delete', 'export', 'payments', 'view journal entries'],
     'purchase' => ['create', 'view', 'edit', 'edit completed', 'delete', 'cancel', 'export', 'payments', 'view journal entries', 'delete item after completed', 'delete payment after completed', 'barcode print'],
