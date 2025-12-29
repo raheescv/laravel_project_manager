@@ -6,6 +6,7 @@ use App\Actions\User\BranchAction;
 use App\Models\Branch;
 use App\Models\User;
 use Exception;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Livewire\Component;
 use Spatie\Permission\Models\Role;
@@ -68,6 +69,39 @@ class View extends Component
             $this->dispatch('success', ['title' => $response['message']]);
         } catch (Exception $e) {
             DB::rollback();
+            $this->dispatch('error', ['message' => $e->getMessage()]);
+        }
+    }
+
+    public function impersonate()
+    {
+        try {
+            $targetUser = User::find($this->table_id);
+            
+            if (!$targetUser) {
+                throw new Exception('User not found', 1);
+            }
+
+            if (!$targetUser->is_active) {
+                throw new Exception('Cannot impersonate inactive user', 1);
+            }
+
+            // Store original user ID in session for later restoration
+            session(['impersonator_id' => Auth::id()]);
+            
+            // Log in as the target user
+            Auth::login($targetUser);
+            
+            // Set branch session data like in AuthenticatedSessionController
+            session(['branch_id' => $targetUser->default_branch_id]);
+            session(['branch_code' => $targetUser->branch?->code]);
+            session(['branch_name' => $targetUser->branch?->name]);
+            
+            // Regenerate session for security
+            request()->session()->regenerate();
+            
+            return $this->redirect(route('dashboard'));
+        } catch (Exception $e) {
             $this->dispatch('error', ['message' => $e->getMessage()]);
         }
     }
