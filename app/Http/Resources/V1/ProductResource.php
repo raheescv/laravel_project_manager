@@ -150,8 +150,6 @@ class ProductResource extends JsonResource
 
     /**
      * Get stock quantity availability status based on selected branch.
-     *
-     * @return string
      */
     private function getStockQuantityAvailabilityStatus(): string
     {

@@ -6,6 +6,7 @@ use App\Actions\Package\CreateAction;
 use App\Actions\Package\UpdateAction;
 use App\Models\Package;
 use App\Models\PackageCategory;
+use Carbon\Carbon;
 use Exception;
 use Livewire\Component;
 
@@ -27,6 +28,69 @@ class Page extends Component
             $this->package = Package::with(['packageCategory', 'account', 'items', 'payments'])->find($this->table_id);
             $this->packages = $this->package->toArray();
         }
+    }
+
+    public function updatedPackagesPackageCategoryId($value)
+    {
+        if ($value) {
+            $category = PackageCategory::find($value);
+            if ($category) {
+                // Auto-fill amount from category price
+                if ($category->price) {
+                    $this->packages['amount'] = $category->price;
+                }
+
+                // Calculate end_date based on frequency and no_of_visits
+                if ($category->frequency && $category->no_of_visits && isset($this->packages['start_date'])) {
+                    $startDate = Carbon::parse($this->packages['start_date']);
+                    $endDate = $this->calculateEndDate($startDate, $category->frequency, $category->no_of_visits);
+                    $this->packages['end_date'] = $endDate->format('Y-m-d');
+                }
+            }
+        }
+    }
+
+    public function updatedPackagesStartDate($value)
+    {
+        // Recalculate end_date if category is selected and has frequency/no_of_visits
+        if ($value && isset($this->packages['package_category_id']) && $this->packages['package_category_id']) {
+            $category = PackageCategory::find($this->packages['package_category_id']);
+            if ($category && $category->frequency && $category->no_of_visits) {
+                $startDate = Carbon::parse($value);
+                $endDate = $this->calculateEndDate($startDate, $category->frequency, $category->no_of_visits);
+                $this->packages['end_date'] = $endDate->format('Y-m-d');
+            }
+        }
+    }
+
+    private function calculateEndDate($startDate, $frequency, $noOfVisits)
+    {
+        $endDate = Carbon::parse($startDate);
+
+        // Calculate end date based on frequency and number of visits
+        switch ($frequency) {
+            case 'daily':
+                $endDate->addDays($noOfVisits - 1);
+                break;
+            case 'weekly':
+                $endDate->addWeeks($noOfVisits - 1);
+                break;
+            case 'bi_weekly':
+                $endDate->addWeeks(($noOfVisits - 1) * 2);
+                break;
+            case 'monthly':
+                $endDate->addMonths($noOfVisits - 1);
+                break;
+            case 'yearly':
+                $endDate->addYears($noOfVisits - 1);
+                break;
+            default:
+                // Default to 30 days if frequency is not set
+                $endDate->addDays(30);
+                break;
+        }
+
+        return $endDate;
     }
 
     protected function validationAttributes()

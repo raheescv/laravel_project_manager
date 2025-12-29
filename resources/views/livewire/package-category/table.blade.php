@@ -36,12 +36,14 @@
             <table class="table table-striped">
                 <thead>
                     <tr>
-                        <th width="20%">
+                        <th width="10%">
                             <input type="checkbox" wire:model.live="selectAll" />
                             <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="id" label="ID" />
                         </th>
                         <th><x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="name" label="Name" /></th>
                         <th class="text-end"><x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="price" label="Price" /></th>
+                        <th><x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="frequency" label="Frequency" /></th>
+                        <th class="text-end"><x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="no_of_visits" label="No. of Visits" /></th>
                         <th width="10%">Action</th>
                     </tr>
                 </thead>
@@ -53,7 +55,21 @@
                                 {{ $item->id }}
                             </td>
                             <td>{{ $item->name }}</td>
-                            <td class="text-end">{{ $item->price }}</td>
+                            <td class="text-end">{{ number_format($item->price, 2) }}</td>
+                            <td>
+                                @if($item->frequency)
+                                    <span class="badge bg-info">{{ packageFrequency()[$item->frequency] ?? ucfirst(str_replace('_', ' ', $item->frequency)) }}</span>
+                                @else
+                                    <span class="text-muted">-</span>
+                                @endif
+                            </td>
+                            <td class="text-end">
+                                @if($item->no_of_visits)
+                                    <span class="badge bg-secondary">{{ $item->no_of_visits }}</span>
+                                @else
+                                    <span class="text-muted">-</span>
+                                @endif
+                            </td>
                             <td>
                                 @can('package category.edit')
                                     <i table_id="{{ $item->id }}" class="demo-psi-pencil fs-5 me-2 pointer edit"></i>

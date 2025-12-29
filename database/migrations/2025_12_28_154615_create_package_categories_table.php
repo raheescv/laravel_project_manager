@@ -15,6 +15,8 @@ return new class() extends Migration
             $table->id();
             $table->string('name');
             $table->decimal('price', 10, 2);
+            $table->string('frequency')->nullable()->default('daily');
+            $table->integer('no_of_visits')->nullable()->default(1);
             $table->timestamps();
         });
     }

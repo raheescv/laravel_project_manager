@@ -423,6 +423,18 @@ if (! function_exists('thermalPrinterStyle')) {
         ];
     }
 }
+if (! function_exists('packageFrequency')) {
+    function packageFrequency()
+    {
+        return [
+            'daily' => 'Daily',
+            'weekly' => 'Weekly',
+            'bi_weekly' => 'Bi-Weekly',
+            'monthly' => 'Monthly',
+            'yearly' => 'Yearly',
+        ];
+    }
+}
 if (! function_exists('getNextSaleInvoiceNo')) {
     function getNextSaleInvoiceNo()
     {

@@ -77,29 +77,29 @@ class View extends Component
     {
         try {
             $targetUser = User::find($this->table_id);
-            
-            if (!$targetUser) {
+
+            if (! $targetUser) {
                 throw new Exception('User not found', 1);
             }
 
-            if (!$targetUser->is_active) {
+            if (! $targetUser->is_active) {
                 throw new Exception('Cannot impersonate inactive user', 1);
             }
 
             // Store original user ID in session for later restoration
             session(['impersonator_id' => Auth::id()]);
-            
+
             // Log in as the target user
             Auth::login($targetUser);
-            
+
             // Set branch session data like in AuthenticatedSessionController
             session(['branch_id' => $targetUser->default_branch_id]);
             session(['branch_code' => $targetUser->branch?->code]);
             session(['branch_name' => $targetUser->branch?->name]);
-            
+
             // Regenerate session for security
             request()->session()->regenerate();
-            
+
             return $this->redirect(route('dashboard'));
         } catch (Exception $e) {
             $this->dispatch('error', ['message' => $e->getMessage()]);

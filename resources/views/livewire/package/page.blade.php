@@ -164,6 +164,23 @@
                     }
                 }
             });
+
+            // Listen for package category changes to auto-fill amount and end_date
+            document.addEventListener('DOMContentLoaded', function() {
+                var packageCategorySelect = document.querySelector('#package_category_id');
+                if (packageCategorySelect) {
+                    // Wait for tomSelect to initialize
+                    setTimeout(function() {
+                        var tomSelectInstance = packageCategorySelect.tomselect;
+                        if (tomSelectInstance) {
+                            tomSelectInstance.on('change', function(value) {
+                                // Update Livewire model which will trigger updatedPackagesPackageCategoryId
+                                @this.set('packages.package_category_id', value, false);
+                            });
+                        }
+                    }, 500);
+                }
+            });
         </script>
     @endpush
 </div>
