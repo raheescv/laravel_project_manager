@@ -65,10 +65,12 @@
                                             </div>
                                             <div class="col-12">
                                                 <div class="info-item p-2 hover-lift rounded bg-light bg-opacity-50">
-                                                    <div class="d-flex align-items-center mb-1">
-                                                        <i
-                                                            class="demo-psi-clock {{ $sale->status === 'completed' ? 'text-success' : ($sale->status === 'cancelled' ? 'text-danger' : 'text-warning') }} me-2"></i>
-                                                        <small class="text-muted">Status</small>
+                                                    <div class="d-flex align-items-center justify-content-between mb-1">
+                                                        <div class="d-flex align-items-center">
+                                                            <i class="demo-psi-clock {{ $sale->status === 'completed' ? 'text-success' : ($sale->status === 'cancelled' ? 'text-danger' : 'text-warning') }} me-2"></i>
+                                                            <small class="text-muted">Status</small>
+                                                        </div>
+                                                        <small class="text-muted">{{ systemDateTime($sale->updated_at) }}</small>
                                                     </div>
                                                     <span class="badge {{ $sale->status === 'completed' ? 'bg-success' : ($sale->status === 'cancelled' ? 'bg-danger' : 'bg-warning') }} rounded-pill">
                                                         {{ ucfirst($sale->status) }}
