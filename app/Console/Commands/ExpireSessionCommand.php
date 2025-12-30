@@ -5,7 +5,6 @@ namespace App\Console\Commands;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
-use Illuminate\Support\Facades\Session;
 
 class ExpireSessionCommand extends Command
 {
@@ -30,6 +29,7 @@ class ExpireSessionCommand extends Command
         } else {
             $this->error("Session driver '{$driver}' is not supported by this command.");
             $this->info("Supported drivers: 'file', 'database'");
+
             return 1;
         }
     }
@@ -38,32 +38,37 @@ class ExpireSessionCommand extends Command
     {
         $sessionPath = storage_path('framework/sessions');
 
-        if (!File::exists($sessionPath)) {
+        if (! File::exists($sessionPath)) {
             $this->error("Session directory not found: {$sessionPath}");
+
             return 1;
         }
 
         if ($expireAll) {
-            $files = File::glob($sessionPath . '/sess_*');
+            $files = File::glob($sessionPath.'/sess_*');
             $count = count($files);
             File::delete($files);
             $this->info("Expired {$count} session file(s).");
+
             return 0;
         }
 
         if ($sessionId) {
-            $filePath = $sessionPath . '/sess_' . $sessionId;
+            $filePath = $sessionPath.'/sess_'.$sessionId;
             if (File::exists($filePath)) {
                 File::delete($filePath);
                 $this->info("Expired session: {$sessionId}");
+
                 return 0;
             } else {
                 $this->error("Session file not found: {$filePath}");
+
                 return 1;
             }
         }
 
-        $this->error("Please provide a session ID or use --all flag.");
+        $this->error('Please provide a session ID or use --all flag.');
+
         return 1;
     }
 
@@ -76,6 +81,7 @@ class ExpireSessionCommand extends Command
                 $count = DB::table($table)->count();
                 DB::table($table)->delete();
                 $this->info("Expired {$count} session(s) from database.");
+
                 return 0;
             }
 
@@ -87,6 +93,7 @@ class ExpireSessionCommand extends Command
                     ->where('user_id', $userId)
                     ->delete();
                 $this->info("Expired {$count} session(s) for user ID: {$userId}");
+
                 return 0;
             }
 
@@ -97,19 +104,22 @@ class ExpireSessionCommand extends Command
 
                 if ($deleted) {
                     $this->info("Expired session: {$sessionId}");
+
                     return 0;
                 } else {
                     $this->error("Session not found: {$sessionId}");
+
                     return 1;
                 }
             }
 
-            $this->error("Please provide a session ID, use --all flag, or specify --user=USER_ID.");
+            $this->error('Please provide a session ID, use --all flag, or specify --user=USER_ID.');
+
             return 1;
         } catch (\Exception $e) {
-            $this->error("Error expiring sessions: " . $e->getMessage());
+            $this->error('Error expiring sessions: '.$e->getMessage());
+
             return 1;
         }
     }
 }
-

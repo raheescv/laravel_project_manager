@@ -4,9 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Actions\Package\GeneratePackageStatementAction;
 use App\Models\Configuration;
-use App\Models\Package;
 use App\Models\PackagePayment;
-use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 
 class PackageController extends Controller

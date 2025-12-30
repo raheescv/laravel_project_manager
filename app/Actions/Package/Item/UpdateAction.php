@@ -3,6 +3,7 @@
 namespace App\Actions\Package\Item;
 
 use App\Models\PackageItem;
+use Exception;
 use Illuminate\Support\Facades\Auth;
 
 class UpdateAction
@@ -12,10 +13,11 @@ class UpdateAction
         try {
             $model = PackageItem::find($id);
             if (! $model) {
-                throw new \Exception("Package Item not found with the specified ID: $id.", 1);
+                throw new Exception("Package Item not found with the specified ID: $id.", 1);
             }
             $data['updated_by'] = Auth::id();
-            validationHelper(PackageItem::rules($id), $data);
+
+            validationHelper(PackageItem::rules($id, [], $data), $data);
             $model->update($data);
 
             $return['success'] = true;

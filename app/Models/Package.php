@@ -60,6 +60,11 @@ class Package extends Model
         return $this->hasMany(PackagePayment::class);
     }
 
+    public function journals()
+    {
+        return $this->hasMany(Journal::class, 'model_id')->where('model', 'Package');
+    }
+
     public function createdBy()
     {
         return $this->belongsTo(User::class, 'created_by');

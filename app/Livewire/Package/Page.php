@@ -161,21 +161,19 @@ class Page extends Component
         try {
             if (! $this->table_id) {
                 $response = (new CreateAction())->execute($this->packages);
-                if (! $response['success']) {
-                    throw new Exception($response['message'], 1);
-                }
-                $this->dispatch('success', ['message' => $response['message']]);
-
-                return redirect()->route('package::edit', $response['data']->id);
+                $this->table_id = $response['data']->id;
             } else {
                 $response = (new UpdateAction())->execute($this->packages, $this->table_id);
-                if (! $response['success']) {
-                    throw new Exception($response['message'], 1);
-                }
-                $this->dispatch('success', ['message' => $response['message']]);
-                $this->mount($this->table_id);
-                $this->dispatch('$refresh'); // Refresh to update balance
             }
+            if (! $response['success']) {
+                throw new Exception($response['message'], 1);
+            }
+
+            $this->dispatch('success', ['message' => $response['message']]);
+            $this->mount($this->table_id);
+            $this->dispatch('$refresh'); // Refresh to update balance
+
+            return redirect()->route('package::edit', $response['data']->id);
         } catch (Exception $e) {
             $this->dispatch('error', ['message' => $e->getMessage()]);
         }

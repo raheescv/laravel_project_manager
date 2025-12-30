@@ -11,10 +11,18 @@ class CreateAction
     public function execute($data)
     {
         try {
+            $userId = Auth::id();
             validationHelper(Package::rules(), $data);
-            $data['created_by'] = Auth::id();
+            $data['created_by'] = $userId;
             $data['paid'] = $data['paid'] ?? 0;
             $model = Package::create($data);
+
+            $model->refresh();
+
+            $response = (new JournalEntryAction())->creditExecute($model, $userId);
+            if (! $response['success']) {
+                throw new Exception($response['message'], 1);
+            }
 
             $return['success'] = true;
             $return['message'] = 'Successfully Created Package';

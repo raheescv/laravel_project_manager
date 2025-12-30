@@ -36,7 +36,7 @@ class GeneratePackageStatementAction
 
     protected function getPackage(): Package
     {
-        return Package::with(['packageCategory', 'account', 'items', 'payments.paymentMethod']) ->findOrFail($this->packageId);
+        return Package::with(['packageCategory', 'account', 'items', 'payments.paymentMethod'])->findOrFail($this->packageId);
     }
 
     protected function buildLedgerEntries(): Collection
@@ -59,6 +59,7 @@ class GeneratePackageStatementAction
             $paymentEntry = $this->createPaymentEntry($payment);
             $ledgerEntries->push($paymentEntry);
         }
+
         return $ledgerEntries;
     }
 
@@ -220,4 +221,3 @@ class GeneratePackageStatementAction
         return $pdf->stream($filename);
     }
 }
-

@@ -2,8 +2,10 @@
 
 namespace App\Actions\Package\Payment;
 
+use App\Actions\Package\JournalDeleteAction;
 use App\Models\PackagePayment;
 use Exception;
+use Illuminate\Support\Facades\Auth;
 
 class DeleteAction
 {
@@ -18,6 +20,8 @@ class DeleteAction
                 throw new Exception('Oops! Something went wrong while deleting the Package Payment. Please try again.', 1);
             }
 
+            $this->deleteJournalEntry($id);
+
             $return['success'] = true;
             $return['message'] = 'Successfully Deleted Package Payment';
             $return['data'] = [];
@@ -27,5 +31,13 @@ class DeleteAction
         }
 
         return $return;
+    }
+
+    private function deleteJournalEntry($id)
+    {
+        $response = (new JournalDeleteAction())->executeByEntryId($id, Auth::id());
+        if (! $response['success']) {
+            throw new Exception($response['message'], 1);
+        }
     }
 }

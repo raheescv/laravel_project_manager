@@ -2,7 +2,9 @@
 
 namespace App\Actions\Package\Payment;
 
+use App\Actions\Package\JournalEntryAction;
 use App\Models\PackagePayment;
+use Exception;
 use Illuminate\Support\Facades\Auth;
 
 class CreateAction
@@ -10,17 +12,23 @@ class CreateAction
     public function execute($data)
     {
         try {
-            $data['created_by'] = Auth::id();
+            $userId = Auth::id();
+            $data['created_by'] = $userId;
             validationHelper(PackagePayment::rules(), $data);
 
             $model = PackagePayment::create($data);
 
+            $response = (new JournalEntryAction())->debitExecute($model, $userId);
+            if (! $response['success']) {
+                throw new Exception($response['message']);
+            }
+
             $return['success'] = true;
             $return['message'] = 'Successfully Created Package Payment';
             $return['data'] = $model;
-        } catch (\Throwable $th) {
+        } catch (Exception $e) {
             $return['success'] = false;
-            $return['message'] = $th->getMessage();
+            $return['message'] = $e->getMessage();
         }
 
         return $return;

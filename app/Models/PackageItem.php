@@ -11,12 +11,24 @@ class PackageItem extends Model
 
     protected $casts = [];
 
-    public static function rules($id = 0, $merge = [])
+    public static function rules($id, $merge, $data)
     {
         return array_merge(
             [
                 'package_id' => ['required', 'exists:packages,id'],
-                'date' => ['required', 'date'],
+                'date' => [
+                    'required',
+                    'date',
+                    Rule::unique('package_items')
+                        ->where(function ($query) use ($data) {
+                            if (isset($data['package_id'])) {
+                                return $query->where('package_id', $data['package_id']);
+                            }
+
+                            return $query;
+                        })
+                        ->ignore($id),
+                ],
                 'rescheduled_date' => ['nullable', 'date'],
                 'status' => ['required', Rule::in(['visited', 'rescheduled', 'pending'])],
                 'notes' => ['nullable', 'string'],

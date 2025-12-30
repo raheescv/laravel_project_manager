@@ -124,7 +124,7 @@ class Items extends Component
     {
         try {
             $item = PackageItem::find($id);
-            if (!$item) {
+            if (! $item) {
                 throw new \Exception('Item not found.');
             }
 
