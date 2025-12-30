@@ -119,10 +119,14 @@ class Page extends Component
         // Update account name when account_id changes in entries
         if (str_starts_with($key, 'entries.')) {
             $parts = explode('.', $key);
-            if (count($parts) === 3 && $parts[2] === 'account_id') {
-                $index = (int) $parts[1];
-                if (isset($this->entries[$index])) {
-                    $account = Account::find($value);
+            $index = (int) $parts[1];
+            // Reset credit and debit if they have non-zero numeric values
+            if (isset($this->entries[$index])) {
+                if (! is_numeric($this->entries[$index]['debit'])) {
+                    $this->entries[$index]['debit'] = 0;
+                }
+                if (! is_numeric($this->entries[$index]['credit'])) {
+                    $this->entries[$index]['credit'] = 0;
                 }
             }
         }
