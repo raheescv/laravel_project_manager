@@ -304,6 +304,7 @@ class ProfitLoss extends Component
 
         $structure = [];
         $sale_id = Account::where('name', 'Sale')->first()?->id;
+        $costOfGoodsSold_id = Account::where('slug', 'cost_of_goods_sold')->where('account_type', 'expense')->first()?->id;
 
         // Get IDs of special accounts that are handled separately
         $specialAccountIds = Account::whereIn('name', ['Sale', 'Purchase', 'Purchase Returns', 'Sales Returns'])
@@ -348,7 +349,7 @@ class ProfitLoss extends Component
                     if ($account->id === $sale_id) {
                         continue;
                     }
-                    if ($account->id === 10) {
+                    if ($costOfGoodsSold_id && $account->id === $costOfGoodsSold_id) {
                         continue;
                     }
                     $amount = $this->calculateAccountAmount($account->id, $accountType);
