@@ -19,6 +19,8 @@ class Items extends Component
 
     protected $paginationTheme = 'bootstrap';
 
+    public $perPage = '10';
+
     public $item = [];
 
     public $showModal = false;
@@ -113,6 +115,29 @@ class Items extends Component
             $this->dispatch('success', ['message' => $response['message']]);
             $this->resetPage();
             $this->selectedItems = [];
+        } catch (\Throwable $e) {
+            $this->dispatch('error', ['message' => $e->getMessage()]);
+        }
+    }
+
+    public function markAsVisited($id)
+    {
+        try {
+            $item = PackageItem::find($id);
+            if (!$item) {
+                throw new \Exception('Item not found.');
+            }
+
+            $itemData = $item->toArray();
+            $itemData['status'] = 'visited';
+
+            $response = (new UpdateAction())->execute($itemData, $id);
+            if (! $response['success']) {
+                throw new \Exception($response['message'], 1);
+            }
+
+            $this->dispatch('success', ['message' => 'Item marked as visited successfully.']);
+            $this->resetPage();
         } catch (\Throwable $e) {
             $this->dispatch('error', ['message' => $e->getMessage()]);
         }
@@ -397,10 +422,26 @@ class Items extends Component
         return $dates;
     }
 
+    public function updatedPerPage()
+    {
+        $this->resetPage();
+    }
+
     public function render()
     {
         $package = Package::with('items')->find($this->package_id);
-        $items = $package ? $package->items()->orderBy('date', 'asc')->paginate(10) : collect([]);
+
+        if ($package) {
+            $query = $package->items()->orderBy('date', 'asc');
+
+            if ($this->perPage === 'all') {
+                $items = $query->get();
+            } else {
+                $items = $query->paginate((int) $this->perPage);
+            }
+        } else {
+            $items = collect([]);
+        }
 
         return view('livewire.package.items', [
             'items' => $items,

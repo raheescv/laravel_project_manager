@@ -33,6 +33,9 @@
                             </td>
                             <td class="text-end fw-bold">{{ currency($payment['amount']) }}</td>
                             <td class="text-end">
+                                <a href="{{ route('package::payment.print', $payment['id']) }}" target="_blank" class="btn btn-xs btn-outline-secondary" title="Print Invoice">
+                                    <i class="demo-psi-printer"></i>
+                                </a>
                                 <button class="btn btn-xs btn-outline-primary" wire:click="openModal({{ $payment['id'] }})" title="Edit">
                                     <i class="demo-psi-pencil"></i>
                                 </button>

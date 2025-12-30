@@ -137,9 +137,14 @@
                                 <td>{{ currency($packages['balance'] ?? 0) }}</td>
                             </tr>
                         </table>
-                        <div class="text-center mt-3">
-                            <button type="submit" class="btn btn-primary btn-lg">
-                                <i class="demo-psi-save fs-5 me-2"></i>
+                        <div class="d-flex flex-column gap-2 mt-3">
+                            @if ($table_id)
+                                <a href="{{ route('package::statement', $table_id) }}" target="_blank" class="btn btn-info btn-sm w-100 d-flex align-items-center justify-content-center" style="font-weight: 500;">
+                                    <i class="demo-psi-file-edit me-2"></i>Get Statement
+                                </a>
+                            @endif
+                            <button type="submit" class="btn btn-primary w-100 d-flex align-items-center justify-content-center" style="font-weight: 600; padding: 0.65rem 1rem;">
+                                <i class="demo-psi-save me-2"></i>
                                 Save Package
                             </button>
                         </div>

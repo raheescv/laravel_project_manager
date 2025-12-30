@@ -38,22 +38,40 @@
             <button class="btn btn-success btn-sm me-2" wire:click="openGenerateModal">
                 <i class="demo-psi-calendar-4 me-2"></i>Generate Terms
             </button>
-        <button class="btn btn-primary btn-sm" wire:click="openModal">
+            <button class="btn btn-primary btn-sm" wire:click="openModal">
                 <i class="demo-psi-add me-2"></i>Add Terms
-        </button>
+            </button>
         </div>
     </div>
 
     @if ($items->count() > 0)
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <div>
+                <span class="text-muted small">
+                    @if (is_object($items) && method_exists($items, 'total'))
+                        Showing {{ $items->firstItem() ?? 0 }} to {{ $items->lastItem() ?? 0 }} of {{ $items->total() }} item(s)
+                    @else
+                        Showing {{ $items->count() }} item(s)
+                    @endif
+                </span>
+            </div>
+            <div class="d-flex align-items-center gap-2">
+                <label class="form-label mb-0 small text-muted">Items per page:</label>
+                <select wire:model.live="perPage" class="form-select form-select-sm" style="width: auto;">
+                    <option value="10">10</option>
+                    <option value="20">20</option>
+                    <option value="50">50</option>
+                    <option value="all">All</option>
+                </select>
+            </div>
+        </div>
         <div class="table-responsive">
             <table class="table table-striped table-sm table-hover">
                 <thead>
                     <tr>
                         <th width="5%">
                             <div class="form-check">
-                                <input class="form-check-input" type="checkbox"
-                                    wire:click="toggleSelectAll"
-                                    id="selectAll">
+                                <input class="form-check-input" type="checkbox" wire:click="toggleSelectAll" id="selectAll">
                                 <label class="form-check-label" for="selectAll" style="cursor: pointer;">
                                     All
                                 </label>
@@ -70,9 +88,7 @@
                         <tr>
                             <td>
                                 <div class="form-check">
-                                    <input class="form-check-input" type="checkbox"
-                                        wire:click="toggleSelectItem({{ $item->id }})"
-                                        @if(in_array($item->id, $selectedItems)) checked @endif
+                                    <input class="form-check-input" type="checkbox" wire:click="toggleSelectItem({{ $item->id }})" @if (in_array($item->id, $selectedItems)) checked @endif
                                         id="item_{{ $item->id }}">
                                     <label class="form-check-label" for="item_{{ $item->id }}" style="cursor: pointer;"></label>
                                 </div>
@@ -91,6 +107,11 @@
                                 </span>
                             </td>
                             <td class="text-end">
+                                @if ($item->status !== 'visited')
+                                    <button class="btn btn-xs btn-outline-success" wire:click="markAsVisited({{ $item->id }})" title="Mark as Visited">
+                                        <i class="demo-psi-check"></i>
+                                    </button>
+                                @endif
                                 <button class="btn btn-xs btn-outline-primary" wire:click="openModal({{ $item->id }})" title="Edit">
                                     <i class="demo-psi-pencil"></i>
                                 </button>
@@ -113,7 +134,7 @@
                 </tbody>
             </table>
         </div>
-        @if ($items->hasPages())
+        @if (is_object($items) && method_exists($items, 'hasPages') && $items->hasPages())
             <div class="d-flex justify-content-center mt-3">
                 {{ $items->links() }}
             </div>
@@ -211,13 +232,15 @@
                                                                             <tr>
                                                                                 @foreach ($week as $day)
                                                                                     @if ($day === null)
-                                                                                        <td class="text-center p-1" style="padding: 2px !important; background-color: #f8f9fa; border: 1px solid #dee2e6;"></td>
+                                                                                        <td class="text-center p-1"
+                                                                                            style="padding: 2px !important; background-color: #f8f9fa; border: 1px solid #dee2e6;"></td>
                                                                                     @elseif (!$day['isTerm'])
                                                                                         <td class="text-center p-1" style="padding: 2px !important; border: 1px solid #dee2e6;">
                                                                                             <span class="text-muted" style="font-size: 0.7rem;">{{ $day['day'] }}</span>
                                                                                         </td>
                                                                                     @else
-                                                                                        <td class="text-center p-1" style="padding: 2px !important; background-color: #0dcaf0; border: 1px solid #0dcaf0; color: white;">
+                                                                                        <td class="text-center p-1"
+                                                                                            style="padding: 2px !important; background-color: #0dcaf0; border: 1px solid #0dcaf0; color: white;">
                                                                                             <span class="fw-bold" style="font-size: 0.7rem;">{{ $day['day'] }}</span>
                                                                                         </td>
                                                                                     @endif
