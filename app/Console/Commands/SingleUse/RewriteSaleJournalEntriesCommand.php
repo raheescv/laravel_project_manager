@@ -29,10 +29,7 @@ class RewriteSaleJournalEntriesCommand extends Command
      */
     public function handle()
     {
-        $sales = Sale::completed()
-        // ->limit(1)
-        ->get();
-
+        $sales = Sale::completed()->get();
         $this->info("Processing {$sales->count()} sales...");
 
         $this->withProgressBar($sales, function ($sale) {
