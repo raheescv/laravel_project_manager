@@ -16,8 +16,11 @@ class AuthenticatedSessionController extends Controller
     /**
      * Display the login view.
      */
-    public function create(): View
+    public function create(Request $request): View
     {
+        // Regenerate session token to prevent 419 errors
+        $request->session()->regenerateToken();
+
         return view('auth.login');
     }
 
