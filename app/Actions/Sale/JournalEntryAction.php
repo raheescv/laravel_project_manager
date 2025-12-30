@@ -34,7 +34,7 @@ class JournalEntryAction
                 $remarks = 'Sale to '.$sale->account->name;
                 $debit = 0;
                 $credit = $sale->gross_amount;
-                $entries[] = $this->makeEntryPair($accounts['sale'], $sale->account_id, $debit, $credit, $remarks);
+                $entries[] = $this->makeEntryPair($accounts['sale'], $sale->account_id, $debit, $credit, $remarks, 'Sale', $sale->id);
             }
 
             // Cost of Goods Sold
@@ -47,7 +47,7 @@ class JournalEntryAction
                 $remarks = 'Cost of goods sold (Inventory transfer)';
                 $debit = $totalCost;
                 $credit = 0;
-                $entries[] = $this->makeEntryPair($accounts['cost_of_goods_sold'], $accounts['inventory'], $debit, $credit, $remarks);
+                $entries[] = $this->makeEntryPair($accounts['cost_of_goods_sold'], $accounts['inventory'], $debit, $credit, $remarks, 'Sale', $sale->id);
             }
 
             // Tax Entries
@@ -55,7 +55,7 @@ class JournalEntryAction
                 $remarks = 'Sales tax collected on sale';
                 $debit = 0;
                 $credit = $sale->tax_amount;
-                $entries[] = $this->makeEntryPair($accounts['tax_amount'], $sale->account_id, $debit, $credit, $remarks);
+                $entries[] = $this->makeEntryPair($accounts['tax_amount'], $sale->account_id, $debit, $credit, $remarks, 'Sale', $sale->id);
             }
 
             // Discounts
@@ -63,14 +63,14 @@ class JournalEntryAction
                 $remarks = 'Discount on individual product on sale';
                 $debit = $sale->item_discount;
                 $credit = 0;
-                $entries[] = $this->makeEntryPair($accounts['discount'], $sale->account_id, $debit, $credit, $remarks);
+                $entries[] = $this->makeEntryPair($accounts['discount'], $sale->account_id, $debit, $credit, $remarks, 'Sale', $sale->id);
             }
 
             if ($sale->other_discount > 0) {
                 $remarks = Sale::ADDITIONAL_DISCOUNT_DESCRIPTION;
                 $debit = $sale->other_discount;
                 $credit = 0;
-                $entries[] = $this->makeEntryPair($accounts['discount'], $sale->account_id, $debit, $credit, $remarks);
+                $entries[] = $this->makeEntryPair($accounts['discount'], $sale->account_id, $debit, $credit, $remarks, 'Sale', $sale->id);
             }
 
             // Freight
@@ -78,7 +78,7 @@ class JournalEntryAction
                 $remarks = 'Freight Charge provided on sale';
                 $debit = 0;
                 $credit = $sale->freight;
-                $entries[] = $this->makeEntryPair($accounts['freight'], $sale->account_id, $debit, $credit, $remarks);
+                $entries[] = $this->makeEntryPair($accounts['freight'], $sale->account_id, $debit, $credit, $remarks, 'Sale', $sale->id);
             }
 
             // Round Off
@@ -92,7 +92,7 @@ class JournalEntryAction
                     $debit = abs($sale->round_off);
                     $credit = 0;
                 }
-                $entries[] = $this->makeEntryPair($accounts['round_off'], $sale->account_id, $debit, $credit, $remarks);
+                $entries[] = $this->makeEntryPair($accounts['round_off'], $sale->account_id, $debit, $credit, $remarks, 'Sale', $sale->id);
             }
             // Payments
             foreach ($sale->payments as $payment) {
@@ -119,7 +119,7 @@ class JournalEntryAction
         return $return;
     }
 
-    protected function makeEntryPair($accountId1, $accountId2, $debit, $credit, $remarks, $model = null, $modelId = null)
+    protected function makeEntryPair($accountId1, $accountId2, $debit, $credit, $remarks, $model, $modelId)
     {
         $base = [
             'created_by' => $this->userId,

@@ -162,7 +162,7 @@ class ProfitLoss extends Component
     {
 
         $totalPurchase = 0.0;
-        $purchaseAccount = Account::where('name', 'Purchase') ->where('account_type', 'expense') ->first();
+        $purchaseAccount = Account::where('name', 'Purchase')->where('account_type', 'expense')->first();
         if ($purchaseAccount) {
             $query = JournalEntry::query()
                 ->where('account_id', $purchaseAccount->id)
@@ -179,7 +179,7 @@ class ProfitLoss extends Component
             }
         }
 
-        $inventoryAccount = Account::where('name', 'Inventory') ->where('account_type', 'asset') ->first();
+        $inventoryAccount = Account::where('name', 'Inventory')->where('account_type', 'asset')->first();
         if ($inventoryAccount) {
             $query = JournalEntry::query()
                 ->where('account_id', $inventoryAccount->id)
@@ -197,7 +197,7 @@ class ProfitLoss extends Component
         }
 
         $totalPurchaseReturn = 0.0;
-        $purchaseReturnAccount = Account::where('name', 'Purchase Returns') ->where('account_type', 'income') ->first();
+        $purchaseReturnAccount = Account::where('name', 'Purchase Returns')->where('account_type', 'income')->first();
         if ($purchaseReturnAccount) {
             $query = JournalEntry::query()
                 ->where('account_id', $purchaseReturnAccount->id)

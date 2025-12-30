@@ -53,8 +53,6 @@ class EnsureDatabaseProceduresCommand extends Command
 
     /**
      * Run a procedure migration file.
-     *
-     * @param  string  $migrationFile
      */
     protected function runProcedureMigration(string $migrationFile): void
     {
@@ -63,6 +61,7 @@ class EnsureDatabaseProceduresCommand extends Command
 
             if (! is_object($migration) || ! method_exists($migration, 'up')) {
                 $this->warn("Skipping invalid migration: {$migrationFile}");
+
                 return;
             }
 
@@ -75,7 +74,7 @@ class EnsureDatabaseProceduresCommand extends Command
             // Verify the procedure was created
             if ($procedureName) {
                 $exists = DB::select(
-                    "SHOW PROCEDURE STATUS WHERE Db = DATABASE() AND Name = ?",
+                    'SHOW PROCEDURE STATUS WHERE Db = DATABASE() AND Name = ?',
                     [$procedureName]
                 );
 
@@ -85,7 +84,7 @@ class EnsureDatabaseProceduresCommand extends Command
                     $this->warn("⚠ Procedure '{$procedureName}' may not have been created.");
                 }
             } else {
-                $this->info("✓ Migration executed: ".basename($migrationFile));
+                $this->info('✓ Migration executed: '.basename($migrationFile));
             }
         } catch (\Exception $e) {
             $this->error("✗ Error running migration '{$migrationFile}': {$e->getMessage()}");
@@ -94,9 +93,6 @@ class EnsureDatabaseProceduresCommand extends Command
 
     /**
      * Extract procedure name from migration file content.
-     *
-     * @param  string  $migrationFile
-     * @return string|null
      */
     protected function extractProcedureName(string $migrationFile): ?string
     {
@@ -115,4 +111,3 @@ class EnsureDatabaseProceduresCommand extends Command
         return null;
     }
 }
-

@@ -93,6 +93,7 @@ class Table extends Component
             ->when($this->search ?? '', function ($query, $value) {
                 return $query->where(function ($q) use ($value) {
                     $value = trim($value);
+
                     return $q->where('name', 'like', '%'.$value.'%')
                         ->orWhere('price', 'like', '%'.$value.'%')
                         ->orWhere('frequency', 'like', '%'.$value.'%')
