@@ -208,6 +208,18 @@
                         </div>
                     </div>
                 </div>
+
+                <!-- Package Calendar View -->
+                <div class="row mt-4">
+                    <div class="col-12">
+                        <div class="content-section">
+                            <h4 class="section-title">
+                                <i class="demo-psi-calendar-4 me-2"></i>Yearly Calendar View
+                            </h4>
+                            @livewire('package.package-calendar', ['package_id' => $id])
+                        </div>
+                    </div>
+                </div>
             @endif
         </div>
     </div>

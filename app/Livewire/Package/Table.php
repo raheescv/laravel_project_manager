@@ -5,6 +5,7 @@ namespace App\Livewire\Package;
 use App\Actions\Package\DeleteAction;
 use App\Models\Package;
 use Exception;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Livewire\Component;
 use Livewire\WithPagination;
@@ -49,7 +50,7 @@ class Table extends Component
                 throw new Exception('Please select any item to delete.', 1);
             }
             foreach ($this->selected as $id) {
-                $response = (new DeleteAction())->execute($id);
+                $response = (new DeleteAction())->execute($id, Auth::id());
                 if (! $response['success']) {
                     throw new Exception($response['message'], 1);
                 }
