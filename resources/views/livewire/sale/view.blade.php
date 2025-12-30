@@ -523,6 +523,10 @@
                                                     <span class="text-muted">Freight</span>
                                                     <span class="fw-medium">{{ currency($sale->freight) }}</span>
                                                 </div>
+                                                <div class="list-group-item d-flex justify-content-between align-items-center px-0 py-2 border-0">
+                                                    <span class="text-muted">Round Off</span>
+                                                    <span class="fw-medium">{{ currency($sale->round_off) }}</span>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
