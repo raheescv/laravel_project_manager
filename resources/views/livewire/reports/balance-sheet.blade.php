@@ -65,7 +65,7 @@
                                                 <h6 class="text-primary mb-0">Total Assets</h6>
                                                 <span class="badge rounded-pill bg-primary bg-opacity-10 text-primary px-3">Asset</span>
                                             </div>
-                                            <h3 class="mb-0 fw-bold">{{ currency($totalAssets) }}</h3>
+                                            <h3 class="mb-0 fw-bold">{{ currency(abs($totalAssets)) }}</h3>
                                         </div>
                                     </div>
                                 </div>
@@ -81,7 +81,7 @@
                                                 <h6 class="text-warning mb-0">Total Liabilities</h6>
                                                 <span class="badge rounded-pill bg-warning bg-opacity-10 text-warning px-3">Liability</span>
                                             </div>
-                                            <h3 class="mb-0 fw-bold">{{ currency($totalLiabilities) }}</h3>
+                                            <h3 class="mb-0 fw-bold">{{ currency(abs($totalLiabilities)) }}</h3>
                                         </div>
                                     </div>
                                 </div>
@@ -97,7 +97,7 @@
                                                 <h6 class="text-success mb-0">Total Equity</h6>
                                                 <span class="badge rounded-pill bg-success bg-opacity-10 text-success px-3">Equity</span>
                                             </div>
-                                            <h3 class="mb-0 fw-bold">{{ currency($totalEquity) }}</h3>
+                                            <h3 class="mb-0 fw-bold">{{ currency(abs($totalEquity)) }}</h3>
                                         </div>
                                     </div>
                                 </div>
@@ -123,15 +123,15 @@
                                 <h6 class="text-primary border-bottom pb-2">Current Assets</h6>
                                 @forelse($currentAssets as $asset)
                                     <div class="d-flex justify-content-between py-1">
-                                        <span>{{ $asset['account'] }}</span>
-                                        <strong>{{ currency($asset['amount']) }}</strong>
+                                        <span class="text-muted">{{ $asset['account'] }}</span>
+                                        <strong class="text-end">{{ currency(abs($asset['amount'])) }}</strong>
                                     </div>
                                 @empty
-                                    <p class="text-muted mb-0">No current assets found</p>
+                                    <p class="text-muted mb-0 small">No current assets found</p>
                                 @endforelse
                                 <div class="d-flex justify-content-between border-top mt-2 pt-2">
                                     <strong>Total Current Assets</strong>
-                                    <strong class="text-primary">{{ currency($totalCurrentAssets) }}</strong>
+                                    <strong class="text-primary text-end">{{ currency(abs($totalCurrentAssets)) }}</strong>
                                 </div>
                             </div>
 
@@ -140,15 +140,15 @@
                                 <h6 class="text-primary border-bottom pb-2">Fixed Assets</h6>
                                 @forelse($fixedAssets as $asset)
                                     <div class="d-flex justify-content-between py-1">
-                                        <span>{{ $asset['account'] }}</span>
-                                        <strong>{{ currency($asset['amount']) }}</strong>
+                                        <span class="text-muted">{{ $asset['account'] }}</span>
+                                        <strong class="text-end">{{ currency(abs($asset['amount'])) }}</strong>
                                     </div>
                                 @empty
-                                    <p class="text-muted mb-0">No fixed assets found</p>
+                                    <p class="text-muted mb-0 small">No fixed assets found</p>
                                 @endforelse
                                 <div class="d-flex justify-content-between border-top mt-2 pt-2">
                                     <strong>Total Fixed Assets</strong>
-                                    <strong class="text-primary">{{ currency($totalFixedAssets) }}</strong>
+                                    <strong class="text-primary text-end">{{ currency(abs($totalFixedAssets)) }}</strong>
                                 </div>
                             </div>
 
@@ -157,22 +157,22 @@
                                 <h6 class="text-primary border-bottom pb-2">Other Assets</h6>
                                 @forelse($otherAssets as $asset)
                                     <div class="d-flex justify-content-between py-1">
-                                        <span>{{ $asset['account'] }}</span>
-                                        <strong>{{ currency($asset['amount']) }}</strong>
+                                        <span class="text-muted">{{ $asset['account'] }}</span>
+                                        <strong class="text-end">{{ currency(abs($asset['amount'])) }}</strong>
                                     </div>
                                 @empty
-                                    <p class="text-muted mb-0">No other assets found</p>
+                                    <p class="text-muted mb-0 small">No other assets found</p>
                                 @endforelse
                                 <div class="d-flex justify-content-between border-top mt-2 pt-2">
                                     <strong>Total Other Assets</strong>
-                                    <strong class="text-primary">{{ currency($totalOtherAssets) }}</strong>
+                                    <strong class="text-primary text-end">{{ currency(abs($totalOtherAssets)) }}</strong>
                                 </div>
                             </div>
 
                             <!-- Total Assets -->
-                            <div class="d-flex justify-content-between bg-primary bg-opacity-10 p-2 rounded mt-3">
-                                <strong>Total Assets</strong>
-                                <strong>{{ currency($totalAssets) }}</strong>
+                            <div class="d-flex justify-content-between bg-primary bg-opacity-10 p-3 rounded mt-3">
+                                <strong class="fs-5">Total Assets</strong>
+                                <strong class="fs-5 text-end">{{ currency(abs($totalAssets)) }}</strong>
                             </div>
                         </div>
                     </div>
@@ -192,15 +192,15 @@
                                 <h6 class="text-warning border-bottom pb-2">Current Liabilities</h6>
                                 @forelse($currentLiabilities as $liability)
                                     <div class="d-flex justify-content-between py-1">
-                                        <span>{{ $liability['account'] }}</span>
-                                        <strong>{{ currency($liability['amount']) }}</strong>
+                                        <span class="text-muted">{{ $liability['account'] }}</span>
+                                        <strong class="text-end">{{ currency(abs($liability['amount'])) }}</strong>
                                     </div>
                                 @empty
-                                    <p class="text-muted mb-0">No current liabilities found</p>
+                                    <p class="text-muted mb-0 small">No current liabilities found</p>
                                 @endforelse
                                 <div class="d-flex justify-content-between border-top mt-2 pt-2">
                                     <strong>Total Current Liabilities</strong>
-                                    <strong class="text-warning">{{ currency($totalCurrentLiabilities) }}</strong>
+                                    <strong class="text-warning text-end">{{ currency(abs($totalCurrentLiabilities)) }}</strong>
                                 </div>
                             </div>
 
@@ -209,22 +209,22 @@
                                 <h6 class="text-warning border-bottom pb-2">Long Term Liabilities</h6>
                                 @forelse($longTermLiabilities as $liability)
                                     <div class="d-flex justify-content-between py-1">
-                                        <span>{{ $liability['account'] }}</span>
-                                        <strong>{{ currency($liability['amount']) }}</strong>
+                                        <span class="text-muted">{{ $liability['account'] }}</span>
+                                        <strong class="text-end">{{ currency(abs($liability['amount'])) }}</strong>
                                     </div>
                                 @empty
-                                    <p class="text-muted mb-0">No long term liabilities found</p>
+                                    <p class="text-muted mb-0 small">No long term liabilities found</p>
                                 @endforelse
                                 <div class="d-flex justify-content-between border-top mt-2 pt-2">
                                     <strong>Total Long Term Liabilities</strong>
-                                    <strong class="text-warning">{{ currency($totalLongTermLiabilities) }}</strong>
+                                    <strong class="text-warning text-end">{{ currency(abs($totalLongTermLiabilities)) }}</strong>
                                 </div>
                             </div>
 
                             <!-- Total Liabilities -->
-                            <div class="d-flex justify-content-between bg-warning bg-opacity-10 p-2 rounded mt-3">
-                                <strong>Total Liabilities</strong>
-                                <strong>{{ currency($totalLiabilities) }}</strong>
+                            <div class="d-flex justify-content-between bg-warning bg-opacity-10 p-3 rounded mt-3">
+                                <strong class="fs-5">Total Liabilities</strong>
+                                <strong class="fs-5 text-end">{{ currency(abs($totalLiabilities)) }}</strong>
                             </div>
                         </div>
                     </div>
@@ -244,15 +244,15 @@
                                 <h6 class="text-success border-bottom pb-2">Owner's Equity</h6>
                                 @forelse($ownerEquity as $equity)
                                     <div class="d-flex justify-content-between py-1">
-                                        <span>{{ $equity['account'] }}</span>
-                                        <strong>{{ currency($equity['amount']) }}</strong>
+                                        <span class="text-muted">{{ $equity['account'] }}</span>
+                                        <strong class="text-end">{{ currency(abs($equity['amount'])) }}</strong>
                                     </div>
                                 @empty
-                                    <p class="text-muted mb-0">No equity accounts found</p>
+                                    <p class="text-muted mb-0 small">No equity accounts found</p>
                                 @endforelse
                                 <div class="d-flex justify-content-between border-top mt-2 pt-2">
                                     <strong>Total Owner's Equity</strong>
-                                    <strong class="text-success">{{ currency($totalEquityAccounts) }}</strong>
+                                    <strong class="text-success text-end">{{ currency(abs($totalEquityAccounts)) }}</strong>
                                 </div>
                             </div>
 
@@ -261,22 +261,22 @@
                                 <h6 class="text-success border-bottom pb-2">Retained Earnings</h6>
                                 @forelse($retainedEarningAccounts as $earning)
                                     <div class="d-flex justify-content-between py-1">
-                                        <span>{{ $earning['account'] }}</span>
-                                        <strong>{{ currency($earning['amount']) }}</strong>
+                                        <span class="text-muted">{{ $earning['account'] }}</span>
+                                        <strong class="text-end">{{ currency(abs($earning['amount'])) }}</strong>
                                     </div>
                                 @empty
-                                    <p class="text-muted mb-0">No retained earnings found</p>
+                                    <p class="text-muted mb-0 small">No retained earnings found</p>
                                 @endforelse
                                 <div class="d-flex justify-content-between border-top mt-2 pt-2">
                                     <strong>Total Retained Earnings</strong>
-                                    <strong class="text-success">{{ currency($totalRetainedEarnings) }}</strong>
+                                    <strong class="text-success text-end">{{ currency(abs($totalRetainedEarnings)) }}</strong>
                                 </div>
                             </div>
 
                             <!-- Total Equity -->
-                            <div class="d-flex justify-content-between bg-success bg-opacity-10 p-2 rounded mt-3">
-                                <strong>Total Equity</strong>
-                                <strong>{{ currency($totalEquity) }}</strong>
+                            <div class="d-flex justify-content-between bg-success bg-opacity-10 p-3 rounded mt-3">
+                                <strong class="fs-5">Total Equity</strong>
+                                <strong class="fs-5 text-end">{{ currency(abs($totalEquity)) }}</strong>
                             </div>
                         </div>
                     </div>
@@ -292,16 +292,27 @@
                             <p class="mb-0 text-muted">Total Assets = Total Liabilities + Total Equity</p>
                         </div>
                         <div class="text-end">
-                            <h4 class="mb-0 {{ $totalAssets === $totalLiabilities + $totalEquity ? 'text-success' : 'text-danger' }}">
-                                {{ $totalAssets === $totalLiabilities + $totalEquity ? 'Balanced' : 'Unbalanced' }}
+                            @php
+                                $difference = abs($totalAssets - ($totalLiabilities + $totalEquity));
+                                $isBalanced = $difference < 0.01; // Allow for rounding differences
+                            @endphp
+                            <h4 class="mb-0 {{ $isBalanced ? 'text-success' : 'text-danger' }}">
+                                {{ $isBalanced ? '✓ Balanced' : '✗ Unbalanced' }}
                             </h4>
-                            <small class="text-muted">{{ currency($totalAssets) }} = {{ currency($totalLiabilities) }} + {{ currency($totalEquity) }}</small>
+                            <small class="text-muted">
+                                {{ currency(abs($totalAssets)) }} = {{ currency(abs($totalLiabilities)) }} + {{ currency(abs($totalEquity)) }}
+                            </small>
                         </div>
                     </div>
                 </div>
             </div>
 
-            @if ($totalAssets !== $totalLiabilities + $totalEquity)
+            @php
+                $difference = abs($totalAssets - ($totalLiabilities + $totalEquity));
+                $isBalanced = $difference < 0.01;
+            @endphp
+
+            @if (!$isBalanced)
                 <div class="alert alert-danger shadow-sm border-0 rounded-3">
                     <div class="d-flex align-items-center">
                         <div class="flex-shrink-0">
@@ -309,8 +320,11 @@
                         </div>
                         <div class="flex-grow-1">
                             <h5 class="alert-heading mb-1">Balance Sheet Mismatch</h5>
-                            <p class="mb-0">The balance sheet is not balanced. There is a difference of <strong>{{ currency(abs($totalAssets - ($totalLiabilities + $totalEquity))) }}</strong>
-                                between Assets and Liabilities + Equity. Please review the entries for potential errors.</p>
+                            <p class="mb-0">
+                                The balance sheet is not balanced. There is a difference of 
+                                <strong>{{ currency($difference) }}</strong> between Assets and Liabilities + Equity. 
+                                Please review the entries for potential errors.
+                            </p>
                         </div>
                     </div>
                 </div>

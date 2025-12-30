@@ -34,7 +34,7 @@ class BalanceSheet extends Component
 
     public $ownerEquity = [];
 
-    public $retainedEarningAccounts = []; // Changed from single value to array
+    public $retainedEarningAccounts = [];
 
     // Totals
     public $totalCurrentAssets = 0;
@@ -51,9 +51,9 @@ class BalanceSheet extends Component
 
     public $totalLiabilities = 0;
 
-    public $totalEquityAccounts = 0;  // Added this for owner's equity total
+    public $totalEquityAccounts = 0;
 
-    public $totalRetainedEarnings = 0; // Added this for retained earnings total
+    public $totalRetainedEarnings = 0;
 
     public $totalEquity = 0;
 
@@ -95,38 +95,71 @@ class BalanceSheet extends Component
         $this->loadBalanceSheet();
     }
 
+    public function updatedStartDate()
+    {
+        $this->loadBalanceSheet();
+    }
+
+    public function updatedEndDate()
+    {
+        $this->loadBalanceSheet();
+    }
+
     public function loadBalanceSheet()
     {
         // Reset all arrays and totals
         $this->resetData();
 
-        // Query base for journal entries with their journals to get date and branch info
-        $query = JournalEntry::query()
+        // Get base query for journal entries within date range
+        $periodQuery = JournalEntry::query()
             ->whereBetween('date', [$this->start_date, $this->end_date])
             ->when($this->branch_id, function ($q) {
                 return $q->where('branch_id', $this->branch_id);
-            })
-            ->select('journal_entries.*');
+            });
 
-        $accounts = Account::get();
+        // Get opening balance query (entries before start date)
+        $openingQuery = JournalEntry::query()
+            ->where('date', '<', $this->start_date)
+            ->when($this->branch_id, function ($q) {
+                return $q->where('branch_id', $this->branch_id);
+            });
+
+        $accounts = Account::with('accountCategory')->get();
 
         foreach ($accounts as $account) {
-            // For each account, calculate total credits and debits from journal entries
-            $entries = $query->clone()
+            // Get period entries
+            $periodEntries = (clone $periodQuery)
                 ->where('account_id', $account->id)
                 ->get();
 
-            // Sum up debits and credits
-            $totalDebit = $entries->sum('debit');
-            $totalCredit = $entries->sum('credit');
+            // Get opening balance entries
+            $openingEntries = (clone $openingQuery)
+                ->where('account_id', $account->id)
+                ->get();
 
-            // Calculate balance based on the account type
+            // Calculate period totals
+            $periodDebit = $periodEntries->sum('debit');
+            $periodCredit = $periodEntries->sum('credit');
+
+            // Calculate opening balance totals
+            $openingDebit = $openingEntries->sum('debit');
+            $openingCredit = $openingEntries->sum('credit');
+
+            // Add account opening balances
+            $openingDebit += $account->opening_debit ?? 0;
+            $openingCredit += $account->opening_credit ?? 0;
+
+            // Calculate total debits and credits
+            $totalDebit = $openingDebit + $periodDebit;
+            $totalCredit = $openingCredit + $periodCredit;
+
+            // Calculate balance based on account type
             $balance = $this->calculateAccountBalance($account, $totalDebit, $totalCredit);
 
-            if ($balance != 0) {
+            // Only include accounts with non-zero balance
+            if (abs($balance) > 0.01) {
                 $this->categorizeAccount($account, $balance);
             }
-
         }
 
         // Calculate totals
@@ -166,25 +199,44 @@ class BalanceSheet extends Component
 
         switch ($account->account_type) {
             case 'asset':
-                // For now put all assets as current assets
-                $this->currentAssets[] = $accountData;
-                $this->totalCurrentAssets += $balance;
+                // Categorize assets based on account category or default to current
+                if ($account->accountCategory && stripos($account->accountCategory->name, 'fixed') !== false) {
+                    $this->fixedAssets[] = $accountData;
+                    $this->totalFixedAssets += $balance;
+                } else {
+                    $this->currentAssets[] = $accountData;
+                    $this->totalCurrentAssets += $balance;
+                }
                 break;
+
             case 'liability':
-                // For now put all liabilities as current liabilities
-                $this->currentLiabilities[] = $accountData;
-                $this->totalCurrentLiabilities += $balance;
+                // Categorize liabilities based on account category or default to current
+                if ($account->accountCategory && stripos($account->accountCategory->name, 'long') !== false) {
+                    $this->longTermLiabilities[] = $accountData;
+                    $this->totalLongTermLiabilities += $balance;
+                } else {
+                    $this->currentLiabilities[] = $accountData;
+                    $this->totalCurrentLiabilities += $balance;
+                }
                 break;
-            case 'expense':
-                // Expenses affect retained earnings
-                $this->retainedEarningAccounts[] = $accountData;
-                $this->totalRetainedEarnings -= $balance; // Subtract expenses
+
+            case 'equity':
+                $this->ownerEquity[] = $accountData;
+                $this->totalEquityAccounts += $balance;
                 break;
+
             case 'income':
-                // Income affects retained earnings
+                // Income increases retained earnings (credit balance)
                 $this->retainedEarningAccounts[] = $accountData;
-                $this->totalRetainedEarnings += $balance; // Add income
+                $this->totalRetainedEarnings += $balance;
                 break;
+
+            case 'expense':
+                // Expenses decrease retained earnings (debit balance, shown as negative)
+                $this->retainedEarningAccounts[] = $accountData;
+                $this->totalRetainedEarnings -= $balance;
+                break;
+
             default:
                 // Put any unrecognized types in other assets
                 $this->otherAssets[] = $accountData;
@@ -195,24 +247,31 @@ class BalanceSheet extends Component
 
     private function calculateTotals()
     {
-        $this->totalAssets = $this->totalCurrentAssets + $this->totalFixedAssets + $this->totalOtherAssets;
-        $this->totalLiabilities = $this->totalCurrentLiabilities + $this->totalLongTermLiabilities;
-        $this->totalEquity = $this->totalEquityAccounts + $this->totalRetainedEarnings;
+        // Calculate asset totals
+        $this->totalAssets = round($this->totalCurrentAssets + $this->totalFixedAssets + $this->totalOtherAssets, 2);
+
+        // Calculate liability totals
+        $this->totalLiabilities = round($this->totalCurrentLiabilities + $this->totalLongTermLiabilities, 2);
+
+        // Calculate equity totals (owner's equity + retained earnings)
+        $this->totalEquity = round($this->totalEquityAccounts + $this->totalRetainedEarnings, 2);
     }
 
     private function calculateAccountBalance($account, $totalDebit, $totalCredit)
     {
-        // Calculate balance based on account type
+        // Calculate balance based on account type and normal balance
         switch ($account->account_type) {
             case 'asset':
             case 'expense':
-                return $totalDebit - $totalCredit; // Debit balance normal
+                // Debit balance normal (debit - credit)
+                return round($totalDebit - $totalCredit, 2);
+
             case 'liability':
             case 'equity':
             case 'income':
-                return $totalCredit - $totalDebit; // Credit balance
-            case 'expense':
-                return $totalDebit - $totalCredit; // Debit balance
+                // Credit balance normal (credit - debit)
+                return round($totalCredit - $totalDebit, 2);
+
             default:
                 return 0;
         }
