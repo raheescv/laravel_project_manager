@@ -4,16 +4,11 @@
             <!-- Filter Section -->
             <div class="row mb-4 g-3">
                 <div class="col-md-2">
-                    <div class="form-group">
+                    <div class="form-group" wire:ignore>
                         <label for="branch_id" class="form-label fw-bold text-secondary mb-2">
                             <i class="pli-building me-1"></i>Branch
                         </label>
-                        <select wire:model="branch_id" class="form-select shadow-sm border-light" id="branch_id">
-                            <option value="">All Branches</option>
-                            @foreach ($branches as $id => $name)
-                                <option value="{{ $id }}">{{ $name }}</option>
-                            @endforeach
-                        </select>
+                        {{ html()->select('branch_id', [session('branch_id') => session('branch_name')])->value(session('branch_id'))->class('select-assigned-branch_id-list border-start-0 ps-0')->id('branch_id')->attribute('style', 'width:80%')->placeholder('Select Branch') }}
                     </div>
                 </div>
                 <div class="col-md-2">
@@ -497,51 +492,12 @@
 
     @push('scripts')
         <script>
-            function copyTable() {
-                const table = document.getElementById('profitLossTable');
-                const range = document.createRange();
-                range.selectNode(table);
-                window.getSelection().removeAllRanges();
-                window.getSelection().addRange(range);
-                document.execCommand('copy');
-                window.getSelection().removeAllRanges();
-                alert('Table copied to clipboard!');
-            }
-
-            function exportToExcel() {
-                // Implement Excel export
-                alert('Excel export functionality will be implemented');
-            }
-
-            function exportToCSV() {
-                const table = document.getElementById('profitLossTable');
-                let csv = [];
-                const rows = table.querySelectorAll('tr');
-
-                for (let i = 0; i < rows.length; i++) {
-                    const row = [],
-                        cols = rows[i].querySelectorAll('td, th');
-                    for (let j = 0; j < cols.length; j++) {
-                        row.push(cols[j].innerText.trim());
-                    }
-                    csv.push(row.join(','));
-                }
-
-                const csvContent = csv.join('\n');
-                const blob = new Blob([csvContent], {
-                    type: 'text/csv;charset=utf-8;'
+            $(document).ready(function() {
+                $('#branch_id').on('change', function(e) {
+                    const value = $(this).val() || null;
+                    @this.set('branch_id', value);
                 });
-                const url = window.URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = 'profit_loss_report.csv';
-                a.click();
-                window.URL.revokeObjectURL(url);
-            }
-
-            function exportToPDF() {
-                window.print();
-            }
+            });
         </script>
     @endpush
 </div>

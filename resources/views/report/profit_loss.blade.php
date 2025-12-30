@@ -22,6 +22,7 @@
         </div>
     </div>
     @push('scripts')
+        <x-select.branchSelect />
         <script src="{{ asset('assets/vendors/chart.js/chart.umd.min.js') }}"></script>
         <script src="{{ asset('assets/vendors/chart.js/chartjs-plugin-datalabels@2.min.js') }}"></script>
     @endpush
