@@ -77,7 +77,7 @@
                         <tr>
                             <td>{{ $item->id }}</td>
                             <td class="text-nowrap">{{ systemDate($item->date) }}</td>
-                            <td class="text-nowrap"> <a href="{{ route('sale::view', $item->sale_id) }}">{{ $item->invoice_no }}</a> </td>
+                            <td class="text-nowrap"> <a href="{{ route('sale::view_booking', $item->sale_id) }}">{{ $item->invoice_no }}</a> </td>
                             <td class="text-nowrap">{{ $item->employee?->name }}</td>
                             <td class="text-nowrap">{{ $item->assistant?->name }}</td>
                             <td class="text-nowrap">{{ $item->product?->name }}</td>

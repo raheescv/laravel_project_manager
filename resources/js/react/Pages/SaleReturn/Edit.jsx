@@ -8,7 +8,7 @@ import TopMenu from "./Components/TopMenu";
 import { toast } from "react-toastify"; 
 import ProductGrid from "./ProductGrid";
 import ViewItemsModal from "./Components/ViewItemsModal";
-import AdvancePaymentModal from "../../Components/Booking/AdvancePaymentModal";
+import AdvanceeditPaymentModal from "../../Components/Booking/AdvanceeditPaymentModal";
 import { usePage } from "@inertiajs/react";
 import CustomerDetailsModal from "./Components/CustomerDetailsModal";
 import AddCustomerModal from "./Components/AddCustomerModal";
@@ -359,17 +359,38 @@ const buildMeasurementPayload = () => {
     };
 
     // ✅ ADVANCE PAYMENT FIX (SAFE)
-    if (paymentMethod === "custom" && customPaymentData) {
-    payload.custom_payment_data = {
-        payments: customPaymentData.payments,
-    };
+// ✅ ADVANCE PAYMENT FIX (FINAL)
+if (paymentMethod === "custom" && customPaymentData) {
 
-    payload.status =
-        customPaymentData.balanceDue > 0 ? "draft" : "completed";
+    const balance = Number(customPaymentData.balanceDue || 0);
+    const totalPaid = Number(customPaymentData.totalPaid || 0);
+
+    // 🔴 If fully paid, force full amount
+    if (balance === 0) {
+        payload.custom_payment_data = {
+            payments: [
+                {
+                    payment_method_id:
+                        customPaymentData.payments?.[0]?.payment_method_id || 1,
+                    amount: grandTotal, // ✅ FULL AMOUNT
+                },
+            ],
+        };
+        payload.status = "completed";
+    } 
+    // 🟡 Partial payment
+    else {
+        payload.custom_payment_data = {
+            payments: customPaymentData.payments,
+        };
+        payload.status = "draft";
+    }
+
 } else {
     payload.custom_payment_data = null;
     payload.status = "completed";
 }
+
 
 
     console.log("FINAL PAYLOAD 👉", payload);
@@ -800,10 +821,11 @@ const buildMeasurementPayload = () => {
                    }}
                />
             )}
-           <AdvancePaymentModal
+      <AdvanceeditPaymentModal
     open={showAdvanceModal}
     onClose={() => setShowAdvanceModal(false)}
-    grandTotal={grandTotal}
+    fullTotal={subTotal - discount + serviceCharge}   // ORIGINAL TOTAL
+    alreadyPaid={customPaymentData?.totalPaid || 0} // EDIT MODE SUPPORT
     onSave={(data) => setCustomPaymentData(data)}
 />
 
