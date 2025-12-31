@@ -34,7 +34,7 @@ class BranchSelection extends Component
     public function render()
     {
         $branch_ids = Auth::user()->branches()->pluck('branch_id', 'branch_id')->toArray();
-        $assigned_branches = Branch::whereIn('id', $branch_ids)->pluck('name', 'id')->toArray();
+        $assigned_branches = Branch::whereIn('id', $branch_ids)->orderBy('name')->get();
 
         return view('livewire.general.branch-selection')->with('assigned_branches', $assigned_branches);
     }
