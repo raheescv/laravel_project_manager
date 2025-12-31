@@ -29,7 +29,7 @@ class ChangeSession extends Component
             ->orderBy('opened_at', 'desc')
             ->get()
             ->mapWithKeys(function ($s) {
-                $label = ($s->opened_at->format('d-m-Y')).' - #'.$s->id;
+                $label = '#'.$s->id.' - '.($s->opened_at->format('d-m-Y'));
 
                 return [$s->id => $label];
             })
