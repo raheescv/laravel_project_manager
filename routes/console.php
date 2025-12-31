@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\Configuration;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Schedule;
@@ -20,6 +21,13 @@ if (config('constants.auto_pull_enabled')) {
 Schedule::command('visitors:process-batches')->everyFiveMinutes();
 
 Schedule::command(RunHealthChecksCommand::class)->daily();
+
+// Close all open sale day sessions daily at start of day (if enabled)
+Schedule::command('sale-day-sessions:close-daily')
+    ->dailyAt('00:00')
+    ->when(function () {
+        return Configuration::where('key', 'auto_close_day_sessions_enabled')->value('value') === 'yes';
+    });
 
 // Optimized unified trading commands
 // Schedule::command('trade:unified --action=buy')->everyFiveMinutes()->between('05:10', '09:55');
