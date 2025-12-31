@@ -13,6 +13,8 @@ use App\Http\Controllers\Settings\CustomerTypeController;
 use App\Http\Controllers\Settings\DepartmentController;
 use App\Http\Controllers\Settings\UnitController;
 use App\Http\Controllers\Settings\MeasurementCategoryController;
+use App\Http\Controllers\Settings\MeasurementSubCategoryController;
+
 use App\Http\Controllers\SettingsController;
 use Illuminate\Support\Facades\Route;
 
@@ -62,6 +64,18 @@ Route::middleware('auth')->group(function (): void {
             ->name('add_field')
             ->can('category.edit');
         });
+
+        Route::name('measurement_sub_category::')
+    ->prefix('measurement_sub_category')
+    ->controller(MeasurementSubCategoryController::class)
+    ->group(function (): void {
+
+        Route::get('', 'index')->name('index')->can('category.view');
+        Route::get('list', 'get')->name('list');
+        Route::post('store', 'store')->name('store')->can('category.create');
+        Route::put('update/{id}', 'update')->name('update')->can('category.edit');
+        Route::delete('delete/{id}', 'destroy')->name('delete')->can('category.delete');
+    });
 
         /* ================= OTHER SETTINGS ================= */
         Route::name('account_category::')->prefix('account_category')->controller(AccountCategoryController::class)

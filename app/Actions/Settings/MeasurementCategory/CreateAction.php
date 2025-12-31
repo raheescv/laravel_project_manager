@@ -24,7 +24,7 @@ class CreateAction
             $model = MeasurementCategory::create($this->data);
 
             $return['success'] = true;
-            $return['message'] = 'Successfully Created Measurement Category';
+            $return['message'] = 'Successfully Created Model';
             $return['data'] = $model;
 
         } catch (\Throwable $th) {

@@ -13,6 +13,9 @@ import { usePage } from "@inertiajs/react";
 import { FaPen } from "react-icons/fa";
 import CustomerDetailsModal from "./Components/CustomerDetailsModal";
 import AddCustomerModal from "./Components/AddCustomerModal";
+import SubCategorySelect from "./Components/SubCategorySelect"; // <-- new import
+
+
 
 
 // show selected customer details (from server) in create page
@@ -30,7 +33,10 @@ export default function Create() {
     const [serviceCharge, setServiceCharge] = useState(0);
     const [showAddCustomerModal, setShowAddCustomerModal] = useState(false);
     const [refreshCustomerKey, setRefreshCustomerKey] = useState(0);
-   const [addedCustomer, setAddedCustomer] = useState(null);
+    const [addedCustomer, setAddedCustomer] = useState(null);
+    const [subCategoryId, setSubCategoryId] = useState(null); // <-- track selected subcategory
+    const [widthValue, setWidthValue] = useState(""); // Track width input
+     const [sizeValue, setSizeValue] = useState("");  
 
 
 
@@ -254,6 +260,21 @@ const validateSale = () => {
         return false;
     }
 
+    if (!subCategoryId) {
+        toast.error("Please select subcategory");
+        return false;
+    }
+
+    if (!widthValue || widthValue.trim() === "") {
+        toast.error("Please enter width");
+        return false;
+    }
+
+    if (!sizeValue || sizeValue.trim() === "") {
+        toast.error("Please select size");
+        return false;
+    }
+
     if (discount > subTotal) {
         toast.error("Discount cannot exceed subtotal");
         return false;
@@ -293,6 +314,9 @@ const buildMeasurementPayload = () => {
         employee_id: employeeId,
         sale_type: "normal",
         account_id: customerId,
+        sub_category_id: subCategoryId, // <-- Added subCategory
+        width: widthValue,  // <-- added
+        size: sizeValue,  
        
         customer_mobile: "",
         other_discount: discount,
@@ -370,10 +394,71 @@ const buildMeasurementPayload = () => {
                         {/* LEFT SIDEBAR: Categories */}
                         <div className="col-12 col-lg-2 pe-0">
                             <CategorySidebar selectedId={categoryId} onSelect={(id) => setCategoryId(id)} />
+
+
+
+                               
+    
                         </div>
+
+                        
+
+                        
+
+                  
+                            {/* SubCategory above Customer */}
+                           
+                            
 
                         {/* CENTER: Product Grid */}
                             <div className="col-md-12 col-lg-7">
+
+
+                                 {categoryId && (
+                                <div className="mb-2">
+                                    
+                                    <SubCategorySelect
+                                        categoryId={categoryId}
+                                        selectedSubId={subCategoryId}
+                                        onSelect={setSubCategoryId}
+                                    />
+
+
+                                      <div className="mt-2">
+            <label className="form-label">Width</label>
+           <input
+                type="number"
+                className="form-control form-control-sm"
+                value={widthValue}
+                onChange={(e) => setWidthValue(e.target.value)}
+                />
+        </div>
+
+        {/* Size dropdown */}
+        <div className="mt-2">
+            <label className="form-label">Size</label>
+                        <select
+            className="form-select form-select-sm"
+            value={sizeValue}
+            onChange={(e) => setSizeValue(e.target.value)}
+            >
+                <option value="">Select Size</option>
+                <option value="S">S</option>
+                <option value="M">M</option>
+                <option value="L">L</option>
+                <option value="XL">XL</option>
+                <option value="XXL">XXL</option>
+                <option value="XXXL">XXXL</option>
+                <option value="XXXXL">XXXXL</option>
+            </select>
+        </div>
+                                </div>
+
+                                
+
+
+
+                            )}
                                 
                                 <div className="mb-2">
                                     <label className="fw-bold mb-1">Customer</label>

@@ -40,4 +40,13 @@ class MeasurementCategory extends Model
         $model = self::firstOrCreate(['name' => $parent]);
         return $model['id'];
     }
+
+        public function subCategories()
+    {
+        return $this->hasMany(
+            MeasurementSubCategory::class,
+            'measurement_category_id'
+        );
+    }
+
 }

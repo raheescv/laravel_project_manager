@@ -172,6 +172,12 @@
                                         </a>
                                     @endcan
 
+                                    @can('category.view')
+                                        <a href="{{ route('settings::measurement_sub_category::index') }}" class="list-group-item list-group-item-action">
+                                            <i class="fa fa-folder fs-5 me-2"></i>Model
+                                        </a>
+                                    @endcan
+
                                   
 
                                    

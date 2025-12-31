@@ -17,7 +17,7 @@ use App\Models\Product;
 use App\Models\SalePayment;
 use App\Models\User;
 use App\Models\Country;
-
+use App\Models\MeasurementSubCategory;
 use App\Models\MeasurementTemplate;
 use Exception;
 use Illuminate\Http\Request;
@@ -27,6 +27,16 @@ use Illuminate\Support\Facades\Log;
 
 class POSController extends Controller
 {
+    public function getSubCategories($categoryId)
+{
+    $subcategories = MeasurementSubCategory::where('measurement_category_id', $categoryId)
+        ->select('id', 'name')
+        ->orderBy('name')
+        ->get();
+
+    return response()->json($subcategories);
+}
+
     public function getProducts(Request $request)
     {
         try {
@@ -407,6 +417,11 @@ public function getMeasurementTemplates($categoryId)
         $saleData['service_charge'] = $request->input('service_charge', 0);
 
        $saleData['category_id'] = $request->input('category_id', 0);
+       $saleData['sub_category_id'] = $request->input('sub_category_id', 0);
+       $saleData['width'] = $request->input('width', '');
+       $saleData['size'] = $request->input('size', '');
+       
+
 
         /* ---------------- Existing payment logic ---------------- */
         if ($saleData['status'] == "draft" || $saleData['status'] == "completed") {
