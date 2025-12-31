@@ -73,20 +73,28 @@ class ChangeSession extends Component
                     $value->update(['date' => $data['date']]);
                 }
             }
-            if ($newSession->status == 'closed') {
-                $newData = [
-                    'closing_amount' => $newSession->closing_amount + $this->sale->paid,
-                    'expected_amount' => $newSession->expected_amount + $this->sale->paid,
-                ];
-                $newSession->update($newData);
+
+            if ($this->sale->journal) {
+                $this->sale->journal->entries()->update(['date' => $data['date']]);
             }
 
-            if ($oldSession->status == 'closed') {
-                $oldData = [
-                    'closing_amount' => $oldSession->closing_amount - $this->sale->paid,
-                    'expected_amount' => $oldSession->expected_amount - $this->sale->paid,
-                ];
-                $oldSession->update($oldData);
+
+            if ($newSession->id != $oldSession->id) {
+                if ($newSession->status == 'closed') {
+                    $newData = [
+                        'closing_amount' => $newSession->closing_amount + $this->sale->paid,
+                        'expected_amount' => $newSession->expected_amount + $this->sale->paid,
+                    ];
+                    $newSession->update($newData);
+                }
+
+                if ($oldSession->status == 'closed') {
+                    $oldData = [
+                        'closing_amount' => $oldSession->closing_amount - $this->sale->paid,
+                        'expected_amount' => $oldSession->expected_amount - $this->sale->paid,
+                    ];
+                    $oldSession->update($oldData);
+                }
             }
 
             DB::commit();
