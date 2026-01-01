@@ -168,53 +168,68 @@
                 <tr class="bg-primary text-white">
                     <th class="text-white rounded-start">SL No</th>
                     <th class="text-white">Measurement Category</th>
+                    <th class="text-white">Model</th>
+                    <th class="text-white">Size</th>
+                    <th class="text-white">Width</th>
                     <th class="text-white">Measurement</th>
                     <th class="text-white text-end rounded-end">Value</th>
                 </tr>
             </thead>
 
-            <tbody>
-                @php
-                    // Group measurements by category
-                    $groupedMeasurements = collect($customer_measurements)
-                        ->groupBy('category_name');
-                @endphp
+           <tbody>
+@php
+    $groupedMeasurements = collect($customer_measurements)
+        ->groupBy('category_name');
+@endphp
 
-                @foreach ($groupedMeasurements as $category => $measurements)
-                    {{-- Category Header --}}
-                    <tr>
-                        <th colspan="4" class="bg-light">
-                            <i class="fa fa-tags me-2"></i>
-                            {{ $category ?? 'General' }}
-                        </th>
-                    </tr>
+@foreach ($groupedMeasurements as $category => $measurements)
+    @foreach ($measurements as $measurement)
+        <tr>
+            {{-- SL No --}}
+            <td>{{ $loop->iteration }}</td>
 
-                    {{-- Measurements --}}
-                    @foreach ($measurements as $measurement)
-                        <tr>
-                            <td>{{ $loop->iteration }}</td>
-                            <td>
-                                <span class="fw-semibold text-primary">
-                                    {{ $measurement['category_name'] ?? '-' }}
-                                </span>
-                            </td>
-                            <td>
-                                <i class="fa fa-ruler me-1 text-secondary"></i>
-                                {{ $measurement['template_name'] ?? '-' }}
-                            </td>
-                            <td class="text-end fw-bold">
-                                {{ $measurement['value'] ?? '-' }}
-                            </td>
-                        </tr>
-                    @endforeach
-                @endforeach
-            </tbody>
+            {{-- Category (show once) --}}
+            @if ($loop->first)
+                <td rowspan="{{ count($measurements) }}" class="align-middle fw-semibold text-primary">
+                    {{ $category ?? 'General' }}
+                </td>
+
+                <td rowspan="{{ count($measurements) }}" class="align-middle">
+                    {{ $sale->subCategory?->name ?? '-' }}
+                </td>
+
+                <td rowspan="{{ count($measurements) }}" class="align-middle">
+                    {{ $sale->size ?? '-' }}
+                </td>
+
+                <td rowspan="{{ count($measurements) }}" class="align-middle">
+                    {{ $sale->width ?? '-' }}
+                </td>
+            @endif
+
+            {{-- Measurement --}}
+            <td>
+                <i class="fa fa-ruler me-1 text-secondary"></i>
+                {{ $measurement['template_name'] ?? '-' }}
+            </td>
+
+            {{-- Value --}}
+            <td class="text-end fw-bold">
+                {{ $measurement['value'] ?? '-' }}
+            </td>
+        </tr>
+    @endforeach
+@endforeach
+</tbody>
+
         </table>
     </div>
 </div>
 @else
     <p class="text-muted mt-3">No measurements found for this sale.</p>
 @endif
+
+
 
 
                     <!-- Customer Feedback Section -->
