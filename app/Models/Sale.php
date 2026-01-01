@@ -275,24 +275,15 @@ class Sale extends Model implements AuditableContracts
             } else {
                 $number = $sale->account->mobile;
             }
-            if ($number) {
-                // Remove all non-numeric characters
-                $number = preg_replace('/\D/', '', $number);
-                if (! str_starts_with($number, '974')) {
-                    $number = '974'.ltrim($number, '0');
-                }
-                $number = '+'.$number;
-            }
-            if (! $number) {
-                throw new Exception('No valid mobile number found for the customer.');
-            }
 
             $imageContent = SaleHelper::saleInvoice($table_id, 'thermal');
             $image_path = SaleHelper::convertHtmlToImage($imageContent, $sale->invoice_no);
 
+            $image_url = asset("invoices/{$sale->invoice_no}.png");
+
             $templateName = config('services.meta_whatsapp.template_name');
 
-            $response = WhatsappHelper::sendTemplateWithImage(to: $number, templateName: $templateName, imageUrl: $image_path);
+            $response = WhatsappHelper::sendTemplateWithImage(to: $number, templateName: $templateName, imageUrl: $image_url);
             if (! $response['success']) {
                 throw new Exception($response['message']);
             }

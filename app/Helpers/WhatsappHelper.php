@@ -240,6 +240,7 @@ class WhatsappHelper
                     'errors' => $errors,
                     'is_failed' => $data['is_failed'] ?? false,
                     'is_sent' => $data['is_sent'] ?? false,
+                    'has_errors' => $data['has_errors'] ?? false,
                 ]);
 
                 throw new Exception("WhatsApp template message failed: {$errorMessage}");
@@ -269,6 +270,7 @@ class WhatsappHelper
                 'template' => $templateName,
                 'is_delivered' => $data['is_delivered'] ?? false,
                 'is_sent' => $data['is_sent'] ?? false,
+                'has_errors' => $data['has_errors'] ?? false,
             ]);
 
             return [
