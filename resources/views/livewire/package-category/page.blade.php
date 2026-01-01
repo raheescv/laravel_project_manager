@@ -25,11 +25,7 @@
                         <label for="name" class="form-label fw-medium">
                             Name <span class="text-danger">*</span>
                         </label>
-                        <input type="text" id="name" class="form-control @error('package_categories.name') is-invalid @enderror" wire:model="package_categories.name"
-                            placeholder="Enter package category name">
-                        @error('package_categories.name')
-                            <div class="invalid-feedback">{{ $message }}</div>
-                        @enderror
+                        <input type="text" id="name" class="form-control" wire:model="package_categories.name" placeholder="Enter package category name">
                     </div>
                 </div>
                 <div class="col-md-6">
@@ -39,11 +35,7 @@
                         </label>
                         <div class="input-group">
                             <span class="input-group-text">₹</span>
-                            <input type="number" id="price" class="form-control @error('package_categories.price') is-invalid @enderror" wire:model="package_categories.price" step="0.01"
-                                min="0" placeholder="0.00">
-                            @error('package_categories.price')
-                                <div class="invalid-feedback">{{ $message }}</div>
-                            @enderror
+                            <input type="number" id="price" class="form-control" wire:model="package_categories.price" step="0.01" min="0" placeholder="0.00">
                         </div>
                     </div>
                 </div>
@@ -53,9 +45,6 @@
                             Frequency
                         </label>
                         {{ html()->select('frequency', packageFrequency())->value('')->class('form-control border-secondary-subtle shadow-sm')->id('frequency')->attribute('wire:model.live', 'package_categories.frequency') }}
-                        @error('package_categories.frequency')
-                            <div class="invalid-feedback">{{ $message }}</div>
-                        @enderror
                     </div>
                 </div>
                 <div class="col-md-6">
@@ -63,11 +52,7 @@
                         <label for="no_of_visits" class="form-label fw-medium">
                             Number of Visits
                         </label>
-                        <input type="number" id="no_of_visits" class="form-control @error('package_categories.no_of_visits') is-invalid @enderror" wire:model="package_categories.no_of_visits"
-                            min="1" placeholder="Enter number of visits">
-                        @error('package_categories.no_of_visits')
-                            <div class="invalid-feedback">{{ $message }}</div>
-                        @enderror
+                        <input type="number" id="no_of_visits" class="form-control" wire:model="package_categories.no_of_visits" min="1" placeholder="Enter number of visits">
                     </div>
                 </div>
             </div>

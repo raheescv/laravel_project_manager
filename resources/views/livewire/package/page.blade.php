@@ -35,7 +35,7 @@
             </div>
 
             <!-- Basic Information Row -->
-            <div class="row g-3">
+            <div class="row">
                 <div class="col-md-3">
                     <div class="form-group-enhanced" wire:ignore>
                         <label class="form-label">
@@ -81,9 +81,9 @@
                     </div>
                 </div>
             </div>
-            <div class="row g-3">
+            <div class="row">
                 <div class="col-md-8">
-                    <div class="row g-3">
+                    <div class="row">
                         <div class="col-md-6">
                             <div class="form-group-enhanced">
                                 <label class="form-label">
@@ -113,7 +113,7 @@
                                     <i class="demo-psi-notepad"></i>
                                     Remarks
                                 </label>
-                                <textarea wire:model="packages.remarks" class="form-control" id="remarks" rows="3" placeholder="Enter any additional notes or remarks..."></textarea>
+                                <textarea wire:model="packages.remarks" class="form-control" id="remarks" rows="8" placeholder="Enter any additional notes or remarks..."></textarea>
                             </div>
                         </div>
                     </div>
@@ -139,7 +139,8 @@
                         </table>
                         <div class="d-flex flex-column gap-2 mt-3">
                             @if ($table_id)
-                                <a href="{{ route('package::statement', $table_id) }}" target="_blank" class="btn btn-info btn-sm w-100 d-flex align-items-center justify-content-center" style="font-weight: 500;">
+                                <a href="{{ route('package::statement', $table_id) }}" target="_blank" class="btn btn-info btn-sm w-100 d-flex align-items-center justify-content-center"
+                                    style="font-weight: 500;">
                                     <i class="demo-psi-file-edit me-2"></i>Get Statement
                                 </a>
                             @endif
