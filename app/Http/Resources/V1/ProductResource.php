@@ -113,7 +113,7 @@ class ProductResource extends JsonResource
                         'id' => $inventory->id,
                         'branch' => [
                             'id' => $inventory->branch?->id,
-                            'name' => $inventory->branch?->name,
+                            'name' => $inventory->branch?->location,
                         ],
                         'quantity' => $inventory->quantity,
                         'is_low_stock' => $inventory->quantity <= $this->reorder_level,
@@ -215,7 +215,7 @@ class ProductResource extends JsonResource
             ->where('name', 'like', $baseName.'%')
             ->whereNotNull('size')
             ->where('size', '!=', '')
-            ->with('inventories.branch:id,name')
+            ->with('inventories.branch:id,name,location')
             ->get();
 
         // Group by size and calculate stock by branch for each size
@@ -236,7 +236,7 @@ class ProductResource extends JsonResource
 
                 return [
                     'id' => $branch->id,
-                    'name' => $branch->name,
+                    'name' => $branch->location,
                     'quantity' => $inventories->sum('quantity'),
                 ];
             })->filter()->values()->toArray();
