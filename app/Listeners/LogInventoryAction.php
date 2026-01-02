@@ -34,6 +34,7 @@ class LogInventoryAction
         if ($quantity_out != $quantity_in) {
             $logData = [
                 'branch_id' => $newInventory->branch_id,
+                'employee_id' => $newInventory->employee_id,
                 'product_id' => $newInventory->product_id,
                 'quantity_in' => $quantity_in,
                 'quantity_out' => $quantity_out,

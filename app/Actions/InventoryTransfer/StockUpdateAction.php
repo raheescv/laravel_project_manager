@@ -56,10 +56,12 @@ class StockUpdateAction
         $toInventory = Inventory::query()
             ->where('product_id', $fromInventory->product_id)
             ->where('branch_id', $branchId)
+            ->whereNull('employee_id')
             ->first();
         if (! $toInventory) {
             $data = $fromInventory->toArray();
             $data['branch_id'] = $branchId;
+            $data['employee_id'] = null; // Ensure branch inventory (not employee inventory)
             if (! isset($data['barcode'])) {
                 $data['barcode'] = generateBarcode();
             }

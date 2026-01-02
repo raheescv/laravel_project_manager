@@ -12,9 +12,12 @@ class CreateAction
         try {
             validationHelper(Inventory::rules(), $data);
 
+            $employeeId = $data['employee_id'] ?? null;
+
             $trashedExists = Inventory::withTrashed()
                 ->where('product_id', $data['product_id'])
                 ->where('branch_id', $data['branch_id'])
+                ->where('employee_id', $employeeId)
                 ->first();
 
             if ($trashedExists) {
@@ -24,6 +27,7 @@ class CreateAction
                 $model = Inventory::firstOrCreate([
                     'product_id' => $data['product_id'],
                     'branch_id' => $data['branch_id'],
+                    'employee_id' => $employeeId,
                 ], $data);
             }
             event(new InventoryActionOccurred('create', $model));

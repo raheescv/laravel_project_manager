@@ -26,7 +26,7 @@ return [
         'create', 'view', 'edit', 'delete',
         'dashboard package calendar',
     ],
-    'inventory' => ['view', 'edit', 'delete', 'import', 'export', 'dashboard status', 'product search', 'barcode cart'],
+    'inventory' => ['view', 'edit', 'delete', 'import', 'export', 'dashboard status', 'product search', 'barcode cart', 'transfer'],
     'inventory transfer' => ['create', 'view', 'edit', 'edit completed', 'delete', 'import', 'export'],
     'category' => ['create', 'view', 'edit', 'delete', 'import', 'export'],
     'appointment' => ['create', 'view', 'edit', 'delete', 'export', 'checkout', 'dashboard'],

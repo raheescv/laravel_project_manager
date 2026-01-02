@@ -75,6 +75,10 @@ class GetAction
             ->when($filter['product_id'] ?? '', function ($query, $value) {
                 return $query->where('inventories.product_id', $value);
             })
+            ->when(! isset($filter['include_employee_inventory']) || ! $filter['include_employee_inventory'], function ($query) {
+                // By default, only show branch inventories (employee_id is null)
+                return $query->whereNull('inventories.employee_id');
+            })
             ->orderBy($filter['sortField'] ?? '', $filter['sortDirection'] ?? '');
     }
 }
