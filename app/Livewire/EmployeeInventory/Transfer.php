@@ -14,6 +14,7 @@ class Transfer extends Component
     public $employee_id;
 
     public $return_to_main_branch;
+
     public $quantity;
 
     public $reason;

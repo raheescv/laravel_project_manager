@@ -15,7 +15,7 @@
                             <div class="mb-4">
                                 <div wire:ignore>
                                     <label for="account_id" class="form-label">Select Vendor <span class="text-danger">*</span></label>
-                                    {{ html()->select('account_id', $accounts)->value($purchases['account_id'])->class('form-select select-vendor_id')->id('account_id')->placeholder('Select Vendor') }}
+                                    {{ html()->select('account_id', $accounts)->value($purchases['account_id'])->class('select-vendor_id')->id('account_id')->placeholder('Select Vendor') }}
                                 </div>
                             </div>
                             <div class="alert alert-light mb-0">
