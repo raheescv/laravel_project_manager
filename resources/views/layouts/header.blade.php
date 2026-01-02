@@ -115,6 +115,11 @@
                                             <i class="fa fa-calendar fs-5 me-2"></i>Day Wise Sale Report
                                         </a>
                                     @endcan
+                                    @can('report.day wise tax report')
+                                        <a href="{{ route('report::day_wise_tax_report') }}" class="list-group-item list-group-item-action">
+                                            <i class="fa fa-calendar fs-5 me-2"></i>Day Wise Tax Report
+                                        </a>
+                                    @endcan
                                     @can('report.vendor aging')
                                         <a href="{{ route('report::vendor_aging') }}" class="list-group-item list-group-item-action">
                                             <i class="fa fa-calendar fs-5 me-2"></i>Vendor Aging

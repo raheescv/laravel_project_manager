@@ -80,6 +80,8 @@ return [
         'bank reconciliation report',
         'customer aging',
         'vendor aging',
+        'tax report',
+        'day wise tax report',
     ],
     'log' => ['inventory'],
     'day close' => ['sync amount'],

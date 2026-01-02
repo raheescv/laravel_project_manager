@@ -117,4 +117,9 @@ class ReportController extends Controller
     {
         return view('report.vendor_aging');
     }
+
+    public function day_wise_tax_report()
+    {
+        return view('report.day_wise_tax_report');
+    }
 }
