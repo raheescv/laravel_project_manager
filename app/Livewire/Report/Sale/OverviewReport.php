@@ -158,7 +158,7 @@ class OverviewReport extends Component
             ->join('users', 'users.id', '=', 'sale_items.employee_id')
             ->tap($baseQuery)
             ->when($this->employeeSearch, function ($query) {
-                $query->where('users.name', 'like', '%'.$this->employeeSearch.'%');
+                $query->where('users.name', 'like', '%'.trim($this->employeeSearch).'%');
             })
             ->groupBy('sale_items.employee_id')
             ->select('users.id', 'users.name as employee')
@@ -175,7 +175,7 @@ class OverviewReport extends Component
             ->join('products', 'products.id', '=', 'sale_items.product_id')
             ->tap($baseQuery)
             ->when($this->productSearch, function ($query) {
-                $query->where('products.name', 'like', '%'.$this->productSearch.'%');
+                $query->where('products.name', 'like', '%'.trim($this->productSearch).'%');
             })
             ->select(
                 'products.id',
@@ -193,7 +193,7 @@ class OverviewReport extends Component
             ->join('products', 'products.id', '=', 'sale_return_items.product_id')
             ->tap($baseReturnQuery)
             ->when($this->productSearch, function ($query) {
-                $query->where('products.name', 'like', '%'.$this->productSearch.'%');
+                $query->where('products.name', 'like', '%'.trim($this->productSearch).'%');
             })
             ->select(
                 'products.id',
@@ -309,7 +309,7 @@ class OverviewReport extends Component
             ->join('users', 'users.id', '=', 'sale_items.employee_id')
             ->tap($baseQuery)
             ->when($this->employeeSearch, function ($query) {
-                $query->where('users.name', 'like', '%'.$this->employeeSearch.'%');
+                $query->where('users.name', 'like', '%'.trim($this->employeeSearch).'%');
             });
 
         return [
@@ -325,7 +325,7 @@ class OverviewReport extends Component
             ->join('products', 'products.id', '=', 'sale_items.product_id')
             ->tap($baseQuery)
             ->when($this->productSearch, function ($query) {
-                $query->where('products.name', 'like', '%'.$this->productSearch.'%');
+                $query->where('products.name', 'like', '%'.trim($this->productSearch).'%');
             });
 
         $totalReturnedProducts = SaleReturnItem::query()
@@ -333,7 +333,7 @@ class OverviewReport extends Component
             ->join('products', 'products.id', '=', 'sale_return_items.product_id')
             ->tap($baseReturnQuery)
             ->when($this->productSearch, function ($query) {
-                $query->where('products.name', 'like', '%'.$this->productSearch.'%');
+                $query->where('products.name', 'like', '%'.trim($this->productSearch).'%');
             });
 
         $totalProductQuantity = $totalProducts->sum('sale_items.quantity');
