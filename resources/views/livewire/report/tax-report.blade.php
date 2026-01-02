@@ -88,41 +88,41 @@
                                 </td>
                                 <td class="px-3 py-2">
                                     @php
-                                        $badgeClass = match($entry->model) {
+                                        $badgeClass = match ($entry->model) {
                                             'Purchase' => 'bg-success',
                                             'PurchaseReturn' => 'bg-danger',
                                             'Sale' => 'bg-info',
                                             'SaleReturn' => 'bg-warning',
-                                            default => 'bg-secondary'
+                                            default => 'bg-secondary',
                                         };
-                                        $label = match($entry->model) {
+                                        $label = match ($entry->model) {
                                             'Purchase' => 'Purchase',
                                             'PurchaseReturn' => 'Purchase Return',
                                             'Sale' => 'Sale',
                                             'SaleReturn' => 'Sale Return',
-                                            default => $entry->model
+                                            default => $entry->model,
                                         };
                                     @endphp
                                     <span class="badge {{ $badgeClass }}">{{ $label }}</span>
                                 </td>
                                 <td class="px-3 py-2">
-                                    <span class="text-muted">{{ $entry->reference_number ?? $entry->journal?->reference_number ?? '-' }}</span>
+                                    <span class="text-muted">{{ $entry->reference_number ?? ($entry->journal?->reference_number ?? '-') }}</span>
                                 </td>
                                 <td class="px-3 py-2">
-                                    <span class="text-dark">{{ $entry->description ?? $entry->journal?->description ?? '-' }}</span>
+                                    <span class="text-dark">{{ $entry->description ?? ($entry->journal?->description ?? '-') }}</span>
                                 </td>
                                 <td class="px-3 py-2">
                                     <span class="text-muted small" title="{{ $entry->remarks ?? '-' }}">{{ \Illuminate\Support\Str::limit($entry->remarks ?? '-', 50) }}</span>
                                 </td>
                                 <td class="px-3 py-2 text-end">
-                                    @if($entry->debit > 0)
+                                    @if ($entry->debit > 0)
                                         <span class="text-success fw-bold">{{ currency($entry->debit) }}</span>
                                     @else
                                         <span class="text-muted">-</span>
                                     @endif
                                 </td>
                                 <td class="px-3 py-2 text-end">
-                                    @if($entry->credit > 0)
+                                    @if ($entry->credit > 0)
                                         <span class="text-info fw-bold">{{ currency($entry->credit) }}</span>
                                     @else
                                         <span class="text-muted">-</span>
@@ -151,7 +151,7 @@
                                 @php
                                     $netPayable = ($totals->total_credit ?? 0) - ($totals->total_debit ?? 0);
                                 @endphp
-                                @if($netPayable >= 0)
+                                @if ($netPayable >= 0)
                                     <span class="text-white">{{ currency($netPayable) }}</span>
                                 @else
                                     <span class="text-warning">{{ currency(abs($netPayable)) }} (Refund)</span>

@@ -72,7 +72,7 @@ class TaxReport extends Component
             ->where('account_id', $taxAccountId)
             ->when($from, fn($q) => $q->where('date', '>=', $from))
             ->when($to, fn($q) => $q->where('date', '<=', $to))
-            // ->when($this->branch_id, fn($q) => $q->where('branch_id', $this->branch_id))
+            ->when($this->branch_id, fn($q) => $q->where('branch_id', $this->branch_id))
             ->when($this->transaction_type === 'purchase', function ($q) {
                 $q->whereIn('model', ['Purchase', 'PurchaseReturn']);
             })
