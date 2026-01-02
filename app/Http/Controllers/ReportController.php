@@ -122,4 +122,9 @@ class ReportController extends Controller
     {
         return view('report.day_wise_tax_report');
     }
+
+    public function tax_report()
+    {
+        return view('report.tax_report');
+    }
 }

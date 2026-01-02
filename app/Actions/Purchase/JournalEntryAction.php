@@ -34,7 +34,7 @@ class JournalEntryAction
                 $remarks = 'Purchase from '.$purchase->account->name;
                 $debit = $purchase->gross_amount;
                 $credit = 0;
-                $entries[] = $this->makeEntryPair($accounts['inventory'], $purchase->account_id, $debit, $credit, $remarks);
+                $entries[] = $this->makeEntryPair($accounts['inventory'], $purchase->account_id, $debit, $credit, $remarks, 'Purchase', $purchase->id);
             }
 
             // Tax Entry
@@ -42,7 +42,7 @@ class JournalEntryAction
                 $remarks = 'Purchases tax collected on purchase';
                 $debit = $purchase->tax_amount;
                 $credit = 0;
-                $entries[] = $this->makeEntryPair($accounts['tax_amount'], $purchase->account_id, $debit, $credit, $remarks);
+                $entries[] = $this->makeEntryPair($accounts['tax_amount'], $purchase->account_id, $debit, $credit, $remarks, 'Purchase', $purchase->id);
             }
 
             // Item Discount Entry
@@ -50,7 +50,7 @@ class JournalEntryAction
                 $remarks = 'Discount granted on individual product on purchase';
                 $debit = 0;
                 $credit = $purchase->item_discount;
-                $entries[] = $this->makeEntryPair($accounts['discount'], $purchase->account_id, $debit, $credit, $remarks);
+                $entries[] = $this->makeEntryPair($accounts['discount'], $purchase->account_id, $debit, $credit, $remarks, 'Purchase', $purchase->id);
             }
 
             // Other Discount Entry
@@ -58,7 +58,7 @@ class JournalEntryAction
                 $remarks = 'Additional Discount granted on purchase';
                 $debit = 0;
                 $credit = $purchase->other_discount;
-                $entries[] = $this->makeEntryPair($accounts['discount'], $purchase->account_id, $debit, $credit, $remarks);
+                $entries[] = $this->makeEntryPair($accounts['discount'], $purchase->account_id, $debit, $credit, $remarks, 'Purchase', $purchase->id);
             }
 
             // Freight Entry
@@ -66,7 +66,7 @@ class JournalEntryAction
                 $remarks = 'Freight charge on purchased goods';
                 $debit = $purchase->freight;
                 $credit = 0;
-                $entries[] = $this->makeEntryPair($accounts['freight'], $purchase->account_id, $debit, $credit, $remarks);
+                $entries[] = $this->makeEntryPair($accounts['freight'], $purchase->account_id, $debit, $credit, $remarks, 'Purchase', $purchase->id);
             }
 
             // Payment Entries

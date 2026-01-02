@@ -35,5 +35,6 @@ Route::middleware('auth')->group(function (): void {
             Route::get('day_wise_sale', 'day_wise_sale')->name('day_wise_sale')->can('report.day wise sale');
             Route::get('vendor_aging', 'vendor_aging')->name('vendor_aging')->can('report.vendor aging');
             Route::get('day_wise_tax_report', 'day_wise_tax_report')->name('day_wise_tax_report')->can('report.day wise tax report');
+            Route::get('tax_report', 'tax_report')->name('tax_report')->can('report.tax report');
         });
 });

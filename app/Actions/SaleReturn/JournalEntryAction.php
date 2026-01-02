@@ -39,35 +39,35 @@ class JournalEntryAction
                 $remarks = 'SaleReturn to '.$model->account->name;
                 $debit = $model->gross_amount;
                 $credit = 0;
-                $entries[] = $this->makeEntryPair($accounts['sales_returns'], $model->account_id, $debit, $credit, $remarks);
+                $entries[] = $this->makeEntryPair($accounts['sales_returns'], $model->account_id, $debit, $credit, $remarks, 'SaleReturn', $model->id);
             }
 
             if ($totalCost > 0) {
                 $remarks = 'Cost of goods return (Inventory transfer)';
                 $debit = $totalCost;
                 $credit = 0;
-                $entries[] = $this->makeEntryPair($accounts['inventory'], $accounts['cost_of_goods_sold'], $debit, $credit, $remarks);
+                $entries[] = $this->makeEntryPair($accounts['inventory'], $accounts['cost_of_goods_sold'], $debit, $credit, $remarks, 'SaleReturn', $model->id);
             }
 
             if ($model->tax_amount > 0) {
                 $remarks = 'Sale Returns tax collected on sale';
                 $debit = $model->tax_amount;
                 $credit = 0;
-                $entries[] = $this->makeEntryPair($accounts['tax_amount'], $model->account_id, $debit, $credit, $remarks);
+                $entries[] = $this->makeEntryPair($accounts['tax_amount'], $model->account_id, $debit, $credit, $remarks, 'SaleReturn', $model->id);
             }
 
             if ($model->item_discount > 0) {
                 $remarks = 'Discount provided on individual product on sale return';
                 $debit = 0;
                 $credit = $model->item_discount;
-                $entries[] = $this->makeEntryPair($accounts['discount'], $model->account_id, $debit, $credit, $remarks);
+                $entries[] = $this->makeEntryPair($accounts['discount'], $model->account_id, $debit, $credit, $remarks, 'SaleReturn', $model->id);
             }
 
             if ($model->other_discount > 0) {
                 $remarks = SaleReturn::ADDITIONAL_DISCOUNT_DESCRIPTION;
                 $debit = 0;
                 $credit = $model->other_discount;
-                $entries[] = $this->makeEntryPair($accounts['discount'], $model->account_id, $debit, $credit, $remarks);
+                $entries[] = $this->makeEntryPair($accounts['discount'], $model->account_id, $debit, $credit, $remarks, 'SaleReturn', $model->id);
             }
 
             foreach ($model->payments as $payment) {

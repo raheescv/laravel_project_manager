@@ -105,6 +105,11 @@
                                             <i class="fa fa-phone fs-5 me-2"></i>Customer Callback Reminder
                                         </a>
                                     @endcan
+                                    @can('report.vendor aging')
+                                        <a href="{{ route('report::vendor_aging') }}" class="list-group-item list-group-item-action">
+                                            <i class="fa fa-calendar fs-5 me-2"></i>Vendor Aging
+                                        </a>
+                                    @endcan
                                     @can('report.customer aging')
                                         <a href="{{ route('report::customer_aging') }}" class="list-group-item list-group-item-action">
                                             <i class="fa fa-calendar fs-5 me-2"></i>Customer Aging
@@ -120,9 +125,9 @@
                                             <i class="fa fa-calendar fs-5 me-2"></i>Day Wise Tax Report
                                         </a>
                                     @endcan
-                                    @can('report.vendor aging')
-                                        <a href="{{ route('report::vendor_aging') }}" class="list-group-item list-group-item-action">
-                                            <i class="fa fa-calendar fs-5 me-2"></i>Vendor Aging
+                                    @can('report.tax report')
+                                        <a href="{{ route('report::tax_report') }}" class="list-group-item list-group-item-action">
+                                            <i class="fa fa-calendar fs-5 me-2"></i>Tax Report
                                         </a>
                                     @endcan
                                 </div>
