@@ -6,8 +6,10 @@ use App\Models\Sale;
 use App\Models\SaleItem;
 use App\Models\SalePayment;
 use App\Models\SaleReturn;
+use App\Models\SaleReturnItem;
 use App\Models\SaleReturnPayment;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\DB;
 use Livewire\Component;
 use Livewire\WithPagination;
 
@@ -91,27 +93,20 @@ class OverviewReport extends Component
         $from = $this->fromDate ? Carbon::parse($this->fromDate)->toDateString() : null;
         $to = $this->toDate ? Carbon::parse($this->toDate)->toDateString() : null;
 
-        $baseQuery = fn ($query) => $query
-            ->when($this->branchId, fn ($q) => $q->where('sales.branch_id', $this->branchId))
-            ->when($from, fn ($q) => $q->where('sales.date', '>=', $from))
-            ->when($to, fn ($q) => $q->where('sales.date', '<=', $to))
-            ->where('sales.status', 'completed');
+        $baseQuery = fn($query) => $query->when($this->branchId, fn($q) => $q->where('sales.branch_id', $this->branchId))->when($from, fn($q) => $q->where('sales.date', '>=', $from))->when($to, fn($q) => $q->where('sales.date', '<=', $to))->where('sales.status', 'completed');
 
-        $baseReturnQuery = fn ($query) => $query
-            ->when($this->branchId, fn ($q) => $q->where('sale_returns.branch_id', $this->branchId))
-            ->when($from, fn ($q) => $q->where('sale_returns.date', '>=', $from))
-            ->when($to, fn ($q) => $q->where('sale_returns.date', '<=', $to))
-            ->where('sale_returns.status', 'completed');
+        $baseReturnQuery = fn($query) => $query->when($this->branchId, fn($q) => $q->where('sale_returns.branch_id', $this->branchId))->when($from, fn($q) => $q->where('sale_returns.date', '>=', $from))->when($to, fn($q) => $q->where('sale_returns.date', '<=', $to))->where('sale_returns.status', 'completed');
 
         $employees = SaleItem::query()
             ->join('sales', 'sales.id', '=', 'sale_items.sale_id')
             ->join('users', 'users.id', '=', 'sale_items.employee_id')
             ->tap($baseQuery)
             ->where(function ($query): void {
-                $query->where('users.name', 'like', '%'.$this->employeeSearch.'%');
+                $query->where('users.name', 'like', '%' . $this->employeeSearch . '%');
             });
         $totalEmployees = clone $employees;
-        $employees = $employees->groupBy('sale_items.employee_id')
+        $employees = $employees
+            ->groupBy('sale_items.employee_id')
             ->select('users.id', 'users.name as employee')
             ->selectRaw('sum(sale_items.total) as total')
             ->selectRaw('sum(sale_items.quantity) as quantity')
@@ -123,44 +118,56 @@ class OverviewReport extends Component
         $employeeTotal = clone $totalEmployees;
         $employeeTotal = $employeeTotal->sum('sale_items.total');
 
-        $products = SaleItem::query()
+        // Query for sale items
+        $saleItemsQuery = SaleItem::query()
             ->join('sales', 'sales.id', '=', 'sale_items.sale_id')
             ->join('products', 'products.id', '=', 'sale_items.product_id')
             ->tap($baseQuery)
             ->where(function ($query): void {
-                $query->where('products.name', 'like', '%'.$this->productSearch.'%');
-            });
-        $totalProducts = clone $products;
+                $query->where('products.name', 'like', '%' . $this->productSearch . '%');
+            })
+            ->select('products.id', 'products.name as product', 'products.type', DB::raw('SUM(sale_items.quantity) as sales_quantity'), DB::raw('0 as return_quantity'), DB::raw('SUM(sale_items.total) as total'))
+            ->groupBy('products.id', 'products.name', 'products.type');
 
-        // $products = $products->select('products.name as product', 'products.type')
-        //     ->selectRaw('sum(sale_items.total) as total')
-        //     ->selectRaw('sum(sale_items.quantity) as quantity')
-        //     ->orderBy($this->productSortField, $this->productSortDirection)
-        //     ->groupBy('sale_items.product_id')
-        //     ->paginate($this->productPerPage, ['*'], 'products-page');
-        $products = SaleItem::query()
-            ->join('sales', 'sales.id', '=', 'sale_items.sale_id')
-            ->join('products', 'products.id', '=', 'sale_items.product_id')
-            ->leftJoin('sale_return_items', 'sale_return_items.product_id', '=', 'products.id')
-            ->leftJoin('sale_returns', function ($join) {
-                $join->on('sale_returns.id', '=', 'sale_return_items.sale_return_id')
-                    ->where('sale_returns.status', 'completed');
+        // Query for sale return items
+        $saleReturnItemsQuery = SaleReturnItem::query()
+            ->join('sale_returns', 'sale_returns.id', '=', 'sale_return_items.sale_return_id')
+            ->join('products', 'products.id', '=', 'sale_return_items.product_id')
+            ->tap($baseReturnQuery)
+            ->where(function ($query): void {
+                $query->where('products.name', 'like', '%' . $this->productSearch . '%');
             })
-            ->tap($baseQuery)
-            ->where(function ($query) {
-                $query->where('products.name', 'like', '%'.$this->productSearch.'%');
-            })
-            ->groupBy('products.id')
-            ->select(
-                'products.id',
-                'products.name as product',
-                'products.type'
-            )
-            ->selectRaw('SUM(sale_items.quantity) as sales_quantity')
-            ->selectRaw('SUM(sale_return_items.quantity) as return_quantity')
-            ->selectRaw('SUM(sale_items.total) as total')
+            ->select('products.id', 'products.name as product', 'products.type', DB::raw('0 as sales_quantity'), DB::raw('SUM(sale_return_items.quantity) as return_quantity'), DB::raw('0 as total'))
+            ->groupBy('products.id', 'products.name', 'products.type');
+
+        // Union both queries
+        $unionQuery = $saleItemsQuery->unionAll($saleReturnItemsQuery);
+
+        // Group by product and aggregate
+        $products = DB::query()
+            ->fromSub($unionQuery, 'unified_items')
+            ->select('id', 'product', 'type', DB::raw('SUM(sales_quantity) as sales_quantity'), DB::raw('SUM(return_quantity) as return_quantity'), DB::raw('SUM(total) as total'))
+            ->groupBy('id', 'product', 'type')
             ->orderBy($this->productSortField, $this->productSortDirection)
             ->paginate($this->productPerPage, ['*'], 'products-page');
+
+        // For total calculations, we need to query separately
+        $totalProducts = SaleItem::query()
+            ->join('sales', 'sales.id', '=', 'sale_items.sale_id')
+            ->join('products', 'products.id', '=', 'sale_items.product_id')
+            ->tap($baseQuery)
+            ->where(function ($query): void {
+                $query->where('products.name', 'like', '%' . $this->productSearch . '%');
+            });
+
+        // Calculate total returned quantity
+        $totalReturnedProducts = SaleReturnItem::query()
+            ->join('sale_returns', 'sale_returns.id', '=', 'sale_return_items.sale_return_id')
+            ->join('products', 'products.id', '=', 'sale_return_items.product_id')
+            ->tap($baseReturnQuery)
+            ->where(function ($query): void {
+                $query->where('products.name', 'like', '%' . $this->productSearch . '%');
+            });
 
         $sales = Sale::query()->customerSearch($this->branchId, $from, $to);
         $saleReturns = SaleReturn::query()->customerSearch($this->branchId, $from, $to);
@@ -183,7 +190,7 @@ class OverviewReport extends Component
             ->tap($baseQuery)
             ->select(
                 'accounts.name as payment_method',
-                'branches.name as branch_name' // <-- added
+                'branches.name as branch_name', // <-- added
             )
             ->selectRaw("'sale' as payment_type")
             ->selectRaw('SUM(sale_payments.amount) as total')
@@ -208,7 +215,7 @@ class OverviewReport extends Component
             ->tap($baseReturnQuery)
             ->select(
                 'accounts.name as payment_method',
-                'branches.name as branch_name' // <-- added
+                'branches.name as branch_name', // <-- added
             )
             ->selectRaw('SUM(sale_return_payments.amount) as total')
             ->selectRaw('COUNT(DISTINCT sale_return_payments.sale_return_id) as transaction_count')
@@ -216,14 +223,7 @@ class OverviewReport extends Component
             ->orderBy('total', 'desc')
             ->get();
 
-        $payments = SalePayment::query()
-            ->join('sales', 'sales.id', '=', 'sale_payments.sale_id')
-            ->join('accounts', 'accounts.id', '=', 'sale_payments.payment_method_id')
-            ->tap($baseQuery)
-            ->select('accounts.name as payment_method')
-            ->selectRaw('sum(sale_payments.amount) as total')
-            ->groupBy('sale_payments.payment_method_id')
-            ->pluck('total', 'payment_method');
+        $payments = SalePayment::query()->join('sales', 'sales.id', '=', 'sale_payments.sale_id')->join('accounts', 'accounts.id', '=', 'sale_payments.payment_method_id')->tap($baseQuery)->select('accounts.name as payment_method')->selectRaw('sum(sale_payments.amount) as total')->groupBy('sale_payments.payment_method_id')->pluck('total', 'payment_method');
 
         $netSales = $sales->sum('gross_amount');
         $saleDiscount = $sales->sum('other_discount');
@@ -241,7 +241,10 @@ class OverviewReport extends Component
         $totalPayment = $payments->sum();
 
         $totalProductQuantity = clone $totalProducts;
-        $totalProductQuantity = $totalProductQuantity->sum('quantity');
+        $totalProductQuantity = $totalProductQuantity->sum('sale_items.quantity');
+
+        $totalReturnedQuantity = clone $totalReturnedProducts;
+        $totalReturnedQuantity = $totalReturnedQuantity->sum('sale_return_items.quantity');
 
         $itemTotal = clone $totalProducts;
         $itemTotal = $itemTotal->sum('sale_items.total');
@@ -270,6 +273,7 @@ class OverviewReport extends Component
             'productSale' => $productSale,
             'itemTotal' => $itemTotal,
             'totalProductQuantity' => $totalProductQuantity,
+            'totalReturnedQuantity' => $totalReturnedQuantity,
             'totalPayment' => $totalPayment,
             'credit' => $credit,
             'paymentMethods' => $paymentMethods,
