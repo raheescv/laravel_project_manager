@@ -55,6 +55,7 @@ class TaxReport extends Component
     private function getTaxAccountId()
     {
         $accounts = Cache::get('accounts_slug_id_map', []);
+
         return $accounts['tax_amount'] ?? null;
     }
 
@@ -64,15 +65,15 @@ class TaxReport extends Component
         $to = $this->to_date ? Carbon::parse($this->to_date)->toDateString() : null;
         $taxAccountId = $this->getTaxAccountId();
 
-        if (!$taxAccountId) {
+        if (! $taxAccountId) {
             return collect([]);
         }
 
         $query = JournalEntry::with(['account', 'journal'])
             ->where('account_id', $taxAccountId)
-            ->when($from, fn($q) => $q->where('date', '>=', $from))
-            ->when($to, fn($q) => $q->where('date', '<=', $to))
-            ->when($this->branch_id, fn($q) => $q->where('branch_id', $this->branch_id))
+            ->when($from, fn ($q) => $q->where('date', '>=', $from))
+            ->when($to, fn ($q) => $q->where('date', '<=', $to))
+            ->when($this->branch_id, fn ($q) => $q->where('branch_id', $this->branch_id))
             ->when($this->transaction_type === 'purchase', function ($q) {
                 $q->whereIn('model', ['Purchase', 'PurchaseReturn']);
             })
@@ -95,6 +96,7 @@ class TaxReport extends Component
         } else {
             $query->orderBy('date', $this->sortDirection)->orderBy('id', $this->sortDirection);
         }
+
         return $query;
     }
 
@@ -112,7 +114,7 @@ class TaxReport extends Component
 
         $from = $this->from_date ? Carbon::parse($this->from_date)->toDateString() : null;
         $to = $this->to_date ? Carbon::parse($this->to_date)->toDateString() : null;
-        $exportFileName = 'TaxReport_' . ($from ? systemDate($from) : '') . '_' . ($to ? systemDate($to) : '') . '_' . now()->timestamp . '.xlsx';
+        $exportFileName = 'TaxReport_'.($from ? systemDate($from) : '').'_'.($to ? systemDate($to) : '').'_'.now()->timestamp.'.xlsx';
 
         return Excel::download(new TaxReportExport($entries, $filters), $exportFileName);
     }

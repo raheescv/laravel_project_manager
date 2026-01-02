@@ -2,9 +2,8 @@
 
 namespace App\Console\Commands\Test;
 
-use Exception;
-use Illuminate\Console\Command;
 use App\Helpers\Facades\WhatsappHelper;
+use Illuminate\Console\Command;
 
 class WhatsappCommand extends Command
 {

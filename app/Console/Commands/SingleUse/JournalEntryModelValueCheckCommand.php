@@ -49,7 +49,7 @@ class JournalEntryModelValueCheckCommand extends Command
             }
 
             // Parse description: "Sale:INV-HM-25/26-5350" or "Purchase:invoice_no" etc.
-            if (!str_contains($entry->description, ':')) {
+            if (! str_contains($entry->description, ':')) {
                 continue;
             }
 
@@ -96,6 +96,7 @@ class JournalEntryModelValueCheckCommand extends Command
                     default:
                         $this->warn("Unknown model type: {$modelType} for entry ID: {$entry->id}");
                         $failed++;
+
                         continue 2;
                 }
 

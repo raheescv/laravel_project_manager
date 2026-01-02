@@ -22,7 +22,7 @@ class WhatsappHelper
         $this->baseUrl = config('services.meta_whatsapp.base_url');
 
         $headers = [
-            'Authorization' => 'Bearer ' . $this->accessToken,
+            'Authorization' => 'Bearer '.$this->accessToken,
             'Content-Type' => 'application/json',
         ];
         $this->http = Http::withHeaders($headers);
@@ -67,7 +67,7 @@ class WhatsappHelper
 
             $response = $this->http->post($url, $payload);
 
-            if (!$response->successful()) {
+            if (! $response->successful()) {
                 $errorData = $response->json();
                 Log::error('WhatsApp API request failed', [
                     'url' => $url,
@@ -111,7 +111,7 @@ class WhatsappHelper
             $isSent = $data['is_sent'] ?? true;
             $isFailed = $data['is_failed'] ?? false;
 
-            if ($isFailed || !$isSent) {
+            if ($isFailed || ! $isSent) {
                 $errorMessage = $data['message'] ?? 'Message failed to send';
                 Log::warning('WhatsApp message may not have been sent', [
                     'message_id' => $data['id'] ?? null,
@@ -191,7 +191,7 @@ class WhatsappHelper
             ];
 
             // Add components if provided
-            if (!empty($components)) {
+            if (! empty($components)) {
                 $template['components'] = $components;
             }
 
@@ -203,7 +203,7 @@ class WhatsappHelper
 
             $response = $this->http->post($url, $payload);
 
-            if (!$response->successful()) {
+            if (! $response->successful()) {
                 $errorData = $response->json();
                 Log::error('WhatsApp template API request failed', [
                     'url' => $url,
@@ -250,7 +250,7 @@ class WhatsappHelper
             $isSent = $data['is_sent'] ?? true;
             $isFailed = $data['is_failed'] ?? false;
 
-            if ($isFailed || !$isSent) {
+            if ($isFailed || ! $isSent) {
                 $errorMessage = $data['message'] ?? 'Template message failed to send';
                 Log::warning('WhatsApp template message may not have been sent', [
                     'message_id' => $data['id'] ?? null,
@@ -345,12 +345,12 @@ class WhatsappHelper
         $cleaned = preg_replace('/[^\d+]/', '', $phoneNumber);
 
         // If it doesn't start with +, ensure it's properly formatted
-        if (!str_starts_with($cleaned, '+')) {
+        if (! str_starts_with($cleaned, '+')) {
             // Remove leading zeros
             $cleaned = ltrim($cleaned, '0');
             // Add + if not present
-            if (!str_starts_with($cleaned, '+')) {
-                $cleaned = '+' . $cleaned;
+            if (! str_starts_with($cleaned, '+')) {
+                $cleaned = '+'.$cleaned;
             }
         }
 

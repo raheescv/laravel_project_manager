@@ -58,6 +58,7 @@ class DayWiseTaxReport extends Component
     private function getTaxAccountId()
     {
         $accounts = Cache::get('accounts_slug_id_map', []);
+
         return $accounts['tax_amount'] ?? null;
     }
 
@@ -68,7 +69,7 @@ class DayWiseTaxReport extends Component
         $to = $this->to_date ? Carbon::parse($this->to_date)->toDateString() : null;
         $taxAccountId = $this->getTaxAccountId();
 
-        if (!$taxAccountId) {
+        if (! $taxAccountId) {
             return [[], []];
         }
 
@@ -128,7 +129,7 @@ class DayWiseTaxReport extends Component
 
             foreach ($purchaseReturnTax as $item) {
                 $key = $item->date;
-                if (!isset($summary[$key])) {
+                if (! isset($summary[$key])) {
                     $summary[$key] = [
                         'date' => $key,
                         'purchase_tax_credit' => 0,
@@ -179,7 +180,7 @@ class DayWiseTaxReport extends Component
             // Merge sale data
             foreach ($saleTax as $item) {
                 $key = $item->date;
-                if (!isset($summary[$key])) {
+                if (! isset($summary[$key])) {
                     $summary[$key] = [
                         'date' => $key,
                         'purchase_tax_credit' => 0,
@@ -193,7 +194,7 @@ class DayWiseTaxReport extends Component
 
             foreach ($saleReturnTax as $item) {
                 $key = $item->date;
-                if (!isset($summary[$key])) {
+                if (! isset($summary[$key])) {
                     $summary[$key] = [
                         'date' => $key,
                         'purchase_tax_credit' => 0,
@@ -264,4 +265,3 @@ class DayWiseTaxReport extends Component
         ]);
     }
 }
-

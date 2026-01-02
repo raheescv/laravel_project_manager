@@ -40,7 +40,7 @@ class TaxReportExport implements FromCollection, WithColumnFormatting, WithEvent
 
     public function map($entry): array
     {
-        $transactionType = match($entry->model) {
+        $transactionType = match ($entry->model) {
             'Purchase' => 'Purchase',
             'PurchaseReturn' => 'Purchase Return',
             'Sale' => 'Sale',
@@ -101,7 +101,7 @@ class TaxReportExport implements FromCollection, WithColumnFormatting, WithEvent
                 $sheet->setCellValue("B{$totalRow}", '');
                 $sheet->setCellValue("C{$totalRow}", '');
                 $sheet->setCellValue("D{$totalRow}", '');
-                $sheet->setCellValue("E{$totalRow}", count($this->entries) . ' entries');
+                $sheet->setCellValue("E{$totalRow}", count($this->entries).' entries');
                 $sheet->setCellValue("F{$totalRow}", $totalDebit);
                 $sheet->setCellValue("G{$totalRow}", $totalCredit);
 
@@ -153,7 +153,7 @@ class TaxReportExport implements FromCollection, WithColumnFormatting, WithEvent
                 }
 
                 // Add title if filters are provided
-                if (!empty($this->filters)) {
+                if (! empty($this->filters)) {
                     $sheet->insertNewRowBefore(1, 2);
                     $sheet->mergeCells('A1:G1');
                     $title = 'TAX REPORT';
@@ -173,4 +173,3 @@ class TaxReportExport implements FromCollection, WithColumnFormatting, WithEvent
         ];
     }
 }
-

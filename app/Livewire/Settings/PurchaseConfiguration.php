@@ -27,4 +27,3 @@ class PurchaseConfiguration extends Component
         return view('livewire.settings.purchase-configuration');
     }
 }
-

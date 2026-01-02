@@ -78,7 +78,6 @@ class ChangeSession extends Component
                 $this->sale->journal->entries()->update(['date' => $data['date']]);
             }
 
-
             if ($newSession->id != $oldSession->id) {
                 if ($newSession->status == 'closed') {
                     $newData = [

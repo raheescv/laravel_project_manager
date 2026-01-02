@@ -500,7 +500,9 @@
                                     <th>Name</th>
                                     <th class="text-end">Sold Qty</th>
                                     <th class="text-end">Returned Qty</th>
-                                    <th class="text-end pe-3">Total</th>
+                                    <th class="text-end">Sale Total</th>
+                                    <th class="text-end">Return Total</th>
+                                    <th class="text-end pe-3">Net Amount</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -510,7 +512,9 @@
                                         <td>{{ $item->product }}</td>
                                         <td class="text-end">{{ number_format($item->sales_quantity) }}</td>
                                         <td class="text-end">{{ number_format($item->return_quantity) }}</td>
-                                        <td class="text-end pe-3">{{ currency($item->total) }}</td>
+                                        <td class="text-end">{{ currency($item->sale_total ?? 0) }}</td>
+                                        <td class="text-end text-warning">{{ currency($item->sale_return_total ?? 0) }}</td>
+                                        <td class="text-end pe-3 fw-bold {{ ($item->net_amount ?? 0) >= 0 ? 'text-success' : 'text-danger' }}">{{ currency($item->net_amount ?? 0) }}</td>
                                     </tr>
                                 @endforeach
                             </tbody>
@@ -520,7 +524,9 @@
                                     <td colspan="2" class="ps-3 fw-bold">Total</td>
                                     <td class="text-end fw-bold">{{ number_format($totalProductQuantity) }}</td>
                                     <td class="text-end fw-bold">{{ number_format($totalReturnedQuantity ?? 0) }}</td>
-                                    <td class="text-end pe-3 fw-bold">{{ currency($itemTotal) }}</td>
+                                    <td class="text-end fw-bold">{{ currency($itemTotal) }}</td>
+                                    <td class="text-end fw-bold text-warning">{{ currency($totalSaleReturnAmount ?? 0) }}</td>
+                                    <td class="text-end pe-3 fw-bold {{ ($netItemTotal ?? 0) >= 0 ? 'text-success' : 'text-danger' }}">{{ currency($netItemTotal ?? 0) }}</td>
                                 </tr>
                             </tfoot>
                         </table>
