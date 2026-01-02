@@ -180,8 +180,7 @@
                             </div>
                         </div>
                     </div>
-
-                    <div class="card shadow-sm">
+                    <div class="card shadow-sm mb-4">
                         <div class="card-header bg-light py-3">
                             <h5 class="mb-0"><i class="fa fa-cogs me-2"></i>User Settings</h5>
                         </div>
@@ -201,6 +200,11 @@
                             </div>
                         </div>
                     </div>
+                    @if ($user->type == 'employee')
+                        <div class="card shadow-sm mb-4">
+                            @livewire('user.employee-inventory-list', ['employee_id' => $user->id], key('employee-inventory-list-'.$user->id))
+                        </div>
+                    @endif
                 </div>
             </div>
         </div>
