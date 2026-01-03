@@ -128,7 +128,7 @@
                             </div>
                             @can('whatsapp.integration')
                                 <div id="tabsWhatsapp" class="tab-pane" role="tabpanel">
-                                    @livewire('settings.whatsapp')
+                                    {{-- @livewire('settings.whatsapp') --}}
                                 </div>
                             @endcan
                         </div>
