@@ -20,7 +20,7 @@ class View extends Component
 
     public $product_id = '';
 
-    public $inventory_filter = 'all'; // 'all', 'main', 'employee'
+    public $inventory_filter = 'main'; // 'all', 'main', 'employee'
 
     public $employee_id = '';
 

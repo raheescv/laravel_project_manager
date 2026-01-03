@@ -79,14 +79,14 @@
                     </div>
                 </div>
             @endif
-
-            <div class="form-check form-switch py-2 mb-2">
-                <input class="form-check-input" type="checkbox" id="return_to_main_branch" wire:model.live="return_to_main_branch">
-                <label class="form-check-label" for="return_to_main_branch"> &emsp; Return to {{ $inventory?->branch?->name }} Branch </label>
-            </div>
-
-            <div class="row" @if($return_to_main_branch) style="display: none;" @endif>
-                <div class="col-md-12 mb-3" wire:ignore >
+            @if ($inventory?->employee_id)
+                <div class="form-check form-switch py-2 mb-2">
+                    <input class="form-check-input" type="checkbox" id="return_to_main_branch" wire:model.live="return_to_main_branch">
+                    <label class="form-check-label" for="return_to_main_branch"> &emsp; Return to {{ $inventory?->branch?->name }} Branch </label>
+                </div>
+            @endif
+            <div class="row" @if ($return_to_main_branch) style="display: none;" @endif>
+                <div class="col-md-12 mb-3" wire:ignore>
                     <label for="employee_id" class="form-label fw-semibold">
                         <i class="demo-pli-user me-1 text-primary"></i>
                         Select Employee <span class="text-danger">*</span>
@@ -94,7 +94,6 @@
                     {{ html()->select('employee_id', [])->value('')->class('select-employee_id-list')->id('transfer_employee_id')->attribute('wire:model', 'employee_id')->placeholder('Search and select employee...') }}
                 </div>
             </div>
-
             <div class="row">
                 <div class="col-md-12 mb-3">
                     <label for="quantity" class="form-label fw-semibold">
