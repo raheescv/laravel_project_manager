@@ -11,10 +11,10 @@ class UserSeeder extends Seeder
 {
     public function run(): void
     {
-        User::factory()->create(['tenant_id'=>1,'name' => 'System', 'email' => 'system@astra.com', 'mobile' => '+919633155669', 'password' => Hash::make('asdasd'), 'is_locked' => 1]);
-        User::factory()->create(['tenant_id'=>1,'name' => 'Admin', 'email' => 'admin@astra.com', 'mobile' => '+919633155669', 'password' => Hash::make('asdasd'), 'is_locked' => 1]);
-        User::factory()->create(['tenant_id'=>1,'name' => 'Rahees', 'email' => 'rahees@astra.com', 'mobile' => '+919633155669', 'password' => Hash::make('asdasd')]);
-        User::factory()->create(['tenant_id'=>1,'name' => 'Employee', 'email' => 'employee@astra.com', 'type' => 'employee', 'mobile' => '+919633155669', 'password' => Hash::make('asdasd')]);
+        User::factory()->create(['tenant_id' => 1, 'name' => 'System', 'email' => 'system@astra.com', 'mobile' => '+919633155669', 'password' => Hash::make('asdasd'), 'is_locked' => 1]);
+        User::factory()->create(['tenant_id' => 1, 'name' => 'Admin', 'email' => 'admin@astra.com', 'mobile' => '+919633155669', 'password' => Hash::make('asdasd'), 'is_locked' => 1]);
+        User::factory()->create(['tenant_id' => 1, 'name' => 'Rahees', 'email' => 'rahees@astra.com', 'mobile' => '+919633155669', 'password' => Hash::make('asdasd')]);
+        User::factory()->create(['tenant_id' => 1, 'name' => 'Employee', 'email' => 'employee@astra.com', 'type' => 'employee', 'mobile' => '+919633155669', 'password' => Hash::make('asdasd')]);
         $list = User::get();
         $action = new BranchAction();
         foreach ($list as $key => $user) {

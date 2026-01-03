@@ -3,7 +3,7 @@
 namespace App\Models;
 
 use App\Models\Models\Views\Ledger;
-use App\Models\Scopes\TenantScope;
+use App\Traits\BelongsToTenant;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -14,6 +14,7 @@ use OwenIt\Auditing\Contracts\Auditable as AuditableContracts;
 class Account extends Model implements AuditableContracts
 {
     use Auditable;
+    use BelongsToTenant;
     use SoftDeletes;
 
     protected $fillable = [
@@ -41,13 +42,10 @@ class Account extends Model implements AuditableContracts
         'second_reference_no',
     ];
 
-    protected static function booted()
-    {
-        static::addGlobalScope(new TenantScope());
-    }
-
     public static function rules($id = 0, $merge = [])
     {
+        $tenantId = self::getCurrentTenantId();
+
         return array_merge([
             'account_type' => ['required'],
             'name' => ['required', 'max:100'],
@@ -56,8 +54,9 @@ class Account extends Model implements AuditableContracts
             'email' => ['max:50'],
             'unique_composite' => [
                 Rule::unique(self::class)
-                    ->where(function ($query) {
+                    ->where(function ($query) use ($tenantId) {
                         return $query
+                            ->where('tenant_id', $tenantId)
                             ->where('account_type', request()->input('account_type'))
                             ->where('name', request()->input('name'))
                             ->where('mobile', request()->input('mobile'));

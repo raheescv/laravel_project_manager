@@ -2,8 +2,7 @@
 
 namespace App\Models;
 
-use App\Models\Scopes\TenantScope;
-use App\Services\TenantService;
+use App\Traits\BelongsToTenant;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -14,11 +13,7 @@ use OwenIt\Auditing\Contracts\Auditable as AuditableContracts;
 class AppointmentItem extends Model implements AuditableContracts
 {
     use Auditable;
-
-    protected static function booted()
-    {
-        static::addGlobalScope(new TenantScope());
-    }
+    use BelongsToTenant;
 
     protected $fillable = [
         'tenant_id',
@@ -28,11 +23,6 @@ class AppointmentItem extends Model implements AuditableContracts
         'created_by',
         'updated_by',
     ];
-
-    protected static function getCurrentTenantId(): ?int
-    {
-        return app(TenantService::class)->getCurrentTenantId();
-    }
 
     public static function rules($data, $id = null, $merge = [])
     {

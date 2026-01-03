@@ -2,8 +2,7 @@
 
 namespace App\Models;
 
-use App\Models\Scopes\TenantScope;
-use App\Services\TenantService;
+use App\Traits\BelongsToTenant;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Validation\Rule;
@@ -13,22 +12,13 @@ use OwenIt\Auditing\Contracts\Auditable as AuditableContracts;
 class Configuration extends Model implements AuditableContracts
 {
     use Auditable;
-
-    protected static function booted()
-    {
-        static::addGlobalScope(new TenantScope());
-    }
+    use BelongsToTenant;
 
     protected $fillable = [
         'tenant_id',
         'key',
         'value',
     ];
-
-    protected static function getCurrentTenantId(): ?int
-    {
-        return app(TenantService::class)->getCurrentTenantId();
-    }
 
     public static function rules($id = 0, $merge = [])
     {

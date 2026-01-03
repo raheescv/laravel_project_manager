@@ -4,10 +4,17 @@ namespace App\Traits;
 
 use App\Models\Scopes\TenantScope;
 use App\Services\TenantService;
-use Illuminate\Support\Facades\App;
 
 trait BelongsToTenant
 {
+    /**
+     * Get the current tenant ID from the service
+     */
+    protected static function getCurrentTenantId(): ?int
+    {
+        return app(TenantService::class)->getCurrentTenantId();
+    }
+
     /**
      * Boot the trait
      */
@@ -19,8 +26,7 @@ trait BelongsToTenant
         // Auto-set tenant_id when creating
         static::creating(function ($model): void {
             if (empty($model->tenant_id)) {
-                $tenantService = App::make(TenantService::class);
-                $tenantId = $tenantService->getCurrentTenantId();
+                $tenantId = static::getCurrentTenantId();
                 if ($tenantId) {
                     $model->tenant_id = $tenantId;
                 }
