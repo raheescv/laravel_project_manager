@@ -172,7 +172,7 @@ class Table extends Component
             SUM(balance) as balance
         ';
         $total = $totals->selectRaw($sql)
-            ->useIndex('sale_date_branch_id_status_index')
+            ->useIndex('sale_tenant_date_branch_id_status_index')
             ->first();
 
         $total = [

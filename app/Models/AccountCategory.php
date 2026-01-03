@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Actions\Settings\AccountCategory\CreateAction;
 use App\Models\Scopes\TenantScope;
+use App\Traits\BelongsToTenant;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -11,6 +12,7 @@ use Illuminate\Validation\Rule;
 
 class AccountCategory extends Model
 {
+    use BelongsToTenant;
     use HasFactory;
 
     protected static function booted()
@@ -26,8 +28,10 @@ class AccountCategory extends Model
 
     public static function rules($id = 0, $merge = [])
     {
+        $tenantId = self::getCurrentTenantId();
+
         return array_merge([
-            'name' => ['required', Rule::unique(self::class)->ignore($id)],
+            'name' => ['required', Rule::unique(self::class)->where('tenant_id', $tenantId)->ignore($id)],
         ], $merge);
     }
 

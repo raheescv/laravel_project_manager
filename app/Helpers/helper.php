@@ -477,11 +477,6 @@ if (! function_exists('getNextUniqueNumber')) {
         // Get tenant_id from session or TenantService
         $tenantId = session('tenant_id');
         if (! $tenantId) {
-            $tenantService = App::make(TenantService::class);
-            $tenantId = $tenantService->getCurrentTenantId();
-        }
-
-        if (! $tenantId) {
             throw new \Exception('Tenant ID is required to generate unique number');
         }
 
