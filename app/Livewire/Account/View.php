@@ -100,6 +100,7 @@ class View extends Component
     private function baseQuery()
     {
         return JournalEntry::with('account')
+            ->where('branch_id', session('branch_id'))
             ->where('counter_account_id', $this->accountId);
     }
 
