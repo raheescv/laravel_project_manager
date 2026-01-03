@@ -13,6 +13,9 @@ return new class() extends Migration
     {
         Schema::create('packages', function (Blueprint $table) {
             $table->id();
+            $table->unsignedBigInteger('tenant_id');
+            $table->foreign('tenant_id')->references('id')->on('tenants')->onDelete('cascade');
+            $table->index('tenant_id');
             $table->unsignedBigInteger('package_category_id')->references('id')->on('package_categories');
             $table->unsignedBigInteger('account_id')->references('id')->on('accounts');
             $table->date('start_date');

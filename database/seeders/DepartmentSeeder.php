@@ -11,10 +11,10 @@ class DepartmentSeeder extends Seeder
     {
         DB::table('departments')->truncate();
         $data = [];
-        $data[] = ['name' => 'Food'];
-        $data[] = ['name' => 'Kitchen'];
-        $data[] = ['name' => 'Beverage'];
-        $data[] = ['name' => 'Bakery'];
+        $data[] = ['tenant_id'=>1,'name' => 'Food'];
+        $data[] = ['tenant_id'=>1,'name' => 'Kitchen'];
+        $data[] = ['tenant_id'=>1,'name' => 'Beverage'];
+        $data[] = ['tenant_id'=>1,'name' => 'Bakery'];
         DB::table('departments')->insert($data);
     }
 }

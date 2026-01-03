@@ -27,11 +27,14 @@ return new class() extends Migration
         Schema::create($tableNames['permissions'], function (Blueprint $table) {
             // $table->engine('InnoDB');
             $table->bigIncrements('id'); // permission id
+            $table->unsignedBigInteger('tenant_id');
+            $table->foreign('tenant_id')->references('id')->on('tenants')->onDelete('cascade');
+            $table->index(['tenant_id'], 'permission_tenant_id_index');
             $table->string('name');       // For MyISAM use string('name', 225); // (or 166 for InnoDB with Redundant/Compact row format)
             $table->string('guard_name'); // For MyISAM use string('guard_name', 25);
             $table->timestamps();
 
-            $table->unique(['name', 'guard_name']);
+            $table->unique(['tenant_id', 'name', 'guard_name']);
         });
 
         Schema::create($tableNames['roles'], function (Blueprint $table) use ($teams, $columnNames) {

@@ -3,7 +3,9 @@
 namespace App\Models;
 
 use App\Actions\Settings\Department\CreateAction;
+use App\Models\Scopes\TenantScope;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Validation\Rule;
 
@@ -11,7 +13,13 @@ class Department extends Model
 {
     use SoftDeletes;
 
+    protected static function booted()
+    {
+        static::addGlobalScope(new TenantScope());
+    }
+
     protected $fillable = [
+        'tenant_id',
         'name',
     ];
 
@@ -20,6 +28,11 @@ class Department extends Model
         return array_merge([
             'name' => ['required', Rule::unique(self::class, 'name')->whereNull('deleted_at')->ignore($id)],
         ], $merge);
+    }
+
+    public function tenant(): BelongsTo
+    {
+        return $this->belongsTo(Tenant::class, 'tenant_id');
     }
 
     public function getDropDownList($request)

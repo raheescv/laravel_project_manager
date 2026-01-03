@@ -2,7 +2,9 @@
 
 namespace App\Models;
 
+use App\Models\Scopes\TenantScope;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use OwenIt\Auditing\Auditable;
 use OwenIt\Auditing\Contracts\Auditable as AuditableContracts;
@@ -12,7 +14,13 @@ class SaleItem extends Model implements AuditableContracts
     use Auditable;
     use SoftDeletes;
 
+    protected static function booted()
+    {
+        static::addGlobalScope(new TenantScope());
+    }
+
     protected $fillable = [
+        'tenant_id',
         'sale_id',
         'employee_id',
         'assistant_id',
@@ -70,6 +78,11 @@ class SaleItem extends Model implements AuditableContracts
     public function salePackage()
     {
         return $this->belongsTo(SaleComboOffer::class, 'sale_combo_offer_id');
+    }
+
+    public function tenant(): BelongsTo
+    {
+        return $this->belongsTo(Tenant::class, 'tenant_id');
     }
 
     public function getNameAttribute()

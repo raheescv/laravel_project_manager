@@ -10,10 +10,13 @@ return new class() extends Migration
     {
         Schema::create('users', function (Blueprint $table) {
             $table->id();
+            $table->unsignedBigInteger('tenant_id');
+            $table->foreign('tenant_id')->references('id')->on('tenants')->onDelete('cascade');
+            $table->index(['tenant_id'], 'user_tenant_id_index');
             $table->enum('type', ['user', 'employee'])->default('user');
             $table->string('name');
             $table->string('code')->nullable();
-            $table->string('email')->unique();
+            $table->string('email');
             $table->string('mobile')->nullable();
 
             $table->boolean('is_admin')->default(0);
@@ -32,10 +35,15 @@ return new class() extends Migration
             $table->decimal('allowance', 10, 2)->nullable();
             $table->decimal('salary', 10, 2)->nullable();
             $table->decimal('hra', 10, 2)->nullable();
+            $table->decimal('max_discount_per_sale', 5, 2)->default(100)->nullable();
 
             $table->boolean('is_locked')->default(0);
             $table->boolean('is_active')->default(1);
             $table->boolean('is_whatsapp_enabled')->default(0);
+            $table->boolean('is_telegram_enabled')->default(false);
+            $table->string('telegram_chat_id')->nullable();
+            $table->string('second_reference_no')->nullable();
+            $table->unique(['tenant_id', 'email']);
             $table->rememberToken();
             $table->timestamps();
         });

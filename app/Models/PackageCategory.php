@@ -2,12 +2,20 @@
 
 namespace App\Models;
 
+use App\Models\Scopes\TenantScope;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Validation\Rule;
 
 class PackageCategory extends Model
 {
+    protected static function booted()
+    {
+        static::addGlobalScope(new TenantScope());
+    }
+
     protected $fillable = [
+        'tenant_id',
         'name',
         'price',
         'frequency',
@@ -27,6 +35,11 @@ class PackageCategory extends Model
             'frequency' => ['nullable', 'string', 'in:'.implode(',', array_keys(packageFrequency()))],
             'no_of_visits' => ['nullable', 'integer', 'min:0'],
         ], $merge);
+    }
+
+    public function tenant(): BelongsTo
+    {
+        return $this->belongsTo(Tenant::class, 'tenant_id');
     }
 
     public function scopeActive($query)

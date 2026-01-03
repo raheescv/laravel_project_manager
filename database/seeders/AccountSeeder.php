@@ -13,36 +13,36 @@ class AccountSeeder extends Seeder
         // DB::table('accounts')->truncate();
 
         // Create Master Groups (Top Level Categories)
-        $currentAssetMaster = AccountCategory::firstOrCreate(['name' => 'Current Asset']);
-        $currentLiabilityMaster = AccountCategory::firstOrCreate(['name' => 'Current Liabilities']);
-        $directIncomeMaster = AccountCategory::firstOrCreate(['name' => 'Direct Income']);
-        $indirectIncomeMaster = AccountCategory::firstOrCreate(['name' => 'Indirect Income']);
-        $directExpenseMaster = AccountCategory::firstOrCreate(['name' => 'Direct Expense']);
-        $indirectExpenseMaster = AccountCategory::firstOrCreate(['name' => 'Indirect Expense']);
+        $currentAssetMaster = AccountCategory::firstOrCreate(['tenant_id' => 1, 'name' => 'Current Asset']);
+        $currentLiabilityMaster = AccountCategory::firstOrCreate(['tenant_id' => 1, 'name' => 'Current Liabilities']);
+        $directIncomeMaster = AccountCategory::firstOrCreate(['tenant_id' => 1, 'name' => 'Direct Income']);
+        $indirectIncomeMaster = AccountCategory::firstOrCreate(['tenant_id' => 1, 'name' => 'Indirect Income']);
+        $directExpenseMaster = AccountCategory::firstOrCreate(['tenant_id' => 1, 'name' => 'Direct Expense']);
+        $indirectExpenseMaster = AccountCategory::firstOrCreate(['tenant_id' => 1, 'name' => 'Indirect Expense']);
 
         // Create Groups under Current Asset
-        $cashGroup = AccountCategory::firstOrCreate(['name' => 'Cash', 'parent_id' => $currentAssetMaster->id]);
-        $bankGroup = AccountCategory::firstOrCreate(['name' => 'Bank', 'parent_id' => $currentAssetMaster->id]);
-        $accountReceivableGroup = AccountCategory::firstOrCreate(['name' => 'Account Receivable', 'parent_id' => $currentAssetMaster->id]);
-        $stockGroup = AccountCategory::firstOrCreate(['name' => 'Stock', 'parent_id' => $currentAssetMaster->id]);
+        $cashGroup = AccountCategory::firstOrCreate(['tenant_id' => 1, 'name' => 'Cash', 'parent_id' => $currentAssetMaster->id]);
+        $bankGroup = AccountCategory::firstOrCreate(['tenant_id' => 1, 'name' => 'Bank', 'parent_id' => $currentAssetMaster->id]);
+        $accountReceivableGroup = AccountCategory::firstOrCreate(['tenant_id' => 1, 'name' => 'Account Receivable', 'parent_id' => $currentAssetMaster->id]);
+        $stockGroup = AccountCategory::firstOrCreate(['tenant_id' => 1, 'name' => 'Stock', 'parent_id' => $currentAssetMaster->id]);
 
         // Create Groups under Current Liabilities
-        $provisionForTaxationGroup = AccountCategory::firstOrCreate(['name' => 'Provision for Taxation', 'parent_id' => $currentLiabilityMaster->id]);
+        $provisionForTaxationGroup = AccountCategory::firstOrCreate(['tenant_id' => 1, 'name' => 'Provision for Taxation', 'parent_id' => $currentLiabilityMaster->id]);
 
         // Create Groups under Direct Income
-        $salesGroup = AccountCategory::firstOrCreate(['name' => 'Sales', 'parent_id' => $directIncomeMaster->id]);
-        $purchaseReturnGroup = AccountCategory::firstOrCreate(['name' => 'Purchase Return', 'parent_id' => $directIncomeMaster->id]);
+        $salesGroup = AccountCategory::firstOrCreate(['tenant_id' => 1, 'name' => 'Sales', 'parent_id' => $directIncomeMaster->id]);
+        $purchaseReturnGroup = AccountCategory::firstOrCreate(['tenant_id' => 1, 'name' => 'Purchase Return', 'parent_id' => $directIncomeMaster->id]);
 
         // Create Groups under Indirect Income
-        $discountReceivedGroup = AccountCategory::firstOrCreate(['name' => 'Discount Received', 'parent_id' => $indirectIncomeMaster->id]);
-        $roundOffReceivedGroup = AccountCategory::firstOrCreate(['name' => 'Round Off Received', 'parent_id' => $indirectIncomeMaster->id]);
+        $discountReceivedGroup = AccountCategory::firstOrCreate(['tenant_id' => 1, 'name' => 'Discount Received', 'parent_id' => $indirectIncomeMaster->id]);
+        $roundOffReceivedGroup = AccountCategory::firstOrCreate(['tenant_id' => 1, 'name' => 'Round Off Received', 'parent_id' => $indirectIncomeMaster->id]);
 
         // Create Groups under Direct Expense
-        $purchaseGroup = AccountCategory::firstOrCreate(['name' => 'Purchase', 'parent_id' => $directExpenseMaster->id]);
-        $salesReturnGroup = AccountCategory::firstOrCreate(['name' => 'Sales Return', 'parent_id' => $directExpenseMaster->id]);
+        $purchaseGroup = AccountCategory::firstOrCreate(['tenant_id' => 1, 'name' => 'Purchase', 'parent_id' => $directExpenseMaster->id]);
+        $salesReturnGroup = AccountCategory::firstOrCreate(['tenant_id' => 1, 'name' => 'Sales Return', 'parent_id' => $directExpenseMaster->id]);
 
         // Create Groups under Indirect Expense
-        $discountPaidGroup = AccountCategory::firstOrCreate(['name' => 'Discount Paid', 'parent_id' => $indirectExpenseMaster->id]);
+        $discountPaidGroup = AccountCategory::firstOrCreate(['tenant_id' => 1, 'name' => 'Discount Paid', 'parent_id' => $indirectExpenseMaster->id]);
 
         $data = [];
 
@@ -73,6 +73,7 @@ class AccountSeeder extends Seeder
         $data[] = ['name' => 'Tax Amount', 'slug' => 'tax_amount', 'account_type' => 'liability', 'description' => 'Sales and purchase tax liabilities', 'model' => null, 'second_reference_no' => null, 'account_category_id' => $provisionForTaxationGroup->id];
 
         foreach ($data as $value) {
+            $value['tenant_id'] = 1;
             $value['is_locked'] = 1;
             $exists = DB::table('accounts')->where('name', $value['name'])->where('account_type', $value['account_type'])->exists();
             if (! $exists) {

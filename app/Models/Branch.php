@@ -2,13 +2,17 @@
 
 namespace App\Models;
 
+use App\Models\Scopes\TenantScope;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
 
 class Branch extends Model
 {
     protected $fillable = [
+        'tenant_id',
         'name',
         'code',
         'location',
@@ -16,12 +20,30 @@ class Branch extends Model
         'moq_sync',
     ];
 
+    protected $casts = [
+        'moq_sync' => 'boolean',
+    ];
+
+    protected static function booted()
+    {
+        static::addGlobalScope(new TenantScope());
+    }
+
     public static function rules($id = 0, $merge = [])
     {
         return array_merge([
+            'tenant_id' => ['required'],
             'name' => ['required', Rule::unique(self::class, 'name')->ignore($id)],
             'code' => ['required', Rule::unique(self::class, 'code')->ignore($id)],
         ], $merge);
+    }
+
+    /**
+     * Get the tenant that owns this branch
+     */
+    public function tenant(): BelongsTo
+    {
+        return $this->belongsTo(Tenant::class, 'tenant_id');
     }
 
     public function setNameAttribute($value)
@@ -68,5 +90,13 @@ class Branch extends Model
         $return['items'] = $self;
 
         return $return;
+    }
+
+    /**
+     * Get all users assigned to this branch
+     */
+    public function assignedUsers(): HasMany
+    {
+        return $this->hasMany(UserHasBranch::class, 'branch_id');
     }
 }

@@ -10,6 +10,9 @@ return new class() extends Migration
     {
         Schema::create('sale_return_items', function (Blueprint $table) {
             $table->id();
+            $table->unsignedBigInteger('tenant_id');
+            $table->foreign('tenant_id')->references('id')->on('tenants')->onDelete('cascade');
+            $table->index('tenant_id');
             $table->unsignedBigInteger('sale_return_id')->references('id')->on('sale_returns');
             $table->unsignedBigInteger('sale_item_id')->nullable()->references('id')->on('sale_items');
 
@@ -32,6 +35,11 @@ return new class() extends Migration
             $table->unsignedBigInteger('created_by')->references('id')->on('users');
             $table->unsignedBigInteger('updated_by')->references('id')->on('users');
             $table->unsignedBigInteger('deleted_by')->nullable()->references('id')->on('users');
+
+            $table->index(['tenant_id', 'employee_id'], 'sale_return_items_tenant_employee_id_index');
+            $table->index(['tenant_id', 'product_id'], 'sale_return_items_tenant_product_id_index');
+            $table->index(['tenant_id', 'sale_return_id'], 'sale_return_items_tenant_sale_return_id_index');
+            $table->index(['tenant_id', 'employee_id', 'product_id'], 'sale_return_items_tenant_employee_product_index');
 
             $table->softDeletes();
             $table->timestamps();

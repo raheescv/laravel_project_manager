@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Middleware\HandleInertiaRequests;
+use App\Http\Middleware\IdentifyTenant;
 use App\Http\Middleware\TrackVisitor;
 use App\Http\Middleware\TrustProxies;
 use Illuminate\Auth\AuthenticationException;
@@ -42,6 +43,9 @@ return Application::configure(basePath: dirname(__DIR__))
             TrustProxies::class,
             TrackVisitor::class,
         ]);
+
+        // Add tenant identification early in web middleware stack
+        $middleware->web(prepend: [IdentifyTenant::class]);
 
         // Add Inertia middleware to the web group
         $middleware->web(append: [

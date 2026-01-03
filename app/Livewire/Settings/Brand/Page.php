@@ -5,6 +5,7 @@ namespace App\Livewire\Settings\Brand;
 use App\Actions\Settings\Brand\CreateAction;
 use App\Actions\Settings\Brand\UpdateAction;
 use App\Models\Brand;
+use App\Services\TenantService;
 use Faker\Factory;
 use Illuminate\Validation\Rule;
 use Livewire\Component;
@@ -60,8 +61,11 @@ class Page extends Component
 
     protected function rules()
     {
+        $tenantService = app(TenantService::class);
+        $tenantId = $tenantService->getCurrentTenantId();
+
         return [
-            'brands.name' => Rule::unique('brands', 'name')->ignore($this->table_id)->whereNull('deleted_at'),
+            'brands.name' => Rule::unique('brands', 'name')->where('tenant_id', $tenantId)->ignore($this->table_id)->whereNull('deleted_at'),
             'image' => 'nullable|image|max:2048',
         ];
     }

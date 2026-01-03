@@ -10,6 +10,9 @@ return new class() extends Migration
     {
         Schema::create('sale_items', function (Blueprint $table) {
             $table->id();
+            $table->unsignedBigInteger('tenant_id');
+            $table->foreign('tenant_id')->references('id')->on('tenants')->onDelete('cascade');
+            $table->index('tenant_id');
             $table->unsignedBigInteger('sale_id')->references('id')->on('sales');
             $table->unsignedBigInteger('employee_id')->references('id')->on('users');
             $table->unsignedBigInteger('assistant_id')->references('id')->on('users')->nullable();

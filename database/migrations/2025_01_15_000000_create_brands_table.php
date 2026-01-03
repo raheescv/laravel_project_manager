@@ -10,7 +10,11 @@ return new class() extends Migration
     {
         Schema::create('brands', function (Blueprint $table) {
             $table->id();
-            $table->string('name')->unique();
+            $table->unsignedBigInteger('tenant_id');
+            $table->foreign('tenant_id')->references('id')->on('tenants')->onDelete('cascade');
+            $table->index('tenant_id');
+            $table->string('name');
+            $table->unique(['tenant_id', 'name']);
             $table->string('image_path')->nullable();
             $table->softDeletes();
             $table->timestamps();

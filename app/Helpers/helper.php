@@ -2,6 +2,8 @@
 
 use App\Models\Country;
 use App\Models\Product;
+use App\Services\TenantService;
+use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Storage;
@@ -472,6 +474,17 @@ if (! function_exists('getNextUniqueNumber')) {
         $branchCode = session('branch_code', 'M');
         $country_id = cache('country_id', Country::QATAR);
 
+        // Get tenant_id from session or TenantService
+        $tenantId = session('tenant_id');
+        if (! $tenantId) {
+            $tenantService = App::make(TenantService::class);
+            $tenantId = $tenantService->getCurrentTenantId();
+        }
+
+        if (! $tenantId) {
+            throw new \Exception('Tenant ID is required to generate unique number');
+        }
+
         if ($country_id == Country::INDIA) {
             $year = now()->format('y').'/'.now()->addYear()->format('y');
             if (now()->lt(now()->copy()->month(3)->day(31))) {
@@ -483,9 +496,10 @@ if (! function_exists('getNextUniqueNumber')) {
 
         DB::statement('SET @out_unique_no = 0;');
         $yearEscaped = DB::getPdo()->quote($year);
+        $tenantIdEscaped = DB::getPdo()->quote($tenantId);
         $branchCodeEscaped = DB::getPdo()->quote($branchCode);
         $segmentEscaped = DB::getPdo()->quote($segment);
-        DB::statement("CALL getNextUniqueNumber($yearEscaped, $branchCodeEscaped, $segmentEscaped, @out_unique_no);");
+        DB::statement("CALL getNextUniqueNumber($tenantIdEscaped, $yearEscaped, $branchCodeEscaped, $segmentEscaped, @out_unique_no);");
 
         $result = DB::select('SELECT @out_unique_no as unique_no');
 
