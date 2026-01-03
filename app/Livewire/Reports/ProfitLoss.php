@@ -34,7 +34,7 @@ class ProfitLoss extends Component
         // Get branches the user has access to
         $branch_ids = Auth::user()->branches->pluck('branch_id', 'branch_id')->toArray();
         $this->branches = Branch::whereIn('id', $branch_ids)->pluck('name', 'id')->toArray();
-        $this->branch_id = '';  // Default to all branches
+        $this->branch_id = session('branch_id');
     }
 
     public function updatedPeriod($value)
