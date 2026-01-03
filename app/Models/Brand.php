@@ -3,7 +3,10 @@
 namespace App\Models;
 
 use App\Actions\Settings\Brand\CreateAction;
+use App\Models\Scopes\TenantScope;
+use App\Services\TenantService;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Validation\Rule;
 
@@ -11,17 +14,35 @@ class Brand extends Model
 {
     use SoftDeletes;
 
+    protected static function booted()
+    {
+        static::addGlobalScope(new TenantScope());
+    }
+
     protected $fillable = [
+        'tenant_id',
         'name',
         'image_path',
     ];
 
+    protected static function getCurrentTenantId(): ?int
+    {
+        return app(TenantService::class)->getCurrentTenantId();
+    }
+
     public static function rules($id = 0, $merge = [])
     {
+        $tenantId = self::getCurrentTenantId();
+
         return array_merge([
-            'name' => ['required', Rule::unique(self::class, 'name')->whereNull('deleted_at')->ignore($id)],
+            'name' => ['required', Rule::unique(self::class, 'name')->where('tenant_id', $tenantId)->whereNull('deleted_at')->ignore($id)],
             'image_path' => ['nullable', 'string'],
         ], $merge);
+    }
+
+    public function tenant(): BelongsTo
+    {
+        return $this->belongsTo(Tenant::class, 'tenant_id');
     }
 
     public function products()

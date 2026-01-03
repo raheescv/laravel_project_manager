@@ -3,7 +3,9 @@
 namespace App\Models;
 
 use App\Models\Models\Views\Ledger;
+use App\Models\Scopes\TenantScope;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Validation\Rule;
 use OwenIt\Auditing\Auditable;
@@ -15,6 +17,7 @@ class Account extends Model implements AuditableContracts
     use SoftDeletes;
 
     protected $fillable = [
+        'tenant_id',
         'account_type',
         'customer_type_id',
         'account_category_id',
@@ -37,6 +40,11 @@ class Account extends Model implements AuditableContracts
         'opening_credit',
         'second_reference_no',
     ];
+
+    protected static function booted()
+    {
+        static::addGlobalScope(new TenantScope());
+    }
 
     public static function rules($id = 0, $merge = [])
     {
@@ -126,6 +134,11 @@ class Account extends Model implements AuditableContracts
     public function accountCategory()
     {
         return $this->belongsTo(AccountCategory::class);
+    }
+
+    public function tenant(): BelongsTo
+    {
+        return $this->belongsTo(Tenant::class, 'tenant_id');
     }
 
     public function sales()

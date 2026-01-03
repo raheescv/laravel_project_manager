@@ -5,7 +5,9 @@ namespace App\Models;
 use App\Models\Models\Views\Ledger;
 use App\Models\Scopes\AssignedBranchScope;
 use App\Models\Scopes\CurrentBranchScope;
+use App\Models\Scopes\TenantScope;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use OwenIt\Auditing\Auditable;
 use OwenIt\Auditing\Contracts\Auditable as AuditableContracts;
@@ -16,6 +18,7 @@ class Purchase extends Model implements AuditableContracts
     use SoftDeletes;
 
     protected $fillable = [
+        'tenant_id',
         'invoice_no',
         'branch_id',
         'account_id',
@@ -49,6 +52,7 @@ class Purchase extends Model implements AuditableContracts
 
     protected static function booted()
     {
+        static::addGlobalScope(new TenantScope());
         static::addGlobalScope(new AssignedBranchScope());
     }
 
@@ -60,6 +64,11 @@ class Purchase extends Model implements AuditableContracts
     public function scopeLast7Days($query)
     {
         return $query->whereBetween('date', [date('Y-m-d', strtotime('-7 days')), date('Y-m-d')]);
+    }
+
+    public function tenant(): BelongsTo
+    {
+        return $this->belongsTo(Tenant::class, 'tenant_id');
     }
 
     public function branch()

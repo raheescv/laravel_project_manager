@@ -13,7 +13,7 @@ class BranchSeeder extends Seeder
         DB::table('branches')->delete();
 
         $data = [];
-        $data[] = ['name' => 'Main', 'code' => 'M', 'location' => '', 'mobile' => '9633155669'];
+        $data[] = ['tenant_id' => 1, 'name' => 'Main', 'code' => 'M', 'location' => '', 'mobile' => '9633155669'];
         DB::table('branches')->insert($data);
     }
 }

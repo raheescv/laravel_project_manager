@@ -2,12 +2,15 @@
 
 namespace App\Models;
 
+use App\Models\Scopes\TenantScope;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Validation\Rule;
 
 class Package extends Model
 {
     protected $fillable = [
+        'tenant_id',
         'package_category_id',
         'account_id',
         'start_date',
@@ -38,6 +41,16 @@ class Package extends Model
             'status' => ['required', Rule::in(['in_progress', 'completed', 'cancelled'])],
             'remarks' => ['nullable', 'string'],
         ], $merge);
+    }
+
+    protected static function booted()
+    {
+        static::addGlobalScope(new TenantScope());
+    }
+
+    public function tenant(): BelongsTo
+    {
+        return $this->belongsTo(Tenant::class, 'tenant_id');
     }
 
     public function packageCategory()

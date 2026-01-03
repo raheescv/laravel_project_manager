@@ -6,7 +6,9 @@ use App\Actions\Product\Inventory\CreateAction as InventoryCreateAction;
 use App\Jobs\BranchProductCreationJob;
 use App\Models\Scopes\AssignedBranchScope;
 use App\Models\Scopes\CurrentBranchScope;
+use App\Models\Scopes\TenantScope;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use OwenIt\Auditing\Auditable;
 use OwenIt\Auditing\Contracts\Auditable as AuditableContracts;
@@ -17,6 +19,7 @@ class Inventory extends Model implements AuditableContracts
     use SoftDeletes;
 
     protected $fillable = [
+        'tenant_id',
         'branch_id',
         'employee_id',
         'product_id',
@@ -47,6 +50,7 @@ class Inventory extends Model implements AuditableContracts
 
     protected static function booted()
     {
+        static::addGlobalScope(new TenantScope());
         static::addGlobalScope(new AssignedBranchScope());
     }
 
@@ -63,6 +67,11 @@ class Inventory extends Model implements AuditableContracts
     public function employee()
     {
         return $this->belongsTo(User::class, 'employee_id');
+    }
+
+    public function tenant(): BelongsTo
+    {
+        return $this->belongsTo(Tenant::class, 'tenant_id');
     }
 
     public function branch()

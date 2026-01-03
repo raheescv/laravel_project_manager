@@ -15,6 +15,8 @@ class ProfileUpdateRequest extends FormRequest
      */
     public function rules(): array
     {
+        $tenantId = $this->user()->tenant_id;
+
         return [
             'name' => ['required', 'string', 'max:255'],
             'email' => [
@@ -23,7 +25,7 @@ class ProfileUpdateRequest extends FormRequest
                 'lowercase',
                 'email',
                 'max:255',
-                Rule::unique(User::class)->ignore($this->user()->id),
+                Rule::unique(User::class)->where('tenant_id', $tenantId)->ignore($this->user()->id),
             ],
         ];
     }

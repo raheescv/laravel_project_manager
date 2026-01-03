@@ -7,9 +7,11 @@ use App\Helpers\Facades\WhatsappHelper;
 use App\Models\Models\Views\Ledger;
 use App\Models\Scopes\AssignedBranchScope;
 use App\Models\Scopes\CurrentBranchScope;
+use App\Models\Scopes\TenantScope;
 use Exception;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Validation\Rule;
 use OwenIt\Auditing\Auditable;
@@ -23,6 +25,7 @@ class Sale extends Model implements AuditableContracts
     const ADDITIONAL_DISCOUNT_DESCRIPTION = 'Additional Discount Provided on Sales';
 
     protected $fillable = [
+        'tenant_id',
         'invoice_no',
         'reference_no',
         'sale_type',
@@ -79,6 +82,7 @@ class Sale extends Model implements AuditableContracts
 
     protected static function booted()
     {
+        static::addGlobalScope(new TenantScope());
         static::addGlobalScope(new AssignedBranchScope());
 
         static::creating(function ($sale): void {
@@ -180,6 +184,11 @@ class Sale extends Model implements AuditableContracts
         $employeeNames = User::whereIn('id', $employeeIds)->orderBy('name')->pluck('name')->filter()->unique()->toArray();
 
         return implode(', ', $employeeNames);
+    }
+
+    public function tenant(): BelongsTo
+    {
+        return $this->belongsTo(Tenant::class, 'tenant_id');
     }
 
     public function branch()

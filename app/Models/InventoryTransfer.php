@@ -2,7 +2,9 @@
 
 namespace App\Models;
 
+use App\Models\Scopes\TenantScope;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use OwenIt\Auditing\Auditable;
 use OwenIt\Auditing\Contracts\Auditable as AuditableContracts;
 
@@ -11,6 +13,7 @@ class InventoryTransfer extends Model implements AuditableContracts
     use Auditable;
 
     protected $fillable = [
+        'tenant_id',
         'date',
         'branch_id',
         'from_branch_id',
@@ -36,9 +39,24 @@ class InventoryTransfer extends Model implements AuditableContracts
         return $query->where('status', 'pending');
     }
 
+    protected static function booted()
+    {
+        static::addGlobalScope(new TenantScope());
+    }
+
     public static function scopeCurrentBranch($query)
     {
         return $query->where('branch_id', session('branch_id'));
+    }
+
+    public function tenant(): BelongsTo
+    {
+        return $this->belongsTo(Tenant::class, 'tenant_id');
+    }
+
+    public function branch()
+    {
+        return $this->belongsTo(Branch::class, 'branch_id');
     }
 
     public function items()

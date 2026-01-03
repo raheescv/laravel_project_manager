@@ -2,12 +2,20 @@
 
 namespace App\Models;
 
+use App\Models\Scopes\TenantScope;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Validation\Rule;
 
 class ComboOffer extends Model
 {
+    protected static function booted()
+    {
+        static::addGlobalScope(new TenantScope());
+    }
+
     protected $fillable = [
+        'tenant_id',
         'name',
         'count',
         'description',
@@ -26,6 +34,11 @@ class ComboOffer extends Model
             'count' => ['required'],
             'amount' => ['required'],
         ], $merge);
+    }
+
+    public function tenant(): BelongsTo
+    {
+        return $this->belongsTo(Tenant::class, 'tenant_id');
     }
 
     public function saleComboOffers()

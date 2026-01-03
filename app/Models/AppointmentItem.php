@@ -2,8 +2,11 @@
 
 namespace App\Models;
 
+use App\Models\Scopes\TenantScope;
+use App\Services\TenantService;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Validation\Rule;
 use OwenIt\Auditing\Auditable;
 use OwenIt\Auditing\Contracts\Auditable as AuditableContracts;
@@ -12,7 +15,13 @@ class AppointmentItem extends Model implements AuditableContracts
 {
     use Auditable;
 
+    protected static function booted()
+    {
+        static::addGlobalScope(new TenantScope());
+    }
+
     protected $fillable = [
+        'tenant_id',
         'appointment_id',
         'service_id',
         'employee_id',
@@ -20,32 +29,50 @@ class AppointmentItem extends Model implements AuditableContracts
         'updated_by',
     ];
 
+    protected static function getCurrentTenantId(): ?int
+    {
+        return app(TenantService::class)->getCurrentTenantId();
+    }
+
     public static function rules($data, $id = null, $merge = [])
     {
-        return array_merge([
-            'appointment_id' => ['required', 'exists:appointments,id'],
-            'service_id' => [
-                'required',
-                'exists:products,id',
-                Rule::unique('appointment_items')
-                    ->where(function ($query) use ($data) {
-                        return $query->where('appointment_id', $data['appointment_id'])
-                            ->where('employee_id', $data['employee_id']);
-                    })
-                    ->ignore($id),
+        $tenantId = self::getCurrentTenantId();
+
+        return array_merge(
+            [
+                'appointment_id' => ['required', 'exists:appointments,id'],
+                'service_id' => [
+                    'required',
+                    'exists:products,id',
+                    Rule::unique('appointment_items')
+                        ->where(function ($query) use ($data, $tenantId) {
+                            $query->where('appointment_id', $data['appointment_id'])->where('employee_id', $data['employee_id']);
+                            if ($tenantId) {
+                                $query->where('tenant_id', $tenantId);
+                            }
+
+                            return $query;
+                        })
+                        ->ignore($id),
+                ],
+                'employee_id' => [
+                    'required',
+                    'exists:users,id',
+                    Rule::unique('appointment_items')
+                        ->where(function ($query) use ($data, $tenantId) {
+                            $query->where('appointment_id', $data['appointment_id'])->where('service_id', $data['service_id']);
+                            if ($tenantId) {
+                                $query->where('tenant_id', $tenantId);
+                            }
+
+                            return $query;
+                        })
+                        ->ignore($id),
+                ],
+                'updated_by' => ['required', 'exists:users,id'],
             ],
-            'employee_id' => [
-                'required',
-                'exists:users,id',
-                Rule::unique('appointment_items')
-                    ->where(function ($query) use ($data) {
-                        return $query->where('appointment_id', $data['appointment_id'])
-                            ->where('service_id', $data['service_id']);
-                    })
-                    ->ignore($id),
-            ],
-            'updated_by' => ['required', 'exists:users,id'],
-        ], $merge);
+            $merge,
+        );
     }
 
     public function appointment()
@@ -61,6 +88,11 @@ class AppointmentItem extends Model implements AuditableContracts
     public function employee()
     {
         return $this->belongsTo(User::class, 'employee_id');
+    }
+
+    public function tenant(): BelongsTo
+    {
+        return $this->belongsTo(Tenant::class, 'tenant_id');
     }
 
     public function scopeFilter(Builder $query, array $filters): Builder

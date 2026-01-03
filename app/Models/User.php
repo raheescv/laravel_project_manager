@@ -3,8 +3,10 @@
 namespace App\Models;
 
 use App\Events\BranchUpdated;
+use App\Models\Scopes\TenantScope;
 use Exception;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Validation\Rule;
@@ -19,6 +21,7 @@ class User extends Authenticatable implements AuditableContracts
     use HasApiTokens;
 
     protected $fillable = [
+        'tenant_id',
         'type',
         'name',
         'code',
@@ -75,6 +78,9 @@ class User extends Authenticatable implements AuditableContracts
     {
         parent::boot();
 
+        // Add tenant scope to automatically filter by tenant
+        static::addGlobalScope(new TenantScope());
+
         static::updating(function ($user): void {
             if ($user->isDirty('default_branch_id')) {
                 // event(new BranchUpdated($user, $user->default_branch_id));
@@ -85,6 +91,11 @@ class User extends Authenticatable implements AuditableContracts
     public function branches()
     {
         return $this->hasMany(UserHasBranch::class, 'user_id');
+    }
+
+    public function tenant(): BelongsTo
+    {
+        return $this->belongsTo(Tenant::class, 'tenant_id');
     }
 
     public function branch()

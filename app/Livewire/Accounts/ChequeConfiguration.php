@@ -3,9 +3,9 @@
 namespace App\Livewire\Accounts;
 
 use App\Models\Configuration;
+use Illuminate\Support\Facades\Storage;
 use Livewire\Component;
 use Livewire\WithFileUploads;
-use Illuminate\Support\Facades\Storage;
 
 class ChequeConfiguration extends Component
 {
@@ -36,7 +36,7 @@ class ChequeConfiguration extends Component
         } else {
             $this->cheque = $defaults;
         }
-        $this->cheque['background_image'] = "https://s6.freechequewriter.com/image/cheque/TheCommercialBank_CorporateBanking_QA.jpg";
+        $this->cheque['background_image'] = 'https://s6.freechequewriter.com/image/cheque/TheCommercialBank_CorporateBanking_QA.jpg';
     }
 
     protected function getDefaultSettings()
@@ -45,7 +45,7 @@ class ChequeConfiguration extends Component
             'width' => 210,
             'height' => 100,
             'use_template' => true,
-            'background_image' => "https://s6.freechequewriter.com/image/cheque/TheCommercialBank_CorporateBanking_QA.jpg",
+            'background_image' => 'https://s6.freechequewriter.com/image/cheque/TheCommercialBank_CorporateBanking_QA.jpg',
             'date' => [
                 'font_size' => 11,
                 'align' => 'right',
@@ -205,7 +205,7 @@ class ChequeConfiguration extends Component
 
     public function removeBackgroundImage()
     {
-        if (!empty($this->cheque['background_image'])) {
+        if (! empty($this->cheque['background_image'])) {
             // Delete old image if exists
             if (Storage::disk('public')->exists($this->cheque['background_image'])) {
                 Storage::disk('public')->delete($this->cheque['background_image']);

@@ -13,6 +13,9 @@ return new class() extends Migration
     {
         Schema::create('package_categories', function (Blueprint $table) {
             $table->id();
+            $table->unsignedBigInteger('tenant_id');
+            $table->foreign('tenant_id')->references('id')->on('tenants')->onDelete('cascade');
+            $table->index('tenant_id');
             $table->string('name');
             $table->decimal('price', 10, 2);
             $table->string('frequency')->nullable()->default('daily');
