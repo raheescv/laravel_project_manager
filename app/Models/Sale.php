@@ -7,7 +7,7 @@ use App\Helpers\Facades\WhatsappHelper;
 use App\Models\Models\Views\Ledger;
 use App\Models\Scopes\AssignedBranchScope;
 use App\Models\Scopes\CurrentBranchScope;
-use App\Models\Scopes\TenantScope;
+use App\Traits\BelongsToTenant;
 use Exception;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
@@ -20,6 +20,7 @@ use OwenIt\Auditing\Contracts\Auditable as AuditableContracts;
 class Sale extends Model implements AuditableContracts
 {
     use Auditable;
+    use BelongsToTenant;
     use SoftDeletes;
 
     const ADDITIONAL_DISCOUNT_DESCRIPTION = 'Additional Discount Provided on Sales';
@@ -68,9 +69,11 @@ class Sale extends Model implements AuditableContracts
 
     public static function rules($id = 0, $merge = [])
     {
+        $tenantId = self::getCurrentTenantId();
+
         return array_merge(
             [
-                'invoice_no' => ['required', Rule::unique(self::class, 'invoice_no')->ignore($id)],
+                'invoice_no' => ['required', Rule::unique(self::class, 'invoice_no')->where('tenant_id', $tenantId)->ignore($id)],
                 'branch_id' => ['required'],
                 'account_id' => ['required'],
                 'sale_type' => ['required'],
@@ -82,7 +85,6 @@ class Sale extends Model implements AuditableContracts
 
     protected static function booted()
     {
-        static::addGlobalScope(new TenantScope());
         static::addGlobalScope(new AssignedBranchScope());
 
         static::creating(function ($sale): void {

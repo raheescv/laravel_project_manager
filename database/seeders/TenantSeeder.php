@@ -15,7 +15,8 @@ class TenantSeeder extends Seeder
         Tenant::firstOrCreate([
             'name' => 'Default Tenant',
             'code' => 'DEFAULT',
-            'subdomain' => 'default',
+            'subdomain' => 'project_manager',
+            'domain' => 'project_manager.test',
             'is_active' => true,
         ]);
     }

@@ -4,6 +4,7 @@ namespace App\Providers;
 
 use App\Models\Branch;
 use App\Models\Configuration;
+use App\Services\TenantService;
 use Dedoc\Scramble\Scramble;
 use Dedoc\Scramble\Support\Generator\OpenApi;
 use Dedoc\Scramble\Support\Generator\SecurityScheme;
@@ -19,7 +20,8 @@ class AppServiceProvider extends ServiceProvider
 {
     public function register(): void
     {
-        //
+        // Register TenantService as singleton to maintain state across the request
+        $this->app->singleton(TenantService::class);
     }
 
     public function boot(): void

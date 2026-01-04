@@ -2,7 +2,7 @@
 
 namespace App\Models;
 
-use App\Models\Scopes\TenantScope;
+use App\Traits\BelongsToTenant;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -13,6 +13,7 @@ use OwenIt\Auditing\Contracts\Auditable as AuditableContracts;
 class Appointment extends Model implements AuditableContracts
 {
     use Auditable;
+    use BelongsToTenant;
     use SoftDeletes;
 
     protected $fillable = [
@@ -42,11 +43,6 @@ class Appointment extends Model implements AuditableContracts
             'start_time' => ['required', 'date'],
             'end_time' => ['required', 'date', 'after:start_time'],
         ], $merge);
-    }
-
-    protected static function booted()
-    {
-        static::addGlobalScope(new TenantScope());
     }
 
     public function tenant(): BelongsTo

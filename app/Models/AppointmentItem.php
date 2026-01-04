@@ -35,13 +35,10 @@ class AppointmentItem extends Model implements AuditableContracts
                     'required',
                     'exists:products,id',
                     Rule::unique('appointment_items')
-                        ->where(function ($query) use ($data, $tenantId) {
-                            $query->where('appointment_id', $data['appointment_id'])->where('employee_id', $data['employee_id']);
-                            if ($tenantId) {
-                                $query->where('tenant_id', $tenantId);
-                            }
-
-                            return $query;
+                        ->where('tenant_id', $tenantId)
+                        ->where(function ($query) use ($data) {
+                            return $query->where('appointment_id', $data['appointment_id'])
+                                ->where('employee_id', $data['employee_id']);
                         })
                         ->ignore($id),
                 ],
@@ -49,13 +46,10 @@ class AppointmentItem extends Model implements AuditableContracts
                     'required',
                     'exists:users,id',
                     Rule::unique('appointment_items')
-                        ->where(function ($query) use ($data, $tenantId) {
-                            $query->where('appointment_id', $data['appointment_id'])->where('service_id', $data['service_id']);
-                            if ($tenantId) {
-                                $query->where('tenant_id', $tenantId);
-                            }
-
-                            return $query;
+                        ->where('tenant_id', $tenantId)
+                        ->where(function ($query) use ($data) {
+                            return $query->where('appointment_id', $data['appointment_id'])
+                                ->where('service_id', $data['service_id']);
                         })
                         ->ignore($id),
                 ],

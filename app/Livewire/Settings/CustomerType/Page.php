@@ -56,7 +56,7 @@ class Page extends Component
     protected function rules()
     {
         return [
-            'customer_types.name' => ['required', Rule::unique('customer_types', 'name')->ignore($this->table_id)],
+            'customer_types.name' => ['required', Rule::unique('customer_types', 'name')->where('tenant_id', session('tenant_id'))->ignore($this->table_id)],
             'customer_types.discount_percentage' => ['required', 'numeric', 'min:0', 'max:100'],
         ];
     }

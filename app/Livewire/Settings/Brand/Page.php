@@ -5,7 +5,6 @@ namespace App\Livewire\Settings\Brand;
 use App\Actions\Settings\Brand\CreateAction;
 use App\Actions\Settings\Brand\UpdateAction;
 use App\Models\Brand;
-use App\Services\TenantService;
 use Faker\Factory;
 use Illuminate\Validation\Rule;
 use Livewire\Component;

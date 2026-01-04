@@ -14,9 +14,7 @@ use Illuminate\View\View;
 
 class AuthenticatedSessionController extends Controller
 {
-    public function __construct(
-        protected TenantService $tenantService
-    ) {}
+    public function __construct(protected TenantService $tenantService) {}
 
     /**
      * Display the login view.
@@ -40,9 +38,7 @@ class AuthenticatedSessionController extends Controller
         $tenant = $this->tenantService->getCurrentTenant();
 
         if (! $tenant) {
-            return back()->withErrors([
-                'email' => 'Invalid subdomain or tenant not found.',
-            ]);
+            return back()->withErrors(['email' => 'Invalid subdomain or tenant not found.']);
         }
 
         // Find user with tenant context

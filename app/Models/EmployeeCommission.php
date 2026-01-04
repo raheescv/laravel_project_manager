@@ -2,23 +2,20 @@
 
 namespace App\Models;
 
-use App\Models\Scopes\TenantScope;
+use App\Traits\BelongsToTenant;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class EmployeeCommission extends Model
 {
+    use BelongsToTenant;
+
     protected $fillable = [
         'tenant_id',
         'product_id',
         'employee_id',
         'commission_percentage',
     ];
-
-    protected static function booted()
-    {
-        static::addGlobalScope(new TenantScope());
-    }
 
     protected $casts = [
         'commission_percentage' => 'decimal:2',

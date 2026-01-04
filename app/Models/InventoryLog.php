@@ -2,17 +2,14 @@
 
 namespace App\Models;
 
-use App\Models\Scopes\TenantScope;
+use App\Traits\BelongsToTenant;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class InventoryLog extends Model
 {
-    protected static function booted()
-    {
-        static::addGlobalScope(new TenantScope());
-    }
+    use BelongsToTenant;
 
     protected $fillable = [
         'tenant_id',

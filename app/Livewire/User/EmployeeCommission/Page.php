@@ -63,6 +63,7 @@ class Page extends Component
         $employeeId = $this->employee_commissions['employee_id'] ?? null;
 
         $uniqueRule = Rule::unique('employee_commissions', 'product_id')
+            ->where('tenant_id', session('tenant_id'))
             ->where('employee_id', $employeeId);
 
         if ($this->table_id) {

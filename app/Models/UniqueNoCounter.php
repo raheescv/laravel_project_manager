@@ -2,18 +2,15 @@
 
 namespace App\Models;
 
-use App\Models\Scopes\TenantScope;
+use App\Traits\BelongsToTenant;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class UniqueNoCounter extends Model
 {
-    protected $fillable = ['tenant_id', 'year', 'branch_code', 'segment', 'number'];
+    use BelongsToTenant;
 
-    protected static function booted()
-    {
-        static::addGlobalScope(new TenantScope());
-    }
+    protected $fillable = ['tenant_id', 'year', 'branch_code', 'segment', 'number'];
 
     public $timestamps = false;
 
