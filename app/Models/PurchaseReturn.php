@@ -5,7 +5,7 @@ namespace App\Models;
 use App\Models\Models\Views\Ledger;
 use App\Models\Scopes\AssignedBranchScope;
 use App\Models\Scopes\CurrentBranchScope;
-use App\Models\Scopes\TenantScope;
+use App\Traits\BelongsToTenant;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -15,6 +15,7 @@ use OwenIt\Auditing\Contracts\Auditable as AuditableContracts;
 class PurchaseReturn extends Model implements AuditableContracts
 {
     use Auditable;
+    use BelongsToTenant;
     use SoftDeletes;
 
     protected $fillable = [
@@ -50,7 +51,6 @@ class PurchaseReturn extends Model implements AuditableContracts
 
     protected static function booted()
     {
-        static::addGlobalScope(new TenantScope());
         static::addGlobalScope(new AssignedBranchScope());
     }
 

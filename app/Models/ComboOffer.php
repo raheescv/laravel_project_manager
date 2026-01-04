@@ -2,17 +2,14 @@
 
 namespace App\Models;
 
-use App\Models\Scopes\TenantScope;
+use App\Traits\BelongsToTenant;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Validation\Rule;
 
 class ComboOffer extends Model
 {
-    protected static function booted()
-    {
-        static::addGlobalScope(new TenantScope());
-    }
+    use BelongsToTenant;
 
     protected $fillable = [
         'tenant_id',
@@ -29,8 +26,10 @@ class ComboOffer extends Model
 
     public static function rules($id = 0, $merge = [])
     {
+        $tenantId = self::getCurrentTenantId();
+
         return array_merge([
-            'name' => ['required', Rule::unique(self::class)->ignore($id)],
+            'name' => ['required', Rule::unique(self::class)->where('tenant_id', $tenantId)->ignore($id)],
             'count' => ['required'],
             'amount' => ['required'],
         ], $merge);

@@ -3,7 +3,7 @@
 namespace App\Models;
 
 use App\Events\BranchUpdated;
-use App\Models\Scopes\TenantScope;
+use App\Traits\BelongsToTenant;
 use Exception;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -18,6 +18,7 @@ use Spatie\Permission\Traits\HasRoles;
 class User extends Authenticatable implements AuditableContracts
 {
     use Auditable, HasFactory, HasRoles, Notifiable;
+    use BelongsToTenant;
     use HasApiTokens;
 
     protected $fillable = [
@@ -59,27 +60,28 @@ class User extends Authenticatable implements AuditableContracts
 
     public static function createRules($id = 0, $merge = [])
     {
+        $tenantId = self::getCurrentTenantId();
+
         return array_merge([
             'name' => ['required'],
-            'email' => ['required', Rule::unique(self::class, 'email')->ignore($id)],
+            'email' => ['required', Rule::unique(self::class, 'email')->where('tenant_id', $tenantId)->ignore($id)],
             'password' => ['required'],
         ], $merge);
     }
 
     public static function updateRules($id = 0, $merge = [])
     {
+        $tenantId = self::getCurrentTenantId();
+
         return array_merge([
             'name' => ['required'],
-            'email' => ['required', Rule::unique(self::class, 'email')->ignore($id)],
+            'email' => ['required', Rule::unique(self::class, 'email')->where('tenant_id', $tenantId)->ignore($id)],
         ], $merge);
     }
 
     protected static function boot()
     {
         parent::boot();
-
-        // Add tenant scope to automatically filter by tenant
-        static::addGlobalScope(new TenantScope());
 
         static::updating(function ($user): void {
             if ($user->isDirty('default_branch_id')) {

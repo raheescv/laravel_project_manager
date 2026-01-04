@@ -5,6 +5,9 @@ return [
     'auto_pull_branch' => env('AUTO_PULL_BRANCH', 'main'),
     'whatsapp_port' => env('WHATSAPP_PORT'),
     'whatsapp_server_url' => env('WHATSAPP_SERVER_URL'),
+    'trading' => [
+        'enabled' => env('TRADING_ENABLED', false),
+    ],
     'data_depth' => [
         'totalbuyqty' => 'Total buying quantity',
         'totalsellqty' => 'Total selling quantity',

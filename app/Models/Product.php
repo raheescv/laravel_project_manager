@@ -2,7 +2,7 @@
 
 namespace App\Models;
 
-use App\Models\Scopes\TenantScope;
+use App\Traits\BelongsToTenant;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -14,13 +14,9 @@ use OwenIt\Auditing\Contracts\Auditable as AuditableContracts;
 class Product extends Model implements AuditableContracts
 {
     use Auditable;
+    use BelongsToTenant;
     use HasFactory;
     use SoftDeletes;
-
-    protected static function booted()
-    {
-        static::addGlobalScope(new TenantScope());
-    }
 
     protected $fillable = [
         'tenant_id',
@@ -71,11 +67,13 @@ class Product extends Model implements AuditableContracts
 
     public static function rules($data, $id = 0, $merge = [])
     {
+        $tenantId = self::getCurrentTenantId();
+
         $rules = [
             'name' => [
                 'required',
                 'max:100',
-                Rule::unique('products')->where('type', $data['type'])->whereNull('deleted_at')->ignore($id),
+                Rule::unique('products')->where('tenant_id', $tenantId)->where('type', $data['type'])->whereNull('deleted_at')->ignore($id),
             ],
             'type' => ['required', 'max:100'],
             'code' => [
@@ -90,7 +88,7 @@ class Product extends Model implements AuditableContracts
             'mrp' => ['required'],
             'barcode' => array_merge(
                 ['required_if:type,product'],
-                ! empty($data['barcode'] ?? null) ? [Rule::unique('products')->where('barcode', $data['barcode'])->whereNull('deleted_at')->ignore($id)] : []
+                ! empty($data['barcode'] ?? null) ? [Rule::unique('products')->where('tenant_id', $tenantId)->where('barcode', $data['barcode'])->whereNull('deleted_at')->ignore($id)] : []
             ),
         ];
 

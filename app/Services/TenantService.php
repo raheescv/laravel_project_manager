@@ -14,7 +14,41 @@ class TenantService
      */
     public function getCurrentTenant(): ?Tenant
     {
-        return $this->currentTenant;
+        // If tenant is already set in this instance, return it
+        if ($this->currentTenant) {
+            return $this->currentTenant;
+        }
+
+        // Fallback: Try to get tenant from request attributes (set by middleware)
+        if (request()->has('tenant')) {
+            $tenant = request()->get('tenant');
+            if ($tenant instanceof Tenant) {
+                $this->currentTenant = $tenant;
+
+                return $tenant;
+            }
+        }
+
+        // Fallback: Try to get tenant from request attributes
+        $tenant = request()->attributes->get('tenant');
+        if ($tenant instanceof Tenant) {
+            $this->currentTenant = $tenant;
+
+            return $tenant;
+        }
+
+        // Fallback: Try to get tenant ID from cache and load it
+        $tenantId = Cache::get('current_tenant_id');
+        if ($tenantId) {
+            $tenant = Tenant::find($tenantId);
+            if ($tenant) {
+                $this->currentTenant = $tenant;
+
+                return $tenant;
+            }
+        }
+
+        return null;
     }
 
     /**

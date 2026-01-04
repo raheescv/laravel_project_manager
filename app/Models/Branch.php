@@ -2,7 +2,7 @@
 
 namespace App\Models;
 
-use App\Models\Scopes\TenantScope;
+use App\Traits\BelongsToTenant;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -11,6 +11,8 @@ use Illuminate\Validation\Rule;
 
 class Branch extends Model
 {
+    use BelongsToTenant;
+
     protected $fillable = [
         'tenant_id',
         'name',
@@ -24,17 +26,14 @@ class Branch extends Model
         'moq_sync' => 'boolean',
     ];
 
-    protected static function booted()
-    {
-        static::addGlobalScope(new TenantScope());
-    }
-
     public static function rules($id = 0, $merge = [])
     {
+        $tenantId = self::getCurrentTenantId();
+
         return array_merge([
             'tenant_id' => ['required'],
-            'name' => ['required', Rule::unique(self::class, 'name')->ignore($id)],
-            'code' => ['required', Rule::unique(self::class, 'code')->ignore($id)],
+            'name' => ['required', Rule::unique(self::class, 'name')->where('tenant_id', $tenantId)->ignore($id)],
+            'code' => ['required', Rule::unique(self::class, 'code')->where('tenant_id', $tenantId)->ignore($id)],
         ], $merge);
     }
 

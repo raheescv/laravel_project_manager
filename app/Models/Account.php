@@ -54,9 +54,9 @@ class Account extends Model implements AuditableContracts
             'email' => ['max:50'],
             'unique_composite' => [
                 Rule::unique(self::class)
-                    ->where(function ($query) use ($tenantId) {
+                    ->where('tenant_id', $tenantId)
+                    ->where(function ($query) {
                         return $query
-                            ->where('tenant_id', $tenantId)
                             ->where('account_type', request()->input('account_type'))
                             ->where('name', request()->input('name'))
                             ->where('mobile', request()->input('mobile'));

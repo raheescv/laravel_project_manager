@@ -3,7 +3,6 @@
 namespace App\Models;
 
 use App\Actions\Settings\AccountCategory\CreateAction;
-use App\Models\Scopes\TenantScope;
 use App\Traits\BelongsToTenant;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -14,11 +13,6 @@ class AccountCategory extends Model
 {
     use BelongsToTenant;
     use HasFactory;
-
-    protected static function booted()
-    {
-        static::addGlobalScope(new TenantScope());
-    }
 
     protected $fillable = [
         'tenant_id',

@@ -3,7 +3,7 @@
 namespace App\Models;
 
 use App\Models\Scopes\CurrentBranchScope;
-use App\Models\Scopes\TenantScope;
+use App\Traits\BelongsToTenant;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -13,12 +13,8 @@ use OwenIt\Auditing\Contracts\Auditable as AuditableContracts;
 class JournalEntry extends Model implements AuditableContracts
 {
     use Auditable;
+    use BelongsToTenant;
     use SoftDeletes;
-
-    protected static function booted()
-    {
-        static::addGlobalScope(new TenantScope());
-    }
 
     protected $fillable = [
         'tenant_id',
