@@ -123,6 +123,15 @@ class Sale extends Model implements AuditableContracts
         return $query->where('date', date('Y-m-d'));
     }
 
+
+        public function subCategory()
+    {
+        return $this->belongsTo(
+            \App\Models\MeasurementSubCategory::class,
+            'sub_category_id'
+        );
+    }
+
     public function scopeCurrentBranch($query)
     {
         return CurrentBranchScope::apply($query);

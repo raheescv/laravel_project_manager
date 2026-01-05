@@ -246,11 +246,16 @@ class OverviewReport extends Component
         $itemTotal = clone $totalProducts;
         $itemTotal = $itemTotal->sum('sale_items.total');
 
-        $productSale = clone $totalProducts;
-        $productSale = $productSale->where('type', 'product')->sum('sale_items.total');
+                $productSale = clone $totalProducts;
+        $productSale = $productSale
+            ->where('products.type', 'product')
+            ->sum('sale_items.total');
 
         $serviceSale = clone $totalProducts;
-        $serviceSale = $serviceSale->where('type', 'service')->sum('sale_items.total');
+        $serviceSale = $serviceSale
+            ->where('products.type', 'service')
+            ->sum('sale_items.total');
+
 
         $this->dataPoints = [];
         foreach ($paymentMethods as $label => $value) {
