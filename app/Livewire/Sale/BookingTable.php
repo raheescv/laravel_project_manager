@@ -13,7 +13,7 @@ use Livewire\Component;
 use Livewire\WithPagination;
 use Maatwebsite\Excel\Facades\Excel;
 
-class BookingTable extends Component
+class bookingtable extends Component
 {
     use WithPagination;
 
