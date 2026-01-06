@@ -13,7 +13,9 @@ return new class extends Migration
     {
         Schema::table('measurement_templates', function (Blueprint $table) {
              $table->string('name')->after('category_id')->nullable();
+             
         });
+
     }
 
     /**
