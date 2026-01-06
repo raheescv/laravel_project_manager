@@ -59,6 +59,10 @@
         .nav-link .fa-clipboard {
             color: #3F51B5;
         }
+        .nav-link .fa-building {
+            color: #009688;
+        }
+        /* Teal for Tenants */
 
         /* Indigo for Log */
         .nav-link .fa-sign-out {
@@ -486,6 +490,14 @@
                                     </li>
                                 @endcan
                             </ul>
+                        </li>
+                    @endif
+                    @if (auth()->user()->is_super_admin)
+                        <li class="nav-item">
+                            <a href="{{ route('tenants::index') }}" class="nav-link {{ request()->is(['tenants']) ? 'active' : '' }}">
+                                <i class="fa fa-building fs-5 me-2"></i>
+                                <span class="nav-label mininav-content ms-1 collapse show" style="">Tenants</span>
+                            </a>
                         </li>
                     @endif
                     @if (auth()->user()->can('flat_trade.view'))
