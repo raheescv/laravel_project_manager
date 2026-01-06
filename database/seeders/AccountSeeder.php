@@ -47,46 +47,40 @@ class AccountSeeder extends Seeder
         $data = [];
 
         // Asset accounts - mapped to specific groups
-        $data[] = ['name' => 'Cash', 'account_type' => 'asset', 'description' => 'Physical currency and cash equivalents', 'model' => null, 'second_reference_no' => null, 'account_category_id' => $cashGroup->id];
-        $data[] = ['name' => 'Card', 'account_type' => 'asset', 'description' => 'Credit and debit card transactions', 'model' => null, 'second_reference_no' => null, 'account_category_id' => $bankGroup->id];
-        $data[] = ['name' => 'General Customer', 'account_type' => 'asset', 'description' => 'Account for walk-in and general customer transactions', 'model' => 'customer', 'second_reference_no' => 2, 'account_category_id' => $accountReceivableGroup->id];
-        $data[] = ['name' => 'Inventory', 'account_type' => 'asset', 'description' => 'Value of goods held for sale or production', 'model' => null, 'second_reference_no' => null, 'account_category_id' => $stockGroup->id];
+        $data[] = ['name' => 'Cash', 'slug' => 'cash', 'account_type' => 'asset', 'description' => 'Physical currency and cash equivalents', 'model' => null, 'second_reference_no' => null, 'account_category_id' => $cashGroup->id];
+        $data[] = ['name' => 'Card', 'slug' => 'card', 'account_type' => 'asset', 'description' => 'Credit and debit card transactions', 'model' => null, 'second_reference_no' => null, 'account_category_id' => $bankGroup->id];
+        $data[] = ['name' => 'General Customer', 'slug' => 'general_customer', 'account_type' => 'asset', 'description' => 'Account for walk-in and general customer transactions', 'model' => 'customer', 'second_reference_no' => 2, 'account_category_id' => $accountReceivableGroup->id];
+        $data[] = ['name' => 'Inventory', 'slug' => 'inventory', 'account_type' => 'asset', 'description' => 'Value of goods held for sale or production', 'model' => null, 'second_reference_no' => null, 'account_category_id' => $stockGroup->id];
 
         // Direct Income accounts
-        $data[] = ['name' => 'Sale', 'account_type' => 'income', 'description' => 'Sales Revenue from business operations', 'model' => null, 'second_reference_no' => null, 'account_category_id' => $salesGroup->id];
-        $data[] = ['name' => 'Purchase Returns', 'account_type' => 'income', 'description' => 'Credits received for returned purchases', 'model' => null, 'second_reference_no' => null, 'account_category_id' => $purchaseReturnGroup->id];
-        $data[] = ['name' => 'Purchase Discount', 'account_type' => 'income', 'description' => 'Discounts received on purchases', 'model' => null, 'second_reference_no' => null, 'account_category_id' => $discountReceivedGroup->id];
+        $data[] = ['name' => 'Sale', 'slug' => 'sale', 'account_type' => 'income', 'description' => 'Sales Revenue from business operations', 'model' => null, 'second_reference_no' => null, 'account_category_id' => $salesGroup->id];
+        $data[] = ['name' => 'Purchase Returns', 'slug' => 'purchase_returns', 'account_type' => 'income', 'description' => 'Credits received for returned purchases', 'model' => null, 'second_reference_no' => null, 'account_category_id' => $purchaseReturnGroup->id];
+        $data[] = ['name' => 'Purchase Discount', 'slug' => 'purchase_discount', 'account_type' => 'income', 'description' => 'Discounts received on purchases', 'model' => null, 'second_reference_no' => null, 'account_category_id' => $discountReceivedGroup->id];
 
         // Indirect Income accounts
-        $data[] = ['name' => 'Round Off', 'account_type' => 'income', 'description' => 'Rounding adjustments for sales and payments', 'model' => null, 'second_reference_no' => null, 'account_category_id' => $roundOffReceivedGroup->id];
+        $data[] = ['name' => 'Round Off', 'slug' => 'round_off', 'account_type' => 'income', 'description' => 'Rounding adjustments for sales and payments', 'model' => null, 'second_reference_no' => null, 'account_category_id' => $roundOffReceivedGroup->id];
 
         // Direct Expense accounts
-        $data[] = ['name' => 'Purchase', 'account_type' => 'expense', 'description' => 'Expenses related to inventory and goods procurement', 'model' => null, 'second_reference_no' => null, 'account_category_id' => $purchaseGroup->id];
-        $data[] = ['name' => 'Cost of Goods Sold', 'account_type' => 'expense', 'description' => 'Direct costs of producing goods sold by the business', 'model' => null, 'second_reference_no' => null, 'account_category_id' => $purchaseGroup->id];
-        $data[] = ['name' => 'Freight', 'account_type' => 'expense', 'description' => 'Transportation and logistics costs for goods', 'model' => null, 'second_reference_no' => null, 'account_category_id' => $purchaseGroup->id];
-        $data[] = ['name' => 'Sales Returns', 'account_type' => 'expense', 'description' => 'Sales Returns & Allowances for refunded or returned items', 'model' => null, 'second_reference_no' => null, 'account_category_id' => $salesReturnGroup->id];
+        $data[] = ['name' => 'Purchase', 'slug' => 'purchase', 'account_type' => 'expense', 'description' => 'Expenses related to inventory and goods procurement', 'model' => null, 'second_reference_no' => null, 'account_category_id' => $purchaseGroup->id];
+        $data[] = ['name' => 'Cost of Goods Sold', 'slug' => 'cost_of_goods_sold', 'account_type' => 'expense', 'description' => 'Direct costs of producing goods sold by the business', 'model' => null, 'second_reference_no' => null, 'account_category_id' => $purchaseGroup->id];
+        $data[] = ['name' => 'Freight', 'slug' => 'freight', 'account_type' => 'expense', 'description' => 'Transportation and logistics costs for goods', 'model' => null, 'second_reference_no' => null, 'account_category_id' => $purchaseGroup->id];
+        $data[] = ['name' => 'Sales Returns', 'slug' => 'sales_returns', 'account_type' => 'expense', 'description' => 'Sales Returns & Allowances for refunded or returned items', 'model' => null, 'second_reference_no' => null, 'account_category_id' => $salesReturnGroup->id];
 
         // Indirect Expense accounts
-        $data[] = ['name' => 'Discount', 'account_type' => 'expense', 'description' => 'Sales discounts and promotional reductions', 'model' => null, 'second_reference_no' => null, 'account_category_id' => $discountPaidGroup->id];
+        $data[] = ['name' => 'Discount', 'slug' => 'discount', 'account_type' => 'expense', 'description' => 'Sales discounts and promotional reductions', 'model' => null, 'second_reference_no' => null, 'account_category_id' => $discountPaidGroup->id];
 
         // Liability accounts
-        $data[] = ['name' => 'Tax Amount', 'account_type' => 'liability', 'description' => 'Sales and purchase tax liabilities', 'model' => null, 'second_reference_no' => null, 'account_category_id' => $provisionForTaxationGroup->id];
+        $data[] = ['name' => 'Tax Amount', 'slug' => 'tax_amount', 'account_type' => 'liability', 'description' => 'Sales and purchase tax liabilities', 'model' => null, 'second_reference_no' => null, 'account_category_id' => $provisionForTaxationGroup->id];
 
         foreach ($data as $value) {
             $value['is_locked'] = 1;
-            $exists = DB::table('accounts')
-                ->where('name', $value['name'])
-                ->where('account_type', $value['account_type'])
-                ->exists();
+            $exists = DB::table('accounts')->where('name', $value['name'])->where('account_type', $value['account_type'])->exists();
             if (! $exists) {
                 echo $value['name']." Created \n";
                 DB::table('accounts')->insert($value);
             } else {
                 // need to update the fields if the account already exists
-                DB::table('accounts')
-                    ->where('name', $value['name'])
-                    ->where('account_type', $value['account_type'])
-                    ->update($value);
+                DB::table('accounts')->where('name', $value['name'])->where('account_type', $value['account_type'])->update($value);
             }
         }
     }

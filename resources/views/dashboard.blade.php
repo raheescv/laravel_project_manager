@@ -91,6 +91,17 @@
                 </div>
             @endcan
 
+            @can('package.dashboard package calendar')
+                <div class="row mb-4">
+                    <div class="col-12 mb-3">
+                        <h5 class="mb-3 text-secondary fw-semibold border-start border-4 border-purple ps-3">Package Calendar</h5>
+                    </div>
+                    <div class="col-xl-12 mb-4">
+                        @livewire('package.package-calendar', ['package_id' => null])
+                    </div>
+                </div>
+            @endcan
+
             <div class="text-center text-muted small py-3">
                 <p class="mb-0">© {{ date('Y') }} {{ config('app.name') }} | Dashboard last updated: {{ date('d M Y, H:i A') }}</p>
             </div>

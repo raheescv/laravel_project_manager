@@ -11,6 +11,8 @@ return new class() extends Migration
         Schema::create('inventories', function (Blueprint $table) {
             $table->id();
             $table->unsignedBigInteger('branch_id');
+            $table->unsignedBigInteger('employee_id')->nullable()->after('branch_id');
+            $table->foreign('employee_id')->references('id')->on('users')->onDelete('cascade');
             $table->unsignedBigInteger('product_id');
             $table->double('quantity', 8, 3);
             $table->string('barcode');
@@ -26,6 +28,9 @@ return new class() extends Migration
             $table->unsignedBigInteger('created_by');
             $table->unsignedBigInteger('updated_by');
 
+            $table->index('employee_id');
+            $table->index('branch_id');
+            $table->index('product_id');
             $table->softDeletes();
             $table->timestamps();
         });

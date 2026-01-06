@@ -29,7 +29,7 @@ class GetBranchesAction
         return $branches->map(function ($branch) {
             return [
                 'id' => $branch->id,
-                'name' => $branch->name,
+                'name' => $branch->location,
                 'code' => $branch->code,
                 'location' => $branch->location,
                 'mobile' => $branch->mobile,

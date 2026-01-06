@@ -17,6 +17,7 @@ class SaleReturnItem extends Model implements AuditableContracts
         'sale_item_id',
         'inventory_id',
         'product_id',
+        'employee_id',
         'unit_price',
         'quantity',
 
@@ -35,6 +36,7 @@ class SaleReturnItem extends Model implements AuditableContracts
             'sale_return_id' => ['required'],
             'inventory_id' => ['required'],
             'product_id' => ['required'],
+            'employee_id' => ['nullable'],
             'unit_price' => ['required'],
             'quantity' => ['required'],
             'created_by' => ['required'],
@@ -52,6 +54,11 @@ class SaleReturnItem extends Model implements AuditableContracts
         return $this->belongsTo(Product::class);
     }
 
+    public function employee()
+    {
+        return $this->belongsTo(User::class, 'employee_id');
+    }
+
     public function saleReturn()
     {
         return $this->belongsTo(SaleReturn::class);
@@ -67,9 +74,14 @@ class SaleReturnItem extends Model implements AuditableContracts
         return $this->product?->name;
     }
 
+    public function getEmployeeNameAttribute()
+    {
+        return $this->employee?->name;
+    }
+
     public function getEffectiveTotalAttribute()
     {
-        if ($this->saleReturn?->other_discount) {
+        if ($this->saleReturn?->other_discount != 0) {
             $discount_percentage = ($this->saleReturn->other_discount / $this->saleReturn->total) * 100;
 
             return round($this->total - ($discount_percentage * $this->total) / 100, 3);

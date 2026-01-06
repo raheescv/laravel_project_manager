@@ -3,7 +3,7 @@
 namespace App\Actions\PurchaseReturn;
 
 use App\Actions\Journal\CreateAction;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Cache;
 
 class JournalEntryAction
 {
@@ -25,7 +25,7 @@ class JournalEntryAction
                 'created_by' => $this->userId,
             ];
 
-            $accounts = $this->getAccountIds(['Inventory', 'Tax Amount', 'Discount', 'Freight']);
+            $accounts = Cache::get('accounts_slug_id_map', []);
 
             $entries = [];
 
@@ -34,7 +34,7 @@ class JournalEntryAction
                 $remarks = 'PurchaseReturn from '.$model->account->name;
                 $debit = 0;
                 $credit = $model->gross_amount;
-                $entries[] = $this->makeEntryPair($accounts['Inventory'], $model->account_id, $debit, $credit, $remarks);
+                $entries[] = $this->makeEntryPair($accounts['inventory'], $model->account_id, $debit, $credit, $remarks, 'PurchaseReturn', $model->id);
             }
 
             // Tax Entry
@@ -42,7 +42,7 @@ class JournalEntryAction
                 $remarks = 'Purchases tax collected on purchase return';
                 $debit = 0;
                 $credit = $model->tax_amount;
-                $entries[] = $this->makeEntryPair($accounts['Tax Amount'], $model->account_id, $debit, $credit, $remarks);
+                $entries[] = $this->makeEntryPair($accounts['tax_amount'], $model->account_id, $debit, $credit, $remarks, 'PurchaseReturn', $model->id);
             }
 
             // Item Discount Entry
@@ -50,7 +50,7 @@ class JournalEntryAction
                 $remarks = 'Discount granted on individual product on purchase return';
                 $debit = $model->item_discount;
                 $credit = 0;
-                $entries[] = $this->makeEntryPair($accounts['Discount'], $model->account_id, $debit, $credit, $remarks);
+                $entries[] = $this->makeEntryPair($accounts['discount'], $model->account_id, $debit, $credit, $remarks, 'PurchaseReturn', $model->id);
             }
 
             // Other Discount Entry
@@ -58,7 +58,7 @@ class JournalEntryAction
                 $remarks = 'Additional Discount granted on purchase return';
                 $debit = $model->other_discount;
                 $credit = 0;
-                $entries[] = $this->makeEntryPair($accounts['Discount'], $model->account_id, $debit, $credit, $remarks);
+                $entries[] = $this->makeEntryPair($accounts['discount'], $model->account_id, $debit, $credit, $remarks, 'PurchaseReturn', $model->id);
             }
 
             // Freight Entry
@@ -66,7 +66,7 @@ class JournalEntryAction
                 $remarks = 'Freight charge on purchase returned goods';
                 $debit = 0;
                 $credit = $model->freight;
-                $entries[] = $this->makeEntryPair($accounts['Freight'], $model->account_id, $debit, $credit, $remarks);
+                $entries[] = $this->makeEntryPair($accounts['freight'], $model->account_id, $debit, $credit, $remarks, 'PurchaseReturn', $model->id);
             }
 
             // Payment Entries
@@ -93,11 +93,6 @@ class JournalEntryAction
         }
 
         return $return;
-    }
-
-    protected function getAccountIds(array $names)
-    {
-        return DB::table('accounts')->whereIn('name', $names)->pluck('id', 'name')->toArray();
     }
 
     protected function makeEntryPair($accountId1, $accountId2, $debit, $credit, $remarks, $model = null, $modelId = null)

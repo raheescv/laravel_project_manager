@@ -38,6 +38,8 @@ class SaleConfiguration extends Component
 
     public $show_colleague;
 
+    public $auto_close_day_sessions_enabled;
+
     public function mount()
     {
         $this->default_status = Configuration::where('key', 'default_status')->value('value');
@@ -55,6 +57,7 @@ class SaleConfiguration extends Component
         $this->default_quantity = Configuration::where('key', 'default_quantity')->value('value') ?? '0.001';
         $this->validate_unit_price_against_mrp = Configuration::where('key', 'validate_unit_price_against_mrp')->value('value') ?? 'yes';
         $this->show_colleague = Configuration::where('key', 'show_colleague')->value('value') ?? 'yes';
+        $this->auto_close_day_sessions_enabled = Configuration::where('key', 'auto_close_day_sessions_enabled')->value('value') ?? 'no';
     }
 
     public function save()
@@ -74,6 +77,7 @@ class SaleConfiguration extends Component
         Configuration::updateOrCreate(['key' => 'default_quantity'], ['value' => $this->default_quantity]);
         Configuration::updateOrCreate(['key' => 'validate_unit_price_against_mrp'], ['value' => $this->validate_unit_price_against_mrp]);
         Configuration::updateOrCreate(['key' => 'show_colleague'], ['value' => $this->show_colleague]);
+        Configuration::updateOrCreate(['key' => 'auto_close_day_sessions_enabled'], ['value' => $this->auto_close_day_sessions_enabled]);
         $this->dispatch('success', ['message' => 'Updated Successfully']);
         Artisan::call('optimize:clear');
     }

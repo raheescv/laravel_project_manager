@@ -46,6 +46,18 @@
                     </div>
                 </div>
             </div>
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <b><label for="credit_period_days" class="text-capitalize">Credit Period (Days)</label></b>
+                        {{ html()->number('credit_period_days')->value('')->class('form-control')->attribute('wire:model', 'accounts.credit_period_days')->placeholder('e.g., 30, 60, 90')->attribute('min', '0')->attribute('step', '1') }}
+                        <small class="form-text text-muted">
+                            <i class="fa fa-info-circle me-1"></i>
+                            Number of days allowed for credit payment
+                        </small>
+                    </div>
+                </div>
+            </div>
         </div>
         <div class="modal-footer">
             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>

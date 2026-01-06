@@ -17,15 +17,24 @@
                 <div class="col-lg-4 col-xl-3 mb-4 mb-lg-0">
                     <div class="card shadow-sm mb-4">
                         <div class="card-body text-center">
-                                                         <img class="img-fluid rounded-circle border mb-3" src="{{ secure_asset('assets/img/profile-photos/3.png') }}" alt="Profile Picture" loading="lazy"
+                            <img class="img-fluid rounded-circle border mb-3" src="{{ secure_asset('assets/img/profile-photos/3.png') }}" alt="Profile Picture" loading="lazy"
                                 style="width: 120px; height: 120px; object-fit: cover;">
                             <h4 class="card-title mb-0">{{ $user->name }}</h4>
                             <p class="text-muted mb-3">{{ getUserRoles($user) }}</p>
-                            @if ($user->type == 'user')
-                                <button class="btn btn-primary btn-sm text-nowrap" id="UserEdit"><i class="fa fa-edit me-1"></i>Edit Profile</button>
-                            @else
-                                <button class="btn btn-primary btn-sm text-nowrap" id="EmployeeEdit"><i class="fa fa-edit me-1"></i>Edit Profile</button>
-                            @endif
+                            <div class="d-flex gap-2 justify-content-center flex-wrap">
+                                @if ($user->type == 'user')
+                                    <button class="btn btn-primary btn-sm text-nowrap" id="UserEdit"><i class="fa fa-edit me-1"></i>Edit Profile</button>
+                                @else
+                                    <button class="btn btn-primary btn-sm text-nowrap" id="EmployeeEdit"><i class="fa fa-edit me-1"></i>Edit Profile</button>
+                                @endif
+                                @if ($user->id != auth()->id())
+                                    <button class="btn btn-warning btn-sm text-nowrap" wire:click="impersonate" wire:loading.attr="disabled">
+                                        <i class="fa fa-user-secret me-1"></i>
+                                        <span wire:loading.remove>Impersonate</span>
+                                        <span wire:loading>Logging in...</span>
+                                    </button>
+                                @endif
+                            </div>
                         </div>
                     </div>
 
@@ -80,11 +89,11 @@
                                         <span><i class="fa fa-home fa-fw me-2 text-muted"></i>HRA</span>
                                         <span class="text-end">{{ currency($user->hra) }}</span>
                                     </li>
-                                <li class="list-group-item d-flex justify-content-between align-items-center">
-                                    <span><i class="fa fa-tag fa-fw me-2 text-muted"></i>Max Discount Per Sale</span>
-                                    <span class="text-end">{{ ($user->max_discount_per_sale) }}%</span>
-                                </li>
-                            @endif
+                                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                                        <span><i class="fa fa-tag fa-fw me-2 text-muted"></i>Max Discount Per Sale</span>
+                                        <span class="text-end">{{ $user->max_discount_per_sale }}%</span>
+                                    </li>
+                                @endif
                             </ul>
                         </div>
                     </div>
@@ -171,8 +180,7 @@
                             </div>
                         </div>
                     </div>
-
-                    <div class="card shadow-sm">
+                    <div class="card shadow-sm mb-4">
                         <div class="card-header bg-light py-3">
                             <h5 class="mb-0"><i class="fa fa-cogs me-2"></i>User Settings</h5>
                         </div>
@@ -192,6 +200,11 @@
                             </div>
                         </div>
                     </div>
+                    @if ($user->type == 'employee')
+                        <div class="card shadow-sm mb-4">
+                            @livewire('user.employee-inventory-list', ['employee_id' => $user->id], key('employee-inventory-list-'.$user->id))
+                        </div>
+                    @endif
                 </div>
             </div>
         </div>

@@ -33,12 +33,8 @@
                             <i class="fa fa-user text-emerald-500 mr-1 text-xs"></i>
                             Employee
                         </label>
-                        <SearchableSelect
-                            v-model="localItem.employee_id"
-                            :options="employees"
-                            placeholder="Select Employee"
-                            filter-placeholder="Search employees..."
-                            :visibleItems="6"
+                        <SearchableSelect v-model="localItem.employee_id" :options="employees"
+                            placeholder="Select Employee" filter-placeholder="Search employees..." :visibleItems="6"
                             input-class="w-full border border-slate-300 rounded px-2 py-1 text-xs focus:border-emerald-500 focus:ring-emerald-500/20 transition-all duration-200 bg-white" />
                     </div>
 
@@ -47,12 +43,8 @@
                             <i class="fa fa-user-plus text-purple-500 mr-1 text-xs"></i>
                             Assistant
                         </label>
-                        <SearchableSelect
-                            v-model="localItem.assistant_id"
-                            :options="employees"
-                            placeholder="Select Assistant"
-                            filter-placeholder="Search assistants..."
-                            :visibleItems="6"
+                        <SearchableSelect v-model="localItem.assistant_id" :options="employees"
+                            placeholder="Select Assistant" filter-placeholder="Search assistants..." :visibleItems="6"
                             input-class="w-full border border-slate-300 rounded px-2 py-1 text-xs focus:border-purple-500 focus:ring-purple-500/20 transition-all duration-200 bg-white" />
                     </div>
                 </div>
@@ -74,8 +66,12 @@
                         <div>
                             <label class="block text-xs font-semibold text-slate-600 mb-1">Price</label>
                             <input v-model.number="localItem.unit_price" type="number" min="0" step="0.01"
-                                class="w-full border border-slate-300 rounded px-2 py-1 text-xs focus:border-blue-500 focus:ring-blue-500/20 transition-all duration-200"
-                                @input="updateItemField('unit_price', $event.target.value)" />
+                                :disabled="!canEditItemPrice" :class="[
+                                    'w-full border rounded px-2 py-1 text-xs transition-all duration-200',
+                                    canEditItemPrice
+                                        ? 'border-slate-300 focus:border-blue-500 focus:ring-blue-500/20'
+                                        : 'border-slate-200 bg-slate-100 text-slate-500 cursor-not-allowed'
+                                ]" @input="updateItemField('unit_price', $event.target.value)" />
                         </div>
                         <div>
                             <label class="block text-xs font-semibold text-slate-600 mb-1">Discount</label>
@@ -102,19 +98,19 @@
                     <div class="grid grid-cols-2 gap-2 text-xs">
                         <div class="flex justify-between items-center">
                             <span class="text-slate-600">Gross:</span>
-                            <span class="font-bold text-slate-800">{{ Number(localItem.gross_amount || 0).toFixed(2) }}</span>
+                            <span class="font-bold text-slate-800">{{ formatNumber(localItem.gross_amount || 0) }}</span>
                         </div>
                         <div class="flex justify-between items-center">
                             <span class="text-slate-600">Net:</span>
-                            <span class="font-bold text-slate-800">{{ Number(localItem.net_amount || 0).toFixed(2) }}</span>
+                            <span class="font-bold text-slate-800">{{ formatNumber(localItem.net_amount || 0) }}</span>
                         </div>
                         <div class="flex justify-between items-center">
                             <span class="text-slate-600">Tax:</span>
-                            <span class="font-bold text-purple-600">{{ Number(localItem.tax_amount || 0).toFixed(2) }}</span>
+                            <span class="font-bold text-purple-600">{{ formatNumber(localItem.tax_amount || 0) }}</span>
                         </div>
                         <div class="flex justify-between items-center">
                             <span class="text-slate-600">Total:</span>
-                            <span class="font-bold text-emerald-600">{{ Number(localItem.total || 0).toFixed(2) }}</span>
+                            <span class="font-bold text-emerald-600">{{ formatNumber(localItem.total || 0) }}</span>
                         </div>
                     </div>
                 </div>
@@ -153,12 +149,18 @@ export default {
         employees: {
             type: [Array, Object],
             default: () => []
+        },
+        canEditItemPrice: {
+            type: Boolean,
+            default: false
         }
     },
     emits: ['save', 'close'],
     data() {
         return {
-            localItem: { ...this.item }
+            localItem: {
+                ...this.item
+            }
         }
     },
 
@@ -166,7 +168,9 @@ export default {
         item: {
             handler(val) {
                 if (val) {
-                    this.localItem = { ...val }
+                    this.localItem = {
+                        ...val
+                    }
                     this.calculateTotals()
                 }
             },
@@ -175,6 +179,13 @@ export default {
         }
     },
     methods: {
+        formatNumber(value, decimals = 2) {
+            const num = parseFloat(value) || 0;
+            return num.toLocaleString('en-US', {
+                minimumFractionDigits: decimals,
+                maximumFractionDigits: decimals
+            });
+        },
         updateItemField(field, value) {
             // Convert to number for numeric fields
             const numericFields = ['unit_price', 'quantity', 'discount', 'tax'];
@@ -215,7 +226,9 @@ export default {
             // Calculate final totals
             this.calculateTotals();
 
-            this.$emit('save', { ...this.localItem });
+            this.$emit('save', {
+                ...this.localItem
+            });
             this.$emit('close');
         }
     }

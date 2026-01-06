@@ -3,11 +3,10 @@
         <div class="row">
             <div class="col-md-6 d-flex gap-1 align-items-center mb-3">
                 <div class="btn-group">
-                    @can('account.delete')
-                        <button class="btn btn-icon btn-outline-light" title="To delete the selected items" wire:click="delete()" wire:confirm="Are you sure you want to delete the selected items?">
-                            <i class="demo-pli-recycling fs-5"></i>
-                        </button>
-                    @endcan
+                    <button class="btn btn-success btn-sm d-flex align-items-center" title="Export to Excel" data-bs-toggle="tooltip" wire:click="export()">
+                        <i class="fa fa-file-excel-o me-md-1 fs-5"></i>
+                        <span class="d-none d-md-inline">Export</span>
+                    </button>
                 </div>
             </div>
             <div class="col-md-6 d-flex gap-1 align-items-center justify-content-md-end mb-3">
@@ -33,6 +32,15 @@
                 <div class="col-md-2">
                     <label for="to_date">To Date</label>
                     {{ html()->date('to_date')->value('')->class('form-control')->id('to_date')->attribute('wire:model.live', 'filter.to_date') }}
+                </div>
+                <div class="col-md-3 d-flex align-items-end">
+                    <div class="form-check mt-3">
+                        <input class="form-check-input" type="checkbox" id="excludeOpeningFromTotal" wire:model.live="excludeOpeningFromTotal">
+                        <label class="form-check-label" for="excludeOpeningFromTotal">
+                            <i class="fa fa-filter me-1 text-muted"></i>
+                            Exclude Opening from Total
+                        </label>
+                    </div>
                 </div>
             </div>
         </div>
@@ -62,31 +70,36 @@
                             <table class="table table-striped table-sm">
                                 <thead>
                                     <tr class="text-capitalize">
-                                        <th>
-                                            <input type="checkbox" wire:model.live="selectAll" />
-                                            <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="id" label="id" />
-                                        </th>
-                                        <th> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="date" label="date" /> </th>
-                                        <th> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="account_id" label="account name" /> </th>
-                                        <th> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="person_name" label="payee" /> </th>
-                                        <th> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="reference_number" label="reference No" /> </th>
-                                        <th> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="description" label="description" /> </th>
-                                        <th class="text-end"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="debit" label="debit" /> </th>
-                                        <th class="text-end"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="credit" label="credit" /> </th>
+                                        <th> # </th>
+                                        <th> date </th>
+                                        <th> account name </th>
+                                        <th> payee </th>
+                                        <th> reference No </th>
+                                        <th> description </th>
+                                        <th width="8%" class="text-end"> debit </th>
+                                        <th width="8%" class="text-end"> credit </th>
+                                        <th width="8%" class="text-end"> balance </th>
                                     </tr>
-                                    <tr>
-                                        <th class="text-end" colspan="6">Total</th>
-                                        <th class="text-end">{{ currency($total['debit']) }}</th>
-                                        <th class="text-end">{{ currency($total['credit']) }}</th>
+                                    <tr class="bg-light">
+                                        <td colspan="6" class="fw-bold"> <span class="pull-right">Opening Balance</span> </td>
+                                        <td class="text-end fw-bold">{{ $openingBalance['debit'] != 0 ? currency($openingBalance['debit']) : '_' }}</td>
+                                        <td class="text-end fw-bold">{{ $openingBalance['credit'] != 0 ? currency($openingBalance['credit']) : '_' }}</td>
+                                        @php
+                                            $balance = $openingBalance['debit'] - $openingBalance['credit'];
+                                        @endphp
+                                        <td class="text-end fw-bold"> {{ $balance != 0 ? currency($balance) : '_' }} </td>
                                     </tr>
                                 </thead>
                                 <tbody>
+                                    @php
+                                        $runningBalance = $openingBalance['debit'] - $openingBalance['credit'];
+                                    @endphp
                                     @foreach ($data as $item)
+                                        @php
+                                            $runningBalance += $item->debit - $item->credit;
+                                        @endphp
                                         <tr>
-                                            <td>
-                                                <input type="checkbox" value="{{ $item->journal_id }}" wire:model.live="selected" />
-                                                {{ $item->journal_id }}
-                                            </td>
+                                            <td> {{ $item->journal_id }} </td>
                                             <td>{{ systemDate($item->journal->date) }}</td>
                                             <td>{{ $item->account->name }}</td>
                                             <td>{{ $item->person_name }}</td>
@@ -105,11 +118,49 @@
                                                         {{ $item->description }}
                                                 @endswitch
                                             </td>
-                                            <td class="text-end">{{ currency($item->debit) }}</td>
-                                            <td class="text-end">{{ currency($item->credit) }}</td>
+                                            <td class="text-end">{{ $item->debit != 0 ? currency($item->debit) : '_' }}</td>
+                                            <td class="text-end">{{ $item->credit != 0 ? currency($item->credit) : '_' }}</td>
+                                            <td class="text-end">{{ $runningBalance != 0 ? currency($runningBalance) : '_' }}</td>
                                         </tr>
                                     @endforeach
                                 </tbody>
+                                <tfoot>
+                                    @php
+                                        // Calculate totals with or without opening balance based on exclude flag
+                                        $totalDebit = $total['debit'] + $openingBalance['debit'];
+
+                                        $totalCredit = $total['credit'] + $openingBalance['credit'];
+
+                                        // Calculate final balance
+                                        $finalBalance = $totalDebit - $totalCredit;
+
+                                        // Format display values: show currency if not zero, otherwise show dash
+                                        $displayTotalDebit = $totalDebit != 0 ? currency($totalDebit) : '_';
+                                        $displayTotalCredit = $totalCredit != 0 ? currency($totalCredit) : '_';
+                                        $displayBalanceDebit = $finalBalance > 0 ? currency($finalBalance) : '_';
+                                        $displayBalanceCredit = $finalBalance < 0 ? currency(abs($finalBalance)) : '_';
+                                    @endphp
+
+                                    {{-- Total Row --}}
+                                    <tr class="bg-light">
+                                        <td colspan="6" class="fw-bold">
+                                            <span class="pull-right">Total</span>
+                                        </td>
+                                        <th class="text-end">{{ $displayTotalDebit }}</th>
+                                        <th class="text-end">{{ $displayTotalCredit }}</th>
+                                        <td class="text-end fw-bold">_</td>
+                                    </tr>
+
+                                    {{-- Balance Row --}}
+                                    <tr class="bg-light">
+                                        <td colspan="6" class="fw-bold">
+                                            <span class="pull-right">Balance</span>
+                                        </td>
+                                        <th class="text-end">{{ $displayBalanceDebit }}</th>
+                                        <th class="text-end">{{ $displayBalanceCredit }}</th>
+                                        <td class="text-end fw-bold">_</td>
+                                    </tr>
+                                </tfoot>
                             </table>
                         </div>
                         {{ $data->links() }}

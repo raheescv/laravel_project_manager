@@ -6,9 +6,9 @@
             class="p-2 border-b border-indigo-100 bg-gradient-to-r from-indigo-50/80 via-violet-50/60 to-indigo-50/80 flex-shrink-0">
             <div class="flex items-center justify-between">
                 <div class="flex items-center">
-                    <div
-                        class="flex items-center justify-center h-6 w-6 bg-gradient-to-br from-violet-500 to-indigo-600 text-white rounded-md shadow-sm mr-1.5">
-                        <span class="font-bold text-xs">{{ totalQuantity }}</span>
+                    <div class="flex items-center justify-center h-6 bg-gradient-to-br from-violet-500 to-indigo-600 text-white rounded-md shadow-sm mr-1.5 px-1"
+                        :style="{ width: badgeWidth }">
+                        <span class="font-bold text-xs">{{ formatNumber(totalQuantity, 3) }}</span>
                     </div>
                     <div>
                         <h6 class="font-medium text-indigo-900 text-xs flex items-center">
@@ -16,11 +16,11 @@
                             Cart Items
                         </h6>
                         <small class="text-xs text-indigo-500">
-                            {{ totalQuantity === 1 ? '1 item' : `${totalQuantity} items` }}
+                            {{ totalQuantity === 1 ? '1 item' : `${formatNumber(totalQuantity, 3)} items` }}
                         </small>
                     </div>
                 </div>
-                <div v-if="totalQuantity > 0" class="flex gap-1">
+                <div class="flex gap-1">
                     <button type="button" @click="$emit('view-cart-items')"
                         class="h-6 w-6 flex items-center justify-center bg-indigo-100 text-indigo-600 rounded-md hover:bg-indigo-600 hover:text-white transition-all duration-200"
                         title="View Items">
@@ -85,15 +85,26 @@
                                         </span>
                                     </div>
                                     <div class="text-xs text-violet-500 leading-tight">
-                                        {{ item.unit_price.toFixed(2) }} × {{ item.quantity }}
+                                        <span v-if="item.combo_offer_price && item.combo_offer_price > 0" class="flex items-center gap-1">
+                                            <span class="line-through text-gray-400">{{ formatNumber(item.unit_price) }}</span>
+                                            <span class="text-emerald-600 font-semibold">{{ formatNumber(item.combo_offer_price) }}</span>
+                                            <span class="text-xs bg-emerald-100 text-emerald-700 px-1 rounded">Combo</span>
+                                        </span>
+                                        <span v-else>{{ formatNumber(item.unit_price) }}</span>
+                                        <span> × {{ formatNumber(item.quantity) }}</span>
                                     </div>
                                 </div>
 
                                 <!-- Total Price - more compact -->
                                 <div class="flex-shrink-0">
                                     <span
-                                        class="font-medium text-teal-600 text-xs bg-teal-50/70 px-1.5 py-0.5 rounded-md border border-teal-100/50">
-                                        {{ (item.quantity * item.unit_price).toFixed(2) }}
+                                        :class="[
+                                            'font-medium text-xs px-1.5 py-0.5 rounded-md border',
+                                            item.combo_offer_price && item.combo_offer_price > 0
+                                                ? 'text-emerald-600 bg-emerald-50/70 border-emerald-100/50'
+                                                : 'text-teal-600 bg-teal-50/70 border-teal-100/50'
+                                        ]">
+                                        {{ formatNumber(item.total || (item.quantity * (item.combo_offer_price || item.unit_price))) }}
                                     </span>
                                 </div>
                             </div>
@@ -105,19 +116,19 @@
                                     class="flex items-center bg-violet-50 rounded-md border border-violet-100 overflow-hidden">
                                     <button type="button" :disabled="item.quantity <= 1"
                                         @click="item.quantity > 1 ? decreaseQuantity(key) : null"
-                                        class="flex items-center justify-center h-6 w-6 transition-colors"
+                                        class="flex items-center justify-center h-7 w-7 sm:h-6 sm:w-6 transition-colors touch-manipulation"
                                         :class="item.quantity <= 1 ? 'text-violet-200 cursor-not-allowed' : 'text-violet-600 hover:text-indigo-500 active:bg-violet-100'">
-                                        <i class="fa fa-minus text-xs"></i>
+                                        <i class="fa fa-minus text-xs sm:text-xs"></i>
                                     </button>
 
                                     <input v-model.number="item.quantity" @change="updateItemQuantity(key)"
                                         @blur="updateItemQuantity(key)" type="number" min="1"
-                                        class="w-8 h-6 text-center text-xs bg-transparent border-0 focus:outline-none focus:ring-0 p-0 text-indigo-800"
+                                        class="w-16 sm:w-14 h-7 sm:h-6 text-center text-sm sm:text-xs bg-transparent border-0 focus:outline-none focus:ring-0 p-0 text-indigo-800 touch-manipulation"
                                         style="appearance: textfield">
 
                                     <button type="button" @click="increaseQuantity(key)"
-                                        class="flex items-center justify-center h-6 w-6 text-violet-600 hover:text-indigo-500 active:bg-violet-100 transition-colors">
-                                        <i class="fa fa-plus text-xs"></i>
+                                        class="flex items-center justify-center h-7 w-7 sm:h-6 sm:w-6 text-violet-600 hover:text-indigo-500 active:bg-violet-100 transition-colors touch-manipulation">
+                                        <i class="fa fa-plus text-xs sm:text-xs"></i>
                                     </button>
                                 </div>
 
@@ -187,7 +198,24 @@ export default {
         'decrease-quantity',
         'manage-combo-offer'
     ],
+    computed: {
+        badgeWidth() {
+            const formattedValue = this.formatNumber(this.totalQuantity, 3);
+            // Calculate width based on character count: min 24px (w-6), ~8px per character
+            const minWidth = 24;
+            const charWidth = 8;
+            const calculatedWidth = Math.max(minWidth, formattedValue.length * charWidth + 8); // +8 for padding
+            return `${calculatedWidth}px`;
+        }
+    },
     methods: {
+        formatNumber(value, decimals = 2) {
+            const num = parseFloat(value) || 0;
+            return num.toLocaleString('en-US', {
+                minimumFractionDigits: decimals,
+                maximumFractionDigits: decimals
+            });
+        },
         updateItemQuantity(key) {
             this.$emit('update-item-quantity', key);
         },

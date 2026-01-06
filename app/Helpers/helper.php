@@ -84,6 +84,14 @@ if (! function_exists('orderSegments')) {
     }
 }
 
+if (! function_exists('excelDateConversion')) {
+    function excelDateConversion($excelDate)
+    {
+        $unixDate = ($excelDate - 25569) * 86400;
+
+        return gmdate('Y-m-d', $unixDate);
+    }
+}
 if (! function_exists('systemDate')) {
     function systemDate($value)
     {
@@ -438,37 +446,18 @@ if (! function_exists('thermalPrinterStyle')) {
         ];
     }
 }
-// if (! function_exists('getNextSaleInvoiceNo')) {
-//     function getNextSaleInvoiceNo()
-//     {
-//         $branchCode = session('branch_code', 'M');
-//         $prefix = 'INV-';
-
-//         if ($branchCode) {
-//             $prefix .= $branchCode.'-';
-//         }
-
-//         $country_id = cache('country_id', Country::QATAR);
-
-//         if ($country_id == Country::INDIA) {
-//             $year = now()->format('y').'/'.now()->addYear()->format('y');
-//             if (now()->lt(now()->copy()->month(3)->day(31))) {
-//                 $year = now()->subYear()->format('y').'/'.now()->format('y');
-//             }
-//         } else {
-//             $year = now()->format('y');
-//         }
-
-//         $invoicePrefix = $prefix.$year.'-';
-
-//         $number = getNextUniqueNumber('Sale');
-
-//         // Generate the invoice number
-//         $invoice = $invoicePrefix.str_pad($number, 4, '0', STR_PAD_LEFT);
-
-//         return $invoice;
-//     }
-// }
+if (! function_exists('packageFrequency')) {
+    function packageFrequency()
+    {
+        return [
+            'daily' => 'Daily',
+            'weekly' => 'Weekly',
+            'bi_weekly' => 'Bi-Weekly',
+            'monthly' => 'Monthly',
+            'yearly' => 'Yearly',
+        ];
+    }
+}
 if (! function_exists('getNextSaleInvoiceNo')) {
     function getNextSaleInvoiceNo()
     {
@@ -588,6 +577,27 @@ if (! function_exists('feedbackTypes')) {
             'compliment' => 'Compliment',
             'suggestion' => 'Suggestion',
             'complaint' => 'Complaint',
+        ];
+    }
+}
+
+if (! function_exists('packageItemStatuses')) {
+    function packageItemStatuses()
+    {
+        return [
+            'pending' => 'Pending',
+            'visited' => 'Visited',
+            'rescheduled' => 'Rescheduled',
+        ];
+    }
+}
+if (! function_exists('packageStatuses')) {
+    function packageStatuses()
+    {
+        return [
+            'in_progress' => 'In Progress',
+            'completed' => 'Completed',
+            'cancelled' => 'Cancelled',
         ];
     }
 }

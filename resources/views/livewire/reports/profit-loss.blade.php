@@ -4,16 +4,11 @@
             <!-- Filter Section -->
             <div class="row mb-4 g-3">
                 <div class="col-md-2">
-                    <div class="form-group">
+                    <div class="form-group" wire:ignore>
                         <label for="branch_id" class="form-label fw-bold text-secondary mb-2">
                             <i class="pli-building me-1"></i>Branch
                         </label>
-                        <select wire:model="branch_id" class="form-select shadow-sm border-light" id="branch_id">
-                            <option value="">All Branches</option>
-                            @foreach ($branches as $id => $name)
-                                <option value="{{ $id }}">{{ $name }}</option>
-                            @endforeach
-                        </select>
+                        {{ html()->select('branch_id', [session('branch_id') => session('branch_name')])->value(session('branch_id'))->class('select-assigned-branch_id-list border-start-0 ps-0')->id('branch_id')->attribute('style', 'width:80%')->placeholder('Select Branch') }}
                     </div>
                 </div>
                 <div class="col-md-2">
@@ -45,7 +40,7 @@
                         <input type="date" wire:model="end_date" class="form-control shadow-sm border-light" id="end_date">
                     </div>
                 </div>
-                <div class="col-md-2">
+                <div class="col-md-1">
                     <div class="form-group">
                         <label class="form-label fw-bold text-secondary mb-2 d-block">&nbsp;</label>
                         <button type="button" wire:click="fetchData" class="btn btn-primary w-100 shadow-sm">
@@ -53,7 +48,7 @@
                         </button>
                     </div>
                 </div>
-                <div class="col-md-2">
+                <div class="col-md-1">
                     <div class="form-group">
                         <label class="form-label fw-bold text-secondary mb-2 d-block">&nbsp;</label>
                         <button type="button" wire:click="resetFilters" class="btn btn-outline-secondary w-100 shadow-sm">
@@ -61,7 +56,16 @@
                         </button>
                     </div>
                 </div>
+                <div class="col-2">
+                    <div class="form-group">
+                        <label class="form-label fw-bold text-secondary mb-2 d-block">&nbsp;</label>
+                        <button type="button" wire:click="export" class="btn btn-success shadow-sm">
+                            <i class="pli-file-excel me-1"></i>Export to Excel
+                        </button>
+                    </div>
+                </div>
             </div>
+            <!-- Export Button -->
             <!-- Profit & Loss Report - T-Account Format -->
             <div class="table-responsive">
                 <table class="table table-bordered table-sm mb-0" id="profitLossTable" style="font-size: 0.9rem;">
@@ -115,12 +119,12 @@
                                         DIRECT EXPENSE
                                     </button>
                                 </td>
-                                <td class="text-end pe-3" style="border-right: 2px solid #dee2e6;">
+                                <td class="text-end pe-3" style="border-right: 2px solid #dee2e6; background-color: #e3f2fd;">
                                     <strong>{{ currency($directExpenseMaster['total']) }}</strong>
                                 </td>
                             @else
                                 <td class="ps-3" style="border-right: 2px solid #dee2e6;"><strong>DIRECT EXPENSE</strong></td>
-                                <td class="text-end pe-3" style="border-right: 2px solid #dee2e6;">{{ currency($directExpense) }}</td>
+                                <td class="text-end pe-3" style="border-right: 2px solid #dee2e6; background-color: #e3f2fd;">{{ currency($directExpense) }}</td>
                             @endif
                             <!-- Right: Direct Income Master -->
                             @if ($directIncomeMaster)
@@ -130,12 +134,12 @@
                                         DIRECT INCOME
                                     </button>
                                 </td>
-                                <td class="text-end pe-3">
+                                <td class="text-end pe-3" style="background-color: #e3f2fd;">
                                     <strong>{{ currency($directIncomeMaster['total']) }}</strong>
                                 </td>
                             @else
                                 <td class="ps-3"><strong>DIRECT INCOME</strong></td>
-                                <td class="text-end pe-3">{{ currency($directIncome) }}</td>
+                                <td class="text-end pe-3" style="background-color: #e3f2fd;">{{ currency($directIncome) }}</td>
                             @endif
                         </tr>
                         <!-- Show Direct Expense groups and accounts if expanded -->
@@ -143,13 +147,15 @@
                             @foreach ($directExpenseMaster['groups'] as $group)
                                 @if ($group['total'])
                                     <tr>
-                                        <td class="ps-5" style="border-right: 2px solid #dee2e6;">
-                                            <button type="button" wire:click="toggleGroup({{ $group['id'] }})" class="btn btn-sm btn-link p-0 text-start text-decoration-none">
+                                        <td class="ps-3" style="border-right: 2px solid #dee2e6; position: relative;">
+                                            <span style="position: absolute; left: 0.75rem; top: 0; height: 50%; width: 1px; background-color: #d0d0d0;"></span>
+                                            <span style="position: absolute; left: 0.75rem; top: 50%; width: 1rem; height: 1px; background-color: #d0d0d0;"></span>
+                                            <button type="button" wire:click="toggleGroup({{ $group['id'] }})" class="btn btn-sm btn-link p-0 text-start text-decoration-none" style="padding-left: 1.5rem !important;">
                                                 <i class="fa fa-{{ in_array($group['id'], $expandedGroups) ? 'minus' : 'plus' }} me-1"></i>
                                                 {{ $group['name'] }}
                                             </button>
                                         </td>
-                                        <td class="text-end pe-3" style="border-right: 2px solid #dee2e6;">
+                                        <td class="text-end pe-3" style="border-right: 2px solid #dee2e6; background-color: #f5f5f5;">
                                             {{ currency($group['total']) }}
                                         </td>
                                         <td></td>
@@ -160,10 +166,13 @@
                                     @foreach ($group['accounts'] as $account)
                                         @if ($account['amount'] > 0)
                                             <tr>
-                                                <td class="ps-5" style="border-right: 2px solid #dee2e6; padding-left: 3rem !important;">
-                                                    <a href="{{ route('account::view', $account['id']) }}" class="text-decoration-none">{{ $account['name'] }}</a>
+                                                <td class="ps-3" style="border-right: 2px solid #dee2e6; position: relative;">
+                                                    <span style="position: absolute; left: 0.75rem; top: 0; height: 50%; width: 1px; background-color: #d0d0d0;"></span>
+                                                    <span style="position: absolute; left: 2.25rem; top: 0; height: 50%; width: 1px; background-color: #d0d0d0;"></span>
+                                                    <span style="position: absolute; left: 2.25rem; top: 50%; width: 1rem; height: 1px; background-color: #d0d0d0;"></span>
+                                                    <a href="{{ route('account::view', $account['id']) }}?from_date={{ $start_date }}&to_date={{ $end_date }}" class="text-decoration-none" style="padding-left: 3rem !important; display: block;">{{ $account['name'] }}</a>
                                                 </td>
-                                                <td class="text-end pe-3" style="border-right: 2px solid #dee2e6;">
+                                                <td class="text-end pe-3" style="border-right: 2px solid #dee2e6; background-color: #ffffff;">
                                                     {{ currency($account['amount']) }}
                                                 </td>
                                                 <td></td>
@@ -178,10 +187,12 @@
                                 @foreach ($directExpenseMaster['directAccounts'] as $account)
                                     @if ($account['amount'] > 0)
                                         <tr>
-                                            <td class="ps-5" style="border-right: 2px solid #dee2e6;">
-                                                <a href="{{ route('account::view', $account['id']) }}" class="text-decoration-none">{{ $account['name'] }}</a>
+                                            <td class="ps-3" style="border-right: 2px solid #dee2e6; position: relative;">
+                                                <span style="position: absolute; left: 0.75rem; top: 0; height: 50%; width: 1px; background-color: #d0d0d0;"></span>
+                                                <span style="position: absolute; left: 0.75rem; top: 50%; width: 1rem; height: 1px; background-color: #d0d0d0;"></span>
+                                                <a href="{{ route('account::view', $account['id']) }}?from_date={{ $start_date }}&to_date={{ $end_date }}" class="text-decoration-none" style="padding-left: 1.5rem !important; display: block;">{{ $account['name'] }}</a>
                                             </td>
-                                            <td class="text-end pe-3" style="border-right: 2px solid #dee2e6;">
+                                            <td class="text-end pe-3" style="border-right: 2px solid #dee2e6; background-color: #ffffff;">
                                                 {{ currency($account['amount']) }}
                                             </td>
                                             <td></td>
@@ -198,13 +209,15 @@
                                     <tr>
                                         <td style="border-right: 2px solid #dee2e6;"></td>
                                         <td style="border-right: 2px solid #dee2e6;"></td>
-                                        <td class="ps-5">
-                                            <button type="button" wire:click="toggleGroup({{ $group['id'] }})" class="btn btn-sm btn-link p-0 text-start text-decoration-none">
+                                        <td class="ps-3" style="position: relative;">
+                                            <span style="position: absolute; left: 0.75rem; top: 0; height: 50%; width: 1px; background-color: #d0d0d0;"></span>
+                                            <span style="position: absolute; left: 0.75rem; top: 50%; width: 1rem; height: 1px; background-color: #d0d0d0;"></span>
+                                            <button type="button" wire:click="toggleGroup({{ $group['id'] }})" class="btn btn-sm btn-link p-0 text-start text-decoration-none" style="padding-left: 1.5rem !important;">
                                                 <i class="fa fa-{{ in_array($group['id'], $expandedGroups) ? 'minus' : 'plus' }} me-1"></i>
                                                 {{ $group['name'] }}
                                             </button>
                                         </td>
-                                        <td class="text-end pe-3">
+                                        <td class="text-end pe-3" style="background-color: #f5f5f5;">
                                             {{ currency($group['total']) }}
                                         </td>
                                     </tr>
@@ -215,10 +228,13 @@
                                             <tr>
                                                 <td style="border-right: 2px solid #dee2e6;"></td>
                                                 <td style="border-right: 2px solid #dee2e6;"></td>
-                                                <td class="ps-5" style="padding-left: 3rem !important;">
-                                                    <a href="{{ route('account::view', $account['id']) }}" class="text-decoration-none">{{ $account['name'] }}</a>
+                                                <td class="ps-3" style="position: relative;">
+                                                    <span style="position: absolute; left: 0.75rem; top: 0; height: 50%; width: 1px; background-color: #d0d0d0;"></span>
+                                                    <span style="position: absolute; left: 2.25rem; top: 0; height: 50%; width: 1px; background-color: #d0d0d0;"></span>
+                                                    <span style="position: absolute; left: 2.25rem; top: 50%; width: 1rem; height: 1px; background-color: #d0d0d0;"></span>
+                                                    <a href="{{ route('account::view', $account['id']) }}?from_date={{ $start_date }}&to_date={{ $end_date }}" class="text-decoration-none" style="padding-left: 3rem !important; display: block;">{{ $account['name'] }}</a>
                                                 </td>
-                                                <td class="text-end pe-3">
+                                                <td class="text-end pe-3" style="background-color: #ffffff;">
                                                     {{ currency($account['amount']) }}
                                                 </td>
                                             </tr>
@@ -233,10 +249,12 @@
                                         <tr>
                                             <td style="border-right: 2px solid #dee2e6;"></td>
                                             <td style="border-right: 2px solid #dee2e6;"></td>
-                                            <td class="ps-5">
-                                                <a href="{{ route('account::view', $account['id']) }}" class="text-decoration-none">{{ $account['name'] }}</a>
+                                            <td class="ps-3" style="position: relative;">
+                                                <span style="position: absolute; left: 0.75rem; top: 0; height: 50%; width: 1px; background-color: #d0d0d0;"></span>
+                                                <span style="position: absolute; left: 0.75rem; top: 50%; width: 1rem; height: 1px; background-color: #d0d0d0;"></span>
+                                                <a href="{{ route('account::view', $account['id']) }}?from_date={{ $start_date }}&to_date={{ $end_date }}" class="text-decoration-none" style="padding-left: 1.5rem !important; display: block;">{{ $account['name'] }}</a>
                                             </td>
-                                            <td class="text-end pe-3">
+                                            <td class="text-end pe-3" style="background-color: #ffffff;">
                                                 {{ currency($account['amount']) }}
                                             </td>
                                         </tr>
@@ -298,12 +316,12 @@
                                         INDIRECT EXPENSE
                                     </button>
                                 </td>
-                                <td class="text-end pe-3" style="border-right: 2px solid #dee2e6;">
+                                <td class="text-end pe-3" style="border-right: 2px solid #dee2e6; background-color: #e3f2fd;">
                                     <strong>{{ currency($indirectExpenseMaster['total']) }}</strong>
                                 </td>
                             @else
                                 <td class="ps-3" style="border-right: 2px solid #dee2e6;"><strong>INDIRECT EXPENSE</strong></td>
-                                <td class="text-end pe-3" style="border-right: 2px solid #dee2e6;">{{ currency($indirectExpense) }}</td>
+                                <td class="text-end pe-3" style="border-right: 2px solid #dee2e6; background-color: #e3f2fd;">{{ currency($indirectExpense) }}</td>
                             @endif
                             <!-- Right: Indirect Income Master -->
                             @if ($indirectIncomeMaster)
@@ -313,12 +331,12 @@
                                         INDIRECT INCOME
                                     </button>
                                 </td>
-                                <td class="text-end pe-3">
+                                <td class="text-end pe-3" style="background-color: #e3f2fd;">
                                     <strong>{{ currency($indirectIncomeMaster['total']) }}</strong>
                                 </td>
                             @else
                                 <td class="ps-3"><strong>INDIRECT INCOME</strong></td>
-                                <td class="text-end pe-3">{{ currency($indirectIncome) }}</td>
+                                <td class="text-end pe-3" style="background-color: #e3f2fd;">{{ currency($indirectIncome) }}</td>
                             @endif
                         </tr>
                         <!-- Show Indirect Expense groups and accounts if expanded -->
@@ -326,13 +344,15 @@
                             @foreach ($indirectExpenseMaster['groups'] as $group)
                                 @if ($group['total'])
                                     <tr>
-                                        <td class="ps-5" style="border-right: 2px solid #dee2e6;">
-                                            <button type="button" wire:click="toggleGroup({{ $group['id'] }})" class="btn btn-sm btn-link p-0 text-start text-decoration-none">
+                                        <td class="ps-3" style="border-right: 2px solid #dee2e6; position: relative;">
+                                            <span style="position: absolute; left: 0.75rem; top: 0; height: 50%; width: 1px; background-color: #d0d0d0;"></span>
+                                            <span style="position: absolute; left: 0.75rem; top: 50%; width: 1rem; height: 1px; background-color: #d0d0d0;"></span>
+                                            <button type="button" wire:click="toggleGroup({{ $group['id'] }})" class="btn btn-sm btn-link p-0 text-start text-decoration-none" style="padding-left: 1.5rem !important;">
                                                 <i class="fa fa-{{ in_array($group['id'], $expandedGroups) ? 'minus' : 'plus' }} me-1"></i>
                                                 {{ $group['name'] }}
                                             </button>
                                         </td>
-                                        <td class="text-end pe-3" style="border-right: 2px solid #dee2e6;">
+                                        <td class="text-end pe-3" style="border-right: 2px solid #dee2e6; background-color: #f5f5f5;">
                                             {{ currency($group['total']) }}
                                         </td>
                                         <td></td>
@@ -343,10 +363,13 @@
                                     @foreach ($group['accounts'] as $account)
                                         @if ($account['amount'] > 0)
                                             <tr>
-                                                <td class="ps-5" style="border-right: 2px solid #dee2e6; padding-left: 3rem !important;">
-                                                    <a href="{{ route('account::view', $account['id']) }}" class="text-decoration-none">{{ $account['name'] }}</a>
+                                                <td class="ps-3" style="border-right: 2px solid #dee2e6; position: relative;">
+                                                    <span style="position: absolute; left: 0.75rem; top: 0; height: 50%; width: 1px; background-color: #d0d0d0;"></span>
+                                                    <span style="position: absolute; left: 2.25rem; top: 0; height: 50%; width: 1px; background-color: #d0d0d0;"></span>
+                                                    <span style="position: absolute; left: 2.25rem; top: 50%; width: 1rem; height: 1px; background-color: #d0d0d0;"></span>
+                                                    <a href="{{ route('account::view', $account['id']) }}?from_date={{ $start_date }}&to_date={{ $end_date }}" class="text-decoration-none" style="padding-left: 3rem !important; display: block;">{{ $account['name'] }}</a>
                                                 </td>
-                                                <td class="text-end pe-3" style="border-right: 2px solid #dee2e6;">
+                                                <td class="text-end pe-3" style="border-right: 2px solid #dee2e6; background-color: #ffffff;">
                                                     {{ currency($account['amount']) }}
                                                 </td>
                                                 <td></td>
@@ -361,10 +384,12 @@
                                 @foreach ($indirectExpenseMaster['directAccounts'] as $account)
                                     @if ($account['amount'] > 0)
                                         <tr>
-                                            <td class="ps-5" style="border-right: 2px solid #dee2e6;">
-                                                <a href="{{ route('account::view', $account['id']) }}" class="text-decoration-none">{{ $account['name'] }}</a>
+                                            <td class="ps-3" style="border-right: 2px solid #dee2e6; position: relative;">
+                                                <span style="position: absolute; left: 0.75rem; top: 0; height: 50%; width: 1px; background-color: #d0d0d0;"></span>
+                                                <span style="position: absolute; left: 0.75rem; top: 50%; width: 1rem; height: 1px; background-color: #d0d0d0;"></span>
+                                                <a href="{{ route('account::view', $account['id']) }}?from_date={{ $start_date }}&to_date={{ $end_date }}" class="text-decoration-none" style="padding-left: 1.5rem !important; display: block;">{{ $account['name'] }}</a>
                                             </td>
-                                            <td class="text-end pe-3" style="border-right: 2px solid #dee2e6;">
+                                            <td class="text-end pe-3" style="border-right: 2px solid #dee2e6; background-color: #ffffff;">
                                                 {{ currency($account['amount']) }}
                                             </td>
                                             <td></td>
@@ -381,13 +406,15 @@
                                     <tr>
                                         <td style="border-right: 2px solid #dee2e6;"></td>
                                         <td style="border-right: 2px solid #dee2e6;"></td>
-                                        <td class="ps-5">
-                                            <button type="button" wire:click="toggleGroup({{ $group['id'] }})" class="btn btn-sm btn-link p-0 text-start text-decoration-none">
+                                        <td class="ps-3" style="position: relative;">
+                                            <span style="position: absolute; left: 0.75rem; top: 0; height: 50%; width: 1px; background-color: #d0d0d0;"></span>
+                                            <span style="position: absolute; left: 0.75rem; top: 50%; width: 1rem; height: 1px; background-color: #d0d0d0;"></span>
+                                            <button type="button" wire:click="toggleGroup({{ $group['id'] }})" class="btn btn-sm btn-link p-0 text-start text-decoration-none" style="padding-left: 1.5rem !important;">
                                                 <i class="fa fa-{{ in_array($group['id'], $expandedGroups) ? 'minus' : 'plus' }} me-1"></i>
                                                 {{ $group['name'] }}
                                             </button>
                                         </td>
-                                        <td class="text-end pe-3">
+                                        <td class="text-end pe-3" style="background-color: #f5f5f5;">
                                             {{ currency($group['total']) }}
                                         </td>
                                     </tr>
@@ -398,10 +425,13 @@
                                             <tr>
                                                 <td style="border-right: 2px solid #dee2e6;"></td>
                                                 <td style="border-right: 2px solid #dee2e6;"></td>
-                                                <td class="ps-5" style="padding-left: 3rem !important;">
-                                                    <a href="{{ route('account::view', $account['id']) }}" class="text-decoration-none">{{ $account['name'] }}</a>
+                                                <td class="ps-3" style="position: relative;">
+                                                    <span style="position: absolute; left: 0.75rem; top: 0; height: 50%; width: 1px; background-color: #d0d0d0;"></span>
+                                                    <span style="position: absolute; left: 2.25rem; top: 0; height: 50%; width: 1px; background-color: #d0d0d0;"></span>
+                                                    <span style="position: absolute; left: 2.25rem; top: 50%; width: 1rem; height: 1px; background-color: #d0d0d0;"></span>
+                                                    <a href="{{ route('account::view', $account['id']) }}?from_date={{ $start_date }}&to_date={{ $end_date }}" class="text-decoration-none" style="padding-left: 3rem !important; display: block;">{{ $account['name'] }}</a>
                                                 </td>
-                                                <td class="text-end pe-3">
+                                                <td class="text-end pe-3" style="background-color: #ffffff;">
                                                     {{ currency($account['amount']) }}
                                                 </td>
                                             </tr>
@@ -416,10 +446,12 @@
                                         <tr>
                                             <td style="border-right: 2px solid #dee2e6;"></td>
                                             <td style="border-right: 2px solid #dee2e6;"></td>
-                                            <td class="ps-5">
-                                                <a href="{{ route('account::view', $account['id']) }}" class="text-decoration-none">{{ $account['name'] }}</a>
+                                            <td class="ps-3" style="position: relative;">
+                                                <span style="position: absolute; left: 0.75rem; top: 0; height: 50%; width: 1px; background-color: #d0d0d0;"></span>
+                                                <span style="position: absolute; left: 0.75rem; top: 50%; width: 1rem; height: 1px; background-color: #d0d0d0;"></span>
+                                                <a href="{{ route('account::view', $account['id']) }}?from_date={{ $start_date }}&to_date={{ $end_date }}" class="text-decoration-none" style="padding-left: 1.5rem !important; display: block;">{{ $account['name'] }}</a>
                                             </td>
-                                            <td class="text-end pe-3">
+                                            <td class="text-end pe-3" style="background-color: #ffffff;">
                                                 {{ currency($account['amount']) }}
                                             </td>
                                         </tr>
@@ -460,51 +492,12 @@
 
     @push('scripts')
         <script>
-            function copyTable() {
-                const table = document.getElementById('profitLossTable');
-                const range = document.createRange();
-                range.selectNode(table);
-                window.getSelection().removeAllRanges();
-                window.getSelection().addRange(range);
-                document.execCommand('copy');
-                window.getSelection().removeAllRanges();
-                alert('Table copied to clipboard!');
-            }
-
-            function exportToExcel() {
-                // Implement Excel export
-                alert('Excel export functionality will be implemented');
-            }
-
-            function exportToCSV() {
-                const table = document.getElementById('profitLossTable');
-                let csv = [];
-                const rows = table.querySelectorAll('tr');
-
-                for (let i = 0; i < rows.length; i++) {
-                    const row = [],
-                        cols = rows[i].querySelectorAll('td, th');
-                    for (let j = 0; j < cols.length; j++) {
-                        row.push(cols[j].innerText.trim());
-                    }
-                    csv.push(row.join(','));
-                }
-
-                const csvContent = csv.join('\n');
-                const blob = new Blob([csvContent], {
-                    type: 'text/csv;charset=utf-8;'
+            $(document).ready(function() {
+                $('#branch_id').on('change', function(e) {
+                    const value = $(this).val() || null;
+                    @this.set('branch_id', value);
                 });
-                const url = window.URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = 'profit_loss_report.csv';
-                a.click();
-                window.URL.revokeObjectURL(url);
-            }
-
-            function exportToPDF() {
-                window.print();
-            }
+            });
         </script>
     @endpush
 </div>

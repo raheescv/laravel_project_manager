@@ -11,6 +11,8 @@ return new class() extends Migration
         Schema::create('inventory_logs', function (Blueprint $table) {
             $table->id();
             $table->unsignedBigInteger('branch_id')->index();
+            $table->unsignedBigInteger('employee_id')->nullable()->after('branch_id')->index();
+            $table->foreign('employee_id')->references('id')->on('users')->onDelete('cascade');
             $table->unsignedBigInteger('product_id')->index();
             $table->double('quantity_in', 8, 3);
             $table->double('quantity_out', 8, 3);

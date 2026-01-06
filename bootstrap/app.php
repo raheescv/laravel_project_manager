@@ -3,9 +3,11 @@
 use App\Http\Middleware\HandleInertiaRequests;
 use App\Http\Middleware\TrackVisitor;
 use App\Http\Middleware\TrustProxies;
+use Illuminate\Auth\AuthenticationException;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+use Illuminate\Session\TokenMismatchException;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -19,6 +21,7 @@ return Application::configure(basePath: dirname(__DIR__))
             __DIR__.'/../routes/print.php',
             __DIR__.'/../routes/report.php',
             __DIR__.'/../routes/settings.php',
+            __DIR__.'/../routes/package.php',
             __DIR__.'/../routes/flat_trade.php',
             __DIR__.'/../routes/api_log.php',
         ],
@@ -51,6 +54,45 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
-        //
+        // Show 419 error page when session expires or CSRF token mismatch
+        $exceptions->render(function (TokenMismatchException $e, \Illuminate\Http\Request $request) {
+            // Regenerate session to get a fresh CSRF token
+            if ($request->hasSession()) {
+                $request->session()->regenerateToken();
+            }
+
+            // Handle API/JSON requests
+            if ($request->expectsJson() || $request->is('api/*')) {
+                return response()->json(['message' => 'CSRF token mismatch. Please refresh the page.'], 419);
+            }
+
+            // Handle Inertia requests
+            if ($request->header('X-Inertia')) {
+                return redirect()->guest(route('login'))->with('error', 'Your session has expired. Please login again.');
+            }
+
+            // Handle regular web requests - show 419 error page
+            return response()->view('errors.419', [], 419);
+        });
+
+        // Handle authentication exceptions
+        $exceptions->respond(function (\Symfony\Component\HttpFoundation\Response $response, \Throwable $exception, \Illuminate\Http\Request $request) {
+            if ($exception instanceof AuthenticationException) {
+                // Handle API/JSON requests
+                if ($request->expectsJson() || $request->is('api/*')) {
+                    return response()->json(['message' => 'Unauthenticated.'], 401);
+                }
+
+                // Handle Inertia requests
+                if ($request->header('X-Inertia')) {
+                    return redirect()->guest(route('login'))->with('error', 'Your session has expired. Please login again.');
+                }
+
+                // Handle regular web requests
+                return redirect()->guest(route('login'));
+            }
+
+            return $response;
+        });
     })
     ->create();

@@ -107,8 +107,28 @@ class ReportController extends Controller
         return view('report.customer.customer-callback-reminder');
     }
 
+    public function customer_aging()
+    {
+        return view('report.customer_aging');
+    }
+
     public function day_wise_sale()
     {
         return view('report.day_wise_sale');
+    }
+
+    public function vendor_aging()
+    {
+        return view('report.vendor_aging');
+    }
+
+    public function day_wise_tax_report()
+    {
+        return view('report.day_wise_tax_report');
+    }
+
+    public function tax_report()
+    {
+        return view('report.tax_report');
     }
 }

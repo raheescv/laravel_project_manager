@@ -73,6 +73,26 @@ class PurchaseController extends Controller
             ->header('Content-Disposition', 'inline; filename="barcode-'.time().'.pdf"');
     }
 
+    public function view($id)
+    {
+        return view('purchase.page', compact('id'));
+    }
+
+    public function print($id)
+    {
+        $model = Purchase::with('items.product', 'account', 'branch', 'createdUser', 'updatedUser')->findOrFail($id);
+        $html = view('purchase.print', compact('model', 'id'));
+        if (! $model->signature) {
+            return $html;
+        }
+        $html = $html->render();
+        $pdf = Browsershot::html($html)->transparentBackground()->pdf();
+
+        return response($pdf)
+            ->header('Content-Type', 'application/pdf')
+            ->header('Content-Disposition', 'inline; filename="purchase-note-'.time().'.pdf"');
+    }
+
     public function payments()
     {
         return view('purchase.payments');

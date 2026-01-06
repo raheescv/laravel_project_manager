@@ -105,9 +105,29 @@
                                             <i class="fa fa-phone fs-5 me-2"></i>Customer Callback Reminder
                                         </a>
                                     @endcan
+                                    @can('report.vendor aging')
+                                        <a href="{{ route('report::vendor_aging') }}" class="list-group-item list-group-item-action">
+                                            <i class="fa fa-calendar fs-5 me-2"></i>Vendor Aging
+                                        </a>
+                                    @endcan
+                                    @can('report.customer aging')
+                                        <a href="{{ route('report::customer_aging') }}" class="list-group-item list-group-item-action">
+                                            <i class="fa fa-calendar fs-5 me-2"></i>Customer Aging
+                                        </a>
+                                    @endcan
                                     @can('report.day wise sale')
                                         <a href="{{ route('report::day_wise_sale') }}" class="list-group-item list-group-item-action">
                                             <i class="fa fa-calendar fs-5 me-2"></i>Day Wise Sale Report
+                                        </a>
+                                    @endcan
+                                    @can('report.day wise tax report')
+                                        <a href="{{ route('report::day_wise_tax_report') }}" class="list-group-item list-group-item-action">
+                                            <i class="fa fa-calendar fs-5 me-2"></i>Day Wise Tax Report
+                                        </a>
+                                    @endcan
+                                    @can('report.tax report')
+                                        <a href="{{ route('report::tax_report') }}" class="list-group-item list-group-item-action">
+                                            <i class="fa fa-calendar fs-5 me-2"></i>Tax Report
                                         </a>
                                     @endcan
                                 </div>
@@ -191,6 +211,11 @@
                                             <i class="fa fa-globe fs-5 me-2"></i>Country
                                         </a>
                                     @endcan
+                                    @can('package category.view')
+                                        <a href="{{ route('settings::package_category::index') }}" class="list-group-item list-group-item-action">
+                                            <i class="fa fa-globe fs-5 me-2"></i>Package Category
+                                        </a>
+                                    @endcan
                                     @can('customer type.view')
                                         <a href="{{ route('settings::customer_type::index') }}" class="list-group-item list-group-item-action">
                                             <i class="fa fa-tags fs-5 me-2"></i>Customer Type
@@ -214,6 +239,11 @@
                                     @can('configuration.barcode')
                                         <a href="{{ route('inventory::barcode::configuration') }}" class="list-group-item list-group-item-action">
                                             <i class="fa fa-barcode fs-5 me-2"></i>Barcode Configuration
+                                        </a>
+                                    @endcan
+                                    @can('configuration.cheque')
+                                        <a href="{{ route('account::cheque::configuration') }}" class="list-group-item list-group-item-action">
+                                            <i class="fa fa-money-check fs-5 me-2"></i>Cheque Configuration
                                         </a>
                                     @endcan
                                     @can('api_log.moq settings')

@@ -2,12 +2,15 @@
     <div v-if="show" class="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog"
         aria-modal="true">
         <div class="flex items-center justify-center min-h-screen p-2 sm:p-4 text-center">
-            <div class="fixed inset-0 bg-black/40 backdrop-blur-sm transition-opacity" aria-hidden="true" @click="$emit('close')">
+            <div class="fixed inset-0 bg-black/40 backdrop-blur-sm transition-opacity" aria-hidden="true"
+                @click="$emit('close')">
             </div>
 
-            <div class="relative inline-block align-bottom bg-white rounded-xl text-left overflow-hidden shadow-2xl transform transition-all sm:my-4 sm:align-middle sm:max-w-4xl w-full max-h-[85vh] overflow-y-auto">
+            <div
+                class="relative inline-block align-bottom bg-white rounded-xl text-left overflow-hidden shadow-2xl transform transition-all sm:my-4 sm:align-middle sm:max-w-4xl w-full max-h-[85vh] overflow-y-auto">
                 <!-- Modal Header -->
-                <div class="bg-gradient-to-br from-emerald-500 via-teal-600 to-cyan-600 px-4 sm:px-6 py-3 sm:py-4 text-white flex items-center justify-between">
+                <div
+                    class="bg-gradient-to-br from-emerald-500 via-teal-600 to-cyan-600 px-4 sm:px-6 py-3 sm:py-4 text-white flex items-center justify-between">
                     <div class="flex items-center">
                         <div class="bg-white/20 p-2 rounded-lg mr-3">
                             <i class="fa fa-cube text-white text-lg"></i>
@@ -35,13 +38,9 @@
                                     <i class="fa fa-tags text-emerald-500 mr-2"></i>
                                     Select Combo Offer
                                 </label>
-                                <SearchableSelect
-                                    v-model="selectedComboOfferId"
-                                    :options="comboOfferOptions"
-                                    placeholder="Choose a combo offer..."
-                                    filter-placeholder="Search combo offers..."
-                                    :visibleItems="6"
-                                    @change="onComboOfferSelected"
+                                <SearchableSelect v-model="selectedComboOfferId" :options="comboOfferOptions"
+                                    placeholder="Choose a combo offer..." filter-placeholder="Search combo offers..."
+                                    :visibleItems="6" @change="onComboOfferSelected"
                                     input-class="w-full rounded-lg border-gray-200 shadow-sm focus:border-emerald-500 focus:ring-emerald-500/20 transition-all duration-200 bg-white/90 backdrop-blur-sm hover:shadow-md text-sm py-2 px-3" />
                             </div>
                             <div class="lg:col-span-1 flex items-end">
@@ -49,7 +48,8 @@
                                     class="w-full bg-gradient-to-r from-emerald-500 to-teal-600 text-white py-2 px-4 rounded-lg hover:from-emerald-600 hover:to-teal-700 transition-all duration-200 shadow-md hover:shadow-lg transform hover:-translate-y-0.5 font-semibold text-sm flex items-center justify-center">
                                     <i class="fa fa-plus mr-1.5 text-sm"></i>
                                     Add
-                                    <span v-if="selectedComboOffers.length > 0" class="ml-1.5 bg-white text-emerald-600 px-1.5 py-0.5 rounded-full text-xs font-bold">
+                                    <span v-if="selectedComboOffers.length > 0"
+                                        class="ml-1.5 bg-white text-emerald-600 px-1.5 py-0.5 rounded-full text-xs font-bold">
                                         {{ selectedComboOffers.length }}
                                     </span>
                                 </button>
@@ -64,7 +64,8 @@
                                 <i class="fa fa-list-check mr-2 text-emerald-500"></i>
                                 Available Services
                             </h6>
-                            <span class="badge bg-emerald-100 text-emerald-700 px-3 py-1 rounded-full text-xs font-semibold border border-emerald-200">
+                            <span
+                                class="badge bg-emerald-100 text-emerald-700 px-3 py-1 rounded-full text-xs font-semibold border border-emerald-200">
                                 {{ selectedServices.length }} Selected
                             </span>
                         </div>
@@ -86,9 +87,7 @@
                                         <div class="card-body p-3">
                                             <div class="flex items-center">
                                                 <div class="flex-grow-1">
-                                                    <input type="checkbox"
-                                                        :value="key"
-                                                        v-model="selectedServices"
+                                                    <input type="checkbox" :value="key" v-model="selectedServices"
                                                         :id="`service-${key}`"
                                                         class="form-check-input mr-2 text-emerald-500 focus:ring-emerald-500">
                                                     <span class="text-xs font-medium text-gray-700">
@@ -106,8 +105,7 @@
                                 </label>
                             </div>
                         </div>
-                        <div v-else
-                            class="bg-blue-50 border border-blue-200 rounded-lg p-4 text-center">
+                        <div v-else class="bg-blue-50 border border-blue-200 rounded-lg p-4 text-center">
                             <div class="flex items-center justify-center mb-2">
                                 <i class="fa fa-info-circle text-blue-500 text-lg mr-2"></i>
                                 <span class="text-blue-700 font-medium text-sm">No services available</span>
@@ -136,13 +134,18 @@
 
                                 <div class="selected-combo-offer">
                                     <div class="combo-offer-grid">
-                                        <div v-for="(comboOffer, index) in selectedComboOffers" :key="index" class="combo-offer-summary-item">
-                                            <div class="card combo-offer-summary-card h-full rounded-md border-0 shadow-sm">
-                                                <div class="card-header py-2 px-3 bg-gradient-to-r from-emerald-50 to-teal-50 border-b border-emerald-100">
+                                        <div v-for="(comboOffer, index) in selectedComboOffers" :key="index"
+                                            class="combo-offer-summary-item">
+                                            <div
+                                                class="card combo-offer-summary-card h-full rounded-md border-0 shadow-sm">
+                                                <div
+                                                    class="card-header py-2 px-3 bg-gradient-to-r from-emerald-50 to-teal-50 border-b border-emerald-100">
                                                     <div class="flex justify-between items-center">
                                                         <div class="flex items-center gap-1.5">
                                                             <div class="combo-offer-indicator"></div>
-                                                            <h6 class="combo-offer-name mb-0 text-emerald-700 font-semibold text-xs">{{ comboOffer.combo_offer_name }}</h6>
+                                                            <h6
+                                                                class="combo-offer-name mb-0 text-emerald-700 font-semibold text-xs">
+                                                                {{ comboOffer.combo_offer_name }}</h6>
                                                         </div>
                                                         <button type="button" @click="removeComboOffer(index)"
                                                             class="btn-close btn-close-sm text-gray-400 hover:text-red-500 transition-colors p-1 rounded-md hover:bg-red-50">
@@ -155,16 +158,23 @@
                                                         <div class="flex justify-around gap-3">
                                                             <div class="stat-item text-center">
                                                                 <div class="stat-info">
-                                                                    <div class="stat-value font-bold text-base text-emerald-600">{{ comboOffer.items.length }}</div>
-                                                                    <div class="stat-label text-gray-600 text-xs font-medium">Services</div>
+                                                                    <div
+                                                                        class="stat-value font-bold text-base text-emerald-600">
+                                                                        {{ comboOffer.items.length }}</div>
+                                                                    <div
+                                                                        class="stat-label text-gray-600 text-xs font-medium">
+                                                                        Services</div>
                                                                 </div>
                                                             </div>
                                                             <div class="stat-item text-center">
                                                                 <div class="stat-info">
-                                                                    <div class="stat-value font-bold text-base text-emerald-600">
+                                                                    <div
+                                                                        class="stat-value font-bold text-base text-emerald-600">
                                                                         {{ calculateDiscountPercentage(comboOffer) }}%
                                                                     </div>
-                                                                    <div class="stat-label text-gray-600 text-xs font-medium">Savings</div>
+                                                                    <div
+                                                                        class="stat-label text-gray-600 text-xs font-medium">
+                                                                        Savings</div>
                                                                 </div>
                                                             </div>
                                                         </div>
@@ -173,21 +183,33 @@
                                                         <div class="table-responsive h-full">
                                                             <table class="table table-sm service-price-table mb-0">
                                                                 <tbody>
-                                                                    <tr v-for="item in comboOffer.items" :key="item.key" class="border-b border-gray-100">
+                                                                    <tr v-for="item in comboOffer.items" :key="item.key"
+                                                                        class="border-b border-gray-100">
                                                                         <td class="py-1.5 w-60">
-                                                                            <span class="service-name text-xs text-gray-700">{{ item.employee_name }} - {{ item.name }}</span>
+                                                                            <span
+                                                                                class="service-name text-xs text-gray-700">{{
+                                                                                item.employee_name }} - {{ item.name
+                                                                                }}</span>
                                                                         </td>
                                                                         <td class="text-end py-1.5 w-40">
-                                                                            <div class="flex items-center justify-end gap-1">
-                                                                                <span class="text-gray-400 line-through text-xs">
-                                                                                    {{ formatCurrency(item.unit_price) }}
+                                                                            <div
+                                                                                class="flex items-center justify-end gap-1">
+                                                                                <span
+                                                                                    class="text-gray-400 line-through text-xs">
+                                                                                    {{ formatCurrency(item.unit_price)
+                                                                                    }}
                                                                                 </span>
-                                                                                <span class="badge bg-red-100 text-red-600 rounded-full text-xs px-1 py-0.5"
+                                                                                <span
+                                                                                    class="badge bg-red-100 text-red-600 rounded-full text-xs px-1 py-0.5"
                                                                                     :title="`You Save ${formatCurrency(item.unit_price - item.combo_offer_price)}`">
-                                                                                    -{{ formatCurrency(item.unit_price - item.combo_offer_price) }}
+                                                                                    -{{ formatCurrency(item.unit_price -
+                                                                                    item.combo_offer_price) }}
                                                                                 </span>
-                                                                                <span class="text-emerald-600 font-bold text-xs">
-                                                                                    {{ formatCurrency(item.combo_offer_price) }}
+                                                                                <span
+                                                                                    class="text-emerald-600 font-bold text-xs">
+                                                                                    {{
+                                                                                    formatCurrency(item.combo_offer_price)
+                                                                                    }}
                                                                                 </span>
                                                                             </div>
                                                                         </td>
@@ -197,9 +219,12 @@
                                                         </div>
                                                     </div>
                                                     <div class="combo-offer-footer mt-2">
-                                                        <div class="total-row flex justify-between items-center py-2 px-2.5 bg-emerald-50 rounded-md border border-emerald-100">
-                                                            <span class="font-semibold text-gray-700 text-xs">Combo Total</span>
-                                                            <span class="font-bold text-base text-emerald-600">{{ formatCurrency(comboOffer.amount) }}</span>
+                                                        <div
+                                                            class="total-row flex justify-between items-center py-2 px-2.5 bg-emerald-50 rounded-md border border-emerald-100">
+                                                            <span class="font-semibold text-gray-700 text-xs">Combo
+                                                                Total</span>
+                                                            <span class="font-bold text-base text-emerald-600">{{
+                                                                formatCurrency(comboOffer.amount) }}</span>
                                                         </div>
                                                     </div>
                                                 </div>
@@ -236,6 +261,10 @@
 import SearchableSelect from '@/components/SearchableSelectFixed.vue'
 import { ref, computed, watch, onMounted } from 'vue'
 import { useToast } from 'vue-toastification'
+import {
+    calculateComboOfferPrices as calculateComboOfferPricesUtil,
+    calculateDiscountPercentage as calculateDiscountPercentageUtil
+} from '@/utils/comboOfferCalculations'
 
 export default {
     name: 'ComboOfferModal',
@@ -270,14 +299,13 @@ export default {
         const comboOffers = ref([])
         const loading = ref(false)
 
-                // Convert cart items to combo offer items format
+        // Convert cart items to combo offer items format
         const convertCartItemsToComboItems = () => {
             const items = {}
 
             if (!props.cartItems || Object.keys(props.cartItems).length === 0) {
                 return items
             }
-            console.log(props.cartItems);
             Object.entries(props.cartItems).forEach(([key, item]) => {
                 if (item && item.name) { // Ensure item has required fields
                     items[key] = {
@@ -328,13 +356,12 @@ export default {
             }))
         })
 
-                        // Filtered combo offer items (excluding already selected services)
+        // Filtered combo offer items (excluding already selected services)
         const filteredComboOfferItems = computed(() => {
             // Get all items that are already in any combo offer (including initial ones)
             const existingComboOfferServices = selectedComboOffers.value
                 .flatMap(combo => combo.items)
                 .map(item => item.key)
-            console.log(existingComboOfferServices);
             const filtered = Object.entries(comboOfferItems.value)
                 .filter(([key, item]) => {
                     // Only show items that are not already in any combo offer
@@ -365,12 +392,17 @@ export default {
         const addComboOffer = () => {
             if (!selectedComboOfferId.value) {
                 toast.error('Please select a combo offer first')
-                return
+                return false
             }
 
-            if (!selectedComboOffer.value || selectedServices.value.length !== selectedComboOffer.value.count) {
-                toast.error(`Please select ${selectedComboOffer.value.count} services for this combo offer`)
-                return
+            if (!selectedComboOffer.value) {
+                toast.error('Combo offer not found. Please select again.')
+                return false
+            }
+
+            if (selectedServices.value.length !== selectedComboOffer.value.count) {
+                toast.error(`Please select exactly ${selectedComboOffer.value.count} service(s) for this combo offer. Currently selected: ${selectedServices.value.length}`)
+                return false
             }
 
             // Check if services are already in another combo offer
@@ -384,11 +416,18 @@ export default {
 
             if (hasConflict) {
                 toast.error('Some services are already in another combo offer')
-                return
+                return false
             }
 
+            // Calculate combo offer prices (this also updates comboOfferItems internally, matching PHP behavior)
             const comboOfferPrices = calculateComboOfferPrices(selectedServices.value, selectedComboOfferId.value)
 
+            if (!comboOfferPrices || comboOfferPrices.length === 0) {
+                toast.error('Failed to calculate combo offer prices')
+                return false
+            }
+
+            // Create combo offer item (matching PHP structure)
             const item = {
                 combo_offer_id: selectedComboOfferId.value,
                 combo_offer_name: selectedComboOffer.value.name,
@@ -396,36 +435,39 @@ export default {
                 items: comboOfferPrices
             }
 
+            // Add to selected combo offers (matching PHP: $this->selectedComboOffers[] = $item)
             selectedComboOffers.value.push(item)
 
-            // Update combo offer items with new prices
-            comboOfferPrices.forEach(item => {
-                comboOfferItems.value[item.key] = item
-            })
 
+            // Reset selection (matching PHP: $this->selectedComboOfferId = null; $this->selectedServices = [])
             selectedComboOfferId.value = null
             selectedServices.value = []
 
             toast.success('Combo Offer added successfully')
+            return true
         }
 
-        // Calculate combo offer prices
+        // Calculate combo offer prices using utility function
         const calculateComboOfferPrices = (selectedServices, comboOfferId) => {
-            const services = selectedServices.map(key => comboOfferItems.value[key]).filter(Boolean)
-            const totalOriginalPrice = services.reduce((sum, item) => sum + item.unit_price, 0)
-            const comboOfferAmount = selectedComboOffer.value.amount
+            try {
+                // Use utility function that matches PHP logic exactly
+                const calculatedItems = calculateComboOfferPricesUtil(
+                    selectedServices,
+                    comboOfferId,
+                    comboOfferItems.value,
+                    selectedComboOffer.value
+                )
 
-            return services.map(item => {
-                const comboOfferPrice = Math.round((item.unit_price / totalOriginalPrice) * comboOfferAmount * 100) / 100
-                const discount = Math.round((item.unit_price - comboOfferPrice) * 100) / 100
+                // Update comboOfferItems in place (matching PHP behavior)
+                calculatedItems.forEach(item => {
+                    comboOfferItems.value[item.key] = item
+                })
 
-                return {
-                    ...item,
-                    combo_offer_price: comboOfferPrice,
-                    discount: discount,
-                    combo_offer_id: comboOfferId
-                }
-            })
+                return calculatedItems
+            } catch (error) {
+                toast.error(error.message || 'Failed to calculate combo offer prices')
+                return []
+            }
         }
 
         // Remove combo offer
@@ -448,18 +490,70 @@ export default {
             toast.success('Combo Offer removed successfully')
         }
 
-        // Calculate discount percentage
+        // Calculate discount percentage using utility function
         const calculateDiscountPercentage = (comboOffer) => {
-            const originalTotal = comboOffer.items.reduce((sum, item) => sum + (parseFloat(item.unit_price) || 0), 0)
-            if (originalTotal === 0) return 0
-            const discountPercent = Math.round((1 - (parseFloat(comboOffer.amount) || 0) / originalTotal) * 100 * 10) / 10
-            return isNaN(discountPercent) ? 0 : discountPercent
+            return calculateDiscountPercentageUtil(comboOffer)
         }
 
         // Save combo offers
         const saveComboOffers = () => {
+            // If no combo offers are added but user has selected one, try to add it automatically
+            if (selectedComboOffers.value.length === 0) {
+                // Ensure selectedComboOffer is set if we have an ID
+                if (selectedComboOfferId.value && !selectedComboOffer.value) {
+                    selectedComboOffer.value = comboOffers.value.find(offer => offer.id === selectedComboOfferId.value)
+                }
+
+                // Check if user has selected a combo offer and services
+                if (selectedComboOfferId.value && selectedComboOffer.value && selectedServices.value.length > 0) {
+                    // Check if the selection matches the required count
+                    if (selectedServices.value.length === selectedComboOffer.value.count) {
+                        // Try to add the combo offer automatically
+                        const added = addComboOffer()
+                        // If addComboOffer returns false or still no combo offers, show error
+                        if (!added || selectedComboOffers.value.length === 0) {
+                            toast.error('Failed to add combo offer. Please check your selection and try clicking "Add" manually.')
+                            return
+                        }
+                    } else {
+                        toast.error(`Please select exactly ${selectedComboOffer.value.count} service(s) for this combo offer (currently selected: ${selectedServices.value.length}), then click "Add"`)
+                        return
+                    }
+                } else {
+                    if (!selectedComboOfferId.value) {
+                        toast.error('Please select a combo offer first')
+                    } else if (!selectedComboOffer.value) {
+                        toast.error('Combo offer not found. Please select again.')
+                    } else if (selectedServices.value.length === 0) {
+                        toast.error('Please select services for the combo offer, then click "Add"')
+                    } else {
+                        toast.error('Please select a combo offer and services, then click "Add" before applying')
+                    }
+                    return
+                }
+            }
+
+            // Build a map of items that are in combo offers with their pricing
+            const itemsWithComboOffers = {}
+
+            // Collect all items from all selected combo offers
+            selectedComboOffers.value.forEach(comboOffer => {
+                comboOffer.items.forEach(item => {
+                    // Use the item from the combo offer (which has the calculated pricing)
+                    if (item.key) {
+                        itemsWithComboOffers[item.key] = {
+                            ...comboOfferItems.value[item.key], // Get base item data
+                            ...item, // Override with combo offer pricing
+                            combo_offer_price: item.combo_offer_price || 0,
+                            discount: item.discount || 0,
+                            combo_offer_id: item.combo_offer_id || null
+                        }
+                    }
+                })
+            })
+
             emit('save', {
-                comboOfferItems: comboOfferItems.value,
+                comboOfferItems: itemsWithComboOffers, // Only send items that are in combo offers
                 selectedComboOffers: selectedComboOffers.value
             })
             emit('close')

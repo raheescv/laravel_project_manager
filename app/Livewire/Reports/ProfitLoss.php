@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Reports;
 
+use App\Exports\ProfitLossExport;
 use App\Models\Account;
 use App\Models\AccountCategory;
 use App\Models\Branch;
@@ -9,6 +10,7 @@ use App\Models\JournalEntry;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
+use Maatwebsite\Excel\Facades\Excel;
 
 class ProfitLoss extends Component
 {
@@ -32,7 +34,7 @@ class ProfitLoss extends Component
         // Get branches the user has access to
         $branch_ids = Auth::user()->branches->pluck('branch_id', 'branch_id')->toArray();
         $this->branches = Branch::whereIn('id', $branch_ids)->pluck('name', 'id')->toArray();
-        $this->branch_id = '';  // Default to all branches
+        $this->branch_id = session('branch_id');
     }
 
     public function updatedPeriod($value)
@@ -91,6 +93,26 @@ class ProfitLoss extends Component
     }
 
     /**
+     * Export Profit & Loss report to Excel
+     */
+    public function export()
+    {
+        try {
+            $reportData = $this->getReportData();
+            $branchName = $this->getBranchName();
+
+            $fileName = 'Profit_Loss_Report_'.$this->start_date.'_to_'.$this->end_date.'_'.now()->format('Y-m-d_H-i-s').'.xlsx';
+
+            return Excel::download(
+                new ProfitLossExport($reportData, $this->start_date, $this->end_date, $branchName),
+                $fileName
+            );
+        } catch (\Exception $e) {
+            $this->dispatch('error', ['message' => 'Export failed: '.$e->getMessage()]);
+        }
+    }
+
+    /**
      * Apply branch filter to query
      */
     protected function applyBranchFilter($query)
@@ -138,17 +160,9 @@ class ProfitLoss extends Component
      */
     protected function calculateNetPurchase(): float
     {
-        $purchaseAccount = Account::where('name', 'Purchase')
-            ->where('account_type', 'expense')
-            ->first();
-
-        $purchaseReturnAccount = Account::where('name', 'Purchase Returns')
-            ->where('account_type', 'income')
-            ->first();
 
         $totalPurchase = 0.0;
-        $totalPurchaseReturn = 0.0;
-
+        $purchaseAccount = Account::where('name', 'Purchase')->where('account_type', 'expense')->first();
         if ($purchaseAccount) {
             $query = JournalEntry::query()
                 ->where('account_id', $purchaseAccount->id)
@@ -165,6 +179,25 @@ class ProfitLoss extends Component
             }
         }
 
+        $inventoryAccount = Account::where('name', 'Inventory')->where('account_type', 'asset')->first();
+        if ($inventoryAccount) {
+            $query = JournalEntry::query()
+                ->where('account_id', $inventoryAccount->id)
+                ->whereBetween('date', [$this->start_date, $this->end_date])
+                ->selectRaw('COALESCE(SUM(debit), 0) as total_debit')
+                ->selectRaw('COALESCE(SUM(credit), 0) as total_credit');
+
+            $this->applyBranchFilter($query);
+
+            $result = $query->first();
+            if ($result) {
+                // For expense accounts, net = debit - credit
+                $totalPurchase += $result->total_debit;
+            }
+        }
+
+        $totalPurchaseReturn = 0.0;
+        $purchaseReturnAccount = Account::where('name', 'Purchase Returns')->where('account_type', 'income')->first();
         if ($purchaseReturnAccount) {
             $query = JournalEntry::query()
                 ->where('account_id', $purchaseReturnAccount->id)
@@ -267,11 +300,17 @@ class ProfitLoss extends Component
     protected function buildCategoryStructure(string $accountType): array
     {
         // Get master categories based on account type
-        $masterCategoryNames = $accountType === 'income'
-            ? ['Direct Income', 'Indirect Income']
-            : ['Direct Expense', 'Indirect Expense'];
+        $masterCategoryNames = $accountType === 'income' ? ['Direct Income', 'Indirect Income'] : ['Direct Expense', 'Indirect Expense'];
 
         $structure = [];
+        $sale_id = Account::where('name', 'Sale')->first()?->id;
+        $costOfGoodsSold_id = Account::where('slug', 'cost_of_goods_sold')->where('account_type', 'expense')->first()?->id;
+
+        // Get IDs of special accounts that are handled separately
+        $specialAccountIds = Account::whereIn('name', ['Sale', 'Purchase', 'Purchase Returns', 'Sales Returns'])
+            ->where('account_type', $accountType)
+            ->pluck('id')
+            ->toArray();
 
         foreach ($masterCategoryNames as $masterName) {
             $masterCategory = AccountCategory::where('name', $masterName)
@@ -290,7 +329,6 @@ class ProfitLoss extends Component
             $masterTotal = 0.0;
             $groups = [];
             $directAccounts = [];
-
             // Get accounts directly under master category (without a group)
             foreach ($masterCategory->accounts as $account) {
                 $amount = $this->calculateAccountAmount($account->id, $accountType);
@@ -307,8 +345,13 @@ class ProfitLoss extends Component
             foreach ($masterCategory->children as $group) {
                 $groupTotal = 0.0;
                 $accounts = [];
-
                 foreach ($group->accounts as $account) {
+                    if ($account->id === $sale_id) {
+                        continue;
+                    }
+                    if ($costOfGoodsSold_id && $account->id === $costOfGoodsSold_id) {
+                        continue;
+                    }
                     $amount = $this->calculateAccountAmount($account->id, $accountType);
                     $groupTotal += $amount;
 
@@ -337,10 +380,70 @@ class ProfitLoss extends Component
             ];
         }
 
+        // Add un categorized accounts to Direct Expense/Direct Income
+        $directCategoryName = $accountType === 'income' ? 'Indirect Income' : 'Indirect Expense';
+
+        // Find un categorized accounts (accounts with null account_category_id)
+        $unCategorizedAccounts = Account::where('account_type', $accountType)
+            ->whereNull('account_category_id')
+            ->whereNotIn('id', $specialAccountIds)
+            ->get();
+
+        $unCategorizedTotal = 0.0;
+        $unCategorizedAccountsList = [];
+
+        foreach ($unCategorizedAccounts as $account) {
+            $amount = $this->calculateAccountAmount($account->id, $accountType);
+            $unCategorizedTotal += $amount;
+
+            $unCategorizedAccountsList[] = [
+                'id' => $account->id,
+                'name' => $account->name,
+                'amount' => $amount,
+            ];
+        }
+
+        // Add un categorized accounts to Direct Expense/Direct Income structure
+        if (count($unCategorizedAccountsList) > 0) {
+            // Find or create the Direct Expense/Direct Income entry in structure
+            $directCategoryFound = false;
+            foreach ($structure as $index => $category) {
+                if ($category['name'] === $directCategoryName) {
+                    // Add un categorized accounts to directAccounts
+                    $structure[$index]['directAccounts'] = array_merge(
+                        $structure[$index]['directAccounts'],
+                        $unCategorizedAccountsList
+                    );
+                    // Update total
+                    $structure[$index]['total'] += $unCategorizedTotal;
+                    $directCategoryFound = true;
+                    break;
+                }
+            }
+
+            // If Direct Expense/Direct Income category doesn't exist in structure, create it
+            if (! $directCategoryFound) {
+                $directCategory = AccountCategory::where('name', $directCategoryName)
+                    ->whereNull('parent_id')
+                    ->first();
+
+                $structure[] = [
+                    'id' => $directCategory?->id ?? 0,
+                    'name' => $directCategoryName,
+                    'total' => $unCategorizedTotal,
+                    'groups' => [],
+                    'directAccounts' => $unCategorizedAccountsList,
+                ];
+            }
+        }
+
         return $structure;
     }
 
-    public function render()
+    /**
+     * Get all report data - used by both render and export
+     */
+    protected function getReportData(): array
     {
         // Calculate stock values
         $openingStock = $this->calculateStockValue($this->start_date);
@@ -354,21 +457,50 @@ class ProfitLoss extends Component
         $directIncomeStructure = $this->buildCategoryStructure('income');
         $directExpenseStructure = $this->buildCategoryStructure('expense');
 
-        // Extract direct income/expense totals
+        // Extract income/expense totals
+        $totals = $this->extractIncomeExpenseTotals($directIncomeStructure, $directExpenseStructure);
+
+        // Calculate profit/loss
+        $profitLoss = $this->calculateProfitLoss(
+            $openingStock,
+            $closingStock,
+            $netPurchase,
+            $netSale,
+            $totals['directExpense'],
+            $totals['directIncome'],
+            $totals['indirectExpense'],
+            $totals['indirectIncome']
+        );
+
+        return array_merge([
+            'openingStock' => $openingStock,
+            'closingStock' => $closingStock,
+            'netPurchase' => $netPurchase,
+            'netSale' => $netSale,
+            'directIncomeStructure' => $directIncomeStructure,
+            'directExpenseStructure' => $directExpenseStructure,
+        ], $totals, $profitLoss);
+    }
+
+    /**
+     * Extract income and expense totals from category structures
+     */
+    protected function extractIncomeExpenseTotals(array $incomeStructure, array $expenseStructure): array
+    {
         $directIncome = 0.0;
-        $directExpense = 0.0;
         $indirectIncome = 0.0;
+        $directExpense = 0.0;
         $indirectExpense = 0.0;
 
-        foreach ($directIncomeStructure as $master) {
+        foreach ($incomeStructure as $master) {
             if ($master['name'] === 'Direct Income') {
                 $directIncome = $master['total'];
             } elseif ($master['name'] === 'Indirect Income') {
                 $indirectIncome = $master['total'];
             }
         }
-// dd($directExpenseStructure);
-        foreach ($directExpenseStructure as $master) {
+
+        foreach ($expenseStructure as $master) {
             if ($master['name'] === 'Direct Expense') {
                 $directExpense = $master['total'];
             } elseif ($master['name'] === 'Indirect Expense') {
@@ -376,7 +508,28 @@ class ProfitLoss extends Component
             }
         }
 
-        // Calculate Gross Profit/Loss (Top Section)
+        return [
+            'directIncome' => $directIncome,
+            'indirectIncome' => $indirectIncome,
+            'directExpense' => $directExpense,
+            'indirectExpense' => $indirectExpense,
+        ];
+    }
+
+    /**
+     * Calculate gross and net profit/loss
+     */
+    protected function calculateProfitLoss(
+        float $openingStock,
+        float $closingStock,
+        float $netPurchase,
+        float $netSale,
+        float $directExpense,
+        float $directIncome,
+        float $indirectExpense,
+        float $indirectIncome
+    ): array {
+        // Calculate Gross Profit/Loss
         $leftTotal1 = $openingStock + $netPurchase + $directExpense;
         $rightTotal1 = $netSale + $closingStock + $directIncome;
         $grossDifference = $rightTotal1 - $leftTotal1;
@@ -385,28 +538,16 @@ class ProfitLoss extends Component
         $leftTotal1 += $grossProfit;
         $rightTotal1 += $grossLoss;
 
-        // Calculate Net Profit/Loss (Bottom Section)
+        // Calculate Net Profit/Loss
         $leftTotal2BeforeProfit = $grossLoss + $indirectExpense;
         $rightTotal2 = $grossProfit + $indirectIncome;
         $netDifference = $rightTotal2 - $leftTotal2BeforeProfit;
         $netProfitAmount = $netDifference > 0 ? $netDifference : 0;
         $netLossAmount = $netDifference < 0 ? abs($netDifference) : 0;
         $rightTotal2 += $netLossAmount;
-
-        // Calculate final totals
         $leftTotal2 = $leftTotal2BeforeProfit + $netProfitAmount;
 
-        return view('livewire.reports.profit-loss', [
-            'openingStock' => $openingStock,
-            'closingStock' => $closingStock,
-            'netPurchase' => $netPurchase,
-            'netSale' => $netSale,
-            'directExpense' => $directExpense,
-            'directIncome' => $directIncome,
-            'indirectExpense' => $indirectExpense,
-            'indirectIncome' => $indirectIncome,
-            'directIncomeStructure' => $directIncomeStructure,
-            'directExpenseStructure' => $directExpenseStructure,
+        return [
             'grossLoss' => $grossLoss,
             'grossProfit' => $grossProfit,
             'netProfitAmount' => $netProfitAmount,
@@ -415,7 +556,29 @@ class ProfitLoss extends Component
             'rightTotal1' => $rightTotal1,
             'leftTotal2' => $leftTotal2,
             'rightTotal2' => $rightTotal2,
+        ];
+    }
+
+    /**
+     * Get branch name for display
+     */
+    protected function getBranchName(): ?string
+    {
+        if (! $this->branch_id) {
+            return null;
+        }
+
+        $branch = Branch::find($this->branch_id);
+
+        return $branch ? $branch->name : null;
+    }
+
+    public function render()
+    {
+        $reportData = $this->getReportData();
+
+        return view('livewire.reports.profit-loss', array_merge($reportData, [
             'branches' => $this->branches,
-        ]);
+        ]));
     }
 }

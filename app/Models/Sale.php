@@ -166,7 +166,11 @@ class Sale extends Model implements AuditableContracts
                 $search = trim($search);
 
                 return $q->where(function ($q) use ($search): void {
-                    $q->where('sales.id', 'like', "%{$search}%")->orWhere('sales.invoice_no', 'like', "%{$search}%");
+                    $q->where('sales.id', 'like', "%{$search}%")
+                        ->orWhere('sales.invoice_no', 'like', "%{$search}%")
+                        ->orWhere('sales.reference_no', 'like', "%{$search}%")
+                        ->orWhere('sales.customer_name', 'like', "%{$search}%")
+                        ->orWhere('sales.customer_mobile', 'like', "%{$search}%");
                 });
             })
             ->when($filters['sale_type'] ?? '', fn ($q, $value) => $q->where('sales.sale_type', $value))
@@ -286,28 +290,19 @@ class Sale extends Model implements AuditableContracts
             } else {
                 $number = $sale->account->mobile;
             }
-            if ($number) {
-                // Remove all non-numeric characters
-                $number = preg_replace('/\D/', '', $number);
-                if (! str_starts_with($number, '974')) {
-                    $number = '974'.ltrim($number, '0');
-                }
-                $number = '+'.$number;
-            }
-            if (! $number) {
-                throw new Exception('No valid mobile number found for the customer.');
-            }
+
             $imageContent = SaleHelper::saleInvoice($table_id, 'thermal');
             $image_path = SaleHelper::convertHtmlToImage($imageContent, $sale->invoice_no);
-            $data = [
-                'number' => $number,
-                'message' => 'Please Check Your Invoice : '.currency($sale->grand_total),
-                'filePath' => $image_path,
-            ];
-            $response = WhatsappHelper::send($data);
+
+            $image_url = asset("invoices/{$sale->invoice_no}.png");
+
+            $templateName = config('services.meta_whatsapp.template_name');
+
+            $response = WhatsappHelper::sendTemplateWithImage(to: $number, templateName: $templateName, imageUrl: $image_url);
             if (! $response['success']) {
                 throw new Exception($response['message']);
             }
+
             $return['success'] = true;
             $return['message'] = 'WhatsApp message sent successfully.';
         } catch (Exception $e) {
@@ -328,6 +323,16 @@ class Sale extends Model implements AuditableContracts
             'payment_method_name' => implode(', ', $payment_method_name),
             'paid' => $sale->payments->sum('amount'),
         ];
+        // to avoid storing the audit log
+        if ($data['payment_method_ids'] == $sale->payment_method_ids) {
+            unset($data['payment_method_ids']);
+        }
+        if ($data['payment_method_name'] == $sale->payment_method_name) {
+            unset($data['payment_method_name']);
+        }
+        if ($data['paid'] == $sale->paid) {
+            unset($data['paid']);
+        }
         $sale->update($data);
     }
 }

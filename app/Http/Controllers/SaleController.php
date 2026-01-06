@@ -466,9 +466,9 @@ class SaleController extends Controller
                         'size' => $item->product->size,
                         'category' => $item->product->category->name ?? 'N/A',
                         'unit_price' => (float) $item->unit_price,
-                        'quantity' => (int) $item->quantity,
+                        'quantity' => $item->quantity,
                         'discount' => (float) ($item->discount ?? 0),
-                        'tax' => (float) ($item->tax_percentage ?? 0),
+                        'tax' => (float) ($item->tax ?? 0),
                         'gross_amount' => (float) $item->gross_amount,
                         'net_amount' => (float) $item->net_amount,
                         'tax_amount' => (float) $item->tax_amount,
@@ -476,6 +476,8 @@ class SaleController extends Controller
                         'stock_available' => $item->inventory->quantity ?? 0,
                         'employee_id' => $item->employee_id,
                         'employee_name' => $item->employee->name ?? 'Unknown Employee',
+                        'assistant_id' => $item->assistant_id,
+                        'assistant_name' => $item->assistant->name ?? 'Unknown Assistant',
                         'combo_offer_price' => 0,
                         'combo_offer_id' => null,
                     ];
@@ -572,6 +574,8 @@ class SaleController extends Controller
             'defaultProductType' => $defaultProductType,
             'defaultCustomerEnabled' => $useDefaultCustomer,
             'defaultQuantity' => $defaultQuantity,
+            'canEditItemPrice' => Auth::user()->can('sale.item price edit'),
+            'canFeedback' => Auth::user()->can('sale.feedback'),
         ];
 
         return inertia('Sale/POS', $data);

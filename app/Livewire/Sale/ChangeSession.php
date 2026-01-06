@@ -29,7 +29,7 @@ class ChangeSession extends Component
             ->orderBy('opened_at', 'desc')
             ->get()
             ->mapWithKeys(function ($s) {
-                $label = ($s->opened_at->format('d-m-Y')).' - #'.$s->id;
+                $label = '#'.$s->id.' - '.($s->opened_at->format('d-m-Y'));
 
                 return [$s->id => $label];
             })
@@ -62,7 +62,7 @@ class ChangeSession extends Component
             $oldSession = $this->sale->saleDaySession;
 
             if ($newSession->id == $oldSession->id) {
-                throw new Exception('Please Select Different session.');
+                // throw new Exception('Please Select Different session.');
             }
             $this->sale->update($data);
             $this->sale->journals()->update(['date' => $data['date']]);
@@ -73,20 +73,27 @@ class ChangeSession extends Component
                     $value->update(['date' => $data['date']]);
                 }
             }
-            if ($newSession->status == 'closed') {
-                $newData = [
-                    'closing_amount' => $newSession->closing_amount + $this->sale->paid,
-                    'expected_amount' => $newSession->expected_amount + $this->sale->paid,
-                ];
-                $newSession->update($newData);
+
+            if ($this->sale->journal) {
+                $this->sale->journal->entries()->update(['date' => $data['date']]);
             }
 
-            if ($oldSession->status == 'closed') {
-                $oldData = [
-                    'closing_amount' => $oldSession->closing_amount - $this->sale->paid,
-                    'expected_amount' => $oldSession->expected_amount - $this->sale->paid,
-                ];
-                $oldSession->update($oldData);
+            if ($newSession->id != $oldSession->id) {
+                if ($newSession->status == 'closed') {
+                    $newData = [
+                        'closing_amount' => $newSession->closing_amount + $this->sale->paid,
+                        'expected_amount' => $newSession->expected_amount + $this->sale->paid,
+                    ];
+                    $newSession->update($newData);
+                }
+
+                if ($oldSession->status == 'closed') {
+                    $oldData = [
+                        'closing_amount' => $oldSession->closing_amount - $this->sale->paid,
+                        'expected_amount' => $oldSession->expected_amount - $this->sale->paid,
+                    ];
+                    $oldSession->update($oldData);
+                }
             }
 
             DB::commit();

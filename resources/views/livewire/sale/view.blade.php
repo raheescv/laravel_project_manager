@@ -65,10 +65,12 @@
                                             </div>
                                             <div class="col-12">
                                                 <div class="info-item p-2 hover-lift rounded bg-light bg-opacity-50">
-                                                    <div class="d-flex align-items-center mb-1">
-                                                        <i
-                                                            class="demo-psi-clock {{ $sale->status === 'completed' ? 'text-success' : ($sale->status === 'cancelled' ? 'text-danger' : 'text-warning') }} me-2"></i>
-                                                        <small class="text-muted">Status</small>
+                                                    <div class="d-flex align-items-center justify-content-between mb-1">
+                                                        <div class="d-flex align-items-center">
+                                                            <i class="demo-psi-clock {{ $sale->status === 'completed' ? 'text-success' : ($sale->status === 'cancelled' ? 'text-danger' : 'text-warning') }} me-2"></i>
+                                                            <small class="text-muted">Status</small>
+                                                        </div>
+                                                        <small class="text-muted">{{ systemDateTime($sale->updated_at) }}</small>
                                                     </div>
                                                     <span class="badge {{ $sale->status === 'completed' ? 'bg-success' : ($sale->status === 'cancelled' ? 'bg-danger' : 'bg-warning') }} rounded-pill">
                                                         {{ ucfirst($sale->status) }}
@@ -110,7 +112,7 @@
                                                 <div class="ps-1">
                                                     <div class="mb-2">
                                                         <small class="text-muted d-block">Name</small>
-                                                        <span class="fw-medium">{{ $sale->account?->name }}</span>
+                                                        <span class="fw-medium"> <a href="{{ route('account::customer::view', $sale->account_id) }}">{{ $sale->account?->name }}</a> </span>
                                                     </div>
                                                     @if ($sale->customer_name)
                                                         <div>
@@ -521,6 +523,10 @@
                                                     <span class="text-muted">Freight</span>
                                                     <span class="fw-medium">{{ currency($sale->freight) }}</span>
                                                 </div>
+                                                <div class="list-group-item d-flex justify-content-between align-items-center px-0 py-2 border-0">
+                                                    <span class="text-muted">Round Off</span>
+                                                    <span class="fw-medium">{{ currency($sale->round_off) }}</span>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
@@ -646,7 +652,7 @@
                                                 @foreach ($journal->entries as $entry)
                                                     <tr>
                                                         <td class="text-end">{{ $entry->id }}</td>
-                                                        <td>{{ systemDate($journal->date) }}</td>
+                                                        <td>{{ systemDate($entry->date) }}</td>
                                                         <td>
                                                             <a href="{{ route('account::view', $entry->account_id) }}" class="text-primary">
                                                                 {{ $entry->account?->name }}

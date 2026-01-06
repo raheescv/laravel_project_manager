@@ -26,39 +26,123 @@ class StockUpdateAction
 
     public function singleItem($item, $purchase, $purchase_type, $user_id)
     {
-        $inventory = Inventory::where('product_id', $item->product_id);
-        if ($item->batch) {
-            // $inventory = $inventory->where('batch', $item->batch);
-        }
-        $inventory = $inventory->where('branch_id', $purchase->branch_id);
-        $inventory = $inventory->first();
+        $inventory = $this->findInventory($item, $purchase);
+
+        $oldQuantity = $inventory->quantity;
+        $oldCost = $inventory->cost;
+
+        $inventoryData = $inventory->toArray();
+        $this->updateInventoryForPurchaseType($inventoryData, $item, $purchase, $purchase_type, $oldQuantity, $oldCost);
+        $this->setInventoryMetadata($inventoryData, $purchase, $user_id);
+
+        $this->saveInventory($inventoryData, $inventory->id);
+    }
+
+    private function findInventory($item, $purchase)
+    {
+        $query = Inventory::where('product_id', $item->product_id)
+            ->where('branch_id', $purchase->branch_id);
+
+        // TODO: Uncomment when batch tracking is implemented
+        // if ($item->batch) {
+        //     $query->where('batch', $item->batch);
+        // }
+
+        $inventory = $query->first();
+
         if (! $inventory) {
-            throw new \Exception('inventory not found', 1);
+            throw new \Exception('Inventory not found for product ID: '.$item->product_id, 1);
         }
-        $inventory = $inventory->toArray();
+
+        return $inventory;
+    }
+
+    private function updateInventoryForPurchaseType(array &$inventoryData, $item, $purchase, $purchase_type, $oldQuantity, $oldCost)
+    {
         switch ($purchase_type) {
             case 'purchase':
-                $inventory['quantity'] += $item->quantity;
-                $inventory['remarks'] = 'Purchase:'.$purchase->invoice_no;
+                $this->handlePurchase($inventoryData, $item, $purchase, $oldQuantity, $oldCost);
                 break;
             case 'cancel':
-                $inventory['quantity'] -= $item->quantity;
-                $inventory['remarks'] = 'Purchase Cancelled:'.$purchase->invoice_no;
-                break;
             case 'purchase_reversal':
-                $inventory['quantity'] -= $item->quantity;
-                $inventory['remarks'] = 'Purchase Adjustment Reversal:'.$purchase->invoice_no;
-                break;
             case 'delete_item':
-                $inventory['quantity'] -= $item->quantity;
-                $inventory['remarks'] = 'Purchase Item Delete:'.$purchase->invoice_no;
+                $this->handlePurchaseReversal($inventoryData, $item, $purchase, $purchase_type, $oldQuantity, $oldCost);
                 break;
         }
-        $inventory['model'] = 'Purchase';
-        $inventory['model_id'] = $purchase->id;
-        $inventory['updated_by'] = $user_id;
+    }
 
-        $response = (new UpdateAction())->execute($inventory, $inventory['id']);
+    private function handlePurchase(array &$inventoryData, $item, $purchase, $oldQuantity, $oldCost)
+    {
+        $inventoryData['quantity'] += $item->quantity;
+        $inventoryData['cost'] = $this->calculateWeightedAverageCost(
+            $oldCost,
+            $oldQuantity,
+            $item->unit_price,
+            $item->quantity,
+            $inventoryData['quantity']
+        );
+        $inventoryData['remarks'] = $this->getRemarks('Purchase', $purchase->invoice_no);
+    }
+
+    private function handlePurchaseReversal(array &$inventoryData, $item, $purchase, $purchase_type, $oldQuantity, $oldCost)
+    {
+        $inventoryData['quantity'] -= $item->quantity;
+        $inventoryData['cost'] = $this->revertCostCalculation(
+            $oldCost,
+            $oldQuantity,
+            $item->unit_price,
+            $item->quantity,
+            $inventoryData['quantity']
+        );
+        $inventoryData['remarks'] = $this->getRemarks($this->getRemarksPrefix($purchase_type), $purchase->invoice_no);
+    }
+
+    private function calculateWeightedAverageCost($oldCost, $oldQuantity, $purchasePrice, $purchaseQuantity, $newQuantity)
+    {
+        if ($newQuantity <= 0) {
+            return 0;
+        }
+
+        return (($oldCost * $oldQuantity) + ($purchasePrice * $purchaseQuantity)) / $newQuantity;
+    }
+
+    private function revertCostCalculation($currentCost, $currentQuantity, $purchasePrice, $purchaseQuantity, $remainingQuantity)
+    {
+        if ($remainingQuantity <= 0) {
+            return 0;
+        }
+
+        // Revert to cost before this purchase
+        // Formula: old_cost = (current_cost × current_quantity - purchase_cost × purchase_quantity) / remaining_quantity
+        return (($currentCost * $currentQuantity) - ($purchasePrice * $purchaseQuantity)) / $remainingQuantity;
+    }
+
+    private function getRemarksPrefix($purchase_type)
+    {
+        return match ($purchase_type) {
+            'cancel' => 'Purchase Cancelled',
+            'purchase_reversal' => 'Purchase Adjustment Reversal',
+            'delete_item' => 'Purchase Item Delete',
+            default => 'Purchase',
+        };
+    }
+
+    private function getRemarks($prefix, $invoiceNo)
+    {
+        return $prefix.':'.$invoiceNo;
+    }
+
+    private function setInventoryMetadata(array &$inventoryData, $purchase, $user_id)
+    {
+        $inventoryData['model'] = 'Purchase';
+        $inventoryData['model_id'] = $purchase->id;
+        $inventoryData['updated_by'] = $user_id;
+    }
+
+    private function saveInventory(array $inventoryData, $inventoryId)
+    {
+        $response = (new UpdateAction())->execute($inventoryData, $inventoryId);
+
         if (! $response['success']) {
             throw new \Exception($response['message'], 1);
         }

@@ -20,13 +20,40 @@
             @endif
 
             <div class="mb-3">
-                <label for="branch_id" class="form-label fw-bold">Select Branch</label>
-                <div class="input-group">
-                    <span class="input-group-text"><i class="fa fa-building"></i></span>
-                    {{ html()->select('branch_id', $assigned_branches)->class(['form-select', 'is-invalid' => $errors->has('branch_id')])->id('branch_id')->attributes(['wire:model.live' => 'branch_id'])->placeholder('Please Select Branch') }}
+                <label class="form-label fw-bold mb-3">Select Branch</label>
+                <div class="row g-3">
+                    @foreach ($assigned_branches as $branch)
+                        <div class="col-md-6 col-lg-4">
+                            <div class="card h-100 cursor-pointer border-2 transition-all {{ $branch_id == $branch->id ? 'border-primary shadow-sm bg-light' : 'border-light' }}"
+                                wire:click="$set('branch_id', {{ $branch->id }})" style="cursor: pointer; transition: all 0.2s ease;" onmouseover="this.style.transform='scale(1.02)'"
+                                onmouseout="this.style.transform='scale(1)'">
+                                <div class="card-body d-flex align-items-center p-3">
+                                    <div class="flex-shrink-0 me-3">
+                                        <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
+                                            <i class="fa fa-building fa-lg"></i>
+                                        </div>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <h6 class="mb-1 fw-bold {{ $branch_id == $branch->id ? 'text-primary' : '' }}">{{ $branch->name }}</h6>
+                                        <p class="mb-0 text-muted small">
+                                            <i class="fa fa-code me-1"></i>{{ $branch->code }}
+                                            @if ($branch->location)
+                                                <br><i class="fa fa-map-marker-alt me-1"></i>{{ $branch->location }}
+                                            @endif
+                                        </p>
+                                    </div>
+                                    @if ($branch_id == $branch->id)
+                                        <div class="flex-shrink-0">
+                                            <i class="fa fa-check-circle text-primary fa-lg"></i>
+                                        </div>
+                                    @endif
+                                </div>
+                            </div>
+                        </div>
+                    @endforeach
                 </div>
                 @error('branch_id')
-                    <span class="text-danger small mt-1">{{ $message }}</span>
+                    <span class="text-danger small mt-2 d-block">{{ $message }}</span>
                 @enderror
             </div>
         </div>

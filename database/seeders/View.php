@@ -16,5 +16,8 @@ class View extends Seeder
         foreach ($data as $value) {
             Artisan::call('migrate --path=database/migrations/'.$value.'.php');
         }
+
+        // Ensure database procedures exist (important after database restore)
+        Artisan::call('db:ensure-procedures');
     }
 }

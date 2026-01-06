@@ -54,8 +54,6 @@ export default {
     },
     methods: {
         handleCardClick(product) {
-            console.log('ProductsGrid received click with product:', product);
-
             // Validate product before passing it up
             if (!product) {
                 console.error('ProductsGrid received undefined or null product');
@@ -74,7 +72,11 @@ export default {
 <style scoped>
 .products-grid-container {
     width: 100%;
+    max-width: 100%;
     padding: 4px;
+    box-sizing: border-box;
+    overflow-x: hidden;
+    overflow-y: visible;
 }
 
 .products-grid {
@@ -82,6 +84,20 @@ export default {
     grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
     gap: 8px;
     width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+    align-items: start;
+    overflow: visible;
+}
+
+.products-grid>* {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+    overflow: hidden;
+    position: relative;
+    contain: layout style paint;
 }
 
 /* Responsive grid layouts for different screen sizes */
@@ -119,8 +135,30 @@ export default {
     }
 
     .products-grid {
-        grid-template-columns: repeat(auto-fill, minmax(95px, 1fr));
+        grid-template-columns: repeat(2, 1fr);
         gap: 6px;
+        max-height: 500px;
+        overflow-y: auto;
+        overflow-x: hidden;
+        scrollbar-width: thin;
+        scrollbar-color: rgba(0, 0, 0, 0.3) transparent;
+    }
+
+    .products-grid::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    .products-grid::-webkit-scrollbar-track {
+        background: transparent;
+    }
+
+    .products-grid::-webkit-scrollbar-thumb {
+        background-color: rgba(0, 0, 0, 0.3);
+        border-radius: 3px;
+    }
+
+    .products-grid::-webkit-scrollbar-thumb:hover {
+        background-color: rgba(0, 0, 0, 0.5);
     }
 }
 
@@ -130,8 +168,30 @@ export default {
     }
 
     .products-grid {
-        grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
+        grid-template-columns: repeat(2, 1fr);
         gap: 6px;
+        max-height: 500px;
+        overflow-y: auto;
+        overflow-x: hidden;
+        scrollbar-width: thin;
+        scrollbar-color: rgba(0, 0, 0, 0.3) transparent;
+    }
+
+    .products-grid::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    .products-grid::-webkit-scrollbar-track {
+        background: transparent;
+    }
+
+    .products-grid::-webkit-scrollbar-thumb {
+        background-color: rgba(0, 0, 0, 0.3);
+        border-radius: 3px;
+    }
+
+    .products-grid::-webkit-scrollbar-thumb:hover {
+        background-color: rgba(0, 0, 0, 0.5);
     }
 }
 

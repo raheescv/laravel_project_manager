@@ -30,6 +30,7 @@ class Purchase extends Model implements AuditableContracts
         'paid',
         'address',
         'status',
+        'signature',
         'created_by',
         'updated_by',
         'cancelled_by',

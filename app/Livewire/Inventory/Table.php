@@ -88,6 +88,7 @@ class Table extends Component
             'quantity' => true,
             'cost' => true,
             'total' => true,
+            'mrp' => true,
             'barcode' => true,
             'batch' => true,
         ];
@@ -97,10 +98,8 @@ class Table extends Component
     {
         try {
             $filters = $this->getFilters();
-
             // Get filtered count for better decision making
             $filteredCount = $this->getFilteredCount($filters);
-
             if ($filteredCount > 2000) {
                 ExportInventoryJob::dispatch(Auth::user(), $filters);
                 $this->dispatch('success', ['message' => 'Export started! You will receive the file in your mailbox shortly.']);
@@ -231,6 +230,7 @@ class Table extends Component
                 'product_id',
                 'products.name',
                 'products.code',
+                'products.mrp',
                 'brands.name as brand_name',
                 'products.size',
                 'products.name_arabic',

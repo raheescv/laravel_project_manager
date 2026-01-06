@@ -36,7 +36,7 @@
                     <div class="mb-4">
                         <label for="feedback_type" class="block font-semibold text-slate-700 mb-1">Feedback Type</label>
                         <select v-model="feedbackData.feedback_type" id="feedback_type"
-                            class="w-full rounded-lg border-slate-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                            class="w-full rounded-lg border-slate-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 px-2 py-1">
                             <option value="" disabled>Select Type</option>
                             <option v-for="(type, key) in feedbackTypes" :key="key" :value="key">{{ type }}</option>
                         </select>
@@ -46,7 +46,7 @@
                     <div class="mb-4">
                         <label for="comment" class="block font-semibold text-slate-700 mb-1">Your Comments</label>
                         <textarea v-model="feedbackData.feedback" id="comment" rows="4"
-                            class="w-full rounded-lg border-slate-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                            class="w-full rounded-lg border-slate-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 px-2 py-1"
                             placeholder="Please share your thoughts..."></textarea>
                     </div>
                 </div>

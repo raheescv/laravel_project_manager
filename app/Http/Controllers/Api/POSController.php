@@ -42,6 +42,7 @@ class POSController extends Controller
         try {
             $query = Inventory::with(['product']);
 
+            $query = $query->whereNull('inventories.employee_id');
             $query = $query->where('inventories.branch_id', session('branch_id'));
 
             $query->whereHas('product', function ($q): void {
@@ -267,6 +268,7 @@ public function getMeasurementTemplates($categoryId)
     {
         try {
             $inventory = Inventory::with(['product'])
+                ->whereNull('inventories.employee_id')
                 ->whereHas('product', function ($q) use ($request): void {
                     $q->where('barcode', $request->barcode)->where('status', 'active');
                 })

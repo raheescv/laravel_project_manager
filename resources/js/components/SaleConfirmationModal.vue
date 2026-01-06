@@ -3,7 +3,8 @@
         aria-modal="true">
         <!-- Background overlay -->
         <div class="flex items-center justify-center min-h-screen p-2 text-center">
-            <div class="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm transition-opacity" aria-hidden="true" @click="close">
+            <div class="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm transition-opacity" aria-hidden="true"
+                @click="close">
             </div>
 
             <!-- Modal positioning -->
@@ -13,7 +14,8 @@
             <div
                 class="relative inline-block align-bottom bg-white rounded-xl text-left overflow-hidden shadow-2xl transform transition-all sm:my-2 sm:align-middle sm:max-w-md w-full max-h-[90vh] overflow-y-auto">
                 <!-- Ultra Compact Header -->
-                <div class="bg-gradient-to-r from-blue-600 via-blue-700 to-indigo-700 px-3 py-2 text-white flex items-center justify-between">
+                <div
+                    class="bg-gradient-to-r from-blue-600 via-blue-700 to-indigo-700 px-3 py-2 text-white flex items-center justify-between">
                     <div class="flex items-center">
                         <div class="bg-white/20 p-1 rounded-md mr-2">
                             <i class="fa fa-check-circle text-white text-xs"></i>
@@ -22,7 +24,8 @@
                             Confirm Sale
                         </h4>
                     </div>
-                    <button type="button" @click="close" class="text-white hover:text-gray-200 focus:outline-none transition-colors">
+                    <button type="button" @click="close"
+                        class="text-white hover:text-gray-200 focus:outline-none transition-colors">
                         <i class="fa fa-times text-xs"></i>
                     </button>
                 </div>
@@ -30,9 +33,11 @@
                 <!-- Ultra Compact Body -->
                 <div class="px-3 py-3">
                     <!-- Customer Info - Ultra Compact -->
-                    <div class="bg-gradient-to-r from-slate-50 to-blue-50 border border-slate-200 rounded-lg p-1.5 mb-2 text-center relative overflow-hidden">
+                    <div
+                        class="bg-gradient-to-r from-slate-50 to-blue-50 border border-slate-200 rounded-lg p-1.5 mb-2 text-center relative overflow-hidden">
                         <div class="relative z-10 flex items-center justify-center gap-1.5">
-                            <div class="w-6 h-6 bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-full flex items-center justify-center shadow-sm">
+                            <div
+                                class="w-6 h-6 bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-full flex items-center justify-center shadow-sm">
                                 <i class="fa fa-user text-xs"></i>
                             </div>
                             <div class="text-left">
@@ -49,7 +54,8 @@
                                 <i class="fa fa-credit-card text-blue-500 text-xs"></i>
                                 <span>Payment Method</span>
                             </h6>
-                            <label class="flex items-center text-xs gap-1 bg-green-50 border border-green-200 rounded px-1.5 py-0.5 cursor-pointer hover:bg-green-100 transition-colors">
+                            <label
+                                class="flex items-center text-xs gap-1 bg-green-50 border border-green-200 rounded px-1.5 py-0.5 cursor-pointer hover:bg-green-100 transition-colors">
                                 <input v-model="localSendToWhatsapp" type="checkbox"
                                     class="rounded border-green-300 text-green-600 focus:ring-green-500">
                                 <i class="fa fa-whatsapp text-green-500 text-xs"></i>
@@ -66,10 +72,15 @@
                                         : 'bg-white border-slate-200 text-slate-700 hover:shadow-md hover:border-green-300 hover:bg-green-50'
                                 ]">
                                     <div class="icon-wrapper mb-0.5">
-                                        <i :class="[ 'fa fa-money text-sm', localPaymentMethod === 1 || localPaymentMethod === '' ? 'text-white' : 'text-green-500' ]"></i>
+                                        <i
+                                            :class="['fa fa-money text-sm', localPaymentMethod === 1 || localPaymentMethod === '' ? 'text-white' : 'text-green-500']"></i>
                                     </div>
-                                    <span :class="[ 'text-xs font-bold', localPaymentMethod === 1 || localPaymentMethod === '' ? 'text-white' : 'text-slate-700' ]">Cash</span>
-                                    <div v-if="localPaymentMethod === 1 || localPaymentMethod === ''" class="absolute top-0.5 right-0.5"> <i class="fa fa-check-circle text-white bg-green-600 rounded-full text-xs"></i> </div>
+                                    <span
+                                        :class="['text-xs font-bold', localPaymentMethod === 1 || localPaymentMethod === '' ? 'text-white' : 'text-slate-700']">Cash</span>
+                                    <div v-if="localPaymentMethod === 1 || localPaymentMethod === ''"
+                                        class="absolute top-0.5 right-0.5"> <i
+                                            class="fa fa-check-circle text-white bg-green-600 rounded-full text-xs"></i>
+                                    </div>
                                 </button>
                             </div>
                             <!-- Card Payment -->
@@ -94,8 +105,7 @@
                                             ? 'text-white'
                                             : 'text-slate-700'
                                     ]">Card</span>
-                                    <div v-if="localPaymentMethod === 2"
-                                        class="absolute top-0.5 right-0.5">
+                                    <div v-if="localPaymentMethod === 2" class="absolute top-0.5 right-0.5">
                                         <i class="fa fa-check-circle text-white bg-blue-600 rounded-full text-xs"></i>
                                     </div>
                                 </button>
@@ -122,8 +132,7 @@
                                             ? 'text-white'
                                             : 'text-slate-700'
                                     ]">Credit</span>
-                                    <div v-if="localPaymentMethod === 'credit'"
-                                        class="absolute top-0.5 right-0.5">
+                                    <div v-if="localPaymentMethod === 'credit'" class="absolute top-0.5 right-0.5">
                                         <i class="fa fa-check-circle text-white bg-purple-600 rounded-full text-xs"></i>
                                     </div>
                                 </button>
@@ -152,8 +161,7 @@
                                     ]">
                                         {{ localCustomPaymentCount > 0 ? `${localCustomPaymentCount}` : 'Custom' }}
                                     </span>
-                                    <div v-if="localPaymentMethod === 'custom'"
-                                        class="absolute top-0.5 right-0.5">
+                                    <div v-if="localPaymentMethod === 'custom'" class="absolute top-0.5 right-0.5">
                                         <i class="fa fa-check-circle text-white bg-amber-600 rounded-full text-xs"></i>
                                     </div>
                                     <div v-if="localCustomPaymentCount > 0 && localPaymentMethod !== 'custom'"
@@ -179,7 +187,7 @@
                                         Grand Total
                                     </span>
                                     <span class="font-bold text-sm text-emerald-600">
-                                        {{ grandTotal.toFixed(2) }}
+                                        {{ formatNumber(grandTotal) }}
                                     </span>
                                 </div>
                                 <div class="flex justify-between items-center py-0.5 border-b border-slate-200">
@@ -188,7 +196,7 @@
                                         Paid Amount
                                     </span>
                                     <span class="font-bold text-sm text-blue-600">
-                                        {{ paidAmount.toFixed(2) }}
+                                        {{ formatNumber(paidAmount) }}
                                     </span>
                                 </div>
                                 <div class="flex justify-between items-center py-0.5" :class="{
@@ -201,7 +209,7 @@
                                         {{ balanceText }}
                                     </span>
                                     <span class="font-bold text-sm" :style="`color: ${balanceColor}`">
-                                        {{ Math.abs(balanceAmount).toFixed(2) }}
+                                        {{ formatNumber(Math.abs(balanceAmount)) }}
                                     </span>
                                 </div>
                             </div>
@@ -215,7 +223,8 @@
                             Payment Methods
                         </h6>
                         <div class="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg p-1.5">
-                            <div class="bg-white p-1 rounded border-l-2 border-blue-500 font-mono text-xs text-slate-700">
+                            <div
+                                class="bg-white p-1 rounded border-l-2 border-blue-500 font-mono text-xs text-slate-700">
                                 {{ paymentMethods }}
                             </div>
                         </div>
@@ -240,7 +249,8 @@
                                     ? 'bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 focus:ring-green-500'
                                     : 'bg-gradient-to-r from-yellow-500 to-amber-600 hover:from-yellow-600 hover:to-amber-700 focus:ring-yellow-500'
                             ]">
-                                <i class="fa mr-1 text-xs" :class="loading ? 'fa-spinner fa-spin' : 'fa-check-circle'"></i>
+                                <i class="fa mr-1 text-xs"
+                                    :class="loading ? 'fa-spinner fa-spin' : 'fa-check-circle'"></i>
                                 {{ loading ? 'Processing...' :
                                     (balanceAmount === 0 ? 'Submit' : 'Submit Anyway') }}
                             </button>
@@ -248,12 +258,11 @@
 
                         <!-- Status Indicator - Ultra Compact and Clickable -->
                         <div class="text-center p-1.5 rounded-lg border-2 cursor-pointer transition-all duration-200 hover:scale-105"
-                             :class="{
+                            :class="{
                                 'bg-gradient-to-r from-green-50 to-emerald-50 border-green-200 hover:from-green-100 hover:to-emerald-100': balanceAmount === 0,
                                 'bg-gradient-to-r from-yellow-50 to-amber-50 border-yellow-200 hover:from-yellow-100 hover:to-amber-100': balanceAmount > 0,
                                 'bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200 hover:from-blue-100 hover:to-indigo-100': balanceAmount < 0
-                             }"
-                             @click="balanceAmount === 0 && !loading ? submit() : null">
+                            }" @click="balanceAmount === 0 && !loading ? submit() : null">
                             <div class="w-6 h-6 rounded-full flex items-center justify-center mx-auto mb-0.5 shadow-sm"
                                 :style="`background: linear-gradient(135deg, ${balanceColor}, ${balanceColor}dd); color: white;`">
                                 <i :class="`fa ${balanceIcon} text-xs`"></i>
@@ -265,7 +274,8 @@
                                 {{ statusDescription }}
                             </div>
                             <!-- Click hint for small screens -->
-                            <div v-if="balanceAmount === 0 && !loading" class="text-xs mt-0.5 opacity-75" :style="`color: ${balanceTextColor}`">
+                            <div v-if="balanceAmount === 0 && !loading" class="text-xs mt-0.5 opacity-75"
+                                :style="`color: ${balanceTextColor}`">
                                 <i class="fa fa-hand-pointer mr-1"></i>Tap to submit
                             </div>
                         </div>
@@ -378,10 +388,18 @@ export default {
             return 'Transaction amount exceeds payment'
         })
 
+        const formatNumber = (value, decimals = 2) => {
+            const num = parseFloat(value) || 0
+            return num.toLocaleString('en-US', {
+                minimumFractionDigits: decimals,
+                maximumFractionDigits: decimals
+            })
+        }
+
         const paymentMethods = computed(() => {
             if (props.saleData.payment_method === 'custom' && props.saleData.custom_payment_data?.payments) {
                 return props.saleData.custom_payment_data.payments
-                    .map(p => `${p.name}: ${parseFloat(p.amount).toFixed(2)}`)
+                    .map(p => `${p.name}: ${formatNumber(parseFloat(p.amount))}`)
                     .join(', ')
             }
             if (props.saleData.payment_method === 1 || props.paymentMethod === 1) return 'Cash Payment'
@@ -438,6 +456,7 @@ export default {
             localPaymentMethod,
             localSendToWhatsapp,
             localCustomPaymentCount,
+            formatNumber,
             close,
             submit
         }

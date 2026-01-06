@@ -55,4 +55,14 @@ return [
         'client_secret' => env('FLAT_TRADE_CLIENT_SECRET'),
         'j_key' => env('FLAT_TRADE_J_KEY'),
     ],
+    'shopify' => [
+        'store_url' => env('SHOPIFY_STORE_URL', 'https://ahlanfun.myshopify.com'),
+        'access_token' => env('SHOPIFY_ACCESS_TOKEN'),
+        'api_version' => env('SHOPIFY_API_VERSION', '2024-10'),
+    ],
+    'meta_whatsapp' => [
+        'access_token' => env('META_WHATSAPP_ACCESS_TOKEN'),
+        'template_name' => env('META_WHATSAPP_TEMPLATE_NAME', 'invoice_slip'),
+        'base_url' => env('META_WHATSAPP_BASE_URL', 'https://wa-api.cloud/api/v1'),
+    ],
 ];

@@ -45,6 +45,7 @@ class ProductList extends Component
                 ->get();
         } else {
             $products = Inventory::join('products', 'product_id', 'products.id')
+                ->whereNull('inventories.employee_id')
                 ->when($product_key, function ($query, $value) {
                     return $query->where('products.name', 'LIKE', '%'.$value.'%');
                 })

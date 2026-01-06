@@ -4,26 +4,35 @@
 
 /* Base mobile styles (up to 767px) */
 @media (max-width: 767px) {
-    /* Container adjustments */
+    /* Container adjustments - Allow scrolling on mobile */
     .container-fluid {
         padding: 0.25rem;
         max-width: 100vw;
+        overflow-x: hidden;
+        overflow-y: visible;
+        height: auto;
+        min-height: 100vh;
+    }
+
+    /* Allow body to scroll on mobile */
+    body {
+        overflow-y: auto;
         overflow-x: hidden;
     }
 
     /* Improved touch targets */
     button, .btn, input[type="button"], input[type="submit"] {
-        min-height: 48px;
-        min-width: 48px;
-        padding: 12px 16px;
+        min-height: 44px;
+        min-width: 44px;
+        padding: 10px 14px;
         font-size: 14px;
         border-radius: 8px;
     }
 
     /* Form inputs */
     input[type="text"], input[type="number"], input[type="email"], select, textarea {
-        min-height: 48px;
-        padding: 12px 16px;
+        min-height: 44px;
+        padding: 10px 14px;
         font-size: 16px; /* Prevents zoom on iOS */
         border-radius: 8px;
     }
@@ -41,7 +50,21 @@
         padding: 0.5rem;
     }
 
-    /* Cart section mobile optimization */
+    /* Cart section mobile optimization - Make it more accessible */
+    .mobile-cart-container {
+        position: relative;
+        max-height: none;
+        margin-top: 0.5rem;
+        height: auto;
+    }
+
+    .mobile-cart-wrapper {
+        border-radius: 12px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        height: auto;
+        max-height: none;
+    }
+
     .cart-section {
         height: calc(45vh - 80px);
         min-height: 200px;
@@ -50,6 +73,11 @@
     }
 
     /* Search area mobile optimization */
+    .mobile-search-area {
+        padding: 0.75rem;
+        margin-bottom: 0.5rem;
+    }
+
     .search-area {
         padding: 0.75rem;
         margin-bottom: 0.5rem;
@@ -60,14 +88,19 @@
         gap: 0.5rem;
     }
 
-    /* Action buttons mobile */
+    /* Action buttons mobile - Optimize spacing */
+    .mobile-action-buttons {
+        gap: 0.75rem;
+        padding: 0.5rem 0.75rem 0.75rem;
+    }
+
     .action-buttons {
         gap: 0.75rem;
         padding: 0.75rem;
     }
 
     .action-button {
-        min-height: 48px;
+        min-height: 44px;
         font-size: 14px;
         font-weight: 600;
     }
@@ -108,11 +141,224 @@
         font-size: 20px;
     }
 
+    /* Products container mobile optimization */
+    .products-container {
+        padding-bottom: 0.5rem;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    /* Allow main content to scroll on mobile */
+    .flex.flex-col {
+        overflow-y: visible;
+    }
+
+    /* Ensure form can scroll on mobile */
+    form {
+        overflow-y: visible;
+        height: auto;
+    }
+
+    /* Improve spacing in customer/employee grids on mobile */
+    .mobile-search-area .grid {
+        gap: 0.75rem;
+    }
+
+    /* Optimize discount and total section on mobile */
+    .mobile-cart-wrapper .border-t {
+        padding-top: 0.75rem;
+    }
+
     /* Safe area for mobile devices */
     .safe-area {
         padding-left: env(safe-area-inset-left);
         padding-right: env(safe-area-inset-right);
         padding-bottom: env(safe-area-inset-bottom);
+    }
+
+    /* Ensure proper stacking on mobile */
+    .flex-col {
+        gap: 0.5rem;
+    }
+
+    /* Optimize input fields on mobile */
+    .mobile-search-area input,
+    .mobile-search-area select {
+        font-size: 15px;
+        padding: 12px 16px;
+    }
+
+    /* Enhanced mobile search area styling */
+    .mobile-search-area {
+        box-shadow: 0 10px 40px rgba(99, 102, 241, 0.15), 0 0 0 1px rgba(99, 102, 241, 0.1);
+    }
+
+    /* Better label styling on mobile */
+    .mobile-search-area label {
+        font-weight: 700;
+        letter-spacing: 0.01em;
+    }
+
+    /* Customer section buttons - full width split on mobile only */
+    .mobile-search-area .grid.grid-cols-2 {
+        width: 100%;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.5rem;
+    }
+
+    /* Ensure buttons take full width of their grid cell on mobile */
+    .mobile-search-area .grid.grid-cols-2 button {
+        width: 100%;
+        flex: 1;
+    }
+
+    /* Better button text sizing on mobile */
+    .mobile-search-area .grid.grid-cols-2 button span {
+        font-size: 0.875rem;
+    }
+
+    /* On tablet and above, buttons should be inline with label */
+    @media (min-width: 640px) {
+        .mobile-search-area .flex.flex-col.sm\:flex-row {
+            flex-direction: row;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .mobile-search-area .grid.grid-cols-2.sm\:grid-cols-none {
+            display: flex;
+            flex-direction: row;
+            gap: 0.5rem;
+        }
+
+        .mobile-search-area .grid.grid-cols-2.sm\:grid-cols-none button {
+            width: auto;
+            flex: none;
+        }
+    }
+
+    /* Enhanced input focus states on mobile */
+    .mobile-search-area input:focus,
+    .mobile-search-area select:focus {
+        transform: translateY(-1px);
+        box-shadow: 0 8px 25px rgba(99, 102, 241, 0.2), 0 0 0 3px rgba(99, 102, 241, 0.1);
+    }
+
+    /* Better button hover effects on mobile */
+    .mobile-search-area button:active {
+        transform: scale(0.96);
+    }
+
+    /* Icon styling in search inputs */
+    .mobile-search-area .fa-barcode,
+    .mobile-search-area .fa-search {
+        transition: all 0.2s ease;
+    }
+
+    .mobile-search-area input:focus ~ .fa-barcode,
+    .mobile-search-area input:focus ~ .fa-search {
+        color: currentColor;
+        transform: translateY(-50%) scale(1.1);
+    }
+
+    /* Better button sizing on mobile */
+    .mobile-action-buttons button {
+        font-size: 13px;
+        padding: 10px 12px;
+    }
+
+    /* Ensure cart items are scrollable on mobile */
+    .mobile-cart-wrapper .custom-scrollbar {
+        max-height: none;
+        overflow-y: visible;
+    }
+
+    /* Allow cart section to expand naturally on mobile */
+    .mobile-cart-wrapper > * {
+        overflow-y: visible;
+    }
+
+    /* Optimize spacing between sections on mobile */
+    .flex.flex-col > div {
+        margin-bottom: 0.5rem;
+    }
+
+    /* Improve product grid visibility on mobile */
+    .products-container {
+        -webkit-overflow-scrolling: touch;
+        scroll-behavior: smooth;
+    }
+
+    /* Better touch targets for cart items on mobile */
+    .mobile-cart-wrapper button,
+    .mobile-cart-wrapper .btn {
+        min-height: 40px;
+        min-width: 40px;
+    }
+
+    /* Optimize discount input on mobile */
+    .mobile-cart-wrapper input[type="number"] {
+        font-size: 15px;
+    }
+
+    /* Ensure proper text sizing in cart totals on mobile */
+    .mobile-cart-wrapper .text-xs {
+        font-size: 11px;
+    }
+
+    .mobile-cart-wrapper .text-sm {
+        font-size: 13px;
+    }
+
+    /* Enhanced mobile summary card styling */
+    .mobile-summary-card {
+        backdrop-filter: blur(10px);
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1), 0 0 0 1px rgba(99, 102, 241, 0.1);
+    }
+
+    .mobile-summary-card .space-y-2\.5 > * + * {
+        margin-top: 0.625rem;
+    }
+
+    /* Enhanced action buttons on mobile */
+    .mobile-action-buttons button {
+        position: relative;
+        font-weight: 700;
+        letter-spacing: 0.025em;
+    }
+
+    .mobile-action-buttons button:active {
+        transform: scale(0.97);
+    }
+
+    /* Pulse animation for submit button */
+    @keyframes pulse-glow {
+        0%, 100% {
+            box-shadow: 0 0 20px rgba(16, 185, 129, 0.4), 0 0 40px rgba(16, 185, 129, 0.2);
+        }
+        50% {
+            box-shadow: 0 0 30px rgba(16, 185, 129, 0.6), 0 0 60px rgba(16, 185, 129, 0.3);
+        }
+    }
+
+    .mobile-action-buttons .btn-pulse {
+        animation: pulse-glow 2s ease-in-out infinite;
+    }
+
+    /* Better spacing for mobile summary items */
+    .mobile-summary-card .space-y-2\.5 > div {
+        transition: all 0.2s ease;
+    }
+
+    .mobile-summary-card .space-y-2\.5 > div:hover {
+        transform: translateX(2px);
+    }
+
+    /* Enhanced total display on mobile */
+    .mobile-summary-card .rounded-xl:last-child {
+        background: linear-gradient(135deg, #10b981 0%, #059669 50%, #047857 100%);
+        box-shadow: 0 8px 32px rgba(16, 185, 129, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.2);
     }
 }
 
@@ -262,24 +508,30 @@
 /* ===== LANDSCAPE MOBILE OPTIMIZATION ===== */
 @media (max-width: 767px) and (orientation: landscape) {
     .products-container {
-        height: calc(40vh - 60px);
-        min-height: 150px;
+        height: calc(50vh - 60px);
+        min-height: 180px;
+    }
+
+    .mobile-cart-container {
+        max-height: 320px;
     }
 
     .cart-section {
-        height: calc(35vh - 60px);
-        min-height: 150px;
+        height: calc(40vh - 60px);
+        min-height: 180px;
     }
 
     .product-card {
         height: 120px;
     }
 
+    .mobile-search-area,
     .search-area {
         padding: 0.5rem;
         margin-bottom: 0.25rem;
     }
 
+    .mobile-action-buttons,
     .action-buttons {
         padding: 0.5rem;
         gap: 0.5rem;

@@ -122,7 +122,7 @@
                                 </tr>
                                 <tr>
                                     <th>Brand</th>
-                                    <td>{{ $product->brand?->name }}</td>
+                                    <td>{{ $product->brand?->name ?? 'N/A' }}</td>
                                 </tr>
                                 <tr>
                                     <th>Part No</th>
@@ -215,8 +215,18 @@
                 <div class="card-header">
                     <div class="d-flex justify-content-between align-items-center">
                         <h5 class="card-title mb-0">Inventory</h5>
-                        <div class="d-flex gap-3">
-                            <input type="text" wire:model.live="search" placeholder="Search..." class="form-control" autocomplete="off">
+                        <div class="d-flex gap-3 align-items-center">
+                            <div class="input-group" style="width: 200px;">
+                                <span class="input-group-text bg-light border-end-0">
+                                    <i class="demo-pli-filter-2"></i>
+                                </span>
+                                <select wire:model.live="inventory_filter" class="form-select border-start-0">
+                                    <option value="all">All Inventory</option>
+                                    <option value="main">Main Only</option>
+                                    <option value="employee">Employee Only</option>
+                                </select>
+                            </div>
+                            <input type="text" wire:model.live="search" placeholder="Search..." class="form-control" autocomplete="off" style="width: 200px;">
                         </div>
                     </div>
                 </div>
@@ -227,6 +237,7 @@
                                 <tr class="text-capitalize">
                                     <th> # </th>
                                     <th> Branch </th>
+                                    <th> Employee </th>
                                     <th> Barcode </th>
                                     <th> batch </th>
                                     <th class="text-end"> cost </th>
@@ -249,6 +260,12 @@
                                         <td>{{ $item->id }}</td>
                                         <td>{{ $item->branch?->name }}</td>
                                         <td>
+                                            {{ $item->employee?->name }}
+                                            @if ($item->employee_id)
+                                                <a href="{{ route('users::employee::view', $item->employee_id) }}"><i class="fa fa-2x fa-user pull-right"></i></a>
+                                            @endif
+                                        </td>
+                                        <td>
                                             {{ $item->barcode }}
                                             <a href="{{ route('inventory::barcode::print', $item->id) }}"><i class="fa fa-2x fa-print pull-right"></i></a>
                                         </td>
@@ -264,9 +281,29 @@
                                         @if ($product->type == 'product')
                                             <td class="text-end">{{ currency($item->total) }}</td>
                                             <td class="text-end">
-                                                @can('inventory.edit')
-                                                    <i table_id="{{ $item->id }}" class="demo-psi-pencil fs-5 me-2 pointer edit"></i>
-                                                @endcan
+                                                <div class="btn-group" role="group">
+                                                    @can('inventory.edit')
+                                                        <button class="btn btn-sm btn-outline-info" wire:click="$dispatch('Inventory-Page-Update-Component', {id: {{ $item->id }}})"
+                                                            title="Edit Inventory">
+                                                            <i class="demo-psi-pencil fs-5 me-2"></i>
+                                                        </button>
+                                                    @endcan
+                                                    @can('inventory.transfer')
+                                                        @if ($item->employee_id)
+                                                            <button class="btn btn-sm btn-outline-warning"
+                                                                wire:click="$dispatch('EmployeeInventory-Transfer-Component', {inventoryId: {{ $item->id }}, type: 'return'})" title="Return to Branch"
+                                                                @if ($item->quantity <= 0) disabled @endif>
+                                                                <i class="fa fa-share"></i>
+                                                            </button>
+                                                        @else
+                                                            <button class="btn btn-sm btn-outline-success"
+                                                                wire:click="$dispatch('EmployeeInventory-Transfer-Component', {inventoryId: {{ $item->id }}, type: 'transfer'})"
+                                                                title="Transfer to Employee" @if ($item->quantity <= 0) disabled @endif>
+                                                                <i class="fa fa-user"></i>
+                                                            </button>
+                                                        @endif
+                                                    @endcan
+                                                </div>
                                             </td>
                                         @endif
                                     </tr>
@@ -274,7 +311,7 @@
                             </tbody>
                             <tfoot>
                                 <tr>
-                                    <th colspan="5" class="text-end">Total</th>
+                                    <th colspan="6" class="text-end">Total</th>
                                     <th class="text-end">
                                         <b>
                                             @if ($product->type == 'product')
@@ -301,14 +338,24 @@
                     <div class="card-body p-4">
                         <div class="d-flex justify-content-between align-items-center mb-3">
                             <h5 class="card-title mb-0">Inventory Movement</h5>
-                            <div class="btn-group" role="group">
-                                <button type="button" class="btn {{ $chartView === 'monthly' ? 'btn-primary' : 'btn-outline-primary' }}" wire:click="toggleChartView"
-                                    {{ $chartView === 'monthly' ? 'disabled' : '' }}>Monthly</button>
-                                <button type="button" class="btn {{ $chartView === 'daily' ? 'btn-primary' : 'btn-outline-primary' }}" wire:click="toggleChartView"
-                                    {{ $chartView === 'daily' ? 'disabled' : '' }}>Daily</button>
+                            <div class="btn-group" role="group" x-data="{
+                                view: @js($chartView),
+                                toggleView(newView) {
+                                    this.view = newView;
+                                    window.dispatchEvent(new CustomEvent('chart-view-changed', { detail: newView }));
+                                }
+                            }">
+                                <button type="button" class="btn" :class="view === 'monthly' ? 'btn-primary' : 'btn-outline-primary'" @click="toggleView('monthly')"
+                                    :disabled="view === 'monthly'">
+                                    Monthly
+                                </button>
+                                <button type="button" class="btn" :class="view === 'daily' ? 'btn-primary' : 'btn-outline-primary'" @click="toggleView('daily')"
+                                    :disabled="view === 'daily'">
+                                    Daily
+                                </button>
                             </div>
                         </div>
-                        <div class="chart-container" style="position: relative; height: 300px;">
+                        <div class="chart-container" wire:ignore style="position: relative; height: 300px;">
                             <canvas id="inventoryChart"></canvas>
                         </div>
                     </div>
@@ -321,12 +368,17 @@
                     <div class="card-header">
                         <h3>Log</h3>
                         <div class="row">
-                            <div class="col-lg-6">
+                            <div class="col-lg-4">
                                 <div wire:ignore>
                                     {{ html()->select('branch_id', [session('branch_id') => session('branch_name')])->value(session('branch_id'))->class('select-assigned-branch_id-list')->id('branch_id')->placeholder('All') }}
                                 </div>
                             </div>
-                            <div class="col-lg-6">
+                            <div class="col-lg-4">
+                                <div wire:ignore>
+                                    {{ html()->select('employee_id', [])->value('')->class('select-employee_id-list')->id('employee_id')->placeholder('All Employees') }}
+                                </div>
+                            </div>
+                            <div class="col-lg-4">
                                 <div class="row ">
                                     <input type="text" wire:model.live="log_search" autofocus placeholder="Search..." class="form-control" autocomplete="off">
                                 </div>
@@ -341,6 +393,7 @@
                                         <th width="5%"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="id" label="#" /> </th>
                                         <th> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="created_at" label="date" /> </th>
                                         <th> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="branch_id" label="Branch" /> </th>
+                                        <th> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="employee_id" label="Employee" /> </th>
                                         <th> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="barcode" label="barcode" /> </th>
                                         <th> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="batch" label="batch" /> </th>
                                         <th class="text-end"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="cost" label="cost" /> </th>
@@ -356,6 +409,7 @@
                                             <td>{{ $item->id }}</td>
                                             <td>{{ systemDateTime($item->created_at) }}</td>
                                             <td>{{ $item->branch?->name }}</td>
+                                            <td>{{ $item->employee?->name }}</td>
                                             <td>{{ $item->barcode }}</td>
                                             <td>{{ $item->batch }}</td>
                                             <td class="text-end">{{ currency($item->cost) }}</td>
@@ -503,24 +557,46 @@
             document.addEventListener('livewire:initialized', () => {
                 const monthlyData = @json($monthly_summary);
                 const dailyData = @json($daily_summary);
-                const currentView = @json($chartView);
+                let currentView = @json($chartView);
+                let inventoryChart = null;
 
+                // Initialize chart
                 const chartData = currentView === 'monthly' ? monthlyData : dailyData;
                 const labels = currentView === 'monthly' ?
                     chartData.map(item => item.month_name) :
                     chartData.map(item => item.day_name);
 
-                createChart(chartData, labels, currentView);
+                inventoryChart = createChart(chartData, labels, currentView);
 
-                // Listen for chart view toggle using updated Livewire 3 syntax
-                Livewire.on('propertyUpdated', (data) => {
-                    const currentView = data[0];
-                    const chartData = currentView === 'monthly' ? monthlyData : dailyData;
-                    const labels = currentView === 'monthly' ?
-                        chartData.map(item => item.month_name) :
-                        chartData.map(item => item.day_name);
+                // Listen for client-side chart view toggle (no Livewire re-render)
+                window.addEventListener('chart-view-changed', (event) => {
+                    currentView = event.detail;
 
-                    createChart(chartData, labels, currentView);
+                    // Update chart without re-rendering component
+                    const newChartData = currentView === 'monthly' ? monthlyData : dailyData;
+                    const newLabels = currentView === 'monthly' ?
+                        newChartData.map(item => item.month_name) :
+                        newChartData.map(item => item.day_name);
+
+                    // Destroy old chart and create new one
+                    if (inventoryChart) {
+                        inventoryChart.destroy();
+                    }
+                    inventoryChart = createChart(newChartData, newLabels, currentView);
+                });
+
+                // Also listen for Livewire event (fallback, but should use skipRender)
+                Livewire.on('chartViewUpdated', (view) => {
+                    currentView = view;
+                    const newChartData = currentView === 'monthly' ? monthlyData : dailyData;
+                    const newLabels = currentView === 'monthly' ?
+                        newChartData.map(item => item.month_name) :
+                        newChartData.map(item => item.day_name);
+
+                    if (inventoryChart) {
+                        inventoryChart.destroy();
+                    }
+                    inventoryChart = createChart(newChartData, newLabels, currentView);
                 });
             });
 
@@ -529,11 +605,10 @@
                 const value = $(this).val() || null;
                 @this.set('branch_id', value);
             });
-
-            $(document).on('click', '.edit', function() {
-                Livewire.dispatch("Inventory-Page-Update-Component", {
-                    id: $(this).attr('table_id')
-                });
+            // Other event handlers
+            $('#employee_id').on('change', function(e) {
+                const value = $(this).val() || null;
+                @this.set('employee_id', value);
             });
 
             window.addEventListener('RefreshInventoryTable', event => {

@@ -30,8 +30,11 @@ class Account extends Model implements AuditableContracts
         'id_no',
         'nationality',
         'company',
+        'credit_period_days',
 
         'description',
+        'opening_debit',
+        'opening_credit',
         'second_reference_no',
     ];
 
@@ -126,5 +129,10 @@ class Account extends Model implements AuditableContracts
     public function sales()
     {
         return $this->hasMany(Sale::class);
+    }
+
+    public function getNameAttribute($value)
+    {
+        return ucwords($value);
     }
 }

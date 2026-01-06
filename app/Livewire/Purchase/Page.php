@@ -7,6 +7,7 @@ use App\Actions\Purchase\Item\DeleteAction as ItemDeleteAction;
 use App\Actions\Purchase\Payment\DeleteAction as PaymentDeleteAction;
 use App\Actions\Purchase\UpdateAction;
 use App\Models\Account;
+use App\Models\Configuration;
 use App\Models\Product;
 use App\Models\Purchase;
 use Illuminate\Support\Facades\Auth;
@@ -401,8 +402,11 @@ class Page extends Component
             $this->dispatch('ResetSelectBox', ['type' => $type]);
             $this->dispatch('success', ['message' => $response['message']]);
 
-            // 🔥 NEW - Redirect to barcode print
-            $this->dispatch('redirect-to-print', id: $table_id);
+            // Redirect to barcode print if enabled in configuration
+            $enableBarcodePrint = Configuration::where('key', 'enable_barcode_print_after_submit')->value('value') ?? 'no';
+            if ($enableBarcodePrint === 'yes') {
+                $this->dispatch('redirect-to-print', id: $table_id);
+            }
 
         } catch (\Throwable $th) {
             DB::rollback();

@@ -58,28 +58,19 @@
                             <table class="w-full cart-table">
                                 <thead class="bg-teal-50/70 border-b-2 border-teal-100">
                                     <tr>
-                                        <th class="text-left py-2 px-3 font-semibold text-teal-700 text-xs">Item
-                                        </th>
-                                        <th class="text-left py-2 px-3 font-semibold text-teal-700 text-xs">Barcode
-                                        </th>
-                                        <th class="text-right py-2 px-3 font-semibold text-teal-700 text-xs">Price
-                                        </th>
-                                        <th class="text-right py-2 px-3 font-semibold text-teal-700 text-xs">Qty
-                                        </th>
-                                        <th class="text-right py-2 px-3 font-semibold text-teal-700 text-xs">Discount
-                                        </th>
-                                        <th class="text-right py-2 px-3 font-semibold text-teal-700 text-xs">Tax %
-                                        </th>
-                                        <th class="text-right py-2 px-3 font-semibold text-teal-700 text-xs">Total
-                                        </th>
-                                        <th class="text-right py-2 px-3 font-semibold text-teal-700 text-xs">Action
-                                        </th>
+                                        <th class="text-left py-2 px-3 font-semibold text-teal-700 text-xs">Item </th>
+                                        <th class="text-left py-2 px-3 font-semibold text-teal-700 text-xs">Barcode </th>
+                                        <th class="text-right py-2 px-3 font-semibold text-teal-700 text-xs">Price </th>
+                                        <th class="text-right py-2 px-3 font-semibold text-teal-700 text-xs">Qty </th>
+                                        <th class="text-right py-2 px-3 font-semibold text-teal-700 text-xs">Discount </th>
+                                        <th class="text-right py-2 px-3 font-semibold text-teal-700 text-xs">Tax % </th>
+                                        <th class="text-right py-2 px-3 font-semibold text-teal-700 text-xs">Total </th>
+                                        <th class="text-right py-2 px-3 font-semibold text-teal-700 text-xs">Action </th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     <tr v-for="item in items" :key="item.key"
                                         class="border-b border-teal-50 hover:bg-teal-50/30 transition-colors">
-
                                         <!-- Item Name & Code -->
                                         <td class="py-2 px-3">
                                             <div class="flex items-center space-x-2">
@@ -99,12 +90,12 @@
                                         </td>
                                         <td class="py-2 px-3">
                                             <div class="flex items-center space-x-2">
-                                                
+
                                                 <div class="min-w-0">
                                                     <div class="font-medium text-teal-800 text-xs truncate">
                                                         {{ item.barcode }}
                                                     </div>
-                                                   
+
                                                 </div>
                                             </div>
                                         </td>
@@ -112,18 +103,40 @@
 
                                         <!-- Price -->
                                         <td class="py-2 px-3 text-right">
-                                            <input :value="item.unit_price"
+                                            <div v-if="item.combo_offer_price && item.combo_offer_price > 0" class="flex flex-col items-end gap-1">
+                                                <div class="text-xs text-gray-400 line-through">
+                                                    {{ formatNumber(item.unit_price) }}
+                                                </div>
+                                                <div class="flex items-center gap-1">
+                                                    <input :value="item.combo_offer_price"
+                                                        @input="updateItemField(item.key, 'combo_offer_price', $event.target.value)"
+                                                        @change="$emit('update-item-quantity', item.key)" type="number" step="0.01"
+                                                        min="0" :disabled="!canEditItemPrice" :class="[
+                                                            'w-full px-2 py-1 text-xs border rounded-md text-right transition-colors',
+                                                            canEditItemPrice
+                                                                ? 'border-emerald-200 focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500 bg-emerald-50 text-emerald-800'
+                                                                : 'border-emerald-100 bg-emerald-50/50 text-emerald-700 cursor-not-allowed'
+                                                        ]">
+                                                    <span class="text-xs bg-emerald-100 text-emerald-700 px-1 rounded">Combo</span>
+                                                </div>
+                                            </div>
+                                            <input v-else :value="item.unit_price"
                                                 @input="updateItemField(item.key, 'unit_price', $event.target.value)"
                                                 @change="$emit('update-item-quantity', item.key)" type="number" step="1"
-                                                min="0"
-                                                class="w-full px-2 py-1 text-xs border border-teal-200 rounded-md focus:ring-1 focus:ring-teal-500 focus:border-teal-500 text-right bg-white text-teal-800 transition-colors">
+                                                min="0" :disabled="!canEditItemPrice" :class="[
+                                                    'w-full px-2 py-1 text-xs border rounded-md text-right transition-colors',
+                                                    canEditItemPrice
+                                                        ? 'border-teal-200 focus:ring-1 focus:ring-teal-500 focus:border-teal-500 bg-white text-teal-800'
+                                                        : 'border-teal-100 bg-slate-100 text-slate-500 cursor-not-allowed'
+                                                ]">
                                         </td>
 
                                         <!-- Quantity -->
                                         <td class="py-2 px-3 text-right">
                                             <input :value="item.quantity"
                                                 @input="updateItemField(item.key, 'quantity', $event.target.value)"
-                                                @change="$emit('update-item-quantity', item.key)" type="number" min="0.001"
+                                                @change="$emit('update-item-quantity', item.key)" type="number"
+                                                min="0.001"
                                                 class="w-full px-2 py-1 text-xs border border-sky-200 rounded-md focus:ring-1 focus:ring-sky-500 focus:border-sky-500 text-right bg-white font-semibold text-sky-800 transition-colors">
                                         </td>
 
@@ -151,7 +164,7 @@
                                         <td class="py-2 px-3 text-right">
                                             <div
                                                 class="bg-gradient-to-r from-teal-50 to-emerald-100 text-teal-700 font-bold text-xs px-2.5 py-1 rounded-md border border-emerald-200 inline-block shadow-sm">
-                                                {{ parseFloat(item.total).toFixed(2) }}
+                                                {{ formatNumber(item.total, 3) }}
                                             </div>
                                         </td>
 
@@ -182,7 +195,7 @@
                     </div>
                     <div class="modal-footer-stats bg-white px-3 py-1.5 rounded-lg shadow-sm border border-emerald-100">
                         <div class="text-xs text-emerald-600 uppercase tracking-wide">Quantity</div>
-                        <div class="text-sm font-bold text-teal-700">{{ totalQuantity }}</div>
+                        <div class="text-sm font-bold text-teal-700">{{ formatNumber(totalQuantity, 3) }}</div>
                     </div>
                 </div>
 
@@ -215,10 +228,21 @@ export default {
         totalQuantity: {
             type: Number,
             default: 0
+        },
+        canEditItemPrice: {
+            type: Boolean,
+            default: false
         }
     },
     emits: ['close', 'update-item-quantity', 'remove-cart-item', 'update-item-field'],
     methods: {
+        formatNumber(value, decimals = 2) {
+            const num = parseFloat(value) || 0;
+            return num.toLocaleString('en-US', {
+                minimumFractionDigits: decimals,
+                maximumFractionDigits: decimals
+            });
+        },
         updateItemField(itemKey, field, value) {
             // Convert to number for numeric fields
             const numericFields = ['unit_price', 'quantity', 'discount', 'tax'];

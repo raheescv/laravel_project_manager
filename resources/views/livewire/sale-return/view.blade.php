@@ -144,48 +144,70 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                @foreach ($items as $item)
+                                @php
+                                    $result = [];
+                                    foreach ($items as $key => $value) {
+                                        [$parent, $sub] = explode('-', $key);
+                                        if (!isset($result[$parent])) {
+                                            $result[$parent] = [];
+                                        }
+                                        $result[$parent][$sub] = $value;
+                                    }
+                                    $data = $result;
+                                @endphp
+                                @foreach ($data as $employee_id => $groupedItems)
                                     <tr>
-                                        <td>{{ $loop->iteration }}</td>
-                                        <td>
-                                            <div class="d-flex align-items-center">
-                                                <i class="fa fa-box me-2"></i>
-                                                <div>
-                                                    @if ($item['sale_id'])
-                                                        <a href="{{ route('sale::view', $item['sale_id']) }}" class="text-primary">{{ $item['invoice_no'] }}</a>
-                                                    @endif
-                                                </div>
-                                            </div>
-                                        </td>
-                                        <td>
-                                            <div class="d-flex align-items-center">
-                                                <i class="fa fa-box me-2"></i>
-                                                <div>
-                                                    <a href="{{ route('inventory::product::view', $item['product_id']) }}" class="text-primary">{{ $item['name'] }}</a>
-                                                </div>
-                                            </div>
-                                        </td>
-                                        <td class="text-end">{{ currency($item['unit_price']) }}</td>
-                                        <td class="text-end">{{ currency($item['quantity'],3) }}</td>
-                                        <td class="text-end">
-                                            @if ($item['discount'] != 0)
-                                                {{ currency($item['discount']) }}
-                                            @else
-                                                -
-                                            @endif
-                                        </td>
-                                        <td class="text-end">
-                                            @if ($item['tax_amount'] != 0)
-                                                {{ currency($item['tax_amount']) }} ({{ round($item['tax'], 2) }}%)
-                                            @else
-                                                -
-                                            @endif
-                                        </td>
-                                        <td class="text-end">{{ currency($item['total']) }}</td>
-                                        @if ($sale_returns['other_discount'] > 0)
-                                            <td class="text-end">{{ currency($item['effective_total']) }}</td>
-                                        @endif
+                                        @php
+                                            $first = array_values($groupedItems)[0];
+                                        @endphp
+                                        <th colspan="8" class="bg-light">
+                                            <i class="demo-psi-user me-2"></i>
+                                            {{ $first['employee_name'] ?? 'No Employee' }}
+                                        </th>
                                     </tr>
+                                    @foreach ($groupedItems as $item)
+                                        <tr>
+                                            <td>{{ $loop->iteration }}</td>
+                                            <td>
+                                                <div class="d-flex align-items-center">
+                                                    <i class="fa fa-box me-2"></i>
+                                                    <div>
+                                                        @if ($item['sale_id'])
+                                                            <a href="{{ route('sale::view', $item['sale_id']) }}" class="text-primary">{{ $item['invoice_no'] }}</a>
+                                                        @endif
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <div class="d-flex align-items-center">
+                                                    <i class="fa fa-box me-2"></i>
+                                                    <div>
+                                                        <a href="{{ route('inventory::product::view', $item['product_id']) }}" class="text-primary">{{ $item['name'] }}</a>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td class="text-end">{{ currency($item['unit_price']) }}</td>
+                                            <td class="text-end">{{ currency($item['quantity'], 3) }}</td>
+                                            <td class="text-end">
+                                                @if ($item['discount'] != 0)
+                                                    {{ currency($item['discount']) }}
+                                                @else
+                                                    -
+                                                @endif
+                                            </td>
+                                            <td class="text-end">
+                                                @if ($item['tax_amount'] != 0)
+                                                    {{ currency($item['tax_amount']) }} ({{ round($item['tax'], 2) }}%)
+                                                @else
+                                                    -
+                                                @endif
+                                            </td>
+                                            <td class="text-end">{{ currency($item['total']) }}</td>
+                                            @if ($sale_returns['other_discount'] > 0)
+                                                <td class="text-end">{{ currency($item['effective_total']) }}</td>
+                                            @endif
+                                        </tr>
+                                    @endforeach
                                 @endforeach
                             </tbody>
                             <tfoot class="table-group-divider">
@@ -194,7 +216,7 @@
                                 @endphp
                                 <tr class="fw-bold">
                                     <td colspan="4" class="text-end">Total</td>
-                                    <td class="text-end">{{ currency($items->sum('quantity'),3) }}</td>
+                                    <td class="text-end">{{ currency($items->sum('quantity'), 3) }}</td>
                                     <td class="text-end">{{ currency($items->sum('discount')) }}</td>
                                     <td class="text-end">{{ currency($items->sum('tax_amount')) }}</td>
                                     <td class="text-end">{{ currency($items->sum('total')) }}</td>

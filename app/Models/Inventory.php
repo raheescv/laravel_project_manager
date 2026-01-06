@@ -18,6 +18,7 @@ class Inventory extends Model implements AuditableContracts
 
     protected $fillable = [
         'branch_id',
+        'employee_id',
         'product_id',
         'quantity',
         'barcode',
@@ -57,6 +58,11 @@ class Inventory extends Model implements AuditableContracts
     public function product()
     {
         return $this->belongsTo(Product::class);
+    }
+
+    public function employee()
+    {
+        return $this->belongsTo(User::class, 'employee_id');
     }
 
     public function branch()
@@ -109,6 +115,7 @@ class Inventory extends Model implements AuditableContracts
     public function getDropDownList($request)
     {
         $self = self::orderBy('products.name');
+        $self = $self->whereNull('inventories.employee_id');
         $self = $self->join('products', 'inventories.product_id', '=', 'products.id');
         $self = $self->when($request['query'] ?? '', function ($query, $value) {
             return $query->where(function ($q) use ($value) {

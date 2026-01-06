@@ -3,6 +3,11 @@
         <div class="row g-3">
             <div class="col-md-4 d-flex align-items-center">
                 <div class="btn-group">
+                    @can('sale.import')
+                        <button class="btn btn-sm btn-outline-info" title="Import Sales" data-bs-toggle="modal" data-bs-target="#SaleImportModal">
+                            <i class="demo-psi-file-import me-1"></i> Import
+                        </button>
+                    @endcan
                     @can('sale.export')
                         <button class="btn btn-sm btn-outline-primary" title="Export as Excel" wire:click="export()">
                             <i class="demo-pli-file-excel me-1"></i> Export
@@ -91,7 +96,7 @@
                                 <label class="form-label text-muted fw-semibold small mb-2" for="branch_id">
                                     <i class="demo-psi-home me-1"></i> Branch
                                 </label>
-                                {{ html()->select('branch_id', [auth()->user()->default_branch_id => auth()->user()->branch?->name])->value(auth()->user()->default_branch_id)->class('select-assigned-branch_id-list')->id('branch_id')->placeholder('All Branches') }}
+                                {{ html()->select('branch_id', [session('branch_id') => session('branch_name')])->value(session('branch_id'))->class('select-assigned-branch_id-list')->id('branch_id')->placeholder('All Branches') }}
                             </div>
                         </div>
                         <div class="col-md-3" wire:ignore>
@@ -138,9 +143,7 @@
                             </div>
                         </th>
                         <th> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="date" label="date" /> </th>
-                        @if ($sale_visible_column['created_at'] ?? '')
-                            <th> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="created_at" label="created at" /> </th>
-                        @endif
+                        <th> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="sales.created_at" label="created at" /> </th>
                         <th class="text-nowrap"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="invoice_no" label="invoice no" /> </th>
                         @if ($sale_visible_column['reference_no'])
                             <th> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="reference_no" label="reference no" /> </th>
@@ -206,9 +209,12 @@
                                     <span>{{ systemDate($item->date) }}</span>
                                 </div>
                             </td>
-                            @if ($sale_visible_column['created_at'] ?? '')
-                                <td>{{ systemDateTime($item->created_at) }}</td>
-                            @endif
+                            <td class="text-nowrap">
+                                <div class="d-flex align-items-center gap-2">
+                                    <i class="demo-psi-calendar-4 fs-5 text-info"></i>
+                                    <span>{{ systemDateTime($item->created_at) }}</span>
+                                </div>
+                            </td>
                             <td class="text-nowrap">
                                 <a href="{{ route('sale::view', $item->id) }}" class="text-primary fw-semibold text-decoration-none">
                                     {{ $item->invoice_no }}
@@ -310,9 +316,7 @@
                 <tfoot class="table-group-divider">
                     <tr class="bg-light">
                         <th colspan="3" class="ps-3"><strong>TOTALS</strong></th>
-                        @if ($sale_visible_column['created_at'] ?? '')
-                            <th></th>
-                        @endif
+                        <th></th>
                         @if ($sale_visible_column['reference_no'])
                             <th></th>
                         @endif

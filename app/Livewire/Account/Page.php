@@ -57,6 +57,8 @@ class Page extends Component
             $this->accounts = [
                 'account_type' => $account_type,
                 'name' => $name,
+                'opening_debit' => 0,
+                'opening_credit' => 0,
             ];
         } else {
             $account = Account::with('accountCategory:id,name')->find($this->table_id);
@@ -80,6 +82,8 @@ class Page extends Component
     protected $messages = [
         'accounts.name.required' => 'The name field is required',
         'accounts.name.max' => 'The name field must not be greater than 100 characters',
+        'accounts.opening_debit.numeric' => 'The opening debit field must be a number',
+        'accounts.opening_credit.numeric' => 'The opening credit field must be a number',
         'accounts.alias_name.max' => 'The alias name field must not be greater than 100 characters',
         'accounts.account_type.required' => 'The account type field is required',
     ];

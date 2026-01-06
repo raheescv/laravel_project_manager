@@ -15,7 +15,7 @@
                             <div class="mb-4">
                                 <div wire:ignore>
                                     <label for="account_id" class="form-label">Select Vendor <span class="text-danger">*</span></label>
-                                    {{ html()->select('account_id', $accounts)->value($purchases['account_id'])->class('form-select select-vendor_id')->id('account_id')->placeholder('Select Vendor') }}
+                                    {{ html()->select('account_id', $accounts)->value($purchases['account_id'])->class('select-vendor_id')->id('account_id')->placeholder('Select Vendor') }}
                                 </div>
                             </div>
                             <div class="alert alert-light mb-0">
@@ -346,6 +346,13 @@
 
                             <div class="d-flex justify-content-end gap-2">
                                 @if (isset($purchases['id']))
+                                    @if ($purchases['status'] != 'cancelled')
+                                        @can('purchase.purchase note print')
+                                            <a href="{{ route('purchase::print', $purchases['id']) }}" target="_blank" class="btn btn-light">
+                                                <i class="demo-psi-printer me-1"></i> Purchase Note Print
+                                            </a>
+                                        @endcan
+                                    @endif
                                     @can('purchase.barcode print')
                                         <a href="{{ route('purchase::barcode-print', $purchases['id']) }}" target="_blank" class="btn btn-info">
                                             <i class="demo-psi-printer me-1"></i> Print
@@ -482,6 +489,20 @@
                     let id = data.id;
                     window.location.href = "/purchase/barcode-print/" + id;
                 });
+            });
+            window.addEventListener('SelectDropDownValues', event => {
+                var data = event.detail[0];
+                if (data && data['account_id']) {
+                    var accountTomSelectInstance = document.querySelector('#account_id').tomselect;
+                    if (accountTomSelectInstance && data['account_id']) {
+                        var preselectedData = {
+                            id: data['account_id'],
+                            name: data['account']['name'],
+                        };
+                        accountTomSelectInstance.addOption(preselectedData);
+                        accountTomSelectInstance.addItem(preselectedData.id);
+                    }
+                }
             });
         </script>
     @endpush

@@ -20,7 +20,9 @@
         </div>
     </div>
     <x-inventory.inventory-modal />
+    <x-employee-inventory.transfer-modal />
     @push('scripts')
         @include('components.select.branchSelect')
+        @include('components.select.employeeSelect')
     @endpush
 </x-app-layout>

@@ -20,13 +20,17 @@ class View extends Component
 
     public $product_id = '';
 
+    public $inventory_filter = 'main'; // 'all', 'main', 'employee'
+
+    public $employee_id = '';
+
     public $branch_id = '';
 
     public $sortField = 'inventory_logs.id';
 
     public $sortDirection = 'desc';
 
-    public $chartView = 'daily';
+    public $chartView = 'daily'; // 'daily' or 'monthly'
 
     protected $paginationTheme = 'bootstrap';
 
@@ -38,7 +42,7 @@ class View extends Component
     {
         $this->product_id = $product_id;
         $this->branch_id = session('branch_id');
-        $this->product = Product::find($this->product_id);
+        $this->product = Product::with('brand')->find($this->product_id);
     }
 
     public function sortBy($field)
@@ -51,10 +55,16 @@ class View extends Component
         }
     }
 
-    public function toggleChartView()
+    public function toggleChartView($view = null)
     {
-        $this->chartView = $this->chartView === 'monthly' ? 'daily' : 'monthly';
-        $this->dispatch('propertyUpdated', $this->chartView);
+        if ($view) {
+            $this->chartView = $view;
+        } else {
+            $this->chartView = $this->chartView === 'monthly' ? 'daily' : 'monthly';
+        }
+        // Skip full render, only update chart via JavaScript
+        $this->skipRender();
+        $this->dispatch('chartViewUpdated', $this->chartView);
     }
 
     public function render()
@@ -70,14 +80,18 @@ class View extends Component
                         ->orWhere('branches.name', 'like', "%{$value}%");
                 });
             })
-            // ->when($this->branch_id ?? '', function ($query, $value) {
-            //     return $query->where('branch_id', $value);
-            // })
+            ->when($this->inventory_filter === 'main', function ($query) {
+                return $query->whereNull('inventories.employee_id');
+            })
+            ->when($this->inventory_filter === 'employee', function ($query) {
+                return $query->whereNotNull('inventories.employee_id');
+            })
             ->where('product_id', $this->product_id)
             ->latest('inventories.created_at')
             ->select(
                 'inventories.id',
                 'inventories.branch_id',
+                'inventories.employee_id',
                 'inventories.barcode',
                 'inventories.batch',
                 'inventories.cost',
@@ -91,6 +105,9 @@ class View extends Component
                     $value = trim($value);
                     $q->where('inventory_logs.remarks', 'like', "%{$value}%");
                 });
+            })
+            ->when($this->employee_id ?? '', function ($query, $value) {
+                return $query->where('employee_id', $value);
             })
             ->when($this->branch_id ?? '', function ($query, $value) {
                 return $query->where('branch_id', $value);

@@ -24,7 +24,7 @@
                     <!-- Total Payable Amount -->
                     <div class="text-center mb-3">
                         <h2 class="text-base font-bold text-gray-900 mb-1">Total Payable Amount</h2>
-                        <h1 class="text-xl sm:text-2xl font-bold text-blue-600">{{ totalAmount }}</h1>
+                        <h1 class="text-xl sm:text-2xl font-bold text-blue-600">{{ formatNumber(totalAmount) }}</h1>
                     </div>
 
                     <hr class="my-3 border-gray-200">
@@ -94,7 +94,7 @@
                                             {{ payment.name }}
                                         </div>
                                         <div class="text-xs font-semibold text-gray-900 text-right">
-                                            {{ payment.amount.toFixed(2) }}
+                                            {{ formatNumber(payment.amount) }}
                                         </div>
                                         <div class="text-center">
                                             <button type="button" @click="removePayment(index)"
@@ -113,11 +113,11 @@
                     <div class="bg-gray-50 rounded-lg p-2 space-y-1">
                         <div class="flex justify-between items-center">
                             <span class="text-xs font-semibold text-green-600">Total Paid:</span>
-                            <span class="text-xs font-bold text-green-600">{{ totalPaid.toFixed(2) }}</span>
+                            <span class="text-xs font-bold text-green-600">{{ formatNumber(totalPaid) }}</span>
                         </div>
                         <div class="flex justify-between items-center">
                             <span class="text-xs font-semibold text-red-600">Balance Due:</span>
-                            <span class="text-xs font-bold text-red-600">{{ balanceDue.toFixed(2) }}</span>
+                            <span class="text-xs font-bold text-red-600">{{ formatNumber(balanceDue) }}</span>
                         </div>
                     </div>
                 </div>
@@ -190,6 +190,14 @@ export default {
         const balanceDue = computed(() => {
             return props.totalAmount - totalPaid.value
         })
+
+        const formatNumber = (value, decimals = 2) => {
+            const num = parseFloat(value) || 0
+            return num.toLocaleString('en-US', {
+                minimumFractionDigits: decimals,
+                maximumFractionDigits: decimals
+            })
+        }
 
         // Watch for prop changes to reset form
         watch(() => props.show, (newVal) => {
@@ -288,6 +296,7 @@ export default {
             errorMessage,
             totalPaid,
             balanceDue,
+            formatNumber,
             addPayment,
             removePayment,
             close,

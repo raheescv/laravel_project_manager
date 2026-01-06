@@ -32,6 +32,12 @@
                                 </button>
                             </li>
                             <li class="nav-item" role="presentation">
+                                <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabsPurchaseSettings" type="button" role="tab" aria-controls="profile" aria-selected="false"
+                                    tabindex="-1">
+                                    Purchase Settings
+                                </button>
+                            </li>
+                            <li class="nav-item" role="presentation">
                                 <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tabsCompanyProfile" type="button" role="tab" aria-controls="profile" aria-selected="false"
                                     tabindex="-1">
                                     Company Profile
@@ -56,6 +62,9 @@
                             </div>
                             <div id="tabsSaleSettings" class="tab-pane" role="tabpanel">
                                 @livewire('settings.sale-configuration')
+                            </div>
+                            <div id="tabsPurchaseSettings" class="tab-pane" role="tabpanel">
+                                @livewire('settings.purchase-configuration')
                             </div>
                             <div id="tabsCompanyProfile" class="tab-pane fade active show" role="tabpanel">
                                 @livewire('settings.company-profile')
@@ -119,7 +128,7 @@
                             </div>
                             @can('whatsapp.integration')
                                 <div id="tabsWhatsapp" class="tab-pane" role="tabpanel">
-                                    @livewire('settings.whatsapp')
+                                    {{-- @livewire('settings.whatsapp') --}}
                                 </div>
                             @endcan
                         </div>

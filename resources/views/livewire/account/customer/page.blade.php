@@ -161,6 +161,32 @@
                     </div>
                 </div>
             </div>
+
+            <div class="card shadow-sm mb-4 border-0">
+                <div class="card-header bg-light py-3">
+                    <h5 class="card-title mb-0 fw-semibold d-flex align-items-center">
+                        <i class="fa fa-credit-card me-2 text-primary"></i>
+                        Credit Information
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <div class="form-floating">
+                                {{ html()->number('credit_period_days')->value('')->class('form-control border-secondary-subtle shadow-sm')->attribute('wire:model', 'accounts.credit_period_days')->placeholder('Credit Period (Days)')->attribute('min', '0')->attribute('step', '1') }}
+                                <label for="credit_period_days" class="text-muted">
+                                    <i class="fa fa-calendar me-1 text-primary"></i>
+                                    Credit Period (Days)
+                                </label>
+                            </div>
+                            <div class="form-text ms-1">
+                                <i class="fa fa-info-circle me-1"></i>
+                                Number of days allowed for credit payment (e.g., 30, 60, 90)
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
             <div class="modal-footer bg-light pt-4">
                 @if ($this->getErrorBag()->count())
                     <div class="alert alert-danger p-3 border-start border-danger border-4 shadow-sm mb-4">

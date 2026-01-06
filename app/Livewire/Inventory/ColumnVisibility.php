@@ -30,6 +30,7 @@ class ColumnVisibility extends Component
             'quantity' => true,
             'cost' => true,
             'total' => true,
+            'mrp' => true,
             'barcode' => true,
             'batch' => true,
         ];

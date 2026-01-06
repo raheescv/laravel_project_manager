@@ -45,4 +45,3 @@ class ColumnVisibility extends Component
         return view('livewire.product.column-visibility');
     }
 }
-

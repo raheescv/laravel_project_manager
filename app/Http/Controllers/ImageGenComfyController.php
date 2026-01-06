@@ -2,30 +2,15 @@
 
 namespace App\Http\Controllers;
 
-use App\Jobs\GenerateProductImageLocallyJob;
-use App\Jobs\GenerateServiceImageJob;
-use App\Models\Product;
+use App\Jobs\GenerateProductImageWithOpenAIJob;
 use Illuminate\Http\Request;
 
 class ImageGenComfyController extends Controller
 {
     public function generate(Request $request)
     {
-        // $products = Product::service()->limit(1)->get();
-        // foreach ($products as $key => $value) {
-        //     $category = $value->mainCategory?->name;
-        //     $serviceName = $value->name;
-        //     GenerateServiceImageJob::dispatch($category, $serviceName);
-        // }
-
-        $category = 'Facial';
-        $category = 'Eyelashes';
-        // $category = 'Wax';
-        // $serviceName = 'Hair Cutting';
-        // $serviceName = 'Full body with brazilian';
-        $serviceName = 'Natures fruit cleanser';
-        $serviceName = 'Eyelashes mixed';
-        GenerateProductImageLocallyJob::dispatchSync($category, $serviceName);
+        $name = 'tiger ballet candy 37.5';
+        GenerateProductImageWithOpenAIJob::dispatchSync($name);
 
         return response()->json([
             'success' => true,
