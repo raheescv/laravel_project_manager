@@ -35,6 +35,10 @@ class CreateAction
             if ($entries) {
                 JournalEntry::insert($entries);
             }
+
+            // Sync counter accounts to pivot table
+            (new SyncCounterAccountsAction())->execute($model->id);
+
             $return['success'] = true;
             $return['message'] = 'Successfully Created Journal';
             $return['data'] = $model;

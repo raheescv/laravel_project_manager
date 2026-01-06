@@ -99,9 +99,18 @@ class View extends Component
 
     private function baseQuery()
     {
+        $accountId = $this->accountId;
+
         return JournalEntry::with('account')
             ->where('branch_id', session('branch_id'))
-            ->where('counter_account_id', $this->accountId);
+            ->where(function ($query) use ($accountId) {
+                // Check single counter_account_id (backward compatibility)
+                $query->where('counter_account_id', $accountId)
+                    // Also check pivot table for multiple counter accounts
+                    ->orWhereHas('counterAccounts', function ($q) use ($accountId) {
+                        $q->where('accounts.id', $accountId);
+                    });
+            });
     }
 
     private function applySearchFilter($query, string $value)

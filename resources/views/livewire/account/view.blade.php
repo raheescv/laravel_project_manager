@@ -101,7 +101,11 @@
                                         <tr>
                                             <td> {{ $item->journal_id }} </td>
                                             <td>{{ systemDate($item->journal->date) }}</td>
-                                            <td>{{ $item->account->name }}</td>
+                                            <td>
+                                                <a href="{{ route('account::view', $item->account_id) }}" class="text-decoration-none">
+                                                    {{ $item->account->name }}
+                                                </a>
+                                            </td>
                                             <td>{{ $item->person_name }}</td>
                                             <td>{{ $item->reference_number }}</td>
                                             <td>
