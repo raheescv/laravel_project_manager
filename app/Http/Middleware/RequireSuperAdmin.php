@@ -23,4 +23,3 @@ class RequireSuperAdmin
         return $next($request);
     }
 }
-

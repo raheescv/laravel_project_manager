@@ -65,6 +65,19 @@
                         </select>
                     </div>
                 </div>
+                <div class="col-md-4">
+                    <div>
+                        <label for="is_active" class="form-label small fw-medium text-capitalize">
+                            <i class="fa fa-toggle-on me-1 text-muted"></i>
+                            Status
+                        </label>
+                        <select wire:model.live="is_active" class="form-select shadow-sm border-secondary-subtle" id="is_active">
+                            <option value="">All Status</option>
+                            <option value="1">Active</option>
+                            <option value="0">Inactive</option>
+                        </select>
+                    </div>
+                </div>
             </div>
         </div>
         <div class="card-body p-0">
