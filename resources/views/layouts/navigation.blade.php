@@ -1,4 +1,4 @@
-<nav id="mainnav-container" class="mainnav">
+<!-- <nav id="mainnav-container" class="mainnav">
     <style>
         /* Colorful FontAwesome Icons Styles */
         .nav-link .fa-dashboard {
@@ -560,4 +560,4 @@
             </ul>
         </div>
     </div>
-</nav>
+</nav> -->
