@@ -118,4 +118,3 @@ class GenerateProductImageWithOpenAIJob implements ShouldQueue
         return $prompt;
     }
 }
-

@@ -27,6 +27,8 @@ class Table extends Component
 
     public $role_id = '';
 
+    public $is_active = '';
+
     public $sortField = 'id';
 
     public $sortDirection = 'desc';
@@ -126,6 +128,9 @@ class Table extends Component
                 $query->whereHas('roles', function ($q): void {
                     $q->where('id', $this->role_id);
                 });
+            })
+            ->when($this->is_active !== '', function ($query): void {
+                $query->where('is_active', $this->is_active);
             })
             ->employee()
             ->latest()

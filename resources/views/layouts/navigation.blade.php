@@ -159,7 +159,7 @@
                             auth()->user()->can('report.product'))
                         <li class="nav-item has-sub">
                             <a href="#"
-                                class="mininav-toggle nav-link {{ request()->is(['inventory', 'inventory/product/*', 'inventory/search', 'inventory/transfer', 'inventory/barcode/cart', 'inventory/transfer/edit/*', 'inventory/transfer/create', 'inventory/transfer/view/*', 'report/product']) ? 'active' : '' }}"><i
+                                class="mininav-toggle nav-link {{ request()->is(['inventory', 'inventory/opening-balance', 'inventory/product/*', 'inventory/search', 'inventory/transfer', 'inventory/barcode/cart', 'inventory/transfer/edit/*', 'inventory/transfer/create', 'inventory/transfer/view/*', 'report/product']) ? 'active' : '' }}"><i
                                     class="fa fa-cubes fs-5 me-2"></i>
                                 <span class="nav-label mininav-content ms-1 collapse show" style="">Inventory</span>
                             </a>
@@ -167,7 +167,7 @@
                                 <li data-popper-arrow class="arrow"></li>
                                 @can('inventory.view')
                                     <li class="nav-item">
-                                        <a href="{{ route('inventory::index') }}" class="nav-link {{ request()->is(['inventory', 'inventory/product/*']) ? 'active' : '' }}">List</a>
+                                        <a href="{{ route('inventory::index') }}" class="nav-link {{ request()->is(['inventory', 'inventory/product/*','inventory/opening-balance']) ? 'active' : '' }}">List</a>
                                     </li>
                                 @endcan
                                 @can('inventory.product search')

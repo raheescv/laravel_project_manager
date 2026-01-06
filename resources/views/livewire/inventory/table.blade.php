@@ -40,14 +40,28 @@
                 </div>
                 <div class="dropdown">
                     <button class="btn btn-sm btn-outline-primary" data-bs-toggle="dropdown" aria-expanded="false">
-                        <i class="demo-pli-layout-grid me-1"></i> Columns
+                        <i class="demo-pli-layout-grid me-1"></i> Actions
                     </button>
                     <ul class="dropdown-menu dropdown-menu-end shadow-sm">
                         <li>
                             <a class="dropdown-item" data-bs-toggle="offcanvas" data-bs-target="#inventoryColumnVisibility" aria-controls="inventoryColumnVisibility">
-                                <i class="demo-pli-column-width me-2"></i>Column Visibility
+                                <i class="demo-pli-layout-grid me-2"></i> Column Visibility
                             </a>
                         </li>
+                        @can('inventory.opening balance')
+                            <li>
+                                <a class="dropdown-item" href="{{ route('inventory::opening-balance') }}">
+                                    <i class="demo-pli-reload-3 me-2"></i> Opening Balance
+                                </a>
+                            </li>
+                        @endcan
+                        @can('inventory.reset stock')
+                            <li>
+                                <a class="dropdown-item" href="#" wire:click.prevent="openResetStockModal">
+                                    <i class="demo-pli-reload-3 me-2"></i> Reset Stock
+                                </a>
+                            </li>
+                        @endcan
                     </ul>
                 </div>
             </div>
@@ -364,6 +378,49 @@
             {{ $data->links() }}
         </div>
     </div>
+    <!-- Reset Stock Modal -->
+    <div class="modal fade" id="ResetStockModal" tabindex="-1" aria-labelledby="ResetStockModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content shadow-lg">
+                <div class="modal-header bg-danger text-white">
+                    <h5 class="modal-title" id="ResetStockModalLabel">
+                        <i class="demo-pli-warning-window me-2"></i> Reset Stock to Zero
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-warning d-flex align-items-center" role="alert">
+                        <i class="demo-pli-warning-window fs-4 me-2"></i>
+                        <div>
+                            <strong>Warning!</strong> This action will reset all inventory quantities to 0 based on your current filters. This action cannot be undone.
+                        </div>
+                    </div>
+                    <form wire:submit.prevent="resetStock">
+                        <div class="mb-3">
+                            <label for="resetReason" class="form-label fw-semibold">
+                                Reason for Reset <span class="text-danger">*</span>
+                            </label>
+                            <textarea class="form-control @error('resetReason') is-invalid @enderror" id="resetReason" wire:model="resetReason" rows="4"
+                                placeholder="Please provide a reason for resetting the stock (e.g., Stock audit, Inventory correction, etc.)" required></textarea>
+                            @error('resetReason')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
+                            <small class="form-text text-muted">Minimum 3 characters, maximum 100 characters.</small>
+                        </div>
+                        <div class="d-flex justify-content-end gap-2">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                                <i class="demo-pli-cross me-1"></i> Cancel
+                            </button>
+                            <button type="submit" class="btn btn-danger">
+                                <i class="demo-pli-reload-3 me-1"></i> Reset Stock to Zero
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
     @push('scripts')
         <script>
             $(document).ready(function() {
@@ -391,6 +448,20 @@
                     const value = $(this).val() || null;
                     @this.set('brand_id', value);
                 });
+            });
+
+            // Handle Reset Stock Modal
+            window.addEventListener('openResetStockModal', event => {
+                $('#ResetStockModal').modal('show');
+            });
+
+            window.addEventListener('closeResetStockModal', event => {
+                $('#ResetStockModal').modal('hide');
+            });
+
+            // Reset form when modal is closed
+            $('#ResetStockModal').on('hidden.bs.modal', function() {
+                @this.closeResetStockModal();
             });
         </script>
     @endpush

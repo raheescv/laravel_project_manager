@@ -84,6 +84,7 @@ class POSController extends Controller
                         'stock' => $inventory->quantity ?? 0,
                         'category_id' => $inventory->product->main_category_id,
                         'product_id' => $inventory->product_id,
+                        'branch_id' => $inventory->branch_id,
                         'image' => $imageUrl,
                     ];
                 });
@@ -129,6 +130,7 @@ class POSController extends Controller
                 'stock' => $inventory->quantity ?? 0,
                 'category_id' => $inventory->category_id,
                 'product_id' => $inventory->product_id,
+                'branch_id' => $inventory->branch_id,
                 'image' => $imageUrl,
             ]);
         } catch (\Exception $e) {

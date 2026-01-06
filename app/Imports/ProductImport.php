@@ -3,6 +3,7 @@
 namespace App\Imports;
 
 use App\Actions\Product\Inventory\UpdateAction;
+use App\Actions\Product\UpdateAction as ProductUpdateAction;
 use App\Events\FileImportCompleted;
 use App\Events\FileImportProgress;
 use App\Models\Inventory;
@@ -93,14 +94,23 @@ class ProductImport implements ToCollection, WithBatchInserts, WithChunkReading,
             }
             validationHelper(Product::rules($data, $data['id']), $data, 'Product');
 
-            $inventory = Inventory::where('branch_id', $this->branchId)->where('product_id', $model->id)->first();
-            $inventoryData = $inventory->toArray();
-            $inventoryData['quantity'] = $quantity;
-            $inventoryData['remarks'] = 'Bulk Update';
+            // Update product using Product UpdateAction
+            $productResponse = (new ProductUpdateAction())->execute($data, $data['id'], $this->userId);
+            if (! $productResponse['success']) {
+                throw new Exception($productResponse['message'], 1);
+            }
 
-            $response = (new UpdateAction())->execute($inventoryData, $inventory->id);
-            if (! $response['success']) {
-                throw new Exception($response['message'], 1);
+            // Update inventory using Inventory UpdateAction
+            $inventory = Inventory::where('branch_id', $this->branchId)->where('product_id', $model->id)->first();
+            if ($inventory) {
+                $inventoryData = $inventory->toArray();
+                $inventoryData['quantity'] = $quantity;
+                $inventoryData['remarks'] = 'Bulk Update';
+
+                $inventoryResponse = (new UpdateAction())->execute($inventoryData, $inventory->id);
+                if (! $inventoryResponse['success']) {
+                    throw new Exception($inventoryResponse['message'], 1);
+                }
             }
         }
     }
