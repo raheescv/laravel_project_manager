@@ -236,7 +236,7 @@ class Page extends Component
     {
         
 
-    $measurementCategories = MeasurementCategory::pluck('name','id')->toArray();
+    
 
         $units = Unit::pluck('name', 'id')->toArray();
        $allProducts = Product::where('status', 'active')
@@ -245,7 +245,7 @@ class Page extends Component
 
     return view('livewire.product.page', compact(
         'units',
-        'measurementCategories',
+      
         'allProducts'
     ));
 

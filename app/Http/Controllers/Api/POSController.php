@@ -150,7 +150,7 @@ class POSController extends Controller
         /* -------------------- Fetch & Format -------------------- */
 
         $products = $query
-            ->limit(50)
+            ->limit(10000) // Increased limit for larger catalogs
             ->get()
             ->map(function ($product) {
 

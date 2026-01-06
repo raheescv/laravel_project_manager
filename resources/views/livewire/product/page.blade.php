@@ -116,18 +116,6 @@
                                 </div>
 
 
-                              <div class="col-md-4" wire:ignore>
-    <label for="measurement_category_id" class="form-label fw-medium">
-        <i class="fa fa-folder text-primary me-1 small"></i>
-        Measurement Category <span class="text-danger">*</span>
-    </label>
-    {{ html()->select('measurement_category_id', ['' => 'Select Measurement Category'] + $measurementCategories)
-        ->value($products['measurement_category_id'] ?? '')
-        ->class('form-select border-primary-subtle shadow-sm')
-        ->id('measurement_category_id')
-        ->attribute('wire:model.defer', 'products.measurement_category_id') }}
-</div>
-
 
                                 @if ($type == 'product')
                                     <div class="col-md-4" wire:ignore>
@@ -689,10 +677,13 @@
 
                                 <!-- QUANTITY -->
                                 <td>
-                                    <input type="number"
-                                           min="1"
-                                           class="form-control"
-                                           wire:model="raw_materials.{{ $index }}.price">
+                                   <input type="number"
+       min="0"
+       step="any"
+       class="form-control"
+       name="raw_materials[{{ $index }}][price]"
+       wire:model="raw_materials.{{ $index }}.price">
+
                                 </td>
 
                                 <!-- DELETE -->

@@ -414,6 +414,25 @@ const buildMeasurementPayload = () => {
                             <div className="col-md-12 col-lg-7">
 
 
+                                  <div className="mb-2">
+                                    <label className="fw-bold mb-1">Customer</label>
+                                    <div className="d-flex gap-2 align-items-center">
+                                        <div style={{ flex: 1 }}>
+                                      <CustomerSelect
+    value={customerId}
+    onChange={setCustomerId}
+    newCustomer={addedCustomer} // <-- use this instead of customerDetails
+/>
+
+
+                                        </div>
+                                        <div>
+                                            <button type="button"  className="btn btn-sm btn-outline-success" title="Add new customer" onClick={() => setShowAddCustomerModal(true)}>+ Add New customer</button>
+                                        </div>
+                                    </div>
+                                </div>
+
+
                                  {categoryId && (
                                 <div className="mb-2">
                                     
@@ -460,47 +479,33 @@ const buildMeasurementPayload = () => {
 
                             )}
                                 
-                                <div className="mb-2">
-                                    <label className="fw-bold mb-1">Customer</label>
-                                    <div className="d-flex gap-2 align-items-center">
-                                        <div style={{ flex: 1 }}>
-                                      <CustomerSelect
-    value={customerId}
-    onChange={setCustomerId}
-    newCustomer={addedCustomer} // <-- use this instead of customerDetails
-/>
+                              
 
-
-                                        </div>
-                                        <div>
-                                            <button type="button"  className="btn btn-sm btn-outline-success" title="Add new customer" onClick={() => setShowAddCustomerModal(true)}>+ Add New customer</button>
-                                        </div>
-                                    </div>
-                                </div>
-
-                    {measurements.length > 0 && (
-    <div className="card mt-2 p-2">
-        <h6 className="fw-bold mb-2">Measurements</h6>
-
-        {measurements.map((m) => (
-            <div key={m.id} className="mb-2">
-                <label className="form-label">{m.name}</label>
-                <input
-                    type="text"
-                    className="form-control form-control-sm"
-                    placeholder={`Enter ${m.name}`}
-                    value={measurementValues[m.id] || ""}
-                    onChange={(e) =>
-                        setMeasurementValues({
-                            ...measurementValues,
-                            [m.id]: e.target.value
-                        })
-                    }
-                />
-            </div>
-        ))}
+             {measurements.length > 0 && (
+  <div className="card mt-2 p-2">
+    <h6 className="fw-bold mb-2">Measurements</h6>
+    <div className="row">
+      {measurements.map((m, index) => (
+        <div key={m.id} className="col-md-4 mb-2"> {/* 3 columns per row */}
+          <label className="form-label">{m.name}</label>
+          <input
+            type="text"
+            className="form-control form-control-sm"
+            placeholder={`Enter ${m.name}`}
+            value={measurementValues[m.id] || ""}
+            onChange={(e) =>
+              setMeasurementValues({
+                ...measurementValues,
+                [m.id]: e.target.value,
+              })
+            }
+          />
+        </div>
+      ))}
     </div>
+  </div>
 )}
+
 
 
 
