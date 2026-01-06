@@ -6,6 +6,7 @@ use App\Models\Scopes\CurrentBranchScope;
 use App\Traits\BelongsToTenant;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use OwenIt\Auditing\Auditable;
 use OwenIt\Auditing\Contracts\Auditable as AuditableContracts;
@@ -15,6 +16,19 @@ class JournalEntry extends Model implements AuditableContracts
     use Auditable;
     use BelongsToTenant;
     use SoftDeletes;
+
+    protected static function booted()
+    {
+        // Clean up pivot table relationships when journal entry is soft deleted
+        static::deleted(function ($journalEntry) {
+            if ($journalEntry->isForceDeleting()) {
+                // Hard delete - foreign key cascade will handle it
+                return;
+            }
+            // Soft delete - manually remove pivot table relationships
+            $journalEntry->counterAccounts()->detach();
+        });
+    }
 
     protected $fillable = [
         'tenant_id',
@@ -72,6 +86,11 @@ class JournalEntry extends Model implements AuditableContracts
     public function account()
     {
         return $this->belongsTo(Account::class);
+    }
+
+    public function counterAccounts(): BelongsToMany
+    {
+        return $this->belongsToMany(Account::class, 'journal_entry_counter_accounts', 'journal_entry_id', 'counter_account_id')->withPivot('tenant_id');
     }
 
     public function tenant(): BelongsTo

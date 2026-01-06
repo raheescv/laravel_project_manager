@@ -4,6 +4,7 @@ namespace App\Actions\Journal;
 
 use App\Models\Journal;
 use App\Models\JournalEntry;
+use Illuminate\Support\Facades\DB;
 
 class UpdateAction
 {
@@ -17,6 +18,16 @@ class UpdateAction
 
             validationHelper(Journal::rules($id), $data);
             $model->update($data);
+
+            if (true) {
+                // Get entry IDs before deletion
+                $entryIds = $model->entries()->pluck('id')->toArray();
+
+                // Delete pivot table relationships for journal_entry_counter_accounts
+                if (! empty($entryIds)) {
+                    DB::table('journal_entry_counter_accounts')->where('tenant_id', $model->tenant_id)->whereIn('journal_entry_id', $entryIds)->delete();
+                }
+            }
 
             // Delete existing entries
             $model->entries()->delete();
@@ -44,6 +55,9 @@ class UpdateAction
             if ($entries) {
                 JournalEntry::insert($entries);
             }
+
+            // Sync counter accounts to pivot table
+            (new SyncCounterAccountsAction())->execute($model->id);
 
             $return['success'] = true;
             $return['message'] = 'Successfully Updated Journal';

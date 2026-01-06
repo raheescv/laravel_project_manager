@@ -70,8 +70,8 @@ class AccountViewExport implements FromCollection, WithColumnFormatting, WithEve
 
     protected function getOpeningBalanceQuery()
     {
-        return JournalEntry::with('account')
-            ->where('counter_account_id', $this->account->id)
+        return $this->getBaseQuery()
+            ->with('account')
             ->when($this->filters['from_date'] ?? '', function ($query, $value) {
                 return $query->where('date', '<', date('Y-m-d', strtotime($value)));
             })
@@ -95,10 +95,24 @@ class AccountViewExport implements FromCollection, WithColumnFormatting, WithEve
         return $collection;
     }
 
+    protected function getBaseQuery()
+    {
+        $accountId = $this->account->id;
+
+        return JournalEntry::where(function ($query) use ($accountId) {
+            // Check single counter_account_id (backward compatibility)
+            $query->where('counter_account_id', $accountId)
+                // Also check pivot table for multiple counter accounts
+                ->orWhereHas('counterAccounts', function ($q) use ($accountId) {
+                    $q->where('accounts.id', $accountId);
+                });
+        });
+    }
+
     protected function getTransactionsQuery()
     {
-        return JournalEntry::with(['account', 'journal'])
-            ->where('counter_account_id', $this->account->id)
+        return $this->getBaseQuery()
+            ->with(['account', 'journal', 'counterAccounts'])
             ->when($this->filters['search'] ?? '', function ($query, $value) {
                 return $query->where(function ($q) use ($value) {
                     $value = trim($value);
