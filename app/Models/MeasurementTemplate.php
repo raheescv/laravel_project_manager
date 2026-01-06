@@ -13,9 +13,7 @@ class MeasurementTemplate extends Model
     //     return $this->belongsTo(Category::class);
     // }
 
-    public function fields() {
-        return $this->hasMany(MeasurementField::class);
-    }
+  
     // Add relationship if needed
     public function category()
     {
