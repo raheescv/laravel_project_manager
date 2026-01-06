@@ -16,7 +16,7 @@
     <div class="content__boxed">
         <div class="content__wrap">
             <div class="card mb-3">
-                @livewire('sale.bookingtable')
+                @livewire('sale.BookingTable')
             </div>
         </div>
     </div>
