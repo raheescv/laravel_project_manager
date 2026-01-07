@@ -30,7 +30,8 @@ class MeasurementTemplateForm extends Component
 
     public function mount($category_id)
     {
-        $this->category_id = $category_id;
+       $category = MeasurementCategory::findOrFail($category_id);
+        $this->category_id = $category->id;
     }
 
     public function updatedSearch()
@@ -79,34 +80,32 @@ class MeasurementTemplateForm extends Component
 
     /* ================= SAVE ================= */
 
-    public function save($saveNew = false)
-    {
-        $this->validate([
-            'template_name' => 'required|string|max:255',
+   public function save($saveNew = false)
+{
+    $this->validate([
+        'template_name' => 'required|string|max:255',
+        'category_id' => 'required',
+    ]);
+
+    if ($this->template_id) {
+        MeasurementTemplate::where('id', $this->template_id)
+            ->update(['name' => $this->template_name]);
+    } else {
+        MeasurementTemplate::create([
+            'category_id' => $this->category_id,
+            'name' => $this->template_name,
         ]);
-
-        if ($this->template_id) {
-            MeasurementTemplate::where('id', $this->template_id)
-                ->update(['name' => $this->template_name]);
-
-            session()->flash('success', 'Template updated successfully.');
-        } else {
-            MeasurementTemplate::create([
-                'category_id' => $this->category_id,
-                'name' => $this->template_name,
-            ]);
-
-            session()->flash('success', 'Template added successfully.');
-        }
-
-        if ($saveNew) {
-            $this->reset(['template_name', 'template_id']);
-        } else {
-            $this->closeModal();
-        }
-
-        $this->resetPage();
     }
+
+    session()->flash('success', 'Template saved successfully.');
+
+    $saveNew
+        ? $this->reset(['template_name', 'template_id'])
+        : $this->closeModal();
+
+    $this->resetPage();
+}
+
 
     /* ================= SINGLE DELETE ================= */
 
