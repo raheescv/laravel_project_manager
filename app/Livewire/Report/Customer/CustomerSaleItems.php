@@ -63,6 +63,7 @@ class CustomerSaleItems extends Component
                 'sales.date',
                 'sales.invoice_no',
                 'accounts.name as customer',
+                'accounts.mobile as mobile',
                 'products.name as product',
                 'users.name as employee',
                 'sale_items.sale_id',

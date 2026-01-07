@@ -22,6 +22,7 @@
                             <th class="text-white">Date</th>
                             <th class="text-white">Invoice</th>
                             <th class="text-white">Customer</th>
+                            <th class="text-white">Mobile</th>
                             <th class="text-white">Employee</th>
                             <th class="text-white">Item</th>
                             <th class="text-white text-end">Quantity</th>
@@ -34,6 +35,7 @@
                                 <td>{{ systemDate($item->date) }}</td>
                                 <td> <a href="{{ route('sale::view', $item->sale_id) }}">{{ $item->invoice_no }} </a> </td>
                                 <td>{{ $item->customer }}</td>
+                                <td>{{ $item->mobile }}</td>
                                 <td>{{ $item->employee }}</td>
                                 <td>{{ $item->product }}</td>
                                 <td class="text-end">{{ number_format($item->quantity) }}</td>
@@ -43,7 +45,7 @@
                     </tbody>
                     <tfoot class="fw-bold bg-light">
                         <tr>
-                            <td colspan="5">Total</td>
+                            <td colspan="6">Total</td>
                             <td class="text-end">{{ number_format($totalQuantity) }}</td>
                             <td class="text-end">{{ currency($totalAmount) }}</td>
                         </tr>
