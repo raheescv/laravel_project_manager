@@ -38,7 +38,7 @@ class SaleController extends Controller
             ->get()
             ->toArray();
 
-        $employees = User::employee();
+        $employees = User::employee()->where('is_active', true);
         if ($showColleague == 'no' && Auth::user()->type == 'employee') {
             $employees = $employees->where('id', Auth::id());
         }
