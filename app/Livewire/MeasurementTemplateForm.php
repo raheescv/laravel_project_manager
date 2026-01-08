@@ -91,11 +91,14 @@ class MeasurementTemplateForm extends Component
         MeasurementTemplate::where('id', $this->template_id)
             ->update(['name' => $this->template_name]);
     } else {
-        MeasurementTemplate::create([
-            'category_id' => $this->category_id,
-            'name' => $this->template_name,
-        ]);
-    }
+    MeasurementTemplate::create([
+        'category_id' => Category::where('id', $this->category_id)->exists()
+            ? $this->category_id
+            : null,
+        'name' => $this->template_name,
+    ]);
+}
+
 
     session()->flash('success', 'Template saved successfully.');
 
