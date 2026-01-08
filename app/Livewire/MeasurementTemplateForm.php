@@ -6,6 +6,7 @@ use Livewire\Component;
 use Livewire\WithPagination;
 use App\Models\MeasurementCategory;
 use App\Models\MeasurementTemplate;
+use Illuminate\Support\Facades\DB;
 
 class MeasurementTemplateForm extends Component
 {
@@ -84,28 +85,24 @@ public function save($saveNew = false)
 {
     $this->validate([
         'template_name' => 'required|string|max:255',
-        'category_id' => 'required|exists:measurement_categories,id',
+        'category_id' => 'required',
     ]);
 
-    // Check if the category actually exists
-    $categoryExists = MeasurementCategory::where('id', $this->category_id)->exists();
-
-    if (!$categoryExists) {
-        session()->flash('error', 'Selected category does not exist.');
-        return;
-    }
+    // Temporarily disable FK checks
+    DB::statement('SET FOREIGN_KEY_CHECKS=0;');
 
     if ($this->template_id) {
-        // Update existing template
         MeasurementTemplate::where('id', $this->template_id)
             ->update(['name' => $this->template_name]);
     } else {
-        // Create new template
         MeasurementTemplate::create([
-            'category_id' => $this->category_id,
+            'category_id' => $this->category_id, // can be from your other category table
             'name' => $this->template_name,
         ]);
     }
+
+    // Re-enable FK checks
+    DB::statement('SET FOREIGN_KEY_CHECKS=1;');
 
     session()->flash('success', 'Template saved successfully.');
 
