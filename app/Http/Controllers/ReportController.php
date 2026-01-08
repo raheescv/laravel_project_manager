@@ -50,6 +50,13 @@ class ReportController extends Controller
         return view('report.sales_overview');
     }
 
+    public function booking_overview()
+    {
+
+      
+        return view('report.booking_overview');
+    }
+
     public function sale_calendar()
     {
         return view('report.sale_calendar');
