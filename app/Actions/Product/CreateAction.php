@@ -44,6 +44,9 @@ class CreateAction
             if ($data['type'] == 'service' || empty($data['barcode'])) {
                 $data['barcode'] = generateBarcode();
             }
+            if (!isset($data['code']) || empty($data['code'])) {
+                $data['code'] = Product::generateUniqueCode();
+            }
             validationHelper(Product::rules($data), $data);
             $user_id = $data['created_by'] = $data['updated_by'] = $user_id;
             $trashedExists = Product::onlyTrashed()->firstWhere('name', $data['name']);
