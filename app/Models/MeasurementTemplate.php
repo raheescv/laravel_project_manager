@@ -8,20 +8,11 @@ class MeasurementTemplate extends Model
 {
     protected $fillable = ['category_id', 'name'];
 
-    //  public function category()
-    // {
-    //     return $this->belongsTo(Category::class);
-    // }
-
+    
   
-    // Add relationship if needed
-    public function category()
-    {
-
-
-        return $this->belongsTo(MeasurementCategory::class, 'category_id');
-   
-
-     }
+    // public function category()
+    // {
+    //     return $this->belongsTo(MeasurementCategory::class, 'category_id');
+    // }
 
 }
