@@ -92,7 +92,7 @@ class MeasurementTemplateForm extends Component
             ->update(['name' => $this->template_name]);
     } else {
     MeasurementTemplate::create([
-        'category_id' => Category::where('id', $this->category_id)->exists()
+        'category_id' => MeasurementCategory::where('id', $this->category_id)->exists()
             ? $this->category_id
             : null,
         'name' => $this->template_name,
