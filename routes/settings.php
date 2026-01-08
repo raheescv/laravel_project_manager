@@ -13,67 +13,139 @@ use App\Http\Controllers\Settings\CountryController;
 use App\Http\Controllers\Settings\CustomerTypeController;
 use App\Http\Controllers\Settings\DepartmentController;
 use App\Http\Controllers\Settings\UnitController;
+use App\Http\Controllers\Settings\MeasurementCategoryController;
+use App\Http\Controllers\Settings\MeasurementSubCategoryController;
+
 use App\Http\Controllers\SettingsController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware('auth')->group(function (): void {
 
-    Route::name('settings::')->prefix('settings')->controller(SettingsController::class)->group(function (): void {
-        Route::get('', 'index')->name('index')->can('configuration.settings');
-        Route::name('category::')->prefix('category')->controller(CategoryController::class)->group(function (): void {
+    Route::name('settings::')
+        ->prefix('settings')
+        ->controller(SettingsController::class)
+        ->group(function (): void {
+
+        Route::get('', 'index')
+            ->name('index')
+            ->can('configuration.settings');
+
+        /* ================= CATEGORY ================= */
+        Route::name('category::')
+            ->prefix('category')
+            ->controller(CategoryController::class)
+            ->group(function (): void {
+
             Route::get('', 'index')->name('index')->can('category.view');
             Route::get('list', 'get')->name('list');
+
+            // Measurement inside Category (customer measurements)
+            Route::get('measurements', 'measurements')->name('measurements')->can('category.view');
+            Route::get('measurements/data', 'measurementdata')->name('measurements.data')->can('category.view');
+            Route::post('measurements/save', 'storeMeasurements')->name('measurements.save')->can('category.edit');
+            Route::delete('measurement/delete/{id}', 'deleteMeasurement')->name('measurement.delete')->can('category.delete');
+            Route::get('measurement/edit/{customer}/{category}', 'editMeasurement')
+                ->name('measurement.edit')
+                ->can('category.edit');
         });
-        Route::name('account_category::')->prefix('account_category')->controller(AccountCategoryController::class)->group(function (): void {
-            Route::get('', 'index')->name('index')->can('account category.view');
+
+        /* ========== MEASUREMENT CATEGORY (FIXED) ========== */
+        Route::name('measurement_category::')
+            ->prefix('measurement_category')
+            ->controller(MeasurementCategoryController::class)
+            ->group(function (): void {
+
+            Route::get('', 'index')->name('index')->can('category.view');
             Route::get('list', 'get')->name('list');
+            Route::post('store', 'store')->name('store')->can('category.create');
+            Route::put('update/{id}', 'update')->name('update')->can('category.edit');
+            Route::delete('delete/{id}', 'destroy')->name('delete')->can('category.delete');
+            Route::get('measurements', 'measurements')->name('measurements')->can('category.view');
+             Route::get('{id}/add_field', 'addMeasurementField')
+            ->name('add_field')
+            ->can('category.edit');
         });
-        Route::name('unit::')->prefix('unit')->controller(UnitController::class)->group(function (): void {
-            Route::get('', 'index')->name('index')->can('unit.view');
-            Route::get('list', 'get')->name('list');
-        });
-        Route::name('branch::')->prefix('branch')->controller(BranchController::class)->group(function (): void {
-            Route::get('', 'index')->name('index')->can('branch.view');
-            Route::get('list', 'get')->name('list');
-            Route::get('assigned-list', 'fetch')->name('assigned-list');
-        });
-        Route::name('department::')->prefix('department')->controller(DepartmentController::class)->group(function (): void {
-            Route::get('', 'index')->name('index')->can('department.view');
-            Route::get('list', 'get')->name('list');
-        });
-        Route::name('roles::')->prefix('roles')->controller(RoleController::class)->group(function (): void {
-            Route::get('', 'index')->name('index')->can('role.view');
-            Route::get('{id}/permissions', 'permissions')->name('permission')->can('role.permissions');
-        });
-        Route::name('country::')->prefix('country')->controller(CountryController::class)->group(function (): void {
-            Route::get('', 'index')->name('index')->can('service.view');
-            Route::get('list', 'get')->name('list');
-        });
-        Route::name('customer_type::')->prefix('customer_type')->controller(CustomerTypeController::class)->group(function (): void {
-            Route::get('', 'index')->name('index')->can('customer type.view');
-            Route::get('list', 'get')->name('list');
-        });
-        Route::name('brand::')->prefix('brand')->controller(BrandController::class)->group(function (): void {
-            Route::get('', 'index')->name('index')->can('brand.view');
-            Route::get('list', 'get')->name('list');
-        });
-        Route::name('package_category::')->prefix('package-category')->controller(PackageCategoryController::class)->group(function (): void {
-            Route::get('', 'index')->name('index')->can('package category.view');
-            Route::get('list', 'get')->name('list');
-        });
+
+        Route::name('measurement_sub_category::')
+    ->prefix('measurement_sub_category')
+    ->controller(MeasurementSubCategoryController::class)
+    ->group(function (): void {
+
+        Route::get('', 'index')->name('index')->can('category.view');
+        Route::get('list', 'get')->name('list');
+        Route::post('store', 'store')->name('store')->can('category.create');
+        Route::put('update/{id}', 'update')->name('update')->can('category.edit');
+        Route::delete('delete/{id}', 'destroy')->name('delete')->can('category.delete');
     });
+
+        /* ================= OTHER SETTINGS ================= */
+        Route::name('account_category::')->prefix('account_category')->controller(AccountCategoryController::class)
+            ->group(fn () => [
+                Route::get('', 'index')->name('index')->can('account category.view'),
+                Route::get('list', 'get')->name('list'),
+            ]);
+
+        Route::name('unit::')->prefix('unit')->controller(UnitController::class)
+            ->group(fn () => [
+                Route::get('', 'index')->name('index')->can('unit.view'),
+                Route::get('list', 'get')->name('list'),
+            ]);
+
+        Route::name('branch::')->prefix('branch')->controller(BranchController::class)
+            ->group(fn () => [
+                Route::get('', 'index')->name('index')->can('branch.view'),
+                Route::get('list', 'get')->name('list'),
+                Route::get('assigned-list', 'fetch')->name('assigned-list'),
+            ]);
+
+        Route::name('department::')->prefix('department')->controller(DepartmentController::class)
+            ->group(fn () => [
+                Route::get('', 'index')->name('index')->can('department.view'),
+                Route::get('list', 'get')->name('list'),
+            ]);
+
+        Route::name('roles::')->prefix('roles')->controller(RoleController::class)
+            ->group(fn () => [
+                Route::get('', 'index')->name('index')->can('role.view'),
+                Route::get('{id}/permissions', 'permissions')->name('permission')->can('role.permissions'),
+            ]);
+
+        Route::name('country::')->prefix('country')->controller(CountryController::class)
+            ->group(fn () => [
+                Route::get('', 'index')->name('index')->can('service.view'),
+                Route::get('list', 'get')->name('list'),
+            ]);
+
+        Route::name('customer_type::')->prefix('customer_type')->controller(CustomerTypeController::class)
+            ->group(fn () => [
+                Route::get('', 'index')->name('index')->can('customer type.view'),
+                Route::get('list', 'get')->name('list'),
+            ]);
+
+        Route::name('brand::')->prefix('brand')->controller(BrandController::class)
+            ->group(fn () => [
+                Route::get('', 'index')->name('index')->can('brand.view'),
+                Route::get('list', 'get')->name('list'),
+            ]);
+    });
+
+    /* ================= PRODUCT ================= */
     Route::name('product::')->prefix('product')->controller(ProductController::class)->group(function (): void {
         Route::get('', 'index')->name('index')->can('product.view');
         Route::get('create', 'page')->name('create')->can('product.create');
         Route::get('edit/{id}', 'page')->name('edit')->can('product.view');
         Route::get('list', 'get')->name('list');
     });
+
+    /* ================= SERVICE ================= */
     Route::name('service::')->prefix('service')->controller(ServiceController::class)->group(function (): void {
         Route::get('', 'index')->name('index')->can('service.view');
         Route::get('create', 'page')->name('create')->can('service.create');
         Route::get('edit/{id}', 'page')->name('edit')->can('service.edit');
         Route::get('list', 'get')->name('list');
     });
+
+    /* ================= COMBO OFFER ================= */
     Route::name('combo_offer::')->prefix('combo_offer')->controller(ComboOfferController::class)->group(function (): void {
         Route::get('', 'index')->name('index')->can('combo offer.view');
         Route::get('list', 'get')->name('list');

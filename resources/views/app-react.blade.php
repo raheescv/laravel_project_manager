@@ -21,6 +21,7 @@
     <link rel="stylesheet" href="{{ https_asset('css/theme-helper.css') }}">
     <link rel="stylesheet" href="{{ https_asset('assets/vendors/tom-select/tom-select.min.css') }}">
     <link rel="stylesheet" href="{{ https_asset('assets/vendors/toaster/toastr.min.css') }}">
+      <link rel="stylesheet" href="{{ asset('assets/pos/pos.css') }}">
 
     @viteReactRefresh
     @php

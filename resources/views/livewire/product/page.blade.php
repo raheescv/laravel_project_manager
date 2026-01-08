@@ -88,6 +88,16 @@
                                     </label>
                                     {{ html()->select('main_category_id', [])->value('')->class('select-category_id-parent border-primary-subtle shadow-sm')->placeholder('Select Main Category')->id('main_category_id') }}
                                 </div>
+                                
+
+                              
+
+                 
+
+
+
+
+                                
 
                                 <div class="col-md-4" wire:ignore>
                                     <label for="sub_category_id" class="form-label fw-medium">
@@ -104,6 +114,9 @@
                                     </label>
                                     {{ html()->select('unit_id', $units)->value('')->class('tomSelect border-primary-subtle shadow-sm')->placeholder('Select your unit')->id('unit_id')->attribute('wire:model', 'products.unit_id') }}
                                 </div>
+
+
+
                                 @if ($type == 'product')
                                     <div class="col-md-4" wire:ignore>
                                         <label for="unit_id" class="form-label fw-medium">
@@ -150,6 +163,15 @@
                                         </div>
                                     </div>
                                 @endif
+                                {{-- RAW MATERIALS SECTION --}}
+@if($type == 'product')
+<div class="col-12">
+    <div class="card bg-light border-0 rounded-3 mt-3">
+       
+    </div>
+</div>
+@endif
+
 
                                 @if ($type == 'product')
                                     @if ($barcode_type == 'product_wise')
@@ -489,6 +511,22 @@
                                                         </button>
                                                     </li>
                                                 @endif
+
+                                                @if ($type == 'product')
+<li class="nav-item" role="presentation">
+    <button
+        class="nav-link @if ($selectedTab == 'RelatedProducts') active show @endif d-flex align-items-center gap-2"
+        data-bs-toggle="tab"
+        wire:click="tabSelect('RelatedProducts')"
+        data-bs-target="#tabRelatedProducts"
+        type="button"
+        role="tab">
+        <i class="fa fa-link text-secondary"></i>
+        Raw materials
+    </button>
+</li>
+@endif
+
                                                 @if ($type == 'product')
                                                     <li class="nav-item" role="presentation">
                                                         <button class="nav-link @if ($selectedTab == 'Attributes') active @endif d-flex align-items-center gap-2" data-bs-toggle="tab"
@@ -591,6 +629,87 @@
                                                         </div>
                                                     </div>
                                                 @endif
+                                                @if ($type == 'product')
+<div id="tabRelatedProducts"
+     class="tab-pane fade @if ($selectedTab == 'RelatedProducts') active show @endif"
+     role="tabpanel">
+
+    <div class="row g-2 mb-3">
+        <h5 class="card-title">Raw materials</h5>
+
+        <div class="col-md-2">
+            <button type="button"
+                    class="btn btn-primary w-100"
+                    wire:click="addRawMaterial">
+                <i class="fa fa-plus"></i> Add
+            </button>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-body">
+            <div class="table-responsive">
+
+                <table class="table table-bordered align-middle">
+                    <thead>
+                        <tr>
+                            <th width="50%">Product</th>
+                            <th width="25%">Quantity</th>
+                            <th width="10%">Action</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        @forelse ($raw_materials as $index => $rm)
+                            <tr>
+                                <!-- PRODUCT DROPDOWN -->
+                                <td>
+                                    <select class="form-select"
+                                        wire:model="raw_materials.{{ $index }}.name">
+                                        <option value="">Select Product</option>
+                                        @foreach ($allProducts as $id => $name)
+                                            <option value="{{ $id }}">
+                                                {{ $name }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                </td>
+
+                                <!-- QUANTITY -->
+                                <td>
+                                   <input type="number"
+       min="0"
+       step="any"
+       class="form-control"
+       name="raw_materials[{{ $index }}][price]"
+       wire:model="raw_materials.{{ $index }}.price">
+
+                                </td>
+
+                                <!-- DELETE -->
+                                <td class="text-center">
+                                    <i class="fa fa-trash text-danger pointer"
+                                       wire:click="removeRawMaterial({{ $index }})">
+                                    </i>
+                                </td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="3" class="text-center text-muted">
+                                    No raw material  added
+                                </td>
+                            </tr>
+                        @endforelse
+                    </tbody>
+
+                </table>
+
+            </div>
+        </div>
+    </div>
+</div>
+@endif
+
                                                 @if ($type == 'product')
                                                     <div id="tabAttributes" class="tab-pane fade @if ($selectedTab == 'Attributes') active show @endif" role="tabpanel">
                                                         <div class="row g-3 ">

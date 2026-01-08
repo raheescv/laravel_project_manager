@@ -1,9 +1,14 @@
-import '../bootstrap'; // axios + csrf handled here
+import "../bootstrap"; // axios + csrf handled here
 import { createRoot } from "react-dom/client";
 import { createInertiaApp } from "@inertiajs/react";
-import React from "react"; // <--- Add this
+import React from "react";
+
+/* 🔔 Toast imports */
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+
 createInertiaApp({
-    resolve: name => {
+    resolve: (name) => {
         // Auto-load all React pages inside resources/js/react/Pages
         const pages = import.meta.glob("./Pages/**/*.jsx");
 
@@ -15,7 +20,22 @@ createInertiaApp({
     },
 
     setup({ el, App, props }) {
-        createRoot(el).render(<App {...props} />);
+        createRoot(el).render(
+            <>
+                <App {...props} />
+
+                {/* ✅ GLOBAL TOASTER (ONLY ONCE) */}
+                <ToastContainer
+                    position="top-right"
+                    autoClose={3000}
+                    hideProgressBar={false}
+                    newestOnTop
+                    closeOnClick
+                    pauseOnHover
+                    draggable
+                />
+            </>
+        );
     },
 
     progress: {

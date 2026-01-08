@@ -5,6 +5,7 @@ namespace App\Actions\Sale;
 use App\Models\Sale;
 use App\Models\User;
 use Exception;
+use Illuminate\Support\Facades\Log;
 
 class CreateAction
 {
@@ -14,6 +15,9 @@ class CreateAction
 
     public function execute($data, $userId)
     {
+
+      
+
         $this->userId = $userId;
         try {
             $data['branch_id'] = $data['branch_id'] ?? session('branch_id');

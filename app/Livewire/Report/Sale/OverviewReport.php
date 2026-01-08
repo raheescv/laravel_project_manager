@@ -312,21 +312,16 @@ class OverviewReport extends Component
                 $query->where('users.name', 'like', '%'.trim($this->employeeSearch).'%');
             });
 
-        return [
-            'employeeQuantity' => $totalEmployees->sum('sale_items.quantity'),
-            'employeeTotal' => $totalEmployees->sum('sale_items.total'),
-        ];
-    }
+                $productSale = clone $totalProducts;
+        $productSale = $productSale
+            ->where('products.type', 'product')
+            ->sum('sale_items.total');
 
-    private function calculateProductStats(callable $baseQuery, callable $baseReturnQuery): array
-    {
-        $totalProducts = SaleItem::query()
-            ->join('sales', 'sales.id', '=', 'sale_items.sale_id')
-            ->join('products', 'products.id', '=', 'sale_items.product_id')
-            ->tap($baseQuery)
-            ->when($this->productSearch, function ($query) {
-                $query->where('products.name', 'like', '%'.trim($this->productSearch).'%');
-            });
+        $serviceSale = clone $totalProducts;
+        $serviceSale = $serviceSale
+            ->where('products.type', 'service')
+            ->sum('sale_items.total');
+
 
         $totalReturnedProducts = SaleReturnItem::query()
             ->join('sale_returns', 'sale_returns.id', '=', 'sale_return_items.sale_return_id')

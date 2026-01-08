@@ -26,6 +26,11 @@ class Sale extends Model implements AuditableContracts
         'invoice_no',
         'reference_no',
         'sale_type',
+        'category_id',
+        'service_charge',
+        'sub_category_id',
+        'width',
+        'size',
 
         'branch_id',
         'account_id',
@@ -56,6 +61,7 @@ class Sale extends Model implements AuditableContracts
         'feedback',
 
         'status',
+        'type', 
 
         'created_by',
         'updated_by',
@@ -115,6 +121,15 @@ class Sale extends Model implements AuditableContracts
     public function scopeToday($query)
     {
         return $query->where('date', date('Y-m-d'));
+    }
+
+
+        public function subCategory()
+    {
+        return $this->belongsTo(
+            \App\Models\MeasurementSubCategory::class,
+            'sub_category_id'
+        );
     }
 
     public function scopeCurrentBranch($query)

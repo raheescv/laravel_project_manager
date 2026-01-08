@@ -13,6 +13,7 @@ Route::middleware('auth')->group(function (): void {
 
     Route::name('sale::')->prefix('sale')->controller(SaleController::class)->group(function (): void {
         Route::get('', 'index')->name('index')->can('sale.view');
+          Route::get('bookings', 'booking')->name('booking')->can('sale.booking');
 
         // Routes that require an open day session
         Route::middleware([RequireOpenDaySession::class])->group(function (): void {
@@ -21,11 +22,20 @@ Route::middleware('auth')->group(function (): void {
             Route::get('pos/{id?}', 'posPage')->name('pos')->can('sale.create');
             Route::get('pos/{id}', 'posPage')->name('pos.edit')->can('sale.edit');
             Route::get('edit/{id}', 'page')->name('edit')->can('sale.edit');
+             Route::get('create-booking', 'create_booking')
+            ->name('create_booking') // ✅ unique name
+            ->can('sale.booking_create');
+
+              Route::get('edit-booking/{id}', 'edit_booking')
+            ->name('edit_booking') // ✅ unique name
+            ->can('sale.booking_edit');
         });
 
         Route::get('view/{id}', 'view')->name('view')->can('sale.view');
+         Route::get('view-booking/{id}', 'view_booking')->name('view_booking')->can('sale.booking_view');
         Route::get('invoices', 'get')->name('invoice-list');
         Route::get('receipts', 'receipts')->name('receipts')->can('sale.receipts');
+         Route::get('booking-receipts', 'booking_receipts')->name('booking_receipts')->can('sale.booking_receipts');
 
         Route::get('day-management', 'dayManagement')->name('day-management')->can('sale.view');
         Route::get('day-session/{id}', 'daySession')->name('day-session')->can('sale.view');
@@ -37,13 +47,40 @@ Route::middleware('auth')->group(function (): void {
         Route::get('edit/{id}', 'page')->name('edit')->can('sales return.edit');
         Route::get('view/{id}', 'view')->name('view')->can('sales return.view');
         Route::get('payments', 'payments')->name('payments')->can('sales return.payments');
+       Route::get('create-booking', 'create_booking')
+            ->name('create_booking') // ✅ unique name
+            ->can('sales return.create');
+        
+
     });
 
     Route::prefix('products')->name('api.products.')->group(function (): void {
         Route::get('/', [POSController::class, 'getProducts'])->name('index');
+          Route::get('/book', [POSController::class, 'getProductsbook'])->name('product.book');
         Route::get('search', [ProductController::class, 'index'])->name('search');
         Route::get('by-barcode', [POSController::class, 'getProductByBarcode'])->name('by-barcode');
     });
+
+
+     Route::prefix('employees')->name('api.employees.')->group(function (): void {
+        Route::get('/employee', [POSController::class, 'getEmployee'])->name('emploeelist');
+        Route::get('/employeeedit', [POSController::class, 'getEmployeeedit'])->name('emploeelistedit');
+      
+    });
+      Route::prefix('categories')->name('api.categories.')->group(function () {
+    Route::get('/categorie', [POSController::class, 'getmeasuremetcategory'])->name('categorielist');
+    Route::get('/countries', [POSController::class, 'getCountries'])->name('countrieslist');
+    Route::get('/categories/measurement/{id}/subcategories', [POSController::class, 'getSubCategories']);
+
+    Route::get('/measurements/{categoryId}', 
+        [POSController::class, 'getMeasurementTemplates']
+    )->name('measurements');
+
+    Route::get('/measurementscustomer/{customerId}/{categoryId}', 
+        [POSController::class, 'getCustomerMeasurements']
+    )->name('measurements.customer');
+});
+
 
     // Customer Management
     Route::prefix('customers')->name('api.customers.')->group(function (): void {

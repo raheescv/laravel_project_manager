@@ -13,6 +13,7 @@ Route::middleware('auth')->group(function (): void {
     Route::name('report::')->prefix('report')
         ->controller(ReportController::class)->group(function (): void {
             Route::get('sale_item', 'sale_item')->name('sale_item');
+             Route::get('sale_booking_item', 'sale_booking_item')->name('sale_booking_item');
             Route::get('sale_return_item', 'sale_return_item')->name('sale_return_item');
             Route::get('sale_mixed_items', 'sale_mixed_items')->name('sale_mixed_items');
             Route::get('purchase_item', 'purchase_item')->name('purchase_item');
@@ -20,6 +21,7 @@ Route::middleware('auth')->group(function (): void {
             Route::get('day_book', 'day_book')->name('day_book');
             Route::get('sale_summary', 'sale_summary')->name('sale_summary')->can('report.sale summary');
             Route::get('sales_overview', 'sales_overview')->name('sales_overview')->can('report.sales overview');
+             Route::get('booking_overview', 'booking_overview')->name('booking_overview')->can('report.sales overview');
             Route::get('sale_calendar', 'sale_calendar')->name('sale_calendar')->can('report.sale calendar');
             Route::get('profit_loss', 'profit_loss')->name('profit_loss')->can('report.profit loss');
             Route::get('trial_balance', 'trial_balance')->name('trial_balance')->can('report.trial balance');

@@ -65,6 +65,14 @@
                                             <i class="fa fa-bar-chart fs-5 me-2"></i>Sales Overview
                                         </a>
                                     @endcan
+
+                                     @can('report.sales overview')
+                                        <a href="{{ route('report::booking_overview') }}" class="list-group-item list-group-item-action">
+                                         <i class="fa fa-bar-chart fs-5 me-2"></i> Booking Overview
+
+
+                                        </a>
+                                    @endcan
                                     @can('report.sale and sales return items')
                                         <a href="{{ route('report::sale_mixed_items') }}" class="list-group-item list-group-item-action">
                                             <i class="fa fa-bar-chart fs-5 me-2"></i>Sale & Sales Return Items
@@ -185,6 +193,22 @@
                                             <i class="fa fa-folder fs-5 me-2"></i>Category
                                         </a>
                                     @endcan
+
+                                     @can('category.view')
+                                        <a href="{{ route('settings::measurement_category::index') }}" class="list-group-item list-group-item-action">
+                                            <i class="fa fa-folder fs-5 me-2"></i>Measurement Category
+                                        </a>
+                                    @endcan
+
+                                    @can('category.view')
+                                        <a href="{{ route('settings::measurement_sub_category::index') }}" class="list-group-item list-group-item-action">
+                                            <i class="fa fa-folder fs-5 me-2"></i>Model
+                                        </a>
+                                    @endcan
+
+                                  
+
+                                   
                                     @can('account category.view')
                                         <a href="{{ route('settings::account_category::index') }}" class="list-group-item list-group-item-action">
                                             <i class="fa fa-folder-open fs-5 me-2"></i>Account Category
