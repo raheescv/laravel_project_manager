@@ -80,25 +80,32 @@ class MeasurementTemplateForm extends Component
 
     /* ================= SAVE ================= */
 
-   public function save($saveNew = false)
+public function save($saveNew = false)
 {
     $this->validate([
         'template_name' => 'required|string|max:255',
-        'category_id' => 'required',
+        'category_id' => 'required|exists:measurement_categories,id',
     ]);
 
+    // Check if the category actually exists
+    $categoryExists = MeasurementCategory::where('id', $this->category_id)->exists();
+
+    if (!$categoryExists) {
+        session()->flash('error', 'Selected category does not exist.');
+        return;
+    }
+
     if ($this->template_id) {
+        // Update existing template
         MeasurementTemplate::where('id', $this->template_id)
             ->update(['name' => $this->template_name]);
     } else {
-    MeasurementTemplate::create([
-        'category_id' => MeasurementCategory::where('id', $this->category_id)->exists()
-            ? $this->category_id
-            : null,
-        'name' => $this->template_name,
-    ]);
-}
-
+        // Create new template
+        MeasurementTemplate::create([
+            'category_id' => $this->category_id,
+            'name' => $this->template_name,
+        ]);
+    }
 
     session()->flash('success', 'Template saved successfully.');
 
@@ -108,6 +115,7 @@ class MeasurementTemplateForm extends Component
 
     $this->resetPage();
 }
+
 
 
     /* ================= SINGLE DELETE ================= */
