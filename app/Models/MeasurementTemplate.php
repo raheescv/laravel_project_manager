@@ -10,9 +10,9 @@ class MeasurementTemplate extends Model
 
     
   
-    // public function category()
-    // {
-    //     return $this->belongsTo(MeasurementCategory::class, 'category_id');
-    // }
+    public function category()
+    {
+        return $this->belongsTo(MeasurementCategory::class, 'category_id');
+    }
 
 }
