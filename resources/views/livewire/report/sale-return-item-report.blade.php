@@ -32,7 +32,7 @@
                 </div>
                 <div class="col-md-3" wire:ignore>
                     <label for="branch_id">Branch</label>
-                    {{ html()->select('branch_id', [auth()->user()->default_branch_id => auth()->user()->branch?->name])->value(auth()->user()->default_branch_id)->class('select-assigned-branch_id-list')->id('branch_id')->placeholder('All') }}
+                    {{ html()->select('branch_id', [session('branch_id') => session('branch_name')])->class('select-assigned-branch_id-list')->id('branch_id')->placeholder('All') }}
                 </div>
                 <div class="col-md-5" wire:ignore>
                     <label for="product_id">Product</label>

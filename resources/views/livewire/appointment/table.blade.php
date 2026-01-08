@@ -49,7 +49,7 @@
             </div>
             <div class="col-md-3" wire:ignore>
                 <b><label for="branch_id">Branch</label></b>
-                {{ html()->select('branch_id', [auth()->user()->default_branch_id => auth()->user()->branch?->name])->value(auth()->user()->default_branch_id)->class('select-assigned-branch_id-list')->id('branch_id')->placeholder('All') }}
+                {{ html()->select('branch_id', [session('branch_id') => session('branch_name')])->class('select-assigned-branch_id-list')->id('branch_id')->placeholder('All') }}
             </div>
         </div>
         <div class="row my-2 mb-3">
