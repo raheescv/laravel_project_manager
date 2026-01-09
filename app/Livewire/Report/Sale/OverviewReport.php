@@ -109,7 +109,7 @@ class OverviewReport extends Component
         $saleReturnPayments = $this->getSaleReturnPaymentsQuery($baseReturnQuery);
         $payments = $this->getPaymentsQuery($baseQuery);
 
-        $totals = $this->calculateTotals($sales, $saleReturns, $payments, $baseQuery, $baseReturnQuery);
+        $totals = $this->calculateTotals($sales, $saleReturns, $payments);
         $employeeStats = $this->calculateEmployeeStats($baseQuery);
         $productStats = $this->calculateProductStats($baseQuery, $baseReturnQuery);
 
@@ -238,6 +238,7 @@ class OverviewReport extends Component
             )
             ->selectRaw("'sale' as payment_type")
             ->selectRaw('SUM(sale_payments.amount) as total')
+            ->selectRaw('COUNT(DISTINCT sale_payments.sale_id) as transaction_count')
             ->groupBy('sale_payments.payment_method_id', 'branches.name')
             ->orderBy('total', 'desc')
             ->get();
@@ -273,33 +274,78 @@ class OverviewReport extends Component
             ->pluck('total', 'payment_method');
     }
 
-    private function calculateTotals($sales, $saleReturns, $payments, callable $baseQuery, callable $baseReturnQuery): array
+    private function calculateTotals($sales, $saleReturns, $payments): array
     {
-        $netSales = $sales->sum('gross_amount');
-        $saleDiscount = $sales->sum('other_discount');
-        $noOfSales = $sales->count();
-        $noOfSalesReturns = $saleReturns->count();
-        $totalSales = $sales->sum('total');
-        $totalSalesReturn = $saleReturns->sum('grand_total');
-        $totalPayment = $payments->sum();
+        $salesMetrics = $this->calculateSalesMetrics($sales);
+        $saleReturnMetrics = $this->calculateSaleReturnMetrics($saleReturns);
+        $paymentMethods = $this->calculatePaymentMethods($sales, $payments);
 
-        $paymentMethods = [];
-        $paymentMethods['Credit'] = $sales->sum('balance');
+        return array_merge(
+            $salesMetrics,
+            $saleReturnMetrics,
+            [
+                'totalPayment' => $payments->sum(),
+                'credit' => $paymentMethods['Credit'] ?? 0,
+                'paymentMethods' => $paymentMethods,
+            ]
+        );
+    }
+
+    private function calculateSalesMetrics($sales): array
+    {
+        $metrics = (clone $sales)
+            ->selectRaw('
+                COALESCE(SUM(gross_amount), 0) as gross_sales,
+                COALESCE(SUM(grand_total), 0) as net_sales,
+                COALESCE(SUM(total), 0) as total_sales,
+                COALESCE(SUM(balance), 0) as sale_balance,
+                COALESCE(SUM(other_discount), 0) + COALESCE(SUM(item_discount), 0) as sale_discount,
+                COUNT(CASE WHEN balance > 0 THEN 1 END) as sale_balance_count,
+                COUNT(*) as no_of_sales
+            ')
+            ->first();
+
+        return [
+            'grossSales' => (float) $metrics->gross_sales,
+            'netSales' => (float) $metrics->net_sales,
+            'totalSales' => (float) $metrics->total_sales,
+            'saleBalance' => (float) $metrics->sale_balance,
+            'saleDiscount' => (float) $metrics->sale_discount,
+            'saleBalanceCount' => (int) $metrics->sale_balance_count,
+            'noOfSales' => (int) $metrics->no_of_sales,
+        ];
+    }
+
+    private function calculateSaleReturnMetrics($saleReturns): array
+    {
+        $metrics = (clone $saleReturns)
+            ->selectRaw('
+                COALESCE(SUM(grand_total), 0) as total_sales_return,
+                COALESCE(SUM(balance), 0) as sale_return_balance,
+                COUNT(CASE WHEN balance > 0 THEN 1 END) as sale_return_balance_count,
+                COUNT(*) as no_of_sales_returns
+            ')
+            ->first();
+
+        return [
+            'totalSalesReturn' => (float) $metrics->total_sales_return,
+            'saleReturnBalance' => (float) $metrics->sale_return_balance,
+            'saleReturnBalanceCount' => (int) $metrics->sale_return_balance_count,
+            'noOfSalesReturns' => (int) $metrics->no_of_sales_returns,
+        ];
+    }
+
+    private function calculatePaymentMethods($sales, $payments): array
+    {
+        $paymentMethods = [
+            'Credit' => $sales->sum('balance') ?? 0,
+        ];
+
         foreach ($payments as $title => $amount) {
             $paymentMethods[$title] = $amount;
         }
 
-        return [
-            'netSales' => $netSales,
-            'saleDiscount' => $saleDiscount,
-            'noOfSales' => $noOfSales,
-            'noOfSalesReturns' => $noOfSalesReturns,
-            'totalSales' => $totalSales,
-            'totalSalesReturn' => $totalSalesReturn,
-            'totalPayment' => $totalPayment,
-            'credit' => $paymentMethods['Credit'],
-            'paymentMethods' => $paymentMethods,
-        ];
+        return $paymentMethods;
     }
 
     private function calculateEmployeeStats(callable $baseQuery): array
