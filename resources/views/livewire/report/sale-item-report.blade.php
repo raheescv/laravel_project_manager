@@ -81,7 +81,7 @@
     </div>
     <div class="card-body px-0 pb-0">
         <div class="table-responsive">
-            <table class="table table-striped table-hover align-middle mb-0 border-bottom">
+            <table class="table table-striped table-hover table-sm align-middle mb-0 border-bottom">
                 <thead class="bg-light text-nowrap">
                     <tr>
                         <th class="ps-3"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="sale_items.id" label="#" /> </th>
@@ -97,7 +97,7 @@
                         <th class="text-nowrap text-end"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="net_amount" label="net amount" /> </th>
                         <th class="text-nowrap text-end"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="tax_amount" label="tax amount" /> </th>
                         <th class="text-nowrap text-end"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="total" label="total" /> </th>
-                        <th class="text-nowrap text-end"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="effective_total" label="effective total" /> </th>
+                        <th class="text-nowrap text-end">Effective Total</th>
                     </tr>
                 </thead>
                 <tbody>
