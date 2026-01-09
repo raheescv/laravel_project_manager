@@ -44,7 +44,7 @@ class CreateAction
             if ($data['type'] == 'service' || empty($data['barcode'])) {
                 $data['barcode'] = generateBarcode();
             }
-            if (!isset($data['code']) || empty($data['code'])) {
+            if (! isset($data['code']) || empty($data['code'])) {
                 $data['code'] = Product::generateUniqueCode();
             }
             validationHelper(Product::rules($data), $data);
