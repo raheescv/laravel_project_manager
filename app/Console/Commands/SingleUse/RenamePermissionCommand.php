@@ -136,4 +136,3 @@ class RenamePermissionCommand extends Command
         return 0;
     }
 }
-

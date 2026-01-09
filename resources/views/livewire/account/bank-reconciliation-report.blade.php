@@ -90,15 +90,41 @@
                 </div>
             </div>
             <div class="card-body">
-                <div class="d-flex justify-content-between align-items-center">
-                    <p class="mb-0 small text-muted">
-                        <i class="fa fa-info-circle me-1"></i>
-                        You have set dates for {{ count($rowDates) }} row(s). Click below to update all at once.
-                    </p>
-                    <button class="btn btn-info" wire:click="updateMultipleRows">
-                        <i class="fa fa-save me-1"></i>
-                        Update All {{ count($rowDates) }} Rows
-                    </button>
+                <div class="row g-3 align-items-center">
+                    <div class="col-md-8">
+                        <div class="d-flex align-items-start mb-3">
+                            <div class="bg-info bg-opacity-10 rounded-circle p-2 me-3 d-flex align-items-center justify-content-center" style="width: 40px; height: 40px; flex-shrink: 0;">
+                                <i class="fa fa-calendar text-info"></i>
+                            </div>
+                            <div class="flex-grow-1">
+                                <h6 class="mb-2 fw-semibold text-dark">
+                                    <i class="fa fa-info-circle me-2 text-info"></i>
+                                    Ready to Update {{ count($rowDates) }} Row(s)
+                                </h6>
+                                <p class="mb-3 small text-muted">
+                                    You have set delivery dates for the following transactions. Review and update all at once.
+                                </p>
+                                <div class="row g-2">
+                                    @foreach ($rowDates as $key => $item)
+                                        <div class="col-auto">
+                                            <div class="badge bg-light text-dark border border-info-subtle px-3 py-2 d-flex align-items-center gap-2">
+                                                <span class="fw-semibold">#{{ $key }}</span>
+                                                <span class="text-muted">|</span>
+                                                <i class="fa fa-calendar text-info"></i>
+                                                <span class="fw-medium">{{ systemDate($item) }}</span>
+                                            </div>
+                                        </div>
+                                    @endforeach
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4 text-md-end">
+                        <button class="btn btn-info btn-lg shadow-sm px-4" wire:click="updateMultipleRows">
+                            <i class="fa fa-save me-2"></i>
+                            Update All {{ count($rowDates) }} Rows
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -310,8 +336,9 @@
                                     <div class="d-flex gap-1 align-items-center">
                                         <input type="date"
                                             class="form-control form-control-sm {{ isset($rowDates[$item->id]) && !empty($rowDates[$item->id]) && $rowDates[$item->id] != ($item->delivered_date ?? '') ? 'border-warning' : '' }}"
-                                            wire:model.lazy="rowDates.{{ $item->id }}" value="{{ $rowDates[$item->id] ?? ($item->delivered_date ?? '') }}" style="min-width: 140px;"
-                                            placeholder="Select date">
+                                            wire:model.lazy="rowDates.{{ $item->id }}"
+                                            style="min-width: 140px;">
+
                                         @if (isset($rowDates[$item->id]) && !empty($rowDates[$item->id]) && $rowDates[$item->id] != ($item->delivered_date ?? ''))
                                             <button class="btn btn-sm btn-primary" wire:click="updateRowDate({{ $item->id }})" title="Update this row">
                                                 <i class="fa fa-save"></i>
