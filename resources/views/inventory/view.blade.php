@@ -10,7 +10,7 @@
             </nav>
             <h1 class="page-title mb-0 mt-2">{{ $product?->name }} Inventory</h1>
             <p class="lead">
-                A page is an details of {{ $product?->type }} : <b>{{ $product?->name }}{{ $product?->name_arabic ? ' (' . $product?->name_arabic . ')' : '' }}</b>
+                A page is an details of {{ $product?->type }} : <b> <a href="{{ url($product?->type.'/edit/'.$product_id) }}">{{ $product?->name }}{{ $product?->name_arabic ? ' (' . $product?->name_arabic . ')' : '' }}</a> </b>
             </p>
         </div>
     </div>
