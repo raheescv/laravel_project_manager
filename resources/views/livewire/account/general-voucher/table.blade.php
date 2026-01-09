@@ -88,7 +88,7 @@
 
     <div class="card-body p-0">
         <div class="table-responsive">
-            <table class="table table-hover align-middle mb-0 border">
+            <table class="table table-hover align-middle mb-0 border table-sm">
                 <thead class="bg-light">
                     <tr class="text-capitalize">
                         <th class="border-bottom py-3">

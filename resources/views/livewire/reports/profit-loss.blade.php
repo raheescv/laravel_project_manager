@@ -172,7 +172,7 @@
                                                     <span style="position: absolute; left: 2.25rem; top: 50%; width: 1rem; height: 1px; background-color: #d0d0d0;"></span>
                                                     <a href="{{ route('account::view', $account['id']) }}?from_date={{ $start_date }}&to_date={{ $end_date }}" class="text-decoration-none" style="padding-left: 3rem !important; display: block;">{{ $account['name'] }}</a>
                                                 </td>
-                                                <td class="text-end pe-3" style="border-right: 2px solid #dee2e6; background-color: #ffffff;">
+                                                <td class="pe-3" style="border-right: 2px solid #dee2e6; background-color: #ffffff;">
                                                     {{ currency($account['amount']) }}
                                                 </td>
                                                 <td></td>
@@ -231,10 +231,10 @@
                                                 <td class="ps-3" style="position: relative;">
                                                     <span style="position: absolute; left: 0.75rem; top: 0; height: 50%; width: 1px; background-color: #d0d0d0;"></span>
                                                     <span style="position: absolute; left: 2.25rem; top: 0; height: 50%; width: 1px; background-color: #d0d0d0;"></span>
-                                                    <span style="position: absolute; left: 2.25rem; top: 50%; width: 1rem; height: 1px; background-color: #d0d0d0;"></span>
+                                                    <span style="position: absolute; left: 2.25phrem; top: 50%; width: 1rem; height: 1px; background-color: #d0d0d0;"></span>
                                                     <a href="{{ route('account::view', $account['id']) }}?from_date={{ $start_date }}&to_date={{ $end_date }}" class="text-decoration-none" style="padding-left: 3rem !important; display: block;">{{ $account['name'] }}</a>
                                                 </td>
-                                                <td class="text-end pe-3" style="background-color: #ffffff;">
+                                                <td class="pe-3" style="background-color: #ffffff;">
                                                     {{ currency($account['amount']) }}
                                                 </td>
                                             </tr>
@@ -369,7 +369,7 @@
                                                     <span style="position: absolute; left: 2.25rem; top: 50%; width: 1rem; height: 1px; background-color: #d0d0d0;"></span>
                                                     <a href="{{ route('account::view', $account['id']) }}?from_date={{ $start_date }}&to_date={{ $end_date }}" class="text-decoration-none" style="padding-left: 3rem !important; display: block;">{{ $account['name'] }}</a>
                                                 </td>
-                                                <td class="text-end pe-3" style="border-right: 2px solid #dee2e6; background-color: #ffffff;">
+                                                <td class="pe-3" style="border-right: 2px solid #dee2e6; background-color: #ffffff;">
                                                     {{ currency($account['amount']) }}
                                                 </td>
                                                 <td></td>
@@ -431,7 +431,7 @@
                                                     <span style="position: absolute; left: 2.25rem; top: 50%; width: 1rem; height: 1px; background-color: #d0d0d0;"></span>
                                                     <a href="{{ route('account::view', $account['id']) }}?from_date={{ $start_date }}&to_date={{ $end_date }}" class="text-decoration-none" style="padding-left: 3rem !important; display: block;">{{ $account['name'] }}</a>
                                                 </td>
-                                                <td class="text-end pe-3" style="background-color: #ffffff;">
+                                                <td class="pe-3" style="background-color: #ffffff;">
                                                     {{ currency($account['amount']) }}
                                                 </td>
                                             </tr>
