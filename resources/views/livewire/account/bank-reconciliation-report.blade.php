@@ -207,7 +207,6 @@
                     <option value="25">25 per page</option>
                     <option value="50">50 per page</option>
                     <option value="100">100 per page</option>
-                    <option value="500">500 per page</option>
                 </select>
             </div>
         </div>
@@ -335,8 +334,10 @@
                                 <td>
                                     <div class="d-flex gap-1 align-items-center">
                                         <input type="date"
+                                            wire:key="date-input-{{ $item->id }}-{{ $item->delivered_date }}"
                                             class="form-control form-control-sm {{ isset($rowDates[$item->id]) && !empty($rowDates[$item->id]) && $rowDates[$item->id] != ($item->delivered_date ?? '') ? 'border-warning' : '' }}"
                                             wire:model.lazy="rowDates.{{ $item->id }}"
+                                            @if(!isset($rowDates[$item->id])) value="{{ $item->delivered_date ?? '' }}" @endif
                                             style="min-width: 140px;">
 
                                         @if (isset($rowDates[$item->id]) && !empty($rowDates[$item->id]) && $rowDates[$item->id] != ($item->delivered_date ?? ''))
