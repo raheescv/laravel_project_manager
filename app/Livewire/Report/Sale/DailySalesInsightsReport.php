@@ -15,7 +15,7 @@ use Livewire\Component;
 use Livewire\WithPagination;
 use Maatwebsite\Excel\Facades\Excel;
 
-class DayWiseReport extends Component
+class DailySalesInsightsReport extends Component
 {
     use WithPagination;
 
@@ -275,7 +275,7 @@ class DayWiseReport extends Component
 
         $this->prepareSalesChartData($summaryCollection);
 
-        return view('livewire.report.sale.day-wise-report', [
+        return view('livewire.report.sale.daily-sales-insights-report', [
             'data' => $summary,
             'total' => $total,
             'paymentMethods' => $paymentMethods,

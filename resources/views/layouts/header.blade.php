@@ -55,9 +55,9 @@
                                             <i class="fa fa-user fs-5 me-2"></i>Employee Report
                                         </a>
                                     @endcan
-                                    @can('report.sale summary')
-                                        <a href="{{ route('report::sale_summary') }}" class="list-group-item list-group-item-action">
-                                            <i class="fa fa-file-text-o fs-5 me-2"></i>Sale Summary
+                                    @can('report.daily sales insights')
+                                        <a href="{{ route('report::daily_sales_insights') }}" class="list-group-item list-group-item-action">
+                                            <i class="fa fa-file-text-o fs-5 me-2"></i>Daily Sales Insights
                                         </a>
                                     @endcan
                                     @can('report.sales overview')
