@@ -79,7 +79,7 @@ class BankReconciliationReport extends Component
             if (isset($this->rowDates[$propertyName])) {
                 $date = $this->rowDates[$propertyName];
                 unset($this->rowDates[$propertyName]);
-                if (!empty($date)) {
+                if (! empty($date)) {
                     $this->rowDates[$id] = $date;
                 } else {
                     unset($this->rowDates[$id]);
