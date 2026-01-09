@@ -85,19 +85,30 @@ export default {
             if (!this.product) {
                 console.error('ProductCard: Product is undefined or null');
                 return; // Prevent click event from propagating
-            } else if (!this.product.id) {
+            }
+            
+            // Check for id in multiple possible locations
+            const productId = this.product.id || this.product.product_id || this.product.inventory_id;
+            if (!productId) {
                 console.error('ProductCard: Product missing id:', JSON.stringify(this.product));
+                console.error('ProductCard: Available keys:', Object.keys(this.product || {}));
                 return; // Prevent click event from propagating
             }
 
+            // Create a clean product object with guaranteed id
+            const cleanProduct = {
+                ...this.product,
+                id: productId // Ensure id is set
+            };
+
             // Ensure product has essential properties
-            if (!this.product.name) {
-                console.warn('ProductCard: Product missing name:', JSON.stringify(this.product));
+            if (!cleanProduct.name) {
+                console.warn('ProductCard: Product missing name:', JSON.stringify(cleanProduct));
                 // Allow it to continue but log the warning
             }
 
-            // Emit with validated product
-            this.$emit('click', this.product);
+            // Emit with validated and cleaned product
+            this.$emit('click', cleanProduct);
         },
         formatPrice(price) {
             if (price) {
