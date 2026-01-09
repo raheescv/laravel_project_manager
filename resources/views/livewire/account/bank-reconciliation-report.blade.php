@@ -181,106 +181,58 @@
                     <option value="25">25 per page</option>
                     <option value="50">50 per page</option>
                     <option value="100">100 per page</option>
+                    <option value="500">500 per page</option>
                 </select>
             </div>
         </div>
         <div class="card-body p-0">
             <div class="table-responsive">
-                <table class="table table-hover align-middle mb-0">
+                <table class="table table-hover table-sm align-middle mb-0">
                     <thead class="table-light">
                         <tr>
                             <th class="border-0" style="width: 40px;">
                                 <input type="checkbox" class="form-check-input" wire:model.live="selectAll" id="selectAll">
                             </th>
-                            <th class="border-0" style="cursor: pointer;" wire:click="sort('date')">
-                                <div class="d-flex align-items-center justify-content-between">
-                                    <div>
-                                        <i class="fa fa-calendar me-2 text-secondary small"></i>
-                                        <span class="fw-semibold">Date</span>
-                                    </div>
-                                    @if($sortBy === 'date')
-                                        <i class="fa fa-sort-{{ $sortDirection === 'asc' ? 'up' : 'down' }} text-primary"></i>
-                                    @else
-                                        <i class="fa fa-sort text-muted opacity-50"></i>
-                                    @endif
+                            <th class="border-0">
+                                <div class="d-flex align-items-center">
+                                    <i class="fa fa-calendar me-2 text-secondary small"></i>
+                                    <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="date" label="Date" />
                                 </div>
                             </th>
-                            <th class="border-0" style="cursor: pointer;" wire:click="sort('account')">
-                                <div class="d-flex align-items-center justify-content-between">
-                                    <div>
-                                        <i class="fa fa-university me-2 text-secondary small"></i>
-                                        <span class="fw-semibold">Account</span>
-                                    </div>
-                                    @if($sortBy === 'account')
-                                        <i class="fa fa-sort-{{ $sortDirection === 'asc' ? 'up' : 'down' }} text-primary"></i>
-                                    @else
-                                        <i class="fa fa-sort text-muted opacity-50"></i>
-                                    @endif
+                            <th class="border-0">
+                                <div class="d-flex align-items-center">
+                                    <i class="fa fa-university me-2 text-secondary small"></i>
+                                    <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="accounts.name" label="Account" />
                                 </div>
                             </th>
-                            <th class="border-0" style="cursor: pointer;" wire:click="sort('description')">
-                                <div class="d-flex align-items-center justify-content-between">
-                                    <div>
-                                        <i class="fa fa-file-text me-2 text-secondary small"></i>
-                                        <span class="fw-semibold">Description</span>
-                                    </div>
-                                    @if($sortBy === 'description')
-                                        <i class="fa fa-sort-{{ $sortDirection === 'asc' ? 'up' : 'down' }} text-primary"></i>
-                                    @else
-                                        <i class="fa fa-sort text-muted opacity-50"></i>
-                                    @endif
+                            <th class="border-0">
+                                <div class="d-flex align-items-center">
+                                    <i class="fa fa-file-text me-2 text-secondary small"></i>
+                                    <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="journal_entries.description" label="Description" />
                                 </div>
                             </th>
-                            <th class="border-0" style="cursor: pointer;" wire:click="sort('reference')">
-                                <div class="d-flex align-items-center justify-content-between">
-                                    <div>
-                                        <i class="fa fa-hashtag me-2 text-secondary small"></i>
-                                        <span class="fw-semibold">Reference</span>
-                                    </div>
-                                    @if($sortBy === 'reference')
-                                        <i class="fa fa-sort-{{ $sortDirection === 'asc' ? 'up' : 'down' }} text-primary"></i>
-                                    @else
-                                        <i class="fa fa-sort text-muted opacity-50"></i>
-                                    @endif
+                            <th class="border-0">
+                                <div class="d-flex align-items-center">
+                                    <i class="fa fa-hashtag me-2 text-secondary small"></i>
+                                    <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="journal_entries.reference_number" label="Reference" />
                                 </div>
                             </th>
-                            <th class="border-0 text-end" style="cursor: pointer;" wire:click="sort('debit')">
+                            <th class="border-0 text-end">
                                 <div class="d-flex align-items-center justify-content-end">
-                                    <div class="text-end">
-                                        <i class="fa fa-arrow-down me-2 text-danger small"></i>
-                                        <span class="fw-semibold">Debit</span>
-                                    </div>
-                                    @if($sortBy === 'debit')
-                                        <i class="fa fa-sort-{{ $sortDirection === 'asc' ? 'up' : 'down' }} text-primary ms-2"></i>
-                                    @else
-                                        <i class="fa fa-sort text-muted opacity-50 ms-2"></i>
-                                    @endif
+                                    <i class="fa fa-arrow-down me-2 text-danger small"></i>
+                                    <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="debit" label="Debit" />
                                 </div>
                             </th>
-                            <th class="border-0 text-end" style="cursor: pointer;" wire:click="sort('credit')">
+                            <th class="border-0 text-end">
                                 <div class="d-flex align-items-center justify-content-end">
-                                    <div class="text-end">
-                                        <i class="fa fa-arrow-up me-2 text-success small"></i>
-                                        <span class="fw-semibold">Credit</span>
-                                    </div>
-                                    @if($sortBy === 'credit')
-                                        <i class="fa fa-sort-{{ $sortDirection === 'asc' ? 'up' : 'down' }} text-primary ms-2"></i>
-                                    @else
-                                        <i class="fa fa-sort text-muted opacity-50 ms-2"></i>
-                                    @endif
+                                    <i class="fa fa-arrow-up me-2 text-success small"></i>
+                                    <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="credit" label="Credit" />
                                 </div>
                             </th>
-                            <th class="border-0" style="cursor: pointer;" wire:click="sort('delivered_date')">
-                                <div class="d-flex align-items-center justify-content-between">
-                                    <div>
-                                        <i class="fa fa-calendar-check me-2 text-secondary small"></i>
-                                        <span class="fw-semibold">Delivered Date</span>
-                                    </div>
-                                    @if($sortBy === 'delivered_date')
-                                        <i class="fa fa-sort-{{ $sortDirection === 'asc' ? 'up' : 'down' }} text-primary"></i>
-                                    @else
-                                        <i class="fa fa-sort text-muted opacity-50"></i>
-                                    @endif
+                            <th class="border-0">
+                                <div class="d-flex align-items-center">
+                                    <i class="fa fa-calendar-check me-2 text-secondary small"></i>
+                                    <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="delivered_date" label="Delivered Date" />
                                 </div>
                             </th>
                             <th class="border-0" style="width: 200px;">
@@ -306,10 +258,26 @@
                                     <span class="text-secondary">{{ $item->account_name }}</span>
                                 </td>
                                 <td>
-                                    <span class="text-secondary">{{ $item->description ?? ($item->journal_remarks ?? '-') }}</span>
+                                    @if ($item->model == 'SalePayment')
+                                        <a href="{{ route('sale::view', $item->journal?->model_id) }}" target="_blank">
+                                            {{ $item->description ?? ($item->journal_remarks ?? '-') }}
+                                        </a>
+                                    @elseif ($item->model == 'PurchasePayment')
+                                        <a href="{{ route('purchase::view', $item->journal?->model_id) }}" target="_blank">
+                                            {{ $item->description ?? ($item->journal_remarks ?? '-') }}
+                                        </a>
+                                    @elseif ($item->model == 'SaleReturnPayment')
+                                        <a href="{{ route('sale_return::view', $item->journal?->model_id) }}" target="_blank">
+                                            {{ $item->description ?? ($item->journal_remarks ?? '-') }}
+                                        </a>
+                                    @else
+                                        <span class="text-secondary">{{ $item->description ?? ($item->journal_remarks ?? '-') }} {{ $item->model }}</span>
+                                    @endif
                                 </td>
                                 <td>
-                                    <span class="badge bg-secondary">{{ $item->reference_number ?? '-' }}</span>
+                                    <span class="badge bg-secondary">
+                                        {{ $item->reference_number ?? '-' }}
+                                    </span>
                                 </td>
                                 <td class="text-end">
                                     @if ($item->debit > 0)
@@ -360,7 +328,7 @@
                                 </td>
                                 <td class="text-center">
                                     <div class="btn-group btn-group-sm" role="group">
-                                        <button type="button" class="btn btn-outline-primary btn-sm" data-bs-toggle="modal" data-bs-target="#updateDateModal{{ $item->id }}"
+                                        <button type="button" class="btn btn-outline-primary btn-sm " data-bs-toggle="modal" data-bs-target="#updateDateModal{{ $item->id }}"
                                             title="Update Delivered Date">
                                             <i class="fa fa-edit"></i>
                                         </button>
@@ -376,7 +344,7 @@
                                                             <i class="fa fa-calendar fa-lg"></i>
                                                         </div>
                                                         <div>
-                                                            <h5 class="modal-title mb-0 fw-bold">Update Delivered Date</h5>
+                                                            <h5 class="modal-title mb-0 fw-bold text-white">Update Delivered Date</h5>
                                                             <small class="opacity-75">Set the reconciliation date for this transaction</small>
                                                         </div>
                                                     </div>

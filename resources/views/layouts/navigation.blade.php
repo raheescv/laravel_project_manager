@@ -438,8 +438,7 @@
                                 @endcan
                                 @can('report.bank reconciliation report')
                                     <li class="nav-item">
-                                        <a href="{{ route('account::bank-reconciliation::index') }}" class="nav-link {{ request()->is(['account/bank-reconciliation']) ? 'active' : '' }}">Bank
-                                            Reconciliation Report</a>
+                                        <a href="{{ route('account::bank-reconciliation::index') }}" class="nav-link {{ request()->is(['account/bank-reconciliation']) ? 'active' : '' }}">Bank Reconciliation</a>
                                     </li>
                                 @endcan
                             </ul>

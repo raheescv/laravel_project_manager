@@ -30,9 +30,7 @@ class BankReconciliationReport extends Component
 
     public $rowDates = [];
 
-    // Sorting properties
-    public $sortBy = 'date';
-
+    public $sortField = 'journal_entries.date';
     public $sortDirection = 'desc';
 
     protected $paginationTheme = 'bootstrap';
@@ -45,25 +43,21 @@ class BankReconciliationReport extends Component
 
     public function updated($propertyName)
     {
-        if (in_array($propertyName, ['account_id', 'from_date', 'to_date', 'delivered_date_filter', 'sortBy', 'sortDirection'])) {
+        if (in_array($propertyName, ['account_id', 'from_date', 'to_date'])) {
             $this->resetPage();
-            if (! in_array($propertyName, ['sortBy', 'sortDirection'])) {
-                $this->selected = [];
-                $this->selectAll = false;
-            }
+            $this->selected = [];
+            $this->selectAll = false;
         }
     }
 
-    public function sort($field)
+    public function sortBy($field)
     {
-        if ($this->sortBy === $field) {
+        if ($this->sortField === $field) {
             $this->sortDirection = $this->sortDirection === 'asc' ? 'desc' : 'asc';
         } else {
-            $this->sortBy = $field;
-            $this->sortDirection = 'asc';
+            $this->sortField = $field;
+            $this->sortDirection = 'desc';
         }
-
-        $this->resetPage();
     }
 
     public function updatedSelectAll($value)
@@ -106,7 +100,8 @@ class BankReconciliationReport extends Component
             ->when($this->account_id, fn ($q) => $q->where('journal_entries.account_id', $this->account_id))
             ->when($this->delivered_date_filter === 'delivered', fn ($q) => $q->whereNotNull('journal_entries.delivered_date'))
             ->when($this->delivered_date_filter === 'pending', fn ($q) => $q->whereNull('journal_entries.delivered_date'))
-            ->select('journal_entries.*', 'accounts.name as account_name', 'account_categories.name as category_name');
+            ->select('journal_entries.*', 'accounts.name as account_name', 'account_categories.name as category_name')
+            ->orderBy($this->sortField, $this->sortDirection);
     }
 
     protected function getBankAccountFilter()
@@ -121,32 +116,9 @@ class BankReconciliationReport extends Component
         };
     }
 
-    protected function getSortFieldMapping(): array
-    {
-        return [
-            'date' => 'journal_entries.date',
-            'account' => 'accounts.name',
-            'description' => 'journal_entries.description',
-            'reference' => 'journal_entries.reference_number',
-            'debit' => 'journal_entries.debit',
-            'credit' => 'journal_entries.credit',
-            'delivered_date' => 'journal_entries.delivered_date',
-        ];
-    }
-
     public function getItemsProperty()
     {
         $query = $this->getBaseQuery();
-        $sortMapping = $this->getSortFieldMapping();
-        $sortField = $sortMapping[$this->sortBy] ?? 'journal_entries.date';
-
-        $query->orderBy($sortField, $this->sortDirection);
-
-        // Secondary sort for consistency
-        if ($this->sortBy !== 'date') {
-            $query->orderBy('journal_entries.date', 'desc');
-        }
-        $query->orderBy('journal_entries.id', 'desc');
 
         return $query->paginate($this->perPage);
     }
