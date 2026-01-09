@@ -12,11 +12,14 @@ class TenantSeeder extends Seeder
      */
     public function run(): void
     {
+        $appUrl = config('app.url');
+        $domain = parse_url($appUrl, PHP_URL_HOST) ?? 'project_manager.test';
+
         Tenant::firstOrCreate([
             'name' => 'Default Tenant',
             'code' => 'DEFAULT',
             'subdomain' => 'project_manager',
-            'domain' => 'project_manager.test',
+            'domain' => $domain,
             'is_active' => true,
         ]);
     }
