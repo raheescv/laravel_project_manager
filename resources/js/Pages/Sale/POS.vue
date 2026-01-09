@@ -102,9 +102,10 @@
                                             <i class="fa fa-user-tie text-purple-600 mr-2 text-sm"></i>
                                             <span>Employee</span>
                                         </label>
-                                        <SearchableSelect v-model="form.employee_id" :options="employees"
+                                        <SearchableSelect ref="employeeSelectRef" v-model="form.employee_id" :options="employees"
                                             placeholder="Select employee..." filter-placeholder="Search employees..."
                                             :visibleItems="8"
+                                            data-employee-select="true"
                                             input-class="w-full rounded-lg border-2 border-purple-200/60 shadow-md focus:border-purple-500 focus:ring-2 focus:ring-purple-500/30 transition-all duration-200 bg-white/95 backdrop-blur-sm hover:shadow-lg hover:border-purple-300 text-sm sm:text-sm py-2 sm:py-2 px-3 min-h-[40px] sm:min-h-[36px] font-medium" />
                                     </div>
                                     <div class="space-y-1.5">
@@ -395,6 +396,7 @@ import {
 } from '@inertiajs/vue3'
 import {
     computed,
+    nextTick,
     onMounted,
     onUnmounted,
     ref,
@@ -472,6 +474,7 @@ export default {
         // Reactive data
         const loading = ref(false)
         const products = ref([])
+        const employeeSelectRef = ref(null)
         // Initialize serverCustomers with default customer and props.customers
         const serverCustomers = ref({
             ...(props.defaultCustomerEnabled ? {
@@ -762,18 +765,42 @@ export default {
 
         const addProductToCart = async (product) => {
             if (!form.employee_id) {
-                toast.error('Please select an employee first')
+                toast.error('Please select an employee first.')
+                // Open the employee dropdown
+                await nextTick()
+                // Small delay to ensure DOM is ready and ref is set
+                setTimeout(() => {
+                    if (employeeSelectRef.value) {
+                        // Use the focus method which opens dropdown and focuses input
+                        if (employeeSelectRef.value.focus) {
+                            employeeSelectRef.value.focus()
+                        } else if (employeeSelectRef.value.openDropdown) {
+                            employeeSelectRef.value.openDropdown()
+                        }
+                    } else {
+                        // Fallback: try to find and click the input directly
+                        const employeeInput = document.querySelector('input[placeholder*="employee" i]')
+                        if (employeeInput) {
+                            employeeInput.focus()
+                            employeeInput.click()
+                            employeeInput.scrollIntoView({ behavior: 'smooth', block: 'center' })
+                        }
+                    }
+                }, 200)
                 return
             }
 
-            if (!product?.id) {
+            // Check for id in multiple possible locations
+            const productId = product?.id || product?.product_id || product?.inventory_id;
+            if (!productId) {
+                console.error('addProductToCart: Invalid product data - missing id:', product);
                 toast.error('Invalid product data')
                 return
             }
 
             try {
                 const response = await axios.post('/pos/add-item', {
-                    inventory_id: product.id,
+                    inventory_id: productId,
                     employee_id: form.employee_id,
                     sale_type: form.sale_type
                 })
@@ -1589,6 +1616,7 @@ export default {
             showCustomerDetailsModal,
             selectedCustomerId,
             hasCustomerFeedbacks,
+            employeeSelectRef,
 
             // Computed
             totalQuantity,

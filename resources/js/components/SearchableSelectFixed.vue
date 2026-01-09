@@ -330,6 +330,23 @@ watch(() => props.options, () => {
     }
     highlightedIndex.value = 0
 }, { deep: true, immediate: true })
+
+// Expose methods for parent component
+defineExpose({
+    openDropdown,
+    focus: () => {
+        nextTick(() => {
+            if (searchInput.value) {
+                // First open the dropdown
+                openDropdown()
+                // Then focus the input (which will also trigger openDropdown via @focus)
+                searchInput.value.focus()
+                // Scroll into view
+                searchInput.value.scrollIntoView({ behavior: 'smooth', block: 'center' })
+            }
+        })
+    }
+})
 </script>
 
 <style scoped>
