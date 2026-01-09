@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Console\Commands;
+namespace App\Console\Commands\SingleUse;
 
 use Illuminate\Console\Command;
 use Spatie\Permission\Models\Permission;
@@ -12,7 +12,7 @@ class RenamePermissionCommand extends Command
      *
      * @var string
      */
-    protected $signature = 'permission:rename 
+    protected $signature = 'permission:rename
                             {old_name : The old permission name to rename}
                             {new_name : The new permission name}
                             {--tenant= : Specific tenant ID to update (optional)}
