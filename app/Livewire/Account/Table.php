@@ -38,6 +38,10 @@ class Table extends Component
 
     public $expandedCategories = [];
 
+    public $excludeCustomer = true;
+
+    public $excludeVendor = true;
+
     protected $paginationTheme = 'bootstrap';
 
     protected $listeners = [
@@ -281,6 +285,18 @@ class Table extends Component
             })
             ->when($this->model ?? '', function ($query, $value) {
                 return $query->where('model', $value);
+            })
+            ->when($this->excludeCustomer, function ($query) {
+                return $query->where(function ($q) {
+                    $q->where('model', '!=', 'Customer')
+                        ->orWhereNull('model');
+                });
+            })
+            ->when($this->excludeVendor, function ($query) {
+                return $query->where(function ($q) {
+                    $q->where('model', '!=', 'Vendor')
+                        ->orWhereNull('model');
+                });
             })
             ->latest()
             ->paginate($this->limit);

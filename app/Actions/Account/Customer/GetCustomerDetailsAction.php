@@ -92,8 +92,7 @@ class GetCustomerDetailsAction
     {
         return Sale::where('account_id', $accountId)
             ->where(function ($query) {
-                $query->whereNotNull('feedback_type')
-                    ->orWhereNotNull('feedback');
+                $query->whereNotNull('feedback');
             })
             ->select([
                 'id',

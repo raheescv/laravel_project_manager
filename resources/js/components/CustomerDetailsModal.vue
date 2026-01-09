@@ -1,5 +1,6 @@
 <template>
-    <div v-if="show" class="fixed inset-0 bg-gray-900 bg-opacity-40 backdrop-blur-sm flex items-center justify-center z-50 p-1 sm:p-2"
+    <div v-if="show"
+        class="fixed inset-0 bg-gray-900 bg-opacity-40 backdrop-blur-sm flex items-center justify-center z-50 p-1 sm:p-2"
         @click.self="closeModal">
         <div class="bg-white rounded-xl shadow-2xl w-full max-w-4xl max-h-[95vh] sm:max-h-[90vh] overflow-hidden flex flex-col"
             @click.stop>
@@ -33,8 +34,7 @@
                     <!-- Customer Basic Info -->
                     <div
                         class="bg-white rounded-lg p-2.5 sm:p-3 border border-slate-200 shadow-sm hover:shadow-md transition-shadow">
-                        <div
-                            class="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-2 gap-2">
+                        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-2 gap-2">
                             <h4 class="text-sm sm:text-base font-bold text-slate-800 flex items-center">
                                 <i class="fa fa-user-circle mr-2 text-blue-500"></i>
                                 Basic Information
@@ -45,76 +45,110 @@
                             </button>
                         </div>
 
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3">
-                            <div class="break-words pb-2 border-b border-slate-100 last:border-b-0 sm:last:border-b sm:border-b-0">
-                                <label class="text-xs font-semibold text-slate-500 uppercase tracking-wide block mb-1">Full Name</label>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-3">
+                            <!-- Column 1: Full Name -->
+                            <div
+                                class="break-words pb-2 border-b border-slate-100 last:border-b-0 sm:last:border-b sm:border-b-0">
+                                <label
+                                    class="text-xs font-semibold text-slate-500 uppercase tracking-wide block mb-1">Full
+                                    Name</label>
                                 <p class="text-sm font-semibold text-slate-800 break-words">{{ customer.name }}</p>
                             </div>
-                            <div class="break-words pb-2 border-b border-slate-100 last:border-b-0 sm:last:border-b sm:border-b-0">
-                                <label class="text-xs font-semibold text-slate-500 uppercase tracking-wide block mb-1">Mobile</label>
+                            <!-- Column 2: Mobile -->
+                            <div
+                                class="break-words pb-2 border-b border-slate-100 last:border-b-0 sm:last:border-b sm:border-b-0">
+                                <label
+                                    class="text-xs font-semibold text-slate-500 uppercase tracking-wide block mb-1">Mobile</label>
                                 <p class="text-sm font-semibold text-slate-800 break-words">
                                     <i class="fa fa-phone mr-1.5 text-emerald-500"></i>
-                                    <a :href="`tel:${customer.mobile}`" class="text-blue-600 hover:text-blue-700 hover:underline transition-colors">{{ customer.mobile
+                                    <a :href="`tel:${customer.mobile}`"
+                                        class="text-blue-600 hover:text-blue-700 hover:underline transition-colors">{{
+                                            customer.mobile
                                         }}</a>
                                 </p>
                             </div>
-                            <div v-if="customer.email" class="break-words pb-2 border-b border-slate-100 last:border-b-0 sm:last:border-b sm:border-b-0">
-                                <label class="text-xs font-semibold text-slate-500 uppercase tracking-wide block mb-1">Email</label>
+                            <!-- Column 3: Credit Period -->
+                            <div
+                                class="break-words pb-2 border-b border-slate-100 last:border-b-0 sm:last:border-b sm:border-b-0">
+                                <label
+                                    class="text-xs font-semibold text-slate-500 uppercase tracking-wide block mb-1">Credit
+                                    Period</label>
                                 <p class="text-sm font-semibold text-slate-800 break-words">
-                                    <i class="fa fa-envelope mr-1.5 text-blue-500"></i>
-                                    <a :href="`mailto:${customer.email}`" class="text-blue-600 hover:text-blue-700 hover:underline break-all transition-colors">{{
-                                        customer.email }}</a>
+                                    <i class="fa fa-calendar mr-1.5 text-teal-500"></i>
+                                    <span v-if="customer.credit_period_days">
+                                        {{ customer.credit_period_days }} {{ customer.credit_period_days === 1 ? 'Day' :
+                                            'Days' }}
+                                    </span>
+                                    <span v-else class="text-slate-400 font-normal">Not set</span>
                                 </p>
                             </div>
-                            <div v-if="customer.whatsapp_mobile" class="break-words pb-2 border-b border-slate-100 last:border-b-0 sm:last:border-b sm:border-b-0">
-                                <label class="text-xs font-semibold text-slate-500 uppercase tracking-wide block mb-1">WhatsApp</label>
+                            <!-- Remaining fields -->
+                            <div v-if="customer.email"
+                                class="break-words pb-2 border-b border-slate-100 last:border-b-0 sm:last:border-b sm:border-b-0">
+                                <label
+                                    class="text-xs font-semibold text-slate-500 uppercase tracking-wide block mb-1">Email</label>
+                                <p class="text-sm font-semibold text-slate-800 break-words">
+                                    <i class="fa fa-envelope mr-1.5 text-blue-500"></i>
+                                    <a :href="`mailto:${customer.email}`"
+                                        class="text-blue-600 hover:text-blue-700 hover:underline break-all transition-colors">{{
+                                            customer.email }}</a>
+                                </p>
+                            </div>
+                            <div v-if="customer.whatsapp_mobile"
+                                class="break-words pb-2 border-b border-slate-100 last:border-b-0 sm:last:border-b sm:border-b-0">
+                                <label
+                                    class="text-xs font-semibold text-slate-500 uppercase tracking-wide block mb-1">WhatsApp</label>
                                 <p class="text-sm font-semibold text-slate-800 break-words">
                                     <i class="fa fa-whatsapp mr-1.5 text-emerald-500"></i>
                                     <a :href="`https://wa.me/${customer.whatsapp_mobile.replace(/[^0-9]/g, '')}`"
-                                        target="_blank" class="text-blue-600 hover:text-blue-700 hover:underline transition-colors">{{ customer.whatsapp_mobile }}</a>
+                                        target="_blank"
+                                        class="text-blue-600 hover:text-blue-700 hover:underline transition-colors">{{
+                                        customer.whatsapp_mobile }}</a>
                                 </p>
                             </div>
-                            <div v-if="customer.company" class="break-words pb-2 border-b border-slate-100 last:border-b-0 sm:last:border-b sm:border-b-0">
-                                <label class="text-xs font-semibold text-slate-500 uppercase tracking-wide block mb-1">Company</label>
+                            <div v-if="customer.company"
+                                class="break-words pb-2 border-b border-slate-100 last:border-b-0 sm:last:border-b sm:border-b-0">
+                                <label
+                                    class="text-xs font-semibold text-slate-500 uppercase tracking-wide block mb-1">Company</label>
                                 <p class="text-sm font-semibold text-slate-800 break-words">
                                     <i class="fa fa-building mr-1.5 text-amber-500"></i>
                                     {{ customer.company }}
                                 </p>
                             </div>
-                            <div v-if="customer.nationality" class="break-words pb-2 border-b border-slate-100 last:border-b-0 sm:last:border-b sm:border-b-0">
-                                <label class="text-xs font-semibold text-slate-500 uppercase tracking-wide block mb-1">Nationality</label>
+                            <div v-if="customer.nationality"
+                                class="break-words pb-2 border-b border-slate-100 last:border-b-0 sm:last:border-b sm:border-b-0">
+                                <label
+                                    class="text-xs font-semibold text-slate-500 uppercase tracking-wide block mb-1">Nationality</label>
                                 <p class="text-sm font-semibold text-slate-800 break-words">
                                     <i class="fa fa-flag mr-1.5 text-rose-500"></i>
                                     {{ customer.nationality }}
                                 </p>
                             </div>
-                            <div v-if="customer.customer_type && customer.customer_type.name" class="break-words pb-2 border-b border-slate-100 last:border-b-0 sm:last:border-b sm:border-b-0">
-                                <label class="text-xs font-semibold text-slate-500 uppercase tracking-wide block mb-1">Customer Type</label>
+                            <div v-if="customer.customer_type && customer.customer_type.name"
+                                class="break-words pb-2 border-b border-slate-100 last:border-b-0 sm:last:border-b sm:border-b-0">
+                                <label
+                                    class="text-xs font-semibold text-slate-500 uppercase tracking-wide block mb-1">Customer
+                                    Type</label>
                                 <p class="text-sm font-semibold text-slate-800 break-words">
                                     <i class="fa fa-tag mr-1.5 text-indigo-500"></i>
                                     {{ customer.customer_type.name }}
                                 </p>
                             </div>
-                            <div class="break-words pb-2 border-b border-slate-100 last:border-b-0 sm:last:border-b sm:border-b-0">
-                                <label class="text-xs font-semibold text-slate-500 uppercase tracking-wide block mb-1">Credit Period</label>
-                                <p class="text-sm font-semibold text-slate-800 break-words">
-                                    <i class="fa fa-calendar mr-1.5 text-teal-500"></i>
-                                    <span v-if="customer.credit_period_days">
-                                        {{ customer.credit_period_days }} {{ customer.credit_period_days === 1 ? 'Day' :
-                                        'Days' }}
-                                    </span>
-                                    <span v-else class="text-slate-400 font-normal">Not set</span>
-                                </p>
-                            </div>
-                            <div v-if="customer.dob" class="break-words pb-2 border-b border-slate-100 last:border-b-0 sm:last:border-b sm:border-b-0">
-                                <label class="text-xs font-semibold text-slate-500 uppercase tracking-wide block mb-1">Date of Birth</label>
+                            <div v-if="customer.dob"
+                                class="break-words pb-2 border-b border-slate-100 last:border-b-0 sm:last:border-b sm:border-b-0">
+                                <label
+                                    class="text-xs font-semibold text-slate-500 uppercase tracking-wide block mb-1">Date
+                                    of Birth</label>
                                 <p class="text-sm font-semibold text-slate-800 break-words">
                                     <i class="fa fa-birthday-cake mr-1.5 text-pink-500"></i>
                                     {{ formatDate(customer.dob) }}
                                 </p>
                             </div>
-                            <div v-if="customer.id_no" class="break-words pb-2 border-b border-slate-100 last:border-b-0 sm:last:border-b sm:border-b-0">
-                                <label class="text-xs font-semibold text-slate-500 uppercase tracking-wide block mb-1">ID Number</label>
+                            <div v-if="customer.id_no"
+                                class="break-words pb-2 border-b border-slate-100 last:border-b-0 sm:last:border-b sm:border-b-0">
+                                <label
+                                    class="text-xs font-semibold text-slate-500 uppercase tracking-wide block mb-1">ID
+                                    Number</label>
                                 <p class="text-sm font-semibold text-slate-800 break-words">
                                     <i class="fa fa-id-badge mr-1.5 text-amber-500"></i>
                                     {{ customer.id_no }}
@@ -132,30 +166,39 @@
                         </h4>
 
                         <div class="grid grid-cols-2 lg:grid-cols-4 gap-2">
-                            <div class="text-center p-2 bg-gradient-to-br from-emerald-50 to-teal-50 rounded-lg border border-emerald-100 shadow-sm hover:shadow-md transition-shadow">
-                                <div class="text-lg sm:text-xl font-bold text-emerald-700 break-words mb-0.5">{{ totalSales || 0
+                            <div
+                                class="text-center p-2 bg-gradient-to-br from-emerald-50 to-teal-50 rounded-lg border border-emerald-100 shadow-sm hover:shadow-md transition-shadow">
+                                <div class="text-lg sm:text-xl font-bold text-emerald-700 break-words mb-0.5">{{
+                                    totalSales || 0
                                     }}</div>
-                                <div class="text-xs font-medium text-slate-600 uppercase tracking-wide">Total Sales</div>
+                                <div class="text-xs font-medium text-slate-600 uppercase tracking-wide">Total Sales
+                                </div>
                             </div>
-                            <div class="text-center p-2 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg border border-blue-100 shadow-sm hover:shadow-md transition-shadow">
+                            <div
+                                class="text-center p-2 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg border border-blue-100 shadow-sm hover:shadow-md transition-shadow">
                                 <div class="text-lg sm:text-xl font-bold text-blue-700 break-words mb-0.5">{{
                                     formatCurrency(totalAmount) }}</div>
-                                <div class="text-xs font-medium text-slate-600 uppercase tracking-wide">Total Amount</div>
+                                <div class="text-xs font-medium text-slate-600 uppercase tracking-wide">Total Amount
+                                </div>
                             </div>
-                            <div class="text-center p-2 bg-gradient-to-br from-teal-50 to-cyan-50 rounded-lg border border-teal-100 shadow-sm hover:shadow-md transition-shadow">
+                            <div
+                                class="text-center p-2 bg-gradient-to-br from-teal-50 to-cyan-50 rounded-lg border border-teal-100 shadow-sm hover:shadow-md transition-shadow">
                                 <div class="text-lg sm:text-xl font-bold text-teal-700 break-words mb-0.5">{{
                                     formatCurrency(totalPaid) }}</div>
                                 <div class="text-xs font-medium text-slate-600 uppercase tracking-wide">Total Paid</div>
                             </div>
-                            <div class="text-center p-2 bg-gradient-to-br from-rose-50 to-pink-50 rounded-lg border border-rose-100 shadow-sm hover:shadow-md transition-shadow">
+                            <div
+                                class="text-center p-2 bg-gradient-to-br from-rose-50 to-pink-50 rounded-lg border border-rose-100 shadow-sm hover:shadow-md transition-shadow">
                                 <div class="text-lg sm:text-xl font-bold text-rose-700 break-words mb-0.5">{{
                                     formatCurrency(totalBalance) }}</div>
-                                <div class="text-xs font-medium text-slate-600 uppercase tracking-wide">Outstanding</div>
+                                <div class="text-xs font-medium text-slate-600 uppercase tracking-wide">Outstanding
+                                </div>
                             </div>
                         </div>
                         <div v-if="lastPurchase" class="mt-2 pt-2 border-t border-slate-200">
                             <div class="text-center">
-                                <div class="text-xs font-semibold text-slate-700 inline-flex items-center px-2 py-1 bg-slate-100 rounded-lg">
+                                <div
+                                    class="text-xs font-semibold text-slate-700 inline-flex items-center px-2 py-1 bg-slate-100 rounded-lg">
                                     <i class="fa fa-calendar mr-1.5 text-indigo-500"></i>
                                     Last Purchase: {{ formatDate(lastPurchase) }}
                                 </div>
@@ -167,7 +210,8 @@
                     <div
                         class="bg-white rounded-lg p-2.5 sm:p-3 border border-slate-200 shadow-sm hover:shadow-md transition-shadow">
                         <!-- Tab Headers -->
-                        <div class="flex border-b border-slate-200 mb-2 bg-slate-50 rounded-t-lg -mx-2.5 sm:-mx-3 px-2.5 sm:px-3">
+                        <div
+                            class="flex border-b border-slate-200 mb-2 bg-slate-50 rounded-t-lg -mx-2.5 sm:-mx-3 px-2.5 sm:px-3">
                             <button @click="activeTab = 'sales'" :class="[
                                 'flex-1 px-3 sm:px-4 py-2 text-xs font-semibold transition-all duration-200 rounded-t-lg',
                                 activeTab === 'sales'
@@ -197,21 +241,24 @@
                                         <!-- Column 1: Invoice & Date -->
                                         <div class="min-w-0">
                                             <div class="font-bold text-sm text-slate-800 break-words mb-0.5">
-                                                #{{ sale.invoice_no }}
+                                                <a :href="`/sale/view/${sale.id}`" target="_blank"
+                                                    class="text-blue-600 hover:text-blue-700 hover:underline transition-colors">
+                                                    #{{ sale.invoice_no }}
+                                                </a>
                                             </div>
                                             <div class="text-xs text-slate-500 flex items-center">
                                                 <i class="fa fa-calendar mr-1 text-slate-400"></i>
-                                                {{ new Date(sale.date).toLocaleDateString('en-GB', {
-                                                    day: '2-digit',
-                                                month: '2-digit', year: 'numeric' }) }}
+                                                {{ new Date(sale.date).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' }) }}
                                             </div>
                                         </div>
                                         <!-- Column 2: Rating -->
-                                        <div class="flex items-center justify-center">
-                                            <div v-if="sale.rating" class="flex items-center gap-0.5 bg-amber-50 px-1.5 py-0.5 rounded border border-amber-200">
+                                        <div class="flex items-center justify-phcenter">
+                                            <div v-if="sale.rating"
+                                                class="flex items-center gap-0.5 bg-amber-50 px-1.5 py-0.5 rounded border border-amber-200">
                                                 <i v-for="i in 5" :key="i"
                                                     :class="['fa fa-star text-xs', sale.rating >= i ? 'text-amber-400' : 'text-slate-300']"></i>
-                                                <span class="text-xs font-semibold text-slate-700 ml-0.5">{{ sale.rating }}/5</span>
+                                                <span class="text-xs font-semibold text-slate-700 ml-0.5">{{ sale.rating
+                                                    }}/5</span>
                                             </div>
                                             <span v-else class="text-xs text-slate-400 italic">No rating</span>
                                         </div>
@@ -220,7 +267,7 @@
                                             <div class="font-bold text-sm text-emerald-600 mb-0.5">
                                                 {{ formatCurrency(sale.total) }}
                                             </div>
-                                            <div class="text-xs font-medium text-slate-500">
+                                            <div v-if="sale.balance>0" class="text-xs font-medium text-slate-500">
                                                 Balance: <span class="text-rose-600">{{ formatCurrency(sale.balance) }}</span>
                                             </div>
                                         </div>
@@ -242,21 +289,23 @@
                                     class="bg-slate-50 rounded-lg p-2 border border-slate-200 hover:border-blue-300 hover:shadow-md transition-all duration-200">
                                     <div class="space-y-2">
                                         <!-- Header: Invoice, Date, Rating, and Type -->
-                                        <div class="flex items-center justify-between flex-wrap gap-1.5 pb-1.5 border-b border-slate-200">
+                                        <div
+                                            class="flex items-center justify-between flex-wrap gap-1.5 pb-1.5 border-b border-slate-200">
                                             <div class="flex items-center gap-1.5 flex-wrap">
-                                                <span class="font-bold text-sm text-slate-800">
+                                                <a :href="`/sale/view/${feedback.id}`" target="_blank"
+                                                    class="font-bold text-sm text-blue-600 hover:text-blue-700 hover:underline transition-colors">
                                                     #{{ feedback.invoice_no }}
-                                                </span>
+                                                </a>
                                                 <span class="text-xs text-slate-500 flex items-center">
                                                     <i class="fa fa-calendar mr-1 text-slate-400"></i>
-                                                    {{ new Date(feedback.date).toLocaleDateString('en-GB', {
-                                                        day:
-                                                    '2-digit', month: '2-digit', year: 'numeric' }) }}
+                                                    {{ new Date(feedback.date).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' }) }}
                                                 </span>
-                                                <div v-if="feedback.rating" class="flex items-center gap-0.5 bg-amber-50 px-1.5 py-0.5 rounded border border-amber-200">
+                                                <div v-if="feedback.rating"
+                                                    class="flex items-center gap-0.5 bg-amber-50 px-1.5 py-0.5 rounded border border-amber-200">
                                                     <i v-for="i in 5" :key="i"
                                                         :class="['fa fa-star text-xs', feedback.rating >= i ? 'text-amber-400' : 'text-slate-300']"></i>
-                                                    <span class="text-xs font-semibold text-slate-700 ml-0.5">{{ feedback.rating
+                                                    <span class="text-xs font-semibold text-slate-700 ml-0.5">{{
+                                                        feedback.rating
                                                         }}/5</span>
                                                 </div>
                                             </div>
@@ -278,7 +327,8 @@
                                                 <span class="flex-1">{{ feedback.feedback }}</span>
                                             </div>
                                         </div>
-                                        <div v-else class="text-xs text-slate-400 italic bg-white rounded-lg p-2 border border-slate-200">
+                                        <div v-else
+                                            class="text-xs text-slate-400 italic bg-white rounded-lg p-2 border border-slate-200">
                                             No comment provided
                                         </div>
                                     </div>

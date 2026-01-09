@@ -140,7 +140,7 @@ class PageController extends Controller
             'balance' => 0,
             'address' => null,
             'rating' => 0,
-            'feedback_type' => 'compliment',
+            'feedback_type' => '',
             'feedback' => null,
             'status' => 'draft',
             'items' => [],

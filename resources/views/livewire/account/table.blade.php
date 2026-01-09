@@ -47,11 +47,27 @@
         </div>
         <hr class="my-3">
         <div class="row">
-            <div class="col-md-4" wire:ignore>
+            <div class="col-md-3" wire:ignore>
                 {{ html()->select('account_type', accountTypes())->value('')->class('tomSelect')->id('account_type')->placeholder('Select Account Type') }}
             </div>
             <div class="col-md-4" wire:ignore>
                 {{ html()->select('account_category_id', [])->value('')->class('select-account_category_id')->id('account_category_id')->placeholder('Select account category') }}
+            </div>
+            <div class="col-md-2">
+                <div class="form-check form-switch d-flex align-items-center h-100">
+                    <input class="form-check-input" type="checkbox" id="excludeCustomer" wire:model.live="excludeCustomer">
+                    <label class="form-check-label ms-2" for="excludeCustomer">
+                        Exclude Customer
+                    </label>
+                </div>
+            </div>
+            <div class="col-md-2">
+                <div class="form-check form-switch d-flex align-items-center h-100">
+                    <input class="form-check-input" type="checkbox" id="excludeVendor" wire:model.live="excludeVendor">
+                    <label class="form-check-label ms-2" for="excludeVendor">
+                        Exclude Vendor
+                    </label>
+                </div>
             </div>
         </div>
     </div>
