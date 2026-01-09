@@ -5,7 +5,7 @@
                 <ol class="breadcrumb">
                     <li class="breadcrumb-item"><a href="{{ route('dashboard') }}">Home</a></li>
                     <li class="breadcrumb-item" aria-current="page">Report</li>
-                    <li class="breadcrumb-item active" aria-current="page">Sale Summary</li>
+                    <li class="breadcrumb-item active" aria-current="page">Daily Sales Insights</li>
                 </ol>
             </nav>
         </div>
@@ -13,7 +13,7 @@
     <div class="content__boxed">
         <div class="content__wrap">
             <div class="card mb-3">
-                @livewire('report.sale.day-wise-report')
+                @livewire('report.sale.daily-sales-insights-report')
             </div>
         </div>
     </div>
