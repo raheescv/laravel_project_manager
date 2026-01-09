@@ -66,10 +66,27 @@ class BankReconciliationReport extends Component
 
         if (in_array($propertyName, $filterProperties)) {
             $this->resetFilters();
+            // Completely clear rowDates when filters change to prevent stale entries
+            $this->rowDates = [];
         }
-        
+
         // Clean up rowDates when it's updated to prevent duplicates
         if (str_starts_with($propertyName, 'rowDates.')) {
+            // Extract the ID and ensure it's stored as integer key
+            $id = (int) str_replace('rowDates.', '', $propertyName);
+
+            // If the value exists under the string key, move it to integer key
+            if (isset($this->rowDates[$propertyName])) {
+                $date = $this->rowDates[$propertyName];
+                unset($this->rowDates[$propertyName]);
+                if (!empty($date)) {
+                    $this->rowDates[$id] = $date;
+                } else {
+                    unset($this->rowDates[$id]);
+                }
+            }
+
+            // Normalize rowDates to ensure all keys are integers and prevent duplicates
             $this->normalizeRowDates();
         }
     }
@@ -82,7 +99,7 @@ class BankReconciliationReport extends Component
             $this->sortField = $field;
             $this->sortDirection = self::DEFAULT_SORT_DIRECTION;
         }
-        
+
         // Clean up rowDates to remove any stale entries after sorting
         $this->cleanupRowDates();
     }
@@ -151,10 +168,10 @@ class BankReconciliationReport extends Component
     public function getItemsProperty(): LengthAwarePaginator
     {
         $items = $this->getBaseQuery()->paginate($this->perPage);
-        
+
         // Ensure rowDates only contains entries for current page items
-        $this->normalizeRowDates();
-        
+        $this->normalizeRowDates($items);
+
         return $items;
     }
 
@@ -210,36 +227,46 @@ class BankReconciliationReport extends Component
 
     private function cleanupRowDates(): void
     {
-        // Get all current item IDs to ensure rowDates only contains valid entries
-        $currentItemIds = $this->items->pluck('id')->toArray();
-        
-        // Remove any entries in rowDates that don't match current items
-        $this->rowDates = array_intersect_key($this->rowDates, array_flip($currentItemIds));
-        
-        // Normalize the array to prevent duplicates
-        $this->normalizeRowDates();
+        // Normalize the array to prevent duplicates using current items
+        $this->normalizeRowDates($this->items);
     }
 
-    private function normalizeRowDates(): void
+    private function normalizeRowDates(?LengthAwarePaginator $items = null): void
     {
+        // Use provided items or get current items (avoiding infinite loop)
+        if ($items === null) {
+            $items = $this->items;
+        }
+
         // Ensure rowDates only contains entries for current items
-        $currentItemIds = $this->items->pluck('id')->toArray();
-        
-        // Remove entries that don't match current items
+        $currentItemIds = $items->pluck('id')->toArray();
+
+        // Remove entries that don't match current items and ensure IDs are integers
+        // Also prevent duplicates by using array_unique on keys
         $normalized = [];
+        $seenIds = [];
         foreach ($this->rowDates as $id => $date) {
+            $intId = (int) $id;
+
+            // Skip if we've already seen this ID (prevent duplicates)
+            if (isset($seenIds[$intId])) {
+                continue;
+            }
+
             // Only keep entries for current items and ensure ID is an integer
-            if (in_array((int) $id, $currentItemIds, true)) {
-                $normalized[(int) $id] = $date;
+            if (in_array($intId, $currentItemIds, true)) {
+                // Prevent duplicates by using integer key
+                $normalized[$intId] = $date;
+                $seenIds[$intId] = true;
             }
         }
-        
+
         $this->rowDates = $normalized;
-        
+
         // Remove entries that match the current delivered_date (no need to track unchanged dates)
         foreach ($this->rowDates as $id => $date) {
-            $item = $this->items->firstWhere('id', $id);
-            if ($item && !empty($date) && $date === ($item->delivered_date ?? '')) {
+            $item = $items->firstWhere('id', $id);
+            if ($item && ! empty($date) && $date === ($item->delivered_date ?? '')) {
                 unset($this->rowDates[$id]);
             }
         }
@@ -355,8 +382,14 @@ class BankReconciliationReport extends Component
 
     public function render(): View
     {
+        // Get items first to avoid infinite loop
+        $items = $this->items;
+
+        // Normalize rowDates after getting items to ensure consistency
+        $this->normalizeRowDates($items);
+
         return view('livewire.account.bank-reconciliation-report', [
-            'items' => $this->items,
+            'items' => $items,
             'bankAccounts' => $this->bankAccounts,
             'summary' => $this->summary,
         ]);
