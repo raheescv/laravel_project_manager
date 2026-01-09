@@ -69,6 +69,7 @@ class EmployeeCalendar extends Component
             ->whereHas('branches', fn ($query) => $query->where('user_has_branches.branch_id', session('branch_id')))
             ->when($this->employee_id, fn ($query) => $query->whereIn('id', $this->employee_id))
             ->whereIn('id', $employeeIds)
+            ->active()
             ->limit($limit)
             ->get()
             ->map(fn ($employee) => [
