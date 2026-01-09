@@ -146,7 +146,7 @@ class Sale extends Model implements AuditableContracts
     public function scopeCustomerSearch($query, $branch_id = null, $from = null, $to = null)
     {
         return $query->when($branch_id, fn ($q) => $q->where('branch_id', $branch_id))
-            ->where('status','completed')
+            ->where('status', 'completed')
             ->when($from, fn ($q) => $q->where('date', '>=', $from))
             ->when($to, fn ($q) => $q->where('date', '<=', $to));
     }
