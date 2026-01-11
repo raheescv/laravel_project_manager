@@ -167,6 +167,10 @@ export default function AddCustomerModal({ open, onClose, customerId, onSaved })
                                     </select>
 
                             </div>
+                            <div className="col-md-6">
+                                <label className="form-label">ID Number (National ID / Passport)</label>
+                                <input name="id_no" className="form-control" value={form.id_no} onChange={handleChange} />
+                            </div>
                         </div>
 
                         {errors.form && <div className="alert alert-danger mt-3">{errors.form}</div>}

@@ -10,7 +10,8 @@ export default function CustomerSelect({ value, onChange, newCustomer }) {
     // Load initial customers
     useEffect(() => {
         let mounted = true;
-        axios.get("/account/list").then(res => {
+        // Request only Customer model by default to avoid loading entire accounts table
+        axios.get("/account/list", { params: { model: 'Customer' } }).then(res => {
             if (!mounted) return;
             const customers = (res.data.items || []).map(c => ({
                 id: String(c.id),
@@ -34,7 +35,8 @@ export default function CustomerSelect({ value, onChange, newCustomer }) {
             create: true,
             load: function(query, callback) {
                 if (!query.length) return callback(options);
-                axios.get("/account/list", { params: { query } })
+                // Include model filter for searches
+                axios.get("/account/list", { params: { query, model: 'Customer' } })
                     .then(res => {
                         const data = (res.data.items || []).map(c => ({
                             id: String(c.id),
@@ -69,7 +71,7 @@ export default function CustomerSelect({ value, onChange, newCustomer }) {
             tomRef.current.setValue(existing.id, true);
         } else {
             // Fetch customer if not in options
-            axios.get(`/account/${value}`).then(res => {
+            axios.get(`/account/${value}`, { params: { model: 'Customer' } }).then(res => {
                 const sel = { id: String(res.data.id), name: `${res.data.name} (${res.data.mobile || "-"})` };
                 setOptions(prev => [sel, ...prev]); // prepend
                 tomRef.current.addOption(sel);
