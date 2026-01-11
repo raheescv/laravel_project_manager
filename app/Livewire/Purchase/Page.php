@@ -56,7 +56,17 @@ class Page extends Component
         ];
 
         if ($this->table_id) {
-            $this->purchase = Purchase::with('account:id,name', 'branch:id,name', 'items.product:id,name,barcode', 'createdUser:id,name', 'updatedUser:id,name', 'cancelledUser:id,name', 'payments.paymentMethod:id,name')->find($this->table_id);
+            $this->purchase = Purchase::with([
+                'account:id,name',
+                'branch:id,name',
+                'items.product.unit:id,name,code',
+                'items.product.units.subUnit:id,name,code',
+                'items.product:id,name,barcode,unit_id,cost',
+                'createdUser:id,name',
+                'updatedUser:id,name',
+                'cancelledUser:id,name',
+                'payments.paymentMethod:id,name',
+            ])->find($this->table_id);
             if (! $this->purchase) {
                 return redirect()->route('purchase::index');
             }
@@ -72,6 +82,9 @@ class Page extends Component
                         'product_id' => $item['product_id'],
                         'name' => $item['name'],
                         'barcode' => $item->product?->barcode,
+                        'unit_id' => $item['unit_id'] ?: $item->product?->unit_id,
+                        'conversion_factor' => $item['conversion_factor'] ?: 1,
+                        'units' => $this->getProductUnits($item->product),
                         'tax_amount' => $item['tax_amount'],
                         'unit_price' => $item['unit_price'],
                         'quantity' => round($item['quantity'], 3),
@@ -120,6 +133,10 @@ class Page extends Component
 
     public function updated($key, $value)
     {
+        if (preg_match('/^items\.(.*?)\.unit_id$/', $key, $matches)) {
+            $index = $matches[1];
+            $this->updateUnit($index, $value);
+        }
         if (preg_match('/^items\..*/', $key)) {
             $indexes = explode('.', $key);
             $index = $indexes[1] ?? null;
@@ -235,12 +252,16 @@ class Page extends Component
     public function addToCart($product)
     {
         $key = $product->id;
-        $product = $product;
+        $product->load(['unit', 'units.subUnit']);
+
         $single = [
             'key' => $key,
             'product_id' => $product->id,
             'name' => $product->name,
             'barcode' => $product->barcode,
+            'unit_id' => $product->unit_id,
+            'conversion_factor' => 1,
+            'units' => $this->getProductUnits($product),
             'unit_price' => $product->cost,
             'discount' => 0,
             'quantity' => 1,
@@ -254,6 +275,40 @@ class Page extends Component
         $this->singleCartCalculator($key);
         $this->mainCalculator();
         // $this->dispatch('success', ['message' => 'item added successfully']);
+    }
+
+    public function getProductUnits($product)
+    {
+        $units = [];
+        if ($product->unit) {
+            $units[] = [
+                'id' => $product->unit->id,
+                'name' => $product->unit->name,
+                'conversion_factor' => 1,
+            ];
+        }
+        foreach ($product->units as $pUnit) {
+            if ($pUnit->subUnit) {
+                $units[] = [
+                    'id' => $pUnit->subUnit->id,
+                    'name' => $pUnit->subUnit->name,
+                    'conversion_factor' => $pUnit->conversion_factor,
+                ];
+            }
+        }
+
+        return $units;
+    }
+
+    public function updateUnit($index, $unit_id)
+    {
+        $units = $this->items[$index]['units'];
+        $selectedUnit = collect($units)->firstWhere('id', $unit_id);
+        if ($selectedUnit) {
+            $this->items[$index]['conversion_factor'] = $selectedUnit['conversion_factor'];
+        }
+        $this->cartCalculator($index);
+        $this->mainCalculator();
     }
 
     public function removeItem($index)
@@ -372,7 +427,6 @@ class Page extends Component
             $oldStatus = $this->purchases['status'];
 
             DB::beginTransaction();
-
             if (! count($this->items)) {
                 throw new \Exception('Please add any item', 1);
             }

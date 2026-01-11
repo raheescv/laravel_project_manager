@@ -15,6 +15,8 @@ class PurchaseItem extends Model implements AuditableContracts
     protected $fillable = [
         'purchase_id',
         'product_id',
+        'unit_id',
+        'conversion_factor',
         'batch',
         'unit_price',
         'quantity',

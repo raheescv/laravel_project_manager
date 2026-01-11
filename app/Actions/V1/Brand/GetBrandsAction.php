@@ -2,7 +2,6 @@
 
 namespace App\Actions\V1\Brand;
 
-
 use App\Models\Brand;
 use Illuminate\Support\Collection;
 
