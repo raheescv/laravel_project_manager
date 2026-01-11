@@ -9,6 +9,7 @@ class StockCheckItem extends Model
 {
     protected $fillable = [
         'stock_check_id',
+        'inventory_id',
         'product_id',
         'physical_quantity',
         'recorded_quantity',
@@ -20,6 +21,7 @@ class StockCheckItem extends Model
         return array_merge(
             [
                 'stock_check_id' => ['required', 'exists:stock_checks,id'],
+                'inventory_id' => ['required', 'exists:inventories,id'],
                 'product_id' => ['required', 'exists:products,id'],
                 'physical_quantity' => ['required', 'numeric', 'min:0'],
                 'recorded_quantity' => ['required', 'numeric', 'min:0'],
@@ -32,6 +34,11 @@ class StockCheckItem extends Model
     public function stockCheck()
     {
         return $this->belongsTo(StockCheck::class);
+    }
+
+    public function inventory()
+    {
+        return $this->belongsTo(Inventory::class);
     }
 
     public function product()

@@ -14,8 +14,7 @@ class CreateStockCheckAction
         try {
             DB::beginTransaction();
 
-            // Create StockCheck record
-            $data = [
+            $stockCheckData = [
                 'tenant_id' => session('tenant_id'),
                 'branch_id' => $data['branch_id'],
                 'title' => $data['title'],
@@ -25,12 +24,14 @@ class CreateStockCheckAction
                 'created_by' => $userId,
                 'updated_by' => $userId,
             ];
-            $stockCheck = StockCheck::create($data);
+            $stockCheck = StockCheck::create($stockCheckData);
 
             $columns = [
                 DB::raw("{$stockCheck->id} as stock_check_id"),
+                'id as inventory_id',
                 'product_id',
                 DB::raw('sum(quantity) as recorded_quantity'),
+                DB::raw('now() as created_at'),
             ];
 
             $items = Inventory::withoutGlobalScopes()
@@ -42,27 +43,26 @@ class CreateStockCheckAction
 
             $stockCheck->items()->insert($items);
 
+            $data = [
+                'id' => $stockCheck->id,
+                'title' => $stockCheck->title,
+                'date' => $stockCheck->date,
+                'branch_id' => $stockCheck->branch_id,
+                'items_count' => count($items),
+            ];
+
             DB::commit();
 
-            return [
-                'success' => true,
-                'message' => 'Stock check created successfully',
-                'data' => [
-                    'id' => $stockCheck->id,
-                    'title' => $stockCheck->title,
-                    'date' => $stockCheck->date,
-                    'branch_id' => $stockCheck->branch_id,
-                    'items_count' => count($items),
-                ],
-            ];
+            $return['success'] = true;
+            $return['message'] = 'Stock check created successfully';
+            $return['data'] = $data;
         } catch (Exception $e) {
             DB::rollBack();
-
-            return [
-                'success' => false,
-                'message' => 'Failed to create stock check: '.$e->getMessage(),
-                'data' => [],
-            ];
+            $return['success'] = false;
+            $return['message'] = 'Failed to create stock check: '.$e->getMessage();
+            $return['data'] = [];
         }
+
+        return $return;
     }
 }

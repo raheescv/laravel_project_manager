@@ -15,35 +15,28 @@ class UpdateStockCheckMetadataAction
 
             $stockCheck = StockCheck::findOrFail($stockCheckId);
 
-            // Update only metadata fields
-            $stockCheck->branch_id = $data['branch_id'];
-            $stockCheck->title = $data['title'];
-            $stockCheck->date = $data['date'];
-            $stockCheck->description = $data['description'] ?? null;
-            $stockCheck->updated_by = $userId;
-            $stockCheck->save();
+            $stockCheckData = [
+                'branch_id' => $data['branch_id'],
+                'title' => $data['title'],
+                'date' => $data['date'],
+                'description' => $data['description'] ?? null,
+                'updated_by' => $userId,
+            ];
+            $stockCheck->update($stockCheckData);
 
             DB::commit();
 
-            return [
-                'success' => true,
-                'message' => 'Stock check updated successfully',
-                'data' => [
-                    'id' => $stockCheck->id,
-                    'title' => $stockCheck->title,
-                    'date' => $stockCheck->date,
-                    'branch_id' => $stockCheck->branch_id,
-                    'description' => $stockCheck->description,
-                ],
-            ];
+            $return['success'] = true;
+            $return['message'] = 'Stock check updated successfully';
+            $return['data'] = $stockCheck->toArray();
         } catch (Exception $e) {
             DB::rollBack();
 
-            return [
-                'success' => false,
-                'message' => 'Failed to update stock check: '.$e->getMessage(),
-                'data' => [],
-            ];
+            $return['success'] = false;
+            $return['message'] = 'Failed to update stock check: '.$e->getMessage();
+            $return['data'] = [];
         }
+
+        return $return;
     }
 }

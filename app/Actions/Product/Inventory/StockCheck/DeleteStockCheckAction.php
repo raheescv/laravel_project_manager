@@ -23,19 +23,17 @@ class DeleteStockCheckAction
 
             DB::commit();
 
-            return [
-                'success' => true,
-                'message' => 'Stock check and all related items deleted successfully',
-                'data' => [],
-            ];
+            $return['success'] = true;
+            $return['message'] = 'Stock check and all related items deleted successfully';
+            $return['data'] = [];
         } catch (Exception $e) {
             DB::rollBack();
 
-            return [
-                'success' => false,
-                'message' => 'Failed to delete stock check: '.$e->getMessage(),
-                'data' => [],
-            ];
+            $return['success'] = false;
+            $return['message'] = 'Failed to delete stock check: '.$e->getMessage();
+            $return['data'] = [];
         }
+
+        return $return;
     }
 }

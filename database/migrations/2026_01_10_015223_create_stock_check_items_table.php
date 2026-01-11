@@ -19,6 +19,9 @@ return new class() extends Migration
             $table->unsignedBigInteger('product_id');
             $table->foreign('product_id')->references('id')->on('products')->onDelete('cascade');
             $table->index('product_id');
+            $table->unsignedBigInteger('inventory_id');
+            $table->foreign('inventory_id')->references('id')->on('inventories')->onDelete('cascade');
+            $table->index('inventory_id');
             $table->decimal('physical_quantity', 16, 2);
             $table->decimal('recorded_quantity', 16, 2);
             $table->decimal('difference', 16, 2)->storedAs('physical_quantity - recorded_quantity');
