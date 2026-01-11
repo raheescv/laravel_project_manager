@@ -16,6 +16,8 @@ class PurchaseReturnItem extends Model implements AuditableContracts
         'purchase_return_id',
         'purchase_item_id',
         'product_id',
+        'unit_id',
+        'conversion_factor',
         'unit_price',
         'quantity',
         'discount',
@@ -46,6 +48,11 @@ class PurchaseReturnItem extends Model implements AuditableContracts
     public function purchaseItem()
     {
         return $this->belongsTo(PurchaseItem::class);
+    }
+
+    public function unit()
+    {
+        return $this->belongsTo(Unit::class);
     }
 
     public function product()

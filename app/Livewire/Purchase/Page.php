@@ -306,6 +306,12 @@ class Page extends Component
         $selectedUnit = collect($units)->firstWhere('id', $unit_id);
         if ($selectedUnit) {
             $this->items[$index]['conversion_factor'] = $selectedUnit['conversion_factor'];
+
+            // Recalculate Unit Price based on Conversion Factor
+            $product = Product::find($this->items[$index]['product_id']);
+            if ($product) {
+                $this->items[$index]['unit_price'] = round($product->cost * $this->items[$index]['conversion_factor'], 2);
+            }
         }
         $this->cartCalculator($index);
         $this->mainCalculator();

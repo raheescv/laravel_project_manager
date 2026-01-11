@@ -154,7 +154,7 @@
                                         @endforeach
                                         @if (count($items) == 0)
                                             <tr>
-                                                <td colspan="10" class="text-center py-4 text-muted">
+                                                <td colspan="11" class="text-center py-4 text-muted">
                                                     <i class="demo-psi-cart-2 fs-1 mb-2 d-block"></i>
                                                     No items added yet
                                                 </td>
