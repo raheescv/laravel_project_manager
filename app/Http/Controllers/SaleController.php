@@ -99,9 +99,12 @@ class SaleController extends Controller
                     'branch:id,name',
                     'items' => function ($query): void {
                         $query->with([
-                            'product:id,name,mrp,size,barcode',
+                            'product:id,name,mrp,size,barcode,unit_id',
+                            'product.unit:id,name',
+                            'product.units.subUnit:id,name',
                             'employee:id,name',
                             'assistant:id,name',
+                            'unit:id,name',
                         ]);
                     },
                     'comboOffers.comboOffer:id,name',
@@ -179,6 +182,21 @@ class SaleController extends Controller
                         'employee_name' => $item->employee->name ?? 'Unknown Employee',
                         'assistant_id' => $item->assistant_id,
                         'assistant_name' => $item->assistant->name ?? 'Unknown Assistant',
+                        'unit_id' => $item->unit_id ?? $item->product->unit_id,
+                        'unit_name' => $item->unit->name ?? ($item->product->unit->name ?? ''),
+                        'units' => collect([
+                            [
+                                'id' => $item->product->unit_id,
+                                'name' => $item->product->unit->name ?? '',
+                                'conversion_factor' => 1,
+                            ],
+                        ])->concat($item->product->units->map(function ($pu) {
+                            return [
+                                'id' => $pu->sub_unit_id,
+                                'name' => $pu->subUnit->name ?? '',
+                                'conversion_factor' => $pu->conversion_factor,
+                            ];
+                        }))->toArray(),
                         'combo_offer_price' => 0,
                         'combo_offer_id' => null,
                     ];

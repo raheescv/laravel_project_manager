@@ -86,6 +86,22 @@ class POSController extends Controller
                         'product_id' => $inventory->product_id,
                         'branch_id' => $inventory->branch_id,
                         'image' => $imageUrl,
+                        'unit_id' => $inventory->product->unit_id,
+                        'unit_name' => $inventory->product->unit->name ?? '',
+                        'conversion_factor' => 1,
+                        'units' => collect([
+                            [
+                                'id' => $inventory->product->unit_id,
+                                'name' => $inventory->product->unit->name ?? '',
+                                'conversion_factor' => 1,
+                            ],
+                        ])->concat($inventory->product->units->map(function ($pu) {
+                            return [
+                                'id' => $pu->sub_unit_id,
+                                'name' => $pu->subUnit->name ?? '',
+                                'conversion_factor' => $pu->conversion_factor,
+                            ];
+                        })),
                     ];
                 });
 
@@ -132,6 +148,22 @@ class POSController extends Controller
                 'product_id' => $inventory->product_id,
                 'branch_id' => $inventory->branch_id,
                 'image' => $imageUrl,
+                'unit_id' => $inventory->product->unit_id,
+                'unit_name' => $inventory->product->unit->name ?? '',
+                'conversion_factor' => 1,
+                'units' => collect([
+                    [
+                        'id' => $inventory->product->unit_id,
+                        'name' => $inventory->product->unit->name ?? '',
+                        'conversion_factor' => 1,
+                    ],
+                ])->concat($inventory->product->units->map(function ($pu) {
+                    return [
+                        'id' => $pu->sub_unit_id,
+                        'name' => $pu->subUnit->name ?? '',
+                        'conversion_factor' => $pu->conversion_factor,
+                    ];
+                })),
             ]);
         } catch (\Exception $e) {
             Log::error('Error finding product by barcode: '.$e->getMessage());
@@ -191,6 +223,22 @@ class POSController extends Controller
                 'tax_amount' => $taxAmount,
                 'total' => $total,
                 'employee_name' => User::find($request->employee_id)->name ?? '',
+                'unit_id' => $inventory->product->unit_id,
+                'unit_name' => $inventory->product->unit->name ?? '',
+                'conversion_factor' => 1,
+                'units' => collect([
+                    [
+                        'id' => $inventory->product->unit_id,
+                        'name' => $inventory->product->unit->name ?? '',
+                        'conversion_factor' => 1,
+                    ],
+                ])->concat($inventory->product->units->map(function ($pu) {
+                    return [
+                        'id' => $pu->sub_unit_id,
+                        'name' => $pu->subUnit->name ?? '',
+                        'conversion_factor' => $pu->conversion_factor,
+                    ];
+                }))->toArray(),
             ];
 
             return response()->json($item);

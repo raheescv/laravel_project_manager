@@ -18,6 +18,9 @@ return new class() extends Migration
 
             $table->unsignedBigInteger('inventory_id')->references('id')->on('inventories');
             $table->unsignedBigInteger('product_id')->references('id')->on('products');
+            $table->foreignId('unit_id')->nullable()->constrained('units');
+            $table->decimal('conversion_factor', 15, 4)->default(1);
+
             $table->unsignedBigInteger('employee_id')->references('id')->on('users');
 
             $table->decimal('unit_price', 16, 2);

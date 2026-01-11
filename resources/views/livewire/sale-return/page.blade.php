@@ -212,7 +212,7 @@
                                             <div class="product-list d-flex align-items-center justify-content-between @if ($loop->index % 2 != 0) bg-custom-gray @endif">
                                                 <div class="d-flex align-items-center product-info">
                                                     <div class="info">
-                                                        <h6>{{ $item['name'] }}</h6>
+                                                        <h6>{{ $item['name'] }} <small class="text-muted">({{ $item['unit_name'] ?? '' }})</small></h6>
                                                         <p class="text-success">{{ currency($item['total']) }}</p>
                                                     </div>
                                                 </div>
