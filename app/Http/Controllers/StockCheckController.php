@@ -75,7 +75,8 @@ class StockCheckController extends Controller
     public function update($id, UpdateStockCheckRequest $request, UpdateStockCheckAction $action)
     {
         try {
-            $response = $action->execute($id, $request->items);
+            $userId = Auth::id();
+            $response = $action->execute($id, $request->items, $userId);
             if (! $response['success']) {
                 throw new Exception($response['message']);
             }
