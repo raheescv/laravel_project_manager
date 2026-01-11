@@ -13,9 +13,9 @@
                     <li class="breadcrumb-item active" aria-current="page">{{ $stockCheck->title }}</li>
                 </ol>
             </nav>
-            <h1 class="page-title mb-0 mt-2">{{ $stockCheck->title }}</h1>
+            <h1 class="page-title mb-0 mt-2">Stock Check Details</h1>
             <p class="lead">
-                Stock check for {{ $stockCheck->branch->name ?? 'Branch' }} - {{ systemDate($stockCheck->date) }}
+                Stock check for {{ $stockCheck->branch->name ?? 'Branch' }} - {{ $stockCheck->title }} - {{ systemDate($stockCheck->date) }}
             </p>
         </div>
     </div>
