@@ -36,7 +36,7 @@ class ScanBarcodeAction
             }
 
             // Increment physical_quantity
-            $item->increment('physical_quantity',1);
+            $item->increment('physical_quantity', 1);
             $item->refresh();
 
             $return['success'] = true;

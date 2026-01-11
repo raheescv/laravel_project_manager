@@ -2,13 +2,14 @@
 
 namespace App\Actions\Product\Inventory\StockCheck\Item;
 
+use App\Actions\Product\Inventory\UpdateAction;
 use App\Models\StockCheckItem;
 use Exception;
 use Illuminate\Support\Facades\DB;
 
 class UpdateStockCheckAction
 {
-    public function execute(int $stockCheckId, array $items): array
+    public function execute(int $stockCheckId, array $items, int $userId): array
     {
         try {
             DB::beginTransaction();
@@ -28,6 +29,20 @@ class UpdateStockCheckAction
                 }
 
                 $item->save();
+
+                if ($item->status == 'completed') {
+                    $sourceData = $item->inventory->toArray();
+                    $sourceData['quantity'] = $item->physical_quantity;
+                    $sourceData['model'] = 'StockCheckItem';
+                    $sourceData['model_id'] = $item->id;
+                    $sourceData['remarks'] = 'Stock Check Updation : '.$item->stockCheck->title;
+                    $sourceData['updated_by'] = $userId;
+
+                    $response = (new UpdateAction())->execute($sourceData, $item->inventory_id);
+                    if (! $response['success']) {
+                        throw new Exception('Failed to update source inventory: '.$response['message'], 1);
+                    }
+                }
 
                 $updatedItems[] = [
                     'id' => $item->id,
