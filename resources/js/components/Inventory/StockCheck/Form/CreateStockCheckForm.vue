@@ -54,9 +54,9 @@
 import { ref, onMounted, nextTick, watch, computed } from 'vue'
 import { useToast } from 'vue-toastification'
 import axios from 'axios'
-import CreateStockCheckAction from './Apis/CreateStockCheckAction.js'
-import UpdateStockCheckMetadataAction from './Apis/UpdateStockCheckMetadataAction.js'
-import GetStockCheckAction from './Apis/GetStockCheckAction.js'
+import CreateStockCheckAction from '../Apis/CreateStockCheckAction.js'
+import UpdateStockCheckMetadataAction from '../Apis/UpdateStockCheckMetadataAction.js'
+import GetStockCheckAction from '../Apis/GetStockCheckAction.js'
 
 const toast = useToast()
 const createAction = new CreateStockCheckAction()

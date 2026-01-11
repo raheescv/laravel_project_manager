@@ -11,7 +11,7 @@
 import { ref } from 'vue'
 import { useToast } from 'vue-toastification'
 import BarcodeInput from './BarcodeInput.vue'
-import ScanBarcodeAction from './Apis/ScanBarcodeAction.js'
+import ScanBarcodeAction from '../Apis/ScanBarcodeAction.js'
 
 const props = defineProps({
     stockCheckId: {

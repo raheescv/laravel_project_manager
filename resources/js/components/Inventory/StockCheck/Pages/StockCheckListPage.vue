@@ -76,10 +76,10 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useToast } from 'vue-toastification'
-import StockCheckListTable from './StockCheckListTable.vue'
-import CreateStockCheckModal from './CreateStockCheckModal.vue'
-import GetStockChecksAction from './Apis/GetStockChecksAction.js'
-import DeleteStockCheckAction from './Apis/DeleteStockCheckAction.js'
+import StockCheckListTable from '../Components/StockCheckListTable.vue'
+import CreateStockCheckModal from '../Form/CreateStockCheckModal.vue'
+import GetStockChecksAction from '../Apis/GetStockChecksAction.js'
+import DeleteStockCheckAction from '../Apis/DeleteStockCheckAction.js'
 
 const toast = useToast()
 const getStockChecksAction = new GetStockChecksAction()
