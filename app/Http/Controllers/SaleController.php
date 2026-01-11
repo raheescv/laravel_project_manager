@@ -123,7 +123,7 @@ class SaleController extends Controller
 
 
           $showColleague = Configuration::where('key', 'show_colleague')->value('value') ?? 'yes';
-         $categories = MeasurementCategory::select('id', 'name')
+          $categories = MeasurementCategory::select('id', 'name')
             ->orderBy('name')
             ->get();
 
@@ -241,7 +241,7 @@ class SaleController extends Controller
                         'id' => $item->id,
                         'product_id' => $item->product_id,
                         'inventory_id' => $item->inventory_id,
-                        'name' => $item->product->name,
+                     'name' => $item->product->name,
                         'barcode' => $item->product->barcode,
                         'size' => $item->product->size,
                         'category' => $item->product->category->name ?? 'N/A',

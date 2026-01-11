@@ -28,14 +28,35 @@ use Illuminate\Support\Facades\Log;
 class POSController extends Controller
 {
     public function getSubCategories($categoryId)
-{
-    $subcategories = MeasurementSubCategory::where('measurement_category_id', $categoryId)
-        ->select('id', 'name')
-        ->orderBy('name')
-        ->get();
+    {
+        // Allow callers to pass multiple category ids via query param `category_ids`
+        // (comma separated or array). If provided, use those; otherwise fall back
+        // to the route parameter.
+        $inputIds = request()->input('category_ids');
+        $ids = [];
 
-    return response()->json($subcategories);
-}
+        if ($inputIds) {
+            if (is_array($inputIds)) {
+                $ids = array_map('intval', $inputIds);
+            } else {
+                $ids = array_map('intval', array_filter(array_map('trim', explode(',', $inputIds))));
+            }
+        } else {
+            // route param may itself be a comma-separated list
+            if (is_string($categoryId) && strpos($categoryId, ',') !== false) {
+                $ids = array_map('intval', array_filter(array_map('trim', explode(',', $categoryId))));
+            } else {
+                $ids = [(int) $categoryId];
+            }
+        }
+
+        $subcategories = MeasurementSubCategory::whereIn('measurement_category_id', $ids)
+            ->select('id', 'name', 'measurement_category_id')
+            ->orderBy('name')
+            ->get();
+
+        return response()->json($subcategories);
+    }
 
     public function getProducts(Request $request)
     {
@@ -416,8 +437,30 @@ public function getMeasurementTemplates($categoryId)
 
         $saleData['service_charge'] = $request->input('service_charge', 0);
 
-       $saleData['category_id'] = $request->input('category_id', 0);
-       $saleData['sub_category_id'] = $request->input('sub_category_id', 0);
+        // Accept either single id, comma-separated string or an array for categories/sub-categories.
+        $inputCategoryIds = $request->input('category_ids', $request->input('category_id', null));
+        if (is_array($inputCategoryIds)) {
+            $saleData['category_ids'] = array_map('intval', $inputCategoryIds);
+            $saleData['category_id'] = implode(',', array_filter($saleData['category_ids']));
+        } elseif (is_string($inputCategoryIds) && strpos($inputCategoryIds, ',') !== false) {
+            $saleData['category_ids'] = array_map('intval', array_filter(array_map('trim', explode(',', $inputCategoryIds))));
+            $saleData['category_id'] = $inputCategoryIds; // keep as string of ids
+        } else {
+            $saleData['category_ids'] = $inputCategoryIds ? [(int)$inputCategoryIds] : [];
+            $saleData['category_id'] = $inputCategoryIds !== null ? (string) $inputCategoryIds : null;
+        }
+
+        $inputSubCategoryIds = $request->input('sub_category_ids', $request->input('sub_category_id', null));
+        if (is_array($inputSubCategoryIds)) {
+            $saleData['sub_category_ids'] = array_map('intval', $inputSubCategoryIds);
+            $saleData['sub_category_id'] = implode(',', array_filter($saleData['sub_category_ids']));
+        } elseif (is_string($inputSubCategoryIds) && strpos($inputSubCategoryIds, ',') !== false) {
+            $saleData['sub_category_ids'] = array_map('intval', array_filter(array_map('trim', explode(',', $inputSubCategoryIds))));
+            $saleData['sub_category_id'] = $inputSubCategoryIds;
+        } else {
+            $saleData['sub_category_ids'] = $inputSubCategoryIds ? [(int)$inputSubCategoryIds] : [];
+            $saleData['sub_category_id'] = $inputSubCategoryIds !== null ? (string) $inputSubCategoryIds : null;
+        }
        $saleData['width'] = $request->input('width', '');
        $saleData['size'] = $request->input('size', '');
        
@@ -469,29 +512,40 @@ public function getMeasurementTemplates($categoryId)
         $sale = $response['data'];
 
         /* ======================================================
-           ✅ ADD THIS BLOCK — SAVE CUSTOMER MEASUREMENTS
+           ✅ SAVE CUSTOMER MEASUREMENTS (supports multi-category)
         ====================================================== */
-        if (
-            !empty($saleData['measurements']) &&
-            !empty($saleData['category_id'])
-        ) {
-            // Optional: delete old measurements for same sale
+        if (!empty($saleData['measurements'])) {
             CustomerMeasurement::where('sale_id', $sale->id)->delete();
 
             foreach ($saleData['measurements'] as $m) {
-                if (!empty($m['value'])) {
-                    CustomerMeasurement::create([
-                        'sale_id' => $sale->id,
-                        'customer_id' => $sale->account_id,
-                        'category_id' => $saleData['category_id'],
-                        'measurement_template_id' => $m['measurement_template_id'],
-                        'value' => $m['value'],
-                        'created_by' => $user_id,
-                    ]);
+                if (empty($m['value'])) {
+                    continue;
                 }
+
+                // Determine category for this measurement. Prefer explicit measurement category
+                // sent from client (`category_id` on measurement). Fallback to template->category_id
+                // and finally to the first selected category in the sale.
+                $mCategoryId = $m['category_id'] ?? null;
+                if (empty($mCategoryId) && !empty($m['measurement_template_id'])) {
+                    $template = MeasurementTemplate::find($m['measurement_template_id']);
+                    $mCategoryId = $template->category_id ?? null;
+                }
+
+                if (empty($mCategoryId) && !empty($saleData['category_ids']) && is_array($saleData['category_ids'])) {
+                    $mCategoryId = $saleData['category_ids'][0] ?? null;
+                }
+
+                CustomerMeasurement::create([
+                    'sale_id' => $sale->id,
+                    'customer_id' => $sale->account_id,
+                    'category_id' => $mCategoryId,
+                    'measurement_template_id' => $m['measurement_template_id'],
+                    'value' => $m['value'],
+                    'created_by' => $user_id,
+                ]);
             }
         }
-        /* ================= END ADD ================= */
+        /* ================= END SAVE ================= */
 
         if ($saleData['status'] == 'completed') {
             if ($saleData['send_to_whatsapp']) {

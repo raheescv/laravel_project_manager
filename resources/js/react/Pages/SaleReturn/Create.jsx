@@ -34,7 +34,7 @@ export default function Create() {
     const [showAddCustomerModal, setShowAddCustomerModal] = useState(false);
     const [refreshCustomerKey, setRefreshCustomerKey] = useState(0);
     const [addedCustomer, setAddedCustomer] = useState(null);
-    const [subCategoryId, setSubCategoryId] = useState(null); // <-- track selected subcategory
+    const [subCategoryIds, setSubCategoryIds] = useState([]); // <-- track selected subcategories (array)
     const [widthValue, setWidthValue] = useState(""); // Track width input
      const [sizeValue, setSizeValue] = useState("");  
 
@@ -57,9 +57,9 @@ export default function Create() {
     const [editingItem, setEditingItem] = useState(null);
     const [editingValues, setEditingValues] = useState({ quantity: 1, unit_price: 0 });
 
-     const [categoryId, setCategoryId] = useState(null);
-     const [measurements, setMeasurements] = useState([]);
-     const [measurementValues, setMeasurementValues] = useState({});
+    const [selectedCategoryIds, setSelectedCategoryIds] = useState([]);
+    const [measurements, setMeasurements] = useState([]);
+    const [measurementValues, setMeasurementValues] = useState({});
 
 
     const subTotal = cartItems.reduce((sum, i) => sum + i.total, 0);
@@ -136,19 +136,30 @@ export default function Create() {
     }, [customerId]);
 
   useEffect(() => {
-    if (!categoryId) {
+    if (!selectedCategoryIds || selectedCategoryIds.length === 0) {
         setMeasurements([]);
         setMeasurementValues({});
         return;
     }
 
-    axios
-        .get(`/categories/measurements/${categoryId}`)
-        .then((res) => {
-            setMeasurements(res.data);
+    const requests = selectedCategoryIds.map(cid => axios.get(`/categories/measurements/${cid}`));
+    Promise.all(requests)
+        .then(responses => {
+            const merged = [];
+            const seen = new Set();
+            responses.forEach(r => {
+                (r.data || []).forEach(m => {
+                    if (!seen.has(m.id)) {
+                        seen.add(m.id);
+                        merged.push(m);
+                    }
+                });
+            });
+
+            setMeasurements(merged);
 
             const initialValues = {};
-            res.data.forEach((m) => {
+            merged.forEach((m) => {
                 initialValues[m.id] = "";
             });
 
@@ -156,28 +167,37 @@ export default function Create() {
         })
         .catch((err) => {
             console.error("Measurement load error:", err);
+            setMeasurements([]);
+            setMeasurementValues({});
         });
-}, [categoryId]);
+}, [selectedCategoryIds]);
 
 
 
 useEffect(() => {
-    if (!customerId || !categoryId) return;
+    if (!customerId || !selectedCategoryIds || selectedCategoryIds.length === 0) return;
 
-    axios
-        .get(`/categories/measurementscustomer/${customerId}/${categoryId}`)
-        .then((res) => {
-            if (res.data && Object.keys(res.data).length > 0) {
+    const requests = selectedCategoryIds.map(cid => axios.get(`/categories/measurementscustomer/${customerId}/${cid}`));
+    Promise.all(requests)
+        .then(responses => {
+            const merged = {};
+            responses.forEach(r => {
+                if (r.data && typeof r.data === 'object') {
+                    Object.assign(merged, r.data);
+                }
+            });
+
+            if (Object.keys(merged).length > 0) {
                 setMeasurementValues((prev) => ({
                     ...prev,
-                    ...res.data, // auto fill saved values
+                    ...merged,
                 }));
             }
         })
         .catch((err) => {
             console.error("Customer measurement load error:", err);
         });
-}, [customerId, categoryId]);
+}, [customerId, selectedCategoryIds]);
 
     const handleAddToCart = (product) => {
         setCartItems((prev) => {
@@ -245,7 +265,7 @@ const validateSale = () => {
         return false;
     }
 
-    if (!categoryId) {
+    if (!selectedCategoryIds || selectedCategoryIds.length === 0) {
         toast.error("Please select category");
         return false;
     }
@@ -260,7 +280,8 @@ const validateSale = () => {
         return false;
     }
 
-    if (!subCategoryId) {
+    // If only one category is selected, require at least one subcategory
+    if (selectedCategoryIds.length === 1 && (!subCategoryIds || subCategoryIds.length === 0)) {
         toast.error("Please select subcategory");
         return false;
     }
@@ -314,7 +335,6 @@ const buildMeasurementPayload = () => {
         employee_id: employeeId,
         sale_type: "normal",
         account_id: customerId,
-        sub_category_id: subCategoryId, // <-- Added subCategory
         width: widthValue,  // <-- added
         size: sizeValue,  
        
@@ -329,10 +349,14 @@ const buildMeasurementPayload = () => {
         service_charge: serviceCharge || 0,
 
 
-        category_id: categoryId,
+        // prefer single category_id when exactly one selected for backward compatibility
+        category_id: selectedCategoryIds.length === 1 ? selectedCategoryIds[0] : null,
+        category_ids: selectedCategoryIds,
         measurements: buildMeasurementPayload(),
 
         items: buildItemsPayload(),
+        sub_category_id: subCategoryIds.length === 1 ? subCategoryIds[0] : null,
+        sub_category_ids: subCategoryIds,
         comboOffers: [],
         payment_method:
             paymentMethod === "cash"
@@ -384,6 +408,9 @@ const buildMeasurementPayload = () => {
 
 
 
+    // derive a primary category id for components that expect a single category
+    const primaryCategoryId = selectedCategoryIds && selectedCategoryIds.length > 0 ? selectedCategoryIds[0] : null;
+
     return (
         <div className="main-wrapper">
             <div className="page-wrapper pos-pg-wrapper ms-0">
@@ -393,7 +420,7 @@ const buildMeasurementPayload = () => {
 
                         {/* LEFT SIDEBAR: Categories */}
                         <div className="col-12 col-lg-2 pe-0">
-                            <CategorySidebar selectedId={categoryId} onSelect={(id) => setCategoryId(id)} />
+                            <CategorySidebar selectedId={selectedCategoryIds} onSelect={(ids) => setSelectedCategoryIds(ids)} />
 
 
 
@@ -444,13 +471,13 @@ const buildMeasurementPayload = () => {
                                 </div>
 
 
-                                 {categoryId && (
+                                 {primaryCategoryId && (
                                 <div className="mb-2">
                                     
                                     <SubCategorySelect
-                                        categoryId={categoryId}
-                                        selectedSubId={subCategoryId}
-                                        onSelect={setSubCategoryId}
+                                        categoryId={selectedCategoryIds}
+                                        selectedSubId={subCategoryIds}
+                                        onSelect={setSubCategoryIds}
                                     />
 
 

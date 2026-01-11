@@ -16,6 +16,12 @@ export default function CategorySidebar({ selectedId, onSelect }) {
         return () => { mounted = false; };
     }, []);
 
+    // selectedId can be a number or an array of numbers
+    const isSelected = (id) => {
+        if (Array.isArray(selectedId)) return selectedId.includes(Number(id));
+        return Number(selectedId) === Number(id);
+    };
+
     return (
         <aside className="categories-sidebar p-2 h-100" style={{ minHeight: '80vh' }}>
             <div className="card">
@@ -26,8 +32,17 @@ export default function CategorySidebar({ selectedId, onSelect }) {
                             <button
                                 key={c.id}
                                 type="button"
-                                className={`list-group-item list-group-item-action ${selectedId == c.id ? 'active' : ''}`}
-                                onClick={() => onSelect?.(Number(c.id))}
+                                className={`list-group-item list-group-item-action ${isSelected(c.id) ? 'active' : ''}`}
+                                onClick={() => {
+                                    if (Array.isArray(selectedId)) {
+                                        const idNum = Number(c.id);
+                                        const exists = selectedId.includes(idNum);
+                                        const next = exists ? selectedId.filter(i => i !== idNum) : [...selectedId, idNum];
+                                        onSelect?.(next);
+                                    } else {
+                                        onSelect?.(Number(c.id));
+                                    }
+                                }}
                             >
                                 {c.name}
                             </button>
