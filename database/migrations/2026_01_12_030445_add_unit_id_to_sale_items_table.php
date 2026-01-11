@@ -13,7 +13,7 @@ return new class() extends Migration
     {
         Schema::table('sale_items', function (Blueprint $table) {
             if (! Schema::hasColumn('sale_items', 'unit_id')) {
-                $table->foreignId('unit_id')->nullable()->after('product_id')->constrained('units');
+                $table->foreignId('unit_id')->default(1)->after('product_id')->constrained('units');
             }
             if (! Schema::hasColumn('sale_items', 'conversion_factor')) {
                 $table->decimal('conversion_factor', 15, 4)->default(1)->after('unit_id');
@@ -21,7 +21,7 @@ return new class() extends Migration
         });
         Schema::table('sale_return_items', function (Blueprint $table) {
             if (! Schema::hasColumn('sale_return_items', 'unit_id')) {
-                $table->foreignId('unit_id')->nullable()->after('product_id')->constrained('units');
+                $table->foreignId('unit_id')->default(1)->after('product_id')->constrained('units');
             }
             if (! Schema::hasColumn('sale_return_items', 'conversion_factor')) {
                 $table->decimal('conversion_factor', 15, 4)->default(1)->after('unit_id');
