@@ -34,6 +34,7 @@ return [
         'transfer',
         'opening balance',
         'reset stock',
+        'stock check',
     ],
     'inventory transfer' => ['create', 'view', 'edit', 'edit completed', 'delete', 'import', 'export'],
     'category' => ['create', 'view', 'edit', 'delete', 'import', 'export'],

@@ -341,6 +341,25 @@ if (! function_exists('appointmentStatuses')) {
         ];
     }
 }
+if (! function_exists('stockCheckStatuses')) {
+    function stockCheckStatuses()
+    {
+        return [
+            'pending' => 'Pending',
+            'completed' => 'Completed',
+            'cancelled' => 'Cancelled',
+        ];
+    }
+}
+if (! function_exists('stockCheckItemStatuses')) {
+    function stockCheckItemStatuses()
+    {
+        return [
+            'pending' => 'Pending',
+            'completed' => 'Completed',
+        ];
+    }
+}
 if (! function_exists('noteTypes')) {
     function noteTypes()
     {

@@ -40,6 +40,7 @@ import axios from 'axios'
 import {
     Html5Qrcode
 } from 'html5-qrcode'
+import { useToast } from 'vue-toastification'
 
 const props = defineProps({
     isOpen: {
@@ -53,6 +54,8 @@ const props = defineProps({
 })
 
 const emit = defineEmits(['barcode-scanned', 'close'])
+
+const toast = useToast()
 
 const manualBarcode = ref('')
 const scannerContainer = ref(null)

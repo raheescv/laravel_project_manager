@@ -5,6 +5,7 @@ use App\Http\Controllers\BarcodeController;
 use App\Http\Controllers\InventoryController;
 use App\Http\Controllers\InventoryOpeningBalanceController;
 use App\Http\Controllers\InventoryTransferController;
+use App\Http\Controllers\StockCheckController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware('auth')->group(function (): void {
@@ -39,5 +40,17 @@ Route::middleware('auth')->group(function (): void {
         // AI Image Generation routes
         Route::get('ai-image', [AiImageController::class, 'index'])->name('ai-image')->can('inventory.view');
         Route::post('ai-image/generate', [AiImageController::class, 'generate'])->name('ai-image.generate')->can('inventory.view');
+        // Stock Check routes
+        Route::name('stock-check::')->prefix('stock-check')->group(function (): void {
+            Route::get('', [StockCheckController::class, 'index'])->name('index');
+            Route::get('list', [StockCheckController::class, 'get'])->name('list');
+            Route::post('create', [StockCheckController::class, 'store'])->name('create');
+            Route::get('{id}', [StockCheckController::class, 'show'])->name('show');
+            Route::put('{id}', [StockCheckController::class, 'update'])->name('update');
+            Route::put('{id}/metadata', [StockCheckController::class, 'updateMetadata'])->name('update-metadata');
+            Route::delete('{id}', [StockCheckController::class, 'delete'])->name('delete');
+            Route::post('{id}/scan-barcode', [StockCheckController::class, 'scanBarcode'])->name('scan-barcode');
+            Route::get('{id}/items', [StockCheckController::class, 'getItems'])->name('items');
+        });
     });
 });

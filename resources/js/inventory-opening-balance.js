@@ -1,12 +1,6 @@
-import { createApp } from 'vue'
 import OpeningBalancePage from './components/Inventory/OpeningBalance/OpeningBalancePage.vue'
+import { mountVueApp } from './utils/createVueApp.js'
 
-// Mount the component when DOM is ready
-document.addEventListener('DOMContentLoaded', () => {
-    const element = document.getElementById('opening-balance-form')
-    if (element) {
-        const app = createApp(OpeningBalancePage)
-        app.mount(element)
-    }
-})
+// Mount the component with toast configured globally
+mountVueApp(OpeningBalancePage, 'opening-balance-form')
 
