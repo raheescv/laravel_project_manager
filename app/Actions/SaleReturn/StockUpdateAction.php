@@ -33,19 +33,19 @@ class StockUpdateAction
         $inventory = $inventory->toArray();
         switch ($method) {
             case 'sale_return':
-                $inventory['quantity'] += $item->quantity;
+                $inventory['quantity'] += round($item->quantity * ($item->conversion_factor ?? 1), 4);
                 $inventory['remarks'] = 'Sale Return:'.$model->id;
                 break;
             case 'sale_return_reversal':
-                $inventory['quantity'] -= $item->quantity;
+                $inventory['quantity'] -= round($item->quantity * ($item->conversion_factor ?? 1), 4);
                 $inventory['remarks'] = 'Sale Return Adjustment Reversal:'.$model->id;
                 break;
             case 'delete_item':
-                $inventory['quantity'] -= $item->quantity;
+                $inventory['quantity'] -= round($item->quantity * ($item->conversion_factor ?? 1), 4);
                 $inventory['remarks'] = 'Sale Return Item Delete:'.$model->id;
                 break;
             case 'delete':
-                $inventory['quantity'] -= $item->quantity;
+                $inventory['quantity'] -= round($item->quantity * ($item->conversion_factor ?? 1), 4);
                 $inventory['remarks'] = 'Sale Return Delete:'.$model->id;
                 break;
         }

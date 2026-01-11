@@ -29,6 +29,8 @@ class SaleReturnItem extends Model implements AuditableContracts
 
         'tax',
 
+        'unit_id',
+        'conversion_factor',
         'created_by',
         'updated_by',
         'deleted_by',
@@ -66,6 +68,11 @@ class SaleReturnItem extends Model implements AuditableContracts
     public function saleReturn()
     {
         return $this->belongsTo(SaleReturn::class);
+    }
+
+    public function unit()
+    {
+        return $this->belongsTo(Unit::class);
     }
 
     public function saleItem()

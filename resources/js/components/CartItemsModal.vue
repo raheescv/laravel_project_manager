@@ -59,6 +59,7 @@
                                 <thead class="bg-teal-50/70 border-b-2 border-teal-100">
                                     <tr>
                                         <th class="text-left py-2 px-3 font-semibold text-teal-700 text-xs">Item </th>
+                                        <th class="text-left py-2 px-3 font-semibold text-teal-700 text-xs">Unit </th>
                                         <th class="text-left py-2 px-3 font-semibold text-teal-700 text-xs">Barcode </th>
                                         <th class="text-right py-2 px-3 font-semibold text-teal-700 text-xs">Price </th>
                                         <th class="text-right py-2 px-3 font-semibold text-teal-700 text-xs">Qty </th>
@@ -86,6 +87,11 @@
                                                         {{ item.product_code }}
                                                     </div>
                                                 </div>
+                                            </div>
+                                        </td>
+                                        <td class="py-2 px-3">
+                                            <div class="text-xs font-semibold text-teal-600 bg-teal-50 px-2 py-1 rounded inline-block">
+                                                {{ item.unit_name }}
                                             </div>
                                         </td>
                                         <td class="py-2 px-3">

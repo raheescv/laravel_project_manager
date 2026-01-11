@@ -27,6 +27,8 @@ class SaleItem extends Model implements AuditableContracts
         'quantity',
         'discount',
         'tax',
+        'unit_id',
+        'conversion_factor',
         'created_by',
         'updated_by',
         'deleted_by',
@@ -59,6 +61,11 @@ class SaleItem extends Model implements AuditableContracts
     public function sale()
     {
         return $this->belongsTo(Sale::class);
+    }
+
+    public function unit()
+    {
+        return $this->belongsTo(Unit::class);
     }
 
     public function employee()

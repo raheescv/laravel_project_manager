@@ -1,57 +1,66 @@
 <template>
-    <div class="product-card group relative overflow-hidden" :class="{ 'low-stock': isLowStock }" @click="handleClick">
+    <div class="card h-100 shadow-sm transition-hover border-light position-relative overflow-hidden" 
+         :class="{ 'border-danger border-2': isLowStock }" 
+         @click="handleClick">
 
         <!-- Type Badge -->
-        <div class="type-badge" :class="{ 'product': isProduct, 'service': !isProduct }">
+        <span class="badge position-absolute top-0 start-0 m-2 z-1" 
+              :class="isProduct ? 'bg-success' : 'bg-purple'">
             {{ isProduct ? 'P' : 'S' }}
-        </div>
+        </span>
 
         <!-- Low Stock Indicator -->
-        <div v-if="isProduct && isLowStock" class="low-stock-badge">
-            <i class="fa fa-exclamation-circle"></i>
-        </div>
+        <span v-if="isProduct && isLowStock" 
+              class="badge bg-danger rounded-circle position-absolute top-0 end-0 m-2 z-1 d-flex align-items-center justify-content-center p-0" 
+              style="width: 20px; height: 20px;">
+            <i class="fa fa-exclamation-circle" style="font-size: 0.65rem;"></i>
+        </span>
 
-        <div class="product-image-container">
+        <div class="card-img-container ratio ratio-16x9 bg-light overflow-hidden border-bottom border-light">
             <img v-if="product.image" :src="product.image" :alt="product.name"
-                class="product-image group-hover:scale-110" @error="handleImageError">
-            <div v-else class="fallback-icon">
-                <i class="fa fa-cube"></i>
+                 class="card-img-top object-fit-cover hover-scale" @error="handleImageError">
+            <div v-else class="d-flex align-items-center justify-content-center bg-gradient-light">
+                <i class="fa fa-cube fa-2x text-primary opacity-25"></i>
             </div>
         </div>
 
-        <div class="product-info-wrapper">
-            <h3 class="product-name" :title="product.name">{{ product.name }}</h3>
+        <div class="card-body p-2 d-flex flex-column">
+            <h6 class="card-title product-name mb-1 fw-bold text-dark" :title="product.name">
+                {{ product.name }}
+            </h6>
 
             <!-- Product Details Row -->
-            <div class="product-details-row">
-                <div v-if="product.code" class="product-code">
-                    <span class="detail-label">SKU:</span>
-                    <span class="detail-value">{{ product.code }}</span>
+            <div class="product-details d-flex flex-wrap gap-2 mb-2 pb-2 border-bottom border-light-subtle extra-small text-muted">
+                <div v-if="product.code" class="d-flex align-items-center">
+                    <span class="fw-medium me-1">SKU:</span>
+                    <span class="text-secondary">{{ product.code }}</span>
                 </div>
-                <div v-if="product.size" class="product-size">
-                    <span class="detail-label">Size:</span>
-                    <span class="detail-value">{{ product.size }}</span>
+                <div v-if="product.size" class="d-flex align-items-center">
+                    <span class="fw-medium me-1">Size:</span>
+                    <span class="text-secondary">{{ product.size }}</span>
                 </div>
-                <div v-if="isProduct && product.barcode" class="product-barcode">
-                    <span class="detail-label">Barcode:</span>
-                    <span class="detail-value">{{ product.barcode }}</span>
+                <div v-if="isProduct && product.barcode" class="d-flex align-items-center">
+                    <span class="fw-medium me-1">BC:</span>
+                    <span class="text-secondary text-truncate" style="max-width: 50px;">{{ product.barcode }}</span>
                 </div>
             </div>
 
-            <div class="product-price-row">
-                <div v-if="isProduct" class="product-qty" :class="{ 'low': isLowStock }">
-                    {{ product.stock }}
+            <div class="d-flex justify-content-between align-items-center mt-auto">
+                <div v-if="isProduct" class="badge rounded-1 fw-semibold px-2 py-1" 
+                     :class="isLowStock ? 'bg-danger-subtle text-danger' : 'bg-light text-secondary'">
+                    Stock: {{ product.stock }}
                 </div>
-                <div v-else>
+                <div v-else></div>
+                
+                <div class="text-success fw-bold">
+                    {{ formatPrice(product.mrp) }}
+                    <span v-if="product.unit_name" class="unit-text text-muted fw-normal">/{{ product.unit_name }}</span>
                 </div>
-                <div class="product-price">{{ formatPrice(product.mrp) }}</div>
             </div>
         </div>
 
-        <!-- Touch feedback -->
-        <div class="ripple-effect">
-            <div class="ripple-inner"></div>
-        </div>
+        <!-- Touch feedback ripple container -->
+        <div class="ripple-container"></div>
     </div>
 </template>
 
@@ -81,52 +90,30 @@ export default {
 
     methods: {
         handleClick() {
-            // Enhanced product validation
-            if (!this.product) {
-                console.error('ProductCard: Product is undefined or null');
-                return; // Prevent click event from propagating
-            }
-            
-            // Check for id in multiple possible locations
-            const productId = this.product.id || this.product.product_id || this.product.inventory_id;
-            if (!productId) {
-                console.error('ProductCard: Product missing id:', JSON.stringify(this.product));
-                console.error('ProductCard: Available keys:', Object.keys(this.product || {}));
-                return; // Prevent click event from propagating
-            }
+            if (!this.product) return;
 
-            // Create a clean product object with guaranteed id
+            const productId = this.product.id || this.product.product_id || this.product.inventory_id;
+            if (!productId) return;
+
             const cleanProduct = {
                 ...this.product,
-                id: productId // Ensure id is set
+                id: productId
             };
 
-            // Ensure product has essential properties
-            if (!cleanProduct.name) {
-                console.warn('ProductCard: Product missing name:', JSON.stringify(cleanProduct));
-                // Allow it to continue but log the warning
-            }
-
-            // Emit with validated and cleaned product
             this.$emit('click', cleanProduct);
         },
         formatPrice(price) {
-            if (price) {
-                return parseFloat(price).toFixed(2);
-            } else {
-                return '0.00';
-            }
+            return price ? parseFloat(price).toFixed(2) : '0.00';
         },
         handleImageError(event) {
             event.target.style.display = 'none';
             const parent = event.target.parentNode;
 
-            // Create and append fallback icon if it doesn't exist
             if (!parent.querySelector('[data-fallback]')) {
                 const fallback = document.createElement('div');
                 fallback.setAttribute('data-fallback', '');
-                fallback.className = 'w-full h-full bg-gradient-to-br from-blue-100 via-indigo-100 to-purple-100 flex items-center justify-center';
-                fallback.innerHTML = '<i class="fa fa-cube text-3xl text-blue-500 group-hover:text-purple-600 transition-colors duration-300"></i>';
+                fallback.className = 'w-100 h-100 bg-gradient-light d-flex align-items-center justify-content-center';
+                fallback.innerHTML = '<i class="fa fa-cube fa-2x text-secondary opacity-50"></i>';
                 parent.appendChild(fallback);
             }
         }
@@ -135,263 +122,53 @@ export default {
 </script>
 
 <style scoped>
-.product-card {
-    background-color: #ffffff;
-    border-radius: 12px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
-    overflow: hidden;
-    transition: box-shadow 0.25s ease;
-    position: relative;
-    display: flex;
-    flex-direction: column;
+.transition-hover {
+    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
     cursor: pointer;
-    min-height: 140px;
-    height: auto;
-    width: 100%;
-    max-width: 100%;
-    border: 1px solid rgba(229, 231, 235, 0.5);
-    box-sizing: border-box;
-    contain: layout style paint;
-    margin: 0;
-    padding: 0;
+    min-height: 160px;
+    background-color: var(--bs-card-bg, #fff);
 }
 
-.product-card:hover {
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-    z-index: 1;
+.transition-hover:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.1) !important;
+    z-index: 5;
 }
 
-.product-card:active {
-    transform: scale(0.98);
+.transition-hover:active {
+    transform: scale(0.97);
 }
 
-/* Image styling */
-.product-image-container {
-    position: relative;
-    width: 100%;
-    max-width: 100%;
-    height: 90px;
-    overflow: hidden;
-    background-color: #f1f5f9;
-    box-sizing: border-box;
-    flex-shrink: 0;
+.hover-scale {
+    transition: transform 0.5s ease;
 }
 
-.product-image {
-    width: 100%;
-    height: 100%;
-    max-width: 100%;
-    max-height: 100%;
+.transition-hover:hover .hover-scale {
+    transform: scale(1.1);
+}
+
+.object-fit-cover {
     object-fit: cover;
-    transition: transform 0.3s ease;
-    display: block;
-    box-sizing: border-box;
 }
 
-.fallback-icon {
-    width: 100%;
-    height: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: linear-gradient(135deg, #f0f4ff, #e6f0ff);
-}
-
-.fallback-icon i {
-    font-size: 1.5rem;
-    color: #6366f1;
-}
-
-/* Badge styling */
-.type-badge {
-    position: absolute;
-    top: 6px;
-    left: 6px;
-    width: 20px;
-    height: 20px;
-    border-radius: 5px;
-    font-size: 0.6rem;
-    font-weight: 700;
-    z-index: 10;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-}
-
-.type-badge.product {
-    background: #22c55e;
+.bg-purple {
+    background-color: #6f42c1;
     color: white;
 }
 
-.type-badge.service {
-    background: #8b5cf6;
-    color: white;
-}
-
-.low-stock-badge {
-    position: absolute;
-    top: 6px;
-    right: 6px;
-    width: 20px;
-    height: 20px;
-    border-radius: 50%;
-    background-color: #ef4444;
-    color: white;
-    font-size: 0.65rem;
-    z-index: 10;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
-}
-
-/* Product info section */
-.product-info-wrapper {
-    padding: 6px 8px 8px;
-    background: white;
-    display: flex;
-    flex-direction: column;
-    flex-grow: 1;
-    min-height: 0;
-    width: 100%;
-    max-width: 100%;
-    box-sizing: border-box;
-    overflow: hidden;
-    min-width: 0;
-}
-
-.product-name {
-    font-size: 0.8rem;
-    font-weight: 600;
-    margin: 0;
-    color: #374151;
-    line-height: 1.3;
-    word-wrap: break-word;
-    overflow-wrap: break-word;
-    word-break: break-word;
-    hyphens: auto;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: normal;
-    padding-bottom: 4px;
-    border-bottom: 1px solid #f3f4f6;
-    margin-bottom: 4px;
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    line-clamp: 2;
-    -webkit-box-orient: vertical;
-    max-height: 2.6em;
-    width: 100%;
-    max-width: 100%;
-    box-sizing: border-box;
-    min-width: 0;
-}
-
-.product-details-row {
-    display: flex;
-    gap: 6px;
-    margin-bottom: 4px;
-    padding-bottom: 4px;
-    border-bottom: 1px solid #f3f4f6;
-    flex-wrap: wrap;
-    visibility: visible !important;
-    opacity: 1 !important;
-    height: auto !important;
-    min-height: 20px;
-    width: 100%;
-    max-width: 100%;
-    box-sizing: border-box;
-    overflow: hidden;
-    min-width: 0;
-}
-
-.product-code,
-.product-size,
-.product-barcode {
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    flex-shrink: 1;
-    max-width: 100%;
-    min-width: 0;
-    overflow: hidden;
-    box-sizing: border-box;
-}
-
-.detail-label {
-    font-size: 0.65rem;
-    color: #6b7280;
-    font-weight: 500;
-}
-
-.detail-value {
+.extra-small {
     font-size: 0.7rem;
-    color: #4b5563;
-    font-weight: 600;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    max-width: 60px;
-    min-width: 0;
-    box-sizing: border-box;
 }
 
-.product-price-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    width: 100%;
-    max-width: 100%;
-    box-sizing: border-box;
-    gap: 4px;
-    flex-wrap: nowrap;
-    min-width: 0;
+.unit-text {
+    font-size: 0.65rem;
 }
 
-.product-qty {
-    background-color: #f3f4f6;
-    color: #4b5563;
-    font-size: 0.7rem;
-    font-weight: 600;
-    padding: 1px 6px;
-    border-radius: 4px;
-    flex-shrink: 1;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    max-width: 45%;
-    min-width: 0;
-    box-sizing: border-box;
+.bg-gradient-light {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
 }
 
-.product-qty.low {
-    background-color: #fee2e2;
-    color: #ef4444;
-}
-
-.product-price {
-    font-weight: 700;
-    color: #047857;
-    font-size: 0.9rem;
-    padding: 1px 0;
-    flex-shrink: 1;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    text-align: right;
-    max-width: 55%;
-    min-width: 0;
-    box-sizing: border-box;
-}
-
-/* Low stock styling */
-.product-card.low-stock {
-    box-shadow: 0 2px 8px rgba(239, 68, 68, 0.1);
-}
-
-/* Ripple effect */
-.ripple-effect {
+.ripple-container {
     position: absolute;
     top: 0;
     left: 0;
@@ -401,143 +178,29 @@ export default {
     pointer-events: none;
 }
 
-.ripple-inner {
-    position: absolute;
-    background: radial-gradient(circle, rgba(255, 255, 255, 0.7) 0%, rgba(255, 255, 255, 0) 70%);
-    transform: scale(0);
-    opacity: 0;
-    transition: transform 0.5s, opacity 0.5s;
+/* Multi-line clamp for product name */
+.product-name {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    height: 2.4em;
+    line-height: 1.2em;
+    font-size: 0.85rem;
 }
 
-.product-card:active .ripple-inner {
-    transform: scale(3);
-    opacity: 0.2;
-    transition: 0s;
-}
-
-/* Responsive styles */
-@media (min-width: 1280px) {
-    .product-card {
-        min-height: 150px;
-        height: auto;
+/* Mobile optimizations */
+@media (max-width: 576px) {
+    .transition-hover {
+        min-height: 140px;
     }
-
-    .product-image-container {
-        height: 100px;
-    }
-
-    .product-name {
-        font-size: 0.85rem;
-    }
-
-    .detail-label {
-        font-size: 0.7rem;
-    }
-
-    .detail-value {
-        font-size: 0.75rem;
-    }
-}
-
-@media (max-width: 768px) {
-    .product-card {
-        min-height: 130px;
-        height: auto;
-        width: 100%;
-        max-width: 100%;
-    }
-
-    .product-image-container {
-        height: 80px;
-        width: 100%;
-    }
-
     .product-name {
         font-size: 0.75rem;
-        -webkit-line-clamp: 2;
-        line-clamp: 2;
-        max-height: 2.4em;
     }
-
-    .product-price {
-        font-size: 0.85rem;
-    }
-
-    .product-details-row {
-        gap: 6px;
-    }
-
-    .detail-label {
-        font-size: 0.6rem;
-    }
-
-    .detail-value {
+    .extra-small {
         font-size: 0.65rem;
-        max-width: 50px;
-    }
-
-    .product-qty {
-        font-size: 0.65rem;
-        padding: 1px 4px;
-        max-width: 45%;
-    }
-}
-
-@media (max-width: 480px) {
-    .product-card {
-        min-height: 125px;
-        height: auto;
-        width: 100%;
-        max-width: 100%;
-    }
-
-    .product-image-container {
-        height: 75px;
-        width: 100%;
-    }
-
-    .product-info-wrapper {
-        padding: 5px 6px 6px;
-        width: 100%;
-        box-sizing: border-box;
-    }
-
-    .product-name {
-        font-size: 0.7rem;
-        -webkit-line-clamp: 2;
-        line-clamp: 2;
-        max-height: 2.2em;
-        padding-bottom: 3px;
-        margin-bottom: 3px;
-    }
-
-    .product-price {
-        font-size: 0.75rem;
-    }
-
-    .product-qty {
-        font-size: 0.6rem;
-        padding: 1px 3px;
-        max-width: 40%;
-    }
-
-    .product-details-row {
-        gap: 4px;
-        margin-bottom: 3px;
-        padding-bottom: 3px;
-    }
-
-    .detail-label {
-        font-size: 0.55rem;
-    }
-
-    .detail-value {
-        font-size: 0.6rem;
-        max-width: 45px;
-    }
-
-    .product-price-row {
-        gap: 2px;
     }
 }
 </style>
+

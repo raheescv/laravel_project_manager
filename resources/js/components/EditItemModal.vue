@@ -16,13 +16,27 @@
 
             <div v-if="item" class="space-y-2">
                 <!-- Compact Product Info -->
-                <div class="bg-slate-50 rounded p-2 border border-slate-200">
-                    <label class="block text-xs font-semibold text-slate-700 mb-1 flex items-center">
-                        <i class="fa fa-box text-blue-500 mr-1 text-xs"></i>
-                        Product
-                    </label>
-                    <div class="text-xs font-medium text-slate-800 bg-white px-2 py-1 rounded border">
-                        {{ item.name }}
+                <div class="grid grid-cols-2 gap-2">
+                    <div class="bg-slate-50 rounded p-2 border border-slate-200">
+                        <label class="block text-xs font-semibold text-slate-700 mb-1 flex items-center">
+                            <i class="fa fa-box text-blue-500 mr-1 text-xs"></i>
+                            Product
+                        </label>
+                        <div class="text-xs font-medium text-slate-800 bg-white px-2 py-1 rounded border truncate" :title="item.name">
+                            {{ item.name }}
+                        </div>
+                    </div>
+                    <div class="bg-slate-50 rounded p-2 border border-slate-200">
+                        <label class="block text-xs font-semibold text-slate-700 mb-1 flex items-center">
+                            <i class="fa fa-balance-scale text-orange-500 mr-1 text-xs"></i>
+                            Unit
+                        </label>
+                        <select v-model="localItem.unit_id" @change="handleUnitChange"
+                            class="w-full border border-slate-300 rounded px-2 py-1 text-xs focus:border-orange-500 focus:ring-orange-500/20 transition-all duration-200 bg-white">
+                            <option v-for="u in availableUnits" :key="u.id" :value="u.id">
+                                {{ u.name }}
+                            </option>
+                        </select>
                     </div>
                 </div>
 
@@ -164,6 +178,28 @@ export default {
         }
     },
 
+    computed: {
+        availableUnits() {
+            const units = [];
+            // Add base unit
+            if (this.item.unit_id) {
+                units.push({
+                    id: this.item.unit_id,
+                    name: this.item.unit_name || 'Base Unit',
+                    conversion_factor: 1
+                });
+            }
+            // Add sub units
+            if (this.item.units && Array.isArray(this.item.units)) {
+                this.item.units.forEach(u => {
+                    if (u.id !== this.item.unit_id) {
+                        units.push(u);
+                    }
+                });
+            }
+            return units;
+        }
+    },
     watch: {
         item: {
             handler(val) {
@@ -210,6 +246,16 @@ export default {
             this.localItem.net_amount = this.localItem.gross_amount - this.localItem.discount;
             this.localItem.tax_amount = this.localItem.net_amount * (this.localItem.tax / 100);
             this.localItem.total = this.localItem.net_amount + this.localItem.tax_amount;
+        },
+        handleUnitChange() {
+            const selectedUnit = this.availableUnits.find(u => u.id === this.localItem.unit_id);
+            if (selectedUnit) {
+                this.localItem.unit_name = selectedUnit.name;
+                this.localItem.conversion_factor = selectedUnit.conversion_factor || 1;
+                // You might want to update price based on conversion factor here if needed,
+                // but usually in POS, prices are set manually or predefined for units.
+                // For now, we just update the unit name and conversion factor.
+            }
         },
         save() {
             // Validate numeric fields
