@@ -23,7 +23,8 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('sales', function (Blueprint $table) {
-             $table->unsignedBigInteger('category_id')->nullable()->change();
+
+            $table->unsignedBigInteger('category_id')->nullable()->change();
             $table->unsignedBigInteger('sub_category_id')->nullable()->change();
         });
     }

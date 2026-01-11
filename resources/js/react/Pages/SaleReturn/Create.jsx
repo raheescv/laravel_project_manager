@@ -35,8 +35,8 @@ export default function Create() {
     const [refreshCustomerKey, setRefreshCustomerKey] = useState(0);
     const [addedCustomer, setAddedCustomer] = useState(null);
     const [subCategoryIds, setSubCategoryIds] = useState([]); // <-- track selected subcategories (array)
-    const [widthValue, setWidthValue] = useState(""); // Track width input
-     const [sizeValue, setSizeValue] = useState("");  
+    const [widthValues, setWidthValues] = useState({}); // { categoryId: width }
+    const [sizeValues, setSizeValues] = useState({}); // { categoryId: size }
 
 
 
@@ -139,8 +139,22 @@ export default function Create() {
     if (!selectedCategoryIds || selectedCategoryIds.length === 0) {
         setMeasurements([]);
         setMeasurementValues({});
+        setWidthValues({});
+        setSizeValues({});
         return;
     }
+
+    // ensure per-category width/size keys exist when categories change
+    setWidthValues(prev => {
+        const next = { ...prev };
+        selectedCategoryIds.forEach(cid => { if (!(cid in next)) next[cid] = next[cid] ?? '' });
+        return next;
+    });
+    setSizeValues(prev => {
+        const next = { ...prev };
+        selectedCategoryIds.forEach(cid => { if (!(cid in next)) next[cid] = next[cid] ?? '' });
+        return next;
+    });
 
     const requests = selectedCategoryIds.map(cid => axios.get(`/categories/measurements/${cid}`));
     Promise.all(requests)
@@ -163,7 +177,7 @@ export default function Create() {
                 initialValues[m.id] = "";
             });
 
-            setMeasurementValues(initialValues);
+            setMeasurementValues(prev => ({ ...initialValues, ...prev }));
         })
         .catch((err) => {
             console.error("Measurement load error:", err);
@@ -286,14 +300,16 @@ const validateSale = () => {
         return false;
     }
 
-    if (!widthValue || widthValue.trim() === "") {
-        toast.error("Please enter width");
-        return false;
-    }
-
-    if (!sizeValue || sizeValue.trim() === "") {
-        toast.error("Please select size");
-        return false;
+    // Require width/size per selected category
+    for (let cid of selectedCategoryIds) {
+        if (!widthValues[cid] || String(widthValues[cid]).trim() === '') {
+            toast.error('Please enter width for selected categories');
+            return false;
+        }
+        if (!sizeValues[cid] || String(sizeValues[cid]).trim() === '') {
+            toast.error('Please select size for selected categories');
+            return false;
+        }
     }
 
     if (discount > subTotal) {
@@ -335,8 +351,9 @@ const buildMeasurementPayload = () => {
         employee_id: employeeId,
         sale_type: "normal",
         account_id: customerId,
-        width: widthValue,  // <-- added
-        size: sizeValue,  
+        // send imploded width/size in the order of selectedCategoryIds
+        width: selectedCategoryIds.map(cid => String(widthValues[cid] || '')).join(','),
+        size: selectedCategoryIds.map(cid => String(sizeValues[cid] || '')).join(','),
        
         customer_mobile: "",
         other_discount: discount,
@@ -471,51 +488,52 @@ const buildMeasurementPayload = () => {
                                 </div>
 
 
-                                 {primaryCategoryId && (
-                                <div className="mb-2">
+                                {primaryCategoryId && (
+                                                        <div className="mb-2">
                                     
-                                    <SubCategorySelect
-                                        categoryId={selectedCategoryIds}
-                                        selectedSubId={subCategoryIds}
-                                        onSelect={setSubCategoryIds}
-                                    />
+                                                            <SubCategorySelect
+                                                                categoryId={selectedCategoryIds}
+                                                                selectedSubId={subCategoryIds}
+                                                                onSelect={setSubCategoryIds}
+                                                            />
 
 
-                                      <div className="mt-2">
-            <label className="form-label">Width</label>
-           <input
-                type="number"
-                className="form-control form-control-sm"
-                value={widthValue}
-                onChange={(e) => setWidthValue(e.target.value)}
-                />
-        </div>
-
-        {/* Size dropdown */}
-        <div className="mt-2">
-            <label className="form-label">Size</label>
-                        <select
-            className="form-select form-select-sm"
-            value={sizeValue}
-            onChange={(e) => setSizeValue(e.target.value)}
-            >
-                <option value="">Select Size</option>
-                <option value="S">S</option>
-                <option value="M">M</option>
-                <option value="L">L</option>
-                <option value="XL">XL</option>
-                <option value="XXL">XXL</option>
-                <option value="XXXL">XXXL</option>
-                <option value="XXXXL">XXXXL</option>
-            </select>
-        </div>
-                                </div>
-
+                                                            {/* Per-category width/size inputs */}
+                                                            {selectedCategoryIds.map((cid) => (
+                                                                <div key={`ws-${cid}`} className="d-flex gap-2 mt-2">
+                                                                    <div style={{ flex: 1 }}>
+                                                                        <label className="form-label">Width ({((props?.categories||[]).find(c => Number(c.id) === Number(cid))?.name || `Category ${cid}`)})</label>
+                                                                        <input
+                                                                            type="text"
+                                                                            className="form-control form-control-sm"
+                                                                            value={widthValues[cid] || ''}
+                                                                            onChange={(e) => setWidthValues(prev => ({ ...prev, [cid]: e.target.value }))}
+                                                                        />
+                                                                    </div>
+                                                                    <div style={{ width: 160 }}>
+                                                                        <label className="form-label">Size ({((props?.categories||[]).find(c => Number(c.id) === Number(cid))?.name || `Category ${cid}`)})</label>
+                                                                        <select
+                                                                            className="form-select form-select-sm"
+                                                                            value={sizeValues[cid] || ''}
+                                                                            onChange={(e) => setSizeValues(prev => ({ ...prev, [cid]: e.target.value }))}
+                                                                        >
+                                                                            <option value="">Select Size</option>
+                                                                            <option value="S">S</option>
+                                                                            <option value="M">M</option>
+                                                                            <option value="L">L</option>
+                                                                            <option value="XL">XL</option>
+                                                                            <option value="XXL">XXL</option>
+                                                                            <option value="XXXL">XXXL</option>
+                                                                            <option value="XXXXL">XXXXL</option>
+                                                                        </select>
+                                                                    </div>
+                                                                </div>
+                                                            ))}
+                                                        </div>
                                 
+                                                    )}
 
-
-
-                            )}
+                        
                                 
                               
 

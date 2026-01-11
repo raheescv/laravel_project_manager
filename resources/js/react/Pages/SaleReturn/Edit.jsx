@@ -31,8 +31,8 @@ export default function Edit() {
     const [refreshCustomerKey, setRefreshCustomerKey] = useState(0);
     const [addedCustomer, setAddedCustomer] = useState(null);
     const [subCategoryIds, setSubCategoryIds] = useState([]); // <-- track selected subcategories (array)
-    const [widthValue, setWidthValue] = useState(""); // Track width input
-    const [sizeValue, setSizeValue] = useState("");  
+    const [widthValues, setWidthValues] = useState({}); // { categoryId: width }
+    const [sizeValues, setSizeValues] = useState({}); // { categoryId: size }
       
       
 
@@ -93,8 +93,31 @@ export default function Edit() {
         setSelectedCategoryIds([]);
     }
 
-    setWidthValue(saleData.width || "");
-    setSizeValue(saleData.size || "");
+        // Initialize per-category widths/sizes from saleData
+        const widthsMap = {};
+        const sizesMap = {};
+        const cids = saleData.category_ids && Array.isArray(saleData.category_ids) && saleData.category_ids.length > 0 ? saleData.category_ids.map(Number) : (saleData.category_id && typeof saleData.category_id === 'string' && saleData.category_id.indexOf(',') !== -1 ? saleData.category_id.split(',').map(s => Number(s.trim())) : (saleData.category_id ? [Number(saleData.category_id)] : []));
+
+        if (saleData.widths && Array.isArray(saleData.widths) && saleData.widths.length > 0) {
+            cids.forEach((cid, idx) => { widthsMap[cid] = saleData.widths[idx] ?? ''; });
+        } else if (saleData.width && typeof saleData.width === 'string') {
+            const parts = saleData.width.split(',').map(s => s.trim());
+            cids.forEach((cid, idx) => { widthsMap[cid] = parts[idx] ?? parts[0] ?? ''; });
+        } else if (saleData.width) {
+            widthsMap[cids[0]] = saleData.width;
+        }
+
+        if (saleData.sizes && Array.isArray(saleData.sizes) && saleData.sizes.length > 0) {
+            cids.forEach((cid, idx) => { sizesMap[cid] = saleData.sizes[idx] ?? ''; });
+        } else if (saleData.size && typeof saleData.size === 'string') {
+            const parts = saleData.size.split(',').map(s => s.trim());
+            cids.forEach((cid, idx) => { sizesMap[cid] = parts[idx] ?? parts[0] ?? ''; });
+        } else if (saleData.size) {
+            sizesMap[cids[0]] = saleData.size;
+        }
+
+        setWidthValues(widthsMap);
+        setSizeValues(sizesMap);
 
     // Auto-select sub-category(s)
     if (saleData.sub_category_ids && Array.isArray(saleData.sub_category_ids) && saleData.sub_category_ids.length > 0) {
@@ -340,19 +363,21 @@ const validateSale = () => {
         return false;
     }
     if (selectedCategoryIds.length === 1 && (!subCategoryIds || subCategoryIds.length === 0)) {
-            toast.error("Please select subcategory");
+        toast.error("Please select subcategory");
+        return false;
+    }
+
+    // Require width/size per selected category
+    for (let cid of selectedCategoryIds) {
+        if (!widthValues[cid] || String(widthValues[cid]).trim() === '') {
+            toast.error('Please enter width for selected categories');
             return false;
         }
-    
-        if (!widthValue || widthValue.trim() === "") {
-            toast.error("Please enter width");
+        if (!sizeValues[cid] || String(sizeValues[cid]).trim() === '') {
+            toast.error('Please select size for selected categories');
             return false;
         }
-    
-        if (!sizeValue || sizeValue.trim() === "") {
-            toast.error("Please select size");
-            return false;
-        }
+    }
 
     if (discount > subTotal) {
         toast.error("Discount cannot exceed subtotal");
@@ -408,8 +433,9 @@ const buildMeasurementPayload = () => {
         category_ids: selectedCategoryIds,
         sub_category_id: subCategoryIds.length === 1 ? subCategoryIds[0] : null,
         sub_category_ids: subCategoryIds,
-        width: widthValue,  // <-- added
-        size: sizeValue,  
+        // send imploded width/size in the order of selectedCategoryIds
+        width: selectedCategoryIds.map(cid => String(widthValues[cid] || '')).join(','),
+        size: selectedCategoryIds.map(cid => String(sizeValues[cid] || '')).join(','),
         measurements: buildMeasurementPayload(),
 
         items: buildItemsPayload(),
@@ -545,34 +571,61 @@ if (paymentMethod === "custom" && customPaymentData) {
                                                                                            />
                                                        
                                                        
-                                                                                             <div className="mt-2">
-                                                                   <label className="form-label">Width</label>
-                                                                  <input
-                                                                       type="number"
-                                                                       className="form-control form-control-sm"
-                                                                       value={widthValue}
-                                                                       onChange={(e) => setWidthValue(e.target.value)}
-                                                                       />
-                                                               </div>
-                                                       
-                                                               {/* Size dropdown */}
-                                                               <div className="mt-2">
-                                                                   <label className="form-label">Size</label>
-                                                                               <select
-                                                                   className="form-select form-select-sm"
-                                                                   value={sizeValue}
-                                                                   onChange={(e) => setSizeValue(e.target.value)}
-                                                                   >
-                                                                       <option value="">Select Size</option>
-                                                                       <option value="S">S</option>
-                                                                       <option value="M">M</option>
-                                                                       <option value="L">L</option>
-                                                                       <option value="XL">XL</option>
-                                                                       <option value="XXL">XXL</option>
-                                                                       <option value="XXXL">XXXL</option>
-                                                                       <option value="XXXXL">XXXXL</option>
-                                                                   </select>
-                                                               </div>
+                                                                                            {/* Per-category width/size and measurements grouped by category */}
+                                                                                            {selectedCategoryIds.map((cid) => {
+                                                                                                const cat = (categories || []).find(c => Number(c.id) === Number(cid)) || { id: cid, name: '' };
+                                                                                                const catMeasurements = (measurements || []).filter(m => m.category_id == cid) || [];
+                                                                                                return (
+                                                                                                    <div key={`cat-${cid}`} className="card mt-2 p-2">
+                                                                                                        <h6 className="fw-bold mb-2">{cat.name || `Category ${cid}`}</h6>
+                                                                                                        <div className="row g-2">
+                                                                                                            <div className="col-md-3">
+                                                                                                                <label className="form-label">Width</label>
+                                                                                                                <input
+                                                                                                                    type="text"
+                                                                                                                    className="form-control form-control-sm"
+                                                                                                                    value={widthValues[cid] || ''}
+                                                                                                                    onChange={(e) => setWidthValues(prev => ({ ...prev, [cid]: e.target.value }))}
+                                                                                                                />
+                                                                                                            </div>
+                                                                                                            <div className="col-md-3">
+                                                                                                                <label className="form-label">Size</label>
+                                                                                                                <select
+                                                                                                                    className="form-select form-select-sm"
+                                                                                                                    value={sizeValues[cid] || ''}
+                                                                                                                    onChange={(e) => setSizeValues(prev => ({ ...prev, [cid]: e.target.value }))}
+                                                                                                                >
+                                                                                                                    <option value="">Select Size</option>
+                                                                                                                    <option value="S">S</option>
+                                                                                                                    <option value="M">M</option>
+                                                                                                                    <option value="L">L</option>
+                                                                                                                    <option value="XL">XL</option>
+                                                                                                                    <option value="XXL">XXL</option>
+                                                                                                                    <option value="XXXL">XXXL</option>
+                                                                                                                    <option value="XXXXL">XXXXL</option>
+                                                                                                                </select>
+                                                                                                            </div>
+                                                                                                        </div>
+
+                                                                                                        {catMeasurements.length > 0 && (
+                                                                                                            <div className="row mt-2">
+                                                                                                                {catMeasurements.map((m) => (
+                                                                                                                    <div key={m.id} className="col-md-4 mb-2">
+                                                                                                                        <label className="form-label">{m.name}</label>
+                                                                                                                        <input
+                                                                                                                            type="text"
+                                                                                                                            className="form-control form-control-sm"
+                                                                                                                            placeholder={`Enter ${m.name}`}
+                                                                                                                            value={measurementValues[m.id] || ''}
+                                                                                                                            onChange={(e) => setMeasurementValues(prev => ({ ...prev, [m.id]: e.target.value }))}
+                                                                                                                        />
+                                                                                                                    </div>
+                                                                                                                ))}
+                                                                                                            </div>
+                                                                                                        )}
+                                                                                                    </div>
+                                                                                                );
+                                                                                            })}
                                                                                        </div>
                                                        
                                                                                        

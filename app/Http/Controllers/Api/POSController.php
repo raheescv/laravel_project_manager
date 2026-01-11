@@ -461,8 +461,35 @@ public function getMeasurementTemplates($categoryId)
             $saleData['sub_category_ids'] = $inputSubCategoryIds ? [(int)$inputSubCategoryIds] : [];
             $saleData['sub_category_id'] = $inputSubCategoryIds !== null ? (string) $inputSubCategoryIds : null;
         }
-       $saleData['width'] = $request->input('width', '');
-       $saleData['size'] = $request->input('size', '');
+       // Normalize width inputs: accept array or comma-separated string and store as imploded CSV
+       $inputWidths = $request->input('width', $request->input('widths', ''));
+       if (is_array($inputWidths)) {
+           $widths = array_map('trim', $inputWidths);
+           $saleData['widths'] = $widths;
+           $saleData['width'] = implode(',', array_filter($widths, function($v){ return $v !== null && $v !== ''; }));
+       } elseif (is_string($inputWidths) && strpos($inputWidths, ',') !== false) {
+           $parts = array_map('trim', explode(',', $inputWidths));
+           $saleData['widths'] = $parts;
+           $saleData['width'] = $inputWidths;
+       } else {
+           $saleData['widths'] = $inputWidths !== null ? [ (string) $inputWidths ] : [];
+           $saleData['width'] = $inputWidths !== null ? (string) $inputWidths : '';
+       }
+
+       // Normalize size inputs similarly
+       $inputSizes = $request->input('size', $request->input('sizes', ''));
+       if (is_array($inputSizes)) {
+           $sizes = array_map('trim', $inputSizes);
+           $saleData['sizes'] = $sizes;
+           $saleData['size'] = implode(',', array_filter($sizes, function($v){ return $v !== null && $v !== ''; }));
+       } elseif (is_string($inputSizes) && strpos($inputSizes, ',') !== false) {
+           $parts = array_map('trim', explode(',', $inputSizes));
+           $saleData['sizes'] = $parts;
+           $saleData['size'] = $inputSizes;
+       } else {
+           $saleData['sizes'] = $inputSizes !== null ? [ (string) $inputSizes ] : [];
+           $saleData['size'] = $inputSizes !== null ? (string) $inputSizes : '';
+       }
        
 
 
