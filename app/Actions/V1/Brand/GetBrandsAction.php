@@ -2,27 +2,29 @@
 
 namespace App\Actions\V1\Brand;
 
-use App\Http\Requests\V1\GetBrandsRequest;
+
 use App\Models\Brand;
+use Illuminate\Support\Collection;
 
 class GetBrandsAction
 {
     /**
      * Execute the action to get all brands.
      */
-    public function execute(GetBrandsRequest $request): array
+    public function execute(Collection $filters): array
     {
-        $filters = $request->validatedWithDefaults();
-        $availableProductsOnly = $filters['available_products_only'] ?? true;
+        $availableProductsOnly = $filters->get('available_products_only', true);
+        // Cast to boolean if string 'true'/'false' is passed (e.g. from query string without validation)
+        $availableProductsOnly = filter_var($availableProductsOnly, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE) ?? true;
 
         $brands = Brand::query()
-            ->when($filters['query'] ?? null, function ($query, $value) {
+            ->when($filters->get('query'), function ($query, $value) {
                 return $query->where('name', 'like', "%{$value}%");
             })
             ->withCount([
                 'products' => function ($query) use ($filters, $availableProductsOnly) {
-                    if ($filters['size'] ?? null) {
-                        $query->where('size', $filters['size']);
+                    if ($filters->get('size')) {
+                        $query->where('size', $filters->get('size'));
                     }
                     // When availableProductsOnly is true, only count products with inventory stock
                     if ($availableProductsOnly) {
