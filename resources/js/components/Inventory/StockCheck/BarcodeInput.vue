@@ -62,7 +62,6 @@ const handleEnter = () => {
         emit('enter', inputValue)
         inputRef.value.value = ''
         inputRef.value.focus()
-        toast.success('Barcode added successfully')
     }
 }
 

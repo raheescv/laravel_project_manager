@@ -210,14 +210,15 @@ const handleManualBarcode = () => {
 }
 
 const showNotification = (message, type = 'info') => {
-    const el = document.createElement('div')
-    el.className = `alert alert-${type} alert-dismissible fade show position-fixed`
-    el.style.cssText = 'top:20px; right:20px; z-index:9999; min-width:260px;'
-    el.innerHTML = `${message} <button type="button" class="btn-close" data-bs-dismiss="alert"></button>`
-    document.body.appendChild(el)
-    setTimeout(() => {
-        if (el.parentNode) el.remove()
-    }, 3500)
+    if (type === 'danger' || type === 'error') {
+        toast.error(message)
+    } else if (type === 'success') {
+        toast.success(message)
+    } else if (type === 'warning') {
+        toast.warning(message)
+    } else {
+        toast.info(message)
+    }
 }
 
 const beep = () => {

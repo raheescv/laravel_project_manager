@@ -44,9 +44,9 @@ import StockCheckItemsTable from './StockCheckItemsTable.vue'
 import SaveStockCheckButton from './SaveStockCheckButton.vue'
 import LoadingOverlay from '../../LoadingOverlay.vue'
 import StatusChangeConfirmationModal from './StatusChangeConfirmationModal.vue'
-import GetStockCheckAction from './GetStockCheckAction.js'
-import GetStockCheckItemsAction from './GetStockCheckItemsAction.js'
-import UpdateStockCheckAction from './UpdateStockCheckAction.js'
+import GetStockCheckAction from './Apis/GetStockCheckAction.js'
+import GetStockCheckItemsAction from './Apis/GetStockCheckItemsAction.js'
+import UpdateStockCheckAction from './Apis/UpdateStockCheckAction.js'
 
 const toast = useToast()
 const getStockCheckAction = new GetStockCheckAction()
@@ -69,10 +69,10 @@ const filters = ref({
     category_id: '',
     brand_id: '',
     recorded_qty_condition: '',
-    status: '',
+    status: 'pending',
     difference_condition: '',
     search: '',
-    per_page: 20,
+    per_page: 10,
     page: 1,
     sort_field: 'stock_check_items.updated_at',
     sort_direction: 'desc'
