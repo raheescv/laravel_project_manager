@@ -11,11 +11,11 @@ return new class() extends Migration
      */
     public function up(): void
     {
-        Schema::table('purchase_items', function (Blueprint $table) {
-            if (! Schema::hasColumn('purchase_items', 'unit_id')) {
+        Schema::table('purchase_return_items', function (Blueprint $table) {
+            if (! Schema::hasColumn('purchase_return_items', 'unit_id')) {
                 $table->foreignId('unit_id')->nullable()->constrained('units')->after('product_id');
             }
-            if (! Schema::hasColumn('purchase_items', 'conversion_factor')) {
+            if (! Schema::hasColumn('purchase_return_items', 'conversion_factor')) {
                 $table->decimal('conversion_factor', 16, 2)->default(1)->after('unit_id');
             }
         });
@@ -26,12 +26,12 @@ return new class() extends Migration
      */
     public function down(): void
     {
-        Schema::table('purchase_items', function (Blueprint $table) {
-            if (Schema::hasColumn('purchase_items', 'unit_id')) {
+        Schema::table('purchase_return_items', function (Blueprint $table) {
+            if (Schema::hasColumn('purchase_return_items', 'unit_id')) {
                 $table->dropForeign(['unit_id']);
                 $table->dropColumn('unit_id');
             }
-            if (Schema::hasColumn('purchase_items', 'conversion_factor')) {
+            if (Schema::hasColumn('purchase_return_items', 'conversion_factor')) {
                 $table->dropColumn('conversion_factor');
             }
         });
