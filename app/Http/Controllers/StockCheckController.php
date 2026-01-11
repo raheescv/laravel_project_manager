@@ -4,10 +4,10 @@ namespace App\Http\Controllers;
 
 use App\Actions\Product\Inventory\StockCheck\CreateStockCheckAction;
 use App\Actions\Product\Inventory\StockCheck\DeleteStockCheckAction;
-use App\Actions\Product\Inventory\StockCheck\UpdateStockCheckMetadataAction;
 use App\Actions\Product\Inventory\StockCheck\Item\GetStockCheckItemsAction;
 use App\Actions\Product\Inventory\StockCheck\Item\ScanBarcodeAction;
 use App\Actions\Product\Inventory\StockCheck\Item\UpdateStockCheckAction;
+use App\Actions\Product\Inventory\StockCheck\UpdateStockCheckMetadataAction;
 use App\Http\Requests\Inventory\StockCheck\CreateStockCheckRequest;
 use App\Http\Requests\Inventory\StockCheck\UpdateStockCheckRequest;
 use App\Models\StockCheck;
@@ -28,7 +28,7 @@ class StockCheckController extends Controller
     public function get(Request $request)
     {
         try {
-            $query = StockCheck::with(['branch:id,name', 'createdBy:id,name']) ->orderBy('created_at', 'desc');
+            $query = StockCheck::with(['branch:id,name', 'createdBy:id,name'])->orderBy('created_at', 'desc');
             $search = trim($request->search);
             if ($search) {
                 $query->where(function ($q) use ($search) {

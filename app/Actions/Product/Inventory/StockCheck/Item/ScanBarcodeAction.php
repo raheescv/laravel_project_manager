@@ -27,6 +27,7 @@ class ScanBarcodeAction
 
             // Find matching StockCheckItem
             $item = StockCheckItem::where('stock_check_id', $stockCheckId)
+                ->where('inventory_id', $inventory->id)
                 ->where('product_id', $inventory->product_id)
                 ->first();
 
@@ -35,29 +36,18 @@ class ScanBarcodeAction
             }
 
             // Increment physical_quantity
-            $item->physical_quantity += 1;
-            $item->save();
+            $item->increment('physical_quantity',1);
+            $item->refresh();
 
-            // Calculate difference
-            $difference = $item->physical_quantity - $item->recorded_quantity;
-
-            return [
-                'success' => true,
-                'data' => [
-                    'id' => $item->id,
-                    'product_id' => $item->product_id,
-                    'physical_quantity' => $item->physical_quantity,
-                    'recorded_quantity' => $item->recorded_quantity,
-                    'difference' => $difference,
-                    'status' => $item->status,
-                ],
-            ];
+            $return['success'] = true;
+            $return['message'] = 'Barcode scanned successfully';
+            $return['data'] = $item->toArray();
         } catch (Exception $e) {
-            return [
-                'success' => false,
-                'message' => $e->getMessage(),
-                'data' => [],
-            ];
+            $return['success'] = false;
+            $return['message'] = 'Failed to scan barcode: '.$e->getMessage();
+            $return['data'] = [];
         }
+
+        return $return;
     }
 }

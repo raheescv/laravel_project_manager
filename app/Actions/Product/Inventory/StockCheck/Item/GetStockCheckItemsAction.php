@@ -59,10 +59,6 @@ class GetStockCheckItemsAction
                 $query->where('inventories.barcode', $request->barcode);
             }
 
-            // Sorting
-            $sortField = $request->get('sort_field', 'stock_check_items.updated_at');
-            $sortDirection = $request->get('sort_direction', 'desc');
-
             // Select columns with calculated difference
             $query->select([
                 'stock_check_items.id',
@@ -91,24 +87,26 @@ class GetStockCheckItemsAction
                 $query->havingRaw('stock_check_items.difference '.$operator.' 0');
             }
 
+            // Sorting
+            $sortField = $request->get('sort_field', 'stock_check_items.updated_at');
+            $sortDirection = $request->get('sort_direction', 'desc');
+
             // Apply sorting
             $query->orderBy($sortField, $sortDirection);
 
             // Pagination
-            $perPage = $request->get('per_page', 20);
+            $perPage = $request->get('per_page', 10);
             $items = $query->paginate($perPage);
 
-            return [
-                'success' => true,
-                'message' => 'Items retrieved successfully',
-                'data' => $items,
-            ];
+            $return['success'] = true;
+            $return['message'] = 'Items retrieved successfully';
+            $return['data'] = $items;
         } catch (Exception $e) {
-            return [
-                'success' => false,
-                'message' => $e->getMessage(),
-                'data' => [],
-            ];
+            $return['success'] = false;
+            $return['message'] = 'Failed to get stock check items: '.$e->getMessage();
+            $return['data'] = [];
         }
+
+        return $return;
     }
 }
