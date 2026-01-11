@@ -30,7 +30,7 @@ import {
     watch
 } from 'vue'
 import { useToast } from 'vue-toastification'
-import BarcodeScanner from '../../BarcodeScanner.vue'
+import BarcodeScanner from '../../../BarcodeScanner.vue'
 
 const props = defineProps({
     value: {

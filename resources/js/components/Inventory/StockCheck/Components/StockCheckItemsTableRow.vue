@@ -25,7 +25,7 @@
 </template>
 
 <script setup>
-import PhysicalQuantityInput from './PhysicalQuantityInput.vue'
+import PhysicalQuantityInput from '../Form/PhysicalQuantityInput.vue'
 import DifferenceDisplay from './DifferenceDisplay.vue'
 import StatusBadge from './StatusBadge.vue'
 

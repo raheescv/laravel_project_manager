@@ -37,16 +37,16 @@
 <script setup>
 import { ref, onMounted, computed } from 'vue'
 import { useToast } from 'vue-toastification'
-import StockCheckHeader from './StockCheckHeader.vue'
-import StockCheckFilters from './StockCheckFilters.vue'
-import StockCheckBarcodeScanner from './StockCheckBarcodeScanner.vue'
-import StockCheckItemsTable from './StockCheckItemsTable.vue'
-import SaveStockCheckButton from './SaveStockCheckButton.vue'
-import LoadingOverlay from '../../LoadingOverlay.vue'
-import StatusChangeConfirmationModal from './StatusChangeConfirmationModal.vue'
-import GetStockCheckAction from './Apis/GetStockCheckAction.js'
-import GetStockCheckItemsAction from './Apis/GetStockCheckItemsAction.js'
-import UpdateStockCheckAction from './Apis/UpdateStockCheckAction.js'
+import StockCheckHeader from '../Components/StockCheckHeader.vue'
+import StockCheckFilters from '../Components/StockCheckFilters.vue'
+import StockCheckBarcodeScanner from '../Form/StockCheckBarcodeScanner.vue'
+import StockCheckItemsTable from '../Components/StockCheckItemsTable.vue'
+import SaveStockCheckButton from '../Form/SaveStockCheckButton.vue'
+import LoadingOverlay from '../../../LoadingOverlay.vue'
+import StatusChangeConfirmationModal from '../Components/StatusChangeConfirmationModal.vue'
+import GetStockCheckAction from '../Apis/GetStockCheckAction.js'
+import GetStockCheckItemsAction from '../Apis/GetStockCheckItemsAction.js'
+import UpdateStockCheckAction from '../Apis/UpdateStockCheckAction.js'
 
 const toast = useToast()
 const getStockCheckAction = new GetStockCheckAction()

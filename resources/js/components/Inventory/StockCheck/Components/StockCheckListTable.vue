@@ -127,7 +127,7 @@
 </template>
 
 <script setup>
-import { formatDate } from '../../../utils/createVueApp.js'
+import { formatDate } from '../../../../utils/createVueApp.js'
 
 defineProps({
     stockChecks: {
