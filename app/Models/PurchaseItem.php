@@ -49,6 +49,11 @@ class PurchaseItem extends Model implements AuditableContracts
         return $this->belongsTo(Purchase::class);
     }
 
+    public function unit()
+    {
+        return $this->belongsTo(Unit::class);
+    }
+
     public function getNameAttribute()
     {
         return $this->product?->name;

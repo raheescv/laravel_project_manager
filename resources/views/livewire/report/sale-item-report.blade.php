@@ -90,6 +90,7 @@
                         <th class="text-nowrap"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="employee_id" label="employee" /> </th>
                         <th class="text-nowrap"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="assistant_id" label="assistant" /> </th>
                         <th class="text-nowrap"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="product_id" label="product" /> </th>
+                        <th class="text-nowrap"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="unit_id" label="unit" /> </th>
                         <th class="text-nowrap text-end"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="unit_price" label="unit price" /> </th>
                         <th class="text-nowrap text-end"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="quantity" label="quantity" /> </th>
                         <th class="text-nowrap text-end"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="gross_amount" label="gross amount" /> </th>
@@ -135,6 +136,12 @@
                                     <span>{{ $item->product?->name }}</span>
                                 </div>
                             </td>
+                            <td class="text-nowrap">
+                                <div class="d-flex align-items-center gap-2">
+                                    <i class="demo-pli-tag fs-5 text-warning"></i>
+                                    <span>{{ $item->unit?->name }}</span>
+                                </div>
+                            </td>
                             <td>
                                 <div class="text-end fw-medium">{{ currency($item->unit_price) }}</div>
                             </td>
@@ -164,7 +171,7 @@
                 </tbody>
                 <tfoot class="table-group-divider">
                     <tr class="bg-light">
-                        <th colspan="7" class="ps-3"><strong>TOTALS</strong></th>
+                        <th colspan="8" class="ps-3"><strong>TOTALS</strong></th>
                         <th>
                             <div class="text-end fw-bold">{{ currency($total['quantity']) }}</div>
                         </th>

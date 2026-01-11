@@ -109,6 +109,9 @@
                         @if ($sale_mixed_item_report_visible_column['cost'] ?? true)
                             <th class="text-end"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="cost" label="Cost" /> </th>
                         @endif
+                        @if ($sale_mixed_item_report_visible_column['unit_name'] ?? true)
+                            <th> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="unit_name" label="unit" /> </th>
+                        @endif
                         @if ($sale_mixed_item_report_visible_column['unit_price'] ?? true)
                             <th class="text-end"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="unit_price" label="unit price" /> </th>
                         @endif
@@ -173,6 +176,9 @@
                             @if ($sale_mixed_item_report_visible_column['cost'] ?? true)
                                 <td class="text-end">{{ currency($row->cost) }}</td>
                             @endif
+                            @if ($sale_mixed_item_report_visible_column['unit_name'] ?? true)
+                                <td class="text-nowrap">{{ $row->unit_name }}</td>
+                            @endif
                             @if ($sale_mixed_item_report_visible_column['unit_price'] ?? true)
                                 <td class="text-end">{{ currency($row->unit_price) }}</td>
                             @endif
@@ -210,6 +216,7 @@
                             $colspan += ($sale_mixed_item_report_visible_column['department_name'] ?? true) ? 1 : 0;
                             $colspan += ($sale_mixed_item_report_visible_column['main_category_name'] ?? true) ? 1 : 0;
                             $colspan += ($sale_mixed_item_report_visible_column['brand_name'] ?? true) ? 1 : 0;
+                            $colspan += ($sale_mixed_item_report_visible_column['unit_name'] ?? true) ? 1 : 0;
                             $colspan += ($sale_mixed_item_report_visible_column['cost'] ?? true) ? 1 : 0;
                         @endphp
                         <th colspan="{{ max($colspan, 1) }}" class="text-end">Total</th>

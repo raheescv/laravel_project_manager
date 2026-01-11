@@ -67,6 +67,9 @@
                         @if ($purchase_item_report_visible_column['product_name'] ?? true)
                             <th> product </th>
                         @endif
+                        @if ($purchase_item_report_visible_column['unit_name'] ?? true)
+                            <th> unit </th>
+                        @endif
                         @if ($purchase_item_report_visible_column['unit_price'] ?? true)
                             <th class="text-end"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="unit_price" label="unit price" /> </th>
                         @endif
@@ -105,6 +108,9 @@
                             @if ($purchase_item_report_visible_column['product_name'] ?? true)
                                 <td>{{ $item->product?->name }}</td>
                             @endif
+                            @if ($purchase_item_report_visible_column['unit_name'] ?? true)
+                                <td>{{ $item->unit?->name }}</td>
+                            @endif
                             @if ($purchase_item_report_visible_column['unit_price'] ?? true)
                                 <td class="text-end">{{ $item->unit_price }}</td>
                             @endif
@@ -137,6 +143,7 @@
                             $colspan += ($purchase_item_report_visible_column['date'] ?? true) ? 1 : 0;
                             $colspan += ($purchase_item_report_visible_column['invoice_no'] ?? true) ? 1 : 0;
                             $colspan += ($purchase_item_report_visible_column['product_name'] ?? true) ? 1 : 0;
+                            $colspan += ($purchase_item_report_visible_column['unit_name'] ?? true) ? 1 : 0;
                         @endphp
                         <th colspan="{{ max($colspan, 1) }}">Total</th>
                         @if ($purchase_item_report_visible_column['quantity'] ?? true)

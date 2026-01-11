@@ -121,6 +121,7 @@ class SaleMixedItemReport extends Component
         $saleQuery = SaleItem::query()
             ->join('sales', 'sales.id', '=', 'sale_items.sale_id')
             ->join('products', 'products.id', '=', 'sale_items.product_id')
+            ->join('units', 'units.id', '=', 'sale_items.unit_id')
             ->leftJoin('departments', 'departments.id', '=', 'products.department_id')
             ->leftJoin('categories as main_categories', 'main_categories.id', '=', 'products.main_category_id')
             ->leftJoin('brands', 'brands.id', '=', 'products.brand_id')
@@ -143,6 +144,7 @@ class SaleMixedItemReport extends Component
                 'products.name as product_name',
                 'products.cost',
                 'products.code as product_code',
+                'units.name as unit_name',
                 'departments.name as department_name',
                 'main_categories.name as main_category_name',
                 'brands.name as brand_name',
@@ -161,6 +163,7 @@ class SaleMixedItemReport extends Component
             ->join('sale_returns', 'sale_returns.id', '=', 'sale_return_items.sale_return_id')
             ->leftJoin('sale_items', 'sale_items.id', '=', 'sale_return_items.sale_item_id')
             ->join('products', 'products.id', '=', 'sale_return_items.product_id')
+            ->join('units', 'units.id', '=', 'sale_items.unit_id')
             ->leftJoin('departments', 'departments.id', '=', 'products.department_id')
             ->leftJoin('categories as main_categories', 'main_categories.id', '=', 'products.main_category_id')
             ->leftJoin('brands', 'brands.id', '=', 'products.brand_id')
@@ -183,6 +186,7 @@ class SaleMixedItemReport extends Component
                 'products.name as product_name',
                 'products.cost',
                 'products.code as product_code',
+                'units.name as unit_name',
                 'departments.name as department_name',
                 'main_categories.name as main_category_name',
                 'brands.name as brand_name',

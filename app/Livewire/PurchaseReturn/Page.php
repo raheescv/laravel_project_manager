@@ -77,6 +77,7 @@ class Page extends Component
                 'items.product.units.subUnit:id,name,code',
                 'items.product:id,name,unit_id,cost',
                 'items.purchaseItem.purchase:id,invoice_no',
+                'items.unit:id,name',
                 'createdUser:id,name',
                 'updatedUser:id,name',
                 'cancelledUser:id,name',
@@ -98,6 +99,7 @@ class Page extends Component
                         'purchase_item_id' => $item['purchase_item_id'],
                         'product_id' => $item['product_id'],
                         'name' => $item['name'],
+                        'unit_name' => $item['unit_name'],
                         'unit_id' => $item['unit_id'],
                         'conversion_factor' => $item['conversion_factor'],
                         'units' => $this->getProductUnits($item->product),
@@ -112,7 +114,6 @@ class Page extends Component
                     ],
                 ];
             })->toArray();
-
             $this->payments = $this->purchase_return->payments->map->only(['id', 'amount', 'date', 'payment_method_id', 'created_by', 'name'])->toArray();
             $this->mainCalculator();
 
