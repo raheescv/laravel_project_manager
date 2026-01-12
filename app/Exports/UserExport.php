@@ -28,9 +28,11 @@ class UserExport implements FromQuery, WithHeadings, WithMapping
     {
         return [
             '#',
+            'Order No',
             'Type',
             'Name',
             'Code',
+            'Designation',
             'Email',
             'Mobile',
             'Is Admin',
@@ -54,9 +56,11 @@ class UserExport implements FromQuery, WithHeadings, WithMapping
     {
         return [
             $row->id,
+            $row->order_no,
             $row->type,
             $row->name,
             $row->code,
+            $row->designation?->name,
             $row->email,
             $row->mobile,
             $row->is_admin ? 'Yes' : 'No',
