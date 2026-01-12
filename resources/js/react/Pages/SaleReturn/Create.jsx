@@ -398,14 +398,22 @@ const buildMeasurementPayload = () => {
     // Build payload from per-instance measurement values
     return measurementsInstances
         .filter(inst => measurementValues[inst.instanceKey] !== undefined && String(measurementValues[inst.instanceKey]).trim() !== '')
-        .map(inst => ({
-            measurement_template_id: Number(inst.id),
-            value: measurementValues[inst.instanceKey],
-            category_id: inst.category_id || null,
-            sub_category_id: inst.subcategory_id || null,
-            size: sizeValues[inst.subcategory_id] || null,
-            width: widthValues[inst.subcategory_id] || null,
-        }));
+        .map(inst => {
+            // instanceKey is like `${scid}-${tpl.id}-${groupIdx}`
+            const parts = inst.instanceKey.split('-');
+            const scid = inst.subcategory_id;
+            const groupIdx = Number(parts[parts.length - 1]) || 0;
+            const sizeArr = sizeValues[scid] || [];
+            const widthArr = widthValues[scid] || [];
+            return {
+                measurement_template_id: Number(inst.id),
+                value: measurementValues[inst.instanceKey],
+                category_id: inst.category_id || null,
+                sub_category_id: scid || null,
+                size: typeof sizeArr[groupIdx] === 'string' ? sizeArr[groupIdx] : '',
+                width: typeof widthArr[groupIdx] === 'string' ? widthArr[groupIdx] : '',
+            };
+        });
 };
 
     /* ------------------- Submit / Update sale ------------------- */
@@ -419,8 +427,9 @@ const buildMeasurementPayload = () => {
         sale_type: "normal",
         account_id: customerId,
         // send imploded width/size in the order of selected subcategories (models)
-        width: subCategoryIds.map(scid => String(widthValues[scid] || '')).join(','),
-        size: subCategoryIds.map(scid => String(sizeValues[scid] || '')).join(','),
+        // Flatten all group widths/sizes for all subcategories (pipe for groups, comma for subcategories)
+        width: subCategoryIds.map(scid => (Array.isArray(widthValues[scid]) ? widthValues[scid].join('|') : String(widthValues[scid] || ''))).join(','),
+        size: subCategoryIds.map(scid => (Array.isArray(sizeValues[scid]) ? sizeValues[scid].join('|') : String(sizeValues[scid] || ''))).join(','),
        
         customer_mobile: "",
         other_discount: discount,

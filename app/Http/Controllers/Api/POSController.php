@@ -560,14 +560,48 @@ public function getMeasurementTemplates($categoryId)
         if (!empty($saleData['measurements'])) {
             CustomerMeasurement::where('sale_id', $sale->id)->delete();
 
+            // Bootcut length validation
+            $bootcutSubCategoryId = null;
+            // Find subcategory id for bootcut (case-insensitive match)
+            if (!empty($saleData['sub_category_ids']) && is_array($saleData['sub_category_ids'])) {
+                foreach ($saleData['sub_category_ids'] as $subCatId) {
+                    $subCat = \App\Models\MeasurementSubCategory::find($subCatId);
+                    if ($subCat && stripos($subCat->name, 'bootcut') !== false) {
+                        $bootcutSubCategoryId = $subCatId;
+                        break;
+                    }
+                }
+            }
+
+            if ($bootcutSubCategoryId) {
+                $hasBootcutLength = false;
+                foreach ($saleData['measurements'] as $m) {
+                    if (
+                        isset($m['sub_category_id']) && (int)$m['sub_category_id'] === (int)$bootcutSubCategoryId &&
+                        isset($m['measurement_template_id'])
+                    ) {
+                        // Check if template name contains 'length'
+                        $template = \App\Models\MeasurementTemplate::find($m['measurement_template_id']);
+                        if ($template && stripos($template->name, 'length') !== false && !empty($m['value'])) {
+                            $hasBootcutLength = true;
+                            break;
+                        }
+                    }
+                }
+                if (!$hasBootcutLength) {
+                    DB::rollback();
+                    return response()->json([
+                        'error' => 'Please enter length of bootcut.'
+                    ], 422);
+                }
+            }
+
             foreach ($saleData['measurements'] as $m) {
                 if (empty($m['value'])) {
                     continue;
                 }
 
-                // Determine category for this measurement. Prefer explicit measurement category
-                // sent from client (`category_id` on measurement). Fallback to template->category_id
-                // and finally to the first selected category in the sale.
+                // ...existing code...
                 $mCategoryId = $m['category_id'] ?? null;
                 if (empty($mCategoryId) && !empty($m['measurement_template_id'])) {
                     $template = MeasurementTemplate::find($m['measurement_template_id']);
@@ -578,12 +612,21 @@ public function getMeasurementTemplates($categoryId)
                     $mCategoryId = $saleData['category_ids'][0] ?? null;
                 }
 
-                // Determine subcategory, size and width for this measurement if provided
+                // ...existing code...
                 $mSubCategoryId = $m['sub_category_id'] ?? null;
                 $mSize = $m['size'] ?? null;
                 $mWidth = $m['width'] ?? null;
+                if (is_array($mSize)) {
+                    $mSize = count($mSize) ? (string)$mSize[0] : null;
+                } elseif (!is_null($mSize) && !is_string($mSize)) {
+                    $mSize = (string)$mSize;
+                }
+                if (is_array($mWidth)) {
+                    $mWidth = count($mWidth) ? (string)$mWidth[0] : null;
+                } elseif (!is_null($mWidth) && !is_string($mWidth)) {
+                    $mWidth = (string)$mWidth;
+                }
 
-                // If subcategory arrays were provided in the sale payload, try to map index
                 if (empty($mSize) && !empty($mSubCategoryId) && !empty($saleData['sub_category_ids']) && is_array($saleData['sub_category_ids'])) {
                     $idx = array_search((int)$mSubCategoryId, $saleData['sub_category_ids']);
                     if ($idx !== false) {
