@@ -506,13 +506,19 @@ const validateSale = () => {
         return false;
     }
 
-    // 🔴 MEASUREMENT REQUIRED VALIDATION (per model instance)
+    // 🔴 MEASUREMENT REQUIRED VALIDATION (per model group instance)
     if (measurementsInstances.length > 0) {
-        for (let m of measurementsInstances) {
-            const key = m.instanceKey;
-            if (!measurementValues[key] || measurementValues[key].trim() === "") {
-                toast.error(`Please enter ${m.name} for ${m.subcategory_name}`);
-                return false;
+        for (let scid of subCategoryIds) {
+            const count = widthSizeCounts[scid] || 1;
+            const subMeasurements = measurementsInstances.filter(m => Number(m.subcategory_id) === Number(scid));
+            for (let idx = 0; idx < count; idx++) {
+                for (let m of subMeasurements) {
+                    const key = m.instanceKey + '-' + idx;
+                    if (!measurementValues[key] || measurementValues[key].trim() === "") {
+                        toast.error(`Please enter ${m.name} for ${(availableSubCategories[scid]?.name) || `Model ${scid}`} (Group ${idx + 1})`);
+                        return false;
+                    }
+                }
             }
         }
     }
@@ -523,17 +529,30 @@ const validateSale = () => {
 
 // 🔹 Build measurement payload
 const buildMeasurementPayload = () => {
-    // Build payload from per-instance measurement values
-    return measurementsInstances
-        .filter(inst => measurementValues[inst.instanceKey] !== undefined && String(measurementValues[inst.instanceKey]).trim() !== '')
-        .map(inst => ({
-            measurement_template_id: Number(inst.id),
-            value: measurementValues[inst.instanceKey],
-            category_id: inst.category_id || null,
-            sub_category_id: inst.subcategory_id || null,
-            size: sizeValues[inst.subcategory_id] || null,
-            width: widthValues[inst.subcategory_id] || null,
-        }));
+    // Build payload from per-instance measurement values for all groups
+    const payload = [];
+    for (let scid of subCategoryIds) {
+        const count = widthSizeCounts[scid] || 1;
+        const subMeasurements = measurementsInstances.filter(m => Number(m.subcategory_id) === Number(scid));
+        for (let idx = 0; idx < count; idx++) {
+            for (let m of subMeasurements) {
+                const key = m.instanceKey + '-' + idx;
+                if (measurementValues[key] !== undefined && String(measurementValues[key]).trim() !== '') {
+                    const sizeArr = sizeValues[scid] || [];
+                    const widthArr = widthValues[scid] || [];
+                    payload.push({
+                        measurement_template_id: Number(m.id),
+                        value: measurementValues[key],
+                        category_id: m.category_id || null,
+                        sub_category_id: scid || null,
+                        size: typeof sizeArr[idx] === 'string' ? sizeArr[idx] : '',
+                        width: typeof widthArr[idx] === 'string' ? widthArr[idx] : '',
+                    });
+                }
+            }
+        }
+    }
+    return payload;
 };
 
     /* ------------------- Submit / Update sale ------------------- */
