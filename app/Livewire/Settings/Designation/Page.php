@@ -5,6 +5,7 @@ namespace App\Livewire\Settings\Designation;
 use App\Actions\Settings\Designation\CreateAction;
 use App\Actions\Settings\Designation\UpdateAction;
 use App\Models\Designation;
+use Illuminate\Validation\Rule;
 use Faker\Factory;
 use Livewire\Component;
 
@@ -24,7 +25,7 @@ class Page extends Component
         $this->mount();
         $this->designations = [
             'name' => $name,
-            'priority' => Designation::max('priority') + 1,
+            'order_no' => Designation::max('order_no') + 1,
         ];
         $this->dispatch('ToggleDesignationModal');
     }
@@ -46,7 +47,7 @@ class Page extends Component
             }
             $this->designations = [
                 'name' => $name,
-                'priority' => 0,
+                'order_no' => 0,
             ];
         } else {
             $designation = Designation::find($this->table_id);
@@ -57,8 +58,8 @@ class Page extends Component
     protected function rules()
     {
         return [
-            'designations.name' => ['required', 'max:100', \Illuminate\Validation\Rule::unique('designations', 'name')->where('tenant_id', Designation::getCurrentTenantId())->ignore($this->table_id)],
-            'designations.priority' => ['nullable', 'integer'],
+            'designations.name' => ['required', 'max:100', Rule::unique('designations', 'name')->where('tenant_id', Designation::getCurrentTenantId())->ignore($this->table_id)],
+            'designations.order_no' => ['nullable', 'integer'],
         ];
     }
 
@@ -66,7 +67,7 @@ class Page extends Component
         'designations.name.required' => 'The name field is required',
         'designations.name.unique' => 'The name is already Registered',
         'designations.name.max' => 'The name field must not be greater than 100 characters.',
-        'designations.priority.integer' => 'The priority field must be an integer.',
+        'designations.order_no.integer' => 'The order no field must be an integer.',
     ];
 
     public function save($close = false)

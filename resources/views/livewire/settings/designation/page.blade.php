@@ -31,9 +31,9 @@
                 </div>
                 <div class="col-md-4">
                     <div class="form-floating">
-                        <input type="number" class="form-control @error('designations.priority') is-invalid @enderror" id="priority" placeholder="0" wire:model="designations.priority">
-                        <label for="priority">Priority</label>
-                        @error('designations.priority')
+                        <input type="number" class="form-control @error('designations.order_no') is-invalid @enderror" id="order_no" placeholder="0" wire:model="designations.order_no">
+                        <label for="order_no">Order No</label>
+                        @error('designations.order_no')
                             <div class="invalid-feedback">{{ $message }}</div>
                         @enderror
                     </div>

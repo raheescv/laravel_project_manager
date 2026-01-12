@@ -23,6 +23,7 @@ return new class() extends Migration
             $table->unsignedBigInteger('default_branch_id')->nullable();
             $table->unsignedBigInteger('designation_id')->nullable();
             $table->foreign('designation_id')->references('id')->on('designations')->onDelete('set null');
+            $table->integer('order_no')->default(1);
 
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
