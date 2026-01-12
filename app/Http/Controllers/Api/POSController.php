@@ -223,6 +223,22 @@ public function getCustomerMeasurements($customerId, $categoryId)
             ];
         });
 }
+
+public function getMeasurementsale($saleId)
+{
+
+
+    $data = DB::table('customer_measurements')
+        ->where('sale_id', $saleId)
+        ->select(
+            'sub_category_id',
+            'width',
+            'size'
+        )
+        ->get();
+
+    return response()->json($data);
+}
  public function getEmployee(Request $request)
 {
     try {

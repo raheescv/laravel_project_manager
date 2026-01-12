@@ -87,7 +87,7 @@ class CategoryController extends Controller
             [
                 'customer_id' => $data['customer_id'],
                 'category_id' => $data['category_id'],
-                'measurement_template_id' => $templateId,
+                'meaerement_template_id' => $templateId,
             ],
             [
                 'values' => ['value' => $value],

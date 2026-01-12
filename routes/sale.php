@@ -79,7 +79,14 @@ Route::middleware('auth')->group(function (): void {
     Route::get('/measurementscustomer/{customerId}/{categoryId}', 
         [POSController::class, 'getCustomerMeasurements']
     )->name('measurements.customer');
+        
+      
+     Route::get('/measurementssale/{saleId}', 
+        [POSController::class, 'getMeasurementsale']
+    )->name('measurementssale.sales');
+
 });
+
 
 
     // Customer Management
