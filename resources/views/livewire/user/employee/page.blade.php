@@ -354,9 +354,9 @@
                 });
                 window.addEventListener('SelectDropDownValues', event => {
                     designation = event.detail[0].designation;
-                    @this.set('users.designation_id', designation.id);
                     var tomSelectInstance = document.querySelector('#model_designation_id').tomselect;
-                    if (designation.id) {
+                    if (designation) {
+                        @this.set('users.designation_id', designation.id);
                         preselectedData = {
                             id: designation.id,
                             name: designation.name,
