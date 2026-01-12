@@ -31,8 +31,8 @@ export default function Edit() {
     const [refreshCustomerKey, setRefreshCustomerKey] = useState(0);
     const [addedCustomer, setAddedCustomer] = useState(null);
     const [subCategoryIds, setSubCategoryIds] = useState([]); // <-- track selected subcategories (array)
-    const [widthValues, setWidthValues] = useState({}); // { categoryId: width }
-    const [sizeValues, setSizeValues] = useState({}); // { categoryId: size }
+    const [widthValues, setWidthValues] = useState({}); // { subCategoryId: width }
+    const [sizeValues, setSizeValues] = useState({}); // { subCategoryId: size }
       
       
 
@@ -54,8 +54,9 @@ export default function Edit() {
     const [editingValues, setEditingValues] = useState({ quantity: 1, unit_price: 0 });
 
     const [selectedCategoryIds, setSelectedCategoryIds] = useState([]);
-    const [measurements, setMeasurements] = useState([]);
-    const [measurementValues, setMeasurementValues] = useState({});
+    const [availableSubCategories, setAvailableSubCategories] = useState({}); // id -> {id,name,measurement_category_id}
+    const [measurementsInstances, setMeasurementsInstances] = useState([]); // duplicated per subcategory
+    const [measurementValues, setMeasurementValues] = useState({}); // keys: `${subId}-${measurementId}`
    
 
     const subTotal = cartItems.reduce((sum, i) => sum + i.total, 0);
@@ -218,43 +219,132 @@ if (saleData.payment_method === 1) {
         return () => { mounted = false };
     }, [customerId]);
 
-  useEffect(() => {
-    if (!selectedCategoryIds || selectedCategoryIds.length === 0) {
-        setMeasurements([]);
-        setMeasurementValues({});
-        return;
-    }
+    // Fetch available subcategories for selected categories (used for labels and mapping)
+    useEffect(() => {
+        if (!selectedCategoryIds || selectedCategoryIds.length === 0) {
+            setAvailableSubCategories({});
+            return;
+        }
+        const url = `/categories/categories/measurement/${selectedCategoryIds[0] || 0}/subcategories`;
+        const params = { category_ids: selectedCategoryIds.join(',') };
+        axios.get(url, { params })
+            .then(res => {
+                const list = res.data || [];
+                const map = {};
+                list.forEach(s => { map[s.id] = s; });
+                setAvailableSubCategories(map);
+            })
+            .catch(() => setAvailableSubCategories({}));
+    }, [selectedCategoryIds]);
 
-    const requests = selectedCategoryIds.map(cid => axios.get(`/categories/measurements/${cid}`));
-    Promise.all(requests)
-        .then(responses => {
-            const merged = [];
-            const seen = new Set();
-            responses.forEach(r => {
-                (r.data || []).forEach(m => {
-                    if (!seen.has(m.id)) {
-                        seen.add(m.id);
-                        merged.push(m);
-                    }
-                });
+    // When subcategories (models) change, build per-model measurement instances and init width/size keys
+    useEffect(() => {
+        if (!subCategoryIds || subCategoryIds.length === 0) {
+            setMeasurementsInstances([]);
+            setMeasurementValues(prev => {
+                const next = { ...prev };
+                Object.keys(next).forEach(k => { if (String(k).indexOf('-') !== -1) delete next[k]; });
+                return next;
             });
-
-            setMeasurements(merged);
-
-            const initialValues = {};
-            merged.forEach((m) => {
-                initialValues[m.id] = "";
-            });
-
-            setMeasurementValues(initialValues);
-        })
-        .catch((err) => {
-            console.error("Measurement load error:", err);
-            setMeasurements([]);
-            setMeasurementValues({});
+            setWidthValues({});
+            setSizeValues({});
+            return;
+        }
+        setWidthValues(prev => {
+            const next = { ...prev };
+            subCategoryIds.forEach(scid => { if (!(scid in next)) next[scid] = next[scid] ?? '' });
+            return next;
         });
-}, [selectedCategoryIds]);
+        setSizeValues(prev => {
+            const next = { ...prev };
+            subCategoryIds.forEach(scid => { if (!(scid in next)) next[scid] = next[scid] ?? '' });
+            return next;
+        });
+        const categoryIds = Array.from(new Set(subCategoryIds.map(scid => (availableSubCategories[scid]?.measurement_category_id || null)).filter(Boolean)));
+        const requests = categoryIds.map(cid => axios.get(`/categories/measurements/${cid}`).then(r => ({ cid, data: r.data || [] })).catch(() => ({ cid, data: [] })) );
+        Promise.all(requests)
+            .then(results => {
+                const templatesMap = {};
+                results.forEach(r => { templatesMap[r.cid] = r.data; });
+                const instances = [];
+                subCategoryIds.forEach(scid => {
+                    const sub = availableSubCategories[scid] || {};
+                    const cid = sub.measurement_category_id || (selectedCategoryIds[0] || null);
+                    const templates = (cid && templatesMap[cid]) ? templatesMap[cid] : [];
+                    templates.forEach(t => {
+                        const instanceKey = `${scid}-${t.id}`;
+                        instances.push({ id: t.id, name: t.name, subcategory_id: scid, subcategory_name: sub.name || `Model ${scid}`, category_id: cid, instanceKey });
+                    });
+                });
+                setMeasurementsInstances(instances);
+                setMeasurementValues(prev => {
+                    const next = { ...prev };
+                    instances.forEach(inst => { if (!(inst.instanceKey in next)) next[inst.instanceKey] = "" });
+                    return next;
+                });
+            })
+            .catch(err => {
+                console.error('Measurement instances load error:', err);
+                setMeasurementsInstances([]);
+            });
+    }, [subCategoryIds, availableSubCategories, selectedCategoryIds]);
 
+    // Load customer-specific measurement defaults and apply to instances
+    useEffect(() => {
+        if (!customerId || measurementsInstances.length === 0) return;
+        const uniqueCategoryIds = Array.from(new Set(measurementsInstances.map(i => i.category_id).filter(Boolean)));
+        const requests = uniqueCategoryIds.map(cid => axios.get(`/categories/measurementscustomer/${customerId}/${cid}`).then(r => ({ cid, data: r.data || {} })).catch(() => ({ cid, data: {} })) );
+        Promise.all(requests)
+            .then(results => {
+                const merged = {};
+                results.forEach(r => Object.assign(merged, r.data));
+                if (Object.keys(merged).length > 0) {
+                    setMeasurementValues(prev => {
+                        const next = { ...prev };
+                        measurementsInstances.forEach(inst => {
+                            const tplId = String(inst.id);
+                            if (merged[tplId] !== undefined && (next[inst.instanceKey] === undefined || next[inst.instanceKey] === '')) {
+                                next[inst.instanceKey] = merged[tplId];
+                            }
+                        });
+                        return next;
+                    });
+                }
+            })
+            .catch(err => console.error('Customer measurement load error:', err));
+    }, [customerId, measurementsInstances]);
+
+
+
+useEffect(() => {
+    if (!saleId || !subCategoryIds.length) return;
+
+    axios.get(`/categories/measurementssale/${saleId}`)
+        .then(res => {
+            console.log('Measurement sale API response:', res.data);
+
+            const widths = {};
+            const sizes = {};
+
+            (res.data || []).forEach(row => {
+                console.log('Row:', row);
+
+                if (row.sub_category_id) {
+                    widths[row.sub_category_id] = row.width || '';
+                    sizes[row.sub_category_id] = row.size || '';
+                }
+            });
+
+            console.log('Widths map:', widths);
+            console.log('Sizes map:', sizes);
+
+            setWidthValues(prev => ({ ...prev, ...widths }));
+            setSizeValues(prev => ({ ...prev, ...sizes }));
+        })
+        .catch(err => {
+            console.error('Measurement sale API error:', err);
+        });
+}, [saleId, subCategoryIds]);
 
 
 useEffect(() => {
@@ -367,14 +457,14 @@ const validateSale = () => {
         return false;
     }
 
-    // Require width/size per selected category
-    for (let cid of selectedCategoryIds) {
-        if (!widthValues[cid] || String(widthValues[cid]).trim() === '') {
-            toast.error('Please enter width for selected categories');
+    // Require width/size per selected subcategory (model)
+    for (let scid of subCategoryIds) {
+        if (!widthValues[scid] || String(widthValues[scid]).trim() === '') {
+            toast.error('Please enter width for selected models');
             return false;
         }
-        if (!sizeValues[cid] || String(sizeValues[cid]).trim() === '') {
-            toast.error('Please select size for selected categories');
+        if (!sizeValues[scid] || String(sizeValues[scid]).trim() === '') {
+            toast.error('Please select size for selected models');
             return false;
         }
     }
@@ -384,11 +474,12 @@ const validateSale = () => {
         return false;
     }
 
-    // 🔴 MEASUREMENT REQUIRED VALIDATION
-    if (measurements.length > 0) {
-        for (let m of measurements) {
-            if (!measurementValues[m.id] || measurementValues[m.id].trim() === "") {
-                toast.error(`Please enter ${m.name}`);
+    // 🔴 MEASUREMENT REQUIRED VALIDATION (per model instance)
+    if (measurementsInstances.length > 0) {
+        for (let m of measurementsInstances) {
+            const key = m.instanceKey;
+            if (!measurementValues[key] || measurementValues[key].trim() === "") {
+                toast.error(`Please enter ${m.name} for ${m.subcategory_name}`);
                 return false;
             }
         }
@@ -400,11 +491,16 @@ const validateSale = () => {
 
 // 🔹 Build measurement payload
 const buildMeasurementPayload = () => {
-    return Object.keys(measurementValues)
-        .filter((key) => measurementValues[key] !== "")
-        .map((key) => ({
-            measurement_template_id: Number(key),
-            value: measurementValues[key],
+    // Build payload from per-instance measurement values
+    return measurementsInstances
+        .filter(inst => measurementValues[inst.instanceKey] !== undefined && String(measurementValues[inst.instanceKey]).trim() !== '')
+        .map(inst => ({
+            measurement_template_id: Number(inst.id),
+            value: measurementValues[inst.instanceKey],
+            category_id: inst.category_id || null,
+            sub_category_id: inst.subcategory_id || null,
+            size: sizeValues[inst.subcategory_id] || null,
+            width: widthValues[inst.subcategory_id] || null,
         }));
 };
 
@@ -433,9 +529,9 @@ const buildMeasurementPayload = () => {
         category_ids: selectedCategoryIds,
         sub_category_id: subCategoryIds.length === 1 ? subCategoryIds[0] : null,
         sub_category_ids: subCategoryIds,
-        // send imploded width/size in the order of selectedCategoryIds
-        width: selectedCategoryIds.map(cid => String(widthValues[cid] || '')).join(','),
-        size: selectedCategoryIds.map(cid => String(sizeValues[cid] || '')).join(','),
+        // send imploded width/size in the order of selected subcategories (models)
+        width: subCategoryIds.map(scid => String(widthValues[scid] || '')).join(','),
+        size: subCategoryIds.map(scid => String(sizeValues[scid] || '')).join(','),
         measurements: buildMeasurementPayload(),
 
         items: buildItemsPayload(),
@@ -572,60 +668,42 @@ if (paymentMethod === "custom" && customPaymentData) {
                                                        
                                                        
                                                                                             {/* Per-category width/size and measurements grouped by category */}
-                                                                                            {selectedCategoryIds.map((cid) => {
-                                                                                                const cat = (categories || []).find(c => Number(c.id) === Number(cid)) || { id: cid, name: '' };
-                                                                                                const catMeasurements = (measurements || []).filter(m => m.category_id == cid) || [];
-                                                                                                return (
-                                                                                                    <div key={`cat-${cid}`} className="card mt-2 p-2">
-                                                                                                        <h6 className="fw-bold mb-2">{cat.name || `Category ${cid}`}</h6>
-                                                                                                        <div className="row g-2">
-                                                                                                            <div className="col-md-3">
-                                                                                                                <label className="form-label">Width</label>
-                                                                                                                <input
-                                                                                                                    type="text"
-                                                                                                                    className="form-control form-control-sm"
-                                                                                                                    value={widthValues[cid] || ''}
-                                                                                                                    onChange={(e) => setWidthValues(prev => ({ ...prev, [cid]: e.target.value }))}
-                                                                                                                />
-                                                                                                            </div>
-                                                                                                            <div className="col-md-3">
-                                                                                                                <label className="form-label">Size</label>
-                                                                                                                <select
-                                                                                                                    className="form-select form-select-sm"
-                                                                                                                    value={sizeValues[cid] || ''}
-                                                                                                                    onChange={(e) => setSizeValues(prev => ({ ...prev, [cid]: e.target.value }))}
-                                                                                                                >
-                                                                                                                    <option value="">Select Size</option>
-                                                                                                                    <option value="S">S</option>
-                                                                                                                    <option value="M">M</option>
-                                                                                                                    <option value="L">L</option>
-                                                                                                                    <option value="XL">XL</option>
-                                                                                                                    <option value="XXL">XXL</option>
-                                                                                                                    <option value="XXXL">XXXL</option>
-                                                                                                                    <option value="XXXXL">XXXXL</option>
-                                                                                                                </select>
-                                                                                                            </div>
-                                                                                                        </div>
-
-                                                                                                        {catMeasurements.length > 0 && (
-                                                                                                            <div className="row mt-2">
-                                                                                                                {catMeasurements.map((m) => (
-                                                                                                                    <div key={m.id} className="col-md-4 mb-2">
-                                                                                                                        <label className="form-label">{m.name}</label>
-                                                                                                                        <input
-                                                                                                                            type="text"
-                                                                                                                            className="form-control form-control-sm"
-                                                                                                                            placeholder={`Enter ${m.name}`}
-                                                                                                                            value={measurementValues[m.id] || ''}
-                                                                                                                            onChange={(e) => setMeasurementValues(prev => ({ ...prev, [m.id]: e.target.value }))}
-                                                                                                                        />
-                                                                                                                    </div>
-                                                                                                                ))}
-                                                                                                            </div>
-                                                                                                        )}
-                                                                                                    </div>
-                                                                                                );
-                                                                                            })}
+                            {/* Per-model (sub-category) width/size inputs */}
+                            {subCategoryIds.map((scid) => {
+                                // Find the first measurement instance for this subcategory to get the subcategory name
+                                const mInst = measurementsInstances.find(mi => Number(mi.subcategory_id) === Number(scid));
+                                const subName = mInst ? mInst.subcategory_name : `Model ${scid}`;
+                                return (
+                                    <div key={`ws-${scid}`} className="d-flex gap-2 mt-2">
+                                        <div style={{ flex: 1 }}>
+                                            <label className="form-label">Width ({subName})</label>
+                                            <input
+                                                type="text"
+                                                className="form-control form-control-sm"
+                                                value={widthValues[scid] || ''}
+                                                onChange={(e) => setWidthValues(prev => ({ ...prev, [scid]: e.target.value }))}
+                                            />
+                                        </div>
+                                        <div style={{ width: 160 }}>
+                                            <label className="form-label">Size ({subName})</label>
+                                            <select
+                                                className="form-select form-select-sm"
+                                                value={sizeValues[scid] || ''}
+                                                onChange={(e) => setSizeValues(prev => ({ ...prev, [scid]: e.target.value }))}
+                                            >
+                                                <option value="">Select Size</option>
+                                                <option value="S">S</option>
+                                                <option value="M">M</option>
+                                                <option value="L">L</option>
+                                                <option value="XL">XL</option>
+                                                <option value="XXL">XXL</option>
+                                                <option value="XXXL">XXXL</option>
+                                                <option value="XXXXL">XXXXL</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                );
+                            })}
                                                                                        </div>
                                                        
                                                                                        
@@ -635,30 +713,31 @@ if (paymentMethod === "custom" && customPaymentData) {
                                                                                    )}
                                                   
 
-                    {measurements.length > 0 && (
-  <div className="card mt-2 p-2">
-    <h6 className="fw-bold mb-2">Measurements</h6>
-    <div className="row">
-      {measurements.map((m, index) => (
-        <div key={m.id} className="col-md-4 mb-2"> {/* 3 columns per row */}
-          <label className="form-label">{m.name}</label>
-          <input
-            type="text"
-            className="form-control form-control-sm"
-            placeholder={`Enter ${m.name}`}
-            value={measurementValues[m.id] || ""}
-            onChange={(e) =>
-              setMeasurementValues({
-                ...measurementValues,
-                [m.id]: e.target.value,
-              })
-            }
-          />
-        </div>
-      ))}
-    </div>
-  </div>
-)}
+                        {measurementsInstances.length > 0 && (
+                                <div className="card mt-2 p-2">
+                                        <h6 className="fw-bold mb-2">Measurements</h6>
+                                        {/* Group measurements by selected subcategory (model) */}
+                                        {subCategoryIds.map(scid => (
+                                                <div key={`grp-${scid}`} className="mb-3">
+                                                        <div className="fw-bold">{(availableSubCategories[scid]?.name) || `Model ${scid}`}</div>
+                                                        <div className="row">
+                                                                {measurementsInstances.filter(mi => Number(mi.subcategory_id) === Number(scid)).map(m => (
+                                                                        <div key={m.instanceKey} className="col-md-4 mb-2">
+                                                                                <label className="form-label">{m.name}</label>
+                                                                                <input
+                                                                                        type="text"
+                                                                                        className="form-control form-control-sm"
+                                                                                        placeholder={`Enter ${m.name}`}
+                                                                                        value={measurementValues[m.instanceKey] || ""}
+                                                                                        onChange={(e) => setMeasurementValues(prev => ({ ...prev, [m.instanceKey]: e.target.value }))}
+                                                                                />
+                                                                        </div>
+                                                                ))}
+                                                        </div>
+                                                </div>
+                                        ))}
+                                </div>
+                        )}
 
 
                             <div className="mb-2">
