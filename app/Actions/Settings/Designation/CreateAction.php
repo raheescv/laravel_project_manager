@@ -1,19 +1,18 @@
 <?php
 
-namespace App\Actions\User;
+namespace App\Actions\Settings\Designation;
 
-use App\Models\User;
+use App\Models\Designation;
 
 class CreateAction
 {
     public function execute($data)
     {
         try {
-            $data['password'] = $data['password'] ?? 'password';
-            validationHelper(User::createRules(), $data);
-            $model = User::create($data);
+            validationHelper(Designation::rules(), $data);
+            $model = Designation::create($data);
             $return['success'] = true;
-            $return['message'] = 'Successfully Created User';
+            $return['message'] = 'Successfully Created Designation';
             $return['data'] = $model;
         } catch (\Throwable $th) {
             $return['success'] = false;

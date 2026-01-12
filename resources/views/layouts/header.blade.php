@@ -210,6 +210,11 @@
                                             <i class="fa fa-cubes fs-5 me-2"></i>Unit
                                         </a>
                                     @endcan
+                                    @can('designation.view')
+                                        <a href="{{ route('settings::designation::index') }}" class="list-group-item list-group-item-action">
+                                            <i class="fa fa-briefcase fs-5 me-2"></i>Designation
+                                        </a>
+                                    @endcan
                                     @can('department.view')
                                         <a href="{{ route('settings::department::index') }}" class="list-group-item list-group-item-action">
                                             <i class="fa fa-sitemap fs-5 me-2"></i>Department

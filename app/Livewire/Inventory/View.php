@@ -29,6 +29,7 @@ class View extends Component
     public $sortField = 'inventory_logs.id';
 
     public $sortDirection = 'desc';
+
     public $selectedTab = 'log';
 
     public $chartView = 'daily'; // 'daily' or 'monthly'

@@ -12,6 +12,7 @@ use App\Http\Controllers\Settings\CategoryController;
 use App\Http\Controllers\Settings\CountryController;
 use App\Http\Controllers\Settings\CustomerTypeController;
 use App\Http\Controllers\Settings\DepartmentController;
+use App\Http\Controllers\Settings\DesignationController;
 use App\Http\Controllers\Settings\UnitController;
 use App\Http\Controllers\SettingsController;
 use Illuminate\Support\Facades\Route;
@@ -30,6 +31,10 @@ Route::middleware('auth')->group(function (): void {
         });
         Route::name('unit::')->prefix('unit')->controller(UnitController::class)->group(function (): void {
             Route::get('', 'index')->name('index')->can('unit.view');
+            Route::get('list', 'get')->name('list');
+        });
+        Route::name('designation::')->prefix('designation')->controller(DesignationController::class)->group(function (): void {
+            Route::get('', 'index')->name('index')->can('employee.view');
             Route::get('list', 'get')->name('list');
         });
         Route::name('branch::')->prefix('branch')->controller(BranchController::class)->group(function (): void {

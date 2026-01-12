@@ -42,6 +42,7 @@ class User extends Authenticatable implements AuditableContracts
         'salary',
         'hra',
         'max_discount_per_sale',
+        'designation_id',
         'is_locked',
         'is_active',
         'is_whatsapp_enabled',
@@ -109,6 +110,11 @@ class User extends Authenticatable implements AuditableContracts
     public function attendances()
     {
         return $this->hasMany(UserAttendance::class, 'employee_id');
+    }
+
+    public function designation()
+    {
+        return $this->belongsTo(Designation::class, 'designation_id');
     }
 
     protected function casts(): array

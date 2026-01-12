@@ -21,6 +21,8 @@ return new class() extends Migration
 
             $table->boolean('is_admin')->default(0);
             $table->unsignedBigInteger('default_branch_id')->nullable();
+            $table->unsignedBigInteger('designation_id')->nullable();
+            $table->foreign('designation_id')->references('id')->on('designations')->onDelete('set null');
 
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
