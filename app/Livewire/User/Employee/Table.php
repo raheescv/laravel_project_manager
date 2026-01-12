@@ -31,9 +31,9 @@ class Table extends Component
 
     public $designation_id = '';
 
-    public $sortField = 'users.id';
+    public $sortField = 'users.order_no';
 
-    public $sortDirection = 'desc';
+    public $sortDirection = 'asc';
 
     protected $paginationTheme = 'bootstrap';
 
@@ -168,7 +168,6 @@ class Table extends Component
             })
             ->employee()
             ->with(['designation', 'roles'])
-            ->latest('users.created_at')
             ->select([
                 'users.*',
                 'designations.name as designation',

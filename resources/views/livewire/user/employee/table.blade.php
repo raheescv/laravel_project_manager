@@ -101,6 +101,8 @@
                                         <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="id" label="ID" />
                                     </label>
                                 </div>
+                            <th class="border-0">
+                                <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="order_no" label="Order" />
                             </th>
                             <th class="border-0">
                                 <div class="d-flex align-items-center">
@@ -161,6 +163,8 @@
                                         </div>
                                         <span class="badge bg-secondary rounded-pill">{{ $item->id }}</span>
                                     </div>
+                                <td>
+                                    <span class="badge bg-light text-dark border">{{ $item->order_no ?? 0 }}</span>
                                 </td>
                                 <td class="text-capitalize">
                                     <a href="{{ route('users::employee::view', $item->id) }}" class="text-decoration-none fw-semibold link-primary">

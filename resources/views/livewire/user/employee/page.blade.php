@@ -56,12 +56,26 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="col-md-12" wire:ignore>
+                        <div class="col-md-8" wire:ignore>
                             <label for="designation_id" class="form-label small fw-medium text-capitalize">
                                 <i class="fa fa-id-badge me-1 text-muted"></i>
                                 Designation
                             </label>
                             {{ html()->select('designation_id', [])->value('')->class('select-designation_id')->id('model_designation_id')->placeholder('All') }}
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label for="order_no" class="form-label small fw-medium">
+                                    <i class="fa fa-sort-numeric-asc me-1 text-muted"></i>
+                                    Order No
+                                </label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-light border-secondary-subtle">
+                                        <i class="fa fa-sort-numeric-asc"></i>
+                                    </span>
+                                    {{ html()->number('order_no')->value('')->class('form-control border-secondary-subtle shadow-sm')->attribute('wire:model', 'users.order_no')->placeholder('0') }}
+                                </div>
+                            </div>
                         </div>
                         <div class="col-md-6">
                             <div class="form-group">

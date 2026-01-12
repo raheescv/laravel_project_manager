@@ -15,7 +15,7 @@ class Designation extends Model
     protected $fillable = [
         'tenant_id',
         'name',
-        'priority',
+        'order_no',
     ];
 
     public static function rules($id = 0, $merge = [])
@@ -24,7 +24,7 @@ class Designation extends Model
 
         return array_merge([
             'name' => ['required', 'max:100', Rule::unique(self::class, 'name')->where('tenant_id', $tenantId)->ignore($id)],
-            'priority' => ['nullable', 'integer'],
+            'order_no' => ['nullable', 'integer'],
         ], $merge);
     }
 
@@ -53,7 +53,7 @@ class Designation extends Model
             });
         });
         $self = $self->limit(10);
-        $self = $self->orderBy('priority');
+        $self = $self->orderBy('order_no');
         $self = $self->get(['name', 'id'])->toArray();
         $return['items'] = $self;
 

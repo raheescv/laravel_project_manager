@@ -54,6 +54,7 @@ class Page extends Component
                 'email' => $email,
                 'password' => '',
                 'designation_id' => '',
+                'order_no' => '',
             ];
         } else {
             $user = User::with('designation')->find($this->table_id);
@@ -70,6 +71,7 @@ class Page extends Component
             'users.designation_id' => ['required'],
             'users.email' => ['required', 'unique:users,email,'.$this->table_id],
             'users.max_discount_per_sale' => ['nullable', 'numeric', 'min:0', 'max:100'],
+            'users.order_no' => ['nullable', 'integer'],
         ];
         // if (! $this->table_id) {
         //     $rules['users.password'] = ['required'];

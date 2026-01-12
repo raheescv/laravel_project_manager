@@ -43,6 +43,7 @@ class User extends Authenticatable implements AuditableContracts
         'hra',
         'max_discount_per_sale',
         'designation_id',
+        'order_no',
         'is_locked',
         'is_active',
         'is_whatsapp_enabled',
