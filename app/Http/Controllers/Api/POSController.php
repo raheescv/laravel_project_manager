@@ -562,12 +562,29 @@ public function getMeasurementTemplates($categoryId)
                     $mCategoryId = $saleData['category_ids'][0] ?? null;
                 }
 
+                // Determine subcategory, size and width for this measurement if provided
+                $mSubCategoryId = $m['sub_category_id'] ?? null;
+                $mSize = $m['size'] ?? null;
+                $mWidth = $m['width'] ?? null;
+
+                // If subcategory arrays were provided in the sale payload, try to map index
+                if (empty($mSize) && !empty($mSubCategoryId) && !empty($saleData['sub_category_ids']) && is_array($saleData['sub_category_ids'])) {
+                    $idx = array_search((int)$mSubCategoryId, $saleData['sub_category_ids']);
+                    if ($idx !== false) {
+                        $mSize = $saleData['sizes'][$idx] ?? $mSize;
+                        $mWidth = $saleData['widths'][$idx] ?? $mWidth;
+                    }
+                }
+
                 CustomerMeasurement::create([
                     'sale_id' => $sale->id,
                     'customer_id' => $sale->account_id,
                     'category_id' => $mCategoryId,
+                    'sub_category_id' => $mSubCategoryId,
                     'measurement_template_id' => $m['measurement_template_id'],
                     'value' => $m['value'],
+                    'size' => $mSize,
+                    'width' => $mWidth,
                     'created_by' => $user_id,
                 ]);
             }

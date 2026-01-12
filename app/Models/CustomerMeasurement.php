@@ -16,6 +16,9 @@ class CustomerMeasurement extends Model
         'category_id',
         'measurement_template_id',
         'value',
+        'sub_category_id',
+        'size',
+        'width',
     ];
 
 
