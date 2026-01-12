@@ -92,6 +92,7 @@ class SaleItem extends Model implements AuditableContracts
     {
         return $this->product?->name;
     }
+
     public function getUnitNameAttribute()
     {
         return $this->unit?->name;

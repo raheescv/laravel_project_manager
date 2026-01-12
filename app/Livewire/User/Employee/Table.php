@@ -29,7 +29,9 @@ class Table extends Component
 
     public $is_active = '';
 
-    public $sortField = 'id';
+    public $designation_id = '';
+
+    public $sortField = 'users.id';
 
     public $sortDirection = 'desc';
 
@@ -80,7 +82,35 @@ class Table extends Component
     public function updatedSelectAll($value)
     {
         if ($value) {
-            $this->selected = User::employee()->latest()->limit(2000)->pluck('id')->toArray();
+            $this->selected = User::employee()
+                ->when($this->search ?? '', function ($query, $value) {
+                    return $query->where(function ($q) use ($value) {
+                        $value = trim($value);
+
+                        return $q->where('name', 'like', "%{$value}%")
+                            ->orWhere('code', 'like', "%{$value}%")
+                            ->orWhere('email', 'like', "%{$value}%")
+                            ->orWhere('mobile', 'like', "%{$value}%")
+                            ->orWhere('place', 'like', "%{$value}%")
+                            ->orWhere('nationality', 'like', "%{$value}%");
+                    });
+                })
+                ->when($this->role_id, function ($query): void {
+                    $query->whereHas('roles', function ($q): void {
+                        $q->where('id', $this->role_id);
+                    });
+                })
+                ->when($this->is_active !== '', function ($query): void {
+                    $query->where('is_active', $this->is_active);
+                })
+                ->when($this->designation_id, function ($query): void {
+                    $query->where('designation_id', $this->designation_id);
+                })
+                ->latest()
+                ->limit(2000)
+                ->pluck('id')
+                ->map(fn ($id) => (string) $id)
+                ->toArray();
         } else {
             $this->selected = [];
         }
@@ -112,6 +142,7 @@ class Table extends Component
     public function render()
     {
         $data = User::orderBy($this->sortField, $this->sortDirection)
+            ->leftJoin('designations', 'designations.id', 'users.designation_id')
             ->when($this->search ?? '', function ($query, $value) {
                 return $query->where(function ($q) use ($value) {
                     $value = trim($value);
@@ -132,9 +163,18 @@ class Table extends Component
             ->when($this->is_active !== '', function ($query): void {
                 $query->where('is_active', $this->is_active);
             })
+            ->when($this->designation_id, function ($query): void {
+                $query->where('designation_id', $this->designation_id);
+            })
             ->employee()
-            ->latest()
+            ->with(['designation', 'roles'])
+            ->latest('users.created_at')
+            ->select([
+                'users.*',
+                'designations.name as designation',
+            ])
             ->paginate($this->limit);
+
         $roles = Role::orderBy('name')->get();
 
         return view('livewire.user.employee.table', [

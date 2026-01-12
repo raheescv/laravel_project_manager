@@ -52,12 +52,12 @@
             <hr class="my-3">
             <div class="row g-3">
                 <div class="col-md-4">
-                    <div>
+                    <div wire:ignore>
                         <label for="role_id" class="form-label small fw-medium text-capitalize">
                             <i class="fa fa-lock me-1 text-muted"></i>
                             Role
                         </label>
-                        <select wire:model.live="role_id" class="form-select shadow-sm border-secondary-subtle" id="role_id">
+                        <select wire:model.live="role_id" class="shadow-sm border-secondary-subtle tomSelect" id="role_id">
                             <option value="">All Roles</option>
                             @foreach($roles as $role)
                                 <option value="{{ $role->id }}">{{ $role->name }}</option>
@@ -66,16 +66,25 @@
                     </div>
                 </div>
                 <div class="col-md-4">
-                    <div>
+                    <div wire:ignore>
                         <label for="is_active" class="form-label small fw-medium text-capitalize">
                             <i class="fa fa-toggle-on me-1 text-muted"></i>
                             Status
                         </label>
-                        <select wire:model.live="is_active" class="form-select shadow-sm border-secondary-subtle" id="is_active">
+                        <select wire:model.live="is_active" class=" shadow-sm border-secondary-subtle tomSelect" id="is_active">
                             <option value="">All Status</option>
                             <option value="1">Active</option>
                             <option value="0">Inactive</option>
                         </select>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div wire:ignore>
+                        <label for="designation_id_filter" class="form-label small fw-medium text-capitalize">
+                            <i class="fa fa-id-badge me-1 text-muted"></i>
+                            Designation
+                        </label>
+                        {{ html()->select('designation_id', [])->value('')->class('select-designation_id-list')->id('designation_id')->placeholder('All') }}
                     </div>
                 </div>
             </div>
@@ -95,8 +104,13 @@
                             </th>
                             <th class="border-0">
                                 <div class="d-flex align-items-center">
-                                    <i class="fa fa-user me-2 text-secondary small"></i>
                                     <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="name" label="Name" />
+                                </div>
+                            </th>
+                            <th class="border-0">
+                                <div class="d-flex align-items-center">
+                                    <i class="fa fa-id-badge me-2 text-secondary small"></i>
+                                    <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="designation" label="Designation" />
                                 </div>
                             </th>
                             <th class="border-0">
@@ -148,16 +162,19 @@
                                         <span class="badge bg-secondary rounded-pill">{{ $item->id }}</span>
                                     </div>
                                 </td>
-                                <td>
-                                    <a href="{{ route('users::employee::view', $item['id']) }}" class="text-decoration-none fw-semibold link-primary">
-                                        {{ $item['name'] }}
+                                <td class="text-capitalize">
+                                    <a href="{{ route('users::employee::view', $item->id) }}" class="text-decoration-none fw-semibold link-primary">
+                                        {{ $item->name }}
                                     </a>
+                                </td>
+                                <td class="text-capitalize">
+                                    <span class="badge bg-primary-subtle text-primary border border-primary-subtle">{{ $item?->designation }}</span>
                                 </td>
                                 <td>
                                     <span class="badge bg-info text-white">{{ getUserRoles($item) }}</span>
                                 </td>
                                 <td>
-                                    <code class="bg-light rounded px-2 py-1 small">{{ $item->code }}</code>
+                                    <code class="bg-light rounded px-2 py-1 small">{{ $item?->code }}</code>
                                 </td>
                                 <td>
                                     <span class="text-secondary">{{ $item->email }}</span>
@@ -174,7 +191,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="8" class="text-center py-5">
+                                <td colspan="9" class="text-center py-5">
                                     <div class="text-muted my-4">
                                         <i class="fa fa-exclamation-circle fs-1 d-block mb-3 text-secondary-emphasis opacity-50"></i>
                                         <h5 class="fw-semibold mb-2">No Employees Found</h5>
@@ -256,7 +273,17 @@
                     window.addEventListener('RefreshEmployeeTable', event => {
                         Livewire.dispatch("Employee-Refresh-Component");
                     });
+                    $(document).on('change', '#designation_id', function() {
+                        @this.set('designation_id', $(this).val());
+                    });
+                     $(document).on('change', '#role_id', function() {
+                        @this.set('role_id', $(this).val());
+                    });
+                     $(document).on('change', '#is_active', function() {
+                        @this.set('is_active', $(this).val());
+                    });
                 });
             </script>
         @endpush
     </div>
+</div>
