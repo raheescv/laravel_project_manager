@@ -82,7 +82,7 @@ Route::middleware('auth')->group(function (): void {
         
       
      Route::get('/measurementssale/{saleId}', 
-        [POSController::class, 'getMeasurementsale']
+        [POSController::class, 'getCustomerMeasurementSale']
     )->name('measurementssale.sales');
 
 });

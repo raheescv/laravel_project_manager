@@ -315,36 +315,31 @@ if (saleData.payment_method === 1) {
 
     // Load customer-specific measurement defaults and apply to all measurement groups (for each group index)
     useEffect(() => {
-        if (!customerId || measurementsInstances.length === 0) return;
-        const uniqueCategoryIds = Array.from(new Set(measurementsInstances.map(i => i.category_id).filter(Boolean)));
-        const requests = uniqueCategoryIds.map(cid => axios.get(`/categories/measurementscustomer/${customerId}/${cid}`).then(r => ({ cid, data: r.data || {} })).catch(() => ({ cid, data: {} })) );
-        Promise.all(requests)
-            .then(results => {
-                const merged = {};
-                results.forEach(r => Object.assign(merged, r.data));
-                if (Object.keys(merged).length > 0) {
-                    setMeasurementValues(prev => {
-                        const next = { ...prev };
-                        // For each subcategory, for each group index, prefill measurement values
-                        subCategoryIds.forEach(scid => {
-                            const count = widthSizeCounts[scid] || 1;
-                            const subMeasurements = measurementsInstances.filter(inst => Number(inst.subcategory_id) === Number(scid));
-                            for (let idx = 0; idx < count; idx++) {
-                                subMeasurements.forEach(inst => {
-                                    const tplId = String(inst.id);
-                                    const key = inst.instanceKey + '-' + idx;
-                                    if (merged[tplId] !== undefined && (next[key] === undefined || next[key] === '')) {
-                                        next[key] = merged[tplId];
-                                    }
-                                });
-                            }
-                        });
-                        return next;
-                    });
-                }
+        // Fetch and set measurements from customermeasuremet table for this sale
+        if (!saleId || !customerId || subCategoryIds.length === 0) return;
+        axios.get(`/categories/customermeasurementsale/${saleId}`)
+            .then(res => {
+                // API should return array of { sub_category_id, measurement_template_id, value, width, size }
+                const data = res.data || [];
+                const measurementVals = {};
+                const widths = {};
+                const sizes = {};
+                data.forEach(row => {
+                    const scid = row.sub_category_id;
+                    const tplId = row.measurement_template_id;
+                    const instanceKey = `${scid}-${tplId}`;
+                    measurementVals[instanceKey] = row.value || '';
+                    if (scid && row.width) widths[scid] = [row.width];
+                    if (scid && row.size) sizes[scid] = [row.size];
+                });
+                setMeasurementValues(prev => ({ ...prev, ...measurementVals }));
+                setWidthValues(prev => ({ ...prev, ...widths }));
+                setSizeValues(prev => ({ ...prev, ...sizes }));
             })
-            .catch(err => console.error('Customer measurement load error:', err));
-    }, [customerId, measurementsInstances, subCategoryIds, widthSizeCounts]);
+            .catch(err => {
+                console.error('Customer measurement sale API error:', err);
+            });
+    }, [saleId, customerId, subCategoryIds]);
 
 
 
@@ -375,33 +370,7 @@ const fetchSaleMeasurements = async (saleId, subCategoryIds) => {
 };
 
 // Load saved measurements for this sale and prefill measurement, width, and size values
-useEffect(() => {
-    if (!saleId || !subCategoryIds.length) return;
-
-    axios.get(`/categories/measurementssale/${saleId}`)
-        .then(res => {
-            const widths = {};
-            const sizes = {};
-            const measurementVals = {};
-            (res.data || []).forEach(row => {
-                // Find the instanceKey for this measurement row
-                const scid = row.sub_category_id;
-                const tplId = row.measurement_template_id;
-                const instanceKey = `${scid}-${tplId}`;
-                measurementVals[instanceKey] = row.value || '';
-                if (scid) {
-                    widths[scid] = row.width || '';
-                    sizes[scid] = row.size || '';
-                }
-            });
-            setMeasurementValues(prev => ({ ...prev, ...measurementVals }));
-            setWidthValues(prev => ({ ...prev, ...widths }));
-            setSizeValues(prev => ({ ...prev, ...sizes }));
-        })
-        .catch(err => {
-            console.error('Measurement sale API error:', err);
-        });
-}, [saleId, subCategoryIds]);
+// Removed duplicate sale measurement fetching logic. Now only customermeasuremet API is used for sale measurements.
 
 useEffect(() => {
     fetchSaleMeasurements(saleId, subCategoryIds);
@@ -538,15 +507,12 @@ const validateSale = () => {
     // 🔴 MEASUREMENT REQUIRED VALIDATION (per model group instance)
     if (measurementsInstances.length > 0) {
         for (let scid of subCategoryIds) {
-            const count = widthSizeCounts[scid] || 1;
             const subMeasurements = measurementsInstances.filter(m => Number(m.subcategory_id) === Number(scid));
-            for (let idx = 0; idx < count; idx++) {
-                for (let m of subMeasurements) {
-                    const key = m.instanceKey + '-' + idx;
-                    if (!measurementValues[key] || measurementValues[key].trim() === "") {
-                        toast.error(`Please enter ${m.name} for ${(availableSubCategories[scid]?.name) || `Model ${scid}`} (Group ${idx + 1})`);
-                        return false;
-                    }
+            for (let m of subMeasurements) {
+                const key = m.instanceKey;
+                if (!measurementValues[key] || measurementValues[key].trim() === "") {
+                    toast.error(`Please enter ${m.name} for ${(availableSubCategories[scid]?.name) || `Model ${scid}`}`);
+                    return false;
                 }
             }
         }
