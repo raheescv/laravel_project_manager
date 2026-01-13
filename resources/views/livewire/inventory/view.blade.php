@@ -411,7 +411,7 @@
                                                 <th width="5%">
                                                     <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="id" label="#" />
                                                 </th>
-                                                <th>
+                                                <th class="text-nowrap">
                                                     <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="created_at" label="date" />
                                                 </th>
                                                 <th>
@@ -447,7 +447,7 @@
                                             @foreach ($logs as $item)
                                                 <tr>
                                                     <td>{{ $item->id }}</td>
-                                                    <td>{{ systemDateTime($item->created_at) }}</td>
+                                                    <td class="text-nowrap">{{ systemDateTime($item->created_at) }}</td>
                                                     <td>{{ $item->branch?->name }}</td>
                                                     <td>{{ $item->employee?->name }}</td>
                                                     <td>{{ $item->barcode }}</td>
