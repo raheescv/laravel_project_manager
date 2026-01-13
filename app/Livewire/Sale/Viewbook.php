@@ -117,8 +117,12 @@ class Viewbook extends Component
                 'id' => $cm->id,
                 'customer_id' => $cm->customer_id,
                 'category_id' => $cm->category_id,
+                'sub_category_id' => $cm->sub_category_id,
                 'measurement_template_id' => $cm->measurement_template_id,
                 'value' => $cm->value,
+                'size' => $cm->size,
+                'width' => $cm->width,
+                'quantity' => $cm->quantity,
                 'category_name' => $cm->category->name ?? null,
                 'template_name' => $cm->template->name ?? null, // updated here
             ];
