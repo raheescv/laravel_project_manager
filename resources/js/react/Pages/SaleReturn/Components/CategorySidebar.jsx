@@ -23,29 +23,30 @@ export default function CategorySidebar({ selectedId, onSelect }) {
     };
 
     return (
-        <aside className="categories-sidebar p-2 h-100" style={{ minHeight: '80vh' }}>
-            <div className="card">
-                <div className="card-body p-2">
-                    <h6 className="fw-bold mb-2">Categories</h6>
-                    <div className="list-group category-list" style={{ maxHeight: '70vh', overflow: 'auto' }}>
+        <aside className="categories-sidebar h-100" style={{ minHeight: '80vh', margin: 0, padding: 0 }}>
+            <div className="card" style={{ margin: 0, boxShadow: 'none', border: 'none' }}>
+                <div className="card-body p-1" style={{ padding: 0 }}>
+                    <h6 className="fw-bold mb-1" style={{ marginBottom: 4 }}>Categories</h6>
+                    <div className="list-group category-list" style={{ maxHeight: '70vh', overflow: 'auto', margin: 0 }}>
                         {categories.map((c) => (
-                            <button
-                                key={c.id}
-                                type="button"
-                                className={`list-group-item list-group-item-action ${isSelected(c.id) ? 'active' : ''}`}
-                                onClick={() => {
-                                    if (Array.isArray(selectedId)) {
-                                        const idNum = Number(c.id);
-                                        const exists = selectedId.includes(idNum);
-                                        const next = exists ? selectedId.filter(i => i !== idNum) : [...selectedId, idNum];
-                                        onSelect?.(next);
-                                    } else {
-                                        onSelect?.(Number(c.id));
-                                    }
-                                }}
-                            >
+                            <label key={c.id} className="list-group-item d-flex align-items-center" style={{ cursor: 'pointer', margin: 0, padding: '2px 0' }}>
+                                <input
+                                    type="checkbox"
+                                    checked={isSelected(c.id)}
+                                    onChange={() => {
+                                        if (Array.isArray(selectedId)) {
+                                            const idNum = Number(c.id);
+                                            const exists = selectedId.includes(idNum);
+                                            const next = exists ? selectedId.filter(i => i !== idNum) : [...selectedId, idNum];
+                                            onSelect?.(next);
+                                        } else {
+                                            onSelect?.([Number(c.id)]);
+                                        }
+                                    }}
+                                    style={{ marginRight: 8 }}
+                                />
                                 {c.name}
-                            </button>
+                            </label>
                         ))}
                     </div>
                 </div>

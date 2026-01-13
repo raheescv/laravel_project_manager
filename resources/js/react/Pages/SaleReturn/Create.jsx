@@ -4,6 +4,7 @@ import CustomerSelect from "./Components/CustomerSelect";
 import EmployeeSelect from "./Components/EmployeeSelect";
 import CategorySelect from "./Components/CategorySelect";
 import CategorySidebar from "./Components/CategorySidebar";
+import MainCategorySidebar from "./MainCategorySidebar";
 import TopMenu from "./Components/TopMenu";
 import { toast } from "react-toastify"; 
 import ProductGrid from "./ProductGrid";
@@ -61,7 +62,8 @@ export default function Create() {
     const [editingItem, setEditingItem] = useState(null);
     const [editingValues, setEditingValues] = useState({ quantity: 1, unit_price: 0 });
 
-    const [selectedCategoryIds, setSelectedCategoryIds] = useState([]);
+    const [selectedCategoryIds, setSelectedCategoryIds] = useState([]); // for measurement categories (CategorySidebar)
+    const [selectedMainCategoryIds, setSelectedMainCategoryIds] = useState([]); // for main categories (MainCategorySidebar)
     const [availableSubCategories, setAvailableSubCategories] = useState({}); // id -> {id,name,measurement_category_id}
     const [measurementsInstances, setMeasurementsInstances] = useState([]); // duplicated per subcategory
     const [measurementValues, setMeasurementValues] = useState({}); // keys: `${subId}-${measurementId}`
@@ -73,18 +75,21 @@ export default function Create() {
 
     const totalQty = cartItems.reduce((s, i) => s + i.quantity, 0);
 
+    // Fetch products when selectedMainCategoryIds changes
     useEffect(() => {
-        axios.get("/products/book").then((res) => {
+        // If no main category selected, fetch all
+        const params = selectedMainCategoryIds.length > 0 ? { main_category_id: selectedMainCategoryIds } : {};
+        axios.get("/products/book", { params }).then((res) => {
             setProducts(
                 res.data.map((p) => ({
                     ...p,
-                      inventory_id: p.id,
+                    inventory_id: p.id,
                     quantity: p.stock,
                     image: p.image || "/logo.png",
                 }))
             );
         });
-    }, []);
+    }, [selectedMainCategoryIds]);
 
     // load employees once so we can show selected employee details in modals/sidebar
     useEffect(() => {
@@ -514,7 +519,9 @@ const buildMeasurementPayload = () => {
 
                         {/* LEFT SIDEBAR: Categories */}
                         <div className="col-12 col-lg-2 pe-0">
-                            <CategorySidebar selectedId={selectedCategoryIds} onSelect={(ids) => setSelectedCategoryIds(ids)} />
+
+                            {/* MainCategorySidebar in left sidebar */}
+                            <MainCategorySidebar selectedId={selectedMainCategoryIds} onSelect={setSelectedMainCategoryIds} />
 
 
 
@@ -533,19 +540,32 @@ const buildMeasurementPayload = () => {
 
                         {/* CENTER: Product Grid */}
                             <div className="col-md-12 col-lg-7">
+                                {/* CategorySidebar just above model selection */}
+                                <div className="mb-1" style={{ marginBottom: '4px' }}>
+                                    <CategorySidebar selectedId={selectedCategoryIds} onSelect={(ids) => setSelectedCategoryIds(ids)} />
+                                </div>
 
+                                {primaryCategoryId && (
+                                    <div className="mb-1" style={{ marginBottom: '4px' }}>
+                                        <SubCategorySelect
+                                            categoryId={selectedCategoryIds}
+                                            selectedSubId={subCategoryIds}
+                                            onSelect={setSubCategoryIds}
+                                        />
+                                        {/* Per-model (sub-category) width/size inputs (single input, no add/remove) */}
+                                        {/* Width/Size inputs are now inside the Measurements card below */}
+                                    </div>
+                                )}
 
-                                  <div className="mb-2">
+                                <div className="mb-2">
                                     <label className="fw-bold mb-1">Customer</label>
                                     <div className="d-flex gap-2 align-items-center">
                                         <div style={{ flex: 1 }}>
-                                      <CustomerSelect
-    value={customerId}
-    onChange={setCustomerId}
-    newCustomer={addedCustomer} // <-- use this instead of customerDetails
-/>
-
-
+                                            <CustomerSelect
+                                                value={customerId}
+                                                onChange={setCustomerId}
+                                                newCustomer={addedCustomer}
+                                            />
                                         </div>
                                         <div>
                                             <div className="d-flex gap-2">
@@ -563,23 +583,6 @@ const buildMeasurementPayload = () => {
                                         </div>
                                     </div>
                                 </div>
-
-
-                                {primaryCategoryId && (
-                                                        <div className="mb-2">
-                                    
-                                                            <SubCategorySelect
-                                                                categoryId={selectedCategoryIds}
-                                                                selectedSubId={subCategoryIds}
-                                                                onSelect={setSubCategoryIds}
-                                                            />
-
-
-                                                            {/* Per-model (sub-category) width/size inputs (single input, no add/remove) */}
-                                                            {/* Width/Size inputs are now inside the Measurements card below */}
-                                                        </div>
-                                
-                                                    )}
 
                         
                                 

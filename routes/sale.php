@@ -69,6 +69,7 @@ Route::middleware('auth')->group(function (): void {
     });
       Route::prefix('categories')->name('api.categories.')->group(function () {
     Route::get('/categorie', [POSController::class, 'getmeasuremetcategory'])->name('categorielist');
+      Route::get('/maincategorie', [POSController::class, 'getmaincategory'])->name('maincategorielist');
     Route::get('/countries', [POSController::class, 'getCountries'])->name('countrieslist');
     Route::get('/categories/measurement/{id}/subcategories', [POSController::class, 'getSubCategories']);
 

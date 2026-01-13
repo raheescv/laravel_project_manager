@@ -13,6 +13,7 @@ import { usePage } from "@inertiajs/react";
 import CustomerDetailsModal from "./Components/CustomerDetailsModal";
 import AddCustomerModal from "./Components/AddCustomerModal";
 import SubCategorySelect from "./Components/SubCategorySelect"; // <-- new import
+import MainCategorySidebar from "./MainCategorySidebar";
 // customer details card
 import { FaPen } from "react-icons/fa";
 
@@ -56,6 +57,7 @@ export default function Edit() {
     const [editingValues, setEditingValues] = useState({ quantity: 1, unit_price: 0 });
 
     const [selectedCategoryIds, setSelectedCategoryIds] = useState([]);
+    const [selectedMainCategoryIds, setSelectedMainCategoryIds] = useState([]);
     const [availableSubCategories, setAvailableSubCategories] = useState({}); // id -> {id,name,measurement_category_id}
     const [measurementsInstances, setMeasurementsInstances] = useState([]); // duplicated per subcategory
     const [measurementValues, setMeasurementValues] = useState({}); // keys: `${subId}-${measurementId}`
@@ -167,18 +169,20 @@ if (saleData.payment_method === 1) {
 
 
 
-    useEffect(() => {
-        axios.get("/products/book").then((res) => {
+   useEffect(() => {
+        // If no main category selected, fetch all
+        const params = selectedMainCategoryIds.length > 0 ? { main_category_id: selectedMainCategoryIds } : {};
+        axios.get("/products/book", { params }).then((res) => {
             setProducts(
                 res.data.map((p) => ({
                     ...p,
-                      inventory_id: p.id,
+                    inventory_id: p.id,
                     quantity: p.stock,
                     image: p.image || "/logo.png",
                 }))
             );
         });
-    }, []);
+    }, [selectedMainCategoryIds]);
 
     useEffect(() => {
         let mounted = true;
@@ -671,17 +675,23 @@ if (paymentMethod === "custom" && customPaymentData) {
                     <div className="row pos-wrapper align-items-start">
 
                     {/* LEFT SIDEBAR: Categories */}
+                    
                     <div className="col-12 col-lg-2 pe-0">
-                        <CategorySidebar selectedId={selectedCategoryIds} onSelect={(ids) => setSelectedCategoryIds(ids)} />
-                    </div>
+                    
+                                                {/* MainCategorySidebar in left sidebar */}
+                                               <MainCategorySidebar selectedId={selectedMainCategoryIds} onSelect={setSelectedMainCategoryIds} />
+                        
+                                            </div>
 
                     
 
                         {/* CENTER: Product Grid */}
                        <div className="col-md-12 col-lg-7">
+                        <div className="mb-1" style={{ marginBottom: '4px' }}>
+                            <CategorySidebar selectedId={selectedCategoryIds} onSelect={(ids) => setSelectedCategoryIds(ids)} />
+                        </div>
 
-
-                             <div className="mb-2">
+                        <div className="mb-1" style={{ marginBottom: '4px' }}>
                                                            <label className="fw-bold mb-1">Customer</label>
                                                            <div className="d-flex gap-2 align-items-center">
                                                                <div style={{ flex: 1 }}>
@@ -712,7 +722,7 @@ if (paymentMethod === "custom" && customPaymentData) {
 
 
                                                           {primaryCategoryId && (
-                                                                                       <div className="mb-2">
+                                                                                       <div className="mb-1" style={{ marginBottom: '4px' }}>
                                                                                             
                                                                                            <SubCategorySelect
                                                                                                categoryId={selectedCategoryIds}

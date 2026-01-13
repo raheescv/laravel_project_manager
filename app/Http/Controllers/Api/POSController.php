@@ -18,6 +18,7 @@ use App\Models\SalePayment;
 use App\Models\User;
 use App\Models\Country;
 use App\Models\MeasurementSubCategory;
+
 use App\Models\MeasurementTemplate;
 use Exception;
 use Illuminate\Http\Request;
@@ -152,11 +153,14 @@ class POSController extends Controller
             $query->where('type', $request->type);
         }
 
-        // Category filter
-        if ($request->filled('category_id') && $request->category_id !== 'favorite') {
-            $query->where('main_category_id', $request->category_id);
-        } elseif ($request->category_id === 'favorite') {
-            $query->where('is_favorite', true);
+        // Category filter (accepts main_category_id as array or single value)
+        if ($request->filled('main_category_id')) {
+            $cat = $request->main_category_id;
+            if ($cat !== 'favorite') {
+                $query->where('main_category_id', $cat);
+            } else {
+                $query->where('is_favorite', true);
+            }
         }
 
         // Search filter
@@ -258,6 +262,20 @@ public function getmeasuremetcategory(Request $request)
 {
     try {
         $categories = MeasurementCategory::select('id', 'name')
+            ->orderBy('name')
+            ->get();
+
+        return response()->json($categories);
+    } catch (\Exception $e) {
+        \Log::error('Error loading categories: ' . $e->getMessage());
+        return response()->json(['error' => 'Failed to load categories'], 500);
+    }
+}
+
+public function getmaincategory(Request $request)
+{
+    try {
+        $categories = Category::select('id', 'name')
             ->orderBy('name')
             ->get();
 
