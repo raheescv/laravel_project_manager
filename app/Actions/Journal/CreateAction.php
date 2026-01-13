@@ -17,6 +17,7 @@ class CreateAction
             foreach ($data['entries'] as $value) {
                 $single = $value;
 
+                $single['tenant_id'] = $model->tenant_id;
                 $single['date'] = $model->date;
                 $single['branch_id'] = $model->branch_id;
                 $single['source'] = $model->source;
