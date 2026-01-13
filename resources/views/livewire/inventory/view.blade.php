@@ -405,7 +405,7 @@
                                     </div>
                                 </div>
                                 <div class="table-responsive">
-                                    <table class="table table-hover align-middle text-capitalize table-modern">
+                                    <table class="table table-hover table-sm align-middle text-capitalize table-modern">
                                         <thead>
                                             <tr class="text-capitalize">
                                                 <th width="5%">
