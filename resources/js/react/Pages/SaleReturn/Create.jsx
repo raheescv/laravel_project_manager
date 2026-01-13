@@ -540,23 +540,7 @@ const buildMeasurementPayload = () => {
 
                         {/* CENTER: Product Grid */}
                             <div className="col-md-12 col-lg-7">
-                                {/* CategorySidebar just above model selection */}
-                                <div className="mb-1" style={{ marginBottom: '4px' }}>
-                                    <CategorySidebar selectedId={selectedCategoryIds} onSelect={(ids) => setSelectedCategoryIds(ids)} />
-                                </div>
-
-                                {primaryCategoryId && (
-                                    <div className="mb-1" style={{ marginBottom: '4px' }}>
-                                        <SubCategorySelect
-                                            categoryId={selectedCategoryIds}
-                                            selectedSubId={subCategoryIds}
-                                            onSelect={setSubCategoryIds}
-                                        />
-                                        {/* Per-model (sub-category) width/size inputs (single input, no add/remove) */}
-                                        {/* Width/Size inputs are now inside the Measurements card below */}
-                                    </div>
-                                )}
-
+                                {/* CustomerSelect above CategorySidebar */}
                                 <div className="mb-2">
                                     <label className="fw-bold mb-1">Customer</label>
                                     <div className="d-flex gap-2 align-items-center">
@@ -583,6 +567,22 @@ const buildMeasurementPayload = () => {
                                         </div>
                                     </div>
                                 </div>
+                                {/* CategorySidebar just above model selection */}
+                                <div className="mb-1" style={{ marginBottom: '4px' }}>
+                                    <CategorySidebar selectedId={selectedCategoryIds} onSelect={(ids) => setSelectedCategoryIds(ids)} />
+                                </div>
+
+                                {primaryCategoryId && (
+                                    <div className="mb-1" style={{ marginBottom: '4px' }}>
+                                        <SubCategorySelect
+                                            categoryId={selectedCategoryIds}
+                                            selectedSubId={subCategoryIds}
+                                            onSelect={setSubCategoryIds}
+                                        />
+                                        {/* Per-model (sub-category) width/size inputs (single input, no add/remove) */}
+                                        {/* Width/Size inputs are now inside the Measurements card below */}
+                                    </div>
+                                )}
 
                         
                                 
