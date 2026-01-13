@@ -30,7 +30,7 @@ class Designation extends Model
 
     public function setNameAttribute($value)
     {
-        $this->attributes['name'] = ucFirst(trim($value));
+        $this->attributes['name'] = ucfirst(trim($value));
     }
 
     public function tenant(): BelongsTo

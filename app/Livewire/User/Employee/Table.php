@@ -147,7 +147,7 @@ class Table extends Component
                 return $query->where(function ($q) use ($value) {
                     $value = trim($value);
 
-                    return $q->where('name', 'like', "%{$value}%")
+                    return $q->where('users.name', 'like', "%{$value}%")
                         ->orWhere('code', 'like', "%{$value}%")
                         ->orWhere('email', 'like', "%{$value}%")
                         ->orWhere('mobile', 'like', "%{$value}%")

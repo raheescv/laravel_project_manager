@@ -5,8 +5,8 @@ namespace App\Livewire\Settings\Designation;
 use App\Actions\Settings\Designation\CreateAction;
 use App\Actions\Settings\Designation\UpdateAction;
 use App\Models\Designation;
-use Illuminate\Validation\Rule;
 use Faker\Factory;
+use Illuminate\Validation\Rule;
 use Livewire\Component;
 
 class Page extends Component
