@@ -588,7 +588,7 @@ const buildMeasurementPayload = () => {
                                 
                               
 
-            {measurementsInstances.length > 0 && (
+            {measurementsInstances.length > 0 && selectedCategoryIds.length > 0 && subCategoryIds.length > 0 && (
                 <div className="card mt-2 p-2">
                     <h6 className="fw-bold mb-2">Measurements</h6>
                     {/* Group measurements by selected subcategory (model) */}
