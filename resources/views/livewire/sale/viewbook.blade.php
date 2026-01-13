@@ -171,6 +171,7 @@
                     <th class="text-white">Model</th>
                     <th class="text-white">Size</th>
                     <th class="text-white">Width</th>
+                    <th class="text-white">Quantity</th>
                     <th class="text-white">Measurement</th>
                     <th class="text-white text-end rounded-end">Value</th>
                 </tr>
@@ -178,125 +179,30 @@
 
            <tbody>
 @php
-    $groupedMeasurements = collect($customer_measurements)
-        ->groupBy('category_name');
-
-    // Build category id list in the order stored on the sale (supports CSV or array)
-    $categoryIds = [];
-    if (!empty($sale->category_ids) && is_array($sale->category_ids)) {
-        $categoryIds = array_map('intval', $sale->category_ids);
-    } elseif (!empty($sale->category_id)) {
-        if (is_string($sale->category_id) && strpos($sale->category_id, ',') !== false) {
-            $categoryIds = array_map('intval', array_map('trim', explode(',', $sale->category_id)));
-        } else {
-            $categoryIds = [(int)$sale->category_id];
-        }
-    }
-
-    // Parse widths and sizes (accept CSV string or arrays)
-    $widthParts = [];
-    if (!empty($sale->widths) && is_array($sale->widths)) {
-        $widthParts = $sale->widths;
-    } elseif (!empty($sale->width) && is_string($sale->width)) {
-        $widthParts = array_map('trim', explode(',', $sale->width));
-    }
-
-    $sizeParts = [];
-    if (!empty($sale->sizes) && is_array($sale->sizes)) {
-        $sizeParts = $sale->sizes;
-    } elseif (!empty($sale->size) && is_string($sale->size)) {
-        $sizeParts = array_map('trim', explode(',', $sale->size));
-    }
-
-    // Map category id -> width/size (by index order)
-    $widthMap = [];
-    $sizeMap = [];
-    foreach ($categoryIds as $idx => $cid) {
-        $widthMap[$cid] = $widthParts[$idx] ?? ($widthParts[0] ?? '-');
-        $sizeMap[$cid] = $sizeParts[$idx] ?? ($sizeParts[0] ?? '-');
-    }
-
-    // Parse sale-level sub_category_ids (CSV or array) so we can map per-category subcategory
-    $subCategoryIds = [];
-    if (!empty($sale->sub_category_ids) && is_array($sale->sub_category_ids)) {
-        $subCategoryIds = array_map('intval', $sale->sub_category_ids);
-    } elseif (!empty($sale->sub_category_id)) {
-        if (is_string($sale->sub_category_id) && strpos($sale->sub_category_id, ',') !== false) {
-            $subCategoryIds = array_map('intval', array_map('trim', explode(',', $sale->sub_category_id)));
-        } else {
-            $subCategoryIds = [(int)$sale->sub_category_id];
-        }
-    }
-
-    // Collect all candidate subcategory ids referenced either on measurements or sale row
-    $candidateSubIds = [];
-    foreach ($customer_measurements as $m) {
-        if (!empty($m['sub_category_id'])) $candidateSubIds[] = (int)$m['sub_category_id'];
-    }
-    foreach ($subCategoryIds as $id) $candidateSubIds[] = (int)$id;
-    $candidateSubIds = array_values(array_filter(array_unique($candidateSubIds)));
-
-    // Bulk load subcategory names to avoid per-row queries in view
-    $subCategoryNames = [];
-    if (!empty($candidateSubIds)) {
-        $subCategoryNames = \App\Models\MeasurementSubCategory::whereIn('id', $candidateSubIds)->pluck('name', 'id')->toArray();
-    }
+    $catIds = collect($customer_measurements)->pluck('category_id')->unique()->filter()->values()->all();
+    $subcatIds = collect($customer_measurements)->pluck('sub_category_id')->unique()->filter()->values()->all();
+    $categoryNames = $catIds ? \App\Models\MeasurementCategory::whereIn('id', $catIds)->pluck('name', 'id')->toArray() : [];
+    $subCategoryNames = $subcatIds ? \App\Models\MeasurementSubCategory::whereIn('id', $subcatIds)->pluck('name', 'id')->toArray() : [];
+    // Group by category and subcategory
+    $grouped = collect($customer_measurements)->groupBy(function($m) {
+        return $m['category_id'].'-'.$m['sub_category_id'];
+    });
+    $rowIndex = 1;
 @endphp
 
-@foreach ($groupedMeasurements as $category => $measurements)
-    @foreach ($measurements as $measurement)
+@foreach ($grouped as $groupKey => $group)
+    @foreach ($group as $j => $measurement)
         <tr>
-            {{-- SL No --}}
-            <td>{{ $loop->iteration }}</td>
-
-            {{-- Category (show once) --}}
-                @if ($loop->first)
-                    @php
-                        // Try to read category id from the first measurement in this group
-                        $groupCategoryId = $measurement['category_id'] ?? null;
-                        $displaySize = $groupCategoryId ? ($sizeMap[$groupCategoryId] ?? ($sale->size ?? '-')) : ($sale->size ?? '-');
-                        $displayWidth = $groupCategoryId ? ($widthMap[$groupCategoryId] ?? ($sale->width ?? '-')) : ($sale->width ?? '-');
-                        // Prefer measurement-provided subcategory id/name, else map using sale->sub_category_ids aligned with category order
-                        $displaySubcategory = '-';
-                        if (!empty($measurements[0]['sub_category_name'])) {
-                            $displaySubcategory = $measurements[0]['sub_category_name'];
-                        } elseif (!empty($measurements[0]['sub_category_id']) && isset($subCategoryNames[(int)$measurements[0]['sub_category_id']])) {
-                            $displaySubcategory = $subCategoryNames[(int)$measurements[0]['sub_category_id']];
-                        } elseif ($groupCategoryId && ($index = array_search((int)$groupCategoryId, $categoryIds)) !== false && isset($subCategoryIds[$index])) {
-                            $scid = (int)$subCategoryIds[$index];
-                            $displaySubcategory = $subCategoryNames[$scid] ?? ($sale->subCategory?->name ?? '-');
-                        } else {
-                            $displaySubcategory = $sale->subCategory?->name ?? '-';
-                        }
-                    @endphp
-
-                    <td rowspan="{{ count($measurements) }}" class="align-middle fw-semibold text-primary">
-                        {{ $category ?? 'General' }}
-                    </td>
-
-                    <td rowspan="{{ count($measurements) }}" class="align-middle">
-                        {{ $displaySubcategory }}
-                    </td>
-
-                    <td rowspan="{{ count($measurements) }}" class="align-middle">
-                        {{ $displaySize }}
-                    </td>
-
-                    <td rowspan="{{ count($measurements) }}" class="align-middle">
-                        {{ $displayWidth }}
-                    </td>
-                @endif
-
-            {{-- Measurement --}}
-            <td>
-                <i class="fa fa-ruler me-1 text-secondary"></i>
-                {{ $measurement['template_name'] ?? '-' }}
-            </td>
-
-            {{-- Value --}}
-            <td class="text-end fw-bold">
-                {{ $measurement['value'] ?? '-' }}
-            </td>
+            <td>{{ $rowIndex++ }}</td>
+            @if ($j === 0)
+                <td rowspan="{{ count($group) }}">{{ $categoryNames[$measurement['category_id']] ?? '-' }}</td>
+                <td rowspan="{{ count($group) }}">{{ $subCategoryNames[$measurement['sub_category_id']] ?? '-' }}</td>
+                <td rowspan="{{ count($group) }}">{{ $measurement['size'] ?? '-' }}</td>
+                <td rowspan="{{ count($group) }}">{{ $measurement['width'] ?? '-' }}</td>
+                <td rowspan="{{ count($group) }}">{{ $measurement['quantity'] ?? '-' }}</td>
+            @endif
+            <td><i class="fa fa-ruler me-1 text-secondary"></i> {{ $measurement['template_name'] ?? '-' }}</td>
+            <td class="text-end fw-bold">{{ $measurement['value'] ?? '-' }}</td>
         </tr>
     @endforeach
 @endforeach
