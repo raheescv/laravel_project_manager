@@ -687,11 +687,8 @@ if (paymentMethod === "custom" && customPaymentData) {
 
                         {/* CENTER: Product Grid */}
                        <div className="col-md-12 col-lg-7">
-                        <div className="mb-1" style={{ marginBottom: '4px' }}>
-                            <CategorySidebar selectedId={selectedCategoryIds} onSelect={(ids) => setSelectedCategoryIds(ids)} />
-                        </div>
 
-                        <div className="mb-1" style={{ marginBottom: '4px' }}>
+                         <div className="mb-1" style={{ marginBottom: '4px' }}>
                                                            <label className="fw-bold mb-1">Customer</label>
                                                            <div className="d-flex gap-2 align-items-center">
                                                                <div style={{ flex: 1 }}>
@@ -717,6 +714,11 @@ if (paymentMethod === "custom" && customPaymentData) {
                                                                </div>
                                                            </div>
                                                        </div>
+                        <div className="mb-1" style={{ marginBottom: '4px' }}>
+                            <CategorySidebar selectedId={selectedCategoryIds} onSelect={(ids) => setSelectedCategoryIds(ids)} />
+                        </div>
+
+                       
                                                        
 
 
