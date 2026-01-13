@@ -2,9 +2,8 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
-use Illuminate\Database\Seeder;
 use App\Models\WorkingDay;
+use Illuminate\Database\Seeder;
 
 class WorkingDaySeeder extends Seeder
 {
@@ -27,9 +26,9 @@ class WorkingDaySeeder extends Seeder
             WorkingDay::firstOrCreate([
                 'tenant_id' => 1,
                 'day_name' => $day,
-            ],[
+            ], [
                 'is_working' => true,
-                'order_no' => $index + 1
+                'order_no' => $index + 1,
             ]);
         }
     }
