@@ -561,6 +561,7 @@ public function getMeasurementTemplates($categoryId)
                 $mSubCategoryId = $m['sub_category_id'] ?? null;
                 $mSize = $m['size'] ?? null;
                 $mWidth = $m['width'] ?? null;
+                $mQuantity = $m['quantity'] ?? 1;
                 CustomerMeasurement::create([
                     'sale_id' => $sale->id,
                     'customer_id' => $sale->account_id,
@@ -570,6 +571,7 @@ public function getMeasurementTemplates($categoryId)
                     'value' => $m['value'],
                     'size' => $mSize,
                     'width' => $mWidth,
+                    'quantity' => $mQuantity,
                     'created_by' => $user_id,
                 ]);
             }
@@ -691,6 +693,7 @@ public function getMeasurementTemplates($categoryId)
 
     public function getCustomerMeasurementSale($saleId)
 {
+    // Return each measurement row only once, with its quantity
     $rows = CustomerMeasurement::where('sale_id', $saleId)->get();
     return response()->json($rows);
 }

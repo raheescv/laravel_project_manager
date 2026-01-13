@@ -82,58 +82,58 @@ export default function Edit() {
     // Auto-select employee
     setEmployeeId(Number(saleData.employee_id));
 
-    // Auto-select category(s)
-    if (saleData.category_ids && Array.isArray(saleData.category_ids) && saleData.category_ids.length > 0) {
-        setSelectedCategoryIds(saleData.category_ids.map((v) => Number(v)));
+
+    // --- Robust category selection ---
+    let catArr = [];
+    if (Array.isArray(saleData.category_ids) && saleData.category_ids.length > 0) {
+        catArr = saleData.category_ids.map(Number);
     } else if (saleData.category_id) {
-        // category_id may be a CSV string or single id
         if (typeof saleData.category_id === 'string' && saleData.category_id.indexOf(',') !== -1) {
-            setSelectedCategoryIds(saleData.category_id.split(',').map((v) => Number(v.trim())));
+            catArr = saleData.category_id.split(',').map(v => Number(v.trim()));
         } else {
-            setSelectedCategoryIds([Number(saleData.category_id)]);
+            catArr = [Number(saleData.category_id)];
         }
-    } else {
-        setSelectedCategoryIds([]);
     }
+    setSelectedCategoryIds(catArr);
 
-        // Initialize per-category widths/sizes from saleData
-        const widthsMap = {};
-        const sizesMap = {};
-        const cids = saleData.category_ids && Array.isArray(saleData.category_ids) && saleData.category_ids.length > 0 ? saleData.category_ids.map(Number) : (saleData.category_id && typeof saleData.category_id === 'string' && saleData.category_id.indexOf(',') !== -1 ? saleData.category_id.split(',').map(s => Number(s.trim())) : (saleData.category_id ? [Number(saleData.category_id)] : []));
-
-        if (saleData.widths && Array.isArray(saleData.widths) && saleData.widths.length > 0) {
-            cids.forEach((cid, idx) => { widthsMap[cid] = saleData.widths[idx] ?? ''; });
-        } else if (saleData.width && typeof saleData.width === 'string') {
-            const parts = saleData.width.split(',').map(s => s.trim());
-            cids.forEach((cid, idx) => { widthsMap[cid] = parts[idx] ?? parts[0] ?? ''; });
-        } else if (saleData.width) {
-            widthsMap[cids[0]] = saleData.width;
-        }
-
-        if (saleData.sizes && Array.isArray(saleData.sizes) && saleData.sizes.length > 0) {
-            cids.forEach((cid, idx) => { sizesMap[cid] = saleData.sizes[idx] ?? ''; });
-        } else if (saleData.size && typeof saleData.size === 'string') {
-            const parts = saleData.size.split(',').map(s => s.trim());
-            cids.forEach((cid, idx) => { sizesMap[cid] = parts[idx] ?? parts[0] ?? ''; });
-        } else if (saleData.size) {
-            sizesMap[cids[0]] = saleData.size;
-        }
-
-        setWidthValues(widthsMap);
-        setSizeValues(sizesMap);
-
-    // Auto-select sub-category(s)
-    if (saleData.sub_category_ids && Array.isArray(saleData.sub_category_ids) && saleData.sub_category_ids.length > 0) {
-        setSubCategoryIds(saleData.sub_category_ids.map((v) => Number(v)));
+    // --- Robust subcategory selection ---
+    let subcatArr = [];
+    if (Array.isArray(saleData.sub_category_ids) && saleData.sub_category_ids.length > 0) {
+        subcatArr = saleData.sub_category_ids.map(Number);
     } else if (saleData.sub_category_id) {
         if (typeof saleData.sub_category_id === 'string' && saleData.sub_category_id.indexOf(',') !== -1) {
-            setSubCategoryIds(saleData.sub_category_id.split(',').map((v) => Number(v.trim())));
+            subcatArr = saleData.sub_category_id.split(',').map(v => Number(v.trim()));
         } else {
-            setSubCategoryIds([Number(saleData.sub_category_id)]);
+            subcatArr = [Number(saleData.sub_category_id)];
         }
-    } else {
-        setSubCategoryIds([]);
     }
+    setSubCategoryIds(subcatArr);
+
+    // Initialize per-category widths/sizes from saleData
+    const widthsMap = {};
+    const sizesMap = {};
+    const cids = catArr;
+
+    if (saleData.widths && Array.isArray(saleData.widths) && saleData.widths.length > 0) {
+        cids.forEach((cid, idx) => { widthsMap[cid] = saleData.widths[idx] ?? ''; });
+    } else if (saleData.width && typeof saleData.width === 'string') {
+        const parts = saleData.width.split(',').map(s => s.trim());
+        cids.forEach((cid, idx) => { widthsMap[cid] = parts[idx] ?? parts[0] ?? ''; });
+    } else if (saleData.width) {
+        widthsMap[cids[0]] = saleData.width;
+    }
+
+    if (saleData.sizes && Array.isArray(saleData.sizes) && saleData.sizes.length > 0) {
+        cids.forEach((cid, idx) => { sizesMap[cid] = saleData.sizes[idx] ?? ''; });
+    } else if (saleData.size && typeof saleData.size === 'string') {
+        const parts = saleData.size.split(',').map(s => s.trim());
+        cids.forEach((cid, idx) => { sizesMap[cid] = parts[idx] ?? parts[0] ?? ''; });
+    } else if (saleData.size) {
+        sizesMap[cids[0]] = saleData.size;
+    }
+
+    setWidthValues(widthsMap);
+    setSizeValues(sizesMap);
 
     setDiscount(Number(saleData.other_discount || 0));
     setReferenceNo(saleData.reference_no || "");
@@ -319,11 +319,13 @@ if (saleData.payment_method === 1) {
         if (!saleId || !customerId || subCategoryIds.length === 0) return;
         axios.get(`/categories/customermeasurementsale/${saleId}`)
             .then(res => {
-                // API should return array of { sub_category_id, measurement_template_id, value, width, size }
+                // API should return array of { sub_category_id, measurement_template_id, value, width, size, quantity }
                 const data = res.data || [];
+                console.log('Fetched measurement data:', data);
                 const measurementVals = {};
                 const widths = {};
                 const sizes = {};
+                const counts = {};
                 data.forEach(row => {
                     const scid = row.sub_category_id;
                     const tplId = row.measurement_template_id;
@@ -331,10 +333,17 @@ if (saleData.payment_method === 1) {
                     measurementVals[instanceKey] = row.value || '';
                     if (scid && row.width) widths[scid] = [row.width];
                     if (scid && row.size) sizes[scid] = [row.size];
+                    if (scid) counts[scid] = row.quantity && Number(row.quantity) > 0 ? Number(row.quantity) : 1;
                 });
+                // Ensure all subCategoryIds are initialized in counts
+                subCategoryIds.forEach(scid => {
+                    if (!(scid in counts)) counts[scid] = 1;
+                });
+                console.log('Setting measurementCounts:', counts);
                 setMeasurementValues(prev => ({ ...prev, ...measurementVals }));
                 setWidthValues(prev => ({ ...prev, ...widths }));
                 setSizeValues(prev => ({ ...prev, ...sizes }));
+                setMeasurementCounts(prev => ({ ...prev, ...counts }));
             })
             .catch(err => {
                 console.error('Customer measurement sale API error:', err);
@@ -524,13 +533,13 @@ const validateSale = () => {
 
 // 🔹 Build measurement payload
 const buildMeasurementPayload = () => {
-    // Build payload from per-instance measurement values for all groups
-    // New logic: only one width/size per subcategory, always use index 0
+    // Build payload from per-instance measurement values for all groups, include quantity
     const payload = [];
     for (let scid of subCategoryIds) {
         const subMeasurements = measurementsInstances.filter(m => Number(m.subcategory_id) === Number(scid));
         const sizeVal = Array.isArray(sizeValues[scid]) ? (sizeValues[scid][0] || '') : (sizeValues[scid] || '');
         const widthVal = Array.isArray(widthValues[scid]) ? (widthValues[scid][0] || '') : (widthValues[scid] || '');
+        const qty = measurementCounts[scid] || 1;
         for (let m of subMeasurements) {
             const key = m.instanceKey;
             if (measurementValues[key] !== undefined && String(measurementValues[key]).trim() !== '') {
@@ -541,6 +550,7 @@ const buildMeasurementPayload = () => {
                     sub_category_id: scid || null,
                     size: sizeVal,
                     width: widthVal,
+                    quantity: qty,
                 });
             }
         }
@@ -768,6 +778,19 @@ if (paymentMethod === "custom" && customPaymentData) {
                                                         <option value="XXXL">XXXL</option>
                                                         <option value="XXXXL">XXXXL</option>
                                                     </select>
+                                                </div>
+                                                <div style={{ width: 120 }}>
+                                                    <label className="form-label">Quantity ({subName})</label>
+                                                    <input
+                                                        type="number"
+                                                        min={1}
+                                                        className="form-control form-control-sm"
+                                                        value={measurementCounts[scid] || 1}
+                                                        onChange={e => {
+                                                            const val = Math.max(1, Number(e.target.value) || 1);
+                                                            setMeasurementCounts(prev => ({ ...prev, [scid]: val }));
+                                                        }}
+                                                    />
                                                 </div>
                                             </div>
                                             {/* Measurement inputs for this subcategory */}

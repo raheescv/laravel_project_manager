@@ -395,23 +395,26 @@ const validateSale = () => {
 
 // 🔹 Build measurement payload
 const buildMeasurementPayload = () => {
-    // Build payload from per-instance measurement values
-    return measurementsInstances
-        .filter(inst => measurementValues[inst.instanceKey] !== undefined && String(measurementValues[inst.instanceKey]).trim() !== '')
-        .map(inst => {
-            const scid = inst.subcategory_id;
-            // Always use the first (and only) width/size for this subcategory
-            const sizeVal = Array.isArray(sizeValues[scid]) ? (sizeValues[scid][0] || '') : (sizeValues[scid] || '');
-            const widthVal = Array.isArray(widthValues[scid]) ? (widthValues[scid][0] || '') : (widthValues[scid] || '');
-            return {
+    // Build payload from per-instance measurement values, include quantity field
+    const payload = [];
+    measurementsInstances.forEach(inst => {
+        const scid = inst.subcategory_id;
+        const qty = measurementCounts[scid] || 1;
+        const sizeVal = Array.isArray(sizeValues[scid]) ? (sizeValues[scid][0] || '') : (sizeValues[scid] || '');
+        const widthVal = Array.isArray(widthValues[scid]) ? (widthValues[scid][0] || '') : (widthValues[scid] || '');
+        if (measurementValues[inst.instanceKey] !== undefined && String(measurementValues[inst.instanceKey]).trim() !== '') {
+            payload.push({
                 measurement_template_id: Number(inst.id),
                 value: measurementValues[inst.instanceKey],
                 category_id: inst.category_id || null,
                 sub_category_id: scid || null,
                 size: sizeVal,
                 width: widthVal,
-            };
-        });
+                quantity: qty,
+            });
+        }
+    });
+    return payload;
 };
 
     /* ------------------- Submit / Update sale ------------------- */
@@ -591,10 +594,10 @@ const buildMeasurementPayload = () => {
                         const sub = availableSubCategories[scid] || {};
                         const catName = props?.categories?.find(c => Number(c.id) === Number(sub.measurement_category_id))?.name || (sub.measurement_category_id ? `Category ${sub.measurement_category_id}` : 'Category');
                         const subName = sub.name || `Model ${scid}`;
+                        // Add quantity input for each subcategory
                         return (
                             <div key={`grp-${scid}`} className="mb-3">
                                 <div className="fw-bold mb-1">{subName}</div>
-                                {/* Width/Size inputs for this subcategory */}
                                 <div className="d-flex gap-2 mb-2">
                                     <div style={{ flex: 1 }}>
                                         <label className="form-label">Width ({catName} - {subName})</label>
@@ -628,8 +631,20 @@ const buildMeasurementPayload = () => {
                                             <option value="XXXXL">XXXXL</option>
                                         </select>
                                     </div>
+                                    <div style={{ width: 120 }}>
+                                        <label className="form-label">Quantity ({subName})</label>
+                                        <input
+                                            type="number"
+                                            min={1}
+                                            className="form-control form-control-sm"
+                                            value={measurementCounts[scid] || 1}
+                                            onChange={e => {
+                                                const val = Math.max(1, Number(e.target.value) || 1);
+                                                setMeasurementCounts(prev => ({ ...prev, [scid]: val }));
+                                            }}
+                                        />
+                                    </div>
                                 </div>
-                                {/* Measurement inputs for this subcategory */}
                                 <div className="row mb-2 align-items-end">
                                     {subMeasurements.map(m => (
                                         <div key={m.instanceKey} className="col-md-4 mb-2">
