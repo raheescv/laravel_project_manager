@@ -3,9 +3,10 @@ import React, { useState } from "react";
 export default function ProductGrid({ products, onAddToCart }) {
     const [search, setSearch] = useState("");
 
-    // Filter products by search
+    // Filter products by search (name or barcode)
     const filteredProducts = products.filter(p =>
-        p.name.toLowerCase().includes(search.toLowerCase())
+        p.name.toLowerCase().includes(search.toLowerCase()) ||
+        (p.barcode && p.barcode.toLowerCase().includes(search.toLowerCase()))
     );
 
     return (
@@ -19,7 +20,7 @@ export default function ProductGrid({ products, onAddToCart }) {
                     <input
                         type="search"
                         className="form-control border-start-0"
-                        placeholder="Search Products/Service"
+                        placeholder="Search Products/Barcode"
                         value={search}
                         onChange={(e) => setSearch(e.target.value)}
                     />

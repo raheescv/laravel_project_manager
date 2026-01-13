@@ -163,12 +163,13 @@ class POSController extends Controller
             }
         }
 
-        // Search filter
+        // Search filter (case-insensitive, ignore spaces for barcode)
         if ($request->filled('search')) {
-            $search = $request->search;
-            $query->where(function ($q) use ($search) {
-                $q->where('name', 'LIKE', "%{$search}%")
-                  ->orWhere('barcode', 'LIKE', "%{$search}%");
+            $search = trim($request->search);
+            $searchLower = strtolower(str_replace(' ', '', $search));
+            $query->where(function ($q) use ($search, $searchLower) {
+                $q->whereRaw('LOWER(name) LIKE ?', ["%".strtolower($search)."%"])
+                  ->orWhereRaw('REPLACE(LOWER(barcode), " ", "") LIKE ?', ["%{$searchLower}%"]);
             });
         }
 
