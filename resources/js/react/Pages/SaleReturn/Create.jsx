@@ -149,6 +149,12 @@ export default function Create() {
     useEffect(() => {
         if (!selectedCategoryIds || selectedCategoryIds.length === 0) {
             setAvailableSubCategories({});
+            setSubCategoryIds([]);
+            setWidthValues({});
+            setSizeValues({});
+            setMeasurementCounts({});
+            setMeasurementsInstances([]);
+            setMeasurementValues({});
             return;
         }
 
@@ -161,8 +167,19 @@ export default function Create() {
                 const map = {};
                 list.forEach(s => { map[s.id] = s; });
                 setAvailableSubCategories(map);
+                // Remove subcategories not in availableSubCategories
+                const validSubIds = Object.keys(map).map(id => Number(id));
+                setSubCategoryIds(prev => prev.filter(scid => validSubIds.includes(Number(scid))));
             })
-            .catch(() => setAvailableSubCategories({}));
+            .catch(() => {
+                setAvailableSubCategories({});
+                setSubCategoryIds([]);
+                setWidthValues({});
+                setSizeValues({});
+                setMeasurementCounts({});
+                setMeasurementsInstances([]);
+                setMeasurementValues({});
+            });
     }, [selectedCategoryIds]);
 
 
