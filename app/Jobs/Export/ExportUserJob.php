@@ -18,15 +18,18 @@ class ExportUserJob implements ShouldQueue
 
     protected $user;
 
-    public function __construct(User $user)
+    protected $filters;
+
+    public function __construct(User $user, array $filters = [])
     {
         $this->user = $user;
+        $this->filters = $filters;
     }
 
     public function handle()
     {
         $exportFileName = 'exports/User_'.now()->timestamp.'.xlsx';
-        Excel::store(new UserExport(), $exportFileName, 'public');
+        Excel::store(new UserExport($this->filters), $exportFileName, 'public');
         $this->user->notify(new ExportCompleted('User', $exportFileName));
     }
 }

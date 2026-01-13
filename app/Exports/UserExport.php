@@ -16,12 +16,8 @@ class UserExport implements FromQuery, WithHeadings, WithMapping
 
     public function query()
     {
-        $query = User::query()
-            ->when($this->filters['type'] ?? '', function ($query, $value) {
-                return $query->where('type', $value);
-            });
-
-        return $query;
+        return User::getFilteredQuery($this->filters)
+            ->with(['designation']);
     }
 
     public function headings(): array

@@ -82,30 +82,7 @@ class Table extends Component
     public function updatedSelectAll($value)
     {
         if ($value) {
-            $this->selected = User::employee()
-                ->when($this->search ?? '', function ($query, $value) {
-                    return $query->where(function ($q) use ($value) {
-                        $value = trim($value);
-
-                        return $q->where('users.name', 'like', "%{$value}%")
-                            ->orWhere('code', 'like', "%{$value}%")
-                            ->orWhere('email', 'like', "%{$value}%")
-                            ->orWhere('mobile', 'like', "%{$value}%")
-                            ->orWhere('place', 'like', "%{$value}%")
-                            ->orWhere('nationality', 'like', "%{$value}%");
-                    });
-                })
-                ->when($this->role_id, function ($query): void {
-                    $query->whereHas('roles', function ($q): void {
-                        $q->where('id', $this->role_id);
-                    });
-                })
-                ->when($this->is_active !== '', function ($query): void {
-                    $query->where('is_active', $this->is_active);
-                })
-                ->when($this->designation_id, function ($query): void {
-                    $query->where('designation_id', $this->designation_id);
-                })
+            $this->selected = $this->getBaseQuery()
                 ->latest()
                 ->limit(2000)
                 ->pluck('id')
@@ -118,14 +95,16 @@ class Table extends Component
 
     public function export()
     {
-        $count = User::employee()->count();
+        $filters = $this->getFilters();
+
+        $count = $this->getBaseQuery()->count();
         if ($count > 2000) {
-            ExportUserJob::dispatch(Auth::user());
+            ExportUserJob::dispatch(Auth::user(), $filters);
             $this->dispatch('success', ['message' => 'You will get your file in your mailbox.']);
         } else {
             $exportFileName = 'Employee_'.now()->timestamp.'.xlsx';
 
-            return Excel::download(new UserExport(), $exportFileName);
+            return Excel::download(new UserExport($filters), $exportFileName);
         }
     }
 
@@ -139,34 +118,27 @@ class Table extends Component
         }
     }
 
+    protected function getFilters(): array
+    {
+        return [
+            'type' => 'employee',
+            'search' => $this->search,
+            'role_id' => $this->role_id,
+            'is_active' => $this->is_active,
+            'designation_id' => $this->designation_id,
+        ];
+    }
+
+    protected function getBaseQuery()
+    {
+        return User::getFilteredQuery($this->getFilters());
+    }
+
     public function render()
     {
-        $data = User::orderBy($this->sortField, $this->sortDirection)
+        $data = $this->getBaseQuery()
+            ->orderBy($this->sortField, $this->sortDirection)
             ->leftJoin('designations', 'designations.id', 'users.designation_id')
-            ->when($this->search ?? '', function ($query, $value) {
-                return $query->where(function ($q) use ($value) {
-                    $value = trim($value);
-
-                    return $q->where('users.name', 'like', "%{$value}%")
-                        ->orWhere('code', 'like', "%{$value}%")
-                        ->orWhere('email', 'like', "%{$value}%")
-                        ->orWhere('mobile', 'like', "%{$value}%")
-                        ->orWhere('place', 'like', "%{$value}%")
-                        ->orWhere('nationality', 'like', "%{$value}%");
-                });
-            })
-            ->when($this->role_id, function ($query): void {
-                $query->whereHas('roles', function ($q): void {
-                    $q->where('id', $this->role_id);
-                });
-            })
-            ->when($this->is_active !== '', function ($query): void {
-                $query->where('is_active', $this->is_active);
-            })
-            ->when($this->designation_id, function ($query): void {
-                $query->where('designation_id', $this->designation_id);
-            })
-            ->employee()
             ->with(['designation', 'roles'])
             ->select([
                 'users.*',
