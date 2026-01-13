@@ -23,7 +23,7 @@ export default function CategorySidebar({ selectedId, onSelect }) {
     };
 
     return (
-        <aside className="categories-sidebar h-100" style={{ minHeight: '80vh', margin: 0, padding: 0 }}>
+        <aside className="categories-sidebar h-100" style={{ minHeight: '8vh', margin: 0, padding: 0 }}>
             <div className="card" style={{ margin: 0, boxShadow: 'none', border: 'none' }}>
                 <div className="card-body p-1" style={{ padding: 0 }}>
                     <h6 className="fw-bold mb-1" style={{ marginBottom: 4 }}>Categories</h6>
