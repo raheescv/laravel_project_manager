@@ -75,7 +75,7 @@ class StockUpdateAction
     {
         $quantity = $item->quantity * ($item->conversion_factor ?? 1);
         $inventoryData['quantity'] += $quantity;
-        $unit_price = round($item->unit_price * ($item->conversion_factor ?? 1), 2);
+        $unit_price = round($item->unit_price / ($item->conversion_factor ?? 1), 2);
         $inventoryData['cost'] = $this->calculateWeightedAverageCost(
             $oldCost,
             $oldQuantity,
@@ -90,7 +90,7 @@ class StockUpdateAction
     {
         $quantity = $item->quantity * ($item->conversion_factor ?? 1);
         $inventoryData['quantity'] -= $quantity;
-        $unit_price = round($item->unit_price * ($item->conversion_factor ?? 1), 2);
+        $unit_price = round($item->unit_price / ($item->conversion_factor ?? 1), 2);
         $inventoryData['cost'] = $this->revertCostCalculation(
             $oldCost,
             $oldQuantity,
