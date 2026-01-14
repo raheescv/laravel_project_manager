@@ -7,6 +7,7 @@ use App\Models\Inventory;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Spatie\Browsershot\Browsershot;
+use App\Models\ProductUnit;
 
 class BarcodeController extends Controller
 {
@@ -40,19 +41,27 @@ class BarcodeController extends Controller
         return $pdf->stream('barcode-'.time().'.pdf');
     }
 
-    public function print($id = null)
+    public function print($type = 'inventory', $id = null)
     {
-        if ($id) {
-            $inventory = Inventory::with('product')->find($id);
-        } else {
-            $inventory = Inventory::with('product')->first();
+        if ($type == 'inventory') {
+            if ($id) {
+                $inventory = Inventory::with('product')->find($id);
+            } else {
+                $inventory = Inventory::with('product')->first();
+            }
+            $product = $inventory->product;
+            $barcode = $inventory->barcode;
+        } else if ($type == 'product_unit') {
+            $productUnit = ProductUnit::find($id);
+            $product = $productUnit->product;
+            $barcode = $productUnit->barcode;
         }
 
         $settings = Configuration::where('key', 'barcode_configurations')->value('value');
         $settings = json_decode($settings, true) ?? [];
         $company_name = Configuration::where('key', 'company_name')->value('value') ?? config('app.name');
 
-        $html = view('inventory.barcode', compact('settings', 'inventory', 'company_name'))->render();
+        $html = view('inventory.barcode', compact('settings', 'product','barcode', 'company_name'))->render();
         // Configure Browsershot with optimized settings for faster rendering
         $pdf = Browsershot::html($html)
             ->paperSize($settings['width'], $settings['height'])

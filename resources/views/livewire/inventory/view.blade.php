@@ -271,7 +271,8 @@
                                     <tr>
                                         <td>
                                             @if ($product->type == 'product' && $product->units->count() > 0)
-                                                <button class="btn btn-sm btn-link p-0" type="button" data-bs-toggle="collapse" data-bs-target="#productUnits{{ $item->id }}" aria-expanded="false" aria-controls="productUnits{{ $item->id }}">
+                                                <button class="btn btn-sm btn-link p-0" type="button" data-bs-toggle="collapse" data-bs-target="#productUnits{{ $item->id }}"
+                                                    aria-expanded="false" aria-controls="productUnits{{ $item->id }}">
                                                     <i class="fa fa-chevron-down"></i>
                                                 </button>
                                             @endif
@@ -286,7 +287,7 @@
                                         </td>
                                         <td>
                                             {{ $item->barcode }}
-                                            <a href="{{ route('inventory::barcode::print', $item->id) }}"><i class="fa fa-2x fa-print pull-right"></i></a>
+                                            <a href="{{ route('inventory::barcode::print', ['type' => 'inventory', 'id' => $item->id]) }}"><i class="fa fa-2x fa-print pull-right"></i></a>
                                         </td>
                                         <td>{{ $item->batch }}</td>
                                         <td class="text-end">{{ currency($item->cost) }}</td>
@@ -354,7 +355,9 @@
                                                                     </td>
                                                                     <td>
                                                                         {{ $productUnit->barcode ?? 'N/A' }}
-                                                                        <a href="{{ route('inventory::barcode::print', $productUnit->id) }}"><i class="fa fa-2x fa-print pull-right"></i></a>
+                                                                        <a href="{{ route('inventory::barcode::print', ['type' => 'product_unit', 'id' => $productUnit->id]) }}">
+                                                                            <i class="fa fa-2x fa-print pull-right"></i>
+                                                                        </a>
                                                                     </td>
                                                                 </tr>
                                                             @endforeach
@@ -425,15 +428,15 @@
                     <div class="card-header pb-0">
                         <ul class="nav nav-tabs nav-tabs-bordered" role="tablist">
                             <li class="nav-item" role="presentation">
-                                <button class="nav-link @if ($selectedTab == 'log') active @endif d-flex align-items-center gap-2"
-                                    wire:click="tabSelect('log')" type="button" role="tab">
+                                <button class="nav-link @if ($selectedTab == 'log') active @endif d-flex align-items-center gap-2" wire:click="tabSelect('log')" type="button"
+                                    role="tab">
                                     <i class="fa fa-history text-primary"></i>
                                     Log
                                 </button>
                             </li>
                             <li class="nav-item" role="presentation">
-                                <button class="nav-link @if ($selectedTab == 'image') active @endif d-flex align-items-center gap-2"
-                                    wire:click="tabSelect('image')" type="button" role="tab">
+                                <button class="nav-link @if ($selectedTab == 'image') active @endif d-flex align-items-center gap-2" wire:click="tabSelect('image')" type="button"
+                                    role="tab">
                                     <i class="fa fa-image text-danger"></i>
                                     Product Image
                                 </button>
@@ -456,8 +459,7 @@
                                     </div>
                                     <div class="col-lg-4">
                                         <div class="row">
-                                            <input type="text" wire:model.live="log_search" autofocus placeholder="Search logs..." class="form-control"
-                                                autocomplete="off">
+                                            <input type="text" wire:model.live="log_search" autofocus placeholder="Search logs..." class="form-control" autocomplete="off">
                                         </div>
                                     </div>
                                 </div>
@@ -558,8 +560,7 @@
                                         <div class="d-flex flex-wrap gap-3">
                                             @if ($product->thumbnail)
                                                 <div class="card border shadow-sm" style="width: 200px;">
-                                                    <img src="{{ url($product->thumbnail) }}" class="card-img-top" alt="Thumbnail"
-                                                        style="height: 200px; object-fit: cover;">
+                                                    <img src="{{ url($product->thumbnail) }}" class="card-img-top" alt="Thumbnail" style="height: 200px; object-fit: cover;">
                                                     <div class="card-footer bg-light text-center small py-2">
                                                         Main Thumbnail
                                                     </div>
@@ -568,8 +569,7 @@
 
                                             @foreach ($product->images as $image)
                                                 <div class="card border shadow-sm" style="width: 200px;">
-                                                    <img src="{{ url($image->path) }}" class="card-img-top" alt="{{ $image->name }}"
-                                                        style="height: 200px; object-fit: cover;">
+                                                    <img src="{{ url($image->path) }}" class="card-img-top" alt="{{ $image->name }}" style="height: 200px; object-fit: cover;">
                                                     <div class="card-footer bg-light text-center small py-2">
                                                         {{ $image->name ?: 'Product Image' }}
                                                     </div>
@@ -591,8 +591,7 @@
                                                 @foreach ($product->angleImages()->orderedByAngle()->get() as $image)
                                                     <div class="col">
                                                         <div class="card h-100 border text-center shadow-sm">
-                                                            <img src="{{ url($image->path) }}" class="card-img-top" alt="360 Image"
-                                                                style="height: 120px; object-fit: cover;">
+                                                            <img src="{{ url($image->path) }}" class="card-img-top" alt="360 Image" style="height: 120px; object-fit: cover;">
                                                             <div class="card-footer bg-light small py-1">
                                                                 {{ $image->degree }}°
                                                             </div>

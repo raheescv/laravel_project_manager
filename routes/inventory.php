@@ -29,7 +29,7 @@ Route::middleware('auth')->group(function (): void {
         });
         // Barcode Routes
         Route::name('barcode::')->prefix('barcode')->group(function (): void {
-            Route::get('print/{id?}', [BarcodeController::class, 'print'])->name('print');
+            Route::get('print/{type?}/{id?}', [BarcodeController::class, 'print'])->name('print');
             Route::get('view/{id?}', [BarcodeController::class, 'print'])->name('view');
             Route::get('configuration', [BarcodeController::class, 'configuration'])->name('configuration')->can('configuration.barcode');
             Route::name('cart::')->prefix('cart')->group(function (): void {
