@@ -267,8 +267,8 @@
                                 <tr class="bg-primary text-white">
                                     <th class="text-white rounded-start">SL No</th>
                                     <th width="20%" class="text-white">Product/Service</th>
-                                    <th class="text-white text-end">Unit Price</th>
                                     <th class="text-white text-end">Unit</th>
+                                    <th class="text-white text-end">Unit Price</th>
                                     <th class="text-white text-end">Quantity</th>
                                     <th class="text-white text-end">Discount</th>
                                     <th class="text-white text-end">Tax %</th>
@@ -321,8 +321,8 @@
                                                     </div>
                                                 </div>
                                             </td>
-                                            <td class="text-end">{{ currency($item['unit_price']) }}</td>
                                             <td class="text-end">{{ $item['unit'] }}</td>
+                                            <td class="text-end">{{ currency($item['unit_price']) }}</td>
                                             <td class="text-end">{{ currency($item['quantity'], 3) }}</td>
                                             <td class="text-end">
                                                 @if ($item['discount'] != 0)
