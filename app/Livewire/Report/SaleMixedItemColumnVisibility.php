@@ -30,6 +30,7 @@ class SaleMixedItemColumnVisibility extends Component
             'cost' => true,
             'unit_price' => true,
             'quantity' => true,
+            'base_unit_quantity' => false,
             'gross_amount' => true,
             'discount' => true,
             'net_amount' => true,

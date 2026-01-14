@@ -90,49 +90,6 @@ class OverviewReport extends Component
     {
         $this->resetPage('products-page');
     }
-
-    public function render()
-    {
-        $from = $this->fromDate ? Carbon::parse($this->fromDate)->toDateString() : null;
-        $to = $this->toDate ? Carbon::parse($this->toDate)->toDateString() : null;
-
-        $baseQuery = $this->getBaseSaleQuery($from, $to);
-        $baseReturnQuery = $this->getBaseReturnQuery($from, $to);
-
-        $employees = $this->getEmployeesQuery($baseQuery);
-        $products = $this->getProductsQuery($baseQuery, $baseReturnQuery);
-
-        $sales = Sale::query()->customerSearch($this->branchId, $from, $to);
-        $saleReturns = SaleReturn::query()->customerSearch($this->branchId, $from, $to);
-
-        $salePayments = $this->getSalePaymentsQuery($baseQuery);
-        $saleReturnPayments = $this->getSaleReturnPaymentsQuery($baseReturnQuery);
-        $payments = $this->getPaymentsQuery($baseQuery);
-
-        $totals = $this->calculateTotals($sales, $saleReturns, $payments);
-        $employeeStats = $this->calculateEmployeeStats($baseQuery);
-        $productStats = $this->calculateProductStats($baseQuery, $baseReturnQuery);
-
-        $this->prepareChartData($totals['paymentMethods']);
-
-        return view('livewire.report.sale.overview-report',
-            array_merge(
-                [
-                    'employees' => $employees,
-                    'products' => $products,
-                    'salePayments' => $salePayments,
-                    'saleReturnPayments' => $saleReturnPayments,
-                ],
-                $totals,
-                $employeeStats,
-                $productStats,
-                [
-                    'dataPoints' => $this->dataPoints,
-                ]
-            )
-        );
-    }
-
     private function getBaseSaleQuery(?string $from, ?string $to): callable
     {
         return fn ($query) => $query
@@ -151,19 +108,48 @@ class OverviewReport extends Component
             ->where('sale_returns.status', 'completed');
     }
 
-    private function getEmployeesQuery(callable $baseQuery)
+    private function getEmployeesQuery(callable $baseQuery, callable $baseReturnQuery)
     {
-        return SaleItem::query()
+        $saleItemsQuery = SaleItem::query()
             ->join('sales', 'sales.id', '=', 'sale_items.sale_id')
             ->join('users', 'users.id', '=', 'sale_items.employee_id')
             ->tap($baseQuery)
             ->when($this->employeeSearch, function ($query) {
                 $query->where('users.name', 'like', '%'.trim($this->employeeSearch).'%');
             })
-            ->groupBy('sale_items.employee_id')
             ->select('users.id', 'users.name as employee')
-            ->selectRaw('SUM(sale_items.total) as total')
-            ->selectRaw('SUM(sale_items.quantity) as quantity')
+            ->selectRaw('SUM(sale_items.total) as sale_total')
+            ->selectRaw('0 as return_total')
+            ->selectRaw('SUM(sale_items.base_unit_quantity) as sale_quantity')
+            ->selectRaw('0 as return_quantity')
+            ->groupBy('sale_items.employee_id', 'users.id', 'users.name');
+
+        $saleReturnItemsQuery = SaleReturnItem::query()
+            ->join('sale_returns', 'sale_returns.id', '=', 'sale_return_items.sale_return_id')
+            ->join('users', 'users.id', '=', 'sale_return_items.employee_id')
+            ->tap($baseReturnQuery)
+            ->when($this->employeeSearch, function ($query) {
+                $query->where('users.name', 'like', '%'.trim($this->employeeSearch).'%');
+            })
+            ->select('users.id', 'users.name as employee')
+            ->selectRaw('0 as sale_total')
+            ->selectRaw('SUM(sale_return_items.total) as return_total')
+            ->selectRaw('0 as sale_quantity')
+            ->selectRaw('SUM(sale_return_items.base_unit_quantity) as return_quantity')
+            ->groupBy('sale_return_items.employee_id', 'users.id', 'users.name');
+
+        $unionQuery = $saleItemsQuery->unionAll($saleReturnItemsQuery);
+
+        return DB::query()
+            ->fromSub($unionQuery, 'unified_employees')
+            ->select(
+                'id',
+                'employee',
+                DB::raw('SUM(sale_total) - SUM(return_total) as total'),
+                DB::raw('SUM(sale_quantity) - SUM(return_quantity) as quantity')
+            )
+            ->groupBy('id', 'employee')
+            ->havingRaw('SUM(sale_quantity) - SUM(return_quantity) > 0')
             ->orderBy($this->employeeSortField, $this->employeeSortDirection)
             ->paginate($this->employeePerPage, ['*'], 'employees-page');
     }
@@ -181,7 +167,7 @@ class OverviewReport extends Component
                 'products.id',
                 'products.name as product',
                 'products.type',
-                DB::raw('SUM(sale_items.quantity) as sales_quantity'),
+                DB::raw('SUM(sale_items.base_unit_quantity) as sales_quantity'),
                 DB::raw('0 as return_quantity'),
                 DB::raw('SUM(sale_items.total) as sale_total'),
                 DB::raw('0 as sale_return_total')
@@ -200,7 +186,7 @@ class OverviewReport extends Component
                 'products.name as product',
                 'products.type',
                 DB::raw('0 as sales_quantity'),
-                DB::raw('SUM(sale_return_items.quantity) as return_quantity'),
+                DB::raw('SUM(sale_return_items.base_unit_quantity) as return_quantity'),
                 DB::raw('0 as sale_total'),
                 DB::raw('SUM(sale_return_items.total) as sale_return_total')
             )
@@ -348,9 +334,9 @@ class OverviewReport extends Component
         return $paymentMethods;
     }
 
-    private function calculateEmployeeStats(callable $baseQuery): array
+    private function calculateEmployeeStats(callable $baseQuery, callable $baseReturnQuery): array
     {
-        $totalEmployees = SaleItem::query()
+        $totalSaleItems = SaleItem::query()
             ->join('sales', 'sales.id', '=', 'sale_items.sale_id')
             ->join('users', 'users.id', '=', 'sale_items.employee_id')
             ->tap($baseQuery)
@@ -358,9 +344,23 @@ class OverviewReport extends Component
                 $query->where('users.name', 'like', '%'.trim($this->employeeSearch).'%');
             });
 
+        $totalSaleReturnItems = SaleReturnItem::query()
+            ->join('sale_returns', 'sale_returns.id', '=', 'sale_return_items.sale_return_id')
+            ->join('users', 'users.id', '=', 'sale_return_items.employee_id')
+            ->tap($baseReturnQuery)
+            ->where('sale_return_items.base_unit_quantity', '>', 0)
+            ->when($this->employeeSearch, function ($query) {
+                $query->where('users.name', 'like', '%'.trim($this->employeeSearch).'%');
+            });
+
+        $saleQuantity = $totalSaleItems->sum('sale_items.base_unit_quantity');
+        $returnQuantity = $totalSaleReturnItems->sum('sale_return_items.base_unit_quantity');
+        $saleTotal = $totalSaleItems->sum('sale_items.total');
+        $returnTotal = $totalSaleReturnItems->sum('sale_return_items.total');
+
         return [
-            'employeeQuantity' => $totalEmployees->sum('sale_items.quantity'),
-            'employeeTotal' => $totalEmployees->sum('sale_items.total'),
+            'employeeQuantity' => $saleQuantity - $returnQuantity,
+            'employeeTotal' => $saleTotal - $returnTotal,
         ];
     }
 
@@ -382,8 +382,8 @@ class OverviewReport extends Component
                 $query->where('products.name', 'like', '%'.trim($this->productSearch).'%');
             });
 
-        $totalProductQuantity = $totalProducts->sum('sale_items.quantity');
-        $totalReturnedQuantity = $totalReturnedProducts->sum('sale_return_items.quantity');
+        $totalProductQuantity = $totalProducts->sum('sale_items.base_unit_quantity');
+        $totalReturnedQuantity = $totalReturnedProducts->sum('sale_return_items.base_unit_quantity');
         $itemTotal = $totalProducts->sum('sale_items.total');
         $totalSaleReturnAmount = $totalReturnedProducts->sum('sale_return_items.total');
         $netItemTotal = $itemTotal - $totalSaleReturnAmount;
@@ -417,5 +417,47 @@ class OverviewReport extends Component
             ];
         }
         $this->dispatch('updatePieChart', $this->dataPoints);
+    }
+
+    public function render()
+    {
+        $from = $this->fromDate ? Carbon::parse($this->fromDate)->toDateString() : null;
+        $to = $this->toDate ? Carbon::parse($this->toDate)->toDateString() : null;
+
+        $baseQuery = $this->getBaseSaleQuery($from, $to);
+        $baseReturnQuery = $this->getBaseReturnQuery($from, $to);
+
+        $employees = $this->getEmployeesQuery($baseQuery, $baseReturnQuery);
+        $products = $this->getProductsQuery($baseQuery, $baseReturnQuery);
+
+        $sales = Sale::query()->customerSearch($this->branchId, $from, $to);
+        $saleReturns = SaleReturn::query()->customerSearch($this->branchId, $from, $to);
+
+        $salePayments = $this->getSalePaymentsQuery($baseQuery);
+        $saleReturnPayments = $this->getSaleReturnPaymentsQuery($baseReturnQuery);
+        $payments = $this->getPaymentsQuery($baseQuery);
+
+        $totals = $this->calculateTotals($sales, $saleReturns, $payments);
+        $employeeStats = $this->calculateEmployeeStats($baseQuery, $baseReturnQuery);
+        $productStats = $this->calculateProductStats($baseQuery, $baseReturnQuery);
+
+        $this->prepareChartData($totals['paymentMethods']);
+
+        return view('livewire.report.sale.overview-report',
+            array_merge(
+                [
+                    'employees' => $employees,
+                    'products' => $products,
+                    'salePayments' => $salePayments,
+                    'saleReturnPayments' => $saleReturnPayments,
+                ],
+                $totals,
+                $employeeStats,
+                $productStats,
+                [
+                    'dataPoints' => $this->dataPoints,
+                ]
+            )
+        );
     }
 }
