@@ -243,7 +243,7 @@ if (! function_exists('generateBarcode')) {
         // Get next unique number from UniqueNoCounter
         $uniqueNumber = getNextUniqueNumber('Barcode');
         // Ensure minimum of 8000 for numeric barcode
-        $barcode = (string) max(8000, $uniqueNumber);
+        $barcode = (string) max(1, $uniqueNumber);
 
         return $barcode;
     }

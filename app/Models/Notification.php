@@ -10,9 +10,7 @@ class Notification extends Model
 {
     use BelongsToTenant;
 
-    protected $fillable = [
-        'tenant_id',
-    ];
+    protected $guarded = [];
 
     public function tenant(): BelongsTo
     {

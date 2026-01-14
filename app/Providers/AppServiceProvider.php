@@ -4,10 +4,12 @@ namespace App\Providers;
 
 use App\Models\Branch;
 use App\Models\Configuration;
+use App\Notifications\DatabaseChannel;
 use App\Services\TenantService;
 use Dedoc\Scramble\Scramble;
 use Dedoc\Scramble\Support\Generator\OpenApi;
 use Dedoc\Scramble\Support\Generator\SecurityScheme;
+use Illuminate\Notifications\Channels\DatabaseChannel as BaseDatabaseChannel;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
@@ -22,6 +24,11 @@ class AppServiceProvider extends ServiceProvider
     {
         // Register TenantService as singleton to maintain state across the request
         $this->app->singleton(TenantService::class);
+        
+        // Bind custom database channel to replace the default one
+        $this->app->singleton(BaseDatabaseChannel::class, function ($app) {
+            return new DatabaseChannel($app['db']);
+        });
     }
 
     public function boot(): void
