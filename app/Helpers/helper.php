@@ -241,47 +241,10 @@ if (! function_exists('fileUpload')) {
 if (! function_exists('generateBarcode')) {
     function generateBarcode()
     {
-        $maxBarcode = Product::max('barcode') ?? '0';
-        $barcode = 0;
-        // If maxBarcode is purely numeric, handle as before
-        if (is_numeric($maxBarcode)) {
-            $numericPart = (int) $maxBarcode;
-            // Ensure we start from at least 8000
-            if ($numericPart < 8000) {
-                $numericPart = 8000;
-            }
-            $barcode = $numericPart + 1;
-        } else {
-            // Extract prefix and numeric part (e.g., "TFQ01" -> prefix: "TFQ", number: "01")
-            if (preg_match('/^([^0-9]*)(\d+)$/', $maxBarcode, $matches)) {
-                $prefix = $matches[1];
-                $numericPart = (int) $matches[2];
-                $paddingLength = strlen($matches[2]); // Preserve original padding length
-
-                // Increment the numeric part
-                $numericPart++;
-
-                // Reconstruct barcode with same prefix and padding
-                $barcode = $prefix.str_pad($numericPart, $paddingLength, '0', STR_PAD_LEFT);
-            }
-        }
-
-        // Ensure uniqueness
-        while (Product::where('barcode', $barcode)->exists()) {
-            if (is_numeric($barcode)) {
-                $barcode = (int) $barcode + 1;
-            } else {
-                // Extract and increment numeric part
-                if (preg_match('/^([^0-9]*)(\d+)$/', $barcode, $matches)) {
-                    $prefix = $matches[1];
-                    $numericPart = (int) $matches[2] + 1;
-                    $paddingLength = strlen($matches[2]);
-                    $barcode = $prefix.str_pad($numericPart, $paddingLength, '0', STR_PAD_LEFT);
-                } else {
-                    $barcode = (int) $barcode + 1;
-                }
-            }
-        }
+        // Get next unique number from UniqueNoCounter
+        $uniqueNumber = getNextUniqueNumber('Barcode');
+        // Ensure minimum of 8000 for numeric barcode
+        $barcode = (string) max(8000, $uniqueNumber);
 
         return $barcode;
     }
@@ -505,6 +468,9 @@ if (! function_exists('getNextUniqueNumber')) {
             }
         } else {
             $year = now()->format('y');
+            if($segment == 'Barcode'){
+                $year = 1;
+            }
         }
 
         DB::statement('SET @out_unique_no = 0;');
