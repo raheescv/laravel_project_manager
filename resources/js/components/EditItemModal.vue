@@ -182,22 +182,31 @@ export default {
     computed: {
         availableUnits() {
             const units = [];
-            // Add base unit
-            if (this.item.unit_id) {
-                units.push({
-                    id: this.item.unit_id,
-                    name: this.item.unit_name || 'Base Unit',
-                    conversion_factor: 1
-                });
-            }
+            
+            // Use base_unit from product if available, otherwise fallback to current unit_id
+            const baseUnit = this.item.base_unit || {
+                id: this.item.unit_id,
+                name: this.item.unit_name || 'Base Unit',
+                conversion_factor: 1
+            };
+            
+            // Add base unit from product
+            units.push({
+                id: baseUnit.id,
+                name: baseUnit.name || 'Base Unit',
+                conversion_factor: baseUnit.conversion_factor || 1
+            });
+            
             // Add sub units
             if (this.item.units && Array.isArray(this.item.units)) {
                 this.item.units.forEach(u => {
-                    if (u.id !== this.item.unit_id) {
+                    // Don't add base unit again if it's already in the units array
+                    if (u.id !== baseUnit.id) {
                         units.push(u);
                     }
                 });
             }
+            
             return units;
         }
     },
@@ -252,18 +261,24 @@ export default {
         handleUnitChange() {
             const selectedUnit = this.availableUnits.find(u => u.id === this.localItem.unit_id);
             if (selectedUnit) {
-                const oldConversionFactor = this.localItem.conversion_factor || 1;
                 const newConversionFactor = selectedUnit.conversion_factor || 1;
 
-                // Calculate base MRP from current unit_price and old conversion factor
-                const baseMRP = this.localItem.unit_price / (oldConversionFactor || 1);
+                // Use base_unit_price from the product (base unit price)
+                // If base_unit_price is not available, fallback to calculating from current price
+                const baseUnitPrice = this.localItem.base_unit_price || 
+                    (this.localItem.unit_price / (this.localItem.conversion_factor || 1));
 
                 // Update unit information
                 this.localItem.unit_name = selectedUnit.name;
                 this.localItem.conversion_factor = newConversionFactor;
 
-                // Recalculate unit_price based on new conversion factor
-                this.localItem.unit_price = Math.round(baseMRP * newConversionFactor * 100) / 100;
+                // Recalculate unit_price based on base unit price and new conversion factor
+                this.localItem.unit_price = Math.round(baseUnitPrice * newConversionFactor * 100) / 100;
+
+                // Ensure base_unit_price is set if not already present
+                if (!this.localItem.base_unit_price) {
+                    this.localItem.base_unit_price = baseUnitPrice;
+                }
 
                 // Update the original conversion factor for future calculations
                 this.originalConversionFactor = newConversionFactor;

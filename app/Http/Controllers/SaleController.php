@@ -32,11 +32,7 @@ class SaleController extends Controller
     public function posPage($id = null)
     {
         $showColleague = Configuration::where('key', 'show_colleague')->value('value') ?? 'yes';
-        $categories = Category::withCount('products')
-            ->where('sale_visibility_flag', true)
-            ->having('products_count', '>', 0)
-            ->get()
-            ->toArray();
+        $categories = Category::withCount('products')->where('sale_visibility_flag', true)->having('products_count', '>', 0)->get()->toArray();
 
         $employees = User::employee();
         if ($showColleague == 'no' && Auth::user()->type == 'employee') {
@@ -61,7 +57,9 @@ class SaleController extends Controller
         $paymentMethodIds = json_decode(Configuration::where('key', 'payment_methods')->value('value'), true);
         $paymentMethods = [];
         if ($paymentMethodIds) {
-            $paymentMethods = Account::whereIn('id', $paymentMethodIds)->get(['name', 'id'])->toArray();
+            $paymentMethods = Account::whereIn('id', $paymentMethodIds)
+                ->get(['name', 'id'])
+                ->toArray();
         }
 
         // Get default product type from configuration
@@ -70,10 +68,14 @@ class SaleController extends Controller
         // Get default quantity from configuration
         $defaultQuantity = (float) (Configuration::where('key', 'default_quantity')->value('value') ?? '0.001');
 
+        $defaultEmployeeId = null;
+        if (User::employee()->count() == 1) {
+            $defaultEmployeeId = User::employee()->first(['id'])->id;
+        }
         // Default sale data
         $saleData = [
             'id' => null,
-            'employee_id' => '',
+            'employee_id' => $defaultEmployeeId,
             'sale_type' => 'normal',
             'account_id' => $useDefaultCustomer ? 3 : null,
             'account_name' => $useDefaultCustomer ? 'General Customer' : null,
@@ -98,14 +100,7 @@ class SaleController extends Controller
                     'account:id,name,mobile',
                     'branch:id,name',
                     'items' => function ($query): void {
-                        $query->with([
-                            'product:id,name,mrp,size,barcode,unit_id',
-                            'product.unit:id,name',
-                            'product.units.subUnit:id,name',
-                            'employee:id,name',
-                            'assistant:id,name',
-                            'unit:id,name',
-                        ]);
+                        $query->with(['product:id,name,mrp,size,barcode,unit_id', 'product.unit:id,name', 'product.units.subUnit:id,name', 'employee:id,name', 'assistant:id,name', 'unit:id,name']);
                     },
                     'comboOffers.comboOffer:id,name',
                     'createdUser:id,name',
@@ -119,7 +114,7 @@ class SaleController extends Controller
                     $customers[$sale->account_id] = [
                         'id' => $sale->account->id,
                         'name' => $sale->account->name,
-                        'mobile' => $sale->account->mobile ?? $sale->customer_mobile ?? '',
+                        'mobile' => $sale->account->mobile ?? ($sale->customer_mobile ?? ''),
                     ];
                 } elseif ($sale->account_id && $sale->account_id !== 3 && $sale->customer_name) {
                     // Handle case where account relation doesn't exist but we have customer data
@@ -190,13 +185,17 @@ class SaleController extends Controller
                                 'name' => $item->product->unit->name ?? '',
                                 'conversion_factor' => 1,
                             ],
-                        ])->concat($item->product->units->map(function ($pu) {
-                            return [
-                                'id' => $pu->sub_unit_id,
-                                'name' => $pu->subUnit->name ?? '',
-                                'conversion_factor' => $pu->conversion_factor,
-                            ];
-                        }))->toArray(),
+                        ])
+                            ->concat(
+                                $item->product->units->map(function ($pu) {
+                                    return [
+                                        'id' => $pu->sub_unit_id,
+                                        'name' => $pu->subUnit->name ?? '',
+                                        'conversion_factor' => $pu->conversion_factor,
+                                    ];
+                                }),
+                            )
+                            ->toArray(),
                         'combo_offer_price' => 0,
                         'combo_offer_id' => null,
                     ];
@@ -210,14 +209,16 @@ class SaleController extends Controller
                 } elseif ($sale->payments->count() > 1 || $sale->balance != 0) {
                     $saleData['payment_method'] = 'custom';
                     $saleData['custom_payment_data'] = [
-                        'payments' => $sale->payments->map(function ($payment) {
-                            return [
-                                'id' => $payment->id,
-                                'amount' => (float) $payment->amount,
-                                'payment_method_id' => $payment->payment_method_id,
-                                'name' => $payment->paymentMethod->name ?? 'Unknown',
-                            ];
-                        })->toArray(),
+                        'payments' => $sale->payments
+                            ->map(function ($payment) {
+                                return [
+                                    'id' => $payment->id,
+                                    'amount' => (float) $payment->amount,
+                                    'payment_method_id' => $payment->payment_method_id,
+                                    'name' => $payment->paymentMethod->name ?? 'Unknown',
+                                ];
+                            })
+                            ->toArray(),
                         'totalPaid' => (float) $sale->payments->sum('amount'),
                         'balanceDue' => (float) ($sale->grand_total - $sale->payments->sum('amount')),
                     ];
@@ -273,7 +274,6 @@ class SaleController extends Controller
                 } else {
                     $saleData['comboOffers'] = [];
                 }
-
             } catch (\Exception $e) {
                 // If sale not found or error, use default data but show the ID for error handling
                 $saleData['id'] = $id;
