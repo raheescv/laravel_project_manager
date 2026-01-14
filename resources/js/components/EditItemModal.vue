@@ -182,21 +182,21 @@ export default {
     computed: {
         availableUnits() {
             const units = [];
-            
+
             // Use base_unit from product if available, otherwise fallback to current unit_id
             const baseUnit = this.item.base_unit || {
                 id: this.item.unit_id,
                 name: this.item.unit_name || 'Base Unit',
                 conversion_factor: 1
             };
-            
+
             // Add base unit from product
             units.push({
                 id: baseUnit.id,
                 name: baseUnit.name || 'Base Unit',
                 conversion_factor: baseUnit.conversion_factor || 1
             });
-            
+
             // Add sub units
             if (this.item.units && Array.isArray(this.item.units)) {
                 this.item.units.forEach(u => {
@@ -206,7 +206,7 @@ export default {
                     }
                 });
             }
-            
+
             return units;
         }
     },
@@ -265,7 +265,7 @@ export default {
 
                 // Use base_unit_price from the product (base unit price)
                 // If base_unit_price is not available, fallback to calculating from current price
-                const baseUnitPrice = this.localItem.base_unit_price || 
+                const baseUnitPrice = this.localItem.base_unit_price ||
                     (this.localItem.unit_price / (this.localItem.conversion_factor || 1));
 
                 // Update unit information
