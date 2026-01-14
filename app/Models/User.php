@@ -142,6 +142,37 @@ class User extends Authenticatable implements AuditableContracts
         return $query->where('is_active', 1);
     }
 
+    public static function getFilteredQuery(array $filters = [])
+    {
+        return static::employee()
+            ->when($filters['search'] ?? '', function ($query, $value) {
+                return $query->where(function ($q) use ($value) {
+                    $value = trim($value);
+
+                    return $q->where('users.name', 'like', "%{$value}%")
+                        ->orWhere('code', 'like', "%{$value}%")
+                        ->orWhere('email', 'like', "%{$value}%")
+                        ->orWhere('mobile', 'like', "%{$value}%")
+                        ->orWhere('place', 'like', "%{$value}%")
+                        ->orWhere('nationality', 'like', "%{$value}%");
+                });
+            })
+            ->when($filters['role_id'] ?? null, function ($query) use ($filters): void {
+                $query->whereHas('roles', function ($q) use ($filters): void {
+                    $q->where('id', $filters['role_id']);
+                });
+            })
+            ->when(isset($filters['is_active']) && $filters['is_active'] !== '', function ($query, $value): void {
+                $query->where('is_active', $value);
+            })
+            ->when($filters['type'] ?? '', function ($query, $value): void {
+                $query->where('type', $value);
+            })
+            ->when($filters['designation_id'] ?? null, function ($query, $value): void {
+                $query->where('designation_id', $value);
+            });
+    }
+
     public function getDropDownList($request)
     {
         $self = self::orderBy('name');
