@@ -48,9 +48,10 @@ class CartPage extends Component
     {
         $this->products = Inventory::with('product')
             ->whereHas('product', function ($query): void {
-                $query->where('name', 'LIKE', '%'.$this->searchQuery.'%')
-                    ->orWhere('barcode', 'LIKE', '%'.$this->searchQuery.'%')
-                    ->orWhere('code', 'LIKE', '%'.$this->searchQuery.'%');
+                $query
+                    ->where('name', 'LIKE', '%' . $this->searchQuery . '%')
+                    ->orWhere('barcode', 'LIKE', '%' . $this->searchQuery . '%')
+                    ->orWhere('code', 'LIKE', '%' . $this->searchQuery . '%');
             })
             ->where('quantity', '>', 0)
             ->limit(10)
@@ -79,6 +80,33 @@ class CartPage extends Component
         $this->products = [];
     }
 
+    public function addAllProducts()
+    {
+        $addedCount = 0;
+        $skippedCount = 0;
+        $inventories = Inventory::with('product')->get();
+        foreach ($inventories as $product) {
+            $this->addToCart($product['id'], true); // Suppress individual messages
+            $addedCount++;
+        }
+
+        // Update session after all additions
+        session(['cart_items' => $this->cartItems]);
+
+        if ($addedCount > 0) {
+            $message = "Successfully added {$addedCount} product(s) to cart.";
+            if ($skippedCount > 0) {
+                $message .= " {$skippedCount} product(s) were skipped.";
+            }
+            $this->dispatch('success', ['message' => $message]);
+        } else {
+            $this->dispatch('error', ['message' => 'No products could be added to cart.']);
+        }
+
+        $this->searchQuery = '';
+        $this->products = [];
+    }
+
     public function handleBarcodeScan()
     {
         $barcode = $this->barcodeInput;
@@ -99,12 +127,14 @@ class CartPage extends Component
         $this->handleBarcodeScan();
     }
 
-    public function addToCart($inventoryId)
+    public function addToCart($inventoryId, $suppressMessage = false)
     {
         $inventory = Inventory::with('product')->find($inventoryId);
 
-        if (! $inventory) {
-            $this->dispatch('error', ['message' => 'Product not available or out of stock.']);
+        if (!$inventory) {
+            if (!$suppressMessage) {
+                $this->dispatch('error', ['message' => 'Product not available or out of stock.']);
+            }
 
             return;
         }
@@ -130,13 +160,18 @@ class CartPage extends Component
 
         // Update session
         session(['cart_items' => $this->cartItems]);
-        $this->dispatch('success', ['message' => 'Product added to cart successfully.']);
+
+        if (!$suppressMessage) {
+            $this->dispatch('success', ['message' => 'Product added to cart successfully.']);
+        }
 
         $this->quantity = 1;
         $this->selectedProductId = '';
 
         // Clear search results after adding to cart
-        $this->products = [];
+        if (!$suppressMessage) {
+            $this->products = [];
+        }
     }
 
     public function updateQuantity($cartKey, $newQuantity)
