@@ -24,6 +24,18 @@
                 border-bottom: none;
                 padding: 1.5rem;
             }
+
+            .btn-link[data-bs-toggle="collapse"] i {
+                transition: transform 0.3s ease;
+            }
+
+            .btn-link[data-bs-toggle="collapse"][aria-expanded="true"] i {
+                transform: rotate(180deg);
+            }
+
+            .table-modern .collapse.show {
+                display: table-row;
+            }
         </style>
     @endpush
     @if ($product->type == 'product')
@@ -239,11 +251,11 @@
                                     <th> Branch </th>
                                     <th> Employee </th>
                                     <th> Barcode </th>
-                                    <th> batch </th>
+                                    <th> Batch </th>
                                     <th class="text-end"> cost </th>
                                     <th class="text-end">
                                         @if ($product->type == 'product')
-                                            quantity
+                                            quantity ({{ $product->unit?->name ?? 'Base Unit' }})
                                         @else
                                             Used Count
                                         @endif
@@ -257,7 +269,14 @@
                             <tbody>
                                 @foreach ($data as $item)
                                     <tr>
-                                        <td>{{ $item->id }}</td>
+                                        <td>
+                                            @if ($product->type == 'product' && $product->units->count() > 0)
+                                                <button class="btn btn-sm btn-link p-0" type="button" data-bs-toggle="collapse" data-bs-target="#productUnits{{ $item->id }}" aria-expanded="false" aria-controls="productUnits{{ $item->id }}">
+                                                    <i class="fa fa-chevron-down"></i>
+                                                </button>
+                                            @endif
+                                            {{ $item->id }}
+                                        </td>
                                         <td>{{ $item->branch?->name }}</td>
                                         <td>
                                             {{ $item->employee?->name }}
@@ -307,6 +326,44 @@
                                             </td>
                                         @endif
                                     </tr>
+                                    @if ($product->type == 'product' && $product->units->count() > 0)
+                                        <tr class="collapse" id="productUnits{{ $item->id }}">
+                                            <td colspan="9" class="p-0">
+                                                <div class="p-3 bg-light">
+                                                    <h6 class="mb-3">Product Units</h6>
+                                                    <table style="width: 50%; margin: 0 auto;" class="table table-sm table-bordered mb-0">
+                                                        <thead>
+                                                            <tr>
+                                                                <th>Unit</th>
+                                                                <th class="text-end">Conversion Factor</th>
+                                                                <th class="text-end">Quantity</th>
+                                                                <th>Barcode</th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody>
+                                                            @foreach ($product->units as $productUnit)
+                                                                <tr>
+                                                                    <td>{{ $productUnit->subUnit?->name ?? 'N/A' }}</td>
+                                                                    <td class="text-end">{{ number_format($productUnit->conversion_factor, 3) }}</td>
+                                                                    <td class="text-end">
+                                                                        @if ($item->quantity > 0)
+                                                                            {{ number_format($item->quantity / $productUnit->conversion_factor, 3) }}
+                                                                        @else
+                                                                            {{ number_format(0, 3) }}
+                                                                        @endif
+                                                                    </td>
+                                                                    <td>
+                                                                        {{ $productUnit->barcode ?? 'N/A' }}
+                                                                        <a href="{{ route('inventory::barcode::print', $productUnit->id) }}"><i class="fa fa-2x fa-print pull-right"></i></a>
+                                                                    </td>
+                                                                </tr>
+                                                            @endforeach
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    @endif
                                 @endforeach
                             </tbody>
                             <tfoot>
@@ -707,6 +764,19 @@
 
             window.addEventListener('RefreshInventoryTable', event => {
                 Livewire.dispatch("Inventory-Refresh-Component");
+            });
+
+            // Handle collapse toggle for product units
+            document.addEventListener('DOMContentLoaded', function() {
+                document.querySelectorAll('[data-bs-toggle="collapse"]').forEach(function(button) {
+                    button.addEventListener('click', function() {
+                        const target = document.querySelector(this.getAttribute('data-bs-target'));
+                        if (target) {
+                            const isExpanded = this.getAttribute('aria-expanded') === 'true';
+                            this.setAttribute('aria-expanded', !isExpanded);
+                        }
+                    });
+                });
             });
         </script>
     @endpush
