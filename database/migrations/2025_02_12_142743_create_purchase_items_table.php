@@ -13,10 +13,12 @@ return new class() extends Migration
             $table->unsignedBigInteger('purchase_id')->references('id')->on('sales');
             $table->unsignedBigInteger('product_id')->references('id')->on('products');
             $table->foreignId('unit_id')->nullable()->constrained('units');
-            $table->decimal('conversion_factor', 16, 2)->default(1);
             $table->string('batch')->nullable();
             $table->decimal('unit_price', 16, 2);
             $table->decimal('quantity', 8, 3);
+            $table->decimal('conversion_factor', 16, 2)->default(1);
+            $table->decimal('base_unit_quantity', 16, 4)->storedAs('quantity * conversion_factor');
+
             $table->decimal('gross_amount', 16, 2)->storedAs('unit_price * quantity');
 
             $table->decimal('discount', 16, 2);

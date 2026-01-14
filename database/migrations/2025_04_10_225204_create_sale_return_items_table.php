@@ -20,6 +20,7 @@ return new class() extends Migration
             $table->unsignedBigInteger('product_id')->references('id')->on('products');
             $table->foreignId('unit_id')->nullable()->constrained('units');
             $table->decimal('conversion_factor', 15, 4)->default(1);
+            $table->decimal('base_unit_quantity', 16, 4)->storedAs('quantity * conversion_factor');
 
             $table->unsignedBigInteger('employee_id')->references('id')->on('users');
 
