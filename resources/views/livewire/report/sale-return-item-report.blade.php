@@ -53,6 +53,7 @@
                         <th> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="unit_id" label="unit" /> </th>
                         <th class="text-end"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="unit_price" label="unit price" /> </th>
                         <th class="text-end"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="quantity" label="quantity" /> </th>
+                        <th class="text-end"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="base_unit_quantity" label="base unit quantity" /> </th>
                         <th class="text-end"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="gross_amount" label="gross amount" /> </th>
                         <th class="text-end"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="discount" label="discount" /> </th>
                         <th class="text-end"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="net_amount" label="net amount" /> </th>
@@ -71,6 +72,7 @@
                             <td>{{ $item->unit?->name }}</td>
                             <td class="text-end">{{ currency($item->unit_price) }}</td>
                             <td class="text-end">{{ currency($item->quantity) }}</td>
+                            <td class="text-end">{{ currency($item->base_unit_quantity) }}</td>
                             <td class="text-end">{{ currency($item->gross_amount) }}</td>
                             <td class="text-end">{{ currency($item->discount) }}</td>
                             <td class="text-end">{{ currency($item->net_amount) }}</td>
@@ -83,6 +85,7 @@
                 <tfoot>
                     <tr>
                         <th colspan="7">Total</th>
+                        <th class="text-end">{{ currency($total['base_unit_quantity']) }}</th>
                         <th class="text-end">{{ currency($total['gross_amount']) }}</th>
                         <th class="text-end">{{ currency($total['discount']) }}</th>
                         <th class="text-end">{{ currency($total['net_amount']) }}</th>

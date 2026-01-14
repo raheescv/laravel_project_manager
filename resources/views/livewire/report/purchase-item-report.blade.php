@@ -77,10 +77,7 @@
                         @endif
                         @if ($purchase_item_report_visible_column['quantity'] ?? true)
                             <th class="text-end">
-                                <div class="d-flex justify-content-end align-items-center gap-1">
-                                    <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="quantity" label="quantity" />
-                                    <i class="demo-pli-information fs-6 text-info" data-bs-toggle="tooltip" data-bs-placement="top" title="Quantity will always show the base unit"></i>
-                                </div>
+                                <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="quantity" label="quantity" />
                             </th>
                         @endif
                         @if ($purchase_item_report_visible_column['quantity'] ?? true)
@@ -218,12 +215,6 @@
                 $('#branch_id').on('change', function(e) {
                     const value = $(this).val() || null;
                     @this.set('branch_id', value);
-                });
-
-                // Initialize tooltips
-                var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
-                var tooltipList = tooltipTriggerList.map(function(tooltipTriggerEl) {
-                    return new bootstrap.Tooltip(tooltipTriggerEl);
                 });
             });
         </script>
