@@ -20,7 +20,7 @@ return new class() extends Migration
             $table->unsignedBigInteger('inventory_id')->references('id')->on('inventories');
             $table->unsignedBigInteger('product_id')->references('id')->on('products');
 
-            $table->foreignId('unit_id')->nullable()->constrained('units');
+            $table->foreignId('unit_id')->default(1)->constrained('units');
 
             $table->unsignedBigInteger('sale_combo_offer_id')->nullable();
 

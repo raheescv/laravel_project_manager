@@ -13,7 +13,7 @@ return new class() extends Migration
     {
         Schema::table('purchase_return_items', function (Blueprint $table) {
             if (! Schema::hasColumn('purchase_return_items', 'unit_id')) {
-                $table->foreignId('unit_id')->nullable()->constrained('units')->after('product_id');
+                $table->foreignId('unit_id')->default(1)->constrained('units')->after('product_id');
             }
             if (! Schema::hasColumn('purchase_return_items', 'conversion_factor')) {
                 $table->decimal('conversion_factor', 16, 2)->default(1)->after('unit_id');

@@ -14,7 +14,7 @@ return new class() extends Migration
             $table->unsignedBigInteger('purchase_item_id')->nullable()->references('id')->on('purchase_items');
 
             $table->unsignedBigInteger('product_id')->references('id')->on('products');
-            $table->foreignId('unit_id')->nullable()->constrained('units')->after('product_id');
+            $table->foreignId('unit_id')->default(1)->constrained('units')->after('product_id');
             $table->decimal('unit_price', 16, 2);
             $table->decimal('quantity', 8, 3);
             $table->decimal('conversion_factor', 16, 2)->default(1);

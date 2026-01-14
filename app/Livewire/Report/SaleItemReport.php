@@ -88,7 +88,7 @@ class SaleItemReport extends Component
         $data = $query->paginate($this->limit);
 
         $total = [
-            'quantity' => $totals->sum('sale_items.quantity'),
+            'base_unit_quantity' => $totals->sum('sale_items.base_unit_quantity'),
             'gross_amount' => $totals->sum('sale_items.gross_amount'),
             'discount' => $totals->sum('sale_items.discount'),
             'net_amount' => $totals->sum('sale_items.net_amount'),
@@ -113,6 +113,7 @@ class SaleItemReport extends Component
                     $value = trim($value);
                     $q->where('sale_items.unit_price', 'like', "%{$value}%")
                         ->orWhere('sale_items.quantity', 'like', "%{$value}%")
+                        ->orWhere('sale_items.base_unit_quantity', 'like', "%{$value}%")
                         ->orWhere('sale_items.discount', 'like', "%{$value}%")
                         ->orWhere('sale_items.tax', 'like', "%{$value}%");
                 });
