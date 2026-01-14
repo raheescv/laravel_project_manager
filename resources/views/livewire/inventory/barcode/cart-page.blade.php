@@ -15,8 +15,11 @@
                         <button wire:click="clearCart" class="btn btn-outline-danger btn-sm" {{ empty($cartItems) ? 'disabled' : '' }}>
                             <i class="fa fa-trash me-1"></i> Clear
                         </button>
-                        <button wire:click="addAllProducts" class="btn btn-success btn-sm">
-                            <i class="fa fa-plus-circle me-1"></i> Add All Products
+                        <button wire:click="addAllInventory" class="btn btn-primary btn-sm">
+                            <i class="fa fa-box me-1"></i> Add All Inventory
+                        </button>
+                        <button wire:click="addAllProductUnits" class="btn btn-success btn-sm">
+                            <i class="fa fa-cubes me-1"></i> Add All Product Units
                         </button>
                         <button type="button" class="btn btn-outline-info btn-sm" data-bs-toggle="modal" data-bs-target="#keyboardShortcutsModal">
                             <i class="fa fa-keyboard me-1"></i> ⌨️
@@ -62,6 +65,37 @@
                                     <i class="fa fa-hashtag me-1 text-primary"></i>Quantity
                                 </label>
                                 <input type="number" wire:model="quantity" class="form-control" min="1" value="1">
+                            </div>
+                        </div>
+
+                        <!-- Unit Filter for Product Units -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <label class="form-label fw-semibold">
+                                    <i class="fa fa-filter me-1 text-primary"></i>Unit Filter (for Product Units)
+                                </label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-light">
+                                        <i class="fa fa-cubes text-muted"></i>
+                                    </span>
+                                    <select wire:model="selectedUnitId" class="form-select">
+                                        <option value="">All Units</option>
+                                        @foreach ($this->units as $unit)
+                                            <option value="{{ $unit->id }}">{{ $unit->name }} ({{ $unit->code }})</option>
+                                        @endforeach
+                                    </select>
+                                    @if($selectedUnitId)
+                                        <button class="btn btn-outline-secondary" type="button" wire:click="$set('selectedUnitId', '')">
+                                            <i class="fa fa-times"></i> Clear
+                                        </button>
+                                    @endif
+                                </div>
+                                @if($selectedUnitId)
+                                    <small class="text-muted">
+                                        <i class="fa fa-info-circle me-1"></i>
+                                        "Add All Product Units" will only add units matching the selected filter.
+                                    </small>
+                                @endif
                             </div>
                         </div>
 
