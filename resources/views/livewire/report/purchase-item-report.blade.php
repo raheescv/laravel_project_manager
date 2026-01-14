@@ -71,25 +71,30 @@
                             <th> unit </th>
                         @endif
                         @if ($purchase_item_report_visible_column['unit_price'] ?? true)
-                            <th class="text-end"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="unit_price" label="unit price" /> </th>
+                            <th class="text-end"> <div class="d-flex justify-content-end"><x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="unit_price" label="unit price" /></div> </th>
                         @endif
                         @if ($purchase_item_report_visible_column['quantity'] ?? true)
-                            <th class="text-end"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="quantity" label="quantity" /> </th>
+                            <th class="text-end">
+                                <div class="d-flex justify-content-end align-items-center gap-1">
+                                    <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="quantity" label="quantity" />
+                                    <i class="demo-pli-information fs-6 text-info" data-bs-toggle="tooltip" data-bs-placement="top" title="Quantity will always show the base unit"></i>
+                                </div>
+                            </th>
                         @endif
                         @if ($purchase_item_report_visible_column['gross_amount'] ?? true)
-                            <th class="text-end"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="gross_amount" label="gross amount" /> </th>
+                            <th class="text-end"> <div class="d-flex justify-content-end"><x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="gross_amount" label="gross amount" /></div> </th>
                         @endif
                         @if ($purchase_item_report_visible_column['discount'] ?? true)
-                            <th class="text-end"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="discount" label="discount" /> </th>
+                            <th class="text-end"> <div class="d-flex justify-content-end"><x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="discount" label="discount" /></div> </th>
                         @endif
                         @if ($purchase_item_report_visible_column['net_amount'] ?? true)
-                            <th class="text-end"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="net_amount" label="net amount" /> </th>
+                            <th class="text-end"> <div class="d-flex justify-content-end"><x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="net_amount" label="net amount" /></div> </th>
                         @endif
                         @if ($purchase_item_report_visible_column['tax_amount'] ?? true)
-                            <th class="text-end"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="tax_amount" label="tax amount" /> </th>
+                            <th class="text-end"> <div class="d-flex justify-content-end"><x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="tax_amount" label="tax amount" /></div> </th>
                         @endif
                         @if ($purchase_item_report_visible_column['total'] ?? true)
-                            <th class="text-end"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="total" label="total" /> </th>
+                            <th class="text-end"> <div class="d-flex justify-content-end"><x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="total" label="total" /></div> </th>
                         @endif
                     </tr>
                 </thead>
@@ -190,6 +195,12 @@
                 $('#branch_id').on('change', function(e) {
                     const value = $(this).val() || null;
                     @this.set('branch_id', value);
+                });
+
+                // Initialize tooltips
+                var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+                var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+                    return new bootstrap.Tooltip(tooltipTriggerEl);
                 });
             });
         </script>
