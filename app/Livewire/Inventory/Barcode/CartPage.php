@@ -34,9 +34,23 @@ class CartPage extends Component
     {
         // Initialize cart from session if exists
         $this->cartItems = session('cart_items', []);
+        $this->cartItems = $this->sortCartItemsByProductId($this->cartItems);
 
         // Set default quantity
         $this->quantity = 1;
+    }
+
+    private function sortCartItemsByProductId($cartItems)
+    {
+        if (empty($cartItems)) {
+            return $cartItems;
+        }
+
+        uasort($cartItems, function ($a, $b) {
+            return $a['product_id'] <=> $b['product_id'];
+        });
+
+        return $cartItems;
     }
 
     public function updatedSearchQuery()
@@ -139,6 +153,7 @@ class CartPage extends Component
         }
 
         // Update session after all additions
+        $this->cartItems = $this->sortCartItemsByProductId($this->cartItems);
         session(['cart_items' => $this->cartItems]);
 
         if ($addedCount > 0) {
@@ -176,6 +191,7 @@ class CartPage extends Component
         }
 
         // Update session after all additions
+        $this->cartItems = $this->sortCartItemsByProductId($this->cartItems);
         session(['cart_items' => $this->cartItems]);
 
         if ($addedCount > 0) {
@@ -266,6 +282,7 @@ class CartPage extends Component
             }
 
             // Update session
+            $this->cartItems = $this->sortCartItemsByProductId($this->cartItems);
             session(['cart_items' => $this->cartItems]);
 
             if (!$suppressMessage) {
@@ -315,6 +332,7 @@ class CartPage extends Component
         }
 
         // Update session
+        $this->cartItems = $this->sortCartItemsByProductId($this->cartItems);
         session(['cart_items' => $this->cartItems]);
 
         if (!$suppressMessage) {
@@ -338,6 +356,7 @@ class CartPage extends Component
             $this->cartItems[$cartKey]['quantity'] = $newQuantity;
         }
 
+        $this->cartItems = $this->sortCartItemsByProductId($this->cartItems);
         session(['cart_items' => $this->cartItems]);
         $this->dispatch('success', ['message' => 'Cart updated successfully.']);
     }
@@ -345,6 +364,7 @@ class CartPage extends Component
     public function removeFromCart($cartKey)
     {
         unset($this->cartItems[$cartKey]);
+        $this->cartItems = $this->sortCartItemsByProductId($this->cartItems);
         session(['cart_items' => $this->cartItems]);
         $this->dispatch('success', ['message' => 'Product removed from cart.']);
     }
