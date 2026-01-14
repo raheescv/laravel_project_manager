@@ -22,7 +22,7 @@ class ImportErrorsNotification extends Notification
 
     public function via($notifiable)
     {
-        return ['database', 'mail', WhatsappChannel::class];
+        return [DatabaseChannel::class, 'mail', WhatsappChannel::class];
     }
 
     public function toMail($notifiable)
