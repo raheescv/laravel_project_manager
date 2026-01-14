@@ -3,7 +3,6 @@
 namespace App\Console\Commands\SingleUse;
 
 use App\Models\Branch;
-use App\Models\Country;
 use App\Models\Product;
 use App\Models\ProductUnit;
 use App\Models\Sale;
@@ -15,9 +14,13 @@ use Illuminate\Support\Facades\DB;
 class GenerateLatestUniqueNoForTableCommand extends Command
 {
     private const SEGMENT_BARCODE = 'Barcode';
+
     private const SEGMENT_SALE = 'Sale';
+
     private const DEFAULT_BRANCH_CODE = 'M';
+
     private const MIN_BARCODE_NUMBER = 8000;
+
     private const INVOICE_NUMBER_INDEX = 3;
 
     protected $signature = 'app:generate-latest-unique-no-for-table {--segment=All : Unique number segment}';
@@ -28,11 +31,11 @@ class GenerateLatestUniqueNoForTableCommand extends Command
     {
         $segment = $this->option('segment');
 
-        if ($segment=='All' || $segment === self::SEGMENT_BARCODE) {
+        if ($segment == 'All' || $segment === self::SEGMENT_BARCODE) {
             $this->handleBarcodeBackfill();
         }
 
-        if ($segment=='All' || $segment === self::SEGMENT_SALE) {
+        if ($segment == 'All' || $segment === self::SEGMENT_SALE) {
             $this->handleSaleBackfill();
         }
 
@@ -109,7 +112,7 @@ class GenerateLatestUniqueNoForTableCommand extends Command
 
     private function handleSaleBackfill(): void
     {
-        $this->info("Collecting invoice counters for segment: Sale");
+        $this->info('Collecting invoice counters for segment: Sale');
 
         $counters = $this->collectSaleCounters();
 
@@ -138,6 +141,7 @@ class GenerateLatestUniqueNoForTableCommand extends Command
 
             if (! $parsed) {
                 $this->warn("Skipping malformed invoice number: {$sale->invoice_no}");
+
                 continue;
             }
 

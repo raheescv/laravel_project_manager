@@ -48,7 +48,7 @@ class AppServiceProvider extends ServiceProvider
         }
         if (Schema::hasTable('accounts')) {
             Cache::remember('accounts_slug_id_map', now()->addYear(), function () {
-                if(Schema::hasColumn('accounts', 'slug')) {
+                if (Schema::hasColumn('accounts', 'slug')) {
                     return DB::table('accounts')->where('is_locked', 1)->pluck('id', 'slug')->toArray();
                 }
             });
