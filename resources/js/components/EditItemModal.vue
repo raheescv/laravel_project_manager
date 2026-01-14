@@ -17,7 +17,7 @@
             <div v-if="item" class="space-y-2">
                 <!-- Compact Product Info -->
                 <div class="grid grid-cols-2 gap-2">
-                    <div class="bg-slate-50 rounded p-2 border border-slate-200">
+                    <div class="bg-slate-60 rounded p-2 border border-slate-200">
                         <label class="block text-xs font-semibold text-slate-700 mb-1 flex items-center">
                             <i class="fa fa-box text-blue-500 mr-1 text-xs"></i>
                             Product
@@ -26,7 +26,7 @@
                             {{ item.name }}
                         </div>
                     </div>
-                    <div class="bg-slate-50 rounded p-2 border border-slate-200">
+                    <div class="bg-slate-40 rounded p-2 border border-slate-200">
                         <label class="block text-xs font-semibold text-slate-700 mb-1 flex items-center">
                             <i class="fa fa-balance-scale text-orange-500 mr-1 text-xs"></i>
                             Unit
@@ -174,7 +174,8 @@ export default {
         return {
             localItem: {
                 ...this.item
-            }
+            },
+            originalConversionFactor: this.item?.conversion_factor || 1
         }
     },
 
@@ -207,6 +208,7 @@ export default {
                     this.localItem = {
                         ...val
                     }
+                    this.originalConversionFactor = val.conversion_factor || 1
                     this.calculateTotals()
                 }
             },
@@ -250,11 +252,24 @@ export default {
         handleUnitChange() {
             const selectedUnit = this.availableUnits.find(u => u.id === this.localItem.unit_id);
             if (selectedUnit) {
+                const oldConversionFactor = this.localItem.conversion_factor || 1;
+                const newConversionFactor = selectedUnit.conversion_factor || 1;
+
+                // Calculate base MRP from current unit_price and old conversion factor
+                const baseMRP = this.localItem.unit_price / (oldConversionFactor || 1);
+
+                // Update unit information
                 this.localItem.unit_name = selectedUnit.name;
-                this.localItem.conversion_factor = selectedUnit.conversion_factor || 1;
-                // You might want to update price based on conversion factor here if needed,
-                // but usually in POS, prices are set manually or predefined for units.
-                // For now, we just update the unit name and conversion factor.
+                this.localItem.conversion_factor = newConversionFactor;
+
+                // Recalculate unit_price based on new conversion factor
+                this.localItem.unit_price = Math.round(baseMRP * newConversionFactor * 100) / 100;
+
+                // Update the original conversion factor for future calculations
+                this.originalConversionFactor = newConversionFactor;
+
+                // Recalculate totals with new price
+                this.calculateTotals();
             }
         },
         save() {
