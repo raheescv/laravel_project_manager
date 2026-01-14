@@ -150,6 +150,7 @@ class SaleMixedItemReport extends Component
                 'brands.name as brand_name',
                 'sale_items.unit_price',
                 'sale_items.quantity',
+                'sale_items.base_unit_quantity',
                 'sale_items.gross_amount',
                 'sale_items.discount',
                 'sale_items.net_amount',
@@ -193,6 +194,7 @@ class SaleMixedItemReport extends Component
                 // Keep unit price as positive for readability; make quantities and amounts negative
                 'sale_return_items.unit_price',
                 DB::raw('(-1) * sale_return_items.quantity as quantity'),
+                DB::raw('(-1) * sale_return_items.base_unit_quantity as base_unit_quantity'),
                 DB::raw('(-1) * sale_return_items.gross_amount as gross_amount'),
                 DB::raw('(-1) * sale_return_items.discount as discount'),
                 DB::raw('(-1) * sale_return_items.net_amount as net_amount'),
@@ -221,6 +223,7 @@ class SaleMixedItemReport extends Component
 
         $total = [
             'quantity' => (float) $totals->sum('quantity'),
+            'base_unit_quantity' => (float) $totals->sum('base_unit_quantity'),
             'gross_amount' => (float) $totals->sum('gross_amount'),
             'discount' => (float) $totals->sum('discount'),
             'net_amount' => (float) $totals->sum('net_amount'),

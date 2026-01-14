@@ -6,6 +6,9 @@
                     <button wire:click="export" class="btn btn-sm btn-outline-success">
                         <i class="demo-pli-download me-1"></i> Export
                     </button>
+                    <button wire:click="resetFilters" class="btn btn-sm btn-outline-secondary">
+                        <i class="demo-pli-reload me-1"></i> Reset
+                    </button>
                 </div>
             </div>
             <div class="col-md-6 d-flex gap-2 align-items-center justify-content-md-end mb-3">
@@ -118,6 +121,9 @@
                         @if ($sale_mixed_item_report_visible_column['quantity'] ?? true)
                             <th class="text-end"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="quantity" label="quantity" /> </th>
                         @endif
+                        @if ($sale_mixed_item_report_visible_column['base_unit_quantity'] ?? true)
+                            <th class="text-end"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="base_unit_quantity" label="base unit quantity" /> </th>
+                        @endif
                         @if ($sale_mixed_item_report_visible_column['gross_amount'] ?? true)
                             <th class="text-end"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="gross_amount" label="gross" /> </th>
                         @endif
@@ -185,6 +191,9 @@
                             @if ($sale_mixed_item_report_visible_column['quantity'] ?? true)
                                 <td class="text-end">{{ currency($row->quantity,3) }}</td>
                             @endif
+                            @if ($sale_mixed_item_report_visible_column['base_unit_quantity'] ?? true)
+                                <td class="text-end">{{ currency($row->base_unit_quantity,3) }}</td>
+                            @endif
                             @if ($sale_mixed_item_report_visible_column['gross_amount'] ?? true)
                                 <td class="text-end">{{ currency($row->gross_amount) }}</td>
                             @endif
@@ -222,6 +231,9 @@
                         <th colspan="{{ max($colspan, 1) }}" class="text-end">Total</th>
                         @if ($sale_mixed_item_report_visible_column['quantity'] ?? true)
                             <th class="text-end">{{ currency($total['quantity'] ?? 0,3) }}</th>
+                        @endif
+                        @if ($sale_mixed_item_report_visible_column['base_unit_quantity'] ?? true)
+                            <th class="text-end">{{ currency($total['base_unit_quantity'] ?? 0,3) }}</th>
                         @endif
                         @if ($sale_mixed_item_report_visible_column['gross_amount'] ?? true)
                             <th class="text-end">{{ currency($total['gross_amount'] ?? 0) }}</th>
