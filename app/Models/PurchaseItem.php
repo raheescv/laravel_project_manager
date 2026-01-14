@@ -16,10 +16,11 @@ class PurchaseItem extends Model implements AuditableContracts
         'purchase_id',
         'product_id',
         'unit_id',
-        'conversion_factor',
         'batch',
         'unit_price',
         'quantity',
+        'conversion_factor',
+
         'discount',
         'tax',
         'created_by',

@@ -52,7 +52,7 @@
     </div>
     <div class="card-body">
         <div class="table-responsive">
-            <table class="table table-striped align-middle table-sm">
+            <table class="table table-striped table-sm">
                 <thead>
                     <tr class="text-capitalize">
                         @if ($purchase_item_report_visible_column['id'] ?? true)
@@ -109,13 +109,19 @@
                                 <td>{{ $item->product?->name }}</td>
                             @endif
                             @if ($purchase_item_report_visible_column['unit_name'] ?? true)
-                                <td>{{ $item->unit?->name }}</td>
+                                <td>
+                                    @if($item->product?->unit_id!=$item->unit_id)
+                                    {{ $item->product?->unit?->name }}|{{ $item->unit?->name }}
+                                    @else
+                                    {{ $item->unit?->name }}
+                                    @endif
+                                </td>
                             @endif
                             @if ($purchase_item_report_visible_column['unit_price'] ?? true)
                                 <td class="text-end">{{ $item->unit_price }}</td>
                             @endif
                             @if ($purchase_item_report_visible_column['quantity'] ?? true)
-                                <td class="text-end">{{ $item->quantity }}</td>
+                                <td class="text-end"> {{ $item->base_unit_quantity }} </td>
                             @endif
                             @if ($purchase_item_report_visible_column['gross_amount'] ?? true)
                                 <td class="text-end">{{ $item->gross_amount }}</td>
@@ -147,7 +153,7 @@
                         @endphp
                         <th colspan="{{ max($colspan, 1) }}">Total</th>
                         @if ($purchase_item_report_visible_column['quantity'] ?? true)
-                            <th class="text-end">{{ currency($total['quantity']) }}</th>
+                            <th class="text-end">{{ currency($total['base_unit_quantity'],3) }}</th>
                         @endif
                         @if ($purchase_item_report_visible_column['gross_amount'] ?? true)
                             <th class="text-end">{{ currency($total['gross_amount']) }}</th>

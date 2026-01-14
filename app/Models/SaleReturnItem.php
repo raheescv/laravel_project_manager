@@ -22,15 +22,15 @@ class SaleReturnItem extends Model implements AuditableContracts
         'inventory_id',
         'product_id',
         'employee_id',
+        'unit_id',
         'unit_price',
         'quantity',
+        'conversion_factor',
 
         'discount',
 
         'tax',
 
-        'unit_id',
-        'conversion_factor',
         'created_by',
         'updated_by',
         'deleted_by',

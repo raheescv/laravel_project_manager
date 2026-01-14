@@ -73,7 +73,7 @@ class StockUpdateAction
 
     private function handlePurchase(array &$inventoryData, $item, $purchase, $oldQuantity, $oldCost)
     {
-        $quantity = $item->quantity * ($item->conversion_factor ?? 1);
+        $quantity = $item->base_unit_quantity;
         $inventoryData['quantity'] += $quantity;
         $unit_price = round($item->unit_price / ($item->conversion_factor ?? 1), 2);
         $inventoryData['cost'] = $this->calculateWeightedAverageCost(
@@ -88,7 +88,7 @@ class StockUpdateAction
 
     private function handlePurchaseReversal(array &$inventoryData, $item, $purchase, $purchase_type, $oldQuantity, $oldCost)
     {
-        $quantity = $item->quantity * ($item->conversion_factor ?? 1);
+        $quantity = $item->base_unit_quantity;
         $inventoryData['quantity'] -= $quantity;
         $unit_price = round($item->unit_price / ($item->conversion_factor ?? 1), 2);
         $inventoryData['cost'] = $this->revertCostCalculation(

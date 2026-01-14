@@ -33,19 +33,19 @@ class StockUpdateAction
         $inventory = $inventory->toArray();
         switch ($sale_type) {
             case 'sale':
-                $inventory['quantity'] -= round($item->quantity * ($item->conversion_factor ?? 1), 4);
+                $inventory['quantity'] -= $item->base_unit_quantity;
                 $inventory['remarks'] = 'Sale:'.$sale->invoice_no;
                 break;
             case 'cancel':
-                $inventory['quantity'] += round($item->quantity * ($item->conversion_factor ?? 1), 4);
+                $inventory['quantity'] += $item->base_unit_quantity;
                 $inventory['remarks'] = 'Sale Cancelled:'.$sale->invoice_no;
                 break;
             case 'sale_reversal':
-                $inventory['quantity'] += round($item->quantity * ($item->conversion_factor ?? 1), 4);
+                $inventory['quantity'] += $item->base_unit_quantity;
                 $inventory['remarks'] = 'Sale Adjustment Reversal:'.$sale->invoice_no;
                 break;
             case 'delete_item':
-                $inventory['quantity'] += round($item->quantity * ($item->conversion_factor ?? 1), 4);
+                $inventory['quantity'] += $item->base_unit_quantity;
                 $inventory['remarks'] = 'Sale Item Delete:'.$sale->invoice_no;
                 break;
         }
