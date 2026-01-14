@@ -20,7 +20,12 @@
         </tbody>
         <tfoot>
             <tr>
-                <th> <a class="btn btn-info" href="{{ route('product::index') }}">Apply</a> </th>
+                <th>
+                    <div class="d-flex gap-2">
+                        <a class="btn btn-info" href="{{ route('product::index') }}">Apply</a>
+                        <button type="button" class="btn btn-warning btn-sm ms-auto" wire:click="resetToDefaults">Reset to Defaults</button>
+                    </div>
+                </th>
             </tr>
         </tfoot>
     </table>
