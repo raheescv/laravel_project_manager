@@ -40,13 +40,13 @@ class PurchaseItemColumnVisibility extends Component
         }
 
         $this->purchase_item_report_visible_column[$column] = ! $this->purchase_item_report_visible_column[$column];
-        Configuration::updateOrCreate( ['key' => 'purchase_item_report_visible_column'], ['value' => json_encode($this->purchase_item_report_visible_column)] );
+        Configuration::updateOrCreate(['key' => 'purchase_item_report_visible_column'], ['value' => json_encode($this->purchase_item_report_visible_column)]);
     }
 
     public function resetToDefaults(): void
     {
         $this->purchase_item_report_visible_column = $this->getDefaultColumns();
-        Configuration::updateOrCreate( ['key' => 'purchase_item_report_visible_column'], ['value' => json_encode($this->purchase_item_report_visible_column)] );
+        Configuration::updateOrCreate(['key' => 'purchase_item_report_visible_column'], ['value' => json_encode($this->purchase_item_report_visible_column)]);
     }
 
     public function render()

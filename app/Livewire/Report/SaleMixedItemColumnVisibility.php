@@ -55,7 +55,7 @@ class SaleMixedItemColumnVisibility extends Component
     public function resetToDefaults(): void
     {
         $this->sale_mixed_item_report_visible_column = $this->getDefaultColumns();
-        Configuration::updateOrCreate( ['key' => 'sale_mixed_item_report_visible_column'], ['value' => json_encode($this->sale_mixed_item_report_visible_column)] );
+        Configuration::updateOrCreate(['key' => 'sale_mixed_item_report_visible_column'], ['value' => json_encode($this->sale_mixed_item_report_visible_column)]);
     }
 
     public function render()

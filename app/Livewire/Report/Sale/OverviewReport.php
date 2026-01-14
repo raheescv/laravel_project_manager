@@ -90,6 +90,7 @@ class OverviewReport extends Component
     {
         $this->resetPage('products-page');
     }
+
     private function getBaseSaleQuery(?string $from, ?string $to): callable
     {
         return fn ($query) => $query
