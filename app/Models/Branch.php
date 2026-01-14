@@ -31,7 +31,6 @@ class Branch extends Model
         $tenantId = self::getCurrentTenantId();
 
         return array_merge([
-            'tenant_id' => ['required'],
             'name' => ['required', Rule::unique(self::class, 'name')->where('tenant_id', $tenantId)->ignore($id)],
             'code' => ['required', Rule::unique(self::class, 'code')->where('tenant_id', $tenantId)->ignore($id)],
         ], $merge);
