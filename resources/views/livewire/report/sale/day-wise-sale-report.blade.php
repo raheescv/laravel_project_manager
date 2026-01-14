@@ -66,6 +66,9 @@
                                 <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="quantity" label="Quantity" />
                             </th>
                             <th class="border-bottom px-3 py-3 text-end">
+                                <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="base_unit_quantity" label="Base Unit Quantity" />
+                            </th>
+                            <th class="border-bottom px-3 py-3 text-end">
                                 <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="net_sale" label="Net Sale" />
                             </th>
                             <th class="border-bottom px-3 py-3 text-end">
@@ -93,6 +96,9 @@
                                 </td>
                                 <td class="px-3 py-2 text-end">
                                     <span class="fw-medium">{{ number_format($item['quantity'], 3) }}</span>
+                                </td>
+                                <td class="px-3 py-2 text-end">
+                                    <span class="fw-medium">{{ number_format($item['base_unit_quantity'], 3) }}</span>
                                 </td>
                                 <td class="px-3 py-2 text-end">
                                     <span class="fw-medium">{{ currency($item['net_sale']) }}</span>
@@ -126,6 +132,7 @@
                                 <span class="badge bg-primary">{{ $total['count'] }}</span>
                             </th>
                             <th class="px-3 py-3 text-end fw-bold">{{ number_format($total['quantity'], 3) }}</th>
+                            <th class="px-3 py-3 text-end fw-bold">{{ number_format($total['base_unit_quantity'], 3) }}</th>
                             <th class="px-3 py-3 text-end fw-bold">{{ currency($total['net_sale']) }}</th>
                             <th class="px-3 py-3 text-end fw-bold">{{ currency($total['gross_sale']) }}</th>
                             <th class="px-3 py-3 text-end fw-bold text-info">{{ currency($total['tax_amount']) }}</th>
