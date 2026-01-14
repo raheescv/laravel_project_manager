@@ -15,6 +15,9 @@
                         <button wire:click="clearCart" class="btn btn-outline-danger btn-sm" {{ empty($cartItems) ? 'disabled' : '' }}>
                             <i class="fa fa-trash me-1"></i> Clear
                         </button>
+                        <button wire:click="addAllProducts" class="btn btn-success btn-sm">
+                            <i class="fa fa-plus-circle me-1"></i> Add All Products
+                        </button>
                         <button type="button" class="btn btn-outline-info btn-sm" data-bs-toggle="modal" data-bs-target="#keyboardShortcutsModal">
                             <i class="fa fa-keyboard me-1"></i> ⌨️
                         </button>
@@ -84,9 +87,11 @@
                         @if (!empty($products))
                             <div class="row">
                                 <div class="col-12">
-                                    <h6 class="text-muted mb-3">
-                                        <i class="fa fa-list me-1"></i>Search Results ({{ count($products) }})
-                                    </h6>
+                                    <div class="d-flex justify-content-between align-items-center mb-3">
+                                        <h6 class="text-muted mb-0">
+                                            <i class="fa fa-list me-1"></i>Search Results ({{ count($products) }})
+                                        </h6>
+                                    </div>
                                     <div class="row g-2">
                                         @foreach ($products as $product)
                                             <div class="col-md-4 col-lg-3 col-xl-2">
