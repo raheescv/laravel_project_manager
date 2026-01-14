@@ -12,7 +12,7 @@ return new class() extends Migration
             $table->id();
             $table->unsignedBigInteger('purchase_id')->references('id')->on('sales');
             $table->unsignedBigInteger('product_id')->references('id')->on('products');
-            $table->foreignId('unit_id')->nullable()->constrained('units');
+            $table->foreignId('unit_id')->default(1)->constrained('units');
             $table->string('batch')->nullable();
             $table->decimal('unit_price', 16, 2);
             $table->decimal('quantity', 8, 3);

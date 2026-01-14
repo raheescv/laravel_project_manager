@@ -71,7 +71,9 @@
                             <th> unit </th>
                         @endif
                         @if ($purchase_item_report_visible_column['unit_price'] ?? true)
-                            <th class="text-end"> <div class="d-flex justify-content-end"><x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="unit_price" label="unit price" /></div> </th>
+                            <th class="text-end">
+                                <div class="d-flex justify-content-end"><x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="unit_price" label="unit price" /></div>
+                            </th>
                         @endif
                         @if ($purchase_item_report_visible_column['quantity'] ?? true)
                             <th class="text-end">
@@ -81,20 +83,35 @@
                                 </div>
                             </th>
                         @endif
+                        @if ($purchase_item_report_visible_column['quantity'] ?? true)
+                            <th class="text-end">
+                                <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="base_unit_quantity" label="base unit quantity" />
+                            </th>
+                        @endif
                         @if ($purchase_item_report_visible_column['gross_amount'] ?? true)
-                            <th class="text-end"> <div class="d-flex justify-content-end"><x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="gross_amount" label="gross amount" /></div> </th>
+                            <th class="text-end">
+                                <div class="d-flex justify-content-end"><x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="gross_amount" label="gross amount" /></div>
+                            </th>
                         @endif
                         @if ($purchase_item_report_visible_column['discount'] ?? true)
-                            <th class="text-end"> <div class="d-flex justify-content-end"><x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="discount" label="discount" /></div> </th>
+                            <th class="text-end">
+                                <div class="d-flex justify-content-end"><x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="discount" label="discount" /></div>
+                            </th>
                         @endif
                         @if ($purchase_item_report_visible_column['net_amount'] ?? true)
-                            <th class="text-end"> <div class="d-flex justify-content-end"><x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="net_amount" label="net amount" /></div> </th>
+                            <th class="text-end">
+                                <div class="d-flex justify-content-end"><x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="net_amount" label="net amount" /></div>
+                            </th>
                         @endif
                         @if ($purchase_item_report_visible_column['tax_amount'] ?? true)
-                            <th class="text-end"> <div class="d-flex justify-content-end"><x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="tax_amount" label="tax amount" /></div> </th>
+                            <th class="text-end">
+                                <div class="d-flex justify-content-end"><x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="tax_amount" label="tax amount" /></div>
+                            </th>
                         @endif
                         @if ($purchase_item_report_visible_column['total'] ?? true)
-                            <th class="text-end"> <div class="d-flex justify-content-end"><x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="total" label="total" /></div> </th>
+                            <th class="text-end">
+                                <div class="d-flex justify-content-end"><x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="total" label="total" /></div>
+                            </th>
                         @endif
                     </tr>
                 </thead>
@@ -115,10 +132,10 @@
                             @endif
                             @if ($purchase_item_report_visible_column['unit_name'] ?? true)
                                 <td>
-                                    @if($item->product?->unit_id!=$item->unit_id)
-                                    {{ $item->product?->unit?->name }}|{{ $item->unit?->name }}
+                                    @if ($item->product?->unit_id != $item->unit_id)
+                                        {{ $item->unit?->name }}|{{ $item->product?->unit?->name }}
                                     @else
-                                    {{ $item->unit?->name }}
+                                        {{ $item->unit?->name }}
                                     @endif
                                 </td>
                             @endif
@@ -126,6 +143,9 @@
                                 <td class="text-end">{{ $item->unit_price }}</td>
                             @endif
                             @if ($purchase_item_report_visible_column['quantity'] ?? true)
+                                <td class="text-end"> {{ $item->quantity }} </td>
+                            @endif
+                            @if ($purchase_item_report_visible_column['base_unit_quantity'] ?? true)
                                 <td class="text-end"> {{ $item->base_unit_quantity }} </td>
                             @endif
                             @if ($purchase_item_report_visible_column['gross_amount'] ?? true)
@@ -150,15 +170,18 @@
                     <tr>
                         @php
                             $colspan = 1;
-                            $colspan += ($purchase_item_report_visible_column['id'] ?? true) ? 1 : 0;
-                            $colspan += ($purchase_item_report_visible_column['date'] ?? true) ? 1 : 0;
-                            $colspan += ($purchase_item_report_visible_column['invoice_no'] ?? true) ? 1 : 0;
-                            $colspan += ($purchase_item_report_visible_column['product_name'] ?? true) ? 1 : 0;
-                            $colspan += ($purchase_item_report_visible_column['unit_name'] ?? true) ? 1 : 0;
+                            $colspan += $purchase_item_report_visible_column['id'] ?? true ? 1 : 0;
+                            $colspan += $purchase_item_report_visible_column['date'] ?? true ? 1 : 0;
+                            $colspan += $purchase_item_report_visible_column['invoice_no'] ?? true ? 1 : 0;
+                            $colspan += $purchase_item_report_visible_column['product_name'] ?? true ? 1 : 0;
+                            $colspan += $purchase_item_report_visible_column['unit_name'] ?? true ? 1 : 0;
                         @endphp
                         <th colspan="{{ max($colspan, 1) }}">Total</th>
                         @if ($purchase_item_report_visible_column['quantity'] ?? true)
-                            <th class="text-end">{{ currency($total['base_unit_quantity'],3) }}</th>
+                            <th class="text-end">{{ currency($total['quantity'], 3) }}</th>
+                        @endif
+                        @if ($purchase_item_report_visible_column['base_unit_quantity'] ?? true)
+                            <th class="text-end">{{ currency($total['base_unit_quantity'], 3) }}</th>
                         @endif
                         @if ($purchase_item_report_visible_column['gross_amount'] ?? true)
                             <th class="text-end">{{ currency($total['gross_amount']) }}</th>
@@ -199,7 +222,7 @@
 
                 // Initialize tooltips
                 var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
-                var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+                var tooltipList = tooltipTriggerList.map(function(tooltipTriggerEl) {
                     return new bootstrap.Tooltip(tooltipTriggerEl);
                 });
             });

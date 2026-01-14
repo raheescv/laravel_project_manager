@@ -93,6 +93,7 @@
                         <th class="text-nowrap"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="unit_id" label="unit" /> </th>
                         <th class="text-nowrap text-end"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="unit_price" label="unit price" /> </th>
                         <th class="text-nowrap text-end"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="quantity" label="quantity" /> </th>
+                        <th class="text-nowrap text-end"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="base_unit_quantity" label="base unit quantity" /> </th>
                         <th class="text-nowrap text-end"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="gross_amount" label="gross amount" /> </th>
                         <th class="text-nowrap text-end"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="discount" label="discount" /> </th>
                         <th class="text-nowrap text-end"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="net_amount" label="net amount" /> </th>
@@ -145,9 +146,8 @@
                             <td>
                                 <div class="text-end fw-medium">{{ currency($item->unit_price) }}</div>
                             </td>
-                            <td>
-                                <div class="text-end fw-medium">{{ currency($item->quantity) }}</div>
-                            </td>
+                            <td> <div class="text-end fw-medium">{{ currency($item->quantity) }}</div> </td>
+                            <td> <div class="text-end fw-medium">{{ currency($item->base_unit_quantity) }}</div> </td>
                             <td>
                                 <div class="text-end fw-medium">{{ currency($item->gross_amount) }}</div>
                             </td>
@@ -171,10 +171,8 @@
                 </tbody>
                 <tfoot class="table-group-divider">
                     <tr class="bg-light">
-                        <th colspan="8" class="ps-3"><strong>TOTALS</strong></th>
-                        <th>
-                            <div class="text-end fw-bold">{{ currency($total['quantity']) }}</div>
-                        </th>
+                        <th colspan="9" class="ps-3"><strong>TOTALS</strong></th>
+                        <th> <div class="text-end fw-bold">{{ currency($total['base_unit_quantity']) }}</div> </th>
                         <th>
                             <div class="text-end fw-bold">{{ currency($total['gross_amount']) }}</div>
                         </th>
