@@ -3,6 +3,7 @@
 namespace App\Livewire\Inventory\Barcode;
 
 use App\Models\Inventory;
+use App\Models\ProductUnit;
 use Livewire\Component;
 
 class CartPage extends Component
@@ -46,7 +47,10 @@ class CartPage extends Component
 
     public function loadProducts()
     {
-        $this->products = Inventory::with('product')
+        $products = collect();
+
+        // Load Inventory items
+        $inventories = Inventory::with('product')
             ->whereHas('product', function ($query): void {
                 $query
                     ->where('name', 'LIKE', '%' . $this->searchQuery . '%')
@@ -67,15 +71,49 @@ class CartPage extends Component
                     'quantity' => $inventory->quantity,
                     'image' => $inventory->product->thumbnail,
                     'type' => $inventory->product->type,
+                    'item_type' => 'inventory',
                 ];
+            });
+
+        $products = $products->merge($inventories);
+
+        // Load ProductUnit items
+        $productUnits = ProductUnit::with('product', 'subUnit')
+            ->where(function ($query) {
+                $query->whereHas('product', function ($q): void {
+                    $q->where('name', 'LIKE', '%' . $this->searchQuery . '%')
+                      ->orWhere('code', 'LIKE', '%' . $this->searchQuery . '%');
+                })
+                ->orWhere('barcode', 'LIKE', '%' . $this->searchQuery . '%');
             })
-            ->toArray();
+            ->limit(10)
+            ->get()
+            ->map(function ($productUnit) {
+                return [
+                    'id' => $productUnit->id,
+                    'product_id' => $productUnit->product_id,
+                    'name' => $productUnit->product->name . ' (' . ($productUnit->subUnit->name ?? 'N/A') . ')',
+                    'barcode' => $productUnit->barcode,
+                    'mrp' => $productUnit->product->mrp,
+                    'size' => $productUnit->product->size,
+                    'quantity' => 0, // ProductUnit doesn't have quantity
+                    'image' => $productUnit->product->thumbnail,
+                    'type' => $productUnit->product->type,
+                    'item_type' => 'product_unit',
+                    'conversion_factor' => $productUnit->conversion_factor,
+                    'sub_unit_name' => $productUnit->subUnit->name ?? 'N/A',
+                ];
+            });
+
+        $products = $products->merge($productUnits);
+
+        $this->products = $products->take(20)->toArray();
     }
 
-    public function selectProduct($productId)
+    public function selectProduct($productId, $itemType = 'inventory')
     {
         $this->selectedProductId = $productId;
-        $this->addToCart($productId);
+        $this->addToCart($productId, false, $itemType);
         $this->searchQuery = '';
         $this->products = [];
     }
@@ -84,9 +122,18 @@ class CartPage extends Component
     {
         $addedCount = 0;
         $skippedCount = 0;
+
+        // Add all Inventory items
         $inventories = Inventory::with('product')->get();
-        foreach ($inventories as $product) {
-            $this->addToCart($product['id'], true); // Suppress individual messages
+        foreach ($inventories as $inventory) {
+            $this->addToCart($inventory->id, true, 'inventory'); // Suppress individual messages
+            $addedCount++;
+        }
+
+        // Add all ProductUnit items
+        $productUnits = ProductUnit::with('product', 'subUnit')->get();
+        foreach ($productUnits as $productUnit) {
+            $this->addToCart($productUnit->id, true, 'product_unit'); // Suppress individual messages
             $addedCount++;
         }
 
@@ -94,13 +141,13 @@ class CartPage extends Component
         session(['cart_items' => $this->cartItems]);
 
         if ($addedCount > 0) {
-            $message = "Successfully added {$addedCount} product(s) to cart.";
+            $message = "Successfully added {$addedCount} item(s) to cart.";
             if ($skippedCount > 0) {
-                $message .= " {$skippedCount} product(s) were skipped.";
+                $message .= " {$skippedCount} item(s) were skipped.";
             }
             $this->dispatch('success', ['message' => $message]);
         } else {
-            $this->dispatch('error', ['message' => 'No products could be added to cart.']);
+            $this->dispatch('error', ['message' => 'No items could be added to cart.']);
         }
 
         $this->searchQuery = '';
@@ -114,12 +161,25 @@ class CartPage extends Component
             return;
         }
 
+        // First try to find in Inventory
         $inventory = Inventory::with('product')->where('barcode', $barcode)->first();
         if ($inventory) {
-            $this->addToCart($inventory->id);
+            $this->addToCart($inventory->id, false, 'inventory');
             $this->barcodeInput = '';
             $this->dispatch('success', ['message' => 'Product added to cart via barcode scan.']);
+            return;
         }
+
+        // Then try to find in ProductUnit
+        $productUnit = ProductUnit::with('product', 'subUnit')->where('barcode', $barcode)->first();
+        if ($productUnit) {
+            $this->addToCart($productUnit->id, false, 'product_unit');
+            $this->barcodeInput = '';
+            $this->dispatch('success', ['message' => 'Product unit added to cart via barcode scan.']);
+            return;
+        }
+
+        $this->dispatch('error', ['message' => 'Barcode not found.']);
     }
 
     public function updatedBarcodeInput()
@@ -127,9 +187,59 @@ class CartPage extends Component
         $this->handleBarcodeScan();
     }
 
-    public function addToCart($inventoryId, $suppressMessage = false)
+    public function addToCart($itemId, $suppressMessage = false, $itemType = 'inventory')
     {
-        $inventory = Inventory::with('product')->find($inventoryId);
+        if ($itemType === 'product_unit') {
+            $productUnit = ProductUnit::with('product', 'subUnit')->find($itemId);
+
+            if (!$productUnit) {
+                if (!$suppressMessage) {
+                    $this->dispatch('error', ['message' => 'Product unit not found.']);
+                }
+                return;
+            }
+
+            $cartKey = 'product_unit_' . $productUnit->id;
+
+            if (isset($this->cartItems[$cartKey])) {
+                $this->cartItems[$cartKey]['quantity'] += $this->quantity;
+            } else {
+                $this->cartItems[$cartKey] = [
+                    'item_type' => 'product_unit',
+                    'product_unit_id' => $productUnit->id,
+                    'product_id' => $productUnit->product_id,
+                    'name' => $productUnit->product->name . ' (' . ($productUnit->subUnit->name ?? 'N/A') . ')',
+                    'barcode' => $productUnit->barcode,
+                    'size' => $productUnit->product->size,
+                    'mrp' => $productUnit->product->mrp,
+                    'quantity' => $this->quantity,
+                    'image' => $productUnit->product->thumbnail,
+                    'type' => $productUnit->product->type,
+                    'conversion_factor' => $productUnit->conversion_factor,
+                    'sub_unit_name' => $productUnit->subUnit->name ?? 'N/A',
+                ];
+            }
+
+            // Update session
+            session(['cart_items' => $this->cartItems]);
+
+            if (!$suppressMessage) {
+                $this->dispatch('success', ['message' => 'Product unit added to cart successfully.']);
+            }
+
+            $this->quantity = 1;
+            $this->selectedProductId = '';
+
+            // Clear search results after adding to cart
+            if (!$suppressMessage) {
+                $this->products = [];
+            }
+
+            return;
+        }
+
+        // Handle Inventory items (existing logic)
+        $inventory = Inventory::with('product')->find($itemId);
 
         if (!$inventory) {
             if (!$suppressMessage) {
@@ -139,12 +249,13 @@ class CartPage extends Component
             return;
         }
 
-        $cartKey = $inventory->id;
+        $cartKey = 'inventory_' . $inventory->id;
 
         if (isset($this->cartItems[$cartKey])) {
             $this->cartItems[$cartKey]['quantity'] += $this->quantity;
         } else {
             $this->cartItems[$cartKey] = [
+                'item_type' => 'inventory',
                 'inventory_id' => $inventory->id,
                 'product_id' => $inventory->product_id,
                 'name' => $inventory->product->name,
