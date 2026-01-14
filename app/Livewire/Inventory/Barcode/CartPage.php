@@ -4,6 +4,7 @@ namespace App\Livewire\Inventory\Barcode;
 
 use App\Models\Inventory;
 use App\Models\ProductUnit;
+use App\Models\Unit;
 use Livewire\Component;
 
 class CartPage extends Component
@@ -21,6 +22,8 @@ class CartPage extends Component
     public $products = [];
 
     public $showProductList = false;
+
+    public $selectedUnitId = '';
 
     protected $listeners = [
         'productSelected' => 'addToCart',
@@ -78,16 +81,21 @@ class CartPage extends Component
         $products = $products->merge($inventories);
 
         // Load ProductUnit items
-        $productUnits = ProductUnit::with('product', 'subUnit')
+        $productUnitsQuery = ProductUnit::with('product', 'subUnit')
             ->where(function ($query) {
                 $query->whereHas('product', function ($q): void {
                     $q->where('name', 'LIKE', '%' . $this->searchQuery . '%')
                       ->orWhere('code', 'LIKE', '%' . $this->searchQuery . '%');
                 })
                 ->orWhere('barcode', 'LIKE', '%' . $this->searchQuery . '%');
-            })
-            ->limit(10)
-            ->get()
+            });
+
+        // Apply unit filter if selected
+        if (!empty($this->selectedUnitId)) {
+            $productUnitsQuery->where('sub_unit_id', $this->selectedUnitId);
+        }
+
+        $productUnits = $productUnitsQuery->limit(10)->get()
             ->map(function ($productUnit) {
                 return [
                     'id' => $productUnit->id,
@@ -118,7 +126,7 @@ class CartPage extends Component
         $this->products = [];
     }
 
-    public function addAllProducts()
+    public function addAllInventory()
     {
         $addedCount = 0;
         $skippedCount = 0;
@@ -130,8 +138,38 @@ class CartPage extends Component
             $addedCount++;
         }
 
-        // Add all ProductUnit items
-        $productUnits = ProductUnit::with('product', 'subUnit')->get();
+        // Update session after all additions
+        session(['cart_items' => $this->cartItems]);
+
+        if ($addedCount > 0) {
+            $message = "Successfully added {$addedCount} inventory item(s) to cart.";
+            if ($skippedCount > 0) {
+                $message .= " {$skippedCount} item(s) were skipped.";
+            }
+            $this->dispatch('success', ['message' => $message]);
+        } else {
+            $this->dispatch('error', ['message' => 'No inventory items could be added to cart.']);
+        }
+
+        $this->searchQuery = '';
+        $this->products = [];
+    }
+
+    public function addAllProductUnits()
+    {
+        $addedCount = 0;
+        $skippedCount = 0;
+
+        // Build query for ProductUnit items
+        $productUnitsQuery = ProductUnit::with('product', 'subUnit');
+
+        // Filter by selected unit if provided
+        if (!empty($this->selectedUnitId)) {
+            $productUnitsQuery->where('sub_unit_id', $this->selectedUnitId);
+        }
+
+        $productUnits = $productUnitsQuery->get();
+
         foreach ($productUnits as $productUnit) {
             $this->addToCart($productUnit->id, true, 'product_unit'); // Suppress individual messages
             $addedCount++;
@@ -141,17 +179,24 @@ class CartPage extends Component
         session(['cart_items' => $this->cartItems]);
 
         if ($addedCount > 0) {
-            $message = "Successfully added {$addedCount} item(s) to cart.";
+            $unitFilter = !empty($this->selectedUnitId) ? ' (filtered by unit)' : '';
+            $message = "Successfully added {$addedCount} product unit(s) to cart{$unitFilter}.";
             if ($skippedCount > 0) {
                 $message .= " {$skippedCount} item(s) were skipped.";
             }
             $this->dispatch('success', ['message' => $message]);
         } else {
-            $this->dispatch('error', ['message' => 'No items could be added to cart.']);
+            $unitFilter = !empty($this->selectedUnitId) ? ' for the selected unit' : '';
+            $this->dispatch('error', ['message' => "No product units could be added to cart{$unitFilter}."]);
         }
 
         $this->searchQuery = '';
         $this->products = [];
+    }
+
+    public function getUnitsProperty()
+    {
+        return Unit::orderBy('name')->get();
     }
 
     public function handleBarcodeScan()
