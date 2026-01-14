@@ -9,7 +9,6 @@ use App\Models\Tenant;
 use App\Models\Unit;
 use App\Services\TenantService;
 use Illuminate\Console\Command;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Session;
 
@@ -41,6 +40,7 @@ class CreateProductUnitsCommand extends Command
 
         if ($totalProducts === 0) {
             $this->warn('No products found to process.');
+
             return Command::SUCCESS;
         }
 
@@ -65,6 +65,7 @@ class CreateProductUnitsCommand extends Command
                         if ($existingProductUnit) {
                             if ($skipExisting) {
                                 $skipped++;
+
                                 continue;
                             }
                         }

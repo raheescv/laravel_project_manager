@@ -802,7 +802,8 @@ export default {
                 const response = await axios.post('/pos/add-item', {
                     inventory_id: productId,
                     employee_id: form.employee_id,
-                    sale_type: form.sale_type
+                    sale_type: form.sale_type,
+                    unit_id: product?.unit_id || null
                 })
 
                 const item = response.data
