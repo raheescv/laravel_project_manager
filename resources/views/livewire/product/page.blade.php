@@ -664,6 +664,8 @@
                                                                                 <tr>
                                                                                     <th>Convert To (1 ({{ $products['unit']['name'] }}) base unit = ? Sub unit)</th>
                                                                                     <th class="text-end">Conversion Factor</th>
+                                                                                    <th class="text-end">Buying Price</th>
+                                                                                    <th class="text-end">Selling Price</th>
                                                                                     <th>Barcode </th>
                                                                                     <th>Action</th>
                                                                                 </tr>
@@ -673,6 +675,8 @@
                                                                                     <tr>
                                                                                         <td>{{ $item['sub_unit']['name'] }}</td>
                                                                                         <td class="text-end">{{ $item['conversion_factor'] }}</td>
+                                                                                        <td class="text-end">{{ currency($products['cost'] * $item['conversion_factor']) }}</td>
+                                                                                        <td class="text-end">{{ currency($products['mrp'] * $item['conversion_factor']) }}</td>
                                                                                         <td>{{ $item['barcode'] }}</td>
                                                                                         <td>
                                                                                             <i table_id="{{ $item['id'] }}" class="fa fa-pencil fs-5 me-2 pointer product_unit_edit"></i>
