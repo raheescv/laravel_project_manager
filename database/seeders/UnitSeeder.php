@@ -38,6 +38,8 @@ class UnitSeeder extends Seeder
         $data[] = ['tenant_id' => 1, 'name' => 'Kilometer', 'code' => 'Km'];
         $data[] = ['tenant_id' => 1, 'name' => 'Foot', 'code' => 'foot'];
         $data[] = ['tenant_id' => 1, 'name' => 'Inch', 'code' => 'inch'];
+        $data[] = ['tenant_id' => 1, 'name' => 'Yard', 'code' => 'yard'];
+        $data[] = ['tenant_id' => 1, 'name' => 'Taka', 'code' => 'taka'];
         DB::table('units')->insert($data);
     }
 }

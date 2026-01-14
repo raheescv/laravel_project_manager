@@ -25,9 +25,9 @@
                 </div>
             </div>
             <div class="row">
-                <div class="col-md-6">
+                <div class="col-md-6" wire:ignore>
                     <label for="name" class="form-label">Convert To *<span style="font-size:8px ">(1 base unit = ? Sub unit)</span></label>
-                    {{ html()->select('sub_unit_id', $units)->value('')->class('form-control')->placeholder('Select your unit')->id('sub_unit_id')->attribute('wire:model', 'product_units.sub_unit_id') }}
+                    {{ html()->select('sub_unit_id', $units)->value('')->class('tomSelect')->placeholder('Select your unit')->id('sub_unit_id')->attribute('wire:model', 'product_units.sub_unit_id') }}
                 </div>
                 <div class="col-md-6">
                     <label for="conversion_factor" class="form-label">Conversion Factor *</label>
@@ -57,6 +57,7 @@
             $(document).ready(function() {
                 $('#sub_unit_id').on('change', function(e) {
                     $("#conversion_factor").select();
+                    @this.set('product_units.sub_unit_id', value);
                 });
             });
         </script>
