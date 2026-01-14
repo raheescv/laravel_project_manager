@@ -9,7 +9,7 @@
                             <i class="fa fa-barcode text-primary me-2"></i>
                             Barcode Cart
                         </h4>
-                        <small class="text-muted">Add products and print barcodes</small>
+                        <small class="text-muted">Add products and print barcode</small>
                     </div>
                     <div class="d-flex gap-2">
                         <button wire:click="clearCart" class="btn btn-outline-danger btn-sm" {{ empty($cartItems) ? 'disabled' : '' }}>
@@ -109,14 +109,24 @@
                                                             @if (isset($product['size']) && $product['size'])
                                                                 <div class="badge bg-warning badge-sm mb-1">Size : {{ $product['size'] }}</div>
                                                             @endif
+                                                            @if (isset($product['item_type']) && $product['item_type'] === 'product_unit')
+                                                                <div class="badge bg-secondary badge-sm mb-1">Unit : {{ $product['sub_unit_name'] ?? 'N/A' }}</div>
+                                                                <div class="badge bg-primary badge-sm mb-1">Factor : {{ $product['conversion_factor'] ?? 1 }}</div>
+                                                            @endif
                                                           <div class="badge bg-success badge-sm me-1 mt-1">{{ currency($product['mrp']) }}</div>
 
                                                         </div>
                                                         <div class="d-flex justify-content-between align-items-center">
-                                                            <small class="text-muted">
-                                                                Stock: {{ $product['quantity'] }}
-                                                            </small>
-                                                            <button wire:click="selectProduct({{ $product['id'] }})" class="btn btn-sm btn-primary btn-xs">
+                                                            @if (isset($product['item_type']) && $product['item_type'] === 'product_unit')
+                                                                <small class="text-muted">
+                                                                    Product Unit
+                                                                </small>
+                                                            @else
+                                                                <small class="text-muted">
+                                                                    Stock: {{ $product['quantity'] }}
+                                                                </small>
+                                                            @endif
+                                                            <button wire:click="selectProduct({{ $product['id'] }}, '{{ $product['item_type'] ?? 'inventory' }}')" class="btn btn-sm btn-primary btn-xs">
                                                                 <i class="fa fa-plus fa-xs"></i>
                                                             </button>
                                                         </div>
@@ -167,6 +177,10 @@
                                                             <span class="badge bg-secondary badge-sm">Barcode : {{ $item['barcode'] }}</span>
                                                             @if (isset($item['size']) && $item['size'])
                                                                 <span class="badge bg-warning badge-sm">Size : {{ $item['size'] }}</span>
+                                                            @endif
+                                                            @if (isset($item['item_type']) && $item['item_type'] === 'product_unit')
+                                                                <span class="badge bg-info badge-sm">Unit : {{ $item['sub_unit_name'] ?? 'N/A' }}</span>
+                                                                <span class="badge bg-dark badge-sm">Factor : {{ $item['conversion_factor'] ?? 1 }}</span>
                                                             @endif
                                                             <span class="badge bg-primary badge-sm">{{ currency($item['mrp']) }}</span>
                                                         </div>
