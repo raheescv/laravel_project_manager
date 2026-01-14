@@ -1,7 +1,6 @@
 <?php
 
 use App\Models\Country;
-use App\Models\Product;
 use App\Services\TenantService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
@@ -468,7 +467,7 @@ if (! function_exists('getNextUniqueNumber')) {
             }
         } else {
             $year = now()->format('y');
-            if($segment == 'Barcode'){
+            if ($segment == 'Barcode') {
                 $year = 1;
             }
         }
