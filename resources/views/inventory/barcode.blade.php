@@ -214,13 +214,13 @@
 
         @if ($settings['price']['visible'] ?? true)
             <div class="barcode-element price" style="{{ getElementStyle('price', $settings) }}">
-                {{ number_format($product->mrp, 2) }}
+                {{ number_format($product->mrp * $conversionFactor, 2) }}
             </div>
         @endif
 
         @if ($settings['price_arabic']['visible'] ?? true)
             <div class="barcode-element price-arabic" style="{{ getElementStyle('price_arabic', $settings) }}">
-                {{ arabicNumber($product->mrp) }}
+                {{ arabicNumber($product->mrp * $conversionFactor) }}
             </div>
         @endif
     </div>
