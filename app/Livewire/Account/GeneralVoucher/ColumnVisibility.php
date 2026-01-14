@@ -36,6 +36,12 @@ class ColumnVisibility extends Component
         Configuration::updateOrCreate(['key' => 'general_voucher_visible_column'], ['value' => json_encode($this->general_voucher_visible_column)]);
     }
 
+    public function resetToDefaults()
+    {
+        $this->general_voucher_visible_column = $this->getDefaultColumns();
+        Configuration::updateOrCreate(['key' => 'general_voucher_visible_column'], ['value' => json_encode($this->general_voucher_visible_column)]);
+    }
+
     public function render()
     {
         return view('livewire.account.general-voucher.column-visibility');
