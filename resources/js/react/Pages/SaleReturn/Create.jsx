@@ -35,7 +35,7 @@ export default function Create() {
     const [showAddCustomerModal, setShowAddCustomerModal] = useState(false);
     const [refreshCustomerKey, setRefreshCustomerKey] = useState(0);
     const [addedCustomer, setAddedCustomer] = useState(null);
-    const [subCategoryIds, setSubCategoryIds] = useState([]); // <-- track selected subcategories (array)
+    const [subCategoryId, setSubCategoryId] = useState(null); // <-- track selected subcategory (single)
     const [widthValues, setWidthValues] = useState({}); // { subCategoryId: [width1, width2, ...] }
     const [sizeValues, setSizeValues] = useState({}); // { subCategoryId: [size1, size2, ...] }
     // Track how many width/size groups per subcategory
@@ -62,7 +62,7 @@ export default function Create() {
     const [editingItem, setEditingItem] = useState(null);
     const [editingValues, setEditingValues] = useState({ quantity: 1, unit_price: 0 });
 
-    const [selectedCategoryIds, setSelectedCategoryIds] = useState([]); // for measurement categories (CategorySidebar)
+    const [selectedCategoryId, setSelectedCategoryId] = useState(null); // for measurement category (CategorySidebar)
     const [selectedMainCategoryIds, setSelectedMainCategoryIds] = useState([]); // for main categories (MainCategorySidebar)
     const [availableSubCategories, setAvailableSubCategories] = useState({}); // id -> {id,name,measurement_category_id}
     const [measurementsInstances, setMeasurementsInstances] = useState([]); // duplicated per subcategory
@@ -147,9 +147,9 @@ export default function Create() {
 
     // Fetch available subcategories for selected categories (used for labels and mapping)
     useEffect(() => {
-        if (!selectedCategoryIds || selectedCategoryIds.length === 0) {
+        if (!selectedCategoryId) {
             setAvailableSubCategories({});
-            setSubCategoryIds([]);
+            setSubCategoryId(null);
             setWidthValues({});
             setSizeValues({});
             setMeasurementCounts({});
@@ -158,34 +158,31 @@ export default function Create() {
             return;
         }
 
-        const url = `/categories/categories/measurement/${selectedCategoryIds[0] || 0}/subcategories`;
-        const params = { category_ids: selectedCategoryIds.join(',') };
-
-        axios.get(url, { params })
+        const url = `/categories/categories/measurement/${selectedCategoryId}/subcategories`;
+        axios.get(url)
             .then(res => {
                 const list = res.data || [];
                 const map = {};
                 list.forEach(s => { map[s.id] = s; });
                 setAvailableSubCategories(map);
-                // Remove subcategories not in availableSubCategories
-                const validSubIds = Object.keys(map).map(id => Number(id));
-                setSubCategoryIds(prev => prev.filter(scid => validSubIds.includes(Number(scid))));
+                // If selected subcategory is not valid, reset
+                if (!map[subCategoryId]) setSubCategoryId(null);
             })
             .catch(() => {
                 setAvailableSubCategories({});
-                setSubCategoryIds([]);
+                setSubCategoryId(null);
                 setWidthValues({});
                 setSizeValues({});
                 setMeasurementCounts({});
                 setMeasurementsInstances([]);
                 setMeasurementValues({});
             });
-    }, [selectedCategoryIds]);
+    }, [selectedCategoryId]);
 
 
     // When subcategories (models) change, build per-model measurement instances and init width/size keys
     useEffect(() => {
-        if (!subCategoryIds || subCategoryIds.length === 0) {
+        if (!subCategoryId) {
             setMeasurementsInstances([]);
             setMeasurementValues(prev => {
                 // clear any keys that were instance keys
@@ -198,62 +195,44 @@ export default function Create() {
             return;
         }
 
-        // ensure width/size keys exist per selected subcategory
+        // ensure width/size keys exist for selected subcategory
         setWidthValues(prev => {
             const next = { ...prev };
-            subCategoryIds.forEach(scid => {
-                if (!(scid in next)) next[scid] = [''];
-                else if (!Array.isArray(next[scid])) next[scid] = [next[scid]];
-            });
+            if (!(subCategoryId in next)) next[subCategoryId] = [''];
+            else if (!Array.isArray(next[subCategoryId])) next[subCategoryId] = [next[subCategoryId]];
             return next;
         });
         setSizeValues(prev => {
             const next = { ...prev };
-            subCategoryIds.forEach(scid => {
-                if (!(scid in next)) next[scid] = [''];
-                else if (!Array.isArray(next[scid])) next[scid] = [next[scid]];
-            });
-            return next;
-        });
-        setWidthSizeCounts(prev => {
-            const next = { ...prev };
-            subCategoryIds.forEach(scid => {
-                if (!(scid in next)) next[scid] = 1;
-            });
+            if (!(subCategoryId in next)) next[subCategoryId] = [''];
+            else if (!Array.isArray(next[subCategoryId])) next[subCategoryId] = [next[subCategoryId]];
             return next;
         });
         setMeasurementCounts(prev => {
             const next = { ...prev };
-            subCategoryIds.forEach(scid => {
-                if (!(scid in next)) next[scid] = 1;
-            });
+            if (!(subCategoryId in next)) next[subCategoryId] = 1;
             return next;
         });
 
-        // Determine unique category ids for measurement templates
-        const categoryIds = Array.from(new Set(subCategoryIds.map(scid => (availableSubCategories[scid]?.measurement_category_id || null)).filter(Boolean)));
-
-        const requests = categoryIds.map(cid => axios.get(`/categories/measurements/${cid}`).then(r => ({ cid, data: r.data || [] })).catch(() => ({ cid, data: [] })) );
-
-        Promise.all(requests)
-            .then(results => {
-                const templatesMap = {};
-                results.forEach(r => { templatesMap[r.cid] = r.data; });
-
-                const instances = [];
-                subCategoryIds.forEach(scid => {
-                    const sub = availableSubCategories[scid] || {};
-                    const cid = sub.measurement_category_id || (selectedCategoryIds[0] || null);
-                    const templates = (cid && templatesMap[cid]) ? templatesMap[cid] : [];
-                    templates.forEach(t => {
-                        const instanceKey = `${scid}-${t.id}`;
-                        instances.push({ id: t.id, name: t.name, subcategory_id: scid, subcategory_name: sub.name || `Model ${scid}`, category_id: cid, instanceKey });
-                    });
-                });
-
+        // Determine category id for measurement templates
+        const cid = availableSubCategories[subCategoryId]?.measurement_category_id || selectedCategoryId || null;
+        if (!cid) {
+            setMeasurementsInstances([]);
+            return;
+        }
+        axios.get(`/categories/measurements/${cid}`)
+            .then(r => {
+                const templates = r.data || [];
+                const sub = availableSubCategories[subCategoryId] || {};
+                const instances = templates.map(t => ({
+                    id: t.id,
+                    name: t.name,
+                    subcategory_id: subCategoryId,
+                    subcategory_name: sub.name || `Model ${subCategoryId}`,
+                    category_id: cid,
+                    instanceKey: `${subCategoryId}-${t.id}`
+                }));
                 setMeasurementsInstances(instances);
-
-                // init measurement values for instances without clobbering existing values
                 setMeasurementValues(prev => {
                     const next = { ...prev };
                     instances.forEach(inst => { if (!(inst.instanceKey in next)) next[inst.instanceKey] = "" });
@@ -264,41 +243,48 @@ export default function Create() {
                 console.error('Measurement instances load error:', err);
                 setMeasurementsInstances([]);
             });
-    }, [subCategoryIds, availableSubCategories, selectedCategoryIds]);
+    }, [subCategoryId, availableSubCategories, selectedCategoryId]);
 
 
 
 // Load customer-specific measurement defaults and apply to instances
-useEffect(() => {
-    if (!customerId || measurementsInstances.length === 0) return;
-
-    const uniqueCategoryIds = Array.from(new Set(measurementsInstances.map(i => i.category_id).filter(Boolean)));
-    const requests = uniqueCategoryIds.map(cid => axios.get(`/categories/measurementscustomer/${customerId}/${cid}`).then(r => ({ cid, data: r.data || {} })).catch(() => ({ cid, data: {} })) );
-
-    Promise.all(requests)
-        .then(results => {
-            const merged = {};
-            results.forEach(r => Object.assign(merged, r.data));
-
-            if (Object.keys(merged).length > 0) {
-                setMeasurementValues(prev => {
-                    const next = { ...prev };
-                    measurementsInstances.forEach(inst => {
-                        const tplId = String(inst.id);
-                        if (merged[tplId] !== undefined && (next[inst.instanceKey] === undefined || next[inst.instanceKey] === '')) {
-                            next[inst.instanceKey] = merged[tplId];
-                        }
+    useEffect(() => {
+        if (!customerId || measurementsInstances.length === 0) return;
+        const cid = measurementsInstances[0]?.category_id;
+        if (!cid) return;
+        axios.get(`/categories/measurementscustomer/${customerId}/${cid}`)
+            .then(r => {
+                const merged = r.data || {};
+                if (Object.keys(merged).length > 0) {
+                    setMeasurementValues(prev => {
+                        const next = { ...prev };
+                        measurementsInstances.forEach(inst => {
+                            const tplId = String(inst.id);
+                            if (merged[tplId] !== undefined && (next[inst.instanceKey] === undefined || next[inst.instanceKey] === '')) {
+                                next[inst.instanceKey] = merged[tplId];
+                            }
+                        });
+                        return next;
                     });
-                    return next;
-                });
-            }
-        })
-        .catch(err => console.error('Customer measurement load error:', err));
-}, [customerId, measurementsInstances]);
+                }
+            })
+            .catch(err => console.error('Customer measurement load error:', err));
+    }, [customerId, measurementsInstances]);
 
     const handleAddToCart = (product) => {
         setCartItems((prev) => {
             const exists = prev.find((i) => i.id === product.id);
+            // Get category and subcategory names from current selection
+            let categoryName = null;
+            let subCategoryName = null;
+            if (selectedCategoryId && props?.categories) {
+                const cat = props.categories.find(c => Number(c.id) === Number(selectedCategoryId));
+                categoryName = cat?.name || null;
+            }
+            if (subCategoryId && availableSubCategories) {
+                const sub = availableSubCategories[subCategoryId];
+                subCategoryName = sub?.name || null;
+            }
             if (exists) {
                 return prev.map((i) =>
                     i.id === product.id
@@ -315,6 +301,10 @@ useEffect(() => {
                     discount: 0,
                     tax: 0,
                     total: product.mrp,
+                    category_id: selectedCategoryId,
+                    category_name: categoryName,
+                    sub_category_id: subCategoryId,
+                    sub_category_name: subCategoryName,
                 },
             ];
         });
@@ -345,6 +335,10 @@ useEffect(() => {
                 net_amount: item.quantity * item.unit_price,
                 tax_amount: 0,
                 total: item.quantity * item.unit_price,
+                category_id: item.category_id || null,
+                category_name: item.category_name || null,
+                subcategory_id: item.sub_category_id || null,
+                sub_category_name: item.sub_category_name || null,
             };
         });
         return items;
@@ -362,7 +356,7 @@ const validateSale = () => {
         return false;
     }
 
-    if (!selectedCategoryIds || selectedCategoryIds.length === 0) {
+    if (!selectedCategoryId) {
         toast.error("Please select category");
         return false;
     }
@@ -377,22 +371,20 @@ const validateSale = () => {
         return false;
     }
 
-    // If only one category is selected, require at least one subcategory
-    if (selectedCategoryIds.length === 1 && (!subCategoryIds || subCategoryIds.length === 0)) {
+    // Require subcategory
+    if (!subCategoryId) {
         toast.error("Please select subcategory");
         return false;
     }
 
     // Require width/size per selected model (sub-category)
-    for (let scid of subCategoryIds) {
-        if (!widthValues[scid] || String(widthValues[scid]).trim() === '') {
-            toast.error('Please enter width for selected models');
-            return false;
-        }
-        if (!sizeValues[scid] || String(sizeValues[scid]).trim() === '') {
-            toast.error('Please select size for selected models');
-            return false;
-        }
+    if (!widthValues[subCategoryId] || String(widthValues[subCategoryId]).trim() === '') {
+        toast.error('Please enter width for selected model');
+        return false;
+    }
+    if (!sizeValues[subCategoryId] || String(sizeValues[subCategoryId]).trim() === '') {
+        toast.error('Please select size for selected model');
+        return false;
     }
 
     if (discount > subTotal) {
@@ -451,8 +443,8 @@ const buildMeasurementPayload = () => {
         account_id: customerId,
         // send imploded width/size in the order of selected subcategories (models)
         // Flatten all group widths/sizes for all subcategories (pipe for groups, comma for subcategories)
-        width: subCategoryIds.map(scid => (Array.isArray(widthValues[scid]) ? widthValues[scid].join('|') : String(widthValues[scid] || ''))).join(','),
-        size: subCategoryIds.map(scid => (Array.isArray(sizeValues[scid]) ? sizeValues[scid].join('|') : String(sizeValues[scid] || ''))).join(','),
+        width: Array.isArray(widthValues[subCategoryId]) ? widthValues[subCategoryId].join('|') : String(widthValues[subCategoryId] || ''),
+        size: Array.isArray(sizeValues[subCategoryId]) ? sizeValues[subCategoryId].join('|') : String(sizeValues[subCategoryId] || ''),
        
         customer_mobile: "",
         other_discount: discount,
@@ -465,14 +457,12 @@ const buildMeasurementPayload = () => {
         service_charge: serviceCharge || 0,
 
 
-        // prefer single category_id when exactly one selected for backward compatibility
-        category_id: selectedCategoryIds.length === 1 ? selectedCategoryIds[0] : null,
-        category_ids: selectedCategoryIds,
+        // single category_id
+        category_id: selectedCategoryId,
         measurements: buildMeasurementPayload(),
 
         items: buildItemsPayload(),
-        sub_category_id: subCategoryIds.length === 1 ? subCategoryIds[0] : null,
-        sub_category_ids: subCategoryIds,
+        sub_category_id: subCategoryId,
         comboOffers: [],
         payment_method:
             paymentMethod === "cash"
@@ -525,7 +515,7 @@ const buildMeasurementPayload = () => {
 
 
     // derive a primary category id for components that expect a single category
-    const primaryCategoryId = selectedCategoryIds && selectedCategoryIds.length > 0 ? selectedCategoryIds[0] : null;
+    const primaryCategoryId = selectedCategoryId || null;
 
     return (
         <div className="main-wrapper">
@@ -586,15 +576,15 @@ const buildMeasurementPayload = () => {
                                 </div>
                                 {/* CategorySidebar just above model selection */}
                                 <div className="mb-1" style={{ marginBottom: '4px' }}>
-                                    <CategorySidebar selectedId={selectedCategoryIds} onSelect={(ids) => setSelectedCategoryIds(ids)} />
+                                    <CategorySidebar selectedId={selectedCategoryId} onSelect={setSelectedCategoryId} />
                                 </div>
 
                                 {primaryCategoryId && (
                                     <div className="mb-1" style={{ marginBottom: '4px' }}>
                                         <SubCategorySelect
-                                            categoryId={selectedCategoryIds}
-                                            selectedSubId={subCategoryIds}
-                                            onSelect={setSubCategoryIds}
+                                            categoryId={selectedCategoryId}
+                                            selectedSubId={subCategoryId}
+                                            onSelect={setSubCategoryId}
                                         />
                                         {/* Per-model (sub-category) width/size inputs (single input, no add/remove) */}
                                         {/* Width/Size inputs are now inside the Measurements card below */}
@@ -605,16 +595,16 @@ const buildMeasurementPayload = () => {
                                 
                               
 
-            {measurementsInstances.length > 0 && selectedCategoryIds.length > 0 && subCategoryIds.length > 0 && (
+            {measurementsInstances.length > 0 && selectedCategoryId && subCategoryId && (
                 <div className="card mt-2 p-2">
                     <h6 className="fw-bold mb-2">Measurements</h6>
-                    {/* Group measurements by selected subcategory (model) */}
-                    {subCategoryIds.map(scid => {
+                    {/* Only one subcategory (model) */}
+                    {(() => {
+                        const scid = subCategoryId;
                         const subMeasurements = measurementsInstances.filter(mi => Number(mi.subcategory_id) === Number(scid));
                         const sub = availableSubCategories[scid] || {};
                         const catName = props?.categories?.find(c => Number(c.id) === Number(sub.measurement_category_id))?.name || (sub.measurement_category_id ? `Category ${sub.measurement_category_id}` : 'Category');
                         const subName = sub.name || `Model ${scid}`;
-                        // Add quantity input for each subcategory
                         return (
                             <div key={`grp-${scid}`} className="mb-3">
                                 <div className="fw-bold mb-1">{subName}</div>
@@ -681,7 +671,7 @@ const buildMeasurementPayload = () => {
                                 </div>
                             </div>
                         );
-                    })}
+                    })()}
                 </div>
             )}
 
@@ -689,7 +679,7 @@ const buildMeasurementPayload = () => {
 
 
                             <div className="mb-2">
-                                <label className="fw-bold mb-1">Employee</label>
+                                <label className="fw-bold mb-1">Tailor</label>
                                 <EmployeeSelect value={employeeId} onChange={setEmployeeId} />
                             </div>
                             <div
@@ -737,6 +727,9 @@ const buildMeasurementPayload = () => {
                                         >
                                             <div>
                                                 <h6>{item.name}</h6>
+                                                <div className="text-muted small">
+                                                    Model: {item.sub_category_name || (item.sub_category_id ? `ID: ${item.sub_category_id}` : '-')}
+                                                </div>
                                                 <p className="text-success">₹{item.total.toFixed(2)}</p>
                                             </div>
                                             <div className="d-flex align-items-center gap-2">
@@ -794,6 +787,9 @@ const buildMeasurementPayload = () => {
                                                                 <div className="mb-2">
                                                                     <label className="form-label">Product</label>
                                                                     <input type="text" className="form-control form-control-sm" value={editingItem.name} readOnly />
+                                                                    <div className="text-muted small mt-1">
+                                                                        Model: {editingItem.sub_category_name || (editingItem.sub_category_id ? `ID: ${editingItem.sub_category_id}` : '-')}
+                                                                    </div>
                                                                 </div>
                                                                 <div className="row g-2">
                                                                     <div className="col-6">

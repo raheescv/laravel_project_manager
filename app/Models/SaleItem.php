@@ -14,6 +14,8 @@ class SaleItem extends Model implements AuditableContracts
 
     protected $fillable = [
         'sale_id',
+        'category_id',
+        'subcategory_id',
         'employee_id',
         'assistant_id',
         'inventory_id',

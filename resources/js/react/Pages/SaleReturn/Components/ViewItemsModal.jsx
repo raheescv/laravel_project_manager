@@ -45,6 +45,8 @@ export default function ViewItemsModal({ items, onClose, onUpdate, onRemove, emp
                                     <tr>
                                         <th>SL No</th>
                                         <th>Product</th>
+                                        <th>Category</th>
+                                        <th>Model</th>
                                         <th className="text-end">Unit Price</th>
                                         <th className="text-end">Quantity</th>
                                         <th className="text-end">Discount</th>
@@ -58,6 +60,8 @@ export default function ViewItemsModal({ items, onClose, onUpdate, onRemove, emp
                                         <tr key={item.id}>
                                             <td>{idx + 1}</td>
                                             <td>{item.name}</td>
+                                            <td>{item.category_name ? item.category_name : (item.category_id ? `ID: ${item.category_id}` : '-')}</td>
+                                            <td>{item.sub_category_name ? item.sub_category_name : (item.sub_category_id ? `ID: ${item.sub_category_id}` : '-')}</td>
                                             <td>
                                                 <input
                                                     type="number"
@@ -114,6 +118,62 @@ export default function ViewItemsModal({ items, onClose, onUpdate, onRemove, emp
                         <button className="btn btn-secondary" onClick={onClose}>Cancel</button>
                         <button className="btn btn-primary"  onClick={onClose}>Submit</button>
                          
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+}
+
+export function EditItemModal({ item, onSave }) {
+    if (!item) return null;
+
+    function update(key, value) {
+        onSave({ ...item, [key]: value });
+    }
+
+    return (
+        <div className="modal fade show d-block">
+            <div className="modal-dialog">
+                <div className="modal-content">
+                    <div className="modal-header">
+                        <h5>Edit Item</h5>
+                    </div>
+
+                    <div className="modal-body">
+                        <div className="mb-2">
+                            <label className="form-label">Product</label>
+                            <input className="form-control" value={item.name} readOnly />
+                        </div>
+                        <div className="mb-2">
+                            <label className="form-label">Category</label>
+                            <input className="form-control" value={item.category_name || (item.category_id ? `ID: ${item.category_id}` : '')} readOnly />
+                        </div>
+                        <div className="mb-2">
+                            <label className="form-label">Model</label>
+                            <input className="form-control" value={item.sub_category_name || (item.sub_category_id ? `ID: ${item.sub_category_id}` : '')} readOnly />
+                        </div>
+                        <input
+                            className="form-control mt-2"
+                            value={item.unit_price}
+                            onChange={e => update("unit_price", e.target.value)}
+                        />
+                        <input
+                            className="form-control mt-2"
+                            value={item.discount}
+                            onChange={e => update("discount", e.target.value)}
+                        />
+                        <input
+                            className="form-control mt-2"
+                            value={item.quantity}
+                            onChange={e => update("quantity", e.target.value)}
+                        />
+                    </div>
+
+                    <div className="modal-footer">
+                        <button className="btn btn-primary" onClick={() => onSave(item)}>
+                            Save
+                        </button>
                     </div>
                 </div>
             </div>

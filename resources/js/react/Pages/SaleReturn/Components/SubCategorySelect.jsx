@@ -22,12 +22,11 @@ export default function SubCategorySelect({ categoryId, selectedSubId, onSelect 
             .finally(() => setLoading(false));
     }, [categoryId]);
 
-    // Normalize selectedSubId to array for multi-select support
-    const selectedArray = Array.isArray(selectedSubId) ? selectedSubId.map(Number) : (selectedSubId ? [Number(selectedSubId)] : []);
+    // Only allow one subcategory to be selected at a time
+    const selectedId = selectedSubId ? Number(selectedSubId) : null;
 
-    const handleToggle = (id) => {
-        const next = selectedArray.includes(id) ? selectedArray.filter(i => i !== id) : [...selectedArray, id];
-        onSelect?.(next);
+    const handleSelect = (id) => {
+        onSelect?.(id);
     };
 
     return (
@@ -42,17 +41,18 @@ export default function SubCategorySelect({ categoryId, selectedSubId, onSelect 
                         <div key={s.id} className="form-check">
                             <input
                                 className="form-check-input"
-                                type="checkbox"
+                                type="radio"
+                                name="subcategory"
                                 id={`sc-${s.id}`}
-                                checked={selectedArray.includes(Number(s.id))}
-                                onChange={() => handleToggle(Number(s.id))}
+                                checked={selectedId === Number(s.id)}
+                                onChange={() => handleSelect(Number(s.id))}
                             />
                             <label className="form-check-label" htmlFor={`sc-${s.id}`}>{s.name}</label>
                         </div>
                     ))
                 )}
             </div>
-            <small className="text-muted">Select one or more models</small>
+            <small className="text-muted">Select one model</small>
         </div>
     );
 }

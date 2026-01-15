@@ -6,21 +6,18 @@ export default function CategorySidebar({ selectedId, onSelect }) {
 
     useEffect(() => {
         let mounted = true;
-        axios.get("/categories/categorie").then((res) => {
-            if (!mounted) return;
-            setCategories(res.data || []);
-        }).catch(() => {
-            setCategories([]);
-        });
+
+        axios.get("/categories/categorie")
+            .then((res) => {
+                if (!mounted) return;
+                setCategories(res.data || []);
+            })
+            .catch(() => setCategories([]));
 
         return () => { mounted = false; };
     }, []);
 
-    // selectedId can be a number or an array of numbers
-    const isSelected = (id) => {
-        if (Array.isArray(selectedId)) return selectedId.includes(Number(id));
-        return Number(selectedId) === Number(id);
-    };
+    const isSelected = (id) => Number(selectedId) === Number(id);
 
     return (
         <aside className="categories-sidebar h-100" style={{ minHeight: '8vh', margin: 0, padding: 0 }}>
@@ -31,18 +28,10 @@ export default function CategorySidebar({ selectedId, onSelect }) {
                         {categories.map((c) => (
                             <label key={c.id} className="list-group-item d-flex align-items-center" style={{ cursor: 'pointer', margin: 0, padding: '2px 0' }}>
                                 <input
-                                    type="checkbox"
+                                    type="radio"
+                                    name="category"
                                     checked={isSelected(c.id)}
-                                    onChange={() => {
-                                        if (Array.isArray(selectedId)) {
-                                            const idNum = Number(c.id);
-                                            const exists = selectedId.includes(idNum);
-                                            const next = exists ? selectedId.filter(i => i !== idNum) : [...selectedId, idNum];
-                                            onSelect?.(next);
-                                        } else {
-                                            onSelect?.([Number(c.id)]);
-                                        }
-                                    }}
+                                    onChange={() => onSelect?.(Number(c.id))}
                                     style={{ marginRight: 8 }}
                                 />
                                 {c.name}
