@@ -605,6 +605,13 @@ class SaleController extends Controller
         return response()->json($list);
     }
 
+     public function get_salecategoryinvoice(Request $request)
+    {
+        $list = (new Sale())->s($request->all());
+
+        return response()->json($list);
+    }
+
     public function dayManagement(Request $request)
     {
         return view('sale.day-management');

@@ -56,7 +56,7 @@ export default function EmployeeSelect({ value = null, onChange }) {
 
     return (
         <select ref={selectRef} className="form-control">
-            <option value="">Select Tailor</option>
+            <option value="">Select Employee</option>
         </select>
     );
 }

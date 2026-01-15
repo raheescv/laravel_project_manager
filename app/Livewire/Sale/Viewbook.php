@@ -61,11 +61,22 @@ class Viewbook extends Component
 
         $item_ids = [];
 
-        // Map sale items
-        $this->items = $this->sale->items->mapWithKeys(function ($item) use (&$item_ids) {
+        // Map sale items with category/subcategory names
+        $categoryIds = $this->sale->items->pluck('category_id')->unique()->filter()->values()->all();
+        $subCategoryIds = $this->sale->items->pluck('subcategory_id')->unique()->filter()->values()->all();
+        $categoryNames = $categoryIds ? \App\Models\MeasurementCategory::whereIn('id', $categoryIds)->pluck('name', 'id')->toArray() : [];
+        $subCategoryNames = $subCategoryIds ? \App\Models\MeasurementSubCategory::whereIn('id', $subCategoryIds)->pluck('name', 'id')->toArray() : [];
+
+        $this->items = $this->sale->items->mapWithKeys(function ($item) use (&$item_ids, $categoryNames, $subCategoryNames) {
             $key = $item['employee_id'] . '-' . $item['inventory_id'];
             $item_ids[] = $item['id'];
-
+            $subCatName = $subCategoryNames[$item['subcategory_id']] ?? null;
+            if (empty($subCatName) && !empty($item['subcategory_id'])) {
+                $subCatName = 'ID: ' . $item['subcategory_id'];
+            }
+            if (empty($subCatName)) {
+                $subCatName = '-';
+            }
             return [
                 $key => [
                     'id' => $item['id'],
@@ -86,6 +97,10 @@ class Viewbook extends Component
                     'total' => $item['total'],
                     'effective_total' => $item['effective_total'],
                     'created_by' => $item['created_by'],
+                    'category_id' => $item['category_id'] ?? null,
+                    'category_name' => $categoryNames[$item['category_id']] ?? '-',
+                    'sub_category_id' => $item['sub_category_id'] ?? null,
+                    'sub_category_name' => $subCatName,
                 ],
             ];
         })->toArray();

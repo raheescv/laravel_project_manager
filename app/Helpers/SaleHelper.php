@@ -57,6 +57,64 @@ class SaleHelper
         return $htmlContent;
     }
 
+
+    public function categorysaleInvoice($saleId, $categoryId, $method = 'pdf')
+    {
+        $sale = Sale::find($saleId);
+        if (! $sale) {
+            return redirect(route('sale::index'));
+        }
+        $grand_total = str_pad(intval($sale->grand_total).'00', 6, '0', STR_PAD_LEFT);
+        $barcode_string = '229919'.$grand_total;
+        $checkDigit = $this->checkDigitFunction($barcode_string);
+        $barcode_string .= $checkDigit;
+
+        $thermal_printer_style = Configuration::where('key', 'thermal_printer_style')->value('value') ?? 'with_arabic';
+        $gst_no = Configuration::where('key', 'gst_no')->value('value') ?? null;
+        $thermal_printer_footer_english = Configuration::where('key', 'thermal_printer_footer_english')->value('value');
+        $thermal_printer_footer_arabic = Configuration::where('key', 'thermal_printer_footer_arabic')->value('value');
+        $enable_discount_in_print = Configuration::where('key', 'enable_discount_in_print')->value('value');
+        $enable_total_quantity_in_print = Configuration::where('key', 'enable_total_quantity_in_print')->value('value');
+        $enable_logo_in_print = Configuration::where('key', 'enable_logo_in_print')->value('value');
+        $enable_barcode_in_print = Configuration::where('key', 'enable_barcode_in_print')->value('value') ?? 'yes';
+        $print_item_label = Configuration::where('key', 'print_item_label')->value('value') ?? 'product';
+        $print_quantity_label = Configuration::where('key', 'print_quantity_label')->value('value') ?? 'quantity';
+        $barcodeSettings = Configuration::where('key', 'barcode_configurations')->value('value');
+        $barcodeSettings = $barcodeSettings ? json_decode($barcodeSettings, true) : [];
+        $barcodeType = $barcodeSettings['barcode']['type'] ?? 'C128';
+        $payments = $sale->payments()->with('paymentMethod:id,name,alias_name')->get(['amount', 'payment_method_id'])->toArray();
+
+        // Fetch customer measurements for this sale and category
+        $customerMeasurements = [];
+        if (class_exists('App\\Models\\CustomerMeasurement')) {
+            $customerMeasurements = \App\Models\CustomerMeasurement::where('sale_id', $saleId)
+                ->where('category_id', $categoryId)
+                ->with('template')
+                ->get();
+        }
+
+        $data = compact(
+            'payments',
+            'sale',
+            'gst_no',
+            'thermal_printer_style',
+            'thermal_printer_footer_english',
+            'thermal_printer_footer_arabic',
+            'enable_discount_in_print',
+            'enable_total_quantity_in_print',
+            'enable_logo_in_print',
+            'enable_barcode_in_print',
+            'print_item_label',
+            'print_quantity_label',
+            'barcode_string',
+            'barcodeType',
+            'customerMeasurements',
+            'categoryId',
+        );
+        $htmlContent = View::make('sale.printcategory', $data)->render();
+
+        return $htmlContent;
+    }
     public function convertHtmlToImage($htmlContent, $title)
     {
         $tempHtmlFile = storage_path('app/temp.html');

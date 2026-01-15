@@ -271,6 +271,32 @@ class Sale extends Model implements AuditableContracts
             'invoice_no' => 'General',
             'reference_no' => null,
             'id' => 0,
+            
+        ]);
+        $return['items'] = $self;
+
+        return $return;
+    }
+     public function getDropDownListforcategory($request)
+    {
+        $self = self::orderBy('invoice_no');
+        $self = $self->when($request['query'] ?? '', function ($query, $value) {
+            return $query->where(function ($q) use ($value): void {
+                $value = trim($value);
+                $q->where('sales.invoice_no', 'like', "%{$value}%")->orWhere('sales.reference_no', 'like', "%{$value}%");
+            });
+        });
+        $self = $self->when($request['account_id'] ?? '', function ($query, $value) {
+            return $query->where('account_id', $value);
+        });
+        $self = $self->limit(10);
+        $self = $self->get(['invoice_no', 'reference_no', 'id', 'category_id', 'sub_category_id'])->toArray();
+        array_unshift($self, [
+            'invoice_no' => 'General',
+            'reference_no' => null,
+            'id' => 0,
+            'category_id' => null,
+            'sub_category_id' => null,
         ]);
         $return['items'] = $self;
 

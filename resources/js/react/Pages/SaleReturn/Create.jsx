@@ -286,6 +286,27 @@ export default function Create() {
                 const sub = availableSubCategories[subCategoryId];
                 subCategoryName = sub?.name || null;
             }
+
+            // Collect current measurements for this subcategory
+            const measurements = [];
+            measurementsInstances.filter(mi => Number(mi.subcategory_id) === Number(subCategoryId)).forEach(inst => {
+                const scid = inst.subcategory_id;
+                const qty = measurementCounts[scid] || 1;
+                const sizeVal = Array.isArray(sizeValues[scid]) ? (sizeValues[scid][0] || '') : (sizeValues[scid] || '');
+                const widthVal = Array.isArray(widthValues[scid]) ? (widthValues[scid][0] || '') : (widthValues[scid] || '');
+                if (measurementValues[inst.instanceKey] !== undefined && String(measurementValues[inst.instanceKey]).trim() !== '') {
+                    measurements.push({
+                        measurement_template_id: Number(inst.id),
+                        value: measurementValues[inst.instanceKey],
+                        category_id: inst.category_id || null,
+                        sub_category_id: scid || null,
+                        size: sizeVal,
+                        width: widthVal,
+                        quantity: qty,
+                    });
+                }
+            });
+
             if (exists) {
                 return prev.map((i) =>
                     i.id === product.id
@@ -306,6 +327,7 @@ export default function Create() {
                     category_name: categoryName,
                     sub_category_id: subCategoryId,
                     sub_category_name: subCategoryName,
+                    measurements, // attach measurements to cart item
                 },
             ];
         });
@@ -408,24 +430,13 @@ const validateSale = () => {
 };
 
 
-// 🔹 Build measurement payload
+// 🔹 Build measurement payload from all cart items
 const buildMeasurementPayload = () => {
-    // Build payload from per-instance measurement values, include quantity field
     const payload = [];
-    measurementsInstances.forEach(inst => {
-        const scid = inst.subcategory_id;
-        const qty = measurementCounts[scid] || 1;
-        const sizeVal = Array.isArray(sizeValues[scid]) ? (sizeValues[scid][0] || '') : (sizeValues[scid] || '');
-        const widthVal = Array.isArray(widthValues[scid]) ? (widthValues[scid][0] || '') : (widthValues[scid] || '');
-        if (measurementValues[inst.instanceKey] !== undefined && String(measurementValues[inst.instanceKey]).trim() !== '') {
-            payload.push({
-                measurement_template_id: Number(inst.id),
-                value: measurementValues[inst.instanceKey],
-                category_id: inst.category_id || null,
-                sub_category_id: scid || null,
-                size: sizeVal,
-                width: widthVal,
-                quantity: qty,
+    cartItems.forEach(item => {
+        if (Array.isArray(item.measurements)) {
+            item.measurements.forEach(m => {
+                payload.push({ ...m });
             });
         }
     });
@@ -700,7 +711,7 @@ const buildMeasurementPayload = () => {
 
 
                             <div className="mb-2">
-                                <label className="fw-bold mb-1">Tailor</label>
+                                <label className="fw-bold mb-1">Employee</label>
                                 <EmployeeSelect value={employeeId} onChange={setEmployeeId} />
                             </div>
                             <div
@@ -816,7 +827,7 @@ const buildMeasurementPayload = () => {
                                                                     <div className="col-6">
                                                                         <label className="form-label">Quantity</label>
                                                                         <input
-                                                                            type="number"
+                                                                            type="hidden"
                                                                             className="form-control form-control-sm"
                                                                             min={1}
                                                                             value={editingValues.quantity}
