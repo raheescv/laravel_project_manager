@@ -34,6 +34,9 @@ Route::middleware('auth')->group(function (): void {
         Route::get('view/{id}', 'view')->name('view')->can('sale.view');
          Route::get('view-booking/{id}', 'view_booking')->name('view_booking')->can('sale.booking_view');
         Route::get('invoices', 'get')->name('invoice-list');
+         Route::get('invoicescategory', 'get_salecategoryinvoice')->name('invoicecategory-list');
+        
+        
         Route::get('receipts', 'receipts')->name('receipts')->can('sale.receipts');
          Route::get('booking-receipts', 'booking_receipts')->name('booking_receipts')->can('sale.booking_receipts');
 
