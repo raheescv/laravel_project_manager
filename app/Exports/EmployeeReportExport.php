@@ -47,7 +47,7 @@ class EmployeeDetailSheet implements FromCollection, WithColumnFormatting, WithE
             ->select(
                 'users.name as employee',
                 'products.name as product',
-                DB::raw('SUM(sale_items.quantity) as total_quantity'),
+                DB::raw('SUM(sale_items.base_unit_quantity) - COALESCE(MAX(returns.return_quantity), 0) as total_quantity'),
                 DB::raw('SUM(sale_items.total) as total_amount'),
                 DB::raw('COALESCE(MAX(returns.return_amount), 0) as return_amount'),
                 DB::raw('SUM(sale_items.total) - COALESCE(MAX(returns.return_amount), 0) as net_amount'),
