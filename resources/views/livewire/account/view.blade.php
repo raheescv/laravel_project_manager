@@ -102,7 +102,7 @@
                                             <td> {{ $item->journal_id }} </td>
                                             <td>{{ systemDate($item->journal->date) }}</td>
                                             <td>
-                                                <a href="{{ route('account::view', $item->account_id) }}" class="text-decoration-none">
+                                                <a target="_blank" href="{{ route('account::view', $item->account_id) . '?from_date=' . $item->journal->date . '&to_date=' . $item->journal->date }}" class="text-decoration-none">
                                                     {{ $item->account->name }}
                                                 </a>
                                             </td>
@@ -116,6 +116,10 @@
 
                                                     @case('SaleReturn')
                                                         <a href="{{ route('sale_return::view', $item->model_id) }}">{{ $item->description }}</a>
+                                                    @break
+
+                                                    @case('SalePayment')
+                                                        <a href="{{ route('sale::view', $item->journal?->model_id) }}">{{ $item->description }}</a>
                                                     @break
 
                                                     @default

@@ -21,12 +21,10 @@ class SyncCounterAccountsAction
             return;
         }
 
-        $entries = JournalEntry::where('journal_id', $journalId)->get();
-
+        $entries = JournalEntry::where('journal_id', $journalId)->where('counter_account_id', '=', 0)->orWhereNull('counter_account_id')->get();
         if ($entries->isEmpty()) {
             return;
         }
-
         foreach ($entries as $entry) {
             $counterAccountsData = [];
 

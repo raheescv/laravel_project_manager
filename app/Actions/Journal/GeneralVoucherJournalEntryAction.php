@@ -20,7 +20,7 @@ class GeneralVoucherJournalEntryAction
                     $entries = [];
                     $entries[] = [
                         'account_id' => $data['debit_id'],
-                        'counter_account_id' => $data['credit_id'],
+                        // 'counter_account_id' => $data['credit_id'],
                         'debit' => $data['amount'],
                         'credit' => 0,
                         'created_by' => $userId,
@@ -28,7 +28,7 @@ class GeneralVoucherJournalEntryAction
                     ];
                     $entries[] = [
                         'account_id' => $data['credit_id'],
-                        'counter_account_id' => $data['debit_id'],
+                        // 'counter_account_id' => $data['debit_id'],
                         'debit' => 0,
                         'credit' => $data['amount'],
                         'created_by' => $userId,
@@ -45,7 +45,7 @@ class GeneralVoucherJournalEntryAction
                     if (! isset($entry['counter_account_id'])) {
                         foreach ($entries as $otherIndex => $otherEntry) {
                             if ($index !== $otherIndex && (($entry['debit'] > 0 && $otherEntry['credit'] > 0) || ($entry['credit'] > 0 && $otherEntry['debit'] > 0))) {
-                                $entry['counter_account_id'] = $otherEntry['account_id'];
+                                // $entry['counter_account_id'] = $otherEntry['account_id'];
                                 break;
                             }
                         }
@@ -53,7 +53,6 @@ class GeneralVoucherJournalEntryAction
                 }
                 $data['entries'] = $entries;
             }
-
             if ($id) {
                 $response = (new UpdateAction())->execute($data, $id);
             } else {
