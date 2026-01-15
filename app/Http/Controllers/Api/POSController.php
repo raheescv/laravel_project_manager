@@ -291,7 +291,7 @@ public function getMeasurementTemplates($categoryId)
 {
     try {
         $templates = MeasurementTemplate::where('category_id', $categoryId)
-            ->select('id', 'name')
+            ->select('id', 'name', 'values') // include values field
             ->orderBy('id')
             ->get();
 

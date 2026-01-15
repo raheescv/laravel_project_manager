@@ -8,6 +8,7 @@ use App\Models\MeasurementCategory;
 use App\Models\MeasurementTemplate;
 use Illuminate\Support\Facades\DB;
 
+
 class MeasurementTemplateForm extends Component
 {
     use WithPagination;
@@ -15,6 +16,7 @@ class MeasurementTemplateForm extends Component
     public $category_id;
     public $template_name;
     public $template_id = null;
+    public $values = '';
 
     public $limit = 10;
     public $search = '';
@@ -22,6 +24,8 @@ class MeasurementTemplateForm extends Component
     public $sortDirection = 'desc';
 
     public $showModal = false;
+    public $showValueModal = false;
+    public $valueModalTemplateId = null;
 
     // MULTI DELETE
     public $selectAll = false;
@@ -31,7 +35,7 @@ class MeasurementTemplateForm extends Component
 
     public function mount($category_id)
     {
-       $category = MeasurementCategory::findOrFail($category_id);
+        $category = MeasurementCategory::findOrFail($category_id);
         $this->category_id = $category->id;
     }
 
@@ -60,7 +64,7 @@ class MeasurementTemplateForm extends Component
 
     public function openModal()
     {
-        $this->reset(['template_name', 'template_id']);
+        $this->reset(['template_name', 'template_id', 'values']);
         $this->showModal = true;
     }
 
@@ -75,43 +79,69 @@ class MeasurementTemplateForm extends Component
         if ($template) {
             $this->template_id = $template->id;
             $this->template_name = $template->name;
+            $this->values = $template->values;
             $this->showModal = true;
         }
     }
 
-    /* ================= SAVE ================= */
-
-public function save($saveNew = false)
-{
-    $this->validate([
-        'template_name' => 'required|string|max:255',
-        'category_id' => 'required',
-    ]);
-
-    // Temporarily disable FK checks
-    DB::statement('SET FOREIGN_KEY_CHECKS=0;');
-
-    if ($this->template_id) {
-        MeasurementTemplate::where('id', $this->template_id)
-            ->update(['name' => $this->template_name]);
-    } else {
-        MeasurementTemplate::create([
-            'category_id' => $this->category_id, // can be from your other category table
-            'name' => $this->template_name,
-        ]);
+    public function openValueModal($templateId)
+    {
+        $template = MeasurementTemplate::find($templateId);
+        if ($template) {
+            $this->valueModalTemplateId = $templateId;
+            $this->values = $template->values;
+            $this->showValueModal = true;
+        }
     }
 
-    // Re-enable FK checks
-    DB::statement('SET FOREIGN_KEY_CHECKS=1;');
+    public function saveValues()
+    {
+        $template = MeasurementTemplate::find($this->valueModalTemplateId);
+        if ($template) {
+            $template->values = $this->values;
+            $template->save();
+            session()->flash('success', 'Values saved successfully.');
+        }
+        $this->showValueModal = false;
+        $this->valueModalTemplateId = null;
+        $this->values = '';
+    }
 
-    session()->flash('success', 'Template saved successfully.');
+    /* ================= SAVE ================= */
 
-    $saveNew
-        ? $this->reset(['template_name', 'template_id'])
-        : $this->closeModal();
+    public function save($saveNew = false)
+    {
+        $this->validate([
+            'template_name' => 'required|string|max:255',
+            'category_id' => 'required',
+        ]);
 
-    $this->resetPage();
-}
+        DB::statement('SET FOREIGN_KEY_CHECKS=0;');
+
+        if ($this->template_id) {
+            MeasurementTemplate::where('id', $this->template_id)
+                ->update([
+                    'name' => $this->template_name,
+                    'values' => $this->values,
+                ]);
+        } else {
+            MeasurementTemplate::create([
+                'category_id' => $this->category_id,
+                'name' => $this->template_name,
+                'values' => $this->values,
+            ]);
+        }
+
+        DB::statement('SET FOREIGN_KEY_CHECKS=1;');
+
+        session()->flash('success', 'Template saved successfully.');
+
+        $saveNew
+            ? $this->reset(['template_name', 'template_id', 'values'])
+            : $this->closeModal();
+
+        $this->resetPage();
+    }
 
 
 

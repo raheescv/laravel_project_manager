@@ -230,7 +230,8 @@ export default function Create() {
                     subcategory_id: subCategoryId,
                     subcategory_name: sub.name || `Model ${subCategoryId}`,
                     category_id: cid,
-                    instanceKey: `${subCategoryId}-${t.id}`
+                    instanceKey: `${subCategoryId}-${t.id}`,
+                    values: t.values || t.template_values || '' // ensure values field is present for dropdown logic
                 }));
                 setMeasurementsInstances(instances);
                 setMeasurementValues(prev => {
@@ -656,18 +657,38 @@ const buildMeasurementPayload = () => {
                                     </div>
                                 </div>
                                 <div className="row mb-2 align-items-end">
-                                    {subMeasurements.map(m => (
-                                        <div key={m.instanceKey} className="col-md-4 mb-2">
-                                            <label className="form-label">{m.name}</label>
-                                            <input
-                                                type="text"
-                                                className="form-control form-control-sm"
-                                                placeholder={`Enter ${m.name}`}
-                                                value={measurementValues[m.instanceKey] || ""}
-                                                onChange={(e) => setMeasurementValues(prev => ({ ...prev, [m.instanceKey]: e.target.value }))}
-                                            />
-                                        </div>
-                                    ))}
+                                    {subMeasurements.map(m => {
+                                        // Parse values from template (assume m.values is comma-separated string or undefined)
+                                        let options = [];
+                                        if (m.values && typeof m.values === 'string' && m.values.trim() !== '') {
+                                            options = m.values.split(',').map(v => v.trim()).filter(Boolean);
+                                        }
+                                        return (
+                                            <div key={m.instanceKey} className="col-md-4 mb-2">
+                                                <label className="form-label">{m.name}</label>
+                                                {options.length > 0 ? (
+                                                    <select
+                                                        className="form-select form-select-sm"
+                                                        value={measurementValues[m.instanceKey] || ""}
+                                                        onChange={e => setMeasurementValues(prev => ({ ...prev, [m.instanceKey]: e.target.value }))}
+                                                    >
+                                                        <option value="">Select {m.name}</option>
+                                                        {options.map(opt => (
+                                                            <option key={opt} value={opt}>{opt}</option>
+                                                        ))}
+                                                    </select>
+                                                ) : (
+                                                    <input
+                                                        type="text"
+                                                        className="form-control form-control-sm"
+                                                        placeholder={`Enter ${m.name}`}
+                                                        value={measurementValues[m.instanceKey] || ""}
+                                                        onChange={e => setMeasurementValues(prev => ({ ...prev, [m.instanceKey]: e.target.value }))}
+                                                    />
+                                                )}
+                                            </div>
+                                        );
+                                    })}
                                 </div>
                             </div>
                         );

@@ -87,7 +87,12 @@
 
                                 <td>{{ $templates->firstItem() + $i }}</td>
                                 <td>{{ $t->category?->name }}</td>
-                                <td>{{ $t->name }}</td>
+                                <td>
+                                    {{ $t->name }}
+                                    <button class="btn btn-xs btn-info ms-2" wire:click="openValueModal({{ $t->id }})">Add Values</button>
+                                    <br>
+                                    <span class="text-muted small">{{ $t->values ?: '-' }}</span>
+                                </td>
 
                                 <td>
                                     <button class="btn btn-sm btn-primary"
@@ -140,6 +145,12 @@
                         <input type="text"
                                wire:model.defer="template_name"
                                class="form-control">
+                        <div class="form-check mt-2">
+                            <input class="form-check-input" type="checkbox" wire:model.defer="multiple" id="multipleCheck">
+                            <label class="form-check-label" for="multipleCheck">
+                                Allow multiple values
+                            </label>
+                        </div>
                     </div>
 
                     <div class="modal-footer">
@@ -159,6 +170,30 @@
                         </button>
                     </div>
 
+                </div>
+            </div>
+        </div>
+    @endif
+
+    {{-- VALUE MODAL --}}
+    @if($showValueModal)
+        <div class="modal fade show d-block" style="background:rgba(0,0,0,.5)">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Add Values</h5>
+                        <button class="btn-close" wire:click="$set('showValueModal', false)"></button>
+                    </div>
+                    <form wire:submit.prevent="saveValues">
+                        <div class="modal-body">
+                            <label>Values (comma separated)</label>
+                            <input type="text" wire:model.defer="values" class="form-control" placeholder="e.g. 12,23,34">
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" wire:click="$set('showValueModal', false)">Cancel</button>
+                            <button type="submit" class="btn btn-primary">Save</button>
+                        </div>
+                    </form>
                 </div>
             </div>
         </div>
