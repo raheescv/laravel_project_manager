@@ -16,16 +16,12 @@ class SyncCounterAccountsAction
             return;
         }
 
-        // Get journal
         $journal = Journal::find($journalId);
         if (! $journal) {
             return;
         }
 
-        // Get all non-deleted entries for this journal
-        $entries = JournalEntry::where('journal_id', $journalId)
-            ->whereNull('deleted_at')
-            ->get();
+        $entries = JournalEntry::where('journal_id', $journalId)->get();
 
         if ($entries->isEmpty()) {
             return;
@@ -43,9 +39,11 @@ class SyncCounterAccountsAction
                 // Check if this is a counter account (opposite transaction type)
                 if (($entry->debit > 0 && $otherEntry->credit > 0) ||
                     ($entry->credit > 0 && $otherEntry->debit > 0)) {
-                    // Include tenant_id in pivot data
+                    // Include tenant_id, journal_id, and branch_id in pivot data
                     $counterAccountsData[$otherEntry->account_id] = [
                         'tenant_id' => $entry->tenant_id,
+                        'journal_id' => $journal->id,
+                        'branch_id' => $entry->branch_id,
                     ];
                 }
             }
