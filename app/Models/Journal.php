@@ -51,6 +51,11 @@ class Journal extends Model implements AuditableContracts
         return $this->hasMany(JournalEntry::class);
     }
 
+    public function entriesCounterAccounts()
+    {
+        return $this->hasMany(JournalEntryCounterAccount::class, 'journal_id');
+    }
+
     public function sale()
     {
         return $this->belongsTo(Sale::class, 'model_id');

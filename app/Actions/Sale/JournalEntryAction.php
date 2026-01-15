@@ -15,6 +15,7 @@ class JournalEntryAction
         try {
             $this->userId = $userId;
             $data = [
+                'tenant_id' => $sale->tenant_id,
                 'date' => $sale->date,
                 'branch_id' => $sale->branch_id,
                 'description' => 'Sale:'.$sale->invoice_no,

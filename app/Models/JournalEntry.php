@@ -90,7 +90,7 @@ class JournalEntry extends Model implements AuditableContracts
 
     public function counterAccounts(): BelongsToMany
     {
-        return $this->belongsToMany(Account::class, 'journal_entry_counter_accounts', 'journal_entry_id', 'counter_account_id')->withPivot('tenant_id');
+        return $this->belongsToMany(Account::class, 'journal_entry_counter_accounts', 'journal_entry_id', 'counter_account_id')->withPivot('tenant_id', 'branch_id', 'journal_id');
     }
 
     public function tenant(): BelongsTo
