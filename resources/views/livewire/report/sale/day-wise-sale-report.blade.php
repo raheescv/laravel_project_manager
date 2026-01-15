@@ -118,7 +118,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="8" class="text-center py-4 text-muted">
+                                <td colspan="9" class="text-center py-4 text-muted">
                                     <i class="fa fa-inbox fa-2x mb-2 d-block"></i>
                                     No data available for the selected date range
                                 </td>
