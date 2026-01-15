@@ -89,7 +89,7 @@
     <div class="card-body p-0">
         <div class="table-responsive">
             <table class="table table-hover align-middle mb-0 border table-sm">
-                <thead class="bg-light">
+                <thead class="bg-light table-sm">
                     <tr class="text-capitalize">
                         <th class="border-bottom py-3">
                             <div class="d-flex align-items-center gap-2">

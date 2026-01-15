@@ -5,7 +5,7 @@ namespace App\Livewire\Account;
 use App\Exports\AccountViewExport;
 use App\Models\Account;
 use App\Models\JournalEntry;
-use App\Models\Models\Views\Ledger;
+use Exception;
 use Livewire\Component;
 use Livewire\WithPagination;
 use Maatwebsite\Excel\Facades\Excel;
@@ -47,6 +47,7 @@ class View extends Component
             'search' => '',
             'account_id' => $this->accountId,
             'branch_id' => session('branch_id'),
+            'filter_account_id' => request()->get('filter_account_id', ''),
         ];
         if (in_array($this->account->account_type, ['income', 'expense'])) {
             $this->excludeOpeningFromTotal = true;
@@ -59,14 +60,14 @@ class View extends Component
     {
         $start = date('Y-m-d', strtotime('-12 months'));
         $end = date('Y-m-d');
-        $this->lineChartData = Ledger::monthly_summary($start, $end, $this->accountId);
+        $this->lineChartData = JournalEntry::monthly_summary($start, $end, $this->accountId, session('branch_id'));
     }
 
     public function groupedChartData(): void
     {
         $this->groupedChartData = $this->dataFunction()
             ->select('account_id')
-            ->selectRaw('account_id, ROUND(SUM(debit),2) as debit, ROUND(SUM(credit),2) as credit')
+            ->selectRaw('account_id, SUM(debit) as debit, SUM(credit) as credit')
             ->groupBy('account_id')
             ->orderBy('account_id')
             ->get();
@@ -94,23 +95,18 @@ class View extends Component
         return $this->baseQuery()
             ->when($this->filter['search'] ?? '', fn ($query, $value) => $this->applySearchFilter($query, $value))
             ->when($this->filter['from_date'] ?? '', fn ($query, $value) => $this->applyFromDateFilter($query, $value))
-            ->when($this->filter['to_date'] ?? '', fn ($query, $value) => $this->applyToDateFilter($query, $value));
+            ->when($this->filter['to_date'] ?? '', fn ($query, $value) => $this->applyToDateFilter($query, $value))
+            ->when($this->filter['filter_account_id'] ?? '', fn ($query, $value) => $this->applyAccountFilter($query, $value));
     }
 
     private function baseQuery()
     {
         $accountId = $this->accountId;
+        $branchId = session('branch_id');
 
-        return JournalEntry::with('account')
-            ->where('branch_id', session('branch_id'))
-            ->where(function ($query) use ($accountId) {
-                // Check single counter_account_id (backward compatibility)
-                $query->where('counter_account_id', $accountId)
-                    // Also check pivot table for multiple counter accounts
-                    ->orWhereHas('counterAccounts', function ($q) use ($accountId) {
-                        $q->where('accounts.id', $accountId);
-                    });
-            });
+        return JournalEntry::with('account', 'journal')
+            ->where('branch_id', $branchId)
+            ->where('account_id', $accountId);
     }
 
     private function applySearchFilter($query, string $value)
@@ -127,12 +123,17 @@ class View extends Component
 
     private function applyFromDateFilter($query, string $value)
     {
-        return $query->where('date', '>=', date('Y-m-d', strtotime($value)));
+        return $query->whereDate('date', '>=', date('Y-m-d', strtotime($value)));
     }
 
     private function applyToDateFilter($query, string $value)
     {
-        return $query->where('date', '<=', date('Y-m-d', strtotime($value)));
+        return $query->whereDate('date', '<=', date('Y-m-d', strtotime($value)));
+    }
+
+    private function applyAccountFilter($query, string $value)
+    {
+        return $query->where('account_id', $value);
     }
 
     public function getOpeningBalance(): array
@@ -152,9 +153,8 @@ class View extends Component
     private function getOpeningBalanceQuery()
     {
         return $this->baseQuery()
-            ->when($this->filter['from_date'] ?? '', fn ($query, $value) => $query->where('date', '<', date('Y-m-d', strtotime($value)))
-            )
-            ->selectRaw('ROUND(SUM(debit),2) as debit, ROUND(SUM(credit),2) as credit');
+            ->whereDate('date', '<', $this->filter['from_date'])
+            ->selectRaw('SUM(debit) as debit, SUM(credit) as credit');
     }
 
     public function export()
@@ -162,11 +162,9 @@ class View extends Component
         try {
             $fileName = $this->generateExportFileName();
 
-            return Excel::download(
-                new AccountViewExport($this->account, $this->filter, $this->excludeOpeningFromTotal),
-                $fileName
-            );
-        } catch (\Exception $e) {
+            return Excel::download(new AccountViewExport($this->account, $this->filter, $this->excludeOpeningFromTotal), $fileName);
+
+        } catch (Exception $e) {
             $this->dispatch('error', ['message' => 'Export failed: '.$e->getMessage()]);
         }
     }
@@ -189,16 +187,12 @@ class View extends Component
         $total = $this->calculateTotals($totalRow);
         $openingBalance = $this->getOpeningBalance();
 
-        return view('livewire.account.view', [
-            'data' => $data,
-            'total' => $total,
-            'openingBalance' => $openingBalance,
-        ]);
+        return view('livewire.account.view', ['data' => $data, 'total' => $total, 'openingBalance' => $openingBalance]);
     }
 
     private function calculateTotals($query): array
     {
-        $totalRow = $query->selectRaw('ROUND(SUM(debit),2) as debit, ROUND(SUM(credit),2) as credit')->first();
+        $totalRow = $query->selectRaw('SUM(debit) as debit, SUM(credit) as credit')->first();
 
         return [
             'debit' => $totalRow->debit ?? 0,

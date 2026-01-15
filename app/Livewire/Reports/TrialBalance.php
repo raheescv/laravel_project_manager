@@ -81,8 +81,7 @@ class TrialBalance extends Component
 
     public function mount()
     {
-        $this->branches = Branch::pluck('name', 'id')->toArray();
-
+        $this->branch_id = session('branch_id');
         // Set default dates based on current month
         $this->start_date = Carbon::now()->startOfMonth()->format('Y-m-d');
         $this->end_date = Carbon::now()->endOfMonth()->format('Y-m-d');
@@ -182,11 +181,13 @@ class TrialBalance extends Component
             $debit = round((float) ($account->total_debit ?? 0), 2);
             $credit = round((float) ($account->total_credit ?? 0), 2);
 
+            $balance = round($debit - $credit, 2);
             $accountData = [
                 'code' => $account->account_code ?? null,
                 'name' => $account->account_name,
                 'debit' => $debit,
                 'credit' => $credit,
+                'balance' => $balance,
             ];
 
             switch ($account->account_type) {
@@ -343,6 +344,7 @@ class TrialBalance extends Component
 
     /**
      * Build tree structure for account type with categories
+     * Groups accounts by their account category
      */
     protected function buildTreeStructure(string $accountType, $accounts)
     {
@@ -362,23 +364,35 @@ class TrialBalance extends Component
             foreach ($typeAccounts as $account) {
                 $debit = round((float) ($account->total_debit ?? 0), 2);
                 $credit = round((float) ($account->total_credit ?? 0), 2);
+                $balance = round($debit - $credit, 2);
                 $uncategorized[] = [
                     'id' => $account->account_id,
                     'name' => $account->account_name,
                     'debit' => $debit,
                     'credit' => $credit,
+                    'balance' => $balance,
                 ];
             }
 
             return ['uncategorized' => $uncategorized];
         }
 
-        // Get categories with their hierarchy
+        // Get categories with their hierarchy - include parent categories even if they don't have direct accounts
         $categories = AccountCategory::whereIn('id', $categoryIds)
             ->with(['parent', 'children'])
             ->get();
 
-        // Build category map
+        // Also fetch parent categories that might not be directly referenced but are needed for hierarchy
+        $parentIds = $categories->pluck('parent_id')->filter()->unique();
+        if ($parentIds->isNotEmpty()) {
+            $parentCategories = AccountCategory::whereIn('id', $parentIds)
+                ->whereNotIn('id', $categoryIds)
+                ->with(['parent', 'children'])
+                ->get();
+            $categories = $categories->merge($parentCategories);
+        }
+
+        // Build category map and organize by hierarchy
         $categoryMap = [];
         $masterCategories = [];
         $subCategories = [];
@@ -387,17 +401,23 @@ class TrialBalance extends Component
             $categoryMap[$category->id] = $category;
 
             if ($category->parent_id) {
+                if (! isset($subCategories[$category->parent_id])) {
+                    $subCategories[$category->parent_id] = [];
+                }
                 $subCategories[$category->parent_id][] = $category;
             } else {
                 $masterCategories[$category->id] = $category;
             }
         }
 
-        // Build tree structure
+        // Build tree structure - ensure all accounts are grouped by category
         $tree = [];
+        $categorizedAccountIds = [];
 
-        // Process master categories
-        foreach ($masterCategories as $masterId => $masterCategory) {
+        // Process master categories in sorted order
+        $sortedMasterCategories = collect($masterCategories)->sortBy('name');
+
+        foreach ($sortedMasterCategories as $masterId => $masterCategory) {
             $masterDebit = 0;
             $masterCredit = 0;
             $groups = [];
@@ -410,18 +430,23 @@ class TrialBalance extends Component
                 $credit = round((float) ($account->total_credit ?? 0), 2);
                 $masterDebit += $debit;
                 $masterCredit += $credit;
+                $categorizedAccountIds[] = $account->account_id;
 
+                $balance = round($debit - $credit, 2);
                 $directAccounts[] = [
                     'id' => $account->account_id,
                     'name' => $account->account_name,
                     'debit' => $debit,
                     'credit' => $credit,
+                    'balance' => $balance,
                 ];
             }
 
-            // Process sub-categories (groups)
+            // Process sub-categories (groups) - sorted by name
             if (isset($subCategories[$masterId])) {
-                foreach ($subCategories[$masterId] as $subCategory) {
+                $sortedSubCategories = collect($subCategories[$masterId])->sortBy('name');
+
+                foreach ($sortedSubCategories as $subCategory) {
                     $groupDebit = 0;
                     $groupCredit = 0;
                     $groupAccounts = [];
@@ -434,60 +459,137 @@ class TrialBalance extends Component
                         $groupCredit += $credit;
                         $masterDebit += $debit;
                         $masterCredit += $credit;
+                        $categorizedAccountIds[] = $account->account_id;
 
+                        $balance = round($debit - $credit, 2);
                         $groupAccounts[] = [
                             'id' => $account->account_id,
                             'name' => $account->account_name,
                             'debit' => $debit,
                             'credit' => $credit,
+                            'balance' => $balance,
                         ];
                     }
 
                     if (! empty($groupAccounts)) {
+                        $groupBalance = round($groupDebit - $groupCredit, 2);
                         $groups[] = [
                             'id' => $subCategory->id,
                             'name' => $subCategory->name,
                             'debit' => $groupDebit,
                             'credit' => $groupCredit,
+                            'balance' => $groupBalance,
                             'accounts' => $groupAccounts,
                         ];
                     }
                 }
             }
 
+            // Only add master category if it has accounts or groups
             if (! empty($directAccounts) || ! empty($groups)) {
+                $masterBalance = round($masterDebit - $masterCredit, 2);
                 $tree[] = [
                     'id' => $masterCategory->id,
                     'name' => $masterCategory->name,
                     'debit' => $masterDebit,
                     'credit' => $masterCredit,
+                    'balance' => $masterBalance,
                     'groups' => $groups,
                     'directAccounts' => $directAccounts,
                 ];
             }
         }
 
-        // Handle uncategorized accounts (accounts without category_id or with invalid category_id)
-        $uncategorized = [];
-        $categorizedAccountIds = [];
+        // Handle sub-categories that might be orphaned (parent not in master categories but exists)
+        // This handles cases where a sub-category's parent exists but wasn't included above
+        foreach ($subCategories as $parentId => $subCats) {
+            // If parent is not in masterCategories but exists in categoryMap, it might be a nested category
+            if (! isset($masterCategories[$parentId]) && isset($categoryMap[$parentId])) {
+                $parentCategory = $categoryMap[$parentId];
 
-        // Collect all account IDs that are in categories
-        foreach ($tree as $item) {
-            if (isset($item['directAccounts'])) {
-                foreach ($item['directAccounts'] as $acc) {
-                    $categorizedAccountIds[] = $acc['id'];
-                }
-            }
-            if (isset($item['groups'])) {
-                foreach ($item['groups'] as $group) {
-                    if (isset($group['accounts'])) {
-                        foreach ($group['accounts'] as $acc) {
-                            $categorizedAccountIds[] = $acc['id'];
+                // Check if this parent category has accounts
+                $parentAccountList = $typeAccounts->where('account_category_id', $parentId);
+                if ($parentAccountList->isNotEmpty()) {
+                    // This parent category has accounts, treat it as a master category
+                    $masterDebit = 0;
+                    $masterCredit = 0;
+                    $groups = [];
+                    $directAccounts = [];
+
+                    foreach ($parentAccountList as $account) {
+                        $debit = round((float) ($account->total_debit ?? 0), 2);
+                        $credit = round((float) ($account->total_credit ?? 0), 2);
+                        $masterDebit += $debit;
+                        $masterCredit += $credit;
+                        $categorizedAccountIds[] = $account->account_id;
+
+                        $balance = round($debit - $credit, 2);
+                        $directAccounts[] = [
+                            'id' => $account->account_id,
+                            'name' => $account->account_name,
+                            'debit' => $debit,
+                            'credit' => $credit,
+                            'balance' => $balance,
+                        ];
+                    }
+
+                    // Process sub-categories under this parent
+                    foreach ($subCats as $subCategory) {
+                        $groupDebit = 0;
+                        $groupCredit = 0;
+                        $groupAccounts = [];
+
+                        $subAccountList = $typeAccounts->where('account_category_id', $subCategory->id);
+                        foreach ($subAccountList as $account) {
+                            $debit = round((float) ($account->total_debit ?? 0), 2);
+                            $credit = round((float) ($account->total_credit ?? 0), 2);
+                            $groupDebit += $debit;
+                            $groupCredit += $credit;
+                            $masterDebit += $debit;
+                            $masterCredit += $credit;
+                            $categorizedAccountIds[] = $account->account_id;
+
+                            $balance = round($debit - $credit, 2);
+                            $groupAccounts[] = [
+                                'id' => $account->account_id,
+                                'name' => $account->account_name,
+                                'debit' => $debit,
+                                'credit' => $credit,
+                                'balance' => $balance,
+                            ];
                         }
+
+                        if (! empty($groupAccounts)) {
+                            $groupBalance = round($groupDebit - $groupCredit, 2);
+                            $groups[] = [
+                                'id' => $subCategory->id,
+                                'name' => $subCategory->name,
+                                'debit' => $groupDebit,
+                                'credit' => $groupCredit,
+                                'balance' => $groupBalance,
+                                'accounts' => $groupAccounts,
+                            ];
+                        }
+                    }
+
+                    if (! empty($directAccounts) || ! empty($groups)) {
+                        $masterBalance = round($masterDebit - $masterCredit, 2);
+                        $tree[] = [
+                            'id' => $parentCategory->id,
+                            'name' => $parentCategory->name,
+                            'debit' => $masterDebit,
+                            'credit' => $masterCredit,
+                            'balance' => $masterBalance,
+                            'groups' => $groups,
+                            'directAccounts' => $directAccounts,
+                        ];
                     }
                 }
             }
         }
+
+        // Handle uncategorized accounts (accounts without category_id or with invalid category_id)
+        $uncategorized = [];
 
         // Find accounts that are not in any category or have invalid category
         foreach ($typeAccounts as $account) {
@@ -495,11 +597,13 @@ class TrialBalance extends Component
                 $debit = round((float) ($account->total_debit ?? 0), 2);
                 $credit = round((float) ($account->total_credit ?? 0), 2);
 
+                $balance = round($debit - $credit, 2);
                 $uncategorized[] = [
                     'id' => $account->account_id,
                     'name' => $account->account_name,
                     'debit' => $debit,
                     'credit' => $credit,
+                    'balance' => $balance,
                 ];
             }
         }

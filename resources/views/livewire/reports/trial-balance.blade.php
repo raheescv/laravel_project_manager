@@ -4,16 +4,11 @@
             <!-- Filter Section -->
             <div class="row mb-4 g-4">
                 <div class="col-md-3">
-                    <div class="form-group">
+                    <div class="form-group" wire:ignore>
                         <label for="branch_id" class="form-label fs-6 text-secondary mb-2 d-flex align-items-center">
                             <i class="pli-building me-2 fs-5"></i>Branch
                         </label>
-                        <select wire:model.live="branch_id" class="form-select form-select-lg border-0 shadow-sm bg-light/50 hover:bg-light transition-colors" id="branch_id">
-                            <option value="">All Branches</option>
-                            @foreach ($branches as $id => $name)
-                                <option value="{{ $id }}">{{ $name }}</option>
-                            @endforeach
-                        </select>
+                        {{ html()->select('branch_id', [session('branch_id') => session('branch_name')])->value(session('branch_id'))->class('select-branch_id-list')->id('branch_id')->placeholder('Select branch') }}
                     </div>
                 </div>
                 <div class="col-md-3">
@@ -113,12 +108,6 @@
                             </p>
                         </div>
                         <div class="d-flex gap-2">
-                            <button @click="expandAll()" class="btn btn-light border-0 shadow-sm hover:bg-light/80 transition-colors">
-                                <i class="pli-arrow-down fs-5 me-2"></i>Expand All
-                            </button>
-                            <button @click="collapseAll()" class="btn btn-light border-0 shadow-sm hover:bg-light/80 transition-colors">
-                                <i class="pli-arrow-up fs-5 me-2"></i>Collapse All
-                            </button>
                             <button wire:click="export" class="btn btn-success border-0 shadow-sm hover:bg-success/80 transition-colors">
                                 <i class="pli-file-excel fs-5 me-2"></i>Export Excel
                             </button>
@@ -135,13 +124,14 @@
                                 <tr>
                                     <th class="border-0 py-3">Account Name</th>
                                     <th class="border-0 py-3 text-end">Debit</th>
-                                    <th class="border-0 py-3 text-end pe-4">Credit</th>
+                                    <th class="border-0 py-3 text-end">Credit</th>
+                                    <th class="border-0 py-3 text-end pe-4">Balance</th>
                                 </tr>
                             </thead>
                             <tbody class="border-top-0">
                                 <!-- Assets Section -->
                                 <tr class="bg-light/30">
-                                    <td colspan="3" class="py-3 fw-bold text-primary" style="padding-left: 1rem;">
+                                    <td colspan="4" class="py-3 fw-bold text-primary" style="padding-left: 1rem;">
                                         <button @click="toggleSection('assets')" class="btn btn-link p-0 text-decoration-none text-primary fw-bold d-inline-flex align-items-center">
                                             <i class="pli-arrow-right me-2" :class="{ 'rotate-90': expandedSections.assets }"
                                                 style="transition: transform 0.2s; width: 1rem; text-align: center;"></i>
@@ -156,25 +146,29 @@
                                         'totalCredit' => $totalAssetsCredit,
                                         'sectionName' => 'assets',
                                         'showCondition' => 'expandedSections.assets',
+                                        'start_date' => $start_date,
+                                        'end_date' => $end_date,
                                     ])
                                 @else
                                     @foreach ($assets ?? [] as $asset)
                                         <tr class="hover:bg-light/40 transition-colors" x-show="expandedSections.assets">
                                             <td class="py-1" style="padding-left: 2rem;">{{ $asset->name }}</td>
                                             <td class="text-end py-1">{{ $asset->debit > 0 ? number_format($asset->debit, 2) : '-' }}</td>
-                                            <td class="text-end pe-4 py-1">{{ $asset->credit > 0 ? number_format($asset->credit, 2) : '-' }}</td>
+                                            <td class="text-end py-1">{{ $asset->credit > 0 ? number_format($asset->credit, 2) : '-' }}</td>
+                                            <td class="text-end pe-4 py-1">{{ number_format($asset->balance ?? ($asset->debit - $asset->credit), 2) }}</td>
                                         </tr>
                                     @endforeach
                                     <tr class="border-top" x-show="expandedSections.assets">
                                         <td class="py-2 fw-bold" style="padding-left: 1rem;">Total Assets</td>
                                         <td class="text-end py-2 fw-bold">{{ number_format($totalAssetsDebit, 2) }}</td>
-                                        <td class="text-end pe-4 py-2 fw-bold">{{ number_format($totalAssetsCredit, 2) }}</td>
+                                        <td class="text-end py-2 fw-bold">{{ number_format($totalAssetsCredit, 2) }}</td>
+                                        <td class="text-end pe-4 py-2 fw-bold">{{ number_format($totalAssetsDebit - $totalAssetsCredit, 2) }}</td>
                                     </tr>
                                 @endif
 
                                 <!-- Liability Section -->
                                 <tr class="bg-light/30">
-                                    <td colspan="3" class="py-3 fw-bold text-warning" style="padding-left: 1rem;">
+                                    <td colspan="4" class="py-3 fw-bold text-warning" style="padding-left: 1rem;">
                                         <button @click="toggleSection('liabilities')" class="btn btn-link p-0 text-decoration-none text-warning fw-bold d-inline-flex align-items-center">
                                             <i class="pli-arrow-right me-2" :class="{ 'rotate-90': expandedSections.liabilities }"
                                                 style="transition: transform 0.2s; width: 1rem; text-align: center;"></i>
@@ -189,25 +183,29 @@
                                         'totalCredit' => $totalLiabilitiesCredit,
                                         'sectionName' => 'liabilities',
                                         'showCondition' => 'expandedSections.liabilities',
+                                        'start_date' => $start_date,
+                                        'end_date' => $end_date,
                                     ])
                                 @else
                                     @foreach ($liabilities ?? [] as $liability)
                                         <tr class="hover:bg-light/40 transition-colors" x-show="expandedSections.liabilities">
                                             <td class="py-1" style="padding-left: 2rem;">{{ $liability->name }}</td>
                                             <td class="text-end py-1">{{ $liability->debit > 0 ? number_format($liability->debit, 2) : '-' }}</td>
-                                            <td class="text-end pe-4 py-1">{{ $liability->credit > 0 ? number_format($liability->credit, 2) : '-' }}</td>
+                                            <td class="text-end py-1">{{ $liability->credit > 0 ? number_format($liability->credit, 2) : '-' }}</td>
+                                            <td class="text-end pe-4 py-1">{{ number_format($liability->balance ?? ($liability->debit - $liability->credit), 2) }}</td>
                                         </tr>
                                     @endforeach
                                     <tr class="border-top" x-show="expandedSections.liabilities">
                                         <td class="py-2 fw-bold" style="padding-left: 1rem;">Total Liabilities</td>
                                         <td class="text-end py-2 fw-bold">{{ number_format($totalLiabilitiesDebit, 2) }}</td>
-                                        <td class="text-end pe-4 py-2 fw-bold">{{ number_format($totalLiabilitiesCredit, 2) }}</td>
+                                        <td class="text-end py-2 fw-bold">{{ number_format($totalLiabilitiesCredit, 2) }}</td>
+                                        <td class="text-end pe-4 py-2 fw-bold">{{ number_format($totalLiabilitiesDebit - $totalLiabilitiesCredit, 2) }}</td>
                                     </tr>
                                 @endif
 
                                 <!-- Equity Section -->
                                 <tr class="bg-light/30">
-                                    <td colspan="3" class="py-3 fw-bold text-success" style="padding-left: 1rem;">
+                                    <td colspan="4" class="py-3 fw-bold text-success" style="padding-left: 1rem;">
                                         <button @click="toggleSection('equity')" class="btn btn-link p-0 text-decoration-none text-success fw-bold d-inline-flex align-items-center">
                                             <i class="pli-arrow-right me-2" :class="{ 'rotate-90': expandedSections.equity }"
                                                 style="transition: transform 0.2s; width: 1rem; text-align: center;"></i>
@@ -222,25 +220,29 @@
                                         'totalCredit' => $totalEquityCredit,
                                         'sectionName' => 'equity',
                                         'showCondition' => 'expandedSections.equity',
+                                        'start_date' => $start_date,
+                                        'end_date' => $end_date,
                                     ])
                                 @else
                                     @foreach ($equity ?? [] as $equityItem)
                                         <tr class="hover:bg-light/40 transition-colors" x-show="expandedSections.equity">
                                             <td class="py-1" style="padding-left: 2rem;">{{ $equityItem->name }}</td>
                                             <td class="text-end py-1">{{ $equityItem->debit > 0 ? number_format($equityItem->debit, 2) : '-' }}</td>
-                                            <td class="text-end pe-4 py-1">{{ $equityItem->credit > 0 ? number_format($equityItem->credit, 2) : '-' }}</td>
+                                            <td class="text-end py-1">{{ $equityItem->credit > 0 ? number_format($equityItem->credit, 2) : '-' }}</td>
+                                            <td class="text-end pe-4 py-1">{{ number_format($equityItem->balance ?? ($equityItem->debit - $equityItem->credit), 2) }}</td>
                                         </tr>
                                     @endforeach
                                     <tr class="border-top" x-show="expandedSections.equity">
                                         <td class="py-2 fw-bold" style="padding-left: 1rem;">Total Equity</td>
                                         <td class="text-end py-2 fw-bold">{{ number_format($totalEquityDebit, 2) }}</td>
-                                        <td class="text-end pe-4 py-2 fw-bold">{{ number_format($totalEquityCredit, 2) }}</td>
+                                        <td class="text-end py-2 fw-bold">{{ number_format($totalEquityCredit, 2) }}</td>
+                                        <td class="text-end pe-4 py-2 fw-bold">{{ number_format($totalEquityDebit - $totalEquityCredit, 2) }}</td>
                                     </tr>
                                 @endif
 
                                 <!-- Income Section -->
                                 <tr class="bg-light/30">
-                                    <td colspan="3" class="py-3 fw-bold text-success" style="padding-left: 1rem;">
+                                    <td colspan="4" class="py-3 fw-bold text-success" style="padding-left: 1rem;">
                                         <button @click="toggleSection('income')" class="btn btn-link p-0 text-decoration-none text-success fw-bold d-inline-flex align-items-center">
                                             <i class="pli-arrow-right me-2" :class="{ 'rotate-90': expandedSections.income }"
                                                 style="transition: transform 0.2s; width: 1rem; text-align: center;"></i>
@@ -255,25 +257,29 @@
                                         'totalCredit' => $totalIncomeCredit,
                                         'sectionName' => 'income',
                                         'showCondition' => 'expandedSections.income',
+                                        'start_date' => $start_date,
+                                        'end_date' => $end_date,
                                     ])
                                 @else
                                     @foreach ($income ?? [] as $incomeItem)
                                         <tr class="hover:bg-light/40 transition-colors" x-show="expandedSections.income">
                                             <td class="py-1" style="padding-left: 2rem;">{{ $incomeItem->name }}</td>
                                             <td class="text-end py-1">{{ $incomeItem->debit > 0 ? number_format($incomeItem->debit, 2) : '-' }}</td>
-                                            <td class="text-end pe-4 py-1">{{ $incomeItem->credit > 0 ? number_format($incomeItem->credit, 2) : '-' }}</td>
+                                            <td class="text-end py-1">{{ $incomeItem->credit > 0 ? number_format($incomeItem->credit, 2) : '-' }}</td>
+                                            <td class="text-end pe-4 py-1">{{ number_format($incomeItem->balance ?? ($incomeItem->debit - $incomeItem->credit), 2) }}</td>
                                         </tr>
                                     @endforeach
                                     <tr class="border-top" x-show="expandedSections.income">
                                         <td class="py-2 fw-bold" style="padding-left: 1rem;">Total Income</td>
                                         <td class="text-end py-2 fw-bold">{{ number_format($totalIncomeDebit, 2) }}</td>
-                                        <td class="text-end pe-4 py-2 fw-bold">{{ number_format($totalIncomeCredit, 2) }}</td>
+                                        <td class="text-end py-2 fw-bold">{{ number_format($totalIncomeCredit, 2) }}</td>
+                                        <td class="text-end pe-4 py-2 fw-bold">{{ number_format($totalIncomeDebit - $totalIncomeCredit, 2) }}</td>
                                     </tr>
                                 @endif
 
                                 <!-- Expense Section -->
                                 <tr class="bg-light/30">
-                                    <td colspan="3" class="py-3 fw-bold text-danger" style="padding-left: 1rem;">
+                                    <td colspan="4" class="py-3 fw-bold text-danger" style="padding-left: 1rem;">
                                         <button @click="toggleSection('expenses')" class="btn btn-link p-0 text-decoration-none text-danger fw-bold d-inline-flex align-items-center">
                                             <i class="pli-arrow-right me-2" :class="{ 'rotate-90': expandedSections.expenses }"
                                                 style="transition: transform 0.2s; width: 1rem; text-align: center;"></i>
@@ -288,19 +294,23 @@
                                         'totalCredit' => $totalExpensesCredit,
                                         'sectionName' => 'expenses',
                                         'showCondition' => 'expandedSections.expenses',
+                                        'start_date' => $start_date,
+                                        'end_date' => $end_date,
                                     ])
                                 @else
                                     @foreach ($expenses ?? [] as $expense)
                                         <tr class="hover:bg-light/40 transition-colors" x-show="expandedSections.expenses">
                                             <td class="py-1" style="padding-left: 2rem;">{{ $expense->name }}</td>
                                             <td class="text-end py-1">{{ $expense->debit > 0 ? number_format($expense->debit, 2) : '-' }}</td>
-                                            <td class="text-end pe-4 py-1">{{ $expense->credit > 0 ? number_format($expense->credit, 2) : '-' }}</td>
+                                            <td class="text-end py-1">{{ $expense->credit > 0 ? number_format($expense->credit, 2) : '-' }}</td>
+                                            <td class="text-end pe-4 py-1">{{ number_format($expense->balance ?? ($expense->debit - $expense->credit), 2) }}</td>
                                         </tr>
                                     @endforeach
                                     <tr class="border-top" x-show="expandedSections.expenses">
                                         <td class="py-2 fw-bold" style="padding-left: 1rem;">Total Expenses</td>
                                         <td class="text-end py-2 fw-bold">{{ number_format($totalExpensesDebit, 2) }}</td>
-                                        <td class="text-end pe-4 py-2 fw-bold">{{ number_format($totalExpensesCredit, 2) }}</td>
+                                        <td class="text-end py-2 fw-bold">{{ number_format($totalExpensesCredit, 2) }}</td>
+                                        <td class="text-end pe-4 py-2 fw-bold">{{ number_format($totalExpensesDebit - $totalExpensesCredit, 2) }}</td>
                                     </tr>
                                 @endif
 
@@ -308,7 +318,8 @@
                                 <tr class="bg-primary bg-opacity-10 fw-bold">
                                     <td class="fw-bold" style="padding-left: 1rem;">Grand Total</td>
                                     <td class="text-end">{{ number_format($totalDebit, 2) }}</td>
-                                    <td class="text-end pe-4">{{ number_format($totalCredit, 2) }}</td>
+                                    <td class="text-end">{{ number_format($totalCredit, 2) }}</td>
+                                    <td class="text-end pe-4">{{ number_format($totalDebit - $totalCredit, 2) }}</td>
                                 </tr>
                             </tbody>
                         </table>
@@ -340,11 +351,11 @@
                             },
                             isCategoryExpanded(section, categoryId) {
                                 const key = `${section}_${categoryId}`;
-                                return this.expandedCategories[key] !== false; // Default to expanded
+                                return this.expandedCategories[key] !== false;
                             },
                             isGroupExpanded(section, groupId) {
                                 const key = `${section}_${groupId}`;
-                                return this.expandedGroups[key] !== false; // Default to expanded
+                                return this.expandedGroups[key] === true; // Default to collapsed
                             },
                             expandAll() {
                                 this.expandedSections.assets = true;
@@ -389,4 +400,14 @@
             @endif
         </div>
     </div>
+    @push('scripts')
+        <script>
+            $(document).ready(function() {
+                $('#branch_id').on('change', function(e) {
+                    const value = $(this).val() || null;
+                    @this.set('branch_id', value);
+                });
+            });
+        </script>
+    @endpush
 </div>
