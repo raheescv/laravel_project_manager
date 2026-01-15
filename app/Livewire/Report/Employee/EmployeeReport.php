@@ -55,7 +55,7 @@ class EmployeeReport extends Component
             })
             ->select('users.name as employee', 'products.name as product')
             ->groupBy('sale_items.employee_id', 'sale_items.product_id', 'employee_commissions.commission_percentage')
-            ->selectRaw('SUM(sale_items.quantity) as total_quantity')
+            ->selectRaw('SUM(sale_items.base_unit_quantity) - COALESCE(MAX(returns.return_quantity), 0) as total_quantity')
             ->selectRaw('SUM(sale_items.total) as total_amount')
             ->selectRaw('COALESCE(MAX(returns.return_amount), 0) as return_amount')
             ->selectRaw('SUM(sale_items.total) - COALESCE(MAX(returns.return_amount), 0) as net_amount')
@@ -78,7 +78,7 @@ class EmployeeReport extends Component
                 $join->on('returns.employee_id', '=', 'sale_items.employee_id');
             })
             ->select('sale_items.employee_id', 'users.name as employee')
-            ->selectRaw('SUM(sale_items.quantity) as total_quantity')
+            ->selectRaw('SUM(sale_items.base_unit_quantity) - COALESCE(MAX(returns.return_quantity), 0) as total_quantity')
             ->selectRaw('SUM(sale_items.total) as total_amount')
             ->selectRaw('COALESCE(MAX(returns.return_amount), 0) as return_amount')
             ->selectRaw('SUM(sale_items.total) - COALESCE(MAX(returns.return_amount), 0) as net_amount')
@@ -102,7 +102,7 @@ class EmployeeReport extends Component
 
         // Get total sale amounts
         $saleTotals = $this->buildBaseQuery($filters)
-            ->selectRaw('SUM(sale_items.quantity) as total_quantity')
+            ->selectRaw('SUM(sale_items.base_unit_quantity) as total_quantity')
             ->selectRaw('SUM(sale_items.total) as total_amount')
             ->first();
 
@@ -114,7 +114,7 @@ class EmployeeReport extends Component
         $totalCommission = $commissions->sum();
 
         return (object) [
-            'total_quantity' => $saleTotals->total_quantity ?? 0,
+            'total_quantity' => ($saleTotals->total_quantity ?? 0) - ($returnTotals->return_quantity ?? 0),
             'total_amount' => $saleTotals->total_amount ?? 0,
             'return_amount' => $returnTotals->return_amount ?? 0,
             'net_amount' => ($saleTotals->total_amount ?? 0) - ($returnTotals->return_amount ?? 0),
