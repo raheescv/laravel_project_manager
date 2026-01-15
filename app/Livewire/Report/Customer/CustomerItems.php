@@ -77,7 +77,7 @@ class CustomerItems extends Component
             ->select([
                 'accounts.name as customer',
                 'products.name as product',
-                SaleItem::raw('SUM(sale_items.quantity) as total_quantity'),
+                SaleItem::raw('SUM(sale_items.base_unit_quantity) as total_quantity'),
                 SaleItem::raw('SUM(sale_items.total) as total_amount'),
             ])
             ->when($this->product_id, fn ($q, $value) => $q->where('sale_items.product_id', $value));
@@ -91,7 +91,7 @@ class CustomerItems extends Component
             ->select([
                 'accounts.name as customer',
                 'users.name as employee',
-                SaleItem::raw('SUM(sale_items.quantity) as total_quantity'),
+                SaleItem::raw('SUM(sale_items.base_unit_quantity) as total_quantity'),
                 SaleItem::raw('SUM(sale_items.total) as total_amount'),
             ])
             ->when($this->employee_id, fn ($q, $value) => $q->where('sale_items.employee_id', $value));
@@ -102,7 +102,7 @@ class CustomerItems extends Component
         $products = $this->getProducts();
         $totalProducts = clone $products;
 
-        $productQuantity = $totalProducts->sum('sale_items.quantity');
+        $productQuantity = $totalProducts->sum('sale_items.base_unit_quantity');
         $productAmount = $totalProducts->sum('sale_items.total');
 
         $products = $products
@@ -114,7 +114,7 @@ class CustomerItems extends Component
         $employees = $this->getEmployees();
         $totalEmployees = clone $employees;
 
-        $employeeQuantity = $totalEmployees->sum('sale_items.quantity');
+        $employeeQuantity = $totalEmployees->sum('sale_items.base_unit_quantity');
         $employeeAmount = $totalEmployees->sum('sale_items.total');
 
         $employees = $employees
