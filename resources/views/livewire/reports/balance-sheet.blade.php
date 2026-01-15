@@ -4,16 +4,11 @@
             <!-- Filter Section -->
             <div class="row mb-4 g-3">
                 <div class="col-md-3">
-                    <div class="form-group">
+                    <div class="form-group" wire:ignore>
                         <label for="branch_id" class="form-label fw-bold text-secondary mb-2">
                             <i class="pli-building me-1"></i>Branch
                         </label>
-                        <select wire:model.live="branch_id" class="form-select shadow-sm border-light" id="branch_id">
-                            <option value="">All Branches</option>
-                            @foreach ($branches as $id => $name)
-                                <option value="{{ $id }}">{{ $name }}</option>
-                            @endforeach
-                        </select>
+                        {{ html()->select('branch_id', [session('branch_id') => session('branch_name')])->value(session('branch_id'))->class('select-branch_id-list')->id('branch_id')->placeholder('Select branch') }}
                     </div>
                 </div>
                 <div class="col-md-3">
@@ -31,16 +26,8 @@
                 </div>
                 <div class="col-md-3">
                     <div class="form-group">
-                        <label for="start_date" class="form-label fw-bold text-secondary mb-2">
-                            <i class="pli-calendar-4 me-1"></i>Start Date
-                        </label>
-                        <input type="date" wire:model.live="start_date" class="form-control shadow-sm border-light" id="start_date">
-                    </div>
-                </div>
-                <div class="col-md-3">
-                    <div class="form-group">
                         <label for="end_date" class="form-label fw-bold text-secondary mb-2">
-                            <i class="pli-calendar-4 me-1"></i>End Date
+                            <i class="pli-calendar-4 me-1"></i>As Of
                         </label>
                         <input type="date" wire:model.live="end_date" class="form-control shadow-sm border-light" id="end_date">
                     </div>
@@ -119,55 +106,184 @@
                         </div>
                         <div class="card-body">
                             <!-- Current Assets -->
+                            @if(count($currentAssets) > 0)
                             <div class="mb-4">
                                 <h6 class="text-primary border-bottom pb-2">Current Assets</h6>
-                                @forelse($currentAssets as $asset)
-                                    <div class="d-flex justify-content-between py-1">
-                                        <span class="text-muted">{{ $asset['account'] }}</span>
-                                        <strong class="text-end">{{ currency(abs($asset['amount'])) }}</strong>
-                                    </div>
-                                @empty
-                                    <p class="text-muted mb-0 small">No current assets found</p>
-                                @endforelse
+                                @foreach($currentAssets as $category)
+                                    @if(isset($category['name']))
+                                        {{-- Account Head/Category --}}
+                                        <div class="mt-3 mb-2">
+                                            <div class="d-flex justify-content-between align-items-center">
+                                                <strong class="text-primary">{{ $category['name'] }}</strong>
+                                                <strong class="text-primary">{{ currency(abs($category['total'] ?? 0)) }}</strong>
+                                            </div>
+
+                                            {{-- Direct Accounts under Category --}}
+                                            @if(!empty($category['directAccounts']))
+                                                @foreach($category['directAccounts'] as $account)
+                                                    <div class="d-flex justify-content-between py-1 ps-3">
+                                                        <span class="text-muted">
+                                                            <a target="_blank" href="{{ route('account::view', $account['id']) }}?from_date=&to_date={{ $end_date }}"
+                                                                class="text-decoration-none text-muted hover:text-primary">{{ $account['name'] }}</a>
+                                                        </span>
+                                                        <strong class="text-end">{{ currency(abs($account['amount'])) }}</strong>
+                                                    </div>
+                                                @endforeach
+                                            @endif
+
+                                            {{-- Groups (Sub-Categories) under Category --}}
+                                            @if(!empty($category['groups']))
+                                                @foreach($category['groups'] as $group)
+                                                    <div class="mt-2 mb-1">
+                                                        <div class="d-flex justify-content-between align-items-center ps-3">
+                                                            <strong class="text-secondary small">{{ $group['name'] }}</strong>
+                                                            <strong class="text-secondary small">{{ currency(abs($group['total'] ?? 0)) }}</strong>
+                                                        </div>
+
+                                                        {{-- Accounts under Group --}}
+                                                        @if(!empty($group['accounts']))
+                                                            @foreach($group['accounts'] as $account)
+                                                                <div class="d-flex justify-content-between py-1 ps-5">
+                                                                    <span class="text-muted">
+                                                                        <a target="_blank" href="{{ route('account::view', $account['id']) }}?from_date=&to_date={{ $end_date }}"
+                                                                            class="text-decoration-none text-muted hover:text-primary">{{ $account['name'] }}</a>
+                                                                    </span>
+                                                                    <strong class="text-end">{{ currency(abs($account['amount'])) }}</strong>
+                                                                </div>
+                                                            @endforeach
+                                                        @endif
+                                                    </div>
+                                                @endforeach
+                                            @endif
+                                        </div>
+                                    @endif
+                                @endforeach
                                 <div class="d-flex justify-content-between border-top mt-2 pt-2">
                                     <strong>Total Current Assets</strong>
                                     <strong class="text-primary text-end">{{ currency(abs($totalCurrentAssets)) }}</strong>
                                 </div>
                             </div>
+                            @endif
 
                             <!-- Fixed Assets -->
+                            @if(count($fixedAssets) > 0)
                             <div class="mb-4">
                                 <h6 class="text-primary border-bottom pb-2">Fixed Assets</h6>
-                                @forelse($fixedAssets as $asset)
-                                    <div class="d-flex justify-content-between py-1">
-                                        <span class="text-muted">{{ $asset['account'] }}</span>
-                                        <strong class="text-end">{{ currency(abs($asset['amount'])) }}</strong>
-                                    </div>
-                                @empty
-                                    <p class="text-muted mb-0 small">No fixed assets found</p>
-                                @endforelse
+                                @foreach($fixedAssets as $category)
+                                    @if(isset($category['name']))
+                                        {{-- Account Head/Category --}}
+                                        <div class="mt-3 mb-2">
+                                            <div class="d-flex justify-content-between align-items-center">
+                                                <strong class="text-primary">{{ $category['name'] }}</strong>
+                                                <strong class="text-primary">{{ currency(abs($category['total'] ?? 0)) }}</strong>
+                                            </div>
+
+                                            {{-- Direct Accounts under Category --}}
+                                            @if(!empty($category['directAccounts']))
+                                                @foreach($category['directAccounts'] as $account)
+                                                    <div class="d-flex justify-content-between py-1 ps-3">
+                                                        <span class="text-muted">
+                                                            <a target="_blank" href="{{ route('account::view', $account['id']) }}?from_date=&to_date={{ $end_date }}"
+                                                                class="text-decoration-none text-muted hover:text-primary">{{ $account['name'] }}</a>
+                                                        </span>
+                                                        <strong class="text-end">{{ currency(abs($account['amount'])) }}</strong>
+                                                    </div>
+                                                @endforeach
+                                            @endif
+
+                                            {{-- Groups (Sub-Categories) under Category --}}
+                                            @if(!empty($category['groups']))
+                                                @foreach($category['groups'] as $group)
+                                                    <div class="mt-2 mb-1">
+                                                        <div class="d-flex justify-content-between align-items-center ps-3">
+                                                            <strong class="text-secondary small">{{ $group['name'] }}</strong>
+                                                            <strong class="text-secondary small">{{ currency(abs($group['total'] ?? 0)) }}</strong>
+                                                        </div>
+
+                                                        {{-- Accounts under Group --}}
+                                                        @if(!empty($group['accounts']))
+                                                            @foreach($group['accounts'] as $account)
+                                                                <div class="d-flex justify-content-between py-1 ps-5">
+                                                                    <span class="text-muted">
+                                                                        <a target="_blank" href="{{ route('account::view', $account['id']) }}?from_date=&to_date={{ $end_date }}"
+                                                                            class="text-decoration-none text-muted hover:text-primary">{{ $account['name'] }}</a>
+                                                                    </span>
+                                                                    <strong class="text-end">{{ currency(abs($account['amount'])) }}</strong>
+                                                                </div>
+                                                            @endforeach
+                                                        @endif
+                                                    </div>
+                                                @endforeach
+                                            @endif
+                                        </div>
+                                    @endif
+                                @endforeach
                                 <div class="d-flex justify-content-between border-top mt-2 pt-2">
                                     <strong>Total Fixed Assets</strong>
                                     <strong class="text-primary text-end">{{ currency(abs($totalFixedAssets)) }}</strong>
                                 </div>
                             </div>
+                            @endif
 
                             <!-- Other Assets -->
+                            @if(count($otherAssets) > 0)
                             <div class="mb-4">
                                 <h6 class="text-primary border-bottom pb-2">Other Assets</h6>
-                                @forelse($otherAssets as $asset)
-                                    <div class="d-flex justify-content-between py-1">
-                                        <span class="text-muted">{{ $asset['account'] }}</span>
-                                        <strong class="text-end">{{ currency(abs($asset['amount'])) }}</strong>
-                                    </div>
-                                @empty
-                                    <p class="text-muted mb-0 small">No other assets found</p>
-                                @endforelse
+                                @foreach($otherAssets as $category)
+                                    @if(isset($category['name']))
+                                        {{-- Account Head/Category --}}
+                                        <div class="mt-3 mb-2">
+                                            <div class="d-flex justify-content-between align-items-center">
+                                                <strong class="text-primary">{{ $category['name'] }}</strong>
+                                                <strong class="text-primary">{{ currency(abs($category['total'] ?? 0)) }}</strong>
+                                            </div>
+
+                                            {{-- Direct Accounts under Category --}}
+                                            @if(!empty($category['directAccounts']))
+                                                @foreach($category['directAccounts'] as $account)
+                                                    <div class="d-flex justify-content-between py-1 ps-3">
+                                                        <span class="text-muted">
+                                                            <a target="_blank" href="{{ route('account::view', $account['id']) }}?from_date=&to_date={{ $end_date }}"
+                                                                class="text-decoration-none text-muted hover:text-primary">{{ $account['name'] }}</a>
+                                                        </span>
+                                                        <strong class="text-end">{{ currency(abs($account['amount'])) }}</strong>
+                                                    </div>
+                                                @endforeach
+                                            @endif
+
+                                            {{-- Groups (Sub-Categories) under Category --}}
+                                            @if(!empty($category['groups']))
+                                                @foreach($category['groups'] as $group)
+                                                    <div class="mt-2 mb-1">
+                                                        <div class="d-flex justify-content-between align-items-center ps-3">
+                                                            <strong class="text-secondary small">{{ $group['name'] }}</strong>
+                                                            <strong class="text-secondary small">{{ currency(abs($group['total'] ?? 0)) }}</strong>
+                                                        </div>
+
+                                                        {{-- Accounts under Group --}}
+                                                        @if(!empty($group['accounts']))
+                                                            @foreach($group['accounts'] as $account)
+                                                                <div class="d-flex justify-content-between py-1 ps-5">
+                                                                    <span class="text-muted">
+                                                                        <a target="_blank" href="{{ route('account::view', $account['id']) }}?from_date=&to_date={{ $end_date }}"
+                                                                            class="text-decoration-none text-muted hover:text-primary">{{ $account['name'] }}</a>
+                                                                    </span>
+                                                                    <strong class="text-end">{{ currency(abs($account['amount'])) }}</strong>
+                                                                </div>
+                                                            @endforeach
+                                                        @endif
+                                                    </div>
+                                                @endforeach
+                                            @endif
+                                        </div>
+                                    @endif
+                                @endforeach
                                 <div class="d-flex justify-content-between border-top mt-2 pt-2">
                                     <strong>Total Other Assets</strong>
                                     <strong class="text-primary text-end">{{ currency(abs($totalOtherAssets)) }}</strong>
                                 </div>
                             </div>
+                            @endif
 
                             <!-- Total Assets -->
                             <div class="d-flex justify-content-between bg-primary bg-opacity-10 p-3 rounded mt-3">
@@ -188,38 +304,124 @@
                         </div>
                         <div class="card-body">
                             <!-- Current Liabilities -->
+                            @if(count($currentLiabilities) > 0)
                             <div class="mb-4">
                                 <h6 class="text-warning border-bottom pb-2">Current Liabilities</h6>
-                                @forelse($currentLiabilities as $liability)
-                                    <div class="d-flex justify-content-between py-1">
-                                        <span class="text-muted">{{ $liability['account'] }}</span>
-                                        <strong class="text-end">{{ currency(abs($liability['amount'])) }}</strong>
-                                    </div>
-                                @empty
-                                    <p class="text-muted mb-0 small">No current liabilities found</p>
-                                @endforelse
+                                @foreach($currentLiabilities as $category)
+                                    @if(isset($category['name']))
+                                        {{-- Account Head/Category --}}
+                                        <div class="mt-3 mb-2">
+                                            <div class="d-flex justify-content-between align-items-center">
+                                                <strong class="text-warning">{{ $category['name'] }}</strong>
+                                                <strong class="text-warning">{{ currency(abs($category['total'] ?? 0)) }}</strong>
+                                            </div>
+
+                                            {{-- Direct Accounts under Category --}}
+                                            @if(!empty($category['directAccounts']))
+                                                @foreach($category['directAccounts'] as $account)
+                                                    <div class="d-flex justify-content-between py-1 ps-3">
+                                                        <span class="text-muted">
+                                                            <a target="_blank" href="{{ route('account::view', $account['id']) }}?from_date=&to_date={{ $end_date }}"
+                                                                class="text-decoration-none text-muted hover:text-warning">{{ $account['name'] }}</a>
+                                                        </span>
+                                                        <strong class="text-end">{{ currency(abs($account['amount'])) }}</strong>
+                                                    </div>
+                                                @endforeach
+                                            @endif
+
+                                            {{-- Groups (Sub-Categories) under Category --}}
+                                            @if(!empty($category['groups']))
+                                                @foreach($category['groups'] as $group)
+                                                    <div class="mt-2 mb-1">
+                                                        <div class="d-flex justify-content-between align-items-center ps-3">
+                                                            <strong class="text-secondary small">{{ $group['name'] }}</strong>
+                                                            <strong class="text-secondary small">{{ currency(abs($group['total'] ?? 0)) }}</strong>
+                                                        </div>
+
+                                                        {{-- Accounts under Group --}}
+                                                        @if(!empty($group['accounts']))
+                                                            @foreach($group['accounts'] as $account)
+                                                                <div class="d-flex justify-content-between py-1 ps-5">
+                                                                    <span class="text-muted">
+                                                                        <a target="_blank" href="{{ route('account::view', $account['id']) }}?from_date=&to_date={{ $end_date }}"
+                                                                            class="text-decoration-none text-muted hover:text-warning">{{ $account['name'] }}</a>
+                                                                    </span>
+                                                                    <strong class="text-end">{{ currency(abs($account['amount'])) }}</strong>
+                                                                </div>
+                                                            @endforeach
+                                                        @endif
+                                                    </div>
+                                                @endforeach
+                                            @endif
+                                        </div>
+                                    @endif
+                                @endforeach
                                 <div class="d-flex justify-content-between border-top mt-2 pt-2">
                                     <strong>Total Current Liabilities</strong>
                                     <strong class="text-warning text-end">{{ currency(abs($totalCurrentLiabilities)) }}</strong>
                                 </div>
                             </div>
+                            @endif
 
                             <!-- Long Term Liabilities -->
+                            @if(count($longTermLiabilities) > 0)
                             <div class="mb-4">
                                 <h6 class="text-warning border-bottom pb-2">Long Term Liabilities</h6>
-                                @forelse($longTermLiabilities as $liability)
-                                    <div class="d-flex justify-content-between py-1">
-                                        <span class="text-muted">{{ $liability['account'] }}</span>
-                                        <strong class="text-end">{{ currency(abs($liability['amount'])) }}</strong>
-                                    </div>
-                                @empty
-                                    <p class="text-muted mb-0 small">No long term liabilities found</p>
-                                @endforelse
+                                @foreach($longTermLiabilities as $category)
+                                    @if(isset($category['name']))
+                                        {{-- Account Head/Category --}}
+                                        <div class="mt-3 mb-2">
+                                            <div class="d-flex justify-content-between align-items-center">
+                                                <strong class="text-warning">{{ $category['name'] }}</strong>
+                                                <strong class="text-warning">{{ currency(abs($category['total'] ?? 0)) }}</strong>
+                                            </div>
+
+                                            {{-- Direct Accounts under Category --}}
+                                            @if(!empty($category['directAccounts']))
+                                                @foreach($category['directAccounts'] as $account)
+                                                    <div class="d-flex justify-content-between py-1 ps-3">
+                                                        <span class="text-muted">
+                                                            <a target="_blank" href="{{ route('account::view', $account['id']) }}?from_date=&to_date={{ $end_date }}"
+                                                                class="text-decoration-none text-muted hover:text-warning">{{ $account['name'] }}</a>
+                                                        </span>
+                                                        <strong class="text-end">{{ currency(abs($account['amount'])) }}</strong>
+                                                    </div>
+                                                @endforeach
+                                            @endif
+
+                                            {{-- Groups (Sub-Categories) under Category --}}
+                                            @if(!empty($category['groups']))
+                                                @foreach($category['groups'] as $group)
+                                                    <div class="mt-2 mb-1">
+                                                        <div class="d-flex justify-content-between align-items-center ps-3">
+                                                            <strong class="text-secondary small">{{ $group['name'] }}</strong>
+                                                            <strong class="text-secondary small">{{ currency(abs($group['total'] ?? 0)) }}</strong>
+                                                        </div>
+
+                                                        {{-- Accounts under Group --}}
+                                                        @if(!empty($group['accounts']))
+                                                            @foreach($group['accounts'] as $account)
+                                                                <div class="d-flex justify-content-between py-1 ps-5">
+                                                                    <span class="text-muted">
+                                                                        <a target="_blank" href="{{ route('account::view', $account['id']) }}?from_date=&to_date={{ $end_date }}"
+                                                                            class="text-decoration-none text-muted hover:text-warning">{{ $account['name'] }}</a>
+                                                                    </span>
+                                                                    <strong class="text-end">{{ currency(abs($account['amount'])) }}</strong>
+                                                                </div>
+                                                            @endforeach
+                                                        @endif
+                                                    </div>
+                                                @endforeach
+                                            @endif
+                                        </div>
+                                    @endif
+                                @endforeach
                                 <div class="d-flex justify-content-between border-top mt-2 pt-2">
                                     <strong>Total Long Term Liabilities</strong>
                                     <strong class="text-warning text-end">{{ currency(abs($totalLongTermLiabilities)) }}</strong>
                                 </div>
                             </div>
+                            @endif
 
                             <!-- Total Liabilities -->
                             <div class="d-flex justify-content-between bg-warning bg-opacity-10 p-3 rounded mt-3">
@@ -240,38 +442,124 @@
                         </div>
                         <div class="card-body">
                             <!-- Owner's Equity -->
+                            @if(count($ownerEquity) > 0)
                             <div class="mb-4">
                                 <h6 class="text-success border-bottom pb-2">Owner's Equity</h6>
-                                @forelse($ownerEquity as $equity)
-                                    <div class="d-flex justify-content-between py-1">
-                                        <span class="text-muted">{{ $equity['account'] }}</span>
-                                        <strong class="text-end">{{ currency(abs($equity['amount'])) }}</strong>
-                                    </div>
-                                @empty
-                                    <p class="text-muted mb-0 small">No equity accounts found</p>
-                                @endforelse
+                                @foreach($ownerEquity as $category)
+                                    @if(isset($category['name']))
+                                        {{-- Account Head/Category --}}
+                                        <div class="mt-3 mb-2">
+                                            <div class="d-flex justify-content-between align-items-center">
+                                                <strong class="text-success">{{ $category['name'] }}</strong>
+                                                <strong class="text-success">{{ currency(abs($category['total'] ?? 0)) }}</strong>
+                                            </div>
+
+                                            {{-- Direct Accounts under Category --}}
+                                            @if(!empty($category['directAccounts']))
+                                                @foreach($category['directAccounts'] as $account)
+                                                    <div class="d-flex justify-content-between py-1 ps-3">
+                                                        <span class="text-muted">
+                                                            <a target="_blank" href="{{ route('account::view', $account['id']) }}?from_date=&to_date={{ $end_date }}"
+                                                                class="text-decoration-none text-muted hover:text-success">{{ $account['name'] }}</a>
+                                                        </span>
+                                                        <strong class="text-end">{{ currency(abs($account['amount'])) }}</strong>
+                                                    </div>
+                                                @endforeach
+                                            @endif
+
+                                            {{-- Groups (Sub-Categories) under Category --}}
+                                            @if(!empty($category['groups']))
+                                                @foreach($category['groups'] as $group)
+                                                    <div class="mt-2 mb-1">
+                                                        <div class="d-flex justify-content-between align-items-center ps-3">
+                                                            <strong class="text-secondary small">{{ $group['name'] }}</strong>
+                                                            <strong class="text-secondary small">{{ currency(abs($group['total'] ?? 0)) }}</strong>
+                                                        </div>
+
+                                                        {{-- Accounts under Group --}}
+                                                        @if(!empty($group['accounts']))
+                                                            @foreach($group['accounts'] as $account)
+                                                                <div class="d-flex justify-content-between py-1 ps-5">
+                                                                    <span class="text-muted">
+                                                                        <a target="_blank" href="{{ route('account::view', $account['id']) }}?from_date=&to_date={{ $end_date }}"
+                                                                            class="text-decoration-none text-muted hover:text-success">{{ $account['name'] }}</a>
+                                                                    </span>
+                                                                    <strong class="text-end">{{ currency(abs($account['amount'])) }}</strong>
+                                                                </div>
+                                                            @endforeach
+                                                        @endif
+                                                    </div>
+                                                @endforeach
+                                            @endif
+                                        </div>
+                                    @endif
+                                @endforeach
                                 <div class="d-flex justify-content-between border-top mt-2 pt-2">
                                     <strong>Total Owner's Equity</strong>
                                     <strong class="text-success text-end">{{ currency(abs($totalEquityAccounts)) }}</strong>
                                 </div>
                             </div>
+                            @endif
 
                             <!-- Retained Earnings -->
+                            @if(count($retainedEarningAccounts) > 0)
                             <div class="mb-4">
                                 <h6 class="text-success border-bottom pb-2">Retained Earnings</h6>
-                                @forelse($retainedEarningAccounts as $earning)
-                                    <div class="d-flex justify-content-between py-1">
-                                        <span class="text-muted">{{ $earning['account'] }}</span>
-                                        <strong class="text-end">{{ currency(abs($earning['amount'])) }}</strong>
-                                    </div>
-                                @empty
-                                    <p class="text-muted mb-0 small">No retained earnings found</p>
-                                @endforelse
+                                @foreach($retainedEarningAccounts as $category)
+                                    @if(isset($category['name']))
+                                        {{-- Account Head/Category --}}
+                                        <div class="mt-3 mb-2">
+                                            <div class="d-flex justify-content-between align-items-center">
+                                                <strong class="text-success">{{ $category['name'] }}</strong>
+                                                <strong class="text-success">{{ currency(abs($category['total'] ?? 0)) }}</strong>
+                                            </div>
+
+                                            {{-- Direct Accounts under Category --}}
+                                            @if(!empty($category['directAccounts']))
+                                                @foreach($category['directAccounts'] as $account)
+                                                    <div class="d-flex justify-content-between py-1 ps-3">
+                                                        <span class="text-muted">
+                                                            <a target="_blank" href="{{ route('account::view', $account['id']) }}?from_date=&to_date={{ $end_date }}"
+                                                                class="text-decoration-none text-muted hover:text-success">{{ $account['name'] }}</a>
+                                                        </span>
+                                                        <strong class="text-end">{{ currency(abs($account['amount'])) }}</strong>
+                                                    </div>
+                                                @endforeach
+                                            @endif
+
+                                            {{-- Groups (Sub-Categories) under Category --}}
+                                            @if(!empty($category['groups']))
+                                                @foreach($category['groups'] as $group)
+                                                    <div class="mt-2 mb-1">
+                                                        <div class="d-flex justify-content-between align-items-center ps-3">
+                                                            <strong class="text-secondary small">{{ $group['name'] }}</strong>
+                                                            <strong class="text-secondary small">{{ currency(abs($group['total'] ?? 0)) }}</strong>
+                                                        </div>
+
+                                                        {{-- Accounts under Group --}}
+                                                        @if(!empty($group['accounts']))
+                                                            @foreach($group['accounts'] as $account)
+                                                                <div class="d-flex justify-content-between py-1 ps-5">
+                                                                    <span class="text-muted">
+                                                                        <a target="_blank" href="{{ route('account::view', $account['id']) }}?from_date=&to_date={{ $end_date }}"
+                                                                            class="text-decoration-none text-muted hover:text-success">{{ $account['name'] }}</a>
+                                                                    </span>
+                                                                    <strong class="text-end">{{ currency(abs($account['amount'])) }}</strong>
+                                                                </div>
+                                                            @endforeach
+                                                        @endif
+                                                    </div>
+                                                @endforeach
+                                            @endif
+                                        </div>
+                                    @endif
+                                @endforeach
                                 <div class="d-flex justify-content-between border-top mt-2 pt-2">
                                     <strong>Total Retained Earnings</strong>
                                     <strong class="text-success text-end">{{ currency(abs($totalRetainedEarnings)) }}</strong>
                                 </div>
                             </div>
+                            @endif
 
                             <!-- Total Equity -->
                             <div class="d-flex justify-content-between bg-success bg-opacity-10 p-3 rounded mt-3">
@@ -321,8 +609,8 @@
                         <div class="flex-grow-1">
                             <h5 class="alert-heading mb-1">Balance Sheet Mismatch</h5>
                             <p class="mb-0">
-                                The balance sheet is not balanced. There is a difference of 
-                                <strong>{{ currency($difference) }}</strong> between Assets and Liabilities + Equity. 
+                                The balance sheet is not balanced. There is a difference of
+                                <strong>{{ currency($difference) }}</strong> between Assets and Liabilities + Equity.
                                 Please review the entries for potential errors.
                             </p>
                         </div>
@@ -331,4 +619,14 @@
             @endif
         </div>
     </div>
+    @push('scripts')
+        <script>
+            $(document).ready(function() {
+                $('#branch_id').on('change', function(e) {
+                    const value = $(this).val() || null;
+                    @this.set('branch_id', value);
+                });
+            });
+        </script>
+    @endpush
 </div>

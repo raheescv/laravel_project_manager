@@ -33,6 +33,10 @@
                     <label for="to_date">To Date</label>
                     {{ html()->date('to_date')->value('')->class('form-control')->id('to_date')->attribute('wire:model.live', 'filter.to_date') }}
                 </div>
+                <div class="col-md-4" wire:ignore>
+                    <label for="filter_account_id">Account</label>
+                    {{ html()->select('filter_account_id', [])->value('')->class('select-account_id-list')->id('filter_account_id')->placeholder('All Accounts') }}
+                </div>
                 <div class="col-md-3 d-flex align-items-end">
                     <div class="form-check mt-3">
                         <input class="form-check-input" type="checkbox" id="excludeOpeningFromTotal" wire:model.live="excludeOpeningFromTotal">
@@ -72,7 +76,7 @@
                                     <tr class="text-capitalize">
                                         <th> # </th>
                                         <th> date </th>
-                                        <th> account name </th>
+                                        <th> Journal </th>
                                         <th> payee </th>
                                         <th> reference No </th>
                                         <th> description </th>
@@ -102,9 +106,15 @@
                                             <td> {{ $item->journal_id }} </td>
                                             <td>{{ systemDate($item->journal->date) }}</td>
                                             <td>
-                                                <a target="_blank" href="{{ route('account::view', $item->account_id) . '?from_date=' . $item->journal->date . '&to_date=' . $item->journal->date }}" class="text-decoration-none">
-                                                    {{ $item->account->name }}
-                                                </a>
+                                                @if ($item->counter_account_id)
+                                                    <a target="_blank"
+                                                        href="{{ route('account::view', $item->account_id) . '?from_date=' . $item->journal->date . '&to_date=' . $item->journal->date }}"
+                                                        class="text-decoration-none">
+                                                        {{ $item->counterAccount?->name }}
+                                                    </a>
+                                                @else
+                                                    {{ $item->journal->description }} | {{ $item->journal->journal_remarks }}
+                                                @endif
                                             </td>
                                             <td>{{ $item->person_name }}</td>
                                             <td>{{ $item->reference_number }}</td>
@@ -208,6 +218,9 @@
         <script src="{{ asset('assets/vendors/chart.js/chart.umd.min.js') }}"></script>
         <script src="{{ asset('assets/vendors/chart.js/chartjs-plugin-datalabels@2.min.js') }}"></script>
         <script>
+            $('#filter_account_id').change(function() {
+                @this.set('filter.filter_account_id', $(this).val());
+            });
             // Register the plugin to all charts
             Chart.register(ChartDataLabels);
             let lineChart = null;
@@ -312,5 +325,6 @@
                 });
             });
         </script>
+        @include('components.select.accountSelect')
     @endpush
 </div>
