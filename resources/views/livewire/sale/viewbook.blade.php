@@ -321,112 +321,108 @@
                     </div>
                 @endif
 
-                <!-- Items Table with enhanced styling -->
+                <!-- Items Table grouped by Category -->
                 <div class="mb-4">
-                    <h5 class="card-title d-flex align-items-center mb-3">
-                        <i class="fa fa-shopping-cart me-2"></i>
-                        Items
-                    </h5>
-                    <div class="table-responsive">
-                        <table class="table table-striped table-hover table-sm align-middle">
-                            <thead>
-                                <tr class="bg-primary text-white">
-                                    <th class="text-white rounded-start">SL No</th>
-                                    <th width="20%" class="text-white">Product/Service</th>
-                                    <th class="text-white text-end">Unit Price</th>
-                                    <th class="text-white text-end">Quantity</th>
-                                    <th class="text-white text-end">Discount</th>
-                                    <th class="text-white text-end">Tax %</th>
-                                    <th class="text-white text-end">Total</th>
-                                    @if ($sales['other_discount'] > 0)
-                                        <th class="text-white text-end rounded-end">Effective Total</th>
-                                    @endif
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @php
-                                    $result = [];
-                                    foreach ($items as $key => $value) {
-                                        [$parent, $sub] = explode('-', $key);
-                                        if (!isset($result[$parent])) {
-                                            $result[$parent] = [];
-                                        }
-                                        $result[$parent][$sub] = $value;
-                                    }
-                                    $data = $result;
-                                @endphp
-                                @foreach ($data as $employee_id => $groupedItems)
-                                    <tr>
-                                        @php
-                                            $first = array_values($groupedItems)[0];
-                                        @endphp
-                                        <th colspan="8" class="bg-light">
-                                            <i class="demo-psi-user me-2"></i>
-                                            {{ $first['employee_name'] }}
-                                        </th>
-                                    </tr>
-                                    @foreach ($groupedItems as $item)
-                                        <tr>
-                                            <td>{{ $loop->iteration }}</td>
-                                            <td>
-                                                <div class="d-flex align-items-start">
-                                                    <i class="fa fa-cube text-primary me-2 fs-5"></i>
-                                                    <div>
-                                                        <a href="{{ route('inventory::product::view', $item['product_id']) }}" class="text-primary fw-semibold">{{ $item['name'] }}</a>
-                                                        <div class="mt-1">
-                                                            @if (!empty($item['sale_combo_offer_id']))
-                                                                <span class="badge bg-info text-white me-1">Combo</span>
-                                                            @endif
-                                                            @if (!empty($item['assistant_name']))
-                                                                <small class="text-muted">
-                                                                    <i class="fa fa-user-plus me-1"></i>{{ $item['assistant_name'] }}
-                                                                </small>
-                                                            @endif
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </td>
-                                            <td class="text-end">{{ currency($item['unit_price']) }}</td>
-                                            <td class="text-end">{{ currency($item['quantity'], 3) }}</td>
-                                            <td class="text-end">
-                                                @if ($item['discount'] != 0)
-                                                    {{ currency($item['discount']) }}
-                                                @else
-                                                    -
-                                                @endif
-                                            </td>
-                                            <td class="text-end">
-                                                @if ($item['tax_amount'] != 0)
-                                                    {{ currency($item['tax_amount']) }} ({{ round($item['tax'], 2) }}%)
-                                                @else
-                                                    -
-                                                @endif
-                                            </td>
-                                            <td class="text-end fw-bold">{{ currency($item['total']) }}</td>
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h5 class="card-title d-flex align-items-center mb-0">
+                            <i class="fa fa-shopping-cart me-2"></i>
+                            Items
+                        </h5>
+                        
+                    </div>
+                    @php
+                        // Group items by category_id
+                        $groupedByCategory = collect($items)->groupBy('category_id');
+                        $categoryNames = collect($items)->pluck('category_name', 'category_id')->toArray();
+                    @endphp
+                    @foreach ($groupedByCategory as $catId => $catItems)
+                        <div class="mb-3">
+                            <h6 class="fw-bold bg-primary bg-opacity-10 p-2 rounded mb-2">
+                                <i class="fa fa-tag me-2 text-primary"></i>
+                                {{ $categoryNames[$catId] ?? 'Category ' . $catId }}
+                            </h6>
+                            <a href="{{ route('print::sale::categoryinvoice', [$sales['id'], $catId]) }}" target="_blank" class="btn btn-outline-primary btn-sm d-print-none">
+                            <i class="fa fa-cut me-1"></i> Cutting Slip
+                        </a>
+                            <div class="table-responsive">
+                                <table class="table table-striped table-hover table-sm align-middle">
+                                    <thead>
+                                        <tr class="bg-primary text-white">
+                                            <th class="text-white rounded-start">SL No</th>
+                                            <th width="20%" class="text-white">Product/Service</th>
+                                            <th class="text-white">Model Name</th>
+                                            <th class="text-white text-end">Unit Price</th>
+                                            <th class="text-white text-end">Quantity</th>
+                                            <th class="text-white text-end">Discount</th>
+                                            <th class="text-white text-end">Tax %</th>
+                                            <th class="text-white text-end">Total</th>
                                             @if ($sales['other_discount'] > 0)
-                                                <td class="text-end fw-bold">{{ currency($item['effective_total']) }}</td>
+                                                <th class="text-white text-end rounded-end">Effective Total</th>
                                             @endif
                                         </tr>
-                                    @endforeach
-                                @endforeach
-                            </tbody>
-                            <tfoot class="bg-light fw-bold">
-                                @php
-                                    $items = collect($items);
-                                @endphp
-                                <tr>
-                                    <th colspan="3" class="text-end">Total</th>
-                                    <th class="text-end">{{ currency($items->sum('quantity'), 3) }}</th>
-                                    <th class="text-end">{{ currency($items->sum('discount')) }}</th>
-                                    <th class="text-end">{{ currency($items->sum('tax_amount')) }}</th>
-                                    <th class="text-end">{{ currency($items->sum('total')) }}</th>
-                                    @if ($sales['other_discount'] > 0)
-                                        <th class="text-end">{{ currency($items->sum('effective_total')) }}</th>
-                                    @endif
-                                </tr>
-                            </tfoot>
-                        </table>
-                    </div>
+                                    </thead>
+                                    <tbody>
+                                        @foreach ($catItems as $idx => $item)
+                                            <tr>
+                                                <td>{{ $idx + 1 }}</td>
+                                                <td>
+                                                    <div class="d-flex align-items-start">
+                                                        <i class="fa fa-cube text-primary me-2 fs-5"></i>
+                                                        <div>
+                                                            <a href="{{ route('inventory::product::view', $item['product_id']) }}" class="text-primary fw-semibold">{{ $item['name'] }}</a>
+                                                            <div class="mt-1">
+                                                                @if (!empty($item['sale_combo_offer_id']))
+                                                                    <span class="badge bg-info text-white me-1">Combo</span>
+                                                                @endif
+                                                                @if (!empty($item['assistant_name']))
+                                                                    <small class="text-muted">
+                                                                        <i class="fa fa-user-plus me-1"></i>{{ $item['assistant_name'] }}
+                                                                    </small>
+                                                                @endif
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                                <td>{{ $item['sub_category_name'] ?? '-' }}</td>
+                                                <td class="text-end">{{ currency($item['unit_price']) }}</td>
+                                                <td class="text-end">{{ currency($item['quantity'], 3) }}</td>
+                                                <td class="text-end">
+                                                    @if ($item['discount'] != 0)
+                                                        {{ currency($item['discount']) }}
+                                                    @else
+                                                        -
+                                                    @endif
+                                                </td>
+                                                <td class="text-end">
+                                                    @if ($item['tax_amount'] != 0)
+                                                        {{ currency($item['tax_amount']) }} ({{ round($item['tax'], 2) }}%)
+                                                    @else
+                                                        -
+                                                    @endif
+                                                </td>
+                                                <td class="text-end fw-bold">{{ currency($item['total']) }}</td>
+                                                @if ($sales['other_discount'] > 0)
+                                                    <td class="text-end fw-bold">{{ currency($item['effective_total']) }}</td>
+                                                @endif
+                                            </tr>
+                                        @endforeach
+                                    </tbody>
+                                    <tfoot class="bg-light fw-bold">
+                                        <tr>
+                                            <th colspan="4" class="text-end">Total</th>
+                                            <th class="text-end">{{ currency(collect($catItems)->sum('quantity'), 3) }}</th>
+                                            <th class="text-end">{{ currency(collect($catItems)->sum('discount')) }}</th>
+                                            <th class="text-end">{{ currency(collect($catItems)->sum('tax_amount')) }}</th>
+                                            <th class="text-end">{{ currency(collect($catItems)->sum('total')) }}</th>
+                                            @if ($sales['other_discount'] > 0)
+                                                <th class="text-end">{{ currency(collect($catItems)->sum('effective_total')) }}</th>
+                                            @endif
+                                        </tr>
+                                    </tfoot>
+                                </table>
+                            </div>
+                        </div>
+                    @endforeach
                 </div>
 
                 <!-- Payments and Totals with enhanced styling -->
