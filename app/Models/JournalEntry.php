@@ -27,7 +27,7 @@ class JournalEntry extends Model implements AuditableContracts
                 return;
             }
             // Soft delete - manually remove pivot table relationships
-            $journalEntry->counterAccounts()->detach();
+        // $journalEntry->counterAccounts()->detach();
         });
     }
 
@@ -92,12 +92,6 @@ class JournalEntry extends Model implements AuditableContracts
     public function counterAccount()
     {
         return $this->belongsTo(Account::class, 'counter_account_id');
-    }
-
-    public function counterAccounts(): BelongsToMany
-    {
-        return $this->belongsToMany(Account::class, 'journal_entry_counter_accounts', 'journal_entry_id', 'counter_account_id')
-            ->withPivot('tenant_id', 'branch_id', 'journal_id');
     }
 
     public function tenant(): BelongsTo

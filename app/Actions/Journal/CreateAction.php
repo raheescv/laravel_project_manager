@@ -38,7 +38,7 @@ class CreateAction
             }
 
             // Sync counter accounts to pivot table
-            (new SyncCounterAccountsAction())->execute($model->id);
+            // (new SyncCounterAccountsAction())->execute($model->id);
 
             $return['success'] = true;
             $return['message'] = 'Successfully Created Journal';

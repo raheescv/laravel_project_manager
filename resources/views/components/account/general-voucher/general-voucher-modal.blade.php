@@ -1,15 +1,17 @@
 <div class="modal" id="GeneralVoucherModal" aria-hidden="true">
     <div class="modal-dialog modal-xl">
-        <div class="modal-content">
-            @livewire('account.general-voucher.page')
+        <div class="modal-content" id="GeneralVoucherModalContent">
+            <!-- Vue component will be mounted here -->
         </div>
     </div>
 </div>
 @push('scripts')
+    @vite('resources/js/general-voucher-modal.js')
     <script>
-        window.addEventListener('ToggleGeneralVoucherModal', event => {
-            $('#GeneralVoucherModal').modal('toggle');
-        });
+        // Store branch_id in window for Vue component access
+        @if(session('branch_id'))
+            window.branch_id = {{ session('branch_id') }};
+        @endif
     </script>
 @endpush
 
