@@ -90,12 +90,12 @@ function handleRefresh() {
 // Listen for Livewire events
 document.addEventListener('DOMContentLoaded', () => {
     // Listen for create event
-    window.addEventListener('GeneralVoucher-Page-Create-Component', () => {
+    window.addEventListener('GeneralVoucher-Create-Component', () => {
         handleCreate()
     })
 
     // Listen for edit event
-    window.addEventListener('GeneralVoucher-Page-Update-Component', (event) => {
+    window.addEventListener('GeneralVoucher-Update-Component', (event) => {
         const id = event.detail?.id || event.detail?.[0]?.id
         if (id) {
             handleEdit(id)
