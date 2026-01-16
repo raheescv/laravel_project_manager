@@ -6,6 +6,7 @@ use App\Actions\Account\CreateAction;
 use App\Actions\Account\UpdateAction;
 use App\Http\Controllers\Controller;
 use App\Models\Account;
+use App\Models\AccountCategory;
 use Illuminate\Http\Request;
 
 class CustomerController extends Controller
@@ -19,6 +20,12 @@ class CustomerController extends Controller
                 unset($data['customer_type_id']);
             }
             $data['model'] = 'customer';
+
+            $accountReceivableGroup = AccountCategory::firstWhere(['tenant_id' => 1, 'name' => 'Account Receivable']);
+            if (! $accountReceivableGroup) {
+                $data['account_category_id'] = $accountReceivableGroup['id'];
+            }
+
             if ($id) {
                 $response = (new UpdateAction())->execute($data, $id);
             } else {

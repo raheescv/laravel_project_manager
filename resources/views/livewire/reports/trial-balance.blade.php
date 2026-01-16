@@ -41,6 +41,17 @@
                     </div>
                 </div>
             </div>
+            <div class="row mb-4 g-4">
+                <div class="col-md-12">
+                    <div class="form-group" wire:ignore>
+                        <label for="selected_account_ids" class="form-label fs-6 text-secondary mb-2 d-flex align-items-center">
+                            <i class="pli-file-edit me-2 fs-5"></i>Filter by Accounts (Optional)
+                        </label>
+                        {{ html()->select('selected_account_ids', [])->multiple()->class('select-account_id-list')->id('selected_account_ids')->attribute('placeholder', 'Select accounts to filter (leave empty for all accounts)') }}
+                        <small class="text-muted">Leave empty to show all accounts</small>
+                    </div>
+                </div>
+            </div>
 
             <!-- Summary Cards -->
             <div class="row g-4 mb-5">
@@ -406,6 +417,9 @@
                 $('#branch_id').on('change', function(e) {
                     const value = $(this).val() || null;
                     @this.set('branch_id', value);
+                });
+                $('#selected_account_ids').on('change', function(e) {
+                    @this.set('selected_account_ids', $(this).val() || []);
                 });
             });
         </script>

@@ -72,7 +72,7 @@ class GeneralVoucherRequest extends FormRequest
                 if (($entry['debit'] ?? 0) > 0 && ($entry['credit'] ?? 0) > 0) {
                     $validator->errors()->add(
                         "entries.{$index}",
-                        "Entry #" . ($index + 1) . " cannot have both debit and credit amounts."
+                        'Entry #'.($index + 1).' cannot have both debit and credit amounts.'
                     );
                 }
             }
@@ -100,7 +100,7 @@ class GeneralVoucherRequest extends FormRequest
                 }
             }
 
-            if (!$hasDebit || !$hasCredit) {
+            if (! $hasDebit || ! $hasCredit) {
                 $validator->errors()->add(
                     'entries',
                     'At least one entry must have a debit amount and one must have a credit amount.'
