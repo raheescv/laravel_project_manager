@@ -6,12 +6,13 @@ export default defineConfig({
     plugins: [
         laravel({
             input: [
-                'resources/css/app.css', 
+                'resources/css/app.css',
                 'resources/js/app.js',
                 'resources/js/inventory-opening-balance.js',
                 'resources/js/stock-check.js',
                 'resources/js/stock-check-show.js',
-                'resources/js/general-voucher-modal.js'
+                'resources/js/general-voucher-modal.js',
+                'resources/js/journal-entries-modal.js'
             ],
             refresh: true,
         }),

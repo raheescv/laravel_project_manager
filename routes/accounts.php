@@ -20,6 +20,8 @@ Route::middleware('auth')->group(function (): void {
 
         // API route for customer details
         Route::get('customer/{id}/details', 'getCustomerDetails')->name('customer.details')->can('customer.view');
+        Route::get('journal-entries/{journalId}', 'getJournalEntries')->name('journal-entries')->can('account.view');
+
         Route::name('vendor::')->prefix('vendor')->group(function (): void {
             Route::get('', 'vendor')->name('index')->can('vendor.view');
         });

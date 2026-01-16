@@ -367,7 +367,7 @@ class Table extends Component
 
         $treeData = $this->getTreeData();
 
-        $visibleColumnNames =[
+        $visibleColumnNames = [
             'id' => '#',
             'account_type' => 'Account Type',
             'account_category' => 'Account Category',
