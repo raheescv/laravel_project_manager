@@ -89,7 +89,7 @@
     <div class="card-body p-0">
         <div class="table-responsive">
             <table class="table table-hover align-middle mb-0 border table-sm">
-                <thead class="bg-light table-sm">
+                <thead class="bg-light">
                     <tr class="text-capitalize">
                         <th class="border-bottom py-3">
                             <div class="d-flex align-items-center gap-2">
@@ -338,7 +338,7 @@
         <script>
             $(document).ready(function() {
                 $(document).on('click', '.edit', function() {
-                    Livewire.dispatch("GeneralVoucher-Page-Update-Component", {
+                    Livewire.dispatch("GeneralVoucher-Update-Component", {
                         id: $(this).attr('table_id')
                     });
                 });
@@ -351,7 +351,7 @@
                     @this.set('filter.branch_id', value);
                 });
                 $('#PageAdd').click(function() {
-                    Livewire.dispatch("GeneralVoucher-Page-Create-Component");
+                    Livewire.dispatch("GeneralVoucher-Create-Component");
                 });
                 window.addEventListener('RefreshGeneralVoucherTable', event => {
                     Livewire.dispatch("GeneralVoucher-Refresh-Component");
