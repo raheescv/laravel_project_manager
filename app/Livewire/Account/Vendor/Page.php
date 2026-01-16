@@ -57,7 +57,8 @@ class Page extends Component
                 $mobile = rand(90000000, 99999999);
                 $email = $faker->email;
             }
-            $account_category_id = AccountCategory::firstWhere(['name' => 'Account Payable'])?->id;
+            $vendorsMaster = AccountCategory::firstOrCreate(['tenant_id' => 1, 'name' => 'Vendors']);
+            $account_category_id = $vendorsMaster->id;
             $this->accounts = [
                 'account_type' => $account_type,
                 'name' => $name,
