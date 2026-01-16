@@ -1,7 +1,7 @@
 <div>
     <div class="modal-header bg-light">
         <h1 class="modal-title fs-5">
-            <i class="fa fa-file-invoice me-2 text-primary"></i>
+            <i class="fa fa-file-text me-2 text-primary"></i>
             General Voucher
         </h1>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>

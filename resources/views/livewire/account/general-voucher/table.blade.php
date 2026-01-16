@@ -277,7 +277,7 @@
                     @empty
                         <tr>
                             <td colspan="{{ 2 + count(array_filter($general_voucher_visible_column ?? [])) }}" class="text-center py-4 text-muted">
-                                <i class="fa fa-file-invoice fs-2 mb-2"></i>
+                                <i class="fa fa-file-text fs-2 mb-2"></i>
                                 <p class="mb-0">No general vouchers found</p>
                             </td>
                         </tr>

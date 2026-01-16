@@ -32,6 +32,9 @@ Route::middleware('auth')->group(function (): void {
         Route::name('general-voucher::')->prefix('general-voucher')->controller(GeneralVoucherController::class)->group(function (): void {
             Route::get('', 'index')->name('index')->can('general voucher.view');
             Route::get('print/{id}', 'print')->name('print')->can('general voucher.view');
+            Route::get('{id}/data', 'getData')->name('data')->can('general voucher.view');
+            Route::post('', 'store')->name('store')->can('general voucher.create');
+            Route::put('{id}', 'update')->name('update')->can('general voucher.edit');
         });
         Route::name('notes::')->prefix('notes')->controller(AccountController::class)->group(function (): void {
             Route::get('/{id?}', 'notes')->name('index')->can('account note.view');

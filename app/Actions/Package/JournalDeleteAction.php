@@ -12,7 +12,7 @@ class JournalDeleteAction
         try {
             $model->journals()->each(function ($journal) use ($userId): void {
                 $journal->entries()->update(['deleted_by' => $userId]);
-                $journal->entriesCounterAccounts()->delete();
+                // $journal->entriesCounterAccounts()->delete();
                 $journal->entries()->delete();
                 $journal->delete();
             });
@@ -37,7 +37,7 @@ class JournalDeleteAction
             $journal = $journalEntry->journal;
 
             $journal->entries()->update(['deleted_by' => $userId]);
-            $journal->entriesCounterAccounts()->delete();
+            // $journal->entriesCounterAccounts()->delete();
             $journal->entries()->delete();
             $journal->delete();
 
