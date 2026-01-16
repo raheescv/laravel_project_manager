@@ -154,7 +154,7 @@ class TrialBalance extends Component
             ->when($this->branch_id, function ($query) {
                 return $query->where('branch_id', $this->branch_id);
             })
-            ->when(!empty($this->selected_account_ids), function ($query) {
+            ->when(! empty($this->selected_account_ids), function ($query) {
                 return $query->whereIn('account_id', $this->selected_account_ids);
             })
             ->groupBy('account_id', 'accounts.name', 'accounts.account_type', 'accounts.account_category_id');

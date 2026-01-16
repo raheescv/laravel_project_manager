@@ -18,6 +18,10 @@ class BalanceSheet extends Component
 
     public $branches = [];
 
+    public $excludeCustomers = false;
+
+    public $excludeVendors = false;
+
     // Account categories - grouped by account heads
     public $currentAssets = [];
 
@@ -96,6 +100,16 @@ class BalanceSheet extends Component
         $this->loadBalanceSheet();
     }
 
+    public function updatedExcludeCustomers()
+    {
+        $this->loadBalanceSheet();
+    }
+
+    public function updatedExcludeVendors()
+    {
+        $this->loadBalanceSheet();
+    }
+
     public function loadBalanceSheet()
     {
         // Reset all arrays and totals
@@ -115,6 +129,7 @@ class BalanceSheet extends Component
                 accounts.name,
                 accounts.account_type,
                 accounts.account_category_id,
+                accounts.model,
                 COALESCE(SUM(journal_entries.debit), 0) as total_debit,
                 COALESCE(SUM(journal_entries.credit), 0) as total_credit
             ')
@@ -125,7 +140,7 @@ class BalanceSheet extends Component
             })
             ->whereNull('journal_entries.deleted_at')
             ->whereNull('accounts.deleted_at')
-            ->groupBy('journal_entries.account_id', 'accounts.id', 'accounts.name', 'accounts.account_type', 'accounts.account_category_id')
+            ->groupBy('journal_entries.account_id', 'accounts.id', 'accounts.name', 'accounts.account_type', 'accounts.account_category_id', 'accounts.model')
             ->get();
 
         // Load all accounts with categories in one query
@@ -136,6 +151,8 @@ class BalanceSheet extends Component
             ->keyBy('id');
 
         // Build accounts with balances array
+        // Note: We include all accounts in calculations for accurate totals
+        // But we'll filter them from display in buildTreeStructure if excluded
         $accountsWithBalances = [];
         foreach ($accountBalances as $balanceData) {
             $account = $accounts->get($balanceData->account_id);
@@ -334,6 +351,11 @@ class BalanceSheet extends Component
             $category = $categoryMap[$categoryId];
             $processedAccountIds[] = $account->id;
 
+            // Check if account should be excluded from display
+            $isCustomer = strtolower($account->model ?? '') === 'customer';
+            $isVendor = strtolower($account->model ?? '') === 'vendor';
+            $shouldExclude = ($this->excludeCustomers && $isCustomer) || ($this->excludeVendors && $isVendor);
+
             if ($category->parent_id) {
                 // Sub-category account
                 if (! isset($accountsBySubCategory[$categoryId])) {
@@ -343,11 +365,14 @@ class BalanceSheet extends Component
                         'total' => 0,
                     ];
                 }
-                $accountsBySubCategory[$categoryId]['accounts'][] = [
-                    'id' => $account->id,
-                    'name' => $account->name,
-                    'amount' => abs($balance),
-                ];
+                // Always include in total, but only add to accounts array if not excluded
+                if (! $shouldExclude) {
+                    $accountsBySubCategory[$categoryId]['accounts'][] = [
+                        'id' => $account->id,
+                        'name' => $account->name,
+                        'amount' => abs($balance),
+                    ];
+                }
                 $accountsBySubCategory[$categoryId]['total'] += $balance;
             } else {
                 // Master category account
@@ -358,11 +383,14 @@ class BalanceSheet extends Component
                         'total' => 0,
                     ];
                 }
-                $accountsByCategory[$categoryId]['accounts'][] = [
-                    'id' => $account->id,
-                    'name' => $account->name,
-                    'amount' => abs($balance),
-                ];
+                // Always include in total, but only add to accounts array if not excluded
+                if (! $shouldExclude) {
+                    $accountsByCategory[$categoryId]['accounts'][] = [
+                        'id' => $account->id,
+                        'name' => $account->name,
+                        'amount' => abs($balance),
+                    ];
+                }
                 $accountsByCategory[$categoryId]['total'] += $balance;
             }
         }
@@ -382,11 +410,17 @@ class BalanceSheet extends Component
                     if (isset($accountsBySubCategory[$subCategoryId])) {
                         $subData = $accountsBySubCategory[$subCategoryId];
                         $masterTotal += $subData['total'];
+                        // Filter accounts array based on exclusion settings
+                        $filteredAccounts = [];
+                        foreach ($subData['accounts'] as $acc) {
+                            // Accounts are already filtered in the loop above, so just add them
+                            $filteredAccounts[] = $acc;
+                        }
                         $groups[] = [
                             'id' => $subCategoryId,
                             'name' => $subCategory->name,
-                            'total' => $subData['total'],
-                            'accounts' => $subData['accounts'],
+                            'total' => round($subData['total'], 2),
+                            'accounts' => $filteredAccounts,
                         ];
                     }
                 }
@@ -397,7 +431,7 @@ class BalanceSheet extends Component
                 $tree[] = [
                     'id' => $masterId,
                     'name' => $masterCategory->name,
-                    'total' => $masterTotal,
+                    'total' => round($masterTotal, 2),
                     'groups' => $groups,
                     'directAccounts' => $directAccounts,
                 ];
@@ -406,25 +440,28 @@ class BalanceSheet extends Component
 
         // Handle uncategorized accounts
         $uncategorized = [];
+        $uncategorizedTotal = 0;
         foreach ($accountsWithBalances as $item) {
             if (! in_array($item['account']->id, $processedAccountIds)) {
-                $uncategorized[] = [
-                    'id' => $item['account']->id,
-                    'name' => $item['account']->name,
-                    'amount' => abs($item['balance']),
-                ];
+                $isCustomer = strtolower($item['account']->model ?? '') === 'customer';
+                $isVendor = strtolower($item['account']->model ?? '') === 'vendor';
+                $shouldExclude = ($this->excludeCustomers && $isCustomer) || ($this->excludeVendors && $isVendor);
+
+                // Always include in total
+                $uncategorizedTotal += $item['balance'];
+
+                // Only add to display array if not excluded
+                if (! $shouldExclude) {
+                    $uncategorized[] = [
+                        'id' => $item['account']->id,
+                        'name' => $item['account']->name,
+                        'amount' => abs($item['balance']),
+                    ];
+                }
             }
         }
 
-        if (! empty($uncategorized)) {
-            // Calculate total from accountsWithBalances for accuracy
-            $uncategorizedTotal = 0;
-            $uncategorizedAccountIds = collect($uncategorized)->pluck('id')->toArray();
-            foreach ($accountsWithBalances as $item) {
-                if (in_array($item['account']->id, $uncategorizedAccountIds)) {
-                    $uncategorizedTotal += $item['balance'];
-                }
-            }
+        if (! empty($uncategorized) || $uncategorizedTotal != 0) {
             $uncategorizedTotal = round($uncategorizedTotal, 2);
 
             $tree[] = [
@@ -452,21 +489,29 @@ class BalanceSheet extends Component
             $balance = $item['balance'];
             $total += $balance;
 
-            $uncategorized[] = [
-                'id' => $account->id,
-                'name' => $account->name,
-                'amount' => abs($balance),
-            ];
+            // Check if account should be excluded from display
+            $isCustomer = strtolower($account->model ?? '') === 'customer';
+            $isVendor = strtolower($account->model ?? '') === 'vendor';
+            $shouldExclude = ($this->excludeCustomers && $isCustomer) || ($this->excludeVendors && $isVendor);
+
+            // Only add to display array if not excluded
+            if (! $shouldExclude) {
+                $uncategorized[] = [
+                    'id' => $account->id,
+                    'name' => $account->name,
+                    'amount' => abs($balance),
+                ];
+            }
         }
 
-        if (empty($uncategorized)) {
+        if (empty($uncategorized) && $total == 0) {
             return [];
         }
 
         return [[
             'id' => 0,
             'name' => 'UnCategorized',
-            'total' => $total,
+            'total' => round($total, 2),
             'groups' => [],
             'directAccounts' => $uncategorized,
         ]];

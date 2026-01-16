@@ -32,6 +32,27 @@
                         <input type="date" wire:model.live="end_date" class="form-control shadow-sm border-light" id="end_date">
                     </div>
                 </div>
+                <div class="col-md-3">
+                    <div class="form-group">
+                        <label class="form-label fw-bold text-secondary mb-2">
+                            <i class="pli-user me-1"></i>Account Display Options
+                        </label>
+                        <div class="d-flex flex-column gap-2">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" wire:model.live="excludeCustomers" id="excludeCustomers">
+                                <label class="form-check-label" for="excludeCustomers">
+                                    Exclude Customer Accounts
+                                </label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" wire:model.live="excludeVendors" id="excludeVendors">
+                                <label class="form-check-label" for="excludeVendors">
+                                    Exclude Vendor Accounts
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <!-- Summary Cards -->
