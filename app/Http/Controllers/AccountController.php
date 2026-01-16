@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Actions\Account\Customer\GenerateStatementAction;
 use App\Actions\Account\Customer\GetCustomerDetailsAction;
+use App\Actions\Account\GetJournalEntriesAction;
 use App\Models\Account;
 use Illuminate\Http\Request;
 
@@ -69,5 +70,12 @@ class AccountController extends Controller
     public function bankReconciliation()
     {
         return view('accounts.bank_reconciliation');
+    }
+
+    public function getJournalEntries($journalId)
+    {
+        $result = (new GetJournalEntriesAction())->execute($journalId);
+
+        return response()->json($result);
     }
 }

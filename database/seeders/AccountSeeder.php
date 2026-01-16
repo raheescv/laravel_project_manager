@@ -104,6 +104,7 @@ class AccountSeeder extends Seeder
 
         if (! file_exists($jsonPath)) {
             echo "JSON file not found at: {$jsonPath}\n";
+
             return;
         }
 
@@ -112,6 +113,7 @@ class AccountSeeder extends Seeder
 
         if (! isset($jsonData['account_heads']) || ! is_array($jsonData['account_heads'])) {
             echo "Invalid JSON structure\n";
+
             return;
         }
 
@@ -148,6 +150,7 @@ class AccountSeeder extends Seeder
 
             if (! $accountType) {
                 echo "Skipping {$accountName}: Invalid account type '{$accountTypeStr}'\n";
+
                 continue;
             }
 
@@ -159,6 +162,7 @@ class AccountSeeder extends Seeder
                     $masterCategory = AccountCategory::firstOrCreate(['tenant_id' => 1, 'name' => 'Equity']);
                 } else {
                     echo "Skipping {$accountName}: Unknown internal_group '{$internalGroup}'\n";
+
                     continue;
                 }
             } else {
@@ -168,13 +172,13 @@ class AccountSeeder extends Seeder
             // Get or create sub-category (group) if group_id exists
             $accountCategoryId = null;
             if ($groupDisplayName && $groupDisplayName !== false) {
-                $cacheKey = $masterCategory->id . '_' . $groupDisplayName;
+                $cacheKey = $masterCategory->id.'_'.$groupDisplayName;
 
                 if (! isset($categoryCache[$cacheKey])) {
                     $subCategory = AccountCategory::firstOrCreate([
                         'tenant_id' => 1,
                         'name' => $groupDisplayName,
-                    ],[
+                    ], [
                         'parent_id' => $masterCategory->id,
                     ]);
                     $categoryCache[$cacheKey] = $subCategory->id;

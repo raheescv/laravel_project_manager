@@ -113,7 +113,12 @@
                                                         {{ $item->counterAccount?->name }}
                                                     </a>
                                                 @else
-                                                    {{ $item->journal->description }} | {{ $item->journal->journal_remarks }}
+                                                    <a href="#"
+                                                       class="text-primary text-decoration-none cursor-pointer journal-entry-link"
+                                                       data-journal-id="{{ $item->journal_id }}"
+                                                       onclick="if(typeof window.openJournalModal === 'function') { window.openJournalModal({{ $item->journal_id }}); } else { console.error('openJournalModal function not available'); alert('Modal function not loaded. Please refresh the page.'); } return false;">
+                                                        {{ $item->journal->description }} | {{ $item->journal_remarks ?? $item->journal->remarks ?? '' }}
+                                                    </a>
                                                 @endif
                                             </td>
                                             <td>{{ $item->person_name }}</td>
@@ -194,6 +199,7 @@
                                                 <th class="text-white">Account Head</th>
                                                 <th class="text-white text-end">Debit</th>
                                                 <th class="text-white text-end">Credit</th>
+                                                <th class="text-white text-end">Balance</th>
                                             </tr>
                                         </thead>
                                         <tbody>
@@ -202,6 +208,7 @@
                                                     <td> <a href="{{ route('account::view', $item->account_id) }}">{{ $item->account->name }}</a> </td>
                                                     <td class="text-end">{{ currency($item->debit) }}</td>
                                                     <td class="text-end">{{ currency($item->credit) }}</td>
+                                                    <td class="text-end">{{ currency($item->debit - $item->credit) }}</td>
                                                 </tr>
                                             @endforeach
                                         </tbody>
@@ -214,7 +221,25 @@
             </div>
         </div>
     </div>
+
+    <!-- Journal Entries Modal Container -->
+    <div id="JournalEntriesModalContainer"></div>
+
     @push('scripts')
+        @vite('resources/js/journal-entries-modal.js')
+        <script>
+            // Ensure function is available immediately
+            if (typeof window.openJournalModal === 'undefined') {
+                window.openJournalModal = function(journalId) {
+                    console.log('Fallback: Opening journal modal for ID:', journalId);
+                    if (window.JournalEntriesModal && window.JournalEntriesModal.open) {
+                        window.JournalEntriesModal.open(journalId);
+                    } else {
+                        console.error('JournalEntriesModal not loaded yet');
+                    }
+                };
+            }
+        </script>
         <script src="{{ asset('assets/vendors/chart.js/chart.umd.min.js') }}"></script>
         <script src="{{ asset('assets/vendors/chart.js/chartjs-plugin-datalabels@2.min.js') }}"></script>
         <script>
