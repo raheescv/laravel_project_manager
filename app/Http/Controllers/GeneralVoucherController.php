@@ -134,6 +134,7 @@ class GeneralVoucherController extends Controller
             ]);
         } catch (ValidationException $e) {
             DB::rollback();
+
             return response()->json([
                 'success' => false,
                 'message' => 'Validation failed',
@@ -141,6 +142,7 @@ class GeneralVoucherController extends Controller
             ], 422);
         } catch (\Exception $e) {
             DB::rollback();
+
             return response()->json([
                 'success' => false,
                 'message' => $e->getMessage(),
@@ -189,12 +191,14 @@ class GeneralVoucherController extends Controller
             ]);
         } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
             DB::rollback();
+
             return response()->json([
                 'success' => false,
                 'message' => 'Journal not found',
             ], 404);
         } catch (ValidationException $e) {
             DB::rollback();
+
             return response()->json([
                 'success' => false,
                 'message' => 'Validation failed',
@@ -202,6 +206,7 @@ class GeneralVoucherController extends Controller
             ], 422);
         } catch (\Exception $e) {
             DB::rollback();
+
             return response()->json([
                 'success' => false,
                 'message' => $e->getMessage(),
