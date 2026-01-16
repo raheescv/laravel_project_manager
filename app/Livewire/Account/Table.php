@@ -6,6 +6,7 @@ use App\Actions\Account\DeleteAction;
 use App\Exports\AccountExport;
 use App\Jobs\Export\ExportAccountJob;
 use App\Models\Account;
+use App\Models\Configuration;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Livewire\Component;
@@ -42,11 +43,44 @@ class Table extends Component
 
     public $excludeVendor = true;
 
+    public $visibleColumns = [
+        'id' => true,
+        'account_type' => true,
+        'account_category' => true,
+        'name' => true,
+        'alias_name' => true,
+        'description' => true,
+        'model' => true,
+    ];
+
     protected $paginationTheme = 'bootstrap';
 
     protected $listeners = [
         'Account-Refresh-Component' => '$refresh',
     ];
+
+    public function mount()
+    {
+        $config = Configuration::where('key', 'account_table_visible_columns')->value('value');
+        $savedColumns = $config ? json_decode($config, true) : [];
+        $defaultColumns = $this->getDefaultColumns();
+
+        // Merge saved columns with defaults to ensure all columns are present
+        $this->visibleColumns = array_merge($defaultColumns, $savedColumns);
+    }
+
+    protected function getDefaultColumns()
+    {
+        return [
+            'id' => true,
+            'account_type' => true,
+            'account_category' => true,
+            'name' => true,
+            'alias_name' => true,
+            'description' => true,
+            'model' => true,
+        ];
+    }
 
     public function delete()
     {
@@ -110,10 +144,40 @@ class Table extends Component
 
     public function updated($key, $value)
     {
-        if ($key !== 'selectedAccountId') {
+        if ($key !== 'selectedAccountId' && ! str_starts_with($key, 'visibleColumns.')) {
             $this->selectedAccountId = null;
         }
-        $this->resetPage();
+
+        // Save column visibility to Configuration when it changes
+        if (str_starts_with($key, 'visibleColumns.')) {
+            Configuration::updateOrCreate(
+                ['key' => 'account_table_visible_columns'],
+                ['value' => json_encode($this->visibleColumns)]
+            );
+        } else {
+            $this->resetPage();
+        }
+    }
+
+    public function toggleColumn($column)
+    {
+        if (isset($this->visibleColumns[$column])) {
+            $this->visibleColumns[$column] = ! $this->visibleColumns[$column];
+            // Save to Configuration
+            Configuration::updateOrCreate(
+                ['key' => 'account_table_visible_columns'],
+                ['value' => json_encode($this->visibleColumns)]
+            );
+        }
+    }
+
+    public function resetColumnVisibility()
+    {
+        $this->visibleColumns = $this->getDefaultColumns();
+        Configuration::updateOrCreate(
+            ['key' => 'account_table_visible_columns'],
+            ['value' => json_encode($this->visibleColumns)]
+        );
     }
 
     public function toggleType($typeKey)
@@ -303,8 +367,19 @@ class Table extends Component
 
         $treeData = $this->getTreeData();
 
+        $visibleColumnNames =[
+            'id' => '#',
+            'account_type' => 'Account Type',
+            'account_category' => 'Account Category',
+            'name' => 'Name',
+            'alias_name' => 'Alias Name',
+            'description' => 'Description',
+            'model' => 'Model',
+        ];
+
         return view('livewire.account.table', [
             'data' => $data,
+            'visibleColumnNames' => $visibleColumnNames,
             'treeData' => $treeData,
         ]);
     }

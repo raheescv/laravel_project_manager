@@ -1,0 +1,1088 @@
+{
+    "account_heads": [
+        {
+            "name": "Bank",
+            "account_type": "asset_cash",
+            "group_id": {
+                "display_name": "Liquidity"
+            },
+            "internal_group": "asset"
+        },
+        {
+            "name": "Outstanding Receipts",
+            "account_type": "asset_current",
+            "group_id": {
+                "display_name": "Liquidity"
+            },
+            "internal_group": "asset"
+        },
+        {
+            "name": "Outstanding Payments",
+            "account_type": "asset_current",
+            "group_id": {
+                "display_name": "Liquidity"
+            },
+            "internal_group": "asset"
+        },
+        {
+            "name": "Liquidity Transfer",
+            "account_type": "asset_current",
+            "group_id": {
+                "display_name": "Liquidity"
+            },
+            "internal_group": "asset"
+        },
+        {
+            "name": "Bank Suspense Account",
+            "account_type": "asset_current",
+            "group_id": {
+                "display_name": "Liquidity"
+            },
+            "internal_group": "asset"
+        },
+        {
+            "name": "Outstanding Receipts",
+            "account_type": "asset_current",
+            "group_id": {
+                "display_name": "Liquidity"
+            },
+            "internal_group": "asset"
+        },
+        {
+            "name": "Outstanding Payments",
+            "account_type": "asset_current",
+            "group_id": {
+                "display_name": "Liquidity"
+            },
+            "internal_group": "asset"
+        },
+        {
+            "name": "Credit cards",
+            "account_type": "asset_current",
+            "group_id": {
+                "display_name": "Liquidity"
+            },
+            "internal_group": "asset"
+        },
+        {
+            "name": "Post Dated Cheques Received",
+            "account_type": "asset_current",
+            "group_id": {
+                "display_name": "Liquidity"
+            },
+            "internal_group": "asset"
+        },
+        {
+            "name": "Accounts Receivable",
+            "account_type": "asset_receivable",
+            "group_id": {
+                "display_name": "Receivables"
+            },
+            "internal_group": "asset"
+        },
+        {
+            "name": "Deposit - Office Rent",
+            "account_type": "asset_current",
+            "group_id": {
+                "display_name": "Deposits"
+            },
+            "internal_group": "asset"
+        },
+        {
+            "name": "Deposits - Customs",
+            "account_type": "asset_current",
+            "group_id": {
+                "display_name": "Deposits"
+            },
+            "internal_group": "asset"
+        },
+        {
+            "name": "Deposit to Immigration (Visa)",
+            "account_type": "asset_current",
+            "group_id": {
+                "display_name": "Deposits"
+            },
+            "internal_group": "asset"
+        },
+        {
+            "name": "Deposit Others",
+            "account_type": "asset_current",
+            "group_id": {
+                "display_name": "Deposits"
+            },
+            "internal_group": "asset"
+        },
+        {
+            "name": "Prepaid Medical Insurance",
+            "account_type": "asset_current",
+            "group_id": {
+                "display_name": "Prepaid Expenses"
+            },
+            "internal_group": "asset"
+        },
+        {
+            "name": "Prepaid Life Insurance",
+            "account_type": "asset_current",
+            "group_id": {
+                "display_name": "Prepaid Expenses"
+            },
+            "internal_group": "asset"
+        },
+        {
+            "name": "Prepaid Office Rent",
+            "account_type": "asset_current",
+            "group_id": {
+                "display_name": "Prepaid Expenses"
+            },
+            "internal_group": "asset"
+        },
+        {
+            "name": "Prepaid Other Insurance",
+            "account_type": "asset_current",
+            "group_id": {
+                "display_name": "Prepaid Expenses"
+            },
+            "internal_group": "asset"
+        },
+        {
+            "name": "Prepaid License Fees",
+            "account_type": "asset_current",
+            "group_id": {
+                "display_name": "Prepaid Expenses"
+            },
+            "internal_group": "asset"
+        },
+        {
+            "name": "Prepaid Maintenance",
+            "account_type": "asset_current",
+            "group_id": {
+                "display_name": "Prepaid Expenses"
+            },
+            "internal_group": "asset"
+        },
+        {
+            "name": "Prepaid Employees Housing",
+            "account_type": "asset_current",
+            "group_id": {
+                "display_name": "Prepaid Expenses"
+            },
+            "internal_group": "asset"
+        },
+        {
+            "name": "Prepaid Schooling Fees",
+            "account_type": "asset_current",
+            "group_id": {
+                "display_name": "Prepaid Expenses"
+            },
+            "internal_group": "asset"
+        },
+        {
+            "name": "Prepaid Consultancy Fees",
+            "account_type": "asset_current",
+            "group_id": {
+                "display_name": "Prepaid Expenses"
+            },
+            "internal_group": "asset"
+        },
+        {
+            "name": "Prepaid Legal Fees",
+            "account_type": "asset_current",
+            "group_id": {
+                "display_name": "Prepaid Expenses"
+            },
+            "internal_group": "asset"
+        },
+        {
+            "name": "Prepaid Sponsorship Fees",
+            "account_type": "asset_current",
+            "group_id": {
+                "display_name": "Prepaid Expenses"
+            },
+            "internal_group": "asset"
+        },
+        {
+            "name": "Prepaid Advertisement Expenses",
+            "account_type": "asset_current",
+            "group_id": {
+                "display_name": "Prepaid Expenses"
+            },
+            "internal_group": "asset"
+        },
+        {
+            "name": "Prepaid Bank Guarantee",
+            "account_type": "asset_current",
+            "group_id": {
+                "display_name": "Prepaid Expenses"
+            },
+            "internal_group": "asset"
+        },
+        {
+            "name": "Prepaid Finance charge for Loans",
+            "account_type": "asset_current",
+            "group_id": {
+                "display_name": "Prepaid Expenses"
+            },
+            "internal_group": "asset"
+        },
+        {
+            "name": "Other Prepayments",
+            "account_type": "asset_current",
+            "group_id": {
+                "display_name": "Prepaid Expenses"
+            },
+            "internal_group": "asset"
+        },
+        {
+            "name": "Prepaid Expenses",
+            "account_type": "asset_current",
+            "group_id": {
+                "display_name": "Prepaid Expenses"
+            },
+            "internal_group": "asset"
+        },
+        {
+            "name": "Handling Difference in Inventory",
+            "account_type": "asset_current",
+            "group_id": {
+                "display_name": "Inventory"
+            },
+            "internal_group": "asset"
+        },
+        {
+            "name": "Inventory Valuation",
+            "account_type": "asset_current",
+            "group_id": {
+                "display_name": "Inventory"
+            },
+            "internal_group": "asset"
+        },
+        {
+            "name": "Stock Incoming",
+            "account_type": "asset_current",
+            "group_id": {
+                "display_name": "Inventory"
+            },
+            "internal_group": "asset"
+        },
+        {
+            "name": "Stock Outgoing",
+            "account_type": "asset_current",
+            "group_id": {
+                "display_name": "Inventory"
+            },
+            "internal_group": "asset"
+        },
+        {
+            "name": "Work in Progress (Inventory)",
+            "account_type": "asset_current",
+            "group_id": {
+                "display_name": "Inventory"
+            },
+            "internal_group": "asset"
+        },
+        {
+            "name": "Accumulated Depreciation of Motor Vehicles",
+            "account_type": "asset_fixed",
+            "group_id": {
+                "display_name": "Company Assets & Depreciation"
+            },
+            "internal_group": "asset"
+        },
+        {
+            "name": "Amortisation on Leasehold Improvement",
+            "account_type": "asset_fixed",
+            "group_id": {
+                "display_name": "Company Assets & Depreciation"
+            },
+            "internal_group": "asset"
+        },
+        {
+            "name": "Leasehold Improvement",
+            "account_type": "asset_fixed",
+            "group_id": {
+                "display_name": "Company Assets & Depreciation"
+            },
+            "internal_group": "asset"
+        },
+        {
+            "name": "Furniture and Equipment",
+            "account_type": "asset_fixed",
+            "group_id": {
+                "display_name": "Company Assets & Depreciation"
+            },
+            "internal_group": "asset"
+        },
+        {
+            "name": "Computer Hardware & Software",
+            "account_type": "asset_fixed",
+            "group_id": {
+                "display_name": "Company Assets & Depreciation"
+            },
+            "internal_group": "asset"
+        },
+        {
+            "name": "Accumulated Depreciation of Furniture & Office Equipment",
+            "account_type": "asset_fixed",
+            "group_id": {
+                "display_name": "Company Assets & Depreciation"
+            },
+            "internal_group": "asset"
+        },
+        {
+            "name": "Accumulated Depreciation of Computer Hardware & Software",
+            "account_type": "asset_fixed",
+            "group_id": {
+                "display_name": "Company Assets & Depreciation"
+            },
+            "internal_group": "asset"
+        },
+        {
+            "name": "Registration of Trademarks",
+            "account_type": "asset_current",
+            "group_id": {
+                "display_name": "Licensing and Copyrights"
+            },
+            "internal_group": "asset"
+        },
+        {
+            "name": "Right of use Asset",
+            "account_type": "asset_fixed",
+            "group_id": {
+                "display_name": "Assets & Depreciation"
+            },
+            "internal_group": "asset"
+        },
+        {
+            "name": "Accumulated Depreciation Right of use Asset",
+            "account_type": "asset_fixed",
+            "group_id": {
+                "display_name": "Assets & Depreciation"
+            },
+            "internal_group": "asset"
+        },
+        {
+            "name": "Payables",
+            "account_type": "liability_payable",
+            "group_id": {
+                "display_name": "Payables"
+            },
+            "internal_group": "liability"
+        },
+        {
+            "name": "Trade Payables",
+            "account_type": "liability_payable",
+            "group_id": {
+                "display_name": "Payables"
+            },
+            "internal_group": "liability"
+        },
+        {
+            "name": "Employees Payables",
+            "account_type": "liability_payable",
+            "group_id": {
+                "display_name": "Payables"
+            },
+            "internal_group": "liability"
+        },
+        {
+            "name": "Credit Notes to Customers",
+            "account_type": "liability_current",
+            "group_id": {
+                "display_name": "Payables"
+            },
+            "internal_group": "liability"
+        },
+        {
+            "name": "Accrued - Salaries",
+            "account_type": "liability_current",
+            "group_id": {
+                "display_name": "Accrued Employee Expenses"
+            },
+            "internal_group": "liability"
+        },
+        {
+            "name": "Accrued - Commissions",
+            "account_type": "liability_current",
+            "group_id": {
+                "display_name": "Accrued Employee Expenses"
+            },
+            "internal_group": "liability"
+        },
+        {
+            "name": "Accrued - Staff Bonus",
+            "account_type": "liability_current",
+            "group_id": {
+                "display_name": "Accrued Employee Expenses"
+            },
+            "internal_group": "liability"
+        },
+        {
+            "name": "Accrued Other Personnel Cost",
+            "account_type": "liability_current",
+            "group_id": {
+                "display_name": "Accrued Employee Expenses"
+            },
+            "internal_group": "liability"
+        },
+        {
+            "name": "Accrued - Sponsorship",
+            "account_type": "liability_current",
+            "group_id": {
+                "display_name": "Accrued Employee Expenses"
+            },
+            "internal_group": "liability"
+        },
+        {
+            "name": "Accrued - Utilities",
+            "account_type": "liability_current",
+            "group_id": {
+                "display_name": "Accrued Expenses"
+            },
+            "internal_group": "liability"
+        },
+        {
+            "name": "Accrued - Telephone",
+            "account_type": "liability_current",
+            "group_id": {
+                "display_name": "Accrued Expenses"
+            },
+            "internal_group": "liability"
+        },
+        {
+            "name": "Accrued - Audit Fees",
+            "account_type": "liability_current",
+            "group_id": {
+                "display_name": "Accrued Expenses"
+            },
+            "internal_group": "liability"
+        },
+        {
+            "name": "Accrued - Office Rent",
+            "account_type": "liability_current",
+            "group_id": {
+                "display_name": "Accrued Expenses"
+            },
+            "internal_group": "liability"
+        },
+        {
+            "name": "Accrued Others",
+            "account_type": "liability_current",
+            "group_id": {
+                "display_name": "Accrued Expenses"
+            },
+            "internal_group": "liability"
+        },
+        {
+            "name": "Accrued Qatar Customs",
+            "account_type": "liability_current",
+            "group_id": {
+                "display_name": "Accrued Expenses"
+            },
+            "internal_group": "liability"
+        },
+        {
+            "name": "Deferred income",
+            "account_type": "liability_current",
+            "group_id": {
+                "display_name": "Deferrals"
+            },
+            "internal_group": "liability"
+        },
+        {
+            "name": "Leave Tickets Provision",
+            "account_type": "liability_non_current",
+            "group_id": {
+                "display_name": "Provisions"
+            },
+            "internal_group": "liability"
+        },
+        {
+            "name": "Leave Days Provision",
+            "account_type": "liability_non_current",
+            "group_id": {
+                "display_name": "Provisions"
+            },
+            "internal_group": "liability"
+        },
+        {
+            "name": "End of Service Provision",
+            "account_type": "liability_non_current",
+            "group_id": {
+                "display_name": "Provisions"
+            },
+            "internal_group": "liability"
+        },
+        {
+            "name": "Income Tax Provision",
+            "account_type": "liability_non_current",
+            "group_id": {
+                "display_name": "Provisions"
+            },
+            "internal_group": "liability"
+        },
+        {
+            "name": "Tax Input",
+            "account_type": "asset_current",
+            "group_id": {
+                "display_name": "Tax"
+            },
+            "internal_group": "asset"
+        },
+        {
+            "name": "Tax Output",
+            "account_type": "liability_current",
+            "group_id": {
+                "display_name": "Tax"
+            },
+            "internal_group": "liability"
+        },
+        {
+            "name": "Tax Payable",
+            "account_type": "liability_current",
+            "group_id": {
+                "display_name": "Tax"
+            },
+            "internal_group": "liability"
+        },
+        {
+            "name": "Tax Receivable",
+            "account_type": "asset_current",
+            "group_id": {
+                "display_name": "Tax"
+            },
+            "internal_group": "asset"
+        },
+        {
+            "name": "Retained Earnings",
+            "account_type": "equity",
+            "group_id": false,
+            "internal_group": "equity"
+        },
+        {
+            "name": "Undistributed Profits/Losses",
+            "account_type": "equity_unaffected",
+            "group_id": false,
+            "internal_group": "equity"
+        },
+        {
+            "name": "Income Clearing Account",
+            "account_type": "income",
+            "group_id": {
+                "display_name": "Operating Income"
+            },
+            "internal_group": "income"
+        },
+        {
+            "name": "Sales Account",
+            "account_type": "income",
+            "group_id": {
+                "display_name": "Operating Income"
+            },
+            "internal_group": "income"
+        },
+        {
+            "name": "Sales of I/C",
+            "account_type": "income",
+            "group_id": {
+                "display_name": "Operating Income"
+            },
+            "internal_group": "income"
+        },
+        {
+            "name": "Sales from Other Region",
+            "account_type": "income",
+            "group_id": {
+                "display_name": "Operating Income"
+            },
+            "internal_group": "income"
+        },
+        {
+            "name": "Management Consultancy Fees",
+            "account_type": "income",
+            "group_id": {
+                "display_name": "Operating Income"
+            },
+            "internal_group": "income"
+        },
+        {
+            "name": "Advertising Income",
+            "account_type": "income",
+            "group_id": {
+                "display_name": "Operating Income"
+            },
+            "internal_group": "income"
+        },
+        {
+            "name": "Other Income",
+            "account_type": "income_other",
+            "group_id": {
+                "display_name": "Non-Operating Income"
+            },
+            "internal_group": "income"
+        },
+        {
+            "name": "Gain on Difference on Exchange",
+            "account_type": "income_other",
+            "group_id": {
+                "display_name": "Other gains & losses - Other Income"
+            },
+            "internal_group": "income"
+        },
+        {
+            "name": "Cash Difference Gain",
+            "account_type": "income_other",
+            "group_id": {
+                "display_name": "Other gains & losses - Other Income"
+            },
+            "internal_group": "income"
+        },
+        {
+            "name": "Excess In Till",
+            "account_type": "income_other",
+            "group_id": {
+                "display_name": "Other gains & losses - Other Income"
+            },
+            "internal_group": "income"
+        },
+        {
+            "name": "Cash Discount Gain",
+            "account_type": "income_other",
+            "group_id": {
+                "display_name": "Other gains & losses - Other Income"
+            },
+            "internal_group": "income"
+        },
+        {
+            "name": "Cost of Goods Sold in Trading",
+            "account_type": "expense_direct_cost",
+            "group_id": {
+                "display_name": "Cost of Sales"
+            },
+            "internal_group": "expense"
+        },
+        {
+            "name": "Cost Of Goods Sold I/C Sales",
+            "account_type": "expense_direct_cost",
+            "group_id": {
+                "display_name": "Cost of Sales"
+            },
+            "internal_group": "expense"
+        },
+        {
+            "name": "Expense Clearing Account",
+            "account_type": "expense",
+            "group_id": {
+                "display_name": "Employees Expenses"
+            },
+            "internal_group": "expense"
+        },
+        {
+            "name": "Medical Insurance",
+            "account_type": "expense",
+            "group_id": {
+                "display_name": "Employees Expenses"
+            },
+            "internal_group": "expense"
+        },
+        {
+            "name": "End of Service Indemnity",
+            "account_type": "expense",
+            "group_id": {
+                "display_name": "Employees Expenses"
+            },
+            "internal_group": "expense"
+        },
+        {
+            "name": "Sponsorship Fees",
+            "account_type": "expense",
+            "group_id": {
+                "display_name": "Employees Expenses"
+            },
+            "internal_group": "expense"
+        },
+        {
+            "name": "Basic Salary",
+            "account_type": "expense",
+            "group_id": {
+                "display_name": "Payroll Expenses"
+            },
+            "internal_group": "expense"
+        },
+        {
+            "name": "Housing Allowance",
+            "account_type": "expense",
+            "group_id": {
+                "display_name": "Payroll Expenses"
+            },
+            "internal_group": "expense"
+        },
+        {
+            "name": "Transportation Allowance",
+            "account_type": "expense",
+            "group_id": {
+                "display_name": "Payroll Expenses"
+            },
+            "internal_group": "expense"
+        },
+        {
+            "name": "Leave Ticket",
+            "account_type": "expense",
+            "group_id": {
+                "display_name": "Payroll Expenses"
+            },
+            "internal_group": "expense"
+        },
+        {
+            "name": "Leave Salary",
+            "account_type": "expense",
+            "group_id": {
+                "display_name": "Payroll Expenses"
+            },
+            "internal_group": "expense"
+        },
+        {
+            "name": "Sales Commission",
+            "account_type": "expense",
+            "group_id": {
+                "display_name": "Payroll Expenses"
+            },
+            "internal_group": "expense"
+        },
+        {
+            "name": "Visa Expenses",
+            "account_type": "expense",
+            "group_id": {
+                "display_name": "Payroll Expenses"
+            },
+            "internal_group": "expense"
+        },
+        {
+            "name": "Staff Other Allowances",
+            "account_type": "expense",
+            "group_id": {
+                "display_name": "Payroll Expenses"
+            },
+            "internal_group": "expense"
+        },
+        {
+            "name": "Air tickets",
+            "account_type": "expense",
+            "group_id": {
+                "display_name": "Payroll Expenses"
+            },
+            "internal_group": "expense"
+        },
+        {
+            "name": "Office Rent",
+            "account_type": "expense",
+            "group_id": {
+                "display_name": "Office and Location Expenses"
+            },
+            "internal_group": "expense"
+        },
+        {
+            "name": "Warehouse Rent",
+            "account_type": "expense",
+            "group_id": {
+                "display_name": "Office and Location Expenses"
+            },
+            "internal_group": "expense"
+        },
+        {
+            "name": "Water & Electricity",
+            "account_type": "expense",
+            "group_id": {
+                "display_name": "Office and Location Expenses"
+            },
+            "internal_group": "expense"
+        },
+        {
+            "name": "Other Utility Charges",
+            "account_type": "expense",
+            "group_id": {
+                "display_name": "Office and Location Expenses"
+            },
+            "internal_group": "expense"
+        },
+        {
+            "name": "Audit Fees",
+            "account_type": "expense",
+            "group_id": {
+                "display_name": "Company Expenses"
+            },
+            "internal_group": "expense"
+        },
+        {
+            "name": "Legal fees",
+            "account_type": "expense",
+            "group_id": {
+                "display_name": "Company Expenses"
+            },
+            "internal_group": "expense"
+        },
+        {
+            "name": "Trade License Fees",
+            "account_type": "expense",
+            "group_id": {
+                "display_name": "Company Expenses"
+            },
+            "internal_group": "expense"
+        },
+        {
+            "name": "Others - Professional Fees",
+            "account_type": "expense",
+            "group_id": {
+                "display_name": "Company Expenses"
+            },
+            "internal_group": "expense"
+        },
+        {
+            "name": "Insurance",
+            "account_type": "expense",
+            "group_id": {
+                "display_name": "Company Expenses"
+            },
+            "internal_group": "expense"
+        },
+        {
+            "name": "Previous Year Adjustments Account",
+            "account_type": "expense",
+            "group_id": {
+                "display_name": "Company Expenses"
+            },
+            "internal_group": "expense"
+        },
+        {
+            "name": "Credit Card Charges",
+            "account_type": "expense",
+            "group_id": {
+                "display_name": "Finance Expenses"
+            },
+            "internal_group": "expense"
+        },
+        {
+            "name": "Other Bank Charges",
+            "account_type": "expense",
+            "group_id": {
+                "display_name": "Finance Expenses"
+            },
+            "internal_group": "expense"
+        },
+        {
+            "name": "Bank Finance & Loan Charges",
+            "account_type": "expense",
+            "group_id": {
+                "display_name": "Finance Expenses"
+            },
+            "internal_group": "expense"
+        },
+        {
+            "name": "Income Tax Expense",
+            "account_type": "expense",
+            "group_id": {
+                "display_name": "Income Tax"
+            },
+            "internal_group": "expense"
+        },
+        {
+            "name": "Other - Advertising Expenses",
+            "account_type": "expense",
+            "group_id": {
+                "display_name": "Misc. Company Expenses"
+            },
+            "internal_group": "expense"
+        },
+        {
+            "name": "Training",
+            "account_type": "expense",
+            "group_id": {
+                "display_name": "Misc. Company Expenses"
+            },
+            "internal_group": "expense"
+        },
+        {
+            "name": "Consultancy Fees",
+            "account_type": "expense",
+            "group_id": {
+                "display_name": "Misc. Company Expenses"
+            },
+            "internal_group": "expense"
+        },
+        {
+            "name": "Amortisation on Leasehold Improvement",
+            "account_type": "expense_depreciation",
+            "group_id": {
+                "display_name": "Assets Depreciation Expenses"
+            },
+            "internal_group": "expense"
+        },
+        {
+            "name": "Vehicle Expenses",
+            "account_type": "expense_depreciation",
+            "group_id": {
+                "display_name": "Assets Depreciation Expenses"
+            },
+            "internal_group": "expense"
+        },
+        {
+            "name": "Depreciation of Motor Vehicles",
+            "account_type": "expense_depreciation",
+            "group_id": {
+                "display_name": "Assets Depreciation Expenses"
+            },
+            "internal_group": "expense"
+        },
+        {
+            "name": "Depreciation of Furniture & Office Equipment",
+            "account_type": "expense_depreciation",
+            "group_id": {
+                "display_name": "Assets Depreciation Expenses"
+            },
+            "internal_group": "expense"
+        },
+        {
+            "name": "Depreciation of Computer Hard & Soft",
+            "account_type": "expense_depreciation",
+            "group_id": {
+                "display_name": "Assets Depreciation Expenses"
+            },
+            "internal_group": "expense"
+        },
+        {
+            "name": "Depreciation on Right of use Asset (IFRS 16)",
+            "account_type": "expense_depreciation",
+            "group_id": {
+                "display_name": "Depreciation"
+            },
+            "internal_group": "expense"
+        },
+        {
+            "name": "Loss on Fixed Assets Disposal",
+            "account_type": "expense",
+            "group_id": {
+                "display_name": "Other gains & losses - Expenses"
+            },
+            "internal_group": "expense"
+        },
+        {
+            "name": "Cash Shortage",
+            "account_type": "expense",
+            "group_id": {
+                "display_name": "Other gains & losses - Expenses"
+            },
+            "internal_group": "expense"
+        },
+        {
+            "name": "Loss on Difference on Exchange",
+            "account_type": "expense",
+            "group_id": {
+                "display_name": "Other gains & losses - Expenses"
+            },
+            "internal_group": "expense"
+        },
+        {
+            "name": "Write Off Receivables & Payables",
+            "account_type": "expense",
+            "group_id": {
+                "display_name": "Other gains & losses - Expenses"
+            },
+            "internal_group": "expense"
+        },
+        {
+            "name": "Write Off Inventory",
+            "account_type": "expense",
+            "group_id": {
+                "display_name": "Other gains & losses - Expenses"
+            },
+            "internal_group": "expense"
+        },
+        {
+            "name": "Others - Provision & Write Off",
+            "account_type": "expense",
+            "group_id": {
+                "display_name": "Other gains & losses - Expenses"
+            },
+            "internal_group": "expense"
+        },
+        {
+            "name": "Others",
+            "account_type": "expense",
+            "group_id": {
+                "display_name": "Other gains & losses - Expenses"
+            },
+            "internal_group": "expense"
+        },
+        {
+            "name": "Other Non-Operating Expenses",
+            "account_type": "expense",
+            "group_id": {
+                "display_name": "Other gains & losses - Expenses"
+            },
+            "internal_group": "expense"
+        },
+        {
+            "name": "Cash Difference Loss",
+            "account_type": "expense",
+            "group_id": {
+                "display_name": "Other gains & losses - Expenses"
+            },
+            "internal_group": "expense"
+        },
+        {
+            "name": "Telephone",
+            "account_type": "expense",
+            "group_id": {
+                "display_name": "Misc. Office Expenses"
+            },
+            "internal_group": "expense"
+        },
+        {
+            "name": "Others - Communication",
+            "account_type": "expense",
+            "group_id": {
+                "display_name": "Misc. Office Expenses"
+            },
+            "internal_group": "expense"
+        },
+        {
+            "name": "Maintenance",
+            "account_type": "expense",
+            "group_id": {
+                "display_name": "Misc. Office Expenses"
+            },
+            "internal_group": "expense"
+        },
+        {
+            "name": "Security & Guard",
+            "account_type": "expense",
+            "group_id": {
+                "display_name": "Misc. Office Expenses"
+            },
+            "internal_group": "expense"
+        },
+        {
+            "name": "Cleaning",
+            "account_type": "expense",
+            "group_id": {
+                "display_name": "Misc. Office Expenses"
+            },
+            "internal_group": "expense"
+        },
+        {
+            "name": "Others - Office Various Expenses",
+            "account_type": "expense",
+            "group_id": {
+                "display_name": "Misc. Office Expenses"
+            },
+            "internal_group": "expense"
+        },
+        {
+            "name": "Cash Discount Loss",
+            "account_type": "expense",
+            "group_id": {
+                "display_name": "Misc. Office Expenses"
+            },
+            "internal_group": "expense"
+        }
+    ]
+}

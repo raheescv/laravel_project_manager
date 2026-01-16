@@ -39,15 +39,15 @@
                         </label>
                         <div class="d-flex flex-column gap-2">
                             <div class="form-check">
-                                <input class="form-check-input" type="checkbox" wire:model.live="excludeCustomers" id="excludeCustomers">
-                                <label class="form-check-label" for="excludeCustomers">
-                                    Exclude Customer Accounts
+                                <input class="form-check-input" type="checkbox" wire:model.live="hideCustomers" id="hideCustomers">
+                                <label class="form-check-label" for="hideCustomers">
+                                    Hide Customer Accounts
                                 </label>
                             </div>
                             <div class="form-check">
-                                <input class="form-check-input" type="checkbox" wire:model.live="excludeVendors" id="excludeVendors">
-                                <label class="form-check-label" for="excludeVendors">
-                                    Exclude Vendor Accounts
+                                <input class="form-check-input" type="checkbox" wire:model.live="hideVendors" id="hideVendors">
+                                <label class="form-check-label" for="hideVendors">
+                                    Hide Vendor Accounts
                                 </label>
                             </div>
                         </div>

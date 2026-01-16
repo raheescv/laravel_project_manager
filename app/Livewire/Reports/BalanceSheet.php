@@ -18,9 +18,9 @@ class BalanceSheet extends Component
 
     public $branches = [];
 
-    public $excludeCustomers = false;
+    public $hideCustomers = true;
 
-    public $excludeVendors = false;
+    public $hideVendors = true;
 
     // Account categories - grouped by account heads
     public $currentAssets = [];
@@ -100,12 +100,12 @@ class BalanceSheet extends Component
         $this->loadBalanceSheet();
     }
 
-    public function updatedExcludeCustomers()
+    public function updatedHideCustomers()
     {
         $this->loadBalanceSheet();
     }
 
-    public function updatedExcludeVendors()
+    public function updatedHideVendors()
     {
         $this->loadBalanceSheet();
     }
@@ -351,10 +351,10 @@ class BalanceSheet extends Component
             $category = $categoryMap[$categoryId];
             $processedAccountIds[] = $account->id;
 
-            // Check if account should be excluded from display
+            // Check if account should be hidden from display
             $isCustomer = strtolower($account->model ?? '') === 'customer';
             $isVendor = strtolower($account->model ?? '') === 'vendor';
-            $shouldExclude = ($this->excludeCustomers && $isCustomer) || ($this->excludeVendors && $isVendor);
+            $shouldHide = ($this->hideCustomers && $isCustomer) || ($this->hideVendors && $isVendor);
 
             if ($category->parent_id) {
                 // Sub-category account
@@ -365,8 +365,8 @@ class BalanceSheet extends Component
                         'total' => 0,
                     ];
                 }
-                // Always include in total, but only add to accounts array if not excluded
-                if (! $shouldExclude) {
+                // Always include in total, but only add to accounts array if not hidden
+                if (! $shouldHide) {
                     $accountsBySubCategory[$categoryId]['accounts'][] = [
                         'id' => $account->id,
                         'name' => $account->name,
@@ -383,8 +383,8 @@ class BalanceSheet extends Component
                         'total' => 0,
                     ];
                 }
-                // Always include in total, but only add to accounts array if not excluded
-                if (! $shouldExclude) {
+                // Always include in total, but only add to accounts array if not hidden
+                if (! $shouldHide) {
                     $accountsByCategory[$categoryId]['accounts'][] = [
                         'id' => $account->id,
                         'name' => $account->name,
@@ -416,18 +416,21 @@ class BalanceSheet extends Component
                             // Accounts are already filtered in the loop above, so just add them
                             $filteredAccounts[] = $acc;
                         }
-                        $groups[] = [
-                            'id' => $subCategoryId,
-                            'name' => $subCategory->name,
-                            'total' => round($subData['total'], 2),
-                            'accounts' => $filteredAccounts,
-                        ];
+                        // Show sub-category if it has a total, even if no accounts are visible
+                        if (abs($subData['total']) >= 0.01) {
+                            $groups[] = [
+                                'id' => $subCategoryId,
+                                'name' => $subCategory->name,
+                                'total' => round($subData['total'], 2),
+                                'accounts' => $filteredAccounts,
+                            ];
+                        }
                     }
                 }
             }
 
-            // Only add category if it has accounts or groups
-            if (! empty($directAccounts) || ! empty($groups)) {
+            // Show category if it has a total, even if no accounts are visible
+            if (abs($masterTotal) >= 0.01) {
                 $tree[] = [
                     'id' => $masterId,
                     'name' => $masterCategory->name,
@@ -445,13 +448,13 @@ class BalanceSheet extends Component
             if (! in_array($item['account']->id, $processedAccountIds)) {
                 $isCustomer = strtolower($item['account']->model ?? '') === 'customer';
                 $isVendor = strtolower($item['account']->model ?? '') === 'vendor';
-                $shouldExclude = ($this->excludeCustomers && $isCustomer) || ($this->excludeVendors && $isVendor);
+                $shouldHide = ($this->hideCustomers && $isCustomer) || ($this->hideVendors && $isVendor);
 
                 // Always include in total
                 $uncategorizedTotal += $item['balance'];
 
-                // Only add to display array if not excluded
-                if (! $shouldExclude) {
+                // Only add to display array if not hidden
+                if (! $shouldHide) {
                     $uncategorized[] = [
                         'id' => $item['account']->id,
                         'name' => $item['account']->name,
@@ -489,13 +492,13 @@ class BalanceSheet extends Component
             $balance = $item['balance'];
             $total += $balance;
 
-            // Check if account should be excluded from display
+            // Check if account should be hidden from display
             $isCustomer = strtolower($account->model ?? '') === 'customer';
             $isVendor = strtolower($account->model ?? '') === 'vendor';
-            $shouldExclude = ($this->excludeCustomers && $isCustomer) || ($this->excludeVendors && $isVendor);
+            $shouldHide = ($this->hideCustomers && $isCustomer) || ($this->hideVendors && $isVendor);
 
-            // Only add to display array if not excluded
-            if (! $shouldExclude) {
+            // Only add to display array if not hidden
+            if (! $shouldHide) {
                 $uncategorized[] = [
                     'id' => $account->id,
                     'name' => $account->name,
