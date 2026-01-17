@@ -148,7 +148,7 @@ class CustomerReceipt extends Component
             return $value['selected'] == true;
         });
         $balance = $selectedSales->sum('payment');
-        $this->payment['amount'] = $balance;
+        $this->payment['amount'] = round($balance, 2);
     }
 
     public function amountSplit()
