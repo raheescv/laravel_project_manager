@@ -212,7 +212,7 @@ class OverviewReport extends Component
             ->paginate($this->productPerPage, ['*'], 'products-page');
     }
 
-    private function getSalePaymentsQuery(callable $baseQuery)
+    private function getSalePaymentsQuery()
     {
         return SalePayment::query()
             ->join('sales', 'sales.id', '=', 'sale_payments.sale_id')
@@ -233,7 +233,7 @@ class OverviewReport extends Component
             ->get();
     }
 
-    private function getSaleReturnPaymentsQuery(callable $baseReturnQuery)
+    private function getSaleReturnPaymentsQuery()
     {
         return SaleReturnPayment::query()
             ->join('sale_returns', 'sale_returns.id', '=', 'sale_return_payments.sale_return_id')
@@ -253,12 +253,14 @@ class OverviewReport extends Component
             ->get();
     }
 
-    private function getPaymentsQuery(callable $baseQuery)
+    private function getPaymentsQuery()
     {
         return SalePayment::query()
             ->join('sales', 'sales.id', '=', 'sale_payments.sale_id')
             ->join('accounts', 'accounts.id', '=', 'sale_payments.payment_method_id')
-            ->tap($baseQuery)
+            ->when($this->fromDate, fn ($q) => $q->where('sale_payments.date', '>=', $this->fromDate))
+            ->when($this->toDate, fn ($q) => $q->where('sale_payments.date', '<=', $this->toDate))
+            ->where('sales.status', 'completed')
             ->select('accounts.name as payment_method')
             ->selectRaw('SUM(sale_payments.amount) as total')
             ->groupBy('sale_payments.payment_method_id')
@@ -438,9 +440,9 @@ class OverviewReport extends Component
         $sales = Sale::query()->customerSearch($this->branchId, $from, $to);
         $saleReturns = SaleReturn::query()->customerSearch($this->branchId, $from, $to);
 
-        $salePayments = $this->getSalePaymentsQuery($baseQuery);
-        $saleReturnPayments = $this->getSaleReturnPaymentsQuery($baseReturnQuery);
-        $payments = $this->getPaymentsQuery($baseQuery);
+        $salePayments = $this->getSalePaymentsQuery();
+        $saleReturnPayments = $this->getSaleReturnPaymentsQuery();
+        $payments = $this->getPaymentsQuery();
 
         $totals = $this->calculateTotals($sales, $saleReturns, $payments);
         $employeeStats = $this->calculateEmployeeStats($baseQuery, $baseReturnQuery);
