@@ -55,7 +55,6 @@
                         <th> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="journal_remarks" label="journal remarks" /> </th>
                         <th class="text-end"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="debit" label="debit" /> </th>
                         <th class="text-end"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="credit" label="credit" /> </th>
-                        <th class="text-end"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="balance" label="balance" /> </th>
                     </tr>
                 </thead>
                 <tbody>
@@ -67,13 +66,17 @@
                                 <a href="{{ route('account::view', $item->account_id) }}?from_date={{ $from_date }}&to_date={{ $to_date }}" class="text-decoration-none" style="padding-left: 3rem !important; display: block;">{{ $item->account_name }}</a>
                             </td>
                             <td>
-                                @switch($item->journal_model)
+                                @switch($item->model)
                                     @case('Sale')
-                                        <a href="{{ route('sale::view', $item->journal_model_id) }}">{{ $item->description }}</a>
+                                        <a href="{{ route('sale::view', $item->model_id) }}">{{ $item->description }}</a>
                                     @break
 
                                     @case('SaleReturn')
-                                        <a href="{{ route('sale_return::view', $item->journal_model_id) }}">{{ $item->description }}</a>
+                                        <a href="{{ route('sale_return::view', $item->model_id) }}">{{ $item->description }}</a>
+                                    @break
+
+                                    @case('SalePayment')
+                                        <a href="{{ route('sale::view', $item->journal?->model_id) }}">{{ $item->description }}</a>
                                     @break
 
                                     @default
@@ -85,7 +88,6 @@
                             <td>{{ $item->journal_remarks }}</td>
                             <td class="text-end">{{ currency($item->debit) }}</td>
                             <td class="text-end">{{ currency($item->credit) }}</td>
-                            <td class="text-end">{{ currency($item->balance) }}</td>
                         </tr>
                     @endforeach
                 </tbody>
@@ -94,7 +96,6 @@
                         <th class="text-end" colspan="7">Total</th>
                         <th class="text-end">{{ currency($total['debit']) }}</th>
                         <th class="text-end">{{ currency($total['credit']) }}</th>
-                        <th class="text-end">{{ currency($total['debit'] - $total['credit']) }}</th>
                     </tr>
                 </tfoot>
             </table>

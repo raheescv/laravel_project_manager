@@ -295,7 +295,7 @@
                                         @php
                                             $first = array_values($groupedItems)[0];
                                         @endphp
-                                        <th colspan="8" class="bg-light">
+                                        <th colspan="9" class="bg-light">
                                             <i class="demo-psi-user me-2"></i>
                                             {{ $first['employee_name'] }}
                                         </th>
