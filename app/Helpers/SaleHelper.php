@@ -5,8 +5,8 @@ namespace App\Helpers;
 use App\Models\Account;
 use App\Models\Configuration;
 use App\Models\Sale;
-use App\Models\SalePayment;
 use App\Models\SaleDaySession;
+use App\Models\SalePayment;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\View;
 
@@ -123,7 +123,7 @@ class SaleHelper
         $payments = SalePayment::whereDate('date', date('Y-m-d', strtotime($session->opened_at)))->get();
         $pendingPayments = [];
         foreach ($payments as $payment) {
-            if($payment->sale->sale_day_session_id!=$id){
+            if ($payment->sale->sale_day_session_id != $id) {
                 $pendingPayments[] = [
                     'date' => $payment->date,
                     'invoice_no' => $payment->sale->invoice_no,
@@ -133,6 +133,7 @@ class SaleHelper
             }
             $totals[$payment->name] += $payment->amount;
         }
-        return view('sale.day-session-print', compact('session','pendingPayments', 'sales', 'totals'));
+
+        return view('sale.day-session-print', compact('session', 'pendingPayments', 'sales', 'totals'));
     }
 }
