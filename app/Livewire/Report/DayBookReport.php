@@ -18,6 +18,8 @@ class DayBookReport extends Component
 
     public $account_id = '';
 
+    public $branch_id = '';
+
     public $from_date;
 
     public $to_date;
@@ -38,6 +40,7 @@ class DayBookReport extends Component
     {
         $this->from_date = date('Y-m-d');
         $this->to_date = date('Y-m-d');
+        $this->branch_id = session('branch_id');
     }
 
     public function export()
