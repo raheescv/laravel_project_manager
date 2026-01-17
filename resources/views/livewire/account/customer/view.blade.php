@@ -487,6 +487,7 @@
                                             <th class="text-white">employee</th>
                                             <th class="text-white">product</th>
                                             <th class="text-white text-end">quantity</th>
+                                            <th class="text-white text-end">base unit quantity</th>
                                             <th class="text-white text-end">total</th>
                                             <th class="text-white text-end">effective</th>
                                         </tr>
@@ -500,6 +501,7 @@
                                                 <td>{{ $item->employee?->name }}</td>
                                                 <td>{{ $item->product?->name }}</td>
                                                 <td class="text-end">{{ currency($item->quantity) }}</td>
+                                                <td class="text-end">{{ currency($item->base_unit_quantity) }}</td>
                                                 <td class="text-end">{{ currency($item->total) }}</td>
                                                 <td class="text-end">{{ currency($item->effective_total) }}</td>
                                             </tr>
