@@ -208,19 +208,47 @@ class CustomerReceipt extends Component
             if ($diff) {
                 throw new \Exception('Total amount and individual invoice amounts do not match mismatching amount is ('.$diff.')', 1);
             }
+            $paymentIds = [];
+            $receiptData = [];
             foreach ($customer_sales as $sale_id => $value) {
                 if ($value['payment'] || $value['discount']) {
+                    $sale = Sale::find($sale_id);
                     $response = (new ReceiptAction())->execute($this->customer_id, $this->name, $sale_id, $value, $this->payment, Auth::id());
                     if (! $response['success']) {
                         throw new \Exception($response['message'], 1);
                     }
+                    // Collect payment data for receipt printing
+                    if ($value['payment'] > 0 && $sale) {
+                        $paymentId = $response['data']['payment_id'] ?? null;
+                        if ($paymentId) {
+                            $paymentIds[] = $paymentId;
+                        }
+                        $receiptData[] = [
+                            'invoice_no' => $sale->invoice_no ?? '',
+                            'amount' => $value['payment'],
+                            'discount' => $value['discount'] ?? 0,
+                        ];
+                    }
                 }
             }
+            $payment =$this->payment;
             DB::commit();
             $this->mount($this->name, $this->customer_id);
             $this->dispatch('success', ['message' => 'Payment added successfully']);
             $this->dispatch('Sale-Receipts-Refresh-Component');
             $this->dispatch('ToggleCustomerReceiptModal');
+
+            // Trigger print if there are payments
+            if (!empty($paymentIds) && !empty($receiptData)) {
+                $this->dispatch('print-customer-receipt', [
+                    'customer_name' => $this->name,
+                    'payment_date' => $payment['date'],
+                    'payment_method' => $payment['payment_method_id'],
+                    'total_amount' => $payment['amount'],
+                    'receipt_data' => $receiptData,
+                    'payment_ids' => array_filter($paymentIds),
+                ]);
+            }
         } catch (\Exception $e) {
             DB::rollback();
             $this->dispatch('error', ['message' => $e->getMessage()]);

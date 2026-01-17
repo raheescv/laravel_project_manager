@@ -10,7 +10,7 @@
             </nav>
             <h1 class="page-title mb-0 mt-2">Purchase Payments</h1>
             <p class="lead">
-                A table is list of Purchase Payments
+                A table of Purchase Payments
             </p>
         </div>
     </div>

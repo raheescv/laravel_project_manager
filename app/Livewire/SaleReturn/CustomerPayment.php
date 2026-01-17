@@ -8,6 +8,7 @@ use App\Models\SaleReturn;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Livewire\Component;
+use Exception;
 
 class CustomerPayment extends Component
 {
@@ -207,22 +208,51 @@ class CustomerPayment extends Component
             $customer_sales_payment = round($customer_sale_returns->sum('payment'), 2);
             $diff = round($this->payment['amount'] - $customer_sales_payment, 2);
             if ($diff) {
-                throw new \Exception('Total amount and individual invoice amounts do not match mismatching amount is ('.$diff.')', 1);
+                throw new Exception('Total amount and individual invoice amounts do not match mismatching amount is ('.$diff.')', 1);
             }
+            $paymentIds = [];
+            $receiptData = [];
             foreach ($customer_sale_returns as $sale_return_id => $value) {
                 if ($value['payment'] || $value['discount']) {
+                    $saleReturn = SaleReturn::find($sale_return_id);
                     $response = (new PaymentAction())->execute($this->customer_id, $this->name, $sale_return_id, $value, $this->payment, Auth::id());
                     if (! $response['success']) {
-                        throw new \Exception($response['message'], 1);
+                        throw new Exception($response['message'], 1);
+                    }
+                    // Collect payment data for receipt printing
+                    if ($value['payment'] > 0 && $saleReturn) {
+                        $paymentId = $response['data']['payment_id'] ?? null;
+                        if ($paymentId) {
+                            $paymentIds[] = $paymentId;
+                        }
+                        $receiptData[] = [
+                            'id' => $saleReturn->id ?? '',
+                            'reference_no' => $saleReturn->reference_no ?? '',
+                            'amount' => $value['payment'],
+                            'discount' => $value['discount'] ?? 0,
+                        ];
                     }
                 }
             }
             DB::commit();
+            $payment = $this->payment;
             $this->mount($this->name, $this->customer_id);
             $this->dispatch('success', ['message' => 'Payment added successfully']);
             $this->dispatch('SaleReturn-Payments-Refresh-Component');
             $this->dispatch('ToggleCustomerReceiptModal');
-        } catch (\Exception $e) {
+
+            // Trigger print if there are payments
+            if (!empty($paymentIds) && !empty($receiptData)) {
+                $this->dispatch('print-sale-return-payment-receipt', [
+                    'customer_name' => $this->name,
+                    'payment_date' => $payment['date'],
+                    'payment_method' => $payment['payment_method_id'],
+                    'total_amount' => $payment['amount'],
+                    'receipt_data' => $receiptData,
+                    'payment_ids' => array_filter($paymentIds),
+                ]);
+            }
+        } catch (Exception $e) {
             DB::rollback();
             $this->dispatch('error', ['message' => $e->getMessage()]);
         }
