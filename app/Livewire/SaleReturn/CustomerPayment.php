@@ -5,10 +5,10 @@ namespace App\Livewire\SaleReturn;
 use App\Actions\SaleReturn\PaymentAction;
 use App\Models\Account;
 use App\Models\SaleReturn;
+use Exception;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Livewire\Component;
-use Exception;
 
 class CustomerPayment extends Component
 {
@@ -242,7 +242,7 @@ class CustomerPayment extends Component
             $this->dispatch('ToggleCustomerReceiptModal');
 
             // Trigger print if there are payments
-            if (!empty($paymentIds) && !empty($receiptData)) {
+            if (! empty($paymentIds) && ! empty($receiptData)) {
                 $this->dispatch('print-sale-return-payment-receipt', [
                     'customer_name' => $this->name,
                     'payment_date' => $payment['date'],

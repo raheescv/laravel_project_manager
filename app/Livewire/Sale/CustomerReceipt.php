@@ -231,7 +231,7 @@ class CustomerReceipt extends Component
                     }
                 }
             }
-            $payment =$this->payment;
+            $payment = $this->payment;
             DB::commit();
             $this->mount($this->name, $this->customer_id);
             $this->dispatch('success', ['message' => 'Payment added successfully']);
@@ -239,7 +239,7 @@ class CustomerReceipt extends Component
             $this->dispatch('ToggleCustomerReceiptModal');
 
             // Trigger print if there are payments
-            if (!empty($paymentIds) && !empty($receiptData)) {
+            if (! empty($paymentIds) && ! empty($receiptData)) {
                 $this->dispatch('print-customer-receipt', [
                     'customer_name' => $this->name,
                     'payment_date' => $payment['date'],
