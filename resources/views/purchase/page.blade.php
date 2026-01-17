@@ -18,8 +18,10 @@
     @endif
     <div class="content__boxed">
         <div class="content__wrap">
+            <div class="card">
             @livewire('purchase.page', ['table_id' => $id])
         </div>
+    </div>
     </div>
     <x-account.vendor-modal />
     @push('styles')

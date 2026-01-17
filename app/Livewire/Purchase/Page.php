@@ -57,7 +57,7 @@ class Page extends Component
 
         if ($this->table_id) {
             $this->purchase = Purchase::with([
-                'account:id,name',
+                'account:id,name,mobile',
                 'branch:id,name',
                 'items.product.unit:id,name,code',
                 'items.product.units.subUnit:id,name,code',
@@ -418,6 +418,7 @@ class Page extends Component
         $vendor = $account->name.'@'.$account->mobile;
         $this->dispatch('show-confirmation', [
             'vendor' => $vendor,
+            'invoice_no' => $this->purchases['invoice_no'] ?? 'N/A',
             'grand_total' => currency($this->purchases['grand_total']),
             'paid' => currency($this->purchases['paid']),
             'payment_methods' => $payment_methods,
