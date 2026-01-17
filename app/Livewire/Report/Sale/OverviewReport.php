@@ -218,7 +218,9 @@ class OverviewReport extends Component
             ->join('sales', 'sales.id', '=', 'sale_payments.sale_id')
             ->join('accounts', 'accounts.id', '=', 'sale_payments.payment_method_id')
             ->join('branches', 'branches.id', '=', 'sales.branch_id')
-            ->tap($baseQuery)
+            ->when($this->fromDate, fn ($q) => $q->where('sale_payments.date', '>=', $this->fromDate))
+            ->when($this->toDate, fn ($q) => $q->where('sale_payments.date', '<=', $this->toDate))
+            ->where('sales.status', 'completed')
             ->select(
                 'accounts.name as payment_method',
                 'branches.name as branch_name'
@@ -237,7 +239,9 @@ class OverviewReport extends Component
             ->join('sale_returns', 'sale_returns.id', '=', 'sale_return_payments.sale_return_id')
             ->join('accounts', 'accounts.id', '=', 'sale_return_payments.payment_method_id')
             ->join('branches', 'branches.id', '=', 'sale_returns.branch_id')
-            ->tap($baseReturnQuery)
+            ->when($this->fromDate, fn ($q) => $q->where('sale_return_payments.date', '>=', $this->fromDate))
+            ->when($this->toDate, fn ($q) => $q->where('sale_return_payments.date', '<=', $this->toDate))
+            ->where('sale_returns.status', 'completed')
             ->select(
                 'accounts.name as payment_method',
                 'branches.name as branch_name'
