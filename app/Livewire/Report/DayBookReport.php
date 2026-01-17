@@ -95,24 +95,24 @@ class DayBookReport extends Component
 
     public function render()
     {
-        $data = JournalEntry::select(
-            'journal_entries.journal_id',
-            'journal_entries.id',
-            'journal_entries.date',
-            'journal_entries.account_id',
-            'accounts.name as account_name',
-            'journal_entries.description',
-            'journal_entries.reference_number',
-            'journal_entries.model',
-            'journal_entries.model_id',
-            'journal_entries.journal_model',
-            'journal_entries.journal_model_id',
-            'journal_entries.remarks',
-            'journal_entries.journal_remarks',
-            'journal_entries.debit',
-            'journal_entries.credit'
+        $data = JournalEntry::join('accounts', 'journal_entries.account_id', '=', 'accounts.id')
+            ->select(
+                'journal_entries.journal_id',
+                'journal_entries.id',
+                'journal_entries.date',
+                'journal_entries.account_id',
+                'accounts.name as account_name',
+                'journal_entries.description',
+                'journal_entries.reference_number',
+                'journal_entries.model',
+                'journal_entries.model_id',
+                'journal_entries.journal_model',
+                'journal_entries.journal_model_id',
+                'journal_entries.remarks',
+                'journal_entries.journal_remarks',
+                'journal_entries.debit',
+                'journal_entries.credit'
             )
-            ->join('accounts', 'journal_entries.account_id', '=', 'accounts.id')
             ->whereNull('journal_entries.deleted_at')
             ->when($this->search, function ($query, $value) {
                 return $query->where(function ($q) use ($value) {
