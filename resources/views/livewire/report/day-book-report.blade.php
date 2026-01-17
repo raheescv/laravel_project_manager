@@ -34,6 +34,10 @@
                     <label for="account_id">Account</label>
                     {{ html()->select('account_id', [])->value('')->class('select-account_id-list')->id('account_id')->placeholder('Account') }}
                 </div>
+                <div class="col-md-4" wire:ignore>
+                    <label for="branch_id">Branch</label>
+                    {{ html()->select('branch_id', [session('branch_id') => session('branch_name')])->value(session('branch_id'))->class('select-assigned-branch_id-list')->id('branch_id')->placeholder('All') }}
+                </div>
             </div>
         </div>
     </div>
@@ -101,6 +105,10 @@
                 $('#account_id').on('change', function(e) {
                     const value = $(this).val() || null;
                     @this.set('account_id', value);
+                });
+                $('#branch_id').on('change', function(e) {
+                    const value = $(this).val() || null;
+                    @this.set('branch_id', value);
                 });
             });
         </script>
