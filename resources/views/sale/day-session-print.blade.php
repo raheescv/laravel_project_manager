@@ -369,7 +369,7 @@
                 </tr>
             </thead>
             <tbody>
-                @forelse($sales as $sale)
+                @foreach($sales as $sale)
                     <tr class="sale-row">
                         <td><b>{{ Carbon::parse($sale->date)->format('d/m') }}</b></td>
                         <td><b>{{ $sale->invoice_no ?? 'N/A' }}</b></td>
@@ -378,12 +378,8 @@
                         </td>
                         <td class="text-right"><b>{{ currency($sale->grand_total) }}</b></td>
                     </tr>
-                @empty
-                    <tr>
-                        <td colspan="4" style="text-align: center; font-style: italic; font-size: 7px;">No sales found</td>
-                    </tr>
-                @endforelse
-                @forelse($pendingPayments as $pendingPayment)
+                @endforeach
+                @foreach($pendingPayments as $pendingPayment)
                     <tr class="pending-row">
                         <td><b>{{ Carbon::parse($pendingPayment['date'])->format('d/m') }}</b></td>
                         <td><b>{{ $pendingPayment['invoice_no'] ?? 'N/A' }}</b></td>
@@ -392,11 +388,7 @@
                         </td>
                         <td class="text-right"><b>{{ currency($pendingPayment['amount']) }}</b></td>
                     </tr>
-                @empty
-                    <tr>
-                        <td colspan="4" style="text-align: center; font-style: italic; font-size: 7px;">No pending payments found</td>
-                    </tr>
-                @endforelse
+                @endforeach
             </tbody>
         </table>
 
