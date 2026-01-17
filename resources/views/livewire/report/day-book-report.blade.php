@@ -125,19 +125,29 @@
                             </td>
                             <td>
                                 <div class="d-flex align-items-center gap-2">
-                                    @if($item->model)
+                                    @if ($item->model)
                                         <span class="badge bg-info bg-opacity-10 text-info">{{ $item->model }}</span>
                                     @endif
-                                    @if($item->journal_model)
+                                    @if ($item->journal_model)
                                         <span class="badge bg-secondary bg-opacity-10 text-secondary">{{ $item->journal_model }}</span>
                                     @endif
                                     @switch($item->model)
                                         @case('Sale')
                                             <a href="{{ route('sale::view', $item->model_id) }}" class="text-primary text-decoration-none">{{ $item->description }}</a>
-                                            @break
+                                        @break
+
+                                        @case('SalePayment')
+                                            <a href="{{ route('sale::view', $item->journal?->model_id) }}" class="text-primary text-decoration-none">{{ $item->description }}</a>
+                                        @break
+
                                         @case('SaleReturn')
                                             <a href="{{ route('sale_return::view', $item->model_id) }}" class="text-primary text-decoration-none">{{ $item->description }}</a>
-                                            @break
+                                        @break
+
+                                        @case('SaleReturnPayment')
+                                            <a href="{{ route('sale_return::view', $item->journal?->model_id) }}" class="text-primary text-decoration-none">{{ $item->description }}</a>
+                                        @break
+
                                         @default
                                             <span>{{ $item->description }}</span>
                                     @endswitch
