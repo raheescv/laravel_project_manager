@@ -12,6 +12,7 @@ use App\Models\Product;
 use App\Models\Purchase;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 use Livewire\Component;
 
 class Page extends Component
@@ -428,7 +429,21 @@ class Page extends Component
 
     public function save($type = 'completed')
     {
-        $this->validate();
+        try {
+            $this->validate();
+        } catch (ValidationException $e) {
+            // Dispatch validation errors to frontend with custom messages
+            $errorMessages = [];
+            foreach ($e->errors() as $field => $messages) {
+                // Use custom messages if available, otherwise use default
+                foreach ($messages as $message) {
+                    $errorMessages[] = $message;
+                }
+            }
+            $this->dispatch('validation-errors', $errorMessages);
+
+            return;
+        }
         try {
             $account_id = $this->purchases['account_id'];
             $oldStatus = $this->purchases['status'];

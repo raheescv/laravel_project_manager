@@ -204,7 +204,7 @@ const props = defineProps({
     }
 })
 
-const emit = defineEmits(['add-payment', 'remove-payment', 'save', 'submit'])
+const emit = defineEmits(['add-payment', 'remove-payment', 'save', 'submit', 'clear-errors'])
 
 const paymentMethodSelect = ref(null)
 const { set, call, on, get, dispatch } = useLivewire()
@@ -262,6 +262,9 @@ const handleSave = async (type) => {
         return
     }
 
+    // Clear errors before saving
+    emit('clear-errors')
+
     try {
         await call('save', type)
         emit('save', type)
@@ -276,6 +279,8 @@ const handleSubmit = async (event) => {
         event.preventDefault()
         event.stopPropagation()
     }
+
+    // Don't clear errors here - let them show if validation fails after confirmation
 
     // Get vendor name and payment methods for confirmation
     // Get vendor name from accounts or purchases
@@ -473,7 +478,7 @@ watch(() => props.selectedPaymentMethodId, async (newValue) => {
             }
         } catch (error) {
             console.error('Error loading payment method:', error)
-            tomSelectInstance.addItem(newValue)
+        tomSelectInstance.addItem(newValue)
         }
     }
 })
