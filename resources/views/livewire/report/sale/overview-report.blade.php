@@ -1,7 +1,7 @@
 @php
     // Pre-calculate common values to avoid repetition
     $netPayment = $totalPayment - $saleReturnPayments->sum('total');
-    $collectionRate = $totalPayment > 0 ? ($totalPayment / $totalSales) * 100 : 0;
+    $collectionRate = $totalSales > 0 ? ($totalPayment > 0 ? ($totalPayment / $totalSales) * 100 : 0) : 0;
     $successRate = $noOfSales > 0 ? (($noOfSales - $noOfSalesReturns) / $noOfSales) * 100 : 0;
     $totalTransactions = $salePayments->sum('transaction_count') + $saleReturnPayments->sum('transaction_count');
     $allPaymentMethods = $salePayments->pluck('payment_method')->merge($saleReturnPayments->pluck('payment_method'))->unique();
@@ -61,13 +61,13 @@
                         @foreach ($allPaymentMethods as $method)
                             @php
                                 if ($method != 'credit') {
-                                $saleAmount = $salePayments->where('payment_method', $method)->first()?->total ?? 0;
-                                $returnAmount = $saleReturnPayments->where('payment_method', $method)->first()?->total ?? 0;
-                                $netAmount = $saleAmount - $returnAmount;
-                                $saleCount = $salePayments->where('payment_method', $method)->first()?->transaction_count ?? 0;
-                                $returnCount = $saleReturnPayments->where('payment_method', $method)->first()?->transaction_count ?? 0;
-                                $methodLower = strtolower($method);
-                                $iconData = $paymentIcons[$methodLower] ?? $paymentIcons['default'];
+                                    $saleAmount = $salePayments->where('payment_method', $method)->first()?->total ?? 0;
+                                    $returnAmount = $saleReturnPayments->where('payment_method', $method)->first()?->total ?? 0;
+                                    $netAmount = $saleAmount - $returnAmount;
+                                    $saleCount = $salePayments->where('payment_method', $method)->first()?->transaction_count ?? 0;
+                                    $returnCount = $saleReturnPayments->where('payment_method', $method)->first()?->transaction_count ?? 0;
+                                    $methodLower = strtolower($method);
+                                    $iconData = $paymentIcons[$methodLower] ?? $paymentIcons['default'];
                                 } else {
                                     $saleAmount = $saleBalance;
                                     $returnAmount = $saleReturnBalance;
