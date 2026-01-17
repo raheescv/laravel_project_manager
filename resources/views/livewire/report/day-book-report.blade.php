@@ -63,7 +63,9 @@
                         <tr>
                             <td>{{ $item->id }}</td>
                             <td>{{ systemDate($item->date) }}</td>
-                            <td>{{ $item->account_name }}</td>
+                            <td>
+                                <a href="{{ route('account::view', $item->account_id) }}?from_date={{ $from_date }}&to_date={{ $to_date }}" class="text-decoration-none" style="padding-left: 3rem !important; display: block;">{{ $item->account_name }}</a>
+                            </td>
                             <td>
                                 @switch($item->journal_model)
                                     @case('Sale')
