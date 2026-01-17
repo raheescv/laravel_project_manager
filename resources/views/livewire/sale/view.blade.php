@@ -801,7 +801,7 @@
                                             @foreach ($sale->items as $item)
                                                 @foreach ($item->audits as $audit)
                                                     <tr>
-                                                        <td>{{ $audit->created_at }}</td>
+                                                        <td class="text-nowrap">{{ $audit->created_at }}</td>
                                                         <td>{{ $audit->user?->name }}</td>
                                                         <td>{{ $audit->event }}</td>
                                                         @foreach ($itemColumns as $key)
@@ -842,7 +842,7 @@
                                             @foreach ($sale->payments as $payment)
                                                 @foreach ($payment->audits as $audit)
                                                     <tr>
-                                                        <td>{{ $audit->created_at }}</td>
+                                                        <td class="text-nowrap">{{ $audit->created_at }}</td>
                                                         <td>{{ $audit->user?->name }}</td>
                                                         <td>{{ $audit->event }}</td>
                                                         @foreach ($paymentColumns as $key)
