@@ -2,7 +2,7 @@
 
 namespace App\Exports;
 
-use App\Models\Models\Views\Ledger;
+use Illuminate\Database\Eloquent\Builder;
 use Maatwebsite\Excel\Concerns\Exportable;
 use Maatwebsite\Excel\Concerns\FromQuery;
 use Maatwebsite\Excel\Concerns\WithColumnFormatting;
@@ -16,25 +16,24 @@ class DayBookReportExport implements FromQuery, WithColumnFormatting, WithEvents
 {
     use Exportable;
 
-    public function __construct(public array $filters = []) {}
+    public function __construct(public Builder $query) {}
 
     public function query()
     {
-        $query = Ledger::select('id', 'date', 'account_name', 'description', 'reference_number', 'remarks', 'debit', 'credit', 'balance')
-            ->when($this->filters['from_date'] ?? '', function ($query, $value) {
-                return $query->where('date', '>=', date('Y-m-d', strtotime($value)));
-            })
-            ->when($this->filters['to_date'] ?? '', function ($query, $value) {
-                return $query->where('date', '<=', date('Y-m-d', strtotime($value)));
-            })
-            ->when($this->filters['branch_id'] ?? '', function ($query, $value) {
-                return $query->where('branch_id', $value);
-            })
-            ->when($this->filters['account_id'] ?? '', function ($query, $value) {
-                return $query->where('account_id', $value);
-            });
-
-        return $query;
+        return $this->query
+            ->orderBy('journal_entries.date', 'asc')
+            ->select(
+                'journal_entries.id',
+                'journal_entries.date',
+                'accounts.name as account_name',
+                'journal_entries.description',
+                'journal_entries.reference_number',
+                'journal_entries.remarks',
+                'journal_entries.journal_remarks',
+                'journal_entries.debit',
+                'journal_entries.credit'
+            )
+            ->orderBy('journal_entries.id', 'asc');
     }
 
     public function headings(): array
@@ -46,9 +45,9 @@ class DayBookReportExport implements FromQuery, WithColumnFormatting, WithEvents
             'Description',
             'Reference',
             'Remarks',
+            'Journal Remarks',
             'Debit',
             'Credit',
-            'Balance',
         ];
     }
 
@@ -59,24 +58,14 @@ class DayBookReportExport implements FromQuery, WithColumnFormatting, WithEvents
 
     public function map($row): array
     {
-        return [
-            $row->id,
-            systemDate($row->date),
-            $row->account_name,
-            $row->description,
-            $row->reference_number,
-            $row->remarks,
-            $row->debit,
-            $row->credit,
-            $row->balance,
-        ];
+        return [$row->id, systemDate($row->date), $row->account_name, $row->description, $row->reference_number ?? '', $row->remarks ?? '', $row->journal_remarks ?? '', $row->debit, $row->credit];
     }
 
     public function columnFormats(): array
     {
         return [
-            'G' => NumberFormat::FORMAT_NUMBER_00,
             'H' => NumberFormat::FORMAT_NUMBER_00,
+            'I' => NumberFormat::FORMAT_NUMBER_00,
         ];
     }
 
@@ -87,15 +76,15 @@ class DayBookReportExport implements FromQuery, WithColumnFormatting, WithEvents
                 $sheet = $event->sheet->getDelegate();
 
                 $totalRows = $sheet->getHighestRow() + 1;
-                $sheet->getStyle("A{$totalRows}:O{$totalRows}")->applyFromArray([
+                $sheet->getStyle("A{$totalRows}:I{$totalRows}")->applyFromArray([
                     'font' => [
                         'bold' => true,
                     ],
                 ]);
 
                 $endRow = $totalRows - 1;
-                $sheet->setCellValue("G{$totalRows}", "=SUM(G2:G{$endRow})");
                 $sheet->setCellValue("H{$totalRows}", "=SUM(H2:H{$endRow})");
+                $sheet->setCellValue("I{$totalRows}", "=SUM(I2:I{$endRow})");
             },
         ];
     }

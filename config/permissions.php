@@ -72,6 +72,7 @@ return [
         'sale item',
         'sale return item',
         'day book',
+        'day book export',
         'daily sales insights',
         'sales overview',
         'purchase item',
