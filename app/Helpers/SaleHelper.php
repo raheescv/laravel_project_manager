@@ -120,7 +120,7 @@ class SaleHelper
         foreach ($paymentMethods as $method) {
             $totals[$method->name] = 0;
         }
-        $payments = SalePayment::whereDate('date', date('Y-m-d', strtotime($session->opened_at)))->get();
+        $payments = SalePayment::where('branch_id', $session->branch_id)->whereDate('date', date('Y-m-d', strtotime($session->opened_at)))->get();
         $pendingPayments = [];
         foreach ($payments as $payment) {
             if ($payment->sale->sale_day_session_id != $id) {
