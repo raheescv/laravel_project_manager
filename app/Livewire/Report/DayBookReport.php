@@ -4,7 +4,7 @@ namespace App\Livewire\Report;
 
 use App\Exports\DayBookReportExport;
 use App\Jobs\Export\ExportSaleItemReportJob;
-use App\Models\Models\Views\Ledger;
+use App\Models\JournalEntry;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
 use Livewire\WithPagination;
@@ -30,7 +30,7 @@ class DayBookReport extends Component
 
     public $selectAll = false;
 
-    public $sortField = 'ledgers.id';
+    public $sortField = 'journal_entries.id';
 
     public $sortDirection = 'desc';
 
@@ -45,7 +45,7 @@ class DayBookReport extends Component
 
     public function export()
     {
-        $count = Ledger::when($this->search, function ($query, $value) {
+        $count = JournalEntry::when($this->search, function ($query, $value) {
             return $query->where(function ($q) use ($value): void {
                 $value = trim($value);
                 $q->where('description', 'like', "%{$value}%")
@@ -95,34 +95,52 @@ class DayBookReport extends Component
 
     public function render()
     {
-        $data = Ledger::select('id', 'date','account_id', 'account_name', 'description', 'reference_number', 'journal_model', 'journal_model_id', 'remarks', 'journal_remarks', 'debit', 'credit', 'balance')
+        $data = JournalEntry::select(
+            'journal_entries.journal_id',
+            'journal_entries.id',
+            'journal_entries.date',
+            'journal_entries.account_id',
+            'accounts.name as account_name',
+            'journal_entries.description',
+            'journal_entries.reference_number',
+            'journal_entries.model',
+            'journal_entries.model_id',
+            'journal_entries.journal_model',
+            'journal_entries.journal_model_id',
+            'journal_entries.remarks',
+            'journal_entries.journal_remarks',
+            'journal_entries.debit',
+            'journal_entries.credit'
+            )
+            ->join('accounts', 'journal_entries.account_id', '=', 'accounts.id')
+            ->whereNull('journal_entries.deleted_at')
             ->when($this->search, function ($query, $value) {
                 return $query->where(function ($q) use ($value) {
                     $value = trim($value);
 
-                    return $q->where('description', 'like', "%{$value}%")
-                        ->orWhere('reference_number', 'like', "%{$value}%")
-                        ->orWhere('journal_remarks', 'like', "%{$value}%")
-                        ->orWhere('remarks', 'like', "%{$value}%");
+                    return $q->where('journal_entries.description', 'like', "%{$value}%")
+                        ->orWhere('journal_entries.reference_number', 'like', "%{$value}%")
+                        ->orWhere('journal_entries.journal_remarks', 'like', "%{$value}%")
+                        ->orWhere('journal_entries.remarks', 'like', "%{$value}%");
                 });
             })
             ->when($this->from_date ?? '', function ($query, $value) {
-                return $query->where('date', '>=', date('Y-m-d', strtotime($value)));
+                return $query->where('journal_entries.date', '>=', date('Y-m-d', strtotime($value)));
             })
             ->when($this->to_date ?? '', function ($query, $value) {
-                return $query->where('date', '<=', date('Y-m-d', strtotime($value)));
+                return $query->where('journal_entries.date', '<=', date('Y-m-d', strtotime($value)));
             })
             ->when($this->branch_id ?? '', function ($query, $value) {
-                return $query->where('branch_id', $value);
+                return $query->where('journal_entries.branch_id', $value);
             })
             ->when($this->account_id ?? '', function ($query, $value) {
-                return $query->where('account_id', $value);
+                return $query->where('journal_entries.account_id', $value);
             });
         $totalRow = clone $data;
         $data = $data->paginate($this->limit);
 
-        $total['debit'] = $totalRow->sum('debit');
-        $total['credit'] = $totalRow->sum('credit');
+        $total['debit'] = $totalRow->sum('journal_entries.debit');
+        $total['credit'] = $totalRow->sum('journal_entries.credit');
 
         return view('livewire.report.day-book-report', [
             'total' => $total,
