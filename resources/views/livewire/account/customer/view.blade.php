@@ -486,6 +486,7 @@
                                             <th class="text-white">invoice</th>
                                             <th class="text-white">employee</th>
                                             <th class="text-white">product</th>
+                                            <th class="text-white">unit</th>
                                             <th class="text-white text-end">quantity</th>
                                             <th class="text-white text-end">base unit quantity</th>
                                             <th class="text-white text-end">total</th>
@@ -500,6 +501,7 @@
                                                 <td> <a href="{{ route('sale::view', $item->sale_id) }}">{{ $item->sale?->invoice_no }}</a> </td>
                                                 <td>{{ $item->employee?->name }}</td>
                                                 <td>{{ $item->product?->name }}</td>
+                                                <td>{{ $item->unit?->name }}</td>
                                                 <td class="text-end">{{ currency($item->quantity) }}</td>
                                                 <td class="text-end">{{ currency($item->base_unit_quantity) }}</td>
                                                 <td class="text-end">{{ currency($item->total) }}</td>
