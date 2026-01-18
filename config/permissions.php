@@ -101,4 +101,6 @@ return [
     'system health' => ['view'],
     'visitor analytics' => ['view'],
     'configuration' => ['barcode', 'settings', 'cheque'],
+    'tailoring.order' => ['view', 'create', 'edit', 'delete'],
+    'tailoring.job_completion' => ['view', 'create', 'edit', 'delete'],
 ];

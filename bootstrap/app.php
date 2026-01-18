@@ -26,6 +26,7 @@ return Application::configure(basePath: dirname(__DIR__))
             __DIR__.'/../routes/flat_trade.php',
             __DIR__.'/../routes/api_log.php',
             __DIR__.'/../routes/tenant_route.php',
+            __DIR__.'/../routes/tailoring.php',
         ],
         api: [
             __DIR__.'/../routes/api.php',
