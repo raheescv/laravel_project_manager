@@ -60,6 +60,11 @@
                                             <i class="fa fa-file-text-o fs-5 me-2"></i>Daily Sales Insights
                                         </a>
                                     @endcan
+                                    @can('report.monthly sale')
+                                        <a href="{{ route('report::monthly_sale') }}" class="list-group-item list-group-item-action">
+                                            <i class="fa fa-file-text-o fs-5 me-2"></i>Monthly Sale Report
+                                        </a>
+                                    @endcan
                                     @can('report.sales overview')
                                         <a href="{{ route('report::sales_overview') }}" class="list-group-item list-group-item-action">
                                             <i class="fa fa-bar-chart fs-5 me-2"></i>Sales Overview

@@ -12,7 +12,7 @@ class DeleteTailoringItemAction
         try {
             $item = TailoringOrderItem::findOrFail($id);
             $order = $item->order;
-            
+
             $categoryId = $item->tailoring_category_id;
             $orderId = $item->tailoring_order_id;
 
@@ -26,7 +26,7 @@ class DeleteTailoringItemAction
                 ->count();
 
             if ($remainingItemsCount === 0) {
-                 \App\Models\TailoringOrderMeasurement::where('tailoring_order_id', $orderId)
+                \App\Models\TailoringOrderMeasurement::where('tailoring_order_id', $orderId)
                     ->where('tailoring_category_id', $categoryId)
                     ->delete();
             }

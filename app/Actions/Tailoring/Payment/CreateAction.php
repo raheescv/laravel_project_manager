@@ -2,7 +2,6 @@
 
 namespace App\Actions\Tailoring\Payment;
 
-use App\Models\TailoringOrder;
 use App\Models\TailoringPayment;
 
 class CreateAction

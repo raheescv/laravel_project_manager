@@ -25,7 +25,7 @@ return new class() extends Migration
                 'pen',
                 'side_pt_model',
                 'stitching',
-                'button'
+                'button',
             ]);
             $table->string('value');
             $table->timestamps();

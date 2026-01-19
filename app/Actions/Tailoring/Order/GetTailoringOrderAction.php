@@ -27,7 +27,7 @@ class GetTailoringOrderAction
                 'payments' => function ($query) {
                     $query->with('paymentMethod:id,name')->orderBy('date');
                 },
-                'measurements'
+                'measurements',
             ])->findOrFail($id);
 
             // Merge measurements into items for frontend compatibility
@@ -42,9 +42,9 @@ class GetTailoringOrderAction
                         'side_pt_size', 'collar', 'collar_size', 'collar_cloth',
                         'collar_model', 'regal_size', 'knee_loose', 'fp_down',
                         'fp_model', 'fp_size', 'pen', 'side_pt_model', 'stitching',
-                        'button', 'button_no', 'mobile_pocket'
+                        'button', 'button_no', 'mobile_pocket',
                     ]);
-                    
+
                     foreach ($measurementAttributes as $key => $value) {
                         $item->$key = $value;
                     }

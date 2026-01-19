@@ -93,6 +93,7 @@ return [
         'vendor aging',
         'tax report',
         'day wise tax report',
+        'monthly sale',
     ],
     'log' => ['inventory'],
     'day close' => ['sync amount'],

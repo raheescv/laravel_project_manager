@@ -180,6 +180,7 @@ class TailoringOrderItem extends Model implements AuditableContracts
     public function calculateStockBalance($stockQuantity)
     {
         $this->total_quantity_used = $this->used_quantity + $this->wastage;
+
         return $stockQuantity - $this->total_quantity_used;
     }
 

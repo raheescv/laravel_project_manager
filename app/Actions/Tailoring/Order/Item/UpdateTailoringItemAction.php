@@ -16,7 +16,7 @@ class UpdateTailoringItemAction
             // save measurement
             $categoryId = $data['tailoring_category_id'] ?? $item->tailoring_category_id;
             if ($categoryId) {
-                 \App\Models\TailoringOrderMeasurement::updateOrCreate(
+                \App\Models\TailoringOrderMeasurement::updateOrCreate(
                     [
                         'tailoring_order_id' => $item->tailoring_order_id,
                         'tailoring_category_id' => $categoryId,

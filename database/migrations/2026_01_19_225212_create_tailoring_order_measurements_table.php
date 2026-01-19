@@ -4,7 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration
+return new class() extends Migration
 {
     /**
      * Run the migrations.
@@ -35,23 +35,23 @@ return new class extends Migration
             $table->string('bottom')->nullable();
             $table->string('mar_size')->nullable();
             $table->string('mar_model')->nullable();
-            
+
             // Cuff Details
             $table->string('cuff')->nullable();
             $table->string('cuff_size')->nullable();
             $table->string('cuff_cloth')->nullable();
             $table->string('cuff_model')->nullable();
-            
+
             // Additional Measurements
             $table->string('neck_d_button')->nullable();
             $table->string('side_pt_size')->nullable();
-            
+
             // Collar Details (Right Column)
             $table->string('collar')->nullable();
             $table->string('collar_size')->nullable();
             $table->string('collar_cloth')->nullable();
             $table->string('collar_model')->nullable();
-            
+
             // Additional Styling
             $table->string('regal_size')->nullable();
             $table->string('knee_loose')->nullable();

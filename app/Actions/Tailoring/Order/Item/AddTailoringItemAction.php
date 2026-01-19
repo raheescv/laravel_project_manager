@@ -2,8 +2,8 @@
 
 namespace App\Actions\Tailoring\Order\Item;
 
-use App\Models\TailoringOrderMeasurement;
 use App\Models\TailoringOrderItem;
+use App\Models\TailoringOrderMeasurement;
 use Exception;
 
 class AddTailoringItemAction
@@ -12,9 +12,9 @@ class AddTailoringItemAction
     {
         try {
             $data['created_by'] = $data['updated_by'] = $user_id;
-            
+
             // save measurement
-            if (!empty($data['tailoring_category_id'])) {
+            if (! empty($data['tailoring_category_id'])) {
                 $measurement = TailoringOrderMeasurement::updateOrCreate(
                     [
                         'tailoring_order_id' => $data['tailoring_order_id'],
