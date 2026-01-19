@@ -3,7 +3,6 @@
 namespace App\Actions\Tailoring\Order;
 
 use App\Models\TailoringOrder;
-use Exception;
 
 class SubmitOrderCompletionAction
 {

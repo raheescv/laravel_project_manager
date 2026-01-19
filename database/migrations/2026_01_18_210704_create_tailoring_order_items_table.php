@@ -16,13 +16,13 @@ return new class() extends Migration
             $table->unsignedBigInteger('tailoring_order_id');
             $table->foreign('tailoring_order_id')->references('id')->on('tailoring_orders')->onDelete('cascade');
             $table->integer('item_no');
-            
+
             // Category & Model
             $table->unsignedBigInteger('tailoring_category_id')->nullable();
             $table->foreign('tailoring_category_id')->references('id')->on('tailoring_categories')->onDelete('set null');
             $table->unsignedBigInteger('tailoring_category_model_id')->nullable();
             $table->foreign('tailoring_category_model_id')->references('id')->on('tailoring_category_models')->onDelete('set null');
-            
+
             // Product Information
             $table->unsignedBigInteger('product_id')->nullable()->references('id')->on('products');
             $table->string('product_name');
@@ -37,7 +37,7 @@ return new class() extends Migration
             $table->decimal('tax', 16, 2)->default(0);
             $table->decimal('tax_amount', 16, 2);
             $table->decimal('total', 16, 2);
-            
+
             // Basic Measurements (Left Column)
             $table->decimal('length', 8, 2)->nullable();
             $table->decimal('shoulder', 8, 2)->nullable();
@@ -50,23 +50,23 @@ return new class() extends Migration
             $table->string('bottom')->nullable();
             $table->string('mar_size')->nullable();
             $table->string('mar_model')->nullable();
-            
+
             // Cuff Details
             $table->string('cuff')->nullable();
             $table->string('cuff_size')->nullable();
             $table->string('cuff_cloth')->nullable();
             $table->string('cuff_model')->nullable();
-            
+
             // Additional Measurements
             $table->string('neck_d_button')->nullable();
             $table->string('side_pt_size')->nullable();
-            
+
             // Collar Details (Right Column)
             $table->string('collar')->nullable();
             $table->string('collar_size')->nullable();
             $table->string('collar_cloth')->nullable();
             $table->string('collar_model')->nullable();
-            
+
             // Additional Styling
             $table->string('regal_size')->nullable();
             $table->string('knee_loose')->nullable();
@@ -79,7 +79,7 @@ return new class() extends Migration
             $table->string('button')->nullable();
             $table->string('button_no')->nullable();
             $table->enum('mobile_pocket', ['Yes', 'No'])->default('No');
-            
+
             // Job Completion Fields
             $table->unsignedBigInteger('tailor_id')->nullable()->references('id')->on('users');
             $table->decimal('tailor_commission', 10, 2)->default(0);
@@ -89,7 +89,7 @@ return new class() extends Migration
             $table->decimal('total_quantity_used', 8, 3)->default(0);
             $table->date('item_completion_date')->nullable();
             $table->boolean('is_selected_for_completion')->default(false);
-            
+
             // Additional
             $table->text('tailoring_notes')->nullable();
             $table->unsignedBigInteger('created_by')->references('id')->on('users');
@@ -97,7 +97,7 @@ return new class() extends Migration
             $table->unsignedBigInteger('deleted_by')->nullable()->references('id')->on('users');
             $table->softDeletes();
             $table->timestamps();
-            
+
             $table->index(['tenant_id', 'tailoring_order_id']);
             $table->index(['tenant_id', 'tailoring_category_id']);
         });

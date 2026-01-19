@@ -102,8 +102,8 @@ class TailoringOrder extends Model implements AuditableContracts
         $month = date('m');
         $day = date('d');
         $random = strtoupper(substr(uniqid(), -4));
-        
-        return $prefix . $year . $month . $day . $random;
+
+        return $prefix.$year.$month.$day.$random;
     }
 
     // Relationships

@@ -12,7 +12,7 @@ class DeleteAction
         try {
             $model = TailoringPayment::findOrFail($id);
             $order = $model->order;
-            
+
             $model->deleted_by = $user_id;
             $model->save();
             $model->delete();

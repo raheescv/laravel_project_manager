@@ -15,7 +15,6 @@ use App\Actions\Tailoring\Payment\CreateAction as PaymentCreateAction;
 use App\Actions\Tailoring\Payment\DeleteAction as PaymentDeleteAction;
 use App\Actions\Tailoring\Payment\UpdateAction as PaymentUpdateAction;
 use App\Http\Controllers\Controller;
-use App\Models\Account;
 use App\Models\Product;
 use App\Models\Rack;
 use App\Models\TailoringCategory;
@@ -27,7 +26,6 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
-use Inertia\Response;
 
 class OrderController extends Controller
 {
@@ -53,7 +51,7 @@ class OrderController extends Controller
         $categories = TailoringCategory::with('activeModels')->active()->ordered()->get();
         $measurementOptions = $this->getMeasurementOptions();
         $salesmen = User::where('type', 'employee')->orWhere('type', 'user')->pluck('name', 'id')->toArray();
-        
+
         // Get default customer if configured
         $useDefaultCustomer = true; // Can be from config
         $customers = [];
@@ -98,7 +96,7 @@ class OrderController extends Controller
         $types = [
             'mar_model', 'cuff', 'cuff_cloth', 'cuff_model',
             'collar', 'collar_cloth', 'collar_model', 'fp_model',
-            'pen', 'side_pt_model', 'stitching', 'button'
+            'pen', 'side_pt_model', 'stitching', 'button',
         ];
 
         $options = [];
@@ -126,8 +124,8 @@ class OrderController extends Controller
     {
         $action = new GetTailoringOrderAction();
         $result = $action->execute($id);
-        
-        if (!$result['success']) {
+
+        if (! $result['success']) {
             return redirect()->route('tailoring::order::index')->with('error', $result['message']);
         }
 
@@ -177,7 +175,7 @@ class OrderController extends Controller
     public function getCategories(): JsonResponse
     {
         $categories = TailoringCategory::with('activeModels')->active()->ordered()->get();
-        
+
         return response()->json([
             'success' => true,
             'data' => $categories,
@@ -225,8 +223,8 @@ class OrderController extends Controller
             $search = trim($request->search);
             $query->where(function ($q) use ($search) {
                 $q->where('name', 'LIKE', "%{$search}%")
-                  ->orWhere('barcode', 'LIKE', "%{$search}%")
-                  ->orWhere('code', 'LIKE', "%{$search}%");
+                    ->orWhere('barcode', 'LIKE', "%{$search}%")
+                    ->orWhere('code', 'LIKE', "%{$search}%");
             });
         }
 

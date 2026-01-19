@@ -34,7 +34,7 @@ class TailoringMeasurementOption extends Model
     public static function getOptionsByType($type)
     {
         $tenantId = self::getCurrentTenantId();
-        
+
         return self::where('tenant_id', $tenantId)
             ->where('option_type', $type)
             ->orderBy('value')

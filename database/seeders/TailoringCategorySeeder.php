@@ -38,7 +38,7 @@ class TailoringCategorySeeder extends Seeder
             $category = TailoringCategory::firstOrCreate(
                 [
                     'tenant_id' => 1,
-                    'name' => $categoryData['name']
+                    'name' => $categoryData['name'],
                 ],
                 $categoryData
             );

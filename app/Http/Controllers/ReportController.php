@@ -127,4 +127,9 @@ class ReportController extends Controller
     {
         return view('report.tax_report');
     }
+
+    public function monthly_sale()
+    {
+        return view('report.monthly_sale');
+    }
 }

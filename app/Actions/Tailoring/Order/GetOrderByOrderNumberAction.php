@@ -30,7 +30,7 @@ class GetOrderByOrderNumberAction
             ])->where('order_no', $orderNo)->first();
 
             if (! $order) {
-                throw new \Exception('Order not found with order number: ' . $orderNo);
+                throw new \Exception('Order not found with order number: '.$orderNo);
             }
 
             $return['success'] = true;
