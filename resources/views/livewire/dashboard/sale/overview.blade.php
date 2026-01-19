@@ -17,6 +17,7 @@
                     <span class="d-none d-md-inline">Options</span>
                 </button>
                 <ul class="dropdown-menu dropdown-menu-end shadow-sm border-0">
+                    add
                     <li>
                         <a href="{{ route('sale::index') }}" class="dropdown-item d-flex align-items-center gap-2">
                             <i class="demo-pli-calendar-4 fs-5"></i>

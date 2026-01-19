@@ -2,6 +2,7 @@
 
 namespace App\Actions\Tailoring\Order\Item;
 
+use App\Models\TailoringOrderMeasurement;
 use App\Models\TailoringOrderItem;
 use Exception;
 
@@ -11,6 +12,18 @@ class AddTailoringItemAction
     {
         try {
             $data['created_by'] = $data['updated_by'] = $user_id;
+            
+            // save measurement
+            if (!empty($data['tailoring_category_id'])) {
+                $measurement = TailoringOrderMeasurement::updateOrCreate(
+                    [
+                        'tailoring_order_id' => $data['tailoring_order_id'],
+                        'tailoring_category_id' => $data['tailoring_category_id'],
+                    ],
+                    $data
+                );
+            }
+
             validationHelper(TailoringOrderItem::rules(), $data);
 
             $item = new TailoringOrderItem($data);

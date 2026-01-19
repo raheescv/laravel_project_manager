@@ -8,56 +8,30 @@
             </div>
 
             <!-- Order Search -->
-            <OrderSearch 
-                v-model:orderNo="searchForm.order_no"
-                v-model:customer="searchForm.customer_name"
-                v-model:contact="searchForm.customer_mobile"
-                v-model:orderDate="searchForm.order_date"
-                v-model:deliveryDate="searchForm.delivery_date"
-                v-model:rack="searchForm.rack_id"
-                :racks="racks"
-                @search="handleSearchOrder"
-                @clear="handleClearSearch"
-            />
+            <OrderSearch v-model:orderNo="searchForm.order_no" v-model:customer="searchForm.customer_name"
+                v-model:contact="searchForm.customer_mobile" v-model:orderDate="searchForm.order_date"
+                v-model:deliveryDate="searchForm.delivery_date" v-model:rack="searchForm.rack_id" :racks="racks"
+                @search="handleSearchOrder" @clear="handleClearSearch" />
 
             <!-- Status Bar -->
-            <StatusBar 
-                :recordCount="order?.items?.length || 0"
-                :completionStatus="order?.completion_status"
-            />
+            <StatusBar :recordCount="order?.items?.length || 0" :completionStatus="order?.completion_status" />
 
             <!-- Order Summary Header -->
-            <CompletionHeader 
-                v-if="order"
-                :order="order"
-                :racks="racks"
-                :cutters="cutters"
-                @update-rack="handleUpdateRack"
-                @update-cutter="handleUpdateCutter"
-            />
+            <CompletionHeader v-if="order" :order="order" :racks="racks" :cutters="cutters"
+                @update-rack="handleUpdateRack" @update-cutter="handleUpdateCutter" />
 
             <!-- Completion Items Table -->
-            <CompletionItemsTable 
-                v-if="order"
-                :items="order.items"
-                :tailors="tailors"
-                @update-item="handleUpdateItem"
-                @calculate-stock="handleCalculateStock"
-                @calculate-commission="handleCalculateCommission"
-            />
+            <CompletionItemsTable v-if="order" :items="order.items" :tailors="tailors" @update-item="handleUpdateItem"
+                @calculate-stock="handleCalculateStock" @calculate-commission="handleCalculateCommission" />
 
             <!-- Action Buttons -->
             <div v-if="order" class="flex justify-center gap-4">
-                <button 
-                    @click="handleUpdateCompletion"
-                    class="px-6 py-2 bg-gray-400 text-white rounded-md hover:bg-gray-500 font-semibold"
-                >
+                <button @click="handleUpdateCompletion"
+                    class="px-6 py-2 bg-gray-400 text-white rounded-md hover:bg-gray-500 font-semibold">
                     Update
                 </button>
-                <button 
-                    @click="handleSubmitCompletion"
-                    class="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 font-semibold"
-                >
+                <button @click="handleSubmitCompletion"
+                    class="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 font-semibold">
                     Submit
                 </button>
             </div>
@@ -194,7 +168,7 @@ const handleUpdateCompletion = async () => {
     if (!order.value) return
 
     const selectedItems = order.value.items.filter(item => item.is_selected_for_completion).map(item => item.id)
-    
+
     try {
         const response = await axios.put(`/tailoring/job-completion/${order.value.id}/completion`, {
             items: order.value.items,
@@ -213,7 +187,7 @@ const handleSubmitCompletion = async () => {
     if (!order.value) return
 
     const selectedItems = order.value.items.filter(item => item.is_selected_for_completion).map(item => item.id)
-    
+
     if (selectedItems.length === 0) {
         toast.error('Please select at least one item to complete')
         return

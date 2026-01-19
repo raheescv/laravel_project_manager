@@ -4,24 +4,7 @@ use App\Http\Controllers\Tailoring\OrderController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware('auth')->group(function (): void {
-    // Tailoring Order Routes
-    Route::name('tailoring::order::')->prefix('tailoring/order')->controller(OrderController::class)->group(function (): void {
-        Route::get('', 'index')->name('index')->can('tailoring.order.view');
-        Route::get('create', 'create')->name('create')->can('tailoring.order.create');
-        Route::post('', 'store')->name('store')->can('tailoring.order.create');
-        Route::get('edit/{id}', 'page')->name('edit')->can('tailoring.order.edit');
-        Route::put('{id}', 'update')->name('update')->can('tailoring.order.edit');
-        Route::get('{id}', 'show')->name('show')->can('tailoring.order.view');
-        Route::delete('{id}', 'destroy')->name('destroy')->can('tailoring.order.delete');
-    });
-
-    // Job Completion Routes
-    Route::name('tailoring::job-completion::')->prefix('tailoring/job-completion')->controller(OrderController::class)->group(function (): void {
-        Route::get('', 'jobCompletionPage')->name('index')->can('tailoring.job_completion.view');
-        Route::get('create', 'jobCompletionPage')->name('create')->can('tailoring.job_completion.create');
-    });
-
-    // Tailoring Order API Routes
+    // Tailoring Order API Routes (must come before web routes to avoid route conflicts)
     Route::prefix('tailoring/order')->name('api.tailoring.order.')->group(function (): void {
         Route::get('categories', [OrderController::class, 'getCategories'])->name('categories');
         Route::get('category-models/{categoryId}', [OrderController::class, 'getCategoryModels'])->name('category-models');
@@ -38,6 +21,23 @@ Route::middleware('auth')->group(function (): void {
         Route::put('update-payment/{id}', [OrderController::class, 'updatePayment'])->name('update-payment');
         Route::delete('remove-payment/{id}', [OrderController::class, 'deletePayment'])->name('remove-payment');
         Route::get('{id}/payments', [OrderController::class, 'getPayments'])->name('payments');
+    });
+
+    // Tailoring Order Routes
+    Route::name('tailoring::order::')->prefix('tailoring/order')->controller(OrderController::class)->group(function (): void {
+        Route::get('', 'index')->name('index')->can('tailoring.order.view');
+        Route::get('create', 'create')->name('create')->can('tailoring.order.create');
+        Route::post('', 'store')->name('store')->can('tailoring.order.create');
+        Route::get('edit/{id}', 'page')->name('edit')->can('tailoring.order.edit');
+        Route::put('{id}', 'update')->name('update')->can('tailoring.order.edit');
+        Route::get('{id}', 'show')->name('show')->can('tailoring.order.view');
+        Route::delete('{id}', 'destroy')->name('destroy')->can('tailoring.order.delete');
+    });
+
+    // Job Completion Routes
+    Route::name('tailoring::job-completion::')->prefix('tailoring/job-completion')->controller(OrderController::class)->group(function (): void {
+        Route::get('', 'jobCompletionPage')->name('index')->can('tailoring.job_completion.view');
+        Route::get('create', 'jobCompletionPage')->name('create')->can('tailoring.job_completion.create');
     });
 
     // Job Completion API Routes

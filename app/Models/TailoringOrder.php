@@ -152,6 +152,11 @@ class TailoringOrder extends Model implements AuditableContracts
         return $this->hasMany(TailoringOrderItem::class);
     }
 
+    public function measurements(): HasMany
+    {
+        return $this->hasMany(TailoringOrderMeasurement::class);
+    }
+
     public function payments(): HasMany
     {
         return $this->hasMany(TailoringPayment::class);

@@ -9,7 +9,7 @@
             </div>
             <div class="form-group">
                 <label class="block text-sm font-medium text-gray-700 mb-1">Customer</label>
-                <input :modelValue="customer" @update:modelValue="$emit('update:customer', $event)" type="text"
+                <input :value="customer" @input="$emit('update:customer', $event.target.value)" type="text"
                     placeholder="Search by name or mobile..."
                     class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500" />
                 <a @click="$emit('add-customer')"

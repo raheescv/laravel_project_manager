@@ -17,28 +17,48 @@
             <CategoryHeader :categories="categories" :selectedCategories="selectedCategories"
                 @category-selected="handleCategorySelection" />
 
-            <!-- Category & Model Selector -->
-            <CategoryModelSelector :categories="categories" v-model:selectedCategory="selectedCategory"
-                v-model:selectedModel="selectedModel" @add-model="handleAddModel" />
-
             <!-- Main Content: Measurements and Styling -->
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <!-- Measurement Form -->
-                <MeasurementForm v-model="measurements" :category="selectedCategory" :model="selectedModel"
-                    :measurementOptions="measurementOptions" @add-option="handleAddMeasurementOption" />
+            <div v-if="selectedCategories.length > 0" class="space-y-6">
+                <!-- Category Tabs -->
+                <div class="border-b border-gray-200">
+                    <nav class="-mb-px flex space-x-8" aria-label="Tabs">
+                        <a v-for="id in selectedCategories" :key="id" href="#" @click.prevent="activeCategoryTab = id"
+                            :class="[activeCategoryTab === id ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300', 'whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm']">
+                            {{ getCategory(id)?.name }}
+                        </a>
+                    </nav>
+                </div>
+
+                <!-- Active Category Content -->
+                <div v-if="activeCategoryTab" class="bg-white rounded-lg shadow-sm p-4 md:p-6 border border-gray-100">
+                    <div class="grid grid-cols-1 gap-6">
+                        <!-- Measurement Form -->
+                        <MeasurementForm v-if="measurements[activeCategoryTab]"
+                            v-model="measurements[activeCategoryTab]" :category="getCategory(activeCategoryTab)"
+                            :measurementOptions="measurementOptions" @add-option="handleAddMeasurementOption" />
+
+                        <!-- Product Selection -->
+                        <ProductSelection v-if="currentItems[activeCategoryTab]"
+                            v-model="currentItems[activeCategoryTab]" :products="products" :colors="colors"
+                            :isLoading="isAddingItem[activeCategoryTab]"
+                            :isEditing="!!editingItemIds[activeCategoryTab]"
+                            @add-item="(item) => handleAddItem(item, activeCategoryTab)"
+                            @calculate-amount="(item) => calculateItemAmount(item, activeCategoryTab)"
+                            @clear="handleItemClear(activeCategoryTab)" />
+                    </div>
+                </div>
             </div>
 
-            <!-- Product Selection -->
-            <ProductSelection v-model="currentItem" :products="products" :colors="colors" @add-item="handleAddItem"
-                @calculate-amount="calculateItemAmount" />
 
             <!-- Summary and Work Orders -->
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <!-- Summary and Work Orders -->
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
                 <!-- Summary Table -->
-                <SummaryTable :items="form.items" />
+                <SummaryTable class="lg:col-span-3" :items="form.items" />
 
                 <!-- Work Orders Preview -->
-                <WorkOrdersPreview :items="form.items" />
+                <WorkOrdersPreview class="lg:col-span-9" :items="form.items" @edit="handleEditItem"
+                    @remove="handleRemoveItem" />
             </div>
 
             <!-- Action Buttons -->
@@ -67,7 +87,6 @@ import {
 } from 'vue-toastification'
 import OrderHeader from '@/components/Tailoring/OrderHeader.vue'
 import CategoryHeader from '@/components/Tailoring/CategoryHeader.vue'
-import CategoryModelSelector from '@/components/Tailoring/CategoryModelSelector.vue'
 import MeasurementForm from '@/components/Tailoring/MeasurementForm.vue'
 import ProductSelection from '@/components/Tailoring/ProductSelection.vue'
 import SummaryTable from '@/components/Tailoring/SummaryTable.vue'
@@ -99,9 +118,7 @@ const form = ref({
 })
 
 const measurements = ref({})
-const currentItem = ref({})
-const selectedCategory = ref(null)
-const selectedModel = ref(null)
+const currentItems = ref({})
 const selectedCategories = ref([])
 const products = ref([])
 const colors = ref([])
@@ -109,14 +126,38 @@ const payments = ref(props.order?.payments || [])
 const paymentMethods = ref([])
 const showPaymentModal = ref(false)
 const isSubmitting = ref(false)
+const isAddingItem = ref({})
+const activeCategoryTab = ref(null)
+const measurementOptions = ref(props.measurementOptions || {})
+const editingItemIds = ref({}) // Map of categoryId -> itemId
 
 const canSubmit = computed(() => {
     return form.value.items.length > 0 && form.value.customer_name
 })
 
+const getCategory = (id) => {
+    return props.categories.find(c => c.id === id)
+}
+
 // Methods
 const handleCategorySelection = (categoryIds) => {
     selectedCategories.value = categoryIds
+
+    // Initialize state for new categories
+    categoryIds.forEach(id => {
+        if (!measurements.value[id]) measurements.value[id] = {}
+        if (!currentItems.value[id]) currentItems.value[id] = {}
+    })
+
+    // Set active tab logic
+    if (categoryIds.length > 0) {
+        // If no active tab or current active is removed, select the last one
+        if (!activeCategoryTab.value || !categoryIds.includes(activeCategoryTab.value)) {
+            activeCategoryTab.value = categoryIds[categoryIds.length - 1]
+        }
+    } else {
+        activeCategoryTab.value = null
+    }
 }
 
 const handleAddMeasurementOption = async (type, value) => {
@@ -134,74 +175,193 @@ const handleAddMeasurementOption = async (type, value) => {
     }
 }
 
-const handleAddModel = async (categoryId, modelName) => {
-    try {
-        const response = await axios.post('/tailoring/order/category-models', {
-            tailoring_category_id: categoryId,
-            name: modelName
-        })
-        if (response.data.success) {
-            toast.success('Model added successfully')
-            // Reload categories to get updated models
-            const catResponse = await axios.get('/tailoring/order/categories')
-            if (catResponse.data.success) {
-                // Update categories
-            }
-        }
-    } catch (error) {
-        toast.error(error.response?.data?.message || 'Failed to add model')
-    }
-}
+const handleAddItem = async (itemData, categoryId) => {
+    if (!categoryId) return
+    const category = getCategory(categoryId)
+    // Merge data from props or current state
+    const item = itemData || currentItems.value[categoryId]
+    // Get measurements for this category
+    const itemMeasurements = measurements.value[categoryId]
 
-const handleAddItem = async () => {
-    if (!currentItem.value.product_name || !currentItem.value.quantity) {
-        toast.error('Please fill required fields')
+    if (!item.product_name && !item.product_id) {
+        toast.error('Please select a product')
         return
     }
 
-    try {
-        const itemData = {
-            ...currentItem.value,
-            ...measurements.value,
-            tailoring_category_id: selectedCategory.value?.id,
-            tailoring_category_model_id: selectedModel.value?.id,
-        }
+    if (!item.quantity || item.quantity <= 0) {
+        toast.error('Please enter a valid quantity')
+        return
+    }
 
-        const response = await axios.post('/tailoring/order/add-item', {
-            ...itemData,
-            tailoring_order_id: form.value.id
+    // Validate measurements
+    if (Object.keys(itemMeasurements || {}).length === 0) {
+        toast.error(`Please fill in measurement details for ${category?.name || 'Item'}`)
+        return
+    }
+
+    isAddingItem.value = { ...isAddingItem.value, [categoryId]: true }
+
+    // Capture editing ID immediately to avoid race condition with clear event
+    const editingId = editingItemIds.value[categoryId]
+
+    try {
+        // Calculate amounts (stateless backend call)
+        const response = await axios.post('/tailoring/order/calculate-amount', {
+            quantity: item.quantity,
+            unit_price: item.unit_price,
+            stitch_rate: item.stitch_rate || 0,
+            discount: item.discount || 0,
+            tax: item.tax || 0,
         })
 
         if (response.data.success) {
-            form.value.items.push(response.data.data)
-            currentItem.value = {}
-            measurements.value = {}
-            toast.success('Item added successfully')
+            const calculatedData = response.data.data
+
+            // Construct the final item object
+            const finalItem = {
+                ...item,
+                ...itemMeasurements,
+                ...calculatedData,
+                tailoring_category_id: categoryId,
+                category: category,
+            }
+
+            if (editingId) {
+                // Find and update index
+                const index = form.value.items.findIndex(i =>
+                    (i.id && i.id === editingId) ||
+                    (i._temp_id && i._temp_id === editingId)
+                )
+
+                if (index !== -1) {
+                    // Preserve ID to avoid creating doubles on backend
+                    finalItem.id = form.value.items[index].id
+                    finalItem._temp_id = form.value.items[index]._temp_id
+
+                    form.value.items[index] = finalItem
+                    toast.success('Item updated successfully')
+                } else {
+                    // Item might have been deleted while editing? Add as new
+                    finalItem._temp_id = Date.now() + Math.random().toString(36).substr(2, 9)
+                    form.value.items.push(finalItem)
+                    toast.success('Item added (original not found)')
+                }
+
+                // Clear editing state
+                editingItemIds.value[categoryId] = null
+            } else {
+                // New item
+                finalItem._temp_id = Date.now() + Math.random().toString(36).substr(2, 9)
+                form.value.items.push(finalItem)
+                toast.success('Item added to order')
+            }
+
+            // Sync measurements to all items of the same category
+            form.value.items.forEach((it, idx) => {
+                it.item_no = idx + 1
+                if (it.tailoring_category_id === categoryId) {
+                    // Update measurement fields
+                    Object.assign(it, itemMeasurements)
+                    it.tailoring_category_model_id = finalItem.tailoring_category_model_id
+                    it.tailoring_category_model_name = finalItem.tailoring_category_model_name
+                }
+            })
+
+            // Reset current item form but KEEP measurements
+            currentItems.value[categoryId] = {
+                 product_id: null,
+                 product_name: '',
+                 product_color: '',
+                 quantity: 0,
+                 unit_price: 0,
+                 stitch_rate: 0,
+                 tax: 0,
+                 total: 0,
+            }
         }
     } catch (error) {
-        toast.error(error.response?.data?.message || 'Failed to add item')
+        console.error('Failed to add item:', error)
+        toast.error(error.response?.data?.message || 'Failed to calculate item amount')
+    } finally {
+        isAddingItem.value = { ...isAddingItem.value, [categoryId]: false }
     }
 }
 
-const calculateItemAmount = async () => {
-    if (!currentItem.value.quantity || !currentItem.value.unit_price) return
+
+const calculateItemAmount = async (item, categoryId) => {
+    if (!item.quantity || !item.unit_price) return
 
     try {
         const response = await axios.post('/tailoring/order/calculate-amount', {
-            quantity: currentItem.value.quantity,
-            unit_price: currentItem.value.unit_price,
-            stitch_rate: currentItem.value.stitch_rate || 0,
-            discount: currentItem.value.discount || 0,
-            tax: currentItem.value.tax || 0,
+            quantity: item.quantity,
+            unit_price: item.unit_price,
+            stitch_rate: item.stitch_rate || 0,
+            discount: item.discount || 0,
+            tax: item.tax || 0,
         })
 
         if (response.data.success) {
-            Object.assign(currentItem.value, response.data.data)
+            currentItems.value[categoryId] = { ...item, ...response.data.data }
         }
     } catch (error) {
         console.error('Failed to calculate amount', error)
     }
 }
+
+const handleEditItem = (item, index) => {
+    // Switch to the correct category tab
+    if (!selectedCategories.value.includes(item.tailoring_category_id)) {
+        selectedCategories.value.push(item.tailoring_category_id)
+    }
+    activeCategoryTab.value = item.tailoring_category_id
+
+    // Restore data to forms
+    currentItems.value[item.tailoring_category_id] = { ...item }
+    measurements.value[item.tailoring_category_id] = { ...item }
+
+    // Set editing state
+    editingItemIds.value[item.tailoring_category_id] = item.id || item._temp_id
+
+    toast.info("Item loaded for editing.")
+
+    // Scroll to top or form area if needed
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+}
+
+const handleItemClear = (categoryId) => {
+    // Clear editing state when user clicks clear on the form
+    editingItemIds.value[categoryId] = null
+}
+
+const handleRemoveItem = (item, index) => {
+    if (confirm('Are you sure you want to remove this item?')) {
+        // If we are currently editing this item, clear the form too?
+        // Check per category
+        const catId = item.tailoring_category_id
+        if (editingItemIds.value[catId] === (item.id || item._temp_id)) {
+            editingItemIds.value[catId] = null
+            // Also reset form? Maybe. For now let's just clear the edit lock.
+            // Actually, if we delete it, we should probably reset the form to avoid "ghost" edits
+            currentItems.value[catId] = {
+                product_id: null,
+                product_name: '',
+                product_color: '',
+                quantity: 0,
+                unit_price: 0,
+                stitch_rate: 0,
+                tax: 0,
+                total: 0,
+            }
+            measurements.value[catId] = {}
+        }
+
+        form.value.items.splice(index, 1)
+        // Re-calculate item numbers
+        form.value.items.forEach((it, idx) => it.item_no = idx + 1)
+        toast.success('Item removed')
+    }
+}
+
 
 const handleCreateOrder = async () => {
     if (!canSubmit.value) {
@@ -310,7 +470,7 @@ const loadMeasurementOptions = async () => {
     try {
         const response = await axios.get('/tailoring/order/measurement-options')
         if (response.data.success) {
-            // Update measurement options
+            measurementOptions.value = response.data.data || {}
         }
     } catch (error) {
         console.error('Failed to load measurement options', error)
