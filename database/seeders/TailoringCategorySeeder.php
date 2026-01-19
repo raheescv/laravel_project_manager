@@ -36,12 +36,16 @@ class TailoringCategorySeeder extends Seeder
             unset($categoryData['models']);
 
             $category = TailoringCategory::firstOrCreate(
-                ['name' => $categoryData['name']],
+                [
+                    'tenant_id' => 1,
+                    'name' => $categoryData['name']
+                ],
                 $categoryData
             );
 
             foreach ($models as $modelName) {
                 TailoringCategoryModel::firstOrCreate([
+                    'tenant_id' => $category->tenant_id,
                     'tailoring_category_id' => $category->id,
                     'name' => $modelName,
                 ], [

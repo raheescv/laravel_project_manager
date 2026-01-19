@@ -5,8 +5,8 @@
             <div class="form-group">
                 <label class="block text-sm font-medium text-gray-700 mb-1">Order No</label>
                 <input 
-                    :modelValue="orderNo"
-                    @update:modelValue="$emit('update:orderNo', $event)"
+                    :value="orderNo"
+                    @input="$emit('update:orderNo', $event.target.value)"
                     type="text"
                     placeholder="Enter order number..."
                     class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
@@ -15,8 +15,8 @@
             <div class="form-group">
                 <label class="block text-sm font-medium text-gray-700 mb-1">Customer</label>
                 <input 
-                    :modelValue="customer"
-                    @update:modelValue="$emit('update:customer', $event)"
+                    :value="customer"
+                    @input="$emit('update:customer', $event.target.value)"
                     type="text"
                     placeholder="Enter customer name..."
                     class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
@@ -25,8 +25,8 @@
             <div class="form-group">
                 <label class="block text-sm font-medium text-gray-700 mb-1">Contact</label>
                 <input 
-                    :modelValue="contact"
-                    @update:modelValue="$emit('update:contact', $event)"
+                    :value="contact"
+                    @input="$emit('update:contact', $event.target.value)"
                     type="text"
                     placeholder="Enter contact..."
                     class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
@@ -35,8 +35,8 @@
             <div class="form-group">
                 <label class="block text-sm font-medium text-gray-700 mb-1">Order Date</label>
                 <input 
-                    :modelValue="orderDate"
-                    @update:modelValue="$emit('update:orderDate', $event)"
+                    :value="orderDate"
+                    @input="$emit('update:orderDate', $event.target.value)"
                     type="date"
                     class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 />
@@ -44,8 +44,8 @@
             <div class="form-group">
                 <label class="block text-sm font-medium text-gray-700 mb-1">Delivery Date</label>
                 <input 
-                    :modelValue="deliveryDate"
-                    @update:modelValue="$emit('update:deliveryDate', $event)"
+                    :value="deliveryDate"
+                    @input="$emit('update:deliveryDate', $event.target.value)"
                     type="date"
                     class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 />
@@ -53,8 +53,8 @@
             <div class="form-group">
                 <label class="block text-sm font-medium text-gray-700 mb-1">Rack</label>
                 <select 
-                    :modelValue="rack"
-                    @update:modelValue="$emit('update:rack', $event)"
+                    :value="rack"
+                    @change="$emit('update:rack', $event.target.value)"
                     class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 >
                     <option value="">Select rack...</option>

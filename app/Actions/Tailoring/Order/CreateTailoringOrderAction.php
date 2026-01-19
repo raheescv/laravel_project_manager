@@ -5,6 +5,7 @@ namespace App\Actions\Tailoring\Order;
 use App\Models\TailoringOrder;
 use App\Models\User;
 use Exception;
+use Illuminate\Support\Facades\DB;
 
 class CreateTailoringOrderAction
 {
@@ -16,31 +17,33 @@ class CreateTailoringOrderAction
     {
         $this->userId = $userId;
         try {
-            $data['branch_id'] = $data['branch_id'] ?? session('branch_id');
-            $data['created_by'] = $this->userId;
-            $data['order_no'] = $data['order_no'] ?? TailoringOrder::generateOrderNo();
-            $data['order_date'] = $data['order_date'] ?? date('Y-m-d');
+            DB::transaction(function () use ($data) {
+                $data['branch_id'] = $data['branch_id'] ?? session('branch_id');
+                $data['created_by'] = $this->userId;
+                $data['order_no'] = $data['order_no'] ?? TailoringOrder::generateOrderNo();
+                $data['order_date'] = $data['order_date'] ?? date('Y-m-d');
 
-            validationHelper(TailoringOrder::rules(), $data);
-            $this->model = TailoringOrder::create($data);
+                validationHelper(TailoringOrder::rules(), $data);
+                $this->model = TailoringOrder::create($data);
 
-            $this->items($data['items'] ?? []);
-            $this->payments($data['payments'] ?? []);
+                $this->items($data['items'] ?? []);
+                $this->payments($data['payments'] ?? []);
 
-            $this->model->refresh();
-            $this->model->calculateTotals();
-            $this->model->save();
+                $this->model->refresh();
+                $this->model->calculateTotals();
+                $this->model->save();
 
-            $this->model->refresh();
+                $this->model->refresh();
 
-            // Validate max_discount_per_sale if needed
-            $totalDiscount = ($this->model->item_discount ?? 0) + ($this->model->other_discount ?? 0);
-            if ($totalDiscount) {
-                $user = User::find($this->userId);
-                if (method_exists($user, 'validateMaxDiscount')) {
-                    $user->validateMaxDiscount($this->model->gross_amount, $totalDiscount);
+                // Validate max_discount_per_sale if needed
+                $totalDiscount = ($this->model->item_discount ?? 0) + ($this->model->other_discount ?? 0);
+                if ($totalDiscount) {
+                    $user = User::find($this->userId);
+                    if (method_exists($user, 'validateMaxDiscount')) {
+                        $user->validateMaxDiscount($this->model->gross_amount, $totalDiscount);
+                    }
                 }
-            }
+            });
 
             $return['success'] = true;
             $return['message'] = 'Successfully Created Tailoring Order';

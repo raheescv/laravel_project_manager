@@ -23,5 +23,5 @@
 </template>
 
 <script setup>
-import { route } from '@/utils/ziggy'
+// route is available globally via ZiggyVue plugin
 </script>
