@@ -41,7 +41,7 @@ Route::middleware('auth')->group(function (): void {
 
     Route::prefix('products')->name('api.products.')->group(function (): void {
         Route::get('/', [POSController::class, 'getProducts'])->name('index');
-        Route::get('search', [ProductController::class, 'get'])->name('search');
+        Route::get('search', [ProductController::class, 'index'])->name('search');
         Route::get('by-barcode', [POSController::class, 'getProductByBarcode'])->name('by-barcode');
     });
 

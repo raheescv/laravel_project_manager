@@ -64,7 +64,9 @@
                     </div>
 
                     <div class="flex flex-col items-end gap-2">
-                        <input v-model="item.is_selected_for_completion" type="checkbox"
+                        <input :checked="item.is_selected_for_completion" 
+                            @change="toggleItemCompletion(item, $event)"
+                            type="checkbox"
                             class="w-5 h-5 text-indigo-600 rounded border-gray-300 focus:ring-indigo-500 cursor-pointer" />
                         <div class="text-[10px] font-bold text-gray-400 uppercase">Complete</div>
                     </div>
@@ -307,9 +309,22 @@ const allSelected = computed(() => {
 })
 
 const handleSelectAll = (event) => {
+    const isChecked = event.target.checked
+    const today = new Date().toISOString().split('T')[0]
     props.items.forEach(item => {
-        item.is_selected_for_completion = event.target.checked
+        item.is_selected_for_completion = isChecked
+        if (isChecked && !item.item_completion_date) {
+            item.item_completion_date = today
+        }
     })
+}
+
+const toggleItemCompletion = (item, event) => {
+    const isChecked = event.target.checked
+    item.is_selected_for_completion = isChecked
+    if (isChecked && !item.item_completion_date) {
+        item.item_completion_date = new Date().toISOString().split('T')[0]
+    }
 }
 
 const refreshStock = async (item) => {

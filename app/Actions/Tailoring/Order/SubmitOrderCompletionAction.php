@@ -20,11 +20,10 @@ class SubmitOrderCompletionAction
                 $order->completion_date = date('Y-m-d');
             }
 
-            // Update selected items
+            // Update status of selected items
             if (isset($data['selected_item_ids']) && is_array($data['selected_item_ids'])) {
                 $order->items()->whereIn('id', $data['selected_item_ids'])->update([
                     'is_selected_for_completion' => true,
-                    'item_completion_date' => $order->completion_date,
                 ]);
 
                 // Update item completion data if provided
@@ -33,6 +32,10 @@ class SubmitOrderCompletionAction
                         if (isset($itemData['id']) && in_array($itemData['id'], $data['selected_item_ids'])) {
                             $item = $order->items()->find($itemData['id']);
                             if ($item) {
+                                // Default to order completion date if item has no date and none provided
+                                if (empty($itemData['item_completion_date']) && empty($item->item_completion_date)) {
+                                    $itemData['item_completion_date'] = $order->completion_date;
+                                }
                                 $item->updateCompletion($itemData);
                             }
                         }

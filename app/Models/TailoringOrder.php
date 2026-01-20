@@ -51,8 +51,8 @@ class TailoringOrder extends Model implements AuditableContracts
     ];
 
     protected $casts = [
-        'order_date' => 'date',
-        'delivery_date' => 'date',
+        'order_date' => 'date:Y-m-d',
+        'delivery_date' => 'date:Y-m-d',
         'completion_date' => 'date:Y-m-d',
         'gross_amount' => 'decimal:2',
         'item_discount' => 'decimal:2',
