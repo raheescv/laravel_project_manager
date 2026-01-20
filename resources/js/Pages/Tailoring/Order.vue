@@ -283,10 +283,11 @@ const handleAddItem = async (itemData, categoryId) => {
                 toast.success('Item added to order')
             }
 
-            // Sync measurements to all items of the same category
+            // Sync measurements to all items of the same category AND model
             form.value.items.forEach((it, idx) => {
                 it.item_no = idx + 1
-                if (it.tailoring_category_id === categoryId) {
+                if (it.tailoring_category_id === categoryId && 
+                    it.tailoring_category_model_id === filteredMeasurements.tailoring_category_model_id) {
                     // Update measurement fields ONLY
                     Object.assign(it, filteredMeasurements)
                 }
@@ -333,7 +334,7 @@ const calculateItemAmount = async (item, categoryId) => {
     }
 }
 
-const handleEditItem = (item, index) => {
+const handleEditItem = (item) => {
     // Switch to the correct category tab
     if (!selectedCategories.value.includes(item.tailoring_category_id)) {
         selectedCategories.value.push(item.tailoring_category_id)
@@ -358,15 +359,19 @@ const handleItemClear = (categoryId) => {
     editingItemIds.value[categoryId] = null
 }
 
-const handleRemoveItem = (item, index) => {
+const handleRemoveItem = (item) => {
     if (confirm('Are you sure you want to remove this item?')) {
-        // If we are currently editing this item, clear the form too?
-        // Check per category
+        // Find index of the item
+        const index = form.value.items.findIndex(i => 
+            (i.id && i.id === item.id) || 
+            (i._temp_id && i._temp_id === item._temp_id)
+        )
+
+        if (index === -1) return
+
         const catId = item.tailoring_category_id
         if (editingItemIds.value[catId] === (item.id || item._temp_id)) {
             editingItemIds.value[catId] = null
-            // Also reset form? Maybe. For now let's just clear the edit lock.
-            // Actually, if we delete it, we should probably reset the form to avoid "ghost" edits
             currentItems.value[catId] = {
                 product_id: null,
                 product_name: '',
