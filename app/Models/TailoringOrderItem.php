@@ -66,7 +66,7 @@ class TailoringOrderItem extends Model implements AuditableContracts
         'used_quantity' => 'decimal:3',
         'wastage' => 'decimal:3',
         'total_quantity_used' => 'decimal:3',
-        'item_completion_date' => 'date',
+        'item_completion_date' => 'date:Y-m-d',
         'is_selected_for_completion' => 'boolean',
     ];
 
