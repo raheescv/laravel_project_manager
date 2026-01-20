@@ -14,7 +14,7 @@ class PermissionSeeder extends Seeder
         $permissions = config('permissions');
         foreach ($permissions as $group => $actions) {
             foreach ($actions as $action) {
-                Permission::firstOrCreate(['name' => "{$group}.{$action}"]);
+                Permission::firstOrCreate(['tanent_id' => 1, 'name' => "{$group}.{$action}"]);
             }
         }
         foreach ($this->data as $key => $value) {
