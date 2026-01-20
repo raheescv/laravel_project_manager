@@ -538,4 +538,37 @@ class OrderController extends Controller
             ],
         ]);
     }
+
+    public function printCuttingSlip($id, $categoryId, $modelId)
+    {
+        $action = new GetTailoringOrderAction();
+        $result = $action->execute($id);
+
+        if (! $result['success']) {
+            return redirect()->back()->with('error', $result['message']);
+        }
+
+        $order = $result['data'];
+
+        // Filter items by category and model
+        $order->items = $order->items->filter(function ($item) use ($categoryId, $modelId) {
+            $catMatch = (string) $item->tailoring_category_id === (string) $categoryId;
+            $modelMatch = true;
+            if ($modelId !== 'all') {
+                $modelMatch = (string) $item->tailoring_category_model_id === (string) $modelId;
+            }
+
+            return $catMatch && $modelMatch;
+        });
+
+        if ($order->items->isEmpty()) {
+            return redirect()->back()->with('error', 'No items found for the selected category/model');
+        }
+
+        return view('print.tailoring.cutting-slip', [
+            'order' => $order,
+            'categoryId' => $categoryId,
+            'modelId' => $modelId,
+        ]);
+    }
 }
