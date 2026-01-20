@@ -328,7 +328,7 @@ class OrderController extends Controller
         $grossAmount = $quantity * $unitPrice;
         $netAmount = $grossAmount - $discount;
         $taxAmount = ($netAmount * $tax) / 100;
-        $total = $netAmount + $taxAmount + $stitchRate;
+        $total = $netAmount + $taxAmount + ($stitchRate * $quantity);
 
         return response()->json([
             'success' => true,
