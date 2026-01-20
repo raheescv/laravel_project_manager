@@ -49,14 +49,14 @@ class CustomerController extends Controller
 
     public function get(Request $request)
     {
-        $mobile = $request->query('mobile');
-        if (! $mobile) {
-            return response()->json(['customers' => []]);
-        }
-        $customers = Account::where('mobile', 'like', '%'.$mobile.'%')
-            ->where('model', 'customer')
+        $search = $request->query('search');
+        $customers = Account::customer()
+            ->where(function($query) use ($search) {
+                $query->where('name', 'like', '%'.$search.'%')
+                      ->orWhere('mobile', 'like', '%'.$search.'%');
+            })
             ->select('id', 'name', 'mobile', 'email')
-            ->limit(10)
+            ->limit(20)
             ->get();
 
         return response()->json([

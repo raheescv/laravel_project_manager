@@ -31,8 +31,8 @@
                             <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none z-10">
                                 <i class="fa fa-user text-gray-400 group-focus-within:text-blue-500 transition-colors"></i>
                             </div>
-                            <select ref="customerSelect" placeholder="Search customer (Name or Mobile)..." autocomplete="off"
-                                class="w-full"></select>
+                            <CustomerSelect :modelValue="customer" @update:modelValue="handleCustomerChange"
+                                valueField="name" placeholder="Search customer..." />
                         </div>
                     </div>
                 </div>
@@ -107,8 +107,10 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onBeforeUnmount, watch, nextTick } from 'vue'
+import { ref, onMounted, onBeforeUnmount, watch, nextTick, computed } from 'vue'
 import axios from 'axios'
+import SearchableSelect from '@/components/SearchableSelect.vue'
+import CustomerSelect from '@/components/CustomerSelect.vue'
 
 const props = defineProps({
     orderNo: String,
@@ -121,15 +123,36 @@ const props = defineProps({
     orderNumbers: {
         type: Array,
         default: () => []
+    },
+    customerLoading: {
+        type: Boolean,
+        default: false
     }
 })
 
-const emit = defineEmits(['update:orderNo', 'update:customer', 'update:contact', 'search', 'clear'])
+const emit = defineEmits(['update:orderNo', 'update:customer', 'update:contact', 'search', 'clear', 'search-customer'])
 
 const orderNoSelect = ref(null)
-const customerSelect = ref(null)
 let tomOrderNo = null
-let tomCustomer = null
+
+const customerOptions = computed(() => {
+    return props.customers.map(c => ({
+        value: c.name,
+        label: c.name + (c.mobile ? ` (${c.mobile})` : ''),
+        mobile: c.mobile
+    }))
+})
+
+const handleCustomerChange = (value, selected) => {
+    emit('update:customer', value)
+    
+    if (selected) {
+        emit('update:contact', selected.mobile)
+        fetchCustomerOrders(value)
+    } else {
+        customerOrders.value = []
+    }
+}
 
 const customerOrders = ref([])
 
@@ -195,58 +218,12 @@ const initTomSelect = () => {
         }
     })
 
-    // Customer Select
-    const customerOptions = props.customers.map(c => ({
-        value: c.name,
-        text: c.label,
-        name: c.name,
-        mobile: c.mobile
-    }))
-    tomCustomer = new window.TomSelect(customerSelect.value, {
-        valueField: 'value',
-        labelField: 'text',
-        searchField: ['name', 'mobile'],
-        options: customerOptions,
-        create: false,
-        placeholder: 'Search customer...',
-        maxItems: 1,
-        plugins: ['clear_button'],
-        render: {
-            option: function(data, escape) {
-                return `<div class="py-2 px-3 border-b border-gray-50 hover:bg-blue-50 transition-colors">
-                    <div class="font-bold text-gray-800">${escape(data.name)}</div>
-                    <div class="text-xs text-blue-600 flex items-center gap-1">
-                        <i class="fa fa-phone scale-75"></i> ${escape(data.mobile || 'No Contact')}
-                    </div>
-                </div>`;
-            },
-            item: function(data, escape) {
-                return `<div>${escape(data.name)} <span class="text-gray-400 text-xs ml-1">(${escape(data.mobile || '-')})</span></div>`;
-            }
-        },
-        onChange: (value) => {
-            emit('update:customer', value)
-            const selected = customerOptions.find(c => c.value === value)
-            if (selected) {
-                emit('update:contact', selected.mobile)
-                fetchCustomerOrders(value)
-            } else {
-                customerOrders.value = []
-            }
-        }
-    })
-
     // Set initial values
     if (props.orderNo) tomOrderNo.setValue(props.orderNo, true)
-    if (props.customer) {
-        tomCustomer.setValue(props.customer, true)
-        fetchCustomerOrders(props.customer)
-    }
 }
 
 const handleClear = () => {
     if (tomOrderNo) tomOrderNo.clear()
-    if (tomCustomer) tomCustomer.clear()
     customerOrders.value = []
     emit('clear')
 }
@@ -258,8 +235,7 @@ watch(() => props.orderNo, (val) => {
 })
 
 watch(() => props.customer, (val) => {
-    if (tomCustomer && val !== tomCustomer.getValue()) {
-        tomCustomer.setValue(val, true)
+    if (val) {
         fetchCustomerOrders(val)
     }
 })
@@ -279,7 +255,6 @@ onMounted(() => {
 
 onBeforeUnmount(() => {
     if (tomOrderNo) tomOrderNo.destroy()
-    if (tomCustomer) tomCustomer.destroy()
 })
 </script>
 

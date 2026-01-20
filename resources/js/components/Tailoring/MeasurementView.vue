@@ -13,26 +13,19 @@
             </div>
         </div>
 
-        <!-- No Data State -->
-        <div v-if="totalVisibleFields === 0 && !item.tailoring_notes" class="py-12 text-center text-gray-400">
-            <p class="text-sm">No measurements recorded</p>
-        </div>
-
-        <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             <!-- Measurement Groups -->
-            <div v-for="(group, groupIdx) in groupedMeasurements" :key="groupIdx">
-                <div v-if="hasGroupValues(group)" class="space-y-2">
-                    <h4 class="text-[10px] font-black text-gray-400 uppercase tracking-widest pl-1">{{ group.title }}</h4>
-                    <div class="bg-white border rounded-lg overflow-hidden">
-                        <table class="w-full text-left text-xs">
-                            <tbody class="divide-y">
-                                <tr v-for="key in group.keys" :key="key" v-show="getValue(key)" class="hover:bg-gray-50">
-                                    <td class="py-2 px-3 font-semibold text-gray-500 bg-gray-50/50 w-2/5">{{ formatLabel(key) }}</td>
-                                    <td class="py-2 px-3 font-bold text-gray-900">{{ getValue(key) }}</td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
+            <div v-for="(group, groupIdx) in groupedMeasurements" :key="groupIdx" class="space-y-2">
+                <h4 class="text-[10px] font-black text-gray-400 uppercase tracking-widest pl-1">{{ group.title }}</h4>
+                <div class="bg-white border rounded-lg overflow-hidden">
+                    <table class="w-full text-left text-xs">
+                        <tbody class="divide-y">
+                            <tr v-for="key in group.keys" :key="key" class="hover:bg-gray-50">
+                                <td class="py-2 px-3 font-semibold text-gray-500 bg-gray-50/50 w-2/5">{{ formatLabel(key) }}</td>
+                                <td class="py-2 px-3 font-bold text-gray-900">{{ getValue(key) || '-' }}</td>
+                            </tr>
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </div>
