@@ -1,7 +1,7 @@
 <template>
     <div class="relative" ref="dropdown">
         <div class="relative">
-            <input ref="searchInput" v-model="displayValue" @click="openDropdown" @focus="openDropdown"
+            <input ref="searchInput" :value="displayValue" @click="openDropdown" @focus="openDropdown"
                 @keydown.arrow-down.prevent="navigateDown" @keydown.arrow-up.prevent="navigateUp"
                 @keydown.enter.prevent="selectHighlighted" @keydown.escape="hideDropdown" type="text"
                 :class="inputClass" :placeholder="placeholder" autocomplete="off" readonly />
@@ -119,43 +119,46 @@ const filterOptions = () => {
     highlightedIndex.value = 0
 }
 
+const displayValue = computed(() => {
+    return selectedOption.value ? selectedOption.value.label : ''
+})
+
+const dropdownStyle = ref({})
+
 // Calculate dropdown position to ensure it stays within viewport
 const calculateDropdownPosition = () => {
     if (!dropdown.value) return
 
     const rect = dropdown.value.getBoundingClientRect()
     const viewportHeight = window.innerHeight
-    const viewportWidth = window.innerWidth
-    const scrollY = window.scrollY
-
-    // Estimate dropdown height (max-h-60 = 240px, but could be less)
+    
+    // Estimate dropdown height
     const maxDropdownHeight = 240
-    const estimatedHeight = Math.min(maxDropdownHeight, (filteredOptions.value.length * 44) + 100) // 44px per item + padding
+    const estimatedHeight = Math.min(maxDropdownHeight, (filteredOptions.value.length * 44) + 100)
 
-    // Calculate available space
-    const spaceBelow = viewportHeight - rect.bottom
-    const spaceAbove = rect.top
-
-    // Prefer showing below unless there's clearly not enough space
-    if (spaceBelow < estimatedHeight && spaceAbove > estimatedHeight) {
+    if (rect.bottom + estimatedHeight > viewportHeight && rect.top > estimatedHeight) {
         dropdownPosition.value = 'up'
-    } else if (spaceBelow < 150 && spaceAbove > spaceBelow) {
-        // If very little space below and more space above, show above
-        dropdownPosition.value = 'up'
+        dropdownStyle.value = {
+            bottom: `${viewportHeight - rect.top}px`,
+            left: `${rect.left}px`,
+            width: `${rect.width}px`
+        }
     } else {
         dropdownPosition.value = 'down'
+        dropdownStyle.value = {
+            top: `${rect.bottom}px`,
+            left: `${rect.left}px`,
+            width: `${rect.width}px`
+        }
     }
 }
 
 // Open dropdown with smart positioning
 const openDropdown = () => {
     showDropdown.value = true
-    // Clear search term to show all options initially
     searchTerm.value = ''
-    // Ensure we have all options loaded
     filteredOptions.value = normalizedOptions.value
-    filterOptions()
-
+    
     nextTick(() => {
         calculateDropdownPosition()
         if (filterInput.value) {
@@ -167,43 +170,29 @@ const openDropdown = () => {
 // Initialize filtered options
 onMounted(() => {
     filteredOptions.value = normalizedOptions.value
-    updateDisplayValue()
-    console.log('SearchableSelect mounted:', {
-        options: props.options,
-        normalizedOptions: normalizedOptions.value,
-        filteredOptions: filteredOptions.value
-    })
-})
+    document.addEventListener('click', handleClickOutside)
+    window.addEventListener('resize', handleResize)
+    window.addEventListener('scroll', handleResize, true)
 
-// Update display value when modelValue changes
-const updateDisplayValue = () => {
-    if (selectedOption.value) {
-        searchTerm.value = selectedOption.value.label
-    } else {
-        searchTerm.value = ''
+    if (searchInput.value) {
+        searchInput.value.addEventListener('click', openDropdown)
     }
-}
-
-// Watch for changes in modelValue
-watch(() => props.modelValue, () => {
-    updateDisplayValue()
 })
 
 // Watch for changes in options
 watch(() => props.options, () => {
     filteredOptions.value = normalizedOptions.value
-    updateDisplayValue()
-    console.log('Options changed:', {
-        options: props.options,
-        normalizedOptions: normalizedOptions.value,
-        filteredOptions: filteredOptions.value
-    })
 }, { deep: true })
+
+onUnmounted(() => {
+    document.removeEventListener('click', handleClickOutside)
+    window.removeEventListener('resize', handleResize)
+    window.removeEventListener('scroll', handleResize, true)
+})
 
 const selectOption = (option) => {
     emit('update:modelValue', option.value)
     emit('change', option.value)
-    searchTerm.value = option.label
     hideDropdown()
 }
 
@@ -227,36 +216,23 @@ const navigateUp = () => {
 
 const hideDropdown = () => {
     showDropdown.value = false
-    searchTerm.value = selectedOption.value ? selectedOption.value.label : ''
 }
 
 const handleClickOutside = (event) => {
-    if (dropdown.value && !dropdown.value.contains(event.target)) {
+    // Check if click is outside trigger and outside teleported menu
+    const isTrigger = dropdown.value && dropdown.value.contains(event.target)
+    const isMenu = dropdownMenu.value && dropdownMenu.value.contains(event.target)
+    
+    if (!isTrigger && !isMenu) {
         hideDropdown()
     }
 }
 
-// Handle window resize to recalculate position
+// Handle window resize/scroll to recalculate position
 const handleResize = () => {
     if (showDropdown.value) {
         calculateDropdownPosition()
     }
 }
 
-onMounted(() => {
-    document.addEventListener('click', handleClickOutside)
-    window.addEventListener('resize', handleResize)
-    window.addEventListener('scroll', handleResize, true)
-
-    // Make the input clickable to show dropdown
-    if (searchInput.value) {
-        searchInput.value.addEventListener('click', openDropdown)
-    }
-})
-
-onUnmounted(() => {
-    document.removeEventListener('click', handleClickOutside)
-    window.removeEventListener('resize', handleResize)
-    window.removeEventListener('scroll', handleResize, true)
-})
 </script>

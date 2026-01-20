@@ -32,6 +32,10 @@
                         <td class="px-4 py-3 text-sm text-right font-medium">{{ formatCurrency(item.total) }}</td>
                         <td class="px-4 py-3 text-sm text-center">
                             <div class="flex justify-center gap-2">
+                                <button type="button" @click="viewMeasurements(item)"
+                                    class="text-amber-600 hover:text-amber-800 transition-colors" title="View Measurements">
+                                    <i class="fa fa-eye"></i>
+                                </button>
                                 <button type="button" @click="$emit('edit', item, index)"
                                     class="text-blue-600 hover:text-blue-800 transition-colors" title="Edit">
                                     <i class="fa fa-pencil"></i>
@@ -51,16 +55,40 @@
                 </tbody>
             </table>
         </div>
+
+        <!-- Measurement View Modal -->
+        <MeasurementViewModal 
+            v-if="selectedItemForView"
+            :show="showViewModal"
+            :item="selectedItemForView"
+            @close="closeViewModal"
+        />
     </div>
 </template>
 
 <script setup>
+import { ref } from 'vue'
+import MeasurementViewModal from '@/components/Tailoring/MeasurementViewModal.vue'
+
 const props = defineProps({
     items: {
         type: Array,
         default: () => []
     }
 })
+
+const selectedItemForView = ref(null)
+const showViewModal = ref(false)
+
+const viewMeasurements = (item) => {
+    selectedItemForView.value = item
+    showViewModal.value = true
+}
+
+const closeViewModal = () => {
+    showViewModal.value = false
+    selectedItemForView.value = null
+}
 
 const formatCurrency = (value) => {
     return parseFloat(value || 0).toFixed(2)

@@ -9,9 +9,10 @@
 
             <!-- Order Header Section -->
             <OrderHeader v-model:orderNo="form.order_no" v-model:customer="form.customer_name"
-                v-model:contact="form.customer_mobile" v-model:salesman="form.salesman_id"
-                v-model:orderDate="form.order_date" :customers="customers" :salesmen="salesmen"
-                @add-customer="handleAddCustomer" />
+                v-model:customerId="form.account_id" v-model:contact="form.customer_mobile"
+                v-model:salesman="form.salesman_id" v-model:orderDate="form.order_date"
+                v-model:deliveryDate="form.delivery_date" :customers="customers" :salesmen="salesmen"
+                @add-customer="showCustomerModal = true" @customer-selected="handleCustomerSelected" />
 
             <!-- Category Selection -->
             <CategoryHeader :categories="categories" :selectedCategories="selectedCategories"
@@ -70,6 +71,10 @@
         <PaymentModal v-if="showPaymentModal" :order="form" :payments="payments" :paymentMethods="paymentMethods"
             @close="showPaymentModal = false" @add-payment="handleAddPayment" @update-payment="handleUpdatePayment"
             @delete-payment="handleDeletePayment" />
+
+        <!-- Customer Modal -->
+        <CustomerModal v-if="showCustomerModal" :show="showCustomerModal" @close="showCustomerModal = false"
+            @customerSaved="handleCustomerAdded" @customerSelected="handleCustomerSelected" />
     </div>
 </template>
 
@@ -93,6 +98,7 @@ import SummaryTable from '@/components/Tailoring/SummaryTable.vue'
 import WorkOrdersPreview from '@/components/Tailoring/WorkOrdersPreview.vue'
 import ActionButtons from '@/components/Tailoring/ActionButtons.vue'
 import PaymentModal from '@/components/Tailoring/PaymentModal.vue'
+import CustomerModal from '@/components/CustomerModal.vue'
 import axios from 'axios'
 
 const props = defineProps({
@@ -109,10 +115,12 @@ const toast = useToast()
 const form = ref({
     id: props.order?.id || null,
     order_no: props.order?.order_no || '',
+    account_id: props.order?.account_id || null,
     customer_name: props.order?.customer_name || '',
     customer_mobile: props.order?.customer_mobile || '',
     salesman_id: props.order?.salesman_id || null,
     order_date: props.order?.order_date || new Date().toISOString().split('T')[0],
+    delivery_date: props.order?.delivery_date || new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
     items: props.order?.items || [],
     payments: props.order?.payments || [],
 })
@@ -125,6 +133,7 @@ const colors = ref([])
 const payments = ref(props.order?.payments || [])
 const paymentMethods = ref([])
 const showPaymentModal = ref(false)
+const showCustomerModal = ref(false)
 const isSubmitting = ref(false)
 const isAddingItem = ref({})
 const activeCategoryTab = ref(null)
@@ -217,10 +226,28 @@ const handleAddItem = async (itemData, categoryId) => {
         if (response.data.success) {
             const calculatedData = response.data.data
 
+            // Define keys to extract for measurements
+            const measurementKeys = [
+                'length', 'shoulder', 'sleeve', 'chest', 'stomach', 'sl_chest', 'sl_so', 'neck',
+                'bottom', 'mar_size', 'mar_model', 'cuff', 'cuff_size', 'cuff_cloth', 'cuff_model',
+                'neck_d_button', 'side_pt_size', 'collar', 'collar_size', 'collar_cloth', 'collar_model',
+                'regal_size', 'knee_loose', 'fp_down', 'fp_model', 'fp_size', 'pen', 'side_pt_model',
+                'stitching', 'button', 'button_no', 'mobile_pocket', 'tailoring_notes',
+                'tailoring_category_model_id', 'tailoring_category_model_name'
+            ]
+
+            // Filter measurements only
+            const filteredMeasurements = {}
+            measurementKeys.forEach(key => {
+                if (itemMeasurements[key] !== undefined) {
+                    filteredMeasurements[key] = itemMeasurements[key]
+                }
+            })
+
             // Construct the final item object
             const finalItem = {
                 ...item,
-                ...itemMeasurements,
+                ...filteredMeasurements,
                 ...calculatedData,
                 tailoring_category_id: categoryId,
                 category: category,
@@ -260,23 +287,21 @@ const handleAddItem = async (itemData, categoryId) => {
             form.value.items.forEach((it, idx) => {
                 it.item_no = idx + 1
                 if (it.tailoring_category_id === categoryId) {
-                    // Update measurement fields
-                    Object.assign(it, itemMeasurements)
-                    it.tailoring_category_model_id = finalItem.tailoring_category_model_id
-                    it.tailoring_category_model_name = finalItem.tailoring_category_model_name
+                    // Update measurement fields ONLY
+                    Object.assign(it, filteredMeasurements)
                 }
             })
 
             // Reset current item form but KEEP measurements
             currentItems.value[categoryId] = {
-                 product_id: null,
-                 product_name: '',
-                 product_color: '',
-                 quantity: 0,
-                 unit_price: 0,
-                 stitch_rate: 0,
-                 tax: 0,
-                 total: 0,
+                product_id: null,
+                product_name: '',
+                product_color: '',
+                quantity: 0,
+                unit_price: 0,
+                stitch_rate: 0,
+                tax: 0,
+                total: 0,
             }
         }
     } catch (error) {
@@ -399,10 +424,12 @@ const handleClear = () => {
     form.value = {
         id: null,
         order_no: '',
+        account_id: null,
         customer_name: '',
         customer_mobile: '',
         salesman_id: null,
         order_date: new Date().toISOString().split('T')[0],
+        delivery_date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
         items: [],
         payments: [],
     }
@@ -462,8 +489,33 @@ const handleDeletePayment = async (paymentId) => {
 }
 
 const handleAddCustomer = () => {
-    // Open customer modal or navigate to customer creation
-    router.visit('/account/customer/create')
+    showCustomerModal.value = true
+}
+
+const handleCustomerAdded = (customer) => {
+    showCustomerModal.value = false
+    // Refresh the page or update customers list
+    router.reload({
+        only: ['customers'],
+        onSuccess: () => {
+            form.value.account_id = customer.id
+            form.value.customer_name = customer.name
+            form.value.customer_mobile = customer.mobile
+            toast.success('Customer added and selected')
+        }
+    })
+}
+
+const handleCustomerSelected = (customer) => {
+    if (customer) {
+        form.value.account_id = customer.id
+        form.value.customer_name = customer.name
+        form.value.customer_mobile = customer.mobile
+    } else {
+        form.value.account_id = null
+        form.value.customer_name = ''
+        form.value.customer_mobile = ''
+    }
 }
 
 const loadMeasurementOptions = async () => {

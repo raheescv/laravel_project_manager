@@ -15,6 +15,7 @@ use App\Actions\Tailoring\Payment\CreateAction as PaymentCreateAction;
 use App\Actions\Tailoring\Payment\DeleteAction as PaymentDeleteAction;
 use App\Actions\Tailoring\Payment\UpdateAction as PaymentUpdateAction;
 use App\Http\Controllers\Controller;
+use App\Models\Account;
 use App\Models\Product;
 use App\Models\Rack;
 use App\Models\TailoringCategory;
@@ -26,6 +27,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
+use Inertia\Response;
 
 class OrderController extends Controller
 {
@@ -52,21 +54,27 @@ class OrderController extends Controller
         $measurementOptions = $this->getMeasurementOptions();
         $salesmen = User::where('type', 'employee')->orWhere('type', 'user')->pluck('name', 'id')->toArray();
 
-        // Get default customer if configured
-        $useDefaultCustomer = true; // Can be from config
-        $customers = [];
-        if ($useDefaultCustomer) {
-            $customers[3] = [
-                'id' => 3,
-                'name' => 'General Customer',
-                'mobile' => '',
-            ];
-        }
+        // Get actual customers
+        $customers = Account::customer()
+            ->orderBy('name')
+            ->get(['id', 'name', 'mobile'])
+            ->map(function ($c) {
+                return [
+                    'id' => $c->id,
+                    'name' => $c->name,
+                    'mobile' => $c->mobile,
+                    'label' => $c->name . ($c->mobile ? " ({$c->mobile})" : ''),
+                ];
+            })
+            ->keyBy('id')
+            ->toArray();
 
         $orderData = [
             'id' => null,
             'order_no' => TailoringOrder::generateOrderNo(),
             'order_date' => date('Y-m-d'),
+            'delivery_date' => date('Y-m-d', strtotime('+7 days')),
+            'customer_id' => null,
             'customer_name' => '',
             'customer_mobile' => '',
             'salesman_id' => null,
@@ -113,10 +121,31 @@ class OrderController extends Controller
         $tailors = User::where('type', 'employee')->pluck('name', 'id')->toArray();
         $cutters = User::where('type', 'employee')->pluck('name', 'id')->toArray();
 
+        // Get unique customers (name and mobile) from TailoringOrder
+        $customers = TailoringOrder::select('customer_name', 'customer_mobile')
+            ->distinct()
+            ->whereNotNull('customer_name')
+            ->orderBy('customer_name')
+            ->get()
+            ->map(function ($c) {
+                return [
+                    'label' => $c->customer_name . ($c->customer_mobile ? " ({$c->customer_mobile})" : ""),
+                    'name' => $c->customer_name,
+                    'mobile' => $c->customer_mobile,
+                ];
+            });
+
+        // Get all order numbers for autotyping
+        $orderNumbers = TailoringOrder::distinct()
+            ->pluck('order_no')
+            ->toArray();
+
         return Inertia::render('Tailoring/JobCompletion', [
             'racks' => $racks,
             'tailors' => $tailors,
             'cutters' => $cutters,
+            'customers' => $customers,
+            'orderNumbers' => $orderNumbers,
         ]);
     }
 
@@ -404,7 +433,9 @@ class OrderController extends Controller
             $query->where('rack_id', $request->rack_id);
         }
 
-        $orders = $query->limit(20)->get(['id', 'order_no', 'customer_name', 'customer_mobile', 'order_date', 'status']);
+        $orders = $query->latest()
+            ->limit(20)
+            ->get(['id', 'order_no', 'customer_name', 'customer_mobile', 'order_date', 'delivery_date', 'status', 'completion_status']);
 
         return response()->json([
             'success' => true,
@@ -500,6 +531,18 @@ class OrderController extends Controller
             'success' => true,
             'message' => 'Item completion updated successfully',
             'data' => $item->fresh(),
+        ]);
+    }
+
+    public function getProductStock($productId): JsonResponse
+    {
+        $stock = Product::where('id', $productId)->withSum('inventories as stock_quantity', 'quantity')->first();
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'stock_quantity' => $stock ? (float) $stock->stock_quantity : 0,
+            ],
         ]);
     }
 }

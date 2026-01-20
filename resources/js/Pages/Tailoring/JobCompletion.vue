@@ -9,8 +9,7 @@
 
             <!-- Order Search -->
             <OrderSearch v-model:orderNo="searchForm.order_no" v-model:customer="searchForm.customer_name"
-                v-model:contact="searchForm.customer_mobile" v-model:orderDate="searchForm.order_date"
-                v-model:deliveryDate="searchForm.delivery_date" v-model:rack="searchForm.rack_id" :racks="racks"
+                v-model:contact="searchForm.customer_mobile" :customers="customers" :orderNumbers="orderNumbers"
                 @search="handleSearchOrder" @clear="handleClearSearch" />
 
             <!-- Status Bar -->
@@ -53,6 +52,8 @@ const props = defineProps({
     racks: Object,
     tailors: Object,
     cutters: Object,
+    customers: Array,
+    orderNumbers: Array,
 })
 
 const toast = useToast()
@@ -61,9 +62,6 @@ const searchForm = ref({
     order_no: '',
     customer_name: '',
     customer_mobile: '',
-    order_date: '',
-    delivery_date: '',
-    rack_id: '',
 })
 
 const handleSearchOrder = async () => {
@@ -90,41 +88,16 @@ const handleClearSearch = () => {
         order_no: '',
         customer_name: '',
         customer_mobile: '',
-        order_date: '',
-        delivery_date: '',
-        rack_id: '',
     }
     order.value = null
 }
 
-const handleUpdateRack = async (rackId) => {
-    if (!order.value) return
-    try {
-        const response = await axios.put(`/tailoring/job-completion/${order.value.id}/completion`, {
-            rack_id: rackId
-        })
-        if (response.data.success) {
-            order.value.rack_id = rackId
-            toast.success('Rack updated successfully')
-        }
-    } catch (error) {
-        toast.error('Failed to update rack')
-    }
+const handleUpdateRack = (rackId) => {
+    if (order.value) order.value.rack_id = rackId
 }
 
-const handleUpdateCutter = async (cutterId) => {
-    if (!order.value) return
-    try {
-        const response = await axios.put(`/tailoring/job-completion/${order.value.id}/completion`, {
-            cutter_id: cutterId
-        })
-        if (response.data.success) {
-            order.value.cutter_id = cutterId
-            toast.success('Cutter updated successfully')
-        }
-    } catch (error) {
-        toast.error('Failed to update cutter')
-    }
+const handleUpdateCutter = (cutterId) => {
+    if (order.value) order.value.cutter_id = cutterId
 }
 
 const handleUpdateItem = async (itemId, itemData) => {
@@ -173,6 +146,8 @@ const handleUpdateCompletion = async () => {
         const response = await axios.put(`/tailoring/job-completion/${order.value.id}/completion`, {
             items: order.value.items,
             selected_item_ids: selectedItems,
+            rack_id: order.value.rack_id,
+            cutter_id: order.value.cutter_id,
         })
         if (response.data.success) {
             order.value = response.data.data
