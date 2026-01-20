@@ -52,5 +52,6 @@ Route::middleware('auth')->group(function (): void {
         Route::get('cutters', [OrderController::class, 'getCutters'])->name('cutters');
         Route::post('calculate-stock-balance', [OrderController::class, 'calculateStockBalance'])->name('calculate-stock-balance');
         Route::post('calculate-tailor-commission', [OrderController::class, 'calculateTailorCommission'])->name('calculate-tailor-commission');
+        Route::get('products/{productId}/stock', [OrderController::class, 'getProductStock'])->name('product-stock');
     });
 });
