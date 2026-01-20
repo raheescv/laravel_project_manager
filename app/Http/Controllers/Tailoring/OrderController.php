@@ -27,7 +27,6 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
-use Inertia\Response;
 
 class OrderController extends Controller
 {
@@ -63,7 +62,7 @@ class OrderController extends Controller
                     'id' => $c->id,
                     'name' => $c->name,
                     'mobile' => $c->mobile,
-                    'label' => $c->name . ($c->mobile ? " ({$c->mobile})" : ''),
+                    'label' => $c->name.($c->mobile ? " ({$c->mobile})" : ''),
                 ];
             })
             ->keyBy('id')
@@ -129,7 +128,7 @@ class OrderController extends Controller
             ->get()
             ->map(function ($c) {
                 return [
-                    'label' => $c->customer_name . ($c->customer_mobile ? " ({$c->customer_mobile})" : ""),
+                    'label' => $c->customer_name.($c->customer_mobile ? " ({$c->customer_mobile})" : ''),
                     'name' => $c->customer_name,
                     'mobile' => $c->customer_mobile,
                 ];
@@ -530,7 +529,7 @@ class OrderController extends Controller
         // Reload with relationships and append measurements
         $item = $item->fresh(['category', 'categoryModel', 'product', 'unit', 'tailor']);
         $order = $item->order()->with('measurements')->first();
-        
+
         // Mock items collection for appendMeasurementsToItems helper
         $order->setRelation('items', collect([$item]));
         $order->appendMeasurementsToItems();

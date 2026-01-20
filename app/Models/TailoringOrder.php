@@ -237,6 +237,7 @@ class TailoringOrder extends Model implements AuditableContracts
         $this->balance = $this->grand_total - $this->paid;
         $this->save();
     }
+
     public function appendMeasurementsToItems()
     {
         $measurements = $this->measurements->keyBy('tailoring_category_id');
@@ -258,6 +259,7 @@ class TailoringOrder extends Model implements AuditableContracts
                 }
             }
         }
+
         return $this;
     }
 }
