@@ -64,8 +64,7 @@
                     </div>
 
                     <div class="flex flex-col items-end gap-2">
-                        <input :checked="item.is_selected_for_completion" 
-                            @change="toggleItemCompletion(item, $event)"
+                        <input :checked="item.is_selected_for_completion" @change="toggleItemCompletion(item, $event)"
                             type="checkbox"
                             class="w-5 h-5 text-indigo-600 rounded border-gray-300 focus:ring-indigo-500 cursor-pointer" />
                         <div class="text-[10px] font-bold text-gray-400 uppercase">Complete</div>
@@ -98,22 +97,6 @@
                             class="bg-gray-50 p-2 rounded-lg text-center group-hover:bg-white transition-colors border border-transparent group-hover:border-gray-100">
                             <div class="text-[10px] text-gray-400 uppercase font-bold mb-1">Amount</div>
                             <div class="text-sm font-bold text-indigo-600">{{ formatCurrency(item.amount) }}</div>
-                        </div>
-                    </div>
-
-                    <!-- Measurements Section (The "Other way to represent keys") -->
-                    <div v-if="hasMeasurements(item)" class="bg-amber-50/20 rounded-xl p-3 border border-amber-100/50">
-                        <div class="flex items-center gap-2 mb-2">
-                            <div class="w-1.5 h-1.5 rounded-full bg-amber-400"></div>
-                            <span class="text-[10px] font-bold text-amber-900/60 uppercase tracking-widest">Measurement
-                                Key Details</span>
-                        </div>
-                        <div class="grid grid-cols-4 gap-y-2 gap-x-1">
-                            <div v-for="(val, key) in getMeasurementDetails(item)" :key="key" class="flex flex-col">
-                                <span class="text-[9px] text-gray-400 uppercase font-medium leading-tight truncate"
-                                    :title="key">{{ key }}</span>
-                                <span class="text-xs font-bold text-gray-700 leading-none">{{ val || '-' }}</span>
-                            </div>
                         </div>
                     </div>
 
@@ -289,17 +272,13 @@ const measurementKeys = [
     'regal_size', 'knee_loose', 'fp_size'
 ];
 
-const hasMeasurements = (item) => {
-    return measurementKeys.some(key => item[key] !== null && item[key] !== undefined && item[key] !== '');
-}
+const hasMeasurements = (item) => true
 
 const getMeasurementDetails = (item) => {
     const details = {};
     measurementKeys.forEach(key => {
-        if (item[key]) {
-            const label = key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
-            details[label] = item[key];
-        }
+        const label = key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+        details[label] = item[key] || '-';
     });
     return details;
 }

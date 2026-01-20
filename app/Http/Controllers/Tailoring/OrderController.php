@@ -53,9 +53,10 @@ class OrderController extends Controller
         $measurementOptions = $this->getMeasurementOptions();
         $salesmen = User::where('type', 'employee')->orWhere('type', 'user')->pluck('name', 'id')->toArray();
 
-        // Get actual customers
+        // Get small list of recent customers for initial view
         $customers = Account::customer()
-            ->orderBy('name')
+            ->orderBy('id', 'desc')
+            ->limit(1)
             ->get(['id', 'name', 'mobile'])
             ->map(function ($c) {
                 return [
@@ -120,21 +121,6 @@ class OrderController extends Controller
         $tailors = User::where('type', 'employee')->pluck('name', 'id')->toArray();
         $cutters = User::where('type', 'employee')->pluck('name', 'id')->toArray();
 
-        // Get unique customers (name and mobile) from TailoringOrder
-        $customers = TailoringOrder::select('customer_name', 'customer_mobile')
-            ->distinct()
-            ->whereNotNull('customer_name')
-            ->orderBy('customer_name')
-            ->get()
-            ->map(function ($c) {
-                return [
-                    'label' => $c->customer_name.($c->customer_mobile ? " ({$c->customer_mobile})" : ''),
-                    'name' => $c->customer_name,
-                    'mobile' => $c->customer_mobile,
-                ];
-            });
-
-        // Get all order numbers for autotyping
         $orderNumbers = TailoringOrder::distinct()
             ->pluck('order_no')
             ->toArray();
@@ -143,7 +129,6 @@ class OrderController extends Controller
             'racks' => $racks,
             'tailors' => $tailors,
             'cutters' => $cutters,
-            'customers' => $customers,
             'orderNumbers' => $orderNumbers,
         ]);
     }

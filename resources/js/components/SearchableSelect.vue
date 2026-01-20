@@ -18,18 +18,26 @@
             <div v-if="showDropdown" ref="dropdownMenu" :style="dropdownStyle"
                 class="fixed z-[9999] bg-white border border-gray-200 rounded-lg shadow-xl max-h-60 overflow-hidden searchable-dropdown-portal">
                 <div class="p-2 border-b border-gray-100">
-                    <input ref="filterInput" v-model="searchTerm" @input="filterOptions"
-                        @keydown.arrow-down.prevent="navigateDown" @keydown.arrow-up.prevent="navigateUp"
-                        @keydown.enter.prevent="selectHighlighted" @keydown.escape="hideDropdown" type="text"
-                        class="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                        :placeholder="filterPlaceholder" autocomplete="off" />
+                    <div class="relative">
+                        <input ref="filterInput" v-model="searchTerm" @input="filterOptions"
+                            @keydown.arrow-down.prevent="navigateDown" @keydown.arrow-up.prevent="navigateUp"
+                            @keydown.enter.prevent="selectHighlighted" @keydown.escape="hideDropdown" type="text"
+                            class="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            :placeholder="filterPlaceholder" autocomplete="off" />
+                        <div v-if="loading" class="absolute right-3 top-2.5">
+                            <i class="fa fa-spinner fa-spin text-blue-500"></i>
+                        </div>
+                    </div>
                 </div>
                 <div class="max-h-48 overflow-auto custom-scrollbar">
                     <div v-if="filteredOptions.length === 0 && !searchTerm" class="px-3 py-2 text-sm text-gray-500">
                         No options available
                     </div>
-                    <div v-else-if="filteredOptions.length === 0 && searchTerm" class="px-3 py-2 text-sm text-gray-500">
+                    <div v-else-if="filteredOptions.length === 0 && searchTerm && !loading" class="px-3 py-2 text-sm text-gray-500">
                         No results found for "{{ searchTerm }}"
+                    </div>
+                    <div v-else-if="loading && filteredOptions.length === 0" class="px-3 py-2 text-sm text-gray-500">
+                        Searching...
                     </div>
                     <div v-for="(option, index) in filteredOptions" :key="option.value" @click="selectOption(option)"
                         :class="[
@@ -67,10 +75,18 @@ const props = defineProps({
     inputClass: {
         type: String,
         default: 'w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500'
+    },
+    remote: {
+        type: Boolean,
+        default: false
+    },
+    loading: {
+        type: Boolean,
+        default: false
     }
 })
 
-const emit = defineEmits(['update:modelValue', 'change'])
+const emit = defineEmits(['update:modelValue', 'change', 'search'])
 
 const searchTerm = ref('')
 const showDropdown = ref(false)
@@ -108,6 +124,12 @@ const selectedOption = computed(() => {
 const filteredOptions = ref([])
 
 const filterOptions = () => {
+    if (props.remote) {
+        filteredOptions.value = [] // Clear old results during new search
+        emit('search', searchTerm.value)
+        return
+    }
+    
     if (!searchTerm.value || searchTerm.value.trim() === '') {
         filteredOptions.value = normalizedOptions.value
     } else {
