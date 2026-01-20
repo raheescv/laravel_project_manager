@@ -527,10 +527,19 @@ class OrderController extends Controller
         $item = \App\Models\TailoringOrderItem::findOrFail($itemId);
         $item->updateCompletion($request->all());
 
+        // Reload with relationships and append measurements
+        $item = $item->fresh(['category', 'categoryModel', 'product', 'unit', 'tailor']);
+        $order = $item->order()->with('measurements')->first();
+        
+        // Mock items collection for appendMeasurementsToItems helper
+        $order->setRelation('items', collect([$item]));
+        $order->appendMeasurementsToItems();
+        $updatedItem = $order->items->first();
+
         return response()->json([
             'success' => true,
             'message' => 'Item completion updated successfully',
-            'data' => $item->fresh(),
+            'data' => $updatedItem,
         ]);
     }
 

@@ -41,6 +41,8 @@ class UpdateOrderCompletionAction
             }
 
             $order->refresh();
+            $order->load(['items.category', 'items.categoryModel', 'items.product', 'items.unit', 'items.tailor', 'measurements']);
+            $order->appendMeasurementsToItems();
 
             $return['success'] = true;
             $return['message'] = 'Successfully Updated Order Completion';
