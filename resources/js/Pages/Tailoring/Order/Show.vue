@@ -1,133 +1,132 @@
 <template>
-    <div class="min-h-screen bg-gray-50 pb-12">
+    <div class="min-h-screen bg-gray-50 pb-6">
         <!-- Top Navigation Bar -->
         <div class="bg-white border-b sticky top-0 z-30">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div class="flex justify-between items-center h-16">
-                    <div class="flex items-center gap-4">
-                        <Link :href="route('tailoring::order::index')" class="p-2 hover:bg-gray-100 rounded-full transition-colors">
-                            <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div class="flex justify-between items-center h-14">
+                    <div class="flex items-center gap-3">
+                        <Link :href="route('tailoring::order::index')" class="p-1.5 hover:bg-gray-100 rounded transition-colors">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="color: #6b7280;">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
                             </svg>
                         </Link>
                         <div>
-                            <h1 class="text-lg font-bold text-gray-900 leading-tight">Order #{{ order.order_no }}</h1>
-                            <p class="text-xs text-gray-500 font-medium">{{ order.customer_name }}</p>
+                            <h1 class="text-base font-semibold" style="color: #111827;">Order #{{ order.order_no }}</h1>
+                            <p class="text-xs" style="color: #6b7280;">{{ order.customer_name }}</p>
                         </div>
                     </div>
-                    <div class="flex items-center gap-3">
-                        <button @click="printOrder" class="inline-flex items-center px-4 py-2 bg-white border border-gray-300 rounded-lg text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-all shadow-sm">
-                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <div class="flex items-center gap-2">
+                        <button @click="printOrder" class="inline-flex items-center px-3 py-1.5 bg-white border rounded text-sm hover:bg-gray-50 transition-colors" style="border-color: #d1d5db; color: #374151;">
+                            <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
                             </svg>
-                            Print Order
+                            Print
                         </button>
-
-                        <Link :href="route('tailoring::order::edit', order.id)" class="inline-flex items-center px-4 py-2 bg-blue-600 border border-transparent rounded-lg text-sm font-semibold text-white hover:bg-blue-700 transition-all shadow-md hover:shadow-lg active:scale-95">
-                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <Link :href="route('tailoring::order::edit', order.id)" class="inline-flex items-center px-3 py-1.5 text-white rounded text-sm transition-colors hover:opacity-90" style="background-color: #2563eb;">
+                            <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                             </svg>
-                            Edit Order
+                            Edit
                         </Link>
                     </div>
                 </div>
             </div>
         </div>
 
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-8">
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-4">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
                 <!-- Left Column: Order Stats & Customer Info -->
-                <div class="lg:col-span-1 space-y-6">
+                <div class="lg:col-span-1 space-y-3">
                     <!-- Status Card -->
-                    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-                        <div class="p-6">
-                            <div class="flex justify-between items-start mb-6">
+                    <div class="bg-white border border-gray-200 rounded">
+                        <div class="p-4">
+                            <div class="flex justify-between items-start mb-4 pb-4 border-b">
                                 <div>
-                                    <p class="text-xs font-black text-gray-400 uppercase tracking-widest mb-1">Current Status</p>
-                                    <span :class="getStatusClass(order.status)" class="px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider">
+                                    <p class="text-xs mb-1" style="color: #6b7280;">Status</p>
+                                    <span :class="getStatusClass(order.status)" :style="getStatusStyle(order.status)">
                                         {{ order.status }}
                                     </span>
                                 </div>
                                 <div class="text-right">
-                                    <p class="text-xs font-black text-gray-400 uppercase tracking-widest mb-1">Completion</p>
-                                    <span :class="getCompletionStatusClass(order.completion_status)" class="px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider">
+                                    <p class="text-xs mb-1" style="color: #6b7280;">Completion</p>
+                                    <span :class="getCompletionStatusClass(order.completion_status)" :style="getCompletionStatusStyle(order.completion_status)">
                                         {{ order.completion_status }}
                                     </span>
                                 </div>
                             </div>
 
-                            <div class="space-y-4">
-                                <div class="flex justify-between py-3 border-b border-gray-50">
-                                    <span class="text-sm text-gray-500 font-medium">Order Date</span>
-                                    <span class="text-sm font-bold text-gray-900">{{ formatDate(order.order_date) }}</span>
+                            <div class="space-y-2.5">
+                                <div class="flex justify-between py-2 border-b border-gray-100">
+                                    <span class="text-xs" style="color: #6b7280;">Order Date</span>
+                                    <span class="text-xs font-medium" style="color: #111827;">{{ formatDate(order.order_date) }}</span>
                                 </div>
-                                <div class="flex justify-between py-3 border-b border-gray-50">
-                                    <span class="text-sm text-gray-500 font-medium">Delivery Date</span>
-                                    <span class="text-sm font-bold text-red-600">{{ formatDate(order.delivery_date) }}</span>
+                                <div class="flex justify-between py-2 border-b border-gray-100">
+                                    <span class="text-xs" style="color: #6b7280;">Delivery Date</span>
+                                    <span class="text-xs font-medium" style="color: #dc2626;">{{ formatDate(order.delivery_date) }}</span>
                                 </div>
-                                <div class="flex justify-between py-3">
-                                    <span class="text-sm text-gray-500 font-medium">Salesman</span>
-                                    <span class="text-sm font-bold text-gray-900">{{ order.salesman?.name || 'N/A' }}</span>
+                                <div class="flex justify-between py-2">
+                                    <span class="text-xs" style="color: #6b7280;">Salesman</span>
+                                    <span class="text-xs font-medium" style="color: #111827;">{{ order.salesman?.name || 'N/A' }}</span>
                                 </div>
                             </div>
                         </div>
                     </div>
 
                     <!-- Customer Card -->
-                    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-                        <div class="bg-gray-900 p-6 text-white">
-                            <div class="flex items-center gap-4">
-                                <div class="w-12 h-12 bg-white/10 rounded-xl flex items-center justify-center text-xl font-bold">
+                    <div class="bg-white border border-gray-200 rounded">
+                        <div class="p-4" style="background-color: #374151; color: white;">
+                            <div class="flex items-center gap-3">
+                                <div class="w-10 h-10 rounded flex items-center justify-center text-base font-semibold" style="background-color: rgba(255, 255, 255, 0.1);">
                                     {{ order.customer_name?.charAt(0) }}
                                 </div>
                                 <div>
-                                    <h3 class="font-bold text-lg leading-tight">{{ order.customer_name }}</h3>
-                                    <p class="text-white/60 text-sm">{{ order.customer_mobile || 'No mobile number' }}</p>
+                                    <h3 class="font-semibold text-sm">{{ order.customer_name }}</h3>
+                                    <p class="text-xs" style="color: rgba(255, 255, 255, 0.7);">{{ order.customer_mobile || 'No mobile' }}</p>
                                 </div>
                             </div>
                         </div>
-                        <div class="p-6">
-                             <div class="grid grid-cols-2 gap-4">
-                                 <div class="p-3 bg-gray-50 rounded-xl">
-                                     <p class="text-[10px] font-black text-gray-400 uppercase mb-1">Branch</p>
-                                     <p class="text-sm font-bold text-gray-800">{{ order.branch?.name || 'Main Branch' }}</p>
+                        <div class="p-4">
+                             <div class="grid grid-cols-2 gap-3">
+                                 <div class="p-2 rounded" style="background-color: #f9fafb;">
+                                     <p class="text-xs mb-0.5" style="color: #6b7280;">Branch</p>
+                                     <p class="text-xs font-medium" style="color: #374151;">{{ order.branch?.name || 'Main' }}</p>
                                  </div>
-                                 <div class="p-3 bg-gray-50 rounded-xl">
-                                     <p class="text-[10px] font-black text-gray-400 uppercase mb-1">Total Items</p>
-                                     <p class="text-sm font-bold text-gray-800">{{ order.items?.length || 0 }} Items</p>
+                                 <div class="p-2 rounded" style="background-color: #f9fafb;">
+                                     <p class="text-xs mb-0.5" style="color: #6b7280;">Items</p>
+                                     <p class="text-xs font-medium" style="color: #374151;">{{ order.items?.length || 0 }}</p>
                                  </div>
                              </div>
                         </div>
                     </div>
 
                     <!-- Payment Summary Card -->
-                    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-                        <div class="p-6">
-                            <h3 class="text-sm font-black text-gray-900 uppercase tracking-widest mb-6 border-l-4 border-emerald-500 pl-3">Payment Summary</h3>
-                            <div class="space-y-3">
-                                <div class="flex justify-between text-sm">
-                                    <span class="text-gray-500">Gross Amount</span>
-                                    <span class="font-bold text-gray-900">{{ formatCurrency(order.gross_amount) }}</span>
+                    <div class="bg-white border border-gray-200 rounded">
+                        <div class="p-4">
+                            <h3 class="text-xs font-semibold mb-3 pb-2 border-b" style="color: #111827;">Payment Summary</h3>
+                            <div class="space-y-2">
+                                <div class="flex justify-between text-xs">
+                                    <span style="color: #6b7280;">Gross Amount</span>
+                                    <span class="font-medium" style="color: #111827;">{{ formatCurrency(order.gross_amount) }}</span>
                                 </div>
-                                <div class="flex justify-between text-sm">
-                                    <span class="text-gray-500">Stitch Rate Total</span>
-                                    <span class="font-bold text-gray-900">{{ formatCurrency(order.stitch_amount) }}</span>
+                                <div class="flex justify-between text-xs">
+                                    <span style="color: #6b7280;">Stitch Rate</span>
+                                    <span class="font-medium" style="color: #111827;">{{ formatCurrency(order.stitch_amount) }}</span>
                                 </div>
-                                <div v-if="order.discount" class="flex justify-between text-sm">
-                                    <span class="text-gray-500">Discount</span>
-                                    <span class="font-bold text-red-500">-{{ formatCurrency(order.discount) }}</span>
+                                <div v-if="order.discount" class="flex justify-between text-xs">
+                                    <span style="color: #6b7280;">Discount</span>
+                                    <span class="font-medium" style="color: #dc2626;">-{{ formatCurrency(order.discount) }}</span>
                                 </div>
-                                <div class="pt-3 border-t-2 border-dashed flex justify-between items-center">
-                                    <span class="text-sm font-bold text-gray-900">Total Amount</span>
-                                    <span class="text-xl font-black text-gray-900">{{ formatCurrency(order.total_amount) }}</span>
+                                <div class="pt-2 border-t flex justify-between items-center">
+                                    <span class="text-xs font-semibold" style="color: #111827;">Total</span>
+                                    <span class="text-sm font-bold" style="color: #111827;">{{ formatCurrency(order.total_amount) }}</span>
                                 </div>
-                                <div class="flex justify-between text-sm pt-4">
-                                    <span class="text-gray-500">Paid Amount</span>
-                                    <span class="font-bold text-emerald-600">{{ formatCurrency(order.paid_amount) }}</span>
+                                <div class="flex justify-between text-xs pt-2">
+                                    <span style="color: #6b7280;">Paid</span>
+                                    <span class="font-medium" style="color: #059669;">{{ formatCurrency(order.paid_amount) }}</span>
                                 </div>
-                                <div class="flex justify-between text-sm">
-                                    <span class="text-gray-500">Balance Due</span>
-                                    <span :class="order.balance_amount > 0 ? 'text-red-600 font-black' : 'text-emerald-600 font-bold'">
+                                <div class="flex justify-between text-xs">
+                                    <span style="color: #6b7280;">Balance</span>
+                                    <span :style="order.balance_amount > 0 ? 'color: #dc2626; font-weight: 600;' : 'color: #059669; font-weight: 500;'">
                                         {{ formatCurrency(order.balance_amount) }}
                                     </span>
                                 </div>
@@ -137,88 +136,112 @@
                 </div>
 
                 <!-- Right Column: Items & Details -->
-                <div class="lg:col-span-2 space-y-6">
-                    <div class="flex items-center justify-between mb-2">
-                            <h2 class="text-xl font-black text-gray-900 uppercase tracking-tight">Order Items</h2>
-                            <div class="h-px bg-gray-200 grow mx-4"></div>
+                <div class="lg:col-span-2 space-y-3">
+                    <div class="flex items-center gap-2 mb-1">
+                        <h2 class="text-sm font-semibold" style="color: #111827;">Order Items</h2>
+                        <div class="h-px bg-gray-200 flex-1"></div>
                     </div>
 
-                    <div v-for="(item, index) in order.items" :key="item.id" class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden transition-all hover:shadow-md">
-                        <!-- Item Header -->
-                        <div class="bg-gray-50 px-6 py-4 border-b flex justify-between items-center">
-                            <div class="flex items-center gap-3">
-                                <span class="w-8 h-8 rounded-full bg-gray-900 text-white flex items-center justify-center text-xs font-bold shadow-sm">
-                                    #{{ item.item_no }}
-                                </span>
-                                <div>
-                                    <h3 class="font-black text-gray-900 uppercase tracking-tight">{{ item.product_name }}</h3>
-                                    <p class="text-xs text-gray-500 font-semibold">{{ item.category?.name }} • {{ item.category_model?.name || 'Standard' }}</p>
-                                </div>
-                            </div>
-                            <div class="flex items-center gap-4">
-                                <a :href="route('tailoring::order::print-cutting-slip', {id: order.id, category_id: item.tailoring_category_id, model_id: item.tailoring_category_model_id || 'all'})" 
-                                   target="_blank"
-                                   class="p-2 hover:bg-emerald-50 rounded-xl transition-all text-gray-400 hover:text-emerald-600 border border-transparent hover:border-emerald-100"
-                                   title="Print Cutting Slip">
-                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
-                                    </svg>
-                                </a>
-                                <div class="text-right">
-                                    <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest leading-none mb-1">Line Total</p>
-                                    <p class="text-lg font-black text-gray-900">{{ formatCurrency(item.total) }}</p>
-                                </div>
-                            </div>
-                        </div>
+                    <!-- Category Tabs -->
+                    <div v-if="categoryTabs.length > 0" class="border-b border-gray-200">
+                        <nav class="-mb-px flex space-x-4 overflow-x-auto" aria-label="Tabs">
+                            <button
+                                v-for="category in categoryTabs"
+                                :key="category.id"
+                                @click="activeCategoryTab = category.id"
+                                :class="[
+                                    activeCategoryTab === category.id
+                                        ? 'border-blue-600 text-blue-600'
+                                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300',
+                                    'whitespace-nowrap py-2 px-3 border-b-2 font-medium text-xs transition-colors'
+                                ]"
+                                :style="activeCategoryTab === category.id ? 'border-color: #2563eb; color: #2563eb;' : ''"
+                            >
+                                {{ category.name }} ({{ category.count }})
+                            </button>
+                        </nav>
+                    </div>
 
-                        <!-- Item Content -->
-                        <div class="p-6">
-                            <MeasurementView :item="item" />
-
-                            <!-- Product Info -->
-                            <div class="mt-8 pt-6 border-t grid grid-cols-2 md:grid-cols-4 gap-6">
-                                <div>
-                                    <p class="text-[10px] font-black text-gray-400 uppercase mb-1">Quantity</p>
-                                    <p class="text-sm font-bold text-gray-800">{{ item.quantity }} {{ item.unit?.name || 'Nos' }}</p>
-                                </div>
-                                <div>
-                                    <p class="text-[10px] font-black text-gray-400 uppercase mb-1">Color</p>
-                                    <p class="text-sm font-bold text-gray-800">{{ item.product_color || 'N/A' }}</p>
-                                </div>
-                                <div>
-                                    <p class="text-[10px] font-black text-gray-400 uppercase mb-1">Stitch Rate</p>
-                                    <p class="text-sm font-bold text-gray-800">{{ formatCurrency(item.stitch_rate) }}</p>
-                                </div>
-                                <div>
-                                    <p class="text-[10px] font-black text-gray-400 uppercase mb-1">Status</p>
-                                    <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-amber-100 text-amber-700 uppercase">
-                                        {{ item.status || 'Pending' }}
+                    <!-- Items by Category -->
+                    <div v-if="activeCategoryTab">
+                        <div v-for="(item, index) in getItemsByCategory(activeCategoryTab)" :key="item.id" class="bg-white border border-gray-200 rounded mb-3">
+                            <!-- Item Header -->
+                            <div class="bg-gray-50 px-4 py-3 border-b flex justify-between items-center">
+                                <div class="flex items-center gap-2.5">
+                                    <span class="w-6 h-6 rounded text-white flex items-center justify-center text-xs font-medium" style="background-color: #374151;">
+                                        #{{ item.item_no }}
                                     </span>
+                                    <div>
+                                        <h3 class="font-semibold text-sm" style="color: #111827;">{{ item.product_name }}</h3>
+                                        <p class="text-xs" style="color: #6b7280;">{{ item.category?.name }} • {{ item.category_model?.name || 'Standard' }}</p>
+                                    </div>
+                                </div>
+                                <div class="flex items-center gap-3">
+                                    <a :href="route('tailoring::order::print-cutting-slip', {id: order.id, category_id: item.tailoring_category_id, model_id: item.tailoring_category_model_id || 'all'})"
+                                       target="_blank"
+                                       class="p-1.5 rounded transition-colors hover:bg-green-50 print-icon"
+                                       style="color: #6b7280;"
+                                       title="Print Cutting Slip">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+                                        </svg>
+                                    </a>
+                                    <div class="text-right">
+                                        <p class="text-xs mb-0.5" style="color: #6b7280;">Total</p>
+                                        <p class="text-sm font-semibold" style="color: #111827;">{{ formatCurrency(item.total) }}</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Item Content -->
+                            <div class="p-4">
+                                <MeasurementView :item="item" />
+
+                                <!-- Product Info -->
+                                <div class="mt-4 pt-4 border-t grid grid-cols-2 md:grid-cols-4 gap-4">
+                                    <div>
+                                        <p class="text-xs mb-0.5" style="color: #6b7280;">Quantity</p>
+                                        <p class="text-xs font-medium" style="color: #374151;">{{ item.quantity }} {{ item.unit?.name || 'Nos' }}</p>
+                                    </div>
+                                    <div>
+                                        <p class="text-xs mb-0.5" style="color: #6b7280;">Color</p>
+                                        <p class="text-xs font-medium" style="color: #374151;">{{ item.product_color || 'N/A' }}</p>
+                                    </div>
+                                    <div>
+                                        <p class="text-xs mb-0.5" style="color: #6b7280;">Stitch Rate</p>
+                                        <p class="text-xs font-medium" style="color: #374151;">{{ formatCurrency(item.stitch_rate) }}</p>
+                                    </div>
+                                    <div>
+                                        <p class="text-xs mb-0.5" style="color: #6b7280;">Status</p>
+                                        <span class="text-xs font-medium px-1.5 py-0.5 rounded" style="background-color: #fffbeb; color: #d97706;">
+                                            {{ item.status || 'Pending' }}
+                                        </span>
+                                    </div>
                                 </div>
                             </div>
                         </div>
                     </div>
 
                     <!-- Payments Log -->
-                    <div v-if="order.payments && order.payments.length > 0" class="mt-12">
-                         <div class="flex items-center justify-between mb-6">
-                            <h2 class="text-xl font-black text-gray-900 uppercase tracking-tight">Payment History</h2>
-                            <div class="h-px bg-gray-200 grow mx-4"></div>
+                    <div v-if="order.payments && order.payments.length > 0" class="mt-4">
+                         <div class="flex items-center gap-2 mb-2">
+                            <h2 class="text-sm font-semibold" style="color: #111827;">Payment History</h2>
+                            <div class="h-px bg-gray-200 flex-1"></div>
                         </div>
-                        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                        <div class="bg-white border border-gray-200 rounded overflow-hidden">
                             <table class="w-full text-left">
                                 <thead class="bg-gray-50 border-b">
                                     <tr>
-                                        <th class="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Date</th>
-                                        <th class="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Method</th>
-                                        <th class="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest text-right">Amount</th>
+                                        <th class="px-4 py-2 text-xs font-medium" style="color: #6b7280;">Date</th>
+                                        <th class="px-4 py-2 text-xs font-medium" style="color: #6b7280;">Method</th>
+                                        <th class="px-4 py-2 text-xs font-medium text-right" style="color: #6b7280;">Amount</th>
                                     </tr>
                                 </thead>
-                                <tbody class="divide-y divide-gray-50">
-                                    <tr v-for="payment in order.payments" :key="payment.id" class="hover:bg-gray-50/50 transition-colors">
-                                        <td class="px-6 py-4 text-sm font-semibold text-gray-600">{{ formatDate(payment.date) }}</td>
-                                        <td class="px-6 py-4 text-sm font-bold text-gray-900">{{ payment.payment_method?.name || 'Cash' }}</td>
-                                        <td class="px-6 py-4 text-sm font-black text-emerald-600 text-right">{{ formatCurrency(payment.amount) }}</td>
+                                <tbody class="divide-y divide-gray-100">
+                                    <tr v-for="payment in order.payments" :key="payment.id" class="hover:bg-gray-50 transition-colors">
+                                        <td class="px-4 py-2 text-xs" style="color: #374151;">{{ formatDate(payment.date) }}</td>
+                                        <td class="px-4 py-2 text-xs font-medium" style="color: #111827;">{{ payment.payment_method?.name || 'Cash' }}</td>
+                                        <td class="px-4 py-2 text-xs font-semibold text-right" style="color: #059669;">{{ formatCurrency(payment.amount) }}</td>
                                     </tr>
                                 </tbody>
                             </table>
@@ -243,7 +266,7 @@
                 </div>
                 <div class="header-right flex flex-col items-end gap-2">
                     <div class="no-print">
-                        <a :href="route('tailoring::order::print-cutting-slip', {id: order.id, category_id: catId, model_id: group.measurements.tailoring_category_model_id || 'all'})" 
+                        <a :href="route('tailoring::order::print-cutting-slip', {id: order.id, category_id: catId, model_id: group.measurements.tailoring_category_model_id || 'all'})"
                            target="_blank"
                            class="inline-flex items-center px-3 py-1 bg-gray-100 hover:bg-gray-200 text-gray-700 text-[10px] font-bold rounded transition-colors">
                             <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -358,7 +381,7 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed, ref, onMounted } from 'vue'
 import { Link } from '@inertiajs/vue3'
 import MeasurementView from '@/components/Tailoring/MeasurementView.vue'
 
@@ -369,6 +392,8 @@ const props = defineProps({
     }
 })
 
+const activeCategoryTab = ref(null)
+
 const groupedItems = computed(() => {
     if (!props.order.items) return {}
     return props.order.items.reduce((acc, item) => {
@@ -378,12 +403,45 @@ const groupedItems = computed(() => {
                 category: item.category,
                 items: [],
                 // Use the first item's measurements for the slip (since they are order-wide per category)
-                measurements: item 
+                measurements: item
             }
         }
         acc[catId].items.push(item)
         return acc
     }, {})
+})
+
+const categoryTabs = computed(() => {
+    if (!props.order.items || props.order.items.length === 0) return []
+
+    const categoriesMap = new Map()
+    props.order.items.forEach(item => {
+        const catId = item.tailoring_category_id || 'other'
+        const catName = item.category?.name || 'Other'
+
+        if (!categoriesMap.has(catId)) {
+            categoriesMap.set(catId, {
+                id: catId,
+                name: catName,
+                count: 0
+            })
+        }
+        categoriesMap.get(catId).count++
+    })
+
+    return Array.from(categoriesMap.values())
+})
+
+const getItemsByCategory = (categoryId) => {
+    if (!props.order.items) return []
+    return props.order.items.filter(item => (item.tailoring_category_id || 'other') === categoryId)
+}
+
+onMounted(() => {
+    // Set first category as active by default
+    if (categoryTabs.value.length > 0 && !activeCategoryTab.value) {
+        activeCategoryTab.value = categoryTabs.value[0].id
+    }
 })
 
 const formatDate = (dateString) => {
@@ -404,22 +462,39 @@ const formatCurrency = (amount) => {
 
 const getStatusClass = (status) => {
     const classes = {
-        'Pending': 'bg-amber-100 text-amber-700',
-        'Confirmed': 'bg-blue-100 text-blue-700',
-        'Completed': 'bg-emerald-100 text-emerald-700',
-        'Cancelled': 'bg-red-100 text-red-700'
+        'Pending': { bg: '#fffbeb', text: '#d97706' },
+        'Confirmed': { bg: '#eff6ff', text: '#2563eb' },
+        'Completed': { bg: '#ecfdf5', text: '#059669' },
+        'Cancelled': { bg: '#fef2f2', text: '#dc2626' }
     }
-    return classes[status] || 'bg-gray-100 text-gray-700'
+    const style = classes[status] || { bg: '#f3f4f6', text: '#6b7280' }
+    return `px-2 py-0.5 rounded text-xs font-medium`
+}
+
+const getStatusStyle = (status) => {
+    const classes = {
+        'Pending': { bg: '#fffbeb', text: '#d97706' },
+        'Confirmed': { bg: '#eff6ff', text: '#2563eb' },
+        'Completed': { bg: '#ecfdf5', text: '#059669' },
+        'Cancelled': { bg: '#fef2f2', text: '#dc2626' }
+    }
+    const style = classes[status] || { bg: '#f3f4f6', text: '#6b7280' }
+    return `background-color: ${style.bg}; color: ${style.text};`
 }
 
 const getCompletionStatusClass = (status) => {
+    return `px-2 py-0.5 rounded text-xs font-medium`
+}
+
+const getCompletionStatusStyle = (status) => {
     const classes = {
-        'Pending': 'bg-gray-100 text-gray-500',
-        'In Progress': 'bg-blue-50 text-blue-600',
-        'Partially Completed': 'bg-amber-50 text-amber-600',
-        'Completed': 'bg-emerald-50 text-emerald-600'
+        'Pending': { bg: '#f3f4f6', text: '#6b7280' },
+        'In Progress': { bg: '#eff6ff', text: '#2563eb' },
+        'Partially Completed': { bg: '#fffbeb', text: '#d97706' },
+        'Completed': { bg: '#ecfdf5', text: '#059669' }
     }
-    return classes[status] || 'bg-gray-100 text-gray-500'
+    const style = classes[status] || { bg: '#f3f4f6', text: '#6b7280' }
+    return `background-color: ${style.bg}; color: ${style.text};`
 }
 
 const printOrder = () => {
@@ -434,6 +509,11 @@ const printCuttingSlips = () => {
 </script>
 
 <style scoped>
+.print-icon:hover {
+    background-color: #ecfdf5 !important;
+    color: #059669 !important;
+}
+
 @media print {
     body.print-slips .min-h-screen {
         display: none !important;
@@ -500,22 +580,22 @@ const printCuttingSlips = () => {
     overflow: hidden;
 }
 
-.measure-val { 
-    width: 40%; 
+.measure-val {
+    width: 40%;
     background: #f0f0f0;
-    border-right: 1px solid #000; 
-    height: 100%; 
-    display: flex; 
-    align-items: center; 
-    justify-content: center; 
-    font-weight: bold; 
+    border-right: 1px solid #000;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
     font-size: 1rem;
 }
 
-.measure-label { 
-    width: 60%; 
-    padding-left: 8px; 
-    font-weight: bold; 
+.measure-label {
+    width: 60%;
+    padding-left: 8px;
+    font-weight: bold;
     font-size: 0.75rem;
     color: #444;
 }

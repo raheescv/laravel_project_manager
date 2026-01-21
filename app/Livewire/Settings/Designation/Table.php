@@ -20,7 +20,7 @@ class Table extends Component
 
     public $selectAll = false;
 
-    public $sortField = 'priority';
+    public $sortField = 'order';
 
     public $sortDirection = 'asc';
 

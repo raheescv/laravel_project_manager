@@ -101,18 +101,14 @@ class AccountViewExport implements FromCollection, WithColumnFormatting, WithEve
 
         return JournalEntry::where(function ($query) use ($accountId) {
             // Check single counter_account_id (backward compatibility)
-            $query->where('counter_account_id', $accountId)
-                // Also check pivot table for multiple counter accounts
-                ->orWhereHas('counterAccounts', function ($q) use ($accountId) {
-                    $q->where('accounts.id', $accountId);
-                });
+            $query->where('counter_account_id', $accountId);
         });
     }
 
     protected function getTransactionsQuery()
     {
         return $this->getBaseQuery()
-            ->with(['account', 'journal', 'counterAccounts'])
+            ->with(['account', 'journal'])
             ->when($this->filters['search'] ?? '', function ($query, $value) {
                 return $query->where(function ($q) use ($value) {
                     $value = trim($value);

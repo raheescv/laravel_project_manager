@@ -67,14 +67,25 @@
                 @create-order="handleCreateOrder" @payment="handlePayment" />
         </div>
 
-        <!-- Payment Modal -->
-        <PaymentModal v-if="showPaymentModal" :order="form" :payments="payments" :paymentMethods="paymentMethods"
-            @close="showPaymentModal = false" @add-payment="handleAddPayment" @update-payment="handleUpdatePayment"
-            @delete-payment="handleDeletePayment" />
+        <!-- Sale Confirmation Modal replaces individual PaymentModal -->
 
         <!-- Customer Modal -->
-        <CustomerModal v-if="showCustomerModal" :show="showCustomerModal" @close="showCustomerModal = false"
+        <CustomerModal v-if="showCustomerModal" :show="showCustomerModal" 
+            :customer-types="customerTypes" :countries="countries"
+            @close="showCustomerModal = false"
             @customerSaved="handleCustomerAdded" @customerSelected="handleCustomerSelected" />
+
+        <!-- Sale Confirmation Modal -->
+        <SaleConfirmationModal :show="showConfirmationModal" :sale-data="confirmationData" :loading="isSubmitting"
+            :payment-method="selectedPaymentMethod" :send-to-whatsapp="sendToWhatsapp"
+            @update:paymentMethod="val => selectedPaymentMethod = val" @update:sendToWhatsapp="val => sendToWhatsapp = val"
+            @openCustomPayment="showCustomPaymentModal = true" @close="showConfirmationModal = false"
+            @submit="processSubmitOrder" />
+
+        <!-- Custom Payment Modal -->
+        <CustomPaymentModal :show="showCustomPaymentModal" :total-amount="grandTotal"
+            :payment-methods="paymentMethods" :initial-payments="form.payments"
+            @close="showCustomPaymentModal = false" @save="handleCustomPaymentSave" />
     </div>
 </template>
 
@@ -97,8 +108,9 @@ import ProductSelection from '@/components/Tailoring/ProductSelection.vue'
 import SummaryTable from '@/components/Tailoring/SummaryTable.vue'
 import WorkOrdersPreview from '@/components/Tailoring/WorkOrdersPreview.vue'
 import ActionButtons from '@/components/Tailoring/ActionButtons.vue'
-import PaymentModal from '@/components/Tailoring/PaymentModal.vue'
 import CustomerModal from '@/components/CustomerModal.vue'
+import SaleConfirmationModal from '@/components/Tailoring/SaleConfirmationModal.vue'
+import CustomPaymentModal from '@/components/Tailoring/CustomPaymentModal.vue'
 import axios from 'axios'
 
 const props = defineProps({
@@ -107,6 +119,15 @@ const props = defineProps({
     measurementOptions: Object,
     salesmen: Object,
     customers: Object,
+    paymentMethods: Array,
+    customerTypes: {
+        type: Object,
+        default: () => ({})
+    },
+    countries: {
+        type: Object,
+        default: () => ({})
+    },
 })
 
 const toast = useToast()
@@ -130,9 +151,12 @@ const currentItems = ref({})
 const selectedCategories = ref([])
 const products = ref([])
 const colors = ref([])
-const payments = ref(props.order?.payments || [])
-const paymentMethods = ref([])
+const paymentMethods = ref(props.paymentMethods || [])
 const showPaymentModal = ref(false)
+const showConfirmationModal = ref(false)
+const showCustomPaymentModal = ref(false)
+const selectedPaymentMethod = ref(1)
+const sendToWhatsapp = ref(false)
 const showCustomerModal = ref(false)
 const isSubmitting = ref(false)
 const isAddingItem = ref({})
@@ -142,6 +166,36 @@ const editingItemIds = ref({}) // Map of categoryId -> itemId
 
 const canSubmit = computed(() => {
     return form.value.items.length > 0 && form.value.customer_name
+})
+
+const grandTotal = computed(() => {
+    return form.value.items.reduce((sum, item) => sum + parseFloat(item.total || 0), 0)
+})
+
+const totalPaid = computed(() => {
+    const fromPayments = (form.value.payments || []).reduce((sum, p) => sum + parseFloat(p.amount || 0), 0)
+    return fromPayments
+})
+
+const balance = computed(() => {
+    return grandTotal.value - totalPaid.value
+})
+
+const confirmationData = computed(() => {
+    return {
+        ...form.value,
+        grand_total: grandTotal.value,
+        customerName: {
+            name: form.value.customer_name || 'Walk-in Customer',
+            mobile: form.value.customer_mobile || ''
+        },
+        payment_method: selectedPaymentMethod.value,
+        custom_payment_data: {
+            payments: form.value.payments,
+            totalPaid: totalPaid.value,
+            balanceDue: balance.value
+        }
+    }
 })
 
 const getCategory = (id) => {
@@ -393,12 +447,15 @@ const handleRemoveItem = (item) => {
 }
 
 
-const handleCreateOrder = async () => {
+const handleCreateOrder = () => {
     if (!canSubmit.value) {
         toast.error('Please add at least one item and customer name')
         return
     }
+    showConfirmationModal.value = true
+}
 
+const processSubmitOrder = async () => {
     isSubmitting.value = true
     try {
         const url = form.value.id ?
@@ -407,9 +464,26 @@ const handleCreateOrder = async () => {
 
         const method = form.value.id ? 'put' : 'post'
 
+        // Add payment data to form before submission
+        let finalPayments = [...form.value.payments]
+        
+        // If Cash (1) or Card (2) is selected and no payments are manually added,
+        // we should create an automatic payment for the full amount
+        if ((selectedPaymentMethod.value === 1 || selectedPaymentMethod.value === 2) && finalPayments.length === 0) {
+            finalPayments.push({
+                payment_method_id: selectedPaymentMethod.value,
+                amount: grandTotal.value,
+                date: new Date().toISOString().split('T')[0]
+            })
+        }
+
+        form.value.payments = finalPayments
+        form.value.payment_method = selectedPaymentMethod.value
+
         router[method](url, form.value, {
             preserveScroll: true,
             onSuccess: () => {
+                showConfirmationModal.value = false
                 toast.success(form.value.id ? 'Order updated successfully' : 'Order created successfully')
             },
             onError: (errors) => {
@@ -444,53 +518,16 @@ const handleClear = () => {
     selectedModel.value = null
 }
 
+// Payment handling via confirmation flow
 const handlePayment = () => {
-    showPaymentModal.value = true
+    showConfirmationModal.value = true
 }
 
-const handleAddPayment = async (paymentData) => {
-    try {
-        const response = await axios.post('/tailoring/order/add-payment', {
-            ...paymentData,
-            tailoring_order_id: form.value.id
-        })
-
-        if (response.data.success) {
-            payments.value.push(response.data.data)
-            form.value.payments = payments.value
-            toast.success('Payment added successfully')
-        }
-    } catch (error) {
-        toast.error(error.response?.data?.message || 'Failed to add payment')
-    }
-}
-
-const handleUpdatePayment = async (paymentId, paymentData) => {
-    try {
-        const response = await axios.put(`/tailoring/order/update-payment/${paymentId}`, paymentData)
-        if (response.data.success) {
-            const index = payments.value.findIndex(p => p.id === paymentId)
-            if (index !== -1) {
-                payments.value[index] = response.data.data
-            }
-            toast.success('Payment updated successfully')
-        }
-    } catch (error) {
-        toast.error(error.response?.data?.message || 'Failed to update payment')
-    }
-}
-
-const handleDeletePayment = async (paymentId) => {
-    try {
-        const response = await axios.delete(`/tailoring/order/remove-payment/${paymentId}`)
-        if (response.data.success) {
-            payments.value = payments.value.filter(p => p.id !== paymentId)
-            form.value.payments = payments.value
-            toast.success('Payment deleted successfully')
-        }
-    } catch (error) {
-        toast.error(error.response?.data?.message || 'Failed to delete payment')
-    }
+const handleCustomPaymentSave = (paymentData) => {
+    form.value.payments = paymentData.payments
+    selectedPaymentMethod.value = 'custom'
+    showCustomPaymentModal.value = false
+    toast.success('Custom payments saved')
 }
 
 const handleAddCustomer = () => {

@@ -16,7 +16,7 @@
                         <i class="fa fa-user text-gray-400 group-focus-within:text-blue-500 transition-colors"></i>
                     </div>
                     <CustomerSelect :modelValue="customerId" @update:modelValue="id => $emit('update:customerId', id)"
-                        :initialData="customerId ? { id: customerId, name: customer, mobile: contact } : null"
+                        :initialData="selectedCustomerData"
                         @selected="handleCustomerSelected" placeholder="Search customer..." />
                 </div>
                 <a @click="$emit('add-customer')"
@@ -50,7 +50,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onBeforeUnmount, watch } from 'vue'
+import { ref, onMounted, onBeforeUnmount, watch, computed } from 'vue'
 import axios from 'axios'
 import SearchableSelect from '@/components/SearchableSelect.vue'
 import CustomerSelect from '@/components/CustomerSelect.vue'
@@ -86,6 +86,17 @@ const emit = defineEmits([
     'customer-selected',
     'search-customer'
 ])
+
+const selectedCustomerData = computed(() => {
+    if (props.customerId && props.customer) {
+        return {
+            id: props.customerId,
+            name: props.customer,
+            mobile: props.contact || ''
+        }
+    }
+    return null
+})
 
 const handleCustomerSelected = (selected) => {
     if (selected) {
