@@ -16,6 +16,8 @@ use App\Actions\Tailoring\Payment\DeleteAction as PaymentDeleteAction;
 use App\Actions\Tailoring\Payment\UpdateAction as PaymentUpdateAction;
 use App\Http\Controllers\Controller;
 use App\Models\Account;
+use App\Models\Country;
+use App\Models\CustomerType;
 use App\Models\Product;
 use App\Models\Rack;
 use App\Models\TailoringCategory;
@@ -51,7 +53,7 @@ class OrderController extends Controller
     {
         $categories = TailoringCategory::with('activeModels')->active()->ordered()->get();
         $measurementOptions = $this->getMeasurementOptions();
-        $salesmen = User::where('type', 'employee')->orWhere('type', 'user')->pluck('name', 'id')->toArray();
+        $salesmen = User::employee()->pluck('name', 'id')->toArray();
 
         // Get small list of recent customers for initial view
         $customers = Account::customer()
@@ -90,12 +92,23 @@ class OrderController extends Controller
             }
         }
 
+        $paymentMethodIds = cache('payment_methods', []);
+        $paymentMethods = Account::whereIn('id', $paymentMethodIds)->get(['id', 'name'])->toArray();
+
+        // Get customer types and countries for CustomerModal
+        $customerTypes = CustomerType::pluck('name', 'id')->toArray();
+
+        $countries = Country::pluck('name', 'name')->toArray();
+
         return Inertia::render('Tailoring/Order', [
             'order' => $orderData,
             'categories' => $categories,
             'measurementOptions' => $measurementOptions,
             'salesmen' => $salesmen,
             'customers' => $customers,
+            'paymentMethods' => $paymentMethods,
+            'customerTypes' => $customerTypes,
+            'countries' => $countries,
         ]);
     }
 
@@ -551,7 +564,7 @@ class OrderController extends Controller
         $order = $result['data'];
 
         // Filter items by category and model
-        $order->items = $order->items->filter(function ($item) use ($categoryId, $modelId) {
+        $filteredItems = $order->items->filter(function ($item) use ($categoryId, $modelId) {
             $catMatch = (string) $item->tailoring_category_id === (string) $categoryId;
             $modelMatch = true;
             if ($modelId !== 'all') {
@@ -561,12 +574,13 @@ class OrderController extends Controller
             return $catMatch && $modelMatch;
         });
 
-        if ($order->items->isEmpty()) {
+        if ($filteredItems->isEmpty()) {
             return redirect()->back()->with('error', 'No items found for the selected category/model');
         }
 
         return view('print.tailoring.cutting-slip', [
             'order' => $order,
+            'items' => $filteredItems,
             'categoryId' => $categoryId,
             'modelId' => $modelId,
         ]);

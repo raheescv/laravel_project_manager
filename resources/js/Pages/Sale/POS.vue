@@ -344,9 +344,9 @@
             :countries="countries" @close="showCustomerModal = false" @customer-saved="handleCustomerSaved"
             @customer-selected="handleCustomerSelected" />
 
-        <!-- Customer Details Modal -->
-        <CustomerDetailsModal :show="showCustomerDetailsModal" :customer-id="selectedCustomerId"
-            @close="showCustomerDetailsModal = false" @edit="handleCustomerEdit" />
+        <!-- Customer Details Modal (using CustomerModal in view mode) -->
+        <CustomerModal :show="showCustomerDetailsModal" mode="view" :customer-id="selectedCustomerId"
+            @close="showCustomerDetailsModal = false" @customerSaved="handleCustomerEdit" />
 
         <!-- Custom Payment Modal -->
         <CustomPaymentModal :show="showCustomPaymentModal" :total-amount="form.grand_total"
@@ -390,7 +390,7 @@ import ProductsGrid from '@/components/ProductsGrid.vue'
 import SaleConfirmationModal from '@/components/SaleConfirmationModal.vue'
 import SearchableSelect from '@/components/SearchableSelectFixed.vue'
 import ComboOfferModal from '@/components/ComboOfferModal.vue'
-import CustomerDetailsModal from '@/components/CustomerDetailsModal.vue'
+
 import {
     useForm
 } from '@inertiajs/vue3'
@@ -426,7 +426,7 @@ export default {
         SaleConfirmationModal,
         EditItemModal,
         ComboOfferModal,
-        CustomerDetailsModal
+
     },
     props: {
         categories: Array,

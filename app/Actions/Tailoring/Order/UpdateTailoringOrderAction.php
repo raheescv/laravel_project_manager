@@ -69,8 +69,11 @@ class UpdateTailoringOrderAction
 
     private function updatePayments($order, $payments, $userId)
     {
-        // This can be handled separately via payment API endpoints
-        // For now, we'll just ensure payments are updated
+        // Delete payments not in the new list
+        $existingPaymentIds = collect($payments)->pluck('id')->filter()->toArray();
+        $order->payments()->whereNotIn('id', $existingPaymentIds)->delete();
+
+        // Update or create payments
         foreach ($payments as $paymentData) {
             if (isset($paymentData['id']) && $paymentData['id']) {
                 $response = (new \App\Actions\Tailoring\Payment\UpdateAction())->execute($paymentData['id'], $paymentData, $userId);

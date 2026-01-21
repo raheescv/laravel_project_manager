@@ -104,12 +104,26 @@ onBeforeUnmount(() => {
 watch(() => props.modelValue, (val) => {
     if (tomSelect && val !== tomSelect.getValue()) {
         if (val && !tomSelect.options[val]) {
-            // Option doesn't exist, we might need to add it if we have context
-            // For now just try to set it.
+            // Option doesn't exist, add it from initialData if available
+            if (props.initialData && props.initialData.id === val) {
+                tomSelect.addOption(props.initialData)
+            }
         }
         tomSelect.setValue(val, true)
     }
 })
+
+// Watch initialData changes to update TomSelect accordingly
+watch(() => props.initialData, (newData) => {
+    if (tomSelect && newData && newData.id) {
+        // Add or update the option
+        tomSelect.addOption(newData)
+        // Set value if it matches the modelValue
+        if (newData.id === props.modelValue) {
+            tomSelect.setValue(newData.id, true)
+        }
+    }
+}, { deep: true })
 </script>
 
 <style>

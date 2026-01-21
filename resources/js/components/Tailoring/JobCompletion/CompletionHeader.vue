@@ -14,25 +14,19 @@
             <div class="flex gap-4">
                 <div class="form-group">
                     <label class="block text-sm font-medium text-gray-700 mb-1">Rack</label>
-                    <select 
-                        :value="order.rack_id"
-                        @change="handleRackChange"
-                        class="px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    >
-                        <option value="">Select rack...</option>
-                        <option v-for="(name, id) in racks" :key="id" :value="id">{{ name }}</option>
-                    </select>
+                    <SearchableSelect 
+                        :modelValue="order.rack_id"
+                        @update:modelValue="emit('update-rack', $event)"
+                        :options="racks"
+                        placeholder="Select rack..." />
                 </div>
                 <div class="form-group">
                     <label class="block text-sm font-medium text-gray-700 mb-1">Cutter</label>
-                    <select 
-                        :value="order.cutter_id"
-                        @change="handleCutterChange"
-                        class="px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    >
-                        <option value="">Select cutter...</option>
-                        <option v-for="(name, id) in cutters" :key="id" :value="id">{{ name }}</option>
-                    </select>
+                    <SearchableSelect 
+                        :modelValue="order.cutter_id"
+                        @update:modelValue="emit('update-cutter', $event)"
+                        :options="cutters"
+                        placeholder="Select cutter..." />
                 </div>
             </div>
         </div>
@@ -40,6 +34,8 @@
 </template>
 
 <script setup>
+import SearchableSelect from '@/components/SearchableSelect.vue'
+
 const props = defineProps({
     order: Object,
     racks: Object,
@@ -47,12 +43,4 @@ const props = defineProps({
 })
 
 const emit = defineEmits(['update-rack', 'update-cutter'])
-
-const handleRackChange = (event) => {
-    emit('update-rack', event.target.value)
-}
-
-const handleCutterChange = (event) => {
-    emit('update-cutter', event.target.value)
-}
 </script>

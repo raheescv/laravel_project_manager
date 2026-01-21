@@ -51,9 +51,9 @@ class CustomerController extends Controller
     {
         $search = $request->query('search');
         $customers = Account::customer()
-            ->where(function($query) use ($search) {
+            ->where(function ($query) use ($search) {
                 $query->where('name', 'like', '%'.$search.'%')
-                      ->orWhere('mobile', 'like', '%'.$search.'%');
+                    ->orWhere('mobile', 'like', '%'.$search.'%');
             })
             ->select('id', 'name', 'mobile', 'email')
             ->limit(20)

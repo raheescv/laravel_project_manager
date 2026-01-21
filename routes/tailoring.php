@@ -26,9 +26,9 @@ Route::middleware('auth')->group(function (): void {
     // Tailoring Order Routes
     Route::name('tailoring::order::')->prefix('tailoring/order')->controller(OrderController::class)->group(function (): void {
         Route::get('', 'index')->name('index')->can('tailoring.order.view');
-        Route::get('create', 'create')->name('create')->can('tailoring.order.create');
-        Route::post('', 'store')->name('store')->can('tailoring.order.create');
+        Route::get('create', 'page')->name('create')->can('tailoring.order.create');
         Route::get('edit/{id}', 'page')->name('edit')->can('tailoring.order.edit');
+        Route::post('', 'store')->name('store')->can('tailoring.order.create');
         Route::put('{id}', 'update')->name('update')->can('tailoring.order.edit');
         Route::get('{id}', 'show')->name('show')->can('tailoring.order.view');
         Route::get('print/cutting-slip/{id}/{category_id}/{model_id}', 'printCuttingSlip')->name('print-cutting-slip')->can('tailoring.order.view');
