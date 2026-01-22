@@ -12,6 +12,7 @@ export default defineConfig({
                 'resources/js/stock-check.js',
                 'resources/js/stock-check-show.js',
                 'resources/js/general-voucher-modal.js',
+                'resources/js/tailoring-order-index.js',
                 'resources/js/journal-entries-modal.js',
                 'resources/js/purchase-page.js'
             ],
