@@ -9,12 +9,12 @@
                             <h1 class="h3 mb-1 text-gray-800 fw-bold">Tailoring Order</h1>
                             <p class="text-muted mb-0">Create and manage tailoring orders</p>
                         </div>
-                        <div class="d-flex gap-2">
-                            <a href="/tailoring/order" class="quick-action-link primary">
+                        <div class="flex gap-2">
+                            <a href="/tailoring/order" class="flex items-center gap-2 px-4 py-2 rounded-[10px] no-underline font-semibold text-[0.9rem] transition-all duration-300 border border-black/5 bg-white shadow-[0_2px_4px_rgba(0,0,0,0.02)] hover:-translate-y-[2px] hover:shadow-[0_4px_12px_rgba(0,0,0,0.05)] hover:bg-slate-50 text-blue-500">
                                 <i class="fa fa-list"></i>
                                 <span>Orders List</span>
                             </a>
-                            <a :href="form.order_no ? '/tailoring/job-completion?order_no=' + form.order_no : '/tailoring/job-completion'" class="quick-action-link success">
+                            <a :href="form.order_no ? '/tailoring/job-completion?order_no=' + form.order_no : '/tailoring/job-completion'" class="flex items-center gap-2 px-4 py-2 rounded-[10px] no-underline font-semibold text-[0.9rem] transition-all duration-300 border border-black/5 bg-white shadow-[0_2px_4px_rgba(0,0,0,0.02)] hover:-translate-y-[2px] hover:shadow-[0_4px_12px_rgba(0,0,0,0.05)] hover:bg-slate-50 text-emerald-500">
                                 <i class="fa fa-check-circle"></i>
                                 <span>Job Completion</span>
                             </a>
@@ -34,12 +34,12 @@
                     @category-selected="handleCategorySelection" />
 
                 <!-- Main Content: Measurements and Styling -->
-                <div v-if="selectedCategories.length > 0" class="mb-5 animate-fade-in">
+                <div v-if="selectedCategories.length > 0" class="mb-5 animate-[fadeIn_0.4s_ease-out]">
                     <!-- Category Tabs - Premium Style -->
-                    <div class="tabs-scroll-container mb-3">
-                        <ul class="nav premium-tabs">
+                    <div class="overflow-x-auto pb-[3px] scrolling-touch scrollbar-h-[3px] scrollbar-thumb-slate-200 mb-3">
+                        <ul class="nav border-b-0 flex gap-[10px]">
                             <li class="nav-item" v-for="id in selectedCategories" :key="id">
-                                <a class="nav-link" :class="{ active: activeCategoryTab === id }" href="#"
+                                <a class="nav-link border-none px-4 py-2 rounded-[10px] text-slate-500 font-semibold text-[0.9rem] bg-slate-100 transition-all duration-200 flex items-center hover:bg-slate-200 hover:text-slate-800" :class="{ 'bg-white text-blue-500 shadow-[0_2px_8px_rgba(0,0,0,0.05)]': activeCategoryTab === id }" href="#"
                                     @click.prevent="activeCategoryTab = id">
                                     <i class="fa fa-dot-circle-o me-2" v-if="activeCategoryTab === id"></i>
                                     {{ getCategory(id)?.name }}
@@ -49,18 +49,18 @@
                     </div>
 
                     <!-- Active Category Content -->
-                    <div v-if="activeCategoryTab" class="content-fade-slide">
-                        <div class="card shadow-sm border-0 premium-content-card">
+                    <div v-if="activeCategoryTab" class="animate-[fadeSlideUp_0.4s_cubic-bezier(0.16,1,0.3,1)]">
+                        <div class="card shadow-sm border-0 rounded-[15px] border border-black/5 !important">
                             <div class="card-body p-3 bg-white">
                                 <div class="row g-3">
                                     <!-- Measurement Form -->
                                     <div class="col-md-12">
-                                        <div class="section-header mb-3">
-                                            <h5 class="fw-bold text-gray-800">
+                                        <div class="relative pb-[3px] mb-3">
+                                            <h5 class="fw-bold text-slate-800">
                                                 <i class="fa fa-pencil-square-o text-primary me-2"></i>
                                                 {{ getCategory(activeCategoryTab)?.name }} Measurements
                                             </h5>
-                                            <div class="header-line"></div>
+                                            <div class="w-[40px] h-[3px] bg-blue-500 rounded-[2px] mt-1"></div>
                                         </div>
 
                                         <MeasurementForm v-if="measurements[activeCategoryTab]"
@@ -72,12 +72,12 @@
 
                                     <!-- Product Selection -->
                                     <div class="col-md-12 mt-4">
-                                        <div class="section-header mb-3">
-                                            <h5 class="fw-bold text-gray-800">
+                                        <div class="relative pb-[3px] mb-3">
+                                            <h5 class="fw-bold text-slate-800">
                                                 <i class="fa fa-shopping-cart text-primary me-2"></i>
                                                 Fabric & Services
                                             </h5>
-                                            <div class="header-line"></div>
+                                            <div class="w-[40px] h-[3px] bg-blue-500 rounded-[2px] mt-1"></div>
                                         </div>
 
                                         <ProductSelection v-if="currentItems[activeCategoryTab]"
@@ -528,21 +528,23 @@ const processSubmitOrder = async () => {
         form.value.payments = finalPayments
         form.value.payment_method = selectedPaymentMethod.value
 
-        router[method](url, form.value, {
-            preserveScroll: true,
-            onSuccess: () => {
-                showConfirmationModal.value = false
-                toast.success(form.value.id ? 'Order updated successfully' : 'Order created successfully')
-            },
-            onError: (errors) => {
-                toast.error(Object.values(errors)[0] || 'Failed to save order')
-            },
-            onFinish: () => {
-                isSubmitting.value = false
-            }
-        })
+        const response = await axios[method](url, form.value)
+
+        if (response.data.success) {
+            showConfirmationModal.value = false
+            toast.success(form.value.id ? 'Order updated successfully' : 'Order created successfully')
+
+            // Get the order ID from response or use existing form ID
+            const orderId = response.data.data?.id || form.value.id || response.data.id
+
+            // Normal redirect (not Inertia way)
+            window.location.href = `/tailoring/order/${orderId}`
+        } else {
+            toast.error(response.data.message || 'Failed to save order')
+            isSubmitting.value = false
+        }
     } catch (error) {
-        toast.error('Failed to save order')
+        toast.error(error.response?.data?.message || Object.values(error.response?.data?.errors || {})[0] || 'Failed to save order')
         isSubmitting.value = false
     }
 }
@@ -624,131 +626,4 @@ onMounted(() => {
 })
 </script>
 
-<style scoped>
 
-.quick-action-link {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 8px 16px;
-    border-radius: 10px;
-    text-decoration: none;
-    font-weight: 600;
-    font-size: 0.9rem;
-    transition: all 0.3s ease;
-    border: 1px solid rgba(0, 0, 0, 0.05);
-    background: white;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
-}
-
-.quick-action-link:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-    background-color: #f8fafc;
-}
-
-.quick-action-link.primary {
-    color: #3b82f6;
-}
-
-.quick-action-link.success {
-    color: #10b981;
-}
-
-.premium-tabs {
-    border-bottom: none;
-    display: flex;
-    gap: 10px;
-}
-
-.premium-tabs .nav-link {
-    border: none;
-    padding: 8px 16px;
-    border-radius: 10px;
-    color: #64748b;
-    font-weight: 600;
-    font-size: 0.9rem;
-    background-color: #f1f5f9;
-    transition: all 0.2s ease;
-    display: flex;
-    align-items: center;
-}
-
-.premium-tabs .nav-link:hover {
-    background-color: #e2e8f0;
-    color: #1e293b;
-}
-
-.premium-tabs .nav-link.active {
-    background-color: #ffffff;
-    color: #3b82f6;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-}
-
-.tabs-scroll-container {
-    overflow-x: auto;
-    padding-bottom: 3px;
-    -webkit-overflow-scrolling: touch;
-}
-
-.tabs-scroll-container::-webkit-scrollbar {
-    height: 3px;
-}
-
-.tabs-scroll-container::-webkit-scrollbar-thumb {
-    background: #e2e8f0;
-    border-radius: 4px;
-}
-
-.premium-content-card {
-    border-radius: 15px;
-    border: 1px solid rgba(0, 0, 0, 0.05) !important;
-}
-
-.section-header {
-    position: relative;
-    padding-bottom: 3px;
-}
-
-.header-line {
-    width: 40px;
-    height: 3px;
-    background: #3b82f6;
-    border-radius: 2px;
-    margin-top: 4px;
-}
-
-.animate-fade-in {
-    animation: fadeIn 0.4s ease-out;
-}
-
-.content-fade-slide {
-    animation: fadeSlideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-@keyframes fadeIn {
-    from {
-        opacity: 0;
-    }
-
-    to {
-        opacity: 1;
-    }
-}
-
-@keyframes fadeSlideUp {
-    from {
-        opacity: 0;
-        transform: translateY(20px);
-    }
-
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-.text-gray-800 {
-    color: #1e293b;
-}
-</style>

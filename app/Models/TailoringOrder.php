@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Traits\BelongsToTenant;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -10,6 +11,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Validation\Rule;
 use OwenIt\Auditing\Auditable;
 use OwenIt\Auditing\Contracts\Auditable as AuditableContracts;
+use Illuminate\Support\Facades\Auth;
 
 class TailoringOrder extends Model implements AuditableContracts
 {
@@ -83,13 +85,13 @@ class TailoringOrder extends Model implements AuditableContracts
                 $order->order_no = self::generateOrderNo();
             }
             if (empty($order->created_by)) {
-                $order->created_by = auth()->id();
+                $order->created_by = Auth::id();
             }
         });
 
         static::updating(function ($order): void {
             if (empty($order->updated_by)) {
-                $order->updated_by = auth()->id();
+                $order->updated_by = Auth::id();
             }
         });
     }
@@ -206,6 +208,41 @@ class TailoringOrder extends Model implements AuditableContracts
     public function scopeByCompletionStatus($query, $status)
     {
         return $query->where('completion_status', $status);
+    }
+
+    public function scopeFilter(Builder $query, array $filters): Builder
+    {
+        return $query
+            ->when($filters['search'] ?? '', function ($q, $search) {
+                $search = trim($search);
+                return $q->where(function ($q) use ($search): void {
+                    $q->where('tailoring_orders.order_no', 'like', "%{$search}%")
+                        ->orWhere('tailoring_orders.customer_name', 'like', "%{$search}%")
+                        ->orWhere('tailoring_orders.customer_mobile', 'like', "%{$search}%")
+                        ->orWhereHas('account', function ($subQ) use ($search) {
+                            $subQ->where('name', 'like', "%{$search}%");
+                        });
+                });
+            })
+            ->when($filters['status'] ?? '', fn ($q, $value) => $q->where('tailoring_orders.status', $value))
+            ->when($filters['customer_id'] ?? '', fn ($q, $value) => $q->where('tailoring_orders.account_id', $value))
+            ->when($filters['branch_id'] ?? '', fn ($q, $value) => $q->where('tailoring_orders.branch_id', $value))
+            ->when($filters['payment_status'] ?? '', function ($q, $value) {
+                if ($value === 'paid') {
+                    return $q->where('tailoring_orders.balance', '<=', 0);
+                } elseif ($value === 'balance') {
+                    return $q->where('tailoring_orders.balance', '>', 0);
+                }
+                return $q;
+            })
+            ->when(($filters['from_date'] ?? '') && ($filters['date_type'] ?? ''), function ($q) use ($filters) {
+                $dateField = ($filters['date_type'] ?? 'order_date') === 'delivery_date' ? 'delivery_date' : 'order_date';
+                return $q->whereDate("tailoring_orders.{$dateField}", '>=', date('Y-m-d', strtotime($filters['from_date'])));
+            })
+            ->when(($filters['to_date'] ?? '') && ($filters['date_type'] ?? ''), function ($q) use ($filters) {
+                $dateField = ($filters['date_type'] ?? 'order_date') === 'delivery_date' ? 'delivery_date' : 'order_date';
+                return $q->whereDate("tailoring_orders.{$dateField}", '<=', date('Y-m-d', strtotime($filters['to_date'])));
+            });
     }
 
     // Methods

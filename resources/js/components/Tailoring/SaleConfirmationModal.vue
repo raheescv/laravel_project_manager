@@ -21,7 +21,7 @@
                             <i class="fa fa-check-circle text-white text-xs"></i>
                         </div>
                         <h4 class="text-base font-bold text-white">
-                            Confirm Sale
+                            Confirm Order
                         </h4>
                     </div>
                     <button type="button" @click="close"
@@ -67,9 +67,9 @@
                             <div class="payment-option">
                                 <button type="button" @click="$emit('update:paymentMethod', 1)" :class="[
                                     'w-full h-12 flex flex-col items-center justify-center p-1 border-2 relative transition-all duration-300 rounded-lg hover:scale-105',
-                                    localPaymentMethod === 1 || localPaymentMethod === ''
-                                        ? 'bg-gradient-to-r from-green-500 to-emerald-600 border-green-500 shadow-lg text-white'
-                                        : 'bg-white border-slate-200 text-slate-700 hover:shadow-md hover:border-green-300 hover:bg-green-50'
+                                    localPaymentMethod === 1 || localPaymentMethod === '' ?
+                                        'bg-gradient-to-r from-green-500 to-emerald-600 border-green-500 shadow-lg text-white' :
+                                        'bg-white border-slate-200 text-slate-700 hover:shadow-md hover:border-green-300 hover:bg-green-50'
                                 ]">
                                     <div class="icon-wrapper mb-0.5">
                                         <i
@@ -87,24 +87,16 @@
                             <div class="payment-option">
                                 <button type="button" @click="$emit('update:paymentMethod', 2)" :class="[
                                     'w-full h-12 flex flex-col items-center justify-center p-1 border-2 relative transition-all duration-300 rounded-lg hover:scale-105',
-                                    localPaymentMethod === 2
-                                        ? 'bg-gradient-to-r from-blue-500 to-indigo-600 border-blue-500 shadow-lg text-white'
-                                        : 'bg-white border-slate-200 text-slate-700 hover:shadow-md hover:border-blue-300 hover:bg-blue-50'
+                                    localPaymentMethod === 2 ?
+                                        'bg-gradient-to-r from-blue-500 to-indigo-600 border-blue-500 shadow-lg text-white' :
+                                        'bg-white border-slate-200 text-slate-700 hover:shadow-md hover:border-blue-300 hover:bg-blue-50'
                                 ]">
                                     <div class="icon-wrapper mb-0.5">
-                                        <i :class="[
-                                            'fa fa-credit-card text-sm',
-                                            localPaymentMethod === 2
-                                                ? 'text-white'
-                                                : 'text-blue-500'
-                                        ]"></i>
+                                        <i
+                                            :class="['fa fa-credit-card text-sm', localPaymentMethod === 2 ? 'text-white' : 'text-blue-500']"></i>
                                     </div>
-                                    <span :class="[
-                                        'text-xs font-bold',
-                                        localPaymentMethod === 2
-                                            ? 'text-white'
-                                            : 'text-slate-700'
-                                    ]">Card</span>
+                                    <span
+                                        :class="['text-xs font-bold', localPaymentMethod === 2 ? 'text-white' : 'text-slate-700']">Card</span>
                                     <div v-if="localPaymentMethod === 2" class="absolute top-0.5 right-0.5">
                                         <i class="fa fa-check-circle text-white bg-blue-600 rounded-full text-xs"></i>
                                     </div>
@@ -114,24 +106,16 @@
                             <div class="payment-option">
                                 <button type="button" @click="$emit('update:paymentMethod', 'credit')" :class="[
                                     'w-full h-12 flex flex-col items-center justify-center p-1 border-2 relative transition-all duration-300 rounded-lg hover:scale-105',
-                                    localPaymentMethod === 'credit'
-                                        ? 'bg-gradient-to-r from-purple-500 to-pink-600 border-purple-500 shadow-lg text-white'
-                                        : 'bg-white border-slate-200 text-slate-700 hover:shadow-md hover:border-purple-300 hover:bg-purple-50'
+                                    localPaymentMethod === 'credit' ?
+                                        'bg-gradient-to-r from-purple-500 to-pink-600 border-purple-500 shadow-lg text-white' :
+                                        'bg-white border-slate-200 text-slate-700 hover:shadow-md hover:border-purple-300 hover:bg-purple-50'
                                 ]">
                                     <div class="icon-wrapper mb-0.5">
-                                        <i :class="[
-                                            'fa fa-file-text-o text-sm',
-                                            localPaymentMethod === 'credit'
-                                                ? 'text-white'
-                                                : 'text-purple-500'
-                                        ]"></i>
+                                        <i
+                                            :class="['fa fa-file-text-o text-sm', localPaymentMethod === 'credit' ? 'text-white' : 'text-purple-500']"></i>
                                     </div>
-                                    <span :class="[
-                                        'text-xs font-bold',
-                                        localPaymentMethod === 'credit'
-                                            ? 'text-white'
-                                            : 'text-slate-700'
-                                    ]">Credit</span>
+                                    <span
+                                        :class="['text-xs font-bold', localPaymentMethod === 'credit' ? 'text-white' : 'text-slate-700']">Credit</span>
                                     <div v-if="localPaymentMethod === 'credit'" class="absolute top-0.5 right-0.5">
                                         <i class="fa fa-check-circle text-white bg-purple-600 rounded-full text-xs"></i>
                                     </div>
@@ -141,23 +125,23 @@
                             <div class="payment-option">
                                 <button type="button" @click="$emit('openCustomPayment')" :class="[
                                     'w-full h-12 flex flex-col items-center justify-center p-1 border-2 relative transition-all duration-300 rounded-lg hover:scale-105',
-                                    localPaymentMethod === 'custom'
-                                        ? 'bg-gradient-to-r from-amber-500 to-orange-600 border-amber-500 shadow-lg text-white'
-                                        : 'bg-white border-slate-200 text-slate-700 hover:shadow-md hover:border-amber-300 hover:bg-amber-50'
+                                    localPaymentMethod === 'custom' ?
+                                        'bg-gradient-to-r from-amber-500 to-orange-600 border-amber-500 shadow-lg text-white' :
+                                        'bg-white border-slate-200 text-slate-700 hover:shadow-md hover:border-amber-300 hover:bg-amber-50'
                                 ]">
                                     <div class="icon-wrapper mb-0.5">
                                         <i :class="[
                                             'fa fa-cogs text-sm',
-                                            localPaymentMethod === 'custom'
-                                                ? 'text-white'
-                                                : 'text-amber-500'
+                                            localPaymentMethod === 'custom' ?
+                                                'text-white' :
+                                                'text-amber-500'
                                         ]"></i>
                                     </div>
                                     <span :class="[
                                         'text-xs font-bold',
-                                        localPaymentMethod === 'custom'
-                                            ? 'text-white'
-                                            : 'text-slate-700'
+                                        localPaymentMethod === 'custom' ?
+                                            'text-white' :
+                                            'text-slate-700'
                                     ]">
                                         {{ localCustomPaymentCount > 0 ? `${localCustomPaymentCount}` : 'Custom' }}
                                     </span>
@@ -245,14 +229,13 @@
                             <button type="button" @click="submit" :disabled="loading" :class="[
                                 'inline-flex items-center justify-center px-3 py-1.5 border border-transparent text-xs font-semibold rounded-lg text-white shadow-lg focus:outline-none focus:ring-2 focus:ring-offset-2 transition-all duration-200 hover:scale-105',
                                 loading ? 'opacity-75 cursor-not-allowed' : '',
-                                balanceAmount === 0
-                                    ? 'bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 focus:ring-green-500'
-                                    : 'bg-gradient-to-r from-yellow-500 to-amber-600 hover:from-yellow-600 hover:to-amber-700 focus:ring-yellow-500'
+                                balanceAmount === 0 ?
+                                    'bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 focus:ring-green-500' :
+                                    'bg-gradient-to-r from-yellow-500 to-amber-600 hover:from-yellow-600 hover:to-amber-700 focus:ring-yellow-500'
                             ]">
                                 <i class="fa mr-1 text-xs"
                                     :class="loading ? 'fa-spinner fa-spin' : 'fa-check-circle'"></i>
-                                {{ loading ? 'Processing...' :
-                                    (balanceAmount === 0 ? 'Submit' : 'Submit Anyway') }}
+                                {{ loading ? 'Processing...' : (balanceAmount === 0 ? 'Submit' : 'Submit Anyway') }}
                             </button>
                         </div>
 
@@ -287,7 +270,9 @@
 </template>
 
 <script>
-import { computed } from 'vue'
+import {
+    computed
+} from 'vue'
 
 export default {
     name: 'SaleConfirmationModal',
@@ -312,7 +297,9 @@ export default {
         }
     },
     emits: ['close', 'submit', 'update:paymentMethod', 'openCustomPayment', 'update:sendToWhatsapp'],
-    setup(props, { emit }) {
+    setup(props, {
+        emit
+    }) {
         const customerName = computed(() => {
             if (props.saleData.account_id && props.saleData.customerName) {
                 // If customerName is an object with name and mobile properties
@@ -399,7 +386,11 @@ export default {
         const formatDate = (dateString) => {
             if (!dateString) return ''
             const date = new Date(dateString)
-            return date.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
+            return date.toLocaleDateString('en-GB', {
+                day: '2-digit',
+                month: 'short',
+                year: 'numeric'
+            })
         }
 
         const paymentMethods = computed(() => {

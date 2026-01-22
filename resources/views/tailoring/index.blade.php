@@ -15,14 +15,15 @@
     </div>
     <div class="content__boxed">
         <div class="content__wrap">
-            <div id="orderList"> </div>
+            <div class="card mb-3">
+                @livewire('tailoring.table')
+            </div>
         </div>
     </div>
     @push('scripts')
-        @routes
-        @vite('resources/js/tailoring-order-index.js')
-        <script>
-            window.ordersData = @json($orders);
-        </script>
+        @include('components.select.customerSelect')
+        @include('components.select.userSelect')
+        @include('components.select.branchSelect')
+        @include('components.select.paymentMethodSelect')
     @endpush
 </x-app-layout>

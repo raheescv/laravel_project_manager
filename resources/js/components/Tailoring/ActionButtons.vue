@@ -1,15 +1,15 @@
 <template>
-    <div class="card shadow-sm border-0">
-        <div class="card-body p-3">
-            <div class="d-flex justify-content-between align-items-center">
-                <div class="d-flex gap-2">
+    <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+        <div class="px-6 py-4">
+            <div class="flex justify-between items-center">
+                <div class="flex gap-2">
                     <button type="button" @click="$emit('clear')" :disabled="isLoading"
-                        class="btn btn-outline-secondary px-4 fw-bold">
+                        class="px-6 py-2.5 rounded-xl border-2 border-slate-200 text-slate-600 font-bold text-sm tracking-wide hover:bg-slate-50 hover:border-slate-300 transition-all duration-300 disabled:opacity-50">
                         Clear
                     </button>
                 </div>
                 <button type="button" @click="$emit('create-order')" :disabled="!canSubmit || isLoading"
-                    class="btn btn-primary px-4 fw-bold">
+                    class="px-8 py-2.5 rounded-xl bg-blue-600 text-white font-bold text-sm tracking-wide shadow-lg shadow-blue-600/20 hover:bg-blue-700 hover:shadow-xl hover:shadow-blue-700/30 transition-all duration-300 disabled:bg-slate-300 disabled:shadow-none disabled:cursor-not-allowed">
                     <span v-if="isLoading">Processing...</span>
                     <span v-else>Create Order</span>
                 </button>
