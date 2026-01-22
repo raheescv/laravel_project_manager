@@ -14,7 +14,8 @@
                 </div>
 
                 <div class="form-check form-switch">
-                    <input class="form-check-input" type="checkbox" id="selectAllItems" @change="handleSelectAll" :checked="allSelected">
+                    <input class="form-check-input" type="checkbox" id="selectAllItems" @change="handleSelectAll"
+                        :checked="allSelected">
                     <label class="form-check-label small fw-bold text-muted cursor-pointer" for="selectAllItems">
                         Select All for Completion
                     </label>
@@ -38,7 +39,8 @@
                     <thead class="table-light">
                         <tr class="x-small fw-bold text-uppercase text-muted">
                             <th class="ps-3 py-3" style="width: 50px;">
-                                <input class="form-check-input mt-0" type="checkbox" @change="handleSelectAll" :checked="allSelected">
+                                <input class="form-check-input mt-0" type="checkbox" @change="handleSelectAll"
+                                    :checked="allSelected">
                             </th>
                             <th class="py-3">Item Details</th>
                             <th class="py-3">Tailor Assignment</th>
@@ -53,7 +55,8 @@
                             <!-- Checkbox Column -->
                             <td class="ps-3">
                                 <input class="form-check-input mt-0" type="checkbox"
-                                    :checked="item.is_selected_for_completion" @change="toggleItemCompletion(item, $event)">
+                                    :checked="item.is_selected_for_completion"
+                                    @change="toggleItemCompletion(item, $event)">
                             </td>
 
                             <!-- Item Details Column -->
@@ -61,7 +64,8 @@
                                 <div class="d-flex flex-column gap-1">
                                     <div class="d-flex align-items-center gap-2">
                                         <span class="badge bg-primary fw-bold">#{{ item.item_no }}</span>
-                                        <span class="small fw-bold text-secondary text-uppercase">{{ item.category?.name }}</span>
+                                        <span class="small fw-bold text-secondary text-uppercase">{{ item.category?.name
+                                        }}</span>
                                     </div>
                                     <div class="fw-bold text-dark">{{ item.product_name }}</div>
                                     <div class="row g-2 x-small text-muted">
@@ -69,10 +73,12 @@
                                             Qty: <span class="fw-bold text-dark">{{ item.quantity }}</span>
                                         </div>
                                         <div class="col-6">
-                                            Amount: <span class="fw-bold text-primary">{{ formatCurrency(item.amount) }}</span>
+                                            Amount: <span class="fw-bold text-primary">{{ formatCurrency(item.amount)
+                                            }}</span>
                                         </div>
                                         <div class="col-6 text-truncate">
-                                            Model: <span class="fw-bold text-dark">{{ item.categoryModel?.name || '-' }}</span>
+                                            Model: <span class="fw-bold text-dark">{{ item.categoryModel?.name || '-'
+                                            }}</span>
                                         </div>
                                         <div class="col-6">
                                             Length: <span class="fw-bold text-dark">{{ item.length || '-' }}</span>
@@ -87,27 +93,31 @@
 
                             <!-- Tailor Assignment Column -->
                             <td class="py-3">
-                                <div class="d-flex flex-column gap-2" style="min-width: 180px;">
-                                    <div>
-                                        <label class="form-label x-small fw-bold text-muted text-uppercase mb-1">Assign Worker</label>
-                                        <SearchableSelect 
-                                            :modelValue="item.tailor_id" 
-                                            @update:modelValue="item.tailor_id = $event"
-                                            :options="tailors"
-                                            placeholder="Select tailor..." 
-                                            class="form-select-sm" />
+                                <div class="d-flex flex-column gap-2" style="min-width: 180px; width: 100%;">
+                                    <div style="width: 100%">
+                                        <label class="form-label x-small fw-bold text-muted text-uppercase mb-1">
+                                            Assign Worker
+                                        </label>
+                                        <div style="width: 100%">
+                                            <SearchableSelect :modelValue="item.tailor_id"
+                                                @update:modelValue="item.tailor_id = $event" :options="tailors"
+                                                placeholder="Select tailor..." class="form-select-sm" style="width: 100%" />
+                                        </div>
                                     </div>
                                     <div>
-                                        <label class="form-label x-small fw-bold text-muted text-uppercase mb-1">Rate/Item</label>
+                                        <label
+                                            class="form-label x-small fw-bold text-muted text-uppercase mb-1">Rate/Item</label>
                                         <div class="input-group input-group-sm">
                                             <span class="input-group-text bg-light border-end-0">₹</span>
-                                            <input v-model.number="item.tailor_commission" @input="calculateCommission(item)"
-                                                type="number" step="0.01" min="0" class="form-control border-start-0" />
+                                            <input v-model.number="item.tailor_commission"
+                                                @input="calculateCommission(item)" type="number" step="0.01" min="0"
+                                                class="form-control border-start-0" />
                                         </div>
                                     </div>
                                     <div class="x-small">
                                         <span class="text-muted">Total:</span>
-                                        <span class="fw-bold text-primary ms-1">₹{{ formatCurrency(item.tailor_total_commission) }}</span>
+                                        <span class="fw-bold text-primary ms-1">₹{{
+                                            formatCurrency(item.tailor_total_commission) }}</span>
                                     </div>
                                 </div>
                             </td>
@@ -123,29 +133,33 @@
                                                 {{ (item.stock_balance || 0).toFixed(3) }}
                                             </span>
                                             <button @click="refreshStock(item)"
-                                                class="btn btn-link btn-sm p-0 text-muted"
-                                                title="Refresh Stock">
+                                                class="btn btn-link btn-sm p-0 text-muted" title="Refresh Stock">
                                                 <i class="fa fa-refresh x-small"></i>
                                             </button>
                                         </div>
                                     </div>
                                     <div>
                                         <div class="input-group input-group-sm">
-                                            <span class="input-group-text bg-light border-end-0 x-small fw-bold">IN STOCK</span>
+                                            <span class="input-group-text bg-light border-end-0 x-small fw-bold">IN
+                                                STOCK</span>
                                             <input :value="(item.product?.stock_quantity || 0).toFixed(3)" readonly
                                                 class="form-control bg-light border-start-0 text-center fw-bold" />
                                         </div>
                                     </div>
                                     <div class="row g-2">
                                         <div class="col-6">
-                                            <label class="form-label x-small fw-bold text-muted text-uppercase mb-1">Used</label>
-                                            <input v-model.number="item.used_quantity" @input="calculateStockBalance(item)"
-                                                type="number" step="0.001" min="0" class="form-control form-control-sm" />
+                                            <label
+                                                class="form-label x-small fw-bold text-muted text-uppercase mb-1">Used</label>
+                                            <input v-model.number="item.used_quantity"
+                                                @input="calculateStockBalance(item)" type="number" step="0.001" min="0"
+                                                class="form-control form-control-sm" />
                                         </div>
                                         <div class="col-6">
-                                            <label class="form-label x-small fw-bold text-muted text-uppercase mb-1">Waste</label>
+                                            <label
+                                                class="form-label x-small fw-bold text-muted text-uppercase mb-1">Waste</label>
                                             <input v-model.number="item.wastage" @input="calculateStockBalance(item)"
-                                                type="number" step="0.001" min="0" class="form-control form-control-sm" />
+                                                type="number" step="0.001" min="0"
+                                                class="form-control form-control-sm" />
                                         </div>
                                     </div>
                                 </div>
@@ -154,20 +168,22 @@
                             <!-- Completion Date Column -->
                             <td class="py-3">
                                 <div style="min-width: 130px;">
-                                    <label class="form-label x-small fw-bold text-muted text-uppercase mb-1">Date</label>
-                                    <input v-model="item.item_completion_date" type="date" class="form-control form-control-sm" />
+                                    <label
+                                        class="form-label x-small fw-bold text-muted text-uppercase mb-1">Date</label>
+                                    <input v-model="item.item_completion_date" type="date"
+                                        class="form-control form-control-sm" />
                                 </div>
                             </td>
 
                             <!-- Actions Column -->
                             <td class="py-3 text-center">
                                 <div class="d-grid gap-2">
-                                    <button @click="saveItem(item)"
-                                        class="btn btn-primary btn-sm fw-bold shadow-sm">
+                                    <button @click="saveItem(item)" class="btn btn-primary btn-sm fw-bold shadow-sm">
                                         <i class="fa fa-save me-1"></i> Save
                                     </button>
                                     <div v-if="item.is_selected_for_completion">
-                                        <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 w-100 x-small fw-bold">
+                                        <span
+                                            class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 w-100 x-small fw-bold">
                                             <i class="fa fa-check-circle me-1"></i> Ready
                                         </span>
                                     </div>

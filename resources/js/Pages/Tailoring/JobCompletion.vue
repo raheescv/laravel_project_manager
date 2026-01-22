@@ -1,30 +1,28 @@
 <template>
-    <div class="bg-light min-vh-100 py-4">
-        <div class="container pb-5">
+    <div class="bg-slate-50 min-vh-100 py-8">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-12">
             <!-- Page Header -->
-            <div class="card shadow-sm border-0 mb-4">
-                <div class="card-body p-4 d-flex justify-content-between align-items-center">
-                    <div>
-                        <h1 class="h3 fw-bold text-dark mb-1">Job Completion</h1>
-                        <p class="text-muted mb-0">Track and complete tailoring orders efficiently</p>
+            <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden mb-8 transition-all duration-300 hover:shadow-md">
+                <div class="px-8 py-6 flex flex-col md:flex-row justify-between items-center gap-4">
+                    <div class="text-center md:text-left">
+                        <h1 class="text-3xl font-black text-slate-900 tracking-tight mb-1">Job Completion</h1>
+                        <p class="text-slate-500 font-medium">Track and complete tailoring orders efficiently</p>
                     </div>
-                    <div class="d-flex gap-2">
-                        <a href="/tailoring/order" class="quick-action-link primary">
-                            <i class="fa fa-list"></i>
+                    <div class="flex items-center gap-3">
+                        <a href="/tailoring/order" class="group flex items-center gap-2 px-5 py-2.5 rounded-xl border-2 border-slate-100 bg-white text-slate-600 font-bold text-sm transition-all duration-300 hover:border-blue-500 hover:text-blue-600 hover:shadow-lg hover:shadow-blue-500/10">
+                            <i class="fa fa-list group-hover:rotate-12 transition-transform"></i>
                             <span>Orders List</span>
                         </a>
                     </div>
                 </div>
             </div>
 
-            <div class="d-flex flex-column gap-4">
+            <div class="flex flex-col gap-8">
                 <!-- Order Search -->
                 <OrderSearch v-model:orderNo="searchForm.order_no" v-model:customer="searchForm.customer_name"
                     v-model:customerId="searchForm.customer_id"
                     v-model:contact="searchForm.customer_mobile" :customers="customers" :orderNumbers="orderNumbers"
                     @search="handleSearchOrder" @clear="handleClearSearch" />
-
-                <!-- Status Bar -->
 
                 <!-- Order Summary Header -->
                 <CompletionHeader v-if="order" :order="order" :racks="racks" :cutters="cutters"
@@ -35,14 +33,14 @@
                     @calculate-stock="handleCalculateStock" @calculate-commission="handleCalculateCommission" />
 
                 <!-- Action Buttons -->
-                <div v-if="order" class="d-flex justify-content-center gap-3 mt-2">
+                <div v-if="order" class="flex justify-center gap-4 mt-4">
                     <button @click="handleUpdateCompletion"
-                        class="btn btn-outline-secondary btn-lg px-5 fw-bold shadow-sm">
-                        <i class="fa fa-refresh me-2"></i> Update
+                        class="px-8 py-3.5 rounded-2xl border-2 border-slate-200 bg-white text-slate-600 font-bold text-sm tracking-wide shadow-sm hover:bg-slate-50 hover:border-slate-300 hover:shadow-md transition-all duration-300">
+                        <i class="fa fa-refresh mr-2 opacity-50"></i> Update Details
                     </button>
                     <button @click="handleSubmitCompletion"
-                        class="btn btn-primary btn-lg px-5 fw-bold shadow-sm">
-                        <i class="fa fa-check-circle me-2"></i> Submit Completion
+                        class="px-10 py-3.5 rounded-2xl bg-blue-600 text-white font-bold text-sm tracking-widest uppercase shadow-xl shadow-blue-600/20 hover:bg-blue-700 hover:shadow-2xl hover:shadow-blue-700/30 hover:-translate-y-0.5 transition-all duration-300">
+                        <i class="fa fa-check-circle mr-2"></i> Submit Completion
                     </button>
                 </div>
             </div>
@@ -204,34 +202,3 @@ onMounted(() => {
     }
 })
 </script>
-
-<style scoped>
-.quick-action-link {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 8px 16px;
-    border-radius: 10px;
-    text-decoration: none;
-    font-weight: 600;
-    font-size: 0.9rem;
-    transition: all 0.3s ease;
-    border: 1px solid rgba(0, 0, 0, 0.05);
-    background: white;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
-}
-
-.quick-action-link:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-    background-color: #f8fafc;
-}
-
-.quick-action-link.primary {
-    color: #3b82f6;
-}
-
-.quick-action-link.success {
-    color: #10b981;
-}
-</style>

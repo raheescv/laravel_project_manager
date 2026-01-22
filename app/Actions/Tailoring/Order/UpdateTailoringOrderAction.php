@@ -12,7 +12,6 @@ class UpdateTailoringOrderAction
         try {
             $model = TailoringOrder::findOrFail($id);
             $data['updated_by'] = $userId;
-
             validationHelper(TailoringOrder::rules($id), $data);
             $model->update($data);
 
