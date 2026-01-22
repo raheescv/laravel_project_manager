@@ -33,15 +33,58 @@ use Inertia\Inertia;
 class OrderController extends Controller
 {
     // Web Routes
-    public function index()
+    public function index(Request $request)
     {
-        $orders = TailoringOrder::with(['account:id,name', 'salesman:id,name'])
-            ->orderBy('created_at', 'desc')
-            ->paginate(20);
+        $query = TailoringOrder::with(['account:id,name', 'salesman:id,name']);
 
-        return Inertia::render('Tailoring/Order/Index', [
-            'orders' => $orders,
-        ]);
+        // Apply filters
+        if ($request->has('search') && $request->search) {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->where('order_no', 'like', "%{$search}%")
+                    ->orWhere('customer_name', 'like', "%{$search}%")
+                    ->orWhere('customer_mobile', 'like', "%{$search}%")
+                    ->orWhereHas('account', function ($subQ) use ($search) {
+                        $subQ->where('name', 'like', "%{$search}%");
+                    });
+            });
+        }
+
+        if ($request->has('status') && $request->status) {
+            $query->where('status', $request->status);
+        }
+
+        if ($request->has('customer_id') && $request->customer_id) {
+            $query->where('account_id', $request->customer_id);
+        }
+
+        if ($request->has('from_date') && $request->from_date) {
+            $dateField = $request->date_type === 'delivery_date' ? 'delivery_date' : 'order_date';
+            $query->whereDate($dateField, '>=', $request->from_date);
+        }
+
+        if ($request->has('to_date') && $request->to_date) {
+            $dateField = $request->date_type === 'delivery_date' ? 'delivery_date' : 'order_date';
+            $query->whereDate($dateField, '<=', $request->to_date);
+        }
+
+        if ($request->has('payment_status') && $request->payment_status) {
+            if ($request->payment_status === 'paid') {
+                $query->where('balance', '<=', 0);
+            } elseif ($request->payment_status === 'balance') {
+                $query->where('balance', '>', 0);
+            }
+        }
+
+        $query->orderBy('created_at', 'desc');
+
+        $orders = $query->paginate($request->per_page ?? 20);
+
+        if ($request->wantsJson()) {
+            return response()->json($orders);
+        }
+
+        return view('tailoring.index', compact('orders'));
     }
 
     public function create()
@@ -166,8 +209,19 @@ class OrderController extends Controller
         $result = $action->execute($request->all(), Auth::id());
 
         if ($result['success']) {
+            if ($request->wantsJson()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => $result['message'],
+                    'redirect_url' => route('tailoring::order::show', $result['data']->id)
+                ]);
+            }
             return redirect()->route('tailoring::order::show', $result['data']->id)
                 ->with('success', $result['message']);
+        }
+
+        if ($request->wantsJson()) {
+            return response()->json(['message' => $result['message']], 422);
         }
 
         return back()->withErrors(['error' => $result['message']]);
@@ -179,8 +233,19 @@ class OrderController extends Controller
         $result = $action->execute($id, $request->all(), Auth::id());
 
         if ($result['success']) {
+            if ($request->wantsJson()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => $result['message'],
+                    'redirect_url' => route('tailoring::order::show', $id)
+                ]);
+            }
             return redirect()->route('tailoring::order::show', $id)
                 ->with('success', $result['message']);
+        }
+
+        if ($request->wantsJson()) {
+            return response()->json(['message' => $result['message']], 422);
         }
 
         return back()->withErrors(['error' => $result['message']]);

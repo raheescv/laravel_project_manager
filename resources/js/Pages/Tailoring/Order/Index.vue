@@ -1,122 +1,308 @@
 <template>
-    <div class="min-h-screen bg-gray-50 p-4 md:p-6 pb-20">
-        <div class="max-w-7xl mx-auto">
-            <!-- Header Section -->
-            <div class="bg-white rounded-2xl shadow-sm p-6 mb-8 border border-gray-100">
-                <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                    <div>
-                        <h1 class="text-3xl font-black text-gray-900 tracking-tight uppercase">Tailoring Orders</h1>
-                        <p class="text-gray-500 font-medium mt-1">Manage and track your customer orders</p>
+    <div class="card mb-3">
+        <div class="card-header bg-white border-bottom-0 py-3">
+            <div class="row g-3">
+                <!-- Search -->
+                <div class="col-md-3">
+                    <label class="form-label small text-muted">Search</label>
+                    <div class="position-relative">
+                        <input type="text" class="form-control" placeholder="Search orders..." v-model="filters.search"
+                            @input="debouncedSearch">
+                        <span v-if="loading" class="position-absolute top-50 end-0 translate-middle-y me-2">
+                            <i class="fa fa-spinner fa-spin text-muted"></i>
+                        </span>
                     </div>
-                    <Link :href="route('tailoring::order::create')"
-                        class="inline-flex items-center px-6 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 font-bold transition-all shadow-lg hover:shadow-blue-200 active:scale-95">
-                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-                        </svg>
-                        Create New Order
-                    </Link>
+                </div>
+
+                <!-- Payment Status -->
+                <div class="col-md-2">
+                    <label class="form-label small text-muted">Payment</label>
+                    <select class="form-select" v-model="filters.payment_status" @change="fetchOrders">
+                        <option value="">All</option>
+                        <option value="paid">Paid</option>
+                        <option value="balance">Balance</option>
+                    </select>
+                </div>
+
+                <!-- Status -->
+                <div class="col-md-2">
+                    <label class="form-label small text-muted">Status</label>
+                    <select class="form-select" v-model="filters.status" @change="fetchOrders">
+                        <option value="">All Statuses</option>
+                        <option value="pending">Pending</option>
+                        <option value="confirmed">Confirmed</option>
+                        <option value="in_progress">In Progress</option>
+                        <option value="completed">Completed</option>
+                        <option value="delivered">Delivered</option>
+                        <option value="cancelled">Cancelled</option>
+                    </select>
+                </div>
+
+                <!-- Column Visibility -->
+                <div class="col-md-2 ms-auto d-flex align-items-end justify-content-end">
+                    <div class="dropdown">
+                        <button class="btn btn-outline-secondary dropdown-toggle w-100" type="button"
+                            data-bs-toggle="dropdown">
+                            <i class="fa fa-columns me-1"></i> Columns
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end p-2">
+                            <li v-for="col in columns" :key="col.name" class="dropdown-item p-0 mb-1">
+                                <label class="d-flex align-items-center w-100 px-2 py-1 cursor-pointer">
+                                    <input type="checkbox" class="form-check-input me-2" v-model="col.visible">
+                                    {{ col.label }}
+                                </label>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="col-md-3 d-flex align-items-end justify-content-end">
+                    <a :href="route('tailoring::order::create')" class="btn btn-primary w-100">
+                        <i class="fa fa-plus me-2"></i> New Order
+                    </a>
                 </div>
             </div>
 
-            <!-- Orders Table -->
-            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-                <div class="overflow-x-auto">
-                    <table class="w-full text-left border-collapse">
-                        <thead>
-                            <tr class="bg-gray-50/50 border-b border-gray-100">
-                                <th class="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Order Details</th>
-                                <th class="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Customer</th>
-                                <th class="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest text-center">Status</th>
-                                <th class="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest text-right">Total Amount</th>
-                                <th class="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest text-right">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y divide-gray-50">
-                            <tr v-for="order in orders.data" :key="order.id" class="hover:bg-gray-50/50 transition-colors group">
-                                <td class="px-6 py-4">
-                                    <div class="flex flex-col">
-                                        <span class="text-sm font-black text-gray-900 group-hover:text-blue-600 transition-colors">#{{ order.order_no }}</span>
-                                        <span class="text-xs text-gray-500 font-medium">{{ formatDate(order.created_at) }}</span>
+            <!-- Advanced Filters Row -->
+            <div class="row g-3 mt-1">
+                <!-- Date Type -->
+                <div class="col-md-2">
+                    <label class="form-label small text-muted">Date Type</label>
+                    <select class="form-select" v-model="filters.date_type" @change="fetchOrders">
+                        <option value="created_at">Order Date</option>
+                        <option value="delivery_date">Delivery Date</option>
+                    </select>
+                </div>
+
+                <!-- Date Range -->
+                <div class="col-md-2">
+                    <label class="form-label small text-muted">From</label>
+                    <input type="date" class="form-control" v-model="filters.from_date" @change="fetchOrders">
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label small text-muted">To</label>
+                    <input type="date" class="form-control" v-model="filters.to_date" @change="fetchOrders">
+                </div>
+
+                <!-- Clear Filters -->
+                <div class="col-md-2 d-flex align-items-end">
+                    <button v-if="hasActiveFilters" @click="clearFilters"
+                        class="btn btn-link text-decoration-none text-danger p-0 mb-2">
+                        <i class="fa fa-times me-1"></i> Clear Filters
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-striped table-hover mb-0 align-middle">
+                    <thead class="bg-light">
+                        <tr>
+                            <th v-if="isColVisible('details')">Order Details</th>
+                            <th v-if="isColVisible('customer')">Customer</th>
+                            <th v-if="isColVisible('status')" class="text-center">Status</th>
+                            <th v-if="isColVisible('amount')" class="text-end">Total Amount</th>
+                            <th v-if="isColVisible('actions')" class="text-end">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody class="border-top-0">
+                        <tr v-if="loading">
+                            <td colspan="10" class="text-center py-5">
+                                <div class="spinner-border text-primary" role="status">
+                                    <span class="visually-hidden">Loading...</span>
+                                </div>
+                            </td>
+                        </tr>
+                        <template v-else>
+                            <tr v-for="order in ordersData.data" :key="order.id">
+                                <td v-if="isColVisible('details')">
+                                    <div>
+                                        <strong>
+                                            <a :href="route('tailoring::order::show', order.id)"
+                                                class="text-decoration-none text-dark">
+                                                #{{ order.order_no }}
+                                            </a>
+                                        </strong>
+                                        <br>
+                                        <small class="text-muted">
+                                            <i class="fa fa-calendar-alt me-1"></i> {{ formatDate(order.order_date ||
+                                            order.created_at) }}
+                                        </small>
+                                        <small v-if="order.delivery_date" class="text-muted ms-2" title="Delivery Date">
+                                            <i class="fa fa-truck me-1"></i> {{ formatDate(order.delivery_date) }}
+                                        </small>
                                     </div>
                                 </td>
-                                <td class="px-6 py-4">
-                                    <div class="flex flex-col">
-                                        <span class="text-sm font-bold text-gray-800">{{ order.account?.name || 'Walk-in Customer' }}</span>
-                                        <span class="text-xs text-gray-400 tracking-tight">{{ order.salesman?.name ? 'Sales: ' + order.salesman.name : '' }}</span>
+                                <td v-if="isColVisible('customer')">
+                                    <div>
+                                        <strong>{{ order.account?.name || order.customer_name || 'Walk-in Customer'
+                                            }}</strong><br>
+                                        <small class="text-muted">{{ order.salesman?.name ? 'Sales: ' +
+                                            order.salesman.name : '' }}</small>
                                     </div>
                                 </td>
-                                <td class="px-6 py-4 text-center">
-                                    <span :class="getStatusClass(order.status)" class="px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider">
+                                <td v-if="isColVisible('status')" class="text-center">
+                                    <span :class="'badge ' + getStatusClass(order.status)">
                                         {{ order.status }}
                                     </span>
                                 </td>
-                                <td class="px-6 py-4 text-right">
-                                    <span class="text-sm font-black text-gray-900">{{ formatCurrency(order.total_amount) }}</span>
+                                <td v-if="isColVisible('amount')" class="text-end">
+                                    <div>
+                                        <strong>{{ formatCurrency(order.grand_total) }}</strong><br>
+                                        <small :class="order.balance > 0 ? 'text-danger' : 'text-success'">
+                                            {{ order.balance > 0 ? 'Bal: ' + formatCurrency(order.balance) : 'Paid' }}
+                                        </small>
+                                    </div>
                                 </td>
-                                <td class="px-6 py-4 text-right">
-                                    <div class="flex justify-end gap-2">
-                                        <Link :href="route('tailoring::order::show', order.id)" 
-                                            class="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all"
-                                            title="View Details">
-                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                                            </svg>
-                                        </Link>
-                                        <Link :href="route('tailoring::order::edit', order.id)" 
-                                            class="p-2 text-gray-400 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-all"
-                                            title="Edit Order">
-                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                                            </svg>
-                                        </Link>
+                                <td v-if="isColVisible('actions')" class="text-end">
+                                    <div class="btn-group btn-group-sm">
+                                        <a :href="route('tailoring::order::show', order.id)"
+                                            class="btn btn-light border" title="View Details">
+                                            <i class="fa fa-eye text-primary"></i>
+                                        </a>
+                                        <a :href="route('tailoring::order::edit', order.id)"
+                                            class="btn btn-light border" title="Edit Order">
+                                            <i class="fa fa-edit text-warning"></i>
+                                        </a>
                                     </div>
                                 </td>
                             </tr>
-                            <tr v-if="orders.data.length === 0">
-                                <td colspan="5" class="px-6 py-12 text-center">
-                                    <div class="flex flex-col items-center">
-                                        <div class="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mb-4">
-                                            <svg class="w-8 h-8 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                                            </svg>
-                                        </div>
-                                        <p class="text-gray-400 font-medium">No orders found</p>
-                                        <Link :href="route('tailoring::order::create')" class="text-blue-600 font-bold text-sm mt-2 hover:underline">Create your first order</Link>
+                            <tr v-if="!ordersData.data || ordersData.data.length === 0">
+                                <td colspan="10" class="text-center py-5">
+                                    <div class="text-muted">
+                                        <i class="fa fa-inbox fa-3x mb-3 text-secondary opacity-50"></i>
+                                        <p class="mb-1">No orders found matching your criteria.</p>
                                     </div>
                                 </td>
                             </tr>
-                        </tbody>
-                    </table>
-                </div>
+                        </template>
+                    </tbody>
+                </table>
+            </div>
 
-                <!-- Pagination -->
-                <div v-if="orders.links && orders.links.length > 3" class="px-6 py-4 bg-gray-50/50 border-t border-gray-100 flex justify-center">
-                    <nav class="flex gap-1">
-                        <Link v-for="(link, i) in orders.links" :key="i"
-                            :href="link.url || '#'"
-                            v-html="link.label"
-                            :class="[
-                                'px-4 py-2 text-xs font-bold rounded-lg transition-all',
-                                link.active ? 'bg-blue-600 text-white shadow-md' : 'bg-white text-gray-500 hover:bg-gray-100 border border-gray-200',
-                                !link.url ? 'opacity-50 cursor-not-allowed' : ''
-                            ]"
-                        />
-                    </nav>
+            <!-- Pagination -->
+            <div v-if="ordersData.links && ordersData.links.length > 3"
+                class="d-flex justify-content-between align-items-center p-3 border-top">
+                <div class="text-muted small">
+                    Showing {{ ordersData.from || 0 }} to {{ ordersData.to || 0 }} of {{ ordersData.total || 0 }}
+                    results
                 </div>
+                <nav>
+                    <ul class="pagination pagination-sm mb-0">
+                        <li v-for="(link, i) in ordersData.links" :key="i"
+                            :class="['page-item', { 'active': link.active, 'disabled': !link.url }]">
+                            <button v-if="link.url" @click.prevent="goToPage(link.url)" class="page-link"
+                                v-html="link.label"></button>
+                            <span v-else class="page-link" v-html="link.label"></span>
+                        </li>
+                    </ul>
+                </nav>
             </div>
         </div>
     </div>
 </template>
 
 <script setup>
-import { Link } from '@inertiajs/vue3'
+import { ref, computed } from 'vue';
+import debounce from 'lodash/debounce';
+import { tailoringOrderService } from '../../../Services/tailoring-order-service';
 
 const props = defineProps({
     orders: Object
 })
 
+const ordersData = ref(props.orders || { data: [], links: [] });
+const loading = ref(false);
+
+const filters = ref({
+    search: '',
+    status: '',
+    payment_status: '',
+    date_type: 'created_at',
+    from_date: '',
+    to_date: '',
+    customer_id: ''
+});
+
+const columns = ref([
+    { name: 'details', label: 'Order Details', visible: true },
+    { name: 'customer', label: 'Customer', visible: true },
+    { name: 'status', label: 'Status', visible: true },
+    { name: 'amount', label: 'Total Amount', visible: true },
+    { name: 'actions', label: 'Actions', visible: true }
+]);
+
+const hasActiveFilters = computed(() => {
+    return filters.value.search ||
+        filters.value.status ||
+        filters.value.payment_status ||
+        filters.value.from_date ||
+        filters.value.to_date ||
+        filters.value.customer_id;
+});
+
+const isColVisible = (name) => {
+    const col = columns.value.find(c => c.name === name);
+    return col ? col.visible : true;
+};
+
+const fetchOrders = async (url = null, params = {}) => {
+    loading.value = true;
+    try {
+        // Prepare params: merge current filters with any extra params (like page)
+        const requestParams = {
+            ...filters.value,
+            ...params
+        };
+
+        const data = await tailoringOrderService.getOrders(requestParams, url);
+        
+        ordersData.value = data;
+    } catch (error) {
+        console.error('Error fetching orders:', error);
+    } finally {
+        loading.value = false;
+    }
+};
+
+const debouncedSearch = debounce(() => {
+    // Reset to page 1 on search
+    fetchOrders(null, { page: 1 });
+}, 500);
+
+const goToPage = (url) => {
+    if (!url) return;
+    
+    // Extract page number from URL if possible to ensure clean param handling
+    try {
+        const target = new URL(url);
+        const page = target.searchParams.get('page');
+        if (page) {
+            fetchOrders(null, { page });
+        } else {
+            fetchOrders(url);
+        }
+    } catch (e) {
+        fetchOrders(url);
+    }
+};
+
+const clearFilters = () => {
+    filters.value = {
+        search: '',
+        status: '',
+        payment_status: '',
+        date_type: 'created_at',
+        from_date: '',
+        to_date: '',
+        customer_id: ''
+    };
+    fetchOrders(null, { page: 1 });
+};
+
 const formatDate = (dateString) => {
+    if (!dateString) return '-';
     return new Date(dateString).toLocaleDateString('en-US', {
         year: 'numeric',
         month: 'short',
@@ -133,11 +319,13 @@ const formatCurrency = (amount) => {
 
 const getStatusClass = (status) => {
     const classes = {
-        'Pending': 'bg-amber-100 text-amber-700',
-        'Confirmed': 'bg-blue-100 text-blue-700',
-        'Completed': 'bg-emerald-100 text-emerald-700',
-        'Cancelled': 'bg-red-100 text-red-700'
+        'pending': 'bg-warning text-dark',
+        'confirmed': 'bg-info text-white',
+        'in_progress': 'bg-primary text-white',
+        'completed': 'bg-success text-white',
+        'delivered': 'bg-dark text-white',
+        'cancelled': 'bg-danger text-white'
     }
-    return classes[status] || 'bg-gray-100 text-gray-700'
+    return classes[status] || 'bg-secondary text-white'
 }
 </script>
