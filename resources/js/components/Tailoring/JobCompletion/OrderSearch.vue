@@ -1,105 +1,96 @@
 <template>
-    <div class="grid grid-cols-1 lg:grid-cols-10 gap-6">
-        <!-- Search Order Form (4/10) -->
-        <div class="lg:col-span-4">
-            <div class="bg-white rounded-xl shadow-md border border-gray-100 p-4 md:p-6 transition-all hover:shadow-lg h-full">
-                <h2 class="text-xl font-bold text-gray-800 mb-6 flex items-center gap-2">
-                    <i class="fa fa-search text-blue-600"></i>
-                    Search Order
-                </h2>
-                <div class="space-y-6">
-                    <!-- Order No with Autocomplete -->
-                    <div class="form-group">
-                        <label class="block text-xs font-semibold uppercase tracking-wider text-gray-500 mb-1.5 ml-1">
-                            Order Number
-                        </label>
-                        <div class="relative group">
-                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none z-10">
-                                <i class="fa fa-hashtag text-gray-400 group-focus-within:text-blue-500 transition-colors"></i>
-                            </div>
-                            <select ref="orderNoSelect" placeholder="Enter or select order no..." autocomplete="off"
-                                class="w-full"></select>
-                        </div>
-                    </div>
-
-                    <!-- Customer Dropdown with Search -->
-                    <div class="form-group">
-                        <label class="block text-xs font-semibold uppercase tracking-wider text-gray-500 mb-1.5 ml-1">
-                            Customer
-                        </label>
-                        <div class="relative group">
-                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none z-10">
-                                <i class="fa fa-user text-gray-400 group-focus-within:text-blue-500 transition-colors"></i>
-                            </div>
-                            <CustomerSelect :modelValue="customer" @update:modelValue="handleCustomerChange"
-                                valueField="name" placeholder="Search customer..." />
-                        </div>
-                    </div>
-                </div>
-
-                <div class="flex justify-end gap-3 mt-8 pt-6 border-t border-gray-50">
-                    <button @click="handleClear"
-                        class="px-6 py-2.5 bg-white border border-gray-300 text-gray-600 rounded-lg hover:bg-gray-50 hover:text-gray-800 font-semibold transition-all shadow-sm flex items-center gap-2">
-                        <i class="fa fa-refresh"></i>
-                        Clear
-                    </button>
-                    <button @click="$emit('search')"
-                        class="px-8 py-2.5 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg hover:from-blue-700 hover:to-blue-800 font-bold transition-all shadow-md hover:shadow-lg flex items-center gap-2">
-                        <i class="fa fa-search"></i>
+    <div class="row g-4">
+        <!-- Search Order Form -->
+        <div class="col-lg-4">
+            <div class="card shadow-sm border-0 h-100">
+                <div class="card-body p-4">
+                    <h5 class="fw-bold text-dark mb-4 d-flex align-items-center gap-2">
+                        <i class="fa fa-search text-primary"></i>
                         Search Order
-                    </button>
+                    </h5>
+
+                    <div class="d-flex flex-column gap-3">
+                        <!-- Order Number -->
+                        <div>
+                            <label class="form-label x-small fw-bold text-muted text-uppercase mb-1">
+                                Order Number
+                            </label>
+                            <SearchableSelect :modelValue="orderNo" :options="formattedOrderNumbers"
+                                placeholder="Select Order No" filter-placeholder="Search order number..."
+                                :visibleItems="8" @update:modelValue="val => $emit('update:orderNo', val)"
+                                input-class="w-full rounded-lg border-2 border-purple-200/60 shadow-md focus:border-purple-500 focus:ring-2 focus:ring-purple-500/30 transition-all duration-200 bg-white/95 backdrop-blur-sm hover:shadow-lg hover:border-purple-300 text-sm sm:text-sm py-2 sm:py-2 px-3 min-h-[40px] sm:min-h-[36px] font-medium" />
+                        </div>
+
+                        <!-- Customer Selection -->
+                        <div>
+                            <label class="form-label x-small fw-bold text-muted text-uppercase mb-1">Customer.</label>
+                            <SearchableSelect :modelValue="customerId" :options="formattedCustomers"
+                                :loading="customerLoading" placeholder="Select Customer"
+                                filter-placeholder="Search by name or mobile..." :visibleItems="8"
+                                @search="searchCustomers" @change="handleCustomerSelect" @open="handleCustomerOpen"
+                                @update:modelValue="val => $emit('update:customerId', val)"
+                                input-class="w-full rounded-lg border-2 border-indigo-200/60 shadow-md focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/30 transition-all duration-200 bg-white/95 backdrop-blur-sm hover:shadow-lg hover:border-indigo-300 text-sm sm:text-sm py-2 sm:py-2 px-3 min-h-[40px] sm:min-h-[36px] font-medium" />
+                        </div>
+                    </div>
+
+                    <div class="d-flex justify-content-end gap-2 mt-4 pt-3 border-top">
+                        <button @click="handleClear" class="btn btn-outline-secondary btn-sm px-3 fw-bold">
+                            <i class="fa fa-refresh me-1"></i> Clear
+                        </button>
+                        <button @click="$emit('search')" class="btn btn-primary btn-sm px-4 fw-bold shadow-sm">
+                            <i class="fa fa-search me-1"></i> Search Order
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
 
-        <!-- Recent Orders (6/10) -->
-        <div class="lg:col-span-6">
-            <div v-if="customerOrders.length > 0"
-                class="bg-white rounded-xl shadow-md border border-gray-100 p-4 transition-all overflow-hidden h-full">
-                <h3 class="text-sm font-bold text-gray-700 mb-3 flex items-center gap-2">
-                    <i class="fa fa-list text-blue-500"></i>
-                    Recent Orders for {{ customer }}
-                </h3>
-                <div class="overflow-x-auto">
-                    <table class="w-full text-left text-sm">
-                        <thead class="bg-gray-50 text-gray-600 font-semibold uppercase text-xs">
-                            <tr>
-                                <th class="px-4 py-3">Order No</th>
-                                <th class="px-4 py-3">Order Date</th>
-                                <th class="px-4 py-3">Delivery Date</th>
-                                <th class="px-4 py-3">Status</th>
-                                <th class="px-4 py-3 text-right">Action</th>
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y divide-gray-100">
-                            <tr v-for="order in customerOrders" :key="order.id" class="hover:bg-blue-50/50 transition-colors">
-                                <td class="px-4 py-3 font-bold text-blue-600">{{ order.order_no }}</td>
-                                <td class="px-4 py-3 text-gray-600">{{ formatDate(order.order_date) }}</td>
-                                <td class="px-4 py-3 text-gray-600">{{ formatDate(order.delivery_date) }}</td>
-                                <td class="px-4 py-3">
-                                    <span :class="getStatusClass(order.completion_status)"
-                                        class="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase">
-                                        {{ order.completion_status || 'Pending' }}
-                                    </span>
-                                </td>
-                                <td class="px-4 py-3 text-right">
-                                    <button @click="selectOrder(order.order_no)"
-                                        class="text-blue-600 hover:text-blue-800 font-bold flex items-center gap-1 ml-auto">
-                                        Select <i class="fa fa-chevron-right text-[10px]"></i>
-                                    </button>
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
+        <!-- Recent Orders -->
+        <div class="col-lg-8">
+            <div v-if="customerOrders.length > 0" class="card shadow-sm border-0 h-100">
+                <div class="card-body p-4">
+                    <h6 class="fw-bold text-dark mb-3 d-flex align-items-center gap-2">
+                        <i class="fa fa-list text-primary"></i>
+                        Recent Orders for <span class="text-primary">{{ customer }}</span>
+                    </h6>
+                    <div class="table-responsive">
+                        <table class="table table-sm table-hover align-middle">
+                            <thead class="table-light">
+                                <tr class="x-small fw-bold text-uppercase text-muted">
+                                    <th class="py-2">Order No</th>
+                                    <th class="py-2">Order Date</th>
+                                    <th class="py-2">Delivery</th>
+                                    <th class="py-2">Status</th>
+                                    <th class="py-2 text-end">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr v-for="order in customerOrders" :key="order.id">
+                                    <td class="fw-bold text-primary">{{ order.order_no }}</td>
+                                    <td class="small text-muted">{{ formatDate(order.order_date) }}</td>
+                                    <td class="small text-muted">{{ formatDate(order.delivery_date) }}</td>
+                                    <td>
+                                        <span :class="getStatusBadgeClass(order.completion_status)"
+                                            class="badge rounded-pill x-small fw-bold">
+                                            {{ order.completion_status || 'Pending' }}
+                                        </span>
+                                    </td>
+                                    <td class="text-end">
+                                        <button @click="selectOrder(order.order_no)"
+                                            class="btn btn-link btn-sm text-primary fw-bold text-decoration-none p-0">
+                                            Select <i class="fa fa-chevron-right ms-1"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
-            <!-- Placeholder when no orders are loaded to maintain layout if desired, 
-                 or we can let it be empty. The user said 4-6 ratio, so keeping the 
-                 structure even if empty helps visualize the ratio. -->
-            <div v-else class="h-full flex items-center justify-center bg-gray-50/50 border-2 border-dashed border-gray-200 rounded-xl p-8 text-gray-400">
-                <div class="text-center">
-                    <i class="fa fa-info-circle text-2xl mb-2"></i>
-                    <p>Select a customer to view recent orders</p>
+            <div v-else class="card shadow-sm border-2 border-dashed h-100 text-center text-muted">
+                <div class="card-body d-flex flex-column justify-content-center py-5">
+                    <i class="fa fa-info-circle fs-3 mb-2 text-primary opacity-50"></i>
+                    <p class="small fw-bold mb-0">Select a customer to view recent orders</p>
                 </div>
             </div>
         </div>
@@ -109,12 +100,13 @@
 <script setup>
 import { ref, onMounted, onBeforeUnmount, watch, nextTick, computed } from 'vue'
 import axios from 'axios'
-import SearchableSelect from '@/components/SearchableSelect.vue'
-import CustomerSelect from '@/components/CustomerSelect.vue'
+import SearchableSelect from '@/components/SearchableSelectFixed.vue'
+import debounce from 'lodash/debounce'
 
 const props = defineProps({
     orderNo: String,
     customer: String,
+    customerId: [String, Number],
     contact: String,
     customers: {
         type: Array,
@@ -130,41 +122,91 @@ const props = defineProps({
     }
 })
 
-const emit = defineEmits(['update:orderNo', 'update:customer', 'update:contact', 'search', 'clear', 'search-customer'])
+const emit = defineEmits(['update:orderNo', 'update:customer', 'update:customerId', 'update:contact', 'update:customerLoading', 'search', 'clear', 'search-customer'])
 
-const orderNoSelect = ref(null)
-let tomOrderNo = null
+const serverCustomers = ref({})
 
-const customerOptions = computed(() => {
-    return props.customers.map(c => ({
-        value: c.name,
-        label: c.name + (c.mobile ? ` (${c.mobile})` : ''),
+const formattedOrderNumbers = computed(() => {
+    return (props.orderNumbers || []).map(no => ({
+        value: no,
+        label: no
+    }))
+})
+
+const formattedCustomers = computed(() => {
+    const customers = Object.values(serverCustomers.value)
+    if (customers.length === 0 && props.customers?.length > 0) {
+        return props.customers.map(c => ({
+            value: c.id,
+            label: `${c.name} ${c.mobile ? ' - ' + c.mobile : ''}`,
+            name: c.name,
+            mobile: c.mobile
+        }))
+    }
+    return customers.map(c => ({
+        value: c.id,
+        label: `${c.name} ${c.mobile ? ' - ' + c.mobile : ''}`,
+        name: c.name,
         mobile: c.mobile
     }))
 })
 
-const handleCustomerChange = (value, selected) => {
-    emit('update:customer', value)
-    
+const searchCustomers = debounce(async (query) => {
+    // If query is empty and we already have some customers, don't necessarily need to fetch
+    // But if query is empty and we want to "load all", we should proceed
+    const isInitial = !query || query.length === 0;
+    if (query && query.length < 2 && !isInitial) return
+
+    emit('update:customerLoading', true)
+    try {
+        const response = await axios.get(`/account/list?query=${encodeURIComponent(query || '')}&model=customer`)
+        if (response.data?.items) {
+            const newCustomers = { ...serverCustomers.value }
+            response.data.items.forEach(c => {
+                newCustomers[c.id] = c
+            })
+            serverCustomers.value = newCustomers
+        }
+    } catch (error) {
+        console.error('Failed to search customers', error)
+    } finally {
+        emit('update:customerLoading', false)
+    }
+}, 300)
+
+const handleCustomerOpen = () => {
+    if (Object.keys(serverCustomers.value).length === 0) {
+        searchCustomers('')
+    }
+}
+
+const handleCustomerSelect = (id) => {
+    const selected = serverCustomers.value[id] ||
+        (Array.isArray(props.customers) ? props.customers.find(c => c.id === id) : null)
+
+    emit('update:customerId', id)
     if (selected) {
-        emit('update:contact', selected.mobile)
-        fetchCustomerOrders(value)
+        emit('update:customer', selected.name)
+        emit('update:contact', selected.mobile || selected.phone || '')
+        fetchCustomerOrders(selected.name, id)
     } else {
+        emit('update:customer', '')
+        emit('update:contact', '')
         customerOrders.value = []
     }
 }
 
 const customerOrders = ref([])
 
-const fetchCustomerOrders = async (customerName) => {
-    if (!customerName) {
+const fetchCustomerOrders = async (customerName, accountId = null) => {
+    if (!customerName && !accountId) {
         customerOrders.value = []
         return
     }
 
     try {
         const response = await axios.post('/tailoring/job-completion/search-orders', {
-            customer_name: customerName
+            account_id: accountId
         })
         if (response.data.success) {
             customerOrders.value = response.data.data
@@ -190,71 +232,34 @@ const formatDate = (dateString) => {
     })
 }
 
-const getStatusClass = (status) => {
+const getStatusBadgeClass = (status) => {
     switch (status?.toLowerCase()) {
-        case 'completed': return 'bg-green-100 text-green-700'
-        case 'in_progress': return 'bg-blue-100 text-blue-700'
-        case 'delivered': return 'bg-purple-100 text-purple-700'
-        default: return 'bg-gray-100 text-gray-700'
+        case 'completed': return 'bg-success'
+        case 'in_progress': return 'bg-primary'
+        case 'delivered': return 'bg-info text-dark'
+        default: return 'bg-secondary'
     }
 }
 
-const initTomSelect = () => {
-    if (typeof window.TomSelect === 'undefined') return
-
-    // Order No Select
-    const orderOptions = props.orderNumbers.map(no => ({ value: no, text: no }))
-    tomOrderNo = new window.TomSelect(orderNoSelect.value, {
-        valueField: 'value',
-        labelField: 'text',
-        searchField: ['text'],
-        options: orderOptions,
-        create: true,
-        placeholder: 'Enter or select order no...',
-        maxItems: 1,
-        plugins: ['clear_button'],
-        onChange: (value) => {
-            emit('update:orderNo', value)
-        }
-    })
-
-    // Set initial values
-    if (props.orderNo) tomOrderNo.setValue(props.orderNo, true)
-}
+// Remote TomSelect code removed, replaced by SearchableSelect
 
 const handleClear = () => {
-    if (tomOrderNo) tomOrderNo.clear()
     customerOrders.value = []
     emit('clear')
 }
 
-watch(() => props.orderNo, (val) => {
-    if (tomOrderNo && val !== tomOrderNo.getValue()) {
-        tomOrderNo.setValue(val, true)
+watch(() => props.customers, (newVal) => {
+    if (newVal?.length > 0) {
+        const newCustomers = { ...serverCustomers.value }
+        newVal.forEach(c => {
+            newCustomers[c.id || Math.random()] = c
+        })
+        serverCustomers.value = newCustomers
     }
-})
-
-watch(() => props.customer, (val) => {
-    if (val) {
-        fetchCustomerOrders(val)
-    }
-})
-
-onMounted(() => {
-    if (typeof window.TomSelect !== 'undefined') {
-        initTomSelect()
-    } else {
-        const check = setInterval(() => {
-            if (typeof window.TomSelect !== 'undefined') {
-                clearInterval(check)
-                initTomSelect()
-            }
-        }, 100)
-    }
-})
+}, { immediate: true })
 
 onBeforeUnmount(() => {
-    if (tomOrderNo) tomOrderNo.destroy()
+    // Cleanup
 })
 </script>
 

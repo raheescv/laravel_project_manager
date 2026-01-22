@@ -1,10 +1,11 @@
 <template>
-    <div class="bg-gray-100 rounded-lg p-4 text-center">
-        <div class="text-sm font-semibold text-gray-700">
-            <span v-if="recordCount > 0">{{ recordCount }} record(s)</span>
-            <span v-else>No records</span>
-            <span v-if="completionStatus" class="ml-4">
-                Status: <span class="text-blue-600">{{ completionStatus }}</span>
+    <div class="alert alert-light border shadow-sm p-3 mb-0 text-center">
+        <div class="small fw-bold text-dark">
+            <span v-if="recordCount > 0" class="badge bg-secondary me-3">{{ recordCount }} record(s)</span>
+            <span v-else class="badge bg-secondary me-3">No records</span>
+            
+            <span v-if="completionStatus">
+                Status: <span class="badge bg-primary text-uppercase">{{ completionStatus }}</span>
             </span>
         </div>
     </div>

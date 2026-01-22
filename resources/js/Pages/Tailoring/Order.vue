@@ -1,91 +1,138 @@
 <template>
-    <div class="min-h-screen bg-gray-50 p-4 md:p-6">
-        <div class="max-w-7xl mx-auto space-y-6">
-            <!-- Page Header -->
-            <div class="bg-white rounded-lg shadow-sm p-4 md:p-6">
-                <h1 class="text-2xl font-bold text-gray-800 mb-2">Tailoring Order</h1>
-                <p class="text-gray-600">Create and manage tailoring orders</p>
-            </div>
-
-            <!-- Order Header Section -->
-            <OrderHeader v-model:orderNo="form.order_no" v-model:customer="form.customer_name"
-                v-model:customerId="form.account_id" v-model:contact="form.customer_mobile"
-                v-model:salesman="form.salesman_id" v-model:orderDate="form.order_date"
-                v-model:deliveryDate="form.delivery_date" :customers="customers" :salesmen="salesmen"
-                @add-customer="showCustomerModal = true" @customer-selected="handleCustomerSelected" />
-
-            <!-- Category Selection -->
-            <CategoryHeader :categories="categories" :selectedCategories="selectedCategories"
-                @category-selected="handleCategorySelection" />
-
-            <!-- Main Content: Measurements and Styling -->
-            <div v-if="selectedCategories.length > 0" class="space-y-6">
-                <!-- Category Tabs -->
-                <div class="border-b border-gray-200">
-                    <nav class="-mb-px flex space-x-8" aria-label="Tabs">
-                        <a v-for="id in selectedCategories" :key="id" href="#" @click.prevent="activeCategoryTab = id"
-                            :class="[activeCategoryTab === id ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300', 'whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm']">
-                            {{ getCategory(id)?.name }}
-                        </a>
-                    </nav>
-                </div>
-
-                <!-- Active Category Content -->
-                <div v-if="activeCategoryTab" class="bg-white rounded-lg shadow-sm p-4 md:p-6 border border-gray-100">
-                    <div class="grid grid-cols-1 gap-6">
-                        <!-- Measurement Form -->
-                        <MeasurementForm v-if="measurements[activeCategoryTab]"
-                            v-model="measurements[activeCategoryTab]" :category="getCategory(activeCategoryTab)"
-                            :measurementOptions="measurementOptions" @add-option="handleAddMeasurementOption" />
-
-                        <!-- Product Selection -->
-                        <ProductSelection v-if="currentItems[activeCategoryTab]"
-                            v-model="currentItems[activeCategoryTab]" :products="products" :colors="colors"
-                            :isLoading="isAddingItem[activeCategoryTab]"
-                            :isEditing="!!editingItemIds[activeCategoryTab]"
-                            @add-item="(item) => handleAddItem(item, activeCategoryTab)"
-                            @calculate-amount="(item) => calculateItemAmount(item, activeCategoryTab)"
-                            @clear="handleItemClear(activeCategoryTab)" />
+    <div class="container-fluid p-4">
+        <div class="row g-3">
+            <div class="col-12">
+                <!-- Page Header -->
+                <div class="card mb-3 shadow-sm border-0">
+                    <div class="card-body p-3 d-flex justify-content-between align-items-center">
+                        <div>
+                            <h1 class="h3 mb-1 text-gray-800 fw-bold">Tailoring Order</h1>
+                            <p class="text-muted mb-0">Create and manage tailoring orders</p>
+                        </div>
+                        <div class="d-flex gap-2">
+                            <a href="/tailoring/order" class="quick-action-link primary">
+                                <i class="fa fa-list"></i>
+                                <span>Orders List</span>
+                            </a>
+                            <a :href="form.order_no ? '/tailoring/job-completion?order_no=' + form.order_no : '/tailoring/job-completion'" class="quick-action-link success">
+                                <i class="fa fa-check-circle"></i>
+                                <span>Job Completion</span>
+                            </a>
+                        </div>
                     </div>
                 </div>
+
+                <!-- Order Header Section -->
+                <OrderHeader v-model:orderNo="form.order_no" v-model:customer="form.customer_name"
+                    v-model:customerId="form.account_id" v-model:contact="form.customer_mobile"
+                    v-model:salesman="form.salesman_id" v-model:orderDate="form.order_date"
+                    v-model:deliveryDate="form.delivery_date" :customers="customers" :salesmen="salesmen"
+                    @add-customer="showCustomerModal = true" @customer-selected="handleCustomerSelected" />
+
+                <!-- Category Selection -->
+                <CategoryHeader :categories="categories" :selectedCategories="selectedCategories"
+                    @category-selected="handleCategorySelection" />
+
+                <!-- Main Content: Measurements and Styling -->
+                <div v-if="selectedCategories.length > 0" class="mb-5 animate-fade-in">
+                    <!-- Category Tabs - Premium Style -->
+                    <div class="tabs-scroll-container mb-3">
+                        <ul class="nav premium-tabs">
+                            <li class="nav-item" v-for="id in selectedCategories" :key="id">
+                                <a class="nav-link" :class="{ active: activeCategoryTab === id }" href="#"
+                                    @click.prevent="activeCategoryTab = id">
+                                    <i class="fa fa-dot-circle-o me-2" v-if="activeCategoryTab === id"></i>
+                                    {{ getCategory(id)?.name }}
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+
+                    <!-- Active Category Content -->
+                    <div v-if="activeCategoryTab" class="content-fade-slide">
+                        <div class="card shadow-sm border-0 premium-content-card">
+                            <div class="card-body p-3 bg-white">
+                                <div class="row g-3">
+                                    <!-- Measurement Form -->
+                                    <div class="col-md-12">
+                                        <div class="section-header mb-3">
+                                            <h5 class="fw-bold text-gray-800">
+                                                <i class="fa fa-pencil-square-o text-primary me-2"></i>
+                                                {{ getCategory(activeCategoryTab)?.name }} Measurements
+                                            </h5>
+                                            <div class="header-line"></div>
+                                        </div>
+
+                                        <MeasurementForm v-if="measurements[activeCategoryTab]"
+                                            v-model="measurements[activeCategoryTab]"
+                                            :category="getCategory(activeCategoryTab)"
+                                            :measurementOptions="measurementOptions"
+                                            @add-option="handleAddMeasurementOption" />
+                                    </div>
+
+                                    <!-- Product Selection -->
+                                    <div class="col-md-12 mt-4">
+                                        <div class="section-header mb-3">
+                                            <h5 class="fw-bold text-gray-800">
+                                                <i class="fa fa-shopping-cart text-primary me-2"></i>
+                                                Fabric & Services
+                                            </h5>
+                                            <div class="header-line"></div>
+                                        </div>
+
+                                        <ProductSelection v-if="currentItems[activeCategoryTab]"
+                                            v-model="currentItems[activeCategoryTab]" :products="products"
+                                            :colors="colors" :isLoading="isAddingItem[activeCategoryTab]"
+                                            :isEditing="!!editingItemIds[activeCategoryTab]"
+                                            @add-item="(item) => handleAddItem(item, activeCategoryTab)"
+                                            @calculate-amount="(item) => calculateItemAmount(item, activeCategoryTab)"
+                                            @clear="handleItemClear(activeCategoryTab)" />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+
+                <!-- Summary and Work Orders -->
+                <div class="row g-3">
+                    <!-- Summary Table -->
+                    <div class="col-lg-3">
+                        <SummaryTable :items="form.items" />
+                    </div>
+
+                    <!-- Work Orders Preview -->
+                    <div class="col-lg-9">
+                        <WorkOrdersPreview :items="form.items" @edit="handleEditItem" @remove="handleRemoveItem" />
+                    </div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="mt-4">
+                    <ActionButtons :isLoading="isSubmitting" :canSubmit="canSubmit" @clear="handleClear"
+                        @create-order="handleCreateOrder" @payment="handlePayment" />
+                </div>
             </div>
-
-
-            <!-- Summary and Work Orders -->
-            <!-- Summary and Work Orders -->
-            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
-                <!-- Summary Table -->
-                <SummaryTable class="lg:col-span-3" :items="form.items" />
-
-                <!-- Work Orders Preview -->
-                <WorkOrdersPreview class="lg:col-span-9" :items="form.items" @edit="handleEditItem"
-                    @remove="handleRemoveItem" />
-            </div>
-
-            <!-- Action Buttons -->
-            <ActionButtons :isLoading="isSubmitting" :canSubmit="canSubmit" @clear="handleClear"
-                @create-order="handleCreateOrder" @payment="handlePayment" />
         </div>
 
         <!-- Sale Confirmation Modal replaces individual PaymentModal -->
 
         <!-- Customer Modal -->
-        <CustomerModal v-if="showCustomerModal" :show="showCustomerModal" 
-            :customer-types="customerTypes" :countries="countries"
-            @close="showCustomerModal = false"
-            @customerSaved="handleCustomerAdded" @customerSelected="handleCustomerSelected" />
+        <CustomerModal v-if="showCustomerModal" :show="showCustomerModal" :customer-types="customerTypes"
+            :countries="countries" @close="showCustomerModal = false" @customerSaved="handleCustomerAdded"
+            @customerSelected="handleCustomerSelected" />
 
         <!-- Sale Confirmation Modal -->
         <SaleConfirmationModal :show="showConfirmationModal" :sale-data="confirmationData" :loading="isSubmitting"
             :payment-method="selectedPaymentMethod" :send-to-whatsapp="sendToWhatsapp"
-            @update:paymentMethod="val => selectedPaymentMethod = val" @update:sendToWhatsapp="val => sendToWhatsapp = val"
-            @openCustomPayment="showCustomPaymentModal = true" @close="showConfirmationModal = false"
-            @submit="processSubmitOrder" />
+            @update:paymentMethod="val => selectedPaymentMethod = val"
+            @update:sendToWhatsapp="val => sendToWhatsapp = val" @openCustomPayment="showCustomPaymentModal = true"
+            @close="showConfirmationModal = false" @submit="processSubmitOrder" />
 
         <!-- Custom Payment Modal -->
-        <CustomPaymentModal :show="showCustomPaymentModal" :total-amount="grandTotal"
-            :payment-methods="paymentMethods" :initial-payments="form.payments"
-            @close="showCustomPaymentModal = false" @save="handleCustomPaymentSave" />
+        <CustomPaymentModal :show="showCustomPaymentModal" :total-amount="grandTotal" :payment-methods="paymentMethods"
+            :initial-payments="form.payments" @close="showCustomPaymentModal = false" @save="handleCustomPaymentSave" />
     </div>
 </template>
 
@@ -96,7 +143,8 @@ import {
     onMounted
 } from 'vue'
 import {
-    router
+    router,
+    Link
 } from '@inertiajs/vue3'
 import {
     useToast
@@ -340,7 +388,7 @@ const handleAddItem = async (itemData, categoryId) => {
             // Sync measurements to all items of the same category AND model
             form.value.items.forEach((it, idx) => {
                 it.item_no = idx + 1
-                if (it.tailoring_category_id === categoryId && 
+                if (it.tailoring_category_id === categoryId &&
                     it.tailoring_category_model_id === filteredMeasurements.tailoring_category_model_id) {
                     // Update measurement fields ONLY
                     Object.assign(it, filteredMeasurements)
@@ -416,8 +464,8 @@ const handleItemClear = (categoryId) => {
 const handleRemoveItem = (item) => {
     if (confirm('Are you sure you want to remove this item?')) {
         // Find index of the item
-        const index = form.value.items.findIndex(i => 
-            (i.id && i.id === item.id) || 
+        const index = form.value.items.findIndex(i =>
+            (i.id && i.id === item.id) ||
             (i._temp_id && i._temp_id === item._temp_id)
         )
 
@@ -466,7 +514,7 @@ const processSubmitOrder = async () => {
 
         // Add payment data to form before submission
         let finalPayments = [...form.value.payments]
-        
+
         // If Cash (1) or Card (2) is selected and no payments are manually added,
         // we should create an automatic payment for the full amount
         if ((selectedPaymentMethod.value === 1 || selectedPaymentMethod.value === 2) && finalPayments.length === 0) {
@@ -575,3 +623,132 @@ onMounted(() => {
     loadMeasurementOptions()
 })
 </script>
+
+<style scoped>
+
+.quick-action-link {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    border-radius: 10px;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 0.9rem;
+    transition: all 0.3s ease;
+    border: 1px solid rgba(0, 0, 0, 0.05);
+    background: white;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
+}
+
+.quick-action-link:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    background-color: #f8fafc;
+}
+
+.quick-action-link.primary {
+    color: #3b82f6;
+}
+
+.quick-action-link.success {
+    color: #10b981;
+}
+
+.premium-tabs {
+    border-bottom: none;
+    display: flex;
+    gap: 10px;
+}
+
+.premium-tabs .nav-link {
+    border: none;
+    padding: 8px 16px;
+    border-radius: 10px;
+    color: #64748b;
+    font-weight: 600;
+    font-size: 0.9rem;
+    background-color: #f1f5f9;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+}
+
+.premium-tabs .nav-link:hover {
+    background-color: #e2e8f0;
+    color: #1e293b;
+}
+
+.premium-tabs .nav-link.active {
+    background-color: #ffffff;
+    color: #3b82f6;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.tabs-scroll-container {
+    overflow-x: auto;
+    padding-bottom: 3px;
+    -webkit-overflow-scrolling: touch;
+}
+
+.tabs-scroll-container::-webkit-scrollbar {
+    height: 3px;
+}
+
+.tabs-scroll-container::-webkit-scrollbar-thumb {
+    background: #e2e8f0;
+    border-radius: 4px;
+}
+
+.premium-content-card {
+    border-radius: 15px;
+    border: 1px solid rgba(0, 0, 0, 0.05) !important;
+}
+
+.section-header {
+    position: relative;
+    padding-bottom: 3px;
+}
+
+.header-line {
+    width: 40px;
+    height: 3px;
+    background: #3b82f6;
+    border-radius: 2px;
+    margin-top: 4px;
+}
+
+.animate-fade-in {
+    animation: fadeIn 0.4s ease-out;
+}
+
+.content-fade-slide {
+    animation: fadeSlideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes fadeSlideUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.text-gray-800 {
+    color: #1e293b;
+}
+</style>

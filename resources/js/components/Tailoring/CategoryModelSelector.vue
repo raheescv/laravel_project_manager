@@ -1,31 +1,33 @@
 <template>
-    <div class="bg-white rounded-lg shadow-sm p-4">
-        <h3 class="text-md font-semibold text-gray-800 mb-4">Select Category & Model</h3>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div class="form-group">
-                <label class="block text-sm font-medium text-gray-700 mb-1">Category</label>
-                <select v-model="selectedCategoryId" @change="handleCategoryChange"
-                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                    <option value="">Select Category</option>
-                    <option v-for="category in categories" :key="category.id" :value="category.id">
-                        {{ category.name }}
-                    </option>
-                </select>
-            </div>
-            <div class="form-group">
-                <label class="block text-sm font-medium text-gray-700 mb-1">Model</label>
-                <div class="flex gap-2">
-                    <select v-model="selectedModelId" @change="handleModelChange" :disabled="!selectedCategoryId"
-                        class="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100">
-                        <option value="">Select Model</option>
-                        <option v-for="model in availableModels" :key="model.id" :value="model.id">
-                            {{ model.name }}
+    <div class="card shadow-sm border-0">
+        <div class="card-body p-3">
+            <h6 class="fw-bold text-dark mb-3">Select Category & Model</h6>
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label class="form-label small fw-bold text-muted text-uppercase mb-1 d-block">Category</label>
+                    <select v-model="selectedCategoryId" @change="handleCategoryChange"
+                        class="form-select form-select-sm">
+                        <option :value="null">Select Category</option>
+                        <option v-for="category in categories" :key="category.id" :value="category.id">
+                            {{ category.name }}
                         </option>
                     </select>
-                    <button type="button" @click="addModel" :disabled="!selectedCategoryId"
-                        class="px-3 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 font-bold disabled:opacity-50 disabled:cursor-not-allowed">
-                        +
-                    </button>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label small fw-bold text-muted text-uppercase mb-1 d-block">Model</label>
+                    <div class="input-group input-group-sm">
+                        <select v-model="selectedModelId" @change="handleModelChange" :disabled="!selectedCategoryId"
+                            class="form-select">
+                            <option :value="null">Select Model</option>
+                            <option v-for="model in availableModels" :key="model.id" :value="model.id">
+                                {{ model.name }}
+                            </option>
+                        </select>
+                        <button type="button" @click="addModel" :disabled="!selectedCategoryId"
+                            class="btn btn-primary fw-bold">
+                            <i class="fa fa-plus"></i>
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>

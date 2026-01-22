@@ -49,7 +49,7 @@ class CustomerController extends Controller
 
     public function get(Request $request)
     {
-        $search = $request->query('search');
+        $search = trim($request->query('mobile'));
         $customers = Account::customer()
             ->where(function ($query) use ($search) {
                 $query->where('name', 'like', '%'.$search.'%')
@@ -61,6 +61,7 @@ class CustomerController extends Controller
 
         return response()->json([
             'success' => true,
+            'search' => $search,
             'customers' => $customers,
         ]);
     }

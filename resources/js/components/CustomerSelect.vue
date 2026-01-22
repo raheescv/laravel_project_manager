@@ -54,13 +54,27 @@ const initTomSelect = () => {
         },
         render: {
             option: function(data, escape) {
-                return `<div>
-                    <div class="font-medium">${escape(data.name)}</div>
-                    <div class="text-gray-400 text-xs">${escape(data.mobile || '')} ${data.email ? '• ' + escape(data.email) : ''}</div>
+                const query = this.lastQuery || '';
+                const highlightText = (text) => {
+                    if (!text) return '';
+                    if (!query) return escape(text);
+                    const re = new RegExp(`(${query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
+                    return escape(text).replace(re, '<span class="ts-highlight">$1</span>');
+                };
+
+                return `<div class="py-1">
+                    <div class="fw-medium text-dark line-height-tight text-truncate">${highlightText(data.name)}</div>
+                    <div class="text-muted small mt-0 opacity-75 d-flex align-items-center">
+                        <span class="text-truncate">${highlightText(data.mobile || '')}</span>
+                        ${data.email ? `<span class="mx-1">•</span><span class="text-truncate">${highlightText(data.email)}</span>` : ''}
+                    </div>
                 </div>`;
             },
             item: function(data, escape) {
-                return `<div>${escape(data.name)} ${data.mobile ? '<span class="text-gray-500 ml-1">(' + escape(data.mobile) + ')</span>' : ''}</div>`;
+                return `<div class="d-flex align-items-center gap-1">
+                    <span class="fw-medium">${escape(data.name)}</span>
+                    <span class="text-muted small opacity-50">(${escape(data.mobile || 'No mobile')})</span>
+                </div>`;
             }
         },
         onChange: (value) => {
@@ -126,10 +140,3 @@ watch(() => props.initialData, (newData) => {
 }, { deep: true })
 </script>
 
-<style>
-/* Base TomSelect overrides can go here or in a global file */
-.ts-wrapper .ts-control {
-    border-radius: 0.5rem;
-    padding: 0.5rem 0.75rem;
-}
-</style>
