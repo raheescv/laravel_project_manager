@@ -1,124 +1,115 @@
 <template>
-    <div v-if="show" class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-        <div class="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-            <div class="p-6 border-b border-gray-200">
-                <div class="flex justify-between items-center">
-                    <h2 class="text-xl font-bold text-gray-800">Payment Management</h2>
-                    <button 
-                        @click="$emit('close')"
-                        class="text-gray-400 hover:text-gray-600"
-                    >
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                        </svg>
-                    </button>
-                </div>
-            </div>
+    <div v-if="show" class="modal show d-block" tabindex="-1" role="dialog">
+        <!-- Background overlay -->
+        <div class="modal-backdrop show" @click="$emit('close')"></div>
 
-            <div class="p-6 space-y-6">
-                <!-- Order Summary -->
-                <div class="bg-gray-50 rounded-lg p-4">
-                    <div class="grid grid-cols-2 gap-4">
-                        <div>
-                            <span class="text-sm text-gray-600">Grand Total:</span>
-                            <span class="text-lg font-bold text-gray-800 ml-2">{{ formatCurrency(order.grand_total || 0) }}</span>
-                        </div>
-                        <div>
-                            <span class="text-sm text-gray-600">Paid:</span>
-                            <span class="text-lg font-bold text-green-600 ml-2">{{ formatCurrency(order.paid || 0) }}</span>
-                        </div>
-                        <div class="col-span-2">
-                            <span class="text-sm text-gray-600">Balance:</span>
-                            <span class="text-lg font-bold text-red-600 ml-2">{{ formatCurrency(order.balance || 0) }}</span>
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content shadow-lg border-0">
+                <!-- Header -->
+                <div class="modal-header bg-primary text-white py-2">
+                    <h5 class="modal-title h6 fw-bold">Payment Management</h5>
+                    <button type="button" class="btn-close btn-close-white" @click="$emit('close')" aria-label="Close"></button>
+                </div>
+
+                <!-- Body -->
+                <div class="modal-body p-4">
+                    <!-- Order Summary -->
+                    <div class="alert alert-light border shadow-sm p-3 mb-4">
+                        <div class="row g-3 text-center">
+                            <div class="col-md-4">
+                                <div class="small fw-bold text-uppercase text-muted mb-1">Grand Total</div>
+                                <div class="h5 fw-bold text-dark mb-0">{{ formatCurrency(order.grand_total || 0) }}</div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="small fw-bold text-uppercase text-muted mb-1">Total Paid</div>
+                                <div class="h5 fw-bold text-success mb-0">{{ formatCurrency(order.paid || 0) }}</div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="small fw-bold text-uppercase text-muted mb-1">Balance Due</div>
+                                <div class="h5 fw-bold text-danger mb-0">{{ formatCurrency(order.balance || 0) }}</div>
+                            </div>
                         </div>
                     </div>
-                </div>
 
-                <!-- Add Payment Form -->
-                <div class="border border-gray-200 rounded-lg p-4">
-                    <h3 class="text-lg font-semibold text-gray-800 mb-4">Add Payment</h3>
-                    <div class="grid grid-cols-3 gap-4">
-                        <div class="form-group">
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Payment Method</label>
-                            <select 
-                                v-model="paymentForm.payment_method_id"
-                                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                            >
-                                <option value="">Select Method</option>
-                                <option v-for="method in paymentMethods" :key="method.id" :value="method.id">
-                                    {{ method.name }}
-                                </option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Amount</label>
-                            <input 
-                                v-model.number="paymentForm.amount"
-                                type="number"
-                                step="0.01"
-                                min="0.01"
-                                :max="order.balance || order.grand_total"
-                                placeholder="Enter amount..."
-                                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                            />
-                        </div>
-                        <div class="form-group">
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Date</label>
-                            <input 
-                                v-model="paymentForm.date"
-                                type="date"
-                                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                            />
-                        </div>
-                    </div>
-                    <button 
-                        type="button"
-                        @click="handleAddPayment"
-                        class="mt-4 px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 font-semibold"
-                    >
-                        Add Payment
-                    </button>
-                </div>
-
-                <!-- Payments List -->
-                <div>
-                    <h3 class="text-lg font-semibold text-gray-800 mb-4">Payment History</h3>
-                    <div class="overflow-x-auto">
-                        <table class="w-full">
-                            <thead>
-                                <tr class="bg-gray-100">
-                                    <th class="px-4 py-2 text-left text-sm font-semibold text-gray-700">Date</th>
-                                    <th class="px-4 py-2 text-left text-sm font-semibold text-gray-700">Method</th>
-                                    <th class="px-4 py-2 text-right text-sm font-semibold text-gray-700">Amount</th>
-                                    <th class="px-4 py-2 text-center text-sm font-semibold text-gray-700">Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr 
-                                    v-for="payment in payments" 
-                                    :key="payment.id"
-                                    class="border-b border-gray-200"
-                                >
-                                    <td class="px-4 py-2 text-sm">{{ payment.date }}</td>
-                                    <td class="px-4 py-2 text-sm">{{ payment.payment_method?.name || payment.name }}</td>
-                                    <td class="px-4 py-2 text-sm text-right font-medium">{{ formatCurrency(payment.amount) }}</td>
-                                    <td class="px-4 py-2 text-center">
-                                        <button 
-                                            @click="handleDeletePayment(payment.id)"
-                                            class="text-red-600 hover:text-red-800 text-sm"
-                                        >
-                                            Delete
+                    <!-- Add Payment Form -->
+                    <div class="card border-0 shadow-sm mb-4">
+                        <div class="card-body p-3">
+                            <h6 class="fw-bold mb-3 d-flex align-items-center gap-2">
+                                <i class="fa fa-plus-circle text-success"></i>
+                                Add Payment
+                            </h6>
+                            <div class="row g-3 align-items-end">
+                                <div class="col-md-4">
+                                    <label class="form-label small text-muted fw-bold">Payment Method</label>
+                                    <select v-model="paymentForm.payment_method_id" class="form-select">
+                                        <option value="">Select Method</option>
+                                        <option v-for="method in paymentMethods" :key="method.id" :value="method.id">
+                                            {{ method.name }}
+                                        </option>
+                                    </select>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label small text-muted fw-bold">Amount</label>
+                                    <input v-model.number="paymentForm.amount" type="number" step="0.01" min="0.01"
+                                        :max="order.balance || order.grand_total" placeholder="0.00" class="form-control" />
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label small text-muted fw-bold">Date</label>
+                                    <div class="input-group">
+                                        <input v-model="paymentForm.date" type="date" class="form-control" />
+                                        <button type="button" @click="handleAddPayment" class="btn btn-primary fw-bold">
+                                            Add
                                         </button>
-                                    </td>
-                                </tr>
-                                <tr v-if="payments.length === 0">
-                                    <td colspan="4" class="px-4 py-8 text-center text-gray-500">
-                                        No payments added yet
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
+
+                    <!-- Payments List -->
+                    <div class="mb-0">
+                        <h6 class="fw-bold mb-2 d-flex align-items-center gap-2">
+                             <i class="fa fa-history text-primary"></i>
+                             Payment History
+                        </h6>
+                        <div class="table-responsive rounded shadow-sm border">
+                            <table class="table table-sm table-striped table-hover mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th class="ps-3 py-2 small fw-bold">Date</th>
+                                        <th class="py-2 small fw-bold">Method</th>
+                                        <th class="py-2 small fw-bold text-end">Amount</th>
+                                        <th class="py-2 small fw-bold text-center">Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr v-for="payment in payments" :key="payment.id" class="align-middle">
+                                        <td class="ps-3 py-2 small">{{ payment.date }}</td>
+                                        <td class="py-2 small">{{ payment.payment_method?.name || payment.name }}</td>
+                                        <td class="py-2 small text-end fw-bold">{{ formatCurrency(payment.amount) }}</td>
+                                        <td class="py-2 text-center">
+                                            <button @click="handleDeletePayment(payment.id)"
+                                                class="btn btn-link text-danger p-0" title="Delete">
+                                                <i class="fa fa-trash"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    <tr v-if="payments.length === 0">
+                                        <td colspan="4" class="text-center py-4 text-muted small italic">
+                                            No payments added yet
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Footer -->
+                <div class="modal-footer bg-light border-top">
+                    <button type="button" @click="$emit('close')" class="btn btn-outline-secondary px-4 fw-bold">
+                        <i class="fa fa-times me-2"></i>Close
+                    </button>
                 </div>
             </div>
         </div>

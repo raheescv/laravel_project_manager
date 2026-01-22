@@ -1,196 +1,176 @@
 <template>
-    <div class="space-y-4">
+    <div class="d-flex flex-column gap-3">
         <!-- Header with Select All -->
-        <div class="flex items-center justify-between bg-white p-4 rounded-lg shadow-sm border border-gray-200">
-            <div class="flex items-center gap-3">
-                <div class="p-2 bg-indigo-50 rounded-lg">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-indigo-600" fill="none"
-                        viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
-                    </svg>
+        <div class="card shadow-sm border-0">
+            <div class="card-body p-3 d-flex align-items-center justify-content-between">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="p-2 bg-primary bg-opacity-10 rounded">
+                        <i class="fa fa-tasks text-primary"></i>
+                    </div>
+                    <div>
+                        <h6 class="fw-bold text-dark mb-0">Job Completion Items</h6>
+                        <small class="text-muted">{{ items.length }} items total</small>
+                    </div>
                 </div>
-                <div>
-                    <h3 class="font-bold text-gray-800">Job Completion Items</h3>
-                    <p class="text-xs text-gray-500">{{ items.length }} items total</p>
+
+                <div class="form-check form-switch">
+                    <input class="form-check-input" type="checkbox" id="selectAllItems" @change="handleSelectAll" :checked="allSelected">
+                    <label class="form-check-label small fw-bold text-muted cursor-pointer" for="selectAllItems">
+                        Select All for Completion
+                    </label>
                 </div>
             </div>
-
-            <label class="flex items-center gap-2 cursor-pointer group">
-                <span class="text-sm font-medium text-gray-600 group-hover:text-indigo-600 transition-colors">Select All for Completion</span>
-                <input type="checkbox" @change="handleSelectAll" :checked="allSelected" 
-                    class="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500" />
-            </label>
         </div>
 
         <!-- Empty State -->
-        <div v-if="items.length === 0"
-            class="flex flex-col items-center justify-center p-12 bg-white rounded-lg border-2 border-dashed border-gray-200">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 mb-4 text-gray-300" fill="none" viewBox="0 0 24 24"
-                stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                    d="M9.172 9.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-            <p class="text-lg font-medium text-gray-500">No items found</p>
-            <p class="text-sm text-gray-400">Search for an order to see completion items</p>
+        <div v-if="items.length === 0" class="card shadow-sm border-2 border-dashed py-5 text-center text-muted">
+            <div class="card-body">
+                <i class="fa fa-search fs-1 mb-3 opacity-25"></i>
+                <h5 class="fw-bold">No items found</h5>
+                <p class="small">Search for an order to see completion items</p>
+            </div>
         </div>
 
         <!-- Table -->
-        <div v-else class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-            <div class="overflow-x-auto">
-                <table class="min-w-full divide-y divide-gray-200">
-                    <thead class="bg-gray-50">
-                        <tr>
-                            <th scope="col" class="px-3 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider w-12">
-                                <input type="checkbox" @change="handleSelectAll" :checked="allSelected"
-                                    class="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500" />
+        <div v-else class="card shadow-sm border-0 overflow-hidden">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle border-top mb-0">
+                    <thead class="table-light">
+                        <tr class="x-small fw-bold text-uppercase text-muted">
+                            <th class="ps-3 py-3" style="width: 50px;">
+                                <input class="form-check-input mt-0" type="checkbox" @change="handleSelectAll" :checked="allSelected">
                             </th>
-                            <th scope="col" class="px-3 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
-                                Item Details
-                            </th>
-                            <th scope="col" class="px-3 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
-                                Tailor Assignment
-                            </th>
-                            <th scope="col" class="px-3 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
-                                Material Tracking
-                            </th>
-                            <th scope="col" class="px-3 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
-                                Completion Date
-                            </th>
-                            <th scope="col" class="px-3 py-3 text-center text-xs font-bold text-gray-700 uppercase tracking-wider w-32">
-                                Actions
-                            </th>
+                            <th class="py-3">Item Details</th>
+                            <th class="py-3">Tailor Assignment</th>
+                            <th class="py-3">Material Tracking</th>
+                            <th class="py-3">Completion Date</th>
+                            <th class="py-3 text-center" style="width: 140px;">Actions</th>
                         </tr>
                     </thead>
-                    <tbody class="bg-white divide-y divide-gray-200">
+                    <tbody>
                         <tr v-for="item in items" :key="item.id"
-                            class="hover:bg-gray-50 transition-colors"
-                            :class="{ 'bg-indigo-50/30': item.is_selected_for_completion }">
+                            :class="{ 'table-primary': item.is_selected_for_completion }">
                             <!-- Checkbox Column -->
-                            <td class="px-3 py-4 whitespace-nowrap">
-                                <input :checked="item.is_selected_for_completion" @change="toggleItemCompletion(item, $event)"
-                                    type="checkbox"
-                                    class="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500" />
+                            <td class="ps-3">
+                                <input class="form-check-input mt-0" type="checkbox"
+                                    :checked="item.is_selected_for_completion" @change="toggleItemCompletion(item, $event)">
                             </td>
 
                             <!-- Item Details Column -->
-                            <td class="px-3 py-4">
-                                <div class="space-y-2">
-                                    <div class="flex items-center gap-2">
-                                        <span class="px-2 py-0.5 bg-indigo-100 text-indigo-700 text-xs font-bold rounded">
-                                            #{{ item.item_no }}
-                                        </span>
-                                        <span class="text-xs text-gray-500 uppercase font-semibold">{{ item.category?.name }}</span>
+                            <td class="py-3">
+                                <div class="d-flex flex-column gap-1">
+                                    <div class="d-flex align-items-center gap-2">
+                                        <span class="badge bg-primary fw-bold">#{{ item.item_no }}</span>
+                                        <span class="small fw-bold text-secondary text-uppercase">{{ item.category?.name }}</span>
                                     </div>
-                                    <div class="font-semibold text-gray-900">{{ item.product_name }}</div>
-                                    <div class="grid grid-cols-2 gap-2 text-xs">
-                                        <div>
-                                            <span class="text-gray-500">Qty:</span>
-                                            <span class="font-semibold ml-1">{{ item.quantity }}</span>
+                                    <div class="fw-bold text-dark">{{ item.product_name }}</div>
+                                    <div class="row g-2 x-small text-muted">
+                                        <div class="col-6">
+                                            Qty: <span class="fw-bold text-dark">{{ item.quantity }}</span>
                                         </div>
-                                        <div>
-                                            <span class="text-gray-500">Amount:</span>
-                                            <span class="font-semibold text-indigo-600 ml-1">{{ formatCurrency(item.amount) }}</span>
+                                        <div class="col-6">
+                                            Amount: <span class="fw-bold text-primary">{{ formatCurrency(item.amount) }}</span>
                                         </div>
-                                        <div>
-                                            <span class="text-gray-500">Model:</span>
-                                            <span class="font-semibold ml-1">{{ item.categoryModel?.name || '-' }}</span>
+                                        <div class="col-6 text-truncate">
+                                            Model: <span class="fw-bold text-dark">{{ item.categoryModel?.name || '-' }}</span>
                                         </div>
-                                        <div>
-                                            <span class="text-gray-500">Length:</span>
-                                            <span class="font-semibold ml-1">{{ item.length || '-' }}</span>
+                                        <div class="col-6">
+                                            Length: <span class="fw-bold text-dark">{{ item.length || '-' }}</span>
                                         </div>
                                     </div>
                                     <button @click="viewMeasurements(item)"
-                                        class="text-xs text-amber-600 hover:text-amber-700 font-semibold flex items-center gap-1">
-                                        <i class="fa fa-eye"></i> View Measurements
+                                        class="btn btn-link btn-sm text-warning p-0 text-start text-decoration-none x-small fw-bold">
+                                        <i class="fa fa-eye me-1"></i> View Measurements
                                     </button>
                                 </div>
                             </td>
 
                             <!-- Tailor Assignment Column -->
-                            <td class="px-3 py-4">
-                                <div class="space-y-2">
+                            <td class="py-3">
+                                <div class="d-flex flex-column gap-2" style="min-width: 180px;">
                                     <div>
-                                        <label class="block text-xs text-gray-500 font-medium mb-1">Assign Worker</label>
+                                        <label class="form-label x-small fw-bold text-muted text-uppercase mb-1">Assign Worker</label>
                                         <SearchableSelect 
                                             :modelValue="item.tailor_id" 
                                             @update:modelValue="item.tailor_id = $event"
                                             :options="tailors"
                                             placeholder="Select tailor..." 
-                                            class="w-full" />
+                                            class="form-select-sm" />
                                     </div>
                                     <div>
-                                        <label class="block text-xs text-gray-500 font-medium mb-1">Rate/Item</label>
-                                        <input v-model.number="item.tailor_commission" @input="calculateCommission(item)"
-                                            type="number" step="0.01" min="0"
-                                            class="w-full px-2 py-1.5 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" />
+                                        <label class="form-label x-small fw-bold text-muted text-uppercase mb-1">Rate/Item</label>
+                                        <div class="input-group input-group-sm">
+                                            <span class="input-group-text bg-light border-end-0">₹</span>
+                                            <input v-model.number="item.tailor_commission" @input="calculateCommission(item)"
+                                                type="number" step="0.01" min="0" class="form-control border-start-0" />
+                                        </div>
                                     </div>
-                                    <div class="text-xs">
-                                        <span class="text-gray-500">Total Commission:</span>
-                                        <span class="font-bold text-indigo-600 ml-1">{{ formatCurrency(item.tailor_total_commission) }}</span>
+                                    <div class="x-small">
+                                        <span class="text-muted">Total:</span>
+                                        <span class="fw-bold text-primary ms-1">₹{{ formatCurrency(item.tailor_total_commission) }}</span>
                                     </div>
                                 </div>
                             </td>
 
                             <!-- Material Tracking Column -->
-                            <td class="px-3 py-4">
-                                <div class="space-y-2">
-                                    <div class="flex items-center justify-between mb-1">
-                                        <span class="text-xs text-gray-500 font-medium">Stock Balance:</span>
-                                        <div class="flex items-center gap-2">
-                                            <span :class="item.stock_balance < 0 ? 'text-rose-600' : 'text-emerald-600'"
-                                                class="text-sm font-bold">
+                            <td class="py-3">
+                                <div class="d-flex flex-column gap-2" style="min-width: 200px;">
+                                    <div class="d-flex align-items-center justify-content-between mb-0">
+                                        <span class="x-small fw-bold text-muted text-uppercase">Stock Balance:</span>
+                                        <div class="d-flex align-items-center gap-2">
+                                            <span :class="item.stock_balance < 0 ? 'text-danger' : 'text-success'"
+                                                class="small fw-bold">
                                                 {{ (item.stock_balance || 0).toFixed(3) }}
                                             </span>
                                             <button @click="refreshStock(item)"
-                                                class="p-1 hover:bg-gray-100 rounded transition-colors"
+                                                class="btn btn-link btn-sm p-0 text-muted"
                                                 title="Refresh Stock">
-                                                <i class="fa fa-refresh text-xs text-gray-500"></i>
+                                                <i class="fa fa-refresh x-small"></i>
                                             </button>
                                         </div>
                                     </div>
                                     <div>
-                                        <label class="block text-xs text-gray-500 font-medium mb-1">In Stock</label>
-                                        <div class="px-2 py-1.5 bg-gray-50 border border-gray-200 rounded text-sm font-semibold text-gray-700">
-                                            {{ (item.product?.stock_quantity || 0).toFixed(3) }}
+                                        <div class="input-group input-group-sm">
+                                            <span class="input-group-text bg-light border-end-0 x-small fw-bold">IN STOCK</span>
+                                            <input :value="(item.product?.stock_quantity || 0).toFixed(3)" readonly
+                                                class="form-control bg-light border-start-0 text-center fw-bold" />
                                         </div>
                                     </div>
-                                    <div class="grid grid-cols-2 gap-2">
-                                        <div>
-                                            <label class="block text-xs text-gray-500 font-medium mb-1">Used Qty</label>
+                                    <div class="row g-2">
+                                        <div class="col-6">
+                                            <label class="form-label x-small fw-bold text-muted text-uppercase mb-1">Used</label>
                                             <input v-model.number="item.used_quantity" @input="calculateStockBalance(item)"
-                                                type="number" step="0.001" min="0"
-                                                class="w-full px-2 py-1.5 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" />
+                                                type="number" step="0.001" min="0" class="form-control form-control-sm" />
                                         </div>
-                                        <div>
-                                            <label class="block text-xs text-gray-500 font-medium mb-1">Wastage</label>
+                                        <div class="col-6">
+                                            <label class="form-label x-small fw-bold text-muted text-uppercase mb-1">Waste</label>
                                             <input v-model.number="item.wastage" @input="calculateStockBalance(item)"
-                                                type="number" step="0.001" min="0"
-                                                class="w-full px-2 py-1.5 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" />
+                                                type="number" step="0.001" min="0" class="form-control form-control-sm" />
                                         </div>
                                     </div>
                                 </div>
                             </td>
 
                             <!-- Completion Date Column -->
-                            <td class="px-3 py-4">
-                                <input v-model="item.item_completion_date" type="date"
-                                    class="w-full px-2 py-1.5 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" />
+                            <td class="py-3">
+                                <div style="min-width: 130px;">
+                                    <label class="form-label x-small fw-bold text-muted text-uppercase mb-1">Date</label>
+                                    <input v-model="item.item_completion_date" type="date" class="form-control form-control-sm" />
+                                </div>
                             </td>
 
                             <!-- Actions Column -->
-                            <td class="px-3 py-4 text-center">
-                                <div class="flex flex-col items-center gap-2">
+                            <td class="py-3 text-center">
+                                <div class="d-grid gap-2">
                                     <button @click="saveItem(item)"
-                                        class="w-full px-3 py-1.5 bg-indigo-600 text-white text-xs font-semibold rounded hover:bg-indigo-700 transition-colors flex items-center justify-center gap-1">
-                                        <i class="fa fa-save"></i>
-                                        Save
+                                        class="btn btn-primary btn-sm fw-bold shadow-sm">
+                                        <i class="fa fa-save me-1"></i> Save
                                     </button>
-                                    <span v-if="item.is_selected_for_completion"
-                                        class="px-2 py-0.5 bg-emerald-100 text-emerald-700 text-xs font-semibold rounded-full">
-                                        ✓ Ready
-                                    </span>
+                                    <div v-if="item.is_selected_for_completion">
+                                        <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 w-100 x-small fw-bold">
+                                            <i class="fa fa-check-circle me-1"></i> Ready
+                                        </span>
+                                    </div>
                                 </div>
                             </td>
                         </tr>

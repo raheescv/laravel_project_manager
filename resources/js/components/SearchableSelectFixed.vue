@@ -1,58 +1,58 @@
 <template>
-    <div class="relative" ref="dropdown">
-        <div class="relative">
+    <div class="position-relative" ref="dropdown">
+        <div class="position-relative">
             <input ref="searchInput" v-model="displayValue" @click="openDropdown" @focus="openDropdown"
                 @keydown.arrow-down.prevent="navigateDown" @keydown.arrow-up.prevent="navigateUp"
                 @keydown.enter.prevent="selectHighlighted" @keydown.escape="hideDropdown" type="text"
-                :class="inputClass" :placeholder="placeholder" autocomplete="off" readonly />
-            <div class="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none">
-                <svg class="w-4 h-4 text-gray-400 transition-transform duration-200"
-                    :class="{ 'rotate-180': showDropdown }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-                </svg>
+                :class="inputClass" :placeholder="placeholder" autocomplete="off" readonly style="cursor: pointer;" />
+            <div class="position-absolute top-50 end-0 translate-middle-y pe-2 pointer-events-none">
+                <i class="fa fa-chevron-down small text-muted transition-transform"
+                    :class="{ 'rotate-180': showDropdown }"></i>
             </div>
         </div>
 
-        <!-- Teleport dropdown to body to escape overflow constraints -->
+        <!-- Teleport dropdown to body -->
         <Teleport to="body">
-            <div v-if="showDropdown" ref="dropdownMenu"
-                :style="{ ...dropdownStyle, maxHeight: `${Math.min(500, (props.visibleItems * 40 + 60))}px` }"
-                class="fixed z-[9999] bg-white border border-gray-200 rounded-lg shadow-xl overflow-hidden searchable-dropdown-portal">
-                <div class="p-2 border-b border-gray-100">
+            <div v-if="showDropdown" ref="dropdownMenu" :style="{ ...dropdownStyle, zIndex: 9999 }"
+                class="position-fixed bg-white border rounded shadow-lg overflow-hidden searchable-dropdown-portal d-flex flex-column">
+                <div class="p-2 border-bottom bg-light">
                     <input ref="filterInput" v-model="searchTerm" @input="filterOptions"
                         @keydown.arrow-down.prevent="navigateDown" @keydown.arrow-up.prevent="navigateUp"
                         @keydown.enter.prevent="selectHighlighted" @keydown.escape="hideDropdown" type="text"
-                        class="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                        :placeholder="filterPlaceholder" autocomplete="off" />
+                        class="form-control form-control-sm" :placeholder="filterPlaceholder" autocomplete="off" />
                 </div>
-                <div class="overflow-auto custom-scrollbar" :style="{ maxHeight: `${props.visibleItems * 40}px` }">
-                    <div v-if="filteredOptions.length === 0 && !searchTerm" class="px-3 py-2 text-sm text-gray-500">
+                <div class="flex-grow-1 overflow-auto custom-scrollbar">
+                    <div v-if="filteredOptions.length === 0 && !searchTerm" class="px-3 py-2 small text-muted">
                         No options available
                     </div>
-                    <div v-else-if="filteredOptions.length === 0 && searchTerm && searchTerm.length >= 2" class="px-3 py-2 text-sm text-gray-500">
-                        <div class="flex items-center justify-center">
-                            <div class="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-500 mr-2"></div>
-                            <span>Searching...</span>
-                        </div>
+                    <div v-else-if="filteredOptions.length === 0 && (searchTerm && searchTerm.length >= 2 || loading)"
+                        class="px-3 py-2 small text-muted text-center">
+                        <div class="spinner-border spinner-border-sm text-primary me-2" role="status"></div>
+                        <span>Searching...</span>
                     </div>
-                    <div v-else-if="filteredOptions.length === 0 && searchTerm" class="px-3 py-2 text-sm text-gray-500">
+                    <div v-else-if="filteredOptions.length === 0 && searchTerm" class="px-3 py-2 small text-muted">
                         No results found for "{{ searchTerm }}"
                     </div>
                     <div v-for="(option, index) in filteredOptions" :key="option.value" @click="selectOption(option)"
                         :class="[
-                            'px-3 py-2 cursor-pointer text-sm border-b border-gray-100 last:border-b-0 searchable-dropdown-item transition-colors duration-150',
-                            index === highlightedIndex ? 'bg-blue-50 text-blue-700 highlighted' : 'hover:bg-gray-50'
+                            'px-3 py-2 cursor-pointer border-bottom transition-colors searchable-dropdown-item d-flex justify-content-between align-items-center',
+                            index === highlightedIndex ? 'bg-dark text-dark highlighted' : (option.value == modelValue ? 'bg-light text-dark fw-bold' : 'text-dark hover-bg-light')
                         ]">
-                        <!-- Check if option has multi-line data -->
-                        <div v-if="option.name && option.mobile" class="flex flex-col space-y-1">
-                            <div class="font-medium text-gray-900 leading-tight">{{ option.name }}</div>
-                            <div class="flex items-center text-xs text-gray-600">
-                                <i class="fa fa-phone mr-1.5 text-blue-500 text-xs"></i>
-                                <span>{{ option.mobile ? option.mobile : '' }}</span>
+                        <div class="flex-grow-1">
+                            <!-- Check if option has multi-line data -->
+                            <div v-if="option.name && option.mobile" class="d-flex flex-column">
+                                <div class="fw-bold small leading-tight">{{ option.name }}</div>
+                                <div class="d-flex align-items-center x-small opacity-75">
+                                    <i class="fa fa-phone me-1 small"></i>
+                                    <span>{{ option.mobile }}</span>
+                                </div>
                             </div>
+                            <!-- Fallback to simple label -->
+                            <div v-else class="small">{{ option.label }}</div>
                         </div>
-                        <!-- Fallback to simple label -->
-                        <div v-else>{{ option.label }}</div>
+
+                        <!-- Checkmark for selected item -->
+                        <i v-if="option.value == modelValue" class="fa fa-check small ms-2"></i>
                     </div>
                 </div>
             </div>
@@ -82,15 +82,19 @@ const props = defineProps({
     },
     inputClass: {
         type: String,
-        default: 'w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500'
+        default: 'form-control shadow-sm'
     },
     visibleItems: {
         type: Number,
         default: 5
+    },
+    loading: {
+        type: Boolean,
+        default: false
     }
 })
 
-const emit = defineEmits(['update:modelValue', 'change', 'search'])
+const emit = defineEmits(['update:modelValue', 'change', 'search', 'open'])
 
 const searchTerm = ref('')
 const showDropdown = ref(false)
@@ -139,8 +143,6 @@ const filterOptions = () => {
     // Emit search event when the search term changes with at least 2 characters
     if (searchTerm.value && searchTerm.value.trim().length >= 2) {
         emit('search', searchTerm.value.trim())
-        // Don't filter immediately when searching - wait for new options to arrive
-        return
     }
 
     if (!searchTerm.value || searchTerm.value.trim() === '') {
@@ -163,6 +165,11 @@ const filterOptions = () => {
         })
     }
     highlightedIndex.value = 0
+    if (showDropdown.value) {
+        nextTick(() => {
+            calculateDropdownPosition()
+        })
+    }
 }
 
 // Calculate dropdown position relative to viewport
@@ -178,22 +185,23 @@ const calculateDropdownPosition = () => {
     const spaceAbove = rect.top
 
     // Estimate dropdown height (max 240px based on max-h-60)
-    const estimatedHeight = Math.min(240, (filteredOptions.value.length * 60) + 80) // 60px per item for multi-line + header
+    const estimatedHeight = Math.min(320, (filteredOptions.value.length * 60) + 80) // 60px per item for multi-line + header
 
     // Determine position
     let top, left, width, maxHeight
 
     if (spaceBelow >= estimatedHeight || spaceBelow >= spaceAbove) {
         // Show below
-        top = rect.bottom + window.scrollY
-        maxHeight = Math.min(240, spaceBelow - 10)
+        top = rect.bottom
+        maxHeight = Math.min(estimatedHeight, spaceBelow - 10)
     } else {
         // Show above
-        top = rect.top + window.scrollY - Math.min(240, estimatedHeight)
-        maxHeight = Math.min(240, spaceAbove - 10)
+        const showHeight = Math.min(estimatedHeight, spaceAbove - 10)
+        top = rect.top - showHeight
+        maxHeight = showHeight
     }
 
-    left = rect.left + window.scrollX
+    left = rect.left
     width = rect.width
 
     // Ensure dropdown stays within viewport horizontally
@@ -218,13 +226,28 @@ const openDropdown = () => {
     showDropdown.value = true
     searchTerm.value = ''
     filteredOptions.value = normalizedOptions.value
-    highlightedIndex.value = 0
+
+    // Set highlighted index to selected item
+    if (props.modelValue !== null && props.modelValue !== undefined && props.modelValue !== '') {
+        const selectedIndex = filteredOptions.value.findIndex(opt => opt.value == props.modelValue)
+        if (selectedIndex !== -1) {
+            highlightedIndex.value = selectedIndex
+        } else {
+            highlightedIndex.value = 0
+        }
+    } else {
+        highlightedIndex.value = 0
+    }
+
+    emit('open')
 
     nextTick(() => {
         calculateDropdownPosition()
         if (filterInput.value) {
             filterInput.value.focus()
         }
+        // Ensure the highlighted item is visible
+        scrollToHighlighted()
     })
 }
 
@@ -329,6 +352,11 @@ watch(() => props.options, () => {
         filteredOptions.value = normalizedOptions.value
     }
     highlightedIndex.value = 0
+    if (showDropdown.value) {
+        nextTick(() => {
+            calculateDropdownPosition()
+        })
+    }
 }, { deep: true, immediate: true })
 
 // Expose methods for parent component
@@ -369,13 +397,32 @@ defineExpose({
 
 .searchable-dropdown-item:hover,
 .searchable-dropdown-item.highlighted {
-    background-color: #eff6ff;
-    color: #1d4ed8;
+    background-color: var(--bs-primary);
+    color: white;
+    border-left: 4px solid #0d6efd;
+    /* Highlight border */
+}
+
+.searchable-dropdown-item {
+    border-left: 4px solid transparent;
+}
+
+.rotate-180 {
+    transform: rotate(180deg);
+}
+
+.transition-transform {
+    transition: transform 0.2s ease;
+}
+
+.x-small {
+    font-size: 0.75rem;
 }
 
 .custom-scrollbar::-webkit-scrollbar {
     width: 6px;
 }
+
 
 .custom-scrollbar::-webkit-scrollbar-track {
     background: #f1f5f9;

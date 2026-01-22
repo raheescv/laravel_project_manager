@@ -1,32 +1,29 @@
 <template>
-    <div class="bg-white rounded-lg shadow-sm p-4 md:p-6">
-        <div class="flex justify-between items-center flex-wrap gap-4">
-            <div class="flex items-center gap-6">
-                <div>
-                    <span class="text-sm text-gray-600">Order No:</span>
-                    <span class="text-lg font-bold text-gray-800 ml-2">{{ order.order_no }}</span>
+    <div class="card shadow-sm border-0">
+        <div class="card-body p-3">
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-4">
+                <div class="d-flex gap-5">
+                    <div>
+                        <div class="small fw-bold text-muted text-uppercase mb-1">Order Number</div>
+                        <div class="h5 fw-bold text-primary mb-0">{{ order.order_no }}</div>
+                    </div>
+                    <div>
+                        <div class="small fw-bold text-muted text-uppercase mb-1">Customer</div>
+                        <div class="h5 fw-bold text-dark mb-0">{{ order.customer_name }}</div>
+                    </div>
                 </div>
-                <div>
-                    <span class="text-sm text-gray-600">Customer:</span>
-                    <span class="text-lg font-bold text-gray-800 ml-2">{{ order.customer_name }}</span>
-                </div>
-            </div>
-            <div class="flex gap-4">
-                <div class="form-group">
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Rack</label>
-                    <SearchableSelect 
-                        :modelValue="order.rack_id"
-                        @update:modelValue="emit('update-rack', $event)"
-                        :options="racks"
-                        placeholder="Select rack..." />
-                </div>
-                <div class="form-group">
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Cutter</label>
-                    <SearchableSelect 
-                        :modelValue="order.cutter_id"
-                        @update:modelValue="emit('update-cutter', $event)"
-                        :options="cutters"
-                        placeholder="Select cutter..." />
+                <div class="d-flex gap-3">
+                    <div style="min-width: 200px;">
+                        <label class="form-label small fw-bold text-muted text-uppercase mb-1">Rack</label>
+                        <SearchableSelect :modelValue="order.rack_id" @update:modelValue="emit('update-rack', $event)"
+                            :options="racks" placeholder="Select rack..." class="form-select-sm" />
+                    </div>
+                    <div style="min-width: 200px;">
+                        <label class="form-label small fw-bold text-muted text-uppercase mb-1">Cutter</label>
+                        <SearchableSelect :modelValue="order.cutter_id"
+                            @update:modelValue="emit('update-cutter', $event)" :options="cutters"
+                            placeholder="Select cutter..." class="form-select-sm" />
+                    </div>
                 </div>
             </div>
         </div>

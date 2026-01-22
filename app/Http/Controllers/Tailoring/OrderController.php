@@ -213,9 +213,10 @@ class OrderController extends Controller
                 return response()->json([
                     'success' => true,
                     'message' => $result['message'],
-                    'redirect_url' => route('tailoring::order::show', $result['data']->id)
+                    'redirect_url' => route('tailoring::order::show', $result['data']->id),
                 ]);
             }
+
             return redirect()->route('tailoring::order::show', $result['data']->id)
                 ->with('success', $result['message']);
         }
@@ -237,9 +238,10 @@ class OrderController extends Controller
                 return response()->json([
                     'success' => true,
                     'message' => $result['message'],
-                    'redirect_url' => route('tailoring::order::show', $id)
+                    'redirect_url' => route('tailoring::order::show', $id),
                 ]);
             }
+
             return redirect()->route('tailoring::order::show', $id)
                 ->with('success', $result['message']);
         }
@@ -493,6 +495,10 @@ class OrderController extends Controller
 
         if ($request->rack_id) {
             $query->where('rack_id', $request->rack_id);
+        }
+
+        if ($request->account_id) {
+            $query->where('account_id', $request->account_id);
         }
 
         $orders = $query->latest()

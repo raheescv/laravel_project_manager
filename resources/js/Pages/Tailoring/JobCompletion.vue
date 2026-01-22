@@ -1,38 +1,50 @@
 <template>
-    <div class="min-h-screen bg-gray-50 p-4 md:p-6">
-        <div class="max-w-7xl mx-auto space-y-6">
+    <div class="bg-light min-vh-100 py-4">
+        <div class="container pb-5">
             <!-- Page Header -->
-            <div class="bg-white rounded-lg shadow-sm p-4 md:p-6">
-                <h1 class="text-2xl font-bold text-gray-800 mb-2">Job Completion</h1>
-                <p class="text-gray-600">Track and complete tailoring orders</p>
+            <div class="card shadow-sm border-0 mb-4">
+                <div class="card-body p-4 d-flex justify-content-between align-items-center">
+                    <div>
+                        <h1 class="h3 fw-bold text-dark mb-1">Job Completion</h1>
+                        <p class="text-muted mb-0">Track and complete tailoring orders efficiently</p>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <a href="/tailoring/order" class="quick-action-link primary">
+                            <i class="fa fa-list"></i>
+                            <span>Orders List</span>
+                        </a>
+                    </div>
+                </div>
             </div>
 
-            <!-- Order Search -->
-            <OrderSearch v-model:orderNo="searchForm.order_no" v-model:customer="searchForm.customer_name"
-                v-model:contact="searchForm.customer_mobile" :customers="customers" :orderNumbers="orderNumbers"
-                @search="handleSearchOrder" @clear="handleClearSearch" />
+            <div class="d-flex flex-column gap-4">
+                <!-- Order Search -->
+                <OrderSearch v-model:orderNo="searchForm.order_no" v-model:customer="searchForm.customer_name"
+                    v-model:customerId="searchForm.customer_id"
+                    v-model:contact="searchForm.customer_mobile" :customers="customers" :orderNumbers="orderNumbers"
+                    @search="handleSearchOrder" @clear="handleClearSearch" />
 
-            <!-- Status Bar -->
-            <StatusBar :recordCount="order?.items?.length || 0" :completionStatus="order?.completion_status" />
+                <!-- Status Bar -->
 
-            <!-- Order Summary Header -->
-            <CompletionHeader v-if="order" :order="order" :racks="racks" :cutters="cutters"
-                @update-rack="handleUpdateRack" @update-cutter="handleUpdateCutter" />
+                <!-- Order Summary Header -->
+                <CompletionHeader v-if="order" :order="order" :racks="racks" :cutters="cutters"
+                    @update-rack="handleUpdateRack" @update-cutter="handleUpdateCutter" />
 
-            <!-- Completion Items Table -->
-            <CompletionItemsTable v-if="order" :items="order.items" :tailors="tailors" @update-item="handleUpdateItem"
-                @calculate-stock="handleCalculateStock" @calculate-commission="handleCalculateCommission" />
+                <!-- Completion Items Table -->
+                <CompletionItemsTable v-if="order" :items="order.items" :tailors="tailors" @update-item="handleUpdateItem"
+                    @calculate-stock="handleCalculateStock" @calculate-commission="handleCalculateCommission" />
 
-            <!-- Action Buttons -->
-            <div v-if="order" class="flex justify-center gap-4">
-                <button @click="handleUpdateCompletion"
-                    class="px-6 py-2 bg-gray-400 text-white rounded-md hover:bg-gray-500 font-semibold">
-                    Update
-                </button>
-                <button @click="handleSubmitCompletion"
-                    class="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 font-semibold">
-                    Submit
-                </button>
+                <!-- Action Buttons -->
+                <div v-if="order" class="d-flex justify-content-center gap-3 mt-2">
+                    <button @click="handleUpdateCompletion"
+                        class="btn btn-outline-secondary btn-lg px-5 fw-bold shadow-sm">
+                        <i class="fa fa-refresh me-2"></i> Update
+                    </button>
+                    <button @click="handleSubmitCompletion"
+                        class="btn btn-primary btn-lg px-5 fw-bold shadow-sm">
+                        <i class="fa fa-check-circle me-2"></i> Submit Completion
+                    </button>
+                </div>
             </div>
         </div>
     </div>
@@ -60,6 +72,7 @@ const toast = useToast()
 const order = ref(null)
 const searchForm = ref({
     order_no: '',
+    customer_id: null,
     customer_name: '',
     customer_mobile: '',
 })
@@ -86,6 +99,7 @@ const handleSearchOrder = async () => {
 const handleClearSearch = () => {
     searchForm.value = {
         order_no: '',
+        customer_id: null,
         customer_name: '',
         customer_mobile: '',
     }
@@ -181,4 +195,43 @@ const handleSubmitCompletion = async () => {
         toast.error(error.response?.data?.message || 'Failed to submit completion')
     }
 }
+onMounted(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const orderNo = urlParams.get('order_no');
+    if (orderNo) {
+        searchForm.value.order_no = orderNo;
+        handleSearchOrder();
+    }
+})
 </script>
+
+<style scoped>
+.quick-action-link {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    border-radius: 10px;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 0.9rem;
+    transition: all 0.3s ease;
+    border: 1px solid rgba(0, 0, 0, 0.05);
+    background: white;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
+}
+
+.quick-action-link:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    background-color: #f8fafc;
+}
+
+.quick-action-link.primary {
+    color: #3b82f6;
+}
+
+.quick-action-link.success {
+    color: #10b981;
+}
+</style>

@@ -1,137 +1,96 @@
 <template>
-    <div class="bg-gray-50/50 rounded-xl p-6 border border-gray-100">
-        <div class="flex items-center justify-between mb-6">
-            <h2 class="text-lg font-bold text-gray-800 flex items-center gap-2">
-                <i class="fa fa-shopping-bag text-blue-600"></i>
-                {{ isEditing ? 'Update Product' : 'Select Products' }}
-            </h2>
-            <div class="text-sm text-gray-500 bg-white px-3 py-1 rounded-full border border-gray-200 shadow-sm">
-                {{ isEditing ? 'Update selected product details' : 'Add products to the order' }}
-            </div>
-        </div>
-
-        <div class="grid grid-cols-1 md:grid-cols-12 gap-6">
-            <!-- Product Selection (Wide) -->
-            <div class="md:col-span-6 form-group">
-                <label class="block text-xs font-semibold uppercase tracking-wider text-gray-500 mb-1.5 ml-1">
-                    Product Search
-                </label>
-                <div class="relative">
-                    <select ref="productSelect" placeholder="Search product by name, code or barcode..."
-                        autocomplete="off" class="w-full"></select>
-                </div>
+    <div class="card mb-4 border shadow-none" style="border-color: #e2e8f0 !important;">
+        <div class="card-body">
+            <div class="d-flex align-items-center justify-content-between mb-4">
+                <h5 class="card-title text-gray-800 d-flex align-items-center gap-2 mb-0">
+                    <i class="fa fa-shopping-bag text-primary"></i>
+                    {{ isEditing ? 'Update Product' : 'Select Products' }}
+                </h5>
+                <span class="badge bg-white text-muted border border-light shadow-sm rounded-pill fw-normal px-3 py-2">
+                    {{ isEditing ? 'Update selected product details' : 'Add products to the order' }}
+                </span>
             </div>
 
-            <!-- Color -->
-            <div class="md:col-span-3 form-group">
-                <label class="block text-xs font-semibold uppercase tracking-wider text-gray-500 mb-1.5 ml-1">
-                    Colour
-                </label>
-                <div class="relative group">
-                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                        <i
-                            class="fa fa-paint-brush text-gray-400 group-focus-within:text-blue-500 transition-colors"></i>
+            <div class="row g-2 align-items-end">
+                <!-- Product Selection -->
+                <div class="col-lg-3">
+                    <label class="form-label small text-muted text-uppercase fw-bold mb-1">Product</label>
+                    <div class="position-relative">
+                        <select ref="productSelect" placeholder="Search product..." autocomplete="off"
+                            class="form-control"></select>
                     </div>
-                    <input v-model="item.product_color" type="text" placeholder="Color..."
-                        class="w-full pl-10 pr-3 py-2.5 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-100 focus:border-blue-500 transition-all text-sm shadow-sm" />
-                    <a @click="addColor"
-                        class="absolute right-0 top-0 mt-2.5 mr-2 text-[10px] font-bold text-blue-600 hover:text-blue-800 cursor-pointer uppercase tracking-wider bg-blue-50 px-2 py-0.5 rounded hover:bg-blue-100 transition-colors">
-                        Add New
-                    </a>
                 </div>
-            </div>
 
-            <!-- Quantity -->
-            <div class="md:col-span-3 form-group">
-                <label class="block text-xs font-semibold uppercase tracking-wider text-gray-500 mb-1.5 ml-1">
-                    Quantity
-                </label>
-                <div class="relative group">
-                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                        <i
-                            class="fa fa-sort-numeric-asc text-gray-400 group-focus-within:text-blue-500 transition-colors"></i>
+                <!-- Color -->
+                <div class="col-lg-2 col-md-6">
+                    <label class="form-label small text-muted text-uppercase fw-bold mb-1">Colour</label>
+                    <div class="input-group">
+                        <span class="input-group-text bg-white border-end-0 text-muted px-2">
+                            <i class="fa fa-paint-brush"></i>
+                        </span>
+                        <input v-model="item.product_color" type="text" placeholder="Color..."
+                            class="form-control border-start-0 ps-0" />
+                        <button @click="addColor" class="btn btn-outline-secondary btn-sm" type="button">
+                            <i class="fa fa-plus"></i>
+                        </button>
                     </div>
-                    <input v-model.number="item.quantity" type="number" step="0.001" min="0.001" placeholder="0.00"
-                        @input="calculateAmount"
-                        class="w-full pl-10 pr-3 py-2.5 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-100 focus:border-blue-500 transition-all text-sm font-medium shadow-sm" />
                 </div>
-            </div>
 
-            <!-- Row 2 -->
+                <!-- Quantity -->
+                <div class="col">
+                    <label class="form-label small text-muted text-uppercase fw-bold mb-1">Qty</label>
+                    <input v-model.number="item.quantity" type="number" step="0.001" min="0.001" placeholder="0"
+                        @input="calculateAmount" class="form-control fw-bold px-2" />
+                </div>
 
-            <!-- Item Rate -->
-            <div class="md:col-span-3 form-group">
-                <label class="block text-xs font-semibold uppercase tracking-wider text-gray-500 mb-1.5 ml-1">
-                    Unit Price
-                </label>
-                <div class="relative group">
-                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <!-- Item Rate -->
+                <div class="col">
+                    <label class="form-label small text-muted text-uppercase fw-bold mb-1">Price</label>
+                    <div class="input-group">
+                        <span class="input-group-text bg-white border-end-0 text-muted px-1 fw-bold">₹</span>
+                        <input v-model.number="item.unit_price" type="number" step="0.01" min="0" placeholder="0"
+                            @input="calculateAmount" class="form-control border-start-0 ps-0 px-1" />
+                    </div>
+                </div>
+
+                <!-- Stitch Rate -->
+                <div class="col">
+                    <label class="form-label small text-muted text-uppercase fw-bold mb-1">Stitch</label>
+                    <input v-model.number="item.stitch_rate" type="number" step="0.01" min="0" placeholder="0"
+                        @input="calculateAmount" class="form-control px-2" />
+                </div>
+
+                <!-- Tax -->
+                <div class="col">
+                    <label class="form-label small text-muted text-uppercase fw-bold mb-1">Tax</label>
+                    <input v-model.number="item.tax" type="number" step="0.01" min="0" placeholder="0"
+                        @input="calculateAmount" class="form-control px-2" />
+                </div>
+
+                <!-- Amount -->
+                <div class="col">
+                    <label class="form-label small text-muted text-uppercase fw-bold mb-1">Total</label>
+                    <div class="input-group">
                         <span
-                            class="text-gray-400 font-bold group-focus-within:text-blue-500 transition-colors">₹</span>
+                            class="input-group-text bg-success bg-opacity-10 border-success border-end-0 text-success px-1 fw-bold">₹</span>
+                        <input :value="item.total || 0" type="text" readonly
+                            class="form-control bg-success bg-opacity-10 border-success border-start-0 text-success fw-bold px-1" />
                     </div>
-                    <input v-model.number="item.unit_price" type="number" step="0.01" min="0" placeholder="0.00"
-                        @input="calculateAmount"
-                        class="w-full pl-10 pr-3 py-2.5 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-100 focus:border-blue-500 transition-all text-sm shadow-sm" />
                 </div>
-            </div>
 
-            <!-- Stitch Rate -->
-            <div class="md:col-span-3 form-group">
-                <label class="block text-xs font-semibold uppercase tracking-wider text-gray-500 mb-1.5 ml-1">
-                    Stitch Rate
-                </label>
-                <div class="relative group">
-                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                        <i class="fa fa-scissors text-gray-400 group-focus-within:text-blue-500 transition-colors"></i>
-                    </div>
-                    <input v-model.number="item.stitch_rate" type="number" step="0.01" min="0" placeholder="0.00"
-                        @input="calculateAmount"
-                        class="w-full pl-10 pr-3 py-2.5 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-100 focus:border-blue-500 transition-all text-sm shadow-sm" />
+                <div class="col-lg-auto col-md-12 d-flex gap-1 justify-content-end">
+                    <button type="button" @click="handleClear"
+                        class="btn btn-link btn-sm text-secondary text-decoration-none px-2" title="Clear/Cancel">
+                        <i class="fa fa-times me-1"></i>Clear
+                    </button>
+                    <button type="button" @click="handleAdd" :disabled="isLoading"
+                        class="btn btn-dark d-flex align-items-center justify-content-center gap-2 px-4 shadow-none rounded-3">
+                        <i v-if="isLoading" class="fa fa-spinner fa-spin"></i>
+                        <i v-else :class="isEditing ? 'fa fa-save' : 'fa fa-plus'"></i>
+                        <span class="text-nowrap fw-semibold">{{ isLoading ? (isEditing ? 'Updating...' : 'Adding...') :
+                            (isEditing ? 'Update' : 'Add Item') }}</span>
+                    </button>
                 </div>
-            </div>
-
-            <!-- Tax -->
-            <div class="md:col-span-2 form-group">
-                <label class="block text-xs font-semibold uppercase tracking-wider text-gray-500 mb-1.5 ml-1">
-                    Tax %
-                </label>
-                <div class="relative group">
-                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                        <i
-                            class="fa fa-percent text-gray-400 group-focus-within:text-blue-500 transition-colors text-xs"></i>
-                    </div>
-                    <input v-model.number="item.tax" type="number" step="0.01" min="0" placeholder="0%"
-                        @input="calculateAmount"
-                        class="w-full pl-10 pr-3 py-2.5 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-100 focus:border-blue-500 transition-all text-sm shadow-sm" />
-                </div>
-            </div>
-
-            <!-- Amount -->
-            <div class="md:col-span-4 form-group">
-                <label class="block text-xs font-semibold uppercase tracking-wider text-gray-500 mb-1.5 ml-1">
-                    Total Amount
-                </label>
-                <div class="relative">
-                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                        <span class="text-green-600 font-bold">₹</span>
-                    </div>
-                    <input :value="item.total || 0" type="text" readonly
-                        class="w-full pl-10 pr-3 py-2.5 border border-green-200 rounded-lg bg-green-50 text-green-700 font-bold text-lg shadow-sm" />
-                </div>
-            </div>
-
-            <!-- Actions -->
-            <div class="md:col-span-12 flex items-center justify-end pt-4 gap-3 border-t border-gray-200/60 mt-2">
-                <button type="button" @click="handleClear"
-                    class="px-5 py-2.5 text-gray-600 bg-white border border-gray-300 hover:bg-gray-50 hover:text-gray-800 rounded-lg font-medium transition-all shadow-sm flex items-center gap-2">
-                    <i class="fa fa-eraser"></i> {{ isEditing ? 'Cancel' : 'Clear' }}
-                </button>
-                <button type="button" @click="handleAdd" :disabled="isLoading"
-                    class="px-8 py-2.5 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg hover:from-blue-700 hover:to-blue-800 font-semibold disabled:opacity-50 disabled:cursor-not-allowed shadow-md hover:shadow-lg transition-all focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 flex items-center gap-2">
-                    <i v-if="isLoading" class="fa fa-spinner fa-spin"></i>
-                    <i v-else :class="isEditing ? 'fa fa-save' : 'fa fa-plus-circle'"></i>
-                    {{ isLoading ? (isEditing ? 'Updating...' : 'Adding...') : (isEditing ? 'Update Product' : 'Add Product') }}
-                </button>
             </div>
         </div>
     </div>
@@ -188,6 +147,7 @@ const initializeProductSelect = () => {
         placeholder: 'Search & Select Product...',
         preload: true, // Preload common items if needed
         maxItems: 1,
+        dropdownParent: 'body',
         plugins: ['clear_button'],
         load: (query, callback) => {
             if (!query || query.length < 2) {
@@ -209,27 +169,32 @@ const initializeProductSelect = () => {
                 })
         },
         render: {
-            option: (item, escape) => {
-                return `<div class="p-2 border-b border-gray-100 hover:bg-gray-50 transition-colors">
-                            <div class="flex justify-between items-start">
-                                <div class="font-medium text-gray-800">${escape(item.name)}</div>
-                                <div class="text-xs font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded">
-                                    ₹${escape(item.mrp || 0)}
-                                </div>
+            option: function (item, escape) {
+                const query = this.lastQuery || '';
+                const highlightText = (text) => {
+                    if (!text) return '';
+                    if (!query) return escape(text);
+                    const re = new RegExp(`(${query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
+                    return escape(text).replace(re, '<span class="ts-highlight">$1</span>');
+                };
+
+                return `<div class="d-flex align-items-center justify-content-between">
+                            <div class="d-flex flex-column min-width-0">
+                                <span class="fw-medium text-dark text-truncate">${highlightText(item.name)}</span>
+                                <span class="text-muted small opacity-75 text-truncate mb-0">${highlightText(item.code || item.barcode || '')}</span>
                             </div>
-                            <div class="text-xs text-gray-500 flex flex-wrap gap-2 mt-1">
-                                ${item.code ? `<span class="bg-gray-100 px-1.5 py-0.5 rounded border border-gray-200">Ref: ${escape(item.code)}</span>` : ''}
-                                ${item.barcode ? `<span class="bg-gray-100 px-1.5 py-0.5 rounded border border-gray-200">Bar: ${escape(item.barcode)}</span>` : ''}
+                            <div class="text-success fw-bold ms-3">
+                                <span class="small opacity-75">₹</span>${escape(item.mrp || 0)}
                             </div>
                         </div>`
             },
             item: (item, escape) => {
-                return `<div class="flex items-center gap-2">
-                            <span class="font-medium text-gray-800">${escape(item.name)}</span>
+                return `<div class="d-flex align-items-center gap-2">
+                            <span class="fw-medium text-dark">${escape(item.name)}</span>
                          </div>`
             },
             loading: (data, escape) => {
-                return '<div class="spinner border-t-2 border-blue-500"></div>'
+                return '<div class="p-2 text-center text-muted small opacity-50">Searching...</div>'
             }
         },
         onChange: (value) => {
@@ -239,6 +204,7 @@ const initializeProductSelect = () => {
                     item.value.product_id = selectedOption.id
                     item.value.product_name = selectedOption.name
                     item.value.unit_price = parseFloat(selectedOption.mrp || 0)
+                    item.value.quantity = 1
                     calculateAmount()
                 }
             } else {
@@ -247,6 +213,7 @@ const initializeProductSelect = () => {
                     item.value.product_id = null
                     item.value.product_name = ''
                     item.value.unit_price = 0
+                    item.value.quantity = 1
                 }
             }
         }

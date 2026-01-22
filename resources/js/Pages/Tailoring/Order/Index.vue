@@ -56,9 +56,17 @@
                     </div>
                 </div>
 
-                <div class="col-md-3 d-flex align-items-end justify-content-end">
-                    <a :href="route('tailoring::order::create')" class="btn btn-primary w-100">
-                        <i class="fa fa-plus me-2"></i> New Order
+                <div class="col-md-3 d-flex align-items-end justify-content-end gap-2">
+                    <a href="/tailoring/order" class="quick-action-link primary flex-grow-1">
+                        <i class="fa fa-list"></i>
+                        <span>Orders</span>
+                    </a>
+                    <a href="/tailoring/job-completion" class="quick-action-link success flex-grow-1">
+                        <i class="fa fa-check-circle"></i>
+                        <span>Job Completion</span>
+                    </a>
+                    <a :href="route('tailoring::order::create')" class="btn btn-primary px-3">
+                        <i class="fa fa-plus me-1"></i> New
                     </a>
                 </div>
             </div>
@@ -329,3 +337,35 @@ const getStatusClass = (status) => {
     return classes[status] || 'bg-secondary text-white'
 }
 </script>
+
+<style scoped>
+.quick-action-link {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 8px 12px;
+    border-radius: 10px;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 0.85rem;
+    transition: all 0.3s ease;
+    border: 1px solid rgba(0, 0, 0, 0.05);
+    background: white;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
+}
+
+.quick-action-link:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    background-color: #f8fafc;
+}
+
+.quick-action-link.primary {
+    color: #3b82f6;
+}
+
+.quick-action-link.success {
+    color: #10b981;
+}
+</style>
