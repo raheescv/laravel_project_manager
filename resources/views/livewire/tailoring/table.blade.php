@@ -218,7 +218,7 @@
                                     <div class="d-flex align-items-center gap-2">
                                         <i class="demo-psi-building fs-5 text-warning"></i>
                                         <div>
-                                            <div>{{ $order->account?->name ?? $order->customer_name ?? 'Walk-in Customer' }}</div>
+                                            <div>{{ $order->account?->name ?? ($order->customer_name ?? 'Walk-in Customer') }}</div>
                                             @if ($order->salesman?->name)
                                                 <small class="text-muted">Sales: {{ $order->salesman->name }}</small>
                                             @endif
@@ -228,7 +228,8 @@
                             @endif
                             @if ($tailoring_visible_column['status'] ?? true)
                                 <td>
-                                    <div class="badge bg-{{ $order->status === 'completed' ? 'success' : ($order->status === 'pending' ? 'warning' : ($order->status === 'delivered' ? 'dark' : ($order->status === 'cancelled' ? 'danger' : 'info'))) }} bg-opacity-10 text-{{ $order->status === 'completed' ? 'success' : ($order->status === 'pending' ? 'warning' : ($order->status === 'delivered' ? 'dark' : ($order->status === 'cancelled' ? 'danger' : 'info'))) }}">
+                                    <div
+                                        class="badge bg-{{ $order->status === 'completed' ? 'success' : ($order->status === 'pending' ? 'warning' : ($order->status === 'delivered' ? 'dark' : ($order->status === 'cancelled' ? 'danger' : 'info'))) }} bg-opacity-10 text-{{ $order->status === 'completed' ? 'success' : ($order->status === 'pending' ? 'warning' : ($order->status === 'delivered' ? 'dark' : ($order->status === 'cancelled' ? 'danger' : 'info'))) }}">
                                         {{ ucFirst($order->status) }}
                                     </div>
                                 </td>
@@ -236,28 +237,28 @@
                             @if ($tailoring_visible_column['grand_total'] ?? true)
                                 <td>
                                     <div class="text-end fw-bold text-primary">{{ currency($order->grand_total) }}</div>
-                                    <div class="text-end {{ $order->balance > 0 ? 'text-danger' : 'text-success' }} fw-semibold">
-                                        {{ $order->balance > 0 ? currency($order->balance) : 'Paid' }}
-                                    </div>
                                 </td>
                             @endif
                             @if ($tailoring_visible_column['paid'] ?? true)
-                                <td> <div class="text-end fw-bold text-primary">{{ currency($order->paid) }}</div> </td>
+                                <td>
+                                    <div class="text-end fw-bold text-success">{{ currency($order->paid) }}</div>
+                                </td>
                             @endif
                             @if ($tailoring_visible_column['balance'] ?? true)
                                 <td>
-                                    <div class="text-end fw-bold text-primary">{{ currency($order->balance) }}</div>
+                                    <div class="text-end fw-bold @if ($order->balance > 0) text-danger @else text-success @endif">{{ currency($order->balance) }}</div>
                                 </td>
                             @endif
                             @if ($tailoring_visible_column['actions'] ?? true)
                                 <td class="text-end">
                                     <div class="btn-group btn-group-sm">
-                                        <a href="{{ route('tailoring::order::show', $order->id) }}"
-                                            class="btn btn-light border" title="View Details">
+                                        <a href="{{ route('tailoring::order::show', $order->id) }}" class="btn btn-light border" title="View Details">
                                             <i class="fa fa-eye text-primary"></i>
                                         </a>
-                                        <a href="{{ route('tailoring::order::edit', $order->id) }}"
-                                            class="btn btn-light border" title="Edit Order">
+                                        <a href="{{ route('tailoring::job-completion::index') }}?order_no={{ $order->order_no }}" class="btn btn-light border" title="Job Completion">
+                                            <i class="fa fa-check-circle text-success"></i>
+                                        </a>
+                                        <a href="{{ route('tailoring::order::edit', $order->id) }}" class="btn btn-light border" title="Edit Order">
                                             <i class="fa fa-edit text-warning"></i>
                                         </a>
                                     </div>
