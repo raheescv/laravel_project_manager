@@ -454,8 +454,8 @@ if (! function_exists('getNextUniqueNumber')) {
         $branchCode = session('branch_code', 'M');
         $country_id = cache('country_id', Country::QATAR);
 
-        // Get tenant_id from session or TenantService
-        $tenantId = session('tenant_id');
+        // Get tenant_id from session or TenantService (e.g. when running inside a job)
+        $tenantId = session('tenant_id') ?? app(TenantService::class)->getCurrentTenantId();
         if (! $tenantId) {
             throw new \Exception('Tenant ID is required to generate unique number');
         }

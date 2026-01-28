@@ -24,10 +24,10 @@
                             </button>
                         @endcan
                         @can('service.import')
-                            <button class="btn btn-info btn-sm d-flex align-items-center text-white" title="Import Services" data-bs-toggle="modal" data-bs-target="#ServiceImportModal">
+                            <a class="btn btn-info btn-sm d-flex align-items-center text-white shadow-sm" title="Import Services" href="{{ route('service::import') }}">
                                 <i class="fa fa-cloud-download me-md-1 fs-5"></i>
                                 <span class="d-none d-md-inline">Import</span>
-                            </button>
+                            </a>
                         @endcan
                     </div>
                 </div>

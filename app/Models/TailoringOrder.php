@@ -8,10 +8,10 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
 use OwenIt\Auditing\Auditable;
 use OwenIt\Auditing\Contracts\Auditable as AuditableContracts;
-use Illuminate\Support\Facades\Auth;
 
 class TailoringOrder extends Model implements AuditableContracts
 {
@@ -215,6 +215,7 @@ class TailoringOrder extends Model implements AuditableContracts
         return $query
             ->when($filters['search'] ?? '', function ($q, $search) {
                 $search = trim($search);
+
                 return $q->where(function ($q) use ($search): void {
                     $q->where('tailoring_orders.order_no', 'like', "%{$search}%")
                         ->orWhere('tailoring_orders.customer_name', 'like', "%{$search}%")
@@ -233,14 +234,17 @@ class TailoringOrder extends Model implements AuditableContracts
                 } elseif ($value === 'balance') {
                     return $q->where('tailoring_orders.balance', '>', 0);
                 }
+
                 return $q;
             })
             ->when(($filters['from_date'] ?? '') && ($filters['date_type'] ?? ''), function ($q) use ($filters) {
                 $dateField = ($filters['date_type'] ?? 'order_date') === 'delivery_date' ? 'delivery_date' : 'order_date';
+
                 return $q->whereDate("tailoring_orders.{$dateField}", '>=', date('Y-m-d', strtotime($filters['from_date'])));
             })
             ->when(($filters['to_date'] ?? '') && ($filters['date_type'] ?? ''), function ($q) use ($filters) {
                 $dateField = ($filters['date_type'] ?? 'order_date') === 'delivery_date' ? 'delivery_date' : 'order_date';
+
                 return $q->whereDate("tailoring_orders.{$dateField}", '<=', date('Y-m-d', strtotime($filters['to_date'])));
             });
     }

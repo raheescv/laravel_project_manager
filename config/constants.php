@@ -1,6 +1,7 @@
 <?php
 
 return [
+    'force_https' => env('FORCE_HTTPS', false),
     'auto_pull_enabled' => env('AUTO_PULL_ENABLED', false),
     'auto_pull_branch' => env('AUTO_PULL_BRANCH', 'main'),
     'whatsapp_port' => env('WHATSAPP_PORT'),
