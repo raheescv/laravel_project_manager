@@ -94,7 +94,7 @@
     </div>
     <div class="card-body px-0 pb-0">
         <div class="table-responsive">
-            <table class="table table-striped table-hover align-middle mb-0 border-bottom">
+            <table class="table table-striped table-hover table-sm align-middle mb-0 border-bottom">
                 <thead class="bg-light text-nowrap">
                     <tr>
                         <th class="ps-3">

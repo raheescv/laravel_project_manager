@@ -5,7 +5,16 @@ import { defineConfig } from 'vite';
 export default defineConfig({
     plugins: [
         laravel({
-            input: ['resources/css/app.css', 'resources/js/app.js'],
+            input: [
+                'resources/css/app.css',
+                'resources/js/app.js',
+                'resources/js/inventory-opening-balance.js',
+                'resources/js/stock-check.js',
+                'resources/js/stock-check-show.js',
+                'resources/js/general-voucher-modal.js',
+                'resources/js/journal-entries-modal.js',
+                'resources/js/purchase-page.js'
+            ],
             refresh: true,
         }),
         vue({

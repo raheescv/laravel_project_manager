@@ -13,6 +13,7 @@ class DatabaseSeeder extends Seeder
         DB::statement('SET FOREIGN_KEY_CHECKS=0;');
 
         // These seeders are safe to run in any environment as they use firstOrCreate
+        $this->call(TenantSeeder::class);
         $this->call(PermissionSeeder::class);
         $this->call(RoleSeeder::class);
         $this->call(AccountSeeder::class);

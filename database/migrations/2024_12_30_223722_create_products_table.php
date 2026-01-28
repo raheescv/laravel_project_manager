@@ -10,9 +10,12 @@ return new class() extends Migration
     {
         Schema::create('products', function (Blueprint $table) {
             $table->id();
+            $table->unsignedBigInteger('tenant_id');
+            $table->foreign('tenant_id')->references('id')->on('tenants')->onDelete('cascade');
+            $table->index('tenant_id');
             $table->enum('type', ['product', 'service'])->default('product');
             $table->string('name');
-            $table->unique(['name', 'type'], 'unique_name_type');
+            $table->unique(['tenant_id', 'name', 'type'], 'product_tenant_name_type_index');
 
             $table->string('code');
             $table->string('name_arabic')->nullable();
@@ -48,6 +51,8 @@ return new class() extends Migration
             $table->string('location')->nullable();
             $table->string('reorder_level')->nullable();
             $table->string('plu')->nullable();
+            $table->integer('priority')->default(0);
+            $table->string('second_reference_no')->nullable();
 
             $table->enum('status', ['active', 'disabled'])->default('active');
 

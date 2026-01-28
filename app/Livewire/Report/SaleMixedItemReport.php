@@ -121,6 +121,7 @@ class SaleMixedItemReport extends Component
         $saleQuery = SaleItem::query()
             ->join('sales', 'sales.id', '=', 'sale_items.sale_id')
             ->join('products', 'products.id', '=', 'sale_items.product_id')
+            ->join('units', 'units.id', '=', 'sale_items.unit_id')
             ->leftJoin('departments', 'departments.id', '=', 'products.department_id')
             ->leftJoin('categories as main_categories', 'main_categories.id', '=', 'products.main_category_id')
             ->leftJoin('brands', 'brands.id', '=', 'products.brand_id')
@@ -143,11 +144,13 @@ class SaleMixedItemReport extends Component
                 'products.name as product_name',
                 'products.cost',
                 'products.code as product_code',
+                'units.name as unit_name',
                 'departments.name as department_name',
                 'main_categories.name as main_category_name',
                 'brands.name as brand_name',
                 'sale_items.unit_price',
                 'sale_items.quantity',
+                'sale_items.base_unit_quantity',
                 'sale_items.gross_amount',
                 'sale_items.discount',
                 'sale_items.net_amount',
@@ -161,6 +164,7 @@ class SaleMixedItemReport extends Component
             ->join('sale_returns', 'sale_returns.id', '=', 'sale_return_items.sale_return_id')
             ->leftJoin('sale_items', 'sale_items.id', '=', 'sale_return_items.sale_item_id')
             ->join('products', 'products.id', '=', 'sale_return_items.product_id')
+            ->join('units', 'units.id', '=', 'sale_items.unit_id')
             ->leftJoin('departments', 'departments.id', '=', 'products.department_id')
             ->leftJoin('categories as main_categories', 'main_categories.id', '=', 'products.main_category_id')
             ->leftJoin('brands', 'brands.id', '=', 'products.brand_id')
@@ -183,12 +187,14 @@ class SaleMixedItemReport extends Component
                 'products.name as product_name',
                 'products.cost',
                 'products.code as product_code',
+                'units.name as unit_name',
                 'departments.name as department_name',
                 'main_categories.name as main_category_name',
                 'brands.name as brand_name',
                 // Keep unit price as positive for readability; make quantities and amounts negative
                 'sale_return_items.unit_price',
                 DB::raw('(-1) * sale_return_items.quantity as quantity'),
+                DB::raw('(-1) * sale_return_items.base_unit_quantity as base_unit_quantity'),
                 DB::raw('(-1) * sale_return_items.gross_amount as gross_amount'),
                 DB::raw('(-1) * sale_return_items.discount as discount'),
                 DB::raw('(-1) * sale_return_items.net_amount as net_amount'),
@@ -217,6 +223,7 @@ class SaleMixedItemReport extends Component
 
         $total = [
             'quantity' => (float) $totals->sum('quantity'),
+            'base_unit_quantity' => (float) $totals->sum('base_unit_quantity'),
             'gross_amount' => (float) $totals->sum('gross_amount'),
             'discount' => (float) $totals->sum('discount'),
             'net_amount' => (float) $totals->sum('net_amount'),

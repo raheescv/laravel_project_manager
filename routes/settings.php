@@ -12,6 +12,7 @@ use App\Http\Controllers\Settings\CategoryController;
 use App\Http\Controllers\Settings\CountryController;
 use App\Http\Controllers\Settings\CustomerTypeController;
 use App\Http\Controllers\Settings\DepartmentController;
+use App\Http\Controllers\Settings\DesignationController;
 use App\Http\Controllers\Settings\UnitController;
 use App\Http\Controllers\SettingsController;
 use Illuminate\Support\Facades\Route;
@@ -30,6 +31,10 @@ Route::middleware('auth')->group(function (): void {
         });
         Route::name('unit::')->prefix('unit')->controller(UnitController::class)->group(function (): void {
             Route::get('', 'index')->name('index')->can('unit.view');
+            Route::get('list', 'get')->name('list');
+        });
+        Route::name('designation::')->prefix('designation')->controller(DesignationController::class)->group(function (): void {
+            Route::get('', 'index')->name('index')->can('designation.view');
             Route::get('list', 'get')->name('list');
         });
         Route::name('branch::')->prefix('branch')->controller(BranchController::class)->group(function (): void {
@@ -53,6 +58,9 @@ Route::middleware('auth')->group(function (): void {
             Route::get('', 'index')->name('index')->can('customer type.view');
             Route::get('list', 'get')->name('list');
         });
+        Route::name('working_day::')->prefix('working-day')->controller(\App\Http\Controllers\Settings\WorkingDayController::class)->group(function (): void {
+            Route::get('', 'index')->name('index')->can('configuration.settings');
+        });
         Route::name('brand::')->prefix('brand')->controller(BrandController::class)->group(function (): void {
             Route::get('', 'index')->name('index')->can('brand.view');
             Route::get('list', 'get')->name('list');
@@ -66,12 +74,14 @@ Route::middleware('auth')->group(function (): void {
         Route::get('', 'index')->name('index')->can('product.view');
         Route::get('create', 'page')->name('create')->can('product.create');
         Route::get('edit/{id}', 'page')->name('edit')->can('product.view');
+        Route::get('import', 'import')->name('import')->can('product.create');
         Route::get('list', 'get')->name('list');
     });
     Route::name('service::')->prefix('service')->controller(ServiceController::class)->group(function (): void {
         Route::get('', 'index')->name('index')->can('service.view');
         Route::get('create', 'page')->name('create')->can('service.create');
         Route::get('edit/{id}', 'page')->name('edit')->can('service.edit');
+        Route::get('import', 'import')->name('import')->can('service.create');
         Route::get('list', 'get')->name('list');
     });
     Route::name('combo_offer::')->prefix('combo_offer')->controller(ComboOfferController::class)->group(function (): void {

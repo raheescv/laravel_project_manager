@@ -80,17 +80,6 @@
                 </div>
             @endif
 
-            @can('flat_trade.view')
-                <div class="row mb-4">
-                    <div class="col-12 mb-3">
-                        <h5 class="mb-3 text-secondary fw-semibold border-start border-4 border-info ps-3">Market Information</h5>
-                    </div>
-                    <div class="col-xl-12 mb-4">
-                        @livewire('dashboard.market-info')
-                    </div>
-                </div>
-            @endcan
-
             @can('package.dashboard package calendar')
                 <div class="row mb-4">
                     <div class="col-12 mb-3">

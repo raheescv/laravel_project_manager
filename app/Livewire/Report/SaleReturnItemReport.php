@@ -127,6 +127,7 @@ class SaleReturnItemReport extends Component
         $totalRow = clone $data;
         $data = $data->paginate($this->limit);
 
+        $total['base_unit_quantity'] = $totalRow->sum('sale_return_items.base_unit_quantity');
         $total['gross_amount'] = $totalRow->sum('sale_return_items.gross_amount');
         $total['discount'] = $totalRow->sum('sale_return_items.discount');
         $total['net_amount'] = $totalRow->sum('sale_return_items.net_amount');

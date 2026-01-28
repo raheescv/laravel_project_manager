@@ -60,6 +60,12 @@
             color: #3F51B5;
         }
 
+        .nav-link .fa-building {
+            color: #009688;
+        }
+
+        /* Teal for Tenants */
+
         /* Indigo for Log */
         .nav-link .fa-sign-out {
             color: #F44336;
@@ -76,6 +82,11 @@
         }
 
         /* Coral for Package */
+        .nav-link .fa-cut {
+            color: #9C27B0;
+        }
+
+        /* Purple for Tailoring */
 
         /* Hover effects for icons */
         .nav-link:hover .fa {
@@ -146,53 +157,73 @@
             </ul>
             <div class="mainnav__categoriy py-3">
                 <ul class="mainnav__menu nav flex-column">
-                    @if (
-                        auth()->user()->can('inventory.view') ||
-                        auth()->user()->can('inventory.product search') ||
-                        auth()->user()->can('inventory.barcode cart') ||
-                        auth()->user()->can('inventory transfer.create') ||
-                        auth()->user()->can('report.product')
-                        )
-                    <li class="nav-item has-sub">
-                        <a href="#"
-                            class="mininav-toggle nav-link {{ request()->is(['inventory', 'inventory/product/*', 'inventory/search', 'inventory/transfer','inventory/barcode/cart', 'inventory/transfer/edit/*', 'inventory/transfer/create', 'inventory/transfer/view/*', 'report/product']) ? 'active' : '' }}"><i
-                                class="fa fa-cubes fs-5 me-2"></i>
-                            <span class="nav-label mininav-content ms-1 collapse show" style="">Inventory</span>
-                        </a>
-                        <ul class="mininav-content nav collapse">
-                            <li data-popper-arrow class="arrow"></li>
-                            @can('inventory.view')
-                                <li class="nav-item">
-                                    <a href="{{ route('inventory::index') }}" class="nav-link {{ request()->is(['inventory', 'inventory/product/*']) ? 'active' : '' }}">List</a>
-                                </li>
-                            @endcan
-                            @can('inventory.product search')
-                                <li class="nav-item">
-                                    <a href="{{ route('inventory::search') }}" class="nav-link {{ request()->is(['inventory/search']) ? 'active' : '' }}">Product Search</a>
-                                </li>
-                            @endcan
-                            @can('inventory.barcode cart')
-                            <li class="nav-item">
-                                    <a href="{{ route('inventory::barcode::cart::index') }}" class="nav-link {{ request()->is(['inventory/barcode/cart']) ? 'active' : '' }}">Barcode Cart</a>
-                                </li>
-                            @endcan
-                            @can('inventory transfer.create')
-                                <li class="nav-item">
-                                    <a href="{{ route('inventory::transfer::index') }}"
-                                        class="nav-link {{ request()->is(['inventory/transfer', 'inventory/transfer/edit/*', 'inventory/transfer/create', 'inventory/transfer/view/*']) ? 'active' : '' }}">
-                                        Inventory Transfer
-                                    </a>
-                                </li>
-                            @endcan
-                            @can('report.product')
-                                <li class="nav-item">
-                                    <a href="{{ route('report::product') }}" class="nav-link {{ request()->is(['report/product']) ? 'active' : '' }}">
-                                        Product Check
-                                    </a>
-                                </li>
-                            @endcan
-                        </ul>
-                    </li>
+                    @if (auth()->user()->can('inventory.view') ||
+                            auth()->user()->can('inventory.product search') ||
+                            auth()->user()->can('inventory.barcode cart') ||
+                            auth()->user()->can('inventory transfer.create') ||
+                            auth()->user()->can('report.product'))
+                        <li class="nav-item has-sub">
+                            @php
+                                $list = [
+                                    'inventory',
+                                    'inventory/opening-balance',
+                                    'inventory/product/*',
+                                    'inventory/search',
+                                    'inventory/transfer',
+                                    'inventory/barcode/cart',
+                                    'inventory/transfer/edit/*',
+                                    'inventory/transfer/create',
+                                    'inventory/transfer/view/*',
+                                    'report/product',
+                                    'inventory/stock-check',
+                                    'inventory/stock-check/*',
+                                ];
+                            @endphp
+                            <a href="#" class="mininav-toggle nav-link {{ request()->is($list) ? 'active' : '' }}"><i class="fa fa-cubes fs-5 me-2"></i>
+                                <span class="nav-label mininav-content ms-1 collapse show" style="">Inventory</span>
+                            </a>
+                            <ul class="mininav-content nav collapse">
+                                <li data-popper-arrow class="arrow"></li>
+                                @can('inventory.view')
+                                    <li class="nav-item">
+                                        <a href="{{ route('inventory::index') }}"
+                                            class="nav-link {{ request()->is(['inventory', 'inventory/product/*', 'inventory/opening-balance']) ? 'active' : '' }}">List</a>
+                                    </li>
+                                @endcan
+                                @can('inventory.product search')
+                                    <li class="nav-item">
+                                        <a href="{{ route('inventory::search') }}" class="nav-link {{ request()->is(['inventory/search']) ? 'active' : '' }}">Product Search</a>
+                                    </li>
+                                @endcan
+                                @can('inventory.barcode cart')
+                                    <li class="nav-item">
+                                        <a href="{{ route('inventory::barcode::cart::index') }}" class="nav-link {{ request()->is(['inventory/barcode/cart']) ? 'active' : '' }}">Barcode Cart</a>
+                                    </li>
+                                @endcan
+                                @can('inventory transfer.create')
+                                    <li class="nav-item">
+                                        <a href="{{ route('inventory::transfer::index') }}"
+                                            class="nav-link {{ request()->is(['inventory/transfer', 'inventory/transfer/edit/*', 'inventory/transfer/create', 'inventory/transfer/view/*']) ? 'active' : '' }}">
+                                            Inventory Transfer
+                                        </a>
+                                    </li>
+                                @endcan
+                                @can('report.product')
+                                    <li class="nav-item">
+                                        <a href="{{ route('report::product') }}" class="nav-link {{ request()->is(['report/product']) ? 'active' : '' }}">
+                                            Product Check
+                                        </a>
+                                    </li>
+                                @endcan
+                                @can('inventory.stock check')
+                                    <li class="nav-item">
+                                        <a href="{{ route('inventory::stock-check::index') }}" class="nav-link {{ request()->is(['inventory/stock-check','inventory/stock-check/*']) ? 'active' : '' }}">
+                                            Stock Check
+                                        </a>
+                                    </li>
+                                @endcan
+                            </ul>
+                        </li>
                     @endif
 
                     @if (auth()->user()->can('appointment.view'))
@@ -242,7 +273,7 @@
                                 <li data-popper-arrow class="arrow"></li>
                                 @can('sale.create')
                                     <li class="nav-item">
-                                        <a href="{{ route('sale::create') }}" class="nav-link {{ request()->is(['sale/create','sale/pos']) ? 'active' : '' }}">Create</a>
+                                        <a href="{{ route('sale::create') }}" class="nav-link {{ request()->is(['sale/create', 'sale/pos']) ? 'active' : '' }}">Create</a>
                                     </li>
                                 @endcan
                                 @can('sale.view')
@@ -374,8 +405,7 @@
                     @endif
                     @if (auth()->user()->can('package.view') || auth()->user()->can('package.create'))
                         <li class="nav-item has-sub">
-                            <a href="#"
-                                class="mininav-toggle nav-link {{ request()->is(['package', 'package/create', 'package/edit/*']) ? 'active' : '' }}"><i
+                            <a href="#" class="mininav-toggle nav-link {{ request()->is(['package', 'package/create', 'package/edit/*']) ? 'active' : '' }}"><i
                                     class="fa fa-gift fs-5 me-2"></i>
                                 <span class="nav-label mininav-content ms-1 collapse show" style="">Package</span>
                             </a>
@@ -394,10 +424,46 @@
                             </ul>
                         </li>
                     @endif
+                    @if (auth()->user()->can('tailoring.order.view') || auth()->user()->can('tailoring.job_completion.view'))
+                        <li class="nav-item has-sub">
+                            @php
+                                $list = [
+                                    'tailoring/order',
+                                    'tailoring/order/create',
+                                    'tailoring/order/edit/*',
+                                    'tailoring/order/*',
+                                    'tailoring/job-completion',
+                                    'tailoring/job-completion/create',
+                                ];
+                            @endphp
+                            <a href="#" class="mininav-toggle nav-link {{ request()->is($list) ? 'active' : '' }}"><i
+                                    class="fa fa-cut fs-5 me-2"></i>
+                                <span class="nav-label mininav-content ms-1 collapse show" style="">Tailoring</span>
+                            </a>
+                            <ul class="mininav-content nav collapse">
+                                <li data-popper-arrow class="arrow"></li>
+                                @can('tailoring.order.create')
+                                    <li class="nav-item">
+                                        <a href="{{ route('tailoring::order::create') }}" class="nav-link {{ request()->is(['tailoring/order/create']) ? 'active' : '' }}">Create Order</a>
+                                    </li>
+                                @endcan
+                                @can('tailoring.order.view')
+                                    <li class="nav-item">
+                                        <a href="{{ route('tailoring::order::index') }}" class="nav-link {{ request()->is(['tailoring/order', 'tailoring/order/edit/*', 'tailoring/order/*']) && !request()->is(['tailoring/order/create']) ? 'active' : '' }}">Orders</a>
+                                    </li>
+                                @endcan
+                                @can('tailoring.job_completion.view')
+                                    <li class="nav-item">
+                                        <a href="{{ route('tailoring::job-completion::index') }}" class="nav-link {{ request()->is(['tailoring/job-completion', 'tailoring/job-completion/create']) ? 'active' : '' }}">Job Completion</a>
+                                    </li>
+                                @endcan
+                            </ul>
+                        </li>
+                    @endif
                     @if (auth()->user()->can('account.view'))
                         <li class="nav-item has-sub">
                             <a href="#"
-                                class="mininav-toggle nav-link {{ request()->is(['account', 'account/expense', 'account/income', 'account/general-voucher', 'account/cheque*', 'account/view/*', 'report/day_book','account/bank-reconciliation']) ? 'active' : '' }}"><i
+                                class="mininav-toggle nav-link {{ request()->is(['account', 'account/expense', 'account/income', 'account/general-voucher', 'account/cheque*', 'account/view/*', 'report/day_book', 'account/bank-reconciliation']) ? 'active' : '' }}"><i
                                     class="fa fa-bank fs-5 me-2"></i>
                                 <span class="nav-label mininav-content ms-1 collapse show" style="">Account</span>
                             </a>
@@ -435,7 +501,8 @@
                                 @endcan
                                 @can('report.bank reconciliation report')
                                     <li class="nav-item">
-                                        <a href="{{ route('account::bank-reconciliation::index') }}" class="nav-link {{ request()->is(['account/bank-reconciliation']) ? 'active' : '' }}">Bank Reconciliation Report</a>
+                                        <a href="{{ route('account::bank-reconciliation::index') }}" class="nav-link {{ request()->is(['account/bank-reconciliation']) ? 'active' : '' }}">Bank
+                                            Reconciliation</a>
                                     </li>
                                 @endcan
                             </ul>
@@ -443,7 +510,7 @@
                     @endif
                     @if (auth()->user()->can('employee.view'))
                         <li class="nav-item has-sub">
-                            <a href="#" class="mininav-toggle nav-link {{ request()->is(['users/employee', 'users/employee/attendance','users/employee/commission']) ? 'active' : '' }}"><i
+                            <a href="#" class="mininav-toggle nav-link {{ request()->is(['users/employee', 'users/employee/attendance', 'users/employee/commission']) ? 'active' : '' }}"><i
                                     class="fa fa-users fs-5 me-2"></i>
                                 <span class="nav-label mininav-content ms-1 collapse show" style="">Employee</span>
                             </a>
@@ -488,35 +555,46 @@
                             </ul>
                         </li>
                     @endif
-                    @if (auth()->user()->can('flat_trade.view'))
-                        <li class="nav-item has-sub">
-                            <a href="#" class="mininav-toggle nav-link {{ request()->is(['flat_trade/*']) ? 'active' : '' }}"><i
-                                    class="fa fa-chart-line fs-5 me-2"></i>
-                                <span class="nav-label mininav-content ms-1 collapse show" style="">FlatTrade</span>
+                    @if (auth()->user()->is_super_admin)
+                        <li class="nav-item">
+                            <a href="{{ route('tenants::index') }}" class="nav-link mininav-toggle {{ request()->is(['tenants']) ? 'active' : '' }}">
+                                <i class="fa fa-building fs-5 me-2"></i>
+                                <span class="nav-label mininav-content ms-1 collapse show" style="">
+                                    Tenants
+                                </span>
                             </a>
-                            <ul class="mininav-content nav collapse">
-                                <li data-popper-arrow class="arrow"></li>
-                                @can('flat_trade.view')
-                                    <li class="nav-item">
-                                        <a href="{{ route('flat_trade::dashboard') }}" class="nav-link {{ request()->is(['flat_trade/dashboard']) ? 'active' : '' }}">Dashboard</a>
-                                    </li>
-                                @endcan
-                                @can('flat_trade.view')
-                                    <li class="nav-item">
-                                        <a href="{{ route('flat_trade::trades') }}" class="nav-link {{ request()->is(['flat_trade/trades']) ? 'active' : '' }}">Trade History</a>
-                                    </li>
-                                @endcan
-                                @can('flat_trade.connect')
-                                    <li class="nav-item">
-                                        <a href="{{ route('flat_trade::connect') }}" class="nav-link {{ request()->is(['flat_trade/connect']) ? 'active' : '' }}">Connect Account</a>
-                                    </li>
-                                @endcan
-                            </ul>
                         </li>
+                    @endif
+                    @if (auth()->user()->is_super_admin)
+                        @if (auth()->user()->can('flat_trade.view'))
+                            <li class="nav-item has-sub">
+                                <a href="#" class="mininav-toggle nav-link {{ request()->is(['flat_trade/*']) ? 'active' : '' }}"><i class="fa fa-chart-line fs-5 me-2"></i>
+                                    <span class="nav-label mininav-content ms-1 collapse show" style="">FlatTrade</span>
+                                </a>
+                                <ul class="mininav-content nav collapse">
+                                    <li data-popper-arrow class="arrow"></li>
+                                    @can('flat_trade.view')
+                                        <li class="nav-item">
+                                            <a href="{{ route('flat_trade::dashboard') }}" class="nav-link {{ request()->is(['flat_trade/dashboard']) ? 'active' : '' }}">Dashboard</a>
+                                        </li>
+                                    @endcan
+                                    @can('flat_trade.view')
+                                        <li class="nav-item">
+                                            <a href="{{ route('flat_trade::trades') }}" class="nav-link {{ request()->is(['flat_trade/trades']) ? 'active' : '' }}">Trade History</a>
+                                        </li>
+                                    @endcan
+                                    @can('flat_trade.connect')
+                                        <li class="nav-item">
+                                            <a href="{{ route('flat_trade::connect') }}" class="nav-link {{ request()->is(['flat_trade/connect']) ? 'active' : '' }}">Connect Account</a>
+                                        </li>
+                                    @endcan
+                                </ul>
+                            </li>
+                        @endif
                     @endif
                     @if (auth()->user()->can('log.inventory'))
                         <li class="nav-item has-sub">
-                            <a href="#" class="mininav-toggle nav-link {{ request()->is(['log/inventory','api_log', 'visitor-analytics', 'health']) ? 'active' : '' }}"><i
+                            <a href="#" class="mininav-toggle nav-link {{ request()->is(['log/inventory', 'api_log', 'visitor-analytics', 'health']) ? 'active' : '' }}"><i
                                     class="fa fa-clipboard fs-5 me-2"></i>
                                 <span class="nav-label mininav-content ms-1 collapse show" style="">Log</span>
                             </a>

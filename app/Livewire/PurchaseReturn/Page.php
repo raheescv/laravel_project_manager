@@ -70,7 +70,19 @@ class Page extends Component
         ];
 
         if ($this->table_id) {
-            $this->purchase_return = PurchaseReturn::with('account:id,name', 'branch:id,name', 'items.product:id,name', 'items.purchaseItem.purchase:id,invoice_no', 'createdUser:id,name', 'updatedUser:id,name', 'cancelledUser:id,name', 'payments.paymentMethod:id,name')->find($this->table_id);
+            $this->purchase_return = PurchaseReturn::with([
+                'account:id,name',
+                'branch:id,name',
+                'items.product.unit:id,name,code',
+                'items.product.units.subUnit:id,name,code',
+                'items.product:id,name,unit_id,cost',
+                'items.purchaseItem.purchase:id,invoice_no',
+                'items.unit:id,name',
+                'createdUser:id,name',
+                'updatedUser:id,name',
+                'cancelledUser:id,name',
+                'payments.paymentMethod:id,name',
+            ])->find($this->table_id);
             if (! $this->purchase_return) {
                 return redirect()->route('purchase_return::index');
             }
@@ -87,6 +99,10 @@ class Page extends Component
                         'purchase_item_id' => $item['purchase_item_id'],
                         'product_id' => $item['product_id'],
                         'name' => $item['name'],
+                        'unit_name' => $item['unit_name'],
+                        'unit_id' => $item['unit_id'],
+                        'conversion_factor' => $item['conversion_factor'],
+                        'units' => $this->getProductUnits($item->product),
                         'tax_amount' => $item['tax_amount'],
                         'unit_price' => $item['unit_price'],
                         'quantity' => round($item['quantity'], 3),
@@ -98,7 +114,6 @@ class Page extends Component
                     ],
                 ];
             })->toArray();
-
             $this->payments = $this->purchase_return->payments->map->only(['id', 'amount', 'date', 'payment_method_id', 'created_by', 'name'])->toArray();
             $this->mainCalculator();
 
@@ -135,6 +150,10 @@ class Page extends Component
 
     public function updated($key, $value)
     {
+        if (preg_match('/^items\.(.*?)\.unit_id$/', $key, $matches)) {
+            $index = $matches[1];
+            $this->updateUnit($index, $value);
+        }
         if (preg_match('/^items\..*/', $key)) {
             $indexes = explode('.', $key);
             $index = $indexes[1] ?? null;
@@ -236,12 +255,17 @@ class Page extends Component
     public function addToCart($product, $purchaseItem = null)
     {
         $key = $product->id;
+        $product->load(['unit', 'units.subUnit']);
+
         $single = [
             'key' => $key,
             'purchase_item_id' => '',
             'purchase_invoice_no' => '',
             'product_id' => $product->id,
             'name' => $product->name,
+            'unit_id' => $product->unit_id,
+            'conversion_factor' => 1,
+            'units' => $this->getProductUnits($product),
             'unit_price' => $product->cost,
             'discount' => 0,
             'quantity' => 1,
@@ -254,6 +278,11 @@ class Page extends Component
             $single['discount'] = $purchaseItem['discount'];
             $single['quantity'] = $purchaseItem['quantity'];
             $single['tax'] = $purchaseItem['tax'];
+
+            if ($purchaseItem->unit_id) {
+                $single['unit_id'] = $purchaseItem->unit_id;
+                $single['conversion_factor'] = $purchaseItem->conversion_factor;
+            }
         }
         if (isset($this->items[$key])) {
             $this->items[$key]['quantity'] += 1;
@@ -261,6 +290,57 @@ class Page extends Component
             $this->items[$key] = $single;
         }
         $this->singleCartCalculator($key);
+        $this->mainCalculator();
+    }
+
+    public function getProductUnits($product)
+    {
+        $units = [];
+        if ($product->unit) {
+            $units[] = [
+                'id' => $product->unit->id,
+                'name' => $product->unit->name,
+                'conversion_factor' => 1,
+            ];
+        }
+        foreach ($product->units as $pUnit) {
+            if ($pUnit->subUnit) {
+                $units[] = [
+                    'id' => $pUnit->subUnit->id,
+                    'name' => $pUnit->subUnit->name,
+                    'conversion_factor' => $pUnit->conversion_factor,
+                ];
+            }
+        }
+
+        return $units;
+    }
+
+    public function updateUnit($index, $unit_id)
+    {
+        $units = $this->items[$index]['units'];
+        $selectedUnit = collect($units)->firstWhere('id', $unit_id);
+
+        if ($selectedUnit) {
+            $this->items[$index]['conversion_factor'] = $selectedUnit['conversion_factor'];
+
+            // Recalculate Unit Price
+            $purchaseItemId = $this->items[$index]['purchase_item_id'] ?? null;
+            $purchaseItem = $purchaseItemId ? PurchaseItem::find($purchaseItemId) : null;
+
+            if ($purchaseItem) {
+                // Calculate base price from the ORIGINAL purchase record
+                $basePrice = $purchaseItem->unit_price / ($purchaseItem->conversion_factor ?: 1);
+                $this->items[$index]['unit_price'] = round($basePrice * $this->items[$index]['conversion_factor'], 2);
+            } else {
+                // Fallback to Product Cost
+                $product = Product::find($this->items[$index]['product_id']);
+                if ($product) {
+                    $this->items[$index]['unit_price'] = round($product->cost * $this->items[$index]['conversion_factor'], 2);
+                }
+            }
+        }
+        $this->cartCalculator($index);
         $this->mainCalculator();
     }
 

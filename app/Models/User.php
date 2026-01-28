@@ -3,8 +3,10 @@
 namespace App\Models;
 
 use App\Events\BranchUpdated;
+use App\Traits\BelongsToTenant;
 use Exception;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Validation\Rule;
@@ -16,15 +18,18 @@ use Spatie\Permission\Traits\HasRoles;
 class User extends Authenticatable implements AuditableContracts
 {
     use Auditable, HasFactory, HasRoles, Notifiable;
+    use BelongsToTenant;
     use HasApiTokens;
 
     protected $fillable = [
+        'tenant_id',
         'type',
         'name',
         'code',
         'email',
         'mobile',
         'is_admin',
+        'is_super_admin',
         'default_branch_id',
         'email_verified_at',
         'password',
@@ -37,6 +42,8 @@ class User extends Authenticatable implements AuditableContracts
         'salary',
         'hra',
         'max_discount_per_sale',
+        'designation_id',
+        'order_no',
         'is_locked',
         'is_active',
         'is_whatsapp_enabled',
@@ -56,18 +63,22 @@ class User extends Authenticatable implements AuditableContracts
 
     public static function createRules($id = 0, $merge = [])
     {
+        $tenantId = self::getCurrentTenantId();
+
         return array_merge([
             'name' => ['required'],
-            'email' => ['required', Rule::unique(self::class, 'email')->ignore($id)],
+            'email' => ['required', Rule::unique(self::class, 'email')->where('tenant_id', $tenantId)->ignore($id)],
             'password' => ['required'],
         ], $merge);
     }
 
     public static function updateRules($id = 0, $merge = [])
     {
+        $tenantId = self::getCurrentTenantId();
+
         return array_merge([
             'name' => ['required'],
-            'email' => ['required', Rule::unique(self::class, 'email')->ignore($id)],
+            'email' => ['required', Rule::unique(self::class, 'email')->where('tenant_id', $tenantId)->ignore($id)],
         ], $merge);
     }
 
@@ -87,6 +98,11 @@ class User extends Authenticatable implements AuditableContracts
         return $this->hasMany(UserHasBranch::class, 'user_id');
     }
 
+    public function tenant(): BelongsTo
+    {
+        return $this->belongsTo(Tenant::class, 'tenant_id');
+    }
+
     public function branch()
     {
         return $this->belongsTo(Branch::class, 'default_branch_id');
@@ -95,6 +111,11 @@ class User extends Authenticatable implements AuditableContracts
     public function attendances()
     {
         return $this->hasMany(UserAttendance::class, 'employee_id');
+    }
+
+    public function designation()
+    {
+        return $this->belongsTo(Designation::class, 'designation_id');
     }
 
     protected function casts(): array
@@ -121,6 +142,37 @@ class User extends Authenticatable implements AuditableContracts
         return $query->where('is_active', 1);
     }
 
+    public static function getFilteredQuery(array $filters = [])
+    {
+        return static::employee()
+            ->when($filters['search'] ?? '', function ($query, $value) {
+                return $query->where(function ($q) use ($value) {
+                    $value = trim($value);
+
+                    return $q->where('users.name', 'like', "%{$value}%")
+                        ->orWhere('code', 'like', "%{$value}%")
+                        ->orWhere('email', 'like', "%{$value}%")
+                        ->orWhere('mobile', 'like', "%{$value}%")
+                        ->orWhere('place', 'like', "%{$value}%")
+                        ->orWhere('nationality', 'like', "%{$value}%");
+                });
+            })
+            ->when($filters['role_id'] ?? null, function ($query) use ($filters): void {
+                $query->whereHas('roles', function ($q) use ($filters): void {
+                    $q->where('id', $filters['role_id']);
+                });
+            })
+            ->when(isset($filters['is_active']) && $filters['is_active'] !== '', function ($query, $value): void {
+                $query->where('is_active', $value);
+            })
+            ->when($filters['type'] ?? '', function ($query, $value): void {
+                $query->where('type', $value);
+            })
+            ->when($filters['designation_id'] ?? null, function ($query, $value): void {
+                $query->where('designation_id', $value);
+            });
+    }
+
     public function getDropDownList($request)
     {
         $self = self::orderBy('name');
@@ -139,6 +191,7 @@ class User extends Authenticatable implements AuditableContracts
         $self = $self->when($request['type'] ?? '', function ($query, $value) {
             return $query->where('type', $value);
         });
+        $self = $self->active();
         $self = $self->limit(10);
         $self = $self->get(['name', 'email', 'mobile', 'id'])->toArray();
         $return['items'] = $self;

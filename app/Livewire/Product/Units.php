@@ -63,14 +63,12 @@ class Units extends Component
         return [
             'product_units.sub_unit_id' => ['required'],
             'product_units.conversion_factor' => ['required'],
-            'product_units.barcode' => ['required'],
         ];
     }
 
     protected $messages = [
         'product_units.sub_unit_id.required' => 'The sub unit field is required',
         'product_units.conversion_factor.required' => 'The conversion factor field is required',
-        'product_units.barcode.required' => 'The barcode field is required',
     ];
 
     public function save($close = false)

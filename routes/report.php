@@ -18,7 +18,9 @@ Route::middleware('auth')->group(function (): void {
             Route::get('purchase_item', 'purchase_item')->name('purchase_item');
             Route::get('purchase_return_item', 'purchase_return_item')->name('purchase_return_item');
             Route::get('day_book', 'day_book')->name('day_book');
-            Route::get('sale_summary', 'sale_summary')->name('sale_summary')->can('report.sale summary');
+
+            Route::get('daily_sales_insights', 'dailySalesInsights')->name('daily_sales_insights')->can('report.daily sales insights');
+
             Route::get('sales_overview', 'sales_overview')->name('sales_overview')->can('report.sales overview');
             Route::get('sale_calendar', 'sale_calendar')->name('sale_calendar')->can('report.sale calendar');
             Route::get('profit_loss', 'profit_loss')->name('profit_loss')->can('report.profit loss');
@@ -36,5 +38,6 @@ Route::middleware('auth')->group(function (): void {
             Route::get('vendor_aging', 'vendor_aging')->name('vendor_aging')->can('report.vendor aging');
             Route::get('day_wise_tax_report', 'day_wise_tax_report')->name('day_wise_tax_report')->can('report.day wise tax report');
             Route::get('tax_report', 'tax_report')->name('tax_report')->can('report.tax report');
+            Route::get('monthly_sale', 'monthly_sale')->name('monthly_sale')->can('report.monthly sale');
         });
 });

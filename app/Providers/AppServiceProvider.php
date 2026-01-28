@@ -4,9 +4,12 @@ namespace App\Providers;
 
 use App\Models\Branch;
 use App\Models\Configuration;
+use App\Notifications\DatabaseChannel;
+use App\Services\TenantService;
 use Dedoc\Scramble\Scramble;
 use Dedoc\Scramble\Support\Generator\OpenApi;
 use Dedoc\Scramble\Support\Generator\SecurityScheme;
+use Illuminate\Notifications\Channels\DatabaseChannel as BaseDatabaseChannel;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
@@ -19,7 +22,13 @@ class AppServiceProvider extends ServiceProvider
 {
     public function register(): void
     {
-        //
+        // Register TenantService as singleton to maintain state across the request
+        $this->app->singleton(TenantService::class);
+
+        // Bind custom database channel to replace the default one
+        $this->app->singleton(BaseDatabaseChannel::class, function ($app) {
+            return new DatabaseChannel($app['db']);
+        });
     }
 
     public function boot(): void
@@ -35,7 +44,7 @@ class AppServiceProvider extends ServiceProvider
                 );
             });
         // Force HTTPS for assets when the app is served over HTTPS
-        if (request()->isSecure() || env('FORCE_HTTPS', false) || env('APP_URL', '')->startsWith('https://')) {
+        if (request()->isSecure() || config('constants.force_https', false) || config('app.url', '')->startsWith('https://')) {
             URL::forceScheme('https');
         }
 
@@ -46,7 +55,9 @@ class AppServiceProvider extends ServiceProvider
         }
         if (Schema::hasTable('accounts')) {
             Cache::remember('accounts_slug_id_map', now()->addYear(), function () {
-                return DB::table('accounts')->where('is_locked', 1)->pluck('id', 'slug')->toArray();
+                if (Schema::hasColumn('accounts', 'slug')) {
+                    return DB::table('accounts')->where('is_locked', 1)->pluck('id', 'slug')->toArray();
+                }
             });
         }
         if (Schema::hasTable('configurations')) {

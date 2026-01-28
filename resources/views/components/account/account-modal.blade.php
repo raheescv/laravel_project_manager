@@ -1,5 +1,5 @@
 <div class="modal" id="AccountModal" aria-hidden="true" style="z-index: 1060;">
-    <div class="modal-dialog">
+    <div class="modal-dialog modal-lg">
         <div class="modal-content">
             @livewire('account.page')
         </div>

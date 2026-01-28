@@ -67,7 +67,7 @@
                         <span class="input-group-text bg-light border-end-0">
                             <i class="fa fa-building text-primary"></i>
                         </span>
-                        {{ html()->select('branch_id', [auth()->user()->default_branch_id => auth()->user()->branch?->name])->value(auth()->user()->default_branch_id)->class('select-assigned-branch_id-list border-start-0 ps-0')->id('branch_id')->attribute('style', 'width:80%')->placeholder('All Branches') }}
+                        {{ html()->select('branch_id', [session('branch_id') => session('branch_name')])->class('select-assigned-branch_id-list border-start-0 ps-0')->id('branch_id')->attribute('style', 'width:80%')->placeholder('All Branches') }}
                     </div>
                     <label class="form-label small text-muted mt-1">Branch</label>
                 </div>

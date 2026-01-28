@@ -21,23 +21,43 @@ class ServiceImport implements ToCollection, WithBatchInserts, WithChunkReading,
 
     private $errors = [];
 
-    public function __construct(private $userId, private $totalRows) {}
+    public function __construct(private $userId, private $totalRows, private $branchId = null, private array $mappings = []) {}
 
     public function collection(Collection $rows)
     {
         foreach ($rows as $value) {
             try {
-                if (! $value['name']) {
+                // Use mappings if provided, otherwise use direct column access
+                $productRow = [];
+                if (! empty($this->mappings)) {
+                    foreach ($this->mappings as $internalField => $excelHeader) {
+                        if ($excelHeader && isset($value[$excelHeader])) {
+                            $productRow[$internalField] = $value[$excelHeader];
+                        }
+                    }
+                } else {
+                    $productRow = $value->toArray();
+                }
+
+                $name = $productRow['name'] ?? $value['name'] ?? null;
+                if (! $name) {
                     continue;
                 }
-                $data = Product::constructData($value->toArray(), $this->userId);
-                $data['mrp'] = $value['price'] ?? 0;
+
+                $data = Product::constructData($productRow, $this->userId);
+                $data['name'] = trim($data['name']);
+                $data['mrp'] = $productRow['price'] ?? $value['price'] ?? $productRow['mrp'] ?? 0;
                 $data['code'] = $data['code'] ?? rand(999, 9999);
                 $data['status'] = $data['status'] ?? 'active';
                 $data['type'] = 'service';
-                $data['cost'] = $value['price'];
-                $home_service = $value['home_service'] ?? 0;
-                $exists = Product::firstWhere('name', $data['name']);
+                $data['cost'] = $productRow['price'] ?? $value['price'] ?? $productRow['cost'] ?? 0;
+                $home_service = $productRow['home_service'] ?? $value['home_service'] ?? 0;
+
+                $productName = $data['name'];
+
+                // Filter by tenant when checking for existing products
+                $exists = Product::where('name', $productName)->first();
+
                 $model = $exists;
                 if (! $exists) {
                     $trashedExists = Product::withTrashed()->firstWhere('name', $data['name']);
@@ -48,7 +68,7 @@ class ServiceImport implements ToCollection, WithBatchInserts, WithChunkReading,
                     } else {
                         $model = Product::create($data);
                     }
-                    Inventory::selfCreateByProduct($model, $this->userId, $quantity = 0);
+                    Inventory::selfCreateByProduct($model, $this->userId, $quantity = 0, $this->branchId);
                 }
                 if ($home_service) {
                     $priceCheck = ProductPrice::where('product_id', $model->id)->where('price_type', 'home_service')->first();

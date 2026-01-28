@@ -2,8 +2,10 @@
 
 namespace App\Models;
 
+use App\Traits\BelongsToTenant;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Validation\Rule;
 use OwenIt\Auditing\Auditable;
@@ -12,10 +14,12 @@ use OwenIt\Auditing\Contracts\Auditable as AuditableContracts;
 class Product extends Model implements AuditableContracts
 {
     use Auditable;
+    use BelongsToTenant;
     use HasFactory;
     use SoftDeletes;
 
     protected $fillable = [
+        'tenant_id',
         'type',
         'code',
         'name',
@@ -63,11 +67,13 @@ class Product extends Model implements AuditableContracts
 
     public static function rules($data, $id = 0, $merge = [])
     {
+        $tenantId = self::getCurrentTenantId();
+
         $rules = [
             'name' => [
                 'required',
                 'max:100',
-                Rule::unique('products')->where('type', $data['type'])->whereNull('deleted_at')->ignore($id),
+                Rule::unique('products')->where('tenant_id', $tenantId)->where('type', $data['type'])->whereNull('deleted_at')->ignore($id),
             ],
             'type' => ['required', 'max:100'],
             'code' => [
@@ -82,7 +88,7 @@ class Product extends Model implements AuditableContracts
             'mrp' => ['required'],
             'barcode' => array_merge(
                 ['required_if:type,product'],
-                ! empty($data['barcode'] ?? null) ? [Rule::unique('products')->where('barcode', $data['barcode'])->whereNull('deleted_at')->ignore($id)] : []
+                ! empty($data['barcode'] ?? null) ? [Rule::unique('products')->where('tenant_id', $tenantId)->where('barcode', $data['barcode'])->whereNull('deleted_at')->ignore($id)] : []
             ),
         ];
 
@@ -162,6 +168,11 @@ class Product extends Model implements AuditableContracts
     public function subCategory()
     {
         return $this->belongsTo(Category::class, 'sub_category_id');
+    }
+
+    public function tenant(): BelongsTo
+    {
+        return $this->belongsTo(Tenant::class, 'tenant_id');
     }
 
     public function inventories()
@@ -245,6 +256,11 @@ class Product extends Model implements AuditableContracts
         if (! isset($data['code']) || empty($data['code'])) {
             $data['code'] = self::generateUniqueCode();
         }
+
+        if (! isset($data['barcode']) || empty($data['barcode'])) {
+            $data['barcode'] = generateBarcode();
+        }
+
         $data['cost'] = extractNumericValue($data['cost'] ?? 0);
         $data['mrp'] = extractNumericValue($data['mrp'] ?? 0);
         $value['is_favorite'] = $value['is_favorite'] ?? true;

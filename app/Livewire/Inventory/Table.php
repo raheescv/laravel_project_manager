@@ -3,6 +3,7 @@
 namespace App\Livewire\Inventory;
 
 use App\Actions\Product\Inventory\GetAction;
+use App\Actions\Product\Inventory\ResetStockAction;
 use App\Actions\Product\InventoryProductWiseAction;
 use App\Exports\InventoryExport;
 use App\Exports\InventoryProductWiseExport;
@@ -59,6 +60,8 @@ class Table extends Component
     protected $paginationTheme = 'bootstrap';
 
     public $product_name = '';   // <— Missing property FIXED
+
+    public $resetReason = '';
 
     protected $listeners = [
         'Inventory-Refresh-Component' => '$refresh',
@@ -195,6 +198,44 @@ class Table extends Component
     public function updated($key, $value)
     {
         $this->resetPage();
+    }
+
+    public function openResetStockModal()
+    {
+        $this->resetReason = '';
+        $this->dispatch('openResetStockModal');
+    }
+
+    public function closeResetStockModal()
+    {
+        $this->resetReason = '';
+        $this->dispatch('closeResetStockModal');
+    }
+
+    public function resetStock()
+    {
+        try {
+            $this->validate([
+                'resetReason' => 'required|string|min:3|max:100',
+            ], [
+                'resetReason.required' => 'Please provide a reason for resetting the stock.',
+                'resetReason.min' => 'The reason must be at least 3 characters.',
+                'resetReason.max' => 'The reason must not exceed 100 characters.',
+            ]);
+
+            $filters = $this->getFilters();
+            $userId = Auth::id();
+
+            $response = (new ResetStockAction())->execute($filters, $this->resetReason, $userId);
+            if (! $response['success']) {
+                throw new Exception($response['message']);
+            }
+            $this->dispatch('success', ['message' => $response['message']]);
+            $this->dispatch('Inventory-Refresh-Component');
+            $this->dispatch('closeResetStockModal');
+        } catch (Exception $e) {
+            $this->dispatch('error', ['message' => $e->getMessage()]);
+        }
     }
 
     public function render()

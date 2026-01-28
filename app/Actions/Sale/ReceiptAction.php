@@ -49,6 +49,7 @@ class ReceiptAction
                     'remarks' => $remarks,
                 ];
             }
+            $sale_payment_id = null;
             if ($payment) {
                 $salePaymentData = [
                     'sale_id' => $sale_id,
@@ -57,7 +58,7 @@ class ReceiptAction
                     'amount' => $data['payment'],
                 ];
                 $salePaymentResponse = (new SalePaymentCreateAction())->execute($salePaymentData, $user_id);
-                $sale_payment_id = $salePaymentResponse['data']['id'];
+                $sale_payment_id = $salePaymentResponse['data']['id'] ?? null;
                 $remarks = $paymentMethod['name'].' payment made by '.$name;
                 $entries[] = [
                     'account_id' => $paymentData['payment_method_id'],
@@ -95,7 +96,9 @@ class ReceiptAction
 
             $return['success'] = true;
             $return['message'] = 'Successfully Updated Journal';
-            $return['data'] = [];
+            $return['data'] = [
+                'payment_id' => $sale_payment_id ?? null,
+            ];
         } catch (\Throwable $th) {
             $return['success'] = false;
             $return['message'] = $th->getMessage();

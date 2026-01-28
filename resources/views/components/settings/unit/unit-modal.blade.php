@@ -1,6 +1,6 @@
-<div class="modal" id="UnitModal" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
+<div class="modal fade" id="UnitModal" tabindex="-1" aria-labelledby="unitModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg">
             @livewire('settings.unit.page')
         </div>
     </div>

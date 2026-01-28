@@ -13,7 +13,7 @@ Route::post('/telegram/webhook', [TelegramWebhookController::class, 'handle']);
 
 // Theme settings route - public but with throttling to prevent abuse
 Route::get('/theme-settings', function () {
-    $themeSettings = Cache::get('theme_settings') ?: Configuration::where('key', 'theme_settings')->value('value');
+    $themeSettings = Cache::get('theme_settings') ?: Configuration::where('key', 'theme_settings')->value('value') ?? [];
 
     return response()->json([
         'success' => true,

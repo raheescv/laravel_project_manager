@@ -61,7 +61,7 @@ class Page extends Component
     protected function rules()
     {
         return [
-            'brands.name' => Rule::unique('brands', 'name')->ignore($this->table_id)->whereNull('deleted_at'),
+            'brands.name' => Rule::unique('brands', 'name')->where('tenant_id', session('tenant_id'))->ignore($this->table_id)->whereNull('deleted_at'),
             'image' => 'nullable|image|max:2048',
         ];
     }

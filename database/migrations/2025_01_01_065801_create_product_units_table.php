@@ -10,6 +10,9 @@ return new class() extends Migration
     {
         Schema::create('product_units', function (Blueprint $table) {
             $table->id();
+            $table->unsignedBigInteger('tenant_id');
+            $table->foreign('tenant_id')->references('id')->on('tenants')->onDelete('cascade');
+            $table->index(['tenant_id'], 'product_unit_tenant_id_index');
             $table->unsignedBigInteger('product_id');
             $table->unsignedBigInteger('sub_unit_id');
             $table->double('conversion_factor', 8, 3);

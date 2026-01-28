@@ -1,3 +1,10 @@
 supervisorctl reread
 
 vendor/bin/phpstan analyse --level 7 app --generate-baseline
+
+composer dump-autoload
+
+sudo chown -R www-data:www-data storage/ bootstrap/cache/
+sudo chmod -R 775 storage/ bootstrap/cache/
+
+

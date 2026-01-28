@@ -13,6 +13,9 @@ return new class() extends Migration
     {
         Schema::create('notifications', function (Blueprint $table) {
             $table->uuid('id')->primary();
+            $table->unsignedBigInteger('tenant_id');
+            $table->foreign('tenant_id')->references('id')->on('tenants')->onDelete('cascade');
+            $table->index('tenant_id');
             $table->string('type');
             $table->morphs('notifiable');
             $table->text('data');

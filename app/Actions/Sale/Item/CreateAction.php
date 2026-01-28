@@ -2,29 +2,21 @@
 
 namespace App\Actions\Sale\Item;
 
-use App\Models\Configuration;
-use App\Models\Product;
 use App\Models\SaleItem;
 use Exception;
 
 class CreateAction
 {
-    public function execute($data, $user_id)
+    use ValidatesUnitPriceAgainstMrpTrait;
+
+    public function execute(array $data, int $user_id): array
     {
         try {
-            $data['created_by'] = $data['updated_by'] = $user_id;
-            $duplicate = SaleItem::where('product_id', $data['product_id'])->where('employee_id', $data['employee_id'])->where('sale_id', $data['sale_id'])->exists();
-            if ($duplicate) {
-                throw new Exception('Item already exists for this product under employee.', 1);
-            }
-            $validateUnitPriceAgainstMrp = Configuration::where('key', 'validate_unit_price_against_mrp')->value('value') ?? 'yes';
-            if ($validateUnitPriceAgainstMrp === 'yes') {
-                $product = Product::find($data['product_id']);
-                if ($product->type == 'product' && $data['unit_price'] > $product->mrp) {
-                    throw new Exception('Unit price cannot be greater than MRP.', 1);
-                }
-            }
+            $this->setUserIds($data, $user_id);
+            $this->validateDuplicate($data);
+            $this->validateUnitPriceAgainstMrp($data);
             validationHelper(SaleItem::rules(), $data);
+
             $model = SaleItem::create($data);
 
             $return['success'] = true;
@@ -36,5 +28,22 @@ class CreateAction
         }
 
         return $return;
+    }
+
+    private function setUserIds(array &$data, int $user_id): void
+    {
+        $data['created_by'] = $data['updated_by'] = $user_id;
+    }
+
+    private function validateDuplicate(array $data): void
+    {
+        $duplicate = SaleItem::where('product_id', $data['product_id'])
+            ->where('employee_id', $data['employee_id'])
+            ->where('sale_id', $data['sale_id'])
+            ->exists();
+
+        if ($duplicate) {
+            throw new Exception('Item already exists for this product under employee.', 1);
+        }
     }
 }

@@ -80,7 +80,7 @@ class PurchaseController extends Controller
 
     public function print($id)
     {
-        $model = Purchase::with('items.product', 'account', 'branch', 'createdUser', 'updatedUser')->findOrFail($id);
+        $model = Purchase::with('items.product', 'items.unit', 'account', 'branch', 'createdUser', 'updatedUser')->findOrFail($id);
         $html = view('purchase.print', compact('model', 'id'));
         if (! $model->signature) {
             return $html;

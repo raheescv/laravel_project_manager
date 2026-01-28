@@ -55,6 +55,7 @@ class EmployeeInventoryList extends Component
             ->leftJoin('branches', 'inventories.branch_id', '=', 'branches.id')
             ->when($this->search, function ($query, $value) {
                 $value = trim($value);
+
                 return $query->where(function ($q) use ($value) {
                     $q->where('products.name', 'like', "%{$value}%")
                         ->orWhere('products.code', 'like', "%{$value}%")
@@ -98,4 +99,3 @@ class EmployeeInventoryList extends Component
         ]);
     }
 }
-

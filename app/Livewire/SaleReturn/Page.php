@@ -90,6 +90,8 @@ class Page extends Component
                         'tax' => $item['tax'],
                         'total' => $item['total'],
                         'effective_total' => $item['effective_total'],
+                        'unit_id' => $item['unit_id'],
+                        'conversion_factor' => $item['conversion_factor'],
                         'created_by' => $item['created_by'],
                     ],
                 ];
@@ -256,6 +258,9 @@ class Page extends Component
             'discount' => 0,
             'quantity' => 1,
             'tax' => $inventory->product->tax ?? 0,
+            'unit_id' => $inventory->product->unit_id,
+            'unit_name' => $inventory->product->unit->name ?? '',
+            'conversion_factor' => 1,
         ];
         if ($saleItem) {
             $single['sale_item_id'] = $saleItem->id;

@@ -10,6 +10,9 @@ return new class() extends Migration
     {
         Schema::create('purchases', function (Blueprint $table) {
             $table->id();
+            $table->unsignedBigInteger('tenant_id');
+            $table->foreign('tenant_id')->references('id')->on('tenants')->onDelete('cascade');
+            $table->index('tenant_id');
             $table->string('invoice_no')->nullable();
 
             $table->unsignedBigInteger('branch_id')->references('id')->on('branches');
@@ -29,10 +32,10 @@ return new class() extends Migration
             $table->decimal('grand_total', 16, 2)->storedAs('total - other_discount + freight');
             $table->decimal('paid', 16, 2)->default(0);
             $table->decimal('balance', 16, 2)->storedAs('grand_total - paid');
-
             $table->text('address')->nullable();
 
             $table->enum('status', array_keys(saleStatuses()))->default('completed');
+            $table->string('signature')->nullable();
 
             $table->unsignedBigInteger('created_by')->references('id')->on('users');
             $table->unsignedBigInteger('updated_by')->nullable()->references('id')->on('users');

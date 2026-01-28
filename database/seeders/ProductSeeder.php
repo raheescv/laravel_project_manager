@@ -20,6 +20,7 @@ class ProductSeeder extends Seeder
 
         for ($i = 0; $i < 100; $i++) {
             $data[] = [
+                'tenant_id' => 1,
                 'type' => 'product',
                 'name' => ucfirst($faker->unique()->word),
                 'department_id' => ! empty($departmentIds) ? $faker->randomElement($departmentIds) : null,

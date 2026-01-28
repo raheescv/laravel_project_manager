@@ -37,16 +37,21 @@ class GeneralVoucherJournalEntryAction
                     $data['entries'] = $entries;
                 }
             } else {
-                // Set counter_account_id for each entry (first other account with opposite transaction)
                 $entries = $data['entries'];
-                foreach ($entries as $index => &$entry) {
-                    $entry['created_by'] = $userId;
-                    // Find a counter account (another entry with opposite debit/credit)
-                    if (! isset($entry['counter_account_id'])) {
-                        foreach ($entries as $otherIndex => $otherEntry) {
-                            if ($index !== $otherIndex && (($entry['debit'] > 0 && $otherEntry['credit'] > 0) || ($entry['credit'] > 0 && $otherEntry['debit'] > 0))) {
-                                $entry['counter_account_id'] = $otherEntry['account_id'];
-                                break;
+                if (count($entries) == 2) {
+                    $entries[0]['counter_account_id'] = $entries[1]['account_id'];
+                    $entries[1]['counter_account_id'] = $entries[0]['account_id'];
+                } else {
+                    // Set counter_account_id for each entry (first other account with opposite transaction)
+                    foreach ($entries as $index => &$entry) {
+                        $entry['created_by'] = $userId;
+                        // Find a counter account (another entry with opposite debit/credit)
+                        if (! isset($entry['counter_account_id'])) {
+                            foreach ($entries as $otherIndex => $otherEntry) {
+                                if ($index !== $otherIndex && (($entry['debit'] > 0 && $otherEntry['credit'] > 0) || ($entry['credit'] > 0 && $otherEntry['debit'] > 0))) {
+                                    // $entry['counter_account_id'] = $otherEntry['account_id'];
+                                    break;
+                                }
                             }
                         }
                     }

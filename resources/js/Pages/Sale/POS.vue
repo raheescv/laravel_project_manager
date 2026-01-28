@@ -59,10 +59,12 @@
                                             <div class="grid grid-cols-2 gap-1.5 sm:grid-cols-none sm:gap-1.5 sm:flex sm:flex-row">
                                                 <button type="button" @click="viewCustomerDetails"
                                                     :disabled="!form.account_id || form.account_id === 3" :class="[
-                                                        'w-full sm:w-auto px-2.5 py-2 sm:py-1 rounded-lg transition-all duration-200 shadow-md hover:shadow-lg transform active:scale-95 font-semibold text-xs sm:text-xs flex items-center justify-center min-h-[40px] sm:min-h-[28px] touch-manipulation border-2',
+                                                        'w-full sm:w-auto px-2.5 py-2 sm:py-1 rounded-lg transition-all duration-200 shadow-md hover:shadow-lg transform active:scale-95 font-semibold text-xs sm:text-xs flex items-center justify-center min-h-[40px] sm:min-h-[28px] touch-manipulation border-2 relative',
                                                         (!form.account_id || form.account_id === 3) ?
                                                             'bg-gray-200 text-gray-500 cursor-not-allowed border-gray-300/50' :
-                                                            'bg-gradient-to-r from-purple-500 via-pink-500 to-rose-500 text-white hover:from-purple-600 hover:via-pink-600 hover:to-rose-600 border-purple-400/30'
+                                                            hasCustomerFeedbacks ?
+                                                                'bg-gradient-to-r from-purple-500 via-pink-500 to-rose-500 text-white hover:from-purple-600 hover:via-pink-600 hover:to-rose-600 border-purple-400/30 button-glow' :
+                                                                'bg-gradient-to-r from-purple-500 via-pink-500 to-rose-500 text-white hover:from-purple-600 hover:via-pink-600 hover:to-rose-600 border-purple-400/30'
                                                     ]">
                                                     <i class="fa fa-eye text-sm mr-1.5 sm:mr-1"></i>
                                                     <span class="text-sm sm:text-xs">View</span>
@@ -100,9 +102,10 @@
                                             <i class="fa fa-user-tie text-purple-600 mr-2 text-sm"></i>
                                             <span>Employee</span>
                                         </label>
-                                        <SearchableSelect v-model="form.employee_id" :options="employees"
+                                        <SearchableSelect ref="employeeSelectRef" v-model="form.employee_id" :options="employees"
                                             placeholder="Select employee..." filter-placeholder="Search employees..."
                                             :visibleItems="8"
+                                            data-employee-select="true"
                                             input-class="w-full rounded-lg border-2 border-purple-200/60 shadow-md focus:border-purple-500 focus:ring-2 focus:ring-purple-500/30 transition-all duration-200 bg-white/95 backdrop-blur-sm hover:shadow-lg hover:border-purple-300 text-sm sm:text-sm py-2 sm:py-2 px-3 min-h-[40px] sm:min-h-[36px] font-medium" />
                                     </div>
                                     <div class="space-y-1.5">
@@ -341,9 +344,9 @@
             :countries="countries" @close="showCustomerModal = false" @customer-saved="handleCustomerSaved"
             @customer-selected="handleCustomerSelected" />
 
-        <!-- Customer Details Modal -->
-        <CustomerDetailsModal :show="showCustomerDetailsModal" :customer-id="selectedCustomerId"
-            @close="showCustomerDetailsModal = false" @edit="handleCustomerEdit" />
+        <!-- Customer Details Modal (using CustomerModal in view mode) -->
+        <CustomerModal :show="showCustomerDetailsModal" mode="view" :customer-id="selectedCustomerId"
+            @close="showCustomerDetailsModal = false" @customerSaved="handleCustomerEdit" />
 
         <!-- Custom Payment Modal -->
         <CustomPaymentModal :show="showCustomPaymentModal" :total-amount="form.grand_total"
@@ -387,12 +390,13 @@ import ProductsGrid from '@/components/ProductsGrid.vue'
 import SaleConfirmationModal from '@/components/SaleConfirmationModal.vue'
 import SearchableSelect from '@/components/SearchableSelectFixed.vue'
 import ComboOfferModal from '@/components/ComboOfferModal.vue'
-import CustomerDetailsModal from '@/components/CustomerDetailsModal.vue'
+
 import {
     useForm
 } from '@inertiajs/vue3'
 import {
     computed,
+    nextTick,
     onMounted,
     onUnmounted,
     ref,
@@ -422,7 +426,7 @@ export default {
         SaleConfirmationModal,
         EditItemModal,
         ComboOfferModal,
-        CustomerDetailsModal
+
     },
     props: {
         categories: Array,
@@ -470,6 +474,7 @@ export default {
         // Reactive data
         const loading = ref(false)
         const products = ref([])
+        const employeeSelectRef = ref(null)
         // Initialize serverCustomers with default customer and props.customers
         const serverCustomers = ref({
             ...(props.defaultCustomerEnabled ? {
@@ -760,20 +765,45 @@ export default {
 
         const addProductToCart = async (product) => {
             if (!form.employee_id) {
-                toast.error('Please select an employee first')
+                toast.error('Please select an employee first.')
+                // Open the employee dropdown
+                await nextTick()
+                // Small delay to ensure DOM is ready and ref is set
+                setTimeout(() => {
+                    if (employeeSelectRef.value) {
+                        // Use the focus method which opens dropdown and focuses input
+                        if (employeeSelectRef.value.focus) {
+                            employeeSelectRef.value.focus()
+                        } else if (employeeSelectRef.value.openDropdown) {
+                            employeeSelectRef.value.openDropdown()
+                        }
+                    } else {
+                        // Fallback: try to find and click the input directly
+                        const employeeInput = document.querySelector('input[placeholder*="employee" i]')
+                        if (employeeInput) {
+                            employeeInput.focus()
+                            employeeInput.click()
+                            employeeInput.scrollIntoView({ behavior: 'smooth', block: 'center' })
+                        }
+                    }
+                }, 200)
                 return
             }
 
-            if (!product?.id) {
+            // Check for id in multiple possible locations
+            const productId = product?.id || product?.product_id || product?.inventory_id;
+            if (!productId) {
+                console.error('addProductToCart: Invalid product data - missing id:', product);
                 toast.error('Invalid product data')
                 return
             }
 
             try {
                 const response = await axios.post('/pos/add-item', {
-                    inventory_id: product.id,
+                    inventory_id: productId,
                     employee_id: form.employee_id,
-                    sale_type: form.sale_type
+                    sale_type: form.sale_type,
+                    unit_id: product?.unit_id || null
                 })
 
                 const item = response.data
@@ -942,6 +972,7 @@ export default {
         const showComboOfferModal = ref(false)
         const showCustomerDetailsModal = ref(false)
         const selectedCustomerId = ref(null)
+        const hasCustomerFeedbacks = ref(false)
 
         // Handler for saving from EditItemModal
         const onEditItemSave = (updatedItem) => {
@@ -1025,8 +1056,30 @@ export default {
                     const normalized = normalizeCustomerData(customer)
                     form.customer_mobile = normalized.mobile
                 }
+                // Check if customer has feedbacks
+                checkCustomerFeedbacks(selectedValue)
             } else {
                 form.customer_mobile = ''
+                hasCustomerFeedbacks.value = false
+            }
+        }
+
+        const checkCustomerFeedbacks = async (customerId) => {
+            if (!customerId || customerId === 3) {
+                hasCustomerFeedbacks.value = false
+                return
+            }
+
+            try {
+                const response = await axios.get(`/account/customer/${customerId}/details`)
+                if (response.data?.feedbacks && Array.isArray(response.data.feedbacks) && response.data.feedbacks.length > 0) {
+                    hasCustomerFeedbacks.value = true
+                } else {
+                    hasCustomerFeedbacks.value = false
+                }
+            } catch (error) {
+                // Silently fail - don't show error for this check
+                hasCustomerFeedbacks.value = false
             }
         }
 
@@ -1453,8 +1506,11 @@ export default {
                     const normalized = normalizeCustomerData(customer)
                     form.customer_mobile = normalized.mobile
                 }
+                // Check if customer has feedbacks
+                checkCustomerFeedbacks(newCustomerId)
             } else {
                 form.customer_mobile = ''
+                hasCustomerFeedbacks.value = false
             }
         }, {
             immediate: true
@@ -1560,6 +1616,8 @@ export default {
             showComboOfferModal,
             showCustomerDetailsModal,
             selectedCustomerId,
+            hasCustomerFeedbacks,
+            employeeSelectRef,
 
             // Computed
             totalQuantity,
@@ -1593,6 +1651,7 @@ export default {
             handleCustomerChange,
             handleCustomerSaved,
             handleCustomerSelected,
+            checkCustomerFeedbacks,
             handleCustomPaymentSave,
             closeCustomPaymentModal,
             viewDraftSales,
@@ -1640,5 +1699,19 @@ export default {
     z-index: 40;
     inset: 0;
     background-color: rgba(0, 0, 0, 0.5);
+}
+
+.button-glow {
+    animation: glow-pulse 2s ease-in-out infinite;
+    box-shadow: 0 0 10px rgba(168, 85, 247, 0.6), 0 0 20px rgba(236, 72, 153, 0.4), 0 0 30px rgba(244, 63, 94, 0.3);
+}
+
+@keyframes glow-pulse {
+    0%, 100% {
+        box-shadow: 0 0 10px rgba(168, 85, 247, 0.6), 0 0 20px rgba(236, 72, 153, 0.4), 0 0 30px rgba(244, 63, 94, 0.3);
+    }
+    50% {
+        box-shadow: 0 0 15px rgba(168, 85, 247, 0.8), 0 0 30px rgba(236, 72, 153, 0.6), 0 0 45px rgba(244, 63, 94, 0.5);
+    }
 }
 </style>

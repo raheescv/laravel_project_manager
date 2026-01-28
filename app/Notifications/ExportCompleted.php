@@ -14,7 +14,7 @@ class ExportCompleted extends Notification
 
     public function via($notifiable)
     {
-        return ['database', 'mail'];
+        return [DatabaseChannel::class, 'mail'];
     }
 
     public function toMail($notifiable)

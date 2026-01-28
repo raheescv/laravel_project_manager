@@ -27,7 +27,7 @@ class View extends Component
     {
         $this->table_id = $table_id;
         if ($this->table_id) {
-            $this->sale = Sale::with('account:id,name,mobile', 'branch:id,name', 'items.product:id,name', 'items.employee:id,name', 'createdUser:id,name', 'updatedUser:id,name', 'cancelledUser:id,name', 'payments.paymentMethod:id,name')->find($this->table_id);
+            $this->sale = Sale::with('account:id,name,mobile', 'branch:id,name', 'items.product:id,name', 'items.employee:id,name', 'items.unit:id,name', 'createdUser:id,name', 'updatedUser:id,name', 'cancelledUser:id,name', 'payments.paymentMethod:id,name')->find($this->table_id);
             if (! $this->sale) {
                 return redirect()->route('sale::index');
             }
@@ -46,6 +46,7 @@ class View extends Component
                         'product_id' => $item['product_id'],
                         'sale_combo_offer_id' => $item['sale_combo_offer_id'],
                         'name' => $item['name'],
+                        'unit' => $item->unit?->name,
                         'employee_name' => $item['employee_name'],
                         'assistant_name' => $item['assistant_name'],
                         'tax_amount' => $item['tax_amount'],
@@ -60,7 +61,7 @@ class View extends Component
                     ],
                 ];
             })->toArray();
-            $this->sale_return_items = SaleReturnItem::with('saleReturn:id,other_discount,total', 'product:id,name')->whereIn('sale_item_id', $item_ids)->get();
+            $this->sale_return_items = SaleReturnItem::with('saleReturn:id,other_discount,total', 'product:id,name', 'unit:id,name')->whereIn('sale_item_id', $item_ids)->get();
             $this->payments = $this->sale->payments->map->only(['id', 'amount', 'date', 'payment_method_id', 'created_by', 'name'])->toArray();
         }
     }

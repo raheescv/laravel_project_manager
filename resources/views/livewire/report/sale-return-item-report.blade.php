@@ -32,7 +32,7 @@
                 </div>
                 <div class="col-md-3" wire:ignore>
                     <label for="branch_id">Branch</label>
-                    {{ html()->select('branch_id', [auth()->user()->default_branch_id => auth()->user()->branch?->name])->value(auth()->user()->default_branch_id)->class('select-assigned-branch_id-list')->id('branch_id')->placeholder('All') }}
+                    {{ html()->select('branch_id', [session('branch_id') => session('branch_name')])->class('select-assigned-branch_id-list')->id('branch_id')->placeholder('All') }}
                 </div>
                 <div class="col-md-5" wire:ignore>
                     <label for="product_id">Product</label>
@@ -50,8 +50,10 @@
                         <th> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="sale_returns.date" label="date" /> </th>
                         <th> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="sale_returns.reference_no" label="reference no" /> </th>
                         <th> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="product_id" label="product" /> </th>
+                        <th> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="unit_id" label="unit" /> </th>
                         <th class="text-end"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="unit_price" label="unit price" /> </th>
                         <th class="text-end"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="quantity" label="quantity" /> </th>
+                        <th class="text-end"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="base_unit_quantity" label="base unit quantity" /> </th>
                         <th class="text-end"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="gross_amount" label="gross amount" /> </th>
                         <th class="text-end"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="discount" label="discount" /> </th>
                         <th class="text-end"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="net_amount" label="net amount" /> </th>
@@ -67,8 +69,10 @@
                             <td>{{ systemDate($item->date) }}</td>
                             <td> <a href="{{ route('sale_return::view', $item->sale_return_id) }}">{{ $item->reference_no ? $item->reference_no : $item->sale_return_id }}</a> </td>
                             <td>{{ $item->product?->name }}</td>
+                            <td>{{ $item->unit?->name }}</td>
                             <td class="text-end">{{ currency($item->unit_price) }}</td>
                             <td class="text-end">{{ currency($item->quantity) }}</td>
+                            <td class="text-end">{{ currency($item->base_unit_quantity) }}</td>
                             <td class="text-end">{{ currency($item->gross_amount) }}</td>
                             <td class="text-end">{{ currency($item->discount) }}</td>
                             <td class="text-end">{{ currency($item->net_amount) }}</td>
@@ -80,7 +84,8 @@
                 </tbody>
                 <tfoot>
                     <tr>
-                        <th colspan="6">Total</th>
+                        <th colspan="7">Total</th>
+                        <th class="text-end">{{ currency($total['base_unit_quantity']) }}</th>
                         <th class="text-end">{{ currency($total['gross_amount']) }}</th>
                         <th class="text-end">{{ currency($total['discount']) }}</th>
                         <th class="text-end">{{ currency($total['net_amount']) }}</th>

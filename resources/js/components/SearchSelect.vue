@@ -12,18 +12,22 @@
 
         <!-- Dropdown -->
         <div v-if="isOpen && filteredOptions.length > 0"
-            class="absolute z-50 mt-1 w-full bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-auto">
+            class="absolute z-50 mt-1 w-full bg-white border border-slate-200 rounded-xl shadow-xl max-h-60 overflow-auto py-1 ring-1 ring-black ring-opacity-5">
             <div v-for="option in filteredOptions" :key="option.value" @click="selectOption(option)"
-                class="px-3 py-2 text-sm cursor-pointer hover:bg-blue-50 hover:text-blue-900 transition-colors duration-150"
-                :class="{ 'bg-blue-100 text-blue-900': option.value === modelValue }">
-                {{ option.label }}
+                class="px-4 py-2 text-sm cursor-pointer transition-all duration-150 flex justify-between items-center"
+                :class="option.value === modelValue ? 'bg-blue-50 text-blue-700 font-semibold' : 'text-slate-700 hover:bg-slate-50'">
+                <span>{{ option.label }}</span>
+                <i v-if="option.value === modelValue" class="fa fa-check text-xs"></i>
             </div>
         </div>
 
         <!-- No results -->
         <div v-if="isOpen && filteredOptions.length === 0 && searchTerm"
-            class="absolute z-50 mt-1 w-full bg-white border border-gray-300 rounded-md shadow-lg">
-            <div class="px-3 py-2 text-sm text-gray-500">No results found</div>
+            class="absolute z-50 mt-1 w-full bg-white border border-slate-200 rounded-xl shadow-xl">
+            <div class="px-4 py-3 text-sm text-slate-500 italic flex items-center gap-2">
+                <i class="fa fa-search opacity-50"></i>
+                No results found
+            </div>
         </div>
     </div>
 </template>

@@ -6,7 +6,9 @@ use App\Actions\Product\Inventory\CreateAction as InventoryCreateAction;
 use App\Jobs\BranchProductCreationJob;
 use App\Models\Scopes\AssignedBranchScope;
 use App\Models\Scopes\CurrentBranchScope;
+use App\Traits\BelongsToTenant;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use OwenIt\Auditing\Auditable;
 use OwenIt\Auditing\Contracts\Auditable as AuditableContracts;
@@ -14,9 +16,11 @@ use OwenIt\Auditing\Contracts\Auditable as AuditableContracts;
 class Inventory extends Model implements AuditableContracts
 {
     use Auditable;
+    use BelongsToTenant;
     use SoftDeletes;
 
     protected $fillable = [
+        'tenant_id',
         'branch_id',
         'employee_id',
         'product_id',
@@ -63,6 +67,11 @@ class Inventory extends Model implements AuditableContracts
     public function employee()
     {
         return $this->belongsTo(User::class, 'employee_id');
+    }
+
+    public function tenant(): BelongsTo
+    {
+        return $this->belongsTo(Tenant::class, 'tenant_id');
     }
 
     public function branch()

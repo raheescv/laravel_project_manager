@@ -22,10 +22,10 @@ class StockUpdateAction
                 }
                 $inventory = $inventory->toArray();
                 if ($is_purchase_return) {
-                    $inventory['quantity'] -= $value->quantity;
+                    $inventory['quantity'] -= $value->base_unit_quantity;
                     $inventory['remarks'] = 'PurchaseReturn:'.$purchaseReturn->invoice_no;
                 } else {
-                    $inventory['quantity'] += $value->quantity;
+                    $inventory['quantity'] += $value->base_unit_quantity;
                     $inventory['remarks'] = 'PurchaseReturn Cancelled:'.$purchaseReturn->invoice_no;
                 }
                 $inventory['model'] = 'PurchaseReturn';

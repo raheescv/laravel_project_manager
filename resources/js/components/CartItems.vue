@@ -91,7 +91,7 @@
                                             <span class="text-xs bg-emerald-100 text-emerald-700 px-1 rounded">Combo</span>
                                         </span>
                                         <span v-else>{{ formatNumber(item.unit_price) }}</span>
-                                        <span> × {{ formatNumber(item.quantity) }}</span>
+                                        <span> × {{ formatNumber(item.quantity) }} <span class="text-[10px] font-semibold text-indigo-400">{{ item.unit_name }}</span></span>
                                     </div>
                                 </div>
 

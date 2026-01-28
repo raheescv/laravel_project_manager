@@ -24,10 +24,10 @@
                             </button>
                         @endcan
                         @can('product.import')
-                            <button class="btn btn-info btn-sm d-flex align-items-center text-white" title="Import Products" data-bs-toggle="modal" data-bs-target="#ProductImportModal">
+                            <a class="btn btn-info btn-sm d-flex align-items-center text-white shadow-sm" title="Import" href="{{ route('product::import') }}">
                                 <i class="demo-pli-download-from-cloud me-md-1 fs-5"></i>
                                 <span class="d-none d-md-inline">Import</span>
-                            </button>
+                            </a>
                         @endcan
                     </div>
                 </div>
@@ -138,7 +138,7 @@
                             Sales Status
                         </label>
                         <div class="form-check form-switch">
-                            {{ html()->checkbox('is_selling', [])->value('')->class('form-check-input')->attribute('wire:model.live', 'is_selling')->id('is_selling') }}
+                            {{ html()->checkbox('is_selling', (bool)$is_selling)->class('form-check-input')->attribute('wire:model.live', 'is_selling')->id('is_selling') }}
                             <label for="is_selling" class="form-check-label">
                                 &nbsp; Is Currently Selling
                             </label>
@@ -395,9 +395,9 @@
                 @endcan
                 @can('product.import')
                     <li>
-                        <a class="dropdown-item d-flex align-items-center" href="#" data-bs-toggle="modal" data-bs-target="#ProductImportModal">
+                        <a class="dropdown-item d-flex align-items-center" href="{{ route('product::import') }}">
                             <i class="demo-pli-download-from-cloud me-2 text-info"></i>
-                            Import Products
+                            Advanced Import
                         </a>
                     </li>
                 @endcan

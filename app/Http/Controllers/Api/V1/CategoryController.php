@@ -7,6 +7,7 @@ use App\Http\Controllers\Controller;
 use App\Traits\ApiResponseTrait;
 use Dedoc\Scramble\Attributes\Group;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 
 #[Group('Product Filter')]
@@ -29,10 +30,10 @@ class CategoryController extends Controller
      *   "message": "Main categories retrieved successfully"
      * }
      */
-    public function index(GetMainCategoriesAction $action): JsonResponse
+    public function index(Request $request, GetMainCategoriesAction $action): JsonResponse
     {
         try {
-            $result = $action->execute();
+            $result = $action->execute(collect($request));
 
             return $this->sendSuccess($result, 'Main categories retrieved successfully');
         } catch (ValidationException $e) {

@@ -25,7 +25,8 @@ trait EmployeeReportQueryBuilder
             ->where('sale_return_items.employee_id', '!=', 0)
             ->groupBy('sale_return_items.employee_id', 'sale_return_items.product_id')
             ->select('sale_return_items.employee_id', 'sale_return_items.product_id')
-            ->selectRaw('SUM(sale_return_items.total) as return_amount');
+            ->selectRaw('SUM(sale_return_items.total) as return_amount')
+            ->selectRaw('SUM(sale_return_items.base_unit_quantity) as return_quantity');
     }
 
     /**
@@ -44,7 +45,8 @@ trait EmployeeReportQueryBuilder
             ->where('sale_return_items.employee_id', '!=', 0)
             ->groupBy('sale_return_items.employee_id')
             ->select('sale_return_items.employee_id')
-            ->selectRaw('SUM(sale_return_items.total) as return_amount');
+            ->selectRaw('SUM(sale_return_items.total) as return_amount')
+            ->selectRaw('SUM(sale_return_items.base_unit_quantity) as return_quantity');
     }
 
     /**
@@ -62,7 +64,8 @@ trait EmployeeReportQueryBuilder
             ->when($filters['to_date'] ?? null, fn ($q) => $q->whereDate('sale_returns.date', '<=', $filters['to_date']))
             ->whereNotNull('sale_return_items.employee_id')
             ->where('sale_return_items.employee_id', '!=', 0)
-            ->selectRaw('SUM(sale_return_items.total) as return_amount');
+            ->selectRaw('SUM(sale_return_items.total) as return_amount')
+            ->selectRaw('SUM(sale_return_items.base_unit_quantity) as return_quantity');
     }
 
     /**

@@ -9,24 +9,24 @@ class ConfigurationSeeder extends Seeder
 {
     public function run(): void
     {
-        Configuration::firstOrCreate(['key' => 'barcode_type', 'value' => 'product_wise']);
-        Configuration::firstOrCreate(['key' => 'contact_no', 'value' => '9633155669']);
-        Configuration::firstOrCreate(['key' => 'mobile', 'value' => '9633155669']);
+        Configuration::firstOrCreate(['tenant_id' => 1, 'key' => 'barcode_type', 'value' => 'product_wise']);
+        Configuration::firstOrCreate(['tenant_id' => 1, 'key' => 'contact_no', 'value' => '9633155669']);
+        Configuration::firstOrCreate(['tenant_id' => 1, 'key' => 'mobile', 'value' => '9633155669']);
         $payment_methods = [1, 2];
-        Configuration::updateOrCreate(['key' => 'payment_methods'], ['value' => json_encode($payment_methods)]);
-        Configuration::updateOrCreate(['key' => 'default_status'], ['value' => 'completed']);
-        Configuration::updateOrCreate(['key' => 'thermal_printer_style'], ['value' => 'with_arabic']);
-        Configuration::updateOrCreate(['key' => 'thermal_printer_footer_english'], ['value' => 'Thank you for shopping! Keep your bill for exchange within 14 days. Terms & Conditions apply.']);
-        Configuration::updateOrCreate(['key' => 'thermal_printer_footer_arabic'], ['value' => 'شكرا للتسوق. يُمكن التبديل خلال 14 يومًا. تطبق الشروط والأحكام.']);
-        Configuration::updateOrCreate(['key' => 'enable_discount_in_print'], ['value' => 'yes']);
-        Configuration::updateOrCreate(['key' => 'enable_total_quantity_in_print'], ['value' => 'yes']);
-        Configuration::updateOrCreate(['key' => 'enable_logo_in_print'], ['value' => 'yes']);
-        Configuration::updateOrCreate(['key' => 'sale_type'], ['value' => 'version_1']);
-        Configuration::updateOrCreate(['key' => 'sale_type'], ['value' => 'pos']);
-        Configuration::updateOrCreate(['key' => 'default_product_type'], ['value' => 'service']);
-        Configuration::updateOrCreate(['key' => 'default_purchase_branch_id'], ['value' => json_encode([1])]);
-        Configuration::updateOrCreate(['key' => 'print_item_label'], ['value' => 'product']);
-        Configuration::updateOrCreate(['key' => 'enable_barcode_in_print'], ['value' => 'yes']);
+        Configuration::updateOrCreate(['tenant_id' => 1, 'key' => 'payment_methods'], ['value' => json_encode($payment_methods)]);
+        Configuration::updateOrCreate(['tenant_id' => 1, 'key' => 'default_status'], ['value' => 'completed']);
+        Configuration::updateOrCreate(['tenant_id' => 1, 'key' => 'thermal_printer_style'], ['value' => 'with_arabic']);
+        Configuration::updateOrCreate(['tenant_id' => 1, 'key' => 'thermal_printer_footer_english'], ['value' => 'Thank you for shopping! Keep your bill for exchange within 14 days. Terms & Conditions apply.']);
+        Configuration::updateOrCreate(['tenant_id' => 1, 'key' => 'thermal_printer_footer_arabic'], ['value' => 'شكرا للتسوق. يُمكن التبديل خلال 14 يومًا. تطبق الشروط والأحكام.']);
+        Configuration::updateOrCreate(['tenant_id' => 1, 'key' => 'enable_discount_in_print'], ['value' => 'yes']);
+        Configuration::updateOrCreate(['tenant_id' => 1, 'key' => 'enable_total_quantity_in_print'], ['value' => 'yes']);
+        Configuration::updateOrCreate(['tenant_id' => 1, 'key' => 'enable_logo_in_print'], ['value' => 'yes']);
+        Configuration::updateOrCreate(['tenant_id' => 1, 'key' => 'sale_type'], ['value' => 'version_1']);
+        Configuration::updateOrCreate(['tenant_id' => 1, 'key' => 'sale_type'], ['value' => 'pos']);
+        Configuration::updateOrCreate(['tenant_id' => 1, 'key' => 'default_product_type'], ['value' => 'service']);
+        Configuration::updateOrCreate(['tenant_id' => 1, 'key' => 'default_purchase_branch_id'], ['value' => json_encode([1])]);
+        Configuration::updateOrCreate(['tenant_id' => 1, 'key' => 'print_item_label'], ['value' => 'product']);
+        Configuration::updateOrCreate(['tenant_id' => 1, 'key' => 'enable_barcode_in_print'], ['value' => 'yes']);
         $saleVisibleColumns = [
             'created_at' => false,
             'reference_no' => false,
@@ -45,7 +45,7 @@ class ConfigurationSeeder extends Seeder
             'balance' => true,
             'status' => false,
         ];
-        Configuration::updateOrCreate(['key' => 'sale_visible_column'], ['value' => json_encode($saleVisibleColumns)]);
+        Configuration::updateOrCreate(['tenant_id' => 1, 'key' => 'sale_visible_column'], ['value' => json_encode($saleVisibleColumns)]);
 
         $saleReturnVisibleColumns = [
             'reference_no' => true,
@@ -61,7 +61,7 @@ class ConfigurationSeeder extends Seeder
             'balance' => false,
             'status' => false,
         ];
-        Configuration::updateOrCreate(['key' => 'sale_return_visible_column'], ['value' => json_encode($saleReturnVisibleColumns)]);
+        Configuration::updateOrCreate(['tenant_id' => 1, 'key' => 'sale_return_visible_column'], ['value' => json_encode($saleReturnVisibleColumns)]);
 
         $purchaseVisibleColumns = [
             'branch_id' => false,
@@ -77,7 +77,7 @@ class ConfigurationSeeder extends Seeder
             'balance' => true,
             'status' => false,
         ];
-        Configuration::updateOrCreate(['key' => 'purchase_visible_column'], ['value' => json_encode($purchaseVisibleColumns)]);
+        Configuration::updateOrCreate(['tenant_id' => 1, 'key' => 'purchase_visible_column'], ['value' => json_encode($purchaseVisibleColumns)]);
 
         $inventoryVisibleColumns = [
             'branch' => true,
@@ -95,7 +95,7 @@ class ConfigurationSeeder extends Seeder
             'barcode' => true,
             'batch' => true,
         ];
-        Configuration::updateOrCreate(['key' => 'inventory_visible_column'], ['value' => json_encode($inventoryVisibleColumns)]);
+        Configuration::updateOrCreate(['tenant_id' => 1, 'key' => 'inventory_visible_column'], ['value' => json_encode($inventoryVisibleColumns)]);
 
         $this->barcode();
 
@@ -104,6 +104,6 @@ class ConfigurationSeeder extends Seeder
     public function barcode()
     {
         $barcode = config('barcode_default_configuration');
-        Configuration::updateOrCreate(['key' => 'barcode_configurations'], ['value' => json_encode($barcode)]);
+        Configuration::updateOrCreate(['tenant_id' => 1, 'key' => 'barcode_configurations'], ['value' => json_encode($barcode)]);
     }
 }

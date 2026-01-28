@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Middleware\HandleInertiaRequests;
+use App\Http\Middleware\IdentifyTenant;
 use App\Http\Middleware\TrackVisitor;
 use App\Http\Middleware\TrustProxies;
 use Illuminate\Auth\AuthenticationException;
@@ -24,6 +25,8 @@ return Application::configure(basePath: dirname(__DIR__))
             __DIR__.'/../routes/package.php',
             __DIR__.'/../routes/flat_trade.php',
             __DIR__.'/../routes/api_log.php',
+            __DIR__.'/../routes/tenant_route.php',
+            __DIR__.'/../routes/tailoring.php',
         ],
         api: [
             __DIR__.'/../routes/api.php',
@@ -42,6 +45,9 @@ return Application::configure(basePath: dirname(__DIR__))
             TrustProxies::class,
             TrackVisitor::class,
         ]);
+
+        // Add tenant identification early in web middleware stack
+        $middleware->web(prepend: [IdentifyTenant::class]);
 
         // Add Inertia middleware to the web group
         $middleware->web(append: [

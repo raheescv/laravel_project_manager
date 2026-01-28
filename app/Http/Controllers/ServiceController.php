@@ -19,6 +19,11 @@ class ServiceController extends Controller
         return view('product.page', compact('type', 'id'));
     }
 
+    public function import()
+    {
+        return view('service.import');
+    }
+
     public function get(Request $request)
     {
         $list = (new Product())->getDropDownList($request->all());

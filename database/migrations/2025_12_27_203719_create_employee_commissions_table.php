@@ -13,12 +13,15 @@ return new class() extends Migration
     {
         Schema::create('employee_commissions', function (Blueprint $table) {
             $table->id();
+            $table->unsignedBigInteger('tenant_id');
+            $table->foreign('tenant_id')->references('id')->on('tenants')->onDelete('cascade');
+            $table->index('tenant_id');
             $table->unsignedBigInteger('product_id')->references('id')->on('products')->onDelete('cascade');
             $table->unsignedBigInteger('employee_id')->references('id')->on('users')->onDelete('cascade');
             $table->decimal('commission_percentage', 5, 2)->default(0);
             $table->timestamps();
 
-            $table->unique(['product_id', 'employee_id'], 'unique_product_employee');
+            $table->unique(['tenant_id', 'product_id', 'employee_id'], 'unique_product_employee');
             $table->index('product_id');
             $table->index('employee_id');
         });

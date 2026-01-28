@@ -2,6 +2,7 @@
 
 namespace App\Livewire\SaleReturn;
 
+use App\Models\Product;
 use Livewire\Component;
 
 class EditItem extends Component
@@ -14,6 +15,8 @@ class EditItem extends Component
 
     public $item;
 
+    public $units = [];
+
     public function mount($index = '', $item = [])
     {
         $this->index = $index;
@@ -22,8 +25,42 @@ class EditItem extends Component
 
     public function open($index, $item)
     {
-        $this->mount($index, $item);
+        $this->index = $index;
+        $this->item = $item;
+        $this->loadUnits();
         $this->dispatch('ToggleEditItemModal');
+    }
+
+    public function loadUnits()
+    {
+        $product = Product::with(['unit', 'units.subUnit'])->find($this->item['product_id']);
+        if ($product) {
+            $this->units = collect([
+                [
+                    'id' => $product->unit_id,
+                    'name' => $product->unit->name ?? 'Base Unit',
+                    'conversion_factor' => 1,
+                ],
+            ])->concat($product->units->map(function ($pu) {
+                return [
+                    'id' => $pu->sub_unit_id,
+                    'name' => $pu->subUnit->name ?? '',
+                    'conversion_factor' => $pu->conversion_factor,
+                ];
+            }))->toArray();
+        } else {
+            $this->units = [];
+        }
+    }
+
+    public function handleUnitChange()
+    {
+        $selectedUnit = collect($this->units)->firstWhere('id', $this->item['unit_id']);
+        if ($selectedUnit) {
+            $this->item['unit_name'] = $selectedUnit['name'];
+            $this->item['conversion_factor'] = $selectedUnit['conversion_factor'];
+        }
+        $this->singleCartCalculator();
     }
 
     public function updated($key, $value)

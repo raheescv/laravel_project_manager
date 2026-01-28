@@ -40,6 +40,12 @@ class ColumnVisibility extends Component
         Configuration::updateOrCreate(['key' => 'product_visible_column'], ['value' => json_encode($this->product_visible_column)]);
     }
 
+    public function resetToDefaults()
+    {
+        $this->product_visible_column = $this->getDefaultColumns();
+        Configuration::updateOrCreate(['key' => 'product_visible_column'], ['value' => json_encode($this->product_visible_column)]);
+    }
+
     public function render()
     {
         return view('livewire.product.column-visibility');

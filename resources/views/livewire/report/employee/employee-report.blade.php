@@ -120,7 +120,7 @@
                                             <span class="text-secondary">{{ $item->product }}</span>
                                         </td>
                                         <td class="text-end">
-                                            <span class="badge bg-secondary rounded-pill">{{ number_format($item->total_quantity) }}</span>
+                                            <span class="badge bg-secondary rounded-pill">{{ currency($item->total_quantity,3) }}</span>
                                         </td>
                                         <td class="text-end">
                                             <strong>{{ currency($item->total_amount) }}</strong>
@@ -167,7 +167,7 @@
                                     <tr class="fw-bold">
                                         <td colspan="2" class="text-end">Total (All Pages):</td>
                                         <td class="text-end">
-                                            <span class="badge bg-primary">{{ number_format($totals->total_quantity ?? 0) }}</span>
+                                            <span class="badge bg-primary">{{ currency($totals->total_quantity ?? 0,3) }}</span>
                                         </td>
                                         <td class="text-end">{{ currency($totals->total_amount ?? 0) }}</td>
                                         <td class="text-end text-danger">-{{ currency($totals->return_amount ?? 0) }}</td>

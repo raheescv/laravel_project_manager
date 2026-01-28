@@ -5,6 +5,18 @@
     <form wire:submit="submit">
         <div class="modal-body">
             <div class="row mb-2">
+                <div class="col-md-12">
+                     <div class="form-group">
+                        <b><label for="unit_id" class="text-capitalize text-end">Unit</label></b>
+                        <select wire:model="item.unit_id" wire:change="handleUnitChange" class="form-control">
+                            @foreach($units as $u)
+                                <option value="{{ $u['id'] }}">{{ $u['name'] }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                </div>
+            </div>
+            <div class="row mb-2">
                 <div class="col-md-6">
                     <div class="form-group">
                         <b><label for="unit_price" class="text-capitalize text-end">Unit Price</label></b>
