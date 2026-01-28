@@ -96,9 +96,14 @@
                                 <td>{{ $itemData['message'] ?? '' }}</td>
                                 <td>
                                     @if ($file_path)
-                                        <a href="{{ url('storage/'.$file_path) }}" download class="btn btn-sm btn-light">
-                                            <i class="demo-psi-download-from-cloud fs-6"></i>
-                                        </a>
+                                        <div class="d-flex gap-1">
+                                            <a href="{{ route('notification::excel-view', ['path' => $file_path]) }}" target="_blank" class="btn btn-sm btn-light" title="View Excel">
+                                                <i class="demo-pli-file-excel fs-6"></i>
+                                            </a>
+                                            <a href="{{ url('storage/'.$file_path) }}" download class="btn btn-sm btn-light" title="Download">
+                                                <i class="demo-psi-download-from-cloud fs-6"></i>
+                                            </a>
+                                        </div>
                                     @endif
                                 </td>
                                 <td>

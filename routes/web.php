@@ -42,6 +42,7 @@ Route::middleware('auth')->group(function (): void {
 
     Route::name('notification::')->prefix('notification')->controller(NotificationController::class)->group(function (): void {
         Route::get('', 'index')->name('index');
+        Route::get('excel-view', 'excelView')->name('excel-view');
     });
     Route::name('audit::')->prefix('audit')->controller(AuditController::class)->group(function (): void {
         Route::get('{modal}/{id}', 'index')->name('index');
