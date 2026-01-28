@@ -256,6 +256,11 @@ class Product extends Model implements AuditableContracts
         if (! isset($data['code']) || empty($data['code'])) {
             $data['code'] = self::generateUniqueCode();
         }
+
+        if (! isset($data['barcode']) || empty($data['barcode'])) {
+            $data['barcode'] = generateBarcode();
+        }
+
         $data['cost'] = extractNumericValue($data['cost'] ?? 0);
         $data['mrp'] = extractNumericValue($data['mrp'] ?? 0);
         $value['is_favorite'] = $value['is_favorite'] ?? true;

@@ -15,10 +15,10 @@
                         </button>
                     @endcan
                     @can('inventory.import')
-                        <button class="btn btn-sm btn-outline-success" data-bs-toggle="modal" data-bs-target="#ProductImportModal">
-                            <i class="demo-pli-download-from-cloud me-1"></i>
-                            <span>Import</span>
-                        </button>
+                        <a class="btn btn-sm btn-outline-success" title="Import" href="{{ route('product::import') }}">
+                            <i class="demo-pli-download-from-cloud me-md-1 fs-5"></i>
+                            <span class="d-none d-md-inline">Import</span>
+                        </a>
                     @endcan
                 </div>
             </div>

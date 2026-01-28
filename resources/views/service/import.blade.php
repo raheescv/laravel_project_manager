@@ -4,25 +4,19 @@
             <nav aria-label="breadcrumb">
                 <ol class="breadcrumb">
                     <li class="breadcrumb-item"><a href="{{ route('dashboard') }}">Home</a></li>
-                    <li class="breadcrumb-item active" aria-current="page">Service</li>
+                    <li class="breadcrumb-item"><a href="{{ route('service::index') }}">Service</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">Import</li>
                 </ol>
             </nav>
-            <h1 class="page-title mb-0 mt-2">Service Management</h1>
+            <h1 class="page-title mb-0 mt-2">Service Import</h1>
             <p class="lead">
-                Manage your services with advanced filtering
+                Easily import services from Excel or CSV files with custom column mapping and preview.
             </p>
         </div>
     </div>
     <div class="content__boxed">
         <div class="content__wrap">
-            <div class="card mb-3">
-                @livewire('service.table')
-            </div>
+            @livewire('service.import')
         </div>
     </div>
-    @push('scripts')
-        @include('components.select.departmentSelect')
-        @include('components.select.categorySelect')
-        @include('components.select.unitSelect')
-    @endpush
 </x-app-layout>

@@ -74,12 +74,14 @@ Route::middleware('auth')->group(function (): void {
         Route::get('', 'index')->name('index')->can('product.view');
         Route::get('create', 'page')->name('create')->can('product.create');
         Route::get('edit/{id}', 'page')->name('edit')->can('product.view');
+        Route::get('import', 'import')->name('import')->can('product.create');
         Route::get('list', 'get')->name('list');
     });
     Route::name('service::')->prefix('service')->controller(ServiceController::class)->group(function (): void {
         Route::get('', 'index')->name('index')->can('service.view');
         Route::get('create', 'page')->name('create')->can('service.create');
         Route::get('edit/{id}', 'page')->name('edit')->can('service.edit');
+        Route::get('import', 'import')->name('import')->can('service.create');
         Route::get('list', 'get')->name('list');
     });
     Route::name('combo_offer::')->prefix('combo_offer')->controller(ComboOfferController::class)->group(function (): void {
