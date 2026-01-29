@@ -3,72 +3,72 @@
         aria-modal="true">
         <!-- Background overlay -->
         <div class="flex items-center justify-center min-h-screen p-4 text-center">
-            <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true" @click="close">
-            </div>
+            <div class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm transition-opacity" @click="close"></div>
 
             <!-- Modal panel - Centered on page -->
             <div
-                class="relative bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all max-w-lg w-full mx-auto">
+                class="relative bg-white rounded-3xl text-left overflow-hidden shadow-2xl transform transition-all max-w-lg w-full mx-auto border border-slate-200">
                 <!-- Header -->
-                <div class="bg-blue-600 px-3 py-2 text-white">
-                    <div class="flex items-center justify-between">
-                        <h4 class="text-base font-semibold text-white mb-0">Custom Payment (Tailoring)</h4>
-                        <button type="button" @click="close" class="text-white hover:text-gray-200 focus:outline-none">
-                            <i class="fa fa-times text-sm"></i>
-                        </button>
+                <div class="px-5 py-4 border-b border-slate-100 bg-white flex items-center justify-between">
+                    <div class="flex items-center gap-3">
+                        <div class="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center text-blue-600">
+                            <i class="fa fa-credit-card text-sm"></i>
+                        </div>
+                        <h4 class="text-sm font-black text-slate-800 uppercase tracking-widest leading-none">Custom Payment</h4>
                     </div>
+                    <button type="button" @click="close" class="w-8 h-8 rounded-full flex items-center justify-center text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-all">
+                        <i class="fa fa-times text-sm"></i>
+                    </button>
                 </div>
 
                 <!-- Body -->
-                <div class="px-3 py-3">
+                <div class="p-5 flex flex-col gap-6">
                     <!-- Total Payable Amount -->
-                    <div class="text-center mb-3">
-                        <h2 class="text-base font-bold text-gray-900 mb-1">Total Payable Amount</h2>
-                        <h1 class="text-xl sm:text-2xl font-bold text-blue-600">{{ formatNumber(totalAmount) }}</h1>
+                    <div class="text-center py-6 bg-slate-50 rounded-2xl border border-slate-200/60 relative overflow-hidden group">
+                        <div class="absolute inset-0 bg-gradient-to-br from-blue-600/5 to-indigo-600/5 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                        <p class="text-[0.65rem] font-black text-slate-400 uppercase tracking-[0.2em] mb-1 relative z-10">Total Payable</p>
+                        <h1 class="text-3xl font-black text-slate-900 leading-none relative z-10">{{ formatNumber(totalAmount) }}</h1>
                     </div>
 
-                    <hr class="my-3 border-gray-200">
-
                     <!-- Add Payment Section -->
-                    <h5 class="text-sm font-semibold mb-2">Add Payment</h5>
-                    <div class="space-y-2 mb-3">
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                             <div>
-                                <label for="payment-date" class="block text-xs font-medium text-gray-700 mb-1">
-                                    Date
-                                </label>
+                    <div class="flex flex-col gap-4">
+                        <div class="flex items-center gap-2">
+                            <h5 class="text-[0.65rem] font-black text-slate-400 uppercase tracking-widest">Add New Payment</h5>
+                            <div class="flex-1 h-px bg-slate-100"></div>
+                        </div>
+                        
+                        <div class="grid grid-cols-2 gap-3">
+                             <div class="col-span-1">
+                                <label class="block text-[0.6rem] font-black text-slate-400 uppercase tracking-widest mb-1 px-1">Date</label>
                                 <input v-model="paymentForm.date" type="date"
-                                    class="w-full text-xs rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 py-1">
+                                    class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-1.5 text-xs font-bold text-slate-700 focus:bg-white focus:border-blue-500 transition-all">
                             </div>
-                            <div>
-                                <label for="payment-method-select" class="block text-xs font-medium text-gray-700 mb-1">
-                                    Payment Method
-                                </label>
-                                <select v-model="paymentForm.payment_method_id"
-                                    class="w-full text-xs rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 py-1">
-                                    <option value="">Select Payment Method</option>
-                                    <option v-for="method in paymentMethods" :key="method.id" :value="method.id">
-                                        {{ method.name }}
-                                    </option>
-                                </select>
+                            <div class="col-span-1">
+                                <label class="block text-[0.6rem] font-black text-slate-400 uppercase tracking-widest mb-1 px-1">Method</label>
+                                <div class="relative">
+                                    <select v-model="paymentForm.payment_method_id"
+                                        class="w-full appearance-none bg-slate-50 border border-slate-200 rounded-xl px-3 py-1.5 text-xs font-bold text-slate-700 focus:bg-white focus:border-blue-500 transition-all">
+                                        <option value="">Select Method</option>
+                                        <option v-for="method in paymentMethods" :key="method.id" :value="method.id">
+                                            {{ method.name }}
+                                        </option>
+                                    </select>
+                                    <div class="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none text-slate-400">
+                                        <i class="fa fa-chevron-down text-[10px]"></i>
+                                    </div>
+                                </div>
                             </div>
-                            <div class="sm:col-span-2">
-                                <label for="payment-amount" class="block text-xs font-medium text-gray-700 mb-1">
-                                    Amount
-                                </label>
-                                <div class="flex gap-1">
+                            <div class="col-span-2">
+                                <label class="block text-[0.6rem] font-black text-slate-400 uppercase tracking-widest mb-1 px-1">Amount</label>
+                                <div class="flex gap-2">
                                     <input v-model.number="paymentForm.amount" type="number" step="0.01"
-                                        class="flex-1 text-xs rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 py-1"
-                                        placeholder="Enter amount" @focus="$event.target.select()">
+                                        class="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-3 py-1.5 text-xs font-black text-blue-600 focus:bg-white focus:border-blue-500 transition-all"
+                                        placeholder="0.00" @focus="$event.target.select()">
                                     <button type="button" @click="addPayment"
-                                        :disabled="!paymentForm.payment_method_id || !paymentForm.amount" :class="[
-                                            'px-2 py-1 rounded-md font-medium text-xs whitespace-nowrap',
-                                            (!paymentForm.payment_method_id || !paymentForm.amount)
-                                                ? 'bg-gray-400 text-gray-600 cursor-not-allowed'
-                                                : 'bg-green-600 text-white hover:bg-green-700'
-                                        ]">
-                                        <i class="fa fa-plus mr-1"></i>
-                                        <span class="hidden sm:inline">Add Payment</span>
+                                        :disabled="!paymentForm.payment_method_id || !paymentForm.amount" 
+                                        class="px-5 py-1.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+                                        :class="(!paymentForm.payment_method_id || !paymentForm.amount) ? 'bg-slate-100 text-slate-400' : 'bg-blue-600 text-white shadow-lg shadow-blue-200'">
+                                        Add
                                     </button>
                                 </div>
                             </div>
@@ -76,86 +76,69 @@
                     </div>
 
                     <!-- Error Message -->
-                    <div v-if="errorMessage" class="mb-2 p-2 bg-red-50 border border-red-200 rounded-md">
-                        <div class="flex">
-                            <i class="fa fa-exclamation-circle text-red-400 mr-2 mt-0.5 text-xs"></i>
-                            <span class="text-red-800 text-xs">{{ errorMessage }}</span>
+                    <Transition name="fade">
+                        <div v-if="errorMessage" class="bg-rose-50 border border-rose-100 rounded-xl p-3 flex items-center gap-2">
+                            <i class="fa fa-exclamation-circle text-rose-500 text-xs text-xs"></i>
+                            <span class="text-rose-700 text-[0.7rem] font-bold">{{ errorMessage }}</span>
                         </div>
-                    </div>
+                    </Transition>
 
-                    <!-- Payment Summary -->
-                    <div v-if="payments.length > 0">
-                        <h5 class="text-sm font-semibold mb-2">Payment Summary</h5>
-                        <div class="overflow-x-auto">
-                            <div class="min-w-full">
-                                <div
-                                    class="bg-gray-50 grid grid-cols-4 gap-2 px-2 py-1 text-xs font-medium text-gray-500 uppercase tracking-wider rounded-t-md">
-                                    <div>Date</div>
-                                    <div>Method</div>
-                                    <div class="text-right">Amount</div>
-                                    <div class="text-center">Action</div>
+                    <!-- Payment Summary Table -->
+                    <div v-if="payments.length > 0" class="flex flex-col gap-3">
+                        <div class="flex items-center gap-2">
+                            <h5 class="text-[0.65rem] font-black text-slate-400 uppercase tracking-widest">Payment Breakdown</h5>
+                            <div class="flex-1 h-px bg-slate-100"></div>
+                        </div>
+                        <div class="bg-white rounded-2xl border border-slate-200 overflow-hidden divide-y divide-slate-100">
+                            <div v-for="(payment, index) in payments" :key="index"
+                                class="flex items-center justify-between px-4 py-3 hover:bg-slate-50/50 transition-colors group">
+                                <div class="flex flex-col">
+                                    <span class="text-xs font-black text-slate-800">{{ payment.name }}</span>
+                                    <span class="text-[0.6rem] font-bold text-slate-400 uppercase tracking-widest">{{ formatDate(payment.date) }}</span>
                                 </div>
-                                <div class="bg-white border border-gray-200 rounded-b-md">
-                                    <div v-for="(payment, index) in payments" :key="index"
-                                        class="grid grid-cols-4 gap-2 px-2 py-1 border-b border-gray-100 last:border-b-0 hover:bg-gray-50">
-                                        <div class="text-xs text-gray-900">
-                                            {{ formatDate(payment.date) }}
-                                        </div>
-                                        <div class="text-xs text-gray-900 truncate" :title="payment.name">
-                                            {{ payment.name }}
-                                        </div>
-                                        <div class="text-xs font-semibold text-gray-900 text-right">
-                                            {{ formatNumber(payment.amount) }}
-                                        </div>
-                                        <div class="text-center">
-                                            <button type="button" @click="removePayment(index)"
-                                                class="inline-flex items-center px-1 py-0.5 border border-red-300 text-xs font-medium rounded text-red-700 bg-white hover:bg-red-50 focus:outline-none focus:ring-1 focus:ring-red-500">
-                                                <i class="fa fa-trash text-xs"></i>
-                                            </button>
-                                        </div>
-                                    </div>
+                                <div class="flex items-center gap-4">
+                                    <span class="text-xs font-black text-blue-600">{{ formatNumber(payment.amount) }}</span>
+                                    <button type="button" @click="removePayment(index)"
+                                        class="w-7 h-7 flex items-center justify-center rounded-lg bg-rose-50 text-rose-500 opacity-0 group-hover:opacity-100 hover:bg-rose-500 hover:text-white transition-all">
+                                        <i class="fa fa-trash text-[10px]"></i>
+                                    </button>
                                 </div>
                             </div>
                         </div>
-                        <hr class="my-3 border-gray-200">
-                    </div>
 
-                    <!-- Payment Totals -->
-                    <div class="bg-gray-50 rounded-lg p-2 space-y-1">
-                        <div class="flex justify-between items-center">
-                            <span class="text-xs font-semibold text-green-600">Total Paid:</span>
-                            <span class="text-xs font-bold text-green-600">{{ formatNumber(totalPaid) }}</span>
-                        </div>
-                        <div class="flex justify-between items-center">
-                            <span class="text-xs font-semibold text-red-600">Balance Due:</span>
-                            <span class="text-xs font-bold text-red-600">{{ formatNumber(balanceDue) }}</span>
+                        <!-- Payment Totals -->
+                        <div class="grid grid-cols-2 gap-3 mt-1">
+                            <div class="bg-emerald-50/50 rounded-xl p-3 border border-emerald-100 flex flex-col items-center">
+                                <span class="text-[0.55rem] font-black text-emerald-600 uppercase tracking-widest mb-0.5">Total Paid</span>
+                                <span class="text-sm font-black text-emerald-700 leading-none">{{ formatNumber(totalPaid) }}</span>
+                            </div>
+                            <div class="rounded-xl p-3 border flex flex-col items-center transition-colors"
+                                :class="balanceDue > 0 ? 'bg-rose-50/50 border-rose-100' : 'bg-slate-50/50 border-slate-200'">
+                                <span class="text-[0.55rem] font-black uppercase tracking-widest mb-0.5"
+                                    :class="balanceDue > 0 ? 'text-rose-600' : 'text-slate-400'">Balance Due</span>
+                                <span class="text-sm font-black leading-none"
+                                    :class="balanceDue > 0 ? 'text-rose-700' : 'text-slate-900'">{{ formatNumber(balanceDue) }}</span>
+                            </div>
                         </div>
                     </div>
                 </div>
 
                 <!-- Footer -->
-                <div class="bg-gray-50 px-3 py-2 text-right">
-                    <div class="flex justify-end space-x-2">
-                        <button type="button" @click="close"
-                            class="inline-flex items-center px-3 py-1 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
-                            <i class="fa fa-times mr-1"></i>
-                            Cancel
-                        </button>
-                        <button type="button" @click="savePayments" :disabled="payments.length === 0" :class="[
-                            'inline-flex items-center px-3 py-1 border border-transparent text-sm font-medium rounded-md text-white focus:outline-none focus:ring-2 focus:ring-offset-2',
-                            payments.length === 0
-                                ? 'bg-gray-400 cursor-not-allowed'
-                                : 'bg-blue-600 hover:bg-blue-700 focus:ring-blue-500'
-                        ]">
-                            <i class="fa fa-save mr-1"></i>
-                            Save Payment
-                        </button>
-                    </div>
+                <div class="px-5 py-4 bg-slate-50/50 border-t border-slate-100 flex justify-end gap-2">
+                    <button type="button" @click="close"
+                        class="px-5 py-2 text-xs font-black text-slate-400 uppercase tracking-widest hover:text-slate-600 transition-colors">
+                        Cancel
+                    </button>
+                    <button type="button" @click="savePayments" :disabled="payments.length === 0" 
+                        class="px-8 py-2 bg-slate-950 text-white text-xs font-black uppercase tracking-widest rounded-xl hover:bg-slate-800 transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-slate-200">
+                        Confirm Payments
+                    </button>
                 </div>
             </div>
         </div>
     </div>
 </template>
+
 
 <script>
 import { computed, ref, watch } from 'vue'

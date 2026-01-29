@@ -1,44 +1,48 @@
 <template>
-    <div class="row g-4">
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
         <!-- Search Order Form -->
-        <div class="col-lg-4">
-            <div class="card shadow-sm border-0 h-100">
-                <div class="card-body p-4">
-                    <h5 class="fw-bold text-dark mb-4 d-flex align-items-center gap-2">
-                        <i class="fa fa-search text-primary"></i>
-                        Search Order
-                    </h5>
+        <div class="lg:col-span-4">
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 h-full">
+                <div class="p-6">
+                    <div class="flex items-center gap-3 mb-6">
+                        <div class="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center text-blue-600">
+                            <i class="fa fa-search text-lg"></i>
+                        </div>
+                        <h5 class="text-sm font-black text-slate-800 uppercase tracking-widest leading-none">Search Order</h5>
+                    </div>
 
-                    <div class="d-flex flex-column gap-3">
+                    <div class="flex flex-col gap-4">
                         <!-- Order Number -->
                         <div>
-                            <label class="form-label x-small fw-bold text-muted text-uppercase mb-1">
+                            <label class="block text-[0.65rem] font-bold text-slate-400 uppercase tracking-widest mb-1.5 px-1">
                                 Order Number
                             </label>
                             <SearchableSelect :modelValue="orderNo" :options="formattedOrderNumbers"
                                 placeholder="Select Order No" filter-placeholder="Search order number..."
                                 :visibleItems="8" @update:modelValue="val => $emit('update:orderNo', val)"
-                                input-class="w-full rounded-lg border-2 border-purple-200/60 shadow-md focus:border-purple-500 focus:ring-2 focus:ring-purple-500/30 transition-all duration-200 bg-white/95 backdrop-blur-sm hover:shadow-lg hover:border-purple-300 text-sm sm:text-sm py-2 sm:py-2 px-3 min-h-[40px] sm:min-h-[36px] font-medium" />
+                                input-class="!text-xs !py-1 !px-3 !rounded-xl !bg-slate-50 !border-slate-200 !font-bold" />
                         </div>
 
                         <!-- Customer Selection -->
                         <div>
-                            <label class="form-label x-small fw-bold text-muted text-uppercase mb-1">Customer.</label>
+                            <label class="block text-[0.65rem] font-bold text-slate-400 uppercase tracking-widest mb-1.5 px-1">Customer Selection</label>
                             <SearchableSelect :modelValue="customerId" :options="formattedCustomers"
                                 :loading="customerLoading" placeholder="Select Customer"
                                 filter-placeholder="Search by name or mobile..." :visibleItems="8"
                                 @search="searchCustomers" @change="handleCustomerSelect" @open="handleCustomerOpen"
                                 @update:modelValue="val => $emit('update:customerId', val)"
-                                input-class="w-full rounded-lg border-2 border-indigo-200/60 shadow-md focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/30 transition-all duration-200 bg-white/95 backdrop-blur-sm hover:shadow-lg hover:border-indigo-300 text-sm sm:text-sm py-2 sm:py-2 px-3 min-h-[40px] sm:min-h-[36px] font-medium" />
+                                input-class="!text-xs !py-1 !px-3 !rounded-xl !bg-slate-50 !border-slate-200 !font-bold" />
                         </div>
                     </div>
 
-                    <div class="d-flex justify-content-end gap-2 mt-4 pt-3 border-top">
-                        <button @click="handleClear" class="btn btn-outline-secondary btn-sm px-3 fw-bold">
-                            <i class="fa fa-refresh me-1"></i> Clear
+                    <div class="flex justify-end gap-2 mt-8 pt-4 border-t border-slate-100">
+                        <button @click="handleClear" 
+                            class="px-4 py-1.5 rounded-xl text-slate-400 hover:text-slate-600 font-bold text-xs uppercase tracking-widest transition-colors flex items-center gap-2">
+                            <i class="fa fa-refresh"></i> Clear
                         </button>
-                        <button @click="$emit('search')" class="btn btn-primary btn-sm px-4 fw-bold shadow-sm">
-                            <i class="fa fa-search me-1"></i> Search Order
+                        <button @click="$emit('search')" 
+                            class="px-5 py-1.5 rounded-xl bg-blue-600 text-white font-bold text-xs uppercase tracking-widest shadow-lg shadow-blue-600/20 hover:bg-blue-700 transition-all flex items-center gap-2">
+                            <i class="fa fa-search"></i> Search Order
                         </button>
                     </div>
                 </div>
@@ -46,39 +50,44 @@
         </div>
 
         <!-- Recent Orders -->
-        <div class="col-lg-8">
-            <div v-if="customerOrders.length > 0" class="card shadow-sm border-0 h-100">
-                <div class="card-body p-4">
-                    <h6 class="fw-bold text-dark mb-3 d-flex align-items-center gap-2">
-                        <i class="fa fa-list text-primary"></i>
-                        Recent Orders for <span class="text-primary">{{ customer }}</span>
-                    </h6>
-                    <div class="table-responsive">
-                        <table class="table table-sm table-hover align-middle">
-                            <thead class="table-light">
-                                <tr class="x-small fw-bold text-uppercase text-muted">
-                                    <th class="py-2">Order No</th>
-                                    <th class="py-2">Order Date</th>
-                                    <th class="py-2">Delivery</th>
-                                    <th class="py-2">Status</th>
-                                    <th class="py-2 text-end">Action</th>
+        <div class="lg:col-span-8">
+            <div v-if="customerOrders.length > 0" class="bg-white rounded-2xl shadow-sm border border-slate-200 h-full overflow-hidden">
+                <div class="p-6">
+                    <div class="flex items-center gap-3 mb-4">
+                        <div class="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center text-blue-600">
+                            <i class="fa fa-list text-sm"></i>
+                        </div>
+                        <h6 class="text-sm font-black text-slate-800 uppercase tracking-widest leading-none">
+                            Recent Orders for <span class="text-blue-600">{{ customer }}</span>
+                        </h6>
+                    </div>
+                    
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse whitespace-nowrap">
+                            <thead>
+                                <tr class="bg-slate-50 border-b border-slate-100">
+                                    <th class="px-4 py-3 text-[0.6rem] font-bold text-slate-400 uppercase tracking-widest">Order No</th>
+                                    <th class="px-4 py-3 text-[0.6rem] font-bold text-slate-400 uppercase tracking-widest">Order Date</th>
+                                    <th class="px-4 py-3 text-[0.6rem] font-bold text-slate-400 uppercase tracking-widest">Delivery</th>
+                                    <th class="px-4 py-3 text-[0.6rem] font-bold text-slate-400 uppercase tracking-widest">Status</th>
+                                    <th class="px-4 py-3 text-[0.6rem] font-bold text-slate-400 uppercase tracking-widest text-right">Action</th>
                                 </tr>
                             </thead>
-                            <tbody>
-                                <tr v-for="order in customerOrders" :key="order.id">
-                                    <td class="fw-bold text-primary">{{ order.order_no }}</td>
-                                    <td class="small text-muted">{{ formatDate(order.order_date) }}</td>
-                                    <td class="small text-muted">{{ formatDate(order.delivery_date) }}</td>
-                                    <td>
+                            <tbody class="divide-y divide-slate-50">
+                                <tr v-for="order in customerOrders" :key="order.id" class="hover:bg-slate-50/50 transition-colors group">
+                                    <td class="px-4 py-3 text-xs font-black text-blue-600">{{ order.order_no }}</td>
+                                    <td class="px-4 py-3 text-[0.65rem] font-bold text-slate-500">{{ formatDate(order.order_date) }}</td>
+                                    <td class="px-4 py-3 text-[0.65rem] font-bold text-slate-500">{{ formatDate(order.delivery_date) }}</td>
+                                    <td class="px-4 py-3">
                                         <span :class="getStatusBadgeClass(order.completion_status)"
-                                            class="badge rounded-pill x-small fw-bold">
+                                            class="inline-flex items-center px-2 py-0.5 rounded-full text-[0.55rem] font-black uppercase tracking-tighter border">
                                             {{ order.completion_status || 'Pending' }}
                                         </span>
                                     </td>
-                                    <td class="text-end">
+                                    <td class="px-4 py-3 text-right">
                                         <button @click="selectOrder(order.order_no)"
-                                            class="btn btn-link btn-sm text-primary fw-bold text-decoration-none p-0">
-                                            Select <i class="fa fa-chevron-right ms-1"></i>
+                                            class="text-blue-600 hover:text-blue-700 font-black text-[0.65rem] uppercase flex items-center gap-1 ml-auto transition-colors">
+                                            Select <i class="fa fa-chevron-right text-[8px]"></i>
                                         </button>
                                     </td>
                                 </tr>
@@ -87,11 +96,9 @@
                     </div>
                 </div>
             </div>
-            <div v-else class="card shadow-sm border-2 border-dashed h-100 text-center text-muted">
-                <div class="card-body d-flex flex-column justify-content-center py-5">
-                    <i class="fa fa-info-circle fs-3 mb-2 text-primary opacity-50"></i>
-                    <p class="small fw-bold mb-0">Select a customer to view recent orders</p>
-                </div>
+            <div v-else class="bg-white rounded-2xl shadow-sm border-2 border-dashed border-slate-200 h-full flex flex-col items-center justify-center p-8 text-center text-slate-400">
+                <i class="fa fa-info-circle text-3xl mb-3 opacity-20 text-blue-500"></i>
+                <p class="text-[0.65rem] font-bold uppercase tracking-widest">Select a customer to view recent orders</p>
             </div>
         </div>
     </div>

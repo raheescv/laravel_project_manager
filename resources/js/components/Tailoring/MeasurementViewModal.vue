@@ -2,35 +2,41 @@
     <Transition name="modal">
         <div v-if="show" class="fixed inset-0 z-[60] flex items-center justify-center p-4" role="dialog">
             <!-- Simple Backdrop -->
-            <div class="fixed inset-0 bg-black/50 transition-opacity" @click="close"></div>
+            <div class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm transition-opacity" @click="close"></div>
 
             <!-- Modal Content -->
-            <div class="relative bg-white rounded-xl shadow-lg w-full max-w-4xl max-h-[85vh] flex flex-col transform transition-all overflow-hidden border">
+            <div class="relative bg-white rounded-3xl shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col transform transition-all overflow-hidden border border-slate-200">
                 
-                <!-- Simple Header -->
-                <div class="px-5 py-3 border-b flex justify-between items-center bg-gray-50">
-                    <span class="text-sm font-bold text-gray-700">Measurement Details</span>
-                    <button @click="close" class="text-gray-400 hover:text-gray-600 transition-colors">
-                        <i class="fa fa-times text-lg"></i>
+                <!-- Premium Header -->
+                <div class="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-white">
+                    <div class="flex items-center gap-3">
+                        <div class="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center text-blue-600">
+                            <i class="fa fa-expand text-sm"></i>
+                        </div>
+                        <h3 class="text-sm font-black text-slate-800 uppercase tracking-widest">Measurement Details</h3>
+                    </div>
+                    <button @click="close" class="w-8 h-8 rounded-full flex items-center justify-center text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-all">
+                        <i class="fa fa-times text-sm"></i>
                     </button>
                 </div>
 
                 <!-- Scrollable Content -->
-                <div class="flex-1 overflow-y-auto p-5 custom-scrollbar">
+                <div class="flex-1 overflow-y-auto p-6 custom-scrollbar bg-slate-50/30">
                     <MeasurementView :item="item" />
                 </div>
 
                 <!-- Footer -->
-                <div class="px-5 py-3 bg-gray-50 flex justify-end border-t">
+                <div class="px-6 py-4 bg-white flex justify-end gap-3 border-t border-slate-100">
                     <button @click="close" 
-                        class="px-6 py-1.5 bg-gray-800 text-white text-sm font-bold rounded-md hover:bg-black transition-all active:scale-95">
-                        Close
+                        class="px-6 py-2 bg-slate-950 text-white text-xs font-black uppercase tracking-widest rounded-xl hover:bg-slate-800 transition-all active:scale-95 shadow-lg shadow-slate-200">
+                        Dismiss
                     </button>
                 </div>
             </div>
         </div>
     </Transition>
 </template>
+
 
 <script setup>
 import MeasurementView from './MeasurementView.vue';

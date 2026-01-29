@@ -1,31 +1,44 @@
 <template>
-    <div class="mb-4">
-        <div class="card shadow-sm border-0 rounded-[10px] bg-white border border-black/5 !important">
-            <div class="card-body p-3">
-                <div class="flex items-center flex-wrap gap-3">
-                    <div class="pr-3 border-r-2 border-slate-100 h-6 flex items-center max-sm:border-r-0 max-sm:w-full max-sm:mb-[5px]">
-                        <i class="fa fa-th-large me-2 text-primary"></i>
-                        <span class="fw-bold text-slate-800">Item Types</span>
+    <div class="bg-white rounded-3xl shadow-lg shadow-slate-200/50 border border-slate-200 overflow-hidden relative">
+        <div class="absolute inset-0 bg-gradient-to-r from-violet-50/10 to-transparent pointer-events-none"></div>
+        <div class="p-3 md:p-4 relative z-10">
+            <div class="flex flex-col md:flex-row md:items-center gap-4">
+                <div class="flex items-center gap-3 md:pr-6 md:border-r border-slate-100/80">
+                    <div class="w-8 h-8 rounded-lg bg-violet-50 flex items-center justify-center text-violet-600 shadow-sm border border-violet-100">
+                        <i class="fa fa-th-large text-xs"></i>
                     </div>
-                    
-                    <div class="flex-1 flex flex-wrap gap-2">
-                        <div v-for="category in categories" :key="category.id"
-                            class="px-3 py-1 rounded-[8px] bg-slate-50 border-[1.5px] border-slate-200 cursor-pointer transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)] select-none hover:border-blue-500 hover:bg-blue-50 hover:-translate-y-[1px]"
-                            :class="{ 'bg-blue-500 border-blue-500 text-white shadow-[0_2px_8px_rgba(59,130,246,0.2)]': selectedCategories.includes(category.id) }"
-                            @click="handleCategoryToggle(category.id)">
-                            <div class="flex items-center gap-2">
-                                <span class="font-semibold text-[0.85rem]">{{ category.name }}</span>
-                                <div class="text-[0.9rem] opacity-70" :class="{ 'opacity-100': selectedCategories.includes(category.id) }">
-                                    <i class="fa" :class="selectedCategories.includes(category.id) ? 'fa-check-circle' : 'fa-circle-thin'"></i>
-                                </div>
+                    <div>
+                        <span class="text-slate-800 font-black text-xs leading-none block mb-0.5">Item Types</span>
+                        <span class="text-slate-400 text-[0.6rem] uppercase tracking-widest font-black">Select Types</span>
+                    </div>
+                </div>
+                
+                <div class="flex-1 flex flex-wrap gap-2.5">
+                    <button v-for="category in categories" :key="category.id"
+                        class="group relative flex items-center gap-2 px-4 py-2 rounded-xl border-2 transition-all duration-500 select-none overflow-hidden"
+                        :class="selectedCategories.includes(category.id) 
+                            ? 'bg-indigo-600 border-indigo-600 text-white shadow-lg shadow-indigo-200 ring-4 ring-indigo-600/10' 
+                            : 'bg-slate-50 border-slate-100 text-slate-500 hover:border-indigo-400 hover:bg-white hover:text-indigo-600 hover:shadow-xl hover:-translate-y-1'"
+                        @click="handleCategoryToggle(category.id)">
+                        
+                        <div class="relative z-10 flex items-center gap-2">
+                            <span class="font-bold text-[0.75rem]">{{ category.name }}</span>
+                            <div class="transition-all duration-300" 
+                                :class="selectedCategories.includes(category.id) ? 'scale-110' : 'opacity-40 group-hover:opacity-100 group-hover:rotate-12'">
+                                <i class="fa text-[10px]" :class="selectedCategories.includes(category.id) ? 'fa-check-circle' : 'fa-circle-thin'"></i>
                             </div>
                         </div>
-                    </div>
+                        
+                        <!-- Shimmer effect for active button -->
+                        <div v-if="selectedCategories.includes(category.id)" 
+                            class="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full animate-[shimmer_2s_infinite]"></div>
+                    </button>
                 </div>
             </div>
         </div>
     </div>
 </template>
+
 
 <script setup>
 const props = defineProps({

@@ -1,92 +1,139 @@
 <template>
-    <div class="container-fluid p-4">
-        <div class="row g-3">
-            <div class="col-12">
-                <!-- Page Header -->
-                <div class="card mb-3 shadow-sm border-0">
-                    <div class="card-body p-3 d-flex justify-content-between align-items-center">
-                        <div>
-                            <h1 class="h3 mb-1 text-gray-800 fw-bold">Tailoring Order</h1>
-                            <p class="text-muted mb-0">Create and manage tailoring orders</p>
-                        </div>
-                        <div class="flex gap-2">
-                            <a href="/tailoring/order" class="flex items-center gap-2 px-4 py-2 rounded-[10px] no-underline font-semibold text-[0.9rem] transition-all duration-300 border border-black/5 bg-white shadow-[0_2px_4px_rgba(0,0,0,0.02)] hover:-translate-y-[2px] hover:shadow-[0_4px_12px_rgba(0,0,0,0.05)] hover:bg-slate-50 text-blue-500">
-                                <i class="fa fa-list"></i>
-                                <span>Orders List</span>
-                            </a>
-                            <a :href="form.order_no ? '/tailoring/job-completion?order_no=' + form.order_no : '/tailoring/job-completion'" class="flex items-center gap-2 px-4 py-2 rounded-[10px] no-underline font-semibold text-[0.9rem] transition-all duration-300 border border-black/5 bg-white shadow-[0_2px_4px_rgba(0,0,0,0.02)] hover:-translate-y-[2px] hover:shadow-[0_4px_12px_rgba(0,0,0,0.05)] hover:bg-slate-50 text-emerald-500">
-                                <i class="fa fa-check-circle"></i>
-                                <span>Job Completion</span>
-                            </a>
-                        </div>
+    <div class="min-h-screen bg-[#f8fafc] font-sans">
+        <!-- Dashboard Header (Light Eye-Friendly Theme) -->
+        <div class="bg-white pt-6 pb-20 px-6 relative overflow-hidden border-b border-slate-100">
+            <!-- Subtle Decorative Elements -->
+            <div class="absolute top-0 right-0 w-64 h-64 bg-indigo-50/40 rounded-full -mr-32 -mt-32 blur-3xl"></div>
+            <div class="absolute bottom-0 left-0 w-96 h-96 bg-blue-50/30 rounded-full -ml-48 -mb-48 blur-3xl"></div>
+            
+            <div class="max-w-[1600px] mx-auto relative z-10">
+                <div class="flex items-center gap-2 text-slate-400 text-sm mb-3 transition-all">
+                    <Link href="/dashboard" class="hover:text-blue-600 no-underline flex items-center gap-1 transition-colors">
+                        <i class="fa fa-home"></i>
+                        <span>Home</span>
+                    </Link>
+                    <i class="fa fa-chevron-right text-[10px] opacity-50"></i>
+                    <span class="text-slate-600 font-medium tracking-tight">Tailoring</span>
+                </div>
+                
+                <div class="flex flex-col md:flex-row md:items-center justify-between gap-3">
+                    <div>
+                        <h1 class="text-2xl font-black text-slate-900 tracking-tight mb-1">Tailoring Studio</h1>
+                        <p class="text-slate-500 text-xs md:text-sm font-medium">Create and manage your tailoring orders with ease</p>
+                    </div>
+                    
+                    <div class="flex flex-wrap gap-2">
+                        <a href="/tailoring/order" class="flex items-center gap-2 px-4 py-2 rounded-xl transition-all duration-300 bg-white hover:bg-slate-50 text-slate-600 border border-slate-200 shadow-sm no-underline font-bold text-sm group">
+                            <i class="fa fa-list text-indigo-500 group-hover:scale-110 transition-transform"></i>
+                            <span>Orders List</span>
+                        </a>
+                        <a href="/tailoring/job-completion" class="flex items-center gap-2 px-4 py-2 rounded-xl transition-all duration-300 bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg shadow-indigo-600/20 hover:-translate-y-0.5 no-underline font-bold text-sm group">
+                            <i class="fa fa-check-circle text-white/90 group-hover:scale-110 transition-transform"></i>
+                            <span>Job Completion</span>
+                        </a>
                     </div>
                 </div>
+            </div>
+        </div>
 
+
+        <div class="max-w-[1600px] mx-auto px-6 -mt-14 relative z-20 pb-8">
+            <div class="space-y-4">
                 <!-- Order Header Section -->
-                <OrderHeader v-model:orderNo="form.order_no" v-model:customer="form.customer_name"
-                    v-model:customerId="form.account_id" v-model:contact="form.customer_mobile"
-                    v-model:salesman="form.salesman_id" v-model:orderDate="form.order_date"
-                    v-model:deliveryDate="form.delivery_date" :customers="customers" :salesmen="salesmen"
-                    @add-customer="showCustomerModal = true" @customer-selected="handleCustomerSelected" />
+                <OrderHeader 
+                    v-model:orderNo="form.order_no" 
+                    v-model:customer="form.customer_name"
+                    v-model:customerId="form.account_id" 
+                    v-model:contact="form.customer_mobile"
+                    v-model:salesman="form.salesman_id" 
+                    v-model:orderDate="form.order_date"
+                    v-model:deliveryDate="form.delivery_date" 
+                    :customers="customers" 
+                    :salesmen="salesmen"
+                    @add-customer="showCustomerModal = true" 
+                    @customer-selected="handleCustomerSelected" 
+                />
 
                 <!-- Category Selection -->
-                <CategoryHeader :categories="categories" :selectedCategories="selectedCategories"
-                    @category-selected="handleCategorySelection" />
+                <CategoryHeader 
+                    :categories="categories" 
+                    :selectedCategories="selectedCategories"
+                    @category-selected="handleCategorySelection" 
+                />
 
                 <!-- Main Content: Measurements and Styling -->
-                <div v-if="selectedCategories.length > 0" class="mb-5 animate-[fadeIn_0.4s_ease-out]">
+                <div v-if="selectedCategories.length > 0" class="animate-[fadeIn_0.5s_ease-out]">
                     <!-- Category Tabs - Premium Style -->
-                    <div class="overflow-x-auto pb-[3px] scrolling-touch scrollbar-h-[3px] scrollbar-thumb-slate-200 mb-3">
-                        <ul class="nav border-b-0 flex gap-[10px]">
-                            <li class="nav-item" v-for="id in selectedCategories" :key="id">
-                                <a class="nav-link border-none px-4 py-2 rounded-[10px] text-slate-500 font-semibold text-[0.9rem] bg-slate-100 transition-all duration-200 flex items-center hover:bg-slate-200 hover:text-slate-800" :class="{ 'bg-white text-blue-500 shadow-[0_2px_8px_rgba(0,0,0,0.05)]': activeCategoryTab === id }" href="#"
-                                    @click.prevent="activeCategoryTab = id">
-                                    <i class="fa fa-dot-circle-o me-2" v-if="activeCategoryTab === id"></i>
-                                    {{ getCategory(id)?.name }}
-                                </a>
-                            </li>
-                        </ul>
+                    <div class="flex gap-2 overflow-x-auto pb-3 scrollbar-hide">
+                        <button 
+                            v-for="id in selectedCategories" 
+                            :key="id"
+                            @click="activeCategoryTab = id"
+                            class="whitespace-nowrap px-4 py-2 rounded-xl font-bold text-xs transition-all duration-300 flex items-center gap-2 border shadow-sm"
+                            :class="activeCategoryTab === id 
+                                ? 'bg-indigo-600 border-indigo-600 text-white shadow-indigo-200' 
+                                : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'"
+                        >
+                            <span class="w-2 h-2 rounded-full bg-current opacity-40" v-if="activeCategoryTab !== id"></span>
+                            <i class="fa fa-dot-circle-o" v-else></i>
+                            {{ getCategory(id)?.name }}
+                        </button>
                     </div>
 
                     <!-- Active Category Content -->
-                    <div v-if="activeCategoryTab" class="animate-[fadeSlideUp_0.4s_cubic-bezier(0.16,1,0.3,1)]">
-                        <div class="card shadow-sm border-0 rounded-[15px] border border-black/5 !important">
-                            <div class="card-body p-3 bg-white">
-                                <div class="row g-3">
+                    <div v-if="activeCategoryTab" class="animate-[fadeSlideUp_0.4s_ease-out]">
+                        <div class="bg-white rounded-3xl shadow-lg shadow-slate-200/50 border border-slate-200 overflow-hidden relative">
+                            <!-- Background Tint -->
+                            <div class="absolute inset-0 bg-gradient-to-br from-indigo-50/20 via-white to-emerald-50/20 pointer-events-none"></div>
+                            
+                            <div class="p-4 md:p-6 relative z-10">
+                                <div class="grid grid-cols-1 gap-6">
                                     <!-- Measurement Form -->
-                                    <div class="col-md-12">
-                                        <div class="relative pb-[3px] mb-3">
-                                            <h5 class="fw-bold text-slate-800">
-                                                <i class="fa fa-pencil-square-o text-primary me-2"></i>
-                                                {{ getCategory(activeCategoryTab)?.name }} Measurements
-                                            </h5>
-                                            <div class="w-[40px] h-[3px] bg-blue-500 rounded-[2px] mt-1"></div>
+                                    <div>
+                                        <div class="flex items-center gap-2 mb-4 border-b border-slate-100 pb-3">
+                                            <div class="w-8 h-8 rounded-lg bg-amber-50 flex items-center justify-center text-amber-600">
+                                                <i class="fa fa-pencil-square-o text-sm"></i>
+                                            </div>
+                                            <div>
+                                                <h3 class="text-sm font-bold text-slate-800 leading-none mb-0.5">
+                                                    {{ getCategory(activeCategoryTab)?.name }} Measurements
+                                                </h3>
+                                                <p class="text-slate-400 text-[10px] font-medium uppercase tracking-wider">Configure dimensions and fits</p>
+                                            </div>
                                         </div>
 
-                                        <MeasurementForm v-if="measurements[activeCategoryTab]"
-                                            v-model="measurements[activeCategoryTab]"
-                                            :category="getCategory(activeCategoryTab)"
-                                            :measurementOptions="measurementOptions"
-                                            @add-option="handleAddMeasurementOption" />
+                                        <div class="bg-slate-50/50 rounded-xl p-3 md:p-4 border border-slate-100">
+                                            <MeasurementForm v-if="measurements[activeCategoryTab]"
+                                                v-model="measurements[activeCategoryTab]"
+                                                :category="getCategory(activeCategoryTab)"
+                                                :measurementOptions="measurementOptions"
+                                                @add-option="handleAddMeasurementOption" />
+                                        </div>
                                     </div>
 
                                     <!-- Product Selection -->
-                                    <div class="col-md-12 mt-4">
-                                        <div class="relative pb-[3px] mb-3">
-                                            <h5 class="fw-bold text-slate-800">
-                                                <i class="fa fa-shopping-cart text-primary me-2"></i>
-                                                Fabric & Services
-                                            </h5>
-                                            <div class="w-[40px] h-[3px] bg-blue-500 rounded-[2px] mt-1"></div>
+                                    <div>
+                                        <div class="flex items-center gap-2 mb-4 border-b border-slate-100 pb-3">
+                                            <div class="w-8 h-8 rounded-lg bg-emerald-50 flex items-center justify-center text-emerald-600">
+                                                <i class="fa fa-shopping-cart text-sm"></i>
+                                            </div>
+                                            <div>
+                                                <h3 class="text-sm font-bold text-slate-800 leading-none mb-0.5">
+                                                    Fabric & Services
+                                                </h3>
+                                                <p class="text-slate-400 text-[10px] font-medium uppercase tracking-wider">Select materials and service rates</p>
+                                            </div>
                                         </div>
 
-                                        <ProductSelection v-if="currentItems[activeCategoryTab]"
-                                            v-model="currentItems[activeCategoryTab]" :products="products"
-                                            :colors="colors" :isLoading="isAddingItem[activeCategoryTab]"
-                                            :isEditing="!!editingItemIds[activeCategoryTab]"
-                                            @add-item="(item) => handleAddItem(item, activeCategoryTab)"
-                                            @calculate-amount="(item) => calculateItemAmount(item, activeCategoryTab)"
-                                            @clear="handleItemClear(activeCategoryTab)" />
+                                        <div class="bg-slate-50/50 rounded-xl p-3 md:p-4 border border-slate-100">
+                                            <ProductSelection v-if="currentItems[activeCategoryTab]"
+                                                v-model="currentItems[activeCategoryTab]" :products="products"
+                                                :colors="colors" :isLoading="isAddingItem[activeCategoryTab]"
+                                                :isEditing="!!editingItemIds[activeCategoryTab]"
+                                                @add-item="(item) => handleAddItem(item, activeCategoryTab)"
+                                                @calculate-amount="(item) => calculateItemAmount(item, activeCategoryTab)"
+                                                @clear="handleItemClear(activeCategoryTab)" />
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -94,47 +141,44 @@
                     </div>
                 </div>
 
-
                 <!-- Summary and Work Orders -->
-                <div class="row g-3">
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-4">
                     <!-- Summary Table -->
-                    <div class="col-lg-3">
+                    <div class="lg:col-span-3">
                         <SummaryTable :items="form.items" />
                     </div>
 
                     <!-- Work Orders Preview -->
-                    <div class="col-lg-9">
+                    <div class="lg:col-span-9">
                         <WorkOrdersPreview :items="form.items" @edit="handleEditItem" @remove="handleRemoveItem" />
                     </div>
                 </div>
 
                 <!-- Action Buttons -->
-                <div class="mt-4">
+                <div class="sticky bottom-4 z-30">
                     <ActionButtons :isLoading="isSubmitting" :canSubmit="canSubmit" @clear="handleClear"
                         @create-order="handleCreateOrder" @payment="handlePayment" />
                 </div>
             </div>
         </div>
 
-        <!-- Sale Confirmation Modal replaces individual PaymentModal -->
 
-        <!-- Customer Modal -->
+        <!-- Modals -->
         <CustomerModal v-if="showCustomerModal" :show="showCustomerModal" :customer-types="customerTypes"
             :countries="countries" @close="showCustomerModal = false" @customerSaved="handleCustomerAdded"
             @customerSelected="handleCustomerSelected" />
 
-        <!-- Sale Confirmation Modal -->
         <SaleConfirmationModal :show="showConfirmationModal" :sale-data="confirmationData" :loading="isSubmitting"
             :payment-method="selectedPaymentMethod" :send-to-whatsapp="sendToWhatsapp"
             @update:paymentMethod="val => selectedPaymentMethod = val"
             @update:sendToWhatsapp="val => sendToWhatsapp = val" @openCustomPayment="showCustomPaymentModal = true"
             @close="showConfirmationModal = false" @submit="processSubmitOrder" />
 
-        <!-- Custom Payment Modal -->
         <CustomPaymentModal :show="showCustomPaymentModal" :total-amount="grandTotal" :payment-methods="paymentMethods"
             :initial-payments="form.payments" @close="showCustomPaymentModal = false" @save="handleCustomPaymentSave" />
     </div>
 </template>
+
 
 <script setup>
 import {
@@ -563,9 +607,9 @@ const handleClear = () => {
         payments: [],
     }
     measurements.value = {}
-    currentItem.value = {}
-    selectedCategory.value = null
-    selectedModel.value = null
+    currentItems.value = {}
+    activeCategoryTab.value = null
+    selectedCategories.value = []
 }
 
 // Payment handling via confirmation flow
@@ -625,5 +669,36 @@ onMounted(() => {
     loadMeasurementOptions()
 })
 </script>
+
+<style scoped>
+@keyframes shimmer {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes fadeSlideUp {
+  from { 
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to { 
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+</style>
 
 

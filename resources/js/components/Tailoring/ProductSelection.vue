@@ -1,100 +1,93 @@
 <template>
-    <div class="card mb-4 border shadow-none" style="border-color: #e2e8f0 !important;">
-        <div class="card-body">
-            <div class="d-flex align-items-center justify-content-between mb-4">
-                <h5 class="card-title text-gray-800 d-flex align-items-center gap-2 mb-0">
-                    <i class="fa fa-shopping-bag text-primary"></i>
-                    {{ isEditing ? 'Update Product' : 'Select Products' }}
-                </h5>
-                <span class="badge bg-white text-muted border border-light shadow-sm rounded-pill fw-normal px-3 py-2">
-                    {{ isEditing ? 'Update selected product details' : 'Add products to the order' }}
-                </span>
+    <div class="space-y-4">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-3 items-end">
+            <!-- Product Selection -->
+            <div class="lg:col-span-3">
+                <label class="block text-slate-500 font-bold text-[0.65rem] uppercase tracking-widest mb-1.5 px-1">Product</label>
+                <div class="relative group">
+                    <select ref="productSelect" placeholder="Search product..." autocomplete="off"
+                        class="form-control !rounded-xl !border-slate-200 !text-xs !py-1 !px-3"></select>
+                </div>
             </div>
 
-            <div class="row g-2 align-items-end">
-                <!-- Product Selection -->
-                <div class="col-lg-3">
-                    <label class="form-label small text-muted text-uppercase fw-bold mb-1">Product</label>
-                    <div class="position-relative">
-                        <select ref="productSelect" placeholder="Search product..." autocomplete="off"
-                            class="form-control"></select>
+            <!-- Color -->
+            <div class="lg:col-span-2">
+                <label class="block text-slate-500 font-bold text-[0.65rem] uppercase tracking-widest mb-1.5 px-1">Colour</label>
+                <div class="relative group">
+                    <div class="absolute inset-y-0 left-0 pl-2.5 flex items-center pointer-events-none text-slate-400 group-focus-within:text-emerald-500 transition-colors">
+                        <i class="fa fa-paint-brush text-[10px]"></i>
                     </div>
-                </div>
-
-                <!-- Color -->
-                <div class="col-lg-2 col-md-6">
-                    <label class="form-label small text-muted text-uppercase fw-bold mb-1">Colour</label>
-                    <div class="input-group">
-                        <span class="input-group-text bg-white border-end-0 text-muted px-2">
-                            <i class="fa fa-paint-brush"></i>
-                        </span>
-                        <input v-model="item.product_color" type="text" placeholder="Color..."
-                            class="form-control border-start-0 ps-0" />
-                        <button @click="addColor" class="btn btn-outline-secondary btn-sm" type="button">
-                            <i class="fa fa-plus"></i>
-                        </button>
-                    </div>
-                </div>
-
-                <!-- Quantity -->
-                <div class="col">
-                    <label class="form-label small text-muted text-uppercase fw-bold mb-1">Qty</label>
-                    <input v-model.number="item.quantity" type="number" step="0.001" min="0.001" placeholder="0"
-                        @input="calculateAmount" class="form-control fw-bold px-2" />
-                </div>
-
-                <!-- Item Rate -->
-                <div class="col">
-                    <label class="form-label small text-muted text-uppercase fw-bold mb-1">Price</label>
-                    <div class="input-group">
-                        <span class="input-group-text bg-white border-end-0 text-muted px-1 fw-bold">₹</span>
-                        <input v-model.number="item.unit_price" type="number" step="0.01" min="0" placeholder="0"
-                            @input="calculateAmount" class="form-control border-start-0 ps-0 px-1" />
-                    </div>
-                </div>
-
-                <!-- Stitch Rate -->
-                <div class="col">
-                    <label class="form-label small text-muted text-uppercase fw-bold mb-1">Stitch</label>
-                    <input v-model.number="item.stitch_rate" type="number" step="0.01" min="0" placeholder="0"
-                        @input="calculateAmount" class="form-control px-2" />
-                </div>
-
-                <!-- Tax -->
-                <div class="col">
-                    <label class="form-label small text-muted text-uppercase fw-bold mb-1">Tax</label>
-                    <input v-model.number="item.tax" type="number" step="0.01" min="0" placeholder="0"
-                        @input="calculateAmount" class="form-control px-2" />
-                </div>
-
-                <!-- Amount -->
-                <div class="col">
-                    <label class="form-label small text-muted text-uppercase fw-bold mb-1">Total</label>
-                    <div class="input-group">
-                        <span
-                            class="input-group-text bg-success bg-opacity-10 border-success border-end-0 text-success px-1 fw-bold">₹</span>
-                        <input :value="item.total || 0" type="text" readonly
-                            class="form-control bg-success bg-opacity-10 border-success border-start-0 text-success fw-bold px-1" />
-                    </div>
-                </div>
-
-                <div class="col-lg-auto col-md-12 d-flex gap-1 justify-content-end">
-                    <button type="button" @click="handleClear"
-                        class="btn btn-link btn-sm text-secondary text-decoration-none px-2" title="Clear/Cancel">
-                        <i class="fa fa-times me-1"></i>Clear
-                    </button>
-                    <button type="button" @click="handleAdd" :disabled="isLoading"
-                        class="btn btn-dark d-flex align-items-center justify-content-center gap-2 px-4 shadow-none rounded-3">
-                        <i v-if="isLoading" class="fa fa-spinner fa-spin"></i>
-                        <i v-else :class="isEditing ? 'fa fa-save' : 'fa fa-plus'"></i>
-                        <span class="text-nowrap fw-semibold">{{ isLoading ? (isEditing ? 'Updating...' : 'Adding...') :
-                            (isEditing ? 'Update' : 'Add Item') }}</span>
+                    <input v-model="item.product_color" type="text" placeholder="Color..."
+                        class="w-full rounded-xl border border-slate-200 bg-white shadow-sm focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 transition-all duration-300 text-xs py-1 pl-8 pr-3 font-medium" />
+                    <button @click="addColor" class="absolute right-1.5 top-1/2 -translate-y/2 w-6 h-6 flex items-center justify-center rounded-lg bg-slate-50 text-slate-400 hover:bg-blue-50 hover:text-blue-600 transition-colors" type="button">
+                        <i class="fa fa-plus text-[9px]"></i>
                     </button>
                 </div>
+            </div>
+
+            <!-- Quantity -->
+            <div class="lg:col-span-1">
+                <label class="block text-slate-500 font-bold text-[0.65rem] uppercase tracking-widest mb-1.5 px-1">Qty</label>
+                <input v-model.number="item.quantity" type="number" step="0.001" min="0.001" placeholder="0"
+                    @input="calculateAmount" 
+                    class="w-full rounded-xl border border-slate-200 bg-white shadow-sm focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 transition-all duration-300 text-xs py-1 px-2 font-bold text-center" />
+            </div>
+
+            <!-- Item Rate -->
+            <div class="lg:col-span-1">
+                <label class="block text-slate-500 font-bold text-[0.65rem] uppercase tracking-widest mb-1.5 px-1">Price</label>
+                <div class="relative">
+                    <input v-model.number="item.unit_price" type="number" step="0.01" min="0" placeholder="0"
+                        @input="calculateAmount" 
+                        class="w-full rounded-xl border border-slate-200 bg-white shadow-sm focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 transition-all duration-300 text-xs py-1 pl-4 pr-1.5 font-bold" />
+                </div>
+            </div>
+
+            <!-- Stitch Rate -->
+            <div class="lg:col-span-1">
+                <label class="block text-slate-500 font-bold text-[0.65rem] uppercase tracking-widest mb-1.5 px-1">Stitch</label>
+                <input v-model.number="item.stitch_rate" type="number" step="0.01" min="0" placeholder="0"
+                    @input="calculateAmount" 
+                    class="w-full rounded-xl border border-slate-200 bg-white shadow-sm focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 transition-all duration-300 text-xs py-1 px-1.5 font-bold text-center" />
+            </div>
+
+            <!-- Tax -->
+            <div class="lg:col-span-1">
+                <label class="block text-slate-500 font-bold text-[0.65rem] uppercase tracking-widest mb-1.5 px-1">Tax</label>
+                <input v-model.number="item.tax" type="number" step="0.01" min="0" placeholder="0"
+                    @input="calculateAmount" 
+                    class="w-full rounded-xl border border-slate-200 bg-white shadow-sm focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 transition-all duration-300 text-xs py-1 px-1.5 font-bold text-center" />
+            </div>
+
+            <!-- Amount -->
+            <div class="lg:col-span-1">
+                <label class="block text-success font-bold text-[0.65rem] uppercase tracking-widest mb-1.5 px-1">Total</label>
+                <div class="relative">
+                    <input :value="item.total || 0" type="text" readonly
+                        class="w-full rounded-xl border border-success/20 bg-success/5 text-success font-black text-xs py-1 pl-4 pr-1.5" />
+                </div>
+            </div>
+
+            <!-- Actions -->
+            <div class="lg:col-span-2 flex items-center gap-2">
+                <button type="button" @click="handleClear"
+                    class="flex-1 px-3 py-1.5 rounded-xl border border-slate-200 text-slate-400 font-bold text-[0.65rem] uppercase tracking-widest hover:bg-slate-100 hover:text-slate-600 transition-all">
+                    Clear
+                </button>
+                <button type="button" @click="handleAdd" :disabled="isLoading"
+                    class="flex-[2] px-3 py-1.5 rounded-xl transition-all duration-300 shadow-lg font-bold text-[0.65rem] uppercase tracking-widest flex items-center justify-center gap-2"
+                    :class="isEditing 
+                        ? 'bg-amber-500 hover:bg-amber-600 text-white shadow-amber-200' 
+                        : 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-emerald-200'">
+                    <i v-if="isLoading" class="fa fa-spinner fa-spin"></i>
+                    <i v-else :class="isEditing ? 'fa fa-save' : 'fa fa-plus'"></i>
+                    <span class="whitespace-nowrap">{{ isLoading ? 'Wait...' : (isEditing ? 'Update' : 'Add Item') }}</span>
+                </button>
             </div>
         </div>
     </div>
 </template>
+
 
 <script setup>
 import { ref, watch, nextTick, onMounted, onBeforeUnmount } from 'vue'
@@ -145,16 +138,13 @@ const initializeProductSelect = () => {
         labelField: 'name',
         searchField: ['name', 'code', 'barcode'],
         placeholder: 'Search & Select Product...',
-        preload: true, // Preload common items if needed
+        preload: 'focus', // Load items when field is focused
         maxItems: 1,
         dropdownParent: 'body',
         plugins: ['clear_button'],
         load: (query, callback) => {
-            if (!query || query.length < 2) {
-                callback()
-                return
-            }
-            const url = '/tailoring/order/products?search=' + encodeURIComponent(query)
+            // Load if query is empty (on focus) or has search text
+            const url = '/tailoring/order/products?search=' + encodeURIComponent(query || '')
             axios.get(url)
                 .then(res => {
                     if (res.data.success && res.data.data && Array.isArray(res.data.data)) {
@@ -178,23 +168,23 @@ const initializeProductSelect = () => {
                     return escape(text).replace(re, '<span class="ts-highlight">$1</span>');
                 };
 
-                return `<div class="d-flex align-items-center justify-content-between">
+                return `<div class="d-flex align-items-center justify-content-between py-1">
                             <div class="d-flex flex-column min-width-0">
-                                <span class="fw-medium text-dark text-truncate">${highlightText(item.name)}</span>
-                                <span class="text-muted small opacity-75 text-truncate mb-0">${highlightText(item.code || item.barcode || '')}</span>
+                                <span class="fw-bold text-dark text-truncate small">${highlightText(item.name)}</span>
+                                <span class="text-muted text-[0.65rem] opacity-75 text-truncate mb-0">${highlightText(item.code || item.barcode || '')}</span>
                             </div>
-                            <div class="text-success fw-bold ms-3">
-                                <span class="small opacity-75">₹</span>${escape(item.mrp || 0)}
+                            <div class="text-blue-600 fw-black ms-3 small">
+                                ${escape(item.mrp || 0)}
                             </div>
                         </div>`
             },
             item: (item, escape) => {
                 return `<div class="d-flex align-items-center gap-2">
-                            <span class="fw-medium text-dark">${escape(item.name)}</span>
+                            <span class="fw-bold text-slate-700 text-xs">${escape(item.name)}</span>
                          </div>`
             },
             loading: (data, escape) => {
-                return '<div class="p-2 text-center text-muted small opacity-50">Searching...</div>'
+                return '<div class="p-2 text-center text-slate-400 text-[0.65rem] font-bold uppercase tracking-widest">Searching...</div>'
             }
         },
         onChange: (value) => {

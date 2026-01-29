@@ -1,84 +1,75 @@
 <template>
-    <div class="measurement-view">
+    <div class="flex flex-col gap-6">
         <!-- Premium Header Area -->
-        <div class="d-flex align-items-center justify-content-between mb-4 px-1">
-            <div class="d-flex align-items-center gap-3">
-                <div class="badge-accent">
-                    <span class="label">ITEM</span>
-                    <span class="value">#{{ item.item_no }}</span>
+        <div class="flex items-center justify-between px-1">
+            <div class="flex items-center gap-4">
+                <div class="flex flex-col items-center bg-slate-50 px-3 py-1.5 rounded-xl border border-slate-200">
+                    <span class="text-[0.6rem] font-black text-slate-400 uppercase tracking-[0.1em]">ITEM</span>
+                    <span class="text-base font-black text-slate-900 leading-none">#{{ item.item_no }}</span>
                 </div>
                 <div>
-                    <h5 class="fw-bold text-slate-900 mb-0">{{ item.product_name || 'Generic Item' }}</h5>
-                    <div class="small text-slate-500 fw-medium">
-                        {{ item.category?.name || 'Item' }} <span class="mx-1 opacity-25">•</span> {{ modelName }}
+                    <h5 class="text-base font-black text-slate-900 leading-none mb-1">{{ item.product_name || 'Generic Item' }}</h5>
+                    <div class="text-[0.65rem] text-slate-500 font-bold uppercase tracking-widest flex items-center gap-2">
+                        <span>{{ item.category?.name || 'Item' }}</span>
+                        <span class="w-1 h-1 rounded-full bg-slate-300"></span>
+                        <span class="text-blue-600">{{ modelName }}</span>
                     </div>
                 </div>
             </div>
         </div>
 
         <!-- Balanced Grid Layout -->
-        <div class="row g-4">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             <!-- Dimensions Column -->
-            <div class="col-xl-4 col-md-6">
-                <div class="group-section">
-                    <div class="group-header">
-                        <i class="fa fa-ruler-combined me-2"></i>
-                        DIMENSIONS
-                    </div>
-                    <div class="measurement-card">
-                        <div v-for="key in groups.dimensions" :key="key" class="m-row">
-                            <div class="m-label">{{ formatLabel(key) }}</div>
-                            <div class="m-value" :class="{ 'text-muted opacity-50': !getValue(key) }">
-                                {{ getValue(key) ?? '-' }}
-                            </div>
+            <div class="flex flex-col gap-2">
+                <div class="flex items-center gap-2 px-1">
+                    <i class="fa fa-arrows-alt text-slate-400 text-[10px]"></i>
+                    <h6 class="text-[0.6rem] font-black text-slate-400 uppercase tracking-[0.15em]">Dimensions</h6>
+                </div>
+                <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden divide-y divide-slate-100">
+                    <div v-for="key in groups.dimensions" :key="key" class="flex items-stretch hover:bg-slate-50/50 transition-colors">
+                        <div class="w-1/2 bg-slate-50/50 px-3 py-2 text-[0.7rem] font-bold text-slate-500 border-r border-slate-100 flex items-center capitalize">
+                            {{ formatLabel(key) }}
+                        </div>
+                        <div class="w-1/2 px-3 py-2 text-[0.7rem] font-black text-slate-800 flex items-center" :class="{ 'opacity-30': !getValue(key) }">
+                            {{ getValue(key) ?? '-' }}
                         </div>
                     </div>
                 </div>
             </div>
 
             <!-- Components Column -->
-            <div class="col-xl-4 col-md-6">
-                <div class="group-section">
-                    <div class="group-header">
-                        <i class="fa fa-puzzle-piece me-2"></i>
-                        COMPONENTS
-                    </div>
-                    <div class="measurement-card">
-                        <div v-for="key in groups.components" :key="key" class="m-row">
-                            <div class="m-label">{{ formatLabel(key) }}</div>
-                            <div class="m-value" :class="{ 'text-muted opacity-50': !getValue(key) }">
-                                {{ getValue(key) ?? '-' }}
-                            </div>
+            <div class="flex flex-col gap-2">
+                <div class="flex items-center gap-2 px-1">
+                    <i class="fa fa-puzzle-piece text-slate-400 text-[10px]"></i>
+                    <h6 class="text-[0.6rem] font-black text-slate-400 uppercase tracking-[0.15em]">Components</h6>
+                </div>
+                <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden divide-y divide-slate-100">
+                    <div v-for="key in groups.components" :key="key" class="flex items-stretch hover:bg-slate-50/50 transition-colors">
+                        <div class="w-1/2 bg-slate-50/50 px-3 py-2 text-[0.7rem] font-bold text-slate-500 border-r border-slate-100 flex items-center capitalize">
+                            {{ formatLabel(key) }}
+                        </div>
+                        <div class="w-1/2 px-3 py-2 text-[0.7rem] font-black text-slate-800 flex items-center" :class="{ 'opacity-30': !getValue(key) }">
+                            {{ getValue(key) ?? '-' }}
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Styles Column (Full width on large, balanced with internal grid) -->
-            <div class="col-xl-4 col-12">
-                <div class="group-section">
-                    <div class="group-header">
-                        <i class="fa fa-cut me-2"></i>
-                        STYLES & MODELS
-                    </div>
-                    <div class="measurement-card">
-                        <!-- Dual column grid for styles to balance height -->
-                        <div class="row g-0">
-                            <div class="col-sm-6 border-end-sm">
-                                <div v-for="key in groups.styles.slice(0, 7)" :key="key" class="m-row">
-                                    <div class="m-label">{{ formatLabel(key) }}</div>
-                                    <div class="m-value" :class="{ 'text-muted opacity-50': !getValue(key) }">
-                                        {{ getValue(key) ?? '-' }}
-                                    </div>
-                                </div>
+            <!-- Styles Column -->
+            <div class="flex flex-col gap-2 lg:col-span-1">
+                <div class="flex items-center gap-2 px-1">
+                    <i class="fa fa-cut text-slate-400 text-[10px]"></i>
+                    <h6 class="text-[0.6rem] font-black text-slate-400 uppercase tracking-[0.15em]">Styles & Models</h6>
+                </div>
+                <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+                    <div class="grid grid-cols-1 divide-y divide-slate-100">
+                        <div v-for="key in groups.styles" :key="key" class="flex items-stretch hover:bg-slate-50/50 transition-colors">
+                            <div class="w-1/2 bg-slate-50/50 px-3 py-2 text-[0.7rem] font-bold text-slate-500 border-r border-slate-100 flex items-center capitalize">
+                                {{ formatLabel(key) }}
                             </div>
-                            <div class="col-sm-6">
-                                <div v-for="key in groups.styles.slice(7)" :key="key" class="m-row">
-                                    <div class="m-label">{{ formatLabel(key) }}</div>
-                                    <div class="m-value" :class="{ 'text-muted opacity-50': !getValue(key) }">
-                                        {{ getValue(key) ?? '-' }}
-                                    </div>
-                                </div>
+                            <div class="w-1/2 px-3 py-2 text-[0.7rem] font-black text-slate-800 flex items-center" :class="{ 'opacity-30': !getValue(key) }">
+                                {{ getValue(key) ?? '-' }}
                             </div>
                         </div>
                     </div>
@@ -87,17 +78,20 @@
         </div>
 
         <!-- Notes Section -->
-        <div v-if="item.tailoring_notes" class="mt-4 notes-box">
-            <div class="notes-header">
-                <i class="fa fa-info-circle me-1"></i>
-                SPECIAL INSTRUCTIONS
-            </div>
-            <div class="notes-content">
-                {{ item.tailoring_notes }}
+        <div v-if="item.tailoring_notes" class="mt-2">
+            <div class="bg-amber-50 rounded-2xl border border-amber-100 p-4">
+                <div class="flex items-center gap-2 mb-2">
+                    <i class="fa fa-info-circle text-amber-600 text-xs"></i>
+                    <h6 class="text-[0.6rem] font-black text-amber-700 uppercase tracking-widest leading-none">Special Instructions</h6>
+                </div>
+                <p class="text-[0.75rem] font-bold text-amber-900 leading-relaxed">
+                    {{ item.tailoring_notes }}
+                </p>
             </div>
         </div>
     </div>
 </template>
+
 
 <script setup>
 import { computed } from 'vue'

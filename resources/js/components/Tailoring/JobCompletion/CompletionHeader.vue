@@ -1,34 +1,37 @@
 <template>
-    <div class="card shadow-sm border-0">
-        <div class="card-body p-3">
-            <div class="d-flex justify-content-between align-items-center flex-wrap gap-4">
-                <div class="d-flex gap-5">
+    <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+        <div class="p-4">
+            <div class="flex flex-col md:flex-row justify-between items-center gap-6">
+                <div class="flex gap-8">
                     <div>
-                        <div class="small fw-bold text-muted text-uppercase mb-1">Order Number</div>
-                        <div class="h5 fw-bold text-primary mb-0">{{ order.order_no }}</div>
+                        <div class="text-[0.65rem] font-bold text-slate-400 uppercase tracking-widest mb-1">Order Number</div>
+                        <div class="text-lg font-black text-blue-600 leading-none">{{ order.order_no }}</div>
                     </div>
                     <div>
-                        <div class="small fw-bold text-muted text-uppercase mb-1">Customer</div>
-                        <div class="h5 fw-bold text-dark mb-0">{{ order.customer_name }}</div>
+                        <div class="text-[0.65rem] font-bold text-slate-400 uppercase tracking-widest mb-1">Customer</div>
+                        <div class="text-lg font-black text-slate-800 leading-none">{{ order.customer_name }}</div>
                     </div>
                 </div>
-                <div class="d-flex gap-3">
-                    <div style="min-width: 200px;">
-                        <label class="form-label small fw-bold text-muted text-uppercase mb-1">Rack</label>
+                <div class="flex items-center gap-4 w-full md:w-auto">
+                    <div class="flex-1 md:min-w-[180px]">
+                        <label class="block text-[0.65rem] font-bold text-slate-400 uppercase tracking-widest mb-1.5 px-1">Rack Assignment</label>
                         <SearchableSelect :modelValue="order.rack_id" @update:modelValue="emit('update-rack', $event)"
-                            :options="racks" placeholder="Select rack..." class="form-select-sm" />
+                            :options="racks" placeholder="Select rack..." 
+                            input-class="!text-xs !py-2 !px-3 !rounded-xl !bg-slate-50 !border-slate-200" />
                     </div>
-                    <div style="min-width: 200px;">
-                        <label class="form-label small fw-bold text-muted text-uppercase mb-1">Cutter</label>
+                    <div class="flex-1 md:min-w-[180px]">
+                        <label class="block text-[0.65rem] font-bold text-slate-400 uppercase tracking-widest mb-1.5 px-1">Assigned Cutter</label>
                         <SearchableSelect :modelValue="order.cutter_id"
                             @update:modelValue="emit('update-cutter', $event)" :options="cutters"
-                            placeholder="Select cutter..." class="form-select-sm" />
+                            placeholder="Select cutter..." 
+                            input-class="!text-xs !py-2 !px-3 !rounded-xl !bg-slate-50 !border-slate-200" />
                     </div>
                 </div>
             </div>
         </div>
     </div>
 </template>
+
 
 <script setup>
 import SearchableSelect from '@/components/SearchableSelect.vue'
