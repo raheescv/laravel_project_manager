@@ -22,15 +22,6 @@
                         </button>
                     @endif
                 @endcan
-                <div class="d-flex align-items-center gap-2">
-                    <label class="form-label mb-0 small text-muted">Category</label>
-                    <select wire:model.live="categoryId" class="form-select form-select-sm" style="min-width: 200px;">
-                        <option value="">-- Select Category --</option>
-                        @foreach($categories as $cat)
-                            <option value="{{ $cat->id }}">{{ $cat->name }}</option>
-                        @endforeach
-                    </select>
-                </div>
             </div>
             <div class="col-12 col-md-6">
                 <div class="d-flex flex-wrap gap-2 justify-content-md-end">

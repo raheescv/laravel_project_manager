@@ -97,14 +97,24 @@ class Table extends Component
     {
         $data = TailoringMeasurementOption::when($this->filterType, fn ($q) => $q->byType($this->filterType))
             ->when($this->search ?? '', function ($query, $value) {
-                return $query->where('value', 'like', "%{$value}%");
+                return $query->where(function($q) use ($value) {
+                    $q->where('value', 'like', "%{$value}%")
+                      ->orWhere('option_type', 'like', "%{$value}%");
+                });
             })
             ->orderBy($this->sortField, $this->sortDirection)
             ->paginate($this->limit);
 
+        // Get unique types from DB for filter dropdown
+        $dbTypes = TailoringMeasurementOption::distinct()->pluck('option_type');
+        $types = [];
+        foreach($dbTypes as $type) {
+            $types[$type] = ucwords(str_replace('_', ' ', $type));
+        }
+
         return view('livewire.settings.tailoring-measurement-option.table', [
             'data' => $data,
-            'optionTypes' => TailoringMeasurementOption::OPTION_TYPES,
+            'optionTypes' => $types,
         ]);
     }
 }

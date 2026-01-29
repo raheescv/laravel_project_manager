@@ -67,6 +67,16 @@ class TailoringCategory extends Model
         return $this->hasMany(TailoringCategoryModel::class)->where('is_active', true);
     }
 
+    public function measurements(): HasMany
+    {
+        return $this->hasMany(TailoringCategoryMeasurement::class);
+    }
+
+    public function activeMeasurements(): HasMany
+    {
+        return $this->hasMany(TailoringCategoryMeasurement::class)->where('is_active', true)->orderBy('sort_order');
+    }
+
     public function scopeActive($query)
     {
         return $query->where('is_active', true);

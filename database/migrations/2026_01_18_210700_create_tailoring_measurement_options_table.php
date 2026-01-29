@@ -13,20 +13,7 @@ return new class() extends Migration
             $table->unsignedBigInteger('tenant_id');
             $table->foreign('tenant_id')->references('id')->on('tenants')->onDelete('cascade');
             $table->index('tenant_id');
-            $table->enum('option_type', [
-                'mar_model',
-                'cuff',
-                'cuff_cloth',
-                'cuff_model',
-                'collar',
-                'collar_cloth',
-                'collar_model',
-                'fp_model',
-                'pen',
-                'side_pt_model',
-                'stitching',
-                'button',
-            ]);
+            $table->string('option_type');
             $table->string('value');
             $table->timestamps();
             $table->index(['tenant_id', 'option_type']);

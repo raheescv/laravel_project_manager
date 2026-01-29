@@ -19,7 +19,7 @@ class Page extends Component
 
     public $table_id;
 
-    public function create()
+    public function create($payload = null)
     {
         $this->mount();
         $this->options = [
@@ -29,7 +29,7 @@ class Page extends Component
         $this->dispatch('ToggleTailoringMeasurementOptionModal');
     }
 
-    public function edit($id)
+    public function edit($id = null)
     {
         $tableId = is_array($id) ? ($id['id'] ?? $id) : $id;
         $this->mount($tableId);
@@ -55,7 +55,7 @@ class Page extends Component
         $optionType = $this->options['option_type'] ?? null;
 
         return [
-            'options.option_type' => ['required', Rule::in(array_keys(TailoringMeasurementOption::OPTION_TYPES))],
+            'options.option_type' => ['required', 'string', 'max:255'],
             'options.value' => [
                 'required',
                 'string',

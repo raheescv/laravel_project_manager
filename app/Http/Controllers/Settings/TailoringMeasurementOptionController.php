@@ -17,7 +17,7 @@ class TailoringMeasurementOptionController extends Controller
     public function getByType(Request $request): JsonResponse
     {
         $type = $request->get('type');
-        if (! $type || ! array_key_exists($type, TailoringMeasurementOption::OPTION_TYPES)) {
+        if (! $type) {
             return response()->json(['items' => []]);
         }
 

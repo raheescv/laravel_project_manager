@@ -19,11 +19,11 @@ class Page extends Component
 
     public $table_id;
 
-    public function create($name = null)
+    public function create($payload = null)
     {
         $this->mount();
         $this->categories = [
-            'name' => $name,
+            'name' => is_string($payload) ? $payload : null,
             'description' => '',
             'is_active' => true,
             'order' => TailoringCategory::max('order') + 1,
@@ -31,7 +31,7 @@ class Page extends Component
         $this->dispatch('ToggleTailoringCategoryModal');
     }
 
-    public function edit($id)
+    public function edit($id = null)
     {
         $tableId = is_array($id) ? ($id['id'] ?? $id) : $id;
         $this->mount($tableId);
