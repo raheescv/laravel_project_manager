@@ -1,7 +1,7 @@
 <div class="card border-0 shadow-sm" id="category-models-card">
     <div class="card-header bg-white py-3">
         <h5 class="mb-0 d-flex align-items-center gap-2">
-            <i class="demo-psi-box fs-5 text-primary"></i>
+            <i class="fa fa-cube fs-5 text-primary"></i>
             Category Models
         </h5>
     </div>
@@ -10,14 +10,14 @@
             <div class="col-12 col-md-6 d-flex gap-2 flex-wrap">
                 @can('tailoring category.create')
                     <button type="button" class="btn btn-primary d-inline-flex align-items-center gap-2" id="TailoringCategoryModelAdd" wire:click="$dispatch('TailoringCategoryModel-Page-Create-Component', { tailoring_category_id: @js($categoryId) })">
-                        <i class="demo-psi-add fs-5"></i>
+                        <i class="fa fa-plus fs-5"></i>
                         <span>Add Model</span>
                     </button>
                 @endcan
                 @can('tailoring category.delete')
                     @if(count($selected) > 0)
                         <button class="btn btn-outline-danger d-inline-flex align-items-center gap-2" wire:click="delete()" wire:confirm="Are you sure you want to delete the selected items?">
-                            <i class="demo-pli-recycling fs-5"></i>
+                            <i class="fa fa-trash fs-5"></i>
                             <span>Delete</span>
                         </button>
                     @endif
@@ -36,7 +36,7 @@
                 <div class="d-flex flex-wrap gap-2 justify-content-md-end">
                     <div class="d-flex bg-light rounded-2 px-2">
                         <span class="d-flex align-items-center text-muted">
-                            <i class="demo-psi-list-view fs-6"></i>
+                            <i class="fa fa-list fs-6"></i>
                         </span>
                         <select wire:model.live="limit" class="form-select bg-transparent border-0 fw-semibold py-2" style="width: 80px; box-shadow: none; font-size: 0.875rem;">
                             <option value="10">10</option>
@@ -46,7 +46,7 @@
                     </div>
                     <div class="d-flex bg-light rounded-2 px-2 flex-grow-1 flex-md-grow-0" style="min-width: 200px;">
                         <span class="d-flex align-items-center text-muted">
-                            <i class="demo-psi-magnifi-glass fs-6"></i>
+                            <i class="fa fa-search fs-6"></i>
                         </span>
                         <input type="text" wire:model.live="search" placeholder="Search models..." class="form-control bg-transparent border-0 py-2" style="box-shadow: none; font-size: 0.875rem;" autocomplete="off">
                     </div>
@@ -57,7 +57,7 @@
     <div class="card-body p-0">
         @if(!$categoryId)
             <div class="text-center py-5 text-muted">
-                <i class="demo-psi-box fs-1 opacity-50"></i>
+                <i class="fa fa-cube fs-1 opacity-50"></i>
                 <p class="mb-0 mt-2">Select a category above to view and manage its models.</p>
             </div>
         @else
@@ -100,7 +100,7 @@
                                 <td class="text-end pe-4">
                                     @can('tailoring category.edit')
                                         <button type="button" table_id="{{ $item->id }}" class="btn btn-icon btn-sm btn-hover btn-light edit-model" title="Edit Model">
-                                            <i class="demo-psi-pencil fs-5 text-muted"></i>
+                                            <i class="fa fa-pencil fs-5 text-muted"></i>
                                         </button>
                                     @endcan
                                 </td>

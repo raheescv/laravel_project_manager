@@ -14,6 +14,7 @@ use App\Http\Controllers\Settings\CustomerTypeController;
 use App\Http\Controllers\Settings\DepartmentController;
 use App\Http\Controllers\Settings\DesignationController;
 use App\Http\Controllers\Settings\TailoringCategoryController;
+use App\Http\Controllers\Settings\TailoringMeasurementOptionController;
 use App\Http\Controllers\Settings\UnitController;
 use App\Http\Controllers\SettingsController;
 use Illuminate\Support\Facades\Route;
@@ -41,6 +42,10 @@ Route::middleware('auth')->group(function (): void {
         Route::name('tailoring_category::')->prefix('tailoring-category')->controller(TailoringCategoryController::class)->group(function (): void {
             Route::get('', 'index')->name('index')->can('tailoring category.view');
             Route::get('list', 'get')->name('list');
+        });
+        Route::name('tailoring_measurement_option::')->prefix('tailoring-measurement-option')->controller(TailoringMeasurementOptionController::class)->group(function (): void {
+            Route::get('', 'index')->name('index')->can('tailoring measurement option.view');
+            Route::get('list', 'getByType')->name('list');
         });
         Route::name('branch::')->prefix('branch')->controller(BranchController::class)->group(function (): void {
             Route::get('', 'index')->name('index')->can('branch.view');

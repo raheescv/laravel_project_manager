@@ -38,7 +38,7 @@ class Page extends Component
         $this->dispatch('ToggleTailoringCategoryModelModal');
     }
 
-    public function edit($id)
+    public function edit($id = null)
     {
         $tableId = is_array($id) ? ($id['id'] ?? $id) : $id;
         $this->mount($tableId);

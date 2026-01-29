@@ -5,16 +5,51 @@ namespace App\Models;
 use App\Traits\BelongsToTenant;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Validation\Rule;
 
 class TailoringMeasurementOption extends Model
 {
     use BelongsToTenant;
+
+    public const OPTION_TYPES = [
+        'mar_model' => 'Mar Model',
+        'cuff' => 'Cuff',
+        'cuff_cloth' => 'Cuff Cloth',
+        'cuff_model' => 'Cuff Model',
+        'collar' => 'Collar',
+        'collar_cloth' => 'Collar Cloth',
+        'collar_model' => 'Collar Model',
+        'fp_model' => 'Fp Model',
+        'pen' => 'Pen',
+        'side_pt_model' => 'Side Pt Model',
+        'stitching' => 'Stitching',
+        'button' => 'Button',
+        'mobile_pocket' => 'Mobile Pocket',
+    ];
 
     protected $fillable = [
         'tenant_id',
         'option_type',
         'value',
     ];
+
+    public static function rules($id = 0, $optionType = null, $merge = [])
+    {
+        $tenantId = self::getCurrentTenantId();
+
+        return array_merge([
+            'option_type' => ['required', Rule::in(array_keys(self::OPTION_TYPES))],
+            'value' => [
+                'required',
+                'string',
+                'max:255',
+                Rule::unique(self::class)
+                    ->where('tenant_id', $tenantId)
+                    ->where('option_type', $optionType ?? request('option_type'))
+                    ->ignore($id),
+            ],
+        ], $merge);
+    }
 
     public function tenant(): BelongsTo
     {

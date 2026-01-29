@@ -1,10 +1,9 @@
 <?php
 
-namespace App\Livewire\Settings\TailoringCategoryModel;
+namespace App\Livewire\Settings\TailoringMeasurementOption;
 
-use App\Actions\Settings\TailoringCategoryModel\DeleteAction;
-use App\Models\TailoringCategory;
-use App\Models\TailoringCategoryModel;
+use App\Actions\Settings\TailoringMeasurementOption\DeleteAction;
+use App\Models\TailoringMeasurementOption;
 use Illuminate\Support\Facades\DB;
 use Livewire\Component;
 use Livewire\WithPagination;
@@ -21,7 +20,7 @@ class Table extends Component
 
     public $selectAll = false;
 
-    public $categoryId = '';
+    public $filterType = '';
 
     public $sortField = 'id';
 
@@ -30,15 +29,8 @@ class Table extends Component
     protected $paginationTheme = 'bootstrap';
 
     protected $listeners = [
-        'RefreshTailoringCategoryModelTable' => '$refresh',
-        'SelectCategoryForModels' => 'selectCategory',
+        'RefreshTailoringMeasurementOptionTable' => '$refresh',
     ];
-
-    public function selectCategory($id = null)
-    {
-        $this->categoryId = $id;
-        $this->resetPage();
-    }
 
     public function delete()
     {
@@ -61,7 +53,7 @@ class Table extends Component
             $this->selected = [];
 
             $this->selectAll = false;
-            $this->dispatch('RefreshTailoringCategoryModelTable');
+            $this->dispatch('RefreshTailoringMeasurementOptionTable');
         } catch (\Exception $e) {
             DB::rollback();
             $this->dispatch('error', ['message' => $e->getMessage()]);
@@ -77,14 +69,14 @@ class Table extends Component
 
     public function updatedSelectAll($value)
     {
-        if ($value && $this->categoryId) {
-            $this->selected = TailoringCategoryModel::byCategory($this->categoryId)->limit(2000)->pluck('id')->toArray();
+        if ($value) {
+            $this->selected = TailoringMeasurementOption::latest()->limit(2000)->pluck('id')->toArray();
         } else {
             $this->selected = [];
         }
     }
 
-    public function updatedCategoryId()
+    public function updatedFilterType()
     {
         $this->selected = [];
         $this->selectAll = false;
@@ -103,26 +95,16 @@ class Table extends Component
 
     public function render()
     {
-        $categories = TailoringCategory::ordered()->get(['id', 'name']);
+        $data = TailoringMeasurementOption::when($this->filterType, fn ($q) => $q->byType($this->filterType))
+            ->when($this->search ?? '', function ($query, $value) {
+                return $query->where('value', 'like', "%{$value}%");
+            })
+            ->orderBy($this->sortField, $this->sortDirection)
+            ->paginate($this->limit);
 
-        if (! $this->categoryId) {
-            $data = TailoringCategoryModel::whereRaw('1=0')->paginate($this->limit);
-        } else {
-            $data = TailoringCategoryModel::with('category')
-                ->byCategory($this->categoryId)
-                ->when($this->search ?? '', function ($query, $value) {
-                    return $query->where(function ($q) use ($value) {
-                        $q->where('name', 'like', "%{$value}%")
-                            ->orWhere('description', 'like', "%{$value}%");
-                    });
-                })
-                ->orderBy($this->sortField, $this->sortDirection)
-                ->paginate($this->limit);
-        }
-
-        return view('livewire.settings.tailoring-category-model.table', [
+        return view('livewire.settings.tailoring-measurement-option.table', [
             'data' => $data,
-            'categories' => $categories,
+            'optionTypes' => TailoringMeasurementOption::OPTION_TYPES,
         ]);
     }
 }

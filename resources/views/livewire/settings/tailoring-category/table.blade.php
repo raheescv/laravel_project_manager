@@ -4,14 +4,14 @@
             <div class="col-12 col-md-6 d-flex gap-2">
                 @can('tailoring category.create')
                     <button class="btn btn-primary d-inline-flex align-items-center gap-2" id="TailoringCategoryAdd">
-                        <i class="demo-psi-add fs-5"></i>
+                        <i class="fa fa-plus fs-5"></i>
                         <span>Add New</span>
                     </button>
                 @endcan
                 @can('tailoring category.delete')
                     @if(count($selected) > 0)
                         <button class="btn btn-outline-danger d-inline-flex align-items-center gap-2" wire:click="delete()" wire:confirm="Are you sure you want to delete the selected items?">
-                            <i class="demo-pli-recycling fs-5"></i>
+                            <i class="fa fa-trash fs-5"></i>
                             <span>Delete</span>
                         </button>
                     @endif
@@ -21,7 +21,7 @@
                 <div class="d-flex flex-wrap gap-2 justify-content-md-end">
                     <div class="d-flex bg-light rounded-2 px-2">
                         <span class="d-flex align-items-center text-muted">
-                            <i class="demo-psi-list-view fs-6"></i>
+                            <i class="fa fa-list fs-6"></i>
                         </span>
                         <select wire:model.live="limit" class="form-select bg-transparent border-0 fw-semibold py-2" style="width: 80px; box-shadow: none; font-size: 0.875rem;">
                             <option value="10">10</option>
@@ -31,7 +31,7 @@
                     </div>
                     <div class="d-flex bg-light rounded-2 px-2 flex-grow-1 flex-md-grow-0" style="min-width: 250px;">
                         <span class="d-flex align-items-center text-muted">
-                            <i class="demo-psi-magnifi-glass fs-6"></i>
+                            <i class="fa fa-search fs-6"></i>
                         </span>
                         <input type="text" wire:model.live="search" autofocus placeholder="Search tailoring categories..." class="form-control bg-transparent border-0 py-2" style="box-shadow: none; font-size: 0.875rem;" autocomplete="off">
                     </div>
@@ -41,7 +41,7 @@
     </div>
     <div class="card-body p-0">
         <div class="table-responsive">
-            <table class="table table-hover align-middle mb-0">
+            <table class="table table-hover table-sm align-middle mb-0">
                 <thead class="table-light">
                     <tr>
                         <th class="ps-4" width="80">
@@ -54,7 +54,7 @@
                         <th> <x-sortable-header field="name" label="Name" :sortField="$sortField" :direction="$sortDirection" /> </th>
                         <th>Description</th>
                         <th width="10%">Status</th>
-                        <th width="10%" class="text-end pe-4" width="120">Action</th>
+                        <th width="20%" class="text-end pe-4">Action</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -79,12 +79,15 @@
                             <td class="text-end pe-4">
                                 @can('tailoring category.view')
                                     <button type="button" class="btn btn-icon btn-sm btn-hover btn-light manage-models" data-category-id="{{ $item->id }}" title="Manage Models">
-                                        <i class="demo-psi-box fs-5 text-info"></i>
+                                        <i class="fa fa-cube fs-5 text-info"></i>
+                                    </button>
+                                    <button type="button" class="btn btn-icon btn-sm btn-hover btn-light manage-measurements" data-category-id="{{ $item->id }}" title="Manage Measurements">
+                                        <i class="fa fa-tasks fs-5 text-warning"></i>
                                     </button>
                                 @endcan
                                 @can('tailoring category.edit')
                                     <button table_id="{{ $item->id }}" class="btn btn-icon btn-sm btn-hover btn-light edit" title="Edit Tailoring Category">
-                                        <i class="demo-psi-pencil fs-5 text-muted"></i>
+                                        <i class="fa fa-pencil fs-5 text-muted"></i>
                                     </button>
                                 @endcan
                             </td>
@@ -120,8 +123,13 @@
                 });
                 $(document).on('click', '.manage-models', function() {
                     var categoryId = $(this).data('category-id');
-                    Livewire.dispatch('SelectCategoryForModels', categoryId);
+                    Livewire.dispatch('SelectCategoryForModels', { id: categoryId });
                     document.getElementById('category-models-card')?.scrollIntoView({ behavior: 'smooth' });
+                });
+                $(document).on('click', '.manage-measurements', function() {
+                    var categoryId = $(this).data('category-id');
+                    Livewire.dispatch('SelectCategoryForMeasurements', { categoryId: categoryId });
+                    document.getElementById('category-measurements-card')?.scrollIntoView({ behavior: 'smooth' });
                 });
             });
         </script>

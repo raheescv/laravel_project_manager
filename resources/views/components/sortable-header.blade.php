@@ -3,7 +3,7 @@
     @if ($sortField === $field)
         <small>{!! sortDirection($direction ?? $sortDirection) !!}</small>
     @else
-        <small class="text-muted opacity-50"><i class="demo-psi-arrow-up-down fs-6"></i></small>
+        <small class="text-muted opacity-50"><i class="fa fa-sort fs-6"></i></small>
     @endif
 </a>
 

@@ -53,6 +53,7 @@ class TailoringOrderMeasurement extends Model implements AuditableContracts
         'button',
         'button_no',
         'mobile_pocket',
+        'tailoring_notes',
         'created_by',
         'updated_by',
         'deleted_by',

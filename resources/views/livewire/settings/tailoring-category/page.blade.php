@@ -1,7 +1,7 @@
 <div>
     <div class="modal-header border-bottom-0 pb-0">
         <h5 class="modal-title fw-bold" id="tailoringCategoryModalLabel">
-            <i class="demo-psi-gear fs-4 me-2 text-primary"></i>
+            <i class="fa fa-cog fs-4 me-2 text-primary"></i>
             {{ $categories['id'] ?? null ? 'Edit Tailoring Category' : 'Create New Tailoring Category' }}
         </h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
@@ -59,11 +59,11 @@
             <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
             <div class="ms-auto d-flex gap-2">
                 <button type="button" wire:click="save(1)" class="btn btn-outline-primary d-inline-flex align-items-center gap-2">
-                    <i class="demo-psi-repeat-2 fs-5"></i>
+                    <i class="fa fa-refresh fs-5"></i>
                     <span>Save & Add Another</span>
                 </button>
                 <button type="submit" class="btn btn-primary d-inline-flex align-items-center gap-2 px-4">
-                    <i class="demo-psi-save fs-5"></i>
+                    <i class="fa fa-save fs-5"></i>
                     <span>Save Category</span>
                 </button>
             </div>

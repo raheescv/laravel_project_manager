@@ -1,7 +1,7 @@
 <div>
     <div class="modal-header border-bottom-0 pb-0">
         <h5 class="modal-title fw-bold" id="tailoringCategoryModelModalLabel">
-            <i class="demo-psi-box fs-4 me-2 text-primary"></i>
+            <i class="fa fa-cube fs-4 me-2 text-primary"></i>
             {{ $models['id'] ?? null ? 'Edit Category Model' : 'Add Category Model' }}
         </h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
@@ -10,7 +10,7 @@
         <div class="modal-body py-4">
             @if ($errors->any())
                 <div class="alert alert-danger d-flex align-items-center mb-4" role="alert">
-                    <i class="demo-pli-danger-2 fs-4 me-2"></i>
+                    <i class="fa fa-exclamation-triangle fs-4 me-2"></i>
                     <ul class="mb-0 ps-3">
                         @foreach ($errors->all() as $error)
                             <li>{{ $error }}</li>
@@ -64,11 +64,11 @@
             <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
             <div class="ms-auto d-flex gap-2">
                 <button type="button" wire:click="save(1)" class="btn btn-outline-primary d-inline-flex align-items-center gap-2">
-                    <i class="demo-psi-repeat-2 fs-5"></i>
+                    <i class="fa fa-refresh fs-5"></i>
                     <span>Save & Add Another</span>
                 </button>
                 <button type="submit" class="btn btn-primary d-inline-flex align-items-center gap-2 px-4">
-                    <i class="demo-psi-save fs-5"></i>
+                    <i class="fa fa-save fs-5"></i>
                     <span>Save Model</span>
                 </button>
             </div>
