@@ -23,13 +23,16 @@ class TailoringCategoryModel extends Model
         'is_active' => 'boolean',
     ];
 
-    public static function rules($id = 0, $merge = [])
+    public static function rules($id = 0, $tailoringCategoryId = null, $merge = [])
     {
         $tenantId = self::getCurrentTenantId();
+        $categoryId = $tailoringCategoryId ?? request('tailoring_category_id');
 
         return array_merge([
-            'tailoring_category_id' => ['required'],
-            'name' => ['required', Rule::unique(self::class)->where('tenant_id', $tenantId)->where('tailoring_category_id', request('tailoring_category_id'))->ignore($id)],
+            'tailoring_category_id' => ['required', 'exists:tailoring_categories,id'],
+            'name' => ['required', 'max:255', Rule::unique(self::class)->where('tenant_id', $tenantId)->where('tailoring_category_id', $categoryId)->ignore($id)],
+            'description' => ['nullable', 'string', 'max:500'],
+            'is_active' => ['nullable', 'boolean'],
         ], $merge);
     }
 

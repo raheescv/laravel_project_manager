@@ -30,8 +30,26 @@ class TailoringCategory extends Model
         $tenantId = self::getCurrentTenantId();
 
         return array_merge([
-            'name' => ['required', Rule::unique(self::class)->where('tenant_id', $tenantId)->ignore($id)],
+            'name' => ['required', 'max:255', Rule::unique(self::class)->where('tenant_id', $tenantId)->ignore($id)],
+            'description' => ['nullable', 'string', 'max:500'],
+            'is_active' => ['nullable', 'boolean'],
+            'order' => ['nullable', 'integer'],
         ], $merge);
+    }
+
+    public function getDropDownList($request)
+    {
+        $self = self::ordered()->active();
+        $self = $self->when($request['query'] ?? '', function ($query, $value) {
+            return $query->where(function ($q) use ($value): void {
+                $value = trim($value);
+                $q->where('name', 'like', "%{$value}%");
+            });
+        });
+        $self = $self->limit(10)->get(['name', 'id'])->toArray();
+        $return['items'] = $self;
+
+        return $return;
     }
 
     public function tenant(): BelongsTo

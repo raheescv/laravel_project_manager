@@ -220,6 +220,11 @@
                                             <i class="fa fa-briefcase fs-5 me-2"></i>Designation
                                         </a>
                                     @endcan
+                                    @can('tailoring category.view')
+                                        <a href="{{ route('settings::tailoring_category::index') }}" class="list-group-item list-group-item-action">
+                                            <i class="fa fa-scissors fs-5 me-2"></i>Tailoring Category
+                                        </a>
+                                    @endcan
                                     @can('department.view')
                                         <a href="{{ route('settings::department::index') }}" class="list-group-item list-group-item-action">
                                             <i class="fa fa-sitemap fs-5 me-2"></i>Department
