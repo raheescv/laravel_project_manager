@@ -14,7 +14,7 @@ class View extends Component
 {
     use WithPagination;
 
-    public $groupedChartData;
+    public $groupedChartData = [];
 
     public $lineChartData;
 
@@ -53,7 +53,7 @@ class View extends Component
             $this->excludeOpeningFromTotal = true;
         }
         $this->lineChartData();
-        $this->groupedChartData();
+        // $this->groupedChartData();
     }
 
     public function lineChartData()
@@ -86,7 +86,7 @@ class View extends Component
     {
         $this->resetPage();
         $this->lineChartData();
-        $this->groupedChartData();
+        // $this->groupedChartData();
         $this->dispatch('propertyUpdated');
     }
 

@@ -58,11 +58,13 @@
                             List
                         </button>
                     </li>
-                    <li class="nav-item" role="presentation">
-                        <button class="nav-link px-3" data-bs-toggle="tab" data-bs-target="#tab-groupedChart" type="button" role="tab" aria-controls="home" aria-selected="true">
-                            Grouped List
-                        </button>
-                    </li>
+                    @if ($groupedChartData)
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link px-3" data-bs-toggle="tab" data-bs-target="#tab-groupedChart" type="button" role="tab" aria-controls="home" aria-selected="true">
+                                Grouped List
+                            </button>
+                        </li>
+                    @endif
                 </ul>
                 <div class="tab-content">
                     <div id="tab-List" class="tab-pane fade active show" role="tabpanel">
@@ -113,11 +115,9 @@
                                                         {{ $item->counterAccount?->name }}
                                                     </a>
                                                 @else
-                                                    <a href="#"
-                                                       class="text-primary text-decoration-none cursor-pointer journal-entry-link"
-                                                       data-journal-id="{{ $item->journal_id }}"
-                                                       onclick="if(typeof window.openJournalModal === 'function') { window.openJournalModal({{ $item->journal_id }}); } else { console.error('openJournalModal function not available'); alert('Modal function not loaded. Please refresh the page.'); } return false;">
-                                                        {{ $item->journal->description }} | {{ $item->journal_remarks ?? $item->journal->remarks ?? '' }}
+                                                    <a href="#" class="text-primary text-decoration-none cursor-pointer journal-entry-link" data-journal-id="{{ $item->journal_id }}"
+                                                        onclick="if(typeof window.openJournalModal === 'function') { window.openJournalModal({{ $item->journal_id }}); } else { console.error('openJournalModal function not available'); alert('Modal function not loaded. Please refresh the page.'); } return false;">
+                                                        {{ $item->journal->description }} | {{ $item->journal_remarks ?? ($item->journal->remarks ?? '') }}
                                                     </a>
                                                 @endif
                                             </td>
@@ -188,35 +188,37 @@
                         </div>
                         {{ $data->links() }}
                     </div>
-                    <div id="tab-groupedChart" class="tab-pane fade active show" role="tabpanel">
-                        <div class="row">
-                            <div class="col-md-12">
-                                <h3>Statistics</h3>
-                                <div class="table-responsive">
-                                    <table class="table table-striped table-sm">
-                                        <thead>
-                                            <tr class="bg-primary">
-                                                <th class="text-white">Account Head</th>
-                                                <th class="text-white text-end">Debit</th>
-                                                <th class="text-white text-end">Credit</th>
-                                                <th class="text-white text-end">Balance</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            @foreach ($groupedChartData as $item)
-                                                <tr>
-                                                    <td> <a href="{{ route('account::view', $item->account_id) }}">{{ $item->account->name }}</a> </td>
-                                                    <td class="text-end">{{ currency($item->debit) }}</td>
-                                                    <td class="text-end">{{ currency($item->credit) }}</td>
-                                                    <td class="text-end">{{ currency($item->debit - $item->credit) }}</td>
+                    @if ($groupedChartData)
+                        <div id="tab-groupedChart" class="tab-pane fade active show" role="tabpanel">
+                            <div class="row">
+                                <div class="col-md-12">
+                                    <h3>Statistics</h3>
+                                    <div class="table-responsive">
+                                        <table class="table table-striped table-sm">
+                                            <thead>
+                                                <tr class="bg-primary">
+                                                    <th class="text-white">Account Head</th>
+                                                    <th class="text-white text-end">Debit</th>
+                                                    <th class="text-white text-end">Credit</th>
+                                                    <th class="text-white text-end">Balance</th>
                                                 </tr>
-                                            @endforeach
-                                        </tbody>
-                                    </table>
+                                            </thead>
+                                            <tbody>
+                                                @foreach ($groupedChartData as $item)
+                                                    <tr>
+                                                        <td> <a href="{{ route('account::view', $item->account_id) }}">{{ $item->account->name }}</a> </td>
+                                                        <td class="text-end">{{ currency($item->debit) }}</td>
+                                                        <td class="text-end">{{ currency($item->credit) }}</td>
+                                                        <td class="text-end">{{ currency($item->debit - $item->credit) }}</td>
+                                                    </tr>
+                                                @endforeach
+                                            </tbody>
+                                        </table>
+                                    </div>
                                 </div>
                             </div>
                         </div>
-                    </div>
+                    @endif
                 </div>
             </div>
         </div>
