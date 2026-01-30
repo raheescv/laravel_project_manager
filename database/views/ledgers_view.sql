@@ -1,6 +1,7 @@
 CREATE VIEW ledgers AS
 SELECT
     je.id,
+    je.tenant_id,
     je.journal_id,
 
     je.account_id,

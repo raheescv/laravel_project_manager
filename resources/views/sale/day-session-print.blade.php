@@ -20,12 +20,15 @@
 
         @page {
             size: 80mm auto;
+            width: 80mm;
+            height: auto;
             margin: 0;
         }
 
         html,
         body {
             width: 80mm;
+            height: auto;
             margin: 0;
             padding: 0;
             font-family: 'Courier New', monospace;
@@ -37,8 +40,12 @@
 
         .receipt-container {
             width: 80mm;
+            max-width: 80mm;
+            min-width: 80mm;
+            height: auto;
             padding: 3mm 4mm;
             margin: 0;
+            box-sizing: border-box;
         }
 
         /* Headers */
@@ -122,6 +129,20 @@
             vertical-align: top;
         }
 
+        .sales-table tr.sale-row {
+            background-color: #f0f0f0;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+            color-adjust: exact;
+        }
+
+        .sales-table tr.pending-row {
+            background-color: #fff3cd;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+            color-adjust: exact;
+        }
+
         /* Totals */
         .totals-section {
             margin-top: 4mm;
@@ -178,25 +199,15 @@
         @media print {
             @page {
                 size: 80mm auto;
+                width: 80mm;
+                height: auto;
                 margin: 0mm;
-            }
-
-            @media print {
-                @page {
-                    margin: 0 auto;
-                    width: 80mm;
-                    height: 100% !important;
-                    sheet-size: 80mm 80mm;
-                }
-
-                .text-center {
-                    text-align: center;
-                }
             }
 
             html,
             body {
                 width: 80mm !important;
+                height: auto !important;
                 margin: 0 !important;
                 padding: 0 !important;
                 font-size: 11px !important;
@@ -209,9 +220,12 @@
 
             .receipt-container {
                 width: 80mm !important;
+                max-width: 80mm !important;
+                min-width: 80mm !important;
+                height: auto !important;
                 padding: 2mm 3mm !important;
                 margin: 0 !important;
-                max-width: none !important;
+                box-sizing: border-box !important;
             }
 
             h1 {
@@ -264,10 +278,32 @@
             /* Force visibility and proper colors */
             * {
                 color: #000 !important;
-                background: transparent !important;
                 text-shadow: none !important;
                 box-shadow: none !important;
                 border-color: #000 !important;
+            }
+
+            /* Preserve row background colors for distinction */
+            .sales-table tr.sale-row {
+                background-color: #f0f0f0 !important;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+                color-adjust: exact !important;
+            }
+
+            .sales-table tr.pending-row {
+                background-color: #fff3cd !important;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+                color-adjust: exact !important;
+            }
+
+            .sales-table tr.sale-row td,
+            .sales-table tr.pending-row td {
+                background-color: inherit !important;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+                color-adjust: exact !important;
             }
 
             /* Ensure borders print correctly */
@@ -333,8 +369,8 @@
                 </tr>
             </thead>
             <tbody>
-                @forelse($sales as $sale)
-                    <tr>
+                @foreach($sales as $sale)
+                    <tr class="sale-row">
                         <td><b>{{ Carbon::parse($sale->date)->format('d/m') }}</b></td>
                         <td><b>{{ $sale->invoice_no ?? 'N/A' }}</b></td>
                         <td>
@@ -342,11 +378,17 @@
                         </td>
                         <td class="text-right"><b>{{ currency($sale->grand_total) }}</b></td>
                     </tr>
-                @empty
-                    <tr>
-                        <td colspan="4" style="text-align: center; font-style: italic; font-size: 7px;">No sales found</td>
+                @endforeach
+                @foreach($pendingPayments as $pendingPayment)
+                    <tr class="pending-row">
+                        <td><b>{{ Carbon::parse($pendingPayment['date'])->format('d/m') }}</b></td>
+                        <td><b>{{ $pendingPayment['invoice_no'] ?? 'N/A' }}</b></td>
+                        <td>
+                            <b>{{ $pendingPayment['payment_method'] }}</b>
+                        </td>
+                        <td class="text-right"><b>{{ currency($pendingPayment['amount']) }}</b></td>
                     </tr>
-                @endforelse
+                @endforeach
             </tbody>
         </table>
 
@@ -363,7 +405,7 @@
 
             <div class="total-row grand-total">
                 <span>TOTAL</span>
-                <span>{{ currency($sales->sum('grand_total')) }}</span>
+                <span>{{ currency(array_sum($totals)) }}</span>
             </div>
         </div>
         <div class="footer">
@@ -376,9 +418,11 @@
     <script>
         // 80mm Thermal Printer Exact Ratio Fix
         document.addEventListener('DOMContentLoaded', function() {
-            // Force exact 80mm width
+            // Force exact 80mm width and auto height
             document.documentElement.style.width = '80mm';
+            document.documentElement.style.height = 'auto';
             document.body.style.width = '80mm';
+            document.body.style.height = 'auto';
             document.body.style.margin = '0';
             document.body.style.padding = '0';
 
@@ -396,6 +440,8 @@
                     @media print {
                         @page {
                             size: 80mm auto !important;
+                            width: 80mm !important;
+                            height: auto !important;
                             margin: 0mm !important;
                         }
                         html, body {
@@ -411,15 +457,34 @@
                             width: 80mm !important;
                             max-width: 80mm !important;
                             min-width: 80mm !important;
+                            height: auto !important;
                             padding: 2mm 3mm !important;
                             margin: 0 !important;
                             box-sizing: border-box !important;
                         }
                         * {
                             color: #000 !important;
-                            background: transparent !important;
                             -webkit-print-color-adjust: exact !important;
                             print-color-adjust: exact !important;
+                        }
+                        .sales-table tr.sale-row {
+                            background-color: #f0f0f0 !important;
+                            -webkit-print-color-adjust: exact !important;
+                            print-color-adjust: exact !important;
+                            color-adjust: exact !important;
+                        }
+                        .sales-table tr.pending-row {
+                            background-color: #fff3cd !important;
+                            -webkit-print-color-adjust: exact !important;
+                            print-color-adjust: exact !important;
+                            color-adjust: exact !important;
+                        }
+                        .sales-table tr.sale-row td,
+                        .sales-table tr.pending-row td {
+                            background-color: inherit !important;
+                            -webkit-print-color-adjust: exact !important;
+                            print-color-adjust: exact !important;
+                            color-adjust: exact !important;
                         }
                     }
                 `;
@@ -430,21 +495,24 @@
             }, 800);
         });
 
-        // Handle print events with exact width
+        // Handle print events with exact width and height
         window.addEventListener('beforeprint', function() {
             document.documentElement.style.width = '80mm';
+            document.documentElement.style.height = 'auto';
             document.body.style.width = '80mm';
+            document.body.style.height = 'auto';
             document.body.style.margin = '0';
             document.body.style.padding = '0';
             document.body.style.fontSize = '11px';
             document.body.style.fontFamily = 'Courier New, monospace';
 
-            // Force container width
+            // Force container width and height
             const container = document.querySelector('.receipt-container');
             if (container) {
                 container.style.width = '80mm';
                 container.style.maxWidth = '80mm';
                 container.style.minWidth = '80mm';
+                container.style.height = 'auto';
                 container.style.padding = '2mm 3mm';
                 container.style.margin = '0';
                 container.style.boxSizing = 'border-box';

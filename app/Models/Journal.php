@@ -3,7 +3,9 @@
 namespace App\Models;
 
 use App\Models\Scopes\AssignedBranchScope;
+use App\Traits\BelongsToTenant;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use OwenIt\Auditing\Auditable;
 use OwenIt\Auditing\Contracts\Auditable as AuditableContracts;
@@ -11,9 +13,11 @@ use OwenIt\Auditing\Contracts\Auditable as AuditableContracts;
 class Journal extends Model implements AuditableContracts
 {
     use Auditable;
+    use BelongsToTenant;
     use SoftDeletes;
 
     protected $fillable = [
+        'tenant_id',
         'branch_id',
         'date',
         'description',
@@ -60,6 +64,16 @@ class Journal extends Model implements AuditableContracts
     public function saleReturn()
     {
         return $this->belongsTo(SaleReturn::class, 'model_id');
+    }
+
+    public function tenant(): BelongsTo
+    {
+        return $this->belongsTo(Tenant::class, 'tenant_id');
+    }
+
+    public function branch()
+    {
+        return $this->belongsTo(Branch::class, 'branch_id');
     }
 
     public function createdBy()

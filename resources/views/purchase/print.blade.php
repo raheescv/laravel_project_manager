@@ -121,6 +121,7 @@
                     <th class="text-end">Barcode</th>
                     <th class="text-end">Unit Price</th>
                     <th class="text-end">Quantity</th>
+                    <th class="text-end">Unit</th>
                     <th class="text-end">Discount</th>
                     <th class="text-end">Tax %</th>
                     <th class="text-end">Tax Amount</th>
@@ -138,6 +139,7 @@
                         <td class="text-end">{{ $item->product?->barcode ?? '-' }}</td>
                         <td class="text-end">{{ currency($item['unit_price']) }}</td>
                         <td class="text-end">{{ $item['quantity'] }}</td>
+                        <td class="text-end">{{ $item->unit?->name }}</td>
                         <td class="text-end">{{ currency($item['discount']) }}</td>
                         <td class="text-end">{{ $item['tax'] }}%</td>
                         <td class="text-end">{{ currency($item['tax_amount']) }}</td>
@@ -150,39 +152,39 @@
                     $items = collect($items);
                 @endphp
                 <tr>
-                    <th colspan="8" class="text-end" style="padding: 0.4rem;">Gross Amount</th>
+                    <th colspan="9" class="text-end" style="padding: 0.4rem;">Gross Amount</th>
                     <th class="text-end" style="padding: 0.4rem;"><b>{{ currency($model->gross_amount) }}</b></th>
                 </tr>
                 @if ($model->item_discount > 0)
                     <tr>
-                        <th colspan="8" class="text-end" style="padding: 0.4rem;">Item Discount</th>
+                        <th colspan="9" class="text-end" style="padding: 0.4rem;">Item Discount</th>
                         <th class="text-end" style="padding: 0.4rem;"><b>{{ currency($model->item_discount) }}</b></th>
                     </tr>
                 @endif
                 @if ($model->tax_amount > 0)
                     <tr>
-                        <th colspan="8" class="text-end" style="padding: 0.4rem;">Tax Amount</th>
+                        <th colspan="9" class="text-end" style="padding: 0.4rem;">Tax Amount</th>
                         <th class="text-end" style="padding: 0.4rem;"><b>{{ currency($model->tax_amount) }}</b></th>
                     </tr>
                 @endif
                 <tr>
-                    <th colspan="8" class="text-end" style="padding: 0.4rem;">Total</th>
+                    <th colspan="9" class="text-end" style="padding: 0.4rem;">Total</th>
                     <th class="text-end" style="padding: 0.4rem;"><b>{{ currency($model->total) }}</b></th>
                 </tr>
                 @if ($model->other_discount > 0)
                     <tr>
-                        <th colspan="8" class="text-end" style="padding: 0.4rem;">Other Discount</th>
+                        <th colspan="9" class="text-end" style="padding: 0.4rem;">Other Discount</th>
                         <th class="text-end" style="padding: 0.4rem;"><b>{{ currency($model->other_discount) }}</b></th>
                     </tr>
                 @endif
                 @if ($model->freight > 0)
                     <tr>
-                        <th colspan="8" class="text-end" style="padding: 0.4rem;">Freight</th>
+                        <th colspan="9" class="text-end" style="padding: 0.4rem;">Freight</th>
                         <th class="text-end" style="padding: 0.4rem;"><b>{{ currency($model->freight) }}</b></th>
                     </tr>
                 @endif
                 <tr style="border-top: 2px solid #212529;">
-                    <th colspan="8" class="text-end" style="padding: 0.5rem; font-size: 0.95rem;">Grand Total</th>
+                    <th colspan="9" class="text-end" style="padding: 0.5rem; font-size: 0.95rem;">Grand Total</th>
                     <th class="text-end" style="padding: 0.5rem; font-size: 0.95rem;"><b>{{ currency($model->grand_total) }}</b></th>
                 </tr>
             </tfoot>

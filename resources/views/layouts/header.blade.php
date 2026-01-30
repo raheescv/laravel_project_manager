@@ -55,9 +55,14 @@
                                             <i class="fa fa-user fs-5 me-2"></i>Employee Report
                                         </a>
                                     @endcan
-                                    @can('report.sale summary')
-                                        <a href="{{ route('report::sale_summary') }}" class="list-group-item list-group-item-action">
-                                            <i class="fa fa-file-text-o fs-5 me-2"></i>Sale Summary
+                                    @can('report.daily sales insights')
+                                        <a href="{{ route('report::daily_sales_insights') }}" class="list-group-item list-group-item-action">
+                                            <i class="fa fa-file-text-o fs-5 me-2"></i>Daily Sales Insights
+                                        </a>
+                                    @endcan
+                                    @can('report.monthly sale')
+                                        <a href="{{ route('report::monthly_sale') }}" class="list-group-item list-group-item-action">
+                                            <i class="fa fa-file-text-o fs-5 me-2"></i>Monthly Sale Report
                                         </a>
                                     @endcan
                                     @can('report.sales overview')
@@ -208,6 +213,21 @@
                                     @can('unit.view')
                                         <a href="{{ route('settings::unit::index') }}" class="list-group-item list-group-item-action">
                                             <i class="fa fa-cubes fs-5 me-2"></i>Unit
+                                        </a>
+                                    @endcan
+                                    @can('designation.view')
+                                        <a href="{{ route('settings::designation::index') }}" class="list-group-item list-group-item-action">
+                                            <i class="fa fa-briefcase fs-5 me-2"></i>Designation
+                                        </a>
+                                    @endcan
+                                    @can('tailoring category.view')
+                                        <a href="{{ route('settings::tailoring_category::index') }}" class="list-group-item list-group-item-action">
+                                            <i class="fa fa-scissors fs-5 me-2"></i>Tailoring Category
+                                        </a>
+                                    @endcan
+                                    @can('tailoring measurement option.view')
+                                        <a href="{{ route('settings::tailoring_measurement_option::index') }}" class="list-group-item list-group-item-action">
+                                            <i class="fa fa-ruler fs-5 me-2"></i>Tailoring Measurement Option
                                         </a>
                                     @endcan
                                     @can('department.view')

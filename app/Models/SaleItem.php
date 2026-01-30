@@ -2,7 +2,9 @@
 
 namespace App\Models;
 
+use App\Traits\BelongsToTenant;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use OwenIt\Auditing\Auditable;
 use OwenIt\Auditing\Contracts\Auditable as AuditableContracts;
@@ -10,17 +12,22 @@ use OwenIt\Auditing\Contracts\Auditable as AuditableContracts;
 class SaleItem extends Model implements AuditableContracts
 {
     use Auditable;
+    use BelongsToTenant;
     use SoftDeletes;
 
     protected $fillable = [
+        'tenant_id',
         'sale_id',
         'employee_id',
         'assistant_id',
         'inventory_id',
         'product_id',
+        'unit_id',
         'sale_combo_offer_id',
         'unit_price',
         'quantity',
+        'conversion_factor',
+
         'discount',
         'tax',
         'created_by',
@@ -57,6 +64,11 @@ class SaleItem extends Model implements AuditableContracts
         return $this->belongsTo(Sale::class);
     }
 
+    public function unit()
+    {
+        return $this->belongsTo(Unit::class);
+    }
+
     public function employee()
     {
         return $this->belongsTo(User::class, 'employee_id');
@@ -72,9 +84,19 @@ class SaleItem extends Model implements AuditableContracts
         return $this->belongsTo(SaleComboOffer::class, 'sale_combo_offer_id');
     }
 
+    public function tenant(): BelongsTo
+    {
+        return $this->belongsTo(Tenant::class, 'tenant_id');
+    }
+
     public function getNameAttribute()
     {
         return $this->product?->name;
+    }
+
+    public function getUnitNameAttribute()
+    {
+        return $this->unit?->name;
     }
 
     public function getEmployeeNameAttribute()

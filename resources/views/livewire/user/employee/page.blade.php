@@ -14,7 +14,7 @@
                     <strong>Please correct the following errors:</strong>
                     <ul class="mb-0 ps-3 mt-1">
                         @foreach ($this->getErrorBag()->toArray() as $field => $errors)
-                            <li>{{ ucfirst($field) }}: {{ $errors[0] }}</li>
+                            <li>{{ $errors[0] }}</li>
                         @endforeach
                     </ul>
                 </div>
@@ -53,6 +53,27 @@
                                         <i class="fa fa-user"></i>
                                     </span>
                                     {{ html()->input('name')->value('')->class('form-control border-secondary-subtle shadow-sm')->autofocus()->required(true)->attribute('wire:model', 'users.name')->placeholder('Enter full name') }}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-8" wire:ignore>
+                            <label for="designation_id" class="form-label small fw-medium text-capitalize">
+                                <i class="fa fa-id-badge me-1 text-muted"></i>
+                                Designation
+                            </label>
+                            {{ html()->select('designation_id', [])->value('')->class('select-designation_id')->id('model_designation_id')->placeholder('All') }}
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label for="order_no" class="form-label small fw-medium">
+                                    <i class="fa fa-sort-numeric-asc me-1 text-muted"></i>
+                                    Order No
+                                </label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-light border-secondary-subtle">
+                                        <i class="fa fa-sort-numeric-asc"></i>
+                                    </span>
+                                    {{ html()->number('order_no')->value('')->class('form-control border-secondary-subtle shadow-sm')->attribute('wire:model', 'users.order_no')->placeholder('0') }}
                                 </div>
                             </div>
                         </div>
@@ -124,7 +145,7 @@
                 </div>
                 <div class="card-body">
                     <div class="row g-3">
-                        <div class="col-md-4">
+                        <div class="col-md-6">
                             <div class="form-group">
                                 <label for="salary" class="form-label small fw-medium">
                                     <i class="fa fa-dollar me-1 text-muted"></i>
@@ -138,7 +159,7 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="col-md-4">
+                        <div class="col-md-6">
                             <div class="form-group">
                                 <label for="allowance" class="form-label small fw-medium">
                                     <i class="fa fa-plus-circle me-1 text-muted"></i>
@@ -152,7 +173,7 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="col-md-4">
+                        <div class="col-md-6">
                             <div class="form-group">
                                 <label for="hra" class="form-label small fw-medium">
                                     <i class="fa fa-home me-1 text-muted"></i>
@@ -166,7 +187,7 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="col-md-4">
+                        <div class="col-md-6">
                             <div class="form-group">
                                 <label for="max_discount_per_sale" class="form-label small fw-medium">
                                     <i class="fa fa-percent me-1 text-muted"></i>
@@ -325,4 +346,29 @@
             </div>
         </div>
     </form>
+    @push('scripts')
+        <script>
+            $(document).ready(function() {
+                $(document).on('change', '#model_designation_id', function() {
+                    @this.set('users.designation_id', $(this).val());
+                });
+                window.addEventListener('SelectDropDownValues', event => {
+                    designation = event.detail[0].designation;
+                    var tomSelectInstance = document.querySelector('#model_designation_id').tomselect;
+                    if (designation) {
+                        @this.set('users.designation_id', designation.id);
+                        preselectedData = {
+                            id: designation.id,
+                            name: designation.name,
+                        };
+                        console.log(preselectedData);
+                        tomSelectInstance.addOption(preselectedData);
+                        tomSelectInstance.addItem(preselectedData.id);
+                    } else {
+                        tomSelectInstance.clear();
+                    }
+                });
+            });
+        </script>
+    @endpush
 </div>

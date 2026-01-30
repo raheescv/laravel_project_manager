@@ -36,9 +36,9 @@ class ReportController extends Controller
         return view('report.day_book');
     }
 
-    public function sale_summary()
+    public function dailySalesInsights()
     {
-        return view('report.sale_summary');
+        return view('report.daily-sales-insights-report');
     }
 
     public function sales_overview()
@@ -126,5 +126,10 @@ class ReportController extends Controller
     public function tax_report()
     {
         return view('report.tax_report');
+    }
+
+    public function monthly_sale()
+    {
+        return view('report.monthly_sale');
     }
 }

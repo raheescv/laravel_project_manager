@@ -41,7 +41,7 @@
                 </div>
                 <div class="col-md-2" wire:ignore>
                     <label for="branch_id">Branch</label>
-                    {{ html()->select('branch_id', [auth()->user()->default_branch_id => auth()->user()->branch?->name])->value(auth()->user()->default_branch_id)->class('select-assigned-branch_id-list')->id('branch_id')->placeholder('All') }}
+                    {{ html()->select('branch_id', [session('branch_id') => session('branch_name')])->class('select-assigned-branch_id-list')->id('branch_id')->placeholder('All') }}
                 </div>
                 <div class="col-md-6" wire:ignore>
                     <label for="product_id">Product</label>
@@ -52,7 +52,7 @@
     </div>
     <div class="card-body">
         <div class="table-responsive">
-            <table class="table table-striped align-middle table-sm">
+            <table class="table table-striped table-sm">
                 <thead>
                     <tr class="text-capitalize">
                         @if ($purchase_item_report_visible_column['id'] ?? true)
@@ -67,26 +67,48 @@
                         @if ($purchase_item_report_visible_column['product_name'] ?? true)
                             <th> product </th>
                         @endif
+                        @if ($purchase_item_report_visible_column['unit_name'] ?? true)
+                            <th> unit </th>
+                        @endif
                         @if ($purchase_item_report_visible_column['unit_price'] ?? true)
-                            <th class="text-end"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="unit_price" label="unit price" /> </th>
+                            <th class="text-end">
+                                <div class="d-flex justify-content-end"><x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="unit_price" label="unit price" /></div>
+                            </th>
                         @endif
                         @if ($purchase_item_report_visible_column['quantity'] ?? true)
-                            <th class="text-end"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="quantity" label="quantity" /> </th>
+                            <th class="text-end">
+                                <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="quantity" label="quantity" />
+                            </th>
+                        @endif
+                        @if ($purchase_item_report_visible_column['quantity'] ?? true)
+                            <th class="text-end">
+                                <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="base_unit_quantity" label="base unit quantity" />
+                            </th>
                         @endif
                         @if ($purchase_item_report_visible_column['gross_amount'] ?? true)
-                            <th class="text-end"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="gross_amount" label="gross amount" /> </th>
+                            <th class="text-end">
+                                <div class="d-flex justify-content-end"><x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="gross_amount" label="gross amount" /></div>
+                            </th>
                         @endif
                         @if ($purchase_item_report_visible_column['discount'] ?? true)
-                            <th class="text-end"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="discount" label="discount" /> </th>
+                            <th class="text-end">
+                                <div class="d-flex justify-content-end"><x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="discount" label="discount" /></div>
+                            </th>
                         @endif
                         @if ($purchase_item_report_visible_column['net_amount'] ?? true)
-                            <th class="text-end"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="net_amount" label="net amount" /> </th>
+                            <th class="text-end">
+                                <div class="d-flex justify-content-end"><x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="net_amount" label="net amount" /></div>
+                            </th>
                         @endif
                         @if ($purchase_item_report_visible_column['tax_amount'] ?? true)
-                            <th class="text-end"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="tax_amount" label="tax amount" /> </th>
+                            <th class="text-end">
+                                <div class="d-flex justify-content-end"><x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="tax_amount" label="tax amount" /></div>
+                            </th>
                         @endif
                         @if ($purchase_item_report_visible_column['total'] ?? true)
-                            <th class="text-end"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="total" label="total" /> </th>
+                            <th class="text-end">
+                                <div class="d-flex justify-content-end"><x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="total" label="total" /></div>
+                            </th>
                         @endif
                     </tr>
                 </thead>
@@ -105,11 +127,23 @@
                             @if ($purchase_item_report_visible_column['product_name'] ?? true)
                                 <td>{{ $item->product?->name }}</td>
                             @endif
+                            @if ($purchase_item_report_visible_column['unit_name'] ?? true)
+                                <td>
+                                    @if ($item->product?->unit_id != $item->unit_id)
+                                        {{ $item->unit?->name }}|{{ $item->product?->unit?->name }}
+                                    @else
+                                        {{ $item->unit?->name }}
+                                    @endif
+                                </td>
+                            @endif
                             @if ($purchase_item_report_visible_column['unit_price'] ?? true)
                                 <td class="text-end">{{ $item->unit_price }}</td>
                             @endif
                             @if ($purchase_item_report_visible_column['quantity'] ?? true)
-                                <td class="text-end">{{ $item->quantity }}</td>
+                                <td class="text-end"> {{ $item->quantity }} </td>
+                            @endif
+                            @if ($purchase_item_report_visible_column['base_unit_quantity'] ?? true)
+                                <td class="text-end"> {{ $item->base_unit_quantity }} </td>
                             @endif
                             @if ($purchase_item_report_visible_column['gross_amount'] ?? true)
                                 <td class="text-end">{{ $item->gross_amount }}</td>
@@ -133,14 +167,18 @@
                     <tr>
                         @php
                             $colspan = 1;
-                            $colspan += ($purchase_item_report_visible_column['id'] ?? true) ? 1 : 0;
-                            $colspan += ($purchase_item_report_visible_column['date'] ?? true) ? 1 : 0;
-                            $colspan += ($purchase_item_report_visible_column['invoice_no'] ?? true) ? 1 : 0;
-                            $colspan += ($purchase_item_report_visible_column['product_name'] ?? true) ? 1 : 0;
+                            $colspan += $purchase_item_report_visible_column['id'] ?? true ? 1 : 0;
+                            $colspan += $purchase_item_report_visible_column['date'] ?? true ? 1 : 0;
+                            $colspan += $purchase_item_report_visible_column['invoice_no'] ?? true ? 1 : 0;
+                            $colspan += $purchase_item_report_visible_column['product_name'] ?? true ? 1 : 0;
+                            $colspan += $purchase_item_report_visible_column['unit_name'] ?? true ? 1 : 0;
                         @endphp
                         <th colspan="{{ max($colspan, 1) }}">Total</th>
                         @if ($purchase_item_report_visible_column['quantity'] ?? true)
-                            <th class="text-end">{{ currency($total['quantity']) }}</th>
+                            <th class="text-end">{{ currency($total['quantity'], 3) }}</th>
+                        @endif
+                        @if ($purchase_item_report_visible_column['base_unit_quantity'] ?? true)
+                            <th class="text-end">{{ currency($total['base_unit_quantity'], 3) }}</th>
                         @endif
                         @if ($purchase_item_report_visible_column['gross_amount'] ?? true)
                             <th class="text-end">{{ currency($total['gross_amount']) }}</th>

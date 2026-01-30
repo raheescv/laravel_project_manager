@@ -20,7 +20,6 @@
             </div>
         </div>
     </div>
-    <x-product.product-import-modal />
     @push('scripts')
         @include('components.select.productSelect')
         @include('components.select.branchSelect')

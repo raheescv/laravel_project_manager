@@ -2,22 +2,34 @@
 
 namespace App\Models;
 
+use App\Traits\BelongsToTenant;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Validation\Rule;
 
 class CustomerType extends Model
 {
+    use BelongsToTenant;
+
     protected $fillable = [
+        'tenant_id',
         'name',
         'discount_percentage',
     ];
 
     public static function rules($id = 0, $merge = [])
     {
+        $tenantId = self::getCurrentTenantId();
+
         return array_merge([
-            'name' => ['required', 'string', 'max:255', Rule::unique(self::class)->ignore($id)],
+            'name' => ['required', 'string', 'max:255', Rule::unique(self::class)->where('tenant_id', $tenantId)->ignore($id)],
             'discount_percentage' => ['required', 'numeric', 'min:0', 'max:100'],
         ], $merge);
+    }
+
+    public function tenant(): BelongsTo
+    {
+        return $this->belongsTo(Tenant::class, 'tenant_id');
     }
 
     public function getDropDownList($request)

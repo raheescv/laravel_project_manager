@@ -2,12 +2,17 @@
 
 namespace App\Models;
 
+use App\Traits\BelongsToTenant;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class InventoryLog extends Model
 {
+    use BelongsToTenant;
+
     protected $fillable = [
+        'tenant_id',
         'branch_id',
         'employee_id',
         'product_id',
@@ -59,6 +64,11 @@ class InventoryLog extends Model
     public function user()
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function tenant(): BelongsTo
+    {
+        return $this->belongsTo(Tenant::class, 'tenant_id');
     }
 
     public static function monthly_summary($start_date, $end_date, $product_id, $branch_id = null)

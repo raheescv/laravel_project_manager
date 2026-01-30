@@ -34,9 +34,12 @@ const toastOptions = {
 createInertiaApp({
     resolve: (name) => resolvePageComponent(`./Pages/${name}.vue`, import.meta.glob('./Pages/**/*.vue')),
     setup({ el, App, props, plugin }) {
+        // Get Ziggy config from Inertia props
+        const ziggy = props.initialPage?.props?.ziggy;
+
         return createApp({ render: () => h(App, props) })
             .use(plugin)
-            .use(ZiggyVue)
+            .use(ZiggyVue, ziggy)
             .use(Toast, toastOptions)
             .mount(el);
     },

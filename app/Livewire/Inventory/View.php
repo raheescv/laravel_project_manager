@@ -30,6 +30,8 @@ class View extends Component
 
     public $sortDirection = 'desc';
 
+    public $selectedTab = 'log';
+
     public $chartView = 'daily'; // 'daily' or 'monthly'
 
     protected $paginationTheme = 'bootstrap';
@@ -42,7 +44,7 @@ class View extends Component
     {
         $this->product_id = $product_id;
         $this->branch_id = session('branch_id');
-        $this->product = Product::with('brand')->find($this->product_id);
+        $this->product = Product::with('brand', 'images', 'units.subUnit')->find($this->product_id);
     }
 
     public function sortBy($field)
@@ -65,6 +67,11 @@ class View extends Component
         // Skip full render, only update chart via JavaScript
         $this->skipRender();
         $this->dispatch('chartViewUpdated', $this->chartView);
+    }
+
+    public function tabSelect($tab)
+    {
+        $this->selectedTab = $tab;
     }
 
     public function render()

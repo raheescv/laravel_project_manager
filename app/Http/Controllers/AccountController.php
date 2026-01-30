@@ -3,8 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Actions\Account\Customer\GenerateStatementAction;
+use App\Actions\Account\Customer\GetCustomerDetailsAction;
+use App\Actions\Account\GetJournalEntriesAction;
 use App\Models\Account;
-use App\Models\Sale;
 use Illuminate\Http\Request;
 
 class AccountController extends Controller
@@ -49,50 +50,13 @@ class AccountController extends Controller
 
     public function getCustomerDetails($id)
     {
-        try {
-            $customer = Account::with('customerType')->findOrFail($id);
+        $result = (new GetCustomerDetailsAction())->execute($id);
 
-            // Get sales statistics
-            $totalSales = Sale::where('account_id', $id)->count();
-            $totalAmount = Sale::where('account_id', $id)->sum('grand_total');
-            $totalPaid = Sale::where('account_id', $id)->sum('paid');
-            $totalBalance = Sale::where('account_id', $id)->sum('balance');
-            $lastPurchase = Sale::where('account_id', $id)->orderBy('date', 'desc')->value('date');
-
-            // Get recent sales (last 5)
-            $recentSales = Sale::where('account_id', $id)
-                ->select('id', 'invoice_no', 'date', 'grand_total', 'status')
-                ->withCount('items')
-                ->orderBy('date', 'desc')
-                ->limit(5)
-                ->get()
-                ->map(function ($sale) {
-                    return [
-                        'id' => $sale->id,
-                        'invoice_no' => $sale->invoice_no,
-                        'date' => $sale->date,
-                        'total' => $sale->grand_total,
-                        'status' => $sale->status,
-                        'items_count' => $sale->items_count,
-                    ];
-                });
-
-            return response()->json([
-                'success' => true,
-                'customer' => $customer,
-                'total_sales' => $totalSales,
-                'total_amount' => $totalAmount,
-                'total_paid' => $totalPaid,
-                'total_balance' => $totalBalance,
-                'last_purchase' => $lastPurchase,
-                'recent_sales' => $recentSales,
-            ]);
-        } catch (\Exception $e) {
-            return response()->json([
-                    'success' => false,
-                    'message' => 'Customer not found',
-                ], 404, );
+        if (! $result['success']) {
+            return response()->json($result, 404);
         }
+
+        return response()->json($result);
     }
 
     public function statement($id, Request $request)
@@ -106,5 +70,12 @@ class AccountController extends Controller
     public function bankReconciliation()
     {
         return view('accounts.bank_reconciliation');
+    }
+
+    public function getJournalEntries($journalId)
+    {
+        $result = (new GetJournalEntriesAction())->execute($journalId);
+
+        return response()->json($result);
     }
 }

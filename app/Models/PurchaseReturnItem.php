@@ -16,8 +16,10 @@ class PurchaseReturnItem extends Model implements AuditableContracts
         'purchase_return_id',
         'purchase_item_id',
         'product_id',
+        'unit_id',
         'unit_price',
         'quantity',
+        'conversion_factor',
         'discount',
         'tax',
         'remark',
@@ -48,6 +50,11 @@ class PurchaseReturnItem extends Model implements AuditableContracts
         return $this->belongsTo(PurchaseItem::class);
     }
 
+    public function unit()
+    {
+        return $this->belongsTo(Unit::class);
+    }
+
     public function product()
     {
         return $this->belongsTo(Product::class);
@@ -56,5 +63,10 @@ class PurchaseReturnItem extends Model implements AuditableContracts
     public function getNameAttribute()
     {
         return $this->product?->name;
+    }
+
+    public function getUnitNameAttribute()
+    {
+        return $this->unit?->name;
     }
 }

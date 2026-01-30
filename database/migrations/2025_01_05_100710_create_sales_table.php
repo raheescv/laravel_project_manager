@@ -10,9 +10,14 @@ return new class() extends Migration
     {
         Schema::create('sales', function (Blueprint $table) {
             $table->id();
-            $table->string('invoice_no')->unique();
+            $table->unsignedBigInteger('tenant_id');
+            $table->foreign('tenant_id')->references('id')->on('tenants')->onDelete('cascade');
+            $table->string('invoice_no');
+            $table->unique(['tenant_id', 'invoice_no']);
             $table->string('reference_no')->nullable();
             $table->unsignedBigInteger('branch_id')->references('id')->on('branches');
+            $table->unsignedBigInteger('sale_day_session_id')->nullable();
+            $table->foreign('sale_day_session_id')->references('id')->on('sale_day_sessions')->onDelete('set null');
             $table->unsignedBigInteger('account_id')->references('id')->on('accounts');
             $table->date('date');
             $table->date('due_date')->nullable();
@@ -35,6 +40,8 @@ return new class() extends Migration
             $table->decimal('grand_total', 16, 2)->storedAs('(total - other_discount + freight) + round_off');
             $table->decimal('paid', 16, 2)->default(0);
             $table->decimal('balance', 16, 2)->storedAs('grand_total - paid');
+            $table->string('payment_method_ids')->nullable();
+            $table->string('payment_method_name')->nullable();
 
             $table->text('address')->nullable();
             $table->integer('rating')->nullable();
@@ -50,6 +57,11 @@ return new class() extends Migration
 
             $table->softDeletes();
             $table->timestamps();
+
+            $table->index(['tenant_id'], 'sale_tenant_id_index');
+            $table->index(['tenant_id', 'date', 'branch_id'], 'sale_tenant_date_branch_id_index');
+            $table->index(['tenant_id', 'branch_id'], 'sale_tenant_branch_id_index');
+            $table->index(['tenant_id', 'date', 'branch_id', 'status'], 'sale_tenant_date_branch_id_status_index');
 
             $table->index('date');
             $table->index('status');

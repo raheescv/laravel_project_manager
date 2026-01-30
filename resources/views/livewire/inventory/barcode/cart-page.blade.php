@@ -9,11 +9,17 @@
                             <i class="fa fa-barcode text-primary me-2"></i>
                             Barcode Cart
                         </h4>
-                        <small class="text-muted">Add products and print barcodes</small>
+                        <small class="text-muted">Add products and print barcode</small>
                     </div>
                     <div class="d-flex gap-2">
                         <button wire:click="clearCart" class="btn btn-outline-danger btn-sm" {{ empty($cartItems) ? 'disabled' : '' }}>
                             <i class="fa fa-trash me-1"></i> Clear
+                        </button>
+                        <button wire:click="addAllInventory" class="btn btn-primary btn-sm">
+                            <i class="fa fa-box me-1"></i> Add All Inventory
+                        </button>
+                        <button wire:click="addAllProductUnits" class="btn btn-success btn-sm">
+                            <i class="fa fa-cubes me-1"></i> Add All Product Units
                         </button>
                         <button type="button" class="btn btn-outline-info btn-sm" data-bs-toggle="modal" data-bs-target="#keyboardShortcutsModal">
                             <i class="fa fa-keyboard me-1"></i> ⌨️
@@ -62,6 +68,37 @@
                             </div>
                         </div>
 
+                        <!-- Unit Filter for Product Units -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <label class="form-label fw-semibold">
+                                    <i class="fa fa-filter me-1 text-primary"></i>Unit Filter (for Product Units)
+                                </label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-light">
+                                        <i class="fa fa-cubes text-muted"></i>
+                                    </span>
+                                    <select wire:model="selectedUnitId" class="form-select">
+                                        <option value="">All Units</option>
+                                        @foreach ($this->units as $unit)
+                                            <option value="{{ $unit->id }}">{{ $unit->name }} ({{ $unit->code }})</option>
+                                        @endforeach
+                                    </select>
+                                    @if($selectedUnitId)
+                                        <button class="btn btn-outline-secondary" type="button" wire:click="$set('selectedUnitId', '')">
+                                            <i class="fa fa-times"></i> Clear
+                                        </button>
+                                    @endif
+                                </div>
+                                @if($selectedUnitId)
+                                    <small class="text-muted">
+                                        <i class="fa fa-info-circle me-1"></i>
+                                        "Add All Product Units" will only add units matching the selected filter.
+                                    </small>
+                                @endif
+                            </div>
+                        </div>
+
                         <!-- Barcode Scanner -->
                         <div class="row mb-4">
                             <div class="col-12">
@@ -84,9 +121,11 @@
                         @if (!empty($products))
                             <div class="row">
                                 <div class="col-12">
-                                    <h6 class="text-muted mb-3">
-                                        <i class="fa fa-list me-1"></i>Search Results ({{ count($products) }})
-                                    </h6>
+                                    <div class="d-flex justify-content-between align-items-center mb-3">
+                                        <h6 class="text-muted mb-0">
+                                            <i class="fa fa-list me-1"></i>Search Results ({{ count($products) }})
+                                        </h6>
+                                    </div>
                                     <div class="row g-2">
                                         @foreach ($products as $product)
                                             <div class="col-md-4 col-lg-3 col-xl-2">
@@ -104,14 +143,24 @@
                                                             @if (isset($product['size']) && $product['size'])
                                                                 <div class="badge bg-warning badge-sm mb-1">Size : {{ $product['size'] }}</div>
                                                             @endif
+                                                            @if (isset($product['item_type']) && $product['item_type'] === 'product_unit')
+                                                                <div class="badge bg-secondary badge-sm mb-1">Unit : {{ $product['sub_unit_name'] ?? 'N/A' }}</div>
+                                                                <div class="badge bg-primary badge-sm mb-1">Factor : {{ $product['conversion_factor'] ?? 1 }}</div>
+                                                            @endif
                                                           <div class="badge bg-success badge-sm me-1 mt-1">{{ currency($product['mrp']) }}</div>
 
                                                         </div>
                                                         <div class="d-flex justify-content-between align-items-center">
-                                                            <small class="text-muted">
-                                                                Stock: {{ $product['quantity'] }}
-                                                            </small>
-                                                            <button wire:click="selectProduct({{ $product['id'] }})" class="btn btn-sm btn-primary btn-xs">
+                                                            @if (isset($product['item_type']) && $product['item_type'] === 'product_unit')
+                                                                <small class="text-muted">
+                                                                    Product Unit
+                                                                </small>
+                                                            @else
+                                                                <small class="text-muted">
+                                                                    Stock: {{ $product['quantity'] }}
+                                                                </small>
+                                                            @endif
+                                                            <button wire:click="selectProduct({{ $product['id'] }}, '{{ $product['item_type'] ?? 'inventory' }}')" class="btn btn-sm btn-primary btn-xs">
                                                                 <i class="fa fa-plus fa-xs"></i>
                                                             </button>
                                                         </div>
@@ -162,6 +211,10 @@
                                                             <span class="badge bg-secondary badge-sm">Barcode : {{ $item['barcode'] }}</span>
                                                             @if (isset($item['size']) && $item['size'])
                                                                 <span class="badge bg-warning badge-sm">Size : {{ $item['size'] }}</span>
+                                                            @endif
+                                                            @if (isset($item['item_type']) && $item['item_type'] === 'product_unit')
+                                                                <span class="badge bg-info badge-sm">Unit : {{ $item['sub_unit_name'] ?? 'N/A' }}</span>
+                                                                <span class="badge bg-dark badge-sm">Factor : {{ $item['conversion_factor'] ?? 1 }}</span>
                                                             @endif
                                                             <span class="badge bg-primary badge-sm">{{ currency($item['mrp']) }}</span>
                                                         </div>

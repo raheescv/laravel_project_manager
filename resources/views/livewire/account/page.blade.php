@@ -24,71 +24,80 @@
                 </div>
             @endif
 
-            {{-- Account Type Field --}}
-            @if (!$type_selection_freeze)
-                <div class="mb-4">
-                    <label for="account_type" class="form-label fw-semibold mb-2">
-                        <i class="fa fa-tag me-1 text-muted"></i>
-                        Account Type <span class="text-danger">*</span>
-                    </label>
-                    <div class="input-group">
-                        <span class="input-group-text bg-light border-end-0">
-                            <i class="fa fa-list text-muted"></i>
-                        </span>
-                        {{ html()->select('account_type', accountTypes())->value('')->class('form-control border-start-0')->attribute('wire:model', 'accounts.account_type')->placeholder('Please Select Account Type')->id('modal_account_type') }}
-                    </div>
-                    @error('accounts.account_type')
-                        <div class="text-danger small mt-1">
-                            <i class="fa fa-exclamation-circle me-1"></i>{{ $message }}
+            {{-- Account Type and Category Fields --}}
+            <div class="d-flex flex-wrap gap-3 mb-4">
+                {{-- Account Type Field --}}
+                @if (!$type_selection_freeze)
+                    <div class="flex-fill" style="min-width: 200px;">
+                        <label for="account_type" class="form-label fw-semibold mb-2">
+                            <i class="fa fa-tag me-1 text-muted"></i>
+                            Account Type <span class="text-danger">*</span>
+                        </label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-light border-end-0">
+                                <i class="fa fa-list text-muted"></i>
+                            </span>
+                            {{ html()->select('account_type', accountTypes())->value('')->class('form-control border-start-0')->attribute('wire:model', 'accounts.account_type')->placeholder('Please Select Account Type')->id('modal_account_type') }}
                         </div>
-                    @enderror
-                </div>
-            @endif
-
-            {{-- Account Category Field --}}
-            <div class="mb-4">
-                <label for="account_category_id" class="form-label fw-semibold mb-2">
-                    <i class="fa fa-folder me-1 text-muted"></i>
-                    Account Category
-                </label>
-                <div class="input-group" wire:ignore>
-                    <span class="input-group-text bg-light border-end-0">
-                        <i class="fa fa-folder-open text-muted"></i>
-                    </span>
-                    {{ html()->select('account_category_id', $accountCategories ?? [])->value(old('account_category_id', $accounts['account_category_id'] ?? ''))->class('select-account_category_id form-control border-start-0')->id('modal_account_category_id')->placeholder('Select account category')->attribute('wire:model.live', 'accounts.account_category_id') }}
-                </div>
-            </div>
-
-            {{-- Name Field --}}
-            <div class="mb-4">
-                <label for="name" class="form-label fw-semibold mb-2">
-                    <i class="fa fa-user me-1 text-muted"></i>
-                    Name <span class="text-danger">*</span>
-                </label>
-                <div class="input-group">
-                    <span class="input-group-text bg-light border-end-0">
-                        <i class="fa fa-building text-muted"></i>
-                    </span>
-                    {{ html()->input('name')->value('')->class('form-control border-start-0')->attribute('wire:model', 'accounts.name')->placeholder('Enter account name') }}
-                </div>
-                @error('accounts.name')
-                    <div class="text-danger small mt-1">
-                        <i class="fa fa-exclamation-circle me-1"></i>{{ $message }}
+                        @error('accounts.account_type')
+                            <div class="text-danger small mt-1">
+                                <i class="fa fa-exclamation-circle me-1"></i>{{ $message }}
+                            </div>
+                        @enderror
                     </div>
-                @enderror
+                @endif
+
+                {{-- Account Category Field --}}
+                <div class="flex-fill" style="min-width: 200px;">
+                    <label for="account_category_id" class="form-label fw-semibold mb-2">
+                        <i class="fa fa-folder me-1 text-muted"></i>
+                        Account Category
+                    </label>
+                    <div class="input-group" wire:ignore>
+                        <span class="input-group-text bg-light border-end-0">
+                            <i class="fa fa-folder-open text-muted"></i>
+                        </span>
+                        {{ html()->select('account_category_id', $accountCategories ?? [])->value(old('account_category_id', $accounts['account_category_id'] ?? ''))->class('select-account_category_id form-control border-start-0')->id('modal_account_category_id')->placeholder('Select account category')->attribute('wire:model.live', 'accounts.account_category_id') }}
+                    </div>
+                </div>
             </div>
 
-            {{-- Alias Name Field --}}
-            <div class="mb-4">
-                <label for="alias_name" class="form-label fw-semibold mb-2">
-                    <i class="fa fa-tag me-1 text-muted"></i>
-                    Alias Name
-                </label>
-                <div class="input-group">
-                    <span class="input-group-text bg-light border-end-0">
-                        <i class="fa fa-at text-muted"></i>
-                    </span>
-                    {{ html()->input('alias_name')->value('')->class('form-control border-start-0')->attribute('wire:model', 'accounts.alias_name')->placeholder('Enter alias name (optional)') }}
+            <div class="row g-3">
+                {{-- Name Field --}}
+                <div class="col-md-6">
+                    <div class="mb-4">
+                        <label for="name" class="form-label fw-semibold mb-2">
+                            <i class="fa fa-user me-1 text-muted"></i>
+                            Name <span class="text-danger">*</span>
+                        </label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-light border-end-0">
+                                <i class="fa fa-building text-muted"></i>
+                            </span>
+                            {{ html()->input('name')->value('')->class('form-control border-start-0')->attribute('wire:model', 'accounts.name')->placeholder('Enter account name') }}
+                        </div>
+                        @error('accounts.name')
+                            <div class="text-danger small mt-1">
+                                <i class="fa fa-exclamation-circle me-1"></i>{{ $message }}
+                            </div>
+                        @enderror
+                    </div>
+                </div>
+
+                {{-- Alias Name Field --}}
+                <div class="col-md-6">
+                    <div class="mb-4">
+                        <label for="alias_name" class="form-label fw-semibold mb-2">
+                            <i class="fa fa-tag me-1 text-muted"></i>
+                            Alias Name
+                        </label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-light border-end-0">
+                                <i class="fa fa-at text-muted"></i>
+                            </span>
+                            {{ html()->input('alias_name')->value('')->class('form-control border-start-0')->attribute('wire:model', 'accounts.alias_name')->placeholder('Enter alias name (optional)') }}
+                        </div>
+                    </div>
                 </div>
             </div>
 

@@ -20,7 +20,6 @@
             </div>
         </div>
     </div>
-    <x-product.product-import-modal />
     <x-inventory.column-visibility-canvas />
     @push('scripts')
         @include('components.select.departmentSelect')

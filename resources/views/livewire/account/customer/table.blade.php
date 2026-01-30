@@ -78,7 +78,7 @@
         </div>
         <div class="card-body p-0">
             <div class="table-responsive">
-                <table class="table table-hover align-middle border-bottom mb-0">
+                <table class="table table-hover align-middle border-bottom mb-0 table-sm">
                     <thead class="bg-light text-muted">
                         <tr class="text-capitalize small">
                             <th class="fw-semibold py-2">

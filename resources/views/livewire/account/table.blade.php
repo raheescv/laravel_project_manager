@@ -42,16 +42,51 @@
                             <i class="demo-pli-download-from-cloud fs-5"></i>
                         </button>
                     @endcan
+                    <div class="btn-group shadow-sm">
+                        <button type="button" class="btn btn-light dropdown-toggle" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false" title="Column Visibility">
+                            <i class="demo-pli-view-list fs-5"></i>
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end" style="min-width: 200px;" onclick="event.stopPropagation()">
+                            <li class="dropdown-header">Show/Hide Columns</li>
+                            <li><hr class="dropdown-divider"></li>
+                            @foreach($visibleColumnNames as $column => $label)
+                                <li>
+                                    <div class="form-check px-3 py-2">
+                                        <input class="form-check-input" type="checkbox" wire:model.lazy="visibleColumns.{{ $column }}" id="col_{{ $column }}" onclick="event.stopPropagation()">
+                                        <label class="form-check-label" for="col_{{ $column }}" onclick="event.stopPropagation()">
+                                            {{ $label }}
+                                        </label>
+                                    </div>
+                                </li>
+                            @endforeach
+                        </ul>
+                    </div>
                 </div>
             </div>
         </div>
         <hr class="my-3">
         <div class="row">
-            <div class="col-md-4" wire:ignore>
+            <div class="col-md-3" wire:ignore>
                 {{ html()->select('account_type', accountTypes())->value('')->class('tomSelect')->id('account_type')->placeholder('Select Account Type') }}
             </div>
             <div class="col-md-4" wire:ignore>
                 {{ html()->select('account_category_id', [])->value('')->class('select-account_category_id')->id('account_category_id')->placeholder('Select account category') }}
+            </div>
+            <div class="col-md-2">
+                <div class="form-check form-switch d-flex align-items-center h-100">
+                    <input class="form-check-input" type="checkbox" id="excludeCustomer" wire:model.live="excludeCustomer">
+                    <label class="form-check-label ms-2" for="excludeCustomer">
+                        Exclude Customer
+                    </label>
+                </div>
+            </div>
+            <div class="col-md-2">
+                <div class="form-check form-switch d-flex align-items-center h-100">
+                    <input class="form-check-input" type="checkbox" id="excludeVendor" wire:model.live="excludeVendor">
+                    <label class="form-check-label ms-2" for="excludeVendor">
+                        Exclude Vendor
+                    </label>
+                </div>
             </div>
         </div>
     </div>
@@ -173,18 +208,34 @@
                     <table class="table table-hover align-middle mb-0">
                         <thead class="bg-light">
                             <tr class="text-capitalize">
-                                <th width="5%" class="text-nowrap">
+                                <th width="3%" class="text-nowrap">
                                     <div class="form-check">
-                                        <input type="checkbox" class="form-check-input" wire:model.live="selectAll">
-                                        <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="id" label="#" />
+                                        <input type="checkbox" class="form-check-input" wire:model.live="selectAll" title="Select All">
                                     </div>
                                 </th>
+                                @if($visibleColumns['id'] ?? true)
+                                <th width="5%" class="text-nowrap">
+                                    <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="id" label="#" />
+                                </th>
+                                @endif
+                                @if($visibleColumns['account_type'] ?? true)
                                 <th width="10%" class="text-nowrap"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="account_type" label="account type" /> </th>
+                                @endif
+                                @if($visibleColumns['account_category'] ?? true)
                                 <th width="20%" class="text-nowrap"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="account_category_id" label="account category" /> </th>
+                                @endif
+                                @if($visibleColumns['name'] ?? true)
                                 <th width="30%" class="text-nowrap"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="name" label="name" /> </th>
+                                @endif
+                                @if($visibleColumns['alias_name'] ?? true)
                                 <th width="10%" class="text-nowrap"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="alias_name" label="alias name" /> </th>
+                                @endif
+                                @if($visibleColumns['description'] ?? true)
                                 <th width="30%" class="text-nowrap"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="description" label="description" /> </th>
+                                @endif
+                                @if($visibleColumns['model'] ?? true)
                                 <th class="text-nowrap"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="model" label="model" /> </th>
+                                @endif
                                 <th class="text-end px-3"> Action </th>
                             </tr>
                         </thead>
@@ -194,23 +245,39 @@
                                     <td class="px-3 text-nowrap">
                                         <div class="form-check">
                                             <input type="checkbox" class="form-check-input" value="{{ $item->id }}" wire:model.live="selected">
-                                            <label class="form-check-label">{{ $item->id }}</label>
                                         </div>
                                     </td>
+                                    @if($visibleColumns['id'] ?? true)
+                                    <td class="px-3 text-nowrap">
+                                        <label class="form-check-label">{{ $item->id }}</label>
+                                    </td>
+                                    @endif
+                                    @if($visibleColumns['account_type'] ?? true)
                                     <td>
                                         <span class="badge bg-light text-dark">{{ ucFirst($item->account_type) }}</span>
                                     </td>
+                                    @endif
+                                    @if($visibleColumns['account_category'] ?? true)
                                     <td> {{ $item->accountCategory?->name }} </td>
+                                    @endif
+                                    @if($visibleColumns['name'] ?? true)
                                     <td>
                                         <a href="{{ route('account::view', $item->id) }}" class="text-decoration-none">{{ $item->name }}</a>
                                     </td>
+                                    @endif
+                                    @if($visibleColumns['alias_name'] ?? true)
                                     <td>
                                         <a href="{{ route('account::view', $item->id) }}" class="text-decoration-none">{{ $item->alias_name }}</a>
                                     </td>
+                                    @endif
+                                    @if($visibleColumns['description'] ?? true)
                                     <td class="text-muted">{{ $item->description }}</td>
+                                    @endif
+                                    @if($visibleColumns['model'] ?? true)
                                     <td>
                                         <span class="badge bg-light text-dark">{{ ucFirst($item->model) }}</span>
                                     </td>
+                                    @endif
                                     <td class="text-end px-3">
                                         @can('account.edit')
                                             <button class="btn btn-light btn-sm edit" title="Edit" table_id="{{ $item->id }}">

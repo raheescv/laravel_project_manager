@@ -10,16 +10,25 @@ return new class() extends Migration
     {
         Schema::create('sale_items', function (Blueprint $table) {
             $table->id();
+            $table->unsignedBigInteger('tenant_id');
+            $table->foreign('tenant_id')->references('id')->on('tenants')->onDelete('cascade');
+            $table->index('tenant_id');
             $table->unsignedBigInteger('sale_id')->references('id')->on('sales');
             $table->unsignedBigInteger('employee_id')->references('id')->on('users');
             $table->unsignedBigInteger('assistant_id')->references('id')->on('users')->nullable();
 
             $table->unsignedBigInteger('inventory_id')->references('id')->on('inventories');
             $table->unsignedBigInteger('product_id')->references('id')->on('products');
+
+            $table->foreignId('unit_id')->default(1)->constrained('units');
+
             $table->unsignedBigInteger('sale_combo_offer_id')->nullable();
 
             $table->decimal('unit_price', 16, 2);
             $table->decimal('quantity', 8, 3);
+            $table->decimal('conversion_factor', 15, 4)->default(1);
+            $table->decimal('base_unit_quantity', 16, 4)->storedAs('quantity * conversion_factor');
+
             $table->decimal('gross_amount', 16, 2)->storedAs('unit_price * quantity');
 
             $table->decimal('discount', 16, 2);

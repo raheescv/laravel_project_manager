@@ -156,7 +156,6 @@ class Table extends Component
 
     public function render()
     {
-        // DB::enableQueryLog();
         $query = $this->getBaseQuery();
         $totals = clone $query;
 
@@ -172,7 +171,7 @@ class Table extends Component
             SUM(balance) as balance
         ';
         $total = $totals->selectRaw($sql)
-            ->useIndex('sale_date_branch_id_status_index')
+            // ->useIndex('sales_tenant_id_invoice_no_unique')
             ->first();
 
         $total = [
@@ -187,7 +186,6 @@ class Table extends Component
             'balance' => $total->balance ?? 0,
         ];
 
-        // info(DB::getQueryLog());
         return view('livewire.sale.table', [
             'total' => $total,
             'data' => $query->select('sales.*', 'accounts.name')

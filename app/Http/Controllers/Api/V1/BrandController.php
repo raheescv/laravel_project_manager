@@ -33,7 +33,7 @@ class BrandController extends Controller
     public function index(GetBrandsAction $action, GetBrandsRequest $request): JsonResponse
     {
         try {
-            $result = $action->execute($request);
+            $result = $action->execute(collect($request->all()));
 
             return $this->sendSuccess($result, 'Brands retrieved successfully');
         } catch (ValidationException $e) {

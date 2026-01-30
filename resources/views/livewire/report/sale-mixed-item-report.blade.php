@@ -6,6 +6,9 @@
                     <button wire:click="export" class="btn btn-sm btn-outline-success">
                         <i class="demo-pli-download me-1"></i> Export
                     </button>
+                    <button wire:click="resetFilters" class="btn btn-sm btn-outline-secondary">
+                        <i class="demo-pli-reload me-1"></i> Reset
+                    </button>
                 </div>
             </div>
             <div class="col-md-6 d-flex gap-2 align-items-center justify-content-md-end mb-3">
@@ -43,7 +46,7 @@
                 </div>
                 <div class="col-md-3" wire:ignore>
                     <label for="branch_id">Branch</label>
-                    {{ html()->select('branch_id', [auth()->user()->default_branch_id => auth()->user()->branch?->name])->value(auth()->user()->default_branch_id)->class('select-assigned-branch_id-list')->id('branch_id')->placeholder('All') }}
+                    {{ html()->select('branch_id', [session('branch_id') => session('branch_name')])->class('select-assigned-branch_id-list')->id('branch_id')->placeholder('All') }}
                 </div>
                 <div class="col-md-2">
                     <label for="type">Type</label>
@@ -109,11 +112,17 @@
                         @if ($sale_mixed_item_report_visible_column['cost'] ?? true)
                             <th class="text-end"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="cost" label="Cost" /> </th>
                         @endif
+                        @if ($sale_mixed_item_report_visible_column['unit_name'] ?? true)
+                            <th> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="unit_name" label="unit" /> </th>
+                        @endif
                         @if ($sale_mixed_item_report_visible_column['unit_price'] ?? true)
                             <th class="text-end"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="unit_price" label="unit price" /> </th>
                         @endif
                         @if ($sale_mixed_item_report_visible_column['quantity'] ?? true)
                             <th class="text-end"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="quantity" label="quantity" /> </th>
+                        @endif
+                        @if ($sale_mixed_item_report_visible_column['base_unit_quantity'] ?? true)
+                            <th class="text-end"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="base_unit_quantity" label="base unit quantity" /> </th>
                         @endif
                         @if ($sale_mixed_item_report_visible_column['gross_amount'] ?? true)
                             <th class="text-end"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="gross_amount" label="gross" /> </th>
@@ -173,11 +182,17 @@
                             @if ($sale_mixed_item_report_visible_column['cost'] ?? true)
                                 <td class="text-end">{{ currency($row->cost) }}</td>
                             @endif
+                            @if ($sale_mixed_item_report_visible_column['unit_name'] ?? true)
+                                <td class="text-nowrap">{{ $row->unit_name }}</td>
+                            @endif
                             @if ($sale_mixed_item_report_visible_column['unit_price'] ?? true)
                                 <td class="text-end">{{ currency($row->unit_price) }}</td>
                             @endif
                             @if ($sale_mixed_item_report_visible_column['quantity'] ?? true)
                                 <td class="text-end">{{ currency($row->quantity,3) }}</td>
+                            @endif
+                            @if ($sale_mixed_item_report_visible_column['base_unit_quantity'] ?? true)
+                                <td class="text-end">{{ currency($row->base_unit_quantity,3) }}</td>
                             @endif
                             @if ($sale_mixed_item_report_visible_column['gross_amount'] ?? true)
                                 <td class="text-end">{{ currency($row->gross_amount) }}</td>
@@ -210,11 +225,15 @@
                             $colspan += ($sale_mixed_item_report_visible_column['department_name'] ?? true) ? 1 : 0;
                             $colspan += ($sale_mixed_item_report_visible_column['main_category_name'] ?? true) ? 1 : 0;
                             $colspan += ($sale_mixed_item_report_visible_column['brand_name'] ?? true) ? 1 : 0;
+                            $colspan += ($sale_mixed_item_report_visible_column['unit_name'] ?? true) ? 1 : 0;
                             $colspan += ($sale_mixed_item_report_visible_column['cost'] ?? true) ? 1 : 0;
                         @endphp
                         <th colspan="{{ max($colspan, 1) }}" class="text-end">Total</th>
                         @if ($sale_mixed_item_report_visible_column['quantity'] ?? true)
                             <th class="text-end">{{ currency($total['quantity'] ?? 0,3) }}</th>
+                        @endif
+                        @if ($sale_mixed_item_report_visible_column['base_unit_quantity'] ?? true)
+                            <th class="text-end">{{ currency($total['base_unit_quantity'] ?? 0,3) }}</th>
                         @endif
                         @if ($sale_mixed_item_report_visible_column['gross_amount'] ?? true)
                             <th class="text-end">{{ currency($total['gross_amount'] ?? 0) }}</th>

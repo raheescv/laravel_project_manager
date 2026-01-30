@@ -5,14 +5,13 @@ namespace App\Http\Controllers\Api;
 use App\Actions\Sale\CreateAction;
 use App\Actions\Sale\Item\DeleteAction as ItemDeleteAction;
 use App\Actions\Sale\Payment\DeleteAction as PaymentDeleteAction;
+use App\Actions\Sale\Pos\AddItemAction;
+use App\Actions\Sale\Pos\GetProductByBarcodeAction;
 use App\Actions\Sale\UpdateAction;
 use App\Http\Controllers\Controller;
-use App\Models\Category;
-use App\Models\Configuration;
 use App\Models\Inventory;
 use App\Models\Sale;
 use App\Models\SalePayment;
-use App\Models\User;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -84,7 +83,24 @@ class POSController extends Controller
                         'stock' => $inventory->quantity ?? 0,
                         'category_id' => $inventory->product->main_category_id,
                         'product_id' => $inventory->product_id,
+                        'branch_id' => $inventory->branch_id,
                         'image' => $imageUrl,
+                        'unit_id' => $inventory->product->unit_id,
+                        'unit_name' => $inventory->product->unit->name ?? '',
+                        'conversion_factor' => 1,
+                        'units' => collect([
+                            [
+                                'id' => $inventory->product->unit_id,
+                                'name' => $inventory->product->unit->name ?? '',
+                                'conversion_factor' => 1,
+                            ],
+                        ])->concat($inventory->product->units->map(function ($pu) {
+                            return [
+                                'id' => $pu->sub_unit_id,
+                                'name' => $pu->subUnit->name ?? '',
+                                'conversion_factor' => $pu->conversion_factor,
+                            ];
+                        })),
                     ];
                 });
 
@@ -98,44 +114,14 @@ class POSController extends Controller
 
     public function getProductByBarcode(Request $request)
     {
-        try {
-            $inventory = Inventory::with(['product'])
-                ->whereNull('inventories.employee_id')
-                ->whereHas('product', function ($q) use ($request): void {
-                    $q->where('barcode', $request->barcode)->where('status', 'active');
-                })
-                ->where('inventories.branch_id', session('branch_id'))
-                ->first();
+        $action = new GetProductByBarcodeAction();
+        $result = $action->execute($request->barcode, $request->sale_type ?? 'normal', session('branch_id'));
 
-            if (! $inventory) {
-                return response()->json(null, 404);
-            }
-
-            $saleType = $request->sale_type ?? 'normal';
-            $price = $inventory->product->saleTypePrice($saleType);
-
-            // Get product image URL
-            $imageUrl = cache('logo');
-            if ($inventory->product->thumbnail) {
-                $imageUrl = $inventory->product->thumbnail;
-            }
-
-            return response()->json([
-                'id' => $inventory->id,
-                'name' => $inventory->product->name,
-                'type' => $inventory->product->type,
-                'barcode' => $inventory->product->barcode,
-                'mrp' => $price,
-                'stock' => $inventory->quantity ?? 0,
-                'category_id' => $inventory->category_id,
-                'product_id' => $inventory->product_id,
-                'image' => $imageUrl,
-            ]);
-        } catch (\Exception $e) {
-            Log::error('Error finding product by barcode: '.$e->getMessage());
-
-            return response()->json(['error' => $e->getMessage()], 500);
+        if (! $result['success']) {
+            return response()->json($result['data'] ?? ['error' => $result['error'] ?? 'Product not found'], $result['status'] ?? 404);
         }
+
+        return response()->json($result['data']);
     }
 
     public function addItem(Request $request)
@@ -145,53 +131,17 @@ class POSController extends Controller
                 'inventory_id' => 'required|exists:inventories,id',
                 'employee_id' => 'required|exists:users,id',
                 'sale_type' => 'string',
+                'unit_id' => 'nullable|exists:units,id',
             ]);
 
-            $inventory = Inventory::with(['product'])->findOrFail($request->inventory_id);
-            $saleType = $request->sale_type ?? 'normal';
+            $action = new AddItemAction();
+            $result = $action->execute($request->inventory_id, $request->employee_id, $request->sale_type ?? 'normal', $request->unit_id);
 
-            // Get pricing based on sale type
-            $unitPrice = $inventory->product->saleTypePrice($saleType);
-
-            // Get tax from product
-            $taxRate = $inventory->product->tax ?? 0;
-
-            // Check stock availability
-            if ($inventory->quantity <= 0) {
-                // return response()->json(['error' => 'Insufficient stock'], 400);
+            if (! $result['success']) {
+                return response()->json(['error' => $result['error'] ?? 'Failed to add item'], 500);
             }
 
-            // Get default quantity from sale configuration
-            $quantity = (float) (Configuration::where('key', 'default_quantity')->value('value') ?? '0.001');
-
-            // Calculate initial totals
-            $grossAmount = $unitPrice * $quantity;
-            $discount = 0;
-            $netAmount = $grossAmount - $discount;
-            $taxAmount = $netAmount * ($taxRate / 100);
-            $total = $netAmount + $taxAmount;
-
-            // Create item data with guaranteed id
-            $item = [
-                'id' => null,
-                'inventory_id' => $inventory->id,
-                'product_id' => $inventory->product_id,
-                'employee_id' => $request->employee_id,
-                'name' => $inventory->product->name,
-                'barcode' => $inventory->product->barcode,
-                'size' => $inventory->product->size,
-                'quantity' => $quantity,
-                'unit_price' => $unitPrice,
-                'tax' => $taxRate,
-                'discount' => $discount,
-                'gross_amount' => $grossAmount,
-                'net_amount' => $netAmount,
-                'tax_amount' => $taxAmount,
-                'total' => $total,
-                'employee_name' => User::find($request->employee_id)->name ?? '',
-            ];
-
-            return response()->json($item);
+            return response()->json($result['data']);
         } catch (\Exception $e) {
             Log::error('Error adding item: '.$e->getMessage());
 

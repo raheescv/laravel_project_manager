@@ -2,8 +2,10 @@
 
 namespace App\Models;
 
+use App\Traits\BelongsToTenant;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use OwenIt\Auditing\Auditable;
 use OwenIt\Auditing\Contracts\Auditable as AuditableContracts;
@@ -11,9 +13,11 @@ use OwenIt\Auditing\Contracts\Auditable as AuditableContracts;
 class Appointment extends Model implements AuditableContracts
 {
     use Auditable;
+    use BelongsToTenant;
     use SoftDeletes;
 
     protected $fillable = [
+        'tenant_id',
         'branch_id',
         'account_id',
         'start_time',
@@ -39,6 +43,16 @@ class Appointment extends Model implements AuditableContracts
             'start_time' => ['required', 'date'],
             'end_time' => ['required', 'date', 'after:start_time'],
         ], $merge);
+    }
+
+    public function tenant(): BelongsTo
+    {
+        return $this->belongsTo(Tenant::class, 'tenant_id');
+    }
+
+    public function branch()
+    {
+        return $this->belongsTo(Branch::class, 'branch_id');
     }
 
     public function account()

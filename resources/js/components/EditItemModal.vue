@@ -16,13 +16,27 @@
 
             <div v-if="item" class="space-y-2">
                 <!-- Compact Product Info -->
-                <div class="bg-slate-50 rounded p-2 border border-slate-200">
-                    <label class="block text-xs font-semibold text-slate-700 mb-1 flex items-center">
-                        <i class="fa fa-box text-blue-500 mr-1 text-xs"></i>
-                        Product
-                    </label>
-                    <div class="text-xs font-medium text-slate-800 bg-white px-2 py-1 rounded border">
-                        {{ item.name }}
+                <div class="grid grid-cols-2 gap-2">
+                    <div class="bg-slate-60 rounded p-2 border border-slate-200">
+                        <label class="block text-xs font-semibold text-slate-700 mb-1 flex items-center">
+                            <i class="fa fa-box text-blue-500 mr-1 text-xs"></i>
+                            Product
+                        </label>
+                        <div class="text-xs font-medium text-slate-800 bg-white px-2 py-1 rounded border truncate" :title="item.name">
+                            {{ item.name }}
+                        </div>
+                    </div>
+                    <div class="bg-slate-40 rounded p-2 border border-slate-200">
+                        <label class="block text-xs font-semibold text-slate-700 mb-1 flex items-center">
+                            <i class="fa fa-balance-scale text-orange-500 mr-1 text-xs"></i>
+                            Unit
+                        </label>
+                        <select v-model="localItem.unit_id" @change="handleUnitChange"
+                            class="w-full border border-slate-300 rounded px-2 py-1 text-xs focus:border-orange-500 focus:ring-orange-500/20 transition-all duration-200 bg-white">
+                            <option v-for="u in availableUnits" :key="u.id" :value="u.id">
+                                {{ u.name }}
+                            </option>
+                        </select>
                     </div>
                 </div>
 
@@ -160,10 +174,42 @@ export default {
         return {
             localItem: {
                 ...this.item
-            }
+            },
+            originalConversionFactor: this.item?.conversion_factor || 1
         }
     },
 
+    computed: {
+        availableUnits() {
+            const units = [];
+
+            // Use base_unit from product if available, otherwise fallback to current unit_id
+            const baseUnit = this.item.base_unit || {
+                id: this.item.unit_id,
+                name: this.item.unit_name || 'Base Unit',
+                conversion_factor: 1
+            };
+
+            // Add base unit from product
+            units.push({
+                id: baseUnit.id,
+                name: baseUnit.name || 'Base Unit',
+                conversion_factor: baseUnit.conversion_factor || 1
+            });
+
+            // Add sub units
+            if (this.item.units && Array.isArray(this.item.units)) {
+                this.item.units.forEach(u => {
+                    // Don't add base unit again if it's already in the units array
+                    if (u.id !== baseUnit.id) {
+                        units.push(u);
+                    }
+                });
+            }
+
+            return units;
+        }
+    },
     watch: {
         item: {
             handler(val) {
@@ -171,6 +217,7 @@ export default {
                     this.localItem = {
                         ...val
                     }
+                    this.originalConversionFactor = val.conversion_factor || 1
                     this.calculateTotals()
                 }
             },
@@ -210,6 +257,35 @@ export default {
             this.localItem.net_amount = this.localItem.gross_amount - this.localItem.discount;
             this.localItem.tax_amount = this.localItem.net_amount * (this.localItem.tax / 100);
             this.localItem.total = this.localItem.net_amount + this.localItem.tax_amount;
+        },
+        handleUnitChange() {
+            const selectedUnit = this.availableUnits.find(u => u.id === this.localItem.unit_id);
+            if (selectedUnit) {
+                const newConversionFactor = selectedUnit.conversion_factor || 1;
+
+                // Use base_unit_price from the product (base unit price)
+                // If base_unit_price is not available, fallback to calculating from current price
+                const baseUnitPrice = this.localItem.base_unit_price ||
+                    (this.localItem.unit_price / (this.localItem.conversion_factor || 1));
+
+                // Update unit information
+                this.localItem.unit_name = selectedUnit.name;
+                this.localItem.conversion_factor = newConversionFactor;
+
+                // Recalculate unit_price based on base unit price and new conversion factor
+                this.localItem.unit_price = Math.round(baseUnitPrice * newConversionFactor * 100) / 100;
+
+                // Ensure base_unit_price is set if not already present
+                if (!this.localItem.base_unit_price) {
+                    this.localItem.base_unit_price = baseUnitPrice;
+                }
+
+                // Update the original conversion factor for future calculations
+                this.originalConversionFactor = newConversionFactor;
+
+                // Recalculate totals with new price
+                this.calculateTotals();
+            }
         },
         save() {
             // Validate numeric fields

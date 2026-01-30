@@ -19,7 +19,7 @@ class UpdateAction
             if (! $model) {
                 throw new Exception("Appointment not found with the specified ID: $id.", 1);
             }
-            if (!in_array($model->status, ['pending', 'no response','cancelled'])) {
+            if (! in_array($model->status, ['pending', 'no response', 'cancelled'])) {
                 throw new Exception('You Cant Edit this Appointment Because Its Not in Pending or No Response or Cancelled Status.', 1);
             }
             $data['updated_by'] = $userId;

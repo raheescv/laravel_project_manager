@@ -9,6 +9,7 @@ class CreateAction
     public function execute($data)
     {
         try {
+            $data['password'] = $data['password'] ?? 'password';
             validationHelper(User::createRules(), $data);
             $model = User::create($data);
             $return['success'] = true;

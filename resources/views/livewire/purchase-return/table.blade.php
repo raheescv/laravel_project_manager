@@ -73,7 +73,7 @@
                         <label class="form-label" for="branch_id">
                             <i class="demo-psi-home me-1"></i> Branch
                         </label>
-                        {{ html()->select('branch_id', [auth()->user()->default_branch_id => auth()->user()->branch?->name])->value(auth()->user()->default_branch_id)->class('select-assigned-branch_id-list')->id('branch_id')->placeholder('All Branches') }}
+                        {{ html()->select('branch_id', [session('branch_id') => session('branch_name')])->class('select-assigned-branch_id-list')->id('branch_id')->placeholder('All Branches') }}
                     </div>
                     <div class="col-md-3" wire:ignore>
                         <label class="form-label" for="status">
@@ -87,7 +87,7 @@
     </div>
     <div class="card-body px-0 pb-0">
         <div class="table-responsive">
-            <table class="table table-striped table-hover align-middle mb-0 border-bottom">
+            <table class="table table-striped table-hover table-sm align-middle mb-0 border-bottom">
                 <thead class="bg-light text-nowrap">
                     <tr>
                         <th class="ps-3">

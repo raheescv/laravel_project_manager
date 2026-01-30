@@ -20,7 +20,6 @@
             </div>
         </div>
     </div>
-    <x-service.service-import-modal />
     @push('scripts')
         @include('components.select.departmentSelect')
         @include('components.select.categorySelect')

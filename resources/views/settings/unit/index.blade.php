@@ -15,11 +15,10 @@
     </div>
     <div class="content__boxed">
         <div class="content__wrap">
-            <div class="card mb-3">
-                @livewire('settings.unit.table')
-            </div>
+            @livewire('settings.unit.table')
         </div>
     </div>
+
     <x-settings.unit.unit-modal />
     @push('scripts')
         @include('components.select.unitSelect')

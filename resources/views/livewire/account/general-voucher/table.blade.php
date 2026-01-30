@@ -88,7 +88,7 @@
 
     <div class="card-body p-0">
         <div class="table-responsive">
-            <table class="table table-hover align-middle mb-0 border">
+            <table class="table table-hover align-middle mb-0 border table-sm">
                 <thead class="bg-light">
                     <tr class="text-capitalize">
                         <th class="border-bottom py-3">
@@ -277,7 +277,7 @@
                     @empty
                         <tr>
                             <td colspan="{{ 2 + count(array_filter($general_voucher_visible_column ?? [])) }}" class="text-center py-4 text-muted">
-                                <i class="fa fa-file-invoice fs-2 mb-2"></i>
+                                <i class="fa fa-file-text fs-2 mb-2"></i>
                                 <p class="mb-0">No general vouchers found</p>
                             </td>
                         </tr>
@@ -338,7 +338,7 @@
         <script>
             $(document).ready(function() {
                 $(document).on('click', '.edit', function() {
-                    Livewire.dispatch("GeneralVoucher-Page-Update-Component", {
+                    Livewire.dispatch("GeneralVoucher-Update-Component", {
                         id: $(this).attr('table_id')
                     });
                 });
@@ -351,7 +351,7 @@
                     @this.set('filter.branch_id', value);
                 });
                 $('#PageAdd').click(function() {
-                    Livewire.dispatch("GeneralVoucher-Page-Create-Component");
+                    Livewire.dispatch("GeneralVoucher-Create-Component");
                 });
                 window.addEventListener('RefreshGeneralVoucherTable', event => {
                     Livewire.dispatch("GeneralVoucher-Refresh-Component");

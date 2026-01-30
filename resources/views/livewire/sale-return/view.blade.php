@@ -133,6 +133,7 @@
                                     <th class="text-white">SL No</th>
                                     <th class="text-white" width="20%">Invoice No</th>
                                     <th class="text-white" width="20%">Product/Service</th>
+                                    <th class="text-white text-end">Unit</th>
                                     <th class="text-white text-end">Unit Price</th>
                                     <th class="text-white text-end">Quantity</th>
                                     <th class="text-white text-end">Discount</th>
@@ -160,7 +161,7 @@
                                         @php
                                             $first = array_values($groupedItems)[0];
                                         @endphp
-                                        <th colspan="8" class="bg-light">
+                                        <th colspan="9" class="bg-light">
                                             <i class="demo-psi-user me-2"></i>
                                             {{ $first['employee_name'] ?? 'No Employee' }}
                                         </th>
@@ -186,6 +187,7 @@
                                                     </div>
                                                 </div>
                                             </td>
+                                            <td class="text-end">{{ $item['unit_name'] }}</td>
                                             <td class="text-end">{{ currency($item['unit_price']) }}</td>
                                             <td class="text-end">{{ currency($item['quantity'], 3) }}</td>
                                             <td class="text-end">
@@ -215,7 +217,7 @@
                                     $items = collect($items);
                                 @endphp
                                 <tr class="fw-bold">
-                                    <td colspan="4" class="text-end">Total</td>
+                                    <td colspan="5" class="text-end">Total</td>
                                     <td class="text-end">{{ currency($items->sum('quantity'), 3) }}</td>
                                     <td class="text-end">{{ currency($items->sum('discount')) }}</td>
                                     <td class="text-end">{{ currency($items->sum('tax_amount')) }}</td>

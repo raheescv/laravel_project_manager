@@ -10,6 +10,9 @@ return new class() extends Migration
     {
         Schema::create('purchase_returns', function (Blueprint $table) {
             $table->id();
+            $table->unsignedBigInteger('tenant_id');
+            $table->foreign('tenant_id')->references('id')->on('tenants')->onDelete('cascade');
+            $table->index('tenant_id');
             $table->string('invoice_no')->nullable();
             $table->unsignedBigInteger('branch_id')->references('id')->on('branches');
             $table->unsignedBigInteger('account_id')->references('id')->on('accounts');

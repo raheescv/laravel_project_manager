@@ -65,4 +65,8 @@ return [
         'template_name' => env('META_WHATSAPP_TEMPLATE_NAME', 'invoice_slip'),
         'base_url' => env('META_WHATSAPP_BASE_URL', 'https://wa-api.cloud/api/v1'),
     ],
+    'pusher' => [
+        'pusher_app_key' => env('PUSHER_APP_KEY'),
+        'pusher_app_cluster' => env('PUSHER_APP_CLUSTER'),
+    ],
 ];

@@ -1,89 +1,94 @@
-<div>
-    <div class="card-header -4 mb-3">
-        <div class="row">
-            <div class="col-md-6 d-flex gap-1 align-items-center mb-3">
+<div class="card border-0 shadow-sm">
+    <div class="card-header bg-white py-3">
+        <div class="row g-3 align-items-center">
+            <div class="col-12 col-md-6 d-flex gap-2">
                 @can('unit.create')
-                    <button class="btn btn-primary hstack gap-2 align-self-center" id="UnitAdd">
+                    <button class="btn btn-primary d-inline-flex align-items-center gap-2" id="UnitAdd">
                         <i class="demo-psi-add fs-5"></i>
-                        <span class="vr"></span>
-                        Add New
+                        <span>Add New Unit</span>
                     </button>
                 @endcan
                 @can('unit.delete')
-                    <div class="btn-group">
-                        <button class="btn btn-icon btn-outline-light" wire:click="delete()" wire:confirm="Are you sure you want to delete the selected items?"><i class="demo-pli-recycling fs-5"></i>
+                    @if(count($selected) > 0)
+                        <button class="btn btn-outline-danger d-inline-flex align-items-center gap-2" wire:click="delete()" wire:confirm="Are you sure you want to delete the selected items?">
+                            <i class="demo-pli-recycling fs-5"></i>
+                            <span>Delete</span>
                         </button>
-                    </div>
+                    @endif
                 @endcan
             </div>
-            <div class="col-md-6 d-flex gap-1 align-items-center justify-content-md-end mb-3">
-                <div class="form-group">
-                    <select wire:model.live="limit" class="form-control">
-                        <option value="10">10</option>
-                        <option value="100">100</option>
-                        <option value="500">500</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <input type="text" wire:model.live="search" autofocus placeholder="Search..." class="form-control" autocomplete="off">
+            <div class="col-12 col-md-6">
+                <div class="d-flex flex-wrap gap-2 justify-content-md-end">
+                    <div class="d-flex bg-light rounded-2 px-2">
+                        <span class="d-flex align-items-center text-muted">
+                            <i class="demo-psi-list-view fs-6"></i>
+                        </span>
+                        <select wire:model.live="limit" class="form-select bg-transparent border-0 fw-semibold py-2" style="width: 80px; box-shadow: none; font-size: 0.875rem;">
+                            <option value="10">10</option>
+                            <option value="100">100</option>
+                            <option value="500">500</option>
+                        </select>
+                    </div>
+                    <div class="d-flex bg-light rounded-2 px-2 flex-grow-1 flex-md-grow-0" style="min-width: 250px;">
+                        <span class="d-flex align-items-center text-muted">
+                            <i class="demo-psi-magnifi-glass fs-6"></i>
+                        </span>
+                        <input type="text" wire:model.live="search" autofocus placeholder="Search units..." class="form-control bg-transparent border-0 py-2" style="box-shadow: none; font-size: 0.875rem;" autocomplete="off">
+                    </div>
                 </div>
             </div>
         </div>
     </div>
-    <div class="card-body">
+    <div class="card-body p-0">
         <div class="table-responsive">
-            <table class="table table-striped">
-                <thead>
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
                     <tr>
-                        <th width="20%">
-                            <input type="checkbox" wire:model.live="selectAll" />
-                            <a href="#" wire:click.prevent="sortBy('id')">
-                                ID
-                                @if ($sortField === 'id')
-                                    {!! sortDirection($sortDirection) !!}
-                                @endif
-                            </a>
+                        <th class="ps-4" width="80">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" wire:model.live="selectAll" id="selectAll">
+                            </div>
                         </th>
-                        <th>
-                            <a href="#" wire:click.prevent="sortBy('code')">
-                                Code
-                                @if ($sortField === 'code')
-                                    {!! sortDirection($sortDirection) !!}
-                                @endif
-                            </a>
-                        </th>
-                        <th>
-                            <a href="#" wire:click.prevent="sortBy('name')">
-                                Name
-                                @if ($sortField === 'name')
-                                    {!! sortDirection($sortDirection) !!}
-                                @endif
-                            </a>
-                        </th>
-                        <th width="10%">Action</th>
+                        <th width="10%"> <x-sortable-header field="id" label="ID" :sortField="$sortField" :direction="$sortDirection" /> </th>
+                        <th width="20%"> <x-sortable-header field="code" label="Code" :sortField="$sortField" :direction="$sortDirection" /> </th>
+                        <th> <x-sortable-header field="name" label="Name" :sortField="$sortField" :direction="$sortDirection" /> </th>
+                        <th width="10%" class="text-end pe-4" width="120">Action</th>
                     </tr>
                 </thead>
                 <tbody>
-                    @foreach ($data as $item)
+                    @forelse ($data as $item)
                         <tr>
-                            <td>
-                                <input type="checkbox" value="{{ $item->id }}" wire:model.live="selected" />
-                                {{ $item->id }}
+                            <td class="ps-4">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" value="{{ $item->id }}" wire:model.live="selected">
+                                </div>
                             </td>
-                            <td>{{ $item->code }}</td>
-                            <td>{{ $item->name }}</td>
-                            <td>
+                            <td><span class="badge bg-light text-dark border">#{{ $item->id }}</span></td>
+                            <td><code class="text-primary fw-bold">{{ $item->code }}</code></td>
+                            <td class="fw-semibold text-dark">{{ $item->name }}</td>
+                            <td class="text-end pe-4">
                                 @can('unit.edit')
-                                    <i table_id="{{ $item->id }}" class="demo-psi-pencil fs-5 me-2 pointer edit"></i>
+                                    <button table_id="{{ $item->id }}" class="btn btn-icon btn-sm btn-hover btn-light edit" title="Edit Unit">
+                                        <i class="demo-psi-pencil fs-5 text-muted"></i>
+                                    </button>
                                 @endcan
                             </td>
                         </tr>
-                    @endforeach
+                    @empty
+                        <tr>
+                            <td colspan="5" class="text-center py-5 text-muted">No units found matching your search.</td>
+                        </tr>
+                    @endforelse
                 </tbody>
             </table>
         </div>
-        {{ $data->links() }}
     </div>
+    @if($data->hasPages())
+        <div class="card-footer bg-white py-3">
+            {{ $data->links() }}
+        </div>
+    @endif
+
     @push('scripts')
         <script>
             $(document).ready(function() {
@@ -102,3 +107,4 @@
         </script>
     @endpush
 </div>
+

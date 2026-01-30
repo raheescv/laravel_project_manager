@@ -1,11 +1,11 @@
 @php
     // Pre-calculate common values to avoid repetition
     $netPayment = $totalPayment - $saleReturnPayments->sum('total');
-    $collectionRate = $totalPayment > 0 ? ($totalPayment / $totalSales) * 100 : 0;
+    $collectionRate = $totalSales > 0 ? ($totalPayment > 0 ? ($totalPayment / $totalSales) * 100 : 0) : 0;
     $successRate = $noOfSales > 0 ? (($noOfSales - $noOfSalesReturns) / $noOfSales) * 100 : 0;
     $totalTransactions = $salePayments->sum('transaction_count') + $saleReturnPayments->sum('transaction_count');
     $allPaymentMethods = $salePayments->pluck('payment_method')->merge($saleReturnPayments->pluck('payment_method'))->unique();
-
+    $allPaymentMethods[] = 'credit';
     // Payment method icons mapping
     $paymentIcons = [
         'cash' => ['icon' => 'fa-money', 'color' => 'text-success'],
@@ -60,13 +60,24 @@
                     <div class="row g-4">
                         @foreach ($allPaymentMethods as $method)
                             @php
-                                $saleAmount = $salePayments->where('payment_method', $method)->first()?->total ?? 0;
-                                $returnAmount = $saleReturnPayments->where('payment_method', $method)->first()?->total ?? 0;
-                                $netAmount = $saleAmount - $returnAmount;
-                                $saleCount = $salePayments->where('payment_method', $method)->first()?->transaction_count ?? 0;
-                                $returnCount = $saleReturnPayments->where('payment_method', $method)->first()?->transaction_count ?? 0;
-                                $methodLower = strtolower($method);
-                                $iconData = $paymentIcons[$methodLower] ?? $paymentIcons['default'];
+                                if ($method != 'credit') {
+                                    $saleAmount = $salePayments->where('payment_method', $method)->first()?->total ?? 0;
+                                    $returnAmount = $saleReturnPayments->where('payment_method', $method)->first()?->total ?? 0;
+                                    $netAmount = $saleAmount - $returnAmount;
+                                    $saleCount = $salePayments->where('payment_method', $method)->first()?->transaction_count ?? 0;
+                                    $returnCount = $saleReturnPayments->where('payment_method', $method)->first()?->transaction_count ?? 0;
+                                    $methodLower = strtolower($method);
+                                    $iconData = $paymentIcons[$methodLower] ?? $paymentIcons['default'];
+                                } else {
+                                    $saleAmount = $saleBalance;
+                                    $returnAmount = $saleReturnBalance;
+                                    $netAmount = $saleAmount - $returnAmount;
+                                    $saleCount = $saleBalanceCount;
+                                    $returnCount = $saleReturnBalanceCount;
+                                    $iconData = $paymentIcons['default'];
+                                    $method = 'Credit';
+                                    $methodLower = 'credit';
+                                }
                             @endphp
 
                             <div class="col-md-4 col-lg-4">
@@ -112,7 +123,7 @@
 
                     <!-- Financial Stats -->
                     <div class="row g-4 mt-4">
-                        <div class="col-md-6">
+                        <div class="col-md-4">
                             <div class="card bg-primary bg-gradient border-0">
                                 <div class="card-body">
                                     <div class="d-flex align-items-center">
@@ -120,14 +131,14 @@
                                             <i class="fa fa-money fa-2x text-white"></i>
                                         </div>
                                         <div class="flex-grow-1 ms-3">
-                                            <h6 class="text-white mb-1">Net Sales</h6>
-                                            <h4 class="mb-0 text-white">{{ currency($netSales, 0) }}</h4>
+                                            <h6 class="text-white mb-1">Gross Sales</h6>
+                                            <h4 class="mb-0 text-white">{{ currency($grossSales, 0) }}</h4>
                                         </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
-                        <div class="col-md-6">
+                        <div class="col-md-4">
                             <div class="card bg-info bg-gradient border-0">
                                 <div class="card-body">
                                     <div class="d-flex align-items-center">
@@ -137,6 +148,21 @@
                                         <div class="flex-grow-1 ms-3">
                                             <h6 class="text-white mb-1">Discounts</h6>
                                             <h4 class="mb-0 text-white">{{ currency($saleDiscount, 0) }}</h4>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card bg-success bg-gradient border-0">
+                                <div class="card-body">
+                                    <div class="d-flex align-items-center">
+                                        <div class="flex-shrink-0">
+                                            <i class="fa fa-money fa-2x text-white"></i>
+                                        </div>
+                                        <div class="flex-grow-1 ms-3">
+                                            <h6 class="text-white mb-1">Net Sales</h6>
+                                            <h4 class="mb-0 text-white">{{ currency($netSales, 0) }}</h4>
                                         </div>
                                     </div>
                                 </div>
@@ -160,7 +186,7 @@
                             </div>
                         </div>
                         <div class="col-md-4">
-                            <div class="card bg-success bg-gradient border-0">
+                            <div class="card bg-danger bg-gradient border-0">
                                 <div class="card-body">
                                     <div class="d-flex align-items-center">
                                         <div class="flex-shrink-0">
@@ -480,7 +506,7 @@
             <div class="card border-0 shadow-sm">
                 <div class="card-header bg-transparent py-3">
                     <div class="d-flex justify-content-between align-items-center">
-                        <h6 class="card-title mb-0 fw-bold">Product Performance</h6>
+                        <h6 class="card-title mb-0 fw-bold">Product/Service Performance</h6>
                         <div class="d-flex gap-2">
                             <select wire:model.live="productPerPage" class="form-select form-select-sm" style="width: 80px">
                                 <option value="10">10</option>
@@ -496,13 +522,13 @@
                         <table class="table table-hover align-middle mb-0">
                             <thead class="bg-light">
                                 <tr>
-                                    <th class="ps-3">#</th>
-                                    <th>Name</th>
-                                    <th class="text-end">Sold Qty</th>
-                                    <th class="text-end">Returned Qty</th>
-                                    <th class="text-end">Sale Total</th>
-                                    <th class="text-end">Return Total</th>
-                                    <th class="text-end pe-3">Net Amount</th>
+                                    <th class="ps-3"><x-sortable-header :direction="$productSortDirection" :sortField="$productSortField" field="product.id" label="#" /></th>
+                                    <th><x-sortable-header :direction="$productSortDirection" :sortField="$productSortField" field="product.product" label="Name" /></th>
+                                    <th class="text-end"><x-sortable-header :direction="$productSortDirection" :sortField="$productSortField" field="product.sales_quantity" label="Sold Qty" /></th>
+                                    <th class="text-end"><x-sortable-header :direction="$productSortDirection" :sortField="$productSortField" field="product.return_quantity" label="Returned Qty" /></th>
+                                    <th class="text-end"><x-sortable-header :direction="$productSortDirection" :sortField="$productSortField" field="product.sale_total" label="Sale Total" /></th>
+                                    <th class="text-end"><x-sortable-header :direction="$productSortDirection" :sortField="$productSortField" field="product.sale_return_total" label="Return Total" /></th>
+                                    <th class="text-end pe-3"><x-sortable-header :direction="$productSortDirection" :sortField="$productSortField" field="product.net_amount" label="Net Amount" /></th>
                                 </tr>
                             </thead>
                             <tbody>

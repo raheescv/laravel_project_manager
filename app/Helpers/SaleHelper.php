@@ -6,6 +6,7 @@ use App\Models\Account;
 use App\Models\Configuration;
 use App\Models\Sale;
 use App\Models\SaleDaySession;
+use App\Models\SalePayment;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\View;
 
@@ -108,7 +109,8 @@ class SaleHelper
     {
         $session = SaleDaySession::with(['branch', 'opener', 'closer'])->findOrFail($id);
 
-        $sales = Sale::completed()->where('sale_day_session_id', $id)
+        $sales = Sale::completed()
+            ->where('sale_day_session_id', $id)
             ->with(['branch', 'payments.paymentMethod'])
             ->orderBy('created_at', 'asc')
             ->get();
@@ -118,13 +120,24 @@ class SaleHelper
         foreach ($paymentMethods as $method) {
             $totals[$method->name] = 0;
         }
-        foreach ($sales as $sale) {
-            foreach ($sale->payments as $payment) {
-                $amount = $payment->amount ?? 0;
-                $totals[$payment->name] += $amount;
+        $payments = SalePayment::whereDate('date', date('Y-m-d', strtotime($session->opened_at)))
+            ->whereHas('sale', function ($query) use ($session) {
+                $query->where('branch_id', $session->branch_id);
+            })
+            ->get();
+        $pendingPayments = [];
+        foreach ($payments as $payment) {
+            if ($payment->sale->sale_day_session_id != $id) {
+                $pendingPayments[] = [
+                    'date' => $payment->date,
+                    'invoice_no' => $payment->sale->invoice_no,
+                    'payment_method' => $payment->name,
+                    'amount' => $payment->amount,
+                ];
             }
+            $totals[$payment->name] += $payment->amount;
         }
 
-        return view('sale.day-session-print', compact('session', 'sales', 'totals'));
+        return view('sale.day-session-print', compact('session', 'pendingPayments', 'sales', 'totals'));
     }
 }

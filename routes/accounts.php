@@ -20,6 +20,8 @@ Route::middleware('auth')->group(function (): void {
 
         // API route for customer details
         Route::get('customer/{id}/details', 'getCustomerDetails')->name('customer.details')->can('customer.view');
+        Route::get('journal-entries/{journalId}', 'getJournalEntries')->name('journal-entries')->can('account.view');
+
         Route::name('vendor::')->prefix('vendor')->group(function (): void {
             Route::get('', 'vendor')->name('index')->can('vendor.view');
         });
@@ -32,6 +34,9 @@ Route::middleware('auth')->group(function (): void {
         Route::name('general-voucher::')->prefix('general-voucher')->controller(GeneralVoucherController::class)->group(function (): void {
             Route::get('', 'index')->name('index')->can('general voucher.view');
             Route::get('print/{id}', 'print')->name('print')->can('general voucher.view');
+            Route::get('{id}/data', 'getData')->name('data')->can('general voucher.view');
+            Route::post('', 'store')->name('store')->can('general voucher.create');
+            Route::put('{id}', 'update')->name('update')->can('general voucher.edit');
         });
         Route::name('notes::')->prefix('notes')->controller(AccountController::class)->group(function (): void {
             Route::get('/{id?}', 'notes')->name('index')->can('account note.view');

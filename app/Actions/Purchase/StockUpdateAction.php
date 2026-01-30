@@ -73,12 +73,14 @@ class StockUpdateAction
 
     private function handlePurchase(array &$inventoryData, $item, $purchase, $oldQuantity, $oldCost)
     {
-        $inventoryData['quantity'] += $item->quantity;
+        $quantity = $item->base_unit_quantity;
+        $inventoryData['quantity'] += $quantity;
+        $unit_price = round($item->unit_price / ($item->conversion_factor ?? 1), 2);
         $inventoryData['cost'] = $this->calculateWeightedAverageCost(
             $oldCost,
             $oldQuantity,
-            $item->unit_price,
-            $item->quantity,
+            $unit_price,
+            $quantity,
             $inventoryData['quantity']
         );
         $inventoryData['remarks'] = $this->getRemarks('Purchase', $purchase->invoice_no);
@@ -86,12 +88,14 @@ class StockUpdateAction
 
     private function handlePurchaseReversal(array &$inventoryData, $item, $purchase, $purchase_type, $oldQuantity, $oldCost)
     {
-        $inventoryData['quantity'] -= $item->quantity;
+        $quantity = $item->base_unit_quantity;
+        $inventoryData['quantity'] -= $quantity;
+        $unit_price = round($item->unit_price / ($item->conversion_factor ?? 1), 2);
         $inventoryData['cost'] = $this->revertCostCalculation(
             $oldCost,
             $oldQuantity,
-            $item->unit_price,
-            $item->quantity,
+            $unit_price,
+            $quantity,
             $inventoryData['quantity']
         );
         $inventoryData['remarks'] = $this->getRemarks($this->getRemarksPrefix($purchase_type), $purchase->invoice_no);

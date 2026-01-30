@@ -5,6 +5,7 @@ namespace App\Livewire\Account\Vendor;
 use App\Actions\Account\CreateAction;
 use App\Actions\Account\UpdateAction;
 use App\Models\Account;
+use App\Models\AccountCategory;
 use Faker\Factory;
 use Livewire\Component;
 
@@ -56,12 +57,15 @@ class Page extends Component
                 $mobile = rand(90000000, 99999999);
                 $email = $faker->email;
             }
+            $vendorsMaster = AccountCategory::firstOrCreate(['tenant_id' => 1, 'name' => 'Vendors']);
+            $account_category_id = $vendorsMaster->id;
             $this->accounts = [
                 'account_type' => $account_type,
                 'name' => $name,
                 'mobile' => $mobile,
                 'email' => $email,
                 'model' => 'Vendor',
+                'account_category_id' => $account_category_id,
                 'place' => $place ?? '',
                 'credit_period_days' => null,
             ];

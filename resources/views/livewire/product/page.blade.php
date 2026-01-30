@@ -8,7 +8,7 @@
                             <div>
                                 <h5 class="card-title fw-bold mb-3">
                                     <i class="fa fa-tag fs-5 me-2 text-primary"></i>
-                                    Product Details
+                                    {{ ucFirst($type) }} Details
                                 </h5>
                             </div>
                             @if ($type == 'product')
@@ -28,13 +28,13 @@
                                 <div class="col-md-4">
                                     <label for="code" class="form-label fw-medium">
                                         <i class="fa fa-code text-primary me-1 small"></i>
-                                        UPC/EAN/ISBN/SKU <span class="text-danger">*</span>
+                                        UPC/EAN/ISBN/SKU
                                     </label>
                                     <div class="input-group">
                                         <span class="input-group-text bg-light border-primary-subtle">
                                             <i class="fa fa-barcode"></i>
                                         </span>
-                                        {{ html()->input('code')->value('')->class('form-control border-primary-subtle shadow-sm')->required(true)->placeholder('Enter your code')->attribute('wire:model', 'products.code') }}
+                                        {{ html()->input('code')->value('')->class('form-control border-primary-subtle shadow-sm')->placeholder('Enter your code')->attribute('wire:model', 'products.code') }}
                                     </div>
                                 </div>
                                 <div class="col-md-8">
@@ -532,8 +532,8 @@
                                                 @if (isset($table_id) && $type == 'product')
                                                     <li class="nav-item" role="presentation">
                                                         <button class="nav-link @if ($selectedTab == 'Related') active show @endif d-flex align-items-center gap-2" data-bs-toggle="tab"
-                                                            wire:click="tabSelect('Related')" data-bs-target="#tabRelated" type="button" role="tab" aria-controls="profile" aria-selected="false"
-                                                            tabindex="-1">
+                                                            wire:click="tabSelect('Related')" data-bs-target="#tabRelated" type="button" role="tab" aria-controls="profile"
+                                                            aria-selected="false" tabindex="-1">
                                                             <i class="fa fa-link text-info"></i>
                                                             Related Products
                                                         </button>
@@ -664,6 +664,8 @@
                                                                                 <tr>
                                                                                     <th>Convert To (1 ({{ $products['unit']['name'] }}) base unit = ? Sub unit)</th>
                                                                                     <th class="text-end">Conversion Factor</th>
+                                                                                    <th class="text-end">Buying Price</th>
+                                                                                    <th class="text-end">Selling Price</th>
                                                                                     <th>Barcode </th>
                                                                                     <th>Action</th>
                                                                                 </tr>
@@ -673,6 +675,8 @@
                                                                                     <tr>
                                                                                         <td>{{ $item['sub_unit']['name'] }}</td>
                                                                                         <td class="text-end">{{ $item['conversion_factor'] }}</td>
+                                                                                        <td class="text-end">{{ currency($products['cost'] * $item['conversion_factor']) }}</td>
+                                                                                        <td class="text-end">{{ currency($products['mrp'] * $item['conversion_factor']) }}</td>
                                                                                         <td>{{ $item['barcode'] }}</td>
                                                                                         <td>
                                                                                             <i table_id="{{ $item['id'] }}" class="fa fa-pencil fs-5 me-2 pointer product_unit_edit"></i>
@@ -735,7 +739,8 @@
                                                                                             <span class="badge bg-secondary rounded-pill">{{ $item['id'] }}</span>
                                                                                         </td>
                                                                                         <td>
-                                                                                            <a href="{{ route('product::edit', $item['id']) }}" class="text-decoration-none fw-semibold link-primary">
+                                                                                            <a href="{{ route('product::edit', $item['id']) }}"
+                                                                                                class="text-decoration-none fw-semibold link-primary">
                                                                                                 {{ $item['name'] }}
                                                                                             </a>
                                                                                         </td>
@@ -747,7 +752,8 @@
                                                                                         </td>
                                                                                         <td>
                                                                                             @if (isset($item['brand']['name']))
-                                                                                                <span class="badge bg-info bg-opacity-10 text-info border border-info-subtle">{{ $item['brand']['name'] }}</span>
+                                                                                                <span
+                                                                                                    class="badge bg-info bg-opacity-10 text-info border border-info-subtle">{{ $item['brand']['name'] }}</span>
                                                                                             @else
                                                                                                 <span class="text-muted">-</span>
                                                                                             @endif
@@ -769,7 +775,8 @@
                                                                                             <span class="text-dark">{{ currency($item['mrp'] ?? 0) }}</span>
                                                                                         </td>
                                                                                         <td>
-                                                                                            <span class="badge bg-{{ $item['status'] == 'active' ? 'success' : 'secondary' }}">{{ ucFirst($item['status'] ?? 'active') }}</span>
+                                                                                            <span
+                                                                                                class="badge bg-{{ $item['status'] == 'active' ? 'success' : 'secondary' }}">{{ ucFirst($item['status'] ?? 'active') }}</span>
                                                                                         </td>
                                                                                     </tr>
                                                                                 @endforeach
@@ -956,7 +963,6 @@
                     @this.set('products.name_arabic', '');
                     return;
                 }
-
                 // Free Google Translate API
                 fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=ar&dt=t&q=${encodeURI(text)}`)
                     .then(res => res.json())

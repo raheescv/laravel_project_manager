@@ -67,7 +67,7 @@ class CustomerSaleItems extends Component
                 'products.name as product',
                 'users.name as employee',
                 'sale_items.sale_id',
-                'sale_items.quantity',
+                'sale_items.base_unit_quantity',
                 'sale_items.total',
             ])
             ->when($this->employee_id, fn ($q, $value) => $q->where('sale_items.employee_id', $value))
@@ -82,7 +82,7 @@ class CustomerSaleItems extends Component
 
         // Calculate totals
         $this->totalAmount = $query->sum('sale_items.total');
-        $this->totalQuantity = $query->sum('sale_items.quantity');
+        $this->totalQuantity = $query->sum('sale_items.base_unit_quantity');
 
         $items = $query->paginate($this->perPage);
 
