@@ -22,9 +22,10 @@ class GetBrandsAction
             })
             ->withCount([
                 'products' => function ($query) use ($filters, $availableProductsOnly) {
-                    if ($filters->get('size')) {
-                        $query->where('size', $filters->get('size'));
-                    }
+                    $query->when($filters->get('size'), fn ($q, $v) => $q->where('size', $v))
+                        ->when($filters->get('main_category_id'), fn ($q, $v) => $q->where('main_category_id', $v))
+                        ->when($filters->get('sub_category_id'), fn ($q, $v) => $q->where('sub_category_id', $v));
+
                     // When availableProductsOnly is true, only count products with inventory stock
                     if ($availableProductsOnly) {
                         $query->whereHas('inventories', function ($invQ) {
