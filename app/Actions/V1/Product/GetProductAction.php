@@ -2,9 +2,9 @@
 
 namespace App\Actions\V1\Product;
 
+use App\Http\Requests\V1\GetProductRequest;
 use App\Http\Resources\V1\ProductResource;
 use App\Models\Product;
-use App\Http\Requests\V1\GetProductRequest;
 
 class GetProductAction
 {
@@ -15,6 +15,9 @@ class GetProductAction
     {
         $filters = $request->validatedWithDefaults();
         $product = Product::query()->where($filters)->first();
+        if (! $product) {
+            throw new \Exception('Product not found');
+        }
         $product->load([
             'unit:id,name,code',
             'brand:id,name',
