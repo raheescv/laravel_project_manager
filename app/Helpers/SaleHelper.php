@@ -122,7 +122,7 @@ class SaleHelper
         }
         $payments = SalePayment::whereDate('date', date('Y-m-d', strtotime($session->opened_at)))
             ->whereHas('sale', function ($query) use ($session) {
-                $query->where('branch_id', $session->branch_id)->where('sale.status', 'completed');
+                $query->where('branch_id', $session->branch_id)->where('status', 'completed');
             })
             ->get();
         $pendingPayments = [];
