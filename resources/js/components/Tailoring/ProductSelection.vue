@@ -211,6 +211,13 @@ const initializeProductSelect = () => {
 
     // Set initial value if exists
     if (item.value.product_id) {
+        if (!tomSelectInstance.options[item.value.product_id]) {
+            tomSelectInstance.addOption({
+                id: item.value.product_id,
+                name: item.value.product_name || 'Selected Product',
+                mrp: item.value.unit_price || 0
+            })
+        }
         tomSelectInstance.setValue(item.value.product_id, true) // silently
     }
 }
@@ -273,6 +280,13 @@ watch(() => props.modelValue, (newVal) => {
 
         // Sync TomSelect if needed
         if (tomSelectInstance && newVal.product_id && tomSelectInstance.getValue() != newVal.product_id) {
+            if (!tomSelectInstance.options[newVal.product_id]) {
+                tomSelectInstance.addOption({
+                    id: newVal.product_id,
+                    name: newVal.product_name || 'Selected Product',
+                    mrp: newVal.unit_price || 0
+                })
+            }
             tomSelectInstance.setValue(newVal.product_id, true)
         } else if (tomSelectInstance && !newVal.product_id && tomSelectInstance.getValue()) {
             tomSelectInstance.clear(true)

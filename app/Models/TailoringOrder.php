@@ -281,22 +281,34 @@ class TailoringOrder extends Model implements AuditableContracts
 
     public function appendMeasurementsToItems()
     {
+        $this->loadMissing(['measurements.category.activeMeasurements', 'items.category.activeMeasurements']);
         $measurements = $this->measurements->keyBy('tailoring_category_id');
+
         foreach ($this->items as $item) {
             if ($item->tailoring_category_id && isset($measurements[$item->tailoring_category_id])) {
                 $meas = $measurements[$item->tailoring_category_id];
-                $measurementAttributes = $meas->only([
-                    'length', 'shoulder', 'sleeve', 'chest', 'stomach', 'sl_chest',
-                    'sl_so', 'neck', 'bottom', 'mar_size', 'mar_model', 'cuff',
-                    'cuff_size', 'cuff_cloth', 'cuff_model', 'neck_d_button',
-                    'side_pt_size', 'collar', 'collar_size', 'collar_cloth',
-                    'collar_model', 'regal_size', 'knee_loose', 'fp_down',
-                    'fp_model', 'fp_size', 'pen', 'side_pt_model', 'stitching',
-                    'button', 'button_no', 'mobile_pocket',
-                ]);
 
-                foreach ($measurementAttributes as $key => $value) {
-                    $item->setAttribute($key, $value);
+                // Set explicit columns
+                $item->setAttribute('tailoring_category_model_id', $meas->tailoring_category_model_id);
+                $item->setAttribute('tailoring_notes', $meas->tailoring_notes);
+
+                $data = $meas->data;
+                if (! empty($data) && (is_array($data) || is_object($data))) {
+                    $fieldKeys = $meas->category->activeMeasurements->pluck('field_key')->toArray();
+
+                    foreach ($data as $key => $value) {
+                        if ($value === null) {
+                            continue;
+                        }
+
+                        $finalKey = (string) $key;
+                        // If key is numeric, try to find the actual field key by index
+                        if (is_numeric($key) && isset($fieldKeys[(int) $key])) {
+                            $finalKey = $fieldKeys[(int) $key];
+                        }
+
+                        $item->setAttribute($finalKey, $value);
+                    }
                 }
             }
         }

@@ -27,12 +27,12 @@
                     <h6 class="text-[0.6rem] font-black text-slate-400 uppercase tracking-[0.15em]">Dimensions</h6>
                 </div>
                 <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden divide-y divide-slate-100">
-                    <div v-for="key in groups.dimensions" :key="key" class="flex items-stretch hover:bg-slate-50/50 transition-colors">
+                    <div v-for="m in getFieldsBySection(sectionGroups.dimensions)" :key="m.id" class="flex items-stretch hover:bg-slate-50/50 transition-colors">
                         <div class="w-1/2 bg-slate-50/50 px-3 py-2 text-[0.7rem] font-bold text-slate-500 border-r border-slate-100 flex items-center capitalize">
-                            {{ formatLabel(key) }}
+                            {{ m.label }}
                         </div>
-                        <div class="w-1/2 px-3 py-2 text-[0.7rem] font-black text-slate-800 flex items-center" :class="{ 'opacity-30': !getValue(key) }">
-                            {{ getValue(key) ?? '-' }}
+                        <div class="w-1/2 px-3 py-2 text-[0.7rem] font-black text-slate-800 flex items-center" :class="{ 'opacity-30': !getValue(m.field_key) }">
+                            {{ getValue(m.field_key) ?? '-' }}
                         </div>
                     </div>
                 </div>
@@ -45,12 +45,12 @@
                     <h6 class="text-[0.6rem] font-black text-slate-400 uppercase tracking-[0.15em]">Components</h6>
                 </div>
                 <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden divide-y divide-slate-100">
-                    <div v-for="key in groups.components" :key="key" class="flex items-stretch hover:bg-slate-50/50 transition-colors">
+                    <div v-for="m in getFieldsBySection(sectionGroups.components)" :key="m.id" class="flex items-stretch hover:bg-slate-50/50 transition-colors">
                         <div class="w-1/2 bg-slate-50/50 px-3 py-2 text-[0.7rem] font-bold text-slate-500 border-r border-slate-100 flex items-center capitalize">
-                            {{ formatLabel(key) }}
+                            {{ m.label }}
                         </div>
-                        <div class="w-1/2 px-3 py-2 text-[0.7rem] font-black text-slate-800 flex items-center" :class="{ 'opacity-30': !getValue(key) }">
-                            {{ getValue(key) ?? '-' }}
+                        <div class="w-1/2 px-3 py-2 text-[0.7rem] font-black text-slate-800 flex items-center" :class="{ 'opacity-30': !getValue(m.field_key) }">
+                            {{ getValue(m.field_key) ?? '-' }}
                         </div>
                     </div>
                 </div>
@@ -64,12 +64,12 @@
                 </div>
                 <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
                     <div class="grid grid-cols-1 divide-y divide-slate-100">
-                        <div v-for="key in groups.styles" :key="key" class="flex items-stretch hover:bg-slate-50/50 transition-colors">
+                        <div v-for="m in getFieldsBySection(sectionGroups.styles)" :key="m.id" class="flex items-stretch hover:bg-slate-50/50 transition-colors">
                             <div class="w-1/2 bg-slate-50/50 px-3 py-2 text-[0.7rem] font-bold text-slate-500 border-r border-slate-100 flex items-center capitalize">
-                                {{ formatLabel(key) }}
+                                {{ m.label }}
                             </div>
-                            <div class="w-1/2 px-3 py-2 text-[0.7rem] font-black text-slate-800 flex items-center" :class="{ 'opacity-30': !getValue(key) }">
-                                {{ getValue(key) ?? '-' }}
+                            <div class="w-1/2 px-3 py-2 text-[0.7rem] font-black text-slate-800 flex items-center" :class="{ 'opacity-30': !getValue(m.field_key) }">
+                                {{ getValue(m.field_key) ?? '-' }}
                             </div>
                         </div>
                     </div>
@@ -110,38 +110,36 @@ const modelName = computed(() => {
            'Standard'
 })
 
+const getFieldsBySection = (sectionId) => {
+    if (!props.item?.category?.active_measurements) return []
+    return props.item.category.active_measurements
+        .filter(m => m.section === sectionId)
+        .sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0))
+}
+
 const getValue = (key) => {
     const val = props.item[key];
     if (val === null || val === undefined || val === '') return null;
     return val;
 }
 
-const groups = {
-    dimensions: ['length', 'shoulder', 'sleeve', 'chest', 'stomach', 'sl_chest', 'sl_so', 'neck', 'bottom'],
-    components: ['mar_size', 'cuff_size', 'collar_size', 'regal_size', 'knee_loose', 'fp_size', 'side_pt_size', 'button_no', 'neck_d_button'],
-    styles: ['mar_model', 'cuff', 'cuff_cloth', 'cuff_model', 'collar', 'collar_cloth', 'collar_model', 'fp_down', 'fp_model', 'pen', 'side_pt_model', 'stitching', 'button', 'mobile_pocket']
+// Map sections to the UI columns
+const sectionGroups = {
+    dimensions: 'basic_body',
+    components: 'collar_cuff',
+    styles: 'specifications'
 }
 
 const formatLabel = (key) => {
-    const labels = {
-        'sl_chest': 'Sleeve Chest',
-        'sl_so': 'Sleeve Shoulder',
-        'mar_size': 'Mar Size',
-        'mar_model': 'Mar Model',
-        'cuff_cloth': 'Cuff Cloth',
-        'cuff_model': 'Cuff Model',
-        'collar_cloth': 'Collar Cloth',
-        'collar_model': 'Collar Model',
-        'fp_down': 'FP Down',
-        'fp_model': 'FP Model',
-        'fp_size': 'FP Size',
-        'side_pt_size': 'Side Pkt Size',
-        'side_pt_model': 'Side Pkt Model',
-        'neck_d_button': 'Neck D Button',
-        'button_no': 'Btn No',
-        'mobile_pocket': 'Mob Pkt'
-    }
-    return labels[key] || key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())
+    const config = props.item?.category?.active_measurements?.find(m => m.field_key === String(key))
+    if (config) return config.label
+
+    // Fallback for special keys or undefined configs
+    if (key === 'tailoring_notes') return 'Special Instructions'
+    
+    return String(key)
+        .replace(/_/g, ' ')
+        .replace(/\b\w/g, l => l.toUpperCase())
 }
 </script>
 

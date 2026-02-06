@@ -18,55 +18,21 @@ class TailoringOrderMeasurement extends Model implements AuditableContracts
     protected $fillable = [
         'tenant_id',
         'tailoring_order_id',
+
         'tailoring_category_id',
         'tailoring_category_model_id',
-        // Measurements
-        'length',
-        'shoulder',
-        'sleeve',
-        'chest',
-        'stomach',
-        'sl_chest',
-        'sl_so',
-        'neck',
-        'bottom',
-        'mar_size',
-        'mar_model',
-        'cuff',
-        'cuff_size',
-        'cuff_cloth',
-        'cuff_model',
-        'neck_d_button',
-        'side_pt_size',
-        'collar',
-        'collar_size',
-        'collar_cloth',
-        'collar_model',
-        'regal_size',
-        'knee_loose',
-        'fp_down',
-        'fp_model',
-        'fp_size',
-        'pen',
-        'side_pt_model',
-        'stitching',
-        'button',
-        'button_no',
-        'mobile_pocket',
+
+        'data',
+
         'tailoring_notes',
+
         'created_by',
         'updated_by',
         'deleted_by',
     ];
 
     protected $casts = [
-        'length' => 'decimal:2',
-        'shoulder' => 'decimal:2',
-        'sleeve' => 'decimal:2',
-        'chest' => 'decimal:2',
-        'sl_chest' => 'decimal:2',
-        'sl_so' => 'decimal:2',
-        'neck' => 'decimal:2',
+        'data' => 'array',
     ];
 
     protected static function booted()

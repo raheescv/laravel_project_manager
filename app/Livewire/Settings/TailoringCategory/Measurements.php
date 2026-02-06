@@ -4,7 +4,6 @@ namespace App\Livewire\Settings\TailoringCategory;
 
 use App\Models\TailoringCategory;
 use App\Models\TailoringCategoryMeasurement;
-use App\Models\TailoringMeasurementOption;
 use Livewire\Component;
 
 class Measurements extends Component
@@ -39,6 +38,16 @@ class Measurements extends Component
         'SelectCategoryForMeasurements' => 'setCategory',
         'RefreshTailoringCategoryMeasurementTable' => 'loadMeasurements',
     ];
+
+    public function mount($id = null): void
+    {
+        if ($id !== null) {
+            $categoryId = is_array($id) ? ($id['categoryId'] ?? $id['id'] ?? null) : $id;
+            if ($categoryId) {
+                $this->setCategory($categoryId);
+            }
+        }
+    }
 
     public function setCategory($categoryId = null)
     {

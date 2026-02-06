@@ -340,47 +340,29 @@
                 </div>
 
                 <!-- Measure Grid -->
-                <div class="row g-2 mb-3">
-                    @php $measures1 = ['length' => 'Length', 'shoulder' => '(Shoulder)', 'sleeve' => '(Sleeve)', 'chest' => '(Chest)', 'stomach' => '(Stomach)', 'sl_chest' => '(S-L Chest)']; @endphp
-                    @foreach ($measures1 as $key => $lbl)
-                        <div class="col-2">
-                            <div class="d-flex border border-dark rounded overflow-hidden" style="height: 38px;">
-                                <div class="bg-light border-end border-dark d-flex align-items-center justify-content-center fw-bold" style="width: 40%;">{{ $group['measurements']->$key }}</div>
-                                <div class="p-1 px-2 small fw-bold d-flex align-items-center" style="width: 60%; line-height: 1.1;">{{ $lbl }}</div>
+                @php
+                    $activeMeasurements = $group['category']->activeMeasurements ?? collect();
+                    $gridFields = $activeMeasurements->where('section', 'basic_body')->sortBy('sort_order');
+                @endphp
+
+                @foreach ($gridFields->chunk(6) as $chunk)
+                    <div class="row g-2 mb-3">
+                        @foreach ($chunk as $m)
+                            <div class="col-2">
+                                <div class="d-flex border border-dark rounded overflow-hidden" style="height: 38px;">
+                                    <div class="bg-light border-end border-dark d-flex align-items-center justify-content-center fw-bold" style="width: 40%;">{{ $group['measurements']->{$m->field_key} }}</div>
+                                    <div class="p-1 px-2 small fw-bold d-flex align-items-center" style="width: 60%; line-height: 1.1;">{{ $m->label }}</div>
+                                </div>
                             </div>
-                        </div>
-                    @endforeach
-                </div>
-                <div class="row g-2 mb-3">
-                    @php $measures2 = ['mar_size' => 'Mar Size', 'regal_size' => '(Regal Size)', 'knee_loose' => '(Knee Loose)', 'fp_down' => '(FP Down)', 'bottom' => '(Bottom)', 'neck' => '(Neck)']; @endphp
-                    @foreach ($measures2 as $key => $lbl)
-                        <div class="col-2">
-                            <div class="d-flex border border-dark rounded overflow-hidden" style="height: 38px;">
-                                <div class="bg-light border-end border-dark d-flex align-items-center justify-content-center fw-bold" style="width: 40%;">{{ $group['measurements']->$key }}</div>
-                                <div class="p-1 px-2 small fw-bold d-flex align-items-center" style="width: 60%; line-height: 1.1;">{{ $lbl }}</div>
-                            </div>
-                        </div>
-                    @endforeach
-                </div>
+                        @endforeach
+                    </div>
+                @endforeach
 
                 <div class="row g-2 mb-4">
-                    <div class="col-8">
-                        <div class="d-flex align-items-center fw-bold border-bottom border-dark pb-1" style="height: 38px;">
+                    <div class="col-12">
+                        <div class="d-flex align-items-center fw-bold border-bottom border-dark pb-1" style="min-height: 38px;">
                             <span class="me-2">Notes:</span>
                             <span class="flex-grow-1 border-bottom border-dark border-opacity-25">{{ $group['measurements']->tailoring_notes }}</span>
-                        </div>
-                    </div>
-                    <div class="col-2">
-                        <div class="d-flex border border-dark rounded overflow-hidden" style="height: 38px;">
-                            <div class="bg-light border-end border-dark d-flex align-items-center justify-content-center fw-bold" style="width: 40%;">{{ $group['measurements']->fp_size }}</div>
-                            <div class="p-1 px-2 small fw-bold d-flex align-items-center" style="width: 60%; line-height: 1.1;">(FP Size)</div>
-                        </div>
-                    </div>
-                    <div class="col-2">
-                        <div class="d-flex border border-dark rounded overflow-hidden" style="height: 38px;">
-                            <div class="bg-light border-end border-dark d-flex align-items-center justify-content-center fw-bold" style="width: 40%;">{{ $group['measurements']->neck_d_button }}
-                            </div>
-                            <div class="p-1 px-2 small fw-bold d-flex align-items-center" style="width: 60%; line-height: 1.1;">(Button)</div>
                         </div>
                     </div>
                 </div>
@@ -414,26 +396,21 @@
                 </table>
 
                 <!-- Info Bar -->
-                <div class="row g-0 border border-dark border-bottom-0 bg-light small fw-bold text-center">
-                    <div class="col p-2 border-end border-dark">MAR Model</div>
-                    <div class="col p-2 border-end border-dark">FP Model</div>
-                    <div class="col p-2 border-end border-dark">Pen</div>
-                    <div class="col p-2 border-end border-dark">Mob Pkt</div>
-                    <div class="col p-2 border-end border-dark">Btn No</div>
-                    <div class="col p-2 border-end border-dark">Side PT</div>
-                    <div class="col p-2 border-end border-dark">Size</div>
-                    <div class="col p-2">Cuff</div>
-                </div>
-                <div class="row g-0 border border-dark text-center fw-bold mb-4" style="min-height: 34px;">
-                    <div class="col py-2 border-end border-dark">{{ $group['measurements']->mar_model ?: '-' }}</div>
-                    <div class="col py-2 border-end border-dark">{{ $group['measurements']->fp_model ?: '-' }}</div>
-                    <div class="col py-2 border-end border-dark">{{ $group['measurements']->pen ?: '-' }}</div>
-                    <div class="col py-2 border-end border-dark">{{ $group['measurements']->mobile_pocket ?: '-' }}</div>
-                    <div class="col py-2 border-end border-dark">{{ $group['measurements']->button_no ?: '-' }}</div>
-                    <div class="col py-2 border-end border-dark">{{ $group['measurements']->side_pt_model ?: '-' }}</div>
-                    <div class="col py-2 border-end border-dark">{{ $group['measurements']->side_pt_size ?: '-' }}</div>
-                    <div class="col py-2">{{ $group['measurements']->cuff ?: '-' }}</div>
-                </div>
+                @php
+                    $infoFields = $activeMeasurements->where('section', '!=', 'basic_body')->sortBy('sort_order');
+                @endphp
+                @foreach ($infoFields->chunk(8) as $chunk)
+                    <div class="row g-0 border border-dark border-bottom-0 bg-light small fw-bold text-center">
+                        @foreach ($chunk as $m)
+                            <div class="col p-2 border-end border-dark">{{ $m->label }}</div>
+                        @endforeach
+                    </div>
+                    <div class="row g-0 border border-dark text-center fw-bold mb-4" style="min-height: 34px;">
+                        @foreach ($chunk as $m)
+                            <div class="col py-2 border-end border-dark">{{ $group['measurements']->{$m->field_key} ?: '-' }}</div>
+                        @endforeach
+                    </div>
+                @endforeach
 
                 <div class="row mt-5 pt-3">
                     <div class="col-8">

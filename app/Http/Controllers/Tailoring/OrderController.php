@@ -21,9 +21,11 @@ use App\Models\CustomerType;
 use App\Models\Product;
 use App\Models\Rack;
 use App\Models\TailoringCategory;
+use App\Models\TailoringCategoryMeasurement;
 use App\Models\TailoringCategoryModel;
 use App\Models\TailoringMeasurementOption;
 use App\Models\TailoringOrder;
+use App\Models\TailoringOrderMeasurement;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -45,7 +47,7 @@ class OrderController extends Controller
 
     public function page($id = null)
     {
-        $categories = TailoringCategory::with('activeModels')->active()->ordered()->get();
+        $categories = TailoringCategory::with(['activeModels:id,tailoring_category_id,name', 'activeMeasurements:id,tailoring_category_id,field_key,label,field_type,options_source,section,sort_order'])->active()->ordered()->get();
         $measurementOptions = $this->getMeasurementOptions();
         $salesmen = User::employee()->pluck('name', 'id')->toArray();
 
@@ -85,7 +87,6 @@ class OrderController extends Controller
                 $orderData = $result['data'];
             }
         }
-
         $paymentMethodIds = cache('payment_methods', []);
         $paymentMethods = Account::whereIn('id', $paymentMethodIds)->get(['id', 'name'])->toArray();
 
@@ -93,8 +94,7 @@ class OrderController extends Controller
         $customerTypes = CustomerType::pluck('name', 'id')->toArray();
 
         $countries = Country::pluck('name', 'name')->toArray();
-
-        return Inertia::render('Tailoring/Order', [
+        $data = [
             'order' => $orderData,
             'categories' => $categories,
             'measurementOptions' => $measurementOptions,
@@ -103,20 +103,36 @@ class OrderController extends Controller
             'paymentMethods' => $paymentMethods,
             'customerTypes' => $customerTypes,
             'countries' => $countries,
-        ]);
+        ];
+
+        return Inertia::render('Tailoring/Order', $data);
     }
 
     private function getMeasurementOptions(): array
     {
-        $types = [
-            'mar_model', 'cuff', 'cuff_cloth', 'cuff_model',
-            'collar', 'collar_cloth', 'collar_model', 'fp_model',
-            'pen', 'side_pt_model', 'stitching', 'button',
-        ];
+        // Get all unique options_source from TailoringCategoryMeasurement
+        $types = TailoringCategoryMeasurement::whereNotNull('options_source')
+            ->distinct()
+            ->pluck('options_source')
+            ->toArray();
 
         $options = [];
         foreach ($types as $type) {
-            $options[$type] = TailoringMeasurementOption::getOptionsByType($type);
+            // Get from dedicated table
+            $tableOptions = array_values(TailoringMeasurementOption::getOptionsByType($type));
+
+            // Also get from history if some are missing (MySQL JSON path syntax)
+            $historyOptions = TailoringOrderMeasurement::whereNotNull("data->{$type}")
+                ->distinct()
+                ->pluck("data->{$type}")
+                ->filter()
+                ->map(fn ($v) => (string) $v)
+                ->toArray();
+
+            $merged = array_unique(array_merge($tableOptions, $historyOptions));
+            sort($merged);
+
+            $options[$type] = array_values($merged);
         }
 
         return $options;
@@ -219,7 +235,7 @@ class OrderController extends Controller
     // API Routes
     public function getCategories(): JsonResponse
     {
-        $categories = TailoringCategory::with('activeModels')->active()->ordered()->get();
+        $categories = TailoringCategory::with(['activeModels', 'activeMeasurements'])->active()->ordered()->get();
 
         return response()->json([
             'success' => true,
@@ -308,8 +324,18 @@ class OrderController extends Controller
 
     public function addMeasurementOption(Request $request): JsonResponse
     {
+        $validTypes = TailoringCategoryMeasurement::whereNotNull('options_source')
+            ->distinct()
+            ->pluck('options_source')
+            ->toArray();
+
+        // Fallback for safety
+        if (empty($validTypes)) {
+            $validTypes = ['mar_model', 'cuff', 'cuff_cloth', 'cuff_model', 'collar', 'collar_cloth', 'collar_model', 'fp_model', 'pen', 'side_pt_model', 'stitching', 'button'];
+        }
+
         $request->validate([
-            'option_type' => 'required|in:mar_model,cuff,cuff_cloth,cuff_model,collar,collar_cloth,collar_model,fp_model,pen,side_pt_model,stitching,button',
+            'option_type' => 'required|in:'.implode(',', $validTypes),
             'value' => 'required|string|max:255',
         ]);
 
@@ -548,10 +574,9 @@ class OrderController extends Controller
         $item->updateCompletion($request->all());
 
         // Reload with relationships and append measurements
-        $item = $item->fresh(['category', 'categoryModel', 'product', 'unit', 'tailor']);
-        $order = $item->order()->with('measurements')->first();
+        $item = $item->fresh(['category' => fn ($q) => $q->with('activeMeasurements'), 'categoryModel', 'product', 'unit', 'tailor']);
+        $order = $item->order()->with(['measurements.category.activeMeasurements'])->first();
 
-        // Mock items collection for appendMeasurementsToItems helper
         $order->setRelation('items', collect([$item]));
         $order->appendMeasurementsToItems();
         $updatedItem = $order->items->first();

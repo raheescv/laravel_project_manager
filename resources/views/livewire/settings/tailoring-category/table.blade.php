@@ -124,28 +124,12 @@
                 $(document).on('click', '.manage-models', function() {
                     var categoryId = $(this).data('category-id');
                     Livewire.dispatch('SelectCategoryForModels', { id: categoryId });
-                    
-                    // Switch to models tab
-                    var tabEl = document.querySelector('#models-tab');
-                    if (tabEl) {
-                        var tab = new bootstrap.Tab(tabEl);
-                        tab.show();
-                    }
-                    
-                    document.getElementById('tailoring-settings-tabs-card')?.scrollIntoView({ behavior: 'smooth' });
+                    document.getElementById('category-models-card')?.scrollIntoView({ behavior: 'smooth' });
                 });
                 $(document).on('click', '.manage-measurements', function() {
                     var categoryId = $(this).data('category-id');
                     Livewire.dispatch('SelectCategoryForMeasurements', { categoryId: categoryId });
-                    
-                    // Switch to measurements tab
-                    var tabEl = document.querySelector('#measurements-tab');
-                    if (tabEl) {
-                        var tab = new bootstrap.Tab(tabEl);
-                        tab.show();
-                    }
-                    
-                    document.getElementById('tailoring-settings-tabs-card')?.scrollIntoView({ behavior: 'smooth' });
+                    document.getElementById('category-measurements-card')?.scrollIntoView({ behavior: 'smooth' });
                 });
             });
         </script>

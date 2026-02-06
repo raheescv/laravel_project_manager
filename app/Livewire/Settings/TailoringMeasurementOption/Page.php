@@ -4,6 +4,7 @@ namespace App\Livewire\Settings\TailoringMeasurementOption;
 
 use App\Actions\Settings\TailoringMeasurementOption\CreateAction;
 use App\Actions\Settings\TailoringMeasurementOption\UpdateAction;
+use App\Models\TailoringCategoryMeasurement;
 use App\Models\TailoringMeasurementOption;
 use Illuminate\Validation\Rule;
 use Livewire\Component;
@@ -15,11 +16,13 @@ class Page extends Component
         'TailoringMeasurementOption-Page-Update-Component' => 'edit',
     ];
 
+    public $optionTypes = [];
+
     public $options;
 
     public $table_id;
 
-    public function create($payload = null)
+    public function create()
     {
         $this->mount();
         $this->options = [
@@ -29,7 +32,7 @@ class Page extends Component
         $this->dispatch('ToggleTailoringMeasurementOptionModal');
     }
 
-    public function edit($id = null)
+    public function edit($id)
     {
         $tableId = is_array($id) ? ($id['id'] ?? $id) : $id;
         $this->mount($tableId);
@@ -48,6 +51,7 @@ class Page extends Component
             $option = TailoringMeasurementOption::find($this->table_id);
             $this->options = $option->toArray();
         }
+        $this->optionTypes = TailoringCategoryMeasurement::pluck('options_source', 'options_source')->toArray();
     }
 
     protected function rules()
@@ -55,7 +59,7 @@ class Page extends Component
         $optionType = $this->options['option_type'] ?? null;
 
         return [
-            'options.option_type' => ['required', 'string', 'max:255'],
+            'options.option_type' => ['required'],
             'options.value' => [
                 'required',
                 'string',

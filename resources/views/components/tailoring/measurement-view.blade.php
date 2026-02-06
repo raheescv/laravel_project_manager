@@ -3,34 +3,17 @@
 @php
     $modelName = $item->categoryModel?->name ?? ($item->category_model?->name ?? ($item->tailoring_category_model_name ?? 'Standard'));
 
-    $groups = [
-        'dimensions' => ['length', 'shoulder', 'sleeve', 'chest', 'stomach', 'sl_chest', 'sl_so', 'neck', 'bottom'],
-        'components' => ['mar_size', 'cuff_size', 'collar_size', 'regal_size', 'knee_loose', 'fp_size', 'side_pt_size', 'button_no', 'neck_d_button'],
-        'styles' => ['mar_model', 'cuff', 'cuff_cloth', 'cuff_model', 'collar', 'collar_cloth', 'collar_model', 'fp_down', 'fp_model', 'pen', 'side_pt_model', 'stitching', 'button', 'mobile_pocket'],
-    ];
+    $activeMeasurements = $item->category?->activeMeasurements ?? collect();
 
-    $labels = [
-        'sl_chest' => 'Sleeve Chest',
-        'sl_so' => 'Sleeve Shoulder',
-        'mar_size' => 'Mar Size',
-        'mar_model' => 'Mar Model',
-        'cuff_cloth' => 'Cuff Cloth',
-        'cuff_model' => 'Cuff Model',
-        'collar_cloth' => 'Collar Cloth',
-        'collar_model' => 'Collar Model',
-        'fp_down' => 'FP Down',
-        'fp_model' => 'FP Model',
-        'fp_size' => 'FP Size',
-        'side_pt_size' => 'Side Pkt Size',
-        'side_pt_model' => 'Side Pkt Model',
-        'neck_d_button' => 'Neck D Button',
-        'button_no' => 'Btn No',
-        'mobile_pocket' => 'Mob Pkt',
-    ];
-
-    $formatLabel = function ($key) use ($labels) {
-        return $labels[$key] ?? str_replace('_', ' ', ucwords($key, '_'));
+    $getFieldsBySection = function ($sectionId) use ($activeMeasurements) {
+        return $activeMeasurements->where('section', $sectionId)->sortBy('sort_order');
     };
+
+    $sectionGroups = [
+        'dimensions' => 'basic_body',
+        'components' => 'collar_cuff',
+        'styles' => 'specifications',
+    ];
 
     $getValue = function ($key) use ($item) {
         $val = $item->$key ?? null;
@@ -68,13 +51,13 @@
                     DIMENSIONS
                 </div>
                 <div class="card shadow-sm rounded-3 overflow-hidden border">
-                    @foreach ($groups['dimensions'] as $key)
+                    @foreach ($getFieldsBySection($sectionGroups['dimensions']) as $m)
                         <div class="row g-0 border-bottom @if ($loop->last) border-bottom-0 @endif">
                             <div class="col-7 bg-light p-2 fw-semibold text-muted small border-end d-flex align-items-center">
-                                {{ $formatLabel($key) }}
+                                {{ $m->label }}
                             </div>
-                            <div class="col-5 p-2 fw-bold text-dark small d-flex align-items-center {{ !$getValue($key) ? 'text-muted opacity-50' : '' }}">
-                                {{ $getValue($key) ?? '-' }}
+                            <div class="col-5 p-2 fw-bold text-dark small d-flex align-items-center {{ !$getValue($m->field_key) ? 'text-muted opacity-50' : '' }}">
+                                {{ $getValue($m->field_key) ?? '-' }}
                             </div>
                         </div>
                     @endforeach
@@ -90,13 +73,13 @@
                     COMPONENTS
                 </div>
                 <div class="card shadow-sm rounded-3 overflow-hidden border">
-                    @foreach ($groups['components'] as $key)
+                    @foreach ($getFieldsBySection($sectionGroups['components']) as $m)
                         <div class="row g-0 border-bottom @if ($loop->last) border-bottom-0 @endif">
                             <div class="col-7 bg-light p-2 fw-semibold text-muted small border-end d-flex align-items-center">
-                                {{ $formatLabel($key) }}
+                                {{ $m->label }}
                             </div>
-                            <div class="col-5 p-2 fw-bold text-dark small d-flex align-items-center {{ !$getValue($key) ? 'text-muted opacity-50' : '' }}">
-                                {{ $getValue($key) ?? '-' }}
+                            <div class="col-5 p-2 fw-bold text-dark small d-flex align-items-center {{ !$getValue($m->field_key) ? 'text-muted opacity-50' : '' }}">
+                                {{ $getValue($m->field_key) ?? '-' }}
                             </div>
                         </div>
                     @endforeach
@@ -113,26 +96,30 @@
                 </div>
                 <div class="card shadow-sm rounded-3 overflow-hidden border">
                     <div class="row g-0">
+                        @php
+                            $styleFields = $getFieldsBySection($sectionGroups['styles']);
+                            $halfCount = ceil($styleFields->count() / 2);
+                        @endphp
                         <div class="col-sm-6 border-end">
-                            @foreach (array_slice($groups['styles'], 0, 7) as $key)
-                                <div class="row g-0 border-bottom @if ($loop->last && count($groups['styles']) <= 7) border-bottom-0 @endif">
+                            @foreach ($styleFields->take($halfCount) as $m)
+                                <div class="row g-0 border-bottom @if ($loop->last && $styleFields->count() <= $halfCount) border-bottom-0 @endif">
                                     <div class="col-7 bg-light p-2 fw-semibold text-muted small border-end d-flex align-items-center">
-                                        {{ $formatLabel($key) }}
+                                        {{ $m->label }}
                                     </div>
-                                    <div class="col-5 p-2 fw-bold text-dark small d-flex align-items-center {{ !$getValue($key) ? 'text-muted opacity-50' : '' }}">
-                                        {{ $getValue($key) ?? '-' }}
+                                    <div class="col-5 p-2 fw-bold text-dark small d-flex align-items-center {{ !$getValue($m->field_key) ? 'text-muted opacity-50' : '' }}">
+                                        {{ $getValue($m->field_key) ?? '-' }}
                                     </div>
                                 </div>
                             @endforeach
                         </div>
                         <div class="col-sm-6">
-                            @foreach (array_slice($groups['styles'], 7) as $key)
+                            @foreach ($styleFields->skip($halfCount) as $m)
                                 <div class="row g-0 border-bottom @if ($loop->last) border-bottom-0 @endif">
                                     <div class="col-7 bg-light p-2 fw-semibold text-muted small border-end d-flex align-items-center">
-                                        {{ $formatLabel($key) }}
+                                        {{ $m->label }}
                                     </div>
-                                    <div class="col-5 p-2 fw-bold text-dark small d-flex align-items-center {{ !$getValue($key) ? 'text-muted opacity-50' : '' }}">
-                                        {{ $getValue($key) ?? '-' }}
+                                    <div class="col-5 p-2 fw-bold text-dark small d-flex align-items-center {{ !$getValue($m->field_key) ? 'text-muted opacity-50' : '' }}">
+                                        {{ $getValue($m->field_key) ?? '-' }}
                                     </div>
                                 </div>
                             @endforeach

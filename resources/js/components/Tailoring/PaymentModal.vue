@@ -41,12 +41,11 @@
                             <div class="row g-3 align-items-end">
                                 <div class="col-md-4">
                                     <label class="form-label small text-muted fw-bold">Payment Method</label>
-                                    <select v-model="paymentForm.payment_method_id" class="form-select">
-                                        <option value="">Select Method</option>
-                                        <option v-for="method in paymentMethods" :key="method.id" :value="method.id">
-                                            {{ method.name }}
-                                        </option>
-                                    </select>
+                                    <VSelect 
+                                        v-model="paymentForm.payment_method_id"
+                                        :options="paymentMethods.map(m => ({ value: m.id, label: m.name }))"
+                                        placeholder="Select Method"
+                                    />
                                 </div>
                                 <div class="col-md-4">
                                     <label class="form-label small text-muted fw-bold">Amount</label>
@@ -119,6 +118,7 @@
 <script setup>
 import { ref, watch } from 'vue'
 import { useToast } from 'vue-toastification'
+import VSelect from '@/components/VSelect.vue'
 
 const props = defineProps({
     show: Boolean,

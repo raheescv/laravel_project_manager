@@ -2,6 +2,7 @@
 
 namespace App\Actions\Tailoring\Order\Item;
 
+use App\Models\TailoringCategoryMeasurement;
 use App\Models\TailoringOrderItem;
 use App\Models\TailoringOrderMeasurement;
 use Exception;
@@ -15,12 +16,41 @@ class AddTailoringItemAction
 
             // save measurement
             if (! empty($data['tailoring_category_id'])) {
-                $measurement = TailoringOrderMeasurement::updateOrCreate(
+                $categoryId = $data['tailoring_category_id'];
+                // Fetch only keys that are defined for this category
+                $activeKeys = TailoringCategoryMeasurement::where('tailoring_category_id', $categoryId)
+                    ->where('is_active', true)
+                    ->pluck('field_key')
+                    ->toArray();
+
+                $measurementData = [];
+                $dynamicData = [];
+
+                if (isset($data['tailoring_category_model_id'])) {
+                    $measurementData['tailoring_category_model_id'] = $data['tailoring_category_model_id'];
+                }
+
+                if (isset($data['tailoring_notes'])) {
+                    $measurementData['tailoring_notes'] = $data['tailoring_notes'];
+                }
+                foreach ($activeKeys as $key) {
+                    if (array_key_exists($key, $data)) {
+                        $value = $data[$key];
+                        if ($key === 'tailoring_category_model_id' || $key === 'tailoring_notes' || $key === 'id' || $key === 'tailoring_order_id' || $key === 'tailoring_category_id') {
+                            continue;
+                        }
+                        $dynamicData[(string) $key] = $value;
+                    }
+                }
+
+                $measurementData['data'] = (object) $dynamicData;
+
+                TailoringOrderMeasurement::updateOrCreate(
                     [
                         'tailoring_order_id' => $data['tailoring_order_id'],
-                        'tailoring_category_id' => $data['tailoring_category_id'],
+                        'tailoring_category_id' => $categoryId,
                     ],
-                    $data
+                    $measurementData
                 );
             }
 

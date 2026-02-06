@@ -34,8 +34,11 @@ class Table extends Component
         'SelectCategoryForModels' => 'selectCategory',
     ];
 
-    public function selectCategory($id = null)
+    public function selectCategory($id)
     {
+        if (is_array($id)) {
+            $id = $id['id'] ?? $id['categoryId'] ?? reset($id);
+        }
         $this->categoryId = $id;
         $this->resetPage();
     }

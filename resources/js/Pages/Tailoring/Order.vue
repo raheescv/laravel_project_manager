@@ -104,6 +104,7 @@
 
                                         <div class="bg-slate-50/50 rounded-xl p-3 md:p-4 border border-slate-100">
                                             <MeasurementForm v-if="measurements[activeCategoryTab]"
+                                                :key="activeCategoryTab + '-' + (editingItemIds[activeCategoryTab] || 'new')"
                                                 v-model="measurements[activeCategoryTab]"
                                                 :category="getCategory(activeCategoryTab)"
                                                 :measurementOptions="measurementOptions"
@@ -301,7 +302,16 @@ const handleCategorySelection = (categoryIds) => {
     // Initialize state for new categories
     categoryIds.forEach(id => {
         if (!measurements.value[id]) measurements.value[id] = {}
-        if (!currentItems.value[id]) currentItems.value[id] = {}
+        if (!currentItems.value[id]) currentItems.value[id] = {
+            product_id: null,
+            product_name: '',
+            product_color: '',
+            quantity: 1,
+            unit_price: 0,
+            stitch_rate: 0,
+            tax: 0,
+            total: 0,
+        }
     })
 
     // Set active tab logic
@@ -372,19 +382,16 @@ const handleAddItem = async (itemData, categoryId) => {
         if (response.data.success) {
             const calculatedData = response.data.data
 
-            // Define keys to extract for measurements
-            const measurementKeys = [
-                'length', 'shoulder', 'sleeve', 'chest', 'stomach', 'sl_chest', 'sl_so', 'neck',
-                'bottom', 'mar_size', 'mar_model', 'cuff', 'cuff_size', 'cuff_cloth', 'cuff_model',
-                'neck_d_button', 'side_pt_size', 'collar', 'collar_size', 'collar_cloth', 'collar_model',
-                'regal_size', 'knee_loose', 'fp_down', 'fp_model', 'fp_size', 'pen', 'side_pt_model',
-                'stitching', 'button', 'button_no', 'mobile_pocket', 'tailoring_notes',
-                'tailoring_category_model_id', 'tailoring_category_model_name'
-            ]
+            // Dynamic keys from category configuration
+            const measurementKeys = (category.active_measurements || []).map(m => m.field_key)
+            
+            // Add mandatory hidden keys
+            const additionalKeys = ['tailoring_category_model_id', 'tailoring_category_model_name', 'tailoring_notes']
+            const allKeys = [...new Set([...measurementKeys, ...additionalKeys])]
 
             // Filter measurements only
             const filteredMeasurements = {}
-            measurementKeys.forEach(key => {
+            allKeys.forEach(key => {
                 if (itemMeasurements[key] !== undefined) {
                     filteredMeasurements[key] = itemMeasurements[key]
                 }
@@ -481,23 +488,29 @@ const calculateItemAmount = async (item, categoryId) => {
 }
 
 const handleEditItem = (item) => {
+    const catId = item.tailoring_category_id
+    
     // Switch to the correct category tab
-    if (!selectedCategories.value.includes(item.tailoring_category_id)) {
-        selectedCategories.value.push(item.tailoring_category_id)
+    if (!selectedCategories.value.includes(catId)) {
+        selectedCategories.value.push(catId)
     }
-    activeCategoryTab.value = item.tailoring_category_id
-
-    // Restore data to forms
-    currentItems.value[item.tailoring_category_id] = { ...item }
-    measurements.value[item.tailoring_category_id] = { ...item }
+    
+    // Restore data to forms immediately - use full copy to include all dynamic measurements
+    currentItems.value[catId] = { ...item }
+    measurements.value[catId] = { ...item }
 
     // Set editing state
-    editingItemIds.value[item.tailoring_category_id] = item.id || item._temp_id
+    editingItemIds.value[catId] = item.id || item._temp_id
+
+    // Set active tab to switch the UI view
+    activeCategoryTab.value = catId
 
     toast.info("Item loaded for editing.")
 
-    // Scroll to top or form area if needed
-    window.scrollTo({ top: 0, behavior: 'smooth' })
+    // Scroll to form area
+    setTimeout(() => {
+        window.scrollTo({ top: 300, behavior: 'smooth' })
+    }, 100)
 }
 
 const handleItemClear = (categoryId) => {
@@ -667,6 +680,37 @@ const loadMeasurementOptions = async () => {
 
 onMounted(() => {
     loadMeasurementOptions()
+
+    // Initialize from existing order items
+    if (props.order?.items?.length > 0) {
+        const categoryIds = [...new Set(props.order.items.map(i => i.tailoring_category_id))]
+        selectedCategories.value = categoryIds
+        
+        // Populate measurements and current items for each category
+        categoryIds.forEach(catId => {
+            const item = props.order.items.find(i => i.tailoring_category_id === catId)
+            if (item) {
+                // Take a full copy to preserve all data including dynamic measurements
+                measurements.value[catId] = { ...item }
+                
+                // Initialize current item form for new additions in this category
+                currentItems.value[catId] = {
+                    product_id: null,
+                    product_name: '',
+                    product_color: '',
+                    quantity: 1,
+                    unit_price: 0,
+                    stitch_rate: 0,
+                    tax: 0,
+                    total: 0,
+                }
+            }
+        })
+
+        if (categoryIds.length > 0) {
+            activeCategoryTab.value = categoryIds[0]
+        }
+    }
 })
 </script>
 

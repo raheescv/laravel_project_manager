@@ -27,7 +27,7 @@
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-50/50">
-                    <tr v-for="(item, index) in items" :key="item.id || item._temp_id || index" class="hover:bg-indigo-50/30 transition-colors group">
+                    <tr v-for="(item, index) in items" :key="item.id || item._temp_id || index" class="hover:bg-indigo-50/30 transition-colors">
                         <td class="px-4 py-2">
                             <span class="text-[0.65rem] font-bold text-slate-400 italic">#{{ item.item_no }}</span>
                         </td>
@@ -55,7 +55,7 @@
                             </div>
                         </td>
                         <td class="px-4 py-2">
-                            <div class="flex items-center justify-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <div class="flex items-center justify-center gap-1">
                                 <button type="button" @click="viewMeasurements(item)"
                                     class="w-7 h-7 flex items-center justify-center rounded-lg bg-amber-50 text-amber-500 hover:bg-amber-500 hover:text-white transition-all"
                                     title="View Measurements">

@@ -10,6 +10,7 @@ use Illuminate\Validation\Rule;
 class TailoringMeasurementOption extends Model
 {
     use BelongsToTenant;
+
     protected $fillable = [
         'tenant_id',
         'option_type',
@@ -21,7 +22,7 @@ class TailoringMeasurementOption extends Model
         $tenantId = self::getCurrentTenantId();
 
         return array_merge([
-            'option_type' => ['required', 'string', 'max:255'],
+            'option_type' => ['required'],
             'value' => [
                 'required',
                 'string',

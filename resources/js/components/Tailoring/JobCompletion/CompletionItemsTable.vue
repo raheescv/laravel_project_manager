@@ -221,22 +221,7 @@ const closeViewModal = () => {
     selectedItemForView.value = null
 }
 
-const measurementKeys = [
-    'shoulder', 'sleeve', 'chest', 'stomach', 'sl_chest', 'sl_so',
-    'neck', 'bottom', 'mar_size', 'cuff_size', 'collar_size',
-    'regal_size', 'knee_loose', 'fp_size'
-];
-
 const hasMeasurements = (item) => true
-
-const getMeasurementDetails = (item) => {
-    const details = {};
-    measurementKeys.forEach(key => {
-        const label = key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
-        details[label] = item[key] || '-';
-    });
-    return details;
-}
 
 const allSelected = computed(() => {
     return props.items.length > 0 && props.items.every(item => item.is_selected_for_completion)

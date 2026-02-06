@@ -196,28 +196,28 @@
         </div>
     </div>
 
-    <div class="measure-grid">
-        <div class="measure-box"><div class="measure-val">{{ $firstItem->length }}</div><div class="measure-label">Length</div></div>
-        <div class="measure-box"><div class="measure-val">{{ $firstItem->shoulder }}</div><div class="measure-label">(Shoulder)</div></div>
-        <div class="measure-box"><div class="measure-val">{{ $firstItem->sleeve }}</div><div class="measure-label">(Sleeve)</div></div>
-        <div class="measure-box"><div class="measure-val">{{ $firstItem->chest }}</div><div class="measure-label">(Chest)</div></div>
-        <div class="measure-box"><div class="measure-val">{{ $firstItem->stomach }}</div><div class="measure-label">(Stomach)</div></div>
-        <div class="measure-box"><div class="measure-val">{{ $firstItem->sl_chest }}</div><div class="measure-label">(S-L Chest)</div></div>
-    </div>
+    @php
+        $activeMeasurements = $firstItem->category->activeMeasurements ?? collect();
+    @endphp
 
-    <div class="measure-grid">
-        <div class="measure-box"><div class="measure-val">{{ $firstItem->mar_size }}</div><div class="measure-label">Mar Size</div></div>
-        <div class="measure-box"><div class="measure-val">{{ $firstItem->regal_size }}</div><div class="measure-label">(Regal Size)</div></div>
-        <div class="measure-box"><div class="measure-val">{{ $firstItem->knee_loose }}</div><div class="measure-label">(Knee Loose)</div></div>
-        <div class="measure-box"><div class="measure-val">{{ $firstItem->fp_down }}</div><div class="measure-label">(FP Down)</div></div>
-        <div class="measure-box"><div class="measure-val">{{ $firstItem->bottom }}</div><div class="measure-label">(Bottom)</div></div>
-        <div class="measure-box"><div class="measure-val">{{ $firstItem->neck }}</div><div class="measure-label">(Neck)</div></div>
-    </div>
+    @foreach($activeMeasurements->chunk(6) as $chunk)
+        <div class="measure-grid">
+            @foreach($chunk as $m)
+                <div class="measure-box">
+                    <div class="measure-val">{{ $firstItem->{$m->field_key} ?? '-' }}</div>
+                    <div class="measure-label">{{ $m->label }}</div>
+                </div>
+            @endforeach
+            {{-- Fill empty cells to maintain grid layout if last chunk is partial --}}
+            @for($i = $chunk->count(); $i < 6; $i++)
+                <div class="measure-box" style="border: none;"></div>
+            @endfor
+        </div>
+    @endforeach
 
-    <div class="measure-grid" style="grid-template-columns: 2fr 1fr 1fr;">
+    <div class="measure-grid" style="grid-template-columns: 2fr 1fr;">
         <div class="field-row" style="margin-bottom: 0;">Notes: <div class="field-input">{{ $firstItem->tailoring_notes }}</div></div>
-        <div class="measure-box"><div class="measure-val">{{ $firstItem->fp_size }}</div><div class="measure-label">(FP Size)</div></div>
-        <div class="measure-box"><div class="measure-val">{{ $firstItem->neck_d_button }}</div><div class="measure-label">(Neck D Bottom)</div></div>
+        <div class="measure-box" style="border: none;"></div>
     </div>
 
     <table class="slip-table">

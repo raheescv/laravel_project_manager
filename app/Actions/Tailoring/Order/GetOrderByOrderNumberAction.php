@@ -3,6 +3,7 @@
 namespace App\Actions\Tailoring\Order;
 
 use App\Models\TailoringOrder;
+use Exception;
 
 class GetOrderByOrderNumberAction
 {
@@ -17,13 +18,16 @@ class GetOrderByOrderNumberAction
                 'cutter:id,name',
                 'items' => function ($query) {
                     $query->with([
-                        'category:id,name',
+                        'category' => function ($q) {
+                            $q->with('activeMeasurements');
+                        },
                         'categoryModel:id,name',
                         'product' => function ($q) {
                             $q->select('id', 'name')->withSum('inventories as stock_quantity', 'quantity');
                         },
                         'unit:id,name',
                         'tailor:id,name',
+                        'order',
                     ])->orderBy('item_no');
                 },
                 'payments' => function ($query) {
@@ -33,7 +37,7 @@ class GetOrderByOrderNumberAction
             ])->where('order_no', $orderNo)->first();
 
             if (! $order) {
-                throw new \Exception('Order not found with order number: '.$orderNo);
+                throw new Exception('Order not found with order number: '.$orderNo);
             }
 
             // Merge measurements into items for frontend compatibility
@@ -42,9 +46,9 @@ class GetOrderByOrderNumberAction
             $return['success'] = true;
             $return['message'] = 'Tailoring Order retrieved successfully';
             $return['data'] = $order;
-        } catch (\Throwable $th) {
+        } catch (Exception $e) {
             $return['success'] = false;
-            $return['message'] = $th->getMessage();
+            $return['message'] = $e->getMessage();
         }
 
         return $return;

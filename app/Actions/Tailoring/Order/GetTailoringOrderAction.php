@@ -17,11 +17,14 @@ class GetTailoringOrderAction
                 'cutter:id,name',
                 'items' => function ($query) {
                     $query->with([
-                        'category:id,name',
+                        'category' => function ($q) {
+                            $q->with('activeMeasurements');
+                        },
                         'categoryModel:id,name',
                         'product:id,name',
                         'unit:id,name',
                         'tailor:id,name',
+                        'order',
                     ])->orderBy('item_no');
                 },
                 'payments' => function ($query) {
@@ -32,9 +35,8 @@ class GetTailoringOrderAction
 
             // Merge measurements into items for frontend compatibility
             $order->appendMeasurementsToItems();
-
             $return['success'] = true;
-            $return['message'] = 'Tailoring Order retrieved successfully';
+            $return['message'] = 'Tailoring Order retrieved successfully.';
             $return['data'] = $order;
         } catch (\Throwable $th) {
             $return['success'] = false;

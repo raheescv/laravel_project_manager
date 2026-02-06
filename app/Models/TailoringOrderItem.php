@@ -34,9 +34,6 @@ class TailoringOrderItem extends Model implements AuditableContracts
         'tax',
         'tax_amount',
         'total',
-        // Measurements moved to TailoringOrderMeasurement
-        // 'length', ...
-        // Completion fields
         'tailor_id',
         'tailor_commission',
         'tailor_total_commission',

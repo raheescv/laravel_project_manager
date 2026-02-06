@@ -45,18 +45,11 @@
                             </div>
                             <div class="col-span-1">
                                 <label class="block text-[0.6rem] font-black text-slate-400 uppercase tracking-widest mb-1 px-1">Method</label>
-                                <div class="relative">
-                                    <select v-model="paymentForm.payment_method_id"
-                                        class="w-full appearance-none bg-slate-50 border border-slate-200 rounded-xl px-3 py-1.5 text-xs font-bold text-slate-700 focus:bg-white focus:border-blue-500 transition-all">
-                                        <option value="">Select Method</option>
-                                        <option v-for="method in paymentMethods" :key="method.id" :value="method.id">
-                                            {{ method.name }}
-                                        </option>
-                                    </select>
-                                    <div class="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none text-slate-400">
-                                        <i class="fa fa-chevron-down text-[10px]"></i>
-                                    </div>
-                                </div>
+                                <VSelect 
+                                    v-model="paymentForm.payment_method_id"
+                                    :options="paymentMethods.map(m => ({ value: m.id, label: m.name }))"
+                                    placeholder="Select Method"
+                                />
                             </div>
                             <div class="col-span-2">
                                 <label class="block text-[0.6rem] font-black text-slate-400 uppercase tracking-widest mb-1 px-1">Amount</label>
@@ -143,9 +136,11 @@
 <script>
 import { computed, ref, watch } from 'vue'
 import { useToast } from 'vue-toastification'
+import VSelect from '@/components/VSelect.vue'
 
 export default {
     name: 'CustomPaymentModal',
+    components: { VSelect },
     props: {
         show: {
             type: Boolean,
