@@ -44,7 +44,7 @@ class AppServiceProvider extends ServiceProvider
                 );
             });
         // Force HTTPS for assets when the app is served over HTTPS
-        if (request()->isSecure() || config('constants.force_https', false) || config('app.url', '')->startsWith('https://')) {
+        if (request()->isSecure() || config('constants.force_https', false) || str_starts_with(config('app.url', ''), 'https://')) {
             URL::forceScheme('https');
         }
 
