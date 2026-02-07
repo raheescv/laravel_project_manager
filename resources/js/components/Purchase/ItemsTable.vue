@@ -106,7 +106,7 @@
                         <tr class="bg-light">
                             <th colspan="5" class="text-end py-2">Total</th>
                             <th class="text-end py-2">
-                                <b>{{ parseFloat(totalQuantity) }}</b>
+                                <b>{{ parseFloat(totalQuantity).toFixed(3) }}</b>
                             </th>
                             <th class="text-end py-2">
                                 <b>{{ formatCurrency(totalDiscount) }}</b>
