@@ -58,32 +58,37 @@
                             <td>
                                 <div class="input-group input-group-sm">
                                     <input type="number" class="form-control form-control-sm text-end border-0 bg-light"
-                                        :value="item.unit_price"
+                                        :value="val(item.key, 'unit_price', item.unit_price)"
                                         @input="handleItemInput(item.key, 'unit_price', $event.target.value)"
-                                        step="any" />
+                                        @blur="handleItemBlur(item.key, 'unit_price')"
+                                        step="any" min="0" />
                                 </div>
                             </td>
                             <td>
                                 <div class="input-group input-group-sm">
                                     <input type="number" class="form-control form-control-sm text-end border-0 bg-light"
-                                        :value="item.quantity" min="1"
+                                        :value="val(item.key, 'quantity', item.quantity)"
                                         @input="handleItemInput(item.key, 'quantity', $event.target.value)"
-                                        step="any" />
+                                        @blur="handleItemBlur(item.key, 'quantity')"
+                                        step="any" min="0" />
                                 </div>
                             </td>
                             <td>
                                 <div class="input-group input-group-sm">
                                     <input type="number" class="form-control form-control-sm text-end border-0 bg-light"
-                                        :value="item.discount"
+                                        :value="val(item.key, 'discount', item.discount)"
                                         @input="handleItemInput(item.key, 'discount', $event.target.value)"
-                                        step="any" />
+                                        @blur="handleItemBlur(item.key, 'discount')"
+                                        step="any" min="0" />
                                 </div>
                             </td>
                             <td>
                                 <div class="input-group input-group-sm">
                                     <input type="number" class="form-control form-control-sm text-end border-0 bg-light"
-                                        :value="item.tax" max="50"
-                                        @input="handleItemInput(item.key, 'tax', $event.target.value)" step="any" />
+                                        :value="val(item.key, 'tax', item.tax)"
+                                        @input="handleItemInput(item.key, 'tax', $event.target.value)"
+                                        @blur="handleItemBlur(item.key, 'tax')"
+                                        step="any" min="0" max="50" />
                                     <span class="input-group-text bg-light border-0">%</span>
                                 </div>
                             </td>
@@ -144,6 +149,7 @@ const emit = defineEmits(['item-removed', 'item-updated'])
 const productSelect = ref(null)
 const { set, call, on } = useLivewire()
 let tomSelectInstance = null
+const editing = ref({})
 
 const totalQuantity = computed(() => {
     return props.items.reduce((sum, item) => sum + (parseFloat(item.quantity) || 0), 0)
@@ -161,10 +167,17 @@ const totalAmount = computed(() => {
     return props.items.reduce((sum, item) => sum + (parseFloat(item.total) || 0), 0)
 })
 
+const val = (key, field, fallback) => editing.value[`${key}-${field}`] ?? fallback
+
 const handleItemInput = (key, field, value) => {
-    const numValue = parseFloat(value) || 0
-    set(`items.${key}.${field}`, numValue)
-    emit('item-updated', { key, field, value: numValue })
+    editing.value[`${key}-${field}`] = value
+    const num = parseFloat(value) || 0
+    set(`items.${key}.${field}`, num)
+    emit('item-updated', { key, field, value: num })
+}
+
+const handleItemBlur = (key, field) => {
+    delete editing.value[`${key}-${field}`]
 }
 
 const handleUnitChange = (key, unitId) => {
