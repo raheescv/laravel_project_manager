@@ -255,6 +255,8 @@ class Page extends Component
         $key = $product->id;
         $product->load(['unit', 'units.subUnit']);
 
+        $defaultQuantity = (float) (Configuration::where('key', 'purchase_default_quantity')->value('value') ?? '1');
+
         $single = [
             'key' => $key,
             'product_id' => $product->id,
@@ -265,11 +267,11 @@ class Page extends Component
             'units' => $this->getProductUnits($product),
             'unit_price' => $product->cost,
             'discount' => 0,
-            'quantity' => 1,
+            'quantity' => $defaultQuantity,
             'tax' => 0,
         ];
         if (isset($this->items[$key])) {
-            $this->items[$key]['quantity'] += 1;
+            $this->items[$key]['quantity'] += $defaultQuantity;
         } else {
             $this->items[$key] = $single;
         }

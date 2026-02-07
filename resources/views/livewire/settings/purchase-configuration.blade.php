@@ -15,6 +15,13 @@
                                     <small class="form-text text-muted">If enabled, barcode print page will open automatically after submitting a purchase.</small>
                                 </div>
                             </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label class="form-label fw-medium" for="default_quantity">Default Quantity</label>
+                                    {{ html()->input('number', 'default_quantity')->value('')->class('form-control')->attribute('step','0.001')->placeholder('Enter default quantity (e.g., 1)')->attribute('wire:model', 'default_quantity') }}
+                                    <small class="form-text text-muted">Default quantity when adding a new item to purchase.</small>
+                                </div>
+                            </div>
                         </div>
                     </div>
                     <div class="card-footer bg-light text-end py-3">
