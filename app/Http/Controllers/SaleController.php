@@ -32,11 +32,17 @@ class SaleController extends Controller
     public function posPage($id = null)
     {
         $showColleague = Configuration::where('key', 'show_colleague')->value('value') ?? 'yes';
+        $branchWiseEmployeeList = Configuration::where('key', 'branch_wise_employee_list')->value('value') ?? 'no';
         $categories = Category::withCount('products')->where('sale_visibility_flag', true)->having('products_count', '>', 0)->get()->toArray();
 
         $employees = User::employee()->where('is_active', true);
         if ($showColleague == 'no' && Auth::user()->type == 'employee') {
             $employees = $employees->where('id', Auth::id());
+        }
+        if ($branchWiseEmployeeList === 'yes' && session('branch_id')) {
+            $employees = $employees->whereHas('branches', function ($query): void {
+                $query->where('user_has_branches.branch_id', session('branch_id'));
+            });
         }
         $employees = $employees->pluck('name', 'id')->toArray();
 

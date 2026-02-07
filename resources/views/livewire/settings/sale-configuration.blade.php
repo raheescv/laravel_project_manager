@@ -88,6 +88,13 @@
                             </div>
                             <div class="col-md-6">
                                 <div class="form-group">
+                                    <label class="form-label fw-medium" for="branch_wise_employee_list">Branch Wise Employee List</label>
+                                    {{ html()->select('branch_wise_employee_list', ['yes' => 'Yes', 'no' => 'No'])->value('')->class('form-select')->placeholder('Show employees of current branch only?')->attribute('wire:model', 'branch_wise_employee_list') }}
+                                    <small class="form-text text-muted">When enabled, POS employee dropdown will show only employees assigned to the current branch.</small>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
                                     <label class="form-label fw-medium" for="auto_close_day_sessions_enabled">Auto Close Day Sessions</label>
                                     {{ html()->select('auto_close_day_sessions_enabled', ['yes' => 'Yes', 'no' => 'No'])->value('')->class('form-select')->placeholder('Enable automatic daily closing of day sessions?')->attribute('wire:model', 'auto_close_day_sessions_enabled') }}
                                     <small class="form-text text-muted">When enabled, all open day sessions will be automatically closed daily at midnight with closing amount set to expected amount.</small>

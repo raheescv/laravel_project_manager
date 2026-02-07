@@ -38,6 +38,8 @@ class SaleConfiguration extends Component
 
     public $show_colleague;
 
+    public $branch_wise_employee_list;
+
     public $auto_close_day_sessions_enabled;
 
     public function mount()
@@ -57,6 +59,7 @@ class SaleConfiguration extends Component
         $this->default_quantity = Configuration::where('key', 'default_quantity')->value('value') ?? '0.001';
         $this->validate_unit_price_against_mrp = Configuration::where('key', 'validate_unit_price_against_mrp')->value('value') ?? 'yes';
         $this->show_colleague = Configuration::where('key', 'show_colleague')->value('value') ?? 'yes';
+        $this->branch_wise_employee_list = Configuration::where('key', 'branch_wise_employee_list')->value('value') ?? 'no';
         $this->auto_close_day_sessions_enabled = Configuration::where('key', 'auto_close_day_sessions_enabled')->value('value') ?? 'no';
     }
 
@@ -77,6 +80,7 @@ class SaleConfiguration extends Component
         Configuration::updateOrCreate(['key' => 'default_quantity'], ['value' => $this->default_quantity]);
         Configuration::updateOrCreate(['key' => 'validate_unit_price_against_mrp'], ['value' => $this->validate_unit_price_against_mrp]);
         Configuration::updateOrCreate(['key' => 'show_colleague'], ['value' => $this->show_colleague]);
+        Configuration::updateOrCreate(['key' => 'branch_wise_employee_list'], ['value' => $this->branch_wise_employee_list]);
         Configuration::updateOrCreate(['key' => 'auto_close_day_sessions_enabled'], ['value' => $this->auto_close_day_sessions_enabled]);
         $this->dispatch('success', ['message' => 'Updated Successfully']);
         Artisan::call('optimize:clear');
