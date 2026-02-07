@@ -13,24 +13,21 @@
         @include('components.select.paymentMethodSelect')
 
         <script>
-            // Expose Livewire data to Vue component
-            document.addEventListener('livewire:init', () => {
-                window.purchasePageData = {
-                    purchases: @json($purchases),
-                    items: @json($items),
-                    payments: @json($payments),
-                    payment: @json($payment),
-                    account_balance: {{ $account_balance ?? 0 }},
-                    accounts: @json($accounts),
-                    paymentMethods: @json($paymentMethods),
-                    default_payment_method_id: {{ $default_payment_method_id ?? 1 }},
-                    table_id: {{ $table_id ?? 'null' }},
-                    canPrintPurchaseNote: @json(auth()->user()->can('purchase.purchase note print')),
-                    canPrintBarcode: @json(auth()->user()->can('purchase.barcode print')),
-                    canCancel: @json(auth()->user()->can('purchase.cancel'))
-                }
-            })
-
+            // Expose Livewire data to Vue component (set immediately so it's available when Vue mounts)
+            window.purchasePageData = {
+                purchases: @json($purchases),
+                items: @json($items),
+                payments: @json($payments),
+                payment: @json($payment),
+                account_balance: {{ $account_balance ?? 0 }},
+                accounts: @json($accounts),
+                paymentMethods: @json($paymentMethods),
+                default_payment_method_id: {{ $default_payment_method_id ?? 1 }},
+                table_id: {{ $table_id ?? 'null' }},
+                canPrintPurchaseNote: @json(auth()->user()->can('purchase.purchase note print')),
+                canPrintBarcode: @json(auth()->user()->can('purchase.barcode print')),
+                canCancel: @json(auth()->user()->can('purchase.cancel'))
+            }
             // Listen for Livewire updates and sync to Vue
             document.addEventListener('livewire:update', () => {
                 if (window.purchasePageVueInstance) {
