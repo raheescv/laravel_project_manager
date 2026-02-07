@@ -13,6 +13,7 @@ use App\Http\Controllers\Settings\CountryController;
 use App\Http\Controllers\Settings\CustomerTypeController;
 use App\Http\Controllers\Settings\DepartmentController;
 use App\Http\Controllers\Settings\DesignationController;
+use App\Http\Controllers\Settings\RackController;
 use App\Http\Controllers\Settings\TailoringCategoryController;
 use App\Http\Controllers\Settings\TailoringMeasurementOptionController;
 use App\Http\Controllers\Settings\UnitController;
@@ -37,6 +38,10 @@ Route::middleware('auth')->group(function (): void {
         });
         Route::name('designation::')->prefix('designation')->controller(DesignationController::class)->group(function (): void {
             Route::get('', 'index')->name('index')->can('designation.view');
+            Route::get('list', 'get')->name('list');
+        });
+        Route::name('rack::')->prefix('rack')->controller(RackController::class)->group(function (): void {
+            Route::get('', 'index')->name('index')->can('rack.view');
             Route::get('list', 'get')->name('list');
         });
         Route::name('tailoring_category::')->prefix('tailoring-category')->controller(TailoringCategoryController::class)->group(function (): void {

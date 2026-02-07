@@ -28,7 +28,9 @@ class Rack extends Model
         $tenantId = self::getCurrentTenantId();
 
         return array_merge([
-            'name' => ['required', Rule::unique(self::class)->where('tenant_id', $tenantId)->ignore($id)],
+            'name' => ['required', 'max:100', Rule::unique(self::class, 'name')->where('tenant_id', $tenantId)->ignore($id)],
+            'description' => ['nullable', 'max:255'],
+            'is_active' => ['nullable', 'boolean'],
         ], $merge);
     }
 
@@ -45,5 +47,21 @@ class Rack extends Model
     public function scopeActive($query)
     {
         return $query->where('is_active', true);
+    }
+
+    public function getDropDownList($request)
+    {
+        $self = self::orderBy('name');
+        $self = $self->when($request['query'] ?? '', function ($query, $value) {
+            return $query->where(function ($q) use ($value): void {
+                $value = trim($value);
+                $q->where('name', 'like', "%{$value}%");
+            });
+        });
+        $self = $self->limit(10);
+        $self = $self->get(['name', 'id'])->toArray();
+        $return['items'] = $self;
+
+        return $return;
     }
 }
