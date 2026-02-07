@@ -51,7 +51,7 @@
 
             <hr class="my-3">
             <div class="row g-3">
-                <div class="col-md-4">
+                <div class="col-md-3">
                     <div wire:ignore>
                         <label for="role_id" class="form-label small fw-medium text-capitalize">
                             <i class="fa fa-lock me-1 text-muted"></i>
@@ -65,7 +65,7 @@
                         </select>
                     </div>
                 </div>
-                <div class="col-md-4">
+                <div class="col-md-3">
                     <div wire:ignore>
                         <label for="is_active" class="form-label small fw-medium text-capitalize">
                             <i class="fa fa-toggle-on me-1 text-muted"></i>
@@ -78,13 +78,22 @@
                         </select>
                     </div>
                 </div>
-                <div class="col-md-4">
+                <div class="col-md-3">
                     <div wire:ignore>
                         <label for="designation_id_filter" class="form-label small fw-medium text-capitalize">
                             <i class="fa fa-id-badge me-1 text-muted"></i>
                             Designation
                         </label>
                         {{ html()->select('designation_id', [])->value('')->class('select-designation_id-list')->id('designation_id')->placeholder('All') }}
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div wire:ignore>
+                        <label for="branch_id" class="form-label small fw-medium text-capitalize">
+                            <i class="fa fa-map-marker me-1 text-muted"></i>
+                            Branch
+                        </label>
+                        {{ html()->select('branch_id', [])->value('')->class('select-branch_id-list border-secondary-subtle shadow-sm')->id('branch_id')->placeholder('All Branches') }}
                     </div>
                 </div>
             </div>
@@ -285,6 +294,9 @@
                     });
                      $(document).on('change', '#is_active', function() {
                         @this.set('is_active', $(this).val());
+                    });
+                    $(document).on('change', '#branch_id', function() {
+                        @this.set('branch_id', $(this).val());
                     });
                 });
             </script>

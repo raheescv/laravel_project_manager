@@ -31,6 +31,8 @@ class Table extends Component
 
     public $designation_id = '';
 
+    public $branch_id = '';
+
     public $sortField = 'users.order_no';
 
     public $sortDirection = 'asc';
@@ -126,6 +128,7 @@ class Table extends Component
             'role_id' => $this->role_id,
             'is_active' => $this->is_active,
             'designation_id' => $this->designation_id,
+            'branch_id' => $this->branch_id,
         ];
     }
 

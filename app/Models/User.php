@@ -170,6 +170,11 @@ class User extends Authenticatable implements AuditableContracts
             })
             ->when($filters['designation_id'] ?? null, function ($query, $value): void {
                 $query->where('designation_id', $value);
+            })
+            ->when($filters['branch_id'] ?? null, function ($query) use ($filters): void {
+                $query->whereHas('branches', function ($q) use ($filters): void {
+                    $q->where('user_has_branches.branch_id', $filters['branch_id']);
+                });
             });
     }
 
