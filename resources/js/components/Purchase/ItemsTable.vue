@@ -21,7 +21,7 @@
                             <th>#</th>
                             <th style="width: 30%">Product</th>
                             <th>Barcode</th>
-                            <th>Unit</th>
+                            <th class="unit-cell">Unit</th>
                             <th class="text-end">Unit Price</th>
                             <th class="text-end">Quantity</th>
                             <th class="text-end">Discount</th>
@@ -47,15 +47,13 @@
                                     </div>
                                 </div>
                             </td>
-                            <td>
-                                <div class="input-group input-group-sm">
-                                    <select class="form-select form-select-sm border-0 bg-light" :value="item.unit_id"
-                                        @change="handleUnitChange(item.key, $event.target.value)">
-                                        <option v-for="unit in item.units || []" :key="unit.id" :value="unit.id">
-                                            {{ unit.name }}
-                                        </option>
-                                    </select>
-                                </div>
+                            <td class="unit-cell">
+                                <select class="form-select form-select-sm border-0 bg-light" :value="item.unit_id"
+                                    @change="handleUnitChange(item.key, $event.target.value)">
+                                    <option v-for="unit in item.units || []" :key="unit.id" :value="unit.id">
+                                        {{ unit.name }}
+                                    </option>
+                                </select>
                             </td>
                             <td>
                                 <div class="input-group input-group-sm">
@@ -283,3 +281,13 @@ onMounted(() => {
     }
 })
 </script>
+
+<style scoped>
+.unit-cell {
+    min-width: 110px;
+    width: 1%;
+}
+.unit-cell .form-select {
+    width: 100%;
+}
+</style>
