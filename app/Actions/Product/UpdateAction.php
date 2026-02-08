@@ -48,7 +48,7 @@ class UpdateAction
                 $model->inventories()->update(['barcode' => $data['barcode']]);
             }
 
-            if ($data['images']) {
+            if (isset($data['images']) && is_array($data['images'])) {
                 foreach ($data['images'] as $file) {
                     $imageData = [
                         'name' => $file->getClientOriginalName(),
