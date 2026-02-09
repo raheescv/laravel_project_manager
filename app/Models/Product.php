@@ -291,6 +291,7 @@ class Product extends Model implements AuditableContracts
         $main_category_id = Category::selfCreate($mainCategoryData);
         $data['main_category_id'] = $main_category_id;
 
+        $data['sub_category_id'] = $data['sub_category_id'] ?? null;
         if (isset($data['sub_category']) && $data['sub_category'] !== '') {
             $subCategoryData = [
                 'parent_id' => $data['main_category_id'],
