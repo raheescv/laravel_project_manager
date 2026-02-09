@@ -6,6 +6,7 @@ use App\Traits\BelongsToTenant;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Facades\Auth;
 use OwenIt\Auditing\Auditable;
 use OwenIt\Auditing\Contracts\Auditable as AuditableContracts;
 
@@ -26,6 +27,7 @@ class TailoringOrderItem extends Model implements AuditableContracts
         'product_color',
         'unit_id',
         'quantity',
+        'quantity_per_item',
         'unit_price',
         'stitch_rate',
         'gross_amount',
@@ -43,6 +45,7 @@ class TailoringOrderItem extends Model implements AuditableContracts
         'item_completion_date',
         'is_selected_for_completion',
         'tailoring_notes',
+        'rating',
         'created_by',
         'updated_by',
         'deleted_by',
@@ -50,6 +53,7 @@ class TailoringOrderItem extends Model implements AuditableContracts
 
     protected $casts = [
         'quantity' => 'decimal:3',
+        'quantity_per_item' => 'decimal:3',
         'unit_price' => 'decimal:2',
         'stitch_rate' => 'decimal:2',
         'gross_amount' => 'decimal:2',
@@ -65,6 +69,7 @@ class TailoringOrderItem extends Model implements AuditableContracts
         'total_quantity_used' => 'decimal:3',
         'item_completion_date' => 'date:Y-m-d',
         'is_selected_for_completion' => 'boolean',
+        'rating' => 'integer',
     ];
 
     public static function rules($id = 0, $merge = [])
@@ -73,6 +78,7 @@ class TailoringOrderItem extends Model implements AuditableContracts
             'tailoring_order_id' => ['required'],
             'product_name' => ['required'],
             'quantity' => ['required', 'numeric', 'min:0.001'],
+            'quantity_per_item' => ['nullable', 'numeric', 'min:0.001'],
             'unit_price' => ['required', 'numeric', 'min:0'],
         ], $merge);
     }
@@ -81,17 +87,17 @@ class TailoringOrderItem extends Model implements AuditableContracts
     {
         static::creating(function ($item): void {
             if (empty($item->created_by)) {
-                $item->created_by = auth()->id();
+                $item->created_by = Auth::id();
             }
             if (empty($item->updated_by)) {
-                $item->updated_by = auth()->id();
+                $item->updated_by = Auth::id();
             }
             $item->calculateAmount();
         });
 
         static::updating(function ($item): void {
             if (empty($item->updated_by)) {
-                $item->updated_by = auth()->id();
+                $item->updated_by = Auth::id();
             }
             $item->calculateAmount();
         });
@@ -162,10 +168,11 @@ class TailoringOrderItem extends Model implements AuditableContracts
     // Methods
     public function calculateAmount()
     {
-        $this->gross_amount = $this->unit_price * $this->quantity;
+        $totalQuantity = $this->quantity * $this->quantity_per_item;
+        $this->gross_amount = $this->unit_price * $totalQuantity;
         $this->net_amount = $this->gross_amount - $this->discount;
         $this->tax_amount = ($this->net_amount * $this->tax) / 100;
-        $this->total = $this->net_amount + $this->tax_amount + $this->stitch_rate;
+        $this->total = $this->net_amount + $this->tax_amount + ($this->stitch_rate * $this->quantity);
     }
 
     public function calculateTotal()
@@ -192,6 +199,9 @@ class TailoringOrderItem extends Model implements AuditableContracts
         $this->fill($data);
         if (isset($data['tailor_commission'])) {
             $this->calculateTailorCommission();
+        }
+        if (isset($data['rating'])) {
+            $this->rating = max(1, min(5, (int) $data['rating']));
         }
         $this->save();
     }

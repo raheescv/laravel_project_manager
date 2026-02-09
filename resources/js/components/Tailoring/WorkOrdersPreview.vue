@@ -2,32 +2,33 @@
     <div class="bg-white rounded-3xl shadow-lg shadow-slate-200/50 border border-slate-200 overflow-hidden relative">
         <!-- Background Tint -->
         <div class="absolute inset-0 bg-gradient-to-tr from-slate-50/50 to-transparent pointer-events-none"></div>
-        
+
         <div class="px-4 py-3 border-b border-slate-100 flex items-center justify-between bg-slate-50/30 relative z-10">
             <div class="flex items-center gap-2">
                 <i class="fa fa-list-alt text-indigo-500 text-xs text-indigo-500/80"></i>
-                <h3 class="text-xs font-black text-slate-700 uppercase tracking-widest">Work Orders Preview</h3>
+                <h3 class="text-xs font-black text-slate-700 uppercase">Work Orders Preview</h3>
             </div>
             <div class="bg-indigo-100/50 text-indigo-600 text-[0.6rem] font-black px-2.5 py-1 rounded-lg uppercase tracking-wider border border-indigo-200/50">
                 {{ items.length }} {{ items.length === 1 ? 'Job' : 'Jobs' }}
             </div>
         </div>
-        
+
         <div class="overflow-x-auto relative z-10">
-            <table class="w-full text-left border-collapse whitespace-nowrap">
+            <table class="work-orders-table w-full text-left border-collapse whitespace-nowrap">
                 <thead>
                     <tr class="bg-slate-50/50 border-b border-slate-100">
                         <th class="px-4 py-3 text-[0.6rem] font-black text-slate-400 uppercase tracking-[0.1em]">No</th>
                         <th class="px-4 py-3 text-[0.6rem] font-black text-slate-400 uppercase tracking-[0.1em]">Item Details</th>
                         <th class="px-4 py-3 text-[0.6rem] font-black text-slate-400 uppercase tracking-[0.1em]">Model</th>
                         <th class="px-4 py-3 text-[0.6rem] font-black text-slate-400 uppercase tracking-[0.1em] text-center">Qty</th>
-                        <th class="px-4 py-3 text-[0.6rem] font-black text-slate-400 uppercase tracking-[0.1em]">Colour</th>
+                        <th class="px-4 py-3 text-[0.6rem] font-black text-slate-400 uppercase tracking-[0.1em] text-center">Qty/Item</th>
+                        <th class="px-4 py-3 text-[0.6rem] font-black text-slate-400 uppercase tracking-[0.1em]">Color</th>
                         <th class="px-4 py-3 text-[0.6rem] font-black text-slate-400 uppercase tracking-[0.1em] text-right">Pricing</th>
                         <th class="px-4 py-3 text-[0.6rem] font-black text-slate-400 uppercase tracking-[0.1em] text-center">Actions</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-50/50">
-                    <tr v-for="(item, index) in items" :key="item.id || item._temp_id || index" class="hover:bg-indigo-50/30 transition-colors">
+                    <tr v-for="(item, index) in items" :key="item.id || item._temp_id || index">
                         <td class="px-4 py-2">
                             <span class="text-[0.65rem] font-bold text-slate-400 italic">#{{ item.item_no }}</span>
                         </td>
@@ -45,13 +46,20 @@
                         <td class="px-4 py-2 text-center">
                             <span class="text-xs font-black text-slate-700">{{ item.quantity }}</span>
                         </td>
+                        <td class="px-4 py-2 text-center">
+                            <span class="text-xs font-bold text-slate-600">{{ item.quantity_per_item ?? 1 }}</span>
+                        </td>
                         <td class="px-4 py-2">
                             <span class="text-[0.65rem] font-bold text-slate-500 lowercase opacity-70">{{ item.product_color || '-' }}</span>
                         </td>
                         <td class="px-4 py-3 text-right">
-                            <div class="flex flex-col items-end">
+                            <div class="flex flex-col items-end gap-0.5">
                                 <span class="text-xs font-black text-indigo-600 tracking-tight">{{ formatCurrency(item.total) }}</span>
-                                <span class="text-[0.55rem] text-slate-400 font-bold tracking-tight">{{ formatCurrency(item.unit_price) }} + {{ formatCurrency(item.stitch_rate) }}</span>
+                                <div class="text-[0.55rem] text-slate-400 font-bold tracking-tight leading-tight">
+                                    <div class="flex justify-end gap-3"><span class="w-10 text-right text-capitalize">price</span><span class="w-12 text-right tabular-nums">{{ formatCurrency(item.unit_price) }}</span></div>
+                                    <div class="flex justify-end gap-3"><span class="w-10 text-right text-capitalize">stitch</span><span class="w-12 text-right tabular-nums">{{ formatCurrency(item.stitch_rate) }}</span></div>
+                                    <div class="flex justify-end gap-3"><span class="w-10 text-right text-capitalize">tax</span><span class="w-12 text-right tabular-nums">{{ formatCurrency(item.tax) }}</span></div>
+                                </div>
                             </div>
                         </td>
                         <td class="px-4 py-2">
@@ -73,7 +81,7 @@
                         </td>
                     </tr>
                     <tr v-if="items.length === 0">
-                        <td colspan="7" class="px-4 py-8 text-center">
+                        <td colspan="8" class="px-4 py-8 text-center">
                             <div class="flex flex-col items-center gap-1 opacity-20">
                                 <i class="fa fa-clipboard-list text-2xl"></i>
                                 <p class="text-[0.6rem] font-bold uppercase tracking-[0.2em]">No jobs</p>
@@ -83,7 +91,7 @@
                 </tbody>
                 <tfoot v-if="items.length > 0">
                     <tr class="bg-slate-50/50">
-                        <td colspan="5" class="px-4 py-3 text-right text-[0.6rem] font-bold text-slate-400 uppercase tracking-widest">Grand Total:</td>
+                        <td colspan="6" class="px-4 py-3 text-right text-[0.6rem] font-bold text-slate-400 uppercase">Grand Total:</td>
                         <td class="px-4 py-3 text-right">
                             <span class="text-sm font-black text-slate-900 leading-none">{{ formatCurrency(grandTotal) }}</span>
                         </td>
@@ -136,4 +144,10 @@ const formatCurrency = (value) => {
 }
 </script>
 
+<style scoped>
+/* Disable unwanted row hover effect */
+.work-orders-table tbody tr:hover {
+    background-color: transparent !important;
+}
+</style>
 

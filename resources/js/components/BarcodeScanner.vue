@@ -6,7 +6,7 @@
         <div class="position-relative bg-white rounded p-2" style="width: 400px; max-width: 90%;">
             <!-- Scanner Video -->
             <div style="width: 100%; height: 300px; overflow: hidden; position: relative;">
-                <div ref="scannerContainer" id="barcode-scanner-container" style="width: 100%; height: 100%;"></div>
+                <div ref="scannerContainer" :id="scannerContainerId" style="width: 100%; height: 100%;"></div>
                 <div
                     style=" position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: 2px dashed red; box-sizing: border-box; pointer-events: none; ">
                 </div>
@@ -50,6 +50,11 @@ const props = defineProps({
     onBarcodeScanned: {
         type: Function,
         default: null
+    },
+    /** When true, emit raw barcode only (no API lookup). Parent handles lookup. */
+    emitRawBarcode: {
+        type: Boolean,
+        default: false
     }
 })
 
@@ -61,6 +66,7 @@ const manualBarcode = ref('')
 const scannerContainer = ref(null)
 const html5QrCode = ref(null)
 const scannedCode = ref('')
+const scannerContainerId = 'barcode-scanner-' + Math.random().toString(36).slice(2, 11)
 
 const close = () => {
     stopScanner()
@@ -72,7 +78,7 @@ const close = () => {
 const startScanner = () => {
     if (!scannerContainer.value) return
 
-    const containerId = scannerContainer.value.id || 'barcode-scanner-container'
+    const containerId = scannerContainer.value?.id || scannerContainerId
 
     try {
         html5QrCode.value = new Html5Qrcode(containerId)
@@ -134,56 +140,40 @@ const stopScanner = () => {
 }
 
 const applyScannedCode = async (code) => {
-    console.log('🚀 applyScannedCode() START:', code)
     beep()
 
     if (!code) return
 
     scannedCode.value = code
 
-    const checkParams = {
-        productBarcode: code,
-        limit: 1,
-        page: 1,
+    // Emit raw barcode for parent to handle lookup (e.g. tailoring products)
+    if (props.emitRawBarcode) {
+        emit('barcode-scanned', { code })
+        if (props.onBarcodeScanned) props.onBarcodeScanned({ code })
+        return Promise.resolve()
     }
 
     try {
-        console.log('📡 Checking barcode with API:', checkParams)
         const checkRes = await axios.get('/inventory/product/getProduct', {
-            params: checkParams
+            params: { productBarcode: code, limit: 1, page: 1 }
         })
-        console.log('📥 API response:', checkRes.data)
 
         const found = Array.isArray(checkRes.data.data) && checkRes.data.data.length > 0
 
         if (!found) {
             showNotification(`❌ Barcode not found: ${code}`, 'danger')
-            console.log('❌ Barcode not found in database:', code)
             scannedCode.value = ''
             return Promise.resolve()
         }
 
-        // If found, emit the scanned barcode
         const product = normalizeProduct(checkRes.data.data[0])
-        emit('barcode-scanned', {
-            code,
-            product
-        })
-
-        if (props.onBarcodeScanned) {
-            props.onBarcodeScanned({
-                code,
-                product
-            })
-        }
-
-        console.log('✅ Barcode found, product data:', product)
+        emit('barcode-scanned', { code, product })
+        if (props.onBarcodeScanned) props.onBarcodeScanned({ code, product })
         showNotification(`✅ Barcode found: ${code}`, 'success')
-
         return Promise.resolve()
 
     } catch (err) {
-        console.error('🔥 ERROR IN applyScannedCode():', err)
+        console.error('Error checking barcode:', err)
         showNotification(`❌ Error checking barcode: ${code}`, 'danger')
         scannedCode.value = ''
         return Promise.resolve()

@@ -72,15 +72,15 @@
                                     <div class="grid grid-cols-2 gap-x-3 gap-y-0.5 text-slate-500 mt-1">
                                         <div class="flex items-center gap-1">
                                             <span>Qty:</span>
-                                            <span class="font-bold text-slate-700">{{ item.quantity }}</span>
+                                            <span class="font-bold text-slate-700">{{ Number(item.quantity) }}</span>
                                         </div>
                                         <div class="flex items-center gap-1">
                                             <span>Price:</span>
-                                            <span class="font-bold text-blue-600">{{ formatCurrency(item.amount) }}</span>
+                                            <span class="font-bold text-blue-600">{{ formatCurrency(item.total) }}</span>
                                         </div>
                                         <div class="flex items-center gap-1">
                                             <span>Model:</span>
-                                            <span class="font-bold text-slate-700 truncate max-w-[60px]">{{ item.categoryModel?.name || '-' }}</span>
+                                            <span class="font-bold text-slate-700 truncate max-w-[60px]">{{ item.categoryModel?.name || item.category_model?.name || item.tailoring_category_model_name || '-' }}</span>
                                         </div>
                                         <div class="flex items-center gap-1">
                                             <span>Len:</span>
@@ -97,23 +97,25 @@
                             <!-- Tailor Assignment Column -->
                             <td class="px-4 py-3">
                                 <div class="flex flex-col gap-2 min-w-[160px]">
-                                    <div>
+                                    <div class="bg-slate-50 rounded-lg p-2 border border-slate-200">
                                         <label class="block text-[0.55rem] font-bold text-slate-400 uppercase tracking-widest mb-1">Assign Tailor</label>
                                         <SearchableSelect :modelValue="item.tailor_id"
                                             @update:modelValue="item.tailor_id = $event" :options="tailors"
-                                            placeholder="Select tailor..." 
-                                            input-class="!text-[0.65rem] !py-1 !px-2 !rounded-lg !bg-white !border-slate-200" />
+                                            placeholder="Select tailor..."
+                                            input-class="!text-[0.65rem] !py-1 !px-2 !rounded-lg !bg-white !border-slate-200 !shadow-sm" />
                                     </div>
-                                    <div class="flex items-center gap-2">
-                                        <div class="flex-1">
-                                            <label class="block text-[0.55rem] font-bold text-slate-400 uppercase tracking-widest mb-1">Rate/Item</label>
-                                            <input v-model.number="item.tailor_commission"
-                                                @input="calculateCommission(item)" type="number" step="0.01" min="0"
-                                                class="w-full text-[0.65rem] font-bold py-0.5 px-2 rounded-lg border border-slate-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all" />
-                                        </div>
-                                        <div class="pt-4">
-                                            <p class="text-[0.55rem] font-bold text-slate-400 uppercase leading-none">Total</p>
-                                            <p class="text-[0.65rem] font-black text-blue-600">{{ formatCurrency(item.tailor_total_commission) }}</p>
+                                    <div class="bg-slate-50 rounded-lg p-2 border border-slate-200">
+                                        <div class="flex flex-col gap-1.5">
+                                            <div>
+                                                <label class="block text-[0.55rem] font-bold text-slate-400 uppercase tracking-widest mb-1">Rate/Item</label>
+                                                <input v-model.number="item.tailor_commission"
+                                                    @input="calculateCommission(item)" type="number" step="0.01" min="0"
+                                                    class="w-full text-[0.65rem] font-bold py-1 px-2 rounded-lg border border-slate-200 bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 transition-all" />
+                                            </div>
+                                            <div class="flex items-center justify-between">
+                                                <span class="text-[0.5rem] font-bold text-slate-400 uppercase tracking-wider">Total</span>
+                                                <span class="text-[0.65rem] font-black text-blue-600">{{ formatCurrency(item.tailor_total_commission) }}</span>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -168,7 +170,18 @@
                             <!-- Actions Column -->
                             <td class="px-4 py-3">
                                 <div class="flex flex-col gap-1.5 w-max mx-auto">
-                                    <button @click="saveItem(item)" 
+                                    <div class="flex flex-col gap-1">
+                                        <label class="block text-[0.5rem] font-bold text-slate-400 uppercase tracking-wider text-center">Rating</label>
+                                        <div class="flex items-center gap-1">
+                                            <button v-for="star in 5" :key="star" type="button"
+                                                @click="item.rating = star"
+                                                class="p-1 rounded transition-colors"
+                                                :class="star <= (item.rating || 0) ? 'text-amber-400' : 'text-slate-200 hover:text-amber-300'">
+                                                <i class="fa fa-star text-sm"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <button @click="saveItem(item)"
                                         class="px-3 py-1 rounded-lg bg-blue-600 text-white font-bold text-[0.6rem] uppercase tracking-widest shadow-sm shadow-blue-200 hover:bg-blue-700 transition-all flex items-center justify-center gap-1.5">
                                         <i class="fa fa-save"></i> Save Job
                                     </button>

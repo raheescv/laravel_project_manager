@@ -32,6 +32,7 @@ class TailoringOrder extends Model implements AuditableContracts
         'gross_amount',
         'item_discount',
         'tax_amount',
+        'stitch_amount',
         'total',
         'other_discount',
         'freight',
@@ -59,6 +60,7 @@ class TailoringOrder extends Model implements AuditableContracts
         'gross_amount' => 'decimal:2',
         'item_discount' => 'decimal:2',
         'tax_amount' => 'decimal:2',
+        'stitch_amount' => 'decimal:2',
         'total' => 'decimal:2',
         'other_discount' => 'decimal:2',
         'freight' => 'decimal:2',
@@ -255,7 +257,10 @@ class TailoringOrder extends Model implements AuditableContracts
         $this->gross_amount = $this->items->sum('gross_amount');
         $this->item_discount = $this->items->sum('discount');
         $this->tax_amount = $this->items->sum('tax_amount');
-        $this->total = $this->gross_amount - $this->item_discount + $this->tax_amount;
+        $this->stitch_amount = $this->items->sum(function ($item) {
+            return $item->stitch_rate * $item->quantity;
+        });
+        $this->total = $this->gross_amount - $this->item_discount + $this->tax_amount + $this->stitch_amount;
         $this->grand_total = ($this->total - $this->other_discount + $this->freight) + $this->round_off;
         $this->paid = $this->payments->sum('amount');
         $this->balance = $this->grand_total - $this->paid;

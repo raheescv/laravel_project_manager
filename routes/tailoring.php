@@ -10,6 +10,7 @@ Route::middleware('auth')->group(function (): void {
         Route::get('category-models/{categoryId}', [OrderController::class, 'getCategoryModels'])->name('category-models');
         Route::post('category-models', [OrderController::class, 'addCategoryModel'])->name('add-category-model');
         Route::get('products', [OrderController::class, 'getProducts'])->name('products');
+        Route::get('products/by-barcode', [OrderController::class, 'getProductByBarcode'])->name('products-by-barcode');
         Route::get('product-colors', [OrderController::class, 'getProductColors'])->name('product-colors');
         Route::get('measurement-options', [OrderController::class, 'getMeasurementOptionsApi'])->name('measurement-options');
         Route::post('measurement-options', [OrderController::class, 'addMeasurementOption'])->name('add-measurement-option');

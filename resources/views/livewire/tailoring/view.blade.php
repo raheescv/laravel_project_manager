@@ -143,16 +143,16 @@
                                 @endif
                                 <div class="pt-3 mt-1 border-top d-flex justify-content-between align-items-center">
                                     <span class="text-uppercase fw-bold text-muted" style="font-size: 0.65rem;">Total</span>
-                                    <span class="h4 fw-bolder text-dark mb-0">{{ currency($order->total_amount) }}</span>
+                                    <span class="h4 fw-bolder text-dark mb-0">{{ currency($order->total) }}</span>
                                 </div>
                                 <div class="d-flex justify-content-between align-items-center py-2 px-3 bg-success bg-opacity-10 rounded-3 border border-success border-opacity-10">
                                     <span class="small fw-bold text-success">Amount Paid</span>
-                                    <span class="fw-bolder text-success">{{ currency($order->paid_amount) }}</span>
+                                    <span class="fw-bolder text-success">{{ currency($order->paid) }}</span>
                                 </div>
                                 <div
-                                    class="d-flex justify-content-between align-items-center py-3 px-3 rounded-3 mt-1 {{ $order->balance_amount > 0 ? 'bg-light border' : 'bg-success bg-opacity-25 border border-success border-opacity-10' }}">
-                                    <span class="text-uppercase fw-bold {{ $order->balance_amount > 0 ? 'text-muted' : 'text-success' }}" style="font-size: 0.65rem;">Remaining Balance</span>
-                                    <span class="h5 fw-bolder mb-0 {{ $order->balance_amount > 0 ? 'text-dark' : 'text-success' }}">{{ currency($order->balance_amount) }}</span>
+                                    class="d-flex justify-content-between align-items-center py-3 px-3 rounded-3 mt-1 {{ $order->balance > 0 ? 'bg-light border' : 'bg-success bg-opacity-25 border border-success border-opacity-10' }}">
+                                    <span class="text-uppercase fw-bold {{ $order->balance > 0 ? 'text-muted' : 'text-success' }}" style="font-size: 0.65rem;">Remaining Balance</span>
+                                    <span class="h5 fw-bolder mb-0 {{ $order->balance > 0 ? 'text-dark' : 'text-success' }}">{{ currency($order->balance) }}</span>
                                 </div>
                             </div>
                         </div>

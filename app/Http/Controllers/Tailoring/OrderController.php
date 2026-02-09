@@ -297,6 +297,20 @@ class OrderController extends Controller
         ]);
     }
 
+    public function getProductByBarcode(Request $request): JsonResponse
+    {
+        $barcode = $request->query('barcode', $request->barcode);
+
+        $product = Product::where('is_selling', true)
+            ->where('barcode', $barcode)
+            ->first(['id', 'name', 'code', 'barcode', 'mrp']);
+
+        return response()->json([
+            'success' => (bool) $product,
+            'data' => $product,
+        ]);
+    }
+
     public function getProductColors(Request $request): JsonResponse
     {
         // This can be from products table or a separate colors table
@@ -378,12 +392,14 @@ class OrderController extends Controller
     public function calculateAmount(Request $request): JsonResponse
     {
         $quantity = (float) ($request->quantity ?? 0);
+        $quantityPerItem = (float) ($request->quantity_per_item ?? 1);
         $unitPrice = (float) ($request->unit_price ?? 0);
         $stitchRate = (float) ($request->stitch_rate ?? 0);
         $discount = (float) ($request->discount ?? 0);
         $tax = (float) ($request->tax ?? 0);
 
-        $grossAmount = $quantity * $unitPrice;
+        $totalQuantity = $quantity * $quantityPerItem;
+        $grossAmount = $unitPrice * $totalQuantity;
         $netAmount = $grossAmount - $discount;
         $taxAmount = ($netAmount * $tax) / 100;
         $total = $netAmount + $taxAmount + ($stitchRate * $quantity);

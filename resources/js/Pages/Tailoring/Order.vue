@@ -5,30 +5,34 @@
             <!-- Subtle Decorative Elements -->
             <div class="absolute top-0 right-0 w-64 h-64 bg-indigo-50/40 rounded-full -mr-32 -mt-32 blur-3xl"></div>
             <div class="absolute bottom-0 left-0 w-96 h-96 bg-blue-50/30 rounded-full -ml-48 -mb-48 blur-3xl"></div>
-            
+
             <div class="max-w-[1600px] mx-auto relative z-10">
                 <div class="flex items-center gap-2 text-slate-400 text-sm mb-3 transition-all">
-                    <Link href="/dashboard" class="hover:text-blue-600 no-underline flex items-center gap-1 transition-colors">
+                    <a href="/dashboard" class="hover:text-blue-600 no-underline flex items-center gap-1 transition-colors">
                         <i class="fa fa-home"></i>
                         <span>Home</span>
-                    </Link>
+                    </a>
                     <i class="fa fa-chevron-right text-[10px] opacity-50"></i>
-                    <span class="text-slate-600 font-medium tracking-tight">Tailoring</span>
+                    <a href="/tailoring/order" class="hover:text-blue-600 no-underline flex items-center gap-1 transition-colors">
+                        <i class="fa fa-home"></i>
+                        <span>Tailoring</span>
+                    </a>
+                    <span class="text-slate-600 font-medium tracking-tight">Order</span>
                 </div>
-                
+
                 <div class="flex flex-col md:flex-row md:items-center justify-between gap-3">
                     <div>
                         <h1 class="text-2xl font-black text-slate-900 tracking-tight mb-1">Tailoring Studio</h1>
                         <p class="text-slate-500 text-xs md:text-sm font-medium">Create and manage your tailoring orders with ease</p>
                     </div>
-                    
+
                     <div class="flex flex-wrap gap-2">
                         <a href="/tailoring/order" class="flex items-center gap-2 px-4 py-2 rounded-xl transition-all duration-300 bg-white hover:bg-slate-50 text-slate-600 border border-slate-200 shadow-sm no-underline font-bold text-sm group">
-                            <i class="fa fa-list text-indigo-500 group-hover:scale-110 transition-transform"></i>
+                            <i class="fa fa-th-list text-indigo-500 group-hover:scale-110 transition-transform"></i>
                             <span>Orders List</span>
                         </a>
-                        <a href="/tailoring/job-completion" class="flex items-center gap-2 px-4 py-2 rounded-xl transition-all duration-300 bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg shadow-indigo-600/20 hover:-translate-y-0.5 no-underline font-bold text-sm group">
-                            <i class="fa fa-check-circle text-white/90 group-hover:scale-110 transition-transform"></i>
+                        <a :href="form.id && form.order_no ? `/tailoring/job-completion?order_no=${form.order_no}` : '/tailoring/job-completion'" class="flex items-center gap-2 px-4 py-2 rounded-xl transition-all duration-300 bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg shadow-indigo-600/20 hover:-translate-y-0.5 no-underline font-bold text-sm group">
+                            <i class="fa fa-tasks text-white/90 group-hover:scale-110 transition-transform"></i>
                             <span>Job Completion</span>
                         </a>
                     </div>
@@ -40,38 +44,38 @@
         <div class="max-w-[1600px] mx-auto px-6 -mt-14 relative z-20 pb-8">
             <div class="space-y-4">
                 <!-- Order Header Section -->
-                <OrderHeader 
-                    v-model:orderNo="form.order_no" 
+                <OrderHeader
+                    v-model:orderNo="form.order_no"
                     v-model:customer="form.customer_name"
-                    v-model:customerId="form.account_id" 
+                    v-model:customerId="form.account_id"
                     v-model:contact="form.customer_mobile"
-                    v-model:salesman="form.salesman_id" 
+                    v-model:salesman="form.salesman_id"
                     v-model:orderDate="form.order_date"
-                    v-model:deliveryDate="form.delivery_date" 
-                    :customers="customers" 
+                    v-model:deliveryDate="form.delivery_date"
+                    :customers="customers"
                     :salesmen="salesmen"
-                    @add-customer="showCustomerModal = true" 
-                    @customer-selected="handleCustomerSelected" 
+                    @add-customer="showCustomerModal = true"
+                    @customer-selected="handleCustomerSelected"
                 />
 
                 <!-- Category Selection -->
-                <CategoryHeader 
-                    :categories="categories" 
+                <CategoryHeader
+                    :categories="categories"
                     :selectedCategories="selectedCategories"
-                    @category-selected="handleCategorySelection" 
+                    @category-selected="handleCategorySelection"
                 />
 
                 <!-- Main Content: Measurements and Styling -->
                 <div v-if="selectedCategories.length > 0" class="animate-[fadeIn_0.5s_ease-out]">
                     <!-- Category Tabs - Premium Style -->
                     <div class="flex gap-2 overflow-x-auto pb-3 scrollbar-hide">
-                        <button 
-                            v-for="id in selectedCategories" 
+                        <button
+                            v-for="id in selectedCategories"
                             :key="id"
                             @click="activeCategoryTab = id"
                             class="whitespace-nowrap px-4 py-2 rounded-xl font-bold text-xs transition-all duration-300 flex items-center gap-2 border shadow-sm"
-                            :class="activeCategoryTab === id 
-                                ? 'bg-indigo-600 border-indigo-600 text-white shadow-indigo-200' 
+                            :class="activeCategoryTab === id
+                                ? 'bg-indigo-600 border-indigo-600 text-white shadow-indigo-200'
                                 : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'"
                         >
                             <span class="w-2 h-2 rounded-full bg-current opacity-40" v-if="activeCategoryTab !== id"></span>
@@ -85,7 +89,7 @@
                         <div class="bg-white rounded-3xl shadow-lg shadow-slate-200/50 border border-slate-200 overflow-hidden relative">
                             <!-- Background Tint -->
                             <div class="absolute inset-0 bg-gradient-to-br from-indigo-50/20 via-white to-emerald-50/20 pointer-events-none"></div>
-                            
+
                             <div class="p-4 md:p-6 relative z-10">
                                 <div class="grid grid-cols-1 gap-6">
                                     <!-- Measurement Form -->
@@ -131,9 +135,12 @@
                                                 v-model="currentItems[activeCategoryTab]" :products="products"
                                                 :colors="colors" :isLoading="isAddingItem[activeCategoryTab]"
                                                 :isEditing="!!editingItemIds[activeCategoryTab]"
+                                                :barcode-from-scanner="barcodeFromScanner"
                                                 @add-item="(item) => handleAddItem(item, activeCategoryTab)"
                                                 @calculate-amount="(item) => calculateItemAmount(item, activeCategoryTab)"
-                                                @clear="handleItemClear(activeCategoryTab)" />
+                                                @clear="handleItemClear(activeCategoryTab)"
+                                                @open-scanner="isScannerOpen = true"
+                                                @clear-barcode="handleClearBarcode" />
                                         </div>
                                     </div>
                                 </div>
@@ -143,15 +150,30 @@
                 </div>
 
                 <!-- Summary and Work Orders -->
-                <div class="grid grid-cols-1 lg:grid-cols-12 gap-4">
-                    <!-- Summary Table -->
-                    <div class="lg:col-span-3">
-                        <SummaryTable :items="form.items" />
-                    </div>
+                <div class="bg-white rounded-3xl shadow-lg shadow-slate-200/50 border border-slate-200 overflow-hidden relative">
+                    <div class="absolute inset-0 bg-gradient-to-tr from-indigo-50/10 to-transparent pointer-events-none"></div>
+                    <div class="p-4 md:p-5 relative z-10">
+                        <div class="flex items-center gap-2 mb-6 border-b border-slate-100 pb-3">
+                            <div class="w-8 h-8 rounded-lg bg-indigo-50 flex items-center justify-center text-indigo-600">
+                                <i class="fa fa-info-circle text-sm"></i>
+                            </div>
+                            <div>
+                                <h3 class="text-sm font-bold text-slate-800 leading-none mb-0.5">Summary and Work Orders</h3>
+                                <p class="text-slate-400 text-[10px] font-medium uppercase tracking-wider">Order totals and job details</p>
+                            </div>
+                        </div>
 
-                    <!-- Work Orders Preview -->
-                    <div class="lg:col-span-9">
-                        <WorkOrdersPreview :items="form.items" @edit="handleEditItem" @remove="handleRemoveItem" />
+                        <div class="grid grid-cols-1 lg:grid-cols-12 gap-4">
+                            <!-- Summary Table -->
+                            <div class="lg:col-span-3">
+                                <SummaryTable :items="form.items" />
+                            </div>
+
+                            <!-- Work Orders Preview -->
+                            <div class="lg:col-span-9">
+                                <WorkOrdersPreview :items="form.items" @edit="handleEditItem" @remove="handleRemoveItem" />
+                            </div>
+                        </div>
                     </div>
                 </div>
 
@@ -177,6 +199,8 @@
 
         <CustomPaymentModal :show="showCustomPaymentModal" :total-amount="grandTotal" :payment-methods="paymentMethods"
             :initial-payments="form.payments" @close="showCustomPaymentModal = false" @save="handleCustomPaymentSave" />
+
+        <BarcodeScanner :isOpen="isScannerOpen" emitRawBarcode @barcode-scanned="handleBarcodeScanned" @close="closeScanner" />
     </div>
 </template>
 
@@ -204,6 +228,7 @@ import ActionButtons from '@/components/Tailoring/ActionButtons.vue'
 import CustomerModal from '@/components/CustomerModal.vue'
 import SaleConfirmationModal from '@/components/Tailoring/SaleConfirmationModal.vue'
 import CustomPaymentModal from '@/components/Tailoring/CustomPaymentModal.vue'
+import BarcodeScanner from '@/components/BarcodeScanner.vue'
 import axios from 'axios'
 
 const props = defineProps({
@@ -251,6 +276,8 @@ const showCustomPaymentModal = ref(false)
 const selectedPaymentMethod = ref(1)
 const sendToWhatsapp = ref(false)
 const showCustomerModal = ref(false)
+const isScannerOpen = ref(false)
+const barcodeFromScanner = ref(null)
 const isSubmitting = ref(false)
 const isAddingItem = ref({})
 const activeCategoryTab = ref(null)
@@ -307,6 +334,7 @@ const handleCategorySelection = (categoryIds) => {
             product_name: '',
             product_color: '',
             quantity: 1,
+            quantity_per_item: 1,
             unit_price: 0,
             stitch_rate: 0,
             tax: 0,
@@ -373,6 +401,7 @@ const handleAddItem = async (itemData, categoryId) => {
         // Calculate amounts (stateless backend call)
         const response = await axios.post('/tailoring/order/calculate-amount', {
             quantity: item.quantity,
+            quantity_per_item: item.quantity_per_item ?? 1,
             unit_price: item.unit_price,
             stitch_rate: item.stitch_rate || 0,
             discount: item.discount || 0,
@@ -384,7 +413,7 @@ const handleAddItem = async (itemData, categoryId) => {
 
             // Dynamic keys from category configuration
             const measurementKeys = (category.active_measurements || []).map(m => m.field_key)
-            
+
             // Add mandatory hidden keys
             const additionalKeys = ['tailoring_category_model_id', 'tailoring_category_model_name', 'tailoring_notes']
             const allKeys = [...new Set([...measurementKeys, ...additionalKeys])]
@@ -452,6 +481,7 @@ const handleAddItem = async (itemData, categoryId) => {
                 product_name: '',
                 product_color: '',
                 quantity: 0,
+                quantity_per_item: 1,
                 unit_price: 0,
                 stitch_rate: 0,
                 tax: 0,
@@ -473,6 +503,7 @@ const calculateItemAmount = async (item, categoryId) => {
     try {
         const response = await axios.post('/tailoring/order/calculate-amount', {
             quantity: item.quantity,
+            quantity_per_item: item.quantity_per_item ?? 1,
             unit_price: item.unit_price,
             stitch_rate: item.stitch_rate || 0,
             discount: item.discount || 0,
@@ -489,12 +520,12 @@ const calculateItemAmount = async (item, categoryId) => {
 
 const handleEditItem = (item) => {
     const catId = item.tailoring_category_id
-    
+
     // Switch to the correct category tab
     if (!selectedCategories.value.includes(catId)) {
         selectedCategories.value.push(catId)
     }
-    
+
     // Restore data to forms immediately - use full copy to include all dynamic measurements
     currentItems.value[catId] = { ...item }
     measurements.value[catId] = { ...item }
@@ -536,6 +567,7 @@ const handleRemoveItem = (item) => {
                 product_name: '',
                 product_color: '',
                 quantity: 0,
+                quantity_per_item: 1,
                 unit_price: 0,
                 stitch_rate: 0,
                 tax: 0,
@@ -655,6 +687,18 @@ const handleCustomerAdded = (customer) => {
     })
 }
 
+const handleBarcodeScanned = (data) => {
+    barcodeFromScanner.value = data?.code ? data : null
+}
+
+const closeScanner = () => {
+    isScannerOpen.value = false
+}
+
+const handleClearBarcode = () => {
+    barcodeFromScanner.value = null
+}
+
 const handleCustomerSelected = (customer) => {
     if (customer) {
         form.value.account_id = customer.id
@@ -685,20 +729,21 @@ onMounted(() => {
     if (props.order?.items?.length > 0) {
         const categoryIds = [...new Set(props.order.items.map(i => i.tailoring_category_id))]
         selectedCategories.value = categoryIds
-        
+
         // Populate measurements and current items for each category
         categoryIds.forEach(catId => {
             const item = props.order.items.find(i => i.tailoring_category_id === catId)
             if (item) {
                 // Take a full copy to preserve all data including dynamic measurements
                 measurements.value[catId] = { ...item }
-                
+
                 // Initialize current item form for new additions in this category
                 currentItems.value[catId] = {
                     product_id: null,
                     product_name: '',
                     product_color: '',
                     quantity: 1,
+                    quantity_per_item: 1,
                     unit_price: 0,
                     stitch_rate: 0,
                     tax: 0,
@@ -726,11 +771,11 @@ onMounted(() => {
 }
 
 @keyframes fadeSlideUp {
-  from { 
+  from {
     opacity: 0;
     transform: translateY(20px);
   }
-  to { 
+  to {
     opacity: 1;
     transform: translateY(0);
   }

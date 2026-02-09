@@ -6,11 +6,11 @@
         </div>
 
         <div class="space-y-2">
-            <div v-for="group in groupedItems" :key="group.categoryId" 
+            <div v-for="group in groupedItems" :key="group.categoryId"
                 class="bg-white rounded-2xl p-3 shadow-sm border border-slate-200 transition-all hover:shadow-md hover:border-indigo-200 relative overflow-hidden group">
                 <!-- Inner background tint -->
                 <div class="absolute inset-0 bg-gradient-to-br from-indigo-50/20 to-transparent pointer-events-none"></div>
-                
+
                 <div class="flex justify-between items-start relative z-10">
                     <div class="flex gap-2">
                         <div class="w-8 h-8 rounded-lg bg-indigo-50 flex items-center justify-center text-indigo-400 group-hover:bg-indigo-100 group-hover:text-indigo-600 transition-colors">
@@ -38,11 +38,11 @@
         </div>
 
         <!-- Grand Total -->
-        <div v-if="groupedItems.length > 0" 
+        <div v-if="groupedItems.length > 0"
             class="bg-indigo-600 rounded-2xl p-4 shadow-xl shadow-indigo-200 flex justify-between items-center transition-all hover:scale-[1.02] relative overflow-hidden">
             <!-- Shimmer effect -->
             <div class="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full animate-[shimmer_2s_infinite] pointer-events-none"></div>
-            
+
             <div class="relative z-10">
                 <p class="text-indigo-100/80 text-[9px] font-black uppercase tracking-[0.2em] mb-0.5">Grand Total</p>
                 <div class="flex items-baseline gap-1">
@@ -71,7 +71,7 @@ const props = defineProps({
 
 const groupedItems = computed(() => {
     const groups = {}
-    
+
     props.items.forEach(item => {
         const catId = item.tailoring_category_id
         if (!groups[catId]) {
@@ -79,14 +79,18 @@ const groupedItems = computed(() => {
                 categoryId: catId,
                 categoryName: item.category?.name || 'Unknown Category',
                 quantity: 0,
+                totalQtyPerItem: 0,
                 total: 0
             }
         }
-        
-        groups[catId].quantity += parseFloat(item.quantity || 0)
+
+        const qty = parseFloat(item.quantity || 0)
+        const qtyPerItem = parseFloat(item.quantity_per_item || 1)
+        groups[catId].quantity += qty
+        groups[catId].totalQtyPerItem += qty * qtyPerItem
         groups[catId].total += parseFloat(item.total || 0)
     })
-    
+
     return Object.values(groups)
 })
 
