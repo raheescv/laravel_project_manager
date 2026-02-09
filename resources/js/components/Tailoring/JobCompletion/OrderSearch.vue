@@ -36,11 +36,11 @@
                     </div>
 
                     <div class="flex justify-end gap-2 mt-8 pt-4 border-t border-slate-100">
-                        <button @click="handleClear" 
+                        <button @click="handleClear"
                             class="px-4 py-1.5 rounded-xl text-slate-400 hover:text-slate-600 font-bold text-xs uppercase tracking-widest transition-colors flex items-center gap-2">
                             <i class="fa fa-refresh"></i> Clear
                         </button>
-                        <button @click="$emit('search')" 
+                        <button @click="$emit('search')"
                             class="px-5 py-1.5 rounded-xl bg-blue-600 text-white font-bold text-xs uppercase tracking-widest shadow-lg shadow-blue-600/20 hover:bg-blue-700 transition-all flex items-center gap-2">
                             <i class="fa fa-search"></i> Search Order
                         </button>
@@ -61,7 +61,7 @@
                             Recent Orders for <span class="text-blue-600">{{ customer }}</span>
                         </h6>
                     </div>
-                    
+
                     <div class="overflow-x-auto">
                         <table class="w-full text-left border-collapse whitespace-nowrap">
                             <thead>
@@ -241,10 +241,10 @@ const formatDate = (dateString) => {
 
 const getStatusBadgeClass = (status) => {
     switch (status?.toLowerCase()) {
-        case 'completed': return 'bg-success'
-        case 'in_progress': return 'bg-primary'
+        case 'completed': return 'bg-success text-white'
+        case 'in_progress': return 'bg-primary text-white'
         case 'delivered': return 'bg-info text-dark'
-        default: return 'bg-secondary'
+        default: return 'bg-secondary text-white'
     }
 }
 
