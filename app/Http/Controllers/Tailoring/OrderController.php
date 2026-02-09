@@ -336,6 +336,64 @@ class OrderController extends Controller
         ]);
     }
 
+    public function getOldMeasurements($accountId, $categoryId): JsonResponse
+    {
+        $measurements = TailoringOrderMeasurement::query()
+            ->where('tailoring_category_id', $categoryId)
+            ->whereHas('order', function ($q) use ($accountId) {
+                $q->where('account_id', $accountId);
+            })
+            ->with(['order:id,order_no,order_date', 'categoryModel:id,name'])
+            ->orderByDesc('created_at')
+            ->limit(20)
+            ->get();
+
+        $seen = [];
+        $unique = $measurements->filter(function ($m) use (&$seen) {
+            $data = $m->data ?? [];
+            ksort($data);
+            $signature = json_encode([
+                'model_id' => $m->tailoring_category_model_id,
+                'notes' => $m->tailoring_notes ?? '',
+                'data' => $data,
+            ]);
+            if (isset($seen[$signature])) {
+                return false;
+            }
+            $seen[$signature] = true;
+
+            return true;
+        })->take(20);
+
+        $data = $unique->map(function ($m) {
+            $item = [
+                'id' => $m->id,
+                'order_no' => $m->order?->order_no,
+                'order_date' => $m->order?->order_date?->format('Y-m-d'),
+                'model_name' => $m->categoryModel?->name ?? 'Standard',
+                'tailoring_category_model_id' => $m->tailoring_category_model_id,
+                'tailoring_category_model_name' => $m->categoryModel?->name,
+                'tailoring_notes' => $m->tailoring_notes,
+                'data' => $m->data ?? [],
+            ];
+            // Merge data keys at top level for frontend compatibility
+            if (! empty($m->data) && is_array($m->data)) {
+                foreach ($m->data as $k => $v) {
+                    if ($v !== null && $v !== '') {
+                        $item[$k] = $v;
+                    }
+                }
+            }
+
+            return $item;
+        })->values()->toArray();
+
+        return response()->json([
+            'success' => true,
+            'data' => $data,
+        ]);
+    }
+
     public function addMeasurementOption(Request $request): JsonResponse
     {
         $validTypes = TailoringCategoryMeasurement::whereNotNull('options_source')

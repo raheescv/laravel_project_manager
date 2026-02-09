@@ -14,6 +14,7 @@ Route::middleware('auth')->group(function (): void {
         Route::get('product-colors', [OrderController::class, 'getProductColors'])->name('product-colors');
         Route::get('measurement-options', [OrderController::class, 'getMeasurementOptionsApi'])->name('measurement-options');
         Route::post('measurement-options', [OrderController::class, 'addMeasurementOption'])->name('add-measurement-option');
+        Route::get('old-measurements/{accountId}/{categoryId}', [OrderController::class, 'getOldMeasurements'])->name('old-measurements');
         Route::post('add-item', [OrderController::class, 'addItem'])->name('add-item');
         Route::put('update-item/{id}', [OrderController::class, 'updateItem'])->name('update-item');
         Route::delete('remove-item/{id}', [OrderController::class, 'removeItem'])->name('remove-item');

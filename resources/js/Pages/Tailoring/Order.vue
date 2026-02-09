@@ -200,6 +200,16 @@
         <CustomPaymentModal :show="showCustomPaymentModal" :total-amount="grandTotal" :payment-methods="paymentMethods"
             :initial-payments="form.payments" @close="showCustomPaymentModal = false" @save="handleCustomPaymentSave" />
 
+        <OldMeasurementModal
+            :show="showOldMeasurementModal"
+            :account-id="form.account_id"
+            :category-id="pendingOldMeasurementCategoryId"
+            :category-name="getCategory(pendingOldMeasurementCategoryId)?.name"
+            :category="getCategory(pendingOldMeasurementCategoryId)"
+            @select="handleOldMeasurementSelect"
+            @skip="handleOldMeasurementSkip"
+        />
+
         <BarcodeScanner :isOpen="isScannerOpen" emitRawBarcode @barcode-scanned="handleBarcodeScanned" @close="closeScanner" />
     </div>
 </template>
@@ -228,6 +238,7 @@ import ActionButtons from '@/components/Tailoring/ActionButtons.vue'
 import CustomerModal from '@/components/CustomerModal.vue'
 import SaleConfirmationModal from '@/components/Tailoring/SaleConfirmationModal.vue'
 import CustomPaymentModal from '@/components/Tailoring/CustomPaymentModal.vue'
+import OldMeasurementModal from '@/components/Tailoring/OldMeasurementModal.vue'
 import BarcodeScanner from '@/components/BarcodeScanner.vue'
 import axios from 'axios'
 
@@ -283,6 +294,8 @@ const isAddingItem = ref({})
 const activeCategoryTab = ref(null)
 const measurementOptions = ref(props.measurementOptions || {})
 const editingItemIds = ref({}) // Map of categoryId -> itemId
+const showOldMeasurementModal = ref(false)
+const pendingOldMeasurementCategoryId = ref(null)
 
 const canSubmit = computed(() => {
     return form.value.items.length > 0 && form.value.customer_name
@@ -324,6 +337,10 @@ const getCategory = (id) => {
 
 // Methods
 const handleCategorySelection = (categoryIds) => {
+    const prev = [...selectedCategories.value]
+    const newlyAdded = categoryIds.filter(id => !prev.includes(id))
+    const removed = prev.filter(id => !categoryIds.includes(id))
+
     selectedCategories.value = categoryIds
 
     // Initialize state for new categories
@@ -342,6 +359,15 @@ const handleCategorySelection = (categoryIds) => {
         }
     })
 
+    // Show old measurement modal when a new category is added and customer is selected
+    if (newlyAdded.length === 1 && form.value.account_id && !removed.length) {
+        pendingOldMeasurementCategoryId.value = newlyAdded[0]
+        showOldMeasurementModal.value = true
+    } else {
+        showOldMeasurementModal.value = false
+        pendingOldMeasurementCategoryId.value = null
+    }
+
     // Set active tab logic
     if (categoryIds.length > 0) {
         // If no active tab or current active is removed, select the last one
@@ -351,6 +377,21 @@ const handleCategorySelection = (categoryIds) => {
     } else {
         activeCategoryTab.value = null
     }
+}
+
+const handleOldMeasurementSelect = (payload) => {
+    const catId = pendingOldMeasurementCategoryId.value
+    if (catId && measurements.value[catId]) {
+        Object.assign(measurements.value[catId], payload)
+        toast.success('Previous measurements applied')
+    }
+    showOldMeasurementModal.value = false
+    pendingOldMeasurementCategoryId.value = null
+}
+
+const handleOldMeasurementSkip = () => {
+    showOldMeasurementModal.value = false
+    pendingOldMeasurementCategoryId.value = null
 }
 
 const handleAddMeasurementOption = async (type, value) => {
