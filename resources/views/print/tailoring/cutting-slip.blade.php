@@ -52,22 +52,22 @@
             overflow: hidden;
         }
 
-        .measure-val { 
-            width: 40%; 
+        .measure-val {
+            width: 40%;
             background: #f0f0f0;
-            border-right: 1px solid #000; 
-            height: 100%; 
-            display: flex; 
-            align-items: center; 
-            justify-content: center; 
-            font-weight: bold; 
+            border-right: 1px solid #000;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
             font-size: 1rem;
         }
-        
-        .measure-label { 
-            width: 60%; 
-            padding-left: 8px; 
-            font-weight: bold; 
+
+        .measure-label {
+            width: 60%;
+            padding-left: 8px;
+            font-weight: bold;
             font-size: 0.75rem;
             color: #444;
         }
@@ -246,28 +246,6 @@
             @endforeach
         </tbody>
     </table>
-
-    <div class="info-bar">
-        <div>MAR Model</div>
-        <div>FP Model</div>
-        <div>Pen</div>
-        <div>Mobile Pocket</div>
-        <div>Button No.</div>
-        <div>Side PT Model</div>
-        <div>Side PT Size</div>
-        <div style="border-right:none">Cuff</div>
-    </div>
-    <div class="info-values">
-        <div>{{ $firstItem->mar_model ?? '-' }}</div>
-        <div>{{ $firstItem->fp_model ?? '-' }}</div>
-        <div>{{ $firstItem->pen ?? '-' }}</div>
-        <div>{{ $firstItem->mobile_pocket ?? '-' }}</div>
-        <div>{{ $firstItem->button_no ?? '-' }}</div>
-        <div>{{ $firstItem->side_pt_model ?? '-' }}</div>
-        <div>{{ $firstItem->side_pt_size ?? '-' }}</div>
-        <div style="border-right:none">{{ $firstItem->cuff ?? '-' }}</div>
-    </div>
-
     <div class="bottom-section">
         <div style="flex: 2;">
             <div class="field-row">Cutting Master: <div class="field-input">{{ $order->cutter->name ?? '' }}</div></div>

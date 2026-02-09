@@ -49,6 +49,7 @@ class AddTailoringItemAction
                     [
                         'tailoring_order_id' => $data['tailoring_order_id'],
                         'tailoring_category_id' => $categoryId,
+                        'tailoring_category_model_id' => $data['tailoring_category_model_id'],
                     ],
                     $measurementData
                 );

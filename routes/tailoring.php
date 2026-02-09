@@ -22,6 +22,7 @@ Route::middleware('auth')->group(function (): void {
         Route::post('add-payment', [OrderController::class, 'addPayment'])->name('add-payment');
         Route::put('update-payment/{id}', [OrderController::class, 'updatePayment'])->name('update-payment');
         Route::delete('remove-payment/{id}', [OrderController::class, 'deletePayment'])->name('remove-payment');
+        Route::get('{orderId}/item/{itemId}', [OrderController::class, 'getItem'])->name('item');
         Route::get('{id}/payments', [OrderController::class, 'getPayments'])->name('payments');
     });
 

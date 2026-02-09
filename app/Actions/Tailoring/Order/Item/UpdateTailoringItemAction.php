@@ -46,11 +46,11 @@ class UpdateTailoringItemAction
                     }
                 }
                 $measurementData['data'] = (object) $dynamicData;
-
                 TailoringOrderMeasurement::updateOrCreate(
                     [
                         'tailoring_order_id' => $item->tailoring_order_id,
                         'tailoring_category_id' => $categoryId,
+                        'tailoring_category_model_id' => $data['tailoring_category_model_id'],
                     ],
                     $measurementData
                 );

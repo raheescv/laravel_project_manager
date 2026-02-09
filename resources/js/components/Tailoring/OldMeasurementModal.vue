@@ -1,7 +1,7 @@
 <template>
     <Teleport to="body">
         <Transition name="modal">
-            <div v-if="show" class="fixed inset-0 z-[9999] overflow-y-auto" aria-labelledby="modal-title" role="dialog"
+            <div v-if="showModal" class="fixed inset-0 z-[9999] overflow-y-auto" aria-labelledby="modal-title" role="dialog"
                 aria-modal="true">
                 <!-- Background overlay -->
                 <div class="flex items-center justify-center min-h-screen p-4">
@@ -140,6 +140,9 @@ const emit = defineEmits(['select', 'skip'])
 const items = ref([])
 const loading = ref(false)
 
+// Only show modal when we have items (skip entirely if none)
+const showModal = computed(() => props.show && (loading.value || items.value.length > 0))
+
 const previewFields = ['length', 'shoulder', 'chest', 'sleeve', 'waist', 'hip', 'collar', 'cuff', 'neck']
 
 const getPreviewFields = (item) => {
@@ -198,6 +201,9 @@ const fetchOldMeasurements = async () => {
         console.error('Failed to load old measurements', err)
     } finally {
         loading.value = false
+        if (items.value.length === 0) {
+            emit('skip')
+        }
     }
 }
 

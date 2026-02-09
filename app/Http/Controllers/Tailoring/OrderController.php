@@ -512,6 +512,34 @@ class OrderController extends Controller
         ]);
     }
 
+    public function getItem($orderId, $itemId): JsonResponse
+    {
+        $action = new GetTailoringOrderAction();
+        $result = $action->execute($orderId);
+
+        if (! $result['success']) {
+            return response()->json([
+                'success' => false,
+                'message' => $result['message'] ?? 'Order not found',
+            ], 404);
+        }
+
+        $order = $result['data'];
+        $item = $order->items->firstWhere('id', (int) $itemId);
+
+        if (! $item) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Item not found',
+            ], 404);
+        }
+
+        return response()->json([
+            'success' => true,
+            'data' => $item,
+        ]);
+    }
+
     // Job Completion API Methods
     public function getOrderByOrderNumber($orderNo): JsonResponse
     {
