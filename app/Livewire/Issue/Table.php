@@ -8,6 +8,7 @@ use App\Models\Issue;
 use Illuminate\Support\Facades\DB;
 use Livewire\Component;
 use Livewire\WithPagination;
+use Illuminate\Support\Facades\Auth;
 
 class Table extends Component
 {
@@ -49,7 +50,7 @@ class Table extends Component
                 return;
             }
             foreach ($this->selected as $id) {
-                $response = (new DeleteAction())->execute((int) $id);
+                $response = (new DeleteAction())->execute((int) $id,Auth::id());
                 if (! $response['success']) {
                     throw new \Exception($response['message']);
                 }
