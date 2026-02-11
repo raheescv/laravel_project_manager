@@ -1,3 +1,6 @@
+@php
+    use Carbon\Carbon;
+@endphp
 <!DOCTYPE html>
 <html lang="en">
 
@@ -54,8 +57,14 @@
         }
 
         @media print {
-            body { background: #fff; padding: 0; }
-            .issue-card { box-shadow: none; }
+            body {
+                background: #fff;
+                padding: 0;
+            }
+
+            .issue-card {
+                box-shadow: none;
+            }
         }
     </style>
 </head>
@@ -100,7 +109,7 @@
                     <th>#</th>
                     <th>Product</th>
                     <th class="text-end">Code</th>
-                    <th>Date</th>
+                    <th colspan="2">Date</th>
                     <th class="text-end">Qty Out</th>
                     <th class="text-end">Qty In</th>
                 </tr>
@@ -112,6 +121,7 @@
                         <td>{{ $item->product?->name }}</td>
                         <td class="text-end">{{ $item->product?->code ?? '-' }}</td>
                         <td>{{ systemDate($item->date) }}</td>
+                        <td>{{ Carbon::parse($item->date)->diffForHumans() }}</td>
                         <td class="text-end">{{ number_format($item->quantity_out, 2) }}</td>
                         <td class="text-end">{{ number_format($item->quantity_in, 2) }}</td>
                     </tr>

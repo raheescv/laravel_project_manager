@@ -14,8 +14,10 @@ class View extends Component
     public function mount(?int $table_id = null): void
     {
         $this->table_id = $table_id;
-        $this->model = Issue::with('account:id,name,mobile', 'items.product:id,name,code')
-            ->find($this->table_id);
+        $this->model = Issue::with([
+            'account:id,name,mobile',
+            'items' => fn ($q) => $q->with('product:id,name,code')->orderBy('date', 'asc'),
+        ])->find($this->table_id);
         if (! $this->model) {
             $this->redirect(route('issue::index'));
         }
