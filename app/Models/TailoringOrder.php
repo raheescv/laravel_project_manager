@@ -290,7 +290,7 @@ class TailoringOrder extends Model implements AuditableContracts
 
         // Key measurements by category + model so each item gets the correct measurement
         $measurementsByKey = $this->measurements->keyBy(function ($m) {
-            return $m->tailoring_category_id . '-' . ($m->tailoring_category_model_id ?? 'null');
+            return $m->tailoring_category_id.'-'.($m->tailoring_category_model_id ?? 'null');
         });
 
         foreach ($this->items as $item) {
@@ -298,7 +298,7 @@ class TailoringOrder extends Model implements AuditableContracts
                 continue;
             }
 
-            $itemKey = $item->tailoring_category_id . '-' . ($item->tailoring_category_model_id ?? 'null');
+            $itemKey = $item->tailoring_category_id.'-'.($item->tailoring_category_model_id ?? 'null');
             $meas = $measurementsByKey->get($itemKey);
 
             if (! $meas) {

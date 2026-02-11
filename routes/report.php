@@ -39,5 +39,6 @@ Route::middleware('auth')->group(function (): void {
             Route::get('day_wise_tax_report', 'day_wise_tax_report')->name('day_wise_tax_report')->can('report.day wise tax report');
             Route::get('tax_report', 'tax_report')->name('tax_report')->can('report.tax report');
             Route::get('monthly_sale', 'monthly_sale')->name('monthly_sale')->can('report.monthly sale');
+            Route::get('issue_item', 'issue_item')->name('issue_item')->can('report.issue item');
         });
 });

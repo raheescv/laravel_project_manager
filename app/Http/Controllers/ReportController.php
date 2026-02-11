@@ -132,4 +132,9 @@ class ReportController extends Controller
     {
         return view('report.monthly_sale');
     }
+
+    public function issue_item()
+    {
+        return view('report.issue_item');
+    }
 }

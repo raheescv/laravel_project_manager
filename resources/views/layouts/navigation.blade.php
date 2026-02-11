@@ -87,6 +87,11 @@
         }
 
         /* Purple for Tailoring */
+        .nav-link .fa-exchange {
+            color: #4f46e5;
+        }
+
+        /* Indigo for Issue */
 
         /* Hover effects for icons */
         .nav-link:hover .fa {
@@ -220,6 +225,35 @@
                                         <a href="{{ route('inventory::stock-check::index') }}" class="nav-link {{ request()->is(['inventory/stock-check','inventory/stock-check/*']) ? 'active' : '' }}">
                                             Stock Check
                                         </a>
+                                    </li>
+                                @endcan
+                            </ul>
+                        </li>
+                    @endif
+
+                    @if (auth()->user()->can('issue.view') || auth()->user()->can('issue.create') || auth()->user()->can('report.issue item'))
+                        <li class="nav-item has-sub">
+                            @php
+                                $issueList = ['issue', 'issue/create', 'issue/edit/*', 'issue/view/*', 'report/issue_item'];
+                            @endphp
+                            <a href="#" class="mininav-toggle nav-link {{ request()->is($issueList) ? 'active' : '' }}"><i class="fa fa-exchange fs-5 me-2"></i>
+                                <span class="nav-label mininav-content ms-1 collapse show" style="">Issue</span>
+                            </a>
+                            <ul class="mininav-content nav collapse">
+                                <li data-popper-arrow class="arrow"></li>
+                                @can('issue.create')
+                                    <li class="nav-item">
+                                        <a href="{{ route('issue::create') }}" class="nav-link {{ request()->is(['issue/create']) ? 'active' : '' }}">Create</a>
+                                    </li>
+                                @endcan
+                                @can('issue.view')
+                                    <li class="nav-item">
+                                        <a href="{{ route('issue::index') }}" class="nav-link {{ request()->is(['issue', 'issue/edit/*', 'issue/view/*']) && !request()->is(['issue/create']) ? 'active' : '' }}">List</a>
+                                    </li>
+                                @endcan
+                                @can('report.issue item')
+                                    <li class="nav-item">
+                                        <a href="{{ route('report::issue_item') }}" class="nav-link {{ request()->is(['report/issue_item']) ? 'active' : '' }}">Item Wise Report</a>
                                     </li>
                                 @endcan
                             </ul>

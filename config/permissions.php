@@ -37,6 +37,7 @@ return [
         'stock check',
     ],
     'inventory transfer' => ['create', 'view', 'edit', 'edit completed', 'delete', 'import', 'export'],
+    'issue' => ['create', 'view', 'edit', 'delete', 'print'],
     'category' => ['create', 'view', 'edit', 'delete', 'import', 'export'],
     'appointment' => ['create', 'view', 'edit', 'delete', 'export', 'checkout', 'dashboard'],
     'sale' => [
@@ -95,6 +96,7 @@ return [
         'tax report',
         'day wise tax report',
         'monthly sale',
+        'issue item',
     ],
     'log' => ['inventory'],
     'day close' => ['sync amount'],

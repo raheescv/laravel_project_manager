@@ -11,8 +11,8 @@ return new class() extends Migration
      */
     public function up(): void
     {
-        Schema::table('tailoring_order_items', function (Blueprint $table) {
-            $table->unsignedTinyInteger('rating')->nullable()->after('tailoring_notes');
+        Schema::table('issue_items', function (Blueprint $table) {
+            //
         });
     }
 
@@ -21,8 +21,8 @@ return new class() extends Migration
      */
     public function down(): void
     {
-        Schema::table('tailoring_order_items', function (Blueprint $table) {
-            $table->dropColumn('rating');
+        Schema::table('issue_items', function (Blueprint $table) {
+            //
         });
     }
 };
