@@ -180,6 +180,9 @@
                             </div>
                         </div>
                     </div>
+
+                    @livewire('user.telegram-setup', ['userId' => $user->id], key('telegram-setup-'.$user->id))
+
                     <div class="card shadow-sm mb-4">
                         <div class="card-header bg-light py-3">
                             <h5 class="mb-0"><i class="fa fa-cogs me-2"></i>User Settings</h5>

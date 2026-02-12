@@ -69,4 +69,7 @@ return [
         'pusher_app_key' => env('PUSHER_APP_KEY'),
         'pusher_app_cluster' => env('PUSHER_APP_CLUSTER'),
     ],
+    'telegram' => [
+        'bot_username' => env('TELEGRAM_BOT_USERNAME'),
+    ],
 ];
