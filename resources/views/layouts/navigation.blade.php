@@ -222,7 +222,7 @@
                                 @endcan
                                 @can('inventory.stock check')
                                     <li class="nav-item">
-                                        <a href="{{ route('inventory::stock-check::index') }}" class="nav-link {{ request()->is(['inventory/stock-check','inventory/stock-check/*']) ? 'active' : '' }}">
+                                        <a href="{{ route('inventory::stock-check::index') }}" class="nav-link {{ request()->is(['inventory/stock-check', 'inventory/stock-check/*']) ? 'active' : '' }}">
                                             Stock Check
                                         </a>
                                     </li>
@@ -231,7 +231,7 @@
                         </li>
                     @endif
 
-                    @if (auth()->user()->can('issue.view') || auth()->user()->can('issue.create') || auth()->user()->can('report.issue item'))
+                    @if (auth()->user()->can('issue.view') || auth()->user()->can('issue.create') || auth()->user()->can('report.issue item') || auth()->user()->can('report.issue aging'))
                         <li class="nav-item has-sub">
                             @php
                                 $issueList = ['issue', 'issue/create', 'issue/create/*', 'issue/edit/*', 'issue/view/*', 'report/issue_item', 'report/issue_aging'];
@@ -243,7 +243,8 @@
                                 <li data-popper-arrow class="arrow"></li>
                                 @can('issue.create')
                                     <li class="nav-item">
-                                        <a href="{{ route('issue::create', ['type' => 'issue']) }}" class="nav-link {{ request()->is(['issue/create', 'issue/create/issue']) ? 'active' : '' }}">Create Issue</a>
+                                        <a href="{{ route('issue::create', ['type' => 'issue']) }}" class="nav-link {{ request()->is(['issue/create', 'issue/create/issue']) ? 'active' : '' }}">Create
+                                            Issue</a>
                                     </li>
                                     <li class="nav-item">
                                         <a href="{{ route('issue::create', ['type' => 'return']) }}" class="nav-link {{ request()->is(['issue/create/return']) ? 'active' : '' }}">Create Return</a>
@@ -251,13 +252,16 @@
                                 @endcan
                                 @can('issue.view')
                                     <li class="nav-item">
-                                        <a href="{{ route('issue::index') }}" class="nav-link {{ request()->is(['issue', 'issue/edit/*', 'issue/view/*']) && !request()->is(['issue/create']) ? 'active' : '' }}">List</a>
+                                        <a href="{{ route('issue::index') }}"
+                                            class="nav-link {{ request()->is(['issue', 'issue/edit/*', 'issue/view/*']) && !request()->is(['issue/create']) ? 'active' : '' }}">List</a>
                                     </li>
                                 @endcan
                                 @can('report.issue item')
                                     <li class="nav-item">
                                         <a href="{{ route('report::issue_item') }}" class="nav-link {{ request()->is(['report/issue_item']) ? 'active' : '' }}">Item Wise Report</a>
                                     </li>
+                                @endcan
+                                @can('report.issue aging')
                                     <li class="nav-item">
                                         <a href="{{ route('report::issue_aging') }}" class="nav-link {{ request()->is(['report/issue_aging']) ? 'active' : '' }}">Aging Report</a>
                                     </li>
@@ -467,17 +471,9 @@
                     @if (auth()->user()->can('tailoring.order.view') || auth()->user()->can('tailoring.job_completion.view'))
                         <li class="nav-item has-sub">
                             @php
-                                $list = [
-                                    'tailoring/order',
-                                    'tailoring/order/create',
-                                    'tailoring/order/edit/*',
-                                    'tailoring/order/*',
-                                    'tailoring/job-completion',
-                                    'tailoring/job-completion/create',
-                                ];
+                                $list = ['tailoring/order', 'tailoring/order/create', 'tailoring/order/edit/*', 'tailoring/order/*', 'tailoring/job-completion', 'tailoring/job-completion/create'];
                             @endphp
-                            <a href="#" class="mininav-toggle nav-link {{ request()->is($list) ? 'active' : '' }}"><i
-                                    class="fa fa-cut fs-5 me-2"></i>
+                            <a href="#" class="mininav-toggle nav-link {{ request()->is($list) ? 'active' : '' }}"><i class="fa fa-cut fs-5 me-2"></i>
                                 <span class="nav-label mininav-content ms-1 collapse show" style="">Tailoring</span>
                             </a>
                             <ul class="mininav-content nav collapse">
@@ -489,12 +485,14 @@
                                 @endcan
                                 @can('tailoring.order.view')
                                     <li class="nav-item">
-                                        <a href="{{ route('tailoring::order::index') }}" class="nav-link {{ request()->is(['tailoring/order', 'tailoring/order/edit/*', 'tailoring/order/*']) && !request()->is(['tailoring/order/create']) ? 'active' : '' }}">Orders</a>
+                                        <a href="{{ route('tailoring::order::index') }}"
+                                            class="nav-link {{ request()->is(['tailoring/order', 'tailoring/order/edit/*', 'tailoring/order/*']) && !request()->is(['tailoring/order/create']) ? 'active' : '' }}">Orders</a>
                                     </li>
                                 @endcan
                                 @can('tailoring.job_completion.view')
                                     <li class="nav-item">
-                                        <a href="{{ route('tailoring::job-completion::index') }}" class="nav-link {{ request()->is(['tailoring/job-completion', 'tailoring/job-completion/create']) ? 'active' : '' }}">Job Completion</a>
+                                        <a href="{{ route('tailoring::job-completion::index') }}"
+                                            class="nav-link {{ request()->is(['tailoring/job-completion', 'tailoring/job-completion/create']) ? 'active' : '' }}">Job Completion</a>
                                     </li>
                                 @endcan
                             </ul>

@@ -97,6 +97,7 @@ return [
         'day wise tax report',
         'monthly sale',
         'issue item',
+        'issue aging',
     ],
     'log' => ['inventory'],
     'day close' => ['sync amount'],

@@ -40,6 +40,6 @@ Route::middleware('auth')->group(function (): void {
             Route::get('tax_report', 'tax_report')->name('tax_report')->can('report.tax report');
             Route::get('monthly_sale', 'monthly_sale')->name('monthly_sale')->can('report.monthly sale');
             Route::get('issue_item', 'issue_item')->name('issue_item')->can('report.issue item');
-            Route::get('issue_aging', 'issue_aging')->name('issue_aging')->can('report.issue item');
+            Route::get('issue_aging', 'issue_aging')->name('issue_aging')->can('report.issue aging');
         });
 });
