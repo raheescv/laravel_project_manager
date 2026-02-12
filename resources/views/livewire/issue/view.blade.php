@@ -1,6 +1,3 @@
-@php
-    use Carbon\Carbon;
-@endphp
 @push('styles')
     <style>
         .issue-view-page {
@@ -243,7 +240,7 @@
                             <div class="value">{{ systemDate($model->date) }}</div>
                             @if ($model->date)
                                 <div class="date-meta">
-                                    <i class="fa fa-clock-o me-1 opacity-75"></i>{{ Carbon::parse($model->date)->diffForHumans() }}
+                                    <i class="fa fa-clock-o me-1 opacity-75"></i>{{ relativeDayLabel($model->date) }}
                                 </div>
                             @endif
                         </div>

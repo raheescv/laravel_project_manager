@@ -2,6 +2,7 @@
 
 use App\Models\Country;
 use App\Services\TenantService;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Storage;
@@ -121,6 +122,38 @@ if (! function_exists('systemDateTime')) {
         } else {
             return $value;
         }
+    }
+}
+
+/**
+ * Human-readable day-relative label for a date (no time): "today", "1 day before", "2 days before", etc.
+ *
+ * @param  string|\Carbon\Carbon|\DateTimeInterface|null  $date
+ * @return string
+ */
+if (! function_exists('relativeDayLabel')) {
+    function relativeDayLabel($date)
+    {
+        if (! $date) {
+            return '';
+        }
+        $issueDay = Carbon::parse($date)->startOfDay();
+        $daysDiff = $issueDay->diffInDays(now()->startOfDay(), false);
+
+        if ($daysDiff == 0) {
+            return 'today';
+        }
+        if ($daysDiff == 1) {
+            return '1 day before';
+        }
+        if ($daysDiff > 1) {
+            return $daysDiff.' days before';
+        }
+        if ($daysDiff == -1) {
+            return '1 day after';
+        }
+
+        return abs($daysDiff).' days after';
     }
 }
 

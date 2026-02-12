@@ -1,6 +1,3 @@
-@php
-    use Carbon\Carbon;
-@endphp
 <div>
     <div class="card-header bg-white">
         <div class="row g-3">
@@ -134,7 +131,7 @@
                             <td class="text-nowrap">
                                 <div class="d-flex align-items-center gap-2">
                                     <i class="demo-psi-clock fs-5 text-info"></i>
-                                    <span>{{ Carbon::parse($item->date)->diffForHumans() }}</span>
+                                    <span>{{ relativeDayLabel($item->date) }}</span>
                                 </div>
                             </td>
                             <td class="text-nowrap">
