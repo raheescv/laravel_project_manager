@@ -168,6 +168,11 @@
                                             <i class="fa fa-pencil"></i>
                                         </a>
                                     @endcan
+                                    @can('issue.print')
+                                        <a target="_blank" href="{{ route('issue::print', $item->id) }}" class="btn btn-sm btn-outline-primary" title="print">
+                                            <i class="fa fa-print"></i>
+                                        </a>
+                                    @endcan
                                 </div>
                             </td>
                         </tr>

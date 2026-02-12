@@ -207,6 +207,7 @@
                 <thead class="bg-light">
                     <tr>
                         <th class="ps-4"><x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="issue_items.id" label="#" /></th>
+                        <th><x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="issue_items.issue_id" label="Issue ID" /></th>
                         <th class="ps-4"><x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="issues.date" label="Date" /></th>
                         <th class="pe-4"><i class="fa fa-building-o me-1 text-warning"></i>Customer</th>
                         <th><i class="fa fa-cube me-1 text-success"></i>Product</th>
@@ -221,6 +222,18 @@
                                 <span class="cell-with-icon">
                                     <span class="icon-chip"><i class="fa fa-list-ol"></i></span>
                                     <span>{{ $item->id }}</span>
+                                </span>
+                            </td>
+                            <td class="text-muted">
+                                <span class="cell-with-icon">
+                                    <span class="icon-chip"><i class="fa fa-file-text-o"></i></span>
+                                    @can('issue.view')
+                                        <a href="{{ route('issue::view', $item->issue_id) }}" class="text-decoration-none fw-medium">
+                                            {{ $item->issue_id }}
+                                        </a>
+                                    @else
+                                        <span>{{ $item->issue_id }}</span>
+                                    @endcan
                                 </span>
                             </td>
                             <td class="ps-4">
@@ -265,7 +278,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="6" class="empty-state text-center">
+                            <td colspan="7" class="empty-state text-center">
                                 <div class="empty-icon">📋</div>
                                 <p class="empty-text mb-0">No issue items found for the selected filters.</p>
                             </td>
