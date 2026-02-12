@@ -81,12 +81,25 @@ class TelegramHelper
     {
         try {
             $response = $this->telegram->setWebhook(['url' => $url]);
-
             return ['success' => true, 'message' => 'Webhook setup successfully'];
         } catch (TelegramSDKException $e) {
             Log::error('Telegram webhook setup failed: '.$e->getMessage());
 
             return ['success' => false, 'message' => $e->getMessage()];
+        }
+    }
+
+    /**
+     * Get current webhook info from Telegram (URL, pending updates, last error).
+     */
+    public function getWebhookInfo(): ?\Telegram\Bot\Objects\WebhookInfo
+    {
+        try {
+            return $this->telegram->getWebhookInfo();
+        } catch (\Throwable $e) {
+            Log::error('Telegram getWebhookInfo failed: '.$e->getMessage());
+
+            return null;
         }
     }
 
@@ -100,6 +113,7 @@ class TelegramHelper
 
             $chatId = $message['chat']['id'] ?? null;
             $phoneNumber = $message['contact']['phone_number'] ?? null;
+            $text = $message['text'] ?? '';
 
             if ($chatId && $phoneNumber) {
                 // Format phone number to match your database format
@@ -120,6 +134,25 @@ class TelegramHelper
                     'chat_id' => $chatId,
                     'text' => 'Successfully connected your Telegram account!',
                 ]);
+
+                return;
+            }
+
+            // Reply with chat ID for /start or /chatid (Telegram may send /start@BotName or /start ref_xyz)
+            $textLower = strtolower(trim((string) $text));
+            $wantsChatId = $textLower === ''
+                || str_starts_with($textLower, '/start')
+                || str_starts_with($textLower, '/chatid');
+            if ($chatId && $wantsChatId) {
+                try {
+                    $this->telegram->sendMessage([
+                        'chat_id' => $chatId,
+                        'text' => "Your Telegram Chat ID: {$chatId}\n\n".
+                            'Share your phone number (contact) with this bot to link your account and receive notifications.',
+                    ]);
+                } catch (\Throwable $e) {
+                    Log::error('Telegram sendMessage failed: '.$e->getMessage(), ['chat_id' => $chatId]);
+                }
             }
         } catch (\Exception $e) {
             Log::error('Telegram update handling failed: '.$e->getMessage());
