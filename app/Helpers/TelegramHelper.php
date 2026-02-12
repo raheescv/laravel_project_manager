@@ -34,17 +34,16 @@ class TelegramHelper
                 throw new \Exception('User needs to connect with Telegram bot first. Invitation sent.');
             }
 
+
             // If user exists but no chat ID and not in auto-connect mode, notify them
             if (! $user->telegram_chat_id) {
                 throw new \Exception('User needs to connect with the bot first. Please ask them to message @'.config('services.telegram.bot_username'));
             }
 
-            $response = $this->telegram->sendMessage([
+            $this->telegram->sendMessage([
                 'chat_id' => $user->telegram_chat_id,
                 'text' => $data['message'],
-                'parse_mode' => 'HTML',
             ]);
-
             // If there's a file to send
             if (! empty($data['filePath']) && file_exists($data['filePath'])) {
                 $this->telegram->sendDocument([
