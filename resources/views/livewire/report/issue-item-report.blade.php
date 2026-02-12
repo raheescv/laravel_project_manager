@@ -117,6 +117,10 @@
         }
         .issue-item-report .table-report .link-issue { color: #4f46e5; font-weight: 500; transition: color 0.2s ease; }
         .issue-item-report .table-report .link-issue:hover { color: #6366f1; }
+        .issue-item-report .table-report .col-aging-30 { background: rgba(16, 185, 129, 0.12); color: #047857; font-weight: 600; }
+        .issue-item-report .table-report .col-aging-60 { background: rgba(245, 158, 11, 0.12); color: #b45309; font-weight: 600; }
+        .issue-item-report .table-report .col-aging-90 { background: rgba(249, 115, 22, 0.12); color: #c2410c; font-weight: 600; }
+        .issue-item-report .table-report .col-aging-90plus { background: rgba(239, 68, 68, 0.12); color: #b91c1c; font-weight: 600; }
 
         /* Empty state */
         .issue-item-report .empty-state {
@@ -226,10 +230,10 @@
                         <th><x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="issue_items.issue_id" label="Issue ID" /></th>
                         <th>Customer</th>
                         <th>Product</th>
-                        <th class="text-end">0–30</th>
-                        <th class="text-end">31–60</th>
-                        <th class="text-end">61–90</th>
-                        <th class="text-end pe-4">90+</th>
+                        <th class="text-end col-aging-30">0–30</th>
+                        <th class="text-end col-aging-60">31–60</th>
+                        <th class="text-end col-aging-90">61–90</th>
+                        <th class="text-end pe-4 col-aging-90plus">90+</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -259,10 +263,10 @@
                                     <small class="text-muted">({{ $item->product->code }})</small>
                                 @endif
                             </td>
-                            <td class="text-end">{{ $bucket === '30' ? number_format($rowQty, 2) : '—' }}</td>
-                            <td class="text-end">{{ $bucket === '60' ? number_format($rowQty, 2) : '—' }}</td>
-                            <td class="text-end">{{ $bucket === '90' ? number_format($rowQty, 2) : '—' }}</td>
-                            <td class="text-end pe-4">{{ $bucket === '90plus' ? number_format($rowQty, 2) : '—' }}</td>
+                            <td class="text-end col-aging-30">{{ $bucket === '30' ? number_format($rowQty, 2) : '—' }}</td>
+                            <td class="text-end col-aging-60">{{ $bucket === '60' ? number_format($rowQty, 2) : '—' }}</td>
+                            <td class="text-end col-aging-90">{{ $bucket === '90' ? number_format($rowQty, 2) : '—' }}</td>
+                            <td class="text-end pe-4 col-aging-90plus">{{ $bucket === '90plus' ? number_format($rowQty, 2) : '—' }}</td>
                         </tr>
                     @empty
                         <tr>
@@ -277,10 +281,10 @@
                     <tfoot class="table-group-divider">
                         <tr class="fw-semibold">
                             <th colspan="6" class="ps-4 text-end">Total</th>
-                            <th class="text-end">{{ number_format($aging['0_30']['quantity_out'] + $aging['0_30']['quantity_in'], 2) }}</th>
-                            <th class="text-end">{{ number_format($aging['31_60']['quantity_out'] + $aging['31_60']['quantity_in'], 2) }}</th>
-                            <th class="text-end">{{ number_format($aging['61_90']['quantity_out'] + $aging['61_90']['quantity_in'], 2) }}</th>
-                            <th class="text-end pe-4">{{ number_format($aging['90_plus']['quantity_out'] + $aging['90_plus']['quantity_in'], 2) }}</th>
+                            <th class="text-end col-aging-30">{{ number_format($aging['0_30']['quantity_out'] + $aging['0_30']['quantity_in'], 2) }}</th>
+                            <th class="text-end col-aging-60">{{ number_format($aging['31_60']['quantity_out'] + $aging['31_60']['quantity_in'], 2) }}</th>
+                            <th class="text-end col-aging-90">{{ number_format($aging['61_90']['quantity_out'] + $aging['61_90']['quantity_in'], 2) }}</th>
+                            <th class="text-end pe-4 col-aging-90plus">{{ number_format($aging['90_plus']['quantity_out'] + $aging['90_plus']['quantity_in'], 2) }}</th>
                         </tr>
                     </tfoot>
                 @endif
