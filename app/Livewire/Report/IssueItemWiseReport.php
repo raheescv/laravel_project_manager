@@ -3,7 +3,6 @@
 namespace App\Livewire\Report;
 
 use App\Models\IssueItem;
-use App\Services\TenantService;
 use Livewire\Component;
 use Livewire\WithPagination;
 

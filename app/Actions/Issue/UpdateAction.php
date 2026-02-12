@@ -3,8 +3,8 @@
 namespace App\Actions\Issue;
 
 use App\Models\Issue;
-use Illuminate\Support\Collection;
 use Exception;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 

@@ -10,7 +10,7 @@ class GetListAction
 {
     public function execute(array $filters = [], int $perPage = 15, ?string $sortField = null, ?string $sortDirection = 'desc'): LengthAwarePaginator
     {
-        $query = Issue::query() ->with(['account:id,name,mobile', 'items.product:id,name']);
+        $query = Issue::query()->with(['account:id,name,mobile', 'items.product:id,name']);
 
         $query = $this->applyFilters($query, $filters);
         $query = $this->applySort($query, $sortField, $sortDirection);

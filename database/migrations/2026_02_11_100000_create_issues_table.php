@@ -14,7 +14,7 @@ return new class() extends Migration
             $table->foreign('tenant_id')->references('id')->on('tenants')->onDelete('cascade');
             $table->index('tenant_id');
 
-            $table->enum('type', ['issue','return'])->default('issue');
+            $table->enum('type', ['issue', 'return'])->default('issue');
             $table->index('type');
 
             $table->unsignedBigInteger('account_id');

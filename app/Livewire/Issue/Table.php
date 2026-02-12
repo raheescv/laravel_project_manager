@@ -5,16 +5,17 @@ namespace App\Livewire\Issue;
 use App\Actions\Issue\DeleteAction;
 use App\Actions\Issue\GetListAction;
 use App\Models\Issue;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Livewire\Component;
 use Livewire\WithPagination;
-use Illuminate\Support\Facades\Auth;
 
 class Table extends Component
 {
     use WithPagination;
 
     public string $type = '';
+
     public string $search = '';
 
     public string $from_date = '';
@@ -51,7 +52,7 @@ class Table extends Component
                 return;
             }
             foreach ($this->selected as $id) {
-                $response = (new DeleteAction())->execute((int) $id,Auth::id());
+                $response = (new DeleteAction())->execute((int) $id, Auth::id());
                 if (! $response['success']) {
                     throw new \Exception($response['message']);
                 }

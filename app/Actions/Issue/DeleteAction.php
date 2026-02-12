@@ -3,7 +3,6 @@
 namespace App\Actions\Issue;
 
 use App\Models\Issue;
-use App\Actions\Issue\StockUpdateAction;
 use Exception;
 
 class DeleteAction

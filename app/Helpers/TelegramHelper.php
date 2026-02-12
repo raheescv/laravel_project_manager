@@ -81,6 +81,7 @@ class TelegramHelper
     {
         try {
             $response = $this->telegram->setWebhook(['url' => $url]);
+
             return ['success' => true, 'message' => 'Webhook setup successfully'];
         } catch (TelegramSDKException $e) {
             Log::error('Telegram webhook setup failed: '.$e->getMessage());
@@ -120,11 +121,10 @@ class TelegramHelper
                 $formattedPhone = $this->formatPhoneNumber($phoneNumber);
 
                 // Update or create user with telegram chat id
-                $user = User::firstOrCreate(
-                    ['mobile' => $formattedPhone],
-                    ['name' => $message['contact']['first_name'] ?? 'Telegram User']
-                );
-
+                $user = User::where('mobile', $formattedPhone)->first();
+                if (! $user) {
+                    throw new \Exception("User not found for this mobile no: $formattedPhone");
+                }
                 $user->update([
                     'telegram_chat_id' => $chatId,
                     'is_telegram_enabled' => true,
@@ -138,17 +138,22 @@ class TelegramHelper
                 return;
             }
 
-            // Reply with chat ID for /start or /chatid (Telegram may send /start@BotName or /start ref_xyz)
+            // Reply with chat ID and show "Share contact" button for /start or /chatid
             $textLower = strtolower(trim((string) $text));
-            $wantsChatId = $textLower === ''
-                || str_starts_with($textLower, '/start')
-                || str_starts_with($textLower, '/chatid');
+            $wantsChatId = $textLower === '' || str_starts_with($textLower, '/start') || str_starts_with($textLower, '/chatid');
             if ($chatId && $wantsChatId) {
                 try {
                     $this->telegram->sendMessage([
                         'chat_id' => $chatId,
                         'text' => "Your Telegram Chat ID: {$chatId}\n\n".
-                            'Share your phone number (contact) with this bot to link your account and receive notifications.',
+                            'Tap the button below to share your phone number and link your account for notifications.',
+                        'reply_markup' => json_encode([
+                            'keyboard' => [
+                                [['text' => '📱 Share my phone number', 'request_contact' => true]],
+                            ],
+                            'one_time_keyboard' => true,
+                            'resize_keyboard' => true,
+                        ]),
                     ]);
                 } catch (\Throwable $e) {
                     Log::error('Telegram sendMessage failed: '.$e->getMessage(), ['chat_id' => $chatId]);

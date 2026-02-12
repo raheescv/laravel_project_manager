@@ -73,7 +73,8 @@ class Page extends Component
         }
     }
 
-    public function updatedProductId(): void{
+    public function updatedProductId(): void
+    {
         if ($this->isReturnMode()) {
             $this->add_quantity_in = '1';
             $this->add_quantity_out = '0';
@@ -82,6 +83,7 @@ class Page extends Component
             $this->add_quantity_in = '0';
         }
     }
+
     public function addToCart(): void
     {
         $productId = $this->product_id;

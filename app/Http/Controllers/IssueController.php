@@ -17,13 +17,13 @@ class IssueController extends Controller
     {
         $entryType = in_array($type, ['issue', 'return'], true) ? $type : 'issue';
 
-        return view('issue.page', ['id' => null,'type' => $entryType]);
+        return view('issue.page', ['id' => null, 'type' => $entryType]);
     }
-
 
     public function edit(string $id): View
     {
         $issue = Issue::findOrFail((int) $id);
+
         return view('issue.page', ['id' => (int) $id, 'type' => 'issue']);
     }
 
