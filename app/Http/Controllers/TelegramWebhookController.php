@@ -22,10 +22,6 @@ class TelegramWebhookController extends Controller
             if (empty($update) && $request->getContent()) {
                 $update = json_decode($request->getContent(), true) ?? [];
             }
-            Log::info('Telegram webhook', [
-                'chat_id' => $update['message']['chat']['id'] ?? null,
-                'text' => $update['message']['text'] ?? null,
-            ]);
             $this->telegram->handleUpdate($update);
 
             return response()->json(['success' => true]);
