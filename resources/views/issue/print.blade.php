@@ -5,6 +5,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Delivery Note - #{{ $model->id }}</title>
+    <link rel="stylesheet" href="{{ asset('assets/css/bootstrap.min.css') }}">
+    <script src="{{ asset('assets/js/signature_pdf.js') }}"></script>
     <style>
         * {
             box-sizing: border-box;
@@ -211,24 +213,66 @@
             margin-bottom: 6px;
         }
 
-        .signatures {
+        .approval-section {
             margin-top: 26px;
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 20px;
         }
 
-        .received-row {
-            border-top: 1px solid #111827;
-            margin-bottom: 0;
-            padding-top: 6px;
-            text-align: center;
-            font-size: 13px;
-            font-style: normal;
+        .approval-meta {
+            width: 50%;
+        }
+
+        .meta-label {
+            font-size: 12px;
             font-weight: 700;
             text-transform: uppercase;
-            letter-spacing: 0.04em;
-            color: #374151;
+            color: #334155;
+            margin-bottom: 4px;
+        }
+
+        .section-title {
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+            color: #334155;
+            margin-bottom: 4px;
+        }
+
+        .meta-value {
+            font-size: 13px;
+            color: #111827;
+            margin: 0 0 14px;
+        }
+
+        .approval-signature {
+            width: 45%;
+            text-align: right;
+        }
+
+        .signature-box {
+            margin-top: 10px;
+            border: 1px dashed #cbd5e1;
+            padding: 10px;
+            min-height: 100px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 220px;
+            background: #fff;
+        }
+
+        .signature-image {
+            max-height: 80px;
+            max-width: 100%;
+        }
+
+        .signature-placeholder {
+            color: #94a3b8;
+            font-style: italic;
+            font-size: 12px;
         }
 
         .doc-footer {
@@ -261,6 +305,19 @@
                 border-radius: 0;
                 box-shadow: none;
             }
+
+            /* Keep content within a single A4 page while printing */
+            .items-table tbody {
+                height: 220px;
+            }
+
+            .approval-section {
+                margin-top: 18px;
+            }
+
+            .doc-footer {
+                margin-top: 14px;
+            }
         }
     </style>
 </head>
@@ -269,6 +326,7 @@
     @php
         $titleType = strtoupper($model->type);
         $preparedBy = $model->createdBy?->name;
+        $updatedBy = $model->updatedBy?->name;
     @endphp
     <div class="print-page">
         <div class="company-header">
@@ -316,7 +374,7 @@
                         <td class="col-sn">{{ $loop->iteration }}</td>
                         <td class="col-ref">{{ $item?->product?->name ?? '' }}</td>
                         <td class="col-qty">
-                            @if ($model->type==='issue')
+                            @if ($model->type === 'issue')
                                 {{ number_format($item->quantity_out, 2) }}
                             @else
                                 {{ number_format($item->quantity_in, 2) }}
@@ -331,16 +389,33 @@
             <div class="remarks-label">REMARKS:</div>
             <div class="remarks-content">
                 <div class="remarks-box">{{ $model->remarks ?? '' }}</div>
-                <div class="remarks-line"></div>
-                <div class="remarks-line"></div>
-                <div class="remarks-line"></div>
             </div>
         </div>
 
-        <div class="signatures">
-            <div class="received-row">Prepared By<br><span style="font-weight: 500; text-transform: none;">{{ $preparedBy }}</span></div>
-            <div class="received-row">Received By</div>
+        <div class="approval-section">
+            <div class="approval-meta">
+                <div class="meta-label">Created By</div>
+                <p class="meta-value">{{ $preparedBy ?? '-' }}</p>
+                <div class="meta-label">Last Updated At</div>
+                <p class="meta-value">{{ systemDateTime($model->updated_at) }}</p>
+            </div>
+            <div class="approval-signature">
+                <div class="meta-label">Approved By</div>
+                <p class="meta-value">{{ $updatedBy ?? '-' }}</p>
+                <div class="signature-box">
+                    @if ($model->signature)
+                        <img src="{{ public_path('storage/' . $model->signature) }}" alt="Signature" class="signature-image">
+                    @else
+                        <span class="signature-placeholder">No signature</span>
+                    @endif
+                </div>
+            </div>
         </div>
+        @if (!$model->signature)
+            <div class="row">
+                @livewire('issue.sign', ['model' => $model])
+            </div>
+        @endif
 
         <div class="doc-footer">
             <span>This is a system-generated delivery note.</span>

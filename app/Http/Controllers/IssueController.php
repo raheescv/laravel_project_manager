@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Issue;
 use Illuminate\View\View;
+use Spatie\Browsershot\Browsershot;
 
 class IssueController extends Controller
 {
@@ -31,11 +32,20 @@ class IssueController extends Controller
         return view('issue.view', ['id' => (int) $id]);
     }
 
-    public function print(string $id): View
+    public function print(string $id)
     {
-        $model = Issue::with(['account:id,name,mobile', 'items.product:id,name,code', 'createdBy:id,name'])
+        $model = Issue::with(['account:id,name,mobile', 'items.product:id,name,code', 'createdBy:id,name', 'updatedBy:id,name'])
             ->findOrFail((int) $id);
 
-        return view('issue.print', compact('model'));
+        $html = view('issue.print', compact('model'));
+        if (! $model->signature) {
+            return $html;
+        }
+        $html = $html->render();
+        $pdf = Browsershot::html($html)->transparentBackground()->pdf();
+
+        return response($pdf)
+            ->header('Content-Type', 'application/pdf')
+            ->header('Content-Disposition', 'inline; filename="issue-note-'.time().'.pdf"');
     }
 }

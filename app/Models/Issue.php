@@ -20,6 +20,7 @@ class Issue extends Model implements AuditableContracts
         'account_id',
         'date',
         'remarks',
+        'signature',
         'no_of_items_out',
         'no_of_items_in',
         'created_by',
@@ -42,6 +43,7 @@ class Issue extends Model implements AuditableContracts
             'account_id' => ['required', 'exists:accounts,id'],
             'date' => ['required', 'date'],
             'remarks' => ['nullable', 'string'],
+            'signature' => ['nullable', 'string'],
         ], $merge);
     }
 

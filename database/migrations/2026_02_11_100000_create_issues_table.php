@@ -25,6 +25,7 @@ return new class() extends Migration
             $table->decimal('no_of_items_out', 16, 2)->default(0);
             $table->decimal('no_of_items_in', 16, 2)->default(0);
 
+            $table->text('signature')->nullable();
             $table->unsignedBigInteger('created_by');
             $table->unsignedBigInteger('updated_by');
 
