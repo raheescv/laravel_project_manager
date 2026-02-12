@@ -4,7 +4,6 @@ namespace App\Console\Commands;
 
 use App\Helpers\TelegramHelper;
 use Illuminate\Console\Command;
-use App\Models\Configuration;
 
 class TelegramSendCommand extends Command
 {
@@ -43,7 +42,7 @@ class TelegramSendCommand extends Command
         $this->error("Failed to send message: {$response['message']}");
         if (str_contains($response['message'], 'needs to connect')) {
             $this->info("\nTo connect the user:");
-            $this->info('1. Ask them to open your Telegram bot: @'.Configuration::where('key', 'telegram_bot_username')->value('value') ?? 'YourBot');
+            $this->info('1. Ask them to open your Telegram bot: @'.config('services.telegram.bot_username', 'YourBot'));
             $this->info('2. They should share their contact information when prompted');
             $this->info("3. Try sending the message again after they've connected");
         }

@@ -28,8 +28,8 @@ class Telegram extends Component
     public function mount(): void
     {
         $this->webhookUrl = config('app.url').'/api/telegram/webhook';
-        $this->botUsername = Configuration::where('key', 'telegram_bot_username')->value('value') ?? null;
-        $this->botToken = Configuration::where('key', 'telegram_bot_token')->value('value') ?? null;
+        $this->botUsername = config('services.telegram.bot_username');
+        $this->botToken = config('services.telegram.bot_token');
     }
 
     public function saveCredentials(): void
@@ -40,18 +40,15 @@ class Telegram extends Component
         ]);
 
         if ($this->botToken !== null && $this->botToken !== '') {
-            Configuration::updateOrCreate(
-                ['key' => 'telegram_bot_token'],
-                ['value' => $this->botToken]
-            );
+            Configuration::updateOrCreate(['key' => 'telegram_bot_token'], ['value' => $this->botToken]);
+            writeToEnv('TELEGRAM_BOT_TOKEN', $this->botToken);
         }
         if ($this->botUsername !== null && $this->botUsername !== '') {
-            Configuration::updateOrCreate(
-                ['key' => 'telegram_bot_username'],
-                ['value' => trim($this->botUsername)]
-            );
+            Configuration::updateOrCreate(['key' => 'telegram_bot_username'], ['value' => trim($this->botUsername)]);
+            writeToEnv('TELEGRAM_BOT_USERNAME', trim($this->botUsername));
         }
 
+        Artisan::call('optimize:clear');
         $this->dispatch('success', ['message' => 'Telegram credentials saved to configuration.']);
     }
 
