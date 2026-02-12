@@ -34,8 +34,11 @@ class UpdateAction
             }
 
             $issue->update([
+                'type' => $data['type'],
                 'account_id' => $data['account_id'],
+                'date' => $data['date'],
                 'remarks' => $data['remarks'] ?? null,
+                'updated_by' => Auth::id(),
             ]);
 
             $submittedItemIds = [];
@@ -61,6 +64,7 @@ class UpdateAction
             $updateData = [
                 'no_of_items_out' => $issue->items()->sum('quantity_out'),
                 'no_of_items_in' => $issue->items()->sum('quantity_in'),
+                'updated_by' => Auth::id(),
             ];
             $issue->update($updateData);
 
@@ -78,7 +82,7 @@ class UpdateAction
 
             return [
                 'success' => true,
-                'message' => 'Successfully updated issue',
+                'message' => 'Successfully updated '.$data['type'],
                 'data' => $issue->fresh(),
             ];
         } catch (Exception $e) {

@@ -17,10 +17,14 @@ class CreateAction
             DB::beginTransaction();
 
             $issue = Issue::create([
+                'type' => $data['type'],
                 'account_id' => $data['account_id'],
+                'date' => $data['date'],
                 'remarks' => $data['remarks'] ?? null,
                 'no_of_items_out' => 0,
                 'no_of_items_in' => 0,
+                'created_by' => Auth::id(),
+                'updated_by' => Auth::id(),
             ]);
 
             foreach ($data['items'] ?? [] as $item) {
@@ -35,6 +39,7 @@ class CreateAction
             $updateData = [
                 'no_of_items_out' => $issue->items()->sum('quantity_out'),
                 'no_of_items_in' => $issue->items()->sum('quantity_in'),
+                'updated_by' => Auth::id(),
             ];
             $issue->update($updateData);
 
@@ -47,7 +52,7 @@ class CreateAction
 
             return [
                 'success' => true,
-                'message' => 'Successfully created issue',
+                'message' => 'Successfully created '.$data['type'],
                 'data' => $issue->fresh(),
             ];
         } catch (Exception $e) {

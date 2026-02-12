@@ -137,4 +137,9 @@ class ReportController extends Controller
     {
         return view('report.issue_item');
     }
+
+    public function issue_aging()
+    {
+        return view('report.issue_aging');
+    }
 }

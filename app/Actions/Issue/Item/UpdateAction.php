@@ -2,6 +2,7 @@
 
 namespace App\Actions\Issue\Item;
 
+use App\Models\Issue;
 use App\Models\IssueItem;
 
 class UpdateAction
@@ -14,9 +15,13 @@ class UpdateAction
                 throw new \Exception("Issue item not found with ID: {$id}.", 1);
             }
             validationHelper(IssueItem::rules(), $data);
+            $issue = Issue::find((int) $data['issue_id']);
+            if (! $issue) {
+                throw new \Exception("Issue not found with ID: {$data['issue_id']}.", 1);
+            }
             $model->update([
+                'tenant_id' => $issue->tenant_id,
                 'product_id' => $data['product_id'],
-                'date' => $data['date'],
                 'quantity_in' => $data['quantity_in'] ?? 0,
                 'quantity_out' => $data['quantity_out'] ?? 0,
             ]);

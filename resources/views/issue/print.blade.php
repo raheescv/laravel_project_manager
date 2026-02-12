@@ -1,68 +1,264 @@
-@php
-    use Carbon\Carbon;
-@endphp
 <!DOCTYPE html>
 <html lang="en">
 
 <head>
     <meta charset="UTF-8">
-    <title>Issue / Return - #{{ $model->id }}</title>
-    <link rel="stylesheet" href="{{ asset('assets/css/bootstrap.min.css') }}">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Delivery Note - #{{ $model->id }}</title>
     <style>
+        * {
+            box-sizing: border-box;
+        }
+
         body {
-            font-family: 'Segoe UI', sans-serif;
-            background-color: #f0f2f5;
-            padding: 2rem;
+            font-family: "Segoe UI", Arial, sans-serif;
+            background: #eef1f5;
+            margin: 0;
+            padding: 24px;
+            color: #111827;
+            line-height: 1.35;
         }
 
-        .issue-card {
-            background: #ffffff;
-            padding: 2.5rem;
-            border-radius: 16px;
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
-            max-width: 1000px;
-            margin: auto;
+        .print-page {
+            max-width: 860px;
+            margin: 0 auto;
+            background: #fff;
+            padding: 28px 30px 24px;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            box-shadow: 0 8px 24px rgba(17, 24, 39, 0.08);
         }
 
-        .form-heading {
-            font-size: 2rem;
+        .company-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 16px;
+            margin-bottom: 14px;
+            border-bottom: 2px solid #0f172a;
+            padding-bottom: 10px;
+        }
+
+        .company-header img {
+            max-height: 72px;
+            max-width: 220px;
+            object-fit: contain;
+            display: block;
+        }
+
+        .company-name {
+            font-size: 22px;
             font-weight: 700;
-            color: #212529;
-            margin-bottom: 0.25rem;
+            color: #0f172a;
+            margin-bottom: 4px;
         }
 
-        .form-subtitle {
-            font-size: 0.95rem;
-            color: #6c757d;
-            margin-bottom: 1.5rem;
-        }
-
-        .section-title {
-            font-size: 0.9rem;
-            font-weight: 600;
-            color: #6c757d;
+        .doc-kicker {
+            font-size: 11px;
             text-transform: uppercase;
-            margin-bottom: 0.25rem;
+            letter-spacing: 0.08em;
+            color: #64748b;
+            margin-bottom: 4px;
         }
 
-        .meta-table th {
-            background-color: #f8f9fa;
-            color: #495057;
+        .doc-heading {
+            font-size: 30px;
+            line-height: 1;
+            font-weight: 800;
+            color: #0f172a;
+            letter-spacing: 0.02em;
         }
 
-        .table th,
-        .table td {
-            vertical-align: middle;
-            font-size: 0.95rem;
+        .doc-meta {
+            margin-top: 6px;
+            font-size: 12px;
+            color: #334155;
+            display: grid;
+            gap: 2px;
+            text-align: right;
+        }
+
+        .doc-table,
+        .items-table {
+            width: 100%;
+            border-collapse: collapse;
+            table-layout: fixed;
+            border: 1px solid #111827;
+        }
+
+        .doc-table td,
+        .items-table th,
+        .items-table td {
+            border: 1px solid #111827;
+            padding: 8px 10px;
+            font-size: 14px;
+        }
+
+        .doc-label {
+            width: 130px;
+            font-weight: 700;
+            text-transform: uppercase;
+            text-align: left;
+            color: #334155;
+        }
+
+        .doc-value {
+            text-align: left;
+            font-weight: 500;
+        }
+
+        .intro-text {
+            margin: 12px 0 8px;
+            font-size: 13px;
+            font-style: normal;
+            font-weight: 500;
+            color: #1f2937;
+        }
+
+        .items-table th {
+            font-size: 14px;
+            font-weight: 700;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+            height: 40px;
+            background: #f8fafc;
+        }
+
+        .items-table td {
+            height: 34px;
+            font-size: 13.5px;
+        }
+
+        .items-table tbody {
+            display: block;
+            height: 320px;
+            overflow: hidden;
+        }
+
+        .items-table thead,
+        .items-table tbody tr {
+            display: table;
+            width: 100%;
+            table-layout: fixed;
+        }
+
+        .items-table caption {
+            caption-side: top;
+            text-align: left;
+            padding: 0 0 8px 0;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: #64748b;
+            font-weight: 700;
+        }
+
+        .col-sn {
+            width: 18px;
+            text-align: left;
+            font-weight: 600;
+        }
+
+        .col-ref {
+            width: 170px;
+            text-align: left;
+            font-weight: 600;
+        }
+
+        .col-qty {
+            width: 30px;
+            text-align: right;
+            font-weight: 700;
+            padding-right: 12px !important;
+        }
+
+        .col-desc {
+            text-align: left;
+        }
+
+        .remarks-section {
+            margin-top: 14px;
+            display: flex;
+            gap: 10px;
+            align-items: flex-start;
+        }
+
+        .remarks-label {
+            font-size: 13px;
+            font-weight: 600;
+            text-transform: uppercase;
+            padding-top: 8px;
+            color: #334155;
+            letter-spacing: 0.04em;
+        }
+
+        .remarks-content {
+            flex: 1;
+        }
+
+        .remarks-box {
+            border: 1px solid #111827;
+            min-height: 42px;
+            width: 100%;
+            margin-bottom: 8px;
+            padding: 7px 10px;
+            font-size: 13px;
+        }
+
+        .remarks-line {
+            border-bottom: 1px solid #94a3b8;
+            height: 22px;
+            margin-bottom: 6px;
+        }
+
+        .signatures {
+            margin-top: 26px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+        }
+
+        .received-row {
+            border-top: 1px solid #111827;
+            margin-bottom: 0;
+            padding-top: 6px;
+            text-align: center;
+            font-size: 13px;
+            font-style: normal;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            color: #374151;
+        }
+
+        .doc-footer {
+            margin-top: 22px;
+            border-top: 1px dashed #94a3b8;
+            padding-top: 8px;
+            font-size: 11px;
+            color: #64748b;
+            display: flex;
+            justify-content: space-between;
+            gap: 10px;
+            flex-wrap: wrap;
         }
 
         @media print {
+            @page {
+                size: A4;
+                margin: 8mm;
+            }
+
             body {
                 background: #fff;
                 padding: 0;
             }
 
-            .issue-card {
+            .print-page {
+                border: none;
+                padding: 0;
+                max-width: 100%;
+                border-radius: 0;
                 box-shadow: none;
             }
         }
@@ -70,74 +266,85 @@
 </head>
 
 <body>
-    <div class="issue-card">
-        <div class="text-center mb-4">
-            <div class="form-heading">Issue / Return</div>
-            <div class="form-subtitle">Product Issue & Return Record</div>
+    @php
+        $titleType = strtoupper($model->type);
+        $preparedBy = $model->createdBy?->name;
+    @endphp
+    <div class="print-page">
+        <div class="company-header">
+            <div>
+                @if (cache('logo'))
+                    <img src="{{ cache('logo') }}" alt="Logo">
+                @endif
+                <div class="company-name">{{ cache('company_name') ?? config('app.name') }}</div>
+            </div>
+            <div>
+                <div class="doc-heading">Delivery Note</div>
+                <div class="doc-meta">
+                    <div><strong>Ref:</strong> #{{ $model->id }}</div>
+                    <div><strong>Date:</strong> {{ systemDate($model->date) }}</div>
+                    <div><strong>Type:</strong> {{ $titleType }}</div>
+                </div>
+            </div>
         </div>
 
-        <table class="table table-bordered table-sm text-center meta-table mb-4">
-            <thead>
-                <tr>
-                    <th>Customer</th>
-                    <th>Issue No</th>
-                    <th>Balance (Out − In)</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr>
-                    <td><b>{{ $model->account?->name }}</b></td>
-                    <td><b>#{{ $model->id }}</b></td>
-                    <td><b>{{ number_format($model->balance ?? 0, 2) }}</b></td>
-                </tr>
-            </tbody>
+        <table class="doc-table">
+            <tr>
+                <td class="doc-label">FROM:</td>
+                <td class="doc-value">{{ cache('company_name') ?? config('app.name') }}</td>
+            </tr>
+            <tr>
+                <td class="doc-label">TO:</td>
+                <td class="doc-value">{{ $model->account?->name ?? '' }}</td>
+            </tr>
         </table>
 
-        @if ($model->account?->mobile)
-            <p class="section-title mb-1">Contact</p>
-            <p class="fw-semibold mb-3">{{ $model->account->mobile }}</p>
-        @endif
+        <div class="intro-text">Please find below the items delivered under this note.</div>
 
-        @if ($model->remarks)
-            <p class="section-title mb-1">Remarks</p>
-            <p class="fw-semibold mb-3">{{ $model->remarks }}</p>
-        @endif
-
-        <table class="table table-sm table-striped table-bordered">
-            <thead class="table-light">
+        <table class="items-table">
+            <caption>Item Details</caption>
+            <thead>
                 <tr>
-                    <th>#</th>
-                    <th>Product</th>
-                    <th class="text-end">Code</th>
-                    <th colspan="2">Date</th>
-                    <th class="text-end">Qty Out</th>
-                    <th class="text-end">Qty In</th>
+                    <th class="col-sn">SN</th>
+                    <th class="col-ref">Item</th>
+                    <th class="col-qty">Quantity</th>
                 </tr>
             </thead>
             <tbody>
                 @foreach ($model->items as $item)
                     <tr>
-                        <td>{{ $loop->iteration }}</td>
-                        <td>{{ $item->product?->name }}</td>
-                        <td class="text-end">{{ $item->product?->code ?? '-' }}</td>
-                        <td>{{ systemDate($item->date) }}</td>
-                        <td>{{ Carbon::parse($item->date)->diffForHumans() }}</td>
-                        <td class="text-end">{{ number_format($item->quantity_out, 2) }}</td>
-                        <td class="text-end">{{ number_format($item->quantity_in, 2) }}</td>
+                        <td class="col-sn">{{ $loop->iteration }}</td>
+                        <td class="col-ref">{{ $item?->product?->name ?? '' }}</td>
+                        <td class="col-qty">
+                            @if ($model->type==='issue')
+                                {{ number_format($item->quantity_out, 2) }}
+                            @else
+                                {{ number_format($item->quantity_in, 2) }}
+                            @endif
+                        </td>
                     </tr>
                 @endforeach
             </tbody>
-            <tfoot>
-                <tr>
-                    <th colspan="4" class="text-end">Total</th>
-                    <th class="text-end"><b>{{ number_format($model->items->sum('quantity_out'), 2) }}</b></th>
-                    <th class="text-end"><b>{{ number_format($model->items->sum('quantity_in'), 2) }}</b></th>
-                </tr>
-            </tfoot>
         </table>
 
-        <div class="mt-4 pt-3 border-top small text-muted">
-            <p class="mb-0">Printed on {{ now()->format('d M Y H:i') }}</p>
+        <div class="remarks-section">
+            <div class="remarks-label">REMARKS:</div>
+            <div class="remarks-content">
+                <div class="remarks-box">{{ $model->remarks ?? '' }}</div>
+                <div class="remarks-line"></div>
+                <div class="remarks-line"></div>
+                <div class="remarks-line"></div>
+            </div>
+        </div>
+
+        <div class="signatures">
+            <div class="received-row">Prepared By<br><span style="font-weight: 500; text-transform: none;">{{ $preparedBy }}</span></div>
+            <div class="received-row">Received By</div>
+        </div>
+
+        <div class="doc-footer">
+            <span>This is a system-generated delivery note.</span>
+            <span>Printed on: {{ now()->format('d M Y, h:i A') }}</span>
         </div>
     </div>
 </body>

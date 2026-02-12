@@ -16,7 +16,7 @@ class View extends Component
         $this->table_id = $table_id;
         $this->model = Issue::with([
             'account:id,name,mobile',
-            'items' => fn ($q) => $q->with('product:id,name,code')->orderBy('date', 'asc'),
+            'items' => fn ($q) => $q->with('product:id,name,code')->orderBy('id', 'asc'),
         ])->find($this->table_id);
         if (! $this->model) {
             $this->redirect(route('issue::index'));

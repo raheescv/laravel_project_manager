@@ -12,9 +12,18 @@ class IssueController extends Controller
         return view('issue.index');
     }
 
-    public function page(?string $id = null): View
+    public function page(string $type = 'issue'): View
     {
-        return view('issue.page', ['id' => $id ? (int) $id : null]);
+        $entryType = in_array($type, ['issue', 'return'], true) ? $type : 'issue';
+
+        return view('issue.page', ['id' => null,'type' => $entryType]);
+    }
+
+
+    public function edit(string $id): View
+    {
+        $issue = Issue::findOrFail((int) $id);
+        return view('issue.page', ['id' => (int) $id, 'type' => 'issue']);
     }
 
     public function view(string $id): View
@@ -24,7 +33,7 @@ class IssueController extends Controller
 
     public function print(string $id): View
     {
-        $model = Issue::with(['account:id,name,mobile', 'items.product:id,name,code'])
+        $model = Issue::with(['account:id,name,mobile', 'items.product:id,name,code', 'createdBy:id,name'])
             ->findOrFail((int) $id);
 
         return view('issue.print', compact('model'));

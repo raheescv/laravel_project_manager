@@ -1,12 +1,19 @@
+@php
+    use Carbon\Carbon;
+@endphp
 <div>
     <div class="card-header bg-white">
         <div class="row g-3">
             <div class="col-md-4 d-flex align-items-center">
                 <div class="btn-group">
                     @can('issue.create')
-                        <a class="btn btn-sm btn-primary hstack gap-2" href="{{ route('issue::create') }}">
+                        <a class="btn btn-sm btn-primary hstack gap-2" href="{{ route('issue::create', ['type' => 'issue']) }}">
                             <i class="demo-psi-add"></i>
-                            Add New
+                            Add Issue
+                        </a>
+                        <a class="btn btn-sm btn-outline-primary hstack gap-2" href="{{ route('issue::create', ['type' => 'return']) }}">
+                            <i class="fa fa-undo"></i>
+                            Add Return
                         </a>
                     @endcan
                     @can('issue.delete')
@@ -43,6 +50,18 @@
             <div class="bg-light rounded-3 border shadow-sm">
                 <div class="p-3">
                     <div class="row g-3">
+                        <div class="col-md-2">
+                            <div class="form-group">
+                                <label class="form-label text-muted fw-semibold small mb-2" for="type">
+                                    <i class="demo-psi-calendar-4 me-1"></i> To Date
+                                </label>
+                                <select wire:model.live="type" class="form-select form-select-sm" id="type">
+                                    <option value="">All</option>
+                                    <option value="issue">Issue</option>
+                                    <option value="return">Return</option>
+                                </select>
+                            </div>
+                        </div>
                         <div class="col-md-3">
                             <div class="form-group">
                                 <label class="form-label text-muted fw-semibold small mb-2" for="from_date">
@@ -86,12 +105,12 @@
                                 <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="id" label="#" />
                             </div>
                         </th>
-                        <th><x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="created_at" label="Date" /></th>
+                        <th colspan="2"><x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="date" label="Date" /></th>
+                        <th><x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="type" label="Type" /></th>
                         <th class="text-nowrap"><x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="account_id" label="Customer" /></th>
                         <th class="text-nowrap text-end"><x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="no_of_items_out" label="Qty Out" /></th>
                         <th class="text-nowrap text-end"><x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="no_of_items_in" label="Qty In" /></th>
-                        <th class="text-nowrap text-end"><x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="balance" label="Balance" /></th>
-                        <th>Remarks</th>
+                        <th class="text-nowrap"><x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="created_by" label="User" /></th>
                         <th class="pe-3">Action</th>
                     </tr>
                 </thead>
@@ -109,7 +128,19 @@
                             <td class="text-nowrap">
                                 <div class="d-flex align-items-center gap-2">
                                     <i class="demo-psi-calendar-4 fs-5 text-primary"></i>
-                                    <span>{{ systemDate($item->created_at) }}</span>
+                                    <span>{{ systemDate($item->date) }}</span>
+                                </div>
+                            </td>
+                            <td class="text-nowrap">
+                                <div class="d-flex align-items-center gap-2">
+                                    <i class="demo-psi-clock fs-5 text-info"></i>
+                                    <span>{{ Carbon::parse($item->date)->diffForHumans() }}</span>
+                                </div>
+                            </td>
+                            <td class="text-nowrap">
+                                <div class="d-flex align-items-center gap-2">
+                                    <i class="{{ $item->type === 'return' ? 'demo-psi-arrow-down text-success' : 'demo-psi-arrow-up text-danger' }} fs-5"></i>
+                                    <span>{{ ucFirst($item->type) }}</span>
                                 </div>
                             </td>
                             <td class="text-nowrap">
@@ -124,10 +155,7 @@
                             <td>
                                 <div class="text-end fw-medium text-success">{{ number_format($item->no_of_items_in, 2) }}</div>
                             </td>
-                            <td>
-                                <div class="text-end fw-bold {{ ($item->balance ?? 0) != 0 ? 'text-primary' : '' }}">{{ number_format($item->balance ?? 0, 2) }}</div>
-                            </td>
-                            <td class="small text-muted">{{ Str::limit($item->remarks, 30) }}</td>
+                            <td>{{ $item->createdBy?->name }}</td>
                             <td class="pe-3">
                                 <div class="d-flex gap-1">
                                     @can('issue.view')
@@ -155,10 +183,9 @@
                 @if ($data->isNotEmpty())
                     <tfoot class="table-group-divider">
                         <tr class="bg-light">
-                            <th colspan="3" class="ps-3"><strong>TOTALS</strong></th>
+                            <th colspan="5" class="ps-3"><strong>TOTALS</strong></th>
                             <th class="text-end fw-bold">{{ number_format($totals['no_of_items_out'] ?? 0, 2) }}</th>
                             <th class="text-end fw-bold text-success">{{ number_format($totals['no_of_items_in'] ?? 0, 2) }}</th>
-                            <th class="text-end fw-bold text-primary">{{ number_format($totals['balance'] ?? 0, 2) }}</th>
                             <th></th>
                             <th class="pe-3"></th>
                         </tr>

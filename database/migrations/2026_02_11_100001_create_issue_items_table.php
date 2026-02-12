@@ -10,11 +10,13 @@ return new class() extends Migration
     {
         Schema::create('issue_items', function (Blueprint $table) {
             $table->id();
+            $table->unsignedBigInteger('tenant_id');
+            $table->foreign('tenant_id')->references('id')->on('tenants')->onDelete('cascade');
+            $table->index('tenant_id');
             $table->unsignedBigInteger('issue_id');
             $table->foreign('issue_id')->references('id')->on('issues')->onDelete('cascade');
             $table->unsignedBigInteger('product_id');
             $table->foreign('product_id')->references('id')->on('products')->onDelete('cascade');
-            $table->date('date');
             $table->decimal('quantity_in', 16, 2)->default(0);
             $table->decimal('quantity_out', 16, 2)->default(0);
             $table->timestamps();

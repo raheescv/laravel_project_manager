@@ -5,19 +5,19 @@
                 <ol class="breadcrumb">
                     <li class="breadcrumb-item"><a href="{{ route('dashboard') }}">Home</a></li>
                     <li class="breadcrumb-item"><a href="{{ route('issue::index') }}">Issue</a></li>
-                    <li class="breadcrumb-item active" aria-current="page">Item Wise Report</li>
+                    <li class="breadcrumb-item active" aria-current="page">Aging Report</li>
                 </ol>
             </nav>
-            <h1 class="page-title mb-0 mt-2">Issue Item Wise Report</h1>
+            <h1 class="page-title mb-0 mt-2">Aging Report</h1>
             <p class="lead">
-                Item-level report with date, product, quantity and customer details.
+                Aging summary grouped by customer and product.
             </p>
         </div>
     </div>
     <div class="content__boxed">
         <div class="content__wrap">
             <div class="card mb-3">
-                @livewire('report.issue-item-wise-report')
+                @livewire('report.issue-aging-report')
             </div>
         </div>
     </div>

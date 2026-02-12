@@ -14,6 +14,7 @@ class Table extends Component
 {
     use WithPagination;
 
+    public string $type = '';
     public string $search = '';
 
     public string $from_date = '';
@@ -28,7 +29,7 @@ class Table extends Component
 
     public bool $selectAll = false;
 
-    public string $sortField = 'created_at';
+    public string $sortField = 'date';
 
     public string $sortDirection = 'desc';
 
@@ -95,10 +96,11 @@ class Table extends Component
             'account_id' => $this->account_id,
             'from_date' => $this->from_date,
             'to_date' => $this->to_date,
+            'type' => $this->type,
         ];
         $data = (new GetListAction())->execute($filter, $this->limit, $this->sortField, $this->sortDirection);
 
-        $collection = $data->getCollection();
+        $collection = collect($data->items());
         $totals = [
             'no_of_items_out' => $collection->sum('no_of_items_out'),
             'no_of_items_in' => $collection->sum('no_of_items_in'),

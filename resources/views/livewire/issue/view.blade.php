@@ -68,6 +68,18 @@
             border-left: 3px solid var(--iv-accent);
         }
 
+        .issue-view-page .info-box.date {
+            border-left: 3px solid #6366f1;
+            background: linear-gradient(135deg, #f8fafc 0%, #eef2ff 100%);
+        }
+
+        .issue-view-page .info-box.date .date-meta {
+            margin-top: 0.25rem;
+            font-size: 0.74rem;
+            color: #64748b;
+            font-weight: 500;
+        }
+
         .issue-view-page .info-box.balance {
             border-left: 3px solid #10b981;
         }
@@ -199,7 +211,7 @@
                 <h5 class="mb-0 d-flex align-items-center gap-2">
                     <span class="badge badge-id rounded-pill px-3 py-1">#{{ $model->id }}</span>
                     <i class="fa fa-file-text-o text-primary opacity-75" style="font-size: 1rem;"></i>
-                    <span class="fw-semibold text-body">Issue details</span>
+                    <span class="fw-semibold text-body">{{ucFirst( $model->type) }} details</span>
                 </h5>
                 <div class="d-flex gap-2">
                     <a href="{{ route('issue::print', $model->id) }}" target="_blank" class="btn btn-sm btn-outline-secondary btn-header btn-print">
@@ -212,7 +224,7 @@
             </div>
             <div class="card-body p-3">
                 <div class="row g-2 mb-0">
-                    <div class="col-md-8">
+                    <div class="col-md-9">
                         <div class="info-box customer">
                             <div class="label d-flex align-items-center gap-1">
                                 <i class="fa fa-user opacity-75" style="font-size: 0.7rem;"></i> Customer
@@ -223,12 +235,17 @@
                             @endif
                         </div>
                     </div>
-                    <div class="col-md-4">
-                        <div class="info-box balance">
+                    <div class="col-md-3">
+                        <div class="info-box date">
                             <div class="label d-flex align-items-center gap-1">
-                                <i class="fa fa-calculator opacity-75" style="font-size: 0.7rem;"></i> Balance (Out − In)
+                                <i class="fa fa-calendar opacity-75" style="font-size: 0.7rem;"></i> Date
                             </div>
-                            <div class="value-lg">{{ number_format($model->balance ?? 0, 2) }}</div>
+                            <div class="value">{{ systemDate($model->date) }}</div>
+                            @if ($model->date)
+                                <div class="date-meta">
+                                    <i class="fa fa-clock-o me-1 opacity-75"></i>{{ Carbon::parse($model->date)->diffForHumans() }}
+                                </div>
+                            @endif
                         </div>
                     </div>
                 </div>
@@ -257,7 +274,6 @@
                             <tr>
                                 <th><i class="fa fa-hashtag text-muted me-1" style="font-size: 0.65rem;"></i>#</th>
                                 <th><i class="fa fa-cube text-muted me-1" style="font-size: 0.65rem;"></i>Product</th>
-                                <th colspan="2"><i class="fa fa-calendar text-muted me-1" style="font-size: 0.65rem;"></i>Date</th>
                                 <th class="text-end"><i class="fa fa-arrow-up text-muted me-1" style="font-size: 0.65rem;"></i>Qty Out</th>
                                 <th class="text-end"><i class="fa fa-arrow-down text-muted me-1" style="font-size: 0.65rem;"></i>Qty In</th>
                             </tr>
@@ -272,8 +288,6 @@
                                             <small class="text-muted">({{ $item->product->code }})</small>
                                         @endif
                                     </td>
-                                    <td>{{ systemDate($item->date) }}</td>
-                                    <td>{{ Carbon::parse($item->date)->diffForHumans() }}</td>
                                     <td class="text-end">{{ $item->quantity_out > 0 ? currency($item->quantity_out) : '—' }}</td>
                                     <td class="text-end">{{ $item->quantity_in > 0 ? currency($item->quantity_in) : '—' }}</td>
                                 </tr>
@@ -281,7 +295,7 @@
                         </tbody>
                         <tfoot>
                             <tr class="fw-semibold">
-                                <th colspan="4" class="text-end"><i class="fa fa-calculator text-muted me-1"></i>Total</th>
+                                <th colspan="2" class="text-end"><i class="fa fa-calculator text-muted me-1"></i>Total</th>
                                 <th class="text-end">{{ number_format($model->items->sum('quantity_out'), 2) }}</th>
                                 <th class="text-end">{{ number_format($model->items->sum('quantity_in'), 2) }}</th>
                             </tr>

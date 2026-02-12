@@ -117,6 +117,30 @@
         }
         .issue-item-report .table-report .link-issue { color: #4f46e5; font-weight: 500; transition: color 0.2s ease; }
         .issue-item-report .table-report .link-issue:hover { color: #6366f1; }
+        .issue-item-report .table-report .icon-chip {
+            width: 1.6rem;
+            height: 1.6rem;
+            border-radius: 0.45rem;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background: #eef2ff;
+            color: #4f46e5;
+            font-size: 0.875rem;
+        }
+        .issue-item-report .table-report .cell-with-icon { display: inline-flex; align-items: center; gap: 0.4rem; }
+        .issue-item-report .table-report .issue-id-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+            border: 1px solid #dbeafe;
+            background: #eff6ff;
+            color: #1d4ed8;
+            border-radius: 999px;
+            padding: 0.2rem 0.55rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
         .issue-item-report .table-report .col-aging-30 { background: rgba(16, 185, 129, 0.12); color: #047857; font-weight: 600; }
         .issue-item-report .table-report .col-aging-60 { background: rgba(245, 158, 11, 0.12); color: #b45309; font-weight: 600; }
         .issue-item-report .table-report .col-aging-90 { background: rgba(249, 115, 22, 0.12); color: #c2410c; font-weight: 600; }
@@ -143,7 +167,7 @@
     <div class="card-header bg-white border-0 pb-0">
         <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-4">
             <div class="report-title-wrap">
-                <h2 class="report-title mb-0">Issue / Return Items by Product & Date</h2>
+                <h2 class="report-title mb-0">Aging Report</h2>
             </div>
             <div class="rows-select-wrap d-flex align-items-center gap-2">
                 <label class="text-muted small mb-0">Rows</label>
@@ -189,21 +213,21 @@
                 <div class="row g-3">
                     <div class="col-6 col-md-3">
                         <div class="aging-card bucket-0 rounded-3 p-3 h-100">
-                            <div class="aging-label mb-2">0–30 days</div>
+                            <div class="aging-label mb-2">0-30 days</div>
                             <div class="aging-value">Out: {{ number_format($aging['0_30']['quantity_out'], 2) }}</div>
                             <div class="aging-sub mt-1">In: {{ number_format($aging['0_30']['quantity_in'], 2) }}</div>
                         </div>
                     </div>
                     <div class="col-6 col-md-3">
                         <div class="aging-card bucket-1 rounded-3 p-3 h-100">
-                            <div class="aging-label mb-2">31–60 days</div>
+                            <div class="aging-label mb-2">31-60 days</div>
                             <div class="aging-value">Out: {{ number_format($aging['31_60']['quantity_out'], 2) }}</div>
                             <div class="aging-sub mt-1">In: {{ number_format($aging['31_60']['quantity_in'], 2) }}</div>
                         </div>
                     </div>
                     <div class="col-6 col-md-3">
                         <div class="aging-card bucket-2 rounded-3 p-3 h-100">
-                            <div class="aging-label mb-2">61–90 days</div>
+                            <div class="aging-label mb-2">61-90 days</div>
                             <div class="aging-value">Out: {{ number_format($aging['61_90']['quantity_out'], 2) }}</div>
                             <div class="aging-sub mt-1">In: {{ number_format($aging['61_90']['quantity_in'], 2) }}</div>
                         </div>
@@ -225,52 +249,56 @@
             <table class="table table-report table-striped table-hover align-middle mb-0">
                 <thead class="bg-light">
                     <tr>
-                        <th class="ps-4"><x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="issue_items.id" label="#" /></th>
-                        <th colspan="2"><x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="issue_items.date" label="Date" /></th>
-                        <th><x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="issue_items.issue_id" label="Issue ID" /></th>
-                        <th>Customer</th>
-                        <th>Product</th>
-                        <th class="text-end col-aging-30">0–30</th>
-                        <th class="text-end col-aging-60">31–60</th>
-                        <th class="text-end col-aging-90">61–90</th>
-                        <th class="text-end pe-4 col-aging-90plus">90+</th>
+                        <th class="ps-4">#</th>
+                        <th><i class="fa fa-building-o me-1 text-warning"></i><x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="account_name" label="Customer" /></th>
+                        <th><i class="fa fa-cube me-1 text-success"></i><x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="product_name" label="Product" /></th>
+                        <th class="text-end"><i class="fa fa-arrow-up me-1 text-danger"></i>Qty Out</th>
+                        <th class="text-end"><i class="fa fa-arrow-down me-1 text-success"></i>Qty In</th>
+                        <th class="text-end"><i class="fa fa-balance-scale me-1 text-primary"></i><x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="net_quantity" label="Net" /></th>
+                        <th><i class="fa fa-calendar me-1 text-primary"></i><x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="latest_issue_date" label="Last Txn Date" /></th>
+                        <th class="text-end col-aging-30"><i class="fa fa-clock-o me-1"></i>0-30</th>
+                        <th class="text-end col-aging-60"><i class="fa fa-clock-o me-1"></i>31-60</th>
+                        <th class="text-end col-aging-90"><i class="fa fa-clock-o me-1"></i>61-90</th>
+                        <th class="text-end pe-4 col-aging-90plus"><i class="fa fa-clock-o me-1"></i>90+</th>
                     </tr>
                 </thead>
                 <tbody>
                     @forelse ($data as $item)
-                        @php
-                            $asOf = $to_date ? Carbon::parse($to_date) : now();
-                            $itemDate = $item->date ? Carbon::parse($item->date) : null;
-                            $ageDays = $itemDate ? $itemDate->diffInDays($asOf, true) : null;
-                            $bucket = $ageDays === null ? null : ($ageDays <= 30 ? '30' : ($ageDays <= 60 ? '60' : ($ageDays <= 90 ? '90' : '90plus')));
-                            $rowQty = $item->quantity_out > 0 ? $item->quantity_out : $item->quantity_in;
-                        @endphp
+                        @php $itemDate = $item->latest_issue_date ? Carbon::parse($item->latest_issue_date) : null; @endphp
                         <tr>
-                            <td class="ps-4 text-muted">{{ $item->id }}</td>
-                            <td>{{ systemDate($item->date) }}</td>
-                            <td>{{ Carbon::parse($item->date)->diffForHumans() }}</td>
+                            <td class="ps-4 text-muted">{{ $loop->iteration + (($data->currentPage() - 1) * $data->perPage()) }}</td>
                             <td>
-                                @can('issue.view')
-                                    <a href="{{ route('issue::view', $item->issue_id) }}" class="link-issue text-decoration-none">{{ $item->issue_id }}</a>
-                                @else
-                                    {{ $item->issue_id }}
-                                @endcan
+                                <span class="cell-with-icon">
+                                    <i class="fa fa-building-o text-warning"></i>
+                                    <span>{{ $item->account_name ?? '—' }}</span>
+                                </span>
                             </td>
-                            <td>{{ $item->issue?->account?->name ?? '—' }}</td>
                             <td>
-                                {{ $item->product?->name ?? '—' }}
-                                @if($item->product?->code)
-                                    <small class="text-muted">({{ $item->product->code }})</small>
+                                <span class="cell-with-icon">
+                                    <i class="fa fa-cube text-success"></i>
+                                    <span>{{ $item->product_name ?? '—' }}</span>
+                                </span>
+                                @if($item->product_code)
+                                    <small class="text-muted">({{ $item->product_code }})</small>
                                 @endif
                             </td>
-                            <td class="text-end col-aging-30">{{ $bucket === '30' ? number_format($rowQty, 2) : '—' }}</td>
-                            <td class="text-end col-aging-60">{{ $bucket === '60' ? number_format($rowQty, 2) : '—' }}</td>
-                            <td class="text-end col-aging-90">{{ $bucket === '90' ? number_format($rowQty, 2) : '—' }}</td>
-                            <td class="text-end pe-4 col-aging-90plus">{{ $bucket === '90plus' ? number_format($rowQty, 2) : '—' }}</td>
+                            <td class="text-end">{{ number_format($item->quantity_out, 2) }}</td>
+                            <td class="text-end">{{ number_format($item->quantity_in, 2) }}</td>
+                            <td class="text-end fw-semibold">{{ number_format($item->net_quantity, 2) }}</td>
+                            <td>
+                                <span class="cell-with-icon">
+                                    <span class="icon-chip"><i class="fa fa-calendar"></i></span>
+                                    <span>{{ $itemDate ? systemDate($itemDate) : '—' }}</span>
+                                </span>
+                            </td>
+                            <td class="text-end col-aging-30">{{ number_format($item->aging_0_30, 2) }}</td>
+                            <td class="text-end col-aging-60">{{ number_format($item->aging_31_60, 2) }}</td>
+                            <td class="text-end col-aging-90">{{ number_format($item->aging_61_90, 2) }}</td>
+                            <td class="text-end pe-4 col-aging-90plus">{{ number_format($item->aging_90_plus, 2) }}</td>
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="10" class="empty-state text-center">
+                            <td colspan="11" class="empty-state text-center">
                                 <div class="empty-icon">📋</div>
                                 <p class="empty-text mb-0">No issue items found for the selected filters.</p>
                             </td>
@@ -280,11 +308,12 @@
                 @if ($data->isNotEmpty())
                     <tfoot class="table-group-divider">
                         <tr class="fw-semibold">
-                            <th colspan="6" class="ps-4 text-end">Total</th>
-                            <th class="text-end col-aging-30">{{ number_format($aging['0_30']['quantity_out'] + $aging['0_30']['quantity_in'], 2) }}</th>
-                            <th class="text-end col-aging-60">{{ number_format($aging['31_60']['quantity_out'] + $aging['31_60']['quantity_in'], 2) }}</th>
-                            <th class="text-end col-aging-90">{{ number_format($aging['61_90']['quantity_out'] + $aging['61_90']['quantity_in'], 2) }}</th>
-                            <th class="text-end pe-4 col-aging-90plus">{{ number_format($aging['90_plus']['quantity_out'] + $aging['90_plus']['quantity_in'], 2) }}</th>
+                            <th colspan="6" class="ps-4 text-end"><i class="fa fa-calculator me-1 text-primary"></i>Total</th>
+                            <th></th>
+                            <th class="text-end col-aging-30">{{ number_format($aging['0_30']['net_quantity'], 2) }}</th>
+                            <th class="text-end col-aging-60">{{ number_format($aging['31_60']['net_quantity'], 2) }}</th>
+                            <th class="text-end col-aging-90">{{ number_format($aging['61_90']['net_quantity'], 2) }}</th>
+                            <th class="text-end pe-4 col-aging-90plus">{{ number_format($aging['90_plus']['net_quantity'], 2) }}</th>
                         </tr>
                     </tfoot>
                 @endif

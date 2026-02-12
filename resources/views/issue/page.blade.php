@@ -8,15 +8,17 @@
                     <li class="breadcrumb-item active" aria-current="page">{{ $id ? 'Edit' : 'Create' }}</li>
                 </ol>
             </nav>
-            <h1 class="page-title mb-0 mt-2">{{ $id ? 'Edit' : 'Create' }} Issue</h1>
+            <h1 class="page-title mb-0 mt-2">{{ $id ? 'Edit' : 'Create' }} {{ $type === 'return' ? 'Return' : 'Issue' }}</h1>
             <p class="lead">
-                Select customer, date and add products with quantity out (issue) or quantity in (return).
+                {{ $type === 'return'
+                    ? 'Select customer, set one date, and add products with quantity in.'
+                    : 'Select customer, set one date, and add products with quantity out.' }}
             </p>
         </div>
     </div>
     <div class="content__boxed">
         <div class="content__wrap">
-            @livewire('issue.page', ['id' => $id])
+            @livewire('issue.page', ['id' => $id, 'type' => $type])
         </div>
     </div>
     <x-account.customer-modal />

@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Traits\BelongsToTenant;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use OwenIt\Auditing\Auditable;
@@ -10,19 +11,20 @@ use OwenIt\Auditing\Contracts\Auditable as AuditableContracts;
 class IssueItem extends Model implements AuditableContracts
 {
     use Auditable;
+    use BelongsToTenant;
 
     protected $fillable = [
+        'tenant_id',
         'issue_id',
         'product_id',
         'quantity_in',
         'quantity_out',
-        'date',
     ];
 
     protected $casts = [
+        'tenant_id' => 'integer',
         'quantity_in' => 'decimal:2',
         'quantity_out' => 'decimal:2',
-        'date' => 'date',
     ];
 
     public static function rules(int $id = 0, array $merge = []): array
@@ -49,7 +51,6 @@ class IssueItem extends Model implements AuditableContracts
                 },
             ],
             'quantity_out' => ['nullable', 'numeric', 'min:0'],
-            'date' => ['date'],
         ], $merge);
     }
 

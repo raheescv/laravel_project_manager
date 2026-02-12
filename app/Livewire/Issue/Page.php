@@ -14,6 +14,8 @@ class Page extends Component
 {
     public ?int $table_id = null;
 
+    public string $type = 'issue';
+
     public array $issues = [];
 
     public array $items = [];
@@ -28,14 +30,13 @@ class Page extends Component
 
     public string $add_quantity_out = '0';
 
-    public string $add_date = '';
-
     public string $barcode_input = '';
 
-    public function mount(?int $id = null): void
+    public function mount(?int $id = null, string $type = 'issue'): void
     {
         $this->table_id = $id;
         $this->items = [];
+        $this->type = in_array($type, ['issue', 'return'], true) ? $type : 'issue';
 
         if ($this->table_id) {
             $issue = Issue::with('account', 'items.product')->find($this->table_id);
@@ -44,12 +45,14 @@ class Page extends Component
 
                 return;
             }
+            $this->type = $issue->type;
             $this->accounts = [$issue->account_id => $issue->account?->name ?? 'Customer'];
             $this->issues = [
                 'account_id' => $issue->account_id,
+                'type' => $issue->type,
+                'date' => $issue->date?->format('Y-m-d') ?? date('Y-m-d'),
                 'remarks' => $issue->remarks ?? '',
             ];
-            $this->add_date = date('Y-m-d');
             foreach ($issue->items as $item) {
                 $key = 'item_'.($item->id ?? uniqid());
                 $this->items[$key] = [
@@ -59,25 +62,26 @@ class Page extends Component
                     'name' => $item->product?->name,
                     'quantity_in' => (string) $item->quantity_in,
                     'quantity_out' => (string) $item->quantity_out,
-                    'date' => $item->date?->format('Y-m-d') ?? '',
                 ];
             }
         } else {
             $this->issues = [
                 'account_id' => '',
+                'date' => date('Y-m-d'),
                 'remarks' => '',
             ];
-            $this->add_date = date('Y-m-d');
         }
     }
 
-    public function updatedIssuesDate($value): void
-    {
-        if ($value && ! $this->table_id) {
-            $this->add_date = $value;
+    public function updatedProductId(): void{
+        if ($this->isReturnMode()) {
+            $this->add_quantity_in = '1';
+            $this->add_quantity_out = '0';
+        } else {
+            $this->add_quantity_out = '1';
+            $this->add_quantity_in = '0';
         }
     }
-
     public function addToCart(): void
     {
         $productId = $this->product_id;
@@ -89,16 +93,9 @@ class Page extends Component
 
         $qtyIn = (float) $this->add_quantity_in;
         $qtyOut = (float) $this->add_quantity_out;
-        $itemDate = $this->add_date;
-
-        if ($qtyIn <= 0 && $qtyOut <= 0) {
-            $this->dispatch('error', ['message' => 'Please enter quantity in (return) or quantity out (issue).']);
-
-            return;
-        }
-
-        if ($qtyIn > 0 && $qtyOut > 0) {
-            $this->dispatch('error', ['message' => 'Only one of quantity in or quantity out can be filled per item.']);
+        $qty = $this->isReturnMode() ? $qtyIn : $qtyOut;
+        if ($qty <= 0) {
+            $this->dispatch('error', ['message' => 'Please enter quantity.']);
 
             return;
         }
@@ -116,15 +113,13 @@ class Page extends Component
             'key' => $key,
             'product_id' => $productId,
             'name' => $product->name,
-            'quantity_in' => (string) $qtyIn,
-            'quantity_out' => (string) $qtyOut,
-            'date' => $itemDate,
+            'quantity_in' => (string) ($this->isReturnMode() ? $qty : 0),
+            'quantity_out' => (string) ($this->isReturnMode() ? 0 : $qty),
         ];
 
         $this->product_id = '';
         $this->add_quantity_in = '0';
         $this->add_quantity_out = '0';
-        $this->add_date = $this->issues['date'] ?? date('Y-m-d');
         $this->dispatch('OpenProductBox');
         $this->dispatch('success', ['message' => 'Added to cart.']);
     }
@@ -145,8 +140,13 @@ class Page extends Component
         }
 
         $this->product_id = (string) $product->id;
-        $this->add_quantity_out = '1';
-        $this->add_quantity_in = '0';
+        if ($this->isReturnMode()) {
+            $this->add_quantity_in = '1';
+            $this->add_quantity_out = '0';
+        } else {
+            $this->add_quantity_out = '1';
+            $this->add_quantity_in = '0';
+        }
         $this->addToCart();
         $this->barcode_input = '';
     }
@@ -161,8 +161,10 @@ class Page extends Component
     {
         $this->validate([
             'issues.account_id' => ['required', 'exists:accounts,id'],
+            'issues.date' => ['required', 'date'],
         ], [
             'issues.account_id.required' => 'Please select a customer.',
+            'issues.date.required' => 'Please select a date.',
         ]);
 
         try {
@@ -171,7 +173,9 @@ class Page extends Component
             }
 
             $payload = [
+                'type' => $this->type,
                 'account_id' => (int) $this->issues['account_id'],
+                'date' => $this->issues['date'],
                 'remarks' => $this->issues['remarks'] ?? '',
                 'items' => [],
             ];
@@ -179,23 +183,22 @@ class Page extends Component
             foreach ($this->items as $item) {
                 $qtyIn = (float) ($item['quantity_in'] ?? 0);
                 $qtyOut = (float) ($item['quantity_out'] ?? 0);
-                if ($qtyIn <= 0 && $qtyOut <= 0) {
+                $qty = $this->isReturnMode() ? $qtyIn : $qtyOut;
+
+                if ($qty <= 0) {
                     continue;
                 }
-                if ($qtyIn > 0 && $qtyOut > 0) {
-                    throw new Exception('Only one of quantity in or quantity out can be filled per item (product: '.($item['name'] ?? '').').');
-                }
+
                 $payload['items'][] = [
                     'id' => $item['id'] ?? null,
                     'product_id' => (int) $item['product_id'],
-                    'quantity_in' => $qtyIn,
-                    'quantity_out' => $qtyOut,
-                    'date' => $item['date'],
+                    'quantity_in' => $this->isReturnMode() ? $qty : 0,
+                    'quantity_out' => $this->isReturnMode() ? 0 : $qty,
                 ];
             }
 
             if (empty($payload['items'])) {
-                throw new Exception('Please enter quantity in (return) or quantity out (issue) for at least one product.');
+                throw new Exception('Please enter quantity for at least one product.');
             }
 
             DB::beginTransaction();
@@ -227,5 +230,10 @@ class Page extends Component
     public function render()
     {
         return view('livewire.issue.page');
+    }
+
+    public function isReturnMode(): bool
+    {
+        return $this->type === 'return';
     }
 }
