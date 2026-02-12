@@ -53,6 +53,11 @@
                                     Working Day
                                 </button>
                             </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabsTelegram" type="button" role="tab" aria-controls="profile" aria-selected="false" tabindex="-1">
+                                    Telegram
+                                </button>
+                            </li>
                             @can('whatsapp.integration')
                                 <li class="nav-item" role="presentation">
                                     <button class="nav-link " data-bs-toggle="tab" data-bs-target="#tabsWhatsapp" type="button" role="tab" aria-controls="home" aria-selected="true">
@@ -133,6 +138,9 @@
                             </div>
                             <div id="tabsWorkingDay" class="tab-pane" role="tabpanel">
                                 @livewire('settings.working-day')
+                            </div>
+                            <div id="tabsTelegram" class="tab-pane" role="tabpanel">
+                                @livewire('settings.telegram')
                             </div>
                             @can('whatsapp.integration')
                                 <div id="tabsWhatsapp" class="tab-pane" role="tabpanel">

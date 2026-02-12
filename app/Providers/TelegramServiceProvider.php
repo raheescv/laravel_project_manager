@@ -3,6 +3,7 @@
 namespace App\Providers;
 
 use App\Helpers\TelegramHelper;
+use App\Models\Configuration;
 use Illuminate\Support\ServiceProvider;
 use Telegram\Bot\Api;
 
@@ -14,7 +15,7 @@ class TelegramServiceProvider extends ServiceProvider
     public function register(): void
     {
         $this->app->singleton(Api::class, function ($app) {
-            return new Api(config('telegram.bot_token'));
+            return new Api(Configuration::where('key', 'telegram_bot_token')->value('value') ?? null);
         });
 
         $this->app->singleton(TelegramHelper::class, function ($app) {
