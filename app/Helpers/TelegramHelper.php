@@ -3,10 +3,11 @@
 namespace App\Helpers;
 
 use App\Models\User;
+use Exception;
 use Illuminate\Support\Facades\Log;
 use Telegram\Bot\Api;
 use Telegram\Bot\Exceptions\TelegramSDKException;
-use Exception;
+use Telegram\Bot\FileUpload\InputFile;
 
 class TelegramHelper
 {
@@ -48,7 +49,7 @@ class TelegramHelper
             if (! empty($data['filePath']) && file_exists($data['filePath'])) {
                 $this->telegram->sendDocument([
                     'chat_id' => $user->telegram_chat_id,
-                    'document' => $data['filePath'],
+                    'document' => InputFile::create($data['filePath'], basename($data['filePath'])),
                 ]);
             }
 
@@ -73,7 +74,7 @@ class TelegramHelper
 
             $params = [
                 'chat_id' => $chatId,
-                'document' => $filePath,
+                'document' => InputFile::create($filePath, basename($filePath)),
             ];
             if ($caption !== null && $caption !== '') {
                 $params['caption'] = $caption;

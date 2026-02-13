@@ -5,10 +5,10 @@ namespace App\Console\Commands;
 use App\Helpers\SaleHelper;
 use App\Helpers\TelegramHelper;
 use App\Models\SaleDaySession;
+use App\Models\User;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\File;
-use App\Models\User;
 
 class SendDailySaleSummaryCommand extends Command
 {
@@ -27,6 +27,7 @@ class SendDailySaleSummaryCommand extends Command
 
         if (! $session) {
             $this->error($sessionId ? "Sale day session with ID {$sessionId} not found." : 'No closed sale day session found.');
+
             return self::FAILURE;
         }
 
@@ -36,7 +37,7 @@ class SendDailySaleSummaryCommand extends Command
         $html = $view->render();
 
         $pdf = Pdf::loadHTML($html);
-        $pdf->setPaper([0, 0, 226.77, 841.89], 'portrait'); // 80mm width in points (80*2.83465), height auto
+        $pdf->setPaper([0, 0, 330, 841.89], 'portrait'); // 80mm width in points (80*2.83465), height auto
         $pdf->setOption('margin-top', 0);
         $pdf->setOption('margin-right', 0);
         $pdf->setOption('margin-bottom', 0);
@@ -67,6 +68,7 @@ class SendDailySaleSummaryCommand extends Command
                 File::delete($path);
             }
             $this->error('Error: '.$e->getMessage());
+
             return self::FAILURE;
         }
     }
