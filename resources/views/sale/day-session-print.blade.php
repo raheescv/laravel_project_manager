@@ -11,7 +11,7 @@
         Sale Bill Report
     </title>
     <style type="text/css">
-        /* 80mm Thermal Printer – same look on screen and in print */
+        /* 80mm Thermal Printer Correct Ratio */
         * {
             margin: 0;
             padding: 0;
@@ -25,53 +25,27 @@
             margin: 0;
         }
 
-        html {
-            font-family: 'Courier New', Consolas, monospace;
+        html,
+        body {
+            width: 80mm;
+            height: auto;
+            margin: 0;
+            padding: 0;
+            font-family: 'Courier New', monospace;
             font-size: 12px;
             line-height: 1.3;
             color: #000;
-            background: #2d2d2d;
-            min-height: 100%;
+            background: #fff;
         }
 
-        body {
-            width: 80mm;
-            min-height: 100vh;
-            margin: 0 auto;
-            padding: 12px 0;
-            font-family: inherit;
-            font-size: inherit;
-            line-height: inherit;
-            color: #000;
-            background: transparent;
-        }
-
-        /* Thermal strip on screen: narrow paper, subtle shadow, thermal-paper tint */
         .receipt-container {
             width: 80mm;
             max-width: 80mm;
             min-width: 80mm;
             height: auto;
-            padding: 4mm 5mm;
-            margin: 0 auto;
+            padding: 3mm 4mm;
+            margin: 0;
             box-sizing: border-box;
-            background: #fffef8;
-            box-shadow: 0 2px 12px rgba(0,0,0,0.25), 0 0 0 1px rgba(0,0,0,0.06);
-            border-radius: 2px;
-            position: relative;
-        }
-
-        /* Perforation line at top (screen only – thermal paper look) */
-        .receipt-container::before {
-            content: '';
-            display: block;
-            position: absolute;
-            left: 0;
-            right: 0;
-            top: 0;
-            height: 0;
-            border-top: 1px dashed #ccc;
-            margin: -1px 0 0 0;
         }
 
         /* Headers */
@@ -156,14 +130,14 @@
         }
 
         .sales-table tr.sale-row {
-            background-color: #f8f8f8;
+            background-color: #f0f0f0;
             -webkit-print-color-adjust: exact;
             print-color-adjust: exact;
             color-adjust: exact;
         }
 
         .sales-table tr.pending-row {
-            background-color: #f5f5e6;
+            background-color: #fff3cd;
             -webkit-print-color-adjust: exact;
             print-color-adjust: exact;
             color-adjust: exact;
@@ -221,7 +195,7 @@
             text-transform: uppercase;
         }
 
-        /* Thermal Printer Print Styles – same thermal look on paper */
+        /* Thermal Printer Print Styles */
         @media print {
             @page {
                 size: 80mm auto;
@@ -230,15 +204,11 @@
                 margin: 0mm;
             }
 
-            html {
-                background: #fff !important;
-            }
-
             html,
             body {
                 width: 80mm !important;
                 height: auto !important;
-                margin: 0 auto !important;
+                margin: 0 !important;
                 padding: 0 !important;
                 font-size: 11px !important;
                 color: #000 !important;
@@ -246,7 +216,6 @@
                 -webkit-print-color-adjust: exact !important;
                 print-color-adjust: exact !important;
                 color-adjust: exact !important;
-                box-shadow: none !important;
             }
 
             .receipt-container {
@@ -257,13 +226,6 @@
                 padding: 2mm 3mm !important;
                 margin: 0 !important;
                 box-sizing: border-box !important;
-                background: #fff !important;
-                box-shadow: none !important;
-                border-radius: 0 !important;
-            }
-
-            .receipt-container::before {
-                display: none !important;
             }
 
             h1 {
@@ -321,16 +283,16 @@
                 border-color: #000 !important;
             }
 
-            /* Preserve row background colors for thermal distinction */
+            /* Preserve row background colors for distinction */
             .sales-table tr.sale-row {
-                background-color: #f8f8f8 !important;
+                background-color: #f0f0f0 !important;
                 -webkit-print-color-adjust: exact !important;
                 print-color-adjust: exact !important;
                 color-adjust: exact !important;
             }
 
             .sales-table tr.pending-row {
-                background-color: #f5f5e6 !important;
+                background-color: #fff3cd !important;
                 -webkit-print-color-adjust: exact !important;
                 print-color-adjust: exact !important;
                 color-adjust: exact !important;
@@ -476,18 +438,20 @@
                 const finalStyle = document.createElement('style');
                 finalStyle.innerHTML = `
                     @media print {
-                        @page { size: 80mm auto !important; margin: 0mm !important; }
-                        html { background: #fff !important; }
+                        @page {
+                            size: 80mm auto !important;
+                            width: 80mm !important;
+                            height: auto !important;
+                            margin: 0mm !important;
+                        }
                         html, body {
                             width: 80mm !important;
                             height: auto !important;
-                            margin: 0 auto !important;
+                            margin: 0 !important;
                             padding: 0 !important;
                             font-family: 'Courier New', monospace !important;
                             font-size: 11px !important;
                             overflow: visible !important;
-                            background: #fff !important;
-                            box-shadow: none !important;
                         }
                         .receipt-container {
                             width: 80mm !important;
@@ -497,9 +461,6 @@
                             padding: 2mm 3mm !important;
                             margin: 0 !important;
                             box-sizing: border-box !important;
-                            background: #fff !important;
-                            box-shadow: none !important;
-                            border-radius: 0 !important;
                         }
                         * {
                             color: #000 !important;
@@ -507,20 +468,23 @@
                             print-color-adjust: exact !important;
                         }
                         .sales-table tr.sale-row {
-                            background-color: #f8f8f8 !important;
+                            background-color: #f0f0f0 !important;
                             -webkit-print-color-adjust: exact !important;
                             print-color-adjust: exact !important;
+                            color-adjust: exact !important;
                         }
                         .sales-table tr.pending-row {
-                            background-color: #f5f5e6 !important;
+                            background-color: #fff3cd !important;
                             -webkit-print-color-adjust: exact !important;
                             print-color-adjust: exact !important;
+                            color-adjust: exact !important;
                         }
                         .sales-table tr.sale-row td,
                         .sales-table tr.pending-row td {
                             background-color: inherit !important;
                             -webkit-print-color-adjust: exact !important;
                             print-color-adjust: exact !important;
+                            color-adjust: exact !important;
                         }
                     }
                 `;
