@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Console\Commands;
+namespace App\Console\Commands\Trading;
 
 use App\Services\FlatTradeService;
 use App\Services\OptimizedTradingService;
@@ -11,7 +11,7 @@ use Illuminate\Support\Facades\Log;
 
 class QuickTradingCommand extends Command
 {
-    protected $signature = 'trade:quick 
+    protected $signature = 'trade:quick
                             {--loss-threshold=2.0 : Loss threshold for selling}
                             {--profit-threshold=2 : Profit threshold for selling}
                             {--max-profit-target=5 : Maximum profit target before selling}

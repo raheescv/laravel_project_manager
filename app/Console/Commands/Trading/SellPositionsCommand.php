@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Console\Commands;
+namespace App\Console\Commands\Trading;
 
 use App\Services\FlatTradeService;
 use App\Services\RiskManagementService;
@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\Log;
 
 class SellPositionsCommand extends Command
 {
-    protected $signature = 'trade:sell-positions 
+    protected $signature = 'trade:sell-positions
                             {--symbol= : Specific symbol to sell (optional)}
                             {--all : Sell all positions}
                             {--profit-threshold=5.0 : Minimum profit % to sell}

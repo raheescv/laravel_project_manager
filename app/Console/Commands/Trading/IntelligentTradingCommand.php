@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Console\Commands;
+namespace App\Console\Commands\Trading;
 
 use App\Services\EnhancedTradingService;
 use App\Services\FlatTradeService;
@@ -11,7 +11,7 @@ use Illuminate\Support\Facades\Log;
 
 class IntelligentTradingCommand extends Command
 {
-    protected $signature = 'trade:intelligent 
+    protected $signature = 'trade:intelligent
                             {--max-stocks=5 : Maximum number of stocks to trade}
                             {--max-investment=0 : Maximum total investment amount (0 = no limit)}
                             {--strategy=adaptive : Trading strategy (conservative, moderate, aggressive, adaptive)}

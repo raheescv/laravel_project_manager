@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Console\Commands;
+namespace App\Console\Commands\Telegram;
 
 use App\Helpers\TelegramHelper;
 use Illuminate\Console\Command;

@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Console\Commands;
+namespace App\Console\Commands\Trading;
 
 use App\Services\FlatTradeService;
 use App\Services\UnifiedTradingStrategyService;
@@ -9,7 +9,7 @@ use Illuminate\Support\Facades\Log;
 
 class AllSymbolTradingCommand extends Command
 {
-    protected $signature = 'trade:all-symbols 
+    protected $signature = 'trade:all-symbols
                             {--quantity=10 : Quantity to buy for each stock}
                             {--max-stocks=5 : Maximum number of stocks to trade}
                             {--min-profit=2.0 : Minimum profit percentage required}

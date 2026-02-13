@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Console\Commands;
+namespace App\Console\Commands\Trading;
 
 use App\Models\TradingOrder;
 use App\Services\FyersService;

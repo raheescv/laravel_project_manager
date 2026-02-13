@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Console\Commands;
+namespace App\Console\Commands\Trading;
 
 use App\Services\FlatTradeService;
 use Exception;
@@ -9,7 +9,7 @@ use Illuminate\Support\Facades\Log;
 
 class ProfitBasedTradingCommand extends Command
 {
-    protected $signature = 'trade:profit-based 
+    protected $signature = 'trade:profit-based
                             {symbol : Trading symbol (e.g., INFY-EQ)}
                             {--quantity=10 : Quantity to trade}
                             {--exchange=NSE : Exchange (NSE/BSE)}

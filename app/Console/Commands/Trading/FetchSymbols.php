@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Console\Commands;
+namespace App\Console\Commands\Trading;
 
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Http;

@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Console\Commands;
+namespace App\Console\Commands\Trading;
 
 use App\Services\FlatTradeService;
 use Illuminate\Console\Command;
@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\Log;
 
 class SellNifty50PositionsCommand extends Command
 {
-    protected $signature = 'trade:sell-nifty50 
+    protected $signature = 'trade:sell-nifty50
                             {--profit-threshold=2.0 : Minimum profit % to sell}
                             {--loss-threshold=3.0 : Maximum loss % to sell}
                             {--dry-run : Run in dry-run mode without placing actual orders}

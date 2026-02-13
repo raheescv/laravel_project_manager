@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Console\Commands;
+namespace App\Console\Commands\Trading;
 
 use App\Services\OptimizedTradingService;
 use Illuminate\Console\Command;
@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\Log;
 
 class UnifiedTradingCommand extends Command
 {
-    protected $signature = 'trade:unified 
+    protected $signature = 'trade:unified
                             {--action=buy : Action to perform (buy, sell)}
                             {--max-stocks=5 : Maximum number of stocks}
                             {--quantity=10 : Quantity per stock}
