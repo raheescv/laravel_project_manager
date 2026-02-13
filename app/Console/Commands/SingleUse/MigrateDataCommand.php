@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Console\Commands;
+namespace App\Console\Commands\SingleUse;
 
 use App\Actions\Appointment\CreateAction as AppointmentCreateAction;
 use App\Actions\InventoryTransfer\CreateAction as InventoryTransferCreateAction;
