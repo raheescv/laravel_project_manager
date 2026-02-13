@@ -109,7 +109,18 @@ class SaleHelper
     {
         $session = SaleDaySession::with(['branch', 'opener', 'closer'])->findOrFail($id);
 
-        $sales = Sale::completed()
+        return $this->daySessionReportView($session);
+    }
+
+    /**
+     * Build the day session report view for a given session (e.g. for PDF export).
+     */
+    public function daySessionReportView(SaleDaySession $session)
+    {
+        $id = $session->id;
+
+        $sales = Sale::withoutGlobalScopes()
+            ->completed()
             ->where('sale_day_session_id', $id)
             ->with(['branch', 'payments.paymentMethod'])
             ->orderBy('created_at', 'asc')

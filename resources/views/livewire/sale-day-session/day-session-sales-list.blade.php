@@ -78,7 +78,7 @@
                                             </div>
                                         </div>
                                         <span class="badge bg-white bg-opacity-25 rounded-pill px-3 py-2">
-                                            {{ number_format(($payment['total_paid'] / $totals['paid']) * 100, 1) }}%
+                                            {{ $totals['paid'] ? number_format(($payment['total_paid'] / $totals['paid']) * 100, 1) : 0 }}%
                                         </span>
                                     </div>
 

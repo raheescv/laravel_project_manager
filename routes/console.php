@@ -8,7 +8,9 @@ Schedule::command('backup:run --only-db')->daily();
 Schedule::command('backup:clean')->daily();
 
 if (config('constants.auto_pull_enabled')) {
-    Schedule::command('git:auto-pull '.config('constants.auto_pull_branch').' --force --build')->everyMinute()->withoutOverlapping();
+    Schedule::command('git:auto-pull '.config('constants.auto_pull_branch').' --force --build')
+        ->everyMinute()
+        ->withoutOverlapping();
 }
 
 // Process any remaining visitor batches that haven't reached batch size
@@ -17,10 +19,13 @@ Schedule::command('visitors:process-batches')->everyFiveMinutes();
 Schedule::command(RunHealthChecksCommand::class)->daily();
 
 // Close all open sale day sessions daily at start of day (if enabled)
-Schedule::command('sale-day-sessions:close-daily') ->dailyAt('00:00')
+Schedule::command('sale-day-sessions:close-daily')
+    ->dailyAt('00:00')
     ->when(function () {
         return Configuration::where('key', 'auto_close_day_sessions_enabled')->value('value') === 'yes';
     });
+
+Schedule::command('send:daily-sale-summary')->dailyAt('00:10');
 
 // Optimized unified trading commands
 // Schedule::command('trade:unified --action=buy')->everyFiveMinutes()->between('05:10', '09:55');

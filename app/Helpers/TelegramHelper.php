@@ -6,6 +6,7 @@ use App\Models\User;
 use Illuminate\Support\Facades\Log;
 use Telegram\Bot\Api;
 use Telegram\Bot\Exceptions\TelegramSDKException;
+use Exception;
 
 class TelegramHelper
 {
@@ -20,7 +21,7 @@ class TelegramHelper
     {
         try {
             if (empty($data['mobile'])) {
-                throw new \Exception('Mobile number is required');
+                throw new Exception('Mobile number is required');
             }
 
             // Format phone number
@@ -31,13 +32,12 @@ class TelegramHelper
             if (! $user) {
                 // If user doesn't exist, we'll send them a message to connect
                 $this->inviteUserToConnect($formattedPhone);
-                throw new \Exception('User needs to connect with Telegram bot first. Invitation sent.');
+                throw new Exception('User needs to connect with Telegram bot first. Invitation sent.');
             }
-
 
             // If user exists but no chat ID and not in auto-connect mode, notify them
             if (! $user->telegram_chat_id) {
-                throw new \Exception('User needs to connect with the bot first. Please ask them to message @'.config('services.telegram.bot_username'));
+                throw new Exception('User needs to connect with the bot first. Please ask them to message @'.config('services.telegram.bot_username'));
             }
 
             $this->telegram->sendMessage([
@@ -53,8 +53,37 @@ class TelegramHelper
             }
 
             return ['success' => true, 'message' => 'Message sent successfully'];
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             Log::error('Telegram send failed: '.$e->getMessage());
+
+            return ['success' => false, 'message' => $e->getMessage()];
+        }
+    }
+
+    /**
+     * Send a document (e.g. PDF) to a Telegram chat by chat ID.
+     * Use for channels/groups or when chat_id is known (e.g. daily report).
+     */
+    public function sendDocumentToChatId(string $chatId, string $filePath, ?string $caption = null): array
+    {
+        try {
+            if (! file_exists($filePath)) {
+                throw new Exception("File not found: {$filePath}");
+            }
+
+            $params = [
+                'chat_id' => $chatId,
+                'document' => $filePath,
+            ];
+            if ($caption !== null && $caption !== '') {
+                $params['caption'] = $caption;
+            }
+
+            $this->telegram->sendDocument($params);
+
+            return ['success' => true, 'message' => 'Document sent successfully'];
+        } catch (Exception $e) {
+            Log::error('Telegram sendDocumentToChatId failed: '.$e->getMessage());
 
             return ['success' => false, 'message' => $e->getMessage()];
         }
@@ -71,7 +100,7 @@ class TelegramHelper
             // For now we'll just log it
             Log::info("Invitation sent to $phone: $inviteMessage");
 
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             Log::error('Failed to send bot invitation: '.$e->getMessage());
         }
     }
@@ -122,7 +151,7 @@ class TelegramHelper
                 // Update or create user with telegram chat id
                 $user = User::where('mobile', $formattedPhone)->first();
                 if (! $user) {
-                    throw new \Exception("User not found for this mobile no: $formattedPhone");
+                    throw new Exception("User not found for this mobile no: $formattedPhone");
                 }
                 $user->update([
                     'telegram_chat_id' => $chatId,
@@ -158,7 +187,7 @@ class TelegramHelper
                     Log::error('Telegram sendMessage failed: '.$e->getMessage(), ['chat_id' => $chatId]);
                 }
             }
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             Log::error('Telegram update handling failed: '.$e->getMessage());
         }
     }
