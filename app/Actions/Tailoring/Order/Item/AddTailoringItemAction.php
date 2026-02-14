@@ -25,10 +25,7 @@ class AddTailoringItemAction
 
                 $measurementData = [];
                 $dynamicData = [];
-
-                if (isset($data['tailoring_category_model_id'])) {
-                    $measurementData['tailoring_category_model_id'] = $data['tailoring_category_model_id'];
-                }
+                $measurementData['tailoring_category_model_id'] = $data['tailoring_category_model_id'];
 
                 if (isset($data['tailoring_notes'])) {
                     $measurementData['tailoring_notes'] = $data['tailoring_notes'];
@@ -58,7 +55,6 @@ class AddTailoringItemAction
             validationHelper(TailoringOrderItem::rules(), $data);
 
             $item = new TailoringOrderItem($data);
-            $item->calculateAmount();
             $item->save();
 
             // Update order totals

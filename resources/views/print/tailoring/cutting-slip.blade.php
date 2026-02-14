@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -30,11 +31,37 @@
             padding-bottom: 10px;
         }
 
-        .header-left h1 { margin: 0; font-size: 1.6rem; text-transform: uppercase; }
-        .header-left p { margin: 2px 0; font-size: 1rem; font-weight: bold; color: #333; }
-        .header-center { text-align: center; }
-        .header-center h2 { margin: 0; font-size: 1.2rem; border-bottom: 1px solid #000; display: inline-block; padding-bottom: 2px; }
-        .header-right { text-align: right; font-size: 0.9rem; font-weight: bold; line-height: 1.4; }
+        .header-left h1 {
+            margin: 0;
+            font-size: 1.6rem;
+            text-transform: uppercase;
+        }
+
+        .header-left p {
+            margin: 2px 0;
+            font-size: 1rem;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .header-center {
+            text-align: center;
+        }
+
+        .header-center h2 {
+            margin: 0;
+            font-size: 1.2rem;
+            border-bottom: 1px solid #000;
+            display: inline-block;
+            padding-bottom: 2px;
+        }
+
+        .header-right {
+            text-align: right;
+            font-size: 0.9rem;
+            font-weight: bold;
+            line-height: 1.4;
+        }
 
         .measure-grid {
             display: grid;
@@ -93,8 +120,17 @@
             text-align: center;
         }
 
-        .col-desc { text-align: left !important; width: 25%; font-weight: bold; }
-        .highlight-yellow { background-color: #ffff00; font-weight: bold; padding: 2px 5px; }
+        .col-desc {
+            text-align: left !important;
+            width: 25%;
+            font-weight: bold;
+        }
+
+        .highlight-yellow {
+            background-color: #ffff00;
+            font-weight: bold;
+            padding: 2px 5px;
+        }
 
         .info-bar {
             display: grid;
@@ -168,113 +204,184 @@
         }
 
         @media print {
-            body { padding: 0; }
-            .print-container { border: 1px solid #000; width: 100%; }
-            .no-print { display: none !important; }
+            body {
+                padding: 0;
+            }
+
+            .print-container {
+                border: 1px solid #000;
+                width: 100%;
+            }
+
+            .no-print {
+                display: none !important;
+            }
         }
     </style>
 </head>
+
 <body>
 
-@php
-    $firstItem = $order->items->first();
-@endphp
-
-<div class="print-container">
-    <div class="header">
-        <div class="header-left">
-            <p>{{ $order->customer_mobile ?? 'No Mobile' }}</p>
-            <h1>{{ $order->customer_name }}</h1>
-            <p>ID: {{ $order->order_no }}</p>
-        </div>
-        <div class="header-center">
-            <h2>{{ strtoupper($firstItem->category->name ?? 'TAILORING') }} CUTTING SLIP</h2>
-        </div>
-        <div class="header-right">
-            Order Date: {{ $order->order_date ? $order->order_date->format('d/m/Y') : '-' }}<br>
-            Delivery Date: {{ $order->delivery_date ? $order->delivery_date->format('d/m/Y') : '-' }}
-        </div>
-    </div>
-
     @php
+        $items = $items ?? $order->items;
+        $firstItem = $items->first();
         $activeMeasurements = $firstItem->category->activeMeasurements ?? collect();
+        $sectionGroups = ['dimensions' => 'basic_body', 'components' => 'collar_cuff', 'styles' => 'specifications'];
+        $common = [];
+        $separate = [];
+        foreach ($sectionGroups as $sectionId) {
+            $fields = $activeMeasurements->where('section', $sectionId)->sortBy('sort_order');
+            foreach ($fields as $m) {
+                $key = $m->field_key;
+                $values = $items->map(fn($item) => ($v = $item->$key ?? null) === '' ? null : $v)->unique()->values();
+                if ($values->count() <= 1) {
+                    $common[$key] = ['label' => $m->label, 'value' => $values->first()];
+                } else {
+                    $separate[$key] = [
+                        'label' => $m->label,
+                        'per_item' => $items->mapWithKeys(fn($item) => [$item->item_no => ($v = $item->$key ?? null) === '' ? null : $v])->all(),
+                    ];
+                }
+            }
+        }
+        $itemsWithNotes = $items->filter(fn($item) => !empty(trim($item->tailoring_notes ?? '')));
     @endphp
 
-    @foreach($activeMeasurements->chunk(6) as $chunk)
-        <div class="measure-grid">
-            @foreach($chunk as $m)
-                <div class="measure-box">
-                    <div class="measure-val">{{ $firstItem->{$m->field_key} ?? '-' }}</div>
-                    <div class="measure-label">{{ $m->label }}</div>
-                </div>
-            @endforeach
-            {{-- Fill empty cells to maintain grid layout if last chunk is partial --}}
-            @for($i = $chunk->count(); $i < 6; $i++)
-                <div class="measure-box" style="border: none;"></div>
-            @endfor
-        </div>
-    @endforeach
-
-    <div class="measure-grid" style="grid-template-columns: 2fr 1fr;">
-        <div class="field-row" style="margin-bottom: 0;">Notes: <div class="field-input">{{ $firstItem->tailoring_notes }}</div></div>
-        <div class="measure-box" style="border: none;"></div>
-    </div>
-
-    <table class="slip-table">
-        <thead>
-            <tr>
-                <th class="col-desc">Description</th>
-                <th>Barcode</th>
-                <th>Qty</th>
-                <th>Type</th>
-                <th>Model</th>
-                <th>Color</th>
-                <th>Used</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach($order->items as $item)
-            <tr>
-                <td class="col-desc">{{ $item->product_name }}</td>
-                <td>{{ $item->product->barcode ?? '-' }}</td>
-                <td>{{ number_format($item->quantity, 1) }}</td>
-                <td>{{ $item->category->name ?? '-' }}</td>
-                <td><span class="highlight-yellow">{{ $item->categoryModel->name ?? 'Standard' }}</span></td>
-                <td>{{ $item->product_color ?? '-' }}</td>
-                <td></td>
-            </tr>
-            @endforeach
-        </tbody>
-    </table>
-    <div class="bottom-section">
-        <div style="flex: 2;">
-            <div class="field-row">Cutting Master: <div class="field-input">{{ $order->cutter->name ?? '' }}</div></div>
-            <div class="field-row">Tailor Name: <div class="field-input">{{ $firstItem->tailor->name ?? '' }}</div></div>
-            <div class="field-row" style="margin-top: 20px; gap: 40px;">
-                <label><input type="checkbox" {{ $order->status == 'confirmed' ? 'checked' : '' }}> Booking</label>
-                <label><input type="checkbox" {{ $order->status == 'completed' ? 'checked' : '' }}> Finished</label>
-                <label><input type="checkbox" {{ $order->status == 'delivered' ? 'checked' : '' }}> Delivered</label>
+    <div class="print-container">
+        <div class="header">
+            <div class="header-left">
+                <p>{{ $order->customer_mobile ?? 'No Mobile' }}</p>
+                <h1>{{ $order->customer_name }}</h1>
+                <p>ID: {{ $order->order_no }}</p>
+            </div>
+            <div class="header-center">
+                <h2>{{ strtoupper($firstItem->category->name ?? 'TAILORING') }} CUTTING SLIP</h2>
+            </div>
+            <div class="header-right">
+                Order Date: {{ $order->order_date ? $order->order_date->format('d/m/Y') : '-' }}<br>
+                Delivery Date: {{ $order->delivery_date ? $order->delivery_date->format('d/m/Y') : '-' }}
             </div>
         </div>
-        <div style="flex: 1; text-align: right;">
-            <div class="field-row">Remarks: <div class="field-input"></div></div>
-            <div style="display: inline-block; margin-top: 10px;">
-                <div class="qr-placeholder">
-                    <img src="https://api.qrserver.com/v1/create-qr-code/?size=100x100&data={{ $order->order_no }}-{{ $categoryId }}" alt="QR Code" width="100">
+
+        {{-- Common measurements (same for all items in this category) --}}
+        @foreach (collect($common)->chunk(6) as $chunk)
+            <div class="measure-grid">
+                @foreach ($chunk as $key => $entry)
+                    <div class="measure-box">
+                        <div class="measure-val">{{ $entry['value'] ?? '-' }}</div>
+                        <div class="measure-label">{{ $entry['label'] }}</div>
+                    </div>
+                @endforeach
+                @for ($i = $chunk->count(); $i < 6; $i++)
+                    <div class="measure-box" style="border: none;"></div>
+                @endfor
+            </div>
+        @endforeach
+
+        {{-- Per-item reference (e.g. Mar Size, Mar Model) --}}
+        @if (count($separate) > 0)
+            <div style="margin-bottom: 12px;">
+                <table class="slip-table" style="margin: 0 0 12px 0;">
+                    <thead>
+                        <tr>
+                            <th style="width: 120px;">Product No</th>
+                            @foreach ($separate as $entry)
+                                <th>{{ $entry['label'] }}</th>
+                            @endforeach
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach ($items as $item)
+                            <tr>
+                                <td style="font-weight: bold;">#{{ $item->item_no }}</td>
+                                @foreach ($separate as $fieldKey => $entry)
+                                    <td>{{ $item->$fieldKey ?? '-' }}</td>
+                                @endforeach
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
+        @endif
+
+        <div class="measure-grid" style="grid-template-columns: 2fr 1fr;">
+            <div class="field-row" style="margin-bottom: 0;">
+                Notes:
+                <div class="field-input" style="min-height: auto;">
+                    @if ($itemsWithNotes->isNotEmpty())
+                        @foreach ($itemsWithNotes as $item)
+                            <span style="font-weight: bold;">#{{ $item->item_no }}</span> {{ $item->tailoring_notes }}@if (!$loop->last)
+                                <br>
+                            @endif
+                        @endforeach
+                    @else
+                        -
+                    @endif
+                </div>
+            </div>
+            <div class="measure-box" style="border: none;"></div>
+        </div>
+
+        <table class="slip-table">
+            <thead>
+                <tr>
+                    <th class="col-desc">Description</th>
+                    <th>Barcode</th>
+                    <th>Qty</th>
+                    <th>Type</th>
+                    <th>Model</th>
+                    <th>Color</th>
+                    <th>Used</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach ($items as $item)
+                    <tr>
+                        <td class="col-desc">{{ $item->product_name }}</td>
+                        <td>{{ $item->product->barcode ?? '-' }}</td>
+                        <td>{{ number_format($item->quantity, 1) }}</td>
+                        <td>{{ $item->category->name ?? '-' }}</td>
+                        <td><span class="highlight-yellow">{{ $item->categoryModel->name ?? 'Standard' }}</span></td>
+                        <td>{{ $item->product_color ?? '-' }}</td>
+                        <td></td>
+                    </tr>
+                @endforeach
+            </tbody>
+        </table>
+        <div class="bottom-section">
+            <div style="flex: 2;">
+                <div class="field-row">Cutting Master: <div class="field-input">{{ $order->cutter->name ?? '' }}</div>
+                </div>
+                <div class="field-row">Tailor Name: <div class="field-input">{{ $firstItem->tailor->name ?? '' }}</div>
+                </div>
+                <div class="field-row" style="margin-top: 20px; gap: 40px;">
+                    <label><input type="checkbox" {{ $order->status == 'confirmed' ? 'checked' : '' }}> Booking</label>
+                    <label><input type="checkbox" {{ $order->status == 'completed' ? 'checked' : '' }}> Finished</label>
+                    <label><input type="checkbox" {{ $order->status == 'delivered' ? 'checked' : '' }}> Delivered</label>
+                </div>
+            </div>
+            <div style="flex: 1; text-align: right;">
+                <div class="field-row">Remarks: <div class="field-input"></div>
+                </div>
+                <div style="display: inline-block; margin-top: 10px;">
+                    <div class="qr-placeholder">
+                        <img src="https://api.qrserver.com/v1/create-qr-code/?size=100x100&data={{ $order->order_no }}-{{ $categoryId }}" alt="QR Code" width="100">
+                    </div>
                 </div>
             </div>
         </div>
+
+        <div class="signature-row">
+            <div>Prepared By: {{ $order->salesman->name ?? '' }}</div>
+            <div>Approved By: {{ $order->customer_name }}</div>
+        </div>
     </div>
 
-    <div class="signature-row">
-        <div>Prepared By: {{ $order->salesman->name ?? '' }}</div>
-        <div>Approved By: {{ $order->customer_name }}</div>
+    <div class="no-print" style="text-align: center; margin-top: 20px; padding-bottom: 40px;">
+        <button onclick="window.print()" style="padding: 12px 30px; cursor: pointer; background: #000; color: #fff; border: none; border-radius: 5px; font-weight: bold; font-size: 1rem;">Print Cutting
+            Slip</button>
     </div>
-</div>
-
-<div class="no-print" style="text-align: center; margin-top: 20px; padding-bottom: 40px;">
-    <button onclick="window.print()" style="padding: 12px 30px; cursor: pointer; background: #000; color: #fff; border: none; border-radius: 5px; font-weight: bold; font-size: 1rem;">Print Cutting Slip</button>
-</div>
 
 </body>
+
 </html>

@@ -18,12 +18,13 @@ return new class() extends Migration
             $table->index('tenant_id');
             $table->unsignedBigInteger('tailoring_order_id');
             $table->foreign('tailoring_order_id', 'tom_order_fk')->references('id')->on('tailoring_orders')->onDelete('cascade');
+
             $table->unsignedBigInteger('tailoring_category_id')->nullable();
             $table->foreign('tailoring_category_id', 'tom_cat_fk')->references('id')->on('tailoring_categories')->onDelete('set null');
             $table->unsignedBigInteger('tailoring_category_model_id')->nullable();
             $table->foreign('tailoring_category_model_id', 'tom_cat_model_fk')->references('id')->on('tailoring_category_models')->onDelete('set null');
-
             $table->json('data')->nullable();
+            $table->text('tailoring_notes')->nullable();
 
             $table->unsignedBigInteger('created_by')->nullable()->references('id')->on('users');
             $table->unsignedBigInteger('updated_by')->nullable()->references('id')->on('users');

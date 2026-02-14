@@ -25,17 +25,25 @@ return new class() extends Migration
             $table->decimal('gross_amount', 16, 2)->default(0);
             $table->decimal('item_discount', 16, 2)->default(0);
             $table->decimal('tax_amount', 16, 2)->default(0);
-            $table->decimal('total', 16, 2)->default(0);
+            $table->decimal('stitch_amount', 16, 2)->default(0);
+            $table->decimal('total', 16, 2)->storedAs('gross_amount - item_discount + tax_amount + stitch_amount');
             $table->decimal('other_discount', 16, 2)->default(0);
-            $table->decimal('freight', 16, 2)->default(0);
             $table->decimal('round_off', 10, 2)->default(0);
-            $table->decimal('grand_total', 16, 2)->default(0);
+            $table->decimal('grand_total', 16, 2)->storedAs('(total - other_discount + round_off)');
             $table->decimal('paid', 16, 2)->default(0);
-            $table->decimal('balance', 16, 2)->default(0);
+            $table->decimal('balance', 16, 2)->storedAs('grand_total - paid');
             $table->string('payment_method_ids')->nullable();
             $table->string('payment_method_name')->nullable();
             $table->enum('status', ['draft', 'pending', 'confirmed', 'in_progress', 'completed', 'delivered', 'cancelled'])->default('draft');
             $table->text('notes')->nullable();
+
+            $table->unsignedBigInteger('rack_id')->nullable();
+            $table->foreign('rack_id')->references('id')->on('racks')->onDelete('set null');
+            $table->unsignedBigInteger('cutter_id')->nullable();
+            $table->foreign('cutter_id')->references('id')->on('users')->onDelete('set null');
+            $table->date('completion_date')->nullable();
+            $table->enum('completion_status', ['pending', 'in_progress', 'completed', 'delivered'])->nullable();
+
             $table->unsignedBigInteger('created_by')->references('id')->on('users');
             $table->unsignedBigInteger('updated_by')->nullable()->references('id')->on('users');
             $table->unsignedBigInteger('deleted_by')->nullable()->references('id')->on('users');

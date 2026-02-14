@@ -2,6 +2,8 @@
 
 namespace App\Actions\Tailoring\Order;
 
+use App\Actions\Tailoring\JournalEntryAction;
+use App\Actions\Tailoring\Payment\CreateAction;
 use App\Models\TailoringOrder;
 use App\Models\User;
 use Exception;
@@ -27,7 +29,10 @@ class CreateTailoringOrderAction
                 $this->model = TailoringOrder::create($data);
 
                 $this->items($data['items'] ?? []);
-                $this->payments($data['payments'] ?? []);
+
+                if ($data['payment_method'] != 'credit') {
+                    $this->payments($data['payments'] ?? []);
+                }
 
                 $this->model->refresh();
                 $this->model->calculateTotals();
@@ -45,12 +50,17 @@ class CreateTailoringOrderAction
                 }
             });
 
+            $response = (new JournalEntryAction())->executeForOrder($this->model, $this->userId);
+            if (! ($response['success'] ?? false)) {
+                throw new Exception($response['message'] ?? 'Failed to create journal entry', 1);
+            }
+
             $return['success'] = true;
             $return['message'] = 'Successfully Created Tailoring Order';
             $return['data'] = $this->model;
-        } catch (\Throwable $th) {
+        } catch (Exception $e) {
             $return['success'] = false;
-            $return['message'] = $th->getMessage();
+            $return['message'] = $e->getMessage();
         }
 
         return $return;
@@ -74,7 +84,7 @@ class CreateTailoringOrderAction
         foreach ($data as $value) {
             $value['tailoring_order_id'] = $this->model->id;
             $value['date'] = $value['date'] ?? $this->model->order_date;
-            $response = (new \App\Actions\Tailoring\Payment\CreateAction())->execute($value, $this->userId);
+            $response = (new CreateAction())->execute($value, $this->userId);
             if (! $response['success']) {
                 throw new Exception($response['message'], 1);
             }

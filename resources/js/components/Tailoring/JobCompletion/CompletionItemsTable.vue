@@ -45,7 +45,7 @@
                             <th class="px-4 py-3 text-[0.6rem] font-bold text-slate-400 uppercase tracking-widest">Item Details</th>
                             <th class="px-4 py-3 text-[0.6rem] font-bold text-slate-400 uppercase tracking-widest">Tailor Assignment</th>
                             <th class="px-4 py-3 text-[0.6rem] font-bold text-slate-400 uppercase tracking-widest">Material Tracking</th>
-                            <th class="px-4 py-3 text-[0.6rem] font-bold text-slate-400 uppercase tracking-widest">Completion Date</th>
+                            <th class="px-4 py-3 text-[0.6rem] font-bold text-slate-400 uppercase tracking-widest">Completion Date / Qty</th>
                             <th class="px-4 py-3 text-[0.6rem] font-bold text-slate-400 uppercase tracking-widest text-center">Actions</th>
                         </tr>
                     </thead>
@@ -158,12 +158,20 @@
                                 </div>
                             </td>
 
-                            <!-- Completion Date Column -->
+                            <!-- Completion Date & Completed Qty Column -->
                             <td class="px-4 py-3">
-                                <div class="min-w-[110px]">
-                                    <label class="block text-[0.55rem] font-bold text-slate-400 uppercase tracking-widest mb-1">Completion</label>
-                                    <input v-model="item.item_completion_date" type="date"
-                                        class="w-full text-[0.6rem] font-bold py-0.5 px-1.5 rounded-lg border border-slate-200 bg-white focus:border-blue-500 transition-all" />
+                                <div class="min-w-[120px] flex flex-col gap-2">
+                                    <div>
+                                        <label class="block text-[0.55rem] font-bold text-slate-400 uppercase tracking-widest mb-1">Completion Date</label>
+                                        <input v-model="item.item_completion_date" type="date"
+                                            class="w-full text-[0.6rem] font-bold py-0.5 px-1.5 rounded-lg border border-slate-200 bg-white focus:border-blue-500 transition-all" />
+                                    </div>
+                                    <div>
+                                        <label class="block text-[0.55rem] font-bold text-slate-400 uppercase tracking-widest mb-1">Completed Qty</label>
+                                        <input v-model.number="item.completed_quantity" type="number" step="0.001" min="0" :max="Number(item.quantity) || undefined"
+                                            placeholder="0"
+                                            class="w-full text-[0.6rem] font-bold py-0.5 px-1.5 rounded-lg border border-slate-200 bg-white focus:border-blue-500 transition-all" />
+                                    </div>
                                 </div>
                             </td>
 

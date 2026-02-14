@@ -94,16 +94,27 @@
                                 <div class="grid grid-cols-1 gap-6">
                                     <!-- Measurement Form -->
                                     <div>
-                                        <div class="flex items-center gap-2 mb-4 border-b border-slate-100 pb-3">
-                                            <div class="w-8 h-8 rounded-lg bg-amber-50 flex items-center justify-center text-amber-600">
-                                                <i class="fa fa-pencil-square-o text-sm"></i>
+                                        <div class="flex items-center justify-between gap-2 mb-4 border-b border-slate-100 pb-3">
+                                            <div class="flex items-center gap-2">
+                                                <div class="w-8 h-8 rounded-lg bg-amber-50 flex items-center justify-center text-amber-600">
+                                                    <i class="fa fa-pencil-square-o text-sm"></i>
+                                                </div>
+                                                <div>
+                                                    <h3 class="text-sm font-bold text-slate-800 leading-none mb-0.5">
+                                                        {{ getCategory(activeCategoryTab)?.name }} Measurements
+                                                    </h3>
+                                                    <p class="text-slate-400 text-[10px] font-medium uppercase tracking-wider">Configure dimensions and fits</p>
+                                                </div>
                                             </div>
-                                            <div>
-                                                <h3 class="text-sm font-bold text-slate-800 leading-none mb-0.5">
-                                                    {{ getCategory(activeCategoryTab)?.name }} Measurements
-                                                </h3>
-                                                <p class="text-slate-400 text-[10px] font-medium uppercase tracking-wider">Configure dimensions and fits</p>
-                                            </div>
+                                            <button
+                                                type="button"
+                                                @click="openPreviousMeasurements"
+                                                :disabled="!form.account_id"
+                                                class="shrink-0 flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-bold border border-slate-200 bg-white text-slate-600 hover:bg-indigo-50 hover:border-indigo-200 hover:text-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                                            >
+                                                <i class="fa fa-history text-indigo-500"></i>
+                                                Use Previous Measurements
+                                            </button>
                                         </div>
 
                                         <div class="bg-slate-50/50 rounded-xl p-3 md:p-4 border border-slate-100">
@@ -405,6 +416,12 @@ const handleOldMeasurementSkip = () => {
     pendingOldMeasurementCategoryId.value = null
 }
 
+const openPreviousMeasurements = () => {
+    if (!activeCategoryTab.value || !form.value.account_id) return
+    pendingOldMeasurementCategoryId.value = activeCategoryTab.value
+    showOldMeasurementModal.value = true
+}
+
 const handleAddMeasurementOption = async (type, value) => {
     try {
         const response = await axios.post('/tailoring/order/measurement-options', {
@@ -442,6 +459,12 @@ const handleAddItem = async (itemData, categoryId) => {
     // Validate measurements
     if (Object.keys(itemMeasurements || {}).length === 0) {
         toast.error(`Please fill in measurement details for ${category?.name || 'Item'}`)
+        return
+    }
+
+    const modelId = itemMeasurements?.tailoring_category_model_id ?? item?.tailoring_category_model_id
+    if (!modelId) {
+        toast.error('Please select a model (Category Model) before adding the product')
         return
     }
 

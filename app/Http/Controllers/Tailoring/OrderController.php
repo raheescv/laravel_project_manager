@@ -25,6 +25,7 @@ use App\Models\TailoringCategoryMeasurement;
 use App\Models\TailoringCategoryModel;
 use App\Models\TailoringMeasurementOption;
 use App\Models\TailoringOrder;
+use App\Models\TailoringOrderItem;
 use App\Models\TailoringOrderMeasurement;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
@@ -672,7 +673,7 @@ class OrderController extends Controller
 
     public function updateItemCompletion(Request $request, $itemId): JsonResponse
     {
-        $item = \App\Models\TailoringOrderItem::findOrFail($itemId);
+        $item = TailoringOrderItem::findOrFail($itemId);
         $item->updateCompletion($request->all());
 
         // Reload with relationships and append measurements
@@ -702,7 +703,7 @@ class OrderController extends Controller
         ]);
     }
 
-    public function printCuttingSlip($id, $categoryId, $modelId)
+    public function printCuttingSlip($id, $categoryId, $modelId = 'all')
     {
         $action = new GetTailoringOrderAction();
         $result = $action->execute($id);

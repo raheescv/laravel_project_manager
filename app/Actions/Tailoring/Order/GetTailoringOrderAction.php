@@ -31,6 +31,7 @@ class GetTailoringOrderAction
                     $query->with('paymentMethod:id,name')->orderBy('date');
                 },
                 'measurements',
+                'journals.entries.account',
             ])->findOrFail($id);
 
             // Merge measurements into items for frontend compatibility

@@ -2,6 +2,9 @@
 
 namespace App\Actions\Tailoring\Order;
 
+use App\Actions\Tailoring\JournalEntryAction;
+use App\Actions\Tailoring\Payment\CreateAction;
+use App\Actions\Tailoring\Payment\UpdateAction;
 use App\Models\TailoringOrder;
 use Exception;
 
@@ -14,27 +17,38 @@ class UpdateTailoringOrderAction
             $data['updated_by'] = $userId;
             validationHelper(TailoringOrder::rules($id), $data);
             $model->update($data);
-
             // Update items if provided
             if (isset($data['items'])) {
                 $this->updateItems($model, $data['items'], $userId);
             }
 
-            // Update payments if provided
-            if (isset($data['payments'])) {
-                $this->updatePayments($model, $data['payments'], $userId);
+            if ($data['payment_method'] == 'credit') {
+                // delete all the payment if exists
+                $model->payments()->delete();
+            } else {
+                // Update payments if provided
+                if (isset($data['payments'])) {
+                    $this->updatePayments($model, $data['payments'], $userId);
+                }
             }
 
             $model->refresh();
             $model->calculateTotals();
             $model->save();
 
+            $journalAction = new JournalEntryAction();
+            $journalAction->deleteJournalsForOrder($model, $userId);
+            $response = $journalAction->executeForOrder($model, $userId);
+            if (! ($response['success'] ?? false)) {
+                throw new Exception($response['message'] ?? 'Failed to create journal entry', 1);
+            }
+
             $return['success'] = true;
             $return['message'] = 'Successfully Updated Tailoring Order';
             $return['data'] = $model;
-        } catch (\Throwable $th) {
+        } catch (Exception $e) {
             $return['success'] = false;
-            $return['message'] = $th->getMessage();
+            $return['message'] = $e->getMessage();
         }
 
         return $return;
@@ -75,10 +89,10 @@ class UpdateTailoringOrderAction
         // Update or create payments
         foreach ($payments as $paymentData) {
             if (isset($paymentData['id']) && $paymentData['id']) {
-                $response = (new \App\Actions\Tailoring\Payment\UpdateAction())->execute($paymentData['id'], $paymentData, $userId);
+                $response = (new UpdateAction())->execute($paymentData['id'], $paymentData, $userId);
             } else {
                 $paymentData['tailoring_order_id'] = $order->id;
-                $response = (new \App\Actions\Tailoring\Payment\CreateAction())->execute($paymentData, $userId);
+                $response = (new CreateAction())->execute($paymentData, $userId);
             }
 
             if (! $response['success']) {

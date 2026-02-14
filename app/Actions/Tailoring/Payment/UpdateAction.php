@@ -3,6 +3,7 @@
 namespace App\Actions\Tailoring\Payment;
 
 use App\Models\TailoringPayment;
+use Exception;
 
 class UpdateAction
 {
@@ -20,9 +21,9 @@ class UpdateAction
             $return['success'] = true;
             $return['message'] = 'Successfully Updated Tailoring Payment';
             $return['data'] = $model;
-        } catch (\Throwable $th) {
+        } catch (Exception $e) {
             $return['success'] = false;
-            $return['message'] = $th->getMessage();
+            $return['message'] = $e->getMessage();
         }
 
         return $return;

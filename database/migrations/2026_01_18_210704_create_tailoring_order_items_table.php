@@ -29,27 +29,31 @@ return new class() extends Migration
             $table->string('product_color')->nullable();
             $table->foreignId('unit_id')->default(1)->constrained('units');
             $table->decimal('quantity', 8, 3);
+            $table->decimal('quantity_per_item', 8, 3);
             $table->decimal('unit_price', 16, 2);
             $table->decimal('stitch_rate', 16, 2)->default(0);
-            $table->decimal('gross_amount', 16, 2);
+            $table->decimal('gross_amount', 16, 2)->storedAs('unit_price * quantity * quantity_per_item');
             $table->decimal('discount', 16, 2)->default(0);
-            $table->decimal('net_amount', 16, 2);
+            $table->decimal('net_amount', 16, 2)->storedAs('gross_amount - discount');
             $table->decimal('tax', 16, 2)->default(0);
-            $table->decimal('tax_amount', 16, 2);
-            $table->decimal('total', 16, 2);
+            $table->decimal('tax_amount', 16, 2)->storedAs('(net_amount * tax) / 100');
+            $table->decimal('total', 16, 2)->storedAs('net_amount + tax_amount + (stitch_rate * quantity)');
 
             // Job Completion Fields
             $table->unsignedBigInteger('tailor_id')->nullable()->references('id')->on('users');
             $table->decimal('tailor_commission', 10, 2)->default(0);
-            $table->decimal('tailor_total_commission', 10, 2)->default(0);
+            $table->decimal('tailor_total_commission', 16, 2)->storedAs('tailor_commission * quantity');
             $table->decimal('used_quantity', 8, 3)->default(0);
             $table->decimal('wastage', 8, 3)->default(0);
-            $table->decimal('total_quantity_used', 8, 3)->default(0);
+            $table->decimal('total_quantity_used', 16, 2)->storedAs('used_quantity + wastage');
             $table->date('item_completion_date')->nullable();
+            $table->decimal('completed_quantity', 8, 3)->nullable()->default(0);
             $table->boolean('is_selected_for_completion')->default(false);
 
             // Additional
             $table->text('tailoring_notes')->nullable();
+            $table->unsignedTinyInteger('rating')->nullable();
+
             $table->unsignedBigInteger('created_by')->references('id')->on('users');
             $table->unsignedBigInteger('updated_by')->nullable()->references('id')->on('users');
             $table->unsignedBigInteger('deleted_by')->nullable()->references('id')->on('users');

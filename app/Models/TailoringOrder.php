@@ -33,13 +33,12 @@ class TailoringOrder extends Model implements AuditableContracts
         'item_discount',
         'tax_amount',
         'stitch_amount',
-        'total',
+
         'other_discount',
-        'freight',
         'round_off',
-        'grand_total',
+
         'paid',
-        'balance',
+
         'payment_method_ids',
         'payment_method_name',
         'status',
@@ -63,7 +62,6 @@ class TailoringOrder extends Model implements AuditableContracts
         'stitch_amount' => 'decimal:2',
         'total' => 'decimal:2',
         'other_discount' => 'decimal:2',
-        'freight' => 'decimal:2',
         'round_off' => 'decimal:2',
         'grand_total' => 'decimal:2',
         'paid' => 'decimal:2',
@@ -166,6 +164,11 @@ class TailoringOrder extends Model implements AuditableContracts
         return $this->hasMany(TailoringPayment::class);
     }
 
+    public function journals(): HasMany
+    {
+        return $this->hasMany(Journal::class, 'model_id')->where('model', 'TailoringOrder');
+    }
+
     // Scopes
     public function scopeDraft($query)
     {
@@ -252,18 +255,17 @@ class TailoringOrder extends Model implements AuditableContracts
     }
 
     // Methods
+    /**
+     * Recalculate and set order-level amounts from items and payments.
+     * total, grand_total, balance are computed by the database (storedAs) and must not be set here.
+     */
     public function calculateTotals()
     {
         $this->gross_amount = $this->items->sum('gross_amount');
         $this->item_discount = $this->items->sum('discount');
         $this->tax_amount = $this->items->sum('tax_amount');
-        $this->stitch_amount = $this->items->sum(function ($item) {
-            return $item->stitch_rate * $item->quantity;
-        });
-        $this->total = $this->gross_amount - $this->item_discount + $this->tax_amount + $this->stitch_amount;
-        $this->grand_total = ($this->total - $this->other_discount + $this->freight) + $this->round_off;
+        $this->stitch_amount = $this->items->sum(fn ($item) => $item->stitch_rate * $item->quantity);
         $this->paid = $this->payments->sum('amount');
-        $this->balance = $this->grand_total - $this->paid;
     }
 
     public function updateTotals()
@@ -280,7 +282,6 @@ class TailoringOrder extends Model implements AuditableContracts
         $this->payment_method_ids = implode(',', $paymentMethodIds);
         $this->payment_method_name = implode(', ', $paymentMethodNames);
         $this->paid = $this->payments->sum('amount');
-        $this->balance = $this->grand_total - $this->paid;
         $this->save();
     }
 

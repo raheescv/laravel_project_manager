@@ -35,18 +35,6 @@
                                 <span>Goto Job Completion</span>
                             </a>
                         </div>
-                        <div class="dropdown">
-                            <button class="btn btn-white border shadow-sm rounded-3 fw-bold small dropdown-toggle d-flex align-items-center gap-2" type="button" data-bs-toggle="dropdown">
-                                <i class="fa fa-print text-muted"></i>
-                                Print
-                            </button>
-                            <ul class="dropdown-menu dropdown-menu-end shadow border-0 rounded-3 mt-2">
-                                <li><a class="dropdown-item py-2 fw-medium" href="javascript:void(0)" onclick="printOrder()"><i class="fa fa-file-text-o me-2 text-muted"></i> Print Order Summary</a>
-                                </li>
-                                <li><a class="dropdown-item py-2 fw-medium" href="javascript:void(0)" onclick="printCuttingSlips()"><i class="fa fa-scissors me-2 text-muted"></i> Print Cutting
-                                        Slips</a></li>
-                            </ul>
-                        </div>
                         <a href="{{ route('tailoring::order::edit', $order->id) }}" class="btn btn-primary rounded-3 py-2 px-3 fw-bold small shadow-sm d-flex align-items-center gap-2">
                             <i class="fa fa-edit"></i>
                             Edit
@@ -175,8 +163,9 @@
                                     @if (count($this->categoryTabs) > 0)
                                         <div class="bg-light p-1 rounded-4 d-flex gap-1 shadow-sm border border-light">
                                             @foreach ($this->categoryTabs as $category)
-                                                <button wire:click="setActiveTab('{{ $category['id'] }}')"
-                                                    class="btn py-2 px-4 rounded-4 small fw-bold border-0 {{ $activeCategoryTab == $category['id'] ? 'bg-white text-primary shadow-sm' : 'text-muted' }}"
+                                                @php $catId = (string) ($category['id'] ?? 'other'); @endphp
+                                                <button type="button" wire:click="setActiveTab('{{ $catId }}')"
+                                                    class="btn py-2 px-4 rounded-4 small fw-bold border-0 {{ $activeCategoryTab === $catId ? 'bg-white text-primary shadow-sm' : 'text-muted' }}"
                                                     style="font-size: 0.75rem;">
                                                     {{ $category['name'] }} <span class="ms-1 opacity-50">{{ $category['count'] }}</span>
                                                 </button>
@@ -186,25 +175,131 @@
                                 </div>
                             </div>
 
-                            <div class="card-body p-5 pt-4">
+                            <div class="card-body p-5 pt-4" wire:key="category-content-{{ $activeCategoryTab }}">
+                                @php
+                                    $measurementData = $this->getMeasurementsCommonAndSeparate($activeCategoryTab);
+                                    $sectionLabels = [
+                                        'basic_body' => ['label' => 'DIMENSIONS', 'icon' => 'fa-ruler-combined'],
+                                        'collar_cuff' => ['label' => 'COMPONENTS', 'icon' => 'fa-puzzle-piece'],
+                                        'specifications' => ['label' => 'STYLES & MODELS', 'icon' => 'fa-cut'],
+                                    ];
+                                @endphp
+
                                 <div class="d-flex flex-column gap-5">
-                                    @foreach ($this->getItemsByCategory($activeCategoryTab) as $item)
+                                    {{-- Single common measurements block (common + separate values) --}}
+                                    @if ($measurementData['referenceItem'])
+                                        <div class="bg-light bg-opacity-25 rounded-5 border p-4 border-opacity-50">
+                                            <div class="d-flex align-items-center gap-2 mb-4 px-1">
+                                                <div class="d-flex align-items-center gap-3 flex-wrap">
+                                                    <div class="bg-primary bg-opacity-10 rounded-pill px-3 py-1">
+                                                        <span class="text-uppercase fw-bold text-primary small" style="font-size: 0.65rem; letter-spacing: 0.05em;">
+                                                            <i class="fa fa-ruler me-2"></i>Measurements (same for all items)
+                                                        </span>
+                                                    </div>
+                                                    <a href="{{ route('tailoring::order::print-cutting-slip', ['id' => $order->id, 'category_id' => $activeCategoryTab, 'model_id' => 'all']) }}"
+                                                        target="_blank" class="btn btn-sm btn-light border rounded-4 shadow-sm text-muted d-flex align-items-center gap-2"
+                                                        title="Print Cutting Slip for this category">
+                                                        <i class="fa fa-print"></i>
+                                                        <span class="small fw-bold">Print Cutting Slip</span>
+                                                    </a>
+                                                </div>
+                                            </div>
+                                            <div class="row g-4">
+                                                @foreach (['basic_body', 'collar_cuff', 'specifications'] as $sectionId)
+                                                    @php
+                                                        $sLabel = $sectionLabels[$sectionId] ?? ['label' => $sectionId, 'icon' => 'fa-list'];
+                                                        $commonInSection = collect($measurementData['common'])->where('section', $sectionId);
+                                                        $separateInSection = collect($measurementData['separate'])->where('section', $sectionId);
+                                                    @endphp
+                                                    @if ($commonInSection->isNotEmpty())
+                                                        <div class="col-xl-4 col-md-6">
+                                                            <div class="text-uppercase fw-bold text-muted small mb-2 ps-1">
+                                                                <i class="fa {{ $sLabel['icon'] }} me-2"></i>{{ $sLabel['label'] }}
+                                                            </div>
+                                                            <div class="card shadow-sm rounded-3 overflow-hidden border">
+                                                                @foreach ($commonInSection as $key => $entry)
+                                                                    <div class="row g-0 border-bottom @if ($loop->last) border-bottom-0 @endif">
+                                                                        <div class="col-7 bg-light p-2 fw-semibold text-muted small border-end d-flex align-items-center">{{ $entry['label'] }}</div>
+                                                                        <div
+                                                                            class="col-5 p-2 fw-bold text-dark small d-flex align-items-center {{ !($entry['value'] ?? null) ? 'text-muted opacity-50' : '' }}">
+                                                                            {{ $entry['value'] ?? '-' }}
+                                                                        </div>
+                                                                    </div>
+                                                                @endforeach
+                                                            </div>
+                                                        </div>
+                                                    @endif
+                                                @endforeach
+                                            </div>
+                                            {{-- Per-item measurements: show in Measurements area with Product No for reference --}}
+                                            @if (count($measurementData['separate']) > 0)
+                                                <div class="mt-4">
+                                                    <div class="text-uppercase fw-bold text-muted small mb-2 ps-1">
+                                                        <i class="fa fa-list-ol me-2"></i>Per-item reference
+                                                    </div>
+                                                    <div class="card shadow-sm rounded-3 overflow-hidden border">
+                                                        <div class="table-responsive mb-0">
+                                                            <table class="table table-sm table-hover align-middle mb-0 small">
+                                                                <thead class="bg-light">
+                                                                    <tr>
+                                                                        <th class="ps-3 py-2 fw-bold text-muted text-uppercase" style="font-size: 0.65rem;">Product No</th>
+                                                                        @foreach ($measurementData['separate'] as $entry)
+                                                                            <th class="py-2 fw-bold text-muted text-uppercase" style="font-size: 0.65rem;">{{ $entry['label'] }}</th>
+                                                                        @endforeach
+                                                                    </tr>
+                                                                </thead>
+                                                                <tbody>
+                                                                    @foreach ($measurementData['items'] as $item)
+                                                                        <tr>
+                                                                            <td class="ps-3 py-2 fw-bolder text-dark">#{{ $item->item_no }}</td>
+                                                                            @foreach ($measurementData['separate'] as $fieldKey => $entry)
+                                                                                @php $val = $item->$fieldKey ?? null; @endphp
+                                                                                <td class="py-2 fw-bold {{ $val !== null && $val !== '' ? 'text-dark' : 'text-muted' }}">{{ $val ?? '-' }}</td>
+                                                                            @endforeach
+                                                                        </tr>
+                                                                    @endforeach
+                                                                </tbody>
+                                                            </table>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            @endif
+                                            @php
+                                                $itemsWithNotes = $measurementData['items']->filter(fn($item) => !empty(trim($item->tailoring_notes ?? '')));
+                                            @endphp
+                                            @if ($itemsWithNotes->isNotEmpty())
+                                                <div class="mt-4 p-3 bg-warning bg-opacity-10 border border-warning rounded-3 border-opacity-25" style="border-style: dashed !important;">
+                                                    <div class="small fw-bold text-warning-emphasis text-uppercase mb-2" style="letter-spacing: 0.05em;">
+                                                        <i class="fa fa-info-circle me-1"></i>SPECIAL INSTRUCTIONS
+                                                    </div>
+                                                    <div class="d-flex flex-column gap-2">
+                                                        @foreach ($itemsWithNotes as $item)
+                                                            <div class="text-dark-emphasis fw-medium small">
+                                                                <span class="badge bg-warning bg-opacity-25 text-dark me-2">#{{ $item->item_no }}</span>{{ $item->tailoring_notes }}
+                                                            </div>
+                                                        @endforeach
+                                                    </div>
+                                                </div>
+                                            @endif
+                                        </div>
+                                    @endif
+                                    {{-- Products list only (no measurement block per product) --}}
+                                    @foreach ($measurementData['items'] as $item)
                                         <div class="bg-white rounded-4">
                                             <div class="row g-4">
-                                                <!-- Visual ID Column -->
                                                 <div class="col-auto d-none d-md-flex flex-column align-items-center">
                                                     <div class="bg-white border-2 border-light rounded-4 shadow-sm d-flex align-items-center justify-content-center fw-bolder text-dark"
                                                         style="width: 56px; height: 56px; border-style: solid !important;">
                                                         {{ $item->item_no }}
                                                     </div>
-                                                    <div class="flex-grow-1 bg-light mt-3 rounded-pill" style="width: 3px; min-height: 100px;"></div>
+                                                    <div class="flex-grow-1 bg-light mt-3 rounded-pill" style="width: 3px; min-height: 80px;"></div>
                                                 </div>
 
                                                 <div class="col flex-grow-1 min-width-0">
-                                                    <div class="d-flex justify-content-between align-items-start mb-4">
+                                                    <div class="d-flex justify-content-between align-items-start mb-3">
                                                         <div>
                                                             <h3 class="h4 fw-bolder text-dark mb-2">{{ $item->product_name }}</h3>
-                                                            <div class="d-flex flex-wrap gap-2">
+                                                            <div class="d-flex flex-wrap gap-2 align-items-center">
                                                                 <span class="badge bg-light text-muted fw-bold border text-uppercase px-2 py-1"
                                                                     style="font-size: 0.6rem;">{{ $item->category->name ?? 'Cat' }}</span>
                                                                 <span class="badge bg-primary bg-opacity-10 text-primary fw-bold border border-primary border-opacity-10 text-uppercase px-2 py-1"
@@ -223,11 +318,7 @@
                                                         </div>
                                                     </div>
 
-                                                    <div class="bg-light bg-opacity-25 rounded-5 border p-3 border-opacity-50">
-                                                        <x-tailoring.measurement-view :item="$item" />
-                                                    </div>
-
-                                                    <div class="mt-5 px-3">
+                                                    <div class="px-3">
                                                         <div class="row g-3">
                                                             <div class="col-6 col-md-3 text-center">
                                                                 <p class="text-uppercase fw-bold text-muted mb-1" style="font-size: 0.6rem;">Volume</p>
@@ -260,17 +351,13 @@
                                                                 <p class="text-uppercase fw-bold text-muted mb-1" style="font-size: 0.6rem;">Phase</p>
                                                                 <div
                                                                     class="rounded-3 py-2 small fw-bold bg-{{ $phaseColor }} bg-opacity-10 text-{{ $phaseColor }} border border-{{ $phaseColor }} border-opacity-10">
-                                                                    {{ $item->status ?: 'Pending' }}
+                                                                    {{ $item->is_selected_for_completion > 0 ? 'Completed' : 'Pending' }}
                                                                 </div>
                                                             </div>
                                                         </div>
                                                     </div>
                                                 </div>
                                             </div>
-
-                                            @if (!$loop->last)
-                                                <hr class="my-5 opacity-10">
-                                            @endif
                                         </div>
                                     @endforeach
                                 </div>
@@ -311,143 +398,54 @@
                                 </div>
                             </div>
                         @endif
+
+                        <!-- Journal Entries -->
+                        @can('tailoring.order.view journal entries')
+                            @if (count($order->journals ?? []) > 0)
+                                <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
+                                    <div class="card-header bg-white p-4 border-bottom-0 d-flex justify-content-between align-items-center">
+                                        <h2 class="h6 fw-bolder text-dark mb-0">Journal Entries</h2>
+                                        <span class="badge bg-light text-muted border px-2 py-1 small">{{ count($order->journals) }} Journal(s)</span>
+                                    </div>
+                                    <div class="table-responsive">
+                                        <table class="table table-striped align-middle table-sm mb-0">
+                                            <thead>
+                                                <tr class="bg-primary text-white">
+                                                    <th class="text-white text-end">SL No</th>
+                                                    <th class="text-white">Date</th>
+                                                    <th class="text-white">Account Name</th>
+                                                    <th class="text-white">Description</th>
+                                                    <th class="text-white text-end">Debit</th>
+                                                    <th class="text-white text-end">Credit</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                @foreach ($order->journals as $journal)
+                                                    @foreach ($journal->entries()->where('account_id','!=',$order->account_id)->get() as $entry)
+                                                        <tr>
+                                                            <td class="text-end">{{ $entry->id }}</td>
+                                                            <td>{{ systemDate($entry->date) }}</td>
+                                                            <td>
+                                                                <a href="{{ route('account::view', $entry->account_id) }}" class="text-primary text-decoration-none">
+                                                                    {{ $entry->account?->name }}
+                                                                </a>
+                                                            </td>
+                                                            <td>{{ $entry->remarks }}</td>
+                                                            <td class="text-end">{{ currency($entry->debit) }}</td>
+                                                            <td class="text-end">{{ currency($entry->credit) }}</td>
+                                                        </tr>
+                                                    @endforeach
+                                                @endforeach
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            @endif
+                        @endcan
                     </div>
                 </div>
             </div>
         </div>
-    </div>
-
-    <!-- Cutting Slips Print Template (Uses simple plain elements for clean Bootstrap printing) -->
-    <div id="cutting-slips-container" class="d-none d-print-block bg-white text-dark">
-        @foreach ($this->groupedItems as $catId => $group)
-            <div class="p-4 border border-dark rounded-0 @if (!$loop->first) page-break-before @endif" style="min-height: 100vh;">
-                <!-- Slip Header -->
-                <div class="d-flex justify-content-between border-bottom border-2 border-dark pb-3 mb-4">
-                    <div>
-                        <p class="small fw-bold mb-1">{{ $order->customer_mobile ?: 'No Phone' }}</p>
-                        <h1 class="h3 fw-bolder text-uppercase mb-1">{{ $order->customer_name }}</h1>
-                        <p class="small fw-bold mb-0">ID: {{ $order->order_no }}</p>
-                    </div>
-                    <div class="text-center">
-                        <h2 class="h5 fw-bolder border-bottom border-dark px-3 mt-3 d-inline-block">{{ strtoupper($group['category']->name ?? 'Tailoring') }} CUTTING SLIP</h2>
-                    </div>
-                    <div class="text-end small fw-bold">
-                        <div class="mb-2">
-                            Order: {{ systemDate($order->order_date) }}<br>
-                            Deliver: {{ systemDate($order->delivery_date) }}
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Measure Grid -->
-                @php
-                    $activeMeasurements = $group['category']->activeMeasurements ?? collect();
-                    $gridFields = $activeMeasurements->where('section', 'basic_body')->sortBy('sort_order');
-                @endphp
-
-                @foreach ($gridFields->chunk(6) as $chunk)
-                    <div class="row g-2 mb-3">
-                        @foreach ($chunk as $m)
-                            <div class="col-2">
-                                <div class="d-flex border border-dark rounded overflow-hidden" style="height: 38px;">
-                                    <div class="bg-light border-end border-dark d-flex align-items-center justify-content-center fw-bold" style="width: 40%;">{{ $group['measurements']->{$m->field_key} }}</div>
-                                    <div class="p-1 px-2 small fw-bold d-flex align-items-center" style="width: 60%; line-height: 1.1;">{{ $m->label }}</div>
-                                </div>
-                            </div>
-                        @endforeach
-                    </div>
-                @endforeach
-
-                <div class="row g-2 mb-4">
-                    <div class="col-12">
-                        <div class="d-flex align-items-center fw-bold border-bottom border-dark pb-1" style="min-height: 38px;">
-                            <span class="me-2">Notes:</span>
-                            <span class="flex-grow-1 border-bottom border-dark border-opacity-25">{{ $group['measurements']->tailoring_notes }}</span>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Item Table -->
-                <table class="table table-bordered border-dark small fw-bold mb-4">
-                    <thead class="bg-light">
-                        <tr class="text-center align-middle">
-                            <th class="text-start">Description</th>
-                            <th>Barcode</th>
-                            <th>Qty</th>
-                            <th>Type</th>
-                            <th>Model</th>
-                            <th>Color</th>
-                            <th>Stitch Rate</th>
-                        </tr>
-                    </thead>
-                    <tbody class="align-middle text-center">
-                        @foreach ($group['items'] as $item)
-                            <tr>
-                                <td class="text-start">{{ $item->product_name }}</td>
-                                <td>{{ $item->product->barcode ?? '-' }}</td>
-                                <td>{{ $item->quantity }}</td>
-                                <td>{{ $item->category->name ?? 'N/A' }}</td>
-                                <td class="bg-warning bg-opacity-25">{{ $item->categoryModel->name ?? 'Std' }}</td>
-                                <td>{{ $item->product_color ?: '-' }}</td>
-                                <td>{{ currency($item->stitch_rate) }}</td>
-                            </tr>
-                        @endforeach
-                    </tbody>
-                </table>
-
-                <!-- Info Bar -->
-                @php
-                    $infoFields = $activeMeasurements->where('section', '!=', 'basic_body')->sortBy('sort_order');
-                @endphp
-                @foreach ($infoFields->chunk(8) as $chunk)
-                    <div class="row g-0 border border-dark border-bottom-0 bg-light small fw-bold text-center">
-                        @foreach ($chunk as $m)
-                            <div class="col p-2 border-end border-dark">{{ $m->label }}</div>
-                        @endforeach
-                    </div>
-                    <div class="row g-0 border border-dark text-center fw-bold mb-4" style="min-height: 34px;">
-                        @foreach ($chunk as $m)
-                            <div class="col py-2 border-end border-dark">{{ $group['measurements']->{$m->field_key} ?: '-' }}</div>
-                        @endforeach
-                    </div>
-                @endforeach
-
-                <div class="row mt-5 pt-3">
-                    <div class="col-8">
-                        <div class="d-flex align-items-center gap-3 mb-3 fw-bold small">
-                            <span>Cutting Master:</span>
-                            <span class="flex-grow-1 border-bottom border-dark border-opacity-50 pb-1">{{ $order->cutter->name ?? '' }}</span>
-                        </div>
-                        <div class="d-flex align-items-center gap-3 mb-4 fw-bold small">
-                            <span>Tailor Name:</span>
-                            <span class="flex-grow-1 border-bottom border-dark border-opacity-50 pb-1">{{ $group['items']->first()->tailor->name ?? '' }}</span>
-                        </div>
-                        <div class="d-flex gap-4 fw-bold small">
-                            <label class="d-flex align-items-center gap-2">
-                                <div class="border border-dark" style="width: 14px; height: 14px; @if ($order->status === 'Confirmed') background: black; @endif"></div> Booking
-                            </label>
-                            <label class="d-flex align-items-center gap-2">
-                                <div class="border border-dark" style="width: 14px; height: 14px; @if ($order->status === 'Completed') background: black; @endif"></div> Finished
-                            </label>
-                            <label class="d-flex align-items-center gap-2">
-                                <div class="border border-dark" style="width: 14px; height: 14px; @if ($order->status === 'Delivered') background: black; @endif"></div> Delivered
-                            </label>
-                        </div>
-                    </div>
-                    <div class="col-4 text-center">
-                        <p class="small fw-bold mb-2">QR VERIFICATION</p>
-                        <div class="d-inline-block p-1 border">
-                            <img src="https://api.qrserver.com/v1/create-qr-code/?size=100x100&data={{ $order->order_no }}-{{ $catId }}" alt="QR" width="80">
-                        </div>
-                    </div>
-                </div>
-
-                <div class="row mt-5 pt-5 border-top border-dark border-opacity-10 opacity-75 fw-bold small">
-                    <div class="col-6">Prepared By: {{ $order->salesman->name ?? 'Sales' }}</div>
-                    <div class="col-6 text-end">Approved: {{ $order->customer_name }}</div>
-                </div>
-            </div>
-        @endforeach
     </div>
 
     <script>

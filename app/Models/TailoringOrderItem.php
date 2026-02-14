@@ -30,19 +30,19 @@ class TailoringOrderItem extends Model implements AuditableContracts
         'quantity_per_item',
         'unit_price',
         'stitch_rate',
-        'gross_amount',
+
         'discount',
-        'net_amount',
+
         'tax',
-        'tax_amount',
-        'total',
+
         'tailor_id',
         'tailor_commission',
-        'tailor_total_commission',
+
         'used_quantity',
         'wastage',
-        'total_quantity_used',
+
         'item_completion_date',
+        'completed_quantity',
         'is_selected_for_completion',
         'tailoring_notes',
         'rating',
@@ -56,18 +56,13 @@ class TailoringOrderItem extends Model implements AuditableContracts
         'quantity_per_item' => 'decimal:3',
         'unit_price' => 'decimal:2',
         'stitch_rate' => 'decimal:2',
-        'gross_amount' => 'decimal:2',
         'discount' => 'decimal:2',
-        'net_amount' => 'decimal:2',
         'tax' => 'decimal:2',
-        'tax_amount' => 'decimal:2',
-        'total' => 'decimal:2',
         'tailor_commission' => 'decimal:2',
-        'tailor_total_commission' => 'decimal:2',
         'used_quantity' => 'decimal:3',
         'wastage' => 'decimal:3',
-        'total_quantity_used' => 'decimal:3',
         'item_completion_date' => 'date:Y-m-d',
+        'completed_quantity' => 'decimal:3',
         'is_selected_for_completion' => 'boolean',
         'rating' => 'integer',
     ];
@@ -92,14 +87,12 @@ class TailoringOrderItem extends Model implements AuditableContracts
             if (empty($item->updated_by)) {
                 $item->updated_by = Auth::id();
             }
-            $item->calculateAmount();
         });
 
         static::updating(function ($item): void {
             if (empty($item->updated_by)) {
                 $item->updated_by = Auth::id();
             }
-            $item->calculateAmount();
         });
     }
 
@@ -165,41 +158,23 @@ class TailoringOrderItem extends Model implements AuditableContracts
         return $query->where('is_selected_for_completion', true);
     }
 
-    // Methods
-    public function calculateAmount()
+    /**
+     * Persist the item. gross_amount, net_amount, tax_amount, total are computed by the database (storedAs).
+     */
+    public function calculateTotal(): void
     {
-        $totalQuantity = $this->quantity * $this->quantity_per_item;
-        $this->gross_amount = $this->unit_price * $totalQuantity;
-        $this->net_amount = $this->gross_amount - $this->discount;
-        $this->tax_amount = ($this->net_amount * $this->tax) / 100;
-        $this->total = $this->net_amount + $this->tax_amount + ($this->stitch_rate * $this->quantity);
-    }
-
-    public function calculateTotal()
-    {
-        $this->calculateAmount();
         $this->save();
-    }
-
-    public function calculateStockBalance($stockQuantity)
-    {
-        $this->total_quantity_used = $this->used_quantity + $this->wastage;
-
-        return $stockQuantity - $this->total_quantity_used;
+        $this->refresh();
     }
 
     public function calculateTailorCommission()
     {
-        $this->tailor_total_commission = $this->tailor_commission * $this->quantity;
         $this->save();
     }
 
     public function updateCompletion($data)
     {
         $this->fill($data);
-        if (isset($data['tailor_commission'])) {
-            $this->calculateTailorCommission();
-        }
         if (isset($data['rating'])) {
             $this->rating = max(1, min(5, (int) $data['rating']));
         }
