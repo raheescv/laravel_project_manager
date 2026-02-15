@@ -49,7 +49,7 @@
             <div class="bg-light rounded-3 border shadow-sm">
                 <div class="p-3">
                     <div class="row g-3">
-                        <div class="col-md-3">
+                        <div class="col-md-2">
                             <div class="form-group">
                                 <label class="form-label text-muted fw-semibold small mb-2" for="from_date">
                                     <i class="demo-psi-calendar-4 me-1"></i> From Date
@@ -57,7 +57,7 @@
                                 {{ html()->date('from_date')->value('')->class('form-control form-control-sm')->id('from_date')->attribute('wire:model.live', 'from_date') }}
                             </div>
                         </div>
-                        <div class="col-md-3">
+                        <div class="col-md-2">
                             <div class="form-group">
                                 <label class="form-label text-muted fw-semibold small mb-2" for="to_date">
                                     <i class="demo-psi-calendar-4 me-1"></i> To Date
@@ -65,7 +65,7 @@
                                 {{ html()->date('to_date')->value('')->class('form-control form-control-sm')->id('to_date')->attribute('wire:model.live', 'to_date') }}
                             </div>
                         </div>
-                        <div class="col-md-3" wire:ignore>
+                        <div class="col-md-2" wire:ignore>
                             <div class="form-group">
                                 <label class="form-label text-muted fw-semibold small mb-2" for="branch_id">
                                     <i class="demo-psi-home me-1"></i> Branch
@@ -73,7 +73,7 @@
                                 {{ html()->select('branch_id', [session('branch_id') => session('branch_name')])->value(session('branch_id'))->class('select-assigned-branch_id-list')->id('branch_id')->placeholder('All Branches') }}
                             </div>
                         </div>
-                        <div class="col-md-3" wire:ignore>
+                        <div class="col-md-6" wire:ignore>
                             <div class="form-group">
                                 <label class="form-label text-muted fw-semibold small mb-2" for="product_id">
                                     <i class="demo-pli-cart me-1"></i> Product
