@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Tailoring;
 
 use App\Actions\Tailoring\Order\CreateTailoringOrderAction;
+use App\Actions\Tailoring\Order\DeleteTailoringOrderAction;
 use App\Actions\Tailoring\Order\GetOrderByOrderNumberAction;
 use App\Actions\Tailoring\Order\GetTailoringOrderAction;
 use App\Actions\Tailoring\Order\Item\AddTailoringItemAction;
@@ -224,13 +225,15 @@ class OrderController extends Controller
 
     public function destroy($id)
     {
-        $order = TailoringOrder::findOrFail($id);
-        $order->deleted_by = Auth::id();
-        $order->save();
-        $order->delete();
+        $result = (new DeleteTailoringOrderAction())->execute((int) $id, (int) Auth::id());
+
+        if (! $result['success']) {
+            return redirect()->route('tailoring::order::index')
+                ->with('error', $result['message']);
+        }
 
         return redirect()->route('tailoring::order::index')
-            ->with('success', 'Order deleted successfully');
+            ->with('success', 'Order and all related data removed successfully');
     }
 
     // API Routes

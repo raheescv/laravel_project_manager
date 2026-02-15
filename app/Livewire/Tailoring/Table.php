@@ -2,8 +2,10 @@
 
 namespace App\Livewire\Tailoring;
 
+use App\Actions\Tailoring\Order\DeleteTailoringOrderAction;
 use App\Models\Configuration;
 use App\Models\TailoringOrder;
+use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
 use Livewire\WithPagination;
 
@@ -95,6 +97,41 @@ class Table extends Component
             $this->sortField = $field;
             $this->sortDirection = 'desc';
         }
+    }
+
+    public function delete()
+    {
+        if (empty($this->selected)) {
+            $this->dispatch('error', ['message' => 'No orders selected.']);
+
+            return;
+        }
+
+        $action = new DeleteTailoringOrderAction();
+        $userId = Auth::id();
+        $deleted = 0;
+        $errors = [];
+
+        foreach ($this->selected as $orderId) {
+            $result = $action->execute((int) $orderId, $userId);
+            if ($result['success']) {
+                $deleted++;
+            } else {
+                $errors[] = $result['message'];
+            }
+        }
+
+        $this->selected = [];
+        $this->selectAll = false;
+
+        if ($deleted > 0) {
+            $this->dispatch('success', ['message' => $deleted.' order(s) and related data removed successfully.']);
+        }
+        if (! empty($errors)) {
+            $this->dispatch('error', ['message' => implode(' ', array_slice($errors, 0, 3)).(count($errors) > 3 ? ' ...' : '')]);
+        }
+
+        $this->dispatch('Tailoring-Refresh-Component');
     }
 
     protected function getBaseQuery()
