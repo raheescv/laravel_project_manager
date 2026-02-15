@@ -1,36 +1,51 @@
 <template>
     <Transition name="modal">
-        <div v-if="show" class="fixed inset-0 z-[60] flex items-center justify-center p-4" role="dialog">
-            <!-- Simple Backdrop -->
-            <div class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm transition-opacity" @click="close"></div>
+        <div v-if="show" class="fixed inset-0 z-[60] overflow-y-auto" aria-labelledby="modal-title" role="dialog"
+            aria-modal="true">
+            <!-- Background overlay -->
+            <div class="flex items-center justify-center min-h-screen p-2 text-center">
+                <div class="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm transition-opacity" aria-hidden="true"
+                    @click="close">
+                </div>
 
-            <!-- Modal Content -->
-            <div class="relative bg-white rounded-3xl shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col transform transition-all overflow-hidden border border-slate-200">
-                
-                <!-- Premium Header -->
-                <div class="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-white">
-                    <div class="flex items-center gap-3">
-                        <div class="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center text-blue-600">
-                            <i class="fa fa-expand text-sm"></i>
+                <!-- Modal positioning -->
+                <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+
+                <!-- Modal panel -->
+                <div
+                    class="relative flex flex-col align-bottom bg-white rounded-xl text-left overflow-hidden shadow-2xl transform transition-all sm:my-2 sm:align-middle sm:max-w-4xl w-full max-h-[90vh]">
+                    <!-- Header - matches SaleConfirmationModal -->
+                    <div
+                        class="bg-gradient-to-r from-blue-600 via-blue-700 to-indigo-700 px-3 py-2 text-white flex items-center justify-between">
+                        <div class="flex items-center">
+                            <div class="bg-white/20 p-1 rounded-md mr-2">
+                                <i class="fa fa-expand text-white text-xs"></i>
+                            </div>
+                            <h4 class="text-base font-bold text-white">
+                                Measurement Details
+                            </h4>
                         </div>
-                        <h3 class="text-sm font-black text-slate-800 uppercase tracking-widest">Measurement Details</h3>
+                        <button type="button" @click="close"
+                            class="text-white hover:text-gray-200 focus:outline-none transition-colors">
+                            <i class="fa fa-times text-xs"></i>
+                        </button>
                     </div>
-                    <button @click="close" class="w-8 h-8 rounded-full flex items-center justify-center text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-all">
-                        <i class="fa fa-times text-sm"></i>
-                    </button>
-                </div>
 
-                <!-- Scrollable Content -->
-                <div class="flex-1 overflow-y-auto p-6 custom-scrollbar bg-slate-50/30">
-                    <MeasurementView :item="item" />
-                </div>
+                    <!-- Scrollable Body -->
+                    <div class="flex-1 overflow-y-auto px-3 py-3 custom-scrollbar bg-slate-50/30">
+                        <MeasurementView :item="item" />
+                    </div>
 
-                <!-- Footer -->
-                <div class="px-6 py-4 bg-white flex justify-end gap-3 border-t border-slate-100">
-                    <button @click="close" 
-                        class="px-6 py-2 bg-slate-950 text-white text-xs font-black uppercase tracking-widest rounded-xl hover:bg-slate-800 transition-all active:scale-95 shadow-lg shadow-slate-200">
-                        Dismiss
-                    </button>
+                    <!-- Footer - matches SaleConfirmationModal -->
+                    <div class="bg-gradient-to-r from-slate-50 to-gray-50 px-3 py-2 border-t border-slate-200">
+                        <div class="flex justify-end">
+                            <button type="button" @click="close"
+                                class="inline-flex items-center justify-center px-3 py-1.5 border border-slate-300 shadow-sm text-xs font-semibold rounded-lg text-slate-700 bg-white hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200">
+                                <i class="fa fa-times mr-1 text-xs"></i>
+                                Dismiss
+                            </button>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>

@@ -1,37 +1,39 @@
 <template>
-    <div class="flex flex-col gap-6">
-        <!-- Premium Header Area -->
-        <div class="flex items-center justify-between px-1">
-            <div class="flex items-center gap-4">
-                <div class="flex flex-col items-center bg-slate-50 px-3 py-1.5 rounded-xl border border-slate-200">
-                    <span class="text-[0.6rem] font-black text-slate-400 uppercase tracking-[0.1em]">ITEM</span>
-                    <span class="text-base font-black text-slate-900 leading-none">#{{ item.item_no }}</span>
+    <div class="flex flex-col gap-3">
+        <!-- Header - SaleConfirmationModal style (gradient info box) -->
+        <div
+            class="bg-gradient-to-r from-slate-50 to-blue-50 border border-slate-200 rounded-lg p-1.5 text-center relative overflow-hidden">
+            <div class="relative z-10 flex items-center justify-center gap-2">
+                <div
+                    class="w-8 h-8 bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-full flex items-center justify-center shadow-sm flex-shrink-0">
+                    <span class="text-xs font-bold">#{{ item.item_no }}</span>
                 </div>
-                <div>
-                    <h5 class="text-base font-black text-slate-900 leading-none mb-1">{{ item.product_name || 'Generic Item' }}</h5>
-                    <div class="text-[0.65rem] text-slate-500 font-bold uppercase tracking-widest flex items-center gap-2">
+                <div class="text-left">
+                    <h5 class="font-bold text-slate-800 text-sm leading-none">{{ item.product_name || 'Generic Item' }}</h5>
+                    <p class="text-slate-600 text-xs mt-0.5 flex items-center gap-1.5">
                         <span>{{ item.category?.name || 'Item' }}</span>
                         <span class="w-1 h-1 rounded-full bg-slate-300"></span>
                         <span class="text-blue-600">{{ modelName }}</span>
-                    </div>
+                    </p>
                 </div>
             </div>
         </div>
 
-        <!-- Balanced Grid Layout -->
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <!-- Grid Layout -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
             <!-- Dimensions Column -->
-            <div class="flex flex-col gap-2">
-                <div class="flex items-center gap-2 px-1">
-                    <i class="fa fa-arrows-alt text-slate-400 text-[10px]"></i>
-                    <h6 class="text-[0.6rem] font-black text-slate-400 uppercase tracking-[0.15em]">Dimensions</h6>
-                </div>
-                <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden divide-y divide-slate-100">
-                    <div v-for="m in getFieldsBySection(sectionGroups.dimensions)" :key="m.id" class="flex items-stretch hover:bg-slate-50/50 transition-colors">
-                        <div class="w-1/2 bg-slate-50/50 px-3 py-2 text-[0.7rem] font-bold text-slate-500 border-r border-slate-100 flex items-center capitalize">
+            <div class="flex flex-col gap-1.5">
+                <h6 class="text-xs font-bold text-slate-800 flex items-center gap-1">
+                    <i class="fa fa-arrows-alt text-blue-500 text-xs"></i>
+                    <span>Dimensions</span>
+                </h6>
+                <div class="bg-gradient-to-r from-slate-50 to-blue-50 border border-slate-200 rounded-lg p-1.5">
+                    <div v-for="m in getFieldsBySection(sectionGroups.dimensions)" :key="m.id"
+                        class="flex items-stretch border-b border-slate-200 last:border-b-0 hover:bg-white/50 transition-colors rounded">
+                        <div class="w-1/2 bg-white/50 px-2 py-1.5 text-xs font-semibold text-slate-600 border-r border-slate-200 flex items-center capitalize">
                             {{ m.label }}
                         </div>
-                        <div class="w-1/2 px-3 py-2 text-[0.7rem] font-black text-slate-800 flex items-center" :class="{ 'opacity-30': !getValue(m.field_key) }">
+                        <div class="w-1/2 px-2 py-1.5 text-xs font-bold text-slate-800 flex items-center" :class="{ 'opacity-30': !getValue(m.field_key) }">
                             {{ getValue(m.field_key) ?? '-' }}
                         </div>
                     </div>
@@ -39,17 +41,18 @@
             </div>
 
             <!-- Components Column -->
-            <div class="flex flex-col gap-2">
-                <div class="flex items-center gap-2 px-1">
-                    <i class="fa fa-puzzle-piece text-slate-400 text-[10px]"></i>
-                    <h6 class="text-[0.6rem] font-black text-slate-400 uppercase tracking-[0.15em]">Components</h6>
-                </div>
-                <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden divide-y divide-slate-100">
-                    <div v-for="m in getFieldsBySection(sectionGroups.components)" :key="m.id" class="flex items-stretch hover:bg-slate-50/50 transition-colors">
-                        <div class="w-1/2 bg-slate-50/50 px-3 py-2 text-[0.7rem] font-bold text-slate-500 border-r border-slate-100 flex items-center capitalize">
+            <div class="flex flex-col gap-1.5">
+                <h6 class="text-xs font-bold text-slate-800 flex items-center gap-1">
+                    <i class="fa fa-puzzle-piece text-blue-500 text-xs"></i>
+                    <span>Components</span>
+                </h6>
+                <div class="bg-gradient-to-r from-slate-50 to-blue-50 border border-slate-200 rounded-lg p-1.5">
+                    <div v-for="m in getFieldsBySection(sectionGroups.components)" :key="m.id"
+                        class="flex items-stretch border-b border-slate-200 last:border-b-0 hover:bg-white/50 transition-colors rounded">
+                        <div class="w-1/2 bg-white/50 px-2 py-1.5 text-xs font-semibold text-slate-600 border-r border-slate-200 flex items-center capitalize">
                             {{ m.label }}
                         </div>
-                        <div class="w-1/2 px-3 py-2 text-[0.7rem] font-black text-slate-800 flex items-center" :class="{ 'opacity-30': !getValue(m.field_key) }">
+                        <div class="w-1/2 px-2 py-1.5 text-xs font-bold text-slate-800 flex items-center" :class="{ 'opacity-30': !getValue(m.field_key) }">
                             {{ getValue(m.field_key) ?? '-' }}
                         </div>
                     </div>
@@ -57,34 +60,33 @@
             </div>
 
             <!-- Styles Column -->
-            <div class="flex flex-col gap-2 lg:col-span-1">
-                <div class="flex items-center gap-2 px-1">
-                    <i class="fa fa-cut text-slate-400 text-[10px]"></i>
-                    <h6 class="text-[0.6rem] font-black text-slate-400 uppercase tracking-[0.15em]">Styles & Models</h6>
-                </div>
-                <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-                    <div class="grid grid-cols-1 divide-y divide-slate-100">
-                        <div v-for="m in getFieldsBySection(sectionGroups.styles)" :key="m.id" class="flex items-stretch hover:bg-slate-50/50 transition-colors">
-                            <div class="w-1/2 bg-slate-50/50 px-3 py-2 text-[0.7rem] font-bold text-slate-500 border-r border-slate-100 flex items-center capitalize">
-                                {{ m.label }}
-                            </div>
-                            <div class="w-1/2 px-3 py-2 text-[0.7rem] font-black text-slate-800 flex items-center" :class="{ 'opacity-30': !getValue(m.field_key) }">
-                                {{ getValue(m.field_key) ?? '-' }}
-                            </div>
+            <div class="flex flex-col gap-1.5 lg:col-span-1">
+                <h6 class="text-xs font-bold text-slate-800 flex items-center gap-1">
+                    <i class="fa fa-cut text-blue-500 text-xs"></i>
+                    <span>Styles & Models</span>
+                </h6>
+                <div class="bg-gradient-to-r from-slate-50 to-blue-50 border border-slate-200 rounded-lg p-1.5">
+                    <div v-for="m in getFieldsBySection(sectionGroups.styles)" :key="m.id"
+                        class="flex items-stretch border-b border-slate-200 last:border-b-0 hover:bg-white/50 transition-colors rounded">
+                        <div class="w-1/2 bg-white/50 px-2 py-1.5 text-xs font-semibold text-slate-600 border-r border-slate-200 flex items-center capitalize">
+                            {{ m.label }}
+                        </div>
+                        <div class="w-1/2 px-2 py-1.5 text-xs font-bold text-slate-800 flex items-center" :class="{ 'opacity-30': !getValue(m.field_key) }">
+                            {{ getValue(m.field_key) ?? '-' }}
                         </div>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Notes Section -->
-        <div v-if="item.tailoring_notes" class="mt-2">
-            <div class="bg-amber-50 rounded-2xl border border-amber-100 p-4">
-                <div class="flex items-center gap-2 mb-2">
-                    <i class="fa fa-info-circle text-amber-600 text-xs"></i>
-                    <h6 class="text-[0.6rem] font-black text-amber-700 uppercase tracking-widest leading-none">Special Instructions</h6>
-                </div>
-                <p class="text-[0.75rem] font-bold text-amber-900 leading-relaxed">
+        <!-- Notes Section - compact style -->
+        <div v-if="item.tailoring_notes" class="mt-1">
+            <h6 class="text-xs font-bold text-slate-800 mb-1 flex items-center gap-1">
+                <i class="fa fa-info-circle text-amber-500 text-xs"></i>
+                Special Instructions
+            </h6>
+            <div class="bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 rounded-lg p-1.5">
+                <p class="text-xs font-semibold text-amber-900 leading-relaxed">
                     {{ item.tailoring_notes }}
                 </p>
             </div>
@@ -104,9 +106,9 @@ const props = defineProps({
 })
 
 const modelName = computed(() => {
-    return props.item.categoryModel?.name || 
-           props.item.category_model?.name || 
-           props.item.tailoring_category_model_name || 
+    return props.item.categoryModel?.name ||
+           props.item.category_model?.name ||
+           props.item.tailoring_category_model_name ||
            'Standard'
 })
 
@@ -136,117 +138,10 @@ const formatLabel = (key) => {
 
     // Fallback for special keys or undefined configs
     if (key === 'tailoring_notes') return 'Special Instructions'
-    
+
     return String(key)
         .replace(/_/g, ' ')
         .replace(/\b\w/g, l => l.toUpperCase())
 }
 </script>
-
-<style scoped>
-.measurement-view {
-    color: #1e293b;
-}
-
-/* Header Badge */
-.badge-accent {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    background: #f1f5f9;
-    padding: 4px 12px;
-    border-radius: 8px;
-    border: 1px solid #e2e8f0;
-}
-.badge-accent .label {
-    font-size: 0.6rem;
-    font-weight: 700;
-    color: #64748b;
-    letter-spacing: 0.05em;
-}
-.badge-accent .value {
-    font-size: 1rem;
-    font-weight: 800;
-    color: #0f172a;
-}
-
-/* Group Section */
-.group-header {
-    font-size: 0.7rem;
-    font-weight: 700;
-    color: #94a3b8;
-    letter-spacing: 0.1em;
-    margin-bottom: 0.5rem;
-    padding-left: 0.25rem;
-}
-
-/* Card Design */
-.measurement-card {
-    background: white;
-    border-radius: 12px;
-    border: 1px solid #e2e8f0;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-    overflow: hidden;
-}
-
-/* Rows Styling */
-.m-row {
-    display: flex;
-    border-bottom: 1px solid #f1f5f9;
-}
-.m-row:last-child {
-    border-bottom: none;
-}
-
-.m-label {
-    flex: 1.2;
-    background: #f8fafc;
-    padding: 8px 12px;
-    font-size: 0.8rem;
-    font-weight: 600;
-    color: #64748b;
-    border-right: 1px solid #f1f5f9;
-    display: flex;
-    align-items: center;
-}
-
-.m-value {
-    flex: 1;
-    padding: 8px 12px;
-    font-size: 0.8rem;
-    font-weight: 700;
-    color: #0f172a;
-    display: flex;
-    align-items: center;
-}
-
-@media (min-width: 576px) {
-    .border-end-sm {
-        border-right: 1px solid #e2e8f0;
-    }
-}
-
-/* Notes Section */
-.notes-box {
-    background: #fffbeb;
-    border: 1px solid #fef3c7;
-    border-radius: 12px;
-    padding: 12px 16px;
-}
-.notes-header {
-    font-size: 0.65rem;
-    font-weight: 700;
-    color: #92400e;
-    letter-spacing: 0.05em;
-    margin-bottom: 4px;
-}
-.notes-content {
-    font-size: 0.85rem;
-    color: #78350f;
-    font-weight: 500;
-}
-
-.text-slate-900 { color: #0f172a; }
-.text-slate-500 { color: #64748b; }
-</style>
 
