@@ -77,13 +77,17 @@
         }
 
         .measure-grid {
-            display: grid;
-            grid-template-columns: repeat(6, 1fr);
+            display: flex;
+            flex-wrap: wrap;
             gap: 6px;
             margin-bottom: 10px;
         }
 
         .measure-box {
+            flex: 0 0 auto;
+            min-width: 90px;
+            width: max-content;
+            max-width: 100%;
             border: none;
             border-radius: 0;
             display: flex;
@@ -108,22 +112,18 @@
             border-radius: 4px;
             background: #f8f8f8;
             min-height: 28px;
-            min-width: 0;
             display: flex;
             align-items: center;
             justify-content: center;
             font-weight: bold;
             font-size: 0.95rem;
-            overflow: hidden;
             padding: 3px 5px;
             text-align: center;
         }
 
         .measure-val-inner {
-            min-width: 0;
             white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
+            text-align: center;
         }
 
         .measure-box--empty .measure-label,
@@ -155,7 +155,7 @@
 
         .col-desc {
             text-align: left !important;
-            width: 25%;
+            width: 35%;
             font-weight: bold;
         }
 
@@ -248,22 +248,46 @@
                 margin: 0;
                 padding: 0;
                 background-color: #fff;
-                overflow: hidden;
+                overflow: visible;
             }
 
             .print-container {
                 width: 297mm;
+                min-width: 297mm;
                 height: 210mm;
-                max-width: 297mm;
                 max-height: 210mm;
                 margin: 0;
                 border: none;
                 padding: 10mm 12mm;
                 border-radius: 0;
+                overflow: visible;
             }
 
             .no-print {
                 display: none !important;
+            }
+
+            /* Single-line display when printing */
+            .measure-grid {
+                grid-template-columns: repeat(auto-fill, minmax(80px, max-content));
+            }
+
+            .measure-box {
+                min-width: min-content;
+            }
+
+            .measure-val {
+                min-width: 0;
+                overflow: visible;
+            }
+
+            .measure-val-inner {
+                white-space: nowrap;
+            }
+
+            .slip-table td,
+            .slip-table th {
+                white-space: nowrap;
             }
         }
     </style>
@@ -301,7 +325,7 @@
             <div class="header-left">
                 <p>{{ $order->customer_mobile ?? 'No Mobile' }}</p>
                 <h1>{{ $order->customer_name }}</h1>
-                <p>ID: {{ $order->order_no }}</p>
+                <p>Work Order: {{ $order->order_no }}</p>
             </div>
             <div class="header-center">
                 <h2>{{ strtoupper($firstItem->category->name ?? 'TAILORING') }} CUTTING SLIP</h2>
@@ -312,19 +336,15 @@
             </div>
         </div>
 
-        {{-- Common measurements (same for all items in this category) --}}
-        @foreach (collect($common)->chunk(6) as $chunk)
-            <div class="measure-grid">
-                @foreach ($chunk as $key => $entry)
-                    @if ($entry['value'])
-                        <div class="measure-box">
-                            <div class="measure-label">{{ $entry['label'] }}</div>
-                            <div class="measure-val"><span class="measure-val-inner">{{ $entry['value'] ?? '-' }}</span></div>
-                        </div>
-                    @endif
-                @endforeach
-            </div>
-        @endforeach
+        {{-- Common measurements (same for all items in this category) — responsive grid by label/value --}}
+        <div class="measure-grid">
+            @foreach (collect($common)->filter(fn($e) => !empty($e['value'])) as $key => $entry)
+                <div class="measure-box">
+                    <div class="measure-label">{{ $entry['label'] }}</div>
+                    <div class="measure-val"><span class="measure-val-inner">{{ $entry['value'] ?? '-' }}</span></div>
+                </div>
+            @endforeach
+        </div>
 
         {{-- Per-item reference (e.g. Mar Size, Mar Model) --}}
         @if (count($separate) > 0)
@@ -332,7 +352,7 @@
                 <table class="slip-table" style="margin: 0 0 10px 0;">
                     <thead>
                         <tr>
-                            <th style="width: 120px;">Product No</th>
+                            <th style="width: 10px;">#</th>
                             @foreach ($separate as $entry)
                                 <th>{{ $entry['label'] }}</th>
                             @endforeach
@@ -343,7 +363,7 @@
                             <tr>
                                 <td style="font-weight: bold;">#{{ $item->item_no }}</td>
                                 @foreach ($separate as $fieldKey => $entry)
-                                    <td>{{ $item->$fieldKey ?? '-' }}</td>
+                                    <td><b>{{ $item->$fieldKey ?? '-' }}</b> </td>
                                 @endforeach
                             </tr>
                         @endforeach
@@ -352,27 +372,25 @@
             </div>
         @endif
 
-        <div class="measure-grid" style="grid-template-columns: 2fr 1fr;">
+        <div class="measure-grid" style="grid-template-columns: 100fr 1fr;">
             <div class="field-row" style="margin-bottom: 0;">
                 Notes:
                 <div class="field-input" style="min-height: auto;">
                     @if ($itemsWithNotes->isNotEmpty())
                         @foreach ($itemsWithNotes as $item)
-                            <span style="font-weight: bold;">#{{ $item->item_no }}</span> {{ $item->tailoring_notes }}@if (!$loop->last)
-                                <br>
-                            @endif
+                            <span style="font-weight: bold;">#{{ $item->item_no }}</span>
+                             {{ $item->tailoring_notes }}@if (!$loop->last) @endif
                         @endforeach
                     @else
                         -
                     @endif
                 </div>
             </div>
-            <div class="measure-box measure-box--empty">
-                <div class="measure-label">&nbsp;</div>
-                <div class="measure-val">&nbsp;</div>
-            </div>
         </div>
 
+        <div style="text-align: right; margin-bottom: 6px;">
+            <strong>Total Qty: {{ number_format(collect($items)->sum('quantity'), 1) }}</strong>
+        </div>
         <table class="slip-table">
             <thead>
                 <tr>
@@ -389,12 +407,12 @@
                 @foreach ($items as $item)
                     <tr>
                         <td class="col-desc">{{ $item->product_name }}</td>
-                        <td>{{ $item->product->barcode ?? '-' }}</td>
-                        <td>{{ number_format($item->quantity, 1) }}</td>
-                        <td>{{ $item->category->name ?? '-' }}</td>
+                        <td><b>{{ $item->product->barcode ?? '-' }}</b></td>
+                        <td><b>{{ number_format($item->quantity, 1) }}</b></td>
+                        <td><b>{{ $item->category->name ?? '-' }}</b></td>
                         <td><span class="highlight-yellow">{{ $item->categoryModel->name ?? 'Standard' }}</span></td>
-                        <td>{{ $item->product_color ?? '-' }}</td>
-                        <td></td>
+                        <td><b>{{ $item->product_color ?? '-' }}</b></td>
+                        <td><b></b></td>
                     </tr>
                 @endforeach
             </tbody>
@@ -409,15 +427,6 @@
                     <label><input type="checkbox" {{ $order->status == 'confirmed' ? 'checked' : '' }}> Booking</label>
                     <label><input type="checkbox" {{ $order->status == 'completed' ? 'checked' : '' }}> Finished</label>
                     <label><input type="checkbox" {{ $order->status == 'delivered' ? 'checked' : '' }}> Delivered</label>
-                </div>
-            </div>
-            <div style="flex: 1; text-align: right;">
-                <div class="field-row">Remarks: <div class="field-input"></div>
-                </div>
-                <div style="display: inline-block; margin-top: 8px;">
-                    <div class="qr-placeholder">
-                        <img src="https://api.qrserver.com/v1/create-qr-code/?size=100x100&data={{ $order->order_no }}-{{ $categoryId }}" alt="QR Code" width="100">
-                    </div>
                 </div>
             </div>
         </div>

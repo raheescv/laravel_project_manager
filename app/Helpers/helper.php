@@ -486,6 +486,7 @@ if (! function_exists('getNextTailorOrderNo')) {
     {
         $branchCode = session('branch_code', 'M');
         $prefix = 'TA-';
+        $prefix = '';
 
         if ($branchCode) {
             $prefix .= $branchCode.'-';
