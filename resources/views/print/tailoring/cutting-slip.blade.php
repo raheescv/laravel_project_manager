@@ -84,6 +84,7 @@
             font-weight: 600;
             text-transform: uppercase;
             letter-spacing: 0.02em;
+            white-space: nowrap;
             color: #555;
             margin-bottom: 3px;
             line-height: 1.2;
