@@ -519,8 +519,9 @@ const handleAddItem = async (itemData, categoryId) => {
                 }
             })
 
-            // Reset current item form but KEEP measurements (use add key for next item)
+            // Reset current item form but KEEP measurements for next item (do not reset measurement values)
             const resetKey = getEditKey(categoryId, editingModelIds.value[categoryId] ?? 'new')
+            const addKey = getEditKey(categoryId, 'new')
             currentItems.value[resetKey] = {
                 product_id: null,
                 product_name: '',
@@ -532,6 +533,8 @@ const handleAddItem = async (itemData, categoryId) => {
                 tax: 0,
                 total: 0,
             }
+            // Preserve measurement values in the add-new slot so the form stays populated for the next item
+            measurements.value[addKey] = { ...filteredMeasurements }
         }
     } catch (error) {
         console.error('Failed to add item:', error)

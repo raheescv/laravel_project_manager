@@ -75,7 +75,7 @@ class TailoringOrderItem extends Model implements AuditableContracts
             'product_name' => ['required'],
             'quantity' => ['required', 'numeric', 'min:0.001'],
             'quantity_per_item' => ['nullable', 'numeric', 'min:0.001'],
-            'unit_price' => ['required', 'numeric', 'min:0'],
+            'unit_price' => ['numeric'],
         ], $merge);
     }
 
