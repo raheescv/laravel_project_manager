@@ -99,6 +99,7 @@
             justify-content: center;
             font-weight: bold;
             font-size: 0.95rem;
+            white-space: nowrap;
         }
 
         .measure-box--empty .measure-label,
@@ -278,7 +279,7 @@
                     @if ($entry['value'])
                         <div class="measure-box">
                             <div class="measure-label">{{ $entry['label'] }}</div>
-                            <div class="measure-val">{{ $entry['value'] ?? '-' }}</div>
+                            <div class="measure-val text-nowrap">{{ $entry['value'] ?? '-' }}</div>
                         </div>
                     @endif
                 @endforeach
