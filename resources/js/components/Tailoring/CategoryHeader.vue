@@ -1,37 +1,21 @@
 <template>
-    <div class="bg-white rounded-3xl shadow-lg shadow-slate-200/50 border border-slate-200 overflow-hidden relative">
-        <div class="absolute inset-0 bg-gradient-to-r from-violet-50/10 to-transparent pointer-events-none"></div>
-        <div class="p-3 md:p-4 relative z-10">
-            <div class="flex flex-col md:flex-row md:items-center gap-4">
-                <div class="flex items-center gap-3 md:pr-6 md:border-r border-slate-100/80">
-                    <div class="w-8 h-8 rounded-lg bg-violet-50 flex items-center justify-center text-violet-600 shadow-sm border border-violet-100">
-                        <i class="fa fa-th-large text-xs"></i>
-                    </div>
-                    <div>
-                        <span class="text-slate-800 font-black text-xs leading-none block mb-0.5">Item Types</span>
-                        <span class="text-slate-400 text-[0.6rem] uppercase tracking-widest font-black">Select Types</span>
-                    </div>
-                </div>
-
-                <div class="flex-1 flex flex-wrap gap-2.5">
+    <div class="bg-white rounded-xl shadow-2xl border border-slate-200 overflow-hidden">
+        <div class="px-3 py-3">
+            <h6 class="text-xs font-bold text-slate-800 mb-1 flex items-center gap-1">
+                <i class="fa fa-th-large text-blue-500 text-xs"></i>
+                <span>Item Types</span>
+            </h6>
+            <div class="bg-gradient-to-r from-slate-50 to-blue-50 border border-slate-200 rounded-lg p-1.5">
+                <div class="flex flex-wrap gap-1.5">
                     <button v-for="category in categories" :key="category.id"
-                        class="group relative flex items-center gap-2 px-4 py-2 rounded-xl border-2 transition-all duration-500 select-none overflow-hidden"
+                        class="group relative flex items-center gap-1.5 px-3 py-2 rounded-lg border-2 transition-all duration-300 select-none"
                         :class="selectedCategories.includes(category.id)
-                            ? 'bg-indigo-600 border-indigo-600 text-white shadow-lg shadow-indigo-200 ring-4 ring-indigo-600/10'
-                            : 'bg-slate-50 border-slate-100 text-slate-500 hover:border-indigo-400 hover:bg-white hover:text-indigo-600 hover:shadow-xl hover:-translate-y-1'"
+                            ? 'bg-gradient-to-r from-blue-500 to-indigo-600 border-blue-500 text-white shadow-lg'
+                            : 'bg-white border-slate-200 text-slate-700 hover:border-blue-300 hover:bg-blue-50 hover:scale-105'"
                         @click="handleCategoryToggle(category.id)">
-
-                        <div class="relative z-10 flex items-center gap-2">
-                            <span class="font-bold text-[0.75rem]">{{ category.name }}</span>
-                            <div class="transition-all duration-300"
-                                :class="selectedCategories.includes(category.id) ? 'scale-110' : 'opacity-40 group-hover:opacity-100 group-hover:rotate-12'">
-                                <i class="fa text-[10px]" :class="selectedCategories.includes(category.id) ? 'fa-check-circle' : 'fa-circle-thin'"></i>
-                            </div>
-                        </div>
-
-                        <!-- Shimmer effect for active button -->
-                        <div v-if="selectedCategories.includes(category.id)"
-                            class="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full animate-[shimmer_2s_infinite]"></div>
+                        <span class="font-bold text-xs">{{ category.name }}</span>
+                        <i v-if="selectedCategories.includes(category.id)" class="fa fa-check-circle text-white text-xs"></i>
+                        <span v-else class="w-2 h-2 rounded-full bg-slate-400 opacity-60"></span>
                     </button>
                 </div>
             </div>

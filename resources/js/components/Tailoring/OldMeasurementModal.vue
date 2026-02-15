@@ -1,73 +1,77 @@
 <template>
     <Teleport to="body">
         <Transition name="modal">
-            <div v-if="showModal" class="fixed inset-0 z-[9999] overflow-y-auto" aria-labelledby="modal-title" role="dialog"
+            <div v-if="showModal" class="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog"
                 aria-modal="true">
                 <!-- Background overlay -->
-                <div class="flex items-center justify-center min-h-screen p-4">
-                    <div class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm" @click="handleSkip"></div>
+                <div class="flex items-center justify-center min-h-screen p-2 text-center">
+                    <div class="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm transition-opacity" aria-hidden="true"
+                        @click="handleSkip">
+                    </div>
+
+                    <!-- Modal positioning -->
+                    <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
 
                     <!-- Modal panel -->
                     <div
-                        class="relative bg-white rounded-3xl text-left overflow-hidden shadow-2xl transform transition-all max-w-2xl w-full mx-auto border border-slate-200 animate-[slideUp_0.3s_ease-out]">
+                        class="relative inline-block align-bottom bg-white rounded-xl text-left overflow-hidden shadow-2xl transform transition-all sm:my-2 sm:align-middle sm:max-w-2xl w-full max-h-[90vh] overflow-y-auto">
                         <!-- Header -->
-                        <div class="px-6 py-5 border-b border-slate-100 bg-gradient-to-r from-indigo-50/80 to-violet-50/60 relative overflow-hidden">
-                            <div class="absolute top-0 right-0 w-40 h-40 bg-indigo-200/20 rounded-full -mr-20 -mt-20 blur-2xl"></div>
-                            <div class="relative z-10 flex items-center justify-between">
-                                <div class="flex items-center gap-4">
-                                    <div
-                                        class="w-12 h-12 rounded-2xl bg-indigo-600 flex items-center justify-center text-white shadow-lg shadow-indigo-600/30">
-                                        <i class="fa fa-history text-lg"></i>
-                                    </div>
-                                    <div>
-                                        <h4 class="text-base font-black text-slate-900 leading-tight">
-                                            Use Previous Measurements
-                                        </h4>
-                                        <p class="text-sm font-medium text-slate-500 mt-0.5">
-                                            Select from {{ categoryName }} orders for this customer
-                                        </p>
-                                    </div>
+                        <div
+                            class="bg-gradient-to-r from-blue-600 via-blue-700 to-indigo-700 px-3 py-2 text-white flex items-center justify-between">
+                            <div class="flex items-center">
+                                <div class="bg-white/20 p-1 rounded-md mr-2">
+                                    <i class="fa fa-history text-white text-xs"></i>
                                 </div>
-                                <button type="button" @click="handleSkip"
-                                    class="w-10 h-10 rounded-xl flex items-center justify-center text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-all">
-                                    <i class="fa fa-times text-lg"></i>
-                                </button>
+                                <div>
+                                    <h4 class="text-base font-bold text-white">
+                                        Use Previous Measurements
+                                    </h4>
+                                    <p class="text-xs text-white/90 mt-0.5">
+                                        Select from {{ categoryName }} orders for this customer
+                                    </p>
+                                </div>
                             </div>
+                            <button type="button" @click="handleSkip"
+                                class="text-white hover:text-gray-200 focus:outline-none transition-colors">
+                                <i class="fa fa-times text-xs"></i>
+                            </button>
                         </div>
 
                         <!-- Body -->
-                        <div class="p-6 max-h-[60vh] overflow-y-auto">
+                        <div class="px-3 py-3 max-h-[60vh] overflow-y-auto">
                             <!-- Loading -->
                             <div v-if="loading"
-                                class="flex flex-col items-center justify-center py-16 text-slate-400">
-                                <i class="fa fa-spinner fa-spin text-3xl mb-4 text-indigo-500"></i>
-                                <span class="text-sm font-bold">Loading previous measurements...</span>
+                                class="flex flex-col items-center justify-center py-12 text-slate-400">
+                                <i class="fa fa-spinner fa-spin text-2xl mb-3 text-blue-500"></i>
+                                <span class="text-xs font-bold">Loading previous measurements...</span>
                             </div>
 
                             <!-- Empty state -->
                             <div v-else-if="!items.length"
-                                class="flex flex-col items-center justify-center py-16 text-center">
-                                <div class="w-16 h-16 rounded-2xl bg-slate-100 flex items-center justify-center mb-4">
-                                    <i class="fa fa-inbox text-2xl text-slate-400"></i>
+                                class="flex flex-col items-center justify-center py-12 text-center">
+                                <div
+                                    class="w-12 h-12 bg-gradient-to-r from-slate-100 to-blue-50 border border-slate-200 rounded-lg flex items-center justify-center mb-3">
+                                    <i class="fa fa-inbox text-xl text-slate-400"></i>
                                 </div>
-                                <p class="text-slate-600 font-bold mb-1">No previous measurements found</p>
-                                <p class="text-slate-400 text-sm">Enter measurements manually for this customer</p>
+                                <p class="text-slate-600 font-bold text-xs mb-1">No previous measurements found</p>
+                                <p class="text-slate-400 text-xs mb-3">Enter measurements manually for this customer</p>
                                 <button type="button" @click="handleSkip"
-                                    class="mt-4 px-6 py-2.5 rounded-xl bg-indigo-600 text-white font-bold text-sm hover:bg-indigo-700 transition-all">
+                                    class="inline-flex items-center justify-center px-3 py-1.5 border border-transparent text-xs font-semibold rounded-lg text-white shadow-lg bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 transition-all duration-200">
+                                    <i class="fa fa-edit mr-1 text-xs"></i>
                                     Enter New Measurements
                                 </button>
                             </div>
 
                             <!-- Measurement cards -->
-                            <div v-else class="space-y-3">
+                            <div v-else class="space-y-2">
                                 <div v-for="(item, idx) in items" :key="item.id || idx"
                                     @click="handleSelect(item)"
-                                    class="group cursor-pointer rounded-2xl border-2 border-slate-100 bg-white p-4 transition-all duration-300 hover:border-indigo-300 hover:shadow-lg hover:shadow-indigo-100/50 hover:-translate-y-0.5 active:scale-[0.99]">
-                                    <div class="flex items-start justify-between gap-4">
+                                    class="group cursor-pointer rounded-lg border border-slate-200 bg-gradient-to-r from-slate-50 to-blue-50 p-2.5 transition-all duration-300 hover:border-blue-300 hover:shadow-md active:scale-[0.99]">
+                                    <div class="flex items-start justify-between gap-3">
                                         <div class="flex-1 min-w-0">
-                                            <div class="flex items-center gap-3 mb-2">
+                                            <div class="flex items-center gap-2 mb-1.5">
                                                 <span
-                                                    class="inline-flex items-center px-2.5 py-0.5 rounded-lg text-[0.65rem] font-black uppercase tracking-wider bg-indigo-100 text-indigo-700">
+                                                    class="inline-flex items-center px-2 py-0.5 rounded text-[0.65rem] font-bold uppercase tracking-wider bg-blue-100 text-blue-700">
                                                     {{ item.order_no || 'Order' }}
                                                 </span>
                                                 <span class="text-[0.65rem] font-bold text-slate-400 uppercase tracking-widest">
@@ -78,24 +82,24 @@
                                                     {{ item.model_name }}
                                                 </span>
                                             </div>
-                                            <div class="grid grid-cols-2 sm:grid-cols-3 gap-x-4 gap-y-1.5">
+                                            <div class="grid grid-cols-2 sm:grid-cols-3 gap-x-3 gap-y-1">
                                                 <div v-for="(val, key) in getPreviewFields(item)" :key="key"
-                                                    class="flex items-center gap-2">
+                                                    class="flex items-center gap-1.5">
                                                     <span class="text-[0.6rem] font-bold text-slate-400 uppercase tracking-wider truncate">
                                                         {{ formatLabel(key) }}:
                                                     </span>
-                                                    <span class="text-xs font-black text-slate-800 truncate">
+                                                    <span class="text-xs font-bold text-slate-800 truncate">
                                                         {{ val ?? '-' }}
                                                     </span>
                                                 </div>
                                             </div>
-                                            <p v-if="item.tailoring_notes" class="mt-2 text-[0.7rem] text-slate-500 line-clamp-2 italic">
+                                            <p v-if="item.tailoring_notes" class="mt-1.5 text-[0.7rem] text-slate-500 line-clamp-2 italic">
                                                 {{ item.tailoring_notes }}
                                             </p>
                                         </div>
                                         <div
-                                            class="flex-shrink-0 w-10 h-10 rounded-xl bg-slate-50 flex items-center justify-center text-slate-400 group-hover:bg-indigo-600 group-hover:text-white transition-all">
-                                            <i class="fa fa-chevron-right text-sm"></i>
+                                            class="flex-shrink-0 w-8 h-8 rounded-lg bg-white/80 border border-slate-200 flex items-center justify-center text-slate-400 group-hover:bg-blue-600 group-hover:text-white group-hover:border-blue-500 transition-all">
+                                            <i class="fa fa-chevron-right text-xs"></i>
                                         </div>
                                     </div>
                                 </div>
@@ -104,9 +108,10 @@
 
                         <!-- Footer -->
                         <div v-if="items.length && !loading"
-                            class="px-6 py-4 border-t border-slate-100 bg-slate-50/50 flex items-center justify-between gap-4">
+                            class="bg-gradient-to-r from-slate-50 to-gray-50 px-3 py-2 border-t border-slate-200 flex items-center justify-between gap-3">
                             <button type="button" @click="handleSkip"
-                                class="px-4 py-2 text-sm font-bold text-slate-500 hover:text-slate-700 transition-colors">
+                                class="inline-flex items-center justify-center px-3 py-1.5 border border-slate-300 shadow-sm text-xs font-semibold rounded-lg text-slate-700 bg-white hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200">
+                                <i class="fa fa-edit mr-1 text-xs"></i>
                                 Enter new measurements instead
                             </button>
                             <p class="text-[0.65rem] font-bold text-slate-400 uppercase tracking-widest">
@@ -230,17 +235,6 @@ watch(() => [props.show, props.accountId, props.categoryId], ([show, accountId, 
 </script>
 
 <style scoped>
-@keyframes slideUp {
-    from {
-        opacity: 0;
-        transform: translateY(16px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
 .modal-enter-active,
 .modal-leave-active {
     transition: opacity 0.2s ease;
@@ -248,9 +242,5 @@ watch(() => [props.show, props.accountId, props.categoryId], ([show, accountId, 
 .modal-enter-from,
 .modal-leave-to {
     opacity: 0;
-}
-.modal-enter-active .relative,
-.modal-leave-active .relative {
-    transition: transform 0.2s ease;
 }
 </style>

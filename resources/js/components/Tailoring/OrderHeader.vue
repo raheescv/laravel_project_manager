@@ -1,21 +1,15 @@
 <template>
-    <div class="bg-white rounded-3xl shadow-lg shadow-slate-200/50 border border-slate-200 overflow-hidden relative">
-        <div class="absolute inset-0 bg-gradient-to-tr from-indigo-50/10 to-transparent pointer-events-none"></div>
-        <div class="p-4 md:p-5 relative z-10">
-                <div class="flex items-center gap-2 mb-6 border-b border-slate-100 pb-3">
-                    <div class="w-8 h-8 rounded-lg bg-indigo-50 flex items-center justify-center text-indigo-600">
-                        <i class="fa fa-info-circle text-sm"></i>
-                    </div>
-                    <div>
-                        <h3 class="text-sm font-bold text-slate-800 leading-none mb-0.5">Order Primary Information</h3>
-                        <p class="text-slate-400 text-[10px] font-medium uppercase tracking-wider">Basic details and scheduling</p>
-                    </div>
-                </div>
-
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-4">
+    <div class="bg-white rounded-xl shadow-2xl border border-slate-200 overflow-hidden">
+        <div class="px-3 py-3">
+            <h6 class="text-xs font-bold text-slate-800 mb-1 flex items-center gap-1">
+                <i class="fa fa-info-circle text-blue-500 text-xs"></i>
+                <span>Order Primary Information</span>
+            </h6>
+            <div class="bg-gradient-to-r from-slate-50 to-blue-50 border border-slate-200 rounded-lg p-1.5">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-3">
                 <!-- Order No -->
                 <div class="lg:col-span-2">
-                    <label class="block text-slate-500 font-bold text-[0.7rem] uppercase tracking-widest mb-2 px-1">Order No</label>
+                    <label class="block text-slate-500 font-bold text-[0.7rem] uppercase tracking-widest mb-1 px-1">Order No</label>
                     <div class="relative group">
                         <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
                             <i class="fa fa-hashtag text-[10px] text-indigo-500/70"></i>
@@ -27,7 +21,7 @@
 
                 <!-- Customer -->
                 <div class="lg:col-span-3">
-                    <div class="flex items-center justify-between mb-2 px-1">
+                    <div class="flex items-center justify-between mb-1 px-1">
                         <label class="block text-slate-500 font-bold text-[0.7rem] uppercase tracking-widest">Customer</label>
                         <button @click.prevent="$emit('add-customer')" class="text-indigo-600 hover:text-indigo-700 font-bold text-[0.7rem] uppercase tracking-widest flex items-center gap-1 transition-colors">
                             <i class="fa fa-plus-circle"></i>
@@ -44,7 +38,7 @@
 
                 <!-- Contact -->
                 <div class="md:col-span-1 lg:col-span-2">
-                    <label class="block text-slate-500 font-bold text-[0.7rem] uppercase tracking-widest mb-2 px-1">Contact</label>
+                    <label class="block text-slate-500 font-bold text-[0.7rem] uppercase tracking-widest mb-1 px-1">Contact</label>
                     <div class="relative group">
                         <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400 group-focus-within:text-emerald-500 transition-colors">
                             <i class="fa fa-phone text-xs"></i>
@@ -57,7 +51,7 @@
 
                 <!-- Salesman -->
                 <div class="md:col-span-1 lg:col-span-2">
-                    <label class="block text-slate-500 font-bold text-[0.7rem] uppercase tracking-widest mb-2 px-1">Salesman</label>
+                    <label class="block text-slate-500 font-bold text-[0.7rem] uppercase tracking-widest mb-1 px-1">Salesman</label>
                     <SearchableSelect :modelValue="salesman" :options="salesmen" placeholder="Select Salesman"
                         @update:modelValue="$emit('update:salesman', $event)" 
                         input-class="w-full rounded-xl border border-slate-200 bg-white shadow-sm focus:border-purple-500 focus:ring-4 focus:ring-purple-500/10 transition-all duration-300 text-sm py-1.5 px-4 font-medium" />
@@ -65,21 +59,22 @@
 
                 <!-- Dates Group -->
                 <div class="lg:col-span-3">
-                    <div class="grid grid-cols-2 gap-4">
+                    <div class="grid grid-cols-2 gap-3">
                         <div>
-                            <label class="block text-slate-500 font-bold text-[0.7rem] uppercase tracking-widest mb-2 px-1">Order Date</label>
+                            <label class="block text-slate-500 font-bold text-[0.7rem] uppercase tracking-widest mb-1 px-1">Order Date</label>
                             <input :value="orderDate" @input="$emit('update:orderDate', $event.target.value)"
                                 type="date" 
                                 class="w-full rounded-xl border border-slate-200 bg-white shadow-sm focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all duration-300 text-sm py-1.5 px-3 font-medium cursor-pointer" />
                         </div>
                         <div>
-                            <label class="block text-slate-500 font-bold text-[0.7rem] uppercase tracking-widest mb-2 px-1">Delivery</label>
+                            <label class="block text-slate-500 font-bold text-[0.7rem] uppercase tracking-widest mb-1 px-1">Delivery</label>
                             <input :value="deliveryDate" @input="$emit('update:deliveryDate', $event.target.value)"
                                 type="date" 
                                 class="w-full rounded-xl border border-slate-200 bg-white shadow-sm focus:border-rose-500 focus:ring-4 focus:ring-rose-500/10 transition-all duration-300 text-sm py-1.5 px-3 font-medium cursor-pointer" />
                         </div>
                     </div>
                 </div>
+            </div>
             </div>
         </div>
     </div>

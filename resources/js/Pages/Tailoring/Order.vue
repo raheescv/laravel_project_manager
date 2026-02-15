@@ -1,38 +1,40 @@
 <template>
     <div class="min-h-screen bg-[#f8fafc] font-sans">
-        <!-- Dashboard Header (Light Eye-Friendly Theme) -->
-        <div class="bg-white pt-6 pb-20 px-6 relative overflow-hidden border-b border-slate-100">
-            <!-- Subtle Decorative Elements -->
-            <div class="absolute top-0 right-0 w-64 h-64 bg-indigo-50/40 rounded-full -mr-32 -mt-32 blur-3xl"></div>
-            <div class="absolute bottom-0 left-0 w-96 h-96 bg-blue-50/30 rounded-full -ml-48 -mb-48 blur-3xl"></div>
-
+        <!-- Page Header - SaleConfirmationModal style gradient -->
+        <div class="bg-gradient-to-r from-blue-600 via-blue-700 to-indigo-700 pt-4 pb-16 px-3 relative overflow-hidden shadow-lg">
             <div class="max-w-[1600px] mx-auto relative z-10">
-                <div class="flex items-center gap-2 text-slate-400 text-sm mb-3 transition-all">
-                    <a href="/dashboard" class="hover:text-blue-600 no-underline flex items-center gap-1 transition-colors">
+                <!-- Breadcrumbs - light on gradient -->
+                <div class="flex items-center gap-2 text-white/80 text-xs mb-2 transition-all">
+                    <a href="/dashboard" class="hover:text-white no-underline flex items-center gap-1 transition-colors">
                         <i class="fa fa-home"></i>
                         <span>Home</span>
                     </a>
-                    <i class="fa fa-chevron-right text-[10px] opacity-50"></i>
-                    <a href="/tailoring/order" class="hover:text-blue-600 no-underline flex items-center gap-1 transition-colors">
-                        <i class="fa fa-home"></i>
+                    <i class="fa fa-chevron-right text-[10px] opacity-60"></i>
+                    <a href="/tailoring/order" class="hover:text-white no-underline flex items-center gap-1 transition-colors">
+                        <i class="fa fa-scissors"></i>
                         <span>Tailoring</span>
                     </a>
-                    <span class="text-slate-600 font-medium tracking-tight">Order</span>
+                    <i class="fa fa-chevron-right text-[10px] opacity-60"></i>
+                    <span class="text-white font-medium tracking-tight">Order</span>
                 </div>
 
-                <div class="flex flex-col md:flex-row md:items-center justify-between gap-3">
-                    <div>
-                        <h1 class="text-2xl font-black text-slate-900 tracking-tight mb-1">Tailoring Studio</h1>
-                        <p class="text-slate-500 text-xs md:text-sm font-medium">Create and manage your tailoring orders with ease</p>
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                    <div class="flex items-center gap-2">
+                        <div class="bg-white/20 p-1 rounded-md mr-2">
+                            <i class="fa fa-shopping-cart text-white text-xs"></i>
+                        </div>
+                        <div>
+                            <h1 class="text-base font-bold text-white tracking-tight leading-tight">Tailoring Studio</h1>
+                            <p class="text-white/80 text-xs font-medium leading-tight">Create and manage your tailoring orders with ease</p>
+                        </div>
                     </div>
-
-                    <div class="flex flex-wrap gap-2">
-                        <a href="/tailoring/order" class="flex items-center gap-2 px-4 py-2 rounded-xl transition-all duration-300 bg-white hover:bg-slate-50 text-slate-600 border border-slate-200 shadow-sm no-underline font-bold text-sm group">
-                            <i class="fa fa-th-list text-indigo-500 group-hover:scale-110 transition-transform"></i>
+                    <div class="flex flex-wrap gap-1.5">
+                        <a href="/tailoring/order" class="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border border-white/20 bg-white/10 text-white hover:bg-white/20 transition-all no-underline">
+                            <i class="fa fa-th-list text-xs"></i>
                             <span>Orders List</span>
                         </a>
-                        <a :href="form.id && form.order_no ? `/tailoring/job-completion?order_no=${form.order_no}` : '/tailoring/job-completion'" class="flex items-center gap-2 px-4 py-2 rounded-xl transition-all duration-300 bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg shadow-indigo-600/20 hover:-translate-y-0.5 no-underline font-bold text-sm group">
-                            <i class="fa fa-tasks text-white/90 group-hover:scale-110 transition-transform"></i>
+                        <a :href="form.id && form.order_no ? `/tailoring/job-completion?order_no=${form.order_no}` : '/tailoring/job-completion'" class="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-white text-blue-700 hover:bg-white/95 shadow-sm transition-all no-underline">
+                            <i class="fa fa-tasks text-xs"></i>
                             <span>Job Completion</span>
                         </a>
                     </div>
@@ -41,8 +43,8 @@
         </div>
 
 
-        <div class="max-w-[1600px] mx-auto px-6 -mt-14 relative z-20 pb-8">
-            <div class="space-y-4">
+        <div class="max-w-[1600px] mx-auto px-3 -mt-12 relative z-20 pb-8">
+            <div class="space-y-3">
                 <!-- Order Header Section -->
                 <OrderHeader
                     v-model:orderNo="form.order_no"
@@ -65,59 +67,48 @@
                     @category-selected="handleCategorySelection"
                 />
 
-                <!-- Main Content: Measurements and Styling -->
+                <!-- Main Content: Measurements and Styling - Modal-style cards -->
                 <div v-if="selectedCategories.length > 0" class="animate-[fadeIn_0.5s_ease-out]">
-                    <!-- Category Tabs - Premium Style -->
-                    <div class="flex gap-2 overflow-x-auto pb-3 scrollbar-hide">
+                    <!-- Category Tabs - Modal payment-option style -->
+                    <div class="flex gap-1.5 overflow-x-auto pb-3 scrollbar-hide">
                         <button
                             v-for="id in selectedCategories"
                             :key="id"
                             @click="activeCategoryTab = id"
-                            class="whitespace-nowrap px-4 py-2 rounded-xl font-bold text-xs transition-all duration-300 flex items-center gap-2 border shadow-sm"
+                            class="whitespace-nowrap px-3 py-2 rounded-lg font-bold text-xs transition-all duration-300 flex items-center gap-1.5 border-2"
                             :class="activeCategoryTab === id
-                                ? 'bg-indigo-600 border-indigo-600 text-white shadow-indigo-200'
-                                : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'"
+                                ? 'bg-gradient-to-r from-blue-500 to-indigo-600 border-blue-500 text-white shadow-lg'
+                                : 'bg-white border-slate-200 text-slate-700 hover:border-blue-300 hover:bg-blue-50'"
                         >
-                            <span class="w-2 h-2 rounded-full bg-current opacity-40" v-if="activeCategoryTab !== id"></span>
-                            <i class="fa fa-dot-circle-o" v-else></i>
+                            <i class="fa fa-dot-circle-o text-xs" v-if="activeCategoryTab === id"></i>
+                            <span class="w-2 h-2 rounded-full bg-current opacity-40" v-else></span>
                             {{ getCategory(id)?.name }}
                         </button>
                     </div>
 
                     <!-- Active Category Content -->
                     <div v-if="activeCategoryTab" class="animate-[fadeSlideUp_0.4s_ease-out]">
-                        <div class="bg-white rounded-3xl shadow-lg shadow-slate-200/50 border border-slate-200 overflow-hidden relative">
-                            <!-- Background Tint -->
-                            <div class="absolute inset-0 bg-gradient-to-br from-indigo-50/20 via-white to-emerald-50/20 pointer-events-none"></div>
-
-                            <div class="p-4 md:p-6 relative z-10">
-                                <div class="grid grid-cols-1 gap-6">
-                                    <!-- Measurement Form -->
-                                    <div>
-                                        <div class="flex items-center justify-between gap-2 mb-4 border-b border-slate-100 pb-3">
-                                            <div class="flex items-center gap-2">
-                                                <div class="w-8 h-8 rounded-lg bg-amber-50 flex items-center justify-center text-amber-600">
-                                                    <i class="fa fa-pencil-square-o text-sm"></i>
-                                                </div>
-                                                <div>
-                                                    <h3 class="text-sm font-bold text-slate-800 leading-none mb-0.5">
-                                                        {{ getCategory(activeCategoryTab)?.name }} Measurements
-                                                    </h3>
-                                                    <p class="text-slate-400 text-[10px] font-medium uppercase tracking-wider">Configure dimensions and fits</p>
-                                                </div>
-                                            </div>
+                        <div class="bg-white rounded-xl shadow-2xl border border-slate-200 overflow-hidden">
+                            <div class="px-3 py-3">
+                                <div class="grid grid-cols-1 gap-3">
+                                    <!-- Measurement Form - Modal section style -->
+                                    <div class="mb-3">
+                                        <div class="flex flex-col sm:flex-row sm:items-center justify-between mb-1.5 gap-1">
+                                            <h6 class="text-xs font-bold text-slate-800 flex items-center gap-1">
+                                                <i class="fa fa-pencil-square-o text-amber-500 text-xs"></i>
+                                                <span>{{ getCategory(activeCategoryTab)?.name }} Measurements</span>
+                                            </h6>
                                             <button
                                                 type="button"
                                                 @click="openPreviousMeasurements"
                                                 :disabled="!form.account_id"
-                                                class="shrink-0 flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-bold border border-slate-200 bg-white text-slate-600 hover:bg-indigo-50 hover:border-indigo-200 hover:text-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                                                class="shrink-0 inline-flex items-center justify-center px-3 py-1.5 rounded-lg text-xs font-semibold border border-slate-200 bg-white text-slate-700 hover:bg-blue-50 hover:border-blue-200 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
                                             >
-                                                <i class="fa fa-history text-indigo-500"></i>
-                                                Use Previous Measurements
+                                                <i class="fa fa-history text-blue-500 text-xs mr-1"></i>
+                                                Use Previous
                                             </button>
                                         </div>
-
-                                        <div class="bg-slate-50/50 rounded-xl p-3 md:p-4 border border-slate-100">
+                                        <div class="bg-gradient-to-r from-slate-50 to-blue-50 border border-slate-200 rounded-lg p-1.5">
                                             <MeasurementForm v-if="activeEditKey && measurements[activeEditKey]"
                                                 :key="activeEditKey"
                                                 v-model="measurements[activeEditKey]"
@@ -127,21 +118,13 @@
                                         </div>
                                     </div>
 
-                                    <!-- Product Selection -->
-                                    <div>
-                                        <div class="flex items-center gap-2 mb-4 border-b border-slate-100 pb-3">
-                                            <div class="w-8 h-8 rounded-lg bg-emerald-50 flex items-center justify-center text-emerald-600">
-                                                <i class="fa fa-shopping-cart text-sm"></i>
-                                            </div>
-                                            <div>
-                                                <h3 class="text-sm font-bold text-slate-800 leading-none mb-0.5">
-                                                    Fabric & Services
-                                                </h3>
-                                                <p class="text-slate-400 text-[10px] font-medium uppercase tracking-wider">Select materials and service rates</p>
-                                            </div>
-                                        </div>
-
-                                        <div class="bg-slate-50/50 rounded-xl p-3 md:p-4 border border-slate-100">
+                                    <!-- Product Selection - Modal section style -->
+                                    <div class="mb-2">
+                                        <h6 class="text-xs font-bold text-slate-800 mb-1 flex items-center gap-1">
+                                            <i class="fa fa-shopping-cart text-emerald-500 text-xs"></i>
+                                            <span>Fabric & Services</span>
+                                        </h6>
+                                        <div class="bg-gradient-to-r from-slate-50 to-blue-50 border border-slate-200 rounded-lg p-1.5">
                                             <ProductSelection v-if="activeEditKey && currentItems[activeEditKey]"
                                                 v-model="currentItems[activeEditKey]" :products="products"
                                                 :colors="colors" :isLoading="isAddingItem[activeCategoryTab]"
@@ -160,29 +143,21 @@
                     </div>
                 </div>
 
-                <!-- Summary and Work Orders -->
-                <div class="bg-white rounded-3xl shadow-lg shadow-slate-200/50 border border-slate-200 overflow-hidden relative">
-                    <div class="absolute inset-0 bg-gradient-to-tr from-indigo-50/10 to-transparent pointer-events-none"></div>
-                    <div class="p-4 md:p-5 relative z-10">
-                        <div class="flex items-center gap-2 mb-6 border-b border-slate-100 pb-3">
-                            <div class="w-8 h-8 rounded-lg bg-indigo-50 flex items-center justify-center text-indigo-600">
-                                <i class="fa fa-info-circle text-sm"></i>
-                            </div>
-                            <div>
-                                <h3 class="text-sm font-bold text-slate-800 leading-none mb-0.5">Summary and Work Orders</h3>
-                                <p class="text-slate-400 text-[10px] font-medium uppercase tracking-wider">Order totals and job details</p>
-                            </div>
-                        </div>
-
-                        <div class="grid grid-cols-1 lg:grid-cols-12 gap-4">
-                            <!-- Summary Table -->
-                            <div class="lg:col-span-3">
-                                <SummaryTable :items="form.items" />
-                            </div>
-
-                            <!-- Work Orders Preview -->
-                            <div class="lg:col-span-9">
-                                <WorkOrdersPreview :items="form.items" @edit="handleEditItem" @remove="handleRemoveItem" />
+                <!-- Summary and Work Orders - Modal style -->
+                <div class="bg-white rounded-xl shadow-2xl border border-slate-200 overflow-hidden">
+                    <div class="px-3 py-3">
+                        <h6 class="text-xs font-bold text-slate-800 mb-1 flex items-center gap-1">
+                            <i class="fa fa-receipt text-emerald-500 text-xs"></i>
+                            Summary and Work Orders
+                        </h6>
+                        <div class="bg-gradient-to-r from-slate-50 to-blue-50 border border-slate-200 rounded-lg p-1.5">
+                            <div class="grid grid-cols-1 lg:grid-cols-12 gap-3">
+                                <div class="lg:col-span-3">
+                                    <SummaryTable :items="form.items" />
+                                </div>
+                                <div class="lg:col-span-9">
+                                    <WorkOrdersPreview :items="form.items" @edit="handleEditItem" @remove="handleRemoveItem" />
+                                </div>
                             </div>
                         </div>
                     </div>

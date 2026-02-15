@@ -1,47 +1,111 @@
 <template>
-    <div class="bg-slate-50 min-vh-100 py-8">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-12">
-            <!-- Page Header -->
-            <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden mb-8 transition-all duration-300 hover:shadow-md">
-                <div class="px-8 py-6 flex flex-col md:flex-row justify-between items-center gap-4">
-                    <div class="text-center md:text-left">
-                        <h1 class="text-3xl font-black text-slate-900 tracking-tight mb-1">Job Completion</h1>
-                        <p class="text-slate-500 font-medium">Track and complete tailoring orders efficiently</p>
+    <div class="min-h-screen bg-[#f8fafc] font-sans">
+        <!-- Page Header - same as Order.vue (gradient, compact) -->
+        <div class="bg-gradient-to-r from-blue-600 via-blue-700 to-indigo-700 pt-4 pb-16 px-3 relative overflow-hidden shadow-lg">
+            <div class="max-w-[1600px] mx-auto relative z-10">
+                <!-- Breadcrumbs - light on gradient -->
+                <div class="flex items-center gap-2 text-white/80 text-xs mb-2 transition-all">
+                    <a href="/dashboard" class="hover:text-white no-underline flex items-center gap-1 transition-colors">
+                        <i class="fa fa-home"></i>
+                        <span>Home</span>
+                    </a>
+                    <i class="fa fa-chevron-right text-[10px] opacity-60"></i>
+                    <a href="/tailoring/order" class="hover:text-white no-underline flex items-center gap-1 transition-colors">
+                        <i class="fa fa-scissors"></i>
+                        <span>Tailoring</span>
+                    </a>
+                    <i class="fa fa-chevron-right text-[10px] opacity-60"></i>
+                    <span class="text-white font-medium tracking-tight">Job Completion</span>
+                </div>
+
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                    <div class="flex items-center gap-2">
+                        <div class="bg-white/20 p-1 rounded-md mr-2">
+                            <i class="fa fa-tasks text-white text-xs"></i>
+                        </div>
+                        <div>
+                            <h1 class="text-base font-bold text-white tracking-tight leading-tight">Job Completion</h1>
+                            <p class="text-white/80 text-xs font-medium leading-tight">Track and complete tailoring orders efficiently</p>
+                        </div>
                     </div>
-                    <div class="flex items-center gap-3">
-                        <a href="/tailoring/order" class="group flex items-center gap-2 px-5 py-2.5 rounded-xl border-2 border-slate-100 bg-white text-slate-600 font-bold text-sm transition-all duration-300 hover:border-blue-500 hover:text-blue-600 hover:shadow-lg hover:shadow-blue-500/10">
-                            <i class="fa fa-list group-hover:rotate-12 transition-transform"></i>
+                    <div class="flex flex-wrap gap-1.5">
+                        <a href="/tailoring/order" class="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border border-white/20 bg-white/10 text-white hover:bg-white/20 transition-all no-underline">
+                            <i class="fa fa-th-list text-xs"></i>
                             <span>Orders List</span>
+                        </a>
+                        <a href="/tailoring/order" class="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-white text-blue-700 hover:bg-white/95 shadow-sm transition-all no-underline">
+                            <i class="fa fa-plus text-xs"></i>
+                            <span>New Order</span>
                         </a>
                     </div>
                 </div>
             </div>
+        </div>
 
-            <div class="flex flex-col gap-8">
+        <div class="max-w-[1600px] mx-auto px-3 -mt-12 relative z-20 pb-8">
+            <div class="space-y-3">
                 <!-- Order Search -->
-                <OrderSearch v-model:orderNo="searchForm.order_no" v-model:customer="searchForm.customer_name"
-                    v-model:customerId="searchForm.customer_id"
-                    v-model:contact="searchForm.customer_mobile" :customers="customers" :orderNumbers="orderNumbers"
-                    @search="handleSearchOrder" @clear="handleClearSearch" />
+                <div class="bg-white rounded-xl shadow-2xl border border-slate-200 overflow-hidden">
+                    <div class="px-3 py-3">
+                        <h6 class="text-xs font-bold text-slate-800 mb-1 flex items-center gap-1">
+                            <i class="fa fa-search text-blue-500 text-xs"></i>
+                            <span>Search Order</span>
+                        </h6>
+                        <div class="bg-gradient-to-r from-slate-50 to-blue-50 border border-slate-200 rounded-lg p-1.5">
+                            <OrderSearch v-model:orderNo="searchForm.order_no" v-model:customer="searchForm.customer_name"
+                                v-model:customerId="searchForm.customer_id"
+                                v-model:contact="searchForm.customer_mobile" :customers="customers" :orderNumbers="orderNumbers"
+                                @search="handleSearchOrder" @clear="handleClearSearch" />
+                        </div>
+                    </div>
+                </div>
 
                 <!-- Order Summary Header -->
-                <CompletionHeader v-if="order" :order="order" :racks="racks" :cutters="cutters"
-                    @update-rack="handleUpdateRack" @update-cutter="handleUpdateCutter" />
+                <div v-if="order" class="bg-white rounded-xl shadow-2xl border border-slate-200 overflow-hidden">
+                    <div class="px-3 py-3">
+                        <h6 class="text-xs font-bold text-slate-800 mb-1 flex items-center gap-1">
+                            <i class="fa fa-info-circle text-blue-500 text-xs"></i>
+                            <span>Order Summary</span>
+                        </h6>
+                        <div class="bg-gradient-to-r from-slate-50 to-blue-50 border border-slate-200 rounded-lg p-1.5">
+                            <CompletionHeader :order="order" :racks="racks" :cutters="cutters"
+                                @update-rack="handleUpdateRack" @update-cutter="handleUpdateCutter" />
+                        </div>
+                    </div>
+                </div>
 
                 <!-- Completion Items Table -->
-                <CompletionItemsTable v-if="order" :items="order.items" :tailors="tailors" @update-item="handleUpdateItem"
-                    @calculate-stock="handleCalculateStock" @calculate-commission="handleCalculateCommission" />
+                <div v-if="order" class="bg-white rounded-xl shadow-2xl border border-slate-200 overflow-hidden">
+                    <div class="px-3 py-3">
+                        <h6 class="text-xs font-bold text-slate-800 mb-1 flex items-center gap-1">
+                            <i class="fa fa-list-alt text-emerald-500 text-xs"></i>
+                            <span>Completion Items</span>
+                        </h6>
+                        <div class="bg-gradient-to-r from-slate-50 to-blue-50 border border-slate-200 rounded-lg p-1.5">
+                            <CompletionItemsTable :items="order.items" :tailors="tailors" @update-item="handleUpdateItem"
+                                @calculate-stock="handleCalculateStock" @calculate-commission="handleCalculateCommission" />
+                        </div>
+                    </div>
+                </div>
 
-                <!-- Action Buttons -->
-                <div v-if="order" class="flex justify-center gap-4 mt-4">
-                    <button @click="handleUpdateCompletion"
-                        class="px-8 py-3.5 rounded-2xl border-2 border-slate-200 bg-white text-slate-600 font-bold text-sm tracking-wide shadow-sm hover:bg-slate-50 hover:border-slate-300 hover:shadow-md transition-all duration-300">
-                        <i class="fa fa-refresh mr-2 opacity-50"></i> Update Details
-                    </button>
-                    <button @click="handleSubmitCompletion"
-                        class="px-10 py-3.5 rounded-2xl bg-blue-600 text-white font-bold text-sm tracking-widest uppercase shadow-xl shadow-blue-600/20 hover:bg-blue-700 hover:shadow-2xl hover:shadow-blue-700/30 hover:-translate-y-0.5 transition-all duration-300">
-                        <i class="fa fa-check-circle mr-2"></i> Submit Completion
-                    </button>
+                <!-- Action Buttons - same style as Order.vue ActionButtons / SaleConfirmationModal footer -->
+                <div v-if="order" class="sticky bottom-4 z-30">
+                    <div class="bg-gradient-to-r from-slate-50 to-gray-50 rounded-xl border border-slate-200 overflow-hidden shadow-sm">
+                        <div class="px-3 py-2">
+                            <div class="flex flex-col sm:flex-row justify-end gap-1.5 sm:justify-center">
+                                <button type="button" @click="handleUpdateCompletion"
+                                    class="inline-flex items-center justify-center px-3 py-1.5 border border-slate-300 shadow-sm text-xs font-semibold rounded-lg text-slate-700 bg-white hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200">
+                                    <i class="fa fa-refresh mr-1 text-xs"></i>
+                                    Update Details
+                                </button>
+                                <button type="button" @click="handleSubmitCompletion"
+                                    class="inline-flex items-center justify-center px-3 py-1.5 border border-transparent text-xs font-semibold rounded-lg text-white shadow-lg focus:outline-none focus:ring-2 focus:ring-offset-2 transition-all duration-200 hover:scale-105 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 focus:ring-green-500">
+                                    <i class="fa fa-check-circle mr-1 text-xs"></i>
+                                    Submit Completion
+                                </button>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>

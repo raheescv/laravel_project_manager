@@ -1,28 +1,21 @@
 <template>
-    <div class="flex flex-col gap-4">
-        <!-- Main Form Grid -->
-        <div class="grid grid-cols-1 xl:grid-cols-2 gap-4">
+    <div class="flex flex-col gap-3">
+        <!-- Main Form Grid - SaleConfirmationModal style padding -->
+        <div class="grid grid-cols-1 xl:grid-cols-2 gap-3">
             <!-- Left Column: Basic & Body Measurements -->
-            <div class="flex flex-col gap-4">
+            <div class="flex flex-col gap-3">
                 <div
-                    class="bg-white rounded-3xl shadow-lg shadow-slate-200/50 border border-slate-200 overflow-hidden flex flex-col h-full relative">
-                    <div class="absolute inset-0 bg-gradient-to-br from-blue-50/20 to-transparent pointer-events-none">
+                    class="bg-gradient-to-r from-slate-50 to-blue-50 border border-slate-200 rounded-lg overflow-hidden flex flex-col h-full">
+                    <div class="px-3 py-2 border-b border-slate-200 flex items-center gap-1">
+                        <i class="fa fa-info-circle text-blue-500 text-xs"></i>
+                        <h6 class="text-xs font-bold text-slate-800">Basic & Body</h6>
                     </div>
-
-                    <div
-                        class="px-4 py-3 border-b border-slate-100 flex items-center gap-3 relative z-10 bg-slate-50/30">
-                        <div
-                            class="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center text-blue-600 shadow-sm border border-blue-100">
-                            <i class="fa fa-info-circle text-sm"></i>
-                        </div>
-                        <h6 class="text-sm font-black text-slate-800 uppercase tracking-widest mb-0">Basic & Body</h6>
-                    </div>
-                    <div class="p-4 relative z-10">
-                        <div class="grid grid-cols-6 gap-3">
+                    <div class="p-1.5">
+                        <div class="grid grid-cols-6 gap-1.5">
                             <!-- Model Selection (Explicit) -->
-                            <div v-if="categoryModels.length > 0" class="col-span-3">
+                            <div v-if="categoryModels.length > 0" class="col-span-3 rounded-xl px-2 py-1.5 transition-all focus-within:bg-blue-50/80 focus-within:ring-2 focus-within:ring-blue-500/30 focus-within:ring-inset">
                                 <label
-                                    class="block text-[0.65rem] font-bold text-slate-400 uppercase tracking-widest mb-1 px-1">
+                                    class="block text-[0.65rem] font-bold text-slate-600 uppercase tracking-widest mb-1 px-1">
                                     Model
                                 </label>
                                 <div class="flex gap-1.5">
@@ -40,9 +33,9 @@
 
                                 <!-- Generic Input -->
                                 <div v-if="m.field_type === 'input'"
-                                    :class="m.field_key === 'length' ? 'col-span-3' : 'col-span-2'">
+                                    :class="[m.field_key === 'length' ? 'col-span-3' : 'col-span-2', 'rounded-xl px-2 py-1.5 transition-all focus-within:bg-blue-50/80 focus-within:ring-2 focus-within:ring-blue-500/30 focus-within:ring-inset']">
                                     <label
-                                        class="block text-[0.65rem] font-bold text-slate-400 uppercase tracking-widest mb-1 px-1">{{
+                                        class="block text-[0.65rem] font-bold text-slate-600 uppercase tracking-widest mb-1 px-1">{{
                                             m.label }}</label>
                                     <div class="relative">
                                         <div v-if="m.field_key === 'length'"
@@ -56,9 +49,9 @@
                                 </div>
 
                                 <!-- Generic Select -->
-                                <div v-else-if="m.field_type === 'select'" class="col-span-3">
+                                <div v-else-if="m.field_type === 'select'" class="col-span-3 rounded-xl px-2 py-1.5 transition-all focus-within:bg-blue-50/80 focus-within:ring-2 focus-within:ring-blue-500/30 focus-within:ring-inset">
                                     <label
-                                        class="block text-[0.65rem] font-bold text-slate-400 uppercase tracking-widest mb-1 px-1">{{
+                                        class="block text-[0.65rem] font-bold text-slate-600 uppercase tracking-widest mb-1 px-1">{{
                                             m.label }}</label>
                                     <div class="flex gap-1.5">
                                         <VSelect v-model="measurements[m.field_key]"
@@ -78,28 +71,20 @@
             </div>
 
             <!-- Right Column: Collar & Cuff -->
-            <div class="flex flex-col gap-4">
+            <div class="flex flex-col gap-3">
                 <div
-                    class="bg-white rounded-3xl shadow-lg shadow-slate-200/50 border border-slate-200 overflow-hidden flex flex-col h-full relative">
-                    <div
-                        class="absolute inset-0 bg-gradient-to-br from-emerald-50/20 to-transparent pointer-events-none">
+                    class="bg-gradient-to-r from-slate-50 to-blue-50 border border-slate-200 rounded-lg overflow-hidden flex flex-col h-full">
+                    <div class="px-3 py-2 border-b border-slate-200 flex items-center gap-1">
+                        <i class="fa fa-tag text-emerald-500 text-xs"></i>
+                        <h6 class="text-xs font-bold text-slate-800">Collar & Cuff</h6>
                     </div>
-
-                    <div
-                        class="px-4 py-3 border-b border-slate-100 flex items-center gap-3 relative z-10 bg-slate-50/30">
-                        <div
-                            class="w-8 h-8 rounded-lg bg-emerald-50 flex items-center justify-center text-emerald-600 shadow-sm border border-emerald-100">
-                            <i class="fa fa-tag text-sm"></i>
-                        </div>
-                        <h6 class="text-sm font-black text-slate-800 uppercase tracking-widest mb-0">Collar & Cuff</h6>
-                    </div>
-                    <div class="p-4 relative z-10">
-                        <div class="grid grid-cols-2 gap-x-4 gap-y-3">
+                    <div class="p-1.5">
+                        <div class="grid grid-cols-2 gap-x-3 gap-y-1.5">
                             <template v-for="m in getFieldsBySection('collar_cuff')" :key="m.id">
                                 <!-- Generic Input -->
-                                <div v-if="m.field_type === 'input'" class="col-span-1">
+                                <div v-if="m.field_type === 'input'" class="col-span-1 rounded-xl px-2 py-1.5 transition-all focus-within:bg-blue-50/80 focus-within:ring-2 focus-within:ring-blue-500/30 focus-within:ring-inset">
                                     <label
-                                        class="block text-[0.65rem] font-bold text-slate-400 uppercase tracking-widest mb-1 px-1">
+                                        class="block text-[0.65rem] font-bold text-slate-600 uppercase tracking-widest mb-1 px-1">
                                         {{ m.label }}
                                     </label>
                                     <input v-model="measurements[m.field_key]" type="text" :placeholder="m.label"
@@ -107,13 +92,13 @@
                                 </div>
 
                                 <!-- Generic Select -->
-                                <div v-else-if="m.field_type === 'select'" class="col-span-1">
+                                <div v-else-if="m.field_type === 'select'" class="col-span-1 rounded-xl px-2 py-1.5 transition-all focus-within:bg-blue-50/80 focus-within:ring-2 focus-within:ring-blue-500/30 focus-within:ring-inset">
                                     <label
                                         class="block text-[0.65rem] font-black text-blue-600 uppercase tracking-widest mb-1 px-1">
                                         {{ m.label }}
                                     </label>
                                     <div class="flex gap-1.5">
-                                        
+
                                         <VSelect v-model="measurements[m.field_key]"
                                             :options="getOptions(m.options_source).map(o => ({ value: o.value, label: o.value }))"
                                             :placeholder="`Select ${m.label}`" class="flex-1" />
@@ -132,34 +117,27 @@
             <!-- Bottom Sections: Full Width Specifications -->
             <div class="col-span-1 xl:col-span-2">
                 <div
-                    class="bg-white rounded-3xl shadow-lg shadow-slate-200/50 border border-slate-200 overflow-hidden relative">
-                    <div class="absolute inset-0 bg-gradient-to-tr from-amber-50/20 to-transparent pointer-events-none">
+                    class="bg-gradient-to-r from-slate-50 to-blue-50 border border-slate-200 rounded-lg overflow-hidden">
+                    <div class="px-3 py-2 border-b border-slate-200 flex items-center gap-1">
+                        <i class="fa fa-sliders text-amber-500 text-xs"></i>
+                        <h6 class="text-xs font-bold text-slate-800">Specifications</h6>
                     </div>
-
-                    <div
-                        class="px-4 py-3 border-b border-slate-100 flex items-center gap-3 relative z-10 bg-slate-50/30">
-                        <div
-                            class="w-8 h-8 rounded-lg bg-amber-50 flex items-center justify-center text-amber-600 shadow-sm border border-amber-100">
-                            <i class="fa fa-sliders text-sm"></i>
-                        </div>
-                        <h6 class="text-sm font-black text-slate-800 uppercase tracking-widest mb-0">Specifications</h6>
-                    </div>
-                    <div class="p-4 relative z-10">
-                        <div class="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-8 gap-3">
+                    <div class="p-1.5">
+                        <div class="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-8 gap-1.5">
                             <template v-for="m in getFieldsBySection('specifications')" :key="m.id">
                                 <!-- Generic Input -->
-                                <div v-if="m.field_type === 'input'" class="col-span-1">
+                                <div v-if="m.field_type === 'input'" class="col-span-1 rounded-xl px-2 py-1.5 transition-all focus-within:bg-blue-50/80 focus-within:ring-2 focus-within:ring-blue-500/30 focus-within:ring-inset">
                                     <label
-                                        class="block text-[0.65rem] font-bold text-slate-400 uppercase tracking-widest mb-1 px-1">{{
+                                        class="block text-[0.65rem] font-bold text-slate-600 uppercase tracking-widest mb-1 px-1">{{
                                             m.label }}</label>
                                     <input v-model="measurements[m.field_key]" type="text" :placeholder="m.label"
                                         class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-1.5 text-xs font-bold text-slate-700 focus:bg-white focus:border-blue-500 transition-all" />
                                 </div>
 
                                 <!-- Generic Select -->
-                                <div v-else-if="m.field_type === 'select'" class="col-span-1">
+                                <div v-else-if="m.field_type === 'select'" class="col-span-1 rounded-xl px-2 py-1.5 transition-all focus-within:bg-blue-50/80 focus-within:ring-2 focus-within:ring-blue-500/30 focus-within:ring-inset">
                                     <label
-                                        class="block text-[0.65rem] font-bold text-slate-400 uppercase tracking-widest mb-1 px-1">{{
+                                        class="block text-[0.65rem] font-bold text-slate-600 uppercase tracking-widest mb-1 px-1">{{
                                             m.label }}</label>
                                     <div class="flex gap-1">
                                         <VSelect v-model="measurements[m.field_key]"
@@ -180,20 +158,13 @@
             <!-- Notes Section -->
             <div class="col-span-1 xl:col-span-2">
                 <div
-                    class="bg-white rounded-3xl shadow-lg shadow-slate-200/50 border border-slate-200 overflow-hidden relative">
-                    <div class="absolute inset-0 bg-gradient-to-tr from-slate-50/20 to-transparent pointer-events-none">
+                    class="bg-gradient-to-r from-slate-50 to-blue-50 border border-slate-200 rounded-lg overflow-hidden">
+                    <div class="px-3 py-2 border-b border-slate-200 flex items-center gap-1">
+                        <i class="fa fa-file-text-o text-slate-500 text-xs"></i>
+                        <h6 class="text-xs font-bold text-slate-800">Tailoring Notes</h6>
                     </div>
-
-                    <div
-                        class="px-4 py-3 border-b border-slate-100 flex items-center gap-3 relative z-10 bg-slate-50/30">
-                        <div
-                            class="w-8 h-8 rounded-lg bg-slate-50 flex items-center justify-center text-slate-600 shadow-sm border border-slate-100">
-                            <i class="fa fa-file-text-o text-sm"></i>
-                        </div>
-                        <h6 class="text-sm font-black text-slate-800 uppercase tracking-widest mb-0">Tailoring Notes
-                        </h6>
-                    </div>
-                    <div class="p-4 relative z-10">
+                    <div class="p-1.5 rounded-xl px-2 py-1.5 transition-all focus-within:bg-blue-50/80 focus-within:ring-2 focus-within:ring-blue-500/30 focus-within:ring-inset">
+                        <label class="block text-[0.65rem] font-bold text-slate-600 uppercase tracking-widest mb-1 px-1">Tailoring Notes</label>
                         <textarea v-model="measurements.tailoring_notes" rows="2"
                             placeholder="Enter any special instructions or additional notes here..."
                             class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-medium text-slate-700 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all placeholder:text-slate-400 resize-none"></textarea>
@@ -289,7 +260,7 @@ watch(() => props.category, async (newCategory) => {
             const response = await axios.get(`/tailoring/order/category-models/${newCategory.id}`)
             if (response.data.success) {
                 categoryModels.value = response.data.data
-                // Removed aggressive clearing of tailoring_category_model_id 
+                // Removed aggressive clearing of tailoring_category_model_id
                 // to prevent data loss during edit and tab switching
             }
         } catch (error) {
