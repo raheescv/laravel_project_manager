@@ -10,12 +10,14 @@
             font-family: 'Segoe UI', Arial, sans-serif;
             margin: 0;
             padding: 20px;
-            background-color: #fff;
+            background-color: #e8e8e8;
             color: #000;
         }
 
+        /* On-screen preview: A4 landscape proportions */
         .print-container {
-            width: 900px;
+            width: 297mm;
+            min-height: 210mm;
             margin: auto;
             border: 1px solid #000;
             padding: 25px;
@@ -224,13 +226,19 @@
         }
 
         @media print {
+            @page {
+                size: A4 landscape;
+            }
+
             body {
                 padding: 0;
+                background-color: #fff;
             }
 
             .print-container {
                 border: 1px solid #000;
                 width: 100%;
+                min-height: auto;
             }
 
             .no-print {
