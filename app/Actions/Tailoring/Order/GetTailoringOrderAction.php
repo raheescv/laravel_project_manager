@@ -21,7 +21,7 @@ class GetTailoringOrderAction
                             $q->with('activeMeasurements');
                         },
                         'categoryModel:id,name',
-                        'product:id,name',
+                        'product:id,name,barcode',
                         'unit:id,name',
                         'tailor:id,name',
                         'order',
