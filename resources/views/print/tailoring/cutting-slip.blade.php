@@ -275,17 +275,13 @@
         @foreach (collect($common)->chunk(6) as $chunk)
             <div class="measure-grid">
                 @foreach ($chunk as $key => $entry)
-                    <div class="measure-box">
-                        <div class="measure-label">{{ $entry['label'] }}</div>
-                        <div class="measure-val">{{ $entry['value'] ?? '-' }}</div>
-                    </div>
+                    @if ($entry['value'])
+                        <div class="measure-box">
+                            <div class="measure-label">{{ $entry['label'] }}</div>
+                            <div class="measure-val">{{ $entry['value'] ?? '-' }}</div>
+                        </div>
+                    @endif
                 @endforeach
-                @for ($i = $chunk->count(); $i < 6; $i++)
-                    <div class="measure-box measure-box--empty">
-                        <div class="measure-label">&nbsp;</div>
-                        <div class="measure-val">&nbsp;</div>
-                    </div>
-                @endfor
             </div>
         @endforeach
 
