@@ -45,6 +45,19 @@ class PrintController extends Controller
         return view('print.sale.receipt', $data);
     }
 
+    public function tailoringCustomerReceipt(Request $request)
+    {
+        $data = $this->getPaymentReceiptViewData($request, [
+            'receiptTitle' => 'TAILORING PAYMENT RECEIPT',
+            'referenceColumnLabel' => 'Order No',
+            'referenceKey' => 'invoice_no',
+            'footerMessage' => 'THANK YOU FOR YOUR PAYMENT',
+            'pageTitle' => 'Tailoring Customer Receipt',
+        ]);
+
+        return view('print.sale.receipt', $data);
+    }
+
     /**
      * Build view data for the common payment receipt (sale receipts & sale return payments).
      *
@@ -54,7 +67,7 @@ class PrintController extends Controller
     {
         $customerName = $request->input('customer_name', 'Customer');
         $paymentDate = $request->input('payment_date', date('Y-m-d'));
-        $paymentMethodId = $request->input('payment_method_id');
+        $paymentMethodId = $request->input('payment_method_id') ?: $request->input('payment_method');
         $totalAmount = $request->input('total_amount', 0);
         $receiptData = json_decode($request->input('receipt_data', '[]'), true);
 

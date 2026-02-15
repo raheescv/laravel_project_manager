@@ -22,7 +22,7 @@ class CreateTailoringOrderAction
             DB::transaction(function () use ($data) {
                 $data['branch_id'] = $data['branch_id'] ?? session('branch_id');
                 $data['created_by'] = $this->userId;
-                $data['order_no'] = $data['order_no'] ?? TailoringOrder::generateOrderNo();
+                $data['order_no'] = getNextTailorOrderNo();
                 $data['order_date'] = $data['order_date'] ?? date('Y-m-d');
 
                 validationHelper(TailoringOrder::rules(), $data);

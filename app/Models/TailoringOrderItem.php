@@ -43,6 +43,7 @@ class TailoringOrderItem extends Model implements AuditableContracts
 
         'item_completion_date',
         'completed_quantity',
+        // 'status',
         'is_selected_for_completion',
         'tailoring_notes',
         'rating',

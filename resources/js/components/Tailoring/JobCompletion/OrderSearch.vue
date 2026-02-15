@@ -79,9 +79,9 @@
                                     <td class="px-4 py-3 text-[0.65rem] font-bold text-slate-500">{{ formatDate(order.order_date) }}</td>
                                     <td class="px-4 py-3 text-[0.65rem] font-bold text-slate-500">{{ formatDate(order.delivery_date) }}</td>
                                     <td class="px-4 py-3">
-                                        <span :class="getStatusBadgeClass(order.completion_status)"
+                                        <span :class="getStatusBadgeClass(order.status)"
                                             class="inline-flex items-center px-2 py-0.5 rounded-full text-[0.55rem] font-black uppercase tracking-tighter border">
-                                            {{ order.completion_status || 'Pending' }}
+                                            {{ order.status || 'Pending' }}
                                         </span>
                                     </td>
                                     <td class="px-4 py-3 text-right">

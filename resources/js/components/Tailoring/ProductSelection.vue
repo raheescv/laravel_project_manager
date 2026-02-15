@@ -39,66 +39,60 @@
                     <div class="relative">
                         <i class="field-icon fa fa-paint-brush"></i>
                         <input v-model="item.product_color" type="text" placeholder="—"
-                            @keydown.enter.prevent="handleAdd"
-                            class="field-input field-input-icon w-full" />
+                            @keydown.enter.prevent="handleAdd" class="field-input field-input-icon w-full" />
                     </div>
                 </div>
                 <!-- Qty -->
                 <div>
-                    <label class="field-label">Qty</label>
+                    <label class="field-label">No Of Qty</label>
                     <input v-model.number="item.quantity" type="number" step="0.001" min="0.001" placeholder="0"
-                        @input="calculateAmount"
-                        @keydown.enter.prevent="handleAdd"
+                        @input="calculateAmount" @keydown.enter.prevent="handleAdd"
                         class="field-input field-input-num w-full text-center" />
                 </div>
                 <!-- Qty/Item -->
                 <div>
-                    <label class="field-label">Qty/Item</label>
-                    <input v-model.number="item.quantity_per_item" type="number" step="0.001" min="0.001" placeholder="1"
-                        @input="calculateAmount"
-                        @keydown.enter.prevent="handleAdd"
+                    <label class="field-label">Qty Per Item</label>
+                    <input v-model.number="item.quantity_per_item" type="number" step="0.001" min="0.001"
+                        placeholder="1" @input="calculateAmount" @keydown.enter.prevent="handleAdd"
                         class="field-input field-input-num w-full text-center" />
                 </div>
                 <!-- Price -->
                 <div>
                     <label class="field-label">Price</label>
                     <input v-model.number="item.unit_price" type="number" step="0.01" min="0" placeholder="0"
-                        @input="calculateAmount"
-                        @keydown.enter.prevent="handleAdd"
+                        @input="calculateAmount" @keydown.enter.prevent="handleAdd"
                         class="field-input field-input-num w-full" />
                 </div>
                 <!-- Stitch -->
                 <div>
                     <label class="field-label">Stitching Rate</label>
                     <input v-model.number="item.stitch_rate" type="number" step="0.01" min="0" placeholder="0"
-                        @input="calculateAmount"
-                        @keydown.enter.prevent="handleAdd"
+                        @input="calculateAmount" @keydown.enter.prevent="handleAdd"
                         class="field-input field-input-num w-full text-center" />
                 </div>
                 <!-- Tax -->
                 <div>
                     <label class="field-label">Tax %</label>
                     <input v-model.number="item.tax" type="number" step="0.01" min="0" placeholder="0"
-                        @input="calculateAmount"
-                        @keydown.enter.prevent="handleAdd"
+                        @input="calculateAmount" @keydown.enter.prevent="handleAdd"
                         class="field-input field-input-num w-full text-center" />
                 </div>
                 <!-- Total -->
                 <div>
                     <label class="field-label text-emerald-600">Total</label>
-                    <div class="field-input field-total w-full bg-emerald-50 border-emerald-200 text-emerald-700 font-black">
+                    <div
+                        class="field-input field-total w-full bg-emerald-50 border-emerald-200 text-emerald-700 font-black">
                         {{ formatTotal(item.total) }}
                     </div>
                 </div>
                 <!-- Actions -->
-                <div class="col-span-2 sm:col-span-3 md:col-span-4 lg:col-span-1 flex flex-col-reverse sm:flex-row gap-1.5 justify-end items-end">
-                    <button type="button" @click="handleClear"
-                        class="action-btn action-btn-secondary">
+                <div
+                    class="col-span-2 sm:col-span-3 md:col-span-4 lg:col-span-1 flex flex-col-reverse sm:flex-row gap-1.5 justify-end items-end">
+                    <button type="button" @click="handleClear" class="action-btn action-btn-secondary">
                         <i class="fa fa-times"></i>
                         Clear
                     </button>
-                    <button type="button" @click="handleAdd" :disabled="isLoading"
-                        class="action-btn"
+                    <button type="button" @click="handleAdd" :disabled="isLoading" class="action-btn"
                         :class="isEditing ? 'action-btn-edit' : 'action-btn-add'">
                         <i v-if="isLoading" class="fa fa-spinner fa-spin"></i>
                         <i v-else :class="isEditing ? 'fa fa-save' : 'fa fa-plus'"></i>
@@ -411,33 +405,43 @@ onBeforeUnmount(() => {
 .field-label {
     @apply block text-slate-500 font-semibold text-[0.6rem] uppercase tracking-wider mb-0.5;
 }
+
 .field-input {
     @apply rounded-md border border-slate-200 bg-white px-2 py-1.5 text-xs font-medium focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 outline-none transition-all min-h-[2rem];
 }
+
 .field-input-icon {
     @apply pl-7;
 }
+
 .field-input-num {
     @apply font-bold tabular-nums;
 }
+
 .field-icon {
     @apply absolute left-2 top-1/2 -translate-y-1/2 text-slate-400 text-[10px] pointer-events-none;
 }
+
 .field-total {
     @apply py-1.5 px-2 text-xs;
 }
+
 .scan-btn {
     min-height: 2rem;
 }
+
 .action-btn {
     @apply px-3 py-2 rounded-md font-bold text-[0.65rem] uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all;
 }
+
 .action-btn-add {
     @apply bg-emerald-600 text-white hover:bg-emerald-500 shadow-md;
 }
+
 .action-btn-edit {
     @apply bg-amber-500 text-white hover:bg-amber-600 shadow-md;
 }
+
 .action-btn-secondary {
     @apply border border-slate-200 text-slate-500 hover:bg-slate-100 hover:text-slate-700;
 }

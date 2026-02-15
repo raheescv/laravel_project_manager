@@ -108,6 +108,6 @@ return [
     'configuration' => ['barcode', 'settings', 'cheque'],
     'tailoring category' => ['create', 'view', 'edit', 'delete'],
     'tailoring measurement option' => ['create', 'view', 'edit', 'delete'],
-    'tailoring.order' => ['view', 'create', 'edit', 'delete', 'export', 'view journal entries'],
-    'tailoring.job_completion' => ['view', 'create', 'edit', 'delete'],
+    'tailoring order' => ['view', 'create', 'edit', 'delete', 'export', 'view journal entries', 'receipts'],
+    'tailoring job completion' => ['view', 'create', 'edit', 'delete'],
 ];

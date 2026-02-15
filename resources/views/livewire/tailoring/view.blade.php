@@ -320,19 +320,25 @@
 
                                                     <div class="px-3">
                                                         <div class="row g-3">
-                                                            <div class="col-6 col-md-3 text-center">
+                                                            <div class="col-6 col-md text-center">
                                                                 <p class="text-uppercase fw-bold text-muted mb-1" style="font-size: 0.6rem;">Volume</p>
                                                                 <div class="bg-white border rounded-3 py-2 small fw-bold">
-                                                                    {{ $item->quantity }} <span class="text-muted">{{ $item->unit->name ?? 'Nos' }}</span>
+                                                                    {{ $item->quantity }} <span class="text-muted">{{ $item->unit?->name ?? 'Nos' }}</span>
                                                                 </div>
                                                             </div>
-                                                            <div class="col-6 col-md-3 text-center">
+                                                            <div class="col-6 col-md text-center">
+                                                                <p class="text-uppercase fw-bold text-muted mb-1" style="font-size: 0.6rem;">Completed Qty</p>
+                                                                <div class="bg-white border rounded-3 py-2 small fw-bold">
+                                                                    {{ number_format($item->completed_quantity, 3) }} <span class="text-muted">{{ $item->unit?->name ?? 'Nos' }}</span>
+                                                                </div>
+                                                            </div>
+                                                            <div class="col-6 col-md text-center">
                                                                 <p class="text-uppercase fw-bold text-muted mb-1" style="font-size: 0.6rem;">Shade</p>
                                                                 <div class="bg-white border rounded-3 py-2 small fw-bold">
                                                                     {{ $item->product_color ?: 'N/A' }}
                                                                 </div>
                                                             </div>
-                                                            <div class="col-6 col-md-3 text-center">
+                                                            <div class="col-6 col-md text-center">
                                                                 <p class="text-uppercase fw-bold text-muted mb-1" style="font-size: 0.6rem;">Rate</p>
                                                                 <div class="bg-white border rounded-3 py-2 small fw-bold">
                                                                     {{ currency($item->stitch_rate) }}
@@ -341,17 +347,16 @@
                                                             @php
                                                                 $phaseColors = [
                                                                     'Pending' => 'warning',
-                                                                    'In Progress' => 'primary',
                                                                     'Partially Completed' => 'indigo',
                                                                     'Completed' => 'success',
                                                                 ];
                                                                 $phaseColor = $phaseColors[$item->status] ?? 'secondary';
                                                             @endphp
-                                                            <div class="col-6 col-md-3 text-center">
+                                                            <div class="col-6 col-md text-center">
                                                                 <p class="text-uppercase fw-bold text-muted mb-1" style="font-size: 0.6rem;">Phase</p>
                                                                 <div
                                                                     class="rounded-3 py-2 small fw-bold bg-{{ $phaseColor }} bg-opacity-10 text-{{ $phaseColor }} border border-{{ $phaseColor }} border-opacity-10">
-                                                                    {{ $item->is_selected_for_completion > 0 ? 'Completed' : 'Pending' }}
+                                                                    {{ ucWords($item->status) }}
                                                                 </div>
                                                             </div>
                                                         </div>
@@ -364,84 +369,305 @@
                             </div>
                         </div>
 
-                        <!-- Payment History Table -->
-                        @if (count($order->payments) > 0)
-                            <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
-                                <div class="card-header bg-white p-4 border-bottom-0 d-flex justify-content-between align-items-center">
-                                    <h2 class="h6 fw-bolder text-dark mb-0">Financial History</h2>
-                                    <span class="badge bg-light text-muted border px-2 py-1 small">{{ count($order->payments) }} Transactions</span>
-                                </div>
-                                <div class="table-responsive">
-                                    <table class="table table-hover align-middle mb-0">
-                                        <thead class="bg-light bg-opacity-50">
-                                            <tr>
-                                                <th class="ps-4 py-3 text-uppercase fw-bold text-muted" style="font-size: 0.65rem;">Date</th>
-                                                <th class="py-3 text-uppercase fw-bold text-muted" style="font-size: 0.65rem;">Method</th>
-                                                <th class="pe-4 py-3 text-end text-uppercase fw-bold text-muted" style="font-size: 0.65rem;">Amount</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody class="border-top-0">
-                                            @foreach ($order->payments as $payment)
-                                                <tr>
-                                                    <td class="ps-4 py-3 small fw-medium text-secondary">{{ systemDate($payment->date) }}</td>
-                                                    <td class="py-3">
-                                                        <div class="d-flex align-items-center gap-2 small fw-bold text-dark">
-                                                            <div class="rounded-circle bg-primary" style="width: 6px; height: 6px;"></div>
-                                                            {{ $payment->paymentMethod->name ?? 'Cash' }}
+                        <!-- Payment Details / Journal Entries / Audit Report Tabs -->
+                        @php
+                            $hasPayments = $order->payments->count() > 0;
+                            $hasJournals = count($order->journals ?? []) > 0;
+                            $canViewJournals = auth()->user()?->can('tailoring order.view journal entries');
+                            $paymentTabActive = $hasPayments;
+                            $journalTabActive = !$hasPayments && $hasJournals && $canViewJournals;
+                            $auditTabActive = !$hasPayments && (!$canViewJournals || !$hasJournals);
+                        @endphp
+                        <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
+                            <div class="card-header bg-white border-bottom p-0">
+                                <ul class="nav nav-tabs border-0 gap-0" role="tablist">
+                                    <li class="nav-item" role="presentation">
+                                        <button class="nav-link rounded-0 py-3 px-4 fw-bold small border-0 {{ $paymentTabActive ? 'active' : '' }}"
+                                            data-bs-toggle="tab" data-bs-target="#tailoring-tab-payment-details" type="button" role="tab">
+                                            <i class="fa fa-credit-card me-2"></i>Payment Details
+                                            @if ($hasPayments)
+                                                <span class="badge bg-primary bg-opacity-25 text-primary ms-1">{{ $order->payments->count() }}</span>
+                                            @endif
+                                        </button>
+                                    </li>
+                                    @can('tailoring order.view journal entries')
+                                        <li class="nav-item" role="presentation">
+                                            <button class="nav-link rounded-0 py-3 px-4 fw-bold small border-0 {{ $journalTabActive ? 'active' : '' }}"
+                                                data-bs-toggle="tab" data-bs-target="#tailoring-tab-journal-entries" type="button" role="tab">
+                                                <i class="fa fa-book me-2"></i>Journal Entries
+                                                @if ($hasJournals)
+                                                    <span class="badge bg-primary bg-opacity-25 text-primary ms-1">{{ count($order->journals) }}</span>
+                                                @endif
+                                            </button>
+                                        </li>
+                                    @endcan
+                                    <li class="nav-item" role="presentation">
+                                        <button class="nav-link rounded-0 py-3 px-4 fw-bold small border-0 {{ $auditTabActive ? 'active' : '' }}"
+                                            data-bs-toggle="tab" data-bs-target="#tailoring-tab-audit-report" type="button" role="tab">
+                                            <i class="fa fa-history me-2"></i>Audit Report
+                                        </button>
+                                    </li>
+                                </ul>
+                            </div>
+                            <div class="card-body p-0">
+                                <div class="tab-content">
+                                    <!-- Payment Details -->
+                                    <div id="tailoring-tab-payment-details" class="tab-pane fade {{ $paymentTabActive ? 'show active' : '' }}" role="tabpanel">
+                                        <div class="p-4">
+                                            @if ($order->payments->count() > 0)
+                                                <div class="table-responsive">
+                                                    <table class="table table-striped align-middle table-sm mb-0">
+                                                        <thead>
+                                                            <tr class="bg-primary text-white">
+                                                                <th class="text-white" style="font-size: 0.65rem;">Date</th>
+                                                                <th class="text-white" style="font-size: 0.65rem;">Method</th>
+                                                                <th class="text-white text-end" style="font-size: 0.65rem;">Amount</th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody>
+                                                            @foreach ($order->payments as $payment)
+                                                                <tr>
+                                                                    <td>{{ systemDate($payment->date) }}</td>
+                                                                    <td>
+                                                                        <div class="d-flex align-items-center gap-2 small fw-bold text-dark">
+                                                                            <div class="rounded-circle bg-primary" style="width: 6px; height: 6px;"></div>
+                                                                            {{ $payment->paymentMethod->name ?? 'Cash' }}
+                                                                        </div>
+                                                                    </td>
+                                                                    <td class="text-end">{{ currency($payment->amount) }}</td>
+                                                                </tr>
+                                                            @endforeach
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+                                            @else
+                                                <p class="text-muted small mb-0 py-3"><i class="fa fa-info-circle me-2"></i>No payment transactions for this order.</p>
+                                            @endif
+                                        </div>
+                                    </div>
+
+                                    <!-- Journal Entries -->
+                                    @can('tailoring order.view journal entries')
+                                        <div id="tailoring-tab-journal-entries" class="tab-pane fade {{ $journalTabActive ? 'show active' : '' }}" role="tabpanel">
+                                            <div class="p-4">
+                                                @if (count($order->journals ?? []) > 0)
+                                                    <div class="table-responsive">
+                                                        <table class="table table-striped align-middle table-sm mb-0">
+                                                            <thead>
+                                                                <tr class="bg-primary text-white">
+                                                                    <th class="text-white text-end">SL No</th>
+                                                                    <th class="text-white">Date</th>
+                                                                    <th class="text-white">Account Name</th>
+                                                                    <th class="text-white">Description</th>
+                                                                    <th class="text-white text-end">Debit</th>
+                                                                    <th class="text-white text-end">Credit</th>
+                                                                </tr>
+                                                            </thead>
+                                                            <tbody>
+                                                                @foreach ($order->journals as $journal)
+                                                                    @foreach ($journal->entries()->where('account_id', '!=', $order->account_id)->get() as $entry)
+                                                                        <tr>
+                                                                            <td class="text-end">{{ $entry->id }}</td>
+                                                                            <td>{{ systemDate($entry->date) }}</td>
+                                                                            <td>
+                                                                                <a href="{{ route('account::view', $entry->account_id) }}" class="text-primary text-decoration-none">
+                                                                                    {{ $entry->account?->name }}
+                                                                                </a>
+                                                                            </td>
+                                                                            <td>{{ $entry->remarks }}</td>
+                                                                            <td class="text-end">{{ currency($entry->debit) }}</td>
+                                                                            <td class="text-end">{{ currency($entry->credit) }}</td>
+                                                                        </tr>
+                                                                    @endforeach
+                                                                @endforeach
+                                                            </tbody>
+                                                        </table>
+                                                    </div>
+                                                @else
+                                                    <p class="text-muted small mb-0 py-3"><i class="fa fa-info-circle me-2"></i>No journal entries for this order.</p>
+                                                @endif
+                                            </div>
+                                        </div>
+                                    @endcan
+
+                                    <!-- Audit Report -->
+                                    <div id="tailoring-tab-audit-report" class="tab-pane fade {{ $auditTabActive ? 'show active' : '' }}" role="tabpanel">
+                                        <div class="p-4">
+                                            <ul class="nav nav-pills nav-fill gap-2 mb-4" role="tablist">
+                                                <li class="nav-item" role="presentation">
+                                                    <button class="nav-link rounded-3 fw-bold small active" data-bs-toggle="tab" data-bs-target="#audit-order" type="button">
+                                                        <i class="fa fa-file-text-o me-2"></i>Order
+                                                    </button>
+                                                </li>
+                                                <li class="nav-item" role="presentation">
+                                                    <button class="nav-link rounded-3 fw-bold small" data-bs-toggle="tab" data-bs-target="#audit-order-items" type="button">
+                                                        <i class="fa fa-list me-2"></i>Order Items
+                                                    </button>
+                                                </li>
+                                                <li class="nav-item" role="presentation">
+                                                    <button class="nav-link rounded-3 fw-bold small" data-bs-toggle="tab" data-bs-target="#audit-order-measurement" type="button">
+                                                        <i class="fa fa-ruler-combined me-2"></i>Order Measurement
+                                                    </button>
+                                                </li>
+                                                <li class="nav-item" role="presentation">
+                                                    <button class="nav-link rounded-3 fw-bold small" data-bs-toggle="tab" data-bs-target="#audit-payments" type="button">
+                                                        <i class="fa fa-credit-card me-2"></i>Payments
+                                                    </button>
+                                                </li>
+                                            </ul>
+                                            <div class="tab-content">
+                                                <div id="audit-order" class="tab-pane fade show active" role="tabpanel">
+                                                    @php $orderAudits = $order->audits ?? collect(); @endphp
+                                                    @if ($orderAudits->isNotEmpty())
+                                                        @php
+                                                            $orderColumns = $orderAudits->pluck('new_values')->filter()->map(fn($item) => is_array($item) ? array_keys($item) : [])->flatten()->unique()->values()->all();
+                                                        @endphp
+                                                        <div class="table-responsive">
+                                                            <table class="table table-striped align-middle table-bordered table-sm mb-0">
+                                                                <thead>
+                                                                    <tr class="bg-primary text-white">
+                                                                        <th class="text-white text-nowrap" style="font-size: 0.65rem;">Date Time</th>
+                                                                        <th class="text-white" style="font-size: 0.65rem;">User</th>
+                                                                        <th class="text-white" style="font-size: 0.65rem;">Event</th>
+                                                                        @foreach ($orderColumns as $key)
+                                                                            <th class="text-white text-end text-nowrap" style="font-size: 0.65rem;">{{ \Illuminate\Support\Str::title(str_replace('_', ' ', $key)) }}</th>
+                                                                        @endforeach
+                                                                    </tr>
+                                                                </thead>
+                                                                <tbody>
+                                                                    @foreach ($orderAudits as $audit)
+                                                                        <tr>
+                                                                            <td class="text-nowrap small">{{ $audit->created_at }}</td>
+                                                                            <td class="small">{{ $audit->user?->name }}</td>
+                                                                            <td class="small">{{ $audit->event }}</td>
+                                                                            @foreach ($orderColumns as $key)
+                                                                                <td class="text-end text-nowrap small">{{ $audit->new_values[$key] ?? '' }}</td>
+                                                                            @endforeach
+                                                                        </tr>
+                                                                    @endforeach
+                                                                </tbody>
+                                                            </table>
                                                         </div>
-                                                    </td>
-                                                    <td class="pe-4 py-3 text-end fw-bold text-success">{{ currency($payment->amount) }}</td>
-                                                </tr>
-                                            @endforeach
-                                        </tbody>
-                                    </table>
+                                                    @else
+                                                        <p class="text-muted small mb-0 py-3"><i class="fa fa-info-circle me-2"></i>No audit history for this order.</p>
+                                                    @endif
+                                                </div>
+                                                <div id="audit-order-items" class="tab-pane fade" role="tabpanel">
+                                                    @php $itemAudits = collect($order->items ?? [])->flatMap->audits; @endphp
+                                                    @if ($itemAudits->isNotEmpty())
+                                                        @php
+                                                            $itemColumns = $itemAudits->pluck('new_values')->filter()->map(fn($item) => is_array($item) ? array_keys($item) : [])->flatten()->unique()->values()->all();
+                                                        @endphp
+                                                        <div class="table-responsive">
+                                                            <table class="table table-striped align-middle table-bordered table-sm mb-0">
+                                                                <thead>
+                                                                    <tr class="bg-primary text-white">
+                                                                        <th class="text-white text-nowrap" style="font-size: 0.65rem;">Date Time</th>
+                                                                        <th class="text-white" style="font-size: 0.65rem;">User</th>
+                                                                        <th class="text-white" style="font-size: 0.65rem;">Event</th>
+                                                                        @foreach ($itemColumns as $key)
+                                                                            <th class="text-white text-end text-nowrap" style="font-size: 0.65rem;">{{ \Illuminate\Support\Str::title(str_replace('_', ' ', $key)) }}</th>
+                                                                        @endforeach
+                                                                    </tr>
+                                                                </thead>
+                                                                <tbody>
+                                                                    @foreach ($itemAudits as $audit)
+                                                                        <tr>
+                                                                            <td class="text-nowrap small">{{ $audit->created_at }}</td>
+                                                                            <td class="small">{{ $audit->user?->name }}</td>
+                                                                            <td class="small">{{ $audit->event }}</td>
+                                                                            @foreach ($itemColumns as $key)
+                                                                                <td class="text-end text-nowrap small">{{ $audit->new_values[$key] ?? '' }}</td>
+                                                                            @endforeach
+                                                                        </tr>
+                                                                    @endforeach
+                                                                </tbody>
+                                                            </table>
+                                                        </div>
+                                                    @else
+                                                        <p class="text-muted small mb-0 py-3"><i class="fa fa-info-circle me-2"></i>No audit history for order items.</p>
+                                                    @endif
+                                                </div>
+                                                <div id="audit-order-measurement" class="tab-pane fade" role="tabpanel">
+                                                    @php $measurementAudits = collect($order->measurements ?? [])->flatMap->audits; @endphp
+                                                    @if ($measurementAudits->isNotEmpty())
+                                                        @php
+                                                            $measurementColumns = $measurementAudits->pluck('new_values')->filter()->map(fn($item) => is_array($item) ? array_keys($item) : [])->flatten()->unique()->values()->all();
+                                                        @endphp
+                                                        <div class="table-responsive">
+                                                            <table class="table table-striped align-middle table-bordered table-sm mb-0">
+                                                                <thead>
+                                                                    <tr class="bg-primary text-white">
+                                                                        <th class="text-white text-nowrap" style="font-size: 0.65rem;">Date Time</th>
+                                                                        <th class="text-white" style="font-size: 0.65rem;">User</th>
+                                                                        <th class="text-white" style="font-size: 0.65rem;">Event</th>
+                                                                        @foreach ($measurementColumns as $key)
+                                                                            <th class="text-white text-end text-nowrap" style="font-size: 0.65rem;">{{ \Illuminate\Support\Str::title(str_replace('_', ' ', $key)) }}</th>
+                                                                        @endforeach
+                                                                    </tr>
+                                                                </thead>
+                                                                <tbody>
+                                                                    @foreach ($measurementAudits as $audit)
+                                                                        <tr>
+                                                                            <td class="text-nowrap small">{{ $audit->created_at }}</td>
+                                                                            <td class="small">{{ $audit->user?->name }}</td>
+                                                                            <td class="small">{{ $audit->event }}</td>
+                                                                            @foreach ($measurementColumns as $key)
+                                                                                <td class="text-end text-nowrap small">{{ $audit->new_values[$key] ?? '' }}</td>
+                                                                            @endforeach
+                                                                        </tr>
+                                                                    @endforeach
+                                                                </tbody>
+                                                            </table>
+                                                        </div>
+                                                    @else
+                                                        <p class="text-muted small mb-0 py-3"><i class="fa fa-info-circle me-2"></i>No audit history for order measurements.</p>
+                                                    @endif
+                                                </div>
+                                                <div id="audit-payments" class="tab-pane fade" role="tabpanel">
+                                                    @php
+                                                        $paymentAudits = collect($order->payments ?? [])->flatMap->audits;
+                                                    @endphp
+                                                    @if ($paymentAudits->isNotEmpty())
+                                                        @php
+                                                            $paymentColumns = $paymentAudits->pluck('new_values')->filter()->map(fn($item) => is_array($item) ? array_keys($item) : [])->flatten()->unique()->values()->all();
+                                                        @endphp
+                                                        <div class="table-responsive">
+                                                            <table class="table table-striped align-middle table-bordered table-sm mb-0">
+                                                                <thead>
+                                                                    <tr class="bg-primary text-white">
+                                                                        <th class="text-white text-nowrap" style="font-size: 0.65rem;">Date Time</th>
+                                                                        <th class="text-white" style="font-size: 0.65rem;">User</th>
+                                                                        <th class="text-white" style="font-size: 0.65rem;">Event</th>
+                                                                        @foreach ($paymentColumns as $key)
+                                                                            <th class="text-white text-end text-nowrap" style="font-size: 0.65rem;">{{ \Illuminate\Support\Str::title(str_replace('_', ' ', $key)) }}</th>
+                                                                        @endforeach
+                                                                    </tr>
+                                                                </thead>
+                                                                <tbody>
+                                                                    @foreach ($paymentAudits as $audit)
+                                                                        <tr>
+                                                                            <td class="text-nowrap small">{{ $audit->created_at }}</td>
+                                                                            <td class="small">{{ $audit->user?->name }}</td>
+                                                                            <td class="small">{{ $audit->event }}</td>
+                                                                            @foreach ($paymentColumns as $key)
+                                                                                <td class="text-end text-nowrap small">{{ $audit->new_values[$key] ?? '' }}</td>
+                                                                            @endforeach
+                                                                        </tr>
+                                                                    @endforeach
+                                                                </tbody>
+                                                            </table>
+                                                        </div>
+                                                    @else
+                                                        <p class="text-muted small mb-0 py-3"><i class="fa fa-info-circle me-2"></i>No audit history for payments.</p>
+                                                    @endif
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
-                        @endif
-
-                        <!-- Journal Entries -->
-                        @can('tailoring.order.view journal entries')
-                            @if (count($order->journals ?? []) > 0)
-                                <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
-                                    <div class="card-header bg-white p-4 border-bottom-0 d-flex justify-content-between align-items-center">
-                                        <h2 class="h6 fw-bolder text-dark mb-0">Journal Entries</h2>
-                                        <span class="badge bg-light text-muted border px-2 py-1 small">{{ count($order->journals) }} Journal(s)</span>
-                                    </div>
-                                    <div class="table-responsive">
-                                        <table class="table table-striped align-middle table-sm mb-0">
-                                            <thead>
-                                                <tr class="bg-primary text-white">
-                                                    <th class="text-white text-end">SL No</th>
-                                                    <th class="text-white">Date</th>
-                                                    <th class="text-white">Account Name</th>
-                                                    <th class="text-white">Description</th>
-                                                    <th class="text-white text-end">Debit</th>
-                                                    <th class="text-white text-end">Credit</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                @foreach ($order->journals as $journal)
-                                                    @foreach ($journal->entries()->where('account_id','!=',$order->account_id)->get() as $entry)
-                                                        <tr>
-                                                            <td class="text-end">{{ $entry->id }}</td>
-                                                            <td>{{ systemDate($entry->date) }}</td>
-                                                            <td>
-                                                                <a href="{{ route('account::view', $entry->account_id) }}" class="text-primary text-decoration-none">
-                                                                    {{ $entry->account?->name }}
-                                                                </a>
-                                                            </td>
-                                                            <td>{{ $entry->remarks }}</td>
-                                                            <td class="text-end">{{ currency($entry->debit) }}</td>
-                                                            <td class="text-end">{{ currency($entry->credit) }}</td>
-                                                        </tr>
-                                                    @endforeach
-                                                @endforeach
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                </div>
-                            @endif
-                        @endcan
+                        </div>
                     </div>
                 </div>
             </div>

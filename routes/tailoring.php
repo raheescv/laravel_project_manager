@@ -28,20 +28,25 @@ Route::middleware('auth')->group(function (): void {
 
     // Tailoring Order Routes
     Route::name('tailoring::order::')->prefix('tailoring/order')->controller(OrderController::class)->group(function (): void {
-        Route::get('', 'index')->name('index')->can('tailoring.order.view');
-        Route::get('create', 'page')->name('create')->can('tailoring.order.create');
-        Route::get('edit/{id}', 'page')->name('edit')->can('tailoring.order.edit');
-        Route::post('', 'store')->name('store')->can('tailoring.order.create');
-        Route::put('{id}', 'update')->name('update')->can('tailoring.order.edit');
-        Route::get('{id}', 'show')->name('show')->can('tailoring.order.view');
-        Route::get('print/cutting-slip/{id}/{category_id}/{model_id?}', 'printCuttingSlip')->name('print-cutting-slip')->can('tailoring.order.view');
-        Route::delete('{id}', 'destroy')->name('destroy')->can('tailoring.order.delete');
+        Route::get('', 'index')->name('index')->can('tailoring order.view');
+        Route::get('create', 'page')->name('create')->can('tailoring order.create');
+        Route::get('edit/{id}', 'page')->name('edit')->can('tailoring order.edit');
+        Route::post('', 'store')->name('store')->can('tailoring order.create');
+        Route::put('{id}', 'update')->name('update')->can('tailoring order.edit');
+        Route::get('{id}', 'show')->name('show')->can('tailoring order.view');
+        Route::get('print/cutting-slip/{id}/{category_id}/{model_id?}', 'printCuttingSlip')->name('print-cutting-slip')->can('tailoring order.view');
+        Route::delete('{id}', 'destroy')->name('destroy')->can('tailoring order.delete');
+    });
+
+    // Tailoring Receipts
+    Route::name('tailoring::receipts::')->prefix('tailoring/receipts')->controller(OrderController::class)->group(function (): void {
+        Route::get('', 'receiptsPage')->name('index')->can('tailoring order.view');
     });
 
     // Job Completion Routes
     Route::name('tailoring::job-completion::')->prefix('tailoring/job-completion')->controller(OrderController::class)->group(function (): void {
-        Route::get('', 'jobCompletionPage')->name('index')->can('tailoring.job_completion.view');
-        Route::get('create', 'jobCompletionPage')->name('create')->can('tailoring.job_completion.create');
+        Route::get('', 'jobCompletionPage')->name('index')->can('tailoring job completion.view');
+        Route::get('create', 'jobCompletionPage')->name('create')->can('tailoring job completion.create');
     });
 
     // Job Completion API Routes

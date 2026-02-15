@@ -25,13 +25,15 @@ class GetTailoringOrderAction
                         'unit:id,name',
                         'tailor:id,name',
                         'order',
+                        'audits.user',
                     ])->orderBy('item_no');
                 },
                 'payments' => function ($query) {
-                    $query->with('paymentMethod:id,name')->orderBy('date');
+                    $query->with(['paymentMethod:id,name', 'audits.user'])->orderBy('date');
                 },
-                'measurements',
+                'measurements.audits.user',
                 'journals.entries.account',
+                'audits.user',
             ])->findOrFail($id);
 
             // Merge measurements into items for frontend compatibility

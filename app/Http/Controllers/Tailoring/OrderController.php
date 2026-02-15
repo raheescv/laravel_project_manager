@@ -42,6 +42,11 @@ class OrderController extends Controller
         return view('tailoring.index');
     }
 
+    public function receiptsPage()
+    {
+        return view('tailoring.receipts');
+    }
+
     public function create()
     {
         return $this->page();
@@ -71,7 +76,7 @@ class OrderController extends Controller
 
         $orderData = [
             'id' => null,
-            'order_no' => TailoringOrder::generateOrderNo(),
+            'order_no' => '',
             'order_date' => date('Y-m-d'),
             'delivery_date' => date('Y-m-d', strtotime('+7 days')),
             'customer_id' => null,
@@ -587,7 +592,7 @@ class OrderController extends Controller
 
         $orders = $query->latest()
             ->limit(20)
-            ->get(['id', 'order_no', 'customer_name', 'customer_mobile', 'order_date', 'delivery_date', 'status', 'completion_status']);
+            ->get(['id', 'order_no', 'customer_name', 'customer_mobile', 'order_date', 'delivery_date', 'status']);
 
         return response()->json([
             'success' => true,

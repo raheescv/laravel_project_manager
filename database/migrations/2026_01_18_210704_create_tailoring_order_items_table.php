@@ -49,6 +49,7 @@ return new class() extends Migration
             $table->date('item_completion_date')->nullable();
             $table->decimal('completed_quantity', 8, 3)->nullable()->default(0);
             $table->boolean('is_selected_for_completion')->default(false);
+            $table->enum('status', array_keys(tailoringOrderItemStatuses()))->storedAs("IF(completed_quantity >= quantity, 'completed', IF(completed_quantity > 0, 'partially completed', 'pending'))");
 
             // Additional
             $table->text('tailoring_notes')->nullable();

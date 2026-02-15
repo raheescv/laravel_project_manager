@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use OwenIt\Auditing\Auditable;
 use OwenIt\Auditing\Contracts\Auditable as AuditableContracts;
+use Illuminate\Support\Facades\Auth;
 
 class TailoringPayment extends Model implements AuditableContracts
 {
@@ -45,16 +46,16 @@ class TailoringPayment extends Model implements AuditableContracts
     {
         static::creating(function ($payment): void {
             if (empty($payment->created_by)) {
-                $payment->created_by = auth()->id();
+                $payment->created_by = Auth::id();
             }
             if (empty($payment->updated_by)) {
-                $payment->updated_by = auth()->id();
+                $payment->updated_by = Auth::id();
             }
         });
 
         static::updating(function ($payment): void {
             if (empty($payment->updated_by)) {
-                $payment->updated_by = auth()->id();
+                $payment->updated_by = Auth::id();
             }
         });
 

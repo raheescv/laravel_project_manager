@@ -13,5 +13,8 @@ Route::middleware('auth')->group(function (): void {
         Route::name('sale_return::')->prefix('sale-return')->group(function (): void {
             Route::get('payment-receipt', 'saleReturnPaymentReceipt')->name('payment-receipt');
         });
+        Route::name('tailoring::')->prefix('tailoring')->group(function (): void {
+            Route::get('customer-receipt', 'tailoringCustomerReceipt')->name('customer-receipt');
+        });
     });
 });

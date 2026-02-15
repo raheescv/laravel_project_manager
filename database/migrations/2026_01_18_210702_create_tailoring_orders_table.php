@@ -34,7 +34,7 @@ return new class() extends Migration
             $table->decimal('balance', 16, 2)->storedAs('grand_total - paid');
             $table->string('payment_method_ids')->nullable();
             $table->string('payment_method_name')->nullable();
-            $table->enum('status', ['draft', 'pending', 'confirmed', 'in_progress', 'completed', 'delivered', 'cancelled'])->default('draft');
+            $table->enum('status', array_keys(tailoringOrderStatuses()))->default('pending');
             $table->text('notes')->nullable();
 
             $table->unsignedBigInteger('rack_id')->nullable();
@@ -42,7 +42,6 @@ return new class() extends Migration
             $table->unsignedBigInteger('cutter_id')->nullable();
             $table->foreign('cutter_id')->references('id')->on('users')->onDelete('set null');
             $table->date('completion_date')->nullable();
-            $table->enum('completion_status', ['pending', 'in_progress', 'completed', 'delivered'])->nullable();
 
             $table->unsignedBigInteger('created_by')->references('id')->on('users');
             $table->unsignedBigInteger('updated_by')->nullable()->references('id')->on('users');

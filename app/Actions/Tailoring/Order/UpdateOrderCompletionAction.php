@@ -23,9 +23,6 @@ class UpdateOrderCompletionAction
             if (isset($data['completion_date'])) {
                 $order->completion_date = $data['completion_date'];
             }
-            if (isset($data['completion_status'])) {
-                $order->completion_status = $data['completion_status'];
-            }
 
             $order->save();
 

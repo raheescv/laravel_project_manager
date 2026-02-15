@@ -3,12 +3,12 @@
         <div class="row g-3">
             <div class="col-md-4 d-flex align-items-center">
                 <div class="btn-group">
-                    @can('tailoring.order.export')
+                    @can('tailoring order.export')
                         <button class="btn btn-sm btn-outline-primary" title="Export as Excel" wire:click="export()">
                             <i class="demo-pli-file-excel me-1"></i> Export
                         </button>
                     @endcan
-                    @can('tailoring.order.delete')
+                    @can('tailoring order.delete')
                         <button class="btn btn-sm btn-outline-danger" title="Delete selected items" wire:click="delete()" wire:confirm="Are you sure you want to delete the selected items?">
                             <i class="demo-pli-recycling me-1"></i> Delete
                         </button>

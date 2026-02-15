@@ -13,18 +13,14 @@ class SubmitOrderCompletionAction
             $order->updated_by = $userId;
 
             // Update completion status
-            $order->completion_status = 'completed';
             if (isset($data['completion_date'])) {
                 $order->completion_date = $data['completion_date'];
             } else {
                 $order->completion_date = date('Y-m-d');
             }
-
             // Update status of selected items
             if (isset($data['selected_item_ids']) && is_array($data['selected_item_ids'])) {
-                $order->items()->whereIn('id', $data['selected_item_ids'])->update([
-                    'is_selected_for_completion' => true,
-                ]);
+                $order->items()->whereIn('id', $data['selected_item_ids'])->update(['is_selected_for_completion' => true]);
 
                 // Update item completion data if provided
                 if (isset($data['items']) && is_array($data['items'])) {
@@ -36,6 +32,7 @@ class SubmitOrderCompletionAction
                                 if (empty($itemData['item_completion_date']) && empty($item->item_completion_date)) {
                                     $itemData['item_completion_date'] = $order->completion_date;
                                 }
+                                $itemData['completed_quantity'] = $item->quantity;
                                 $item->updateCompletion($itemData);
                             }
                         }
@@ -46,6 +43,7 @@ class SubmitOrderCompletionAction
             // Update order status if all items completed
             $totalItems = $order->items()->count();
             $completedItems = $order->items()->where('is_selected_for_completion', true)->count();
+
             if ($totalItems > 0 && $totalItems == $completedItems) {
                 $order->status = 'completed';
             }

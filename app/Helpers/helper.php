@@ -481,6 +481,25 @@ if (! function_exists('getNextSaleInvoiceNo')) {
         return $invoice;
     }
 }
+if (! function_exists('getNextTailorOrderNo')) {
+    function getNextTailorOrderNo()
+    {
+        $branchCode = session('branch_code', 'M');
+        $prefix = 'TA-';
+
+        if ($branchCode) {
+            $prefix .= $branchCode.'-';
+        }
+
+        $year = now()->format('y');
+
+        $orderPrefix = $prefix.$year.'-';
+
+        $number = getNextUniqueNumber('TailoringOrder');
+
+        return $orderPrefix.str_pad($number, 4, '0', STR_PAD_LEFT);
+    }
+}
 if (! function_exists('getNextUniqueNumber')) {
     function getNextUniqueNumber($segment = 'Sale')
     {
@@ -592,6 +611,29 @@ if (! function_exists('packageStatuses')) {
             'in_progress' => 'In Progress',
             'completed' => 'Completed',
             'cancelled' => 'Cancelled',
+        ];
+    }
+}
+
+if (! function_exists('tailoringOrderStatuses')) {
+    function tailoringOrderStatuses()
+    {
+        return [
+            'pending' => 'Pending',
+            'completed' => 'Completed',
+            'delivered' => 'Delivered',
+            'cancelled' => 'Cancelled',
+        ];
+    }
+}
+
+if (! function_exists('tailoringOrderItemStatuses')) {
+    function tailoringOrderItemStatuses()
+    {
+        return [
+            'pending' => 'Pending',
+            'partially completed' => 'Partially Completed',
+            'completed' => 'Completed',
         ];
     }
 }

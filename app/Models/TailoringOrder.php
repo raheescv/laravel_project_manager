@@ -46,7 +46,6 @@ class TailoringOrder extends Model implements AuditableContracts
         'rack_id',
         'cutter_id',
         'completion_date',
-        'completion_status',
         'created_by',
         'updated_by',
         'deleted_by',
@@ -94,18 +93,6 @@ class TailoringOrder extends Model implements AuditableContracts
                 $order->updated_by = Auth::id();
             }
         });
-    }
-
-    public static function generateOrderNo()
-    {
-        // Generate order number like RA3HAWO2404
-        $prefix = 'TA'; // Tailoring prefix
-        $year = date('y');
-        $month = date('m');
-        $day = date('d');
-        $random = strtoupper(substr(uniqid(), -4));
-
-        return $prefix.$year.$month.$day.$random;
     }
 
     // Relationships
@@ -208,11 +195,6 @@ class TailoringOrder extends Model implements AuditableContracts
     public function scopeByCustomer($query, $customerName)
     {
         return $query->where('customer_name', 'like', "%{$customerName}%");
-    }
-
-    public function scopeByCompletionStatus($query, $status)
-    {
-        return $query->where('completion_status', $status);
     }
 
     public function scopeFilter(Builder $query, array $filters): Builder

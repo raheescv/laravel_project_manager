@@ -33,7 +33,7 @@
                             <i class="fa fa-th-list text-xs"></i>
                             <span>Orders List</span>
                         </a>
-                        <a href="/tailoring/order" class="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-white text-blue-700 hover:bg-white/95 shadow-sm transition-all no-underline">
+                        <a href="/tailoring/order/create" class="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-white text-blue-700 hover:bg-white/95 shadow-sm transition-all no-underline">
                             <i class="fa fa-plus text-xs"></i>
                             <span>New Order</span>
                         </a>
@@ -119,7 +119,6 @@ import { router } from '@inertiajs/vue3'
 import OrderSearch from '@/components/Tailoring/JobCompletion/OrderSearch.vue'
 import CompletionHeader from '@/components/Tailoring/JobCompletion/CompletionHeader.vue'
 import CompletionItemsTable from '@/components/Tailoring/JobCompletion/CompletionItemsTable.vue'
-import StatusBar from '@/components/Tailoring/JobCompletion/CompletionStatusBar.vue'
 import axios from 'axios'
 
 const props = defineProps({
