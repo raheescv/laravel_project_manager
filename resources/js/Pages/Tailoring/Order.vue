@@ -108,7 +108,7 @@
                                                 Use Previous
                                             </button>
                                         </div>
-                                        <div class="bg-gradient-to-r from-slate-50 to-blue-50 border border-slate-200 rounded-lg p-1.5">
+                                        <div class="bg-slate-50 border border-slate-200 rounded-lg p-1.5">
                                             <MeasurementForm v-if="activeEditKey && measurements[activeEditKey]"
                                                 :key="activeEditKey"
                                                 v-model="measurements[activeEditKey]"

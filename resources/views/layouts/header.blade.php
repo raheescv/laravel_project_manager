@@ -232,7 +232,7 @@
                                     @endcan
                                     @can('tailoring measurement option.view')
                                         <a href="{{ route('settings::tailoring_measurement_option::index') }}" class="list-group-item list-group-item-action">
-                                            <i class="fa fa-ruler fs-5 me-2"></i>Tailoring Measurement Option
+                                            <i class="fa fa-sliders fs-5 me-2"></i>Tailoring Measurement Option
                                         </a>
                                     @endcan
                                     @can('department.view')

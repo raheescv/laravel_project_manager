@@ -122,18 +122,18 @@ class OrderController extends Controller
             ->distinct()
             ->pluck('options_source')
             ->toArray();
-
         $options = [];
         foreach ($types as $type) {
             // Get from dedicated table
             $tableOptions = array_values(TailoringMeasurementOption::getOptionsByType($type));
-
-            // Also get from history if some are missing (MySQL JSON path syntax)
-            $historyOptions = TailoringOrderMeasurement::whereNotNull("data->{$type}")
-                ->distinct()
-                ->pluck("data->{$type}")
-                ->filter()
-                ->map(fn ($v) => (string) $v)
+            // Also get from history if some are missing (only from rows that have this key)
+            $historyOptions = TailoringOrderMeasurement::whereNotNull('data')
+                ->get(['data'])
+                ->pluck('data')
+                ->filter(fn ($data) => is_array($data) && isset($data[$type]) && $data[$type] !== null && $data[$type] !== '')
+                ->map(fn ($data) => (string) $data[$type])
+                ->unique()
+                ->values()
                 ->toArray();
 
             $merged = array_unique(array_merge($tableOptions, $historyOptions));
