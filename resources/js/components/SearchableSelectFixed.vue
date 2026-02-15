@@ -25,7 +25,7 @@
                     <div v-if="filteredOptions.length === 0 && !searchTerm" class="px-3 py-2 small text-muted">
                         No options available
                     </div>
-                    <div v-else-if="filteredOptions.length === 0 && (searchTerm && searchTerm.length >= 2 || loading)"
+                    <div v-else-if="loading && filteredOptions.length === 0 && !remoteSearchResolved"
                         class="px-3 py-2 small text-muted text-center">
                         <div class="spinner-border spinner-border-sm text-primary me-2" role="status"></div>
                         <span>Searching...</span>
@@ -99,6 +99,7 @@ const emit = defineEmits(['update:modelValue', 'change', 'search', 'open'])
 const searchTerm = ref('')
 const showDropdown = ref(false)
 const highlightedIndex = ref(0)
+const remoteSearchResolved = ref(false)
 const dropdown = ref(null)
 const dropdownMenu = ref(null)
 const searchInput = ref(null)
@@ -142,6 +143,7 @@ const filteredOptions = ref([])
 const filterOptions = () => {
     // Emit search event when the search term changes with at least 2 characters
     if (searchTerm.value && searchTerm.value.trim().length >= 2) {
+        remoteSearchResolved.value = false
         emit('search', searchTerm.value.trim())
     }
 
@@ -331,6 +333,7 @@ watch(() => props.modelValue, () => {
 
 // Watch for changes in options
 watch(() => props.options, () => {
+    remoteSearchResolved.value = true
     // If there's an active search term, filter the new options
     if (searchTerm.value && searchTerm.value.trim().length >= 2) {
         const searchLower = searchTerm.value.toLowerCase().trim()

@@ -1,16 +1,19 @@
 <template>
     <div class="min-h-screen bg-[#f8fafc] font-sans">
         <!-- Page Header - SaleConfirmationModal style gradient -->
-        <div class="bg-gradient-to-r from-blue-600 via-blue-700 to-indigo-700 pt-4 pb-16 px-3 relative overflow-hidden shadow-lg">
+        <div
+            class="bg-gradient-to-r from-blue-600 via-blue-700 to-indigo-700 pt-4 pb-16 px-3 relative overflow-hidden shadow-lg">
             <div class="max-w-[1600px] mx-auto relative z-10">
                 <!-- Breadcrumbs - light on gradient -->
                 <div class="flex items-center gap-2 text-white/80 text-xs mb-2 transition-all">
-                    <a href="/dashboard" class="hover:text-white no-underline flex items-center gap-1 transition-colors">
+                    <a href="/dashboard"
+                        class="hover:text-white no-underline flex items-center gap-1 transition-colors">
                         <i class="fa fa-home"></i>
                         <span>Home</span>
                     </a>
                     <i class="fa fa-chevron-right text-[10px] opacity-60"></i>
-                    <a href="/tailoring/order" class="hover:text-white no-underline flex items-center gap-1 transition-colors">
+                    <a href="/tailoring/order"
+                        class="hover:text-white no-underline flex items-center gap-1 transition-colors">
                         <i class="fa fa-scissors"></i>
                         <span>Tailoring</span>
                     </a>
@@ -24,16 +27,20 @@
                             <i class="fa fa-shopping-cart text-white text-xs"></i>
                         </div>
                         <div>
-                            <h1 class="text-base font-bold text-white tracking-tight leading-tight">Tailoring Studio</h1>
-                            <p class="text-white/80 text-xs font-medium leading-tight">Create and manage your tailoring orders with ease</p>
+                            <h1 class="text-base font-bold text-white tracking-tight leading-tight">Tailoring Studio
+                            </h1>
+                            <p class="text-white/80 text-xs font-medium leading-tight">Create and manage your tailoring
+                                orders with ease</p>
                         </div>
                     </div>
                     <div class="flex flex-wrap gap-1.5">
-                        <a href="/tailoring/order" class="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border border-white/20 bg-white/10 text-white hover:bg-white/20 transition-all no-underline">
+                        <a href="/tailoring/order"
+                            class="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border border-white/20 bg-white/10 text-white hover:bg-white/20 transition-all no-underline">
                             <i class="fa fa-th-list text-xs"></i>
                             <span>Orders List</span>
                         </a>
-                        <a :href="form.id && form.order_no ? `/tailoring/job-completion?order_no=${form.order_no}` : '/tailoring/job-completion'" class="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-white text-blue-700 hover:bg-white/95 shadow-sm transition-all no-underline">
+                        <a :href="form.id && form.order_no ? `/tailoring/job-completion?order_no=${form.order_no}` : '/tailoring/job-completion'"
+                            class="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-white text-blue-700 hover:bg-white/95 shadow-sm transition-all no-underline">
                             <i class="fa fa-tasks text-xs"></i>
                             <span>Job Completion</span>
                         </a>
@@ -46,40 +53,25 @@
         <div class="max-w-[1600px] mx-auto px-3 -mt-12 relative z-20 pb-8">
             <div class="space-y-3">
                 <!-- Order Header Section -->
-                <OrderHeader
-                    v-model:orderNo="form.order_no"
-                    v-model:customer="form.customer_name"
-                    v-model:customerId="form.account_id"
-                    v-model:contact="form.customer_mobile"
-                    v-model:salesman="form.salesman_id"
-                    v-model:orderDate="form.order_date"
-                    v-model:deliveryDate="form.delivery_date"
-                    :customers="customers"
-                    :salesmen="salesmen"
-                    @add-customer="showCustomerModal = true"
-                    @customer-selected="handleCustomerSelected"
-                />
+                <OrderHeader v-model:orderNo="form.order_no" v-model:customer="form.customer_name"
+                    v-model:customerId="form.account_id" v-model:contact="form.customer_mobile"
+                    v-model:salesman="form.salesman_id" v-model:orderDate="form.order_date"
+                    v-model:deliveryDate="form.delivery_date" :customers="customers" :salesmen="salesmen"
+                    @add-customer="showCustomerModal = true" @customer-selected="handleCustomerSelected" />
 
                 <!-- Category Selection -->
-                <CategoryHeader
-                    :categories="categories"
-                    :selectedCategories="selectedCategories"
-                    @category-selected="handleCategorySelection"
-                />
+                <CategoryHeader :categories="categories" :selectedCategories="selectedCategories"
+                    @category-selected="handleCategorySelection" />
 
                 <!-- Main Content: Measurements and Styling - Modal-style cards -->
                 <div v-if="selectedCategories.length > 0" class="animate-[fadeIn_0.5s_ease-out]">
                     <!-- Category Tabs - Modal payment-option style -->
                     <div class="flex gap-1.5 overflow-x-auto pb-3 scrollbar-hide">
-                        <button
-                            v-for="id in selectedCategories"
-                            :key="id"
-                            @click="activeCategoryTab = id"
+                        <button v-for="id in selectedCategories" :key="id" @click="activeCategoryTab = id"
                             class="whitespace-nowrap px-3 py-2 rounded-lg font-bold text-xs transition-all duration-300 flex items-center gap-1.5 border-2"
                             :class="activeCategoryTab === id
                                 ? 'bg-gradient-to-r from-blue-500 to-indigo-600 border-blue-500 text-white shadow-lg'
-                                : 'bg-white border-slate-200 text-slate-700 hover:border-blue-300 hover:bg-blue-50'"
-                        >
+                                : 'bg-white border-slate-200 text-slate-700 hover:border-blue-300 hover:bg-blue-50'">
                             <i class="fa fa-dot-circle-o text-xs" v-if="activeCategoryTab === id"></i>
                             <span class="w-2 h-2 rounded-full bg-current opacity-40" v-else></span>
                             {{ getCategory(id)?.name }}
@@ -93,25 +85,22 @@
                                 <div class="grid grid-cols-1 gap-3">
                                     <!-- Measurement Form - Modal section style -->
                                     <div class="mb-3">
-                                        <div class="flex flex-col sm:flex-row sm:items-center justify-between mb-1.5 gap-1">
+                                        <div
+                                            class="flex flex-col sm:flex-row sm:items-center justify-between mb-1.5 gap-1">
                                             <h6 class="text-xs font-bold text-slate-800 flex items-center gap-1">
                                                 <i class="fa fa-pencil-square-o text-amber-500 text-xs"></i>
                                                 <span>{{ getCategory(activeCategoryTab)?.name }} Measurements</span>
                                             </h6>
-                                            <button
-                                                type="button"
-                                                @click="openPreviousMeasurements"
+                                            <button type="button" @click="openPreviousMeasurements"
                                                 :disabled="!form.account_id"
-                                                class="shrink-0 inline-flex items-center justify-center px-3 py-1.5 rounded-lg text-xs font-semibold border border-slate-200 bg-white text-slate-700 hover:bg-blue-50 hover:border-blue-200 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
-                                            >
+                                                class="shrink-0 inline-flex items-center justify-center px-3 py-1.5 rounded-lg text-xs font-semibold border border-slate-200 bg-white text-slate-700 hover:bg-blue-50 hover:border-blue-200 disabled:opacity-50 disabled:cursor-not-allowed transition-all">
                                                 <i class="fa fa-history text-blue-500 text-xs mr-1"></i>
                                                 Use Previous
                                             </button>
                                         </div>
                                         <div class="bg-slate-50 border border-slate-200 rounded-lg p-1.5">
                                             <MeasurementForm v-if="activeEditKey && measurements[activeEditKey]"
-                                                :key="activeEditKey"
-                                                v-model="measurements[activeEditKey]"
+                                                :key="activeEditKey" v-model="measurements[activeEditKey]"
                                                 :category="getCategory(activeCategoryTab)"
                                                 :measurementOptions="measurementOptions"
                                                 @add-option="handleAddMeasurementOption" />
@@ -124,7 +113,8 @@
                                             <i class="fa fa-shopping-cart text-emerald-500 text-xs"></i>
                                             <span>Fabric & Services</span>
                                         </h6>
-                                        <div class="bg-gradient-to-r from-slate-50 to-blue-50 border border-slate-200 rounded-lg p-1.5">
+                                        <div
+                                            class="bg-gradient-to-r from-slate-50 to-blue-50 border border-slate-200 rounded-lg p-1.5">
                                             <ProductSelection v-if="activeEditKey && currentItems[activeEditKey]"
                                                 v-model="currentItems[activeEditKey]" :products="products"
                                                 :colors="colors" :isLoading="isAddingItem[activeCategoryTab]"
@@ -156,7 +146,8 @@
                                     <SummaryTable :items="form.items" />
                                 </div>
                                 <div class="lg:col-span-9">
-                                    <WorkOrdersPreview :items="form.items" @edit="handleEditItem" @remove="handleRemoveItem" />
+                                    <WorkOrdersPreview :items="form.items" @edit="handleEditItem"
+                                        @remove="handleRemoveItem" />
                                 </div>
                             </div>
                         </div>
@@ -186,17 +177,14 @@
         <CustomPaymentModal :show="showCustomPaymentModal" :total-amount="grandTotal" :payment-methods="paymentMethods"
             :initial-payments="form.payments" @close="showCustomPaymentModal = false" @save="handleCustomPaymentSave" />
 
-        <OldMeasurementModal
-            :show="showOldMeasurementModal"
-            :account-id="form.account_id"
+        <OldMeasurementModal :show="showOldMeasurementModal" :account-id="form.account_id"
             :category-id="pendingOldMeasurementCategoryId"
             :category-name="getCategory(pendingOldMeasurementCategoryId)?.name"
-            :category="getCategory(pendingOldMeasurementCategoryId)"
-            @select="handleOldMeasurementSelect"
-            @skip="handleOldMeasurementSkip"
-        />
+            :category="getCategory(pendingOldMeasurementCategoryId)" @select="handleOldMeasurementSelect"
+            @skip="handleOldMeasurementSkip" />
 
-        <BarcodeScanner :isOpen="isScannerOpen" emitRawBarcode @barcode-scanned="handleBarcodeScanned" @close="closeScanner" />
+        <BarcodeScanner :isOpen="isScannerOpen" emitRawBarcode @barcode-scanned="handleBarcodeScanned"
+            @close="closeScanner" />
     </div>
 </template>
 
@@ -243,6 +231,10 @@ const props = defineProps({
         type: Object,
         default: () => ({})
     },
+    tailoringRedirectionPage: {
+        type: String,
+        default: 'create'
+    }
 })
 
 const toast = useToast()
@@ -685,9 +677,7 @@ const handleCreateOrder = () => {
 const processSubmitOrder = async () => {
     isSubmitting.value = true
     try {
-        const url = form.value.id ?
-            `/tailoring/order/${form.value.id}` :
-            '/tailoring/order'
+        const url = form.value.id ? `/tailoring/order/${form.value.id}` : '/tailoring/order'
 
         const method = form.value.id ? 'put' : 'post'
 
@@ -716,8 +706,11 @@ const processSubmitOrder = async () => {
             // Get the order ID from response or use existing form ID
             const orderId = response.data.data?.id || form.value.id || response.data.id
 
-            // Normal redirect (not Inertia way)
-            window.location.href = `/tailoring/order/${orderId}`
+            // Redirect based on tailoring config (create page vs show page)
+            const redirectUrl = props.tailoringRedirectionPage === 'show'
+                ? `/tailoring/order/${orderId}`
+                : '/tailoring/order/create'
+            window.location.href = redirectUrl
         } else {
             toast.error(response.data.message || 'Failed to save order')
             isSubmitting.value = false
@@ -848,33 +841,43 @@ onMounted(() => {
 
 <style scoped>
 @keyframes shimmer {
-  0% { transform: translateX(-100%); }
-  100% { transform: translateX(100%); }
+    0% {
+        transform: translateX(-100%);
+    }
+
+    100% {
+        transform: translateX(100%);
+    }
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
 }
 
 @keyframes fadeSlideUp {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 .scrollbar-hide::-webkit-scrollbar {
-  display: none;
+    display: none;
 }
+
 .scrollbar-hide {
-  -ms-overflow-style: none;
-  scrollbar-width: none;
+    -ms-overflow-style: none;
+    scrollbar-width: none;
 }
 </style>
-
-

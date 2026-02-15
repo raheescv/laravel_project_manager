@@ -44,7 +44,7 @@
                             <i class="fa fa-phone text-xs"></i>
                         </div>
                         <input :value="contact" @input="$emit('update:contact', $event.target.value)" type="tel"
-                            placeholder="Enter contact..." 
+                            placeholder="Enter contact..."
                             class="w-full rounded-xl border border-slate-200 bg-white shadow-sm focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 transition-all duration-300 text-sm py-1.5 pl-9 pr-4 font-medium placeholder:text-slate-300" />
                     </div>
                 </div>
@@ -53,7 +53,7 @@
                 <div class="md:col-span-1 lg:col-span-2">
                     <label class="block text-slate-500 font-bold text-[0.7rem] uppercase tracking-widest mb-1 px-1">Salesman</label>
                     <SearchableSelect :modelValue="salesman" :options="salesmen" placeholder="Select Salesman"
-                        @update:modelValue="$emit('update:salesman', $event)" 
+                        @update:modelValue="$emit('update:salesman', $event)"
                         input-class="w-full rounded-xl border border-slate-200 bg-white shadow-sm focus:border-purple-500 focus:ring-4 focus:ring-purple-500/10 transition-all duration-300 text-sm py-1.5 px-4 font-medium" />
                 </div>
 
@@ -63,13 +63,13 @@
                         <div>
                             <label class="block text-slate-500 font-bold text-[0.7rem] uppercase tracking-widest mb-1 px-1">Order Date</label>
                             <input :value="orderDate" @input="$emit('update:orderDate', $event.target.value)"
-                                type="date" 
+                                type="date"
                                 class="w-full rounded-xl border border-slate-200 bg-white shadow-sm focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all duration-300 text-sm py-1.5 px-3 font-medium cursor-pointer" />
                         </div>
                         <div>
                             <label class="block text-slate-500 font-bold text-[0.7rem] uppercase tracking-widest mb-1 px-1">Delivery</label>
                             <input :value="deliveryDate" @input="$emit('update:deliveryDate', $event.target.value)"
-                                type="date" 
+                                type="date"
                                 class="w-full rounded-xl border border-slate-200 bg-white shadow-sm focus:border-rose-500 focus:ring-4 focus:ring-rose-500/10 transition-all duration-300 text-sm py-1.5 px-3 font-medium cursor-pointer" />
                         </div>
                     </div>

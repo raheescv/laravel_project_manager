@@ -25,6 +25,7 @@ use App\Models\TailoringCategory;
 use App\Models\TailoringCategoryMeasurement;
 use App\Models\TailoringCategoryModel;
 use App\Models\TailoringMeasurementOption;
+use App\Models\Configuration;
 use App\Models\TailoringOrder;
 use App\Models\TailoringOrderItem;
 use App\Models\TailoringOrderMeasurement;
@@ -101,6 +102,10 @@ class OrderController extends Controller
         $customerTypes = CustomerType::pluck('name', 'id')->toArray();
 
         $countries = Country::pluck('name', 'name')->toArray();
+        $tailoringRedirectionPage = Configuration::where('key', 'tailoring_redirection_page')->value('value') ?? 'create';
+        if($id){
+            $tailoringRedirectionPage = 'show';
+        }
         $data = [
             'order' => $orderData,
             'categories' => $categories,
@@ -110,6 +115,7 @@ class OrderController extends Controller
             'paymentMethods' => $paymentMethods,
             'customerTypes' => $customerTypes,
             'countries' => $countries,
+            'tailoringRedirectionPage' => $tailoringRedirectionPage,
         ];
 
         return Inertia::render('Tailoring/Order', $data);

@@ -21,7 +21,7 @@
                             @keydown.arrow-down.prevent="navigateDown" @keydown.arrow-up.prevent="navigateUp"
                             @keydown.enter.prevent="selectHighlighted" @keydown.escape="hideDropdown" type="text"
                             class="form-control form-control-sm" :placeholder="filterPlaceholder" autocomplete="off" />
-                        <div v-if="loading" class="position-absolute end-0 top-50 translate-middle-y pe-3">
+                        <div v-if="loading && !remoteSearchResolved" class="position-absolute end-0 top-50 translate-middle-y pe-3">
                             <div class="spinner-border spinner-border-sm text-primary" role="status"></div>
                         </div>
                     </div>
@@ -30,11 +30,11 @@
                     <div v-if="filteredOptions.length === 0 && !searchTerm" class="px-3 py-2 small text-muted">
                         No options available
                     </div>
-                    <div v-else-if="filteredOptions.length === 0 && searchTerm && !loading"
+                    <div v-else-if="filteredOptions.length === 0 && searchTerm && (!loading || remoteSearchResolved)"
                         class="px-3 py-2 small text-muted">
                         No results found for "{{ searchTerm }}"
                     </div>
-                    <div v-else-if="loading && filteredOptions.length === 0" class="px-3 py-2 small text-muted">
+                    <div v-else-if="loading && filteredOptions.length === 0 && !remoteSearchResolved" class="px-3 py-2 small text-muted">
                         Searching...
                     </div>
                     <div v-for="(option, index) in filteredOptions" :key="option.value" @click="selectOption(option)"
@@ -91,6 +91,8 @@ const emit = defineEmits(['update:modelValue', 'change', 'search', 'open'])
 const searchTerm = ref('')
 const showDropdown = ref(false)
 const highlightedIndex = ref(0)
+// In remote mode, set when options have been updated after a search (so we can show "No results" even before loading becomes false)
+const remoteSearchResolved = ref(false)
 const dropdown = ref(null)
 const dropdownMenu = ref(null)
 const noResultsMenu = ref(null)
@@ -126,6 +128,7 @@ const filteredOptions = ref([])
 const filterOptions = () => {
     if (props.remote) {
         filteredOptions.value = [] // Clear old results during new search
+        remoteSearchResolved.value = false
         emit('search', searchTerm.value)
         return
     }
@@ -246,6 +249,9 @@ onMounted(() => {
 
 // Watch for changes in options
 watch(() => props.options, () => {
+    if (props.remote) {
+        remoteSearchResolved.value = true
+    }
     filteredOptions.value = normalizedOptions.value
     if (showDropdown.value) {
         nextTick(() => {
