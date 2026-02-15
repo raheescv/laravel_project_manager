@@ -71,32 +71,40 @@
         }
 
         .measure-box {
-            border: 1px solid #000;
-            border-radius: 6px;
+            border: none;
+            border-radius: 0;
             display: flex;
-            align-items: center;
-            height: 35px;
-            overflow: hidden;
+            flex-direction: column;
+            align-items: stretch;
+            gap: 0;
+        }
+
+        .measure-label {
+            font-size: 0.65rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.02em;
+            color: #555;
+            margin-bottom: 3px;
+            line-height: 1.2;
         }
 
         .measure-val {
-            width: 40%;
-            background: #f0f0f0;
-            border-right: 1px solid #000;
-            height: 100%;
+            border: 1px solid #000;
+            border-radius: 4px;
+            background: #f8f8f8;
+            min-height: 32px;
             display: flex;
             align-items: center;
             justify-content: center;
             font-weight: bold;
-            font-size: 1rem;
+            font-size: 0.95rem;
         }
 
-        .measure-label {
-            width: 60%;
-            padding-left: 8px;
-            font-weight: bold;
-            font-size: 0.75rem;
-            color: #444;
+        .measure-box--empty .measure-label,
+        .measure-box--empty .measure-val {
+            border-color: transparent;
+            background: transparent;
         }
 
         .slip-table {
@@ -268,12 +276,15 @@
             <div class="measure-grid">
                 @foreach ($chunk as $key => $entry)
                     <div class="measure-box">
-                        <div class="measure-val">{{ $entry['value'] ?? '-' }}</div>
                         <div class="measure-label">{{ $entry['label'] }}</div>
+                        <div class="measure-val">{{ $entry['value'] ?? '-' }}</div>
                     </div>
                 @endforeach
                 @for ($i = $chunk->count(); $i < 6; $i++)
-                    <div class="measure-box" style="border: none;"></div>
+                    <div class="measure-box measure-box--empty">
+                        <div class="measure-label">&nbsp;</div>
+                        <div class="measure-val">&nbsp;</div>
+                    </div>
                 @endfor
             </div>
         @endforeach
@@ -319,7 +330,10 @@
                     @endif
                 </div>
             </div>
-            <div class="measure-box" style="border: none;"></div>
+            <div class="measure-box measure-box--empty">
+                <div class="measure-label">&nbsp;</div>
+                <div class="measure-val">&nbsp;</div>
+            </div>
         </div>
 
         <table class="slip-table">
