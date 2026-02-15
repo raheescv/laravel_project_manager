@@ -94,12 +94,22 @@
             border-radius: 4px;
             background: #f8f8f8;
             min-height: 32px;
+            min-width: 0;
             display: flex;
             align-items: center;
             justify-content: center;
             font-weight: bold;
             font-size: 0.95rem;
+            overflow: hidden;
+            padding: 4px 6px;
+            text-align: center;
+        }
+
+        .measure-val-inner {
+            min-width: 0;
             white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
 
         .measure-box--empty .measure-label,
@@ -279,7 +289,7 @@
                     @if ($entry['value'])
                         <div class="measure-box">
                             <div class="measure-label">{{ $entry['label'] }}</div>
-                            <div class="measure-val">{{ $entry['value'] ?? '-' }}</div>
+                            <div class="measure-val"><span class="measure-val-inner">{{ $entry['value'] ?? '-' }}</span></div>
                         </div>
                     @endif
                 @endforeach
