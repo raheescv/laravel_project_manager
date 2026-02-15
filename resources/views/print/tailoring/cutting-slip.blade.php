@@ -6,23 +6,34 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Cutting Slip - {{ $order->order_no }}</title>
     <style>
-        body {
+        * {
+            box-sizing: border-box;
+        }
+
+        html, body {
             font-family: 'Segoe UI', Arial, sans-serif;
             margin: 0;
-            padding: 16px;
+            padding: 0;
             background-color: #e8e8e8;
             color: #000;
         }
 
-        /* On-screen preview: A4 landscape proportions */
+        body {
+            padding: 16px;
+        }
+
+        /* Fit to A4 landscape: 297mm × 210mm */
         .print-container {
             width: 297mm;
-            min-height: 210mm;
+            height: 210mm;
+            max-width: 297mm;
+            max-height: 210mm;
             margin: auto;
             border: 1px solid #000;
-            padding: 18px 20px;
+            padding: 10mm 12mm;
             box-sizing: border-box;
             background: #fff;
+            overflow: hidden;
         }
 
         .header {
@@ -228,17 +239,27 @@
         @media print {
             @page {
                 size: A4 landscape;
+                margin: 0;
             }
 
-            body {
+            html, body {
+                width: 297mm;
+                height: 210mm;
+                margin: 0;
                 padding: 0;
                 background-color: #fff;
+                overflow: hidden;
             }
 
             .print-container {
-                border: 1px solid #000;
-                width: 100%;
-                min-height: auto;
+                width: 297mm;
+                height: 210mm;
+                max-width: 297mm;
+                max-height: 210mm;
+                margin: 0;
+                border: none;
+                padding: 10mm 12mm;
+                border-radius: 0;
             }
 
             .no-print {
