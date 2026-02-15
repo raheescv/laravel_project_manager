@@ -9,7 +9,7 @@
         body {
             font-family: 'Segoe UI', Arial, sans-serif;
             margin: 0;
-            padding: 20px;
+            padding: 16px;
             background-color: #e8e8e8;
             color: #000;
         }
@@ -20,7 +20,7 @@
             min-height: 210mm;
             margin: auto;
             border: 1px solid #000;
-            padding: 25px;
+            padding: 18px 20px;
             box-sizing: border-box;
             background: #fff;
         }
@@ -28,9 +28,9 @@
         .header {
             display: flex;
             justify-content: space-between;
-            margin-bottom: 20px;
+            margin-bottom: 14px;
             border-bottom: 2px solid #000;
-            padding-bottom: 10px;
+            padding-bottom: 8px;
         }
 
         .header-left h1 {
@@ -68,8 +68,8 @@
         .measure-grid {
             display: grid;
             grid-template-columns: repeat(6, 1fr);
-            gap: 8px;
-            margin-bottom: 12px;
+            gap: 6px;
+            margin-bottom: 10px;
         }
 
         .measure-box {
@@ -88,7 +88,7 @@
             letter-spacing: 0.02em;
             white-space: nowrap;
             color: #555;
-            margin-bottom: 3px;
+            margin-bottom: 2px;
             line-height: 1.2;
         }
 
@@ -96,7 +96,7 @@
             border: 1px solid #000;
             border-radius: 4px;
             background: #f8f8f8;
-            min-height: 32px;
+            min-height: 28px;
             min-width: 0;
             display: flex;
             align-items: center;
@@ -104,7 +104,7 @@
             font-weight: bold;
             font-size: 0.95rem;
             overflow: hidden;
-            padding: 4px 6px;
+            padding: 3px 5px;
             text-align: center;
         }
 
@@ -124,13 +124,13 @@
         .slip-table {
             width: 100%;
             border-collapse: collapse;
-            margin: 20px 0;
+            margin: 10px 0 12px 0;
             font-size: 0.85rem;
         }
 
         .slip-table th {
             border: 1px solid #000;
-            padding: 10px 5px;
+            padding: 6px 5px;
             background-color: #f2f2f2;
             text-transform: capitalize;
             font-weight: bold;
@@ -138,7 +138,7 @@
 
         .slip-table td {
             border: 1px solid #000;
-            padding: 10px 8px;
+            padding: 6px 6px;
             text-align: center;
         }
 
@@ -151,19 +151,19 @@
         .highlight-yellow {
             background-color: #ffff00;
             font-weight: bold;
-            padding: 2px 5px;
+            padding: 2px 4px;
         }
 
         .info-bar {
             display: grid;
             grid-template-columns: repeat(8, 1fr);
             border: 1px solid #000;
-            margin-top: 10px;
+            margin-top: 8px;
             background: #fff;
         }
 
         .info-bar div {
-            padding: 8px 4px;
+            padding: 5px 4px;
             text-align: center;
             border-right: 1px solid #000;
             font-size: 0.7rem;
@@ -176,27 +176,27 @@
             grid-template-columns: repeat(8, 1fr);
             border: 1px solid #000;
             border-top: none;
-            margin-bottom: 20px;
-            min-height: 30px;
+            margin-bottom: 12px;
+            min-height: 26px;
         }
 
         .info-values div {
             border-right: 1px solid #000;
-            padding: 5px;
+            padding: 4px;
             text-align: center;
             font-weight: bold;
         }
 
         .bottom-section {
             display: flex;
-            gap: 30px;
-            margin-top: 20px;
+            gap: 24px;
+            margin-top: 12px;
         }
 
         .field-row {
             display: flex;
             align-items: center;
-            margin-bottom: 12px;
+            margin-bottom: 8px;
             font-size: 0.9rem;
             font-weight: bold;
         }
@@ -204,22 +204,22 @@
         .field-input {
             flex: 1;
             border-bottom: 1px dashed #000;
-            margin-left: 10px;
-            min-height: 22px;
+            margin-left: 8px;
+            min-height: 18px;
         }
 
         .qr-placeholder {
-            width: 110px;
-            height: 110px;
+            width: 90px;
+            height: 90px;
             border: 1px solid #eee;
-            padding: 5px;
+            padding: 4px;
         }
 
         .signature-row {
             display: flex;
             justify-content: space-between;
-            margin-top: 50px;
-            padding-top: 10px;
+            margin-top: 24px;
+            padding-top: 8px;
             border-top: 1px solid #eee;
             font-size: 0.9rem;
             font-weight: bold;
@@ -307,8 +307,8 @@
 
         {{-- Per-item reference (e.g. Mar Size, Mar Model) --}}
         @if (count($separate) > 0)
-            <div style="margin-bottom: 12px;">
-                <table class="slip-table" style="margin: 0 0 12px 0;">
+            <div style="margin-bottom: 10px;">
+                <table class="slip-table" style="margin: 0 0 10px 0;">
                     <thead>
                         <tr>
                             <th style="width: 120px;">Product No</th>
@@ -384,7 +384,7 @@
                 </div>
                 <div class="field-row">Tailor Name: <div class="field-input">{{ $firstItem->tailor->name ?? '' }}</div>
                 </div>
-                <div class="field-row" style="margin-top: 20px; gap: 40px;">
+                <div class="field-row" style="margin-top: 12px; gap: 32px;">
                     <label><input type="checkbox" {{ $order->status == 'confirmed' ? 'checked' : '' }}> Booking</label>
                     <label><input type="checkbox" {{ $order->status == 'completed' ? 'checked' : '' }}> Finished</label>
                     <label><input type="checkbox" {{ $order->status == 'delivered' ? 'checked' : '' }}> Delivered</label>
@@ -393,7 +393,7 @@
             <div style="flex: 1; text-align: right;">
                 <div class="field-row">Remarks: <div class="field-input"></div>
                 </div>
-                <div style="display: inline-block; margin-top: 10px;">
+                <div style="display: inline-block; margin-top: 8px;">
                     <div class="qr-placeholder">
                         <img src="https://api.qrserver.com/v1/create-qr-code/?size=100x100&data={{ $order->order_no }}-{{ $categoryId }}" alt="QR Code" width="100">
                     </div>
@@ -407,7 +407,7 @@
         </div>
     </div>
 
-    <div class="no-print" style="text-align: center; margin-top: 20px; padding-bottom: 40px;">
+    <div class="no-print" style="text-align: center; margin-top: 16px; padding-bottom: 32px;">
         <button onclick="window.print()" style="padding: 12px 30px; cursor: pointer; background: #000; color: #fff; border: none; border-radius: 5px; font-weight: bold; font-size: 1rem;">Print Cutting
             Slip</button>
     </div>
