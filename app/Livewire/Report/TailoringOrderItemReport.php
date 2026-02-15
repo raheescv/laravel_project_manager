@@ -185,7 +185,7 @@ class TailoringOrderItemReport extends Component
             'product_color' => 'Color',
             'unit' => 'Unit',
             'quantity' => 'Qty',
-            'quantity_per_item' => 'Qty Per Item',
+            'quantity_per_item' => 'Meter Per Item',
             'completed_quantity' => 'Completed Qty',
             'unit_price' => 'Unit Price',
             'stitch_rate' => 'Stitch Rate',

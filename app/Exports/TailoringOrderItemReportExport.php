@@ -114,7 +114,7 @@ class TailoringOrderItemReportExport implements FromQuery, WithColumnFormatting,
             $out[] = 'Quantity';
         }
         if ($vis['quantity_per_item'] ?? true) {
-            $out[] = 'Qty Per Item';
+            $out[] = 'Meter Per Item';
         }
         if ($vis['completed_quantity'] ?? true) {
             $out[] = 'Completed Qty';

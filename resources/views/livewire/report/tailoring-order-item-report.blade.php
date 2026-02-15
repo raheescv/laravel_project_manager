@@ -134,7 +134,7 @@
                             <th class="text-end"><x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="tailoring_order_items.quantity" label="Qty" /></th>
                         @endif
                         @if ($tailoring_order_item_report_visible_column['quantity_per_item'] ?? true)
-                            <th class="text-end"><x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="tailoring_order_items.quantity_per_item" label="Qty Per Item" /></th>
+                            <th class="text-end"><x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="tailoring_order_items.quantity_per_item" label="Meter Per Item" /></th>
                         @endif
                         @if ($tailoring_order_item_report_visible_column['completed_quantity'] ?? true)
                             <th class="text-end"><x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="tailoring_order_items.completed_quantity" label="Completed Qty" /></th>

@@ -51,7 +51,7 @@
                 </div>
                 <!-- Qty/Item -->
                 <div>
-                    <label class="field-label">Qty Per Item</label>
+                    <label class="field-label">Meter Per Item</label>
                     <input v-model.number="item.quantity_per_item" type="number" step="0.001" min="0.001"
                         placeholder="1" @input="calculateAmount" @keydown.enter.prevent="handleAdd"
                         class="field-input field-input-num w-full text-center" />

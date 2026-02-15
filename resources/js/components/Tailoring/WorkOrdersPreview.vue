@@ -21,7 +21,7 @@
                         <th class="px-4 py-3 text-[0.6rem] font-black text-slate-400 uppercase tracking-[0.1em]">Item Details</th>
                         <th class="px-4 py-3 text-[0.6rem] font-black text-slate-400 uppercase tracking-[0.1em]">Model</th>
                         <th class="px-4 py-3 text-[0.6rem] font-black text-slate-400 uppercase tracking-[0.1em] text-center">No Of Qty</th>
-                        <th class="px-4 py-3 text-[0.6rem] font-black text-slate-400 uppercase tracking-[0.1em] text-center">Qty Per Item</th>
+                        <th class="px-4 py-3 text-[0.6rem] font-black text-slate-400 uppercase tracking-[0.1em] text-center">Meter Per Item</th>
                         <th class="px-4 py-3 text-[0.6rem] font-black text-slate-400 uppercase tracking-[0.1em]">Color</th>
                         <th class="px-4 py-3 text-[0.6rem] font-black text-slate-400 uppercase tracking-[0.1em] text-right">Pricing</th>
                         <th class="px-4 py-3 text-[0.6rem] font-black text-slate-400 uppercase tracking-[0.1em] text-center">Actions</th>
