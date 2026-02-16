@@ -3,7 +3,7 @@
         <div class="px-3 py-3">
             <h6 class="text-xs font-bold text-slate-800 mb-1 flex items-center gap-1">
                 <i class="fa fa-th-large text-blue-500 text-xs"></i>
-                <span>Item Types</span>
+                <span>Item Category</span>
             </h6>
             <div class="bg-gradient-to-r from-slate-50 to-blue-50 border border-slate-200 rounded-lg p-1.5">
                 <div class="flex flex-wrap gap-1.5">
