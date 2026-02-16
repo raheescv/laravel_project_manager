@@ -3,6 +3,7 @@
 namespace App\Actions\Issue\Item;
 
 use App\Models\IssueItem;
+use Exception;
 
 class DeleteAction
 {
@@ -11,21 +12,23 @@ class DeleteAction
         try {
             $model = IssueItem::find($id);
             if (! $model) {
-                throw new \Exception("Issue item not found with ID: {$id}.", 1);
+                throw new Exception("Issue item not found with ID: {$id}.", 1);
             }
             $issueId = $model->issue_id;
             $model->delete();
 
-            return [
-                'success' => true,
-                'message' => 'Successfully deleted issue item',
-                'data' => ['issue_id' => $issueId],
+            $data = [
+                'issue_id' => $issueId,
             ];
-        } catch (\Throwable $th) {
-            return [
-                'success' => false,
-                'message' => $th->getMessage(),
-            ];
+
+            $return['success'] = true;
+            $return['message'] = 'Successfully deleted issue item';
+            $return['data'] = $data;
+        } catch (Exception $e) {
+            $return['success'] = false;
+            $return['message'] = $e->getMessage();
         }
+
+        return $return;
     }
 }

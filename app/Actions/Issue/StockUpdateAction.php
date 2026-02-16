@@ -5,6 +5,7 @@ namespace App\Actions\Issue;
 use App\Actions\Product\Inventory\UpdateAction;
 use App\Models\Inventory;
 use App\Models\IssueItem;
+use Exception;
 
 class StockUpdateAction
 {
@@ -15,17 +16,15 @@ class StockUpdateAction
                 $this->singleItem($item, $issue, $issue_type, $user_id);
             }
 
-            return [
-                'success' => true,
-                'message' => 'Successfully Updated Inventory',
-                'data' => [],
-            ];
-        } catch (\Throwable $th) {
-            return [
-                'success' => false,
-                'message' => $th->getMessage(),
-            ];
+            $return['success'] = true;
+            $return['message'] = 'Successfully Updated Inventory';
+            $return['data'] = [];
+        } catch (Exception $e) {
+            $return['success'] = false;
+            $return['message'] = $e->getMessage();
         }
+
+        return $return;
     }
 
     /**
@@ -38,17 +37,15 @@ class StockUpdateAction
                 $this->singleItem($item, $issue, $issue_type, $user_id);
             }
 
-            return [
-                'success' => true,
-                'message' => 'Successfully Updated Inventory',
-                'data' => [],
-            ];
-        } catch (\Throwable $th) {
-            return [
-                'success' => false,
-                'message' => $th->getMessage(),
-            ];
+            $return['success'] = true;
+            $return['message'] = 'Successfully Updated Inventory';
+            $return['data'] = [];
+        } catch (Exception $e) {
+            $return['success'] = false;
+            $return['message'] = $e->getMessage();
         }
+
+        return $return;
     }
 
     public function singleItem(IssueItem $item, $issue, string $issue_type, $user_id): void
@@ -68,7 +65,7 @@ class StockUpdateAction
     {
         $branchId = session('branch_id');
         if (! $branchId) {
-            throw new \Exception('Branch context is required to update inventory for issue.', 1);
+            throw new Exception('Branch context is required to update inventory for issue.', 1);
         }
 
         $inventory = Inventory::withoutGlobalScopes()
@@ -77,7 +74,7 @@ class StockUpdateAction
             ->first();
 
         if (! $inventory) {
-            throw new \Exception('Inventory not found for product ID: '.$item->product_id, 1);
+            throw new Exception('Inventory not found for product ID: '.$item->product_id, 1);
         }
 
         return $inventory;
@@ -121,7 +118,7 @@ class StockUpdateAction
         $response = (new UpdateAction())->execute($inventoryData, $inventoryId);
 
         if (! $response['success']) {
-            throw new \Exception($response['message'], 1);
+            throw new Exception($response['message'], 1);
         }
     }
 }

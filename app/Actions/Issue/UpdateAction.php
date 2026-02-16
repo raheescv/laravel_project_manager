@@ -33,13 +33,14 @@ class UpdateAction
                 }
             }
 
-            $issue->update([
+            $issueData = [
                 'type' => $data['type'],
                 'account_id' => $data['account_id'],
                 'date' => $data['date'],
                 'remarks' => $data['remarks'] ?? null,
                 'updated_by' => Auth::id(),
-            ]);
+            ];
+            $issue->update($issueData);
 
             $submittedItemIds = [];
             foreach ($data['items'] ?? [] as $item) {
@@ -80,19 +81,17 @@ class UpdateAction
 
             DB::commit();
 
-            return [
-                'success' => true,
-                'message' => 'Successfully updated '.$data['type'],
-                'data' => $issue->fresh(),
-            ];
+            $return['success'] = true;
+            $return['message'] = 'Successfully updated '.$data['type'];
+            $return['data'] = $issue->fresh();
         } catch (Exception $e) {
             DB::rollBack();
 
-            return [
-                'success' => false,
-                'message' => $e->getMessage(),
-            ];
+            $return['success'] = false;
+            $return['message'] = $e->getMessage();
         }
+
+        return $return;
     }
 
     /**

@@ -17,6 +17,7 @@ use App\Actions\Tailoring\Payment\DeleteAction as PaymentDeleteAction;
 use App\Actions\Tailoring\Payment\UpdateAction as PaymentUpdateAction;
 use App\Http\Controllers\Controller;
 use App\Models\Account;
+use App\Models\Configuration;
 use App\Models\Country;
 use App\Models\CustomerType;
 use App\Models\Product;
@@ -25,7 +26,6 @@ use App\Models\TailoringCategory;
 use App\Models\TailoringCategoryMeasurement;
 use App\Models\TailoringCategoryModel;
 use App\Models\TailoringMeasurementOption;
-use App\Models\Configuration;
 use App\Models\TailoringOrder;
 use App\Models\TailoringOrderItem;
 use App\Models\TailoringOrderMeasurement;
@@ -103,7 +103,7 @@ class OrderController extends Controller
 
         $countries = Country::pluck('name', 'name')->toArray();
         $tailoringRedirectionPage = Configuration::where('key', 'tailoring_redirection_page')->value('value') ?? 'create';
-        if($id){
+        if ($id) {
             $tailoringRedirectionPage = 'show';
         }
         $data = [

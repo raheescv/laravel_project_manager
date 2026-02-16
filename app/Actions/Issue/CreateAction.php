@@ -16,7 +16,7 @@ class CreateAction
 
             DB::beginTransaction();
 
-            $issue = Issue::create([
+            $data = [
                 'type' => $data['type'],
                 'account_id' => $data['account_id'],
                 'date' => $data['date'],
@@ -25,7 +25,8 @@ class CreateAction
                 'no_of_items_in' => 0,
                 'created_by' => Auth::id(),
                 'updated_by' => Auth::id(),
-            ]);
+            ];
+            $issue = Issue::create($data);
 
             foreach ($data['items'] ?? [] as $item) {
                 $item['issue_id'] = $issue->id;
@@ -50,18 +51,16 @@ class CreateAction
 
             DB::commit();
 
-            return [
-                'success' => true,
-                'message' => 'Successfully created '.$data['type'],
-                'data' => $issue->fresh(),
-            ];
+            $return['success'] = true;
+            $return['message'] = 'Successfully created '.$data['type'];
+            $return['data'] = $issue->fresh();
         } catch (Exception $e) {
             DB::rollBack();
 
-            return [
-                'success' => false,
-                'message' => $e->getMessage(),
-            ];
+            $return['success'] = false;
+            $return['message'] = $e->getMessage();
         }
+
+        return $return;
     }
 }

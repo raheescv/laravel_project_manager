@@ -23,16 +23,14 @@ class DeleteAction
             $model->items()->delete();
             $model->delete();
 
-            return [
-                'success' => true,
-                'message' => 'Successfully deleted issue',
-                'data' => $model,
-            ];
-        } catch (Exception $th) {
-            return [
-                'success' => false,
-                'message' => $th->getMessage(),
-            ];
+            $return['success'] = true;
+            $return['message'] = 'Successfully deleted issue';
+            $return['data'] = $model;
+        } catch (Exception $e) {
+            $return['success'] = false;
+            $return['message'] = $e->getMessage();
         }
+
+        return $return;
     }
 }
