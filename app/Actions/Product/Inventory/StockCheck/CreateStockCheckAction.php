@@ -27,6 +27,7 @@ class CreateStockCheckAction
             $stockCheck = StockCheck::create($stockCheckData);
 
             $columns = [
+                DB::raw("{$stockCheck->tenant_id} as tenant_id"),
                 DB::raw("{$stockCheck->id} as stock_check_id"),
                 'id as inventory_id',
                 'product_id',
