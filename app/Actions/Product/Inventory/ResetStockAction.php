@@ -48,24 +48,23 @@ class ResetStockAction
                 $message .= " {$failedCount} item(s) failed to update.";
             }
 
-            return [
-                'success' => $updatedCount > 0,
-                'message' => $message,
-                'data' => [
-                    'updated_count' => $updatedCount,
-                    'failed_count' => $failedCount,
-                    'total_count' => $inventories->count(),
-                    'errors' => $errors,
-                ],
+            $data = [
+                'updated_count' => $updatedCount,
+                'failed_count' => $failedCount,
+                'total_count' => $inventories->count(),
+                'errors' => $errors,
             ];
+            $return['success'] = true;
+            $return['message'] = $message;
+            $return['data'] = $data;
         } catch (Exception $e) {
             DB::rollBack();
 
-            return [
-                'success' => false,
-                'message' => 'Failed to reset stock: '.$e->getMessage(),
-                'data' => [],
-            ];
+            $return['success'] = false;
+            $return['message'] = 'Failed to reset stock: '.$e->getMessage();
+            $return['data'] = [];
         }
+
+        return $return;
     }
 }

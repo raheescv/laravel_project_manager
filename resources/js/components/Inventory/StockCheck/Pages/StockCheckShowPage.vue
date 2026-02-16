@@ -2,27 +2,33 @@
     <div class="stock-check-show-page">
         <LoadingOverlay :show="loading" :text="loadingText" />
 
-        <StockCheckHeader :stock-check="stockCheck" />
+        <div class="page-container">
+            <StockCheckHeader :stock-check="stockCheck" />
 
-        <div class="mt-4">
-            <StockCheckFilters :filters="filters" :categories="categories" :brands="brands"
-            @filter-changed="handleFilterChanged" />
-        </div>
+            <section class="section-card section-filters" aria-label="Filters">
+                <StockCheckFilters :filters="filters" :categories="categories" :brands="brands"
+                    @filter-changed="handleFilterChanged" />
+            </section>
 
-        <div class="mt-4">
-            <StockCheckBarcodeScanner :stock-check-id="stockCheckId" @scan-success="handleScanSuccess"
-                @scan-error="handleScanError" />
-        </div>
+            <section class="section-card section-scanner" aria-label="Barcode scanner">
+                <StockCheckBarcodeScanner :stock-check-id="stockCheckId" @scan-success="handleScanSuccess"
+                    @scan-error="handleScanError" />
+            </section>
 
-        <div class="mt-4">
-            <StockCheckItemsTable :items="items" :loading="itemsLoading" :filters="filters" :pagination="pagination"
-                @sort="handleSort" @page-change="handlePageChange" @update-quantity="handleUpdateQuantity"
-                @status-change-request="handleStatusChangeRequest" />
-        </div>
+            <section class="section-card section-table" aria-label="Stock check items">
+                <div class="section-header">
+                    <h2 class="section-title">Items</h2>
+                    <span v-if="pagination.total > 0" class="section-badge">{{ pagination.total }} item{{ pagination.total !== 1 ? 's' : '' }}</span>
+                </div>
+                <StockCheckItemsTable :items="items" :loading="itemsLoading" :filters="filters" :pagination="pagination"
+                    @sort="handleSort" @page-change="handlePageChange" @update-quantity="handleUpdateQuantity"
+                    @status-change-request="handleStatusChangeRequest" />
+            </section>
 
-        <div class="mt-4 d-flex justify-content-end">
-            <div class="w-100 w-md-auto">
-                <SaveStockCheckButton :loading="saving" :disabled="items.length === 0" @save="handleSave" />
+            <div class="action-bar">
+                <div class="action-bar-inner">
+                    <SaveStockCheckButton :loading="saving" :disabled="items.length === 0" @save="handleSave" />
+                </div>
             </div>
         </div>
 
@@ -306,12 +312,134 @@ onMounted(() => {
 
 <style scoped>
 .stock-check-show-page {
-    padding: 1rem;
+    --page-bg: linear-gradient(165deg, #f0f4f8 0%, #e2e8f0 35%, #f8fafc 100%);
+    --section-bg: #ffffff;
+    --section-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+    --section-shadow-hover: 0 4px 12px rgba(0, 0, 0, 0.08);
+    --border-subtle: rgba(0, 0, 0, 0.06);
+    --accent: #0d6efd;
+    --accent-muted: rgba(13, 110, 253, 0.12);
+    min-height: 100vh;
+    padding: 1.5rem 1rem 5rem;
+    background: var(--page-bg);
+    background-attachment: fixed;
+}
+
+.page-container {
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+.section-card {
+    background: var(--section-bg);
+    border-radius: 12px;
+    box-shadow: var(--section-shadow);
+    border: 1px solid var(--border-subtle);
+    margin-bottom: 1.25rem;
+    overflow: hidden;
+    transition: box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+.section-card:hover {
+    box-shadow: var(--section-shadow-hover);
+}
+
+.section-card :deep(.card) {
+    border: none !important;
+    box-shadow: none !important;
+    margin-bottom: 0 !important;
+    border-radius: 0 !important;
+}
+
+.section-table :deep(.stock-check-items-table .card) {
+    border: none !important;
+    box-shadow: none !important;
+    background: transparent !important;
+}
+
+.section-filters :deep(.card-body),
+.section-scanner :deep(.card-body) {
+    padding: 1rem 1.25rem;
+}
+
+.section-table {
+    padding: 1.25rem 1.25rem 1rem;
+}
+
+.section-header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid var(--border-subtle);
+}
+
+.section-title {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: #1e293b;
+    margin: 0;
+    letter-spacing: -0.01em;
+}
+
+.section-badge {
+    font-size: 0.8125rem;
+    font-weight: 500;
+    color: #64748b;
+    background: var(--accent-muted);
+    color: var(--accent);
+    padding: 0.25rem 0.625rem;
+    border-radius: 999px;
+}
+
+.action-bar {
+    position: sticky;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: 1rem 0 0;
+    margin: 0.5rem 0 -1rem;
+    background: linear-gradient(to top, rgba(240, 244, 248, 0.98) 60%, transparent);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+}
+
+.action-bar-inner {
+    max-width: 1400px;
+    margin: 0 auto;
+    display: flex;
+    justify-content: flex-end;
+}
+
+.action-bar-inner :deep(button) {
+    border-radius: 10px;
+    font-weight: 600;
+    padding: 0.625rem 1.5rem;
+    box-shadow: 0 2px 8px rgba(13, 110, 253, 0.25);
+    transition: transform 0.15s ease, box-shadow 0.2s ease;
+}
+
+.action-bar-inner :deep(button:hover:not(:disabled)) {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(13, 110, 253, 0.35);
+}
+
+.action-bar-inner :deep(button:active:not(:disabled)) {
+    transform: translateY(0);
 }
 
 @media (max-width: 576px) {
     .stock-check-show-page {
-        padding: 0.5rem;
+        padding: 0.75rem 0.5rem 4.5rem;
+    }
+
+    .section-table {
+        padding: 1rem;
+    }
+
+    .section-title {
+        font-size: 1rem;
     }
 }
 </style>
