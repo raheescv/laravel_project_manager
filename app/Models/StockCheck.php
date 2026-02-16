@@ -2,11 +2,14 @@
 
 namespace App\Models;
 
+use App\Traits\BelongsToTenant;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Validation\Rule;
 
 class StockCheck extends Model
 {
+    use BelongsToTenant;
+
     protected $fillable = [
         'tenant_id',
         'branch_id',

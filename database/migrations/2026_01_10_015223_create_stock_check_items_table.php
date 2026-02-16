@@ -13,6 +13,9 @@ return new class() extends Migration
     {
         Schema::create('stock_check_items', function (Blueprint $table) {
             $table->id();
+            $table->unsignedBigInteger('tenant_id');
+            $table->foreign('tenant_id')->references('id')->on('tenants')->onDelete('cascade');
+            $table->index('tenant_id');
             $table->unsignedBigInteger('stock_check_id');
             $table->foreign('stock_check_id')->references('id')->on('stock_checks')->onDelete('cascade');
             $table->index('stock_check_id');

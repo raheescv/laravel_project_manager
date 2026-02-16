@@ -31,6 +31,7 @@ class CreateStockCheckAction
                 DB::raw("{$stockCheck->id} as stock_check_id"),
                 'id as inventory_id',
                 'product_id',
+                DB::raw('0 as physical_quantity'),
                 DB::raw('sum(quantity) as recorded_quantity'),
                 DB::raw('now() as created_at'),
             ];
