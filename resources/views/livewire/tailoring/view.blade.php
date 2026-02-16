@@ -204,7 +204,7 @@
                                                     </a>
                                                 </div>
                                             </div>
-                                            <div class="row g-4">
+                                            <div class="d-flex flex-wrap gap-4">
                                                 @foreach (['basic_body', 'collar_cuff', 'specifications'] as $sectionId)
                                                     @php
                                                         $sLabel = $sectionLabels[$sectionId] ?? ['label' => $sectionId, 'icon' => 'fa-list'];
@@ -212,16 +212,18 @@
                                                         $separateInSection = collect($measurementData['separate'])->where('section', $sectionId);
                                                     @endphp
                                                     @if ($commonInSection->isNotEmpty())
-                                                        <div class="col-xl-4 col-md-6">
+                                                    {{-- <div class="col-xl-6 col-md-6"> --}}
+                                                        <div class="flex-grow-1 flex-shrink-0" style="flex: 1 1 280px; min-width: min(100%, 280px);">
                                                             <div class="text-uppercase fw-bold text-muted small mb-2 ps-1">
                                                                 <i class="fa {{ $sLabel['icon'] }} me-2"></i>{{ $sLabel['label'] }}
                                                             </div>
-                                                            <div class="card shadow-sm rounded-3 overflow-hidden border">
+                                                            <div class="card shadow-sm rounded-3 border overflow-x-auto" style="min-width: 0;">
                                                                 @foreach ($commonInSection as $key => $entry)
-                                                                    <div class="row g-0 border-bottom @if ($loop->last) border-bottom-0 @endif">
-                                                                        <div class="col-7 bg-light p-2 fw-semibold text-muted small border-end d-flex align-items-center">{{ $entry['label'] }}</div>
+                                                                    <div class="d-flex flex-nowrap g-0 border-bottom @if ($loop->last) border-bottom-0 @endif">
+                                                                        <div class="bg-light p-2 fw-semibold text-muted small border-end d-flex align-items-center flex-shrink-0" style="min-width: 7rem;">{{ $entry['label'] }}</div>
                                                                         <div
-                                                                            class="col-5 p-2 fw-bold text-dark small d-flex align-items-center {{ !($entry['value'] ?? null) ? 'text-muted opacity-50' : '' }}">
+                                                                            class="p-2 fw-bold text-dark text-nowrap small d-flex align-items-center flex-grow-1 {{ !($entry['value'] ?? null) ? 'text-muted opacity-50' : '' }}"
+                                                                            style="min-width: min-content;">
                                                                             {{ $entry['value'] ?? '-' }}
                                                                         </div>
                                                                     </div>
