@@ -88,6 +88,23 @@
                         <th class="text-end">Actions</th>
                     </tr>
                 </thead>
+                @if ($data->isNotEmpty())
+                    <tbody class="table-group-divider">
+                        <tr class="bg-light">
+                            <th colspan="5" class="ps-3 text-end"><strong>TOTALS</strong></th>
+                            <th>
+                                <div class="text-end fw-bold text-primary">{{ currency($total['grand_total']) }}</div>
+                            </th>
+                            <th>
+                                <div class="text-end fw-bold text-success">{{ currency($total['paid']) }}</div>
+                            </th>
+                            <th>
+                                <div class="text-end fw-bold text-danger">{{ currency($total['balance']) }}</div>
+                            </th>
+                            <th></th>
+                        </tr>
+                    </tbody>
+                @endif
                 <tbody>
                     @forelse ($data as $order)
                         <tr>
@@ -171,23 +188,6 @@
                         </tr>
                     @endforelse
                 </tbody>
-                @if ($data->isNotEmpty())
-                    <tfoot class="table-group-divider">
-                        <tr class="bg-light">
-                            <th colspan="5" class="ps-3"><strong>TOTALS</strong></th>
-                            <th>
-                                <div class="text-end fw-bold text-primary">{{ currency($total['grand_total']) }}</div>
-                            </th>
-                            <th>
-                                <div class="text-end fw-bold text-primary">{{ currency($total['paid']) }}</div>
-                            </th>
-                            <th>
-                                <div class="text-end fw-bold text-primary">{{ currency($total['balance']) }}</div>
-                            </th>
-                            <th></th>
-                        </tr>
-                    </tfoot>
-                @endif
             </table>
         </div>
         {{ $data->links() }}
