@@ -42,6 +42,8 @@ Route::middleware('auth')->group(function (): void {
         Route::put('{id}', 'update')->name('update')->can('tailoring order.edit');
         Route::get('{id}', 'show')->name('show')->can('tailoring order.view');
         Route::get('print/cutting-slip/{id}/{category_id}/{model_id?}', 'printCuttingSlip')->name('print-cutting-slip')->can('tailoring order.view');
+        Route::get('print/receipt/{id}', 'printOrderReceipt')->name('print-receipt')->can('tailoring order.view');
+        Route::get('print/receipt-thermal/{id}', 'printOrderReceiptThermal')->name('print-receipt-thermal')->can('tailoring order.view');
         Route::delete('{id}', 'destroy')->name('destroy')->can('tailoring order.delete');
     });
 

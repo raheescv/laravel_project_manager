@@ -27,6 +27,21 @@
                             <p class="small text-muted mb-0 fw-medium" style="font-size: 0.75rem;">Created: {{ systemDate($order->order_date) }}</p>
                         </div>
                     </div>
+
+                    <div class="d-flex align-items-center gap-2">
+                        <a href="{{ route('tailoring::order::print-receipt', $order->id) }}"
+                            target="_blank" class="btn btn-sm btn-light border rounded-4 shadow-sm text-muted d-flex align-items-center gap-2"
+                            title="Print Order Receipt (PDF)">
+                            <i class="fa fa-file-pdf-o"></i>
+                            <span class="small fw-bold">Receipt PDF</span>
+                        </a>
+                        <a href="{{ route('tailoring::order::print-receipt-thermal', $order->id) }}"
+                            target="_blank" class="btn btn-sm btn-light border rounded-4 shadow-sm text-muted d-flex align-items-center gap-2"
+                            title="Print Order Receipt (Thermal)">
+                            <i class="fa fa-print"></i>
+                            <span class="small fw-bold">Receipt Thermal</span>
+                        </a>
+                    </div>
                     <div class="d-flex align-items-center gap-2">
                         <div class="d-none d-md-flex gap-2 me-3">
                             <a href="{{ route('tailoring::job-completion::index') }}?order_no={{ $order->order_no }}"

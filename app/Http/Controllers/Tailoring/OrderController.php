@@ -16,6 +16,7 @@ use App\Actions\Tailoring\Payment\CreateAction as PaymentCreateAction;
 use App\Actions\Tailoring\Payment\DeleteAction as PaymentDeleteAction;
 use App\Actions\Tailoring\Payment\UpdateAction as PaymentUpdateAction;
 use App\Http\Controllers\Controller;
+use Barryvdh\DomPDF\Facade\Pdf;
 use App\Models\Account;
 use App\Models\Configuration;
 use App\Models\Country;
@@ -793,6 +794,69 @@ class OrderController extends Controller
             'items' => $filteredItems,
             'categoryId' => $categoryId,
             'modelId' => $modelId,
+        ]);
+    }
+
+    public function printOrderReceipt($id)
+    {
+        $action = new GetTailoringOrderAction();
+        $result = $action->execute($id);
+
+        if (! $result['success']) {
+            return redirect()->back()->with('error', $result['message']);
+        }
+
+        $order = $result['data'];
+
+        $pdf = Pdf::loadView('print.tailoring.order-receipt-pdf', [
+            'order' => $order,
+        ]);
+        $pdf->setPaper('a4', 'portrait');
+        $pdf->setOption('margin-top', 8);
+        $pdf->setOption('margin-right', 8);
+        $pdf->setOption('margin-bottom', 8);
+        $pdf->setOption('margin-left', 8);
+
+        $filename = 'order-receipt-'.str_replace('/', '-', $order->order_no).'.pdf';
+
+        return $pdf->stream($filename);
+    }
+
+    public function printOrderReceiptThermal($id)
+    {
+        $action = new GetTailoringOrderAction();
+        $result = $action->execute($id);
+
+        if (! $result['success']) {
+            return redirect()->back()->with('error', $result['message']);
+        }
+
+        $order = $result['data'];
+
+        $categorySummary = $order->items->groupBy('tailoring_category_id')->map(function ($items) {
+            $first = $items->first();
+
+            return [
+                'name' => $first->category->name ?? 'Other',
+                'count' => $items->sum('quantity'),
+                'amount' => $items->sum('total'),
+            ];
+        })->values();
+
+        $thermal_printer_style = Configuration::where('key', 'thermal_printer_style')->value('value') ?? 'with_arabic';
+        $thermal_printer_footer_english = Configuration::where('key', 'thermal_printer_footer_english')->value('value');
+        $thermal_printer_footer_arabic = Configuration::where('key', 'thermal_printer_footer_arabic')->value('value');
+        $enable_logo_in_print = Configuration::where('key', 'enable_logo_in_print')->value('value');
+        $gst_no = Configuration::where('key', 'gst_no')->value('value');
+
+        return view('print.tailoring.order-receipt-thermal', [
+            'order' => $order,
+            'categorySummary' => $categorySummary,
+            'thermal_printer_style' => $thermal_printer_style,
+            'thermal_printer_footer_english' => $thermal_printer_footer_english,
+            'thermal_printer_footer_arabic' => $thermal_printer_footer_arabic,
+            'enable_logo_in_print' => $enable_logo_in_print,
+            'gst_no' => $gst_no,
         ]);
     }
 }
