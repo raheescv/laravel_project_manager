@@ -10,10 +10,14 @@
                 </div>
                 <div class="text-left">
                     <h5 class="font-bold text-slate-800 text-sm leading-none">{{ item.product_name || 'Generic Item' }}</h5>
-                    <p class="text-slate-600 text-xs mt-0.5 flex items-center gap-1.5">
+                    <p class="text-slate-600 text-xs mt-0.5 flex items-center gap-1.5 flex-wrap">
                         <span>{{ item.category?.name || 'Item' }}</span>
                         <span class="w-1 h-1 rounded-full bg-slate-300"></span>
                         <span class="text-blue-600">{{ modelName }}</span>
+                        <template v-if="modelTypeName">
+                            <span class="w-1 h-1 rounded-full bg-slate-300"></span>
+                            <span class="text-indigo-600">{{ modelTypeName }}</span>
+                        </template>
                     </p>
                 </div>
             </div>
@@ -110,6 +114,13 @@ const modelName = computed(() => {
            props.item.category_model?.name ||
            props.item.tailoring_category_model_name ||
            'Standard'
+})
+
+const modelTypeName = computed(() => {
+    return props.item.categoryModelType?.name ||
+           props.item.category_model_type?.name ||
+           props.item.tailoring_category_model_type_name ||
+           null
 })
 
 const getFieldsBySection = (sectionId) => {

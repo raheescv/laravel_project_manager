@@ -81,6 +81,10 @@
                                                     class="text-xs font-bold text-slate-600 truncate">
                                                     {{ item.model_name }}
                                                 </span>
+                                                <span v-if="modelTypeName(item)"
+                                                    class="text-xs font-bold text-indigo-600 truncate">
+                                                    {{ modelTypeName(item) }}
+                                                </span>
                                             </div>
                                             <div class="grid grid-cols-2 sm:grid-cols-3 gap-x-3 gap-y-1">
                                                 <div v-for="(val, key) in getPreviewFields(item)" :key="key"
@@ -161,7 +165,7 @@ const getPreviewFields = (item) => {
     })
     // If no preview fields found, show first few non-meta keys from data
     if (Object.keys(result).length === 0 && item.data && typeof item.data === 'object') {
-        const meta = ['id', 'order_no', 'order_date', 'model_name', 'tailoring_category_model_id', 'tailoring_notes']
+        const meta = ['id', 'order_no', 'order_date', 'model_name', 'tailoring_category_model_id', 'tailoring_category_model_type_id', 'tailoring_category_model_type_name', 'tailoring_notes']
         let count = 0
         for (const [k, v] of Object.entries(item.data)) {
             if (!meta.includes(k) && v !== undefined && v !== null && v !== '' && count < 6) {
@@ -179,6 +183,10 @@ const formatLabel = (key) => {
     }
     const m = props.category.active_measurements.find(x => x.field_key === key)
     return m?.label || String(key).replace(/_/g, ' ')
+}
+
+const modelTypeName = (item) => {
+    return item.tailoring_category_model_type_name ?? item.model_type_name ?? null
 }
 
 const formatDate = (dateStr) => {

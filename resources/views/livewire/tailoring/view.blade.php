@@ -306,6 +306,10 @@
                                                                     style="font-size: 0.6rem;">{{ $item->category->name ?? 'Cat' }}</span>
                                                                 <span class="badge bg-primary bg-opacity-10 text-primary fw-bold border border-primary border-opacity-10 text-uppercase px-2 py-1"
                                                                     style="font-size: 0.6rem;">{{ $item->categoryModel->name ?? 'Standard' }}</span>
+                                                                @if($item->categoryModelType)
+                                                                <span class="badge bg-info bg-opacity-10 text-info fw-bold border border-info border-opacity-10 text-uppercase px-2 py-1"
+                                                                    style="font-size: 0.6rem;">{{ $item->categoryModelType->name }}</span>
+                                                                @endif
                                                             </div>
                                                         </div>
                                                         <div class="d-flex align-items-center gap-3">

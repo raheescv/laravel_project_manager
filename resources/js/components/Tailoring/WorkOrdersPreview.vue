@@ -20,6 +20,7 @@
                         <th class="px-4 py-3 text-[0.6rem] font-black text-slate-400 uppercase tracking-[0.1em]">No</th>
                         <th class="px-4 py-3 text-[0.6rem] font-black text-slate-400 uppercase tracking-[0.1em]">Item Details</th>
                         <th class="px-4 py-3 text-[0.6rem] font-black text-slate-400 uppercase tracking-[0.1em]">Model</th>
+                        <th class="px-4 py-3 text-[0.6rem] font-black text-slate-400 uppercase tracking-[0.1em]">Type</th>
                         <th class="px-4 py-3 text-[0.6rem] font-black text-slate-400 uppercase tracking-[0.1em] text-center">No Of Qty</th>
                         <th class="px-4 py-3 text-[0.6rem] font-black text-slate-400 uppercase tracking-[0.1em] text-center">Meter Per Item</th>
                         <th class="px-4 py-3 text-[0.6rem] font-black text-slate-400 uppercase tracking-[0.1em]">Color</th>
@@ -41,6 +42,11 @@
                         <td class="px-4 py-2">
                             <span class="inline-flex items-center px-1.5 py-0.5 rounded-lg bg-slate-100 text-slate-600 text-[0.6rem] font-bold border border-slate-200">
                                 {{ item.category_model?.name || item.tailoring_category_model_name || '-' }}
+                            </span>
+                        </td>
+                        <td class="px-4 py-2">
+                            <span class="inline-flex items-center px-1.5 py-0.5 rounded-lg bg-slate-100 text-slate-600 text-[0.6rem] font-bold border border-slate-200">
+                                {{ item.categoryModelType?.name || item.category_model_type?.name || item.tailoring_category_model_type_name || '-' }}
                             </span>
                         </td>
                         <td class="px-4 py-2 text-center">

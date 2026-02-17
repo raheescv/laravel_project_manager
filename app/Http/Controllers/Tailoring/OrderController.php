@@ -25,6 +25,7 @@ use App\Models\Rack;
 use App\Models\TailoringCategory;
 use App\Models\TailoringCategoryMeasurement;
 use App\Models\TailoringCategoryModel;
+use App\Models\TailoringCategoryModelType;
 use App\Models\TailoringMeasurementOption;
 use App\Models\TailoringOrder;
 use App\Models\TailoringOrderItem;
@@ -291,6 +292,42 @@ class OrderController extends Controller
         ]);
     }
 
+    public function getCategoryModelTypes($categoryId): JsonResponse
+    {
+        $types = TailoringCategoryModelType::where('tailoring_category_id', $categoryId)
+            ->active()
+            ->orderBy('name')
+            ->get(['id', 'name']);
+
+        return response()->json([
+            'success' => true,
+            'data' => $types,
+        ]);
+    }
+
+    public function addCategoryModelType(Request $request): JsonResponse
+    {
+        $request->validate([
+            'tailoring_category_id' => 'required|exists:tailoring_categories,id',
+            'name' => 'required|string|max:255',
+        ]);
+
+        $category = TailoringCategory::findOrFail($request->tailoring_category_id);
+
+        $type = TailoringCategoryModelType::create([
+            'tenant_id' => $category->tenant_id,
+            'tailoring_category_id' => $request->tailoring_category_id,
+            'name' => $request->name,
+            'is_active' => true,
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'data' => $type,
+            'message' => 'Category model type added successfully',
+        ]);
+    }
+
     public function getProducts(Request $request): JsonResponse
     {
         $query = Product::where('is_selling', true);
@@ -358,7 +395,7 @@ class OrderController extends Controller
             ->whereHas('order', function ($q) use ($accountId) {
                 $q->where('account_id', $accountId);
             })
-            ->with(['order:id,order_no,order_date', 'categoryModel:id,name'])
+            ->with(['order:id,order_no,order_date', 'categoryModel:id,name', 'categoryModelType:id,name'])
             ->orderByDesc('created_at')
             ->limit(20)
             ->get();
@@ -369,6 +406,7 @@ class OrderController extends Controller
             ksort($data);
             $signature = json_encode([
                 'model_id' => $m->tailoring_category_model_id,
+                'model_type_id' => $m->tailoring_category_model_type_id,
                 'notes' => $m->tailoring_notes ?? '',
                 'data' => $data,
             ]);
@@ -388,6 +426,8 @@ class OrderController extends Controller
                 'model_name' => $m->categoryModel?->name ?? 'Standard',
                 'tailoring_category_model_id' => $m->tailoring_category_model_id,
                 'tailoring_category_model_name' => $m->categoryModel?->name,
+                'tailoring_category_model_type_id' => $m->tailoring_category_model_type_id,
+                'tailoring_category_model_type_name' => $m->categoryModelType?->name,
                 'tailoring_notes' => $m->tailoring_notes,
                 'data' => $m->data ?? [],
             ];
@@ -691,7 +731,7 @@ class OrderController extends Controller
         $item->updateCompletion($request->all());
 
         // Reload with relationships and append measurements
-        $item = $item->fresh(['category' => fn ($q) => $q->with('activeMeasurements'), 'categoryModel', 'product', 'unit', 'tailor']);
+        $item = $item->fresh(['category' => fn ($q) => $q->with('activeMeasurements'), 'categoryModel', 'categoryModelType', 'product', 'unit', 'tailor']);
         $order = $item->order()->with(['measurements.category.activeMeasurements'])->first();
 
         $order->setRelation('items', collect([$item]));

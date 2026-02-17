@@ -47,6 +47,7 @@ class TailoringOrderItemReportExport implements FromQuery, WithColumnFormatting,
             ->whereIn('tailoring_orders.branch_id', $allowedBranchIds)
             ->leftJoin('tailoring_categories', 'tailoring_categories.id', '=', 'tailoring_order_items.tailoring_category_id')
             ->leftJoin('tailoring_category_models', 'tailoring_category_models.id', '=', 'tailoring_order_items.tailoring_category_model_id')
+            ->leftJoin('tailoring_category_model_types', 'tailoring_category_model_types.id', '=', 'tailoring_order_items.tailoring_category_model_type_id')
             ->leftJoin('units', 'units.id', '=', 'tailoring_order_items.unit_id')
             ->leftJoin('users as tailors', 'tailors.id', '=', 'tailoring_order_items.tailor_id')
             ->select(
@@ -56,6 +57,7 @@ class TailoringOrderItemReportExport implements FromQuery, WithColumnFormatting,
                 'tailoring_orders.customer_name',
                 'tailoring_categories.name as category_name',
                 'tailoring_category_models.name as category_model_name',
+                'tailoring_category_model_types.name as category_model_type_name',
                 'units.name as unit_name',
                 'tailors.name as tailor_name'
             )
@@ -67,7 +69,7 @@ class TailoringOrderItemReportExport implements FromQuery, WithColumnFormatting,
         $cols = $this->filters['visible_columns'] ?? [];
         $defaults = [
             'order_no' => true, 'order_date' => true, 'customer' => true, 'item_no' => true,
-            'category' => true, 'category_model' => true, 'product_name' => true, 'product_color' => true,
+            'category' => true, 'category_model' => true, 'category_model_type' => true, 'product_name' => true, 'product_color' => true,
             'unit' => true, 'quantity' => true, 'quantity_per_item' => true, 'completed_quantity' => true,
             'unit_price' => true, 'stitch_rate' => true, 'gross_amount' => true, 'discount' => true,
             'net_amount' => true, 'tax' => true, 'tax_amount' => true, 'total' => true,
@@ -100,6 +102,9 @@ class TailoringOrderItemReportExport implements FromQuery, WithColumnFormatting,
         }
         if ($vis['category_model'] ?? true) {
             $out[] = 'Model';
+        }
+        if ($vis['category_model_type'] ?? true) {
+            $out[] = 'Model Type';
         }
         if ($vis['product_name'] ?? true) {
             $out[] = 'Product';
@@ -196,6 +201,9 @@ class TailoringOrderItemReportExport implements FromQuery, WithColumnFormatting,
         }
         if ($vis['category_model'] ?? true) {
             $out[] = $row->category_model_name ?? '';
+        }
+        if ($vis['category_model_type'] ?? true) {
+            $out[] = $row->category_model_type_name ?? '';
         }
         if ($vis['product_name'] ?? true) {
             $out[] = $row->product_name ?? '';

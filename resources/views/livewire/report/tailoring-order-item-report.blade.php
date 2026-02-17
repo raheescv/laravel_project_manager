@@ -121,6 +121,9 @@
                         @if ($tailoring_order_item_report_visible_column['category_model'] ?? true)
                             <th>Model</th>
                         @endif
+                        @if ($tailoring_order_item_report_visible_column['category_model_type'] ?? true)
+                            <th>Type</th>
+                        @endif
                         @if ($tailoring_order_item_report_visible_column['product_name'] ?? true)
                             <th>Product</th>
                         @endif
@@ -214,7 +217,10 @@
                                 <td>{{ $item->category?->name ?? '–' }}</td>
                             @endif
                             @if ($tailoring_order_item_report_visible_column['category_model'] ?? true)
-                                <td>{{ $item->categoryModel?->name ?? '–' }}</td>
+                                <td class="text-nowrap">{{ $item->categoryModel?->name ?? '–' }}</td>
+                            @endif
+                            @if ($tailoring_order_item_report_visible_column['category_model_type'] ?? true)
+                                <td class="text-nowrap">{{ $item->categoryModelType?->name ?? '–' }}</td>
                             @endif
                             @if ($tailoring_order_item_report_visible_column['product_name'] ?? true)
                                 <td class="text-nowrap">{{ $item->product_name }}</td>
@@ -326,6 +332,9 @@
                             <th></th>
                         @endif
                         @if ($tailoring_order_item_report_visible_column['category_model'] ?? true)
+                            <th></th>
+                        @endif
+                        @if ($tailoring_order_item_report_visible_column['category_model_type'] ?? true)
                             <th></th>
                         @endif
                         @if ($tailoring_order_item_report_visible_column['product_name'] ?? true)

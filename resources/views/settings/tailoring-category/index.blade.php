@@ -21,6 +21,9 @@
                 @livewire('settings.tailoring-category-model.table')
             </div>
             <div class="mt-4">
+                @livewire('settings.tailoring-category-model-type.table')
+            </div>
+            <div class="mt-4">
                 @livewire('settings.tailoring-category.measurements')
             </div>
         </div>
@@ -28,4 +31,5 @@
 
     <x-settings.tailoring-category.tailoring-category-modal />
     <x-settings.tailoring-category.tailoring-category-model-modal />
+    <x-settings.tailoring-category.tailoring-category-model-type-modal />
 </x-app-layout>

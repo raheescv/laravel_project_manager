@@ -273,15 +273,17 @@ const activeCategoryTab = ref(null)
 const measurementOptions = ref(props.measurementOptions || {})
 const editingItemIds = ref({}) // Map of categoryId -> itemId
 const editingModelIds = ref({}) // Map of categoryId -> modelId (when editing)
+const editingModelTypeIds = ref({}) // Map of categoryId -> modelTypeId (when editing)
 const showOldMeasurementModal = ref(false)
 const pendingOldMeasurementCategoryId = ref(null)
 
-const getEditKey = (catId, modelId) => `${catId}-${modelId ?? 'new'}`
+const getEditKey = (catId, modelId, modelTypeId) => `${catId}-${modelId ?? 'new'}-${modelTypeId ?? 'new'}`
 
 const activeEditKey = computed(() => {
     if (!activeCategoryTab.value) return null
     const modelId = editingModelIds.value[activeCategoryTab.value]
-    return getEditKey(activeCategoryTab.value, modelId)
+    const modelTypeId = editingModelTypeIds.value[activeCategoryTab.value]
+    return getEditKey(activeCategoryTab.value, modelId, modelTypeId)
 })
 
 const canSubmit = computed(() => {
@@ -330,9 +332,9 @@ const handleCategorySelection = (categoryIds) => {
 
     selectedCategories.value = categoryIds
 
-    // Initialize state for new categories (keyed by category + model: catId-new for add)
+    // Initialize state for new categories (keyed by category + model + modelType: catId-new-new for add)
     categoryIds.forEach(id => {
-        const addKey = getEditKey(id, 'new')
+        const addKey = getEditKey(id, 'new', 'new')
         if (!measurements.value[addKey]) measurements.value[addKey] = {}
         if (!currentItems.value[addKey]) currentItems.value[addKey] = {
             product_id: null,
@@ -369,7 +371,7 @@ const handleCategorySelection = (categoryIds) => {
 
 const handleOldMeasurementSelect = (payload) => {
     const catId = pendingOldMeasurementCategoryId.value
-    const addKey = catId ? getEditKey(catId, 'new') : null
+    const addKey = catId ? getEditKey(catId, 'new', 'new') : null
     if (addKey && measurements.value[addKey]) {
         Object.assign(measurements.value[addKey], payload)
         toast.success('Previous measurements applied')
@@ -407,7 +409,7 @@ const handleAddMeasurementOption = async (type, value) => {
 const handleAddItem = async (itemData, categoryId) => {
     if (!categoryId) return
     const category = getCategory(categoryId)
-    const editKey = getEditKey(categoryId, editingModelIds.value[categoryId])
+    const editKey = getEditKey(categoryId, editingModelIds.value[categoryId], editingModelTypeIds.value[categoryId])
     // Merge data from props or current state
     const item = itemData || currentItems.value[editKey]
     // Get measurements for this category + model
@@ -435,6 +437,12 @@ const handleAddItem = async (itemData, categoryId) => {
         return
     }
 
+    const modelTypeId = itemMeasurements?.tailoring_category_model_type_id ?? item?.tailoring_category_model_type_id
+    if (!modelTypeId) {
+        toast.error('Please select a model type (Category Model Type) before adding the product')
+        return
+    }
+
     isAddingItem.value = { ...isAddingItem.value, [categoryId]: true }
 
     // Capture editing ID immediately to avoid race condition with clear event
@@ -458,7 +466,7 @@ const handleAddItem = async (itemData, categoryId) => {
             const measurementKeys = (category.active_measurements || []).map(m => m.field_key)
 
             // Add mandatory hidden keys
-            const additionalKeys = ['tailoring_category_model_id', 'tailoring_category_model_name', 'tailoring_notes']
+            const additionalKeys = ['tailoring_category_model_id', 'tailoring_category_model_name', 'tailoring_category_model_type_id', 'tailoring_category_model_type_name', 'tailoring_notes']
             const allKeys = [...new Set([...measurementKeys, ...additionalKeys])]
 
             // Filter measurements only
@@ -502,6 +510,7 @@ const handleAddItem = async (itemData, categoryId) => {
                 // Clear editing state
                 editingItemIds.value[categoryId] = null
                 editingModelIds.value[categoryId] = null
+                editingModelTypeIds.value[categoryId] = null
             } else {
                 // New item
                 finalItem._temp_id = Date.now() + Math.random().toString(36).substr(2, 9)
@@ -509,19 +518,20 @@ const handleAddItem = async (itemData, categoryId) => {
                 toast.success('Item added to order')
             }
 
-            // Sync measurements to all items of the same category AND model
+            // Sync measurements to all items of the same category, model AND model type
             form.value.items.forEach((it, idx) => {
                 it.item_no = idx + 1
                 if (it.tailoring_category_id === categoryId &&
-                    it.tailoring_category_model_id === filteredMeasurements.tailoring_category_model_id) {
+                    it.tailoring_category_model_id === filteredMeasurements.tailoring_category_model_id &&
+                    it.tailoring_category_model_type_id === filteredMeasurements.tailoring_category_model_type_id) {
                     // Update measurement fields ONLY
                     Object.assign(it, filteredMeasurements)
                 }
             })
 
             // Reset current item form but KEEP measurements for next item (do not reset measurement values)
-            const resetKey = getEditKey(categoryId, editingModelIds.value[categoryId] ?? 'new')
-            const addKey = getEditKey(categoryId, 'new')
+            const resetKey = getEditKey(categoryId, editingModelIds.value[categoryId] ?? 'new', editingModelTypeIds.value[categoryId] ?? 'new')
+            const addKey = getEditKey(categoryId, 'new', 'new')
             currentItems.value[resetKey] = {
                 product_id: null,
                 product_name: '',
@@ -548,7 +558,7 @@ const handleAddItem = async (itemData, categoryId) => {
 const calculateItemAmount = async (item, categoryId) => {
     if (!item.quantity || !item.unit_price) return
 
-    const editKey = getEditKey(categoryId, editingModelIds.value[categoryId])
+    const editKey = getEditKey(categoryId, editingModelIds.value[categoryId], editingModelTypeIds.value[categoryId])
 
     try {
         const response = await axios.post('/tailoring/order/calculate-amount', {
@@ -571,6 +581,7 @@ const calculateItemAmount = async (item, categoryId) => {
 const handleEditItem = async (item) => {
     const catId = item.tailoring_category_id
     const modelId = item.tailoring_category_model_id
+    const modelTypeId = item.tailoring_category_model_type_id
 
     // Fetch full item from API when we have order id and persisted item
     let itemToEdit = item
@@ -591,14 +602,15 @@ const handleEditItem = async (item) => {
         selectedCategories.value.push(catId)
     }
 
-    // Restore data to forms - keyed by category + model so each item's measurements stay separate
-    const editKey = getEditKey(catId, modelId)
+    // Restore data to forms - keyed by category + model + model type so each item's measurements stay separate
+    const editKey = getEditKey(catId, modelId, modelTypeId)
     currentItems.value[editKey] = { ...itemToEdit }
     measurements.value[editKey] = { ...itemToEdit }
 
     // Set editing state
     editingItemIds.value[catId] = itemToEdit.id || itemToEdit._temp_id
     editingModelIds.value[catId] = modelId
+    editingModelTypeIds.value[catId] = modelTypeId
 
     // Set active tab to switch the UI view
     activeCategoryTab.value = catId
@@ -615,8 +627,9 @@ const handleItemClear = (categoryId) => {
     // Clear editing state when user clicks clear on the form
     editingItemIds.value[categoryId] = null
     editingModelIds.value[categoryId] = null
+    editingModelTypeIds.value[categoryId] = null
     // Reset add-new form slot for this category
-    const addKey = getEditKey(categoryId, 'new')
+    const addKey = getEditKey(categoryId, 'new', 'new')
     currentItems.value[addKey] = {
         product_id: null,
         product_name: '',
@@ -643,10 +656,12 @@ const handleRemoveItem = (item) => {
 
         const catId = item.tailoring_category_id
         const modelId = item.tailoring_category_model_id
+        const modelTypeId = item.tailoring_category_model_type_id
         if (editingItemIds.value[catId] === (item.id || item._temp_id)) {
             editingItemIds.value[catId] = null
             editingModelIds.value[catId] = null
-            const editKey = getEditKey(catId, modelId)
+            editingModelTypeIds.value[catId] = null
+            const editKey = getEditKey(catId, modelId, modelTypeId)
             currentItems.value[editKey] = {
                 product_id: null,
                 product_name: '',
@@ -741,6 +756,7 @@ const handleClear = () => {
     currentItems.value = {}
     editingItemIds.value = {}
     editingModelIds.value = {}
+    editingModelTypeIds.value = {}
     activeCategoryTab.value = null
     selectedCategories.value = []
 }
@@ -818,9 +834,9 @@ onMounted(() => {
         const categoryIds = [...new Set(props.order.items.map(i => i.tailoring_category_id))]
         selectedCategories.value = categoryIds
 
-        // Initialize add-new slots for each category (measurements keyed by category + model)
+        // Initialize add-new slots for each category (measurements keyed by category + model + model type)
         categoryIds.forEach(catId => {
-            const addKey = getEditKey(catId, 'new')
+            const addKey = getEditKey(catId, 'new', 'new')
             measurements.value[addKey] = {}
             currentItems.value[addKey] = {
                 product_id: null,

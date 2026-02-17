@@ -157,6 +157,11 @@
                                 <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="tailoring_orders.account_id" label="Customer" />
                             </th>
                         @endif
+                        @if ($tailoring_visible_column['customer_mobile'] ?? true)
+                            <th class="text-nowrap">
+                                <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="tailoring_orders.customer_mobile" label="Mobile" />
+                            </th>
+                        @endif
                         @if ($tailoring_visible_column['status'] ?? true)
                             <th>
                                 <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="tailoring_orders.status" label="Status" />
@@ -226,6 +231,14 @@
                                     </div>
                                 </td>
                             @endif
+                            @if ($tailoring_visible_column['customer_mobile'] ?? true)
+                                <td class="text-nowrap">
+                                    <div class="d-flex align-items-center gap-2">
+                                        <i class="fa fa-phone fs-5 text-info"></i>
+                                        <div>{{ $order->customer_mobile }}</div>
+                                    </div>
+                                </td>
+                            @endif
                             @if ($tailoring_visible_column['status'] ?? true)
                                 <td>
                                     <div
@@ -274,6 +287,9 @@
                             <th></th>
                         @endif
                         @if ($tailoring_visible_column['customer'] ?? true)
+                            <th></th>
+                        @endif
+                        @if ($tailoring_visible_column['customer_mobile'] ?? true)
                             <th></th>
                         @endif
                         @if ($tailoring_visible_column['status'] ?? true)

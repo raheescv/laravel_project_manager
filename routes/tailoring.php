@@ -9,6 +9,8 @@ Route::middleware('auth')->group(function (): void {
         Route::get('categories', [OrderController::class, 'getCategories'])->name('categories');
         Route::get('category-models/{categoryId}', [OrderController::class, 'getCategoryModels'])->name('category-models');
         Route::post('category-models', [OrderController::class, 'addCategoryModel'])->name('add-category-model');
+        Route::get('category-model-types/{categoryId}', [OrderController::class, 'getCategoryModelTypes'])->name('category-model-types');
+        Route::post('category-model-types', [OrderController::class, 'addCategoryModelType'])->name('add-category-model-type');
         Route::get('products', [OrderController::class, 'getProducts'])->name('products');
         Route::get('products/by-barcode', [OrderController::class, 'getProductByBarcode'])->name('products-by-barcode');
         Route::get('product-colors', [OrderController::class, 'getProductColors'])->name('product-colors');

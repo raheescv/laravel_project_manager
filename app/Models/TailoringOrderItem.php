@@ -22,6 +22,7 @@ class TailoringOrderItem extends Model implements AuditableContracts
         'item_no',
         'tailoring_category_id',
         'tailoring_category_model_id',
+        'tailoring_category_model_type_id',
         'product_id',
         'product_name',
         'product_color',
@@ -118,6 +119,11 @@ class TailoringOrderItem extends Model implements AuditableContracts
         return $this->belongsTo(TailoringCategoryModel::class, 'tailoring_category_model_id');
     }
 
+    public function categoryModelType(): BelongsTo
+    {
+        return $this->belongsTo(TailoringCategoryModelType::class, 'tailoring_category_model_type_id');
+    }
+
     public function product(): BelongsTo
     {
         return $this->belongsTo(Product::class, 'product_id');
@@ -152,6 +158,11 @@ class TailoringOrderItem extends Model implements AuditableContracts
     public function scopeByModel($query, $modelId)
     {
         return $query->where('tailoring_category_model_id', $modelId);
+    }
+
+    public function scopeByModelType($query, $modelTypeId)
+    {
+        return $query->where('tailoring_category_model_type_id', $modelTypeId);
     }
 
     public function scopeSelectedForCompletion($query)
@@ -191,6 +202,11 @@ class TailoringOrderItem extends Model implements AuditableContracts
     public function getModelNameAttribute()
     {
         return $this->categoryModel?->name;
+    }
+
+    public function getModelTypeNameAttribute()
+    {
+        return $this->categoryModelType?->name;
     }
 
     public function getTailorNameAttribute()

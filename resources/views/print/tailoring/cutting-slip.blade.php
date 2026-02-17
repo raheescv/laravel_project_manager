@@ -397,8 +397,9 @@
                     <th class="col-desc">Description</th>
                     <th>Barcode</th>
                     <th>Qty</th>
-                    <th>Type</th>
+                    <th>Category</th>
                     <th>Model</th>
+                    <th>Type</th>
                     <th>Color</th>
                     <th>Used</th>
                 </tr>
@@ -410,7 +411,8 @@
                         <td><b>{{ $item->product->barcode ?? '-' }}</b></td>
                         <td><b>{{ number_format($item->quantity, 1) }}</b></td>
                         <td><b>{{ $item->category->name ?? '-' }}</b></td>
-                        <td><span class="highlight-yellow">{{ $item->categoryModel->name ?? 'Standard' }}</span></td>
+                        <td><span class="highlight-yellow">{{ $item->categoryModel->name ?? $item->tailoring_category_model_name ?? 'Standard' }}</span></td>
+                        <td><span class="highlight-yellow">{{ $item->categoryModelType->name  ?? $item->tailoring_category_model_type_name ?? '-' }}</span></td>
                         <td><b>{{ $item->product_color ?? '-' }}</b></td>
                         <td><b></b></td>
                     </tr>

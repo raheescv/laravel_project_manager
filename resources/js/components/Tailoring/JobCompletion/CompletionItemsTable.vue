@@ -76,11 +76,11 @@
                                     <div class="flex items-center gap-1.5">
                                         <span
                                             class="text-[0.6rem] font-black text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded">#{{
-                                            item.item_no }}</span>
+                                                item.item_no }}</span>
                                         <span class="font-bold text-slate-400 uppercase tracking-tighter">{{
                                             item.category?.name }}</span>
                                     </div>
-                                    <div class="text-xs font-bold text-slate-800 mt-0.5 truncate max-w-[150px]">{{
+                                    <div class="text-xs font-bold text-slate-800 mt-0.5 truncate max-w-[450px]">{{
                                         item.product_name }}</div>
                                     <div class="grid grid-cols-2 gap-x-3 gap-y-0.5 text-slate-500 mt-1">
                                         <div class="flex items-center gap-1">
@@ -90,13 +90,19 @@
                                         <div class="flex items-center gap-1">
                                             <span>Price:</span>
                                             <span class="font-bold text-blue-600">{{ formatCurrency(item.total)
-                                                }}</span>
+                                            }}</span>
                                         </div>
                                         <div class="flex items-center gap-1">
                                             <span>Model:</span>
                                             <span class="font-bold text-slate-700 truncate max-w-[60px]">{{
                                                 item.categoryModel?.name || item.category_model?.name ||
                                                 item.tailoring_category_model_name || '-' }}</span>
+                                        </div>
+                                        <div class="flex items-center gap-1">
+                                            <span>Type:</span>
+                                            <span class="font-bold text-slate-700 truncate max-w-[100px]">{{
+                                                item.categoryModelType?.name || item.category_model_type?.name ||
+                                                item.tailoring_category_model_type_name || '-' }}</span>
                                         </div>
                                         <!-- <div class="flex items-center gap-1">
                                             <span>Len:</span>
@@ -243,7 +249,8 @@
         </div>
 
         <!-- Measurement View Modal -->
-        <MeasurementViewModal v-if="selectedItemForView" :show="showViewModal" :item="selectedItemForView" @close="closeViewModal" />
+        <MeasurementViewModal v-if="selectedItemForView" :show="showViewModal" :item="selectedItemForView"
+            @close="closeViewModal" />
     </div>
 </template>
 

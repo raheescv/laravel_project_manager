@@ -22,6 +22,18 @@
                                     <i class="fa fa-plus text-[10px]"></i>
                                 </button>
                             </div>
+                            <div
+                                class="field-wrap col-span-3 flex flex-row justify-between items-end gap-2">
+                                <div class="flex flex-col gap-1 flex-1 min-w-0">
+                                    <label>Model Type</label>
+                                    <VSelect v-model="measurements.tailoring_category_model_type_id"
+                                        :options="categoryModelTypes.map(t => ({ value: t.id, label: t.name }))"
+                                        placeholder="Select Model Type" @change="updateModelTypeName" />
+                                </div>
+                                <button type="button" @click="addCategoryModelType" class="btn-add-more">
+                                    <i class="fa fa-plus text-[10px]"></i>
+                                </button>
+                            </div>
                             <template v-for="m in getFieldsBySection('basic_body')" :key="m.id">
                                 <div v-if="m.field_type === 'input'" :class="[m.field_key === 'length' ? 'col-span-3' : 'col-span-3', 'field-wrap']">
                                     <label> {{ m.label }} </label>
@@ -154,6 +166,7 @@ const emit = defineEmits(['update:modelValue', 'add-option'])
 const toast = useToast()
 const measurements = ref(props.modelValue || {})
 const categoryModels = ref([])
+const categoryModelTypes = ref([])
 
 const getFieldsBySection = (sectionId) => {
     if (!props.category?.active_measurements) return []
@@ -215,20 +228,58 @@ const updateModelName = () => {
     }
 }
 
+const addCategoryModelType = async () => {
+    if (!props.category?.id) {
+        toast.error('Please select an item type first')
+        return
+    }
+
+    const name = prompt(`Add new ${props.category.name} Model Type:`)
+    if (!name || !name.trim()) return
+
+    try {
+        const response = await axios.post('/tailoring/order/category-model-types', {
+            tailoring_category_id: props.category.id,
+            name: name.trim()
+        })
+
+        if (response.data.success) {
+            toast.success('Model type added successfully')
+            const newType = response.data.data
+            categoryModelTypes.value.push(newType)
+            measurements.value.tailoring_category_model_type_id = newType.id
+            measurements.value.tailoring_category_model_type_name = newType.name
+        }
+    } catch (error) {
+        console.error('Failed to add model type', error)
+        toast.error(error.response?.data?.message || 'Failed to add model type')
+    }
+}
+
+const updateModelTypeName = () => {
+    const selectedType = categoryModelTypes.value.find(t => t.id == measurements.value.tailoring_category_model_type_id)
+    if (selectedType) {
+        measurements.value.tailoring_category_model_type_name = selectedType.name
+    } else {
+        measurements.value.tailoring_category_model_type_name = null
+    }
+}
+
 watch(() => props.category, async (newCategory) => {
     if (newCategory?.id) {
         try {
-            const response = await axios.get(`/tailoring/order/category-models/${newCategory.id}`)
-            if (response.data.success) {
-                categoryModels.value = response.data.data
-                // Removed aggressive clearing of tailoring_category_model_id
-                // to prevent data loss during edit and tab switching
-            }
+            const [modelsRes, typesRes] = await Promise.all([
+                axios.get(`/tailoring/order/category-models/${newCategory.id}`),
+                axios.get(`/tailoring/order/category-model-types/${newCategory.id}`)
+            ])
+            if (modelsRes.data.success) categoryModels.value = modelsRes.data.data
+            if (typesRes.data.success) categoryModelTypes.value = typesRes.data.data
         } catch (error) {
-            console.error('Failed to load category models', error)
+            console.error('Failed to load category models/types', error)
         }
     } else {
         categoryModels.value = []
+        categoryModelTypes.value = []
     }
 }, { immediate: true })
 
@@ -242,6 +293,10 @@ watch(measurements, (newVal) => {
 
 watch(categoryModels, () => {
     updateModelName()
+}, { deep: true })
+
+watch(categoryModelTypes, () => {
+    updateModelTypeName()
 }, { deep: true })
 
 watch(() => props.modelValue, (newVal) => {

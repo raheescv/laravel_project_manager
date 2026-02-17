@@ -30,6 +30,7 @@ class UpdateTailoringItemAction
                 $dynamicData = [];
 
                 $measurementData['tailoring_category_model_id'] = $data['tailoring_category_model_id'];
+                $measurementData['tailoring_category_model_type_id'] = $data['tailoring_category_model_type_id'];
 
                 if (isset($data['tailoring_notes'])) {
                     $measurementData['tailoring_notes'] = $data['tailoring_notes'];
@@ -37,7 +38,7 @@ class UpdateTailoringItemAction
                 foreach ($activeKeys as $key) {
                     if (array_key_exists($key, $data)) {
                         $value = $data[$key];
-                        if ($key === 'tailoring_category_model_id' || $key === 'tailoring_notes' || $key === 'id' || $key === 'tailoring_order_id' || $key === 'tailoring_category_id') {
+                        if (in_array($key, ['tailoring_category_model_id', 'tailoring_category_model_type_id', 'tailoring_notes', 'id', 'tailoring_order_id', 'tailoring_category_id'])) {
                             continue;
                         }
                         $dynamicData[(string) $key] = $value;
@@ -49,6 +50,7 @@ class UpdateTailoringItemAction
                         'tailoring_order_id' => $item->tailoring_order_id,
                         'tailoring_category_id' => $categoryId,
                         'tailoring_category_model_id' => $data['tailoring_category_model_id'],
+                        'tailoring_category_model_type_id' => $data['tailoring_category_model_type_id'] ?? null,
                     ],
                     $measurementData
                 );

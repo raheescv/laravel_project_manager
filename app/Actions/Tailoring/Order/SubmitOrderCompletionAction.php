@@ -53,7 +53,7 @@ class SubmitOrderCompletionAction
             // TODO: Update stock inventory if integrated
             // TODO: Record tailor commissions if needed
 
-            $order = $order->fresh(['items.category', 'items.categoryModel', 'items.product', 'items.unit', 'items.tailor', 'measurements']);
+            $order = $order->fresh(['items.category', 'items.categoryModel', 'items.categoryModelType', 'items.product', 'items.unit', 'items.tailor', 'measurements']);
             $order->appendMeasurementsToItems();
 
             $return['success'] = true;

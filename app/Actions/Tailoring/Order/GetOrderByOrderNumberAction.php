@@ -22,6 +22,7 @@ class GetOrderByOrderNumberAction
                             $q->with('activeMeasurements');
                         },
                         'categoryModel:id,name',
+                        'categoryModelType:id,name',
                         'product' => function ($q) {
                             $q->select('id', 'name')->withSum('inventories as stock_quantity', 'quantity');
                         },

@@ -22,7 +22,8 @@ return new class() extends Migration
             $table->foreign('tailoring_category_id')->references('id')->on('tailoring_categories')->onDelete('set null');
             $table->unsignedBigInteger('tailoring_category_model_id')->nullable();
             $table->foreign('tailoring_category_model_id')->references('id')->on('tailoring_category_models')->onDelete('set null');
-
+            $table->unsignedBigInteger('tailoring_category_model_type_id')->nullable()->after('tailoring_category_model_id');
+            $table->foreign('tailoring_category_model_type_id')->references('id')->on('tailoring_category_model_types')->onDelete('set null');
             // Product Information
             $table->unsignedBigInteger('product_id')->nullable()->references('id')->on('products');
             $table->string('product_name');

@@ -21,6 +21,7 @@ class TailoringOrderMeasurement extends Model implements AuditableContracts
 
         'tailoring_category_id',
         'tailoring_category_model_id',
+        'tailoring_category_model_type_id',
 
         'data',
 
@@ -72,6 +73,11 @@ class TailoringOrderMeasurement extends Model implements AuditableContracts
     public function categoryModel(): BelongsTo
     {
         return $this->belongsTo(TailoringCategoryModel::class, 'tailoring_category_model_id');
+    }
+
+    public function categoryModelType(): BelongsTo
+    {
+        return $this->belongsTo(TailoringCategoryModelType::class, 'tailoring_category_model_type_id');
     }
 
     public function createdUser(): BelongsTo

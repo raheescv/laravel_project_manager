@@ -81,6 +81,9 @@
                                     <button type="button" class="btn btn-icon btn-sm btn-hover btn-light manage-models" data-category-id="{{ $item->id }}" title="Manage Models">
                                         <i class="fa fa-cube fs-5 text-info"></i>
                                     </button>
+                                    <button type="button" class="btn btn-icon btn-sm btn-hover btn-light manage-model-types" data-category-id="{{ $item->id }}" title="Manage Model Types">
+                                        <i class="fa fa-tags fs-5 text-primary"></i>
+                                    </button>
                                     <button type="button" class="btn btn-icon btn-sm btn-hover btn-light manage-measurements" data-category-id="{{ $item->id }}" title="Manage Measurements">
                                         <i class="fa fa-tasks fs-5 text-warning"></i>
                                     </button>
@@ -125,6 +128,11 @@
                     var categoryId = $(this).data('category-id');
                     Livewire.dispatch('SelectCategoryForModels', { id: categoryId });
                     document.getElementById('category-models-card')?.scrollIntoView({ behavior: 'smooth' });
+                });
+                $(document).on('click', '.manage-model-types', function() {
+                    var categoryId = $(this).data('category-id');
+                    Livewire.dispatch('SelectCategoryForModelTypes', { id: categoryId });
+                    document.getElementById('category-model-types-card')?.scrollIntoView({ behavior: 'smooth' });
                 });
                 $(document).on('click', '.manage-measurements', function() {
                     var categoryId = $(this).data('category-id');
