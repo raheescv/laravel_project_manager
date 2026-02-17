@@ -51,7 +51,7 @@ class Page extends Component
             $option = TailoringMeasurementOption::find($this->table_id);
             $this->options = $option->toArray();
         }
-        $this->optionTypes = TailoringCategoryMeasurement::pluck('options_source', 'options_source')->toArray();
+        $this->optionTypes = TailoringMeasurementOption::pluck('option_type', 'option_type')->toArray();
     }
 
     protected function rules()

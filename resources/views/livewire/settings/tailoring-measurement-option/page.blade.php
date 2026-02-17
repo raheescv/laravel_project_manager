@@ -24,7 +24,7 @@
                     <div class="form-floating">
                         <select class="form-select @error('options.option_type') is-invalid @enderror" id="options_option_type" wire:model="options.option_type">
                             <option value="">-- Select Option Type --</option>
-                            @foreach($optionTypes as $key => $label)
+                            @foreach ($optionTypes as $key => $label)
                                 <option value="{{ $key }}">{{ $label }}</option>
                             @endforeach
                         </select>
