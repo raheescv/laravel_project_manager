@@ -49,6 +49,11 @@ class OrderController extends Controller
         return view('tailoring.receipts');
     }
 
+    public function orderSearchPage()
+    {
+        return view('tailoring.order-search');
+    }
+
     public function create()
     {
         return $this->page();

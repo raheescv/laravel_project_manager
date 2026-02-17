@@ -28,6 +28,11 @@ Route::middleware('auth')->group(function (): void {
         Route::get('{id}/payments', [OrderController::class, 'getPayments'])->name('payments');
     });
 
+    // Tailoring Order Search (must be before order routes to avoid conflict with {id})
+    Route::name('tailoring::order-search::')->prefix('tailoring/order-search')->controller(OrderController::class)->group(function (): void {
+        Route::get('', 'orderSearchPage')->name('index')->can('tailoring order.view');
+    });
+
     // Tailoring Order Routes
     Route::name('tailoring::order::')->prefix('tailoring/order')->controller(OrderController::class)->group(function (): void {
         Route::get('', 'index')->name('index')->can('tailoring order.view');
