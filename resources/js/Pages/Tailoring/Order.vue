@@ -724,6 +724,9 @@ const processSubmitOrder = async () => {
             // Get the order ID from response or use existing form ID
             const orderId = response.data.data?.id || form.value.id || response.data.id
 
+            // Open thermal receipt print in new window
+            window.open(`/tailoring/order/print/receipt-thermal/${orderId}`, '_blank')
+
             // Redirect based on tailoring config (create page vs show page)
             const redirectUrl = props.tailoringRedirectionPage === 'show'
                 ? `/tailoring/order/${orderId}`
