@@ -736,8 +736,15 @@ class OrderController extends Controller
         $item = TailoringOrderItem::findOrFail($itemId);
         $item->updateCompletion($request->all());
 
-        // Reload with relationships and append measurements
-        $item = $item->fresh(['category' => fn ($q) => $q->with('activeMeasurements'), 'categoryModel', 'categoryModelType', 'product', 'unit', 'tailor']);
+        // Reload with relationships and append measurements (product with stock_quantity to match initial order load)
+        $item = $item->fresh([
+            'category' => fn ($q) => $q->with('activeMeasurements'),
+            'categoryModel',
+            'categoryModelType',
+            'product' => fn ($q) => $q->select('id', 'name')->withSum('inventories as stock_quantity', 'quantity'),
+            'unit',
+            'tailor',
+        ]);
         $order = $item->order()->with(['measurements.category.activeMeasurements'])->first();
 
         $order->setRelation('items', collect([$item]));

@@ -90,7 +90,7 @@
                                         <div class="flex items-center gap-1">
                                             <span>Price:</span>
                                             <span class="font-bold text-blue-600">{{ formatCurrency(item.total)
-                                            }}</span>
+                                                }}</span>
                                         </div>
                                         <div class="flex items-center gap-1">
                                             <span>Model:</span>
@@ -151,20 +151,6 @@
                             <!-- Material Tracking Column -->
                             <td class="px-4 py-3">
                                 <div class="flex flex-col gap-2 min-w-[180px]">
-                                    <div class="flex items-center justify-between">
-                                        <span
-                                            class="text-[0.55rem] font-bold text-slate-400 uppercase tracking-widest">Balance:</span>
-                                        <div class="flex items-center gap-1.5">
-                                            <span :class="item.stock_balance < 0 ? 'text-rose-500' : 'text-emerald-500'"
-                                                class="text-[0.65rem] font-black">
-                                                {{ (item.stock_balance || 0).toFixed(3) }}
-                                            </span>
-                                            <button @click="refreshStock(item)"
-                                                class="text-slate-300 hover:text-blue-500 transition-colors">
-                                                <i class="fa fa-refresh text-[10px]"></i>
-                                            </button>
-                                        </div>
-                                    </div>
                                     <div class="bg-slate-50 rounded-lg p-1.5 border border-slate-100">
                                         <div class="flex items-center justify-between mb-1.5">
                                             <span

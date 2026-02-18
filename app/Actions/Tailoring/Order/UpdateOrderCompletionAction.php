@@ -60,7 +60,19 @@ class UpdateOrderCompletionAction
             }
 
             $order->refresh();
-            $order->load(['items.category', 'items.categoryModel', 'items.categoryModelType', 'items.product', 'items.unit', 'items.tailor', 'measurements']);
+            $order->load([
+                'items' => function ($query) {
+                    $query->with([
+                        'category' => fn ($q) => $q->with('activeMeasurements'),
+                        'categoryModel',
+                        'categoryModelType',
+                        'product' => fn ($q) => $q->select('id', 'name')->withSum('inventories as stock_quantity', 'quantity'),
+                        'unit',
+                        'tailor',
+                    ])->orderBy('item_no');
+                },
+                'measurements',
+            ]);
             $order->appendMeasurementsToItems();
 
             $return['success'] = true;
