@@ -57,6 +57,7 @@ class UniversalUomConfiguration extends Component
         ]);
 
         $this->reset(['base_unit_id', 'sub_unit_id', 'conversion_factor']);
+        $this->dispatch('uom-dropdowns-reset');
         $this->dispatch('success', ['message' => __('Universal UOM conversion added.')]);
     }
 

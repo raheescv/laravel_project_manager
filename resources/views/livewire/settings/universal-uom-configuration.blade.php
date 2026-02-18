@@ -90,6 +90,13 @@
                 $('#sub_unit_id').change(function() {
                     @this.set('sub_unit_id', $(this).val());
                 });
+
+                Livewire.on('uom-dropdowns-reset', function() {
+                    var baseEl = document.querySelector('#base_unit_id');
+                    var subEl = document.querySelector('#sub_unit_id');
+                    if (baseEl && baseEl.tomselect) baseEl.tomselect.clear();
+                    if (subEl && subEl.tomselect) subEl.tomselect.clear();
+                });
             });
         </script>
     @endpush
