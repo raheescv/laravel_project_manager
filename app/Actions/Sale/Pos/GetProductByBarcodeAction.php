@@ -90,19 +90,7 @@ class GetProductByBarcodeAction
                 'unit_id' => $selectedUnitId ?? $inventory->product->unit_id,
                 'unit_name' => $selectedUnitName ?? ($inventory->product->unit->name ?? ''),
                 'conversion_factor' => $selectedConversionFactor,
-                'units' => collect([
-                    [
-                        'id' => $inventory->product->unit_id,
-                        'name' => $inventory->product->unit->name ?? '',
-                        'conversion_factor' => 1,
-                    ],
-                ])->concat($inventory->product->units->map(function ($pu) {
-                    return [
-                        'id' => $pu->sub_unit_id,
-                        'name' => $pu->subUnit->name ?? '',
-                        'conversion_factor' => $pu->conversion_factor,
-                    ];
-                })),
+                'units' => $inventory->product->getResolvedUnits(),
             ];
 
             return [

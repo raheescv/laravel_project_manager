@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Validation\Rule;
 use OwenIt\Auditing\Auditable;
 use OwenIt\Auditing\Contracts\Auditable as AuditableContracts;
@@ -17,6 +18,15 @@ class Product extends Model implements AuditableContracts
     use BelongsToTenant;
     use HasFactory;
     use SoftDeletes;
+
+    protected static function booted(): void
+    {
+        static::saved(function (Product $product): void {
+            if (array_key_exists('unit_id', $product->getChanges())) {
+                Cache::increment('product_units_version_'.$product->id);
+            }
+        });
+    }
 
     protected $fillable = [
         'tenant_id',
@@ -148,6 +158,83 @@ class Product extends Model implements AuditableContracts
     public function unit()
     {
         return $this->belongsTo(Unit::class);
+    }
+
+    /**
+     * Get units for this product: use product's own ProductUnits if any,
+     * otherwise fall back to Universal UOM conversions for the product's base unit.
+     * Return format matches getProductUnits(): [ ['id', 'name', 'conversion_factor'], ... ].
+     * Result is cached; invalidated when this product or tenant's Universal UOM changes.
+     */
+    public function getResolvedUnits(): array
+    {
+        $tenantId = $this->tenant_id ?? static::getCurrentTenantId();
+        $uomVersion = Cache::get('uom_version_'.$tenantId, 0);
+        $productVersion = Cache::get('product_units_version_'.$this->id, 0);
+        $key = 'product_resolved_units_'.$tenantId.'_'.$this->id.'_'.$uomVersion.'_'.$productVersion;
+
+        return Cache::remember($key, 3600, fn () => $this->computeResolvedUnits());
+    }
+
+    /**
+     * Compute resolved units (no cache). Used internally by getResolvedUnits().
+     * Includes: base unit, product-specific units (ProductUnit), and universal
+     * conversions for the base unit. Duplicates by unit id are skipped (product-specific wins).
+     */
+    protected function computeResolvedUnits(): array
+    {
+        $this->loadMissing(['unit', 'units.subUnit']);
+        $units = [];
+        $seenUnitIds = [];
+
+        // 1. Base unit
+        if ($this->unit) {
+            $units[] = [
+                'id' => $this->unit->id,
+                'name' => $this->unit->name,
+                'conversion_factor' => 1,
+            ];
+            $seenUnitIds[$this->unit->id] = true;
+        }
+
+        // 2. Product-specific units (ProductUnit)
+        foreach ($this->units as $pUnit) {
+            if ($pUnit->subUnit && empty($seenUnitIds[$pUnit->subUnit->id])) {
+                $units[] = [
+                    'id' => $pUnit->subUnit->id,
+                    'name' => $pUnit->subUnit->name,
+                    'conversion_factor' => $pUnit->conversion_factor,
+                ];
+                $seenUnitIds[$pUnit->subUnit->id] = true;
+            }
+        }
+
+        // 3. Universal conversions for this product's base unit (add any not already present)
+        if ($this->unit_id) {
+            $universal = UniversalUnitConversion::with('subUnit')
+                ->where('base_unit_id', $this->unit_id)
+                ->get();
+            foreach ($universal as $u) {
+                if ($u->subUnit && empty($seenUnitIds[$u->subUnit->id])) {
+                    $units[] = [
+                        'id' => $u->subUnit->id,
+                        'name' => $u->subUnit->name,
+                        'conversion_factor' => $u->conversion_factor,
+                    ];
+                    $seenUnitIds[$u->subUnit->id] = true;
+                }
+            }
+        }
+
+        return $units;
+    }
+
+    /**
+     * Invalidate cached resolved units for this product (e.g. when unit_id or product units change).
+     */
+    public function invalidateResolvedUnitsCache(): void
+    {
+        Cache::increment('product_units_version_'.$this->id);
     }
 
     public function brand()

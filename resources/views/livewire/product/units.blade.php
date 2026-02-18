@@ -24,6 +24,16 @@
                     </div>
                 </div>
             </div>
+            @if (count($universalConversionFactors) > 0)
+                <div class="row">
+                    <div class="col-md-12">
+                        <small class="text-muted d-block mb-2">
+                            <i class="fa fa-info-circle me-1"></i>
+                            Sub-units from <strong>Universal UOM</strong> (Settings) will auto-fill the conversion factor when selected.
+                        </small>
+                    </div>
+                </div>
+            @endif
             <div class="row">
                 <div class="col-md-6" wire:ignore>
                     <label for="name" class="form-label">Convert To *<span style="font-size:8px ">(1 base unit = ? Sub unit)</span></label>
@@ -55,9 +65,17 @@
     @push('scripts')
         <script>
             $(document).ready(function() {
-                $('#sub_unit_id').on('change', function(e) {
-                    $("#conversion_factor").select();
-                    @this.set('product_units.sub_unit_id', value);
+                var universalFactors = @json($universalConversionFactors);
+                $('#sub_unit_id').on('change', function() {
+                    var value = $(this).val();
+                    if (value) {
+                        value = parseInt(value, 10);
+                        @this.set('product_units.sub_unit_id', value);
+                        if (universalFactors[value] !== undefined) {
+                            @this.set('product_units.conversion_factor', universalFactors[value]);
+                            $('#conversion_factor').val(universalFactors[value]);
+                        }
+                    }
                 });
             });
         </script>

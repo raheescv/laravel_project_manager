@@ -16,7 +16,7 @@
 
             <div v-if="item" class="space-y-2">
                 <!-- Compact Product Info -->
-                <div class="grid grid-cols-2 gap-2">
+                <div class="grid grid-cols-1">
                     <div class="bg-slate-60 rounded p-2 border border-slate-200">
                         <label class="block text-xs font-semibold text-slate-700 mb-1 flex items-center">
                             <i class="fa fa-box text-blue-500 mr-1 text-xs"></i>
@@ -26,6 +26,8 @@
                             {{ item.name }}
                         </div>
                     </div>
+                </div>
+                <div class="grid grid-cols-1">
                     <div class="bg-slate-40 rounded p-2 border border-slate-200">
                         <label class="block text-xs font-semibold text-slate-700 mb-1 flex items-center">
                             <i class="fa fa-balance-scale text-orange-500 mr-1 text-xs"></i>

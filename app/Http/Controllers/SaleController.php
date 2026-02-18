@@ -185,23 +185,7 @@ class SaleController extends Controller
                         'assistant_name' => $item->assistant->name ?? 'Unknown Assistant',
                         'unit_id' => $item->unit_id ?? $item->product->unit_id,
                         'unit_name' => $item->unit->name ?? ($item->product->unit->name ?? ''),
-                        'units' => collect([
-                            [
-                                'id' => $item->product->unit_id,
-                                'name' => $item->product->unit->name ?? '',
-                                'conversion_factor' => 1,
-                            ],
-                        ])
-                            ->concat(
-                                $item->product->units->map(function ($pu) {
-                                    return [
-                                        'id' => $pu->sub_unit_id,
-                                        'name' => $pu->subUnit->name ?? '',
-                                        'conversion_factor' => $pu->conversion_factor,
-                                    ];
-                                }),
-                            )
-                            ->toArray(),
+                        'units' => $item->product->getResolvedUnits(),
                         'combo_offer_price' => 0,
                         'combo_offer_id' => null,
                     ];

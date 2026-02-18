@@ -88,19 +88,7 @@ class POSController extends Controller
                         'unit_id' => $inventory->product->unit_id,
                         'unit_name' => $inventory->product->unit->name ?? '',
                         'conversion_factor' => 1,
-                        'units' => collect([
-                            [
-                                'id' => $inventory->product->unit_id,
-                                'name' => $inventory->product->unit->name ?? '',
-                                'conversion_factor' => 1,
-                            ],
-                        ])->concat($inventory->product->units->map(function ($pu) {
-                            return [
-                                'id' => $pu->sub_unit_id,
-                                'name' => $pu->subUnit->name ?? '',
-                                'conversion_factor' => $pu->conversion_factor,
-                            ];
-                        })),
+                        'units' => $inventory->product->getResolvedUnits(),
                     ];
                 });
 

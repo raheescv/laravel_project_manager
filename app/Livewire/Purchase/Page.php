@@ -282,25 +282,7 @@ class Page extends Component
 
     public function getProductUnits($product)
     {
-        $units = [];
-        if ($product->unit) {
-            $units[] = [
-                'id' => $product->unit->id,
-                'name' => $product->unit->name,
-                'conversion_factor' => 1,
-            ];
-        }
-        foreach ($product->units as $pUnit) {
-            if ($pUnit->subUnit) {
-                $units[] = [
-                    'id' => $pUnit->subUnit->id,
-                    'name' => $pUnit->subUnit->name,
-                    'conversion_factor' => $pUnit->conversion_factor,
-                ];
-            }
-        }
-
-        return $units;
+        return $product->getResolvedUnits();
     }
 
     public function updateUnit($index, $unit_id)

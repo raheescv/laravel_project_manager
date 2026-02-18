@@ -35,19 +35,7 @@ class EditItem extends Component
     {
         $product = Product::with(['unit', 'units.subUnit'])->find($this->item['product_id']);
         if ($product) {
-            $this->units = collect([
-                [
-                    'id' => $product->unit_id,
-                    'name' => $product->unit->name ?? 'Base Unit',
-                    'conversion_factor' => 1,
-                ],
-            ])->concat($product->units->map(function ($pu) {
-                return [
-                    'id' => $pu->sub_unit_id,
-                    'name' => $pu->subUnit->name ?? '',
-                    'conversion_factor' => $pu->conversion_factor,
-                ];
-            }))->toArray();
+            $this->units = $product->getResolvedUnits();
         } else {
             $this->units = [];
         }

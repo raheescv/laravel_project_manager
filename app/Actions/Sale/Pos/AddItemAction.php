@@ -5,6 +5,7 @@ namespace App\Actions\Sale\Pos;
 use App\Models\Configuration;
 use App\Models\Inventory;
 use App\Models\ProductUnit;
+use App\Models\UniversalUnitConversion;
 use App\Models\User;
 use Illuminate\Support\Facades\Log;
 
@@ -92,6 +93,15 @@ class AddItemAction
                 $unitInfo['conversion_factor'] = $productUnit->conversion_factor;
                 $unitInfo['unit_name'] = $productUnit->subUnit->name ?? '';
                 $unitInfo['barcode'] = $productUnit->barcode ?? $unitInfo['barcode'];
+            } else {
+                $universal = UniversalUnitConversion::with('subUnit')
+                    ->where('base_unit_id', $baseUnitId)
+                    ->where('sub_unit_id', $selectedUnitId)
+                    ->first();
+                if ($universal && $universal->subUnit) {
+                    $unitInfo['conversion_factor'] = $universal->conversion_factor;
+                    $unitInfo['unit_name'] = $universal->subUnit->name ?? '';
+                }
             }
         }
 
@@ -165,20 +175,6 @@ class AddItemAction
 
     private function buildUnitsArray(Inventory $inventory): array
     {
-        $baseUnit = [
-            'id' => $inventory->product->unit_id,
-            'name' => $inventory->product->unit->name ?? '',
-            'conversion_factor' => 1,
-        ];
-
-        $subUnits = $inventory->product->units->map(function ($pu) {
-            return [
-                'id' => $pu->sub_unit_id,
-                'name' => $pu->subUnit->name ?? '',
-                'conversion_factor' => $pu->conversion_factor,
-            ];
-        });
-
-        return collect([$baseUnit])->concat($subUnits)->toArray();
+        return $inventory->product->getResolvedUnits();
     }
 }

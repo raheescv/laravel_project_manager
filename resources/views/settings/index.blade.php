@@ -19,27 +19,38 @@
                         <div class="col-12 col-md-4 col-lg-3 border-end bg-light p-3 p-md-4">
                             <ul class="nav flex-row flex-md-column nav-pills gap-1 gap-md-2" role="tablist">
                                 <li class="nav-item" role="presentation">
-                                    <button class="nav-link text-start rounded" data-bs-toggle="tab" data-bs-target="#tabsConfiguration" type="button" role="tab" aria-selected="false" tabindex="-1">
+                                    <button class="nav-link text-start rounded" data-bs-toggle="tab" data-bs-target="#tabsConfiguration" type="button" role="tab" aria-selected="false"
+                                        tabindex="-1">
                                         <i class="demo-pli-data-settings me-2"></i>Configuration
                                     </button>
                                 </li>
                                 <li class="nav-item" role="presentation">
-                                    <button class="nav-link text-start rounded" data-bs-toggle="tab" data-bs-target="#tabsSaleSettings" type="button" role="tab" aria-selected="false" tabindex="-1">
+                                    <button class="nav-link text-start rounded" data-bs-toggle="tab" data-bs-target="#tabsSaleSettings" type="button" role="tab" aria-selected="false"
+                                        tabindex="-1">
                                         <i class="demo-pli-receipt-4 me-2"></i>Sale Settings
                                     </button>
                                 </li>
                                 <li class="nav-item" role="presentation">
-                                    <button class="nav-link text-start rounded" data-bs-toggle="tab" data-bs-target="#tabsPurchaseSettings" type="button" role="tab" aria-selected="false" tabindex="-1">
+                                    <button class="nav-link text-start rounded" data-bs-toggle="tab" data-bs-target="#tabsPurchaseSettings" type="button" role="tab" aria-selected="false"
+                                        tabindex="-1">
                                         <i class="demo-pli-credit-card-2 me-2"></i>Purchase Settings
                                     </button>
                                 </li>
                                 <li class="nav-item" role="presentation">
-                                    <button class="nav-link text-start rounded" data-bs-toggle="tab" data-bs-target="#tabsTailoringSettings" type="button" role="tab" aria-selected="false" tabindex="-1">
+                                    <button class="nav-link text-start rounded" data-bs-toggle="tab" data-bs-target="#tabsTailoringSettings" type="button" role="tab" aria-selected="false"
+                                        tabindex="-1">
                                         <i class="demo-pli-repair me-2"></i>Tailoring Settings
                                     </button>
                                 </li>
                                 <li class="nav-item" role="presentation">
-                                    <button class="nav-link active text-start rounded" data-bs-toggle="tab" data-bs-target="#tabsCompanyProfile" type="button" role="tab" aria-selected="true" tabindex="0">
+                                    <button class="nav-link text-start rounded" data-bs-toggle="tab" data-bs-target="#tabsUniversalUom" type="button" role="tab" aria-selected="false"
+                                        tabindex="-1">
+                                        <i class="demo-pli-data-storage me-2"></i>Universal UOM
+                                    </button>
+                                </li>
+                                <li class="nav-item" role="presentation">
+                                    <button class="nav-link active text-start rounded" data-bs-toggle="tab" data-bs-target="#tabsCompanyProfile" type="button" role="tab" aria-selected="true"
+                                        tabindex="0">
                                         <i class="demo-pli-male me-2"></i>Company Profile
                                     </button>
                                 </li>
@@ -50,20 +61,23 @@
                                 </li>
                                 @if (false)
                                     <li class="nav-item" role="presentation">
-                                        <button class="nav-link text-start rounded" data-bs-toggle="tab" data-bs-target="#tabsWorkingDay" type="button" role="tab" aria-selected="false" tabindex="-1">
+                                        <button class="nav-link text-start rounded" data-bs-toggle="tab" data-bs-target="#tabsWorkingDay" type="button" role="tab" aria-selected="false"
+                                            tabindex="-1">
                                             <i class="demo-pli-calendar-4 me-2"></i>Working Day
                                         </button>
                                     </li>
                                 @endif
                                 <li class="nav-item" role="presentation">
-                                    <button class="nav-link text-start rounded" data-bs-toggle="tab" data-bs-target="#tabsTelegram" type="button" role="tab" aria-selected="false" tabindex="-1">
+                                    <button class="nav-link text-start rounded" data-bs-toggle="tab" data-bs-target="#tabsTelegram" type="button" role="tab" aria-selected="false"
+                                        tabindex="-1">
                                         <i class="demo-pli-speech-bubble-5 me-2"></i>Telegram
                                     </button>
                                 </li>
                                 @if (false)
                                     @can('whatsapp.integration')
                                         <li class="nav-item" role="presentation">
-                                            <button class="nav-link text-start rounded" data-bs-toggle="tab" data-bs-target="#tabsWhatsapp" type="button" role="tab" aria-selected="false" tabindex="-1">
+                                            <button class="nav-link text-start rounded" data-bs-toggle="tab" data-bs-target="#tabsWhatsapp" type="button" role="tab" aria-selected="false"
+                                                tabindex="-1">
                                                 <i class="demo-pli-speech-bubble-4 me-2"></i>Whatsapp
                                             </button>
                                         </li>
@@ -73,70 +87,75 @@
                         </div>
                         <div class="col-12 col-md-8 col-lg-9">
                             <div class="tab-content p-2 p-md-3">
-                                    <div id="tabsConfiguration" class="tab-pane" role="tabpanel">
-                                        @livewire('settings.configurations')
-                                    </div>
-                                    <div id="tabsSaleSettings" class="tab-pane" role="tabpanel">
-                                        @livewire('settings.sale-configuration')
-                                    </div>
-                                    <div id="tabsPurchaseSettings" class="tab-pane" role="tabpanel">
-                                        @livewire('settings.purchase-configuration')
-                                    </div>
-                                    <div id="tabsTailoringSettings" class="tab-pane" role="tabpanel">
-                                        @livewire('settings.tailoring-configuration')
-                                    </div>
-                                    <div id="tabsCompanyProfile" class="tab-pane fade active show" role="tabpanel">
-                                        @livewire('settings.company-profile')
-                                    </div>
-                                    <div id="tabsTheme" class="tab-pane" role="tabpanel">
-                                <div class="card">
-                                    <div class="card-header">
-                                        <h5 class="card-title mb-0">Theme Settings</h5>
-                                    </div>
-                                    <div class="card-body">
-                                        <p class="text-muted mb-4">
-                                            Customize your workspace appearance. All settings are automatically saved to your browser's local storage and synchronized with your account.
-                                        </p>
-                                        <div class="row">
-                                            <div class="col-md-6">
-                                                <div class="mb-4">
-                                                    <h6>Layout Preferences</h6>
-                                                    <p class="text-muted small">
-                                                        Choose your preferred layout style, transitions and positioning.
-                                                    </p>
-                                                    <button class="btn btn-primary" id="openSettingsOffcanvas" type="button" data-bs-toggle="offcanvas" data-bs-target="#_dm-settingsContainer">
-                                                        <i class="demo-psi-gear me-2"></i> Open Settings Panel
-                                                    </button>
-                                                </div>
+                                <div id="tabsConfiguration" class="tab-pane" role="tabpanel">
+                                    @livewire('settings.configurations')
+                                </div>
+                                <div id="tabsSaleSettings" class="tab-pane" role="tabpanel">
+                                    @livewire('settings.sale-configuration')
+                                </div>
+                                <div id="tabsPurchaseSettings" class="tab-pane" role="tabpanel">
+                                    @livewire('settings.purchase-configuration')
+                                </div>
+                                <div id="tabsTailoringSettings" class="tab-pane" role="tabpanel">
+                                    @livewire('settings.tailoring-configuration')
+                                </div>
+                                <div id="tabsUniversalUom" class="tab-pane" role="tabpanel">
+                                    @livewire('settings.universal-uom-configuration')
+                                </div>
+                                <div id="tabsCompanyProfile" class="tab-pane fade active show" role="tabpanel">
+                                    @livewire('settings.company-profile')
+                                </div>
+                                <div id="tabsTheme" class="tab-pane" role="tabpanel">
+                                    <div class="card">
+                                        <div class="card-header">
+                                            <h5 class="card-title mb-0">Theme Settings</h5>
+                                        </div>
+                                        <div class="card-body">
+                                            <p class="text-muted mb-4">
+                                                Customize your workspace appearance. All settings are automatically saved to your browser's local storage and synchronized with your account.
+                                            </p>
+                                            <div class="row">
+                                                <div class="col-md-6">
+                                                    <div class="mb-4">
+                                                        <h6>Layout Preferences</h6>
+                                                        <p class="text-muted small">
+                                                            Choose your preferred layout style, transitions and positioning.
+                                                        </p>
+                                                        <button class="btn btn-primary" id="openSettingsOffcanvas" type="button" data-bs-toggle="offcanvas"
+                                                            data-bs-target="#_dm-settingsContainer">
+                                                            <i class="demo-psi-gear me-2"></i> Open Settings Panel
+                                                        </button>
+                                                    </div>
 
-                                                <div class="mb-4">
-                                                    <h6>Sync with Server</h6>
-                                                    <p class="text-muted small">
-                                                        Synchronize theme settings between your browser and the server.
-                                                    </p>
-                                                    <button class="btn btn-outline-primary" id="syncThemeSettings">
-                                                        <i class="demo-psi-synchronize me-2"></i> Sync Settings
-                                                    </button>
-                                                </div>
+                                                    <div class="mb-4">
+                                                        <h6>Sync with Server</h6>
+                                                        <p class="text-muted small">
+                                                            Synchronize theme settings between your browser and the server.
+                                                        </p>
+                                                        <button class="btn btn-outline-primary" id="syncThemeSettings">
+                                                            <i class="demo-psi-synchronize me-2"></i> Sync Settings
+                                                        </button>
+                                                    </div>
 
-                                                <div class="mb-4">
-                                                    <h6>Reset to Defaults</h6>
-                                                    <p class="text-muted small">
-                                                        Reset all theme settings to their default values.
-                                                    </p>
-                                                    <button class="btn btn-outline-danger" id="resetThemeSettings">
-                                                        <i class="demo-psi-reset me-2"></i> Reset Settings
-                                                    </button>
+                                                    <div class="mb-4">
+                                                        <h6>Reset to Defaults</h6>
+                                                        <p class="text-muted small">
+                                                            Reset all theme settings to their default values.
+                                                        </p>
+                                                        <button class="btn btn-outline-danger" id="resetThemeSettings">
+                                                            <i class="demo-psi-reset me-2"></i> Reset Settings
+                                                        </button>
+                                                    </div>
                                                 </div>
-                                            </div>
-                                            <div class="col-md-6">
-                                                <div class="card bg-light">
-                                                    <div class="card-body">
-                                                        <h6>Theme Settings Status</h6>
-                                                        <div id="themeSettingsStatus">
-                                                            <p><strong>Storage:</strong> <span id="storageStatus">Checking...</span></p>
-                                                            <p><strong>Last Updated:</strong> <span id="lastUpdated">Checking...</span></p>
-                                                            <p><strong>Sync Status:</strong> <span id="syncStatus">Checking...</span></p>
+                                                <div class="col-md-6">
+                                                    <div class="card bg-light">
+                                                        <div class="card-body">
+                                                            <h6>Theme Settings Status</h6>
+                                                            <div id="themeSettingsStatus">
+                                                                <p><strong>Storage:</strong> <span id="storageStatus">Checking...</span></p>
+                                                                <p><strong>Last Updated:</strong> <span id="lastUpdated">Checking...</span></p>
+                                                                <p><strong>Sync Status:</strong> <span id="syncStatus">Checking...</span></p>
+                                                            </div>
                                                         </div>
                                                     </div>
                                                 </div>
@@ -144,18 +163,17 @@
                                         </div>
                                     </div>
                                 </div>
+                                <div id="tabsWorkingDay" class="tab-pane" role="tabpanel">
+                                    @livewire('settings.working-day')
+                                </div>
+                                <div id="tabsTelegram" class="tab-pane" role="tabpanel">
+                                    @livewire('settings.telegram')
+                                </div>
+                                @can('whatsapp.integration')
+                                    <div id="tabsWhatsapp" class="tab-pane" role="tabpanel">
+                                        {{-- @livewire('settings.whatsapp') --}}
                                     </div>
-                                    <div id="tabsWorkingDay" class="tab-pane" role="tabpanel">
-                                        @livewire('settings.working-day')
-                                    </div>
-                                    <div id="tabsTelegram" class="tab-pane" role="tabpanel">
-                                        @livewire('settings.telegram')
-                                    </div>
-                                    @can('whatsapp.integration')
-                                        <div id="tabsWhatsapp" class="tab-pane" role="tabpanel">
-                                            {{-- @livewire('settings.whatsapp') --}}
-                                        </div>
-                                    @endcan
+                                @endcan
                             </div>
                         </div>
                     </div>
