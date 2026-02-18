@@ -22,21 +22,21 @@ class SubmitOrderCompletionAction
             if (isset($data['selected_item_ids']) && is_array($data['selected_item_ids'])) {
                 $order->items()->whereIn('id', $data['selected_item_ids'])->update(['is_selected_for_completion' => true]);
 
-                // Update item completion data if provided
+                // Prepare item data and update items + stock via shared action
                 if (isset($data['items']) && is_array($data['items'])) {
-                    foreach ($data['items'] as $itemData) {
+                    foreach ($data['items'] as &$itemData) {
                         if (isset($itemData['id']) && in_array($itemData['id'], $data['selected_item_ids'])) {
                             $item = $order->items()->find($itemData['id']);
                             if ($item) {
-                                // Default to order completion date if item has no date and none provided
                                 if (empty($itemData['item_completion_date']) && empty($item->item_completion_date)) {
                                     $itemData['item_completion_date'] = $order->completion_date;
                                 }
                                 $itemData['completed_quantity'] = $item->quantity;
-                                $item->updateCompletion($itemData);
                             }
                         }
                     }
+                    unset($itemData);
+                    (new ProcessOrderCompletionItemsAction())->execute($order, $data['items'], (int) $userId, $data['selected_item_ids']);
                 }
             }
 
@@ -49,9 +49,6 @@ class SubmitOrderCompletionAction
             }
 
             $order->save();
-
-            // TODO: Update stock inventory if integrated
-            // TODO: Record tailor commissions if needed
 
             $order = $order->fresh([
                 'items' => function ($query) {
