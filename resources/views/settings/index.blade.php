@@ -1,5 +1,5 @@
 <x-app-layout>
-    <div class=" content__boxed overlapping">
+    <div class="content__boxed overlapping">
         <div class="content__wrap">
             <nav aria-label="breadcrumb">
                 <ol class="breadcrumb">
@@ -8,87 +8,87 @@
                 </ol>
             </nav>
             <h1 class="page-title mb-0 mt-2">Settings</h1>
-            <p class="lead">
-                A table is an arrangement of Settings
-            </p>
+            <p class="text-body-secondary mb-0">Manage configuration, company profile, and integrations.</p>
         </div>
     </div>
     <div class="content__boxed">
         <div class="content__wrap">
-            <div class="row">
-                <div class="col-md-12 mb-3">
-                    <div class="tab-base">
-                        <ul class="nav nav-tabs" role="tablist">
-                            <li class="nav-item" role="presentation">
-                                <button class="nav-link " data-bs-toggle="tab" data-bs-target="#tabsConfiguration" type="button" role="tab" aria-controls="profile" aria-selected="false"
-                                    tabindex="-1">
-                                    Configuration
-                                </button>
-                            </li>
-                            <li class="nav-item" role="presentation">
-                                <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabsSaleSettings" type="button" role="tab" aria-controls="profile" aria-selected="false"
-                                    tabindex="-1">
-                                    Sale Settings
-                                </button>
-                            </li>
-                            <li class="nav-item" role="presentation">
-                                <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabsPurchaseSettings" type="button" role="tab" aria-controls="profile" aria-selected="false"
-                                    tabindex="-1">
-                                    Purchase Settings
-                                </button>
-                            </li>
-                            <li class="nav-item" role="presentation">
-                                <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabsTailoringSettings" type="button" role="tab" aria-controls="profile" aria-selected="false"
-                                    tabindex="-1">
-                                    Tailoring Settings
-                                </button>
-                            </li>
-                            <li class="nav-item" role="presentation">
-                                <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tabsCompanyProfile" type="button" role="tab" aria-controls="profile" aria-selected="false"
-                                    tabindex="-1">
-                                    Company Profile
-                                </button>
-                            </li>
-                            <li class="nav-item" role="presentation">
-                                <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabsTheme" type="button" role="tab" aria-controls="profile" aria-selected="false" tabindex="-1">
-                                    Theme
-                                </button>
-                            </li>
-                            <li class="nav-item" role="presentation">
-                                <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabsWorkingDay" type="button" role="tab" aria-controls="profile" aria-selected="false" tabindex="-1">
-                                    Working Day
-                                </button>
-                            </li>
-                            <li class="nav-item" role="presentation">
-                                <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabsTelegram" type="button" role="tab" aria-controls="profile" aria-selected="false" tabindex="-1">
-                                    Telegram
-                                </button>
-                            </li>
-                            @can('whatsapp.integration')
+            <div class="card shadow-sm">
+                <div class="card-body p-0">
+                    <div class="row g-0">
+                        <div class="col-12 col-md-4 col-lg-3 border-end bg-light p-3 p-md-4">
+                            <ul class="nav flex-row flex-md-column nav-pills gap-1 gap-md-2" role="tablist">
                                 <li class="nav-item" role="presentation">
-                                    <button class="nav-link " data-bs-toggle="tab" data-bs-target="#tabsWhatsapp" type="button" role="tab" aria-controls="home" aria-selected="true">
-                                        Whatsapp
+                                    <button class="nav-link text-start rounded" data-bs-toggle="tab" data-bs-target="#tabsConfiguration" type="button" role="tab" aria-selected="false" tabindex="-1">
+                                        <i class="demo-pli-data-settings me-2"></i>Configuration
                                     </button>
                                 </li>
-                            @endcan
-                        </ul>
-                        <div class="tab-content">
-                            <div id="tabsConfiguration" class="tab-pane" role="tabpanel">
-                                @livewire('settings.configurations')
-                            </div>
-                            <div id="tabsSaleSettings" class="tab-pane" role="tabpanel">
-                                @livewire('settings.sale-configuration')
-                            </div>
-                            <div id="tabsPurchaseSettings" class="tab-pane" role="tabpanel">
-                                @livewire('settings.purchase-configuration')
-                            </div>
-                            <div id="tabsTailoringSettings" class="tab-pane" role="tabpanel">
-                                @livewire('settings.tailoring-configuration')
-                            </div>
-                            <div id="tabsCompanyProfile" class="tab-pane fade active show" role="tabpanel">
-                                @livewire('settings.company-profile')
-                            </div>
-                            <div id="tabsTheme" class="tab-pane" role="tabpanel">
+                                <li class="nav-item" role="presentation">
+                                    <button class="nav-link text-start rounded" data-bs-toggle="tab" data-bs-target="#tabsSaleSettings" type="button" role="tab" aria-selected="false" tabindex="-1">
+                                        <i class="demo-pli-receipt-4 me-2"></i>Sale Settings
+                                    </button>
+                                </li>
+                                <li class="nav-item" role="presentation">
+                                    <button class="nav-link text-start rounded" data-bs-toggle="tab" data-bs-target="#tabsPurchaseSettings" type="button" role="tab" aria-selected="false" tabindex="-1">
+                                        <i class="demo-pli-credit-card-2 me-2"></i>Purchase Settings
+                                    </button>
+                                </li>
+                                <li class="nav-item" role="presentation">
+                                    <button class="nav-link text-start rounded" data-bs-toggle="tab" data-bs-target="#tabsTailoringSettings" type="button" role="tab" aria-selected="false" tabindex="-1">
+                                        <i class="demo-pli-repair me-2"></i>Tailoring Settings
+                                    </button>
+                                </li>
+                                <li class="nav-item" role="presentation">
+                                    <button class="nav-link active text-start rounded" data-bs-toggle="tab" data-bs-target="#tabsCompanyProfile" type="button" role="tab" aria-selected="true" tabindex="0">
+                                        <i class="demo-pli-male me-2"></i>Company Profile
+                                    </button>
+                                </li>
+                                <li class="nav-item" role="presentation">
+                                    <button class="nav-link text-start rounded" data-bs-toggle="tab" data-bs-target="#tabsTheme" type="button" role="tab" aria-selected="false" tabindex="-1">
+                                        <i class="demo-psi-gear me-2"></i>Theme
+                                    </button>
+                                </li>
+                                @if (false)
+                                    <li class="nav-item" role="presentation">
+                                        <button class="nav-link text-start rounded" data-bs-toggle="tab" data-bs-target="#tabsWorkingDay" type="button" role="tab" aria-selected="false" tabindex="-1">
+                                            <i class="demo-pli-calendar-4 me-2"></i>Working Day
+                                        </button>
+                                    </li>
+                                @endif
+                                <li class="nav-item" role="presentation">
+                                    <button class="nav-link text-start rounded" data-bs-toggle="tab" data-bs-target="#tabsTelegram" type="button" role="tab" aria-selected="false" tabindex="-1">
+                                        <i class="demo-pli-speech-bubble-5 me-2"></i>Telegram
+                                    </button>
+                                </li>
+                                @if (false)
+                                    @can('whatsapp.integration')
+                                        <li class="nav-item" role="presentation">
+                                            <button class="nav-link text-start rounded" data-bs-toggle="tab" data-bs-target="#tabsWhatsapp" type="button" role="tab" aria-selected="false" tabindex="-1">
+                                                <i class="demo-pli-speech-bubble-4 me-2"></i>Whatsapp
+                                            </button>
+                                        </li>
+                                    @endcan
+                                @endif
+                            </ul>
+                        </div>
+                        <div class="col-12 col-md-8 col-lg-9">
+                            <div class="tab-content p-2 p-md-3">
+                                    <div id="tabsConfiguration" class="tab-pane" role="tabpanel">
+                                        @livewire('settings.configurations')
+                                    </div>
+                                    <div id="tabsSaleSettings" class="tab-pane" role="tabpanel">
+                                        @livewire('settings.sale-configuration')
+                                    </div>
+                                    <div id="tabsPurchaseSettings" class="tab-pane" role="tabpanel">
+                                        @livewire('settings.purchase-configuration')
+                                    </div>
+                                    <div id="tabsTailoringSettings" class="tab-pane" role="tabpanel">
+                                        @livewire('settings.tailoring-configuration')
+                                    </div>
+                                    <div id="tabsCompanyProfile" class="tab-pane fade active show" role="tabpanel">
+                                        @livewire('settings.company-profile')
+                                    </div>
+                                    <div id="tabsTheme" class="tab-pane" role="tabpanel">
                                 <div class="card">
                                     <div class="card-header">
                                         <h5 class="card-title mb-0">Theme Settings</h5>
@@ -144,18 +144,19 @@
                                         </div>
                                     </div>
                                 </div>
+                                    </div>
+                                    <div id="tabsWorkingDay" class="tab-pane" role="tabpanel">
+                                        @livewire('settings.working-day')
+                                    </div>
+                                    <div id="tabsTelegram" class="tab-pane" role="tabpanel">
+                                        @livewire('settings.telegram')
+                                    </div>
+                                    @can('whatsapp.integration')
+                                        <div id="tabsWhatsapp" class="tab-pane" role="tabpanel">
+                                            {{-- @livewire('settings.whatsapp') --}}
+                                        </div>
+                                    @endcan
                             </div>
-                            <div id="tabsWorkingDay" class="tab-pane" role="tabpanel">
-                                @livewire('settings.working-day')
-                            </div>
-                            <div id="tabsTelegram" class="tab-pane" role="tabpanel">
-                                @livewire('settings.telegram')
-                            </div>
-                            @can('whatsapp.integration')
-                                <div id="tabsWhatsapp" class="tab-pane" role="tabpanel">
-                                    {{-- @livewire('settings.whatsapp') --}}
-                                </div>
-                            @endcan
                         </div>
                     </div>
                 </div>

@@ -1,38 +1,28 @@
-<div class="container py-4">
-    <div class="row justify-content-center">
-        <div class="col-md-8">
-            <div class="card shadow-sm">
-                <div class="card-header bg-primary text-white">
-                    <h4 class="mb-0 text-white">Purchase Configuration Settings</h4>
+<div class="card shadow-sm border-0">
+    <div class="card-header bg-primary text-white py-2">
+        <h5 class="mb-0 text-white">Purchase Configuration Settings</h5>
+    </div>
+    <form wire:submit="save">
+        <div class="card-body p-3">
+            <div class="row g-2">
+                <div class="col-12 col-md-6">
+                    <label class="form-label fw-medium small mb-1" for="enable_barcode_print_after_submit">Enable Barcode Print After Submit</label>
+                    {{ html()->select('enable_barcode_print_after_submit', ['yes' => 'Yes', 'no' => 'No'])->value('')->class('form-select form-select-sm')->placeholder('Select Option')->attribute('wire:model', 'enable_barcode_print_after_submit') }}
+                    <small class="form-text text-muted">If enabled, barcode print page will open automatically after submitting a purchase.</small>
                 </div>
-                <form wire:submit="save">
-                    <div class="card-body">
-                        <div class="row g-3">
-                            <div class="col-md-6">
-                                <div class="form-group">
-                                    <label class="form-label fw-medium" for="enable_barcode_print_after_submit">Enable Barcode Print After Submit</label>
-                                    {{ html()->select('enable_barcode_print_after_submit', ['yes' => 'Yes', 'no' => 'No'])->value('')->class('form-select')->placeholder('Select Option')->attribute('wire:model', 'enable_barcode_print_after_submit') }}
-                                    <small class="form-text text-muted">If enabled, barcode print page will open automatically after submitting a purchase.</small>
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="form-group">
-                                    <label class="form-label fw-medium" for="default_quantity">Default Quantity</label>
-                                    {{ html()->input('number', 'default_quantity')->value('')->class('form-control')->attribute('step','0.001')->placeholder('Enter default quantity (e.g., 1)')->attribute('wire:model', 'default_quantity') }}
-                                    <small class="form-text text-muted">Default quantity when adding a new item to purchase.</small>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="card-footer bg-light text-end py-3">
-                        <button type="submit" class="btn btn-primary px-4">
-                            <i class="fa fa-save me-2"></i>Save Changes
-                        </button>
-                    </div>
-                </form>
+                <div class="col-12 col-md-6">
+                    <label class="form-label fw-medium small mb-1" for="default_quantity">Default Quantity</label>
+                    {{ html()->input('number', 'default_quantity')->value('')->class('form-control form-control-sm')->attribute('step','0.001')->placeholder('Enter default quantity (e.g., 1)')->attribute('wire:model', 'default_quantity') }}
+                    <small class="form-text text-muted">Default quantity when adding a new item to purchase.</small>
+                </div>
             </div>
         </div>
-    </div>
+        <div class="card-footer bg-light text-end py-2 px-3">
+            <button type="submit" class="btn btn-primary btn-sm px-3">
+                <i class="fa fa-save me-1"></i>Save Changes
+            </button>
+        </div>
+    </form>
 </div>
 
 
