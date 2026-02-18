@@ -5,8 +5,8 @@
                 @keydown.arrow-down.prevent="navigateDown" @keydown.arrow-up.prevent="navigateUp"
                 @keydown.enter.prevent="selectHighlighted" @keydown.escape="hideDropdown" type="text"
                 :class="inputClass" :placeholder="placeholder" autocomplete="off" readonly style="cursor: pointer;" />
-            <div class="position-absolute top-50 end-0 translate-middle-y pe-2 pointer-events-none">
-                <i class="fa fa-chevron-down small text-muted transition-transform"
+            <div class="position-absolute top-50 end-0 translate-middle-y searchable-select-chevron pointer-events-none">
+                <i class="fa fa-chevron-down transition-transform searchable-select-chevron-icon"
                     :class="{ 'rotate-180': showDropdown }"></i>
             </div>
         </div>
@@ -382,5 +382,23 @@ const handleResize = () => {
 
 .transition-transform {
     transition: transform 0.2s ease;
+}
+
+.searchable-select-chevron {
+    padding-right: 0.625rem;
+    padding-left: 0.25rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.searchable-select-chevron-icon {
+    font-size: 0.65rem;
+    color: #64748b;
+    transition: transform 0.2s ease, color 0.15s ease;
+}
+
+.position-relative:hover .searchable-select-chevron-icon {
+    color: #475569;
 }
 </style>
