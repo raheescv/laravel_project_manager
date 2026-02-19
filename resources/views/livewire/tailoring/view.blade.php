@@ -85,7 +85,7 @@
                 </div>
             </div>
 
-            <div class="row g-3">
+            <div class="row g-3 mb-3">
                 <div class="col-lg-4">
                     <div class="d-flex flex-column gap-3">
                         <div class="card border-0 shadow-sm">
@@ -342,273 +342,312 @@
                                 </div>
                             </div>
                         </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-12">
+                    @php
+                        $hasPayments = $order->payments->count() > 0;
+                        $hasJournals = count($order->journals ?? []) > 0;
+                        $canViewJournals = auth()->user()?->can('tailoring order.view journal entries');
+                        $paymentTabActive = $hasPayments;
+                        $journalTabActive = !$hasPayments && $hasJournals && $canViewJournals;
+                        $auditTabActive = !$hasPayments && (!$canViewJournals || !$hasJournals);
+                    @endphp
 
-                        @php
-                            $hasPayments = $order->payments->count() > 0;
-                            $hasJournals = count($order->journals ?? []) > 0;
-                            $canViewJournals = auth()->user()?->can('tailoring order.view journal entries');
-                            $paymentTabActive = $hasPayments;
-                            $journalTabActive = !$hasPayments && $hasJournals && $canViewJournals;
-                            $auditTabActive = !$hasPayments && (!$canViewJournals || !$hasJournals);
-                        @endphp
-
-                        <div class="card border-0 shadow-sm">
-                            <div class="card-header bg-white pb-0 border-bottom">
-                                <ul class="nav nav-tabs card-header-tabs" role="tablist">
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-header bg-white pb-0 border-bottom">
+                            <ul class="nav nav-tabs card-header-tabs" role="tablist">
+                                <li class="nav-item" role="presentation">
+                                    <button class="nav-link {{ $paymentTabActive ? 'active' : '' }}" data-bs-toggle="tab" data-bs-target="#tailoring-tab-payment-details" type="button"
+                                        role="tab">
+                                        <i class="fa fa-credit-card me-1"></i>Payment Details @if ($hasPayments)
+                                            <span class="badge text-bg-primary ms-1">{{ $order->payments->count() }}</span>
+                                        @endif
+                                    </button>
+                                </li>
+                                @can('tailoring order.view journal entries')
                                     <li class="nav-item" role="presentation">
-                                        <button class="nav-link {{ $paymentTabActive ? 'active' : '' }}" data-bs-toggle="tab" data-bs-target="#tailoring-tab-payment-details" type="button" role="tab">
-                                            <i class="fa fa-credit-card me-1"></i>Payment Details @if ($hasPayments)<span class="badge text-bg-primary ms-1">{{ $order->payments->count() }}</span>@endif
+                                        <button class="nav-link {{ $journalTabActive ? 'active' : '' }}" data-bs-toggle="tab" data-bs-target="#tailoring-tab-journal-entries" type="button"
+                                            role="tab">
+                                            <i class="fa fa-book me-1"></i>Journal Entries @if ($hasJournals)
+                                                <span class="badge text-bg-primary ms-1">{{ count($order->journals) }}</span>
+                                            @endif
                                         </button>
                                     </li>
-                                    @can('tailoring order.view journal entries')
-                                        <li class="nav-item" role="presentation">
-                                            <button class="nav-link {{ $journalTabActive ? 'active' : '' }}" data-bs-toggle="tab" data-bs-target="#tailoring-tab-journal-entries" type="button" role="tab">
-                                                <i class="fa fa-book me-1"></i>Journal Entries @if ($hasJournals)<span class="badge text-bg-primary ms-1">{{ count($order->journals) }}</span>@endif
-                                            </button>
-                                        </li>
-                                    @endcan
-                                    <li class="nav-item" role="presentation">
-                                        <button class="nav-link {{ $auditTabActive ? 'active' : '' }}" data-bs-toggle="tab" data-bs-target="#tailoring-tab-audit-report" type="button" role="tab">
-                                            <i class="fa fa-history me-1"></i>Audit Report
-                                        </button>
-                                    </li>
-                                </ul>
-                            </div>
+                                @endcan
+                                <li class="nav-item" role="presentation">
+                                    <button class="nav-link {{ $auditTabActive ? 'active' : '' }}" data-bs-toggle="tab" data-bs-target="#tailoring-tab-audit-report" type="button"
+                                        role="tab">
+                                        <i class="fa fa-history me-1"></i>Audit Report
+                                    </button>
+                                </li>
+                            </ul>
+                        </div>
 
-                            <div class="card-body">
-                                <div class="tab-content">
-                                    <div id="tailoring-tab-payment-details" class="tab-pane fade {{ $paymentTabActive ? 'show active' : '' }}" role="tabpanel">
-                                        @if ($order->payments->count() > 0)
+                        <div class="card-body">
+                            <div class="tab-content">
+                                <div id="tailoring-tab-payment-details" class="tab-pane fade {{ $paymentTabActive ? 'show active' : '' }}" role="tabpanel">
+                                    @if ($order->payments->count() > 0)
+                                        <div class="table-responsive">
+                                            <table class="table table-sm table-bordered align-middle mb-0">
+                                                <thead class="table-light">
+                                                    <tr>
+                                                        <th><i class="fa fa-calendar me-1"></i>Date</th>
+                                                        <th><i class="fa fa-credit-card me-1"></i>Method</th>
+                                                        <th class="text-end"><i class="fa fa-money me-1"></i>Amount</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    @foreach ($order->payments as $payment)
+                                                        <tr>
+                                                            <td>{{ systemDate($payment->date) }}</td>
+                                                            <td>{{ $payment->paymentMethod->name ?? 'Cash' }}</td>
+                                                            <td class="text-end fw-semibold">{{ currency($payment->amount) }}</td>
+                                                        </tr>
+                                                    @endforeach
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    @else
+                                        <div class="alert alert-secondary mb-0">No payment transactions for this order.</div>
+                                    @endif
+                                </div>
+
+                                @can('tailoring order.view journal entries')
+                                    <div id="tailoring-tab-journal-entries" class="tab-pane fade {{ $journalTabActive ? 'show active' : '' }}" role="tabpanel">
+                                        @if (count($order->journals ?? []) > 0)
                                             <div class="table-responsive">
                                                 <table class="table table-sm table-bordered align-middle mb-0">
                                                     <thead class="table-light">
                                                         <tr>
+                                                            <th class="text-end"><i class="fa fa-hashtag me-1"></i>SL No</th>
                                                             <th><i class="fa fa-calendar me-1"></i>Date</th>
-                                                            <th><i class="fa fa-credit-card me-1"></i>Method</th>
-                                                            <th class="text-end"><i class="fa fa-money me-1"></i>Amount</th>
+                                                            <th><i class="fa fa-user me-1"></i>Account</th>
+                                                            <th><i class="fa fa-file-text-o me-1"></i>Description</th>
+                                                            <th class="text-end"><i class="fa fa-arrow-down me-1"></i>Debit</th>
+                                                            <th class="text-end"><i class="fa fa-arrow-up me-1"></i>Credit</th>
                                                         </tr>
                                                     </thead>
                                                     <tbody>
-                                                        @foreach ($order->payments as $payment)
-                                                            <tr>
-                                                                <td>{{ systemDate($payment->date) }}</td>
-                                                                <td>{{ $payment->paymentMethod->name ?? 'Cash' }}</td>
-                                                                <td class="text-end fw-semibold">{{ currency($payment->amount) }}</td>
-                                                            </tr>
+                                                        @foreach ($order->journals as $journal)
+                                                            @foreach ($journal->entries()->where('account_id', '!=', $order->account_id)->get() as $entry)
+                                                                <tr>
+                                                                    <td class="text-end">{{ $entry->id }}</td>
+                                                                    <td>{{ systemDate($entry->date) }}</td>
+                                                                    <td>
+                                                                        <a href="{{ route('account::view', $entry->account_id) }}" class="text-decoration-none">
+                                                                            {{ $entry->account?->name }}
+                                                                        </a>
+                                                                    </td>
+                                                                    <td>{{ $entry->remarks }}</td>
+                                                                    <td class="text-end">{{ currency($entry->debit) }}</td>
+                                                                    <td class="text-end">{{ currency($entry->credit) }}</td>
+                                                                </tr>
+                                                            @endforeach
                                                         @endforeach
                                                     </tbody>
                                                 </table>
                                             </div>
                                         @else
-                                            <div class="alert alert-secondary mb-0">No payment transactions for this order.</div>
+                                            <div class="alert alert-secondary mb-0">No journal entries for this order.</div>
                                         @endif
                                     </div>
+                                @endcan
 
-                                    @can('tailoring order.view journal entries')
-                                        <div id="tailoring-tab-journal-entries" class="tab-pane fade {{ $journalTabActive ? 'show active' : '' }}" role="tabpanel">
-                                            @if (count($order->journals ?? []) > 0)
+                                <div id="tailoring-tab-audit-report" class="tab-pane fade {{ $auditTabActive ? 'show active' : '' }}" role="tabpanel">
+                                    <ul class="nav nav-pills mb-3 gap-2" role="tablist">
+                                        <li class="nav-item" role="presentation">
+                                            <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#audit-order" type="button"><i class="fa fa-file-text-o me-1"></i>Order</button>
+                                        </li>
+                                        <li class="nav-item" role="presentation">
+                                            <button class="nav-link" data-bs-toggle="tab" data-bs-target="#audit-order-items" type="button"><i class="fa fa-list me-1"></i>Order Items</button>
+                                        </li>
+                                        <li class="nav-item" role="presentation">
+                                            <button class="nav-link" data-bs-toggle="tab" data-bs-target="#audit-order-measurement" type="button"><i
+                                                    class="fa fa-ruler me-1"></i>Measurements</button>
+                                        </li>
+                                        <li class="nav-item" role="presentation">
+                                            <button class="nav-link" data-bs-toggle="tab" data-bs-target="#audit-payments" type="button"><i class="fa fa-credit-card me-1"></i>Payments</button>
+                                        </li>
+                                    </ul>
+
+                                    <div class="tab-content">
+                                        <div id="audit-order" class="tab-pane fade show active" role="tabpanel">
+                                            @php $orderAudits = $order->audits ?? collect(); @endphp
+                                            @if ($orderAudits->isNotEmpty())
+                                                @php
+                                                    $orderColumns = $orderAudits
+                                                        ->pluck('new_values')
+                                                        ->filter()
+                                                        ->map(fn($item) => is_array($item) ? array_keys($item) : [])
+                                                        ->flatten()
+                                                        ->unique()
+                                                        ->values()
+                                                        ->all();
+                                                @endphp
                                                 <div class="table-responsive">
                                                     <table class="table table-sm table-bordered align-middle mb-0">
                                                         <thead class="table-light">
                                                             <tr>
-                                                                <th class="text-end"><i class="fa fa-hashtag me-1"></i>SL No</th>
-                                                                <th><i class="fa fa-calendar me-1"></i>Date</th>
-                                                                <th><i class="fa fa-user me-1"></i>Account</th>
-                                                                <th><i class="fa fa-file-text-o me-1"></i>Description</th>
-                                                                <th class="text-end"><i class="fa fa-arrow-down me-1"></i>Debit</th>
-                                                                <th class="text-end"><i class="fa fa-arrow-up me-1"></i>Credit</th>
+                                                                <th><i class="fa fa-clock-o me-1"></i>Date Time</th>
+                                                                <th><i class="fa fa-user me-1"></i>User</th>
+                                                                <th><i class="fa fa-bolt me-1"></i>Event</th>
+                                                                @foreach ($orderColumns as $key)
+                                                                    <th class="text-end">{{ \Illuminate\Support\Str::title(str_replace('_', ' ', $key)) }}</th>
+                                                                @endforeach
                                                             </tr>
                                                         </thead>
                                                         <tbody>
-                                                            @foreach ($order->journals as $journal)
-                                                                @foreach ($journal->entries()->where('account_id', '!=', $order->account_id)->get() as $entry)
-                                                                    <tr>
-                                                                        <td class="text-end">{{ $entry->id }}</td>
-                                                                        <td>{{ systemDate($entry->date) }}</td>
-                                                                        <td>
-                                                                            <a href="{{ route('account::view', $entry->account_id) }}" class="text-decoration-none">
-                                                                                {{ $entry->account?->name }}
-                                                                            </a>
-                                                                        </td>
-                                                                        <td>{{ $entry->remarks }}</td>
-                                                                        <td class="text-end">{{ currency($entry->debit) }}</td>
-                                                                        <td class="text-end">{{ currency($entry->credit) }}</td>
-                                                                    </tr>
-                                                                @endforeach
+                                                            @foreach ($orderAudits as $audit)
+                                                                <tr>
+                                                                    <td>{{ $audit->created_at }}</td>
+                                                                    <td>{{ $audit->user?->name }}</td>
+                                                                    <td>{{ $audit->event }}</td>
+                                                                    @foreach ($orderColumns as $key)
+                                                                        <td class="text-end">{{ $audit->new_values[$key] ?? '' }}</td>
+                                                                    @endforeach
+                                                                </tr>
                                                             @endforeach
                                                         </tbody>
                                                     </table>
                                                 </div>
                                             @else
-                                                <div class="alert alert-secondary mb-0">No journal entries for this order.</div>
+                                                <div class="alert alert-secondary mb-0">No audit history for this order.</div>
                                             @endif
                                         </div>
-                                    @endcan
 
-                                    <div id="tailoring-tab-audit-report" class="tab-pane fade {{ $auditTabActive ? 'show active' : '' }}" role="tabpanel">
-                                        <ul class="nav nav-pills mb-3 gap-2" role="tablist">
-                                            <li class="nav-item" role="presentation">
-                                                <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#audit-order" type="button"><i class="fa fa-file-text-o me-1"></i>Order</button>
-                                            </li>
-                                            <li class="nav-item" role="presentation">
-                                                <button class="nav-link" data-bs-toggle="tab" data-bs-target="#audit-order-items" type="button"><i class="fa fa-list me-1"></i>Order Items</button>
-                                            </li>
-                                            <li class="nav-item" role="presentation">
-                                                <button class="nav-link" data-bs-toggle="tab" data-bs-target="#audit-order-measurement" type="button"><i class="fa fa-ruler me-1"></i>Measurements</button>
-                                            </li>
-                                            <li class="nav-item" role="presentation">
-                                                <button class="nav-link" data-bs-toggle="tab" data-bs-target="#audit-payments" type="button"><i class="fa fa-credit-card me-1"></i>Payments</button>
-                                            </li>
-                                        </ul>
-
-                                        <div class="tab-content">
-                                            <div id="audit-order" class="tab-pane fade show active" role="tabpanel">
-                                                @php $orderAudits = $order->audits ?? collect(); @endphp
-                                                @if ($orderAudits->isNotEmpty())
-                                                    @php
-                                                        $orderColumns = $orderAudits->pluck('new_values')->filter()->map(fn($item) => is_array($item) ? array_keys($item) : [])->flatten()->unique()->values()->all();
-                                                    @endphp
-                                                    <div class="table-responsive">
-                                                        <table class="table table-sm table-bordered align-middle mb-0">
-                                                            <thead class="table-light">
-                                                                <tr>
-                                                                    <th><i class="fa fa-clock-o me-1"></i>Date Time</th>
-                                                                    <th><i class="fa fa-user me-1"></i>User</th>
-                                                                    <th><i class="fa fa-bolt me-1"></i>Event</th>
-                                                                    @foreach ($orderColumns as $key)
-                                                                        <th class="text-end">{{ \Illuminate\Support\Str::title(str_replace('_', ' ', $key)) }}</th>
-                                                                    @endforeach
-                                                                </tr>
-                                                            </thead>
-                                                            <tbody>
-                                                                @foreach ($orderAudits as $audit)
-                                                                    <tr>
-                                                                        <td>{{ $audit->created_at }}</td>
-                                                                        <td>{{ $audit->user?->name }}</td>
-                                                                        <td>{{ $audit->event }}</td>
-                                                                        @foreach ($orderColumns as $key)
-                                                                            <td class="text-end">{{ $audit->new_values[$key] ?? '' }}</td>
-                                                                        @endforeach
-                                                                    </tr>
+                                        <div id="audit-order-items" class="tab-pane fade" role="tabpanel">
+                                            @php $itemAudits = collect($order->items ?? [])->flatMap->audits; @endphp
+                                            @if ($itemAudits->isNotEmpty())
+                                                @php
+                                                    $itemColumns = $itemAudits
+                                                        ->pluck('new_values')
+                                                        ->filter()
+                                                        ->map(fn($item) => is_array($item) ? array_keys($item) : [])
+                                                        ->flatten()
+                                                        ->unique()
+                                                        ->values()
+                                                        ->all();
+                                                @endphp
+                                                <div class="table-responsive">
+                                                    <table class="table table-sm table-bordered align-middle mb-0">
+                                                        <thead class="table-light">
+                                                            <tr>
+                                                                <th><i class="fa fa-clock-o me-1"></i>Date Time</th>
+                                                                <th><i class="fa fa-user me-1"></i>User</th>
+                                                                <th><i class="fa fa-bolt me-1"></i>Event</th>
+                                                                @foreach ($itemColumns as $key)
+                                                                    <th class="text-end">{{ \Illuminate\Support\Str::title(str_replace('_', ' ', $key)) }}</th>
                                                                 @endforeach
-                                                            </tbody>
-                                                        </table>
-                                                    </div>
-                                                @else
-                                                    <div class="alert alert-secondary mb-0">No audit history for this order.</div>
-                                                @endif
-                                            </div>
-
-                                            <div id="audit-order-items" class="tab-pane fade" role="tabpanel">
-                                                @php $itemAudits = collect($order->items ?? [])->flatMap->audits; @endphp
-                                                @if ($itemAudits->isNotEmpty())
-                                                    @php
-                                                        $itemColumns = $itemAudits->pluck('new_values')->filter()->map(fn($item) => is_array($item) ? array_keys($item) : [])->flatten()->unique()->values()->all();
-                                                    @endphp
-                                                    <div class="table-responsive">
-                                                        <table class="table table-sm table-bordered align-middle mb-0">
-                                                            <thead class="table-light">
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody>
+                                                            @foreach ($itemAudits as $audit)
                                                                 <tr>
-                                                                    <th><i class="fa fa-clock-o me-1"></i>Date Time</th>
-                                                                    <th><i class="fa fa-user me-1"></i>User</th>
-                                                                    <th><i class="fa fa-bolt me-1"></i>Event</th>
+                                                                    <td>{{ $audit->created_at }}</td>
+                                                                    <td>{{ $audit->user?->name }}</td>
+                                                                    <td>{{ $audit->event }}</td>
                                                                     @foreach ($itemColumns as $key)
-                                                                        <th class="text-end">{{ \Illuminate\Support\Str::title(str_replace('_', ' ', $key)) }}</th>
+                                                                        <td class="text-end">{{ $audit->new_values[$key] ?? '' }}</td>
                                                                     @endforeach
                                                                 </tr>
-                                                            </thead>
-                                                            <tbody>
-                                                                @foreach ($itemAudits as $audit)
-                                                                    <tr>
-                                                                        <td>{{ $audit->created_at }}</td>
-                                                                        <td>{{ $audit->user?->name }}</td>
-                                                                        <td>{{ $audit->event }}</td>
-                                                                        @foreach ($itemColumns as $key)
-                                                                            <td class="text-end">{{ $audit->new_values[$key] ?? '' }}</td>
-                                                                        @endforeach
-                                                                    </tr>
-                                                                @endforeach
-                                                            </tbody>
-                                                        </table>
-                                                    </div>
-                                                @else
-                                                    <div class="alert alert-secondary mb-0">No audit history for order items.</div>
-                                                @endif
-                                            </div>
+                                                            @endforeach
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+                                            @else
+                                                <div class="alert alert-secondary mb-0">No audit history for order items.</div>
+                                            @endif
+                                        </div>
 
-                                            <div id="audit-order-measurement" class="tab-pane fade" role="tabpanel">
-                                                @php $measurementAudits = collect($order->measurements ?? [])->flatMap->audits; @endphp
-                                                @if ($measurementAudits->isNotEmpty())
-                                                    @php
-                                                        $measurementColumns = $measurementAudits->pluck('new_values')->filter()->map(fn($item) => is_array($item) ? array_keys($item) : [])->flatten()->unique()->values()->all();
-                                                    @endphp
-                                                    <div class="table-responsive">
-                                                        <table class="table table-sm table-bordered align-middle mb-0">
-                                                            <thead class="table-light">
+                                        <div id="audit-order-measurement" class="tab-pane fade" role="tabpanel">
+                                            @php $measurementAudits = collect($order->measurements ?? [])->flatMap->audits; @endphp
+                                            @if ($measurementAudits->isNotEmpty())
+                                                @php
+                                                    $measurementColumns = $measurementAudits
+                                                        ->pluck('new_values')
+                                                        ->filter()
+                                                        ->map(fn($item) => is_array($item) ? array_keys($item) : [])
+                                                        ->flatten()
+                                                        ->unique()
+                                                        ->values()
+                                                        ->all();
+                                                @endphp
+                                                <div class="table-responsive">
+                                                    <table class="table table-sm table-bordered align-middle mb-0">
+                                                        <thead class="table-light">
+                                                            <tr>
+                                                                <th><i class="fa fa-clock-o me-1"></i>Date Time</th>
+                                                                <th><i class="fa fa-user me-1"></i>User</th>
+                                                                <th><i class="fa fa-bolt me-1"></i>Event</th>
+                                                                @foreach ($measurementColumns as $key)
+                                                                    <th class="text-end">{{ \Illuminate\Support\Str::title(str_replace('_', ' ', $key)) }}</th>
+                                                                @endforeach
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody>
+                                                            @foreach ($measurementAudits as $audit)
                                                                 <tr>
-                                                                    <th><i class="fa fa-clock-o me-1"></i>Date Time</th>
-                                                                    <th><i class="fa fa-user me-1"></i>User</th>
-                                                                    <th><i class="fa fa-bolt me-1"></i>Event</th>
+                                                                    <td>{{ $audit->created_at }}</td>
+                                                                    <td>{{ $audit->user?->name }}</td>
+                                                                    <td>{{ $audit->event }}</td>
                                                                     @foreach ($measurementColumns as $key)
-                                                                        <th class="text-end">{{ \Illuminate\Support\Str::title(str_replace('_', ' ', $key)) }}</th>
+                                                                        <td class="text-end">{{ $audit->new_values[$key] ?? '' }}</td>
                                                                     @endforeach
                                                                 </tr>
-                                                            </thead>
-                                                            <tbody>
-                                                                @foreach ($measurementAudits as $audit)
-                                                                    <tr>
-                                                                        <td>{{ $audit->created_at }}</td>
-                                                                        <td>{{ $audit->user?->name }}</td>
-                                                                        <td>{{ $audit->event }}</td>
-                                                                        @foreach ($measurementColumns as $key)
-                                                                            <td class="text-end">{{ $audit->new_values[$key] ?? '' }}</td>
-                                                                        @endforeach
-                                                                    </tr>
-                                                                @endforeach
-                                                            </tbody>
-                                                        </table>
-                                                    </div>
-                                                @else
-                                                    <div class="alert alert-secondary mb-0">No audit history for order measurements.</div>
-                                                @endif
-                                            </div>
+                                                            @endforeach
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+                                            @else
+                                                <div class="alert alert-secondary mb-0">No audit history for order measurements.</div>
+                                            @endif
+                                        </div>
 
-                                            <div id="audit-payments" class="tab-pane fade" role="tabpanel">
-                                                @php $paymentAudits = collect($order->payments ?? [])->flatMap->audits; @endphp
-                                                @if ($paymentAudits->isNotEmpty())
-                                                    @php
-                                                        $paymentColumns = $paymentAudits->pluck('new_values')->filter()->map(fn($item) => is_array($item) ? array_keys($item) : [])->flatten()->unique()->values()->all();
-                                                    @endphp
-                                                    <div class="table-responsive">
-                                                        <table class="table table-sm table-bordered align-middle mb-0">
-                                                            <thead class="table-light">
+                                        <div id="audit-payments" class="tab-pane fade" role="tabpanel">
+                                            @php $paymentAudits = collect($order->payments ?? [])->flatMap->audits; @endphp
+                                            @if ($paymentAudits->isNotEmpty())
+                                                @php
+                                                    $paymentColumns = $paymentAudits
+                                                        ->pluck('new_values')
+                                                        ->filter()
+                                                        ->map(fn($item) => is_array($item) ? array_keys($item) : [])
+                                                        ->flatten()
+                                                        ->unique()
+                                                        ->values()
+                                                        ->all();
+                                                @endphp
+                                                <div class="table-responsive">
+                                                    <table class="table table-sm table-bordered align-middle mb-0">
+                                                        <thead class="table-light">
+                                                            <tr>
+                                                                <th><i class="fa fa-clock-o me-1"></i>Date Time</th>
+                                                                <th><i class="fa fa-user me-1"></i>User</th>
+                                                                <th><i class="fa fa-bolt me-1"></i>Event</th>
+                                                                @foreach ($paymentColumns as $key)
+                                                                    <th class="text-end">{{ \Illuminate\Support\Str::title(str_replace('_', ' ', $key)) }}</th>
+                                                                @endforeach
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody>
+                                                            @foreach ($paymentAudits as $audit)
                                                                 <tr>
-                                                                    <th><i class="fa fa-clock-o me-1"></i>Date Time</th>
-                                                                    <th><i class="fa fa-user me-1"></i>User</th>
-                                                                    <th><i class="fa fa-bolt me-1"></i>Event</th>
+                                                                    <td>{{ $audit->created_at }}</td>
+                                                                    <td>{{ $audit->user?->name }}</td>
+                                                                    <td>{{ $audit->event }}</td>
                                                                     @foreach ($paymentColumns as $key)
-                                                                        <th class="text-end">{{ \Illuminate\Support\Str::title(str_replace('_', ' ', $key)) }}</th>
+                                                                        <td class="text-end">{{ $audit->new_values[$key] ?? '' }}</td>
                                                                     @endforeach
                                                                 </tr>
-                                                            </thead>
-                                                            <tbody>
-                                                                @foreach ($paymentAudits as $audit)
-                                                                    <tr>
-                                                                        <td>{{ $audit->created_at }}</td>
-                                                                        <td>{{ $audit->user?->name }}</td>
-                                                                        <td>{{ $audit->event }}</td>
-                                                                        @foreach ($paymentColumns as $key)
-                                                                            <td class="text-end">{{ $audit->new_values[$key] ?? '' }}</td>
-                                                                        @endforeach
-                                                                    </tr>
-                                                                @endforeach
-                                                            </tbody>
-                                                        </table>
-                                                    </div>
-                                                @else
-                                                    <div class="alert alert-secondary mb-0">No audit history for payments.</div>
-                                                @endif
-                                            </div>
+                                                            @endforeach
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+                                            @else
+                                                <div class="alert alert-secondary mb-0">No audit history for payments.</div>
+                                            @endif
                                         </div>
                                     </div>
                                 </div>

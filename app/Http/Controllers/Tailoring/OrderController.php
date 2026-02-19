@@ -814,9 +814,23 @@ class OrderController extends Controller
         }
 
         $order = $result['data'];
+        $companyName = Configuration::where('key', 'company_name')->value('value') ?? config('app.name');
+        $companyAddress = Configuration::where('key', 'company_address')->value('value') ?? '';
+        $companyPhone = Configuration::where('key', 'company_mobile')->value('value') ?? '';
+        $companyEmail = Configuration::where('key', 'company_email')->value('value') ?? '';
+        $gstNo = Configuration::where('key', 'gst_no')->value('value') ?? '';
+        $enableLogoInPrint = Configuration::where('key', 'enable_logo_in_print')->value('value') ?? 'no';
+        $companyLogo = cache('logo');
 
         $pdf = Pdf::loadView('print.tailoring.order-receipt-pdf', [
             'order' => $order,
+            'companyName' => $companyName,
+            'companyAddress' => $companyAddress,
+            'companyPhone' => $companyPhone,
+            'companyEmail' => $companyEmail,
+            'gstNo' => $gstNo,
+            'enableLogoInPrint' => $enableLogoInPrint,
+            'companyLogo' => $companyLogo,
         ]);
         $pdf->setPaper('a4', 'portrait');
         $pdf->setOption('margin-top', 8);
