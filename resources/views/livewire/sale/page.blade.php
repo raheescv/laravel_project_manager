@@ -19,7 +19,7 @@
                                     <div class="table-responsive mt-2">
                                         <table class="table table-sm m-0">
                                             <tr class="bg-light">
-                                                <th><i class="fa fa-balance-scale me-1"></i> Balance</th>
+                                                <th><i class="fa fa-exchange me-1"></i> Balance</th>
                                                 <th class="text-end">{{ currency($account_balance ?? 0) }}</th>
                                             </tr>
                                         </table>

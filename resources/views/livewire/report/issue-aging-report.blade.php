@@ -254,7 +254,7 @@
                         <th><i class="fa fa-cube me-1 text-success"></i><x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="product_name" label="Product" /></th>
                         <th class="text-end"><i class="fa fa-arrow-up me-1 text-danger"></i>Qty Out</th>
                         <th class="text-end"><i class="fa fa-arrow-down me-1 text-success"></i>Qty In</th>
-                        <th class="text-end"><i class="fa fa-balance-scale me-1 text-primary"></i><x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="net_quantity" label="Net" /></th>
+                        <th class="text-end"><i class="fa fa-exchange me-1 text-primary"></i><x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="net_quantity" label="Net" /></th>
                         <th><i class="fa fa-calendar me-1 text-primary"></i><x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="latest_issue_date" label="Last Txn Date" /></th>
                         <th class="text-end col-aging-30"><i class="fa fa-clock-o me-1"></i>0-30</th>
                         <th class="text-end col-aging-60"><i class="fa fa-clock-o me-1"></i>31-60</th>

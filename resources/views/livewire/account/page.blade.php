@@ -106,7 +106,7 @@
                 <div class="card border-0 bg-light-subtle shadow-sm">
                     <div class="card-body p-3">
                         <div class="d-flex align-items-center mb-3">
-                            <i class="fa fa-balance-scale me-2 text-primary fs-5"></i>
+                            <i class="fa fa-exchange me-2 text-primary fs-5"></i>
                             <h6 class="mb-0 fw-semibold text-muted">Opening Balance</h6>
                         </div>
                         <div class="row g-3">

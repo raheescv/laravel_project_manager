@@ -30,7 +30,7 @@
                 <div class="grid grid-cols-1">
                     <div class="bg-slate-40 rounded p-2 border border-slate-200">
                         <label class="block text-xs font-semibold text-slate-700 mb-1 flex items-center">
-                            <i class="fa fa-balance-scale text-orange-500 mr-1 text-xs"></i>
+                            <i class="fa fa-exchange text-orange-500 mr-1 text-xs"></i>
                             Unit
                         </label>
                         <select v-model="localItem.unit_id" @change="handleUnitChange"
