@@ -10,6 +10,21 @@
             </div>
             <div class="col-md-8">
                 <div class="d-flex gap-2 justify-content-md-end align-items-center">
+                    <div class="form-group" style="width: 280px;">
+                        <div class="input-group input-group-sm">
+                            <span class="input-group-text border-end-0">
+                                <i class="demo-pli-magnifi-glass"></i>
+                            </span>
+                            <input type="text" wire:model.live="search" class="form-control border-start-0"
+                                placeholder="Search name / mobile / work order..." autofocus>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <select wire:model.live="pending_only" class="form-select form-select-sm">
+                            <option value="1">Pending Balance Only</option>
+                            <option value="0">All Orders</option>
+                        </select>
+                    </div>
                     <div class="form-group">
                         <select wire:model.live="limit" class="form-select form-select-sm">
                             <option value="10">10 rows</option>
@@ -35,25 +50,70 @@
                                 {{ html()->select('customer_id', [])->value($customer_id ?? '')->class('select-customer_id-list')->id('order_search_customer_id')->placeholder('All Customers') }}
                             </div>
                         </div>
-                        <div class="col-md-4">
+                        <div class="col-md-8">
                             <div class="form-group">
-                                <label class="form-label text-muted fw-semibold small mb-2" for="mobile">
-                                    <i class="fa fa-phone me-1"></i> Mobile No
+                                <label class="form-label text-muted fw-semibold small mb-2" for="quick_search_hint">
+                                    <i class="fa fa-search me-1"></i> Quick Search
                                 </label>
-                                <input type="text" wire:model.live="mobile" class="form-control form-control-sm" id="mobile" placeholder="Mobile number...">
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="form-group">
-                                <label class="form-label text-muted fw-semibold small mb-2" for="order_no">
-                                    <i class="demo-pli-file me-1"></i>Work Order No
-                                </label>
-                                <input type="text" wire:model.live="order_no" class="form-control form-control-sm" id="order_no" placeholder="Order number...">
+                                <input type="text" wire:model.live="search" class="form-control form-control-sm" id="quick_search_hint"
+                                    placeholder="Type customer name, mobile number, or work order number...">
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
+        </div>
+    </div>
+    <div class="card-body border-bottom">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+            <h6 class="mb-0">Customer Quick View</h6>
+            <small class="text-muted">Click "Orders" to filter that customer, or "Pay" to collect receipt</small>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-sm align-middle mb-0">
+                <thead class="bg-light text-nowrap">
+                    <tr>
+                        <th class="ps-3">Customer</th>
+                        <th class="text-end">Orders</th>
+                        <th class="text-end">Total Bill</th>
+                        <th class="text-end">Paid</th>
+                        <th class="text-end">Balance</th>
+                        <th class="text-nowrap">Latest Order</th>
+                        <th class="text-end">Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @forelse ($customerSummary as $customer)
+                        <tr>
+                            <td class="ps-3">
+                                <div class="fw-semibold">{{ $customer->customer_display ?: ($customer->customer_name ?: 'Walk-in Customer') }}</div>
+                                <small class="text-muted">{{ $customer->customer_mobile ?: ($customer->order_customer_mobile ?: 'No mobile') }}</small>
+                            </td>
+                            <td class="text-end">{{ $customer->order_count }}</td>
+                            <td class="text-end fw-semibold text-primary">{{ currency($customer->grand_total) }}</td>
+                            <td class="text-end fw-semibold text-success">{{ currency($customer->paid) }}</td>
+                            <td class="text-end fw-bold {{ (float) $customer->balance > 0 ? 'text-danger' : 'text-success' }}">{{ currency($customer->balance) }}</td>
+                            <td>{{ $customer->latest_order_date ? systemDate($customer->latest_order_date) : '_' }}</td>
+                            <td class="text-end">
+                                <div class="btn-group btn-group-sm">
+                                    <button type="button" class="btn btn-light border"
+                                        wire:click="viewCustomerOrders({{ $customer->account_id ?? 'null' }}, {{ json_encode($customer->customer_name ?? '') }}, {{ json_encode($customer->order_customer_mobile ?? '') }})">
+                                        <i class="fa fa-list text-primary me-1"></i> Orders
+                                    </button>
+                                    <button type="button" class="btn btn-success border"
+                                        wire:click="openReceiptModal({{ $customer->account_id ?? 'null' }}, {{ json_encode($customer->customer_name ?? '') }}, {{ json_encode($customer->order_customer_mobile ?? '') }}, {{ json_encode($customer->customer_display ?? ($customer->customer_name ?? 'Customer')) }})">
+                                        <i class="fa fa-file-text-o me-1"></i> Pay
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    @empty
+                        <tr>
+                            <td colspan="7" class="text-center text-muted py-3">No customers found for current filters.</td>
+                        </tr>
+                    @endforelse
+                </tbody>
+            </table>
         </div>
     </div>
     <div class="card-body px-0 pb-0">
@@ -63,6 +123,9 @@
                     <tr>
                         <th class="ps-3">
                             <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="tailoring_orders.id" label="#" />
+                        </th>
+                        <th class="text-nowrap">
+                            <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="tailoring_orders.order_date" label="Order Date" />
                         </th>
                         <th class="text-nowrap">
                             <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="tailoring_orders.order_no" label="Order Details" />
@@ -91,7 +154,7 @@
                 @if ($data->isNotEmpty())
                     <tbody class="table-group-divider">
                         <tr class="bg-light">
-                            <th colspan="5" class="ps-3 text-end"><strong>TOTALS</strong></th>
+                            <th colspan="6" class="ps-3 text-end"><strong>TOTALS</strong></th>
                             <th>
                                 <div class="text-end fw-bold text-primary">{{ currency($total['grand_total']) }}</div>
                             </th>
@@ -110,6 +173,9 @@
                         <tr>
                             <td class="ps-3">
                                 <span class="text-muted">#{{ $order->id }}</span>
+                            </td>
+                            <td class="text-nowrap">
+                                {{ systemDate($order->order_date ?? $order->created_at) }}
                             </td>
                             <td class="text-nowrap">
                                 <div>
@@ -166,6 +232,14 @@
                                     <a href="{{ route('tailoring::order::show', $order->id) }}" class="btn btn-light border" title="View Details">
                                         <i class="fa fa-eye text-primary"></i>
                                     </a>
+                                    <button type="button" class="btn btn-light border" title="View Full Items"
+                                        wire:click="openItemsModal({{ $order->id }})">
+                                        <i class="fa fa-list text-dark"></i>
+                                    </button>
+                                    <button type="button" class="btn btn-success border" title="Collect Payment"
+                                        wire:click="openReceiptModal({{ $order->account_id ?? 'null' }}, {{ json_encode($order->customer_name ?? '') }}, {{ json_encode($order->customer_mobile ?? '') }}, {{ json_encode($order->account?->name ?? ($order->customer_name ?? 'Customer')) }})">
+                                        <i class="fa fa-file-text-o"></i>
+                                    </button>
                                     <a href="{{ route('tailoring::job-completion::index') }}?order_no={{ $order->order_no }}" class="btn btn-light border" title="Job Completion">
                                         <i class="fa fa-check-circle text-success"></i>
                                     </a>
@@ -177,12 +251,12 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="9" class="text-center py-4 text-muted">
+                            <td colspan="10" class="text-center py-4 text-muted">
                                 <i class="demo-pli-magnifi-glass fs-1 d-block mb-2"></i>
-                                @if (trim($customer_id ?? '') !== '' || trim($mobile ?? '') !== '' || trim($order_no ?? '') !== '')
+                                @if (trim($customer_id ?? '') !== '' || trim($search ?? '') !== '')
                                     No orders found. Try different search criteria.
                                 @else
-                                    Enter Customer, Mobile or Order No above to search.
+                                    Start searching by customer name, mobile, or work order.
                                 @endif
                             </td>
                         </tr>
@@ -191,6 +265,68 @@
             </table>
         </div>
         {{ $data->links() }}
+    </div>
+
+    <div class="modal" id="TailoringOrderItemsPreviewModal" aria-hidden="true" wire:ignore.self>
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <div>
+                        <h5 class="mb-0">Order Items</h5>
+                        <small class="text-muted">
+                            Order: {{ $selectedOrderDetails['order_no'] ?? '-' }}
+                            | Date: {{ !empty($selectedOrderDetails['order_date']) ? systemDate($selectedOrderDetails['order_date']) : '-' }}
+                            | Customer: {{ $selectedOrderDetails['customer_name'] ?? '-' }}
+                        </small>
+                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-striped table-hover table-sm align-middle mb-0">
+                            <thead class="bg-light text-nowrap">
+                                <tr>
+                                    <th class="ps-3">#</th>
+                                    <th>Product</th>
+                                    <th>Category / Model</th>
+                                    <th>Color</th>
+                                    <th class="text-end">Qty</th>
+                                    <th class="text-end">Unit Price</th>
+                                    <th class="text-end">Total</th>
+                                    <th>Notes</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @forelse ($selectedOrderItems as $item)
+                                    <tr>
+                                        <td class="ps-3">{{ $item['item_no'] }}</td>
+                                        <td class="fw-semibold">{{ $item['product_name'] }}</td>
+                                        <td>
+                                            <div>{{ $item['category'] ?: '-' }}</div>
+                                            <small class="text-muted">
+                                                {{ $item['model'] ?: '-' }}
+                                                @if (!empty($item['model_type']))
+                                                    / {{ $item['model_type'] }}
+                                                @endif
+                                            </small>
+                                        </td>
+                                        <td>{{ $item['color'] ?: '-' }}</td>
+                                        <td class="text-end">{{ number_format((float) $item['quantity'], 3) }} {{ $item['unit'] ?: '' }}</td>
+                                        <td class="text-end">{{ currency($item['unit_price']) }}</td>
+                                        <td class="text-end fw-bold">{{ currency($item['total']) }}</td>
+                                        <td>{{ $item['notes'] ?: '-' }}</td>
+                                    </tr>
+                                @empty
+                                    <tr>
+                                        <td colspan="8" class="text-center text-muted py-3">No items in this order.</td>
+                                    </tr>
+                                @endforelse
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
     @push('scripts')
         <script>
@@ -214,6 +350,9 @@
                 Livewire.on('order-search-clear-customer', function() {
                     const el = document.getElementById('order_search_customer_id');
                     if (el && el.tomselect) el.tomselect.clear();
+                });
+                Livewire.on('toggle-order-items-modal', function() {
+                    $('#TailoringOrderItemsPreviewModal').modal('toggle');
                 });
             });
         </script>

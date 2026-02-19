@@ -105,7 +105,7 @@
                             </td>
                             <td class="text-center">
                                 <button type="button" class="btn btn-sm btn-success py-0 px-2" wire:click="openReceiptModal({{ $item->account_id ?? 'null' }}, {{ json_encode($item->customer_name ?? '') }}, {{ json_encode($item->customer_mobile ?? '') }}, {{ json_encode($item->customer_display) }})" title="Collect payment / Print receipt">
-                                    <i class="fa fa-receipt me-1"></i> Receipt
+                                    <i class="fa fa-file-text-o me-1"></i> Receipt
                                 </button>
                             </td>
                         </tr>

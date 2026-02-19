@@ -21,7 +21,9 @@
             </div>
         </div>
     </div>
+    <x-tailoring.customer-receipt-modal />
     @push('scripts')
         @include('components.select.customerSelect')
+        @include('components.select.paymentMethodSelect')
     @endpush
 </x-app-layout>
