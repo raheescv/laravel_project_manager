@@ -24,6 +24,8 @@
             color: #111;
             font-size: 11px;
             line-height: 1.35;
+            font-weight: 700;
+            text-rendering: geometricPrecision;
         }
 
         body {
@@ -34,7 +36,7 @@
             width: 281mm;
             min-height: 194mm;
             max-height: 194mm;
-            border: 1px solid #d1d5db;
+            border: 1.6px solid #111;
             padding: 10px 12px;
             overflow: hidden;
         }
@@ -43,7 +45,7 @@
             width: 100%;
             border-collapse: collapse;
             margin-bottom: 8px;
-            border-bottom: 2px solid #111;
+            border-bottom: 2.2px solid #111;
             padding-bottom: 6px;
         }
 
@@ -58,7 +60,7 @@
         }
 
         .subtle {
-            color: #4b5563;
+            color: #111;
             font-size: 10px;
         }
 
@@ -95,8 +97,8 @@
         }
 
         .measure-cell {
-            border: 1px solid #d1d5db;
-            background: #f9fafb;
+            border: 1.4px solid #111;
+            background: #fff;
             padding: 5px 6px;
             min-height: 28px;
             display: flex;
@@ -115,7 +117,7 @@
 
         .measure-label {
             text-transform: uppercase;
-            color: #6b7280;
+            color: #111;
             font-weight: 700;
             flex: 0 0 auto;
             font-size: 9px;
@@ -139,7 +141,7 @@
             border-collapse: collapse;
             table-layout: fixed;
             margin-bottom: 8px;
-            border: 1px solid #cbd5e1;
+            border: 1.6px solid #111;
         }
 
         .std-table th {
@@ -147,20 +149,21 @@
             font-weight: 700;
             text-transform: uppercase;
             letter-spacing: 0.5px;
-            background: #f3f4f6;
-            border-bottom: 1px solid #cbd5e1;
-            border-right: 1px solid #e5e7eb;
+            background: #fff;
+            border-bottom: 1.4px solid #111;
+            border-right: 1.2px solid #111;
             padding: 5px 4px;
             text-align: left;
         }
 
         .std-table td {
-            border-top: 1px solid #e5e7eb;
-            border-right: 1px solid #f1f5f9;
+            border-top: 1.2px solid #111;
+            border-right: 1.2px solid #111;
             padding: 5px 4px;
             vertical-align: top;
             word-wrap: break-word;
             overflow-wrap: break-word;
+            font-weight: 700;
         }
 
         .std-table th:last-child,
@@ -198,11 +201,12 @@
         }
 
         .notes-box {
-            border: 1px dashed #94a3b8;
-            background: #f8fafc;
+            border: 1.4px dashed #111;
+            background: #fff;
             padding: 6px 8px;
             min-height: 26px;
             margin-bottom: 8px;
+            font-weight: 700;
         }
 
         .meta-strip {
@@ -212,10 +216,11 @@
         }
 
         .meta-strip td {
-            border: 1px solid #cbd5e1;
+            border: 1.4px solid #111;
             padding: 5px 6px;
             font-size: 10px;
             width: 25%;
+            font-weight: 700;
         }
 
         .bottom {
@@ -236,7 +241,7 @@
         }
 
         .line-value {
-            border-bottom: 1px dashed #94a3b8;
+            border-bottom: 1.2px dashed #111;
             display: inline-block;
             min-width: 180px;
             padding-left: 5px;
@@ -265,8 +270,9 @@
             width: 13px;
             height: 13px;
             margin: 0;
-            accent-color: #111;
+            accent-color: #000;
             vertical-align: middle;
+            border: 1.4px solid #111;
         }
 
         .rating-box {
@@ -280,7 +286,7 @@
             font-size: 9px;
             text-transform: uppercase;
             letter-spacing: 0.4px;
-            color: #4b5563;
+            color: #111;
             font-weight: 700;
             margin-bottom: 3px;
         }
@@ -288,7 +294,7 @@
         .rating-box .square {
             width: 40px;
             height: 40px;
-            border: 1.5px solid #111;
+            border: 2px solid #111;
             margin: 0 auto;
             background: #fff;
         }
@@ -306,13 +312,14 @@
         }
 
         .sign-line {
-            border-top: 1px solid #9ca3af;
+            border-top: 1.4px solid #111;
             margin: 0 20px;
             padding-top: 5px;
             text-align: center;
             font-size: 10px;
-            color: #4b5563;
+            color: #111;
             text-transform: uppercase;
+            font-weight: 700;
         }
 
         .no-print {
