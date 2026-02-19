@@ -112,7 +112,7 @@
             align-items: center;
             gap: 4px;
             white-space: nowrap;
-            font-size: 10px;
+            font-size: 12px;
         }
 
         .measure-label {
@@ -120,7 +120,7 @@
             color: #111;
             font-weight: 700;
             flex: 0 0 auto;
-            font-size: 9px;
+            font-size: 12px;
         }
 
         .measure-value {
@@ -128,6 +128,7 @@
             color: #111;
             flex: 0 0 auto;
             white-space: nowrap;
+            font-size: 14px;
         }
 
         .measure-line--stacked {
@@ -448,7 +449,7 @@
                 @foreach (collect($common)->filter(fn($e) => !empty($e['value'])) as $entry)
                     <div class="measure-cell">
                         <div class="measure-line measure-line--stacked">
-                            <span class="measure-label">{{ $entry['label'] }}:</span>
+                            <span class="measure-label">{{ $entry['label'] }}</span>
                             <span class="measure-value">{{ $entry['value'] ?? '-' }}</span>
                         </div>
                     </div>
