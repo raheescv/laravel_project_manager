@@ -120,7 +120,7 @@
             color: #111;
             font-weight: 700;
             flex: 0 0 auto;
-            font-size: 12px;
+            font-size: 10px;
         }
 
         .measure-value {
