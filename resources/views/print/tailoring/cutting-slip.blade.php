@@ -87,9 +87,10 @@
         }
 
         .measure-grid {
-            width: 100%;
-            border-collapse: separate;
-            border-spacing: 5px;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: stretch;
+            gap: 5px;
             margin-bottom: 8px;
         }
 
@@ -97,23 +98,40 @@
             border: 1px solid #d1d5db;
             background: #f9fafb;
             padding: 5px 6px;
-            min-width: 80px;
-            vertical-align: top;
+            min-height: 28px;
+            display: flex;
+            align-items: center;
+            width: max-content;
+            max-width: 100%;
+        }
+
+        .measure-line {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            white-space: nowrap;
+            font-size: 10px;
         }
 
         .measure-label {
-            font-size: 9px;
             text-transform: uppercase;
             color: #6b7280;
-            margin-bottom: 2px;
             font-weight: 700;
+            flex: 0 0 auto;
+            font-size: 9px;
         }
 
         .measure-value {
-            font-size: 12px;
             font-weight: 700;
             color: #111;
-            word-break: break-word;
+            flex: 0 0 auto;
+            white-space: nowrap;
+        }
+
+        .measure-line--stacked {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 2px;
         }
 
         .std-table {
@@ -148,6 +166,23 @@
         .std-table th:last-child,
         .std-table td:last-child {
             border-right: none;
+        }
+
+        .ref-table {
+            table-layout: fixed;
+        }
+
+        .ref-table th,
+        .ref-table td {
+            padding: 6px 7px;
+            font-size: 10px;
+            vertical-align: top;
+        }
+
+        .ref-col-item {
+            width: 8%;
+            text-align: center;
+            white-space: nowrap;
         }
 
         .text-center {
@@ -313,6 +348,10 @@
             .no-print {
                 display: none !important;
             }
+
+            .measure-grid {
+                gap: 4px;
+            }
         }
     </style>
 </head>
@@ -348,6 +387,33 @@
         $bookingChecked = $order->status == 'confirmed';
         $finishedChecked = $order->status == 'completed';
         $deliveredChecked = $order->status == 'delivered';
+
+        // Dynamic width allocation for per-item measurement columns
+        $separateColumnWidths = [];
+        $separateColumnWraps = [];
+        if (count($separate) > 0) {
+            $itemColWidth = 8; // fixed
+            $remainingWidth = 92;
+            $weights = [];
+
+            foreach ($separate as $fieldKey => $entry) {
+                $labelLen = mb_strlen((string) ($entry['label'] ?? ''));
+                $maxValueLen = collect($items)->map(function ($item) use ($fieldKey) {
+                    return mb_strlen((string) ($item->$fieldKey ?? ''));
+                })->max() ?? 0;
+
+                // Common-sense weight: value length dominates, label still matters
+                $weights[$fieldKey] = max(8, (int) round(($labelLen * 0.7) + ($maxValueLen * 0.9)));
+                $separateColumnWraps[$fieldKey] = $maxValueLen > 22;
+            }
+
+            $totalWeight = array_sum($weights) ?: 1;
+
+            foreach ($weights as $fieldKey => $weight) {
+                $width = ($weight / $totalWeight) * $remainingWidth;
+                $separateColumnWidths[$fieldKey] = max(8, min(34, round($width, 2)));
+            }
+        }
     @endphp
 
     <div class="sheet">
@@ -371,35 +437,42 @@
 
         @if (collect($common)->filter(fn($e) => !empty($e['value']))->isNotEmpty())
             <div class="section-title">Common Measurements</div>
-            <table class="measure-grid">
-                <tr>
-                    @foreach (collect($common)->filter(fn($e) => !empty($e['value'])) as $entry)
-                        <td class="measure-cell">
-                            <div class="measure-label">{{ $entry['label'] }}</div>
-                            <div class="measure-value">{{ $entry['value'] ?? '-' }}</div>
-                        </td>
-                    @endforeach
-                </tr>
-            </table>
+            <div class="measure-grid">
+                @foreach (collect($common)->filter(fn($e) => !empty($e['value'])) as $entry)
+                    <div class="measure-cell">
+                        <div class="measure-line measure-line--stacked">
+                            <span class="measure-label">{{ $entry['label'] }}:</span>
+                            <span class="measure-value">{{ $entry['value'] ?? '-' }}</span>
+                        </div>
+                    </div>
+                @endforeach
+            </div>
         @endif
 
         @if (count($separate) > 0)
             <div class="section-title">Per Item Measurement Reference</div>
-            <table class="std-table">
+            <table class="std-table ref-table">
                 <thead>
                     <tr>
-                        <th style="width: 8%;">Item</th>
-                        @foreach ($separate as $entry)
-                            <th>{{ $entry['label'] }}</th>
+                        <th class="ref-col-item">Item</th>
+                        @foreach ($separate as $fieldKey => $entry)
+                            @php
+                                $width = $separateColumnWidths[$fieldKey] ?? 12;
+                            @endphp
+                            <th style="width: {{ $width }}%; white-space: nowrap;">{{ $entry['label'] }}</th>
                         @endforeach
                     </tr>
                 </thead>
                 <tbody>
                     @foreach ($items as $item)
                         <tr>
-                            <td class="text-center bold">#{{ $item->item_no }}</td>
+                            <td class="ref-col-item bold">#{{ $item->item_no }}</td>
                             @foreach ($separate as $fieldKey => $entry)
-                                <td class="bold">{{ $item->$fieldKey ?? '-' }}</td>
+                                @php
+                                    $width = $separateColumnWidths[$fieldKey] ?? 12;
+                                    $allowWrap = (bool) ($separateColumnWraps[$fieldKey] ?? false);
+                                @endphp
+                                <td class="bold" style="width: {{ $width }}%; {{ $allowWrap ? 'white-space: normal; overflow-wrap: anywhere;' : 'white-space: nowrap;' }}">{{ $item->$fieldKey ?? '-' }}</td>
                             @endforeach
                         </tr>
                     @endforeach
