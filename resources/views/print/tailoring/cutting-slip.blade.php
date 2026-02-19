@@ -278,7 +278,7 @@
 
         .rating-box {
             float: right;
-            width: 70px;
+            width: 210px;
             margin-top: 2px;
             text-align: center;
         }
@@ -293,11 +293,20 @@
         }
 
         .rating-box .square {
-            width: 40px;
-            height: 40px;
-            border: 2px solid #111;
-            margin: 0 auto;
-            background: #fff;
+            display: none;
+        }
+
+        .rating-stars {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .rating-star {
+            font-size: 24px;
+            line-height: 1;
+            color: #111;
+            font-weight: 700;
         }
 
         .signatures {
@@ -557,7 +566,13 @@
                     </div>
                     <div class="rating-box">
                         <div class="label">Rating</div>
-                        <div class="square"></div>
+                        <div class="rating-stars">
+                            <span class="rating-star">☆</span>
+                            <span class="rating-star">☆</span>
+                            <span class="rating-star">☆</span>
+                            <span class="rating-star">☆</span>
+                            <span class="rating-star">☆</span>
+                        </div>
                     </div>
                 </td>
                 <td>
