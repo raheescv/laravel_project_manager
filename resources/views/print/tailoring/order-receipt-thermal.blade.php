@@ -21,11 +21,13 @@
         body {
             width: 80mm;
             max-width: 80mm;
-            font-family: "Courier New", Courier, monospace;
-            font-size: 11px;
-            line-height: 1.28;
+            font-family: Arial, Helvetica, sans-serif;
+            font-size: 12px;
+            line-height: 1.34;
             color: #000;
             background: #fff;
+            font-weight: 600;
+            text-rendering: geometricPrecision;
         }
 
         body {
@@ -58,34 +60,34 @@
         }
 
         .tiny {
-            font-size: 9px;
-        }
-
-        .small {
             font-size: 10px;
         }
 
-        .normal {
+        .small {
             font-size: 11px;
+        }
+
+        .normal {
+            font-size: 12px;
         }
 
         .title {
-            font-size: 14px;
+            font-size: 16px;
             font-weight: 700;
             letter-spacing: 0.4px;
             text-transform: uppercase;
-            margin: 1mm 0 0.5mm;
+            margin: 1.2mm 0 0.8mm;
         }
 
         .subtitle {
-            font-size: 11px;
+            font-size: 12px;
             font-weight: 700;
             margin: 0.8mm 0 0;
         }
 
         .line {
-            border-top: 1px dashed #000;
-            margin: 2.2mm 0;
+            border-top: 1.2px solid #000;
+            margin: 2.5mm 0;
             height: 0;
         }
 
@@ -105,7 +107,7 @@
         }
 
         .meta-key {
-            width: 31%;
+            width: 34%;
             font-weight: 700;
         }
 
@@ -115,22 +117,23 @@
         }
 
         .meta-value {
-            width: 65%;
+            width: 62%;
         }
 
         .items-table thead th {
-            font-size: 10px;
+            font-size: 11px;
             font-weight: 700;
             text-transform: uppercase;
-            border-top: 1px solid #000;
-            border-bottom: 1px solid #000;
-            padding: 1.2mm 0.8mm;
+            border-top: 1.2px solid #000;
+            border-bottom: 1.2px solid #000;
+            padding: 1.4mm 0.9mm;
         }
 
         .items-table td {
-            padding: 1.2mm 0.8mm;
+            padding: 1.35mm 0.9mm;
             vertical-align: top;
-            border-bottom: 1px dotted #000;
+            border-bottom: 1px solid #000;
+            font-weight: 700;
         }
 
         .items-table tr:last-child td {
@@ -154,9 +157,9 @@
         }
 
         .category-row td {
-            border-bottom: 1px solid #000;
-            padding-top: 1.5mm;
-            padding-bottom: 1mm;
+            border-bottom: 1.2px solid #000;
+            padding-top: 1.7mm;
+            padding-bottom: 1.1mm;
             font-weight: 700;
         }
 
@@ -166,13 +169,15 @@
 
         .item-sub {
             display: block;
-            font-size: 9px;
-            margin-top: 0.4mm;
+            font-size: 10px;
+            margin-top: 0.6mm;
+            font-weight: 700;
         }
 
         .totals-table td {
-            padding: 1.1mm 0.8mm;
-            border-bottom: 1px dotted #000;
+            padding: 1.35mm 0.9mm;
+            border-bottom: 1px solid #000;
+            font-size: 12px;
         }
 
         .totals-table tr:last-child td {
@@ -187,8 +192,12 @@
         .totals-value {
             width: 45%;
             text-align: right;
-            font-weight: 700;
+            font-weight: 800;
             white-space: nowrap;
+        }
+
+        .totals-table tr:last-child td {
+            border-bottom: 1.5px solid #000;
         }
 
         .footer {
@@ -202,7 +211,7 @@
         }
 
         .print-actions button {
-            border: 1px solid #000;
+            border: 1.2px solid #000;
             background: #fff;
             color: #000;
             padding: 6px 14px;
