@@ -4,7 +4,6 @@ namespace App\Livewire\Settings\TailoringMeasurementOption;
 
 use App\Actions\Settings\TailoringMeasurementOption\CreateAction;
 use App\Actions\Settings\TailoringMeasurementOption\UpdateAction;
-use App\Models\TailoringCategoryMeasurement;
 use App\Models\TailoringMeasurementOption;
 use Illuminate\Validation\Rule;
 use Livewire\Component;

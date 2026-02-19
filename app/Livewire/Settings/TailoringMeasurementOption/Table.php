@@ -104,7 +104,7 @@ class Table extends Component
 
         return view('livewire.settings.tailoring-measurement-option.table', [
             'data' => $data,
-            'optionTypes' => TailoringMeasurementOption::pluck('option_type','option_type')->toArray(),
+            'optionTypes' => TailoringMeasurementOption::pluck('option_type', 'option_type')->toArray(),
         ]);
     }
 }

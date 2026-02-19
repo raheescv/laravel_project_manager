@@ -18,7 +18,7 @@ return new class() extends Migration
             $table->unsignedBigInteger('sub_unit_id');
             $table->foreign('sub_unit_id')->references('id')->on('units')->onDelete('cascade');
             $table->double('conversion_factor', 12, 4)->comment('1 base_unit = conversion_factor × sub_unit (e.g. 1 L = 1000 ml)');
-            $table->unique(['tenant_id', 'base_unit_id', 'sub_unit_id'],'uuc_tenant_base_sub_unique');
+            $table->unique(['tenant_id', 'base_unit_id', 'sub_unit_id'], 'uuc_tenant_base_sub_unique');
             $table->timestamps();
         });
     }

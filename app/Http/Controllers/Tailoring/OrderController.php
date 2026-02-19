@@ -16,7 +16,6 @@ use App\Actions\Tailoring\Payment\CreateAction as PaymentCreateAction;
 use App\Actions\Tailoring\Payment\DeleteAction as PaymentDeleteAction;
 use App\Actions\Tailoring\Payment\UpdateAction as PaymentUpdateAction;
 use App\Http\Controllers\Controller;
-use Barryvdh\DomPDF\Facade\Pdf;
 use App\Models\Account;
 use App\Models\Configuration;
 use App\Models\Country;
@@ -32,6 +31,7 @@ use App\Models\TailoringOrder;
 use App\Models\TailoringOrderItem;
 use App\Models\TailoringOrderMeasurement;
 use App\Models\User;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -741,7 +741,9 @@ class OrderController extends Controller
             'category' => fn ($q) => $q->with('activeMeasurements'),
             'categoryModel',
             'categoryModelType',
-            'product' => fn ($q) => $q->select('id', 'name')->withSum('inventories as stock_quantity', 'quantity'),
+            'product' => fn ($q) => $q->select('id', 'name')->withSum([
+                'inventories as stock_quantity' => fn ($q2) => $q2->where('branch_id', session('branch_id')),
+            ], 'quantity'),
             'unit',
             'tailor',
         ]);
@@ -760,7 +762,9 @@ class OrderController extends Controller
 
     public function getProductStock($productId): JsonResponse
     {
-        $stock = Product::where('id', $productId)->withSum('inventories as stock_quantity', 'quantity')->first();
+        $stock = Product::where('id', $productId)->withSum([
+            'inventories as stock_quantity' => fn ($q) => $q->where('branch_id', session('branch_id')),
+        ], 'quantity')->first();
 
         return response()->json([
             'success' => true,

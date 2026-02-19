@@ -24,7 +24,9 @@ class GetOrderByOrderNumberAction
                         'categoryModel:id,name',
                         'categoryModelType:id,name',
                         'product' => function ($q) {
-                            $q->select('id', 'name')->withSum('inventories as stock_quantity', 'quantity');
+                            $q->select('id', 'name')->withSum([
+                                'inventories as stock_quantity' => fn ($q2) => $q2->where('branch_id', session('branch_id')),
+                            ], 'quantity');
                         },
                         'unit:id,name',
                         'tailor:id,name',

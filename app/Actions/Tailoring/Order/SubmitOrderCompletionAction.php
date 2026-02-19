@@ -56,7 +56,9 @@ class SubmitOrderCompletionAction
                         'category' => fn ($q) => $q->with('activeMeasurements'),
                         'categoryModel',
                         'categoryModelType',
-                        'product' => fn ($q) => $q->select('id', 'name')->withSum('inventories as stock_quantity', 'quantity'),
+                        'product' => fn ($q) => $q->select('id', 'name')->withSum([
+                            'inventories as stock_quantity' => fn ($q2) => $q2->where('branch_id', session('branch_id')),
+                        ], 'quantity'),
                         'unit',
                         'tailor',
                     ])->orderBy('item_no');

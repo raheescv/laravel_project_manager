@@ -12,6 +12,7 @@ class ProcessOrderCompletionItemsAction
      *
      * @param  array<int, array<string, mixed>>  $itemsData  Each element must have 'id'; may have used_quantity, wastage, etc.
      * @param  array<int>|null  $selectedItemIds  If set, only process items whose id is in this array
+     *
      * @throws Exception
      */
     public function execute(TailoringOrder $order, array $itemsData, int $userId, ?array $selectedItemIds = null): void
