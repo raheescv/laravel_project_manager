@@ -8,300 +8,324 @@
     <style>
         * {
             box-sizing: border-box;
-        }
-
-        html, body {
-            font-family: 'Segoe UI', Arial, sans-serif;
             margin: 0;
             padding: 0;
-            background-color: #e8e8e8;
-            color: #000;
+        }
+
+        @page {
+            size: A4 landscape;
+            margin: 8mm;
+        }
+
+        html,
+        body {
+            font-family: DejaVu Sans, Arial, Helvetica, sans-serif;
+            background: #fff;
+            color: #111;
+            font-size: 11px;
+            line-height: 1.35;
         }
 
         body {
-            padding: 16px;
+            padding: 10px;
         }
 
-        /* Fit to A4 landscape: 297mm × 210mm */
-        .print-container {
-            width: 297mm;
-            height: 210mm;
-            max-width: 297mm;
-            max-height: 210mm;
-            margin: auto;
-            border: 1px solid #000;
-            padding: 10mm 12mm;
-            box-sizing: border-box;
-            background: #fff;
+        .sheet {
+            width: 281mm;
+            min-height: 194mm;
+            max-height: 194mm;
+            border: 1px solid #d1d5db;
+            padding: 10px 12px;
             overflow: hidden;
         }
 
         .header {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 14px;
-            border-bottom: 2px solid #000;
-            padding-bottom: 8px;
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 8px;
+            border-bottom: 2px solid #111;
+            padding-bottom: 6px;
         }
 
-        .header-left h1 {
-            margin: 0;
-            font-size: 1.6rem;
-            text-transform: uppercase;
+        .header td {
+            vertical-align: top;
         }
 
-        .header-left p {
-            margin: 2px 0;
-            font-size: 1rem;
-            font-weight: bold;
-            color: #333;
+        .left-title {
+            font-size: 16px;
+            font-weight: 700;
+            margin-bottom: 2px;
         }
 
-        .header-center {
+        .subtle {
+            color: #4b5563;
+            font-size: 10px;
+        }
+
+        .center-title {
             text-align: center;
+            font-size: 15px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.6px;
+            margin-top: 2px;
         }
 
-        .header-center h2 {
-            margin: 0;
-            font-size: 1.2rem;
-            border-bottom: 1px solid #000;
-            display: inline-block;
-            padding-bottom: 2px;
-        }
-
-        .header-right {
+        .right-meta {
             text-align: right;
-            font-size: 0.9rem;
-            font-weight: bold;
-            line-height: 1.4;
+            font-size: 10px;
+            line-height: 1.5;
+        }
+
+        .section-title {
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            font-weight: 700;
+            margin-bottom: 5px;
+            color: #1f2937;
         }
 
         .measure-grid {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 6px;
-            margin-bottom: 10px;
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 5px;
+            margin-bottom: 8px;
         }
 
-        .measure-box {
-            flex: 0 0 auto;
-            min-width: 90px;
-            width: max-content;
-            max-width: 100%;
-            border: none;
-            border-radius: 0;
-            display: flex;
-            flex-direction: column;
-            align-items: stretch;
-            gap: 0;
+        .measure-cell {
+            border: 1px solid #d1d5db;
+            background: #f9fafb;
+            padding: 5px 6px;
+            min-width: 80px;
+            vertical-align: top;
         }
 
         .measure-label {
-            font-size: 0.65rem;
-            font-weight: 600;
+            font-size: 9px;
             text-transform: uppercase;
-            letter-spacing: 0.02em;
-            white-space: nowrap;
-            color: #555;
+            color: #6b7280;
             margin-bottom: 2px;
-            line-height: 1.2;
+            font-weight: 700;
         }
 
-        .measure-val {
-            border: 1px solid #000;
-            border-radius: 4px;
-            background: #f8f8f8;
-            min-height: 28px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: bold;
-            font-size: 0.95rem;
-            padding: 3px 5px;
-            text-align: center;
+        .measure-value {
+            font-size: 12px;
+            font-weight: 700;
+            color: #111;
+            word-break: break-word;
         }
 
-        .measure-val-inner {
-            white-space: nowrap;
-            text-align: center;
-        }
-
-        .measure-box--empty .measure-label,
-        .measure-box--empty .measure-val {
-            border-color: transparent;
-            background: transparent;
-        }
-
-        .slip-table {
+        .std-table {
             width: 100%;
             border-collapse: collapse;
-            margin: 10px 0 12px 0;
-            font-size: 0.85rem;
+            table-layout: fixed;
+            margin-bottom: 8px;
+            border: 1px solid #cbd5e1;
         }
 
-        .slip-table th {
-            border: 1px solid #000;
-            padding: 6px 5px;
-            background-color: #f2f2f2;
-            text-transform: capitalize;
-            font-weight: bold;
+        .std-table th {
+            font-size: 9px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            background: #f3f4f6;
+            border-bottom: 1px solid #cbd5e1;
+            border-right: 1px solid #e5e7eb;
+            padding: 5px 4px;
+            text-align: left;
         }
 
-        .slip-table td {
-            border: 1px solid #000;
-            padding: 6px 6px;
+        .std-table td {
+            border-top: 1px solid #e5e7eb;
+            border-right: 1px solid #f1f5f9;
+            padding: 5px 4px;
+            vertical-align: top;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+        }
+
+        .std-table th:last-child,
+        .std-table td:last-child {
+            border-right: none;
+        }
+
+        .text-center {
             text-align: center;
         }
 
-        .col-desc {
-            text-align: left !important;
-            width: 35%;
-            font-weight: bold;
+        .text-right {
+            text-align: right;
         }
 
-        .highlight-yellow {
-            background-color: #ffff00;
-            font-weight: bold;
-            padding: 2px 4px;
+        .bold {
+            font-weight: 700;
         }
 
-        .info-bar {
-            display: grid;
-            grid-template-columns: repeat(8, 1fr);
-            border: 1px solid #000;
-            margin-top: 8px;
+        .notes-box {
+            border: 1px dashed #94a3b8;
+            background: #f8fafc;
+            padding: 6px 8px;
+            min-height: 26px;
+            margin-bottom: 8px;
+        }
+
+        .meta-strip {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 8px;
+        }
+
+        .meta-strip td {
+            border: 1px solid #cbd5e1;
+            padding: 5px 6px;
+            font-size: 10px;
+            width: 25%;
+        }
+
+        .bottom {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 6px;
+        }
+
+        .bottom td {
+            vertical-align: top;
+            width: 50%;
+            padding-right: 10px;
+        }
+
+        .line-field {
+            margin-bottom: 7px;
+            font-size: 10px;
+        }
+
+        .line-value {
+            border-bottom: 1px dashed #94a3b8;
+            display: inline-block;
+            min-width: 180px;
+            padding-left: 5px;
+            font-weight: 700;
+        }
+
+        .checklist {
+            margin-top: 10px;
+            font-size: 10px;
+            display: inline-block;
+        }
+
+        .checklist span {
+            margin-right: 18px;
+            font-weight: 700;
+        }
+
+        .check-item {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            margin-right: 18px;
+        }
+
+        .check-input {
+            width: 13px;
+            height: 13px;
+            margin: 0;
+            accent-color: #111;
+            vertical-align: middle;
+        }
+
+        .rating-box {
+            float: right;
+            width: 70px;
+            margin-top: 2px;
+            text-align: center;
+        }
+
+        .rating-box .label {
+            font-size: 9px;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+            color: #4b5563;
+            font-weight: 700;
+            margin-bottom: 3px;
+        }
+
+        .rating-box .square {
+            width: 40px;
+            height: 40px;
+            border: 1.5px solid #111;
+            margin: 0 auto;
             background: #fff;
         }
 
-        .info-bar div {
-            padding: 5px 4px;
+        .signatures {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+
+        .signatures td {
+            width: 50%;
+            vertical-align: bottom;
+            padding-top: 16px;
+        }
+
+        .sign-line {
+            border-top: 1px solid #9ca3af;
+            margin: 0 20px;
+            padding-top: 5px;
             text-align: center;
-            border-right: 1px solid #000;
-            font-size: 0.7rem;
-            font-weight: bold;
-            background-color: #f9f9f9;
+            font-size: 10px;
+            color: #4b5563;
+            text-transform: uppercase;
         }
 
-        .info-values {
-            display: grid;
-            grid-template-columns: repeat(8, 1fr);
-            border: 1px solid #000;
-            border-top: none;
-            margin-bottom: 12px;
-            min-height: 26px;
-        }
-
-        .info-values div {
-            border-right: 1px solid #000;
-            padding: 4px;
+        .no-print {
             text-align: center;
-            font-weight: bold;
+            margin-top: 14px;
         }
 
-        .bottom-section {
-            display: flex;
-            gap: 24px;
-            margin-top: 12px;
-        }
-
-        .field-row {
-            display: flex;
-            align-items: center;
-            margin-bottom: 8px;
-            font-size: 0.9rem;
-            font-weight: bold;
-        }
-
-        .field-input {
-            flex: 1;
-            border-bottom: 1px dashed #000;
-            margin-left: 8px;
-            min-height: 18px;
-        }
-
-        .qr-placeholder {
-            width: 90px;
-            height: 90px;
-            border: 1px solid #eee;
-            padding: 4px;
-        }
-
-        .signature-row {
-            display: flex;
-            justify-content: space-between;
-            margin-top: 24px;
-            padding-top: 8px;
-            border-top: 1px solid #eee;
-            font-size: 0.9rem;
-            font-weight: bold;
+        .no-print button {
+            border: none;
+            background: #111827;
+            color: #fff;
+            font-size: 13px;
+            font-weight: 700;
+            padding: 9px 20px;
+            border-radius: 4px;
+            cursor: pointer;
         }
 
         @media print {
-            @page {
-                size: A4 landscape;
-                margin: 0;
-            }
-
-            html, body {
-                width: 297mm;
-                height: 210mm;
-                margin: 0;
+            body {
                 padding: 0;
-                background-color: #fff;
-                overflow: visible;
             }
 
-            .print-container {
-                width: 297mm;
-                min-width: 297mm;
-                height: 210mm;
-                max-height: 210mm;
-                margin: 0;
+            .sheet {
                 border: none;
-                padding: 10mm 12mm;
-                border-radius: 0;
-                overflow: visible;
+                width: 281mm;
+                min-height: 194mm;
+                max-height: 194mm;
+                padding: 0;
+                overflow: hidden;
             }
 
             .no-print {
                 display: none !important;
-            }
-
-            /* Single-line display when printing */
-            .measure-grid {
-                grid-template-columns: repeat(auto-fill, minmax(80px, max-content));
-            }
-
-            .measure-box {
-                min-width: min-content;
-            }
-
-            .measure-val {
-                min-width: 0;
-                overflow: visible;
-            }
-
-            .measure-val-inner {
-                white-space: nowrap;
-            }
-
-            .slip-table td,
-            .slip-table th {
-                white-space: nowrap;
             }
         }
     </style>
 </head>
 
 <body>
-
     @php
         $items = $items ?? $order->items;
         $firstItem = $items->first();
-        $activeMeasurements = $firstItem->category->activeMeasurements ?? collect();
+        $activeMeasurements = $firstItem?->category?->activeMeasurements ?? collect();
         $sectionGroups = ['dimensions' => 'basic_body', 'components' => 'collar_cuff', 'styles' => 'specifications'];
         $common = [];
         $separate = [];
+
         foreach ($sectionGroups as $sectionId) {
             $fields = $activeMeasurements->where('section', $sectionId)->sortBy('sort_order');
             foreach ($fields as $m) {
@@ -317,133 +341,163 @@
                 }
             }
         }
+
         $itemsWithNotes = $items->filter(fn($item) => !empty(trim($item->tailoring_notes ?? '')));
+        $totalQty = collect($items)->sum('quantity');
+
+        $bookingChecked = $order->status == 'confirmed';
+        $finishedChecked = $order->status == 'completed';
+        $deliveredChecked = $order->status == 'delivered';
     @endphp
 
-    <div class="print-container">
-        <div class="header">
-            <div class="header-left">
-                <p>{{ $order->customer_mobile ?? 'No Mobile' }}</p>
-                <h1>{{ $order->customer_name }}</h1>
-                <p>Work Order: {{ $order->order_no }}</p>
-            </div>
-            <div class="header-center">
-                <h2>{{ strtoupper($firstItem->category->name ?? 'TAILORING') }} CUTTING SLIP</h2>
-            </div>
-            <div class="header-right">
-                Order Date: {{ $order->order_date ? $order->order_date->format('d/m/Y') : '-' }}<br>
-                Delivery Date: {{ $order->delivery_date ? $order->delivery_date->format('d/m/Y') : '-' }}
-            </div>
-        </div>
+    <div class="sheet">
+        <table class="header">
+            <tr>
+                <td style="width: 34%;">
+                    <div class="left-title">{{ $order->customer_name ?: 'Walk-in Customer' }}</div>
+                    <div class="subtle">Mobile: {{ $order->customer_mobile ?? '-' }}</div>
+                    <div class="subtle">Work Order: {{ $order->order_no }}</div>
+                </td>
+                <td style="width: 32%;">
+                    <div class="center-title">{{ strtoupper($firstItem?->category?->name ?? 'TAILORING') }} CUTTING SLIP</div>
+                </td>
+                <td style="width: 34%;" class="right-meta">
+                    <div><span class="bold">Order Date:</span> {{ $order->order_date ? $order->order_date->format('d/m/Y') : '-' }}</div>
+                    <div><span class="bold">Delivery:</span> {{ $order->delivery_date ? $order->delivery_date->format('d/m/Y') : '-' }}</div>
+                    <div><span class="bold">Printed:</span> {{ now()->format('d/m/Y h:i A') }}</div>
+                </td>
+            </tr>
+        </table>
 
-        {{-- Common measurements (same for all items in this category) — responsive grid by label/value --}}
-        <div class="measure-grid">
-            @foreach (collect($common)->filter(fn($e) => !empty($e['value'])) as $key => $entry)
-                <div class="measure-box">
-                    <div class="measure-label">{{ $entry['label'] }}</div>
-                    <div class="measure-val"><span class="measure-val-inner">{{ $entry['value'] ?? '-' }}</span></div>
-                </div>
-            @endforeach
-        </div>
-
-        {{-- Per-item reference (e.g. Mar Size, Mar Model) --}}
-        @if (count($separate) > 0)
-            <div style="margin-bottom: 10px;">
-                <table class="slip-table" style="margin: 0 0 10px 0;">
-                    <thead>
-                        <tr>
-                            <th style="width: 10px;">#</th>
-                            @foreach ($separate as $entry)
-                                <th>{{ $entry['label'] }}</th>
-                            @endforeach
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach ($items as $item)
-                            <tr>
-                                <td style="font-weight: bold;">#{{ $item->item_no }}</td>
-                                @foreach ($separate as $fieldKey => $entry)
-                                    <td><b>{{ $item->$fieldKey ?? '-' }}</b> </td>
-                                @endforeach
-                            </tr>
-                        @endforeach
-                    </tbody>
-                </table>
-            </div>
+        @if (collect($common)->filter(fn($e) => !empty($e['value']))->isNotEmpty())
+            <div class="section-title">Common Measurements</div>
+            <table class="measure-grid">
+                <tr>
+                    @foreach (collect($common)->filter(fn($e) => !empty($e['value'])) as $entry)
+                        <td class="measure-cell">
+                            <div class="measure-label">{{ $entry['label'] }}</div>
+                            <div class="measure-value">{{ $entry['value'] ?? '-' }}</div>
+                        </td>
+                    @endforeach
+                </tr>
+            </table>
         @endif
 
-        <div class="measure-grid" style="grid-template-columns: 100fr 1fr;">
-            <div class="field-row" style="margin-bottom: 0;">
-                Notes:
-                <div class="field-input" style="min-height: auto;">
-                    @if ($itemsWithNotes->isNotEmpty())
-                        @foreach ($itemsWithNotes as $item)
-                            <span style="font-weight: bold;">#{{ $item->item_no }}</span>
-                             {{ $item->tailoring_notes }}@if (!$loop->last) @endif
+        @if (count($separate) > 0)
+            <div class="section-title">Per Item Measurement Reference</div>
+            <table class="std-table">
+                <thead>
+                    <tr>
+                        <th style="width: 8%;">Item</th>
+                        @foreach ($separate as $entry)
+                            <th>{{ $entry['label'] }}</th>
                         @endforeach
-                    @else
-                        -
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach ($items as $item)
+                        <tr>
+                            <td class="text-center bold">#{{ $item->item_no }}</td>
+                            @foreach ($separate as $fieldKey => $entry)
+                                <td class="bold">{{ $item->$fieldKey ?? '-' }}</td>
+                            @endforeach
+                        </tr>
+                    @endforeach
+                </tbody>
+            </table>
+        @endif
+
+        <div class="section-title">Notes</div>
+        <div class="notes-box">
+            @if ($itemsWithNotes->isNotEmpty())
+                @foreach ($itemsWithNotes as $item)
+                    <span class="bold">#{{ $item->item_no }}</span> {{ $item->tailoring_notes }}@if (!$loop->last)
+                        |
                     @endif
-                </div>
-            </div>
+                @endforeach
+            @else
+                -
+            @endif
         </div>
 
-        <div style="text-align: right; margin-bottom: 6px;">
-            <strong>Total Qty: {{ number_format(collect($items)->sum('quantity'), 1) }}</strong>
-        </div>
-        <table class="slip-table">
+        <table class="meta-strip">
+            <tr>
+                <td><span class="bold">Branch:</span> {{ $order->branch->name ?? '-' }}</td>
+                <td style="text-align: right"><span class="bold">Total Quantity: {{ number_format((float) $totalQty, 2) }}</span></td>
+            </tr>
+        </table>
+
+        <div class="section-title">Cutting Items</div>
+        <table class="std-table">
             <thead>
                 <tr>
-                    <th class="col-desc">Description</th>
-                    <th>Barcode</th>
-                    <th>Qty</th>
-                    <th>Category</th>
-                    <th>Model</th>
-                    <th>Type</th>
-                    <th>Color</th>
-                    <th>Used</th>
+                    <th style="width: 21%;">Description</th>
+                    <th style="width: 12%;">Barcode</th>
+                    <th style="width: 8%;" class="text-right">Qty</th>
+                    <th style="width: 13%;">Model</th>
+                    <th style="width: 12%;">Type</th>
+                    <th style="width: 10%;">Color</th>
+                    <th style="width: 12%;">Used Qty</th>
                 </tr>
             </thead>
             <tbody>
                 @foreach ($items as $item)
                     <tr>
-                        <td class="col-desc">{{ $item->product_name }}</td>
-                        <td><b>{{ $item->product->barcode ?? '-' }}</b></td>
-                        <td><b>{{ number_format($item->quantity, 1) }}</b></td>
-                        <td><b>{{ $item->category->name ?? '-' }}</b></td>
-                        <td><span class="highlight-yellow">{{ $item->categoryModel->name ?? $item->tailoring_category_model_name ?? 'Standard' }}</span></td>
-                        <td><span class="highlight-yellow">{{ $item->categoryModelType->name  ?? $item->tailoring_category_model_type_name ?? '-' }}</span></td>
-                        <td><b>{{ $item->product_color ?? '-' }}</b></td>
-                        <td><b></b></td>
+                        <td class="bold">{{ $item->product_name }}</td>
+                        <td>{{ $item->product->barcode ?? '-' }}</td>
+                        <td class="text-right bold">{{ number_format((float) $item->quantity, 2) }}</td>
+                        <td class="bold">{{ $item->categoryModel->name ?? ($item->tailoring_category_model_name ?? 'Standard') }}</td>
+                        <td class="bold">{{ $item->categoryModelType->name ?? ($item->tailoring_category_model_type_name ?? '-') }}</td>
+                        <td>{{ $item->product_color ?? '-' }}</td>
+                        <td></td>
                     </tr>
                 @endforeach
             </tbody>
         </table>
-        <div class="bottom-section">
-            <div style="flex: 2;">
-                <div class="field-row">Cutting Master: <div class="field-input">{{ $order->cutter->name ?? '' }}</div>
-                </div>
-                <div class="field-row">Tailor Name: <div class="field-input">{{ $firstItem->tailor->name ?? '' }}</div>
-                </div>
-                <div class="field-row" style="margin-top: 12px; gap: 32px;">
-                    <label><input type="checkbox" {{ $order->status == 'confirmed' ? 'checked' : '' }}> Booking</label>
-                    <label><input type="checkbox" {{ $order->status == 'completed' ? 'checked' : '' }}> Finished</label>
-                    <label><input type="checkbox" {{ $order->status == 'delivered' ? 'checked' : '' }}> Delivered</label>
-                </div>
-            </div>
-        </div>
 
-        <div class="signature-row">
-            <div>Prepared By: {{ $order->salesman->name ?? '' }}</div>
-            <div>Approved By: {{ $order->customer_name }}</div>
-        </div>
+        <table class="bottom">
+            <tr>
+                <td>
+                    <div class="line-field"><span class="bold">Cutting Master:</span><span class="line-value">{{ $order->cutter->name ?? '' }}</span></div>
+                    <div class="line-field"><span class="bold">Tailor Name:</span><span class="line-value">{{ $firstItem?->tailor?->name ?? '' }}</span></div>
+                    <div class="checklist">
+                        <label class="check-item">
+                            <input type="checkbox" class="check-input" {{ $bookingChecked ? 'checked' : '' }}>
+                            <span>Booking</span>
+                        </label>
+                        <label class="check-item">
+                            <input type="checkbox" class="check-input" {{ $finishedChecked ? 'checked' : '' }}>
+                            <span>Finished</span>
+                        </label>
+                        <label class="check-item">
+                            <input type="checkbox" class="check-input" {{ $deliveredChecked ? 'checked' : '' }}>
+                            <span>Delivered</span>
+                        </label>
+                    </div>
+                    <div class="rating-box">
+                        <div class="label">Rating</div>
+                        <div class="square"></div>
+                    </div>
+                </td>
+                <td>
+                    <table class="signatures">
+                        <tr>
+                            <td>
+                                <div class="sign-line">Prepared By: {{ $order->salesman->name ?? '' }}</div>
+                            </td>
+                            <td>
+                                <div class="sign-line">Approved By: {{ $order->customer_name ?: 'Customer' }}</div>
+                            </td>
+                        </tr>
+                    </table>
+                </td>
+            </tr>
+        </table>
     </div>
 
-    <div class="no-print" style="text-align: center; margin-top: 16px; padding-bottom: 32px;">
-        <button onclick="window.print()" style="padding: 12px 30px; cursor: pointer; background: #000; color: #fff; border: none; border-radius: 5px; font-weight: bold; font-size: 1rem;">Print Cutting
-            Slip</button>
+    <div class="no-print">
+        <button onclick="window.print()">Print Cutting Slip</button>
     </div>
-
 </body>
 
 </html>
