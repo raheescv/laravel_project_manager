@@ -1,47 +1,50 @@
 <template>
-    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-5 lg:gap-6 items-start">
         <!-- Search Order Form -->
         <div class="lg:col-span-4">
-            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 h-full">
-                <div class="p-6">
-                    <div class="flex items-center gap-3 mb-6">
-                        <div class="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center text-blue-600">
+            <div class="search-card bg-white rounded-2xl shadow-sm border border-slate-200">
+                <div class="p-5 sm:p-6">
+                    <div class="flex items-center gap-3 mb-5 sm:mb-6">
+                        <div class="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center text-blue-600 ring-1 ring-blue-100">
                             <i class="fa fa-search text-lg"></i>
                         </div>
-                        <h5 class="text-sm font-black text-slate-800 uppercase tracking-widest leading-none">Search Order</h5>
+                        <div class="leading-tight">
+                            <h5 class="text-sm font-extrabold text-slate-800 uppercase tracking-widest">Search Order</h5>
+                            <p class="text-[11px] text-slate-500 font-medium mt-0.5">Find and load customer orders quickly</p>
+                        </div>
                     </div>
 
-                    <div class="flex flex-col gap-4">
+                    <div class="flex flex-col gap-4 sm:gap-5">
                         <!-- Order Number -->
-                        <div>
-                            <label class="block text-[0.65rem] font-bold text-slate-400 uppercase tracking-widest mb-1.5 px-1">
+                        <div class="space-y-1.5">
+                            <label class="block text-[0.65rem] font-bold text-slate-500 uppercase tracking-widest px-0.5">
                                 Order Number
                             </label>
-                            <SearchableSelect :modelValue="orderNo" :options="formattedOrderNumbers"
+                            <SearchableSelect class="w-full" :modelValue="orderNo" :options="formattedOrderNumbers"
                                 placeholder="Select Order No" filter-placeholder="Search order number..."
                                 :visibleItems="8" @update:modelValue="val => $emit('update:orderNo', val)"
-                                input-class="!text-xs !py-1 !px-3 !rounded-xl !bg-slate-50 !border-slate-200 !font-bold" />
+                                input-class="!w-full !text-xs !py-2 !px-3 !rounded-xl !bg-slate-50 !border-slate-200 !font-semibold !min-h-[40px] focus:!bg-white focus:!border-blue-300" />
                         </div>
 
                         <!-- Customer Selection -->
-                        <div>
-                            <label class="block text-[0.65rem] font-bold text-slate-400 uppercase tracking-widest mb-1.5 px-1">Customer Selection</label>
-                            <SearchableSelect :modelValue="customerId" :options="formattedCustomers"
+                        <div class="space-y-1.5">
+                            <label class="block text-[0.65rem] font-bold text-slate-500 uppercase tracking-widest px-0.5">Customer Selection</label>
+                            <SearchableSelect class="w-full" :modelValue="customerId" :options="formattedCustomers"
                                 :loading="customerLoading" placeholder="Select Customer"
                                 filter-placeholder="Search by name or mobile..." :visibleItems="8"
                                 @search="searchCustomers" @change="handleCustomerSelect" @open="handleCustomerOpen"
                                 @update:modelValue="val => $emit('update:customerId', val)"
-                                input-class="!text-xs !py-1 !px-3 !rounded-xl !bg-slate-50 !border-slate-200 !font-bold" />
+                                input-class="!w-full !text-xs !py-2 !px-3 !rounded-xl !bg-slate-50 !border-slate-200 !font-semibold !min-h-[40px] focus:!bg-white focus:!border-blue-300" />
                         </div>
                     </div>
 
-                    <div class="flex justify-end gap-2 mt-8 pt-4 border-t border-slate-100">
+                    <div class="flex flex-col sm:flex-row sm:flex-wrap sm:justify-end gap-2 mt-7 pt-4 border-t border-slate-100">
                         <button @click="handleClear"
-                            class="px-4 py-1.5 rounded-xl text-slate-400 hover:text-slate-600 font-bold text-xs uppercase tracking-widest transition-colors flex items-center gap-2">
+                            class="w-full sm:w-auto justify-center px-4 py-2 rounded-xl border border-slate-200 bg-white text-slate-600 hover:text-slate-800 hover:border-slate-300 font-bold text-[11px] uppercase tracking-widest transition-all flex items-center gap-2">
                             <i class="fa fa-refresh"></i> Clear
                         </button>
                         <button @click="$emit('search')"
-                            class="px-5 py-1.5 rounded-xl bg-blue-600 text-white font-bold text-xs uppercase tracking-widest shadow-lg shadow-blue-600/20 hover:bg-blue-700 transition-all flex items-center gap-2">
+                            class="w-full sm:w-auto justify-center px-5 py-2 rounded-xl bg-blue-600 text-white font-bold text-[11px] uppercase tracking-widest shadow-md shadow-blue-600/20 hover:bg-blue-700 transition-all flex items-center gap-2">
                             <i class="fa fa-search"></i> Search Order
                         </button>
                     </div>
@@ -51,42 +54,42 @@
 
         <!-- Recent Orders -->
         <div class="lg:col-span-8">
-            <div v-if="customerOrders.length > 0" class="bg-white rounded-2xl shadow-sm border border-slate-200 h-full overflow-hidden">
-                <div class="p-6">
+            <div v-if="customerOrders.length > 0" class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+                <div class="p-5 sm:p-6">
                     <div class="flex items-center gap-3 mb-4">
-                        <div class="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center text-blue-600">
+                        <div class="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center text-blue-600 ring-1 ring-blue-100">
                             <i class="fa fa-list text-sm"></i>
                         </div>
-                        <h6 class="text-sm font-black text-slate-800 uppercase tracking-widest leading-none">
+                        <h6 class="text-sm font-extrabold text-slate-800 uppercase tracking-widest leading-none">
                             Recent Orders for <span class="text-blue-600">{{ customer }}</span>
                         </h6>
                     </div>
 
-                    <div class="overflow-x-auto">
+                    <div class="hidden md:block overflow-x-auto rounded-xl border border-slate-200">
                         <table class="w-full text-left border-collapse whitespace-nowrap">
                             <thead>
-                                <tr class="bg-slate-50 border-b border-slate-100">
-                                    <th class="px-4 py-3 text-[0.6rem] font-bold text-slate-400 uppercase tracking-widest">Order No</th>
-                                    <th class="px-4 py-3 text-[0.6rem] font-bold text-slate-400 uppercase tracking-widest">Order Date</th>
-                                    <th class="px-4 py-3 text-[0.6rem] font-bold text-slate-400 uppercase tracking-widest">Delivery</th>
-                                    <th class="px-4 py-3 text-[0.6rem] font-bold text-slate-400 uppercase tracking-widest">Status</th>
-                                    <th class="px-4 py-3 text-[0.6rem] font-bold text-slate-400 uppercase tracking-widest text-right">Action</th>
+                                <tr class="bg-slate-50/90 border-b border-slate-200">
+                                    <th class="px-4 py-3 text-[0.6rem] font-bold text-slate-500 uppercase tracking-widest">Order No</th>
+                                    <th class="px-4 py-3 text-[0.6rem] font-bold text-slate-500 uppercase tracking-widest">Order Date</th>
+                                    <th class="px-4 py-3 text-[0.6rem] font-bold text-slate-500 uppercase tracking-widest">Delivery</th>
+                                    <th class="px-4 py-3 text-[0.6rem] font-bold text-slate-500 uppercase tracking-widest">Status</th>
+                                    <th class="px-4 py-3 text-[0.6rem] font-bold text-slate-500 uppercase tracking-widest text-right">Action</th>
                                 </tr>
                             </thead>
-                            <tbody class="divide-y divide-slate-50">
-                                <tr v-for="order in customerOrders" :key="order.id" class="hover:bg-slate-50/50 transition-colors group">
-                                    <td class="px-4 py-3 text-xs font-black text-blue-600">{{ order.order_no }}</td>
-                                    <td class="px-4 py-3 text-[0.65rem] font-bold text-slate-500">{{ formatDate(order.order_date) }}</td>
-                                    <td class="px-4 py-3 text-[0.65rem] font-bold text-slate-500">{{ formatDate(order.delivery_date) }}</td>
+                            <tbody class="divide-y divide-slate-100 bg-white">
+                                <tr v-for="order in customerOrders" :key="order.id" class="hover:bg-blue-50/40 transition-colors group">
+                                    <td class="px-4 py-3.5 text-xs font-extrabold text-blue-600">{{ order.order_no }}</td>
+                                    <td class="px-4 py-3.5 text-[0.68rem] font-semibold text-slate-600">{{ formatDate(order.order_date) }}</td>
+                                    <td class="px-4 py-3.5 text-[0.68rem] font-semibold text-slate-600">{{ formatDate(order.delivery_date) }}</td>
                                     <td class="px-4 py-3">
                                         <span :class="getStatusBadgeClass(order.status)"
                                             class="inline-flex items-center px-2 py-0.5 rounded-full text-[0.55rem] font-black uppercase tracking-tighter border">
                                             {{ order.status || 'Pending' }}
                                         </span>
                                     </td>
-                                    <td class="px-4 py-3 text-right">
+                                    <td class="px-4 py-3.5 text-right">
                                         <button @click="selectOrder(order.order_no)"
-                                            class="text-blue-600 hover:text-blue-700 font-black text-[0.65rem] uppercase flex items-center gap-1 ml-auto transition-colors">
+                                            class="text-blue-600 hover:text-blue-700 font-extrabold text-[0.65rem] uppercase flex items-center gap-1 ml-auto transition-colors">
                                             Select <i class="fa fa-chevron-right text-[8px]"></i>
                                         </button>
                                     </td>
@@ -94,11 +97,49 @@
                             </tbody>
                         </table>
                     </div>
+
+                    <div class="md:hidden space-y-3">
+                        <div
+                            v-for="order in customerOrders"
+                            :key="`mobile-${order.id}`"
+                            class="rounded-xl border border-slate-200 p-3 bg-white"
+                        >
+                            <div class="flex items-start justify-between gap-3">
+                                <div>
+                                    <p class="text-[10px] uppercase tracking-widest font-bold text-slate-400">Order No</p>
+                                    <p class="text-sm font-extrabold text-blue-600">{{ order.order_no }}</p>
+                                </div>
+                                <span :class="getStatusBadgeClass(order.status)"
+                                    class="inline-flex items-center px-2 py-0.5 rounded-full text-[0.55rem] font-black uppercase tracking-tighter border">
+                                    {{ order.status || 'Pending' }}
+                                </span>
+                            </div>
+                            <div class="grid grid-cols-2 gap-2 mt-3">
+                                <div>
+                                    <p class="text-[10px] uppercase tracking-widest font-bold text-slate-400">Order Date</p>
+                                    <p class="text-[11px] font-semibold text-slate-600">{{ formatDate(order.order_date) }}</p>
+                                </div>
+                                <div>
+                                    <p class="text-[10px] uppercase tracking-widest font-bold text-slate-400">Delivery</p>
+                                    <p class="text-[11px] font-semibold text-slate-600">{{ formatDate(order.delivery_date) }}</p>
+                                </div>
+                            </div>
+                            <button
+                                @click="selectOrder(order.order_no)"
+                                class="mt-3 w-full rounded-lg border border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100 font-extrabold text-[11px] uppercase tracking-widest py-2 transition-colors"
+                            >
+                                Select Order
+                            </button>
+                        </div>
+                    </div>
                 </div>
             </div>
-            <div v-else class="bg-white rounded-2xl shadow-sm border-2 border-dashed border-slate-200 h-full flex flex-col items-center justify-center p-8 text-center text-slate-400">
-                <i class="fa fa-info-circle text-3xl mb-3 opacity-20 text-blue-500"></i>
-                <p class="text-[0.65rem] font-bold uppercase tracking-widest">Select a customer to view recent orders</p>
+            <div v-else class="bg-white rounded-2xl shadow-sm border border-slate-200 min-h-[280px] flex flex-col items-center justify-center p-8 sm:p-10 text-center">
+                <div class="w-12 h-12 rounded-2xl bg-blue-50 text-blue-600 ring-1 ring-blue-100 flex items-center justify-center mb-3">
+                    <i class="fa fa-info-circle text-xl"></i>
+                </div>
+                <p class="text-[0.7rem] font-extrabold uppercase tracking-widest text-slate-500">Select a customer to view recent orders</p>
+                <p class="text-xs text-slate-400 mt-2 max-w-xs">Use customer search on the left to load and pick a previous order.</p>
             </div>
         </div>
     </div>
@@ -270,29 +311,32 @@ onBeforeUnmount(() => {
 })
 </script>
 
-<style>
-/* Custom styling for TomSelect to match our theme */
-.ts-control {
-    border-radius: 0.5rem !important;
-    padding: 0.625rem 0.75rem 0.625rem 2.5rem !important;
-    border-color: #d1d5db !important;
-    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05) !important;
-    font-size: 0.875rem !important;
+<style scoped>
+.search-card {
+    background: linear-gradient(180deg, #ffffff 0%, #fbfdff 100%);
 }
 
-.ts-control:focus {
-    box-shadow: 0 0 0 4px #eff6ff !important;
-    border-color: #3b82f6 !important;
+/* Keep dropdown styling consistent with the refreshed panel */
+:deep(.ts-control) {
+    border-radius: 0.75rem !important;
+    border-color: #dbe2ea !important;
+    box-shadow: 0 1px 2px 0 rgba(15, 23, 42, 0.05) !important;
+    font-size: 0.75rem !important;
 }
 
-.ts-wrapper.single .ts-control {
+:deep(.ts-control:focus) {
+    box-shadow: 0 0 0 3px #e0ecff !important;
+    border-color: #4f8ff8 !important;
+}
+
+:deep(.ts-wrapper.single .ts-control) {
     background-image: none !important;
 }
 
-.ts-dropdown {
-    border-radius: 0.5rem !important;
-    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1) !important;
-    border: 1px solid #f3f4f6 !important;
-    margin-top: 5px !important;
+:deep(.ts-dropdown) {
+    border-radius: 0.75rem !important;
+    box-shadow: 0 14px 24px -10px rgba(15, 23, 42, 0.22) !important;
+    border: 1px solid #e2e8f0 !important;
+    margin-top: 6px !important;
 }
 </style>
