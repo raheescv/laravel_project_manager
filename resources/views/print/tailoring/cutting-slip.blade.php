@@ -549,7 +549,7 @@
             <tr>
                 <td>
                     <div class="line-field"><span class="bold">Cutting Master:</span><span class="line-value">{{ $order->cutter->name ?? '' }}</span></div>
-                    <div class="line-field"><span class="bold">Tailor Name:</span><span class="line-value">{{ $firstItem?->tailor?->name ?? '' }}</span></div>
+                    <div class="line-field"><span class="bold">Tailor Name:</span><span class="line-value">{{ $firstItem?->latestTailorAssignment?->tailor?->name ?? '' }}</span></div>
                     <div class="checklist">
                         <label class="check-item">
                             <input type="checkbox" class="check-input" {{ $bookingChecked ? 'checked' : '' }}>

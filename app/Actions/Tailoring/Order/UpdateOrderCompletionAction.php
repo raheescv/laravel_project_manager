@@ -37,11 +37,11 @@ class UpdateOrderCompletionAction
                         'category' => fn ($q) => $q->with('activeMeasurements'),
                         'categoryModel',
                         'categoryModelType',
-                        'product' => fn ($q) => $q->select('id', 'name')->withSum([
-                            'inventories as stock_quantity' => fn ($q2) => $q2->where('branch_id', session('branch_id')),
-                        ], 'quantity'),
+                        'inventory:id,product_id,branch_id,quantity,barcode,batch',
+                        'product:id,name',
                         'unit',
-                        'tailor',
+                        'tailorAssignments.tailor:id,name',
+                        'latestTailorAssignment.tailor:id,name',
                     ])->orderBy('item_no');
                 },
                 'measurements',

@@ -23,8 +23,10 @@ class GetTailoringOrderAction
                         'categoryModel:id,name',
                         'categoryModelType:id,name',
                         'product:id,name,barcode',
+                        'inventory:id,product_id,branch_id,quantity,barcode,batch',
                         'unit:id,name',
-                        'tailor:id,name',
+                        'tailorAssignments.tailor:id,name',
+                        'latestTailorAssignment.tailor:id,name',
                         'order',
                         'audits.user',
                     ])->orderBy('item_no');

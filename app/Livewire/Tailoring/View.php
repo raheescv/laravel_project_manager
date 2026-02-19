@@ -171,7 +171,11 @@ class View extends Component
         // (runtime attributes from appendMeasurementsToItems are not preserved when Livewire rehydrates)
         if ($this->order) {
             $this->order->loadMissing([
-                'items' => fn ($q) => $q->with(['category' => fn ($q) => $q->with('activeMeasurements')]),
+                'items' => fn ($q) => $q->with([
+                    'category' => fn ($q) => $q->with('activeMeasurements'),
+                    'tailorAssignments.tailor:id,name',
+                    'latestTailorAssignment.tailor:id,name',
+                ]),
                 'measurements.category.activeMeasurements',
             ]);
             $this->order->appendMeasurementsToItems();

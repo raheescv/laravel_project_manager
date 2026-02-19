@@ -28,10 +28,25 @@ class SubmitOrderCompletionAction
                         if (isset($itemData['id']) && in_array($itemData['id'], $data['selected_item_ids'])) {
                             $item = $order->items()->find($itemData['id']);
                             if ($item) {
-                                if (empty($itemData['item_completion_date']) && empty($item->item_completion_date)) {
-                                    $itemData['item_completion_date'] = $order->completion_date;
+                                if (! isset($itemData['tailor_assignments']) || ! is_array($itemData['tailor_assignments']) || empty($itemData['tailor_assignments'])) {
+                                    $itemData['tailor_assignments'] = [];
+                                    if (isset($itemData['tailor_assignment']) && is_array($itemData['tailor_assignment'])) {
+                                        $itemData['tailor_assignments'][] = $itemData['tailor_assignment'];
+                                    }
                                 }
-                                $itemData['completed_quantity'] = $item->quantity;
+
+                                $units = max(1, (int) round((float) $item->quantity));
+                                if (empty($itemData['tailor_assignments'])) {
+                                    $itemData['tailor_assignments'][] = [];
+                                }
+                                if (count($itemData['tailor_assignments']) < $units) {
+                                    $itemData['tailor_assignments'] = array_merge(
+                                        $itemData['tailor_assignments'],
+                                        array_fill(0, $units - count($itemData['tailor_assignments']), [])
+                                    );
+                                }
+                                $itemData['tailor_assignments'] = array_slice($itemData['tailor_assignments'], 0, $units);
+                                $itemData['tailor_assignment'] = $itemData['tailor_assignments'][0];
                             }
                         }
                     }
@@ -56,11 +71,11 @@ class SubmitOrderCompletionAction
                         'category' => fn ($q) => $q->with('activeMeasurements'),
                         'categoryModel',
                         'categoryModelType',
-                        'product' => fn ($q) => $q->select('id', 'name')->withSum([
-                            'inventories as stock_quantity' => fn ($q2) => $q2->where('branch_id', session('branch_id')),
-                        ], 'quantity'),
+                        'inventory:id,product_id,branch_id,quantity,barcode,batch',
+                        'product:id,name',
                         'unit',
-                        'tailor',
+                        'tailorAssignments.tailor:id,name',
+                        'latestTailorAssignment.tailor:id,name',
                     ])->orderBy('item_no');
                 },
                 'measurements',

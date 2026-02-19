@@ -136,6 +136,19 @@
             font-weight: 700;
         }
 
+        /* Allow suppressing the separation line for item name rows and reduce vertical padding for combo rows */
+        .items-table tr.no-sep td {
+            border-bottom: none;
+            padding-top: 0.1mm;
+            padding-bottom: 0mm;
+        }
+
+        /* Reduce top padding for the detail row that follows the name row */
+        .items-table tr.no-sep + tr td {
+            padding-top: 0mm;
+            padding-bottom: 1mm;
+        }
+
         .items-table tr:last-child td {
             border-bottom: none;
         }
@@ -310,15 +323,19 @@
                         <td class="col-amt right">{{ currency($catAmount) }}</td>
                     </tr>
                     @foreach ($items as $item)
-                        <tr>
-                            <td class="col-item left item-name">
+                        <tr class="no-sep">
+                            <td colspan="3" class="col-item left item-name">
                                 {{ $item->product_name }}
                                 <span class="item-sub">
                                     @if ($item->product_color)
                                         {{ $item->product_color }} |
                                     @endif
-                                    {{ number_format((float) $item->quantity, 2) }} x {{ currency($item->stitch_rate) }}
                                 </span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                {{ number_format((float) $item->quantity, 2) }} x {{ currency($item->stitch_rate) }}
                             </td>
                             <td class="col-qty right">{{ number_format((float) $item->quantity, 2) }}</td>
                             <td class="col-amt right">{{ currency($item->total) }}</td>

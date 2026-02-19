@@ -23,13 +23,11 @@ class GetOrderByOrderNumberAction
                         },
                         'categoryModel:id,name',
                         'categoryModelType:id,name',
-                        'product' => function ($q) {
-                            $q->select('id', 'name')->withSum([
-                                'inventories as stock_quantity' => fn ($q2) => $q2->where('branch_id', session('branch_id')),
-                            ], 'quantity');
-                        },
+                        'inventory:id,product_id,branch_id,quantity,barcode,batch',
+                        'product:id,name',
                         'unit:id,name',
-                        'tailor:id,name',
+                        'tailorAssignments.tailor:id,name',
+                        'latestTailorAssignment.tailor:id,name',
                         'order',
                     ])->orderBy('item_no');
                 },

@@ -140,6 +140,7 @@ let tomSelectInstance = null
 const barcodeInput = ref('')
 
 const item = ref(props.modelValue || {
+    inventory_id: null,
     product_id: null,
     product_name: '',
     product_color: '',
@@ -170,22 +171,26 @@ const lookupProductByBarcode = async (barcode) => {
 
 const selectProduct = (product) => {
     if (!product) return
-    item.value.product_id = product.id
+    const selectedInventoryId = product.inventory_id || product.id || null
+    item.value.inventory_id = selectedInventoryId
+    item.value.product_id = product.product_id || product.id || null
     item.value.product_name = product.name
     item.value.unit_price = parseFloat(product.mrp || 0)
     item.value.quantity = 1
     item.value.quantity_per_item = item.value.quantity_per_item ?? 1
     if (tomSelectInstance) {
-        if (!tomSelectInstance.options[product.id]) {
+        if (!tomSelectInstance.options[selectedInventoryId]) {
             tomSelectInstance.addOption({
-                id: product.id,
+                id: selectedInventoryId,
+                inventory_id: selectedInventoryId,
+                product_id: product.product_id || product.id || null,
                 name: product.name,
                 mrp: product.mrp,
                 code: product.code,
                 barcode: product.barcode
             })
         }
-        tomSelectInstance.setValue(product.id, true)
+        tomSelectInstance.setValue(selectedInventoryId, true)
     }
     calculateAmount()
 }
@@ -274,7 +279,8 @@ const initializeProductSelect = () => {
             if (value) {
                 const selectedOption = tomSelectInstance.options[value]
                 if (selectedOption) {
-                    item.value.product_id = selectedOption.id
+                    item.value.inventory_id = selectedOption.inventory_id || selectedOption.id || null
+                    item.value.product_id = selectedOption.product_id || null
                     item.value.product_name = selectedOption.name
                     item.value.unit_price = parseFloat(selectedOption.mrp || 0)
                     item.value.quantity = 1
@@ -283,6 +289,7 @@ const initializeProductSelect = () => {
                 }
             } else {
                 if (item.value.product_id) {
+                    item.value.inventory_id = null
                     item.value.product_id = null
                     item.value.product_name = ''
                     item.value.unit_price = 0
@@ -293,15 +300,17 @@ const initializeProductSelect = () => {
         }
     })
 
-    if (item.value.product_id) {
-        if (!tomSelectInstance.options[item.value.product_id]) {
+    if (item.value.inventory_id) {
+        if (!tomSelectInstance.options[item.value.inventory_id]) {
             tomSelectInstance.addOption({
-                id: item.value.product_id,
+                id: item.value.inventory_id,
+                inventory_id: item.value.inventory_id || null,
+                product_id: item.value.product_id || null,
                 name: item.value.product_name || 'Selected Product',
                 mrp: item.value.unit_price || 0
             })
         }
-        tomSelectInstance.setValue(item.value.product_id, true)
+        tomSelectInstance.setValue(item.value.inventory_id, true)
     }
 }
 
@@ -315,6 +324,7 @@ const formatTotal = (val) => {
 
 const handleClear = () => {
     item.value = {
+        inventory_id: null,
         product_id: null,
         product_name: '',
         product_color: '',
@@ -365,16 +375,18 @@ watch(() => props.modelValue, (newVal) => {
         isUpdatingFromProps = true
         item.value = { ...newVal }
 
-        if (tomSelectInstance && newVal.product_id && tomSelectInstance.getValue() != newVal.product_id) {
-            if (!tomSelectInstance.options[newVal.product_id]) {
+        if (tomSelectInstance && newVal.inventory_id && tomSelectInstance.getValue() != newVal.inventory_id) {
+            if (!tomSelectInstance.options[newVal.inventory_id]) {
                 tomSelectInstance.addOption({
-                    id: newVal.product_id,
+                    id: newVal.inventory_id,
+                    inventory_id: newVal.inventory_id || null,
+                    product_id: newVal.product_id || null,
                     name: newVal.product_name || 'Selected Product',
                     mrp: newVal.unit_price || 0
                 })
             }
-            tomSelectInstance.setValue(newVal.product_id, true)
-        } else if (tomSelectInstance && !newVal.product_id && tomSelectInstance.getValue()) {
+            tomSelectInstance.setValue(newVal.inventory_id, true)
+        } else if (tomSelectInstance && !newVal.inventory_id && tomSelectInstance.getValue()) {
             tomSelectInstance.clear(true)
         }
 

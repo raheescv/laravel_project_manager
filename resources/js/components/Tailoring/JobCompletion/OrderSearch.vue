@@ -1,9 +1,9 @@
 <template>
-    <div class="grid grid-cols-1 lg:grid-cols-12 gap-3 sm:gap-4 items-start">
+    <div class="grid grid-cols-1 md:grid-cols-12 gap-2.5 sm:gap-3 items-start">
         <!-- Search Order Form -->
-        <div class="lg:col-span-4">
-            <div class="search-card bg-white rounded-xl shadow-sm border border-slate-200">
-                <div class="p-3 sm:p-4">
+        <div class="md:col-span-5 lg:col-span-4">
+            <div class="search-card bg-white rounded-xl shadow-sm border border-slate-200/90">
+                <div class="p-2.5 sm:p-3">
                     <div class="flex items-center gap-2 mb-3 sm:mb-4">
                         <div class="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center text-blue-600 ring-1 ring-blue-100 shrink-0">
                             <i class="fa fa-search text-sm"></i>
@@ -17,8 +17,9 @@
                     <div class="flex flex-col gap-3">
                         <!-- Order Number -->
                         <div class="space-y-1">
-                            <label class="block text-[0.65rem] font-bold text-slate-500 uppercase tracking-widest px-0.5">
-                                Order Number
+                            <label class="flex items-center gap-1.5 text-[0.65rem] font-bold text-slate-500 uppercase tracking-widest px-0.5">
+                                <i class="fa fa-sort-numeric-asc text-slate-400"></i>
+                                <span>Order Number</span>
                             </label>
                             <SearchableSelect class="w-full min-w-0" :modelValue="orderNo" :options="formattedOrderNumbers"
                                 placeholder="Select Order No" filter-placeholder="Search order number..."
@@ -28,7 +29,10 @@
 
                         <!-- Customer Selection -->
                         <div class="space-y-1">
-                            <label class="block text-[0.65rem] font-bold text-slate-500 uppercase tracking-widest px-0.5">Customer Selection</label>
+                            <label class="flex items-center gap-1.5 text-[0.65rem] font-bold text-slate-500 uppercase tracking-widest px-0.5">
+                                <i class="fa fa-user text-slate-400"></i>
+                                <span>Customer Selection</span>
+                            </label>
                             <SearchableSelect class="w-full min-w-0" :modelValue="customerId" :options="formattedCustomers"
                                 :loading="customerLoading" placeholder="Select Customer"
                                 filter-placeholder="Search by name or mobile..." :visibleItems="8"
@@ -38,7 +42,7 @@
                         </div>
                     </div>
 
-                    <div class="flex flex-col sm:flex-row sm:flex-wrap sm:justify-end gap-1.5 mt-4 pt-3 border-t border-slate-100">
+                    <div class="flex flex-col sm:flex-row sm:flex-wrap sm:justify-end gap-1.5 mt-3 pt-2.5 border-t border-slate-100">
                         <button @click="handleClear"
                             class="w-full sm:w-auto justify-center px-3 py-1.5 rounded-lg border border-slate-200 bg-white text-slate-600 hover:text-slate-800 hover:border-slate-300 font-bold text-[10px] uppercase tracking-widest transition-all flex items-center gap-1.5">
                             <i class="fa fa-refresh"></i> Clear
@@ -53,9 +57,9 @@
         </div>
 
         <!-- Recent Orders -->
-        <div class="lg:col-span-8 min-w-0">
-            <div v-if="customerOrders.length > 0" class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-                <div class="p-3 sm:p-4">
+        <div class="md:col-span-7 lg:col-span-8 min-w-0">
+            <div v-if="customerOrders.length > 0" class="bg-white rounded-xl shadow-sm border border-slate-200/90 overflow-hidden">
+                <div class="p-2.5 sm:p-3">
                     <div class="flex items-center gap-2 mb-3">
                         <div class="w-7 h-7 rounded-lg bg-blue-50 flex items-center justify-center text-blue-600 ring-1 ring-blue-100 shrink-0">
                             <i class="fa fa-list text-xs"></i>
@@ -98,11 +102,11 @@
                         </table>
                     </div>
 
-                    <div class="md:hidden space-y-2">
+                    <div class="md:hidden space-y-1.5">
                         <div
                             v-for="order in customerOrders"
                             :key="`mobile-${order.id}`"
-                            class="rounded-lg border border-slate-200 p-2.5 bg-white"
+                            class="rounded-lg border border-slate-200 p-2 bg-white"
                         >
                             <div class="flex items-start justify-between gap-2">
                                 <div class="min-w-0">
@@ -134,7 +138,7 @@
                     </div>
                 </div>
             </div>
-            <div v-else class="bg-white rounded-xl shadow-sm border border-slate-200 min-h-[200px] flex flex-col items-center justify-center p-4 sm:p-6 text-center">
+            <div v-else class="bg-white rounded-xl shadow-sm border border-slate-200/90 min-h-[180px] flex flex-col items-center justify-center p-3 sm:p-5 text-center">
                 <div class="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 ring-1 ring-blue-100 flex items-center justify-center mb-2 shrink-0">
                     <i class="fa fa-info-circle text-lg"></i>
                 </div>

@@ -77,7 +77,7 @@ class StockUpdateAction
 
     private function updateItemStock(TailoringOrderItem $item, float $oldQty, float $newQty, TailoringOrder $order, int $branchId, int $userId, string $remarksPrefix): void
     {
-        if (! $item->product_id) {
+        if (! $item->product_id && ! $item->inventory_id) {
             return;
         }
 
@@ -86,13 +86,21 @@ class StockUpdateAction
             return;
         }
 
-        $inventory = Inventory::withoutGlobalScopes()
-            ->where('product_id', $item->product_id)
-            ->where('branch_id', $branchId)
-            ->first();
+        $inventory = null;
+        if (! empty($item->inventory_id)) {
+            $inventory = Inventory::withoutGlobalScopes()
+                ->where('id', $item->inventory_id)
+                ->where('branch_id', $branchId)
+                ->first();
+        }
 
         if (! $inventory) {
-            throw new Exception('Inventory not found for product ID: '.$item->product_id, 1);
+            throw new Exception(
+                'Inventory not found for item #'.$item->item_no.
+                ' (inventory_id: '.($item->inventory_id ?: 'null').
+                ', product_id: '.($item->product_id ?: 'null').')',
+                1
+            );
         }
 
         $payload = array_merge($inventory->toArray(), [

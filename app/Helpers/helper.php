@@ -635,6 +635,29 @@ if (! function_exists('tailoringOrderItemStatuses')) {
             'pending' => 'Pending',
             'partially completed' => 'Partially Completed',
             'completed' => 'Completed',
+            'delivered' => 'Delivered',
+        ];
+    }
+}
+
+if (! function_exists('tailoringOrderItemCompletionStatuses')) {
+    function tailoringOrderItemCompletionStatuses()
+    {
+        return [
+            'not completed' => 'Not Completed',
+            'partially completed' => 'Partially Completed',
+            'completed' => 'Completed',
+        ];
+    }
+}
+
+if (! function_exists('tailoringOrderItemDeliveryStatuses')) {
+    function tailoringOrderItemDeliveryStatuses()
+    {
+        return [
+            'not delivered' => 'Not Delivered',
+            'partially delivered' => 'Partially Delivered',
+            'delivered' => 'Delivered',
         ];
     }
 }

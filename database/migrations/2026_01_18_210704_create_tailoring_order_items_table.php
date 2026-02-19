@@ -22,9 +22,12 @@ return new class() extends Migration
             $table->foreign('tailoring_category_id')->references('id')->on('tailoring_categories')->onDelete('set null');
             $table->unsignedBigInteger('tailoring_category_model_id')->nullable();
             $table->foreign('tailoring_category_model_id')->references('id')->on('tailoring_category_models')->onDelete('set null');
-            $table->unsignedBigInteger('tailoring_category_model_type_id')->nullable()->after('tailoring_category_model_id');
+            $table->unsignedBigInteger('tailoring_category_model_type_id')->nullable();
             $table->foreign('tailoring_category_model_type_id')->references('id')->on('tailoring_category_model_types')->onDelete('set null');
             // Product Information
+            $table->unsignedBigInteger('inventory_id')->nullable();
+            $table->foreign('inventory_id')->references('id')->on('inventories')->nullOnDelete();
+            $table->index('inventory_id');
             $table->unsignedBigInteger('product_id')->nullable()->references('id')->on('products');
             $table->string('product_name');
             $table->string('product_color')->nullable();
@@ -41,20 +44,36 @@ return new class() extends Migration
             $table->decimal('total', 16, 2)->storedAs('net_amount + tax_amount + (stitch_rate * quantity)');
 
             // Job Completion Fields
-            $table->unsignedBigInteger('tailor_id')->nullable()->references('id')->on('users');
-            $table->decimal('tailor_commission', 10, 2)->default(0);
-            $table->decimal('tailor_total_commission', 16, 2)->storedAs('tailor_commission * quantity');
+            $table->decimal('tailor_total_commission', 16, 2)->default(0);
+
             $table->decimal('used_quantity', 8, 3)->default(0);
             $table->decimal('wastage', 8, 3)->default(0);
             $table->decimal('total_quantity_used', 16, 2)->storedAs('used_quantity + wastage');
+
             $table->date('item_completion_date')->nullable();
-            $table->decimal('completed_quantity', 8, 3)->nullable()->default(0);
+
+            $table->decimal('completed_quantity', 8, 3)->default(0);
+            $table->decimal('pending_quantity', 8, 3)->storedAs('GREATEST(quantity - completed_quantity, 0)');
+            $table->decimal('delivered_quantity', 8, 3)->default(0);
+
+            $table->enum('completion_status', array_keys(tailoringOrderItemCompletionStatuses()))->storedAs("IF(completed_quantity >= quantity, 'completed', IF(completed_quantity > 0, 'partially completed', 'not completed'))");
+            $table->enum('delivery_status', array_keys(tailoringOrderItemDeliveryStatuses()))->storedAs("IF(delivered_quantity >= quantity, 'delivered', IF(delivered_quantity > 0, 'partially delivered', 'not delivered'))");
+
             $table->boolean('is_selected_for_completion')->default(false);
-            $table->enum('status', array_keys(tailoringOrderItemStatuses()))->storedAs("IF(completed_quantity >= quantity, 'completed', IF(completed_quantity > 0, 'partially completed', 'pending'))");
+
+            // Derived status: prefer explicit CASE expression for readability
+            $statusOptions = array_keys(tailoringOrderItemStatuses());
+            $statusExpression = "CASE
+                WHEN delivery_status = 'delivered' THEN 'delivered'
+                WHEN completion_status = 'completed' THEN 'completed'
+                WHEN completion_status = 'partially completed' OR delivery_status = 'partially delivered' THEN 'partially completed'
+                ELSE 'pending'
+            END";
+
+            $table->enum('status', $statusOptions)->storedAs($statusExpression);
 
             // Additional
             $table->text('tailoring_notes')->nullable();
-            $table->unsignedTinyInteger('rating')->nullable();
 
             $table->unsignedBigInteger('created_by')->references('id')->on('users');
             $table->unsignedBigInteger('updated_by')->nullable()->references('id')->on('users');

@@ -1,105 +1,108 @@
 <template>
-    <div class="bg-white rounded-3xl shadow-lg shadow-slate-200/50 border border-slate-200 overflow-hidden relative">
-        <!-- Background Tint -->
-        <div class="absolute inset-0 bg-gradient-to-tr from-slate-50/50 to-transparent pointer-events-none"></div>
+    <div class="work-preview-wrap rounded-3xl overflow-hidden relative">
+        <div class="absolute inset-0 bg-gradient-to-tr from-slate-50/70 via-white to-blue-50/60 pointer-events-none"></div>
 
-        <div class="px-4 py-3 border-b border-slate-100 flex items-center justify-between bg-slate-50/30 relative z-10">
-            <div class="flex items-center gap-2">
-                <i class="fa fa-list-alt text-indigo-500 text-xs text-indigo-500/80"></i>
-                <h3 class="text-xs font-black text-slate-700 uppercase">Work Orders Preview</h3>
+        <div class="px-4 py-3 border-b border-slate-200/80 flex items-center justify-between bg-gradient-to-r from-indigo-50 via-blue-50 to-white relative z-10">
+            <div class="flex items-center gap-2.5 min-w-0">
+                <span class="w-9 h-9 rounded-xl bg-indigo-100 text-indigo-700 flex items-center justify-center border border-indigo-200 shadow-sm shrink-0">
+                    <i class="fa fa-list-alt text-sm"></i>
+                </span>
+                <div class="min-w-0">
+                    <h3 class="text-sm font-black text-slate-800 uppercase tracking-wide mb-0 truncate">Work Orders Preview</h3>
+                    <p class="text-[11px] text-slate-500 font-semibold mb-0 truncate">Structured summary of item details, quantity and pricing</p>
+                </div>
             </div>
-            <div class="bg-indigo-100/50 text-indigo-600 text-[0.6rem] font-black px-2.5 py-1 rounded-lg uppercase tracking-wider border border-indigo-200/50">
+            <div class="bg-gradient-to-r from-indigo-100 to-blue-100 text-indigo-700 text-[0.72rem] font-black px-3 py-1.5 rounded-xl uppercase tracking-wider border border-indigo-200 shadow-sm shrink-0">
                 {{ items.length }} {{ items.length === 1 ? 'Job' : 'Jobs' }}
             </div>
         </div>
 
         <div class="overflow-x-auto relative z-10">
-            <table class="work-orders-table w-full text-left border-collapse whitespace-nowrap">
+            <table class="work-orders-table w-full text-left border-collapse min-w-[760px] lg:min-w-[980px]">
+                <colgroup>
+                    <col class="col-no">
+                    <col class="col-item">
+                    <col class="col-qty">
+                    <col class="col-meter">
+                    <col class="col-color">
+                    <col class="col-pricing">
+                    <col class="col-actions">
+                </colgroup>
                 <thead>
-                    <tr class="bg-slate-50/50 border-b border-slate-100">
-                        <th class="px-4 py-3 text-[0.6rem] font-black text-slate-400 uppercase tracking-[0.1em]">No</th>
-                        <th class="px-4 py-3 text-[0.6rem] font-black text-slate-400 uppercase tracking-[0.1em]">Item Details</th>
-                        <th class="px-4 py-3 text-[0.6rem] font-black text-slate-400 uppercase tracking-[0.1em]">Model</th>
-                        <th class="px-4 py-3 text-[0.6rem] font-black text-slate-400 uppercase tracking-[0.1em]">Type</th>
-                        <th class="px-4 py-3 text-[0.6rem] font-black text-slate-400 uppercase tracking-[0.1em] text-center">No Of Qty</th>
-                        <th class="px-4 py-3 text-[0.6rem] font-black text-slate-400 uppercase tracking-[0.1em] text-center">Meter Per Item</th>
-                        <th class="px-4 py-3 text-[0.6rem] font-black text-slate-400 uppercase tracking-[0.1em]">Color</th>
-                        <th class="px-4 py-3 text-[0.6rem] font-black text-slate-400 uppercase tracking-[0.1em] text-right">Pricing</th>
-                        <th class="px-4 py-3 text-[0.6rem] font-black text-slate-400 uppercase tracking-[0.1em] text-center">Actions</th>
+                    <tr class="bg-slate-100/90 border-b border-slate-200">
+                        <th class="px-4 py-3 text-[0.65rem] font-black text-slate-500 uppercase tracking-[0.1em]">No</th>
+                        <th class="px-4 py-3 text-[0.65rem] font-black text-slate-500 uppercase tracking-[0.1em]">Item Details</th>
+                        <th class="px-4 py-3 text-[0.65rem] font-black text-slate-500 uppercase tracking-[0.1em] text-center">No Of Qty</th>
+                        <th class="px-4 py-3 text-[0.65rem] font-black text-slate-500 uppercase tracking-[0.1em] text-center">Meter Per Item</th>
+                        <th class="px-4 py-3 text-[0.65rem] font-black text-slate-500 uppercase tracking-[0.1em]">Color</th>
+                        <th class="px-4 py-3 text-[0.65rem] font-black text-slate-500 uppercase tracking-[0.1em] text-right">Pricing</th>
+                        <th class="px-4 py-3 text-[0.65rem] font-black text-slate-500 uppercase tracking-[0.1em] text-center">Actions</th>
                     </tr>
                 </thead>
-                <tbody class="divide-y divide-slate-50/50">
-                    <tr v-for="(item, index) in items" :key="item.id || item._temp_id || index">
-                        <td class="px-4 py-2">
-                            <span class="text-[0.65rem] font-bold text-slate-400 italic">#{{ item.item_no }}</span>
+                <tbody class="divide-y divide-slate-100">
+                    <tr v-for="(item, index) in items" :key="item.id || item._temp_id || index" class="row-item">
+                        <td class="px-4 py-3 align-top">
+                            <span class="inline-flex items-center justify-center min-w-[36px] h-7 px-2 text-[0.7rem] font-black text-indigo-700 bg-indigo-100 rounded-lg border border-indigo-200">#{{ item.item_no }}</span>
                         </td>
-                        <td class="px-4 py-2">
-                            <div class="flex flex-col">
-                                <span class="text-xs font-bold text-slate-800">{{ item.category?.name || 'Unknown' }}</span>
-                                <span class="text-[0.6rem] text-slate-400 font-medium truncate max-w-[120px]">{{ item.product_name }}</span>
+                        <td class="px-4 py-3 align-top">
+                            <div class="flex flex-col gap-1 text-[0.72rem] leading-tight">
+                                <div><span class="text-slate-500 font-semibold">Category:</span> <span class="text-slate-900 font-black">{{ item.category?.name || '-' }}</span></div>
+                                <div><span class="text-slate-500 font-semibold">Model:</span> <span class="text-slate-700 font-semibold">{{ item.tailoring_category_model_name || item.category_model?.name || '-' }}</span></div>
+                                <div><span class="text-slate-500 font-semibold">Type:</span> <span class="text-slate-700 font-semibold">{{ item.tailoring_category_model_type_name || item.categoryModelType?.name || item.category_model_type?.name || '-' }}</span></div>
+                                <div class="truncate max-w-[300px] text-slate-800 font-bold pt-0.5">{{ item.product_name || '-' }}</div>
                             </div>
                         </td>
-                        <td class="px-4 py-2">
-                            <span class="inline-flex items-center px-1.5 py-0.5 rounded-lg bg-slate-100 text-slate-600 text-[0.6rem] font-bold border border-slate-200">
-                                {{ item.category_model?.name || item.tailoring_category_model_name || '-' }}
-                            </span>
+                        <td class="px-4 py-3 text-center align-top">
+                            <span class="text-xl leading-none font-black text-slate-800 tabular-nums">{{ item.quantity }}</span>
                         </td>
-                        <td class="px-4 py-2">
-                            <span class="inline-flex items-center px-1.5 py-0.5 rounded-lg bg-slate-100 text-slate-600 text-[0.6rem] font-bold border border-slate-200">
-                                {{ item.categoryModelType?.name || item.category_model_type?.name || item.tailoring_category_model_type_name || '-' }}
-                            </span>
+                        <td class="px-4 py-3 text-center align-top">
+                            <span class="text-lg leading-none font-black text-slate-700 tabular-nums">{{ item.quantity_per_item ?? 1 }}</span>
                         </td>
-                        <td class="px-4 py-2 text-center">
-                            <span class="text-xs font-black text-slate-700">{{ item.quantity }}</span>
+                        <td class="px-4 py-3 align-top">
+                            <span class="inline-flex items-center px-2 py-1 rounded-lg bg-slate-100 border border-slate-200 text-[0.72rem] font-bold text-slate-700">{{ item.product_color || 'N/A' }}</span>
                         </td>
-                        <td class="px-4 py-2 text-center">
-                            <span class="text-xs font-bold text-slate-600">{{ item.quantity_per_item ?? 1 }}</span>
-                        </td>
-                        <td class="px-4 py-2">
-                            <span class="text-[0.65rem] font-bold text-slate-500 lowercase opacity-70">{{ item.product_color || '-' }}</span>
-                        </td>
-                        <td class="px-4 py-3 text-right">
+                        <td class="px-4 py-3 text-right align-top">
                             <div class="flex flex-col items-end gap-0.5">
-                                <span class="text-xs font-black text-indigo-600 tracking-tight">{{ formatCurrency(item.total) }}</span>
-                                <div class="text-[0.55rem] text-slate-400 font-bold tracking-tight leading-tight">
+                                <span class="text-2xl leading-none font-black text-indigo-700 tracking-tight tabular-nums">{{ formatCurrency(item.total) }}</span>
+                                <div class="text-[0.58rem] text-slate-500 font-bold tracking-tight leading-tight">
                                     <div class="flex justify-end gap-3"><span class="w-10 text-right text-capitalize">price</span><span class="w-12 text-right tabular-nums">{{ formatCurrency(item.unit_price) }}</span></div>
                                     <div class="flex justify-end gap-3"><span class="w-10 text-right text-capitalize">stitch</span><span class="w-12 text-right tabular-nums">{{ formatCurrency(item.stitch_rate) }}</span></div>
                                     <div class="flex justify-end gap-3"><span class="w-10 text-right text-capitalize">tax</span><span class="w-12 text-right tabular-nums">{{ formatCurrency(item.tax) }}</span></div>
                                 </div>
                             </div>
                         </td>
-                        <td class="px-4 py-2">
-                            <div class="flex items-center justify-center gap-1">
+                        <td class="px-4 py-3 align-top">
+                            <div class="flex items-center justify-center gap-2">
                                 <button type="button" @click="viewMeasurements(item)"
-                                    class="w-7 h-7 flex items-center justify-center rounded-lg bg-amber-50 text-amber-500 hover:bg-amber-500 hover:text-white transition-all"
+                                    class="w-9 h-9 flex items-center justify-center rounded-xl bg-amber-50 text-amber-600 border border-amber-100 hover:bg-amber-500 hover:text-white transition-all"
                                     title="View Measurements">
-                                    <i class="fa fa-eye text-[10px]"></i>
+                                    <i class="fa fa-eye text-xs"></i>
                                 </button>
                                 <button type="button" @click="$emit('edit', item)"
-                                    class="w-7 h-7 flex items-center justify-center rounded-lg bg-blue-50 text-blue-500 hover:bg-blue-500 hover:text-white transition-all" title="Edit">
-                                    <i class="fa fa-pencil text-[10px]"></i>
+                                    class="w-9 h-9 flex items-center justify-center rounded-xl bg-blue-50 text-blue-600 border border-blue-100 hover:bg-blue-500 hover:text-white transition-all" title="Edit">
+                                    <i class="fa fa-pencil text-xs"></i>
                                 </button>
                                 <button type="button" @click="$emit('remove', item)"
-                                    class="w-7 h-7 flex items-center justify-center rounded-lg bg-rose-50 text-rose-500 hover:bg-rose-500 hover:text-white transition-all" title="Remove">
-                                    <i class="fa fa-trash text-[10px]"></i>
+                                    class="w-9 h-9 flex items-center justify-center rounded-xl bg-rose-50 text-rose-600 border border-rose-100 hover:bg-rose-500 hover:text-white transition-all" title="Remove">
+                                    <i class="fa fa-trash text-xs"></i>
                                 </button>
                             </div>
                         </td>
                     </tr>
                     <tr v-if="items.length === 0">
-                        <td colspan="8" class="px-4 py-8 text-center">
-                            <div class="flex flex-col items-center gap-1 opacity-20">
+                        <td colspan="7" class="px-4 py-8 text-center">
+                            <div class="flex flex-col items-center gap-1 opacity-30">
                                 <i class="fa fa-clipboard-list text-2xl"></i>
-                                <p class="text-[0.6rem] font-bold uppercase tracking-[0.2em]">No jobs</p>
+                                <p class="text-[0.62rem] font-bold uppercase tracking-[0.2em]">No jobs</p>
                             </div>
                         </td>
                     </tr>
                 </tbody>
                 <tfoot v-if="items.length > 0">
-                    <tr class="bg-slate-50/50">
-                        <td colspan="6" class="px-4 py-3 text-right text-[0.6rem] font-bold text-slate-400 uppercase">Grand Total:</td>
+                    <tr class="bg-gradient-to-r from-slate-50 to-blue-50 border-t border-slate-200">
+                        <td colspan="5" class="px-4 py-3 text-right text-[0.65rem] font-black text-slate-500 uppercase tracking-[0.08em]">Grand Total:</td>
                         <td class="px-4 py-3 text-right">
-                            <span class="text-sm font-black text-slate-900 leading-none">{{ formatCurrency(grandTotal) }}</span>
+                            <span class="text-3xl font-black text-indigo-800 leading-none tabular-nums">{{ formatCurrency(grandTotal) }}</span>
                         </td>
                         <td></td>
                     </tr>
@@ -107,13 +110,10 @@
             </table>
         </div>
 
-
-        <!-- Measurement View Modal -->
         <MeasurementViewModal v-if="selectedItemForView" :show="showViewModal" :item="selectedItemForView"
             @close="closeViewModal" />
     </div>
 </template>
-
 
 <script setup>
 import { ref, computed } from 'vue'
@@ -151,9 +151,67 @@ const formatCurrency = (value) => {
 </script>
 
 <style scoped>
-/* Disable unwanted row hover effect */
-.work-orders-table tbody tr:hover {
-    background-color: transparent !important;
+.work-preview-wrap {
+    border: 1px solid #cbd5e1;
+    box-shadow: 0 14px 36px rgba(15, 23, 42, 0.09);
+    background: #fff;
+}
+
+.work-orders-table tbody tr {
+    transition: background-color 160ms ease;
+}
+
+.work-orders-table tbody tr.row-item:hover {
+    background-color: #f8fbff !important;
+}
+
+.work-orders-table .col-no {
+    width: 6%;
+}
+
+.work-orders-table .col-item {
+    width: 43%;
+}
+
+.work-orders-table .col-qty {
+    width: 10%;
+}
+
+.work-orders-table .col-meter {
+    width: 11%;
+}
+
+.work-orders-table .col-color {
+    width: 10%;
+}
+
+.work-orders-table .col-pricing {
+    width: 14%;
+}
+
+.work-orders-table .col-actions {
+    width: 10%;
+}
+
+@media (max-width: 1024px) {
+    .work-orders-table {
+        min-width: 900px;
+    }
+}
+
+@media (max-width: 768px) {
+    .work-orders-table {
+        min-width: 760px;
+    }
+
+    .work-orders-table th,
+    .work-orders-table td {
+        padding-left: 0.65rem;
+        padding-right: 0.65rem;
+    }
+
+    .work-orders-table .col-item {
+        width: 40%;
+    }
 }
 </style>
-

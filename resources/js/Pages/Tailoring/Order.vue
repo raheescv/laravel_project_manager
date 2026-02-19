@@ -337,6 +337,7 @@ const handleCategorySelection = (categoryIds) => {
         const addKey = getEditKey(id, 'new', 'new')
         if (!measurements.value[addKey]) measurements.value[addKey] = {}
         if (!currentItems.value[addKey]) currentItems.value[addKey] = {
+            inventory_id: null,
             product_id: null,
             product_name: '',
             product_color: '',
@@ -499,11 +500,13 @@ const handleAddItem = async (itemData, categoryId) => {
                     finalItem._temp_id = form.value.items[index]._temp_id
 
                     form.value.items[index] = finalItem
+                    form.value.items = [...form.value.items]
                     toast.success('Item updated successfully')
                 } else {
                     // Item might have been deleted while editing? Add as new
                     finalItem._temp_id = Date.now() + Math.random().toString(36).substr(2, 9)
                     form.value.items.push(finalItem)
+                    form.value.items = [...form.value.items]
                     toast.success('Item added (original not found)')
                 }
 
@@ -515,6 +518,7 @@ const handleAddItem = async (itemData, categoryId) => {
                 // New item
                 finalItem._temp_id = Date.now() + Math.random().toString(36).substr(2, 9)
                 form.value.items.push(finalItem)
+                form.value.items = [...form.value.items]
                 toast.success('Item added to order')
             }
 
@@ -528,11 +532,13 @@ const handleAddItem = async (itemData, categoryId) => {
                     Object.assign(it, filteredMeasurements)
                 }
             })
+            form.value.items = [...form.value.items]
 
             // Reset current item form but KEEP measurements for next item (do not reset measurement values)
             const resetKey = getEditKey(categoryId, editingModelIds.value[categoryId] ?? 'new', editingModelTypeIds.value[categoryId] ?? 'new')
             const addKey = getEditKey(categoryId, 'new', 'new')
             currentItems.value[resetKey] = {
+                inventory_id: null,
                 product_id: null,
                 product_name: '',
                 product_color: '',
@@ -544,7 +550,10 @@ const handleAddItem = async (itemData, categoryId) => {
                 total: 0,
             }
             // Preserve measurement values in the add-new slot so the form stays populated for the next item
-            measurements.value[addKey] = { ...filteredMeasurements }
+            // Exclude tailoring_notes from preserved measurements so notes are not carried over
+            const preservedMeasurements = { ...filteredMeasurements }
+            delete preservedMeasurements.tailoring_notes
+            measurements.value[addKey] = preservedMeasurements
         }
     } catch (error) {
         console.error('Failed to add item:', error)
@@ -631,6 +640,7 @@ const handleItemClear = (categoryId) => {
     // Reset add-new form slot for this category
     const addKey = getEditKey(categoryId, 'new', 'new')
     currentItems.value[addKey] = {
+        inventory_id: null,
         product_id: null,
         product_name: '',
         product_color: '',
@@ -663,6 +673,7 @@ const handleRemoveItem = (item) => {
             editingModelTypeIds.value[catId] = null
             const editKey = getEditKey(catId, modelId, modelTypeId)
             currentItems.value[editKey] = {
+                inventory_id: null,
                 product_id: null,
                 product_name: '',
                 product_color: '',
@@ -842,6 +853,7 @@ onMounted(() => {
             const addKey = getEditKey(catId, 'new', 'new')
             measurements.value[addKey] = {}
             currentItems.value[addKey] = {
+                inventory_id: null,
                 product_id: null,
                 product_name: '',
                 product_color: '',

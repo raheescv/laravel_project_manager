@@ -32,7 +32,6 @@ class TailoringOrderItemReportExport implements FromQuery, WithColumnFormatting,
             ->when($this->filters['customer_id'] ?? '', fn ($q) => $q->where('tailoring_orders.account_id', $this->filters['customer_id']))
             ->when($this->filters['product_id'] ?? '', fn ($q) => $q->where('tailoring_order_items.product_id', $this->filters['product_id']))
             ->when($this->filters['category_id'] ?? '', fn ($q) => $q->where('tailoring_order_items.tailoring_category_id', $this->filters['category_id']))
-            ->when($this->filters['tailor_id'] ?? '', fn ($q) => $q->where('tailoring_order_items.tailor_id', $this->filters['tailor_id']))
             ->when($this->filters['status'] ?? '', fn ($q) => $q->where('tailoring_orders.status', $this->filters['status']))
             ->when($this->filters['search'] ?? '', function ($q) {
                 $term = trim($this->filters['search']);
@@ -49,7 +48,6 @@ class TailoringOrderItemReportExport implements FromQuery, WithColumnFormatting,
             ->leftJoin('tailoring_category_models', 'tailoring_category_models.id', '=', 'tailoring_order_items.tailoring_category_model_id')
             ->leftJoin('tailoring_category_model_types', 'tailoring_category_model_types.id', '=', 'tailoring_order_items.tailoring_category_model_type_id')
             ->leftJoin('units', 'units.id', '=', 'tailoring_order_items.unit_id')
-            ->leftJoin('users as tailors', 'tailors.id', '=', 'tailoring_order_items.tailor_id')
             ->select(
                 'tailoring_order_items.*',
                 'tailoring_orders.order_no',
@@ -58,8 +56,7 @@ class TailoringOrderItemReportExport implements FromQuery, WithColumnFormatting,
                 'tailoring_categories.name as category_name',
                 'tailoring_category_models.name as category_model_name',
                 'tailoring_category_model_types.name as category_model_type_name',
-                'units.name as unit_name',
-                'tailors.name as tailor_name'
+                'units.name as unit_name'
             )
             ->orderBy('tailoring_order_items.id');
     }
@@ -73,9 +70,9 @@ class TailoringOrderItemReportExport implements FromQuery, WithColumnFormatting,
             'unit' => true, 'quantity' => true, 'quantity_per_item' => true, 'completed_quantity' => true,
             'unit_price' => true, 'stitch_rate' => true, 'gross_amount' => true, 'discount' => true,
             'net_amount' => true, 'tax' => true, 'tax_amount' => true, 'total' => true,
-            'tailor' => true, 'tailor_commission' => true, 'used_quantity' => true, 'wastage' => true,
+            'used_quantity' => true, 'wastage' => true,
             'item_completion_date' => true, 'is_selected_for_completion' => true, 'tailoring_notes' => true,
-            'rating' => true, 'status' => true,
+            'status' => true,
         ];
 
         return array_merge($defaults, $cols);
@@ -85,6 +82,7 @@ class TailoringOrderItemReportExport implements FromQuery, WithColumnFormatting,
     {
         $vis = $this->visibleColumns();
         $out = ['#'];
+
         if ($vis['order_no'] ?? true) {
             $out[] = 'Order No';
         }
@@ -148,12 +146,6 @@ class TailoringOrderItemReportExport implements FromQuery, WithColumnFormatting,
         if ($vis['total'] ?? true) {
             $out[] = 'Total';
         }
-        if ($vis['tailor'] ?? true) {
-            $out[] = 'Tailor';
-        }
-        if ($vis['tailor_commission'] ?? true) {
-            $out[] = 'Tailor Commission';
-        }
         if ($vis['used_quantity'] ?? true) {
             $out[] = 'Used Qty';
         }
@@ -169,9 +161,6 @@ class TailoringOrderItemReportExport implements FromQuery, WithColumnFormatting,
         if ($vis['tailoring_notes'] ?? true) {
             $out[] = 'Notes';
         }
-        if ($vis['rating'] ?? true) {
-            $out[] = 'Rating';
-        }
         if ($vis['status'] ?? true) {
             $out[] = 'Item Status';
         }
@@ -184,6 +173,7 @@ class TailoringOrderItemReportExport implements FromQuery, WithColumnFormatting,
         $vis = $this->visibleColumns();
         $statusLabels = tailoringOrderItemStatuses();
         $out = [$row->id];
+
         if ($vis['order_no'] ?? true) {
             $out[] = $row->order_no ?? '';
         }
@@ -247,12 +237,6 @@ class TailoringOrderItemReportExport implements FromQuery, WithColumnFormatting,
         if ($vis['total'] ?? true) {
             $out[] = $row->total ?? '';
         }
-        if ($vis['tailor'] ?? true) {
-            $out[] = $row->tailor_name ?? '';
-        }
-        if ($vis['tailor_commission'] ?? true) {
-            $out[] = $row->tailor_commission ?? '';
-        }
         if ($vis['used_quantity'] ?? true) {
             $out[] = $row->used_quantity !== null ? $row->used_quantity : '';
         }
@@ -267,9 +251,6 @@ class TailoringOrderItemReportExport implements FromQuery, WithColumnFormatting,
         }
         if ($vis['tailoring_notes'] ?? true) {
             $out[] = $row->tailoring_notes ?? '';
-        }
-        if ($vis['rating'] ?? true) {
-            $out[] = $row->rating !== null && $row->rating > 0 ? $row->rating.'/5' : '';
         }
         if ($vis['status'] ?? true) {
             $out[] = $statusLabels[$row->status] ?? $row->status;

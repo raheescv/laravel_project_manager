@@ -66,14 +66,6 @@
                     </select>
                 </div>
                 <div class="col-6 col-md-2">
-                    <label class="form-label small text-muted mb-1">Tailor</label>
-                    <select wire:model.live="tailor_id" class="form-select form-select-sm">
-                        @foreach ($tailorOptions as $id => $name)
-                            <option value="{{ $id }}">{{ $name }}</option>
-                        @endforeach
-                    </select>
-                </div>
-                <div class="col-6 col-md-2">
                     <label class="form-label small text-muted mb-1">Status</label>
                     {{ html()->select('status', tailoringOrderItemStatuses())->value($status ?? '')->class('form-select form-select-sm')->id('tailoring_item_report_status')->placeholder('All Status') }}
 
@@ -166,12 +158,6 @@
                         @if ($tailoring_order_item_report_visible_column['total'] ?? true)
                             <th class="text-end"><x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="tailoring_order_items.total" label="Total" /></th>
                         @endif
-                        @if ($tailoring_order_item_report_visible_column['tailor'] ?? true)
-                            <th>Tailor</th>
-                        @endif
-                        @if ($tailoring_order_item_report_visible_column['tailor_commission'] ?? true)
-                            <th class="text-end"><x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="tailoring_order_items.tailor_commission" label="Tailor Commission" /></th>
-                        @endif
                         @if ($tailoring_order_item_report_visible_column['used_quantity'] ?? true)
                             <th class="text-end"><x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="tailoring_order_items.used_quantity" label="Used Qty" /></th>
                         @endif
@@ -186,9 +172,6 @@
                         @endif
                         @if ($tailoring_order_item_report_visible_column['tailoring_notes'] ?? true)
                             <th>Notes</th>
-                        @endif
-                        @if ($tailoring_order_item_report_visible_column['rating'] ?? true)
-                            <th class="text-center">Rating</th>
                         @endif
                         @if ($tailoring_order_item_report_visible_column['status'] ?? true)
                             <th>Item Status</th>
@@ -264,12 +247,6 @@
                             @if ($tailoring_order_item_report_visible_column['total'] ?? true)
                                 <td class="text-end fw-semibold">{{ currency($item->total) }}</td>
                             @endif
-                            @if ($tailoring_order_item_report_visible_column['tailor'] ?? true)
-                                <td>{{ $item->tailor?->name ?? '–' }}</td>
-                            @endif
-                            @if ($tailoring_order_item_report_visible_column['tailor_commission'] ?? true)
-                                <td class="text-end">{{ $item->tailor_commission ? currency($item->tailor_commission) : '–' }}</td>
-                            @endif
                             @if ($tailoring_order_item_report_visible_column['used_quantity'] ?? true)
                                 <td class="text-end">{{ $item->used_quantity !== null ? number_format((float) $item->used_quantity, 3) : '–' }}</td>
                             @endif
@@ -284,19 +261,6 @@
                             @endif
                             @if ($tailoring_order_item_report_visible_column['tailoring_notes'] ?? true)
                                 <td class="text-truncate" style="max-width: 12rem;" title="{{ $item->tailoring_notes }}">{{ $item->tailoring_notes ?? '–' }}</td>
-                            @endif
-                            @if ($tailoring_order_item_report_visible_column['rating'] ?? true)
-                                <td class="text-center">
-                                    @if ($item->rating !== null && $item->rating > 0)
-                                        <span class="text-warning" title="{{ $item->rating }}/5">
-                                            @for ($i = 1; $i <= 5; $i++)
-                                                <i class="fa fa-star{{ $i <= $item->rating ? '' : '-o' }}"></i>
-                                            @endfor
-                                        </span>
-                                    @else
-                                        <span class="text-muted">–</span>
-                                    @endif
-                                </td>
                             @endif
                             @if ($tailoring_order_item_report_visible_column['status'] ?? true)
                                 <td>
@@ -379,12 +343,6 @@
                         @if ($tailoring_order_item_report_visible_column['total'] ?? true)
                             <th class="text-end fw-semibold text-primary">{{ currency($total['total']) }}</th>
                         @endif
-                        @if ($tailoring_order_item_report_visible_column['tailor'] ?? true)
-                            <th></th>
-                        @endif
-                        @if ($tailoring_order_item_report_visible_column['tailor_commission'] ?? true)
-                            <th class="text-end fw-semibold">{{ currency($total['tailor_commission'] ?? 0) }}</th>
-                        @endif
                         @if ($tailoring_order_item_report_visible_column['used_quantity'] ?? true)
                             <th class="text-end fw-semibold">{{ number_format((float) ($total['used_quantity'] ?? 0), 3) }}</th>
                         @endif
@@ -398,9 +356,6 @@
                             <th></th>
                         @endif
                         @if ($tailoring_order_item_report_visible_column['tailoring_notes'] ?? true)
-                            <th></th>
-                        @endif
-                        @if ($tailoring_order_item_report_visible_column['rating'] ?? true)
                             <th></th>
                         @endif
                         @if ($tailoring_order_item_report_visible_column['status'] ?? true)

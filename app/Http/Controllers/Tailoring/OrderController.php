@@ -20,6 +20,7 @@ use App\Models\Account;
 use App\Models\Configuration;
 use App\Models\Country;
 use App\Models\CustomerType;
+use App\Models\Inventory;
 use App\Models\Product;
 use App\Models\Rack;
 use App\Models\TailoringCategory;
@@ -336,18 +337,35 @@ class OrderController extends Controller
 
     public function getProducts(Request $request): JsonResponse
     {
-        $query = Product::where('is_selling', true);
+        $branchId = (int) ($request->query('branch_id') ?: session('branch_id'));
+
+        $query = Inventory::query()
+            ->whereNull('inventories.employee_id')
+            ->where('inventories.branch_id', $branchId)
+            ->join('products', 'products.id', '=', 'inventories.product_id')
+            ->where('products.is_selling', true);
 
         if ($request->search) {
             $search = trim($request->search);
             $query->where(function ($q) use ($search) {
-                $q->where('name', 'LIKE', "%{$search}%")
-                    ->orWhere('barcode', 'LIKE', "%{$search}%")
-                    ->orWhere('code', 'LIKE', "%{$search}%");
+                $q->where('products.name', 'LIKE', "%{$search}%")
+                    ->orWhere('inventories.barcode', 'LIKE', "%{$search}%")
+                    ->orWhere('products.code', 'LIKE', "%{$search}%");
             });
         }
 
-        $products = $query->limit(50)->get(['id', 'name', 'code', 'barcode', 'mrp']);
+        $products = $query
+            ->orderByDesc('inventories.id')
+            ->limit(50)
+            ->get([
+                'inventories.id as id',
+                'inventories.id as inventory_id',
+                'products.id as product_id',
+                'products.name',
+                'products.code',
+                'inventories.barcode',
+                'products.mrp',
+            ]);
 
         return response()->json([
             'success' => true,
@@ -358,10 +376,26 @@ class OrderController extends Controller
     public function getProductByBarcode(Request $request): JsonResponse
     {
         $barcode = $request->query('barcode', $request->barcode);
+        $branchId = (int) ($request->query('branch_id') ?: session('branch_id'));
 
-        $product = Product::where('is_selling', true)
-            ->where('barcode', $barcode)
-            ->first(['id', 'name', 'code', 'barcode', 'mrp']);
+        $product = Inventory::query()
+            ->whereNull('inventories.employee_id')
+            ->where('inventories.branch_id', $branchId)
+            ->join('products', 'products.id', '=', 'inventories.product_id')
+            ->where('products.is_selling', true)
+            ->where(function ($q) use ($barcode) {
+                $q->where('inventories.barcode', $barcode)
+                    ->orWhere('products.barcode', $barcode);
+            })
+            ->first([
+                'inventories.id as id',
+                'inventories.id as inventory_id',
+                'products.id as product_id',
+                'products.name',
+                'products.code',
+                'inventories.barcode',
+                'products.mrp',
+            ]);
 
         return response()->json([
             'success' => (bool) $product,
@@ -741,11 +775,11 @@ class OrderController extends Controller
             'category' => fn ($q) => $q->with('activeMeasurements'),
             'categoryModel',
             'categoryModelType',
-            'product' => fn ($q) => $q->select('id', 'name')->withSum([
-                'inventories as stock_quantity' => fn ($q2) => $q2->where('branch_id', session('branch_id')),
-            ], 'quantity'),
+            'inventory:id,product_id,branch_id,quantity,barcode,batch',
+            'product:id,name',
             'unit',
-            'tailor',
+            'tailorAssignments.tailor:id,name',
+            'latestTailorAssignment.tailor:id,name',
         ]);
         $order = $item->order()->with(['measurements.category.activeMeasurements'])->first();
 
@@ -760,16 +794,24 @@ class OrderController extends Controller
         ]);
     }
 
-    public function getProductStock($productId): JsonResponse
+    public function getProductStock(Request $request, $productId): JsonResponse
     {
-        $stock = Product::where('id', $productId)->withSum([
-            'inventories as stock_quantity' => fn ($q) => $q->where('branch_id', session('branch_id')),
-        ], 'quantity')->first();
+        $branchId = (int) session('branch_id');
+        $inventoryId = $request->query('inventory_id');
+
+        $stockQuantity = 0.0;
+
+        if (! empty($inventoryId)) {
+            $stockQuantity = (float) Inventory::query()
+                ->where('id', $inventoryId)
+                ->where('branch_id', $branchId)
+                ->value('quantity');
+        }
 
         return response()->json([
             'success' => true,
             'data' => [
-                'stock_quantity' => $stock ? (float) $stock->stock_quantity : 0,
+                'stock_quantity' => $stockQuantity,
             ],
         ]);
     }

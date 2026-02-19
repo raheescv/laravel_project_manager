@@ -6,7 +6,6 @@ use App\Exports\TailoringOrderItemReportExport;
 use App\Models\Configuration;
 use App\Models\TailoringCategory;
 use App\Models\TailoringOrderItem;
-use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
 use Livewire\WithPagination;
@@ -25,8 +24,6 @@ class TailoringOrderItemReport extends Component
     public $product_id = '';
 
     public $category_id = '';
-
-    public $tailor_id = '';
 
     public $status = '';
 
@@ -53,7 +50,6 @@ class TailoringOrderItemReport extends Component
         'customer_id' => ['except' => ''],
         'product_id' => ['except' => ''],
         'category_id' => ['except' => ''],
-        'tailor_id' => ['except' => ''],
         'status' => ['except' => ''],
         'search' => ['except' => ''],
     ];
@@ -98,7 +94,6 @@ class TailoringOrderItemReport extends Component
         $this->customer_id = '';
         $this->product_id = '';
         $this->category_id = '';
-        $this->tailor_id = '';
         $this->status = '';
         $this->date_type = 'order_date';
         $this->from_date = date('Y-m-d');
@@ -126,7 +121,6 @@ class TailoringOrderItemReport extends Component
             'customer_id' => $this->customer_id,
             'product_id' => $this->product_id,
             'category_id' => $this->category_id,
-            'tailor_id' => $this->tailor_id,
             'status' => $this->status,
             'search' => $this->search,
             'date_type' => $this->date_type,
@@ -160,14 +154,10 @@ class TailoringOrderItemReport extends Component
             'tax' => true,
             'tax_amount' => true,
             'total' => true,
-            'tailor' => true,
-            'tailor_commission' => true,
             'used_quantity' => true,
             'wastage' => true,
-            'item_completion_date' => true,
             'is_selected_for_completion' => true,
             'tailoring_notes' => true,
-            'rating' => true,
             'status' => true,
         ];
     }
@@ -195,14 +185,11 @@ class TailoringOrderItemReport extends Component
             'tax' => 'Tax %',
             'tax_amount' => 'Tax Amt',
             'total' => 'Total',
-            'tailor' => 'Tailor',
-            'tailor_commission' => 'Tailor Commission',
             'used_quantity' => 'Used Qty',
             'wastage' => 'Wastage',
             'item_completion_date' => 'Completion Date',
             'is_selected_for_completion' => 'Selected for Completion',
             'tailoring_notes' => 'Notes',
-            'rating' => 'Rating',
             'status' => 'Item Status',
         ];
     }
@@ -212,7 +199,7 @@ class TailoringOrderItemReport extends Component
         $allowedBranchIds = Auth::user()->branches->pluck('branch_id')->toArray();
 
         return TailoringOrderItem::query()
-            ->with(['order:id,order_no,order_date,delivery_date,account_id,customer_name,status,branch_id', 'order.account:id,name', 'category:id,name', 'categoryModel:id,name', 'unit:id,name', 'tailor:id,name'])
+            ->with(['order:id,order_no,order_date,delivery_date,account_id,customer_name,status,branch_id', 'order.account:id,name', 'category:id,name', 'categoryModel:id,name', 'unit:id,name'])
             ->join('tailoring_orders', 'tailoring_orders.id', '=', 'tailoring_order_items.tailoring_order_id')
             ->when($this->from_date, fn ($q) => $q->whereDate('tailoring_orders.'.$this->date_type, '>=', $this->from_date))
             ->when($this->to_date, fn ($q) => $q->whereDate('tailoring_orders.'.$this->date_type, '<=', $this->to_date))
@@ -220,7 +207,6 @@ class TailoringOrderItemReport extends Component
             ->when($this->customer_id, fn ($q) => $q->where('tailoring_orders.account_id', $this->customer_id))
             ->when($this->product_id, fn ($q) => $q->where('tailoring_order_items.product_id', $this->product_id))
             ->when($this->category_id, fn ($q) => $q->where('tailoring_order_items.tailoring_category_id', $this->category_id))
-            ->when($this->tailor_id, fn ($q) => $q->where('tailoring_order_items.tailor_id', $this->tailor_id))
             ->when($this->status, fn ($q) => $q->where('tailoring_orders.status', $this->status))
             ->when($this->search, function ($q) {
                 $term = trim($this->search);
@@ -251,7 +237,6 @@ class TailoringOrderItemReport extends Component
             'net_amount' => $totals->sum('tailoring_order_items.net_amount'),
             'tax_amount' => $totals->sum('tailoring_order_items.tax_amount'),
             'total' => $totals->sum('tailoring_order_items.total'),
-            'tailor_commission' => $totals->sum('tailoring_order_items.tailor_total_commission'),
         ];
 
         $data = $query->orderBy($this->sortField, $this->sortDirection)->paginate($this->limit);
@@ -261,21 +246,12 @@ class TailoringOrderItemReport extends Component
 
         $categoryOptions = ['' => 'All Categories'] + TailoringCategory::ordered()->active()->pluck('name', 'id')->toArray();
 
-        $tailorIds = TailoringOrderItem::query()
-            ->join('tailoring_orders', 'tailoring_orders.id', '=', 'tailoring_order_items.tailoring_order_id')
-            ->whereIn('tailoring_orders.branch_id', $branchIds)
-            ->whereNotNull('tailoring_order_items.tailor_id')
-            ->distinct()
-            ->pluck('tailoring_order_items.tailor_id');
-        $tailorOptions = ['' => 'All Tailors'] + User::whereIn('id', $tailorIds)->pluck('name', 'id')->toArray();
-
         return view('livewire.report.tailoring-order-item-report', [
             'data' => $data,
             'total' => $total,
             'columnDefinitions' => $this->getColumnDefinitions(),
             'branchOptions' => $branchOptions,
             'categoryOptions' => $categoryOptions,
-            'tailorOptions' => $tailorOptions,
         ]);
     }
 }
