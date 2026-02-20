@@ -714,7 +714,7 @@
                                                                     <td>{{ $audit->user?->name }}</td>
                                                                     <td>{{ $audit->event }}</td>
                                                                     @foreach ($measurementColumns as $key)
-                                                                        <td class="text-end text-nowrap>{{ $audit->new_values[$key] ?? '' }}</td>
+                                                                        <td class="text-end text-nowrap">{{ $audit->new_values[$key] ?? '' }}</td>
                                                                     @endforeach
                                                                 </tr>
                                                             @endforeach
