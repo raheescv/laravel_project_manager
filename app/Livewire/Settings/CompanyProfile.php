@@ -12,6 +12,7 @@ class CompanyProfile extends Component
     use WithFilePond;
 
     public $company_name;
+    public $company_description;
 
     public $mobile;
 
@@ -26,6 +27,7 @@ class CompanyProfile extends Component
         $this->uploaded_logo = Configuration::where('key', 'logo')->value('value');
         $this->mobile = Configuration::where('key', 'mobile')->value('value');
         $this->company_name = Configuration::where('key', 'company_name')->value('value');
+        $this->company_description = Configuration::where('key', 'company_description')->value('value');
         $this->gst_no = Configuration::where('key', 'gst_no')->value('value');
     }
 
@@ -56,6 +58,8 @@ class CompanyProfile extends Component
             Configuration::updateOrCreate(['key' => 'mobile'], ['value' => $this->mobile]);
             Configuration::updateOrCreate(['key' => 'company_name'], ['value' => $this->company_name]);
             Configuration::updateOrCreate(['key' => 'gst_no'], ['value' => $this->gst_no]);
+            Configuration::updateOrCreate(['key' => 'company_description'], ['value' => $this->company_description]);
+            Cache::forget('company_description');
             Cache::forget('company_name');
             Cache::forget('mobile');
             Cache::forget('gst_no');
