@@ -65,7 +65,7 @@ class OrderController extends Controller
     {
         $categories = TailoringCategory::with(['activeModels:id,tailoring_category_id,name', 'activeMeasurements:id,tailoring_category_id,field_key,label,field_type,options_source,section,sort_order'])->active()->ordered()->get();
         $measurementOptions = $this->getMeasurementOptions();
-        $salesmen = User::employee()->pluck('name', 'id')->toArray();
+        $salesmen = User::employee()->active()->pluck('name', 'id')->toArray();
 
         // Get small list of recent customers for initial view
         $customers = Account::customer()
@@ -163,8 +163,7 @@ class OrderController extends Controller
     public function jobCompletionPage()
     {
         $racks = Rack::active()->pluck('name', 'id')->toArray();
-        $tailors = User::where('type', 'employee')->pluck('name', 'id')->toArray();
-        $cutters = User::where('type', 'employee')->pluck('name', 'id')->toArray();
+        $cutters = $tailors = User::employee()->active()->pluck('name', 'id')->toArray();
 
         $orderNumbers = TailoringOrder::distinct()
             ->pluck('order_no')
@@ -715,7 +714,7 @@ class OrderController extends Controller
 
     public function getTailors(): JsonResponse
     {
-        $tailors = User::where('type', 'employee')->orderBy('name')->get(['id', 'name']);
+        $tailors = User::employee()->active()->orderBy('name')->get(['id', 'name']);
 
         return response()->json([
             'success' => true,
@@ -725,7 +724,7 @@ class OrderController extends Controller
 
     public function getCutters(): JsonResponse
     {
-        $cutters = User::where('type', 'employee')->orderBy('name')->get(['id', 'name']);
+        $cutters = User::employee()->active()->orderBy('name')->get(['id', 'name']);
 
         return response()->json([
             'success' => true,
