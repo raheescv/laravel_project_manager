@@ -137,7 +137,7 @@
 
 <script setup>
 import { ref, computed, onMounted, watch, nextTick } from 'vue'
-import { formatCurrency } from '@/utils/currency'
+import { formatCurrency } from '@/utils/number'
 import { useLivewire } from '@/composables/useLivewire'
 import { getRoute } from '@/utils/routes'
 

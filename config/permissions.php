@@ -98,6 +98,8 @@ return [
         'monthly sale',
         'issue item',
         'issue aging',
+        'tailoring order item',
+        'tailoring order item tailor',
     ],
     'log' => ['inventory'],
     'day close' => ['sync amount'],

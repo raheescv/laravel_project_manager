@@ -65,10 +65,9 @@
                         @endforeach
                     </select>
                 </div>
-                <div class="col-6 col-md-2">
+                <div class="col-6 col-md-4" wire:ignore>
                     <label class="form-label small text-muted mb-1">Status</label>
-                    {{ html()->select('status', tailoringOrderItemStatuses())->value($status ?? '')->class('form-select form-select-sm')->id('tailoring_item_report_status')->placeholder('All Status') }}
-
+                    {{ html()->select('status', tailoringOrderItemStatuses())->value($status ?? '')->class('tomSelect')->multiple(true)->id('tailoring_item_report_status')->attribute('wire:model.live', 'status') }}
                 </div>
                 <div class="col-12 col-md-4" wire:ignore>
                     <label class="form-label small text-muted mb-1">Customer</label>
@@ -90,6 +89,34 @@
         </div>
     </div>
     <div class="card-body pt-2 px-0 pb-0">
+        <div class="px-3 pb-2">
+            <div class="row g-2 report-metrics">
+                <div class="col-6 col-lg-3">
+                    <div class="metric-card">
+                        <small class="text-muted d-block">Filtered Items</small>
+                        <div class="metric-value">{{ number_format($data->total()) }}</div>
+                    </div>
+                </div>
+                <div class="col-6 col-lg-3">
+                    <div class="metric-card">
+                        <small class="text-muted d-block">Grand Total</small>
+                        <div class="metric-value text-primary">{{ currency($total['total']) }}</div>
+                    </div>
+                </div>
+                <div class="col-6 col-lg-3">
+                    <div class="metric-card">
+                        <small class="text-muted d-block">Completed Qty</small>
+                        <div class="metric-value">{{ number_format((float) ($total['completed_quantity'] ?? 0), 3) }}</div>
+                    </div>
+                </div>
+                <div class="col-6 col-lg-3">
+                    <div class="metric-card">
+                        <small class="text-muted d-block">Pending Qty</small>
+                        <div class="metric-value">{{ number_format((float) ($total['pending_quantity'] ?? 0), 3) }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
         <div class="table-responsive">
             <table class="table table-striped table-hover table-sm align-middle mb-0">
                 <thead class="bg-light text-nowrap">
@@ -134,6 +161,12 @@
                         @if ($tailoring_order_item_report_visible_column['completed_quantity'] ?? true)
                             <th class="text-end"><x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="tailoring_order_items.completed_quantity" label="Completed Qty" /></th>
                         @endif
+                        @if ($tailoring_order_item_report_visible_column['pending_quantity'] ?? true)
+                            <th class="text-end"><x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="tailoring_order_items.pending_quantity" label="Pending Qty" /></th>
+                        @endif
+                        @if ($tailoring_order_item_report_visible_column['delivered_quantity'] ?? true)
+                            <th class="text-end"><x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="tailoring_order_items.delivered_quantity" label="Delivered Qty" /></th>
+                        @endif
                         @if ($tailoring_order_item_report_visible_column['unit_price'] ?? true)
                             <th class="text-end"><x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="tailoring_order_items.unit_price" label="Unit Price" /></th>
                         @endif
@@ -158,20 +191,29 @@
                         @if ($tailoring_order_item_report_visible_column['total'] ?? true)
                             <th class="text-end"><x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="tailoring_order_items.total" label="Total" /></th>
                         @endif
+                        @if ($tailoring_order_item_report_visible_column['tailor_total_commission'] ?? true)
+                            <th class="text-end"><x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="tailoring_order_items.tailor_total_commission" label="Tailor Commission" /></th>
+                        @endif
                         @if ($tailoring_order_item_report_visible_column['used_quantity'] ?? true)
                             <th class="text-end"><x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="tailoring_order_items.used_quantity" label="Used Qty" /></th>
                         @endif
                         @if ($tailoring_order_item_report_visible_column['wastage'] ?? true)
                             <th class="text-end"><x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="tailoring_order_items.wastage" label="Wastage" /></th>
                         @endif
+                        @if ($tailoring_order_item_report_visible_column['total_quantity_used'] ?? true)
+                            <th class="text-end"><x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="tailoring_order_items.total_quantity_used" label="Total Used Qty" /></th>
+                        @endif
                         @if ($tailoring_order_item_report_visible_column['item_completion_date'] ?? true)
                             <th><x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="tailoring_order_items.item_completion_date" label="Completion Date" /></th>
                         @endif
-                        @if ($tailoring_order_item_report_visible_column['is_selected_for_completion'] ?? true)
-                            <th class="text-center">Selected for Completion</th>
-                        @endif
                         @if ($tailoring_order_item_report_visible_column['tailoring_notes'] ?? true)
                             <th>Notes</th>
+                        @endif
+                        @if ($tailoring_order_item_report_visible_column['completion_status'] ?? true)
+                            <th>Completion Status</th>
+                        @endif
+                        @if ($tailoring_order_item_report_visible_column['delivery_status'] ?? true)
+                            <th>Delivery Status</th>
                         @endif
                         @if ($tailoring_order_item_report_visible_column['status'] ?? true)
                             <th>Item Status</th>
@@ -223,6 +265,12 @@
                             @if ($tailoring_order_item_report_visible_column['completed_quantity'] ?? true)
                                 <td class="text-end">{{ $item->completed_quantity !== null ? number_format((float) $item->completed_quantity, 3) : '–' }}</td>
                             @endif
+                            @if ($tailoring_order_item_report_visible_column['pending_quantity'] ?? true)
+                                <td class="text-end">{{ $item->pending_quantity !== null ? number_format((float) $item->pending_quantity, 3) : '–' }}</td>
+                            @endif
+                            @if ($tailoring_order_item_report_visible_column['delivered_quantity'] ?? true)
+                                <td class="text-end">{{ $item->delivered_quantity !== null ? number_format((float) $item->delivered_quantity, 3) : '–' }}</td>
+                            @endif
                             @if ($tailoring_order_item_report_visible_column['unit_price'] ?? true)
                                 <td class="text-end">{{ currency($item->unit_price) }}</td>
                             @endif
@@ -247,25 +295,34 @@
                             @if ($tailoring_order_item_report_visible_column['total'] ?? true)
                                 <td class="text-end fw-semibold">{{ currency($item->total) }}</td>
                             @endif
+                            @if ($tailoring_order_item_report_visible_column['tailor_total_commission'] ?? true)
+                                <td class="text-end">{{ $item->tailor_total_commission ? currency($item->tailor_total_commission) : '–' }}</td>
+                            @endif
                             @if ($tailoring_order_item_report_visible_column['used_quantity'] ?? true)
                                 <td class="text-end">{{ $item->used_quantity !== null ? number_format((float) $item->used_quantity, 3) : '–' }}</td>
                             @endif
                             @if ($tailoring_order_item_report_visible_column['wastage'] ?? true)
                                 <td class="text-end">{{ $item->wastage !== null ? number_format((float) $item->wastage, 3) : '–' }}</td>
                             @endif
+                            @if ($tailoring_order_item_report_visible_column['total_quantity_used'] ?? true)
+                                <td class="text-end">{{ $item->total_quantity_used !== null ? number_format((float) $item->total_quantity_used, 3) : '–' }}</td>
+                            @endif
                             @if ($tailoring_order_item_report_visible_column['item_completion_date'] ?? true)
                                 <td class="text-nowrap">{{ $item->item_completion_date ? systemDate($item->item_completion_date) : '–' }}</td>
-                            @endif
-                            @if ($tailoring_order_item_report_visible_column['is_selected_for_completion'] ?? true)
-                                <td class="text-center">{{ $item->is_selected_for_completion ? 'Yes' : 'No' }}</td>
                             @endif
                             @if ($tailoring_order_item_report_visible_column['tailoring_notes'] ?? true)
                                 <td class="text-truncate" style="max-width: 12rem;" title="{{ $item->tailoring_notes }}">{{ $item->tailoring_notes ?? '–' }}</td>
                             @endif
+                            @if ($tailoring_order_item_report_visible_column['completion_status'] ?? true)
+                                <td class="text-nowrap text-capitalize">{{ $item->completion_status ?? '–' }}</td>
+                            @endif
+                            @if ($tailoring_order_item_report_visible_column['delivery_status'] ?? true)
+                                <td class="text-nowrap text-capitalize">{{ $item->delivery_status ?? '–' }}</td>
+                            @endif
                             @if ($tailoring_order_item_report_visible_column['status'] ?? true)
                                 <td>
                                     @php $s = $item->status ?? 'pending'; @endphp
-                                    <span class="badge bg-{{ $s === 'completed' ? 'success' : ($s === 'pending' ? 'warning' : 'info') }} bg-opacity-10 text-{{ $s === 'completed' ? 'success' : ($s === 'pending' ? 'warning' : 'info') }}">
+                                    <span class="badge bg-{{ $s === 'completed' || $s === 'delivered' ? 'success' : ($s === 'pending' ? 'warning' : 'info') }} bg-opacity-10 text-{{ $s === 'completed' || $s === 'delivered' ? 'success' : ($s === 'pending' ? 'warning' : 'info') }}">
                                         {{ (tailoringOrderItemStatuses())[$item->status] ?? $item->status }}
                                     </span>
                                 </td>
@@ -319,6 +376,12 @@
                         @if ($tailoring_order_item_report_visible_column['completed_quantity'] ?? true)
                             <th class="text-end fw-semibold">{{ number_format((float) ($total['completed_quantity'] ?? 0), 3) }}</th>
                         @endif
+                        @if ($tailoring_order_item_report_visible_column['pending_quantity'] ?? true)
+                            <th class="text-end fw-semibold">{{ number_format((float) ($total['pending_quantity'] ?? 0), 3) }}</th>
+                        @endif
+                        @if ($tailoring_order_item_report_visible_column['delivered_quantity'] ?? true)
+                            <th class="text-end fw-semibold">{{ number_format((float) ($total['delivered_quantity'] ?? 0), 3) }}</th>
+                        @endif
                         @if ($tailoring_order_item_report_visible_column['unit_price'] ?? true)
                             <th></th>
                         @endif
@@ -343,19 +406,28 @@
                         @if ($tailoring_order_item_report_visible_column['total'] ?? true)
                             <th class="text-end fw-semibold text-primary">{{ currency($total['total']) }}</th>
                         @endif
+                        @if ($tailoring_order_item_report_visible_column['tailor_total_commission'] ?? true)
+                            <th class="text-end fw-semibold">{{ currency($total['tailor_total_commission']) }}</th>
+                        @endif
                         @if ($tailoring_order_item_report_visible_column['used_quantity'] ?? true)
                             <th class="text-end fw-semibold">{{ number_format((float) ($total['used_quantity'] ?? 0), 3) }}</th>
                         @endif
                         @if ($tailoring_order_item_report_visible_column['wastage'] ?? true)
                             <th class="text-end fw-semibold">{{ number_format((float) ($total['wastage'] ?? 0), 3) }}</th>
                         @endif
+                        @if ($tailoring_order_item_report_visible_column['total_quantity_used'] ?? true)
+                            <th class="text-end fw-semibold">{{ number_format((float) ($total['total_quantity_used'] ?? 0), 3) }}</th>
+                        @endif
                         @if ($tailoring_order_item_report_visible_column['item_completion_date'] ?? true)
                             <th></th>
                         @endif
-                        @if ($tailoring_order_item_report_visible_column['is_selected_for_completion'] ?? true)
+                        @if ($tailoring_order_item_report_visible_column['tailoring_notes'] ?? true)
                             <th></th>
                         @endif
-                        @if ($tailoring_order_item_report_visible_column['tailoring_notes'] ?? true)
+                        @if ($tailoring_order_item_report_visible_column['completion_status'] ?? true)
+                            <th></th>
+                        @endif
+                        @if ($tailoring_order_item_report_visible_column['delivery_status'] ?? true)
                             <th></th>
                         @endif
                         @if ($tailoring_order_item_report_visible_column['status'] ?? true)
@@ -376,17 +448,34 @@
                 $(document).on('change', '#tailoring_item_report_product_id', function() {
                     @this.set('product_id', $(this).val() || '');
                 });
+                $(document).on('change', '#tailoring_item_report_status', function() {
+                    @this.set('status', $(this).val() || '');
+                });
                 Livewire.on('tailoring-item-report-filters-reset', function() {
                     var cust = document.getElementById('tailoring_item_report_customer_id');
                     var prod = document.getElementById('tailoring_item_report_product_id');
+                    var status = document.getElementById('tailoring_item_report_status');
                     if (cust && cust.tomselect) cust.tomselect.clear();
                     if (prod && prod.tomselect) prod.tomselect.clear();
+                    if (status && status.tomselect) status.tomselect.clear();
                 });
             });
         </script>
     @endpush
     @push('styles')
         <style>
+            .tailoring-item-report .table-responsive {
+                max-height: 70vh;
+            }
+
+            .tailoring-item-report thead th {
+                position: sticky;
+                top: 0;
+                z-index: 2;
+                background: #f8fafc;
+                box-shadow: inset 0 -1px 0 #e9ecef;
+            }
+
             .tailoring-item-report .cursor-pointer {
                 cursor: pointer;
             }
@@ -395,8 +484,24 @@
                 min-width: 12rem;
             }
 
+            .tailoring-item-report .report-metrics .metric-card {
+                background: linear-gradient(135deg, #f8fafc 0%, #edf2ff 100%);
+                border: 1px solid #e9ecef;
+                border-radius: 0.5rem;
+                padding: 0.6rem 0.75rem;
+            }
+
+            .tailoring-item-report .report-metrics .metric-value {
+                font-weight: 700;
+                line-height: 1.2;
+            }
+
             .tailoring-item-report .filter-panel .form-label {
                 font-size: 0.75rem;
+            }
+
+            .tailoring-item-report tbody tr:hover td {
+                background-color: #f8fbff;
             }
         </style>
     @endpush

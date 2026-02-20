@@ -61,7 +61,7 @@
 
 <script setup>
 import { computed } from 'vue'
-import { formatCurrency } from '@/utils/currency'
+import { formatCurrency } from '@/utils/number'
 
 const props = defineProps({
     items: {

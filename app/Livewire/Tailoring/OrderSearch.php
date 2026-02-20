@@ -3,6 +3,7 @@
 namespace App\Livewire\Tailoring;
 
 use App\Models\TailoringOrder;
+use App\Models\TailoringOrderItem;
 use Livewire\Component;
 use Livewire\WithPagination;
 
@@ -26,6 +27,10 @@ class OrderSearch extends Component
 
     public $selectedOrderItems = [];
 
+    public $expandedOrderIds = [];
+
+    public $orderItemsByOrder = [];
+
     protected $paginationTheme = 'bootstrap';
 
     protected $listeners = [
@@ -43,6 +48,7 @@ class OrderSearch extends Component
         if (! in_array($key, ['search', 'customer_id', 'pending_only', 'limit'])) {
             return;
         }
+        $this->resetExpandedRows();
         $this->resetPage();
     }
 
@@ -61,6 +67,7 @@ class OrderSearch extends Component
         $this->search = '';
         $this->customer_id = '';
         $this->pending_only = 1;
+        $this->resetExpandedRows();
         $this->resetPage();
         $this->dispatch('order-search-clear-customer');
     }
@@ -74,7 +81,65 @@ class OrderSearch extends Component
             $this->customer_id = '';
             $this->search = trim((string) ($customerName ?: $customerMobile));
         }
+        $this->resetExpandedRows();
         $this->resetPage();
+    }
+
+    protected function resetExpandedRows(): void
+    {
+        $this->expandedOrderIds = [];
+        $this->orderItemsByOrder = [];
+    }
+
+    public function toggleOrderItems($orderId): void
+    {
+        $orderId = (int) $orderId;
+        $isExpanded = in_array($orderId, $this->expandedOrderIds, true);
+
+        if ($isExpanded) {
+            $this->expandedOrderIds = array_values(array_filter(
+                $this->expandedOrderIds,
+                fn ($id) => (int) $id !== $orderId
+            ));
+
+            return;
+        }
+
+        $this->expandedOrderIds[] = $orderId;
+
+        if (array_key_exists($orderId, $this->orderItemsByOrder)) {
+            return;
+        }
+
+        $this->orderItemsByOrder[$orderId] = TailoringOrderItem::query()
+            ->select([
+                'id',
+                'tailoring_order_id',
+                'item_no',
+                'product_name',
+                'quantity',
+                'completed_quantity',
+                'pending_quantity',
+                'delivered_quantity',
+                'completion_status',
+                'delivery_status',
+            ])
+            ->where('tailoring_order_id', $orderId)
+            ->orderBy('item_no')
+            ->get()
+            ->map(fn ($item) => [
+                'id' => (int) $item->id,
+                'item_no' => (int) $item->item_no,
+                'product_name' => (string) ($item->product_name ?? ''),
+                'quantity' => (float) $item->quantity,
+                'completed_quantity' => (float) $item->completed_quantity,
+                'pending_quantity' => (float) $item->pending_quantity,
+                'delivered_quantity' => (float) $item->delivered_quantity,
+                'completion_status' => (string) ($item->completion_status ?? ''),
+                'delivery_status' => (string) ($item->delivery_status ?? ''),
+            ])
+            ->values()
+            ->toArray();
     }
 
     public function openReceiptModal($accountId = null, $customerName = '', $customerMobile = '', $displayName = '')
@@ -140,7 +205,6 @@ class OrderSearch extends Component
             ->with([
                 'account:id,name,mobile',
                 'salesman:id,name',
-                'items:id,tailoring_order_id,product_name,quantity',
             ])
             ->when(trim((string) $this->customer_id) !== '', fn ($q) => $q->where('tailoring_orders.account_id', $this->customer_id))
             ->when(trim((string) $this->search) !== '', function ($q) {
@@ -156,7 +220,8 @@ class OrderSearch extends Component
                         });
                 });
             })
-            ->when((int) $this->pending_only === 1, fn ($q) => $q->where('tailoring_orders.balance', '>', 0));
+            ->when((int) $this->pending_only === 1, fn ($q) => $q->where('tailoring_orders.status','pending'))
+            ->when((int) $this->pending_only === 2, fn ($q) => $q->where('tailoring_orders.balance', '>', 0));
     }
 
     protected function getCustomerSummary($query)

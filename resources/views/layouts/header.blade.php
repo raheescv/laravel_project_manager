@@ -251,9 +251,9 @@
                                         </a>
                                     @endcan
                                     @can('configuration.cheque')
-                                        <a href="{{ route('account::cheque::configuration') }}" class="list-group-item list-group-item-action">
+                                        {{-- <a href="{{ route('account::cheque::configuration') }}" class="list-group-item list-group-item-action">
                                             <i class="fa fa-money-check fs-5 me-2"></i>Cheque Configuration
-                                        </a>
+                                        </a> --}}
                                     @endcan
                                     @can('api_log.moq settings')
                                         <a href="{{ route('api_log::moq-settings') }}" class="list-group-item list-group-item-action">

@@ -70,7 +70,7 @@
 
 <script setup>
 import { useLivewire } from '@/composables/useLivewire'
-import { formatCurrency } from '@/utils/currency'
+import { formatCurrency } from '@/utils/number'
 
 const props = defineProps({
     grossAmount: {

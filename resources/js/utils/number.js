@@ -59,3 +59,9 @@ export function formatNumber(amount) {
         maximumFractionDigits: 2
     }).format(amount)
 }
+
+export function formatPercent(value) {
+    const n = parseFloat(value)
+    if (Number.isNaN(n)) return '-'
+    return `${Number(n).toFixed(2)}%`
+}

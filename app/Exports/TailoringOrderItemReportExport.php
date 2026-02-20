@@ -32,7 +32,7 @@ class TailoringOrderItemReportExport implements FromQuery, WithColumnFormatting,
             ->when($this->filters['customer_id'] ?? '', fn ($q) => $q->where('tailoring_orders.account_id', $this->filters['customer_id']))
             ->when($this->filters['product_id'] ?? '', fn ($q) => $q->where('tailoring_order_items.product_id', $this->filters['product_id']))
             ->when($this->filters['category_id'] ?? '', fn ($q) => $q->where('tailoring_order_items.tailoring_category_id', $this->filters['category_id']))
-            ->when($this->filters['status'] ?? '', fn ($q) => $q->where('tailoring_orders.status', $this->filters['status']))
+            ->when($this->filters['status'] ?? '', fn ($q) => $q->whereIn('tailoring_order_items.status', $this->filters['status']))
             ->when($this->filters['search'] ?? '', function ($q) {
                 $term = trim($this->filters['search']);
 
@@ -68,11 +68,12 @@ class TailoringOrderItemReportExport implements FromQuery, WithColumnFormatting,
             'order_no' => true, 'order_date' => true, 'customer' => true, 'item_no' => true,
             'category' => true, 'category_model' => true, 'category_model_type' => true, 'product_name' => true, 'product_color' => true,
             'unit' => true, 'quantity' => true, 'quantity_per_item' => true, 'completed_quantity' => true,
+            'pending_quantity' => true, 'delivered_quantity' => true,
             'unit_price' => true, 'stitch_rate' => true, 'gross_amount' => true, 'discount' => true,
             'net_amount' => true, 'tax' => true, 'tax_amount' => true, 'total' => true,
-            'used_quantity' => true, 'wastage' => true,
-            'item_completion_date' => true, 'is_selected_for_completion' => true, 'tailoring_notes' => true,
-            'status' => true,
+            'tailor_total_commission' => true, 'used_quantity' => true, 'wastage' => true, 'total_quantity_used' => true,
+            'item_completion_date' => true, 'tailoring_notes' => true,
+            'completion_status' => true, 'delivery_status' => true, 'status' => true,
         ];
 
         return array_merge($defaults, $cols);
@@ -122,6 +123,12 @@ class TailoringOrderItemReportExport implements FromQuery, WithColumnFormatting,
         if ($vis['completed_quantity'] ?? true) {
             $out[] = 'Completed Qty';
         }
+        if ($vis['pending_quantity'] ?? true) {
+            $out[] = 'Pending Qty';
+        }
+        if ($vis['delivered_quantity'] ?? true) {
+            $out[] = 'Delivered Qty';
+        }
         if ($vis['unit_price'] ?? true) {
             $out[] = 'Unit Price';
         }
@@ -146,20 +153,29 @@ class TailoringOrderItemReportExport implements FromQuery, WithColumnFormatting,
         if ($vis['total'] ?? true) {
             $out[] = 'Total';
         }
+        if ($vis['tailor_total_commission'] ?? true) {
+            $out[] = 'Tailor Commission';
+        }
         if ($vis['used_quantity'] ?? true) {
             $out[] = 'Used Qty';
         }
         if ($vis['wastage'] ?? true) {
             $out[] = 'Wastage';
         }
+        if ($vis['total_quantity_used'] ?? true) {
+            $out[] = 'Total Used Qty';
+        }
         if ($vis['item_completion_date'] ?? true) {
             $out[] = 'Completion Date';
         }
-        if ($vis['is_selected_for_completion'] ?? true) {
-            $out[] = 'Selected for Completion';
-        }
         if ($vis['tailoring_notes'] ?? true) {
             $out[] = 'Notes';
+        }
+        if ($vis['completion_status'] ?? true) {
+            $out[] = 'Completion Status';
+        }
+        if ($vis['delivery_status'] ?? true) {
+            $out[] = 'Delivery Status';
         }
         if ($vis['status'] ?? true) {
             $out[] = 'Item Status';
@@ -213,6 +229,12 @@ class TailoringOrderItemReportExport implements FromQuery, WithColumnFormatting,
         if ($vis['completed_quantity'] ?? true) {
             $out[] = $row->completed_quantity !== null ? $row->completed_quantity : '';
         }
+        if ($vis['pending_quantity'] ?? true) {
+            $out[] = $row->pending_quantity !== null ? $row->pending_quantity : '';
+        }
+        if ($vis['delivered_quantity'] ?? true) {
+            $out[] = $row->delivered_quantity !== null ? $row->delivered_quantity : '';
+        }
         if ($vis['unit_price'] ?? true) {
             $out[] = $row->unit_price ?? '';
         }
@@ -237,20 +259,29 @@ class TailoringOrderItemReportExport implements FromQuery, WithColumnFormatting,
         if ($vis['total'] ?? true) {
             $out[] = $row->total ?? '';
         }
+        if ($vis['tailor_total_commission'] ?? true) {
+            $out[] = $row->tailor_total_commission ?? '';
+        }
         if ($vis['used_quantity'] ?? true) {
             $out[] = $row->used_quantity !== null ? $row->used_quantity : '';
         }
         if ($vis['wastage'] ?? true) {
             $out[] = $row->wastage !== null ? $row->wastage : '';
         }
+        if ($vis['total_quantity_used'] ?? true) {
+            $out[] = $row->total_quantity_used !== null ? $row->total_quantity_used : '';
+        }
         if ($vis['item_completion_date'] ?? true) {
             $out[] = $row->item_completion_date ? systemDate($row->item_completion_date) : '';
         }
-        if ($vis['is_selected_for_completion'] ?? true) {
-            $out[] = $row->is_selected_for_completion ? 'Yes' : 'No';
-        }
         if ($vis['tailoring_notes'] ?? true) {
             $out[] = $row->tailoring_notes ?? '';
+        }
+        if ($vis['completion_status'] ?? true) {
+            $out[] = $row->completion_status ?? '';
+        }
+        if ($vis['delivery_status'] ?? true) {
+            $out[] = $row->delivery_status ?? '';
         }
         if ($vis['status'] ?? true) {
             $out[] = $statusLabels[$row->status] ?? $row->status;

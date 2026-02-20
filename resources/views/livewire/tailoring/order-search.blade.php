@@ -15,13 +15,13 @@
                             <span class="input-group-text border-end-0">
                                 <i class="demo-pli-magnifi-glass"></i>
                             </span>
-                            <input type="text" wire:model.live="search" class="form-control border-start-0"
-                                placeholder="Search name / mobile / work order..." autofocus>
+                            <input type="text" wire:model.live="search" class="form-control border-start-0" placeholder="Search name / mobile / work order..." autofocus>
                         </div>
                     </div>
                     <div class="form-group">
                         <select wire:model.live="pending_only" class="form-select form-select-sm">
-                            <option value="1">Pending Balance Only</option>
+                            <option value="1">Pending Status Only</option>
+                            <option value="2">Pending Balance Only</option>
                             <option value="0">All Orders</option>
                         </select>
                     </div>
@@ -151,27 +151,14 @@
                         <th class="text-end">Actions</th>
                     </tr>
                 </thead>
-                @if ($data->isNotEmpty())
-                    <tbody class="table-group-divider">
-                        <tr class="bg-light">
-                            <th colspan="6" class="ps-3 text-end"><strong>TOTALS</strong></th>
-                            <th>
-                                <div class="text-end fw-bold text-primary">{{ currency($total['grand_total']) }}</div>
-                            </th>
-                            <th>
-                                <div class="text-end fw-bold text-success">{{ currency($total['paid']) }}</div>
-                            </th>
-                            <th>
-                                <div class="text-end fw-bold text-danger">{{ currency($total['balance']) }}</div>
-                            </th>
-                            <th></th>
-                        </tr>
-                    </tbody>
-                @endif
                 <tbody>
                     @forelse ($data as $order)
                         <tr>
                             <td class="ps-3">
+                                <button type="button" class="btn btn-sm btn-light border me-2" title="{{ in_array($order->id, $expandedOrderIds, true) ? 'Hide items' : 'Show items' }}"
+                                    wire:click="toggleOrderItems({{ $order->id }})">
+                                    <i class="fa {{ in_array($order->id, $expandedOrderIds, true) ? 'fa-chevron-up' : 'fa-chevron-down' }}"></i>
+                                </button>
                                 <span class="text-muted">#{{ $order->id }}</span>
                             </td>
                             <td class="text-nowrap">
@@ -232,8 +219,7 @@
                                     <a href="{{ route('tailoring::order::show', $order->id) }}" class="btn btn-light border" title="View Details">
                                         <i class="fa fa-eye text-primary"></i>
                                     </a>
-                                    <button type="button" class="btn btn-light border" title="View Full Items"
-                                        wire:click="openItemsModal({{ $order->id }})">
+                                    <button type="button" class="btn btn-light border" title="View Full Items" wire:click="openItemsModal({{ $order->id }})">
                                         <i class="fa fa-list text-dark"></i>
                                     </button>
                                     <button type="button" class="btn btn-success border" title="Collect Payment"
@@ -249,6 +235,71 @@
                                 </div>
                             </td>
                         </tr>
+                        @if (in_array($order->id, $expandedOrderIds, true))
+                            <tr class="bg-white">
+                                <td colspan="10" class="px-3 py-2">
+                                    <div class="border rounded-3 shadow-sm overflow-hidden">
+                                        <div class="px-3 py-2 bg-light border-bottom d-flex justify-content-between align-items-center">
+                                            <div class="fw-semibold">Order Items</div>
+                                            <small class="text-muted">Work Order: {{ $order->order_no }}</small>
+                                        </div>
+                                        <div class="nested-items-wrapper">
+                                            <table class="table table-sm mb-0 nested-items-table">
+                                                <thead class="table-light text-nowrap">
+                                                    <tr>
+                                                        <th style="width: 48px;">#</th>
+                                                        <th>Product Name</th>
+                                                        <th class="text-end">Total Qty</th>
+                                                        <th class="text-end">Completed Qty</th>
+                                                        <th class="text-end">Delivered Qty</th>
+                                                        <th class="text-end">Pending Qty</th>
+                                                        <th>Completed Status</th>
+                                                        <th>Delivery Status</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    @forelse (($orderItemsByOrder[$order->id] ?? []) as $item)
+                                                        @php
+                                                            $status = $item['status'] ?? '';
+                                                            $statusClass =
+                                                                $status === 'delivered'
+                                                                    ? 'dark'
+                                                                    : ($status === 'completed'
+                                                                        ? 'success'
+                                                                        : ($status === 'partially completed'
+                                                                            ? 'warning'
+                                                                            : 'secondary'));
+                                                        @endphp
+                                                        <tr>
+                                                            <td>{{ $item['item_no'] ?? '-' }}</td>
+                                                            <td class="fw-semibold">{{ $item['product_name'] ?: '-' }}</td>
+                                                            <td class="text-end">{{ round($item['quantity']) }}</td>
+                                                            <td class="text-end text-success">{{ round($item['completed_quantity']) }}</td>
+                                                            <td class="text-end text-info">{{ round($item['delivered_quantity']) }}</td>
+                                                            <td class="text-end text-warning">{{ round($item['pending_quantity']) }}</td>
+                                                            <td>
+                                                                <span class="badge bg-info bg-opacity-10 text-info">
+                                                                    {{ ucWords($item['completion_status']) }}
+                                                                </span>
+                                                            </td>
+                                                            <td>
+                                                                <span class="badge bg-secondary bg-opacity-10 text-secondary">
+                                                                    {{ ucWords($item['delivery_status']) }}
+                                                                </span>
+                                                            </td>
+                                                        </tr>
+                                                    @empty
+                                                        <tr>
+                                                            <td colspan="8" class="text-center text-muted py-3">No order items.</td>
+                                                        </tr>
+                                                    @endforelse
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
+                        @endif
                     @empty
                         <tr>
                             <td colspan="10" class="text-center py-4 text-muted">
@@ -356,5 +407,30 @@
                 });
             });
         </script>
+    @endpush
+    @push('styles')
+        <style>
+            .nested-items-wrapper {
+                background: #f8fbff;
+                border: 1px solid #e6f0fb;
+                padding: 0.5rem;
+                border-radius: 0.375rem;
+                box-shadow: 0 6px 18px rgba(15, 23, 42, 0.03);
+            }
+
+            .nested-items-table thead th {
+                background: #ffffff;
+                color: #334155;
+                font-size: 0.78rem;
+                border-bottom: 1px solid #e6eef6;
+            }
+
+            .nested-items-table td {
+                font-size: 0.92rem;
+                vertical-align: middle;
+                padding-top: 0.55rem;
+                padding-bottom: 0.55rem;
+            }
+        </style>
     @endpush
 </div>

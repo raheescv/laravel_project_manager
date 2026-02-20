@@ -231,7 +231,7 @@ import {
 } from 'vue'
 import {
     formatCurrency
-} from '@/utils/currency'
+} from '@/utils/number'
 import {
     useLivewire
 } from '@/composables/useLivewire'
