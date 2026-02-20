@@ -107,7 +107,7 @@ return [
     'visitor analytics' => ['view'],
     'configuration' => ['barcode', 'settings', 'cheque'],
     'tailoring category' => ['create', 'view', 'edit', 'delete'],
-    'tailoring measurement option' => ['create', 'view', 'edit', 'delete'],
+    'tailoring measurement option' => ['create', 'view', 'edit', 'delete', 'quick add'],
     'tailoring order' => ['view', 'create', 'edit', 'delete', 'export', 'view journal entries', 'receipts'],
     'tailoring job completion' => ['view', 'create', 'edit', 'delete'],
 ];

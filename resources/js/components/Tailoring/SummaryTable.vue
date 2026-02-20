@@ -61,6 +61,7 @@
 
 <script setup>
 import { computed } from 'vue'
+import { formatCurrency } from '@/utils/currency'
 
 const props = defineProps({
     items: {
@@ -98,7 +99,4 @@ const subTotal = computed(() => {
     return props.items.reduce((sum, item) => sum + (parseFloat(item.total) || 0), 0)
 })
 
-const formatCurrency = (value) => {
-    return parseFloat(value || 0).toFixed(2)
-}
 </script>

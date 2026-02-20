@@ -65,9 +65,9 @@
                             <div class="flex flex-col items-end gap-0.5">
                                 <span class="text-2xl leading-none font-black text-indigo-700 tracking-tight tabular-nums">{{ formatCurrency(item.total) }}</span>
                                 <div class="text-[0.58rem] text-slate-500 font-bold tracking-tight leading-tight">
-                                    <div class="flex justify-end gap-3"><span class="w-10 text-right text-capitalize">price</span><span class="w-12 text-right tabular-nums">{{ formatCurrency(item.unit_price) }}</span></div>
-                                    <div class="flex justify-end gap-3"><span class="w-10 text-right text-capitalize">stitch</span><span class="w-12 text-right tabular-nums">{{ formatCurrency(item.stitch_rate) }}</span></div>
-                                    <div class="flex justify-end gap-3"><span class="w-10 text-right text-capitalize">tax</span><span class="w-12 text-right tabular-nums">{{ formatCurrency(item.tax) }}</span></div>
+                                    <div class="flex justify-end gap-3"><span class="w-10 text-right text-capitalize">price</span><span class="w-24 text-right tabular-nums">{{ formatCurrency(item.unit_price) }}</span></div>
+                                    <div class="flex justify-end gap-3"><span class="w-10 text-right text-capitalize">stitch</span><span class="w-24 text-right tabular-nums">{{ formatCurrency(item.stitch_rate) }}</span></div>
+                                    <div class="flex justify-end gap-3"><span class="w-10 text-right text-capitalize">tax</span><span class="w-24 text-right tabular-nums">{{ formatCurrency(item.tax) }}</span></div>
                                 </div>
                             </div>
                         </td>
@@ -118,6 +118,7 @@
 <script setup>
 import { ref, computed } from 'vue'
 import MeasurementViewModal from '@/components/Tailoring/MeasurementViewModal.vue'
+import { formatCurrency } from '@/utils/currency'
 
 const props = defineProps({
     items: {
@@ -145,9 +146,6 @@ const closeViewModal = () => {
     selectedItemForView.value = null
 }
 
-const formatCurrency = (value) => {
-    return parseFloat(value || 0).toFixed(2)
-}
 </script>
 
 <style scoped>

@@ -103,6 +103,7 @@
                                                 :key="activeEditKey" v-model="measurements[activeEditKey]"
                                                 :category="getCategory(activeCategoryTab)"
                                                 :measurementOptions="measurementOptions"
+                                                :canQuickAddMeasurementOption="props.canQuickAddMeasurementOption"
                                                 @add-option="handleAddMeasurementOption" />
                                         </div>
                                     </div>
@@ -220,6 +221,10 @@ const props = defineProps({
     order: Object,
     categories: Array,
     measurementOptions: Object,
+    canQuickAddMeasurementOption: {
+        type: Boolean,
+        default: false
+    },
     salesmen: Object,
     customers: Object,
     paymentMethods: Array,

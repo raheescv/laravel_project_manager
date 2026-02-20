@@ -18,7 +18,7 @@
                                         :options="categoryModels.map(m => ({ value: m.id, label: m.name }))"
                                         placeholder="Select Model" @change="updateModelName" />
                                 </div>
-                                <button type="button" @click="addCategoryModel" class="btn-add-more">
+                                <button v-if="props.canQuickAddMeasurementOption" type="button" @click="addCategoryModel" class="btn-add-more">
                                     <i class="fa fa-plus text-[10px]"></i>
                                 </button>
                             </div>
@@ -30,7 +30,7 @@
                                         :options="categoryModelTypes.map(t => ({ value: t.id, label: t.name }))"
                                         placeholder="Select Model Type" @change="updateModelTypeName" />
                                 </div>
-                                <button type="button" @click="addCategoryModelType" class="btn-add-more">
+                                <button v-if="props.canQuickAddMeasurementOption" type="button" @click="addCategoryModelType" class="btn-add-more">
                                     <i class="fa fa-plus text-[10px]"></i>
                                 </button>
                             </div>
@@ -51,7 +51,7 @@
                                         <VSelect v-model="measurements[m.field_key]"
                                             :options="getOptions(m.options_source).map(o => ({ value: o.value, label: o.value }))"
                                             :placeholder="`Select ${m.label}`" class="flex-1" />
-                                        <button v-if="m.options_source" type="button"
+                                        <button v-if="m.options_source && props.canQuickAddMeasurementOption" type="button"
                                             @click="addOption(m.options_source)" class="btn-add-more">
                                             <i class="fa fa-plus text-[10px]"></i>
                                         </button>
@@ -84,7 +84,7 @@
                                         <VSelect v-model="measurements[m.field_key]"
                                             :options="getOptions(m.options_source).map(o => ({ value: o.value, label: o.value }))"
                                             :placeholder="`Select ${m.label}`" class="flex-1" />
-                                        <button v-if="m.options_source" type="button"
+                                        <button v-if="m.options_source && props.canQuickAddMeasurementOption" type="button"
                                             @click="addOption(m.options_source)" class="btn-add-more">
                                             <i class="fa fa-plus text-[10px]"></i>
                                         </button>
@@ -117,7 +117,7 @@
                                         <VSelect v-model="measurements[m.field_key]"
                                             :options="getOptions(m.options_source).map(o => ({ value: o.value, label: o.value }))"
                                             placeholder="Select" class="flex-1" />
-                                        <button v-if="m.options_source" type="button"
+                                        <button v-if="m.options_source && props.canQuickAddMeasurementOption" type="button"
                                             @click="addOption(m.options_source)" class="btn-add-more">
                                             <i class="fa fa-plus text-[6px]"></i>
                                         </button>
@@ -159,6 +159,10 @@ const props = defineProps({
     category: Object,
     model: Object,
     measurementOptions: Object,
+    canQuickAddMeasurementOption: {
+        type: Boolean,
+        default: false
+    },
 })
 
 const emit = defineEmits(['update:modelValue', 'add-option'])
@@ -184,6 +188,7 @@ const getOptions = (type) => {
 }
 
 const addOption = async (type) => {
+    if (!props.canQuickAddMeasurementOption) return
     const value = prompt(`Add new ${type.replace('_', ' ')}:`)
     if (value && value.trim()) {
         emit('add-option', type, value.trim())
@@ -191,6 +196,7 @@ const addOption = async (type) => {
 }
 
 const addCategoryModel = async () => {
+    if (!props.canQuickAddMeasurementOption) return
     if (!props.category?.id) {
         toast.error('Please select an item type first')
         return
@@ -229,6 +235,7 @@ const updateModelName = () => {
 }
 
 const addCategoryModelType = async () => {
+    if (!props.canQuickAddMeasurementOption) return
     if (!props.category?.id) {
         toast.error('Please select an item type first')
         return
