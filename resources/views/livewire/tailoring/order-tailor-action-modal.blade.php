@@ -66,10 +66,23 @@
                         <div class="guide-title">
                             <i class="fa fa-info-circle me-1"></i>Status Selection Guide
                         </div>
-                        <div class="guide-items">
-                            <span class="guide-chip guide-pending"><i class="fa fa-clock-o me-1"></i>Pending: Initial status only (cannot be selected here)</span>
-                            <span class="guide-chip guide-completed"><i class="fa fa-check-circle me-1"></i>Completed: Stitching finished</span>
-                            <span class="guide-chip guide-delivered"><i class="fa fa-truck me-1"></i>Delivered: Handed to customer</span>
+                        <div class="guide-grid">
+                            <div class="guide-items">
+                                <span class="guide-chip guide-completed"><i class="fa fa-check-circle me-1"></i>Completed: Stitching finished</span>
+                                <span class="guide-chip guide-delivered"><i class="fa fa-truck me-1"></i>Delivered: Handed to customer</span>
+                            </div>
+                            <div class="bulk-status-actions pull-right text-right">
+                                <button type="button" class="bulk-status-btn bulk-status-btn-completed"
+                                    wire:click="bulkUpdateTailorAssignmentStatus('completed')"
+                                    wire:loading.attr="disabled" wire:target="bulkUpdateTailorAssignmentStatus">
+                                    <i class="fa fa-check-circle me-1"></i>Set All to Completed
+                                </button>
+                                <button type="button" class="bulk-status-btn bulk-status-btn-delivered"
+                                    wire:click="bulkUpdateTailorAssignmentStatus('delivered')"
+                                    wire:loading.attr="disabled" wire:target="bulkUpdateTailorAssignmentStatus">
+                                    <i class="fa fa-truck me-1"></i>Set All to Delivered
+                                </button>
+                            </div>
                         </div>
                     </div>
 
@@ -217,7 +230,7 @@
                             </tbody>
                         </table>
                     </div>
-                    <div wire:loading wire:target="updateTailorAssignmentStatus" class="small text-primary mt-2">
+                    <div wire:loading wire:target="updateTailorAssignmentStatus,bulkUpdateTailorAssignmentStatus" class="small text-primary mt-2">
                         <i class="fa fa-spinner fa-spin me-1"></i> Updating tailor status...
                     </div>
                 </div>
@@ -360,6 +373,15 @@
                 display: flex;
                 flex-wrap: wrap;
                 gap: 0.45rem;
+                justify-content: flex-start;
+                align-content: flex-start;
+            }
+
+            .status-selection-guide .guide-grid {
+                display: grid;
+                grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+                gap: 0.7rem 1rem;
+                align-items: start;
             }
 
             .status-selection-guide .guide-chip {
@@ -389,6 +411,69 @@
                 background: #f1f5f9;
                 color: #0f172a;
                 border-color: #cbd5e1;
+            }
+
+            .bulk-status-actions {
+                display: flex;
+                flex-wrap: wrap;
+                align-items: center;
+                gap: 0.5rem;
+                justify-content: flex-end;
+                justify-self: end;
+                text-align: right;
+            }
+
+            .bulk-status-btn {
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                border-radius: 999px;
+                border: 1px solid transparent;
+                font-size: 0.78rem;
+                font-weight: 700;
+                padding: 0.42rem 0.95rem;
+                min-height: 2.1rem;
+                line-height: 1;
+                transition: all 0.16s ease;
+                box-shadow: 0 2px 6px rgba(15, 23, 42, 0.08);
+            }
+
+            .bulk-status-btn:hover {
+                transform: translateY(-1px);
+                box-shadow: 0 8px 14px rgba(15, 23, 42, 0.14);
+            }
+
+            .bulk-status-btn:disabled {
+                opacity: 0.65;
+                cursor: not-allowed;
+                transform: none;
+                box-shadow: none;
+            }
+
+            .bulk-status-btn-completed {
+                color: #14532d;
+                border-color: #86efac;
+                background: linear-gradient(180deg, #bbf7d0, #86efac);
+            }
+
+            .bulk-status-btn-delivered {
+                color: #020617;
+                border-color: #94a3b8;
+                background: linear-gradient(180deg, #cbd5e1, #94a3b8);
+            }
+
+            .bulk-status-note {
+                flex: 1 1 100%;
+                margin: 0.05rem 0 0 0.2rem;
+                font-size: 0.78rem;
+                font-weight: 600;
+                color: #7b8a9f;
+            }
+
+            @media (max-width: 991px) {
+                .status-selection-guide .guide-grid {
+                    grid-template-columns: 1fr;
+                }
             }
 
             .tailor-summary-card {

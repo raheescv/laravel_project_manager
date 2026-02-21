@@ -78,7 +78,7 @@
                                             </div>
                                         </div>
                                         <span class="badge bg-white bg-opacity-25 rounded-pill px-3 py-2">
-                                            {{ $totals['paid'] ? number_format(($payment['total_paid'] / $totals['paid']) * 100, 1) : 0 }}%
+                                            {{ $totals['paid']!=0 ? number_format(($payment['total_paid'] / $totals['paid']) * 100, 1) : 0 }}%
                                         </span>
                                     </div>
 
@@ -128,7 +128,7 @@
                                             </div>
                                         </div>
                                         <span class="badge bg-white bg-opacity-25 rounded-pill px-3 py-2">
-                                            {{ $tailoringTotals['paid'] ? number_format(($payment['total_paid'] / $tailoringTotals['paid']) * 100, 1) : 0 }}%
+                                            {{ $tailoringTotals['paid']!=0 ? number_format(($payment['total_paid'] / $tailoringTotals['paid']) * 100, 1) : 0 }}%
                                         </span>
                                     </div>
                                     <div class="mb-3">

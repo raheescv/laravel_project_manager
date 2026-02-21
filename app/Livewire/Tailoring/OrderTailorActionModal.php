@@ -95,6 +95,86 @@ class OrderTailorActionModal extends Component
         $this->dispatch('success', ['message' => 'Tailor status updated successfully']);
     }
 
+    public function bulkUpdateTailorAssignmentStatus($status): void
+    {
+        $status = (string) $status;
+        $allowedStatuses = array_keys($this->tailorStatusOptions);
+        if (! in_array($status, $allowedStatuses, true)) {
+            $this->dispatch('error', ['message' => 'Invalid tailor status selected for bulk update']);
+
+            return;
+        }
+
+        $selectedOrderId = (int) ($this->selectedTailorOrderDetails['id'] ?? 0);
+        if ($selectedOrderId <= 0) {
+            $this->dispatch('error', ['message' => 'No valid order selected']);
+
+            return;
+        }
+
+        $assignmentIds = collect($this->selectedTailorAssignments ?? [])
+            ->filter(fn ($row) => (string) ($row['status'] ?? 'pending') !== 'pending')
+            ->pluck('assignment_id')
+            ->filter()
+            ->map(fn ($id) => (int) $id)
+            ->unique()
+            ->values();
+
+        if ($assignmentIds->isEmpty()) {
+            $this->dispatch('error', ['message' => 'No eligible assignments found for bulk update']);
+
+            return;
+        }
+
+        $assignments = TailoringOrderItemTailor::with('tailoringOrderItem.order')
+            ->whereIn('id', $assignmentIds)
+            ->get()
+            ->filter(function ($assignment) use ($selectedOrderId) {
+                return $assignment->tailoringOrderItem &&
+                    $assignment->tailoringOrderItem->order &&
+                    (int) $assignment->tailoringOrderItem->order->id === $selectedOrderId;
+            });
+
+        if ($assignments->isEmpty()) {
+            $this->dispatch('error', ['message' => 'No matching assignments found for this order']);
+
+            return;
+        }
+
+        $updatedItemIds = [];
+        foreach ($assignments as $assignment) {
+            if ((string) ($assignment->status ?? 'pending') === 'pending') {
+                continue;
+            }
+
+            $assignment->update([
+                'status' => $status,
+                'updated_by' => Auth::id(),
+            ]);
+
+            $updatedItemIds[] = (int) $assignment->tailoring_order_item_id;
+        }
+
+        $itemIds = collect($updatedItemIds)->unique()->values();
+        if ($itemIds->isNotEmpty()) {
+            $items = $assignments->pluck('tailoringOrderItem')
+                ->filter(fn ($item) => $item && $itemIds->contains((int) $item->id))
+                ->unique('id');
+
+            $syncAction = new SyncTailorAssignmentAction();
+            foreach ($items as $item) {
+                $syncAction->syncItemSummary($item);
+            }
+        }
+
+        $order = $this->getOrderForTailorActionModal($selectedOrderId);
+        if ($order) {
+            $this->setTailorActionModalData($order);
+        }
+
+        $this->dispatch('success', ['message' => 'Tailor statuses updated in bulk successfully']);
+    }
+
     protected function getOrderForTailorActionModal(int $orderId): ?TailoringOrder
     {
         return TailoringOrder::with(['account:id,name,mobile', 'items:id,tailoring_order_id,item_no,product_name,quantity,completion_status,delivery_status', 'items.tailorAssignments:id,tailoring_order_item_id,tailor_id,tailor_commission,completion_date,rating,status', 'items.tailorAssignments.tailor:id,name'])->find($orderId);
