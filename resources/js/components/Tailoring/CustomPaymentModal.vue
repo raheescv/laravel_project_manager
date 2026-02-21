@@ -101,13 +101,13 @@
                                 <div v-for="(payment, index) in payments" :key="index"
                                     class="flex items-center justify-between py-0.5 border-b border-slate-200 last:border-0 group">
                                     <div class="flex flex-col min-w-0">
-                                        <span class="text-xs font-bold text-slate-800 truncate">{{ payment.name }}</span>
+                                        <span class="text-xs font-bold text-slate-800 truncate">{{ getPaymentMethodName(payment) }}</span>
                                         <span class="text-[10px] font-semibold text-slate-500">{{ formatDate(payment.date) }}</span>
                                     </div>
-                                    <div class="flex items-center gap-1.5 shrink-0">
-                                        <span class="text-xs font-bold text-blue-600">{{ formatNumber(payment.amount) }}</span>
+                                    <div class="flex items-center justify-end gap-1.5 shrink-0 min-w-[110px]">
+                                        <span class="text-xs font-bold text-blue-600 text-right">{{ formatNumber(payment.amount) }}</span>
                                         <button type="button" @click="removePayment(index)"
-                                            class="w-5 h-5 flex items-center justify-center rounded bg-rose-100 text-rose-500 opacity-0 group-hover:opacity-100 hover:bg-rose-500 hover:text-white transition-all">
+                                            class="w-5 h-5 flex items-center justify-center rounded bg-rose-100 text-rose-500 hover:bg-rose-500 hover:text-white transition-all">
                                             <i class="fa fa-trash text-[9px]"></i>
                                         </button>
                                     </div>
@@ -199,6 +199,15 @@ export default {
         const payments = ref([])
         const errorMessage = ref('')
 
+        const getPaymentMethodName = (payment) => {
+            if (payment?.name) return payment.name
+            if (payment?.payment_method_name) return payment.payment_method_name
+            if (payment?.paymentMethod?.name) return payment.paymentMethod.name
+
+            const selectedMethod = props.paymentMethods.find(m => Number(m?.id) === Number(payment?.payment_method_id))
+            return selectedMethod?.name || 'Unknown Method'
+        }
+
         // Computed properties
         const totalPaid = computed(() => {
             return payments.value.reduce((sum, payment) => sum + payment.amount, 0)
@@ -234,6 +243,7 @@ export default {
                 }
                 payments.value = [...(props.initialPayments || []).map(p => ({
                     ...p,
+                    name: p.name || p.payment_method_name || p.paymentMethod?.name || '',
                     date: p.date || getTodayDate()
                 }))]
                 errorMessage.value = ''
@@ -325,6 +335,7 @@ export default {
             balanceDue,
             formatNumber,
             formatDate,
+            getPaymentMethodName,
             addPayment,
             removePayment,
             close,
