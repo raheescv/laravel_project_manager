@@ -23,9 +23,9 @@
             max-width: 80mm;
             background: #fff;
             color: #000;
-            font-family: "Trebuchet MS", "Arial", sans-serif;
-            font-size: 11px;
-            line-height: 1.35;
+            font-family: "Arial", "Helvetica", sans-serif;
+            font-size: 11.4px;
+            line-height: 1.3;
             -webkit-print-color-adjust: exact;
             print-color-adjust: exact;
         }
@@ -33,6 +33,7 @@
         body {
             margin: 0;
             padding: 0;
+            font-weight: 600;
         }
 
         .receipt {
@@ -96,20 +97,21 @@
 
         .meta-line {
             margin-top: 0.3mm;
-            font-size: 10.4px;
-            font-weight: 600;
+            font-size: 10.8px;
+            font-weight: 700;
         }
 
         .divider {
-            border-top: 1px dashed #000;
+            border-top: 1px solid #000;
             margin: 1.7mm 0;
         }
 
         .section-title {
-            font-size: 10px;
+            text-align: center;
+            font-size: 10.2px;
             font-weight: 700;
             text-transform: uppercase;
-            letter-spacing: 0.7px;
+            letter-spacing: 0.35px;
             margin-bottom: 0.9mm;
         }
 
@@ -122,7 +124,7 @@
         }
 
         .info-table td {
-            border-bottom: 0.5px dashed #000;
+            border-bottom: 1px solid #000;
             padding: 0.75mm 0;
             vertical-align: top;
             font-size: 10.8px;
@@ -134,16 +136,16 @@
 
         .info-key {
             width: 38%;
-            font-weight: 600;
+            font-weight: 700;
             color: #222;
             text-transform: uppercase;
-            font-size: 9.5px;
-            letter-spacing: 0.35px;
+            font-size: 10px;
+            letter-spacing: 0.2px;
         }
 
         .info-value {
             width: 62%;
-            font-weight: 600;
+            font-weight: 700;
             word-break: break-word;
             text-align: right;
         }
@@ -152,17 +154,17 @@
             border-top: 1px solid #000;
             border-bottom: 1px solid #000;
             padding: 0.8mm 0.65mm;
-            font-size: 9.7px;
+            font-size: 10px;
             font-weight: 700;
             text-transform: uppercase;
-            letter-spacing: 0.3px;
+            letter-spacing: 0.2px;
         }
 
         .items-table td {
-            border-bottom: 0.5px dashed #000;
+            border-bottom: 1px solid #000;
             padding: 0.8mm 0.65mm;
-            font-size: 10.8px;
-            font-weight: 600;
+            font-size: 11px;
+            font-weight: 700;
             vertical-align: top;
         }
 
@@ -206,7 +208,7 @@
 
         .item-sub {
             display: block;
-            font-size: 9.5px;
+            font-size: 9.8px;
             margin-top: 0.2mm;
             font-weight: 600;
             opacity: 0.9;
@@ -218,10 +220,10 @@
         }
 
         .totals-table td {
-            border-bottom: 0.5px dashed #000;
+            border-bottom: 1px solid #000;
             padding: 0.95mm 0.7mm;
-            font-size: 10.8px;
-            font-weight: 600;
+            font-size: 11.2px;
+            font-weight: 700;
         }
 
         .totals-table tr:last-child td {
@@ -259,13 +261,13 @@
         }
 
         .print-time {
-            font-size: 10.3px;
-            font-weight: 600;
+            font-size: 10.6px;
+            font-weight: 700;
             margin-bottom: 0.7mm;
         }
 
         .footer-note {
-            font-size: 9.8px;
+            font-size: 10.1px;
             font-weight: 600;
             line-height: 1.3;
             margin-top: 0.55mm;
