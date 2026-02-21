@@ -129,7 +129,7 @@
                                             <td class="fw-semibold">{{ $summary['tailor_name'] }}</td>
                                             <td class="text-center"><span class="summary-pill">{{ $summary['assignment_count'] }}</span></td>
                                             <td class="text-center"><span class="badge bg-warning bg-opacity-10 text-warning">{{ $summary['pending_count'] }}</span></td>
-                                            <td class="text-center"><span class="badge bg-success bg-opacity-10 text-success">{{ $summary['completed_count'] + $summary['delivered_count'] }}</span></td>
+                                            <td class="text-center"><span class="badge bg-success bg-opacity-10 text-success">{{ $summary['completed_count']+$summary['delivered_count'] }}</span></td>
                                             <td class="text-center"><span class="badge bg-dark bg-opacity-10 text-dark">{{ $summary['delivered_count'] }}</span></td>
                                             <td class="text-center">
                                                 @if (!is_null($summary['avg_rating']))
@@ -181,7 +181,7 @@
                                         </td>
                                     </tr>
                                     @foreach ($itemAssignments as $index => $row)
-                                        <tr wire:key="tailor-assignment-row-{{ $row['assignment_id'] }}">
+                                        <tr wire:key="tailor-assignment-row-{{ $row['assignment_id'] }}-{{ $row['status'] ?? 'pending' }}">
                                             <td class="fw-semibold">{{ $index + 1 }}</td>
                                             <td>{{ $row['tailor_name'] ?: '-' }}</td>
                                             <td class="text-end fw-semibold">{{ currency($row['tailor_commission']) }}</td>

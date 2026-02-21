@@ -7,6 +7,7 @@ use App\Models\TailoringOrder;
 use App\Models\TailoringOrderItemTailor;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
+use App\Models\TailoringOrderItem;
 
 class OrderTailorActionModal extends Component
 {
@@ -45,7 +46,7 @@ class OrderTailorActionModal extends Component
 
     public function updateTailorAssignmentStatus($assignmentId, $status): void
     {
-        $status = (string) $status;
+        $status = strtolower(trim((string) $status));
         $assignment = TailoringOrderItemTailor::with('tailoringOrderItem.order')->find($assignmentId);
 
         if (! $assignment || ! $assignment->tailoringOrderItem || ! $assignment->tailoringOrderItem->order) {
@@ -97,7 +98,6 @@ class OrderTailorActionModal extends Component
 
     public function bulkUpdateTailorAssignmentStatus($status): void
     {
-        $status = (string) $status;
         $allowedStatuses = array_keys($this->tailorStatusOptions);
         if (! in_array($status, $allowedStatuses, true)) {
             $this->dispatch('error', ['message' => 'Invalid tailor status selected for bulk update']);
@@ -112,54 +112,37 @@ class OrderTailorActionModal extends Component
             return;
         }
 
-        $assignmentIds = collect($this->selectedTailorAssignments ?? [])
-            ->filter(fn ($row) => (string) ($row['status'] ?? 'pending') !== 'pending')
-            ->pluck('assignment_id')
-            ->filter()
-            ->map(fn ($id) => (int) $id)
-            ->unique()
-            ->values();
+        $eligibleAssignmentIds = TailoringOrderItemTailor::query()
+            ->whereHas('tailoringOrderItem', function ($query) use ($selectedOrderId) {
+                $query->where('tailoring_order_id', $selectedOrderId);
+            })
+            ->where('status', '!=', 'pending')
+            ->pluck('id');
 
-        if ($assignmentIds->isEmpty()) {
-            $this->dispatch('error', ['message' => 'No eligible assignments found for bulk update']);
-
-            return;
-        }
-
-        $assignments = TailoringOrderItemTailor::with('tailoringOrderItem.order')
-            ->whereIn('id', $assignmentIds)
-            ->get()
-            ->filter(function ($assignment) use ($selectedOrderId) {
-                return $assignment->tailoringOrderItem &&
-                    $assignment->tailoringOrderItem->order &&
-                    (int) $assignment->tailoringOrderItem->order->id === $selectedOrderId;
-            });
-
-        if ($assignments->isEmpty()) {
+        if ($eligibleAssignmentIds->isEmpty()) {
             $this->dispatch('error', ['message' => 'No matching assignments found for this order']);
 
             return;
         }
-
-        $updatedItemIds = [];
-        foreach ($assignments as $assignment) {
-            if ((string) ($assignment->status ?? 'pending') === 'pending') {
-                continue;
-            }
-
-            $assignment->update([
+        $updatedCount = TailoringOrderItemTailor::query()
+            ->whereIn('id', $eligibleAssignmentIds)
+            ->where('status', '!=', $status)
+            ->update([
                 'status' => $status,
                 'updated_by' => Auth::id(),
             ]);
 
-            $updatedItemIds[] = (int) $assignment->tailoring_order_item_id;
-        }
+        $itemIds = TailoringOrderItemTailor::query()
+            ->whereIn('id', $eligibleAssignmentIds)
+            ->pluck('tailoring_order_item_id')
+            ->map(fn ($id) => (int) $id)
+            ->unique()
+            ->values();
 
-        $itemIds = collect($updatedItemIds)->unique()->values();
         if ($itemIds->isNotEmpty()) {
-            $items = $assignments->pluck('tailoringOrderItem')
-                ->filter(fn ($item) => $item && $itemIds->contains((int) $item->id))
-                ->unique('id');
+            $items = TailoringOrderItem::query()
+                ->whereIn('id', $itemIds)
+                ->get();
 
             $syncAction = new SyncTailorAssignmentAction();
             foreach ($items as $item) {
@@ -172,7 +155,7 @@ class OrderTailorActionModal extends Component
             $this->setTailorActionModalData($order);
         }
 
-        $this->dispatch('success', ['message' => 'Tailor statuses updated in bulk successfully']);
+        $this->dispatch('success', ['message' => $updatedCount > 0 ? "Updated {$updatedCount} tailor statuses successfully" : 'All eligible rows are already in the selected status']);
     }
 
     protected function getOrderForTailorActionModal(int $orderId): ?TailoringOrder
@@ -207,7 +190,7 @@ class OrderTailorActionModal extends Component
                         'tailor_commission' => (float) ($assignment->tailor_commission ?? 0),
                         'completion_date' => $assignment->completion_date ? $assignment->completion_date->format('Y-m-d') : null,
                         'rating' => $assignment->rating !== null ? (int) $assignment->rating : null,
-                        'status' => (string) ($assignment->status ?? 'pending'),
+                        'status' => strtolower(trim((string) ($assignment->status ?? 'pending'))),
                     ];
                 });
             })
