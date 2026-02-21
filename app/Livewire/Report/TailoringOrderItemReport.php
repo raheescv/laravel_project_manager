@@ -161,7 +161,6 @@ class TailoringOrderItemReport extends Component
             'used_quantity' => true,
             'wastage' => true,
             'total_quantity_used' => true,
-            'is_selected_for_completion' => true,
             'tailoring_notes' => true,
             'completion_status' => true,
             'delivery_status' => true,

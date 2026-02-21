@@ -92,7 +92,7 @@ class UpdateAction
                 // Validate max_discount_per_sale
                 $user = User::find($this->userId);
                 if ($totalDiscount) {
-                    $user->validateMaxDiscount($this->model->gross_amount, $totalDiscount);
+                    User::validateMaxDiscount($user->max_discount_per_sale, $this->model->gross_amount, $totalDiscount);
                 }
 
                 if ($model['status'] == 'completed') {

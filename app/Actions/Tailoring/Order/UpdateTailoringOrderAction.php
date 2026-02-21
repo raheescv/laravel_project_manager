@@ -56,28 +56,78 @@ class UpdateTailoringOrderAction
 
     private function updateItems($order, $items, $userId)
     {
-        // Delete items not in the new list
-        $existingItemIds = collect($items)->pluck('id')->filter()->toArray();
-        $order->items()->whereNotIn('id', $existingItemIds)->delete();
+        // Keep items not present in payload until completion processing reverses their stock.
+        $incomingItemIds = collect($items)->pluck('id')->filter()->map(fn ($id) => (int) $id)->values()->all();
+        $removedItemIds = $order->items()->whereNotIn('id', $incomingItemIds)->pluck('id')->map(fn ($id) => (int) $id)->values()->all();
 
         // Update or create items
         $itemNo = 1;
+        $completionItemsData = [];
         foreach ($items as $itemData) {
+            $baseItemData = $this->baseItemData($itemData);
+
             if (isset($itemData['id']) && $itemData['id']) {
                 // Update existing item
-                $itemData['item_no'] = $itemNo++;
-                $response = (new Item\UpdateTailoringItemAction())->execute($itemData['id'], $itemData, $userId);
+                $baseItemData['item_no'] = $itemNo++;
+                $response = (new Item\UpdateTailoringItemAction())->execute($itemData['id'], $baseItemData, $userId);
+                $itemId = (int) $itemData['id'];
             } else {
                 // Create new item
-                $itemData['tailoring_order_id'] = $order->id;
-                $itemData['item_no'] = $itemNo++;
-                $response = (new Item\AddTailoringItemAction())->execute($itemData, $userId);
+                $baseItemData['tailoring_order_id'] = $order->id;
+                $baseItemData['item_no'] = $itemNo++;
+                $response = (new Item\AddTailoringItemAction())->execute($baseItemData, $userId);
+                $itemId = (int) $response['data']->id;
             }
 
             if (! $response['success']) {
                 throw new Exception($response['message'], 1);
             }
+
+            $completionItemsData[] = array_merge( ['id' => $itemId], $this->completionData($itemData) );
         }
+
+        foreach ($removedItemIds as $removedItemId) {
+            $completionItemsData[] = [
+                'id' => $removedItemId,
+                'used_quantity' => 0,
+                'wastage' => 0,
+                'completed_quantity' => 0,
+                'delivered_quantity' => 0,
+                'is_selected_for_completion' => false,
+                'tailor_assignments' => [],
+                'status' => 'pending',
+            ];
+        }
+        if (! empty($completionItemsData)) {
+            (new ProcessOrderCompletionItemsAction())->execute($order, $completionItemsData, (int) $userId);
+        }
+
+        if (! empty($removedItemIds)) {
+            $order->items()->whereIn('id', $removedItemIds)->delete();
+        }
+    }
+
+    private function baseItemData(array $itemData): array
+    {
+        unset(
+            $itemData['used_quantity'],
+            $itemData['wastage'],
+            $itemData['item_completion_date'],
+            $itemData['completed_quantity'],
+            $itemData['delivered_quantity'],
+            $itemData['is_selected_for_completion'],
+            $itemData['tailor_assignment'],
+            $itemData['tailor_assignments'],
+            $itemData['status']
+        );
+
+        return $itemData;
+    }
+
+    private function completionData(array $itemData): array
+    {
+        $data['used_quantity'] = $itemData['quantity'] * $itemData['quantity_per_item'];
+        return $data;
     }
 
     private function updatePayments($order, $payments, $userId)

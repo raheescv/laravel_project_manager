@@ -78,4 +78,15 @@ trait ApiResponseTrait
     {
         return $this->sendError($message, [], 500);
     }
+
+    private function respondWithActionResult(array $result): JsonResponse
+    {
+        if (! empty($result['success'])) {
+            return $this->sendSuccess($result['data'] ?? null, $result['message'] ?? 'Success');
+        }
+
+        $errorData = $result['data'] ?? [];
+
+        return $this->sendError($result['message'] ?? 'Error occurred', is_array($errorData) ? $errorData : [], 200);
+    }
 }

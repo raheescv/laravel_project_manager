@@ -28,7 +28,10 @@ class CreateTailoringOrderAction
                 validationHelper(TailoringOrder::rules(), $data);
                 $this->model = TailoringOrder::create($data);
 
-                $this->items($data['items'] ?? []);
+                $completionItemsData = $this->items($data['items'] ?? []);
+                if (! empty($completionItemsData)) {
+                    (new ProcessOrderCompletionItemsAction())->execute($this->model, $completionItemsData, (int) $this->userId);
+                }
 
                 if ($data['payment_method'] != 'credit') {
                     $this->payments($data['payments'] ?? []);
@@ -44,9 +47,7 @@ class CreateTailoringOrderAction
                 $totalDiscount = ($this->model->item_discount ?? 0) + ($this->model->other_discount ?? 0);
                 if ($totalDiscount) {
                     $user = User::find($this->userId);
-                    if (method_exists($user, 'validateMaxDiscount')) {
-                        $user->validateMaxDiscount($this->model->gross_amount, $totalDiscount);
-                    }
+                    User::validateMaxDiscount($user->max_discount_per_sale, $this->model->gross_amount, $totalDiscount);
                 }
             });
 
@@ -66,17 +67,40 @@ class CreateTailoringOrderAction
         return $return;
     }
 
-    private function items($data)
+    private function items($data): array
     {
         $itemNo = 1;
+        $completionItemsData = [];
         foreach ($data as $value) {
-            $value['tailoring_order_id'] = $this->model->id;
-            $value['item_no'] = $itemNo++;
-            $response = (new Item\AddTailoringItemAction())->execute($value, $this->userId);
+            $baseItemData = $this->baseItemData($value);
+            $baseItemData['tailoring_order_id'] = $this->model->id;
+            $baseItemData['item_no'] = $itemNo++;
+
+            $response = (new Item\AddTailoringItemAction())->execute($baseItemData, $this->userId);
             if (! $response['success']) {
                 throw new Exception($response['message'], 1);
             }
+
+            $completionItemsData[] = array_merge(['id' => (int) $response['data']->id], $this->completionData($baseItemData));
         }
+
+        return $completionItemsData;
+    }
+
+    private function baseItemData(array $itemData): array
+    {
+        unset(
+            $itemData['category'],
+        );
+
+        return $itemData;
+    }
+
+    private function completionData(array $itemData): array
+    {
+        $data['used_quantity'] = $itemData['quantity'] * $itemData['quantity_per_item'];
+
+        return $data;
     }
 
     private function payments($data)

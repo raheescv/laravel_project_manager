@@ -9,8 +9,8 @@ use App\Actions\Tailoring\Order\GetTailoringOrderAction;
 use App\Actions\Tailoring\Order\Item\AddTailoringItemAction;
 use App\Actions\Tailoring\Order\Item\DeleteTailoringItemAction;
 use App\Actions\Tailoring\Order\Item\UpdateTailoringItemAction;
-use App\Actions\Tailoring\Order\SubmitOrderCompletionAction;
-use App\Actions\Tailoring\Order\UpdateOrderCompletionAction;
+use App\Actions\Tailoring\Order\SaveItemCompletionAction;
+use App\Actions\Tailoring\Order\SaveOrderCompletionAction;
 use App\Actions\Tailoring\Order\UpdateTailoringOrderAction;
 use App\Actions\Tailoring\Payment\CreateAction as PaymentCreateAction;
 use App\Actions\Tailoring\Payment\DeleteAction as PaymentDeleteAction;
@@ -29,9 +29,9 @@ use App\Models\TailoringCategoryModel;
 use App\Models\TailoringCategoryModelType;
 use App\Models\TailoringMeasurementOption;
 use App\Models\TailoringOrder;
-use App\Models\TailoringOrderItem;
 use App\Models\TailoringOrderMeasurement;
 use App\Models\User;
+use App\Traits\ApiResponseTrait;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -40,6 +40,8 @@ use Inertia\Inertia;
 
 class OrderController extends Controller
 {
+    use ApiResponseTrait;
+
     // Web Routes
     public function index(Request $request)
     {
@@ -189,13 +191,9 @@ class OrderController extends Controller
 
         if ($result['success']) {
             if ($request->wantsJson() || $request->expectsJson()) {
-                return response()->json([
-                    'success' => true,
-                    'message' => $result['message'],
-                    'data' => [
-                        'id' => $result['data']->id,
-                    ],
-                ]);
+                $data = ['id' => $result['data']->id];
+
+                return $this->sendSuccess($data, $result['message']);
             }
 
             return redirect()->route('tailoring::order::show', $result['data']->id)
@@ -203,10 +201,7 @@ class OrderController extends Controller
         }
 
         if ($request->wantsJson() || $request->expectsJson()) {
-            return response()->json([
-                'success' => false,
-                'message' => $result['message'],
-            ], 422);
+            return $this->sendError($result['message'], [], 422);
         }
 
         return back()->withErrors(['error' => $result['message']]);
@@ -219,24 +214,16 @@ class OrderController extends Controller
 
         if ($result['success']) {
             if ($request->wantsJson() || $request->expectsJson()) {
-                return response()->json([
-                    'success' => true,
-                    'message' => $result['message'],
-                    'data' => [
-                        'id' => $id,
-                    ],
-                ]);
+                $data = ['id' => $id];
+
+                return $this->sendSuccess($data, $result['message']);
             }
 
-            return redirect()->route('tailoring::order::show', $id)
-                ->with('success', $result['message']);
+            return redirect()->route('tailoring::order::show', $id)->with('success', $result['message']);
         }
 
         if ($request->wantsJson() || $request->expectsJson()) {
-            return response()->json([
-                'success' => false,
-                'message' => $result['message'],
-            ], 422);
+            return $this->sendError($result['message'], [], 422);
         }
 
         return back()->withErrors(['error' => $result['message']]);
@@ -247,12 +234,10 @@ class OrderController extends Controller
         $result = (new DeleteTailoringOrderAction())->execute((int) $id, (int) Auth::id());
 
         if (! $result['success']) {
-            return redirect()->route('tailoring::order::index')
-                ->with('error', $result['message']);
+            return redirect()->route('tailoring::order::index')->with('error', $result['message']);
         }
 
-        return redirect()->route('tailoring::order::index')
-            ->with('success', 'Order and all related data removed successfully');
+        return redirect()->route('tailoring::order::index')->with('success', 'Order and all related data removed successfully');
     }
 
     // API Routes
@@ -260,10 +245,7 @@ class OrderController extends Controller
     {
         $categories = TailoringCategory::with(['activeModels', 'activeMeasurements'])->active()->ordered()->get();
 
-        return response()->json([
-            'success' => true,
-            'data' => $categories,
-        ]);
+        return $this->sendSuccess($categories);
     }
 
     public function getCategoryModels($categoryId): JsonResponse
@@ -273,10 +255,7 @@ class OrderController extends Controller
             ->orderBy('name')
             ->get(['id', 'name']);
 
-        return response()->json([
-            'success' => true,
-            'data' => $models,
-        ]);
+        return $this->sendSuccess($models);
     }
 
     public function addCategoryModel(Request $request): JsonResponse
@@ -292,11 +271,7 @@ class OrderController extends Controller
             'is_active' => true,
         ]);
 
-        return response()->json([
-            'success' => true,
-            'data' => $model,
-            'message' => 'Category model added successfully',
-        ]);
+        return $this->sendSuccess($model, 'Category model added successfully');
     }
 
     public function getCategoryModelTypes($categoryId): JsonResponse
@@ -306,10 +281,7 @@ class OrderController extends Controller
             ->orderBy('name')
             ->get(['id', 'name']);
 
-        return response()->json([
-            'success' => true,
-            'data' => $types,
-        ]);
+        return $this->sendSuccess($types);
     }
 
     public function addCategoryModelType(Request $request): JsonResponse
@@ -328,11 +300,7 @@ class OrderController extends Controller
             'is_active' => true,
         ]);
 
-        return response()->json([
-            'success' => true,
-            'data' => $type,
-            'message' => 'Category model type added successfully',
-        ]);
+        return $this->sendSuccess($type, 'Category model type added successfully');
     }
 
     public function getProducts(Request $request): JsonResponse
@@ -367,10 +335,7 @@ class OrderController extends Controller
                 'products.mrp',
             ]);
 
-        return response()->json([
-            'success' => true,
-            'data' => $products,
-        ]);
+        return $this->sendSuccess($products);
     }
 
     public function getProductByBarcode(Request $request): JsonResponse
@@ -397,10 +362,11 @@ class OrderController extends Controller
                 'products.mrp',
             ]);
 
-        return response()->json([
-            'success' => (bool) $product,
-            'data' => $product,
-        ]);
+        if (! $product) {
+            return $this->sendError('Product not found', [], 200);
+        }
+
+        return $this->sendSuccess($product);
     }
 
     public function getProductColors(Request $request): JsonResponse
@@ -412,20 +378,14 @@ class OrderController extends Controller
             ->filter()
             ->values();
 
-        return response()->json([
-            'success' => true,
-            'data' => $colors,
-        ]);
+        return $this->sendSuccess($colors);
     }
 
     public function getMeasurementOptionsApi(): JsonResponse
     {
         $options = $this->getMeasurementOptions();
 
-        return response()->json([
-            'success' => true,
-            'data' => $options,
-        ]);
+        return $this->sendSuccess($options);
     }
 
     public function getOldMeasurements($accountId, $categoryId): JsonResponse
@@ -483,10 +443,7 @@ class OrderController extends Controller
             return $item;
         })->values()->toArray();
 
-        return response()->json([
-            'success' => true,
-            'data' => $data,
-        ]);
+        return $this->sendSuccess($data);
     }
 
     public function addMeasurementOption(Request $request): JsonResponse
@@ -511,11 +468,7 @@ class OrderController extends Controller
             'value' => $request->value,
         ]);
 
-        return response()->json([
-            'success' => true,
-            'data' => $option,
-            'message' => 'Measurement option added successfully',
-        ]);
+        return $this->sendSuccess($option, 'Measurement option added successfully');
     }
 
     public function addItem(Request $request): JsonResponse
@@ -523,7 +476,7 @@ class OrderController extends Controller
         $action = new AddTailoringItemAction();
         $result = $action->execute($request->all(), Auth::id());
 
-        return response()->json($result);
+        return $this->respondWithActionResult($result);
     }
 
     public function updateItem(Request $request, $id): JsonResponse
@@ -531,7 +484,7 @@ class OrderController extends Controller
         $action = new UpdateTailoringItemAction();
         $result = $action->execute($id, $request->all(), Auth::id());
 
-        return response()->json($result);
+        return $this->respondWithActionResult($result);
     }
 
     public function removeItem($id): JsonResponse
@@ -539,7 +492,7 @@ class OrderController extends Controller
         $action = new DeleteTailoringItemAction();
         $result = $action->execute($id, Auth::id());
 
-        return response()->json($result);
+        return $this->respondWithActionResult($result);
     }
 
     public function calculateAmount(Request $request): JsonResponse
@@ -557,15 +510,14 @@ class OrderController extends Controller
         $taxAmount = ($netAmount * $tax) / 100;
         $total = $netAmount + $taxAmount + ($stitchRate * $quantity);
 
-        return response()->json([
-            'success' => true,
-            'data' => [
-                'gross_amount' => round($grossAmount, 2),
-                'net_amount' => round($netAmount, 2),
-                'tax_amount' => round($taxAmount, 2),
-                'total' => round($total, 2),
-            ],
-        ]);
+        $data = [
+            'gross_amount' => round($grossAmount, 2),
+            'net_amount' => round($netAmount, 2),
+            'tax_amount' => round($taxAmount, 2),
+            'total' => round($total, 2),
+        ];
+
+        return $this->sendSuccess($data);
     }
 
     // Payment API Methods
@@ -574,7 +526,7 @@ class OrderController extends Controller
         $action = new PaymentCreateAction();
         $result = $action->execute($request->all(), Auth::id());
 
-        return response()->json($result);
+        return $this->respondWithActionResult($result);
     }
 
     public function updatePayment(Request $request, $id): JsonResponse
@@ -582,7 +534,7 @@ class OrderController extends Controller
         $action = new PaymentUpdateAction();
         $result = $action->execute($id, $request->all(), Auth::id());
 
-        return response()->json($result);
+        return $this->respondWithActionResult($result);
     }
 
     public function deletePayment($id): JsonResponse
@@ -590,7 +542,7 @@ class OrderController extends Controller
         $action = new PaymentDeleteAction();
         $result = $action->execute($id, Auth::id());
 
-        return response()->json($result);
+        return $this->respondWithActionResult($result);
     }
 
     public function getPayments($orderId): JsonResponse
@@ -601,10 +553,7 @@ class OrderController extends Controller
             ->orderBy('date')
             ->get();
 
-        return response()->json([
-            'success' => true,
-            'data' => $payments,
-        ]);
+        return $this->sendSuccess($payments);
     }
 
     public function getItem($orderId, $itemId): JsonResponse
@@ -613,26 +562,17 @@ class OrderController extends Controller
         $result = $action->execute($orderId);
 
         if (! $result['success']) {
-            return response()->json([
-                'success' => false,
-                'message' => $result['message'] ?? 'Order not found',
-            ], 404);
+            return $this->sendNotFoundError($result['message'] ?? 'Order not found');
         }
 
         $order = $result['data'];
         $item = $order->items->firstWhere('id', (int) $itemId);
 
         if (! $item) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Item not found',
-            ], 404);
+            return $this->sendNotFoundError('Item not found');
         }
 
-        return response()->json([
-            'success' => true,
-            'data' => $item,
-        ]);
+        return $this->sendSuccess($item);
     }
 
     // Job Completion API Methods
@@ -641,7 +581,7 @@ class OrderController extends Controller
         $action = new GetOrderByOrderNumberAction();
         $result = $action->execute($orderNo);
 
-        return response()->json($result);
+        return $this->respondWithActionResult($result);
     }
 
     public function searchOrders(Request $request): JsonResponse
@@ -676,60 +616,48 @@ class OrderController extends Controller
             $query->where('account_id', $request->account_id);
         }
 
-        $orders = $query->latest()
-            ->limit(20)
-            ->get(['id', 'order_no', 'customer_name', 'customer_mobile', 'order_date', 'delivery_date', 'status']);
+        $orders = $query->latest()->limit(20)->get(['id', 'order_no', 'customer_name', 'customer_mobile', 'order_date', 'delivery_date', 'status']);
 
-        return response()->json([
-            'success' => true,
-            'data' => $orders,
-        ]);
+        return $this->sendSuccess($orders);
     }
 
     public function updateCompletion(Request $request, $id): JsonResponse
     {
-        $action = new UpdateOrderCompletionAction();
-        $result = $action->execute($id, $request->all(), Auth::id());
+        $action = new SaveOrderCompletionAction();
+        // update flow: do not force default completion date
+        $result = $action->execute($id, $request->all(), Auth::id(), ['default_completion_date' => false]);
 
-        return response()->json($result);
+        return $this->respondWithActionResult($result);
     }
 
     public function submitCompletion(Request $request, $id): JsonResponse
     {
-        $action = new SubmitOrderCompletionAction();
-        $result = $action->execute($id, $request->all(), Auth::id());
+        $action = new SaveOrderCompletionAction();
+        // submit flow: if completion_date not provided, set to today
+        $result = $action->execute($id, $request->all(), Auth::id(), ['default_completion_date' => true]);
 
-        return response()->json($result);
+        return $this->respondWithActionResult($result);
     }
 
     public function getRacks(): JsonResponse
     {
         $racks = Rack::active()->orderBy('name')->get(['id', 'name']);
 
-        return response()->json([
-            'success' => true,
-            'data' => $racks,
-        ]);
+        return $this->sendSuccess($racks);
     }
 
     public function getTailors(): JsonResponse
     {
         $tailors = User::employee()->active()->orderBy('name')->get(['id', 'name']);
 
-        return response()->json([
-            'success' => true,
-            'data' => $tailors,
-        ]);
+        return $this->sendSuccess($tailors);
     }
 
     public function getCutters(): JsonResponse
     {
         $cutters = User::employee()->active()->orderBy('name')->get(['id', 'name']);
 
-        return response()->json([
-            'success' => true,
-            'data' => $cutters,
-        ]);
+        return $this->sendSuccess($cutters);
     }
 
     public function calculateStockBalance(Request $request): JsonResponse
@@ -741,13 +669,12 @@ class OrderController extends Controller
         $totalQuantityUsed = $usedQuantity + $wastage;
         $stockBalance = $stockQuantity - $totalQuantityUsed;
 
-        return response()->json([
-            'success' => true,
-            'data' => [
-                'total_quantity_used' => round($totalQuantityUsed, 3),
-                'stock_balance' => round($stockBalance, 3),
-            ],
-        ]);
+        $data = [
+            'total_quantity_used' => round($totalQuantityUsed, 3),
+            'stock_balance' => round($stockBalance, 3),
+        ];
+
+        return $this->sendSuccess($data);
     }
 
     public function calculateTailorCommission(Request $request): JsonResponse
@@ -756,42 +683,17 @@ class OrderController extends Controller
         $quantity = (float) ($request->quantity ?? 0);
 
         $totalCommission = $commission * $quantity;
+        $data = ['tailor_total_commission' => round($totalCommission, 2)];
 
-        return response()->json([
-            'success' => true,
-            'data' => [
-                'tailor_total_commission' => round($totalCommission, 2),
-            ],
-        ]);
+        return $this->sendSuccess($data);
     }
 
     public function updateItemCompletion(Request $request, $itemId): JsonResponse
     {
-        $item = TailoringOrderItem::findOrFail($itemId);
-        $item->updateCompletion($request->all());
+        $action = new SaveItemCompletionAction();
+        $result = $action->execute($itemId, $request->all(), Auth::id());
 
-        // Reload with relationships and append measurements (product with stock_quantity to match initial order load)
-        $item = $item->fresh([
-            'category' => fn ($q) => $q->with('activeMeasurements'),
-            'categoryModel',
-            'categoryModelType',
-            'inventory:id,product_id,branch_id,quantity,barcode,batch',
-            'product:id,name',
-            'unit',
-            'tailorAssignments.tailor:id,name',
-            'latestTailorAssignment.tailor:id,name',
-        ]);
-        $order = $item->order()->with(['measurements.category.activeMeasurements'])->first();
-
-        $order->setRelation('items', collect([$item]));
-        $order->appendMeasurementsToItems();
-        $updatedItem = $order->items->first();
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Item completion updated successfully',
-            'data' => $updatedItem,
-        ]);
+        return $this->respondWithActionResult($result);
     }
 
     public function getProductStock(Request $request, $productId): JsonResponse
@@ -808,12 +710,9 @@ class OrderController extends Controller
                 ->value('quantity');
         }
 
-        return response()->json([
-            'success' => true,
-            'data' => [
-                'stock_quantity' => $stockQuantity,
-            ],
-        ]);
+        $data = ['stock_quantity' => $stockQuantity];
+
+        return $this->sendSuccess($data);
     }
 
     public function printCuttingSlip($id, $categoryId, $modelId = 'all')

@@ -220,7 +220,7 @@ class OrderSearch extends Component
                         });
                 });
             })
-            ->when((int) $this->pending_only === 1, fn ($q) => $q->where('tailoring_orders.status','pending'))
+            ->when((int) $this->pending_only === 1, fn ($q) => $q->where('tailoring_orders.status', 'pending'))
             ->when((int) $this->pending_only === 2, fn ($q) => $q->where('tailoring_orders.balance', '>', 0));
     }
 
