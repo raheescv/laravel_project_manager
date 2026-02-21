@@ -57,7 +57,7 @@ class PrintController extends Controller
             'pageTitle' => 'Tailoring Customer Receipt',
         ]);
 
-        return view('print.sale.receipt', $data);
+        return view('print.tailoring.customer-receipt-thermal', $data);
     }
 
     /**
