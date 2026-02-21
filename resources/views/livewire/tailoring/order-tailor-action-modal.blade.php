@@ -67,7 +67,7 @@
                             <i class="fa fa-info-circle me-1"></i>Status Selection Guide
                         </div>
                         <div class="guide-items">
-                            <span class="guide-chip guide-pending"><i class="fa fa-clock-o me-1"></i>Pending: Work not finished</span>
+                            <span class="guide-chip guide-pending"><i class="fa fa-clock-o me-1"></i>Pending: Initial status only (cannot be selected here)</span>
                             <span class="guide-chip guide-completed"><i class="fa fa-check-circle me-1"></i>Completed: Stitching finished</span>
                             <span class="guide-chip guide-delivered"><i class="fa fa-truck me-1"></i>Delivered: Handed to customer</span>
                         </div>
@@ -186,11 +186,14 @@
                                                 </div>
                                             </td>
                                             <td style="min-width: 170px;">
-                                                <div class="tailor-status-radio-group">
+                                                @php
+                                                    $isPendingAssignment = ($row['status'] ?? 'pending') === 'pending';
+                                                @endphp
+                                                <div class="tailor-status-radio-group {{ $isPendingAssignment ? 'opacity-50' : '' }}">
                                                     @foreach ($tailorStatusOptions as $statusKey => $statusLabel)
                                                         <label class="tailor-status-radio-option tailor-status-{{ str_replace(' ', '-', $statusKey) }}">
                                                             <input type="radio" name="tailor_status_{{ $row['assignment_id'] }}" value="{{ $statusKey }}"
-                                                                wire:change="updateTailorAssignmentStatus({{ $row['assignment_id'] }}, '{{ $statusKey }}')" @checked(($row['status'] ?? 'pending') === $statusKey)>
+                                                                wire:change="updateTailorAssignmentStatus({{ $row['assignment_id'] }}, '{{ $statusKey }}')" @checked(($row['status'] ?? 'pending') === $statusKey) @disabled($isPendingAssignment)>
                                                             <span class="status-pill-label">
                                                                 <i class="fa {{ $statusKey === 'pending' ? 'fa-clock-o' : ($statusKey === 'completed' ? 'fa-check-circle' : 'fa-truck') }} me-1"></i>
                                                                 {{ $statusLabel }}
@@ -198,6 +201,9 @@
                                                         </label>
                                                     @endforeach
                                                 </div>
+                                                @if ($isPendingAssignment)
+                                                    <small class="text-muted d-block mt-1">Pending item is locked in this screen.</small>
+                                                @endif
                                             </td>
                                         </tr>
                                     @endforeach

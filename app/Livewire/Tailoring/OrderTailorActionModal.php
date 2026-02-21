@@ -15,7 +15,6 @@ class OrderTailorActionModal extends Component
     public $selectedTailorAssignments = [];
 
     public $tailorStatusOptions = [
-        'pending' => 'Pending',
         'completed' => 'Completed',
         'delivered' => 'Delivered',
     ];
@@ -47,12 +46,6 @@ class OrderTailorActionModal extends Component
     public function updateTailorAssignmentStatus($assignmentId, $status): void
     {
         $status = (string) $status;
-        if (! in_array($status, array_keys($this->tailorStatusOptions), true)) {
-            $this->dispatch('error', ['message' => 'Invalid tailor status selected']);
-
-            return;
-        }
-
         $assignment = TailoringOrderItemTailor::with('tailoringOrderItem.order')->find($assignmentId);
 
         if (! $assignment || ! $assignment->tailoringOrderItem || ! $assignment->tailoringOrderItem->order) {
@@ -67,6 +60,24 @@ class OrderTailorActionModal extends Component
             $this->dispatch('error', ['message' => 'This assignment does not belong to the selected order']);
 
             return;
+        }
+
+        $allowedStatuses = array_keys($this->tailorStatusOptions);
+        $currentStatus = (string) ($assignment->status ?? 'pending');
+
+        if ($currentStatus === 'pending') {
+            $this->dispatch('error', ['message' => 'Pending assignments cannot be changed from this screen']);
+
+            return;
+        }
+
+        if (! in_array($status, $allowedStatuses, true)) {
+            // Allow keeping an already pending assignment as pending; block reverting to pending.
+            if (! ($status === 'pending' && $currentStatus === 'pending')) {
+                $this->dispatch('error', ['message' => 'Pending status cannot be selected from this screen']);
+
+                return;
+            }
         }
 
         $assignment->update([
