@@ -35,6 +35,25 @@ class CustomerReceipt extends Component
 
     public $paymentMethods = [];
 
+    public function mount(): void
+    {
+        $ids = cache('payment_methods', []);
+        $this->paymentMethods = $ids
+            ? Account::whereIn('id', $ids)->pluck('name', 'id')->toArray()
+            : Account::where('id', $this->default_payment_method_id)->pluck('name', 'id')->toArray();
+
+        $this->default_payment_method_id = array_key_exists($this->default_payment_method_id, $this->paymentMethods)
+            ? $this->default_payment_method_id
+            : (array_key_first($this->paymentMethods) ?: 1);
+
+        $this->payment = [
+            'date' => date('Y-m-d'),
+            'amount' => 0,
+            'remarks' => '',
+            'payment_method_id' => $this->default_payment_method_id,
+        ];
+    }
+
     public function open($payload)
     {
         if (is_array($payload)) {
@@ -49,13 +68,12 @@ class CustomerReceipt extends Component
 
     public function loadOrders()
     {
-        $ids = cache('payment_methods', []);
-        $this->paymentMethods = $ids ? Account::whereIn('id', $ids)->pluck('name', 'id')->toArray() : Account::where('id', $this->default_payment_method_id)->pluck('name', 'id')->toArray();
+        $defaultPaymentMethodId = $this->default_payment_method_id;
         $this->payment = [
             'date' => date('Y-m-d'),
             'amount' => 0,
             'remarks' => '',
-            'payment_method_id' => $this->default_payment_method_id,
+            'payment_method_id' => $defaultPaymentMethodId,
         ];
         $this->total = [
             'total' => 0,
@@ -107,6 +125,7 @@ class CustomerReceipt extends Component
                 'selected' => false,
             ];
         }
+
     }
 
     public function updated($key, $value)

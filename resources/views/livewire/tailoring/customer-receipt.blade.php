@@ -28,7 +28,7 @@
                                     <label class="form-label text-muted fw-semibold small mb-2" for="tailoring_receipt_amount">
                                         <i class="demo-pli-money me-1"></i> Amount
                                     </label>
-                                    <input type="number" step="any" wire:model.live="payment.amount" id="tailoring_receipt_amount" class="form-control form-control-sm number" required>
+                                    <input type="number" step="any" wire:model.lazy="payment.amount" id="tailoring_receipt_amount" class="form-control form-control-sm number" required>
                                 </div>
                             </div>
                             <div class="col-md-4" wire:ignore>
