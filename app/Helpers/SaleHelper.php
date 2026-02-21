@@ -7,6 +7,8 @@ use App\Models\Configuration;
 use App\Models\Sale;
 use App\Models\SaleDaySession;
 use App\Models\SalePayment;
+use App\Models\TailoringOrder;
+use App\Models\TailoringPayment;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\View;
 
@@ -126,6 +128,35 @@ class SaleHelper
             ->orderBy('created_at', 'asc')
             ->get();
 
+        $tailoringOrders = TailoringOrder::withoutGlobalScopes()
+            ->where('sale_day_session_id', $id)
+            ->with(['branch', 'payments.paymentMethod'])
+            ->orderBy('created_at', 'asc')
+            ->get();
+
+        $transactions = collect();
+        foreach ($sales as $sale) {
+            $transactions->push([
+                'source' => 'Sale',
+                'date' => $sale->date,
+                'reference_no' => $sale->invoice_no,
+                'payment_method' => $sale->payment_method_name,
+                'amount' => (float) $sale->grand_total,
+            ]);
+        }
+        foreach ($tailoringOrders as $order) {
+            $transactions->push([
+                'source' => 'Tailoring',
+                'date' => $order->order_date,
+                'reference_no' => $order->order_no,
+                'payment_method' => $order->payment_method_name,
+                'amount' => (float) $order->grand_total,
+            ]);
+        }
+        $transactions = $transactions->sortBy(function (array $row) {
+            return sprintf('%s|%s', $row['date'], $row['reference_no'] ?? '');
+        })->values();
+
         $paymentMethods = Account::whereIn('id', cache('payment_methods', []))->get();
         $totals['credit'] = $sales->sum('balance');
         foreach ($paymentMethods as $method) {
@@ -140,15 +171,42 @@ class SaleHelper
         foreach ($payments as $payment) {
             if ($payment->sale->sale_day_session_id != $id) {
                 $pendingPayments[] = [
+                    'source' => 'Sale',
                     'date' => $payment->date,
-                    'invoice_no' => $payment->sale->invoice_no,
+                    'reference_no' => $payment->sale->invoice_no,
                     'payment_method' => $payment->name,
                     'amount' => $payment->amount,
                 ];
             }
+            if (! isset($totals[$payment->name])) {
+                $totals[$payment->name] = 0;
+            }
             $totals[$payment->name] += $payment->amount;
         }
 
-        return view('sale.day-session-print', compact('session', 'pendingPayments', 'sales', 'totals'));
+        $tailoringPayments = TailoringPayment::whereDate('date', date('Y-m-d', strtotime($session->opened_at)))
+            ->with('order')
+            ->whereHas('order', function ($query) use ($session) {
+                $query->where('branch_id', $session->branch_id);
+            })
+            ->get();
+        foreach ($tailoringPayments as $payment) {
+            if (! $payment->order || $payment->order->sale_day_session_id != $id) {
+                $pendingPayments[] = [
+                    'source' => 'Tailoring',
+                    'date' => $payment->date,
+                    'reference_no' => $payment->order?->order_no,
+                    'payment_method' => $payment->name,
+                    'amount' => $payment->amount,
+                ];
+            }
+
+            if (! isset($totals[$payment->name])) {
+                $totals[$payment->name] = 0;
+            }
+            $totals[$payment->name] += $payment->amount;
+        }
+
+        return view('sale.day-session-print', compact('session', 'pendingPayments', 'transactions', 'totals'));
     }
 }

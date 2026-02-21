@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Tailoring\OrderController;
+use App\Http\Middleware\RequireOpenDaySession;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware('auth')->group(function (): void {
@@ -17,15 +18,18 @@ Route::middleware('auth')->group(function (): void {
         Route::get('measurement-options', [OrderController::class, 'getMeasurementOptionsApi'])->name('measurement-options');
         Route::post('measurement-options', [OrderController::class, 'addMeasurementOption'])->name('add-measurement-option');
         Route::get('old-measurements/{accountId}/{categoryId}', [OrderController::class, 'getOldMeasurements'])->name('old-measurements');
-        Route::post('add-item', [OrderController::class, 'addItem'])->name('add-item');
-        Route::put('update-item/{id}', [OrderController::class, 'updateItem'])->name('update-item');
-        Route::delete('remove-item/{id}', [OrderController::class, 'removeItem'])->name('remove-item');
-        Route::post('calculate-amount', [OrderController::class, 'calculateAmount'])->name('calculate-amount');
-        Route::post('add-payment', [OrderController::class, 'addPayment'])->name('add-payment');
-        Route::put('update-payment/{id}', [OrderController::class, 'updatePayment'])->name('update-payment');
-        Route::delete('remove-payment/{id}', [OrderController::class, 'deletePayment'])->name('remove-payment');
         Route::get('{orderId}/item/{itemId}', [OrderController::class, 'getItem'])->name('item');
         Route::get('{id}/payments', [OrderController::class, 'getPayments'])->name('payments');
+
+        Route::middleware([RequireOpenDaySession::class])->group(function (): void {
+            Route::post('add-item', [OrderController::class, 'addItem'])->name('add-item');
+            Route::put('update-item/{id}', [OrderController::class, 'updateItem'])->name('update-item');
+            Route::delete('remove-item/{id}', [OrderController::class, 'removeItem'])->name('remove-item');
+            Route::post('calculate-amount', [OrderController::class, 'calculateAmount'])->name('calculate-amount');
+            Route::post('add-payment', [OrderController::class, 'addPayment'])->name('add-payment');
+            Route::put('update-payment/{id}', [OrderController::class, 'updatePayment'])->name('update-payment');
+            Route::delete('remove-payment/{id}', [OrderController::class, 'deletePayment'])->name('remove-payment');
+        });
     });
 
     // Tailoring Order Search (must be before order routes to avoid conflict with {id})
@@ -36,10 +40,14 @@ Route::middleware('auth')->group(function (): void {
     // Tailoring Order Routes
     Route::name('tailoring::order::')->prefix('tailoring/order')->controller(OrderController::class)->group(function (): void {
         Route::get('', 'index')->name('index')->can('tailoring order.view');
-        Route::get('create', 'page')->name('create')->can('tailoring order.create');
-        Route::get('edit/{id}', 'page')->name('edit')->can('tailoring order.edit');
-        Route::post('', 'store')->name('store')->can('tailoring order.create');
-        Route::put('{id}', 'update')->name('update')->can('tailoring order.edit');
+
+        Route::middleware([RequireOpenDaySession::class])->group(function (): void {
+            Route::get('create', 'page')->name('create')->can('tailoring order.create');
+            Route::get('edit/{id}', 'page')->name('edit')->can('tailoring order.edit');
+            Route::post('', 'store')->name('store')->can('tailoring order.create');
+            Route::put('{id}', 'update')->name('update')->can('tailoring order.edit');
+        });
+
         Route::get('{id}', 'show')->name('show')->can('tailoring order.view');
         Route::get('print/cutting-slip/{id}/{category_id}/{model_id?}', 'printCuttingSlip')->name('print-cutting-slip')->can('tailoring order.view');
         Route::get('print/receipt/{id}', 'printOrderReceipt')->name('print-receipt')->can('tailoring order.view');

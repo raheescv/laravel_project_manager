@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\ValidationException;
 use Illuminate\Validation\Rule;
 use OwenIt\Auditing\Auditable;
 use OwenIt\Auditing\Contracts\Auditable as AuditableContracts;
@@ -23,6 +24,7 @@ class TailoringOrder extends Model implements AuditableContracts
         'tenant_id',
         'order_no',
         'branch_id',
+        'sale_day_session_id',
         'account_id',
         'customer_name',
         'customer_mobile',
@@ -89,6 +91,23 @@ class TailoringOrder extends Model implements AuditableContracts
             if (empty($order->created_by)) {
                 $order->created_by = Auth::id();
             }
+
+            if ($order->branch_id) {
+                if (empty($order->sale_day_session_id)) {
+                    $openSession = SaleDaySession::getOpenSessionForBranch($order->branch_id);
+                    if ($openSession) {
+                        $order->sale_day_session_id = $openSession->id;
+                        $order->order_date = $openSession->opened_at->format('Y-m-d');
+                    }
+                } else {
+                    $session = SaleDaySession::find($order->sale_day_session_id);
+                    if (! $session || $session->status !== 'open' || $session->branch_id !== (int) $order->branch_id) {
+                        throw ValidationException::withMessages([
+                            'sale_day_session_id' => 'Invalid or closed day session provided.',
+                        ]);
+                    }
+                }
+            }
         });
 
         static::updating(function ($order): void {
@@ -112,6 +131,11 @@ class TailoringOrder extends Model implements AuditableContracts
     public function account(): BelongsTo
     {
         return $this->belongsTo(Account::class, 'account_id');
+    }
+
+    public function saleDaySession(): BelongsTo
+    {
+        return $this->belongsTo(SaleDaySession::class, 'sale_day_session_id');
     }
 
     public function salesman(): BelongsTo
@@ -218,6 +242,7 @@ class TailoringOrder extends Model implements AuditableContracts
             ->when($filters['status'] ?? '', fn ($q, $value) => $q->where('tailoring_orders.status', $value))
             ->when($filters['customer_id'] ?? '', fn ($q, $value) => $q->where('tailoring_orders.account_id', $value))
             ->when($filters['branch_id'] ?? '', fn ($q, $value) => $q->where('tailoring_orders.branch_id', $value))
+            ->when($filters['sale_day_session_id'] ?? '', fn ($q, $value) => $q->where('tailoring_orders.sale_day_session_id', $value))
             ->when($filters['payment_status'] ?? '', function ($q, $value) {
                 if ($value === 'paid') {
                     return $q->where('tailoring_orders.balance', '<=', 0);

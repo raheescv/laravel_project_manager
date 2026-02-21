@@ -5,6 +5,8 @@ namespace App\Livewire\SaleDaySession;
 use App\Models\Sale;
 use App\Models\SaleDaySession;
 use App\Models\SalePayment;
+use App\Models\TailoringOrder;
+use App\Models\TailoringPayment;
 use Livewire\Component;
 use Livewire\WithPagination;
 
@@ -41,7 +43,8 @@ class DaySessionSalesList extends Component
 
     public function updatingSearch()
     {
-        $this->resetPage();
+        $this->resetPage('salesPage');
+        $this->resetPage('tailoringPage');
     }
 
     public function sortBy($field)
@@ -58,6 +61,9 @@ class DaySessionSalesList extends Component
     {
         $baseQuery = Sale::completed()->with(['account', 'payments.paymentMethod'])
             ->where('sale_day_session_id', $this->sessionId);
+        $tailoringBaseQuery = TailoringOrder::query()
+            ->with(['account', 'payments.paymentMethod'])
+            ->where('sale_day_session_id', $this->sessionId);
 
         if ($this->search) {
             $baseQuery->where(function ($q): void {
@@ -67,9 +73,26 @@ class DaySessionSalesList extends Component
                     ->orWhere('customer_mobile', 'like', $search)
                     ->orWhere('id', 'like', $search);
             });
+            $tailoringBaseQuery->where(function ($q): void {
+                $search = '%'.$this->search.'%';
+                $q->where('order_no', 'like', $search)
+                    ->orWhere('customer_name', 'like', $search)
+                    ->orWhere('customer_mobile', 'like', $search)
+                    ->orWhere('id', 'like', $search);
+            });
         }
 
         $totals = Sale::completed()->where('sale_day_session_id', $this->sessionId)
+            ->selectRaw('
+                SUM(total) as total,
+                SUM(item_discount) as item_discount,
+                SUM(tax_amount) as tax_amount,
+                SUM(paid) as paid,
+                SUM(balance) as balance,
+                COUNT(*) as total_count
+            ')
+            ->first()->toArray();
+        $tailoringTotals = TailoringOrder::query()->where('sale_day_session_id', $this->sessionId)
             ->selectRaw('
                 SUM(total) as total,
                 SUM(item_discount) as item_discount,
@@ -96,15 +119,37 @@ class DaySessionSalesList extends Component
             ->groupBy('accounts.id', 'accounts.name')
             ->get()
             ->toArray();
+        $tailoringPaymentSummary = TailoringPayment::query()
+            ->join('tailoring_orders', 'tailoring_payments.tailoring_order_id', '=', 'tailoring_orders.id')
+            ->join('accounts', 'tailoring_payments.payment_method_id', '=', 'accounts.id')
+            ->where('tailoring_orders.sale_day_session_id', $this->sessionId)
+            ->whereNull('tailoring_orders.deleted_at')
+            ->selectRaw('
+                accounts.name as payment_method_name,
+                COUNT(DISTINCT tailoring_orders.id) as count,
+                SUM(tailoring_payments.amount) as total_paid
+            ')
+            ->groupBy('accounts.id', 'accounts.name')
+            ->get()
+            ->toArray();
 
         $sales = $baseQuery
             ->orderBy($this->sortField, $this->sortDirection)
-            ->paginate($this->perPage);
+            ->paginate($this->perPage, ['*'], 'salesPage');
+        $tailoringSortField = in_array($this->sortField, ['id', 'order_no', 'customer_name', 'order_date', 'total', 'item_discount', 'tax_amount', 'paid', 'balance', 'created_at'], true)
+            ? $this->sortField
+            : 'created_at';
+        $tailoringOrders = $tailoringBaseQuery
+            ->orderBy($tailoringSortField, $this->sortDirection)
+            ->paginate($this->perPage, ['*'], 'tailoringPage');
 
         return view('livewire.sale-day-session.day-session-sales-list', [
             'sales' => $sales,
             'totals' => $totals,
             'paymentSummary' => $paymentSummary,
+            'tailoringOrders' => $tailoringOrders,
+            'tailoringTotals' => $tailoringTotals,
+            'tailoringPaymentSummary' => $tailoringPaymentSummary,
         ]);
     }
 }

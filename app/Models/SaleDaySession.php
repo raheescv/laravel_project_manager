@@ -69,6 +69,11 @@ class SaleDaySession extends Model implements AuditableContracts
         return $this->hasMany(Sale::class, 'sale_day_session_id')->where('status', 'completed');
     }
 
+    public function tailoringOrders()
+    {
+        return $this->hasMany(TailoringOrder::class, 'sale_day_session_id');
+    }
+
     public function scopeOpen($query)
     {
         return $query->where('status', 'open');
@@ -108,7 +113,11 @@ class SaleDaySession extends Model implements AuditableContracts
 
         // Calculate total sales amount for this session
         $totalSalesAmount = $this->sales->sum('paid');
-        $this->expected_amount = $this->opening_amount + $totalSalesAmount;
+        $totalTailoringAmount = TailoringPayment::whereHas('order', function ($query) {
+            $query->where('sale_day_session_id', $this->id);
+        })->sum('amount');
+
+        $this->expected_amount = $this->opening_amount + $totalSalesAmount + $totalTailoringAmount;
 
         $this->status = 'closed';
         $this->notes = $notes;

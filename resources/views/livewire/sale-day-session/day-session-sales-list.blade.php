@@ -6,8 +6,8 @@
                     <i class="fa fa-shopping-cart" style="font-size: 20px;"></i>
                 </div>
                 <div>
-                    <h5 class="mb-0 text-white">Session Sales</h5>
-                    <small class="text-light opacity-75">All sales recorded during this day session</small>
+                    <h5 class="mb-0 text-white">Session Sales & Tailoring</h5>
+                    <small class="text-light opacity-75">All sale and tailoring entries recorded during this day session</small>
                 </div>
             </div>
         </div>
@@ -19,7 +19,7 @@
                         <span class="input-group-text" style="background-color: #e9ecef; border-color: #ced4da;">
                             <i class="fa fa-search" style="color: #6c757d;"></i>
                         </span>
-                        <input type="text" wire:model.live="search" class="form-control" placeholder="Search by invoice, customer name, or mobile..." style="border-color: #ced4da;">
+                        <input type="text" wire:model.live="search" class="form-control" placeholder="Search by invoice/order, customer name, or mobile..." style="border-color: #ced4da;">
                     </div>
                 </div>
                 <div class="col-md-3">
@@ -32,9 +32,9 @@
                 </div>
                 <div class="col-md-3">
                     <div class="d-flex align-items-center justify-content-end">
-                        <small class="text-muted me-2">Total Sales:</small>
+                        <small class="text-muted me-2">Total Entries:</small>
                         <span class="badge" style="background-color: #4a6fa5; font-size: 14px; padding: 8px 12px;">
-                            {{ $sales->total() }}
+                            {{ $sales->total() + $tailoringOrders->total() }}
                         </span>
                     </div>
                 </div>
@@ -104,8 +104,54 @@
                 </div>
             @endif
 
+            @if (count($tailoringPaymentSummary) > 0)
+                <div class="row g-3 mb-4">
+                    <div class="col-12">
+                        <h6 class="mb-3 text-muted d-flex align-items-center">
+                            <i class="fa fa-scissors me-2"></i>
+                            Tailoring Payment Summary
+                            <span class="badge bg-light text-dark ms-2">{{ count($tailoringPaymentSummary) }} Methods</span>
+                        </h6>
+                    </div>
+                    @foreach ($tailoringPaymentSummary as $payment)
+                        <div class="col-xl-3 col-lg-4 col-md-6">
+                            <div class="card h-100 shadow-sm border-0 bg-info text-white">
+                                <div class="card-body p-4">
+                                    <div class="d-flex align-items-center justify-content-between mb-3">
+                                        <div class="d-flex align-items-center">
+                                            <div class="bg-white bg-opacity-25 rounded-3 p-3 me-3 d-flex align-items-center justify-content-center">
+                                                <i class="fa fa-wallet fs-4"></i>
+                                            </div>
+                                            <div>
+                                                <h6 class="mb-0 fw-bold text-uppercase small">{{ $payment['payment_method_name'] }}</h6>
+                                                <small class="opacity-75">Payment Method</small>
+                                            </div>
+                                        </div>
+                                        <span class="badge bg-white bg-opacity-25 rounded-pill px-3 py-2">
+                                            {{ $tailoringTotals['paid'] ? number_format(($payment['total_paid'] / $tailoringTotals['paid']) * 100, 1) : 0 }}%
+                                        </span>
+                                    </div>
+                                    <div class="mb-3">
+                                        <h3 class="mb-1 fw-bold">{{ currency($payment['total_paid']) }}</h3>
+                                        <small class="opacity-75">Total Collected</small>
+                                    </div>
+                                    <div class="d-flex justify-content-between align-items-center pt-3 border-top border-white border-opacity-25">
+                                        <div class="d-flex align-items-center">
+                                            <i class="fa fa-chart-line me-2 opacity-75"></i>
+                                            <span class="small">{{ $payment['count'] }} Orders</span>
+                                        </div>
+                                        <span class="small opacity-75">Tailoring</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    @endforeach
+                </div>
+            @endif
+
             <!-- Enhanced Data Table -->
             <div class="table-responsive">
+                <h6 class="mb-2 text-muted"><i class="fa fa-shopping-cart me-2"></i>Sales Module</h6>
                 <table class="table table-sm table-hover mb-0" style="background-color: white;">
                     <thead style="background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);">
                         <tr>
@@ -244,7 +290,7 @@
 
                         @if ($sales->count() === 0)
                             <tr>
-                                <td colspan="9" class="text-center" style="padding: 40px 20px;">
+                                <td colspan="10" class="text-center" style="padding: 40px 20px;">
                                     <div class="d-flex flex-column align-items-center">
                                         <div class="rounded-circle d-flex align-items-center justify-content-center mb-3" style="width: 60px; height: 60px; background-color: #f8f9fa;">
                                             <i class="fa fa-shopping-cart" style="color: #6c757d; font-size: 24px;"></i>
@@ -291,11 +337,106 @@
                 <div class="text-muted">
                     <small>
                         Showing {{ $sales->firstItem() ?? 0 }} to {{ $sales->lastItem() ?? 0 }}
-                        of {{ $sales->total() }} results
+                        of {{ $sales->total() }} sales
                     </small>
                 </div>
                 <div>
                     {{ $sales->links() }}
+                </div>
+            </div>
+
+            <div class="table-responsive mt-4">
+                <h6 class="mb-2 text-muted"><i class="fa fa-scissors me-2"></i>Tailoring Module</h6>
+                <table class="table table-sm table-hover mb-0" style="background-color: white;">
+                    <thead style="background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);">
+                        <tr>
+                            <th>ID</th>
+                            <th>Order No</th>
+                            <th>Customer</th>
+                            <th>Date</th>
+                            <th class="text-end">Total</th>
+                            <th class="text-end">Discount</th>
+                            <th class="text-end">Tax</th>
+                            <th class="text-end">Payment Method</th>
+                            <th class="text-end">Paid</th>
+                            <th class="text-end">Balance</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach ($tailoringOrders as $order)
+                            <tr style="border-bottom: 1px solid #f8f9fa;">
+                                <td><span class="badge" style="background-color: #e9ecef; color: #495057;">#{{ $order->id }}</span></td>
+                                <td>
+                                    <div class="fw-bold" style="color: #4a6fa5;">
+                                        <a href="{{ route('tailoring::order::show', $order->id) }}">
+                                            <i class="fa fa-eye me-2" style="font-size: 12px;"></i>
+                                            {{ $order->order_no }}
+                                        </a>
+                                    </div>
+                                </td>
+                                <td>
+                                    @php
+                                        $customer_name = $order->customer_name;
+                                        $customer_mobile = $order->customer_mobile;
+                                        if ($order->account && $order->account->name) {
+                                            $customer_name = $order->account->name;
+                                            $customer_mobile = $order->account->mobile;
+                                        }
+                                    @endphp
+                                    <div class="fw-medium" style="color: #495057;">{{ $customer_name }}</div>
+                                    @if ($customer_mobile)
+                                        <small class="text-muted d-flex align-items-center mt-1">
+                                            <i class="fa fa-phone me-1" style="font-size: 10px;"></i>
+                                            {{ $customer_mobile }}
+                                        </small>
+                                    @endif
+                                </td>
+                                <td><span style="color: #495057;">{{ systemDate($order->order_date) }}</span></td>
+                                <td class="text-end"><span class="fw-bold" style="color: #b8860b; font-size: 15px;">{{ currency($order->total) }}</span></td>
+                                <td class="text-end"><span style="color: #dc3545;">{{ $order->item_discount != 0 ? currency($order->item_discount) : '-' }}</span></td>
+                                <td class="text-end"><span style="color: #5a9fd4;">{{ $order->tax_amount != 0 ? currency($order->tax_amount) : '-' }}</span></td>
+                                <td class="text-end"><span class="fw-bold" style="color: #28a745; font-size: 15px;">{{ $order->payment_method_name ?: '-' }}</span></td>
+                                <td class="text-end"><span class="fw-bold" style="color: #28a745; font-size: 15px;">{{ currency($order->paid) }}</span></td>
+                                <td class="text-end"><span class="fw-bold" style="color: red; font-size: 15px;">{{ $order->balance != 0 ? currency($order->balance) : '-' }}</span></td>
+                            </tr>
+                        @endforeach
+                        @if ($tailoringOrders->count() === 0)
+                            <tr>
+                                <td colspan="10" class="text-center" style="padding: 30px 20px;">
+                                    <div class="d-flex flex-column align-items-center">
+                                        <div class="rounded-circle d-flex align-items-center justify-content-center mb-3" style="width: 60px; height: 60px; background-color: #f8f9fa;">
+                                            <i class="fa fa-scissors" style="color: #6c757d; font-size: 24px;"></i>
+                                        </div>
+                                        <h6 style="color: #6c757d; margin-bottom: 8px;">No Tailoring Orders Found</h6>
+                                        <p class="text-muted mb-0">No tailoring orders have been recorded for this day session yet.</p>
+                                    </div>
+                                </td>
+                            </tr>
+                        @endif
+                    </tbody>
+                    <tfoot style="background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); border-top: 2px solid #dee2e6;">
+                        <tr>
+                            <td colspan="4" class="text-end fw-bold" style="color: #495057; padding: 20px 12px; font-size: 16px;">Tailoring Totals:</td>
+                            <td class="text-end fw-bold" style="color: #b8860b; padding: 20px 12px; font-size: 16px;">{{ currency($tailoringTotals['total']) }}</td>
+                            <td class="text-end fw-bold" style="color: #dc3545; padding: 20px 12px; font-size: 16px;">{{ currency($tailoringTotals['item_discount']) }}</td>
+                            <td class="text-end fw-bold" style="color: #5a9fd4; padding: 20px 12px; font-size: 16px;">{{ currency($tailoringTotals['tax_amount']) }}</td>
+                            <td class="text-end fw-bold" style="padding: 20px 12px; font-size: 16px;"></td>
+                            <td class="text-end fw-bold" style="color: #28a745; padding: 20px 12px; font-size: 16px;">{{ currency($tailoringTotals['paid']) }}</td>
+                            <td class="text-end fw-bold" style="color: #28a745; padding: 20px 12px; font-size: 16px;">{{ currency($tailoringTotals['balance']) }}</td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+
+            <div class="d-flex justify-content-between align-items-center mt-4">
+                <div class="text-muted">
+                    <small>
+                        Showing {{ $tailoringOrders->firstItem() ?? 0 }} to {{ $tailoringOrders->lastItem() ?? 0 }}
+                        of {{ $tailoringOrders->total() }} tailoring orders
+                    </small>
+                </div>
+                <div>
+                    {{ $tailoringOrders->links() }}
                 </div>
             </div>
         </div>

@@ -16,6 +16,11 @@ return new class() extends Migration
             $table->string('order_no');
             $table->unique(['tenant_id', 'order_no']);
             $table->unsignedBigInteger('branch_id')->nullable()->references('id')->on('branches');
+
+            $table->unsignedBigInteger('sale_day_session_id')->nullable();
+            $table->foreign('sale_day_session_id')->references('id')->on('sale_day_sessions')->onDelete('set null');
+            $table->index(['tenant_id', 'sale_day_session_id'], 'tailoring_orders_tenant_session_idx');
+
             $table->unsignedBigInteger('account_id')->nullable()->references('id')->on('accounts');
             $table->string('customer_name')->nullable();
             $table->string('customer_mobile', 15)->nullable();

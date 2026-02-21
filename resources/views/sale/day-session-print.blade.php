@@ -358,34 +358,71 @@
 
         <div class="divider"></div>
 
-        <!-- Sales Table - Thermal Optimized -->
+        @php
+            $saleTransactions = collect($transactions)->where('source', 'Sale')->values();
+            $tailoringTransactions = collect($transactions)->where('source', 'Tailoring')->values();
+            $salePendingPayments = collect($pendingPayments)->where('source', 'Sale')->values();
+            $tailoringPendingPayments = collect($pendingPayments)->where('source', 'Tailoring')->values();
+        @endphp
+
+        <!-- Sale Group -->
+        <p><strong>SALE</strong></p>
         <table class="sales-table">
             <thead>
                 <tr>
-                    <th style="width: 15%;">Date</th>
-                    <th style="width: 35%;">Invoice</th>
+                    <th style="width: 20%;">Date</th>
+                    <th style="width: 35%;">Reference</th>
                     <th style="width: 20%;">Payment</th>
-                    <th style="width: 30%;" class="text-right">Total</th>
+                    <th style="width: 25%;" class="text-right">Total</th>
                 </tr>
             </thead>
             <tbody>
-                @foreach($sales as $sale)
+                @foreach($saleTransactions as $transaction)
                     <tr class="sale-row">
-                        <td><b>{{ Carbon::parse($sale->date)->format('d/m') }}</b></td>
-                        <td><b>{{ $sale->invoice_no ?? 'N/A' }}</b></td>
-                        <td>
-                            <b>{{ $sale->payment_method_name }}</b>
-                        </td>
-                        <td class="text-right"><b>{{ currency($sale->grand_total) }}</b></td>
+                        <td><b>{{ Carbon::parse($transaction['date'])->format('d/m') }}</b></td>
+                        <td><b>{{ $transaction['reference_no'] ?? 'N/A' }}</b></td>
+                        <td><b>{{ $transaction['payment_method'] }}</b></td>
+                        <td class="text-right"><b>{{ currency($transaction['amount']) }}</b></td>
                     </tr>
                 @endforeach
-                @foreach($pendingPayments as $pendingPayment)
+                @foreach($salePendingPayments as $pendingPayment)
                     <tr class="pending-row">
                         <td><b>{{ Carbon::parse($pendingPayment['date'])->format('d/m') }}</b></td>
-                        <td><b>{{ $pendingPayment['invoice_no'] ?? 'N/A' }}</b></td>
-                        <td>
-                            <b>{{ $pendingPayment['payment_method'] }}</b>
-                        </td>
+                        <td><b>{{ $pendingPayment['reference_no'] ?? 'N/A' }}</b></td>
+                        <td><b>{{ $pendingPayment['payment_method'] }}</b></td>
+                        <td class="text-right"><b>{{ currency($pendingPayment['amount']) }}</b></td>
+                    </tr>
+                @endforeach
+            </tbody>
+        </table>
+
+        <div class="divider"></div>
+
+        <!-- Tailoring Group -->
+        <p><strong>TAILORING</strong></p>
+        <table class="sales-table">
+            <thead>
+                <tr>
+                    <th style="width: 20%;">Date</th>
+                    <th style="width: 35%;">Reference</th>
+                    <th style="width: 20%;">Payment</th>
+                    <th style="width: 25%;" class="text-right">Total</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach($tailoringTransactions as $transaction)
+                    <tr class="sale-row">
+                        <td><b>{{ Carbon::parse($transaction['date'])->format('d/m') }}</b></td>
+                        <td><b>{{ $transaction['reference_no'] ?? 'N/A' }}</b></td>
+                        <td><b>{{ $transaction['payment_method'] }}</b></td>
+                        <td class="text-right"><b>{{ currency($transaction['amount']) }}</b></td>
+                    </tr>
+                @endforeach
+                @foreach($tailoringPendingPayments as $pendingPayment)
+                    <tr class="pending-row">
+                        <td><b>{{ Carbon::parse($pendingPayment['date'])->format('d/m') }}</b></td>
+                        <td><b>{{ $pendingPayment['reference_no'] ?? 'N/A' }}</b></td>
+                        <td><b>{{ $pendingPayment['payment_method'] }}</b></td>
                         <td class="text-right"><b>{{ currency($pendingPayment['amount']) }}</b></td>
                     </tr>
                 @endforeach
