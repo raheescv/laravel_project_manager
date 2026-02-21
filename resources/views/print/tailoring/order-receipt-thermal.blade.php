@@ -21,26 +21,38 @@
         body {
             width: 80mm;
             max-width: 80mm;
-            font-family: Arial, Helvetica, sans-serif;
-            font-size: 12px;
-            line-height: 1.34;
-            color: #000;
             background: #fff;
-            font-weight: 600;
-            text-rendering: geometricPrecision;
+            color: #000;
+            font-family: "Trebuchet MS", "Arial", sans-serif;
+            font-size: 11px;
+            line-height: 1.35;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
         }
 
         body {
-            padding: 0;
             margin: 0;
-            -webkit-print-color-adjust: exact;
-            print-color-adjust: exact;
+            padding: 0;
         }
 
         .receipt {
             width: 80mm;
             max-width: 80mm;
-            padding: 3mm 3.5mm;
+            padding: 2.2mm;
+        }
+
+        .header-card {
+            border: 1px solid #000;
+            padding: 1.6mm 1.8mm;
+            margin-bottom: 1.6mm;
+        }
+
+        .shop-name {
+            font-size: 13px;
+            font-weight: 700;
+            letter-spacing: 0.2px;
+            text-transform: uppercase;
+            line-height: 1.2;
         }
 
         .center {
@@ -51,47 +63,57 @@
             text-align: right;
         }
 
-        .left {
-            text-align: left;
-        }
-
-        .bold {
-            font-weight: 700;
-        }
-
-        .tiny {
-            font-size: 10px;
-        }
-
-        .small {
-            font-size: 11px;
-        }
-
-        .normal {
-            font-size: 12px;
-        }
-
         .title {
-            font-size: 16px;
+            font-size: 13px;
             font-weight: 700;
-            letter-spacing: 0.4px;
+            letter-spacing: 0.65px;
             text-transform: uppercase;
-            margin: 1.2mm 0 0.8mm;
+            margin-top: 1.2mm;
         }
 
-        .subtitle {
-            font-size: 12px;
+        .receipt-chip {
+            margin-top: 1mm;
+            display: inline-block;
+            border: 1px solid #000;
+            padding: 0.35mm 1.3mm;
+            font-size: 9.4px;
             font-weight: 700;
-            margin: 0.8mm 0 0;
+            letter-spacing: 0.35px;
+            text-transform: uppercase;
         }
 
-        .line {
-            border-top: 1.2px solid #000;
-            margin: 2.5mm 0;
-            height: 0;
+        .order-ref {
+            margin-top: 1mm;
+            font-size: 12.4px;
+            font-weight: 700;
         }
 
-        .meta-table,
+        .branch {
+            margin-top: 0.35mm;
+            font-size: 10.8px;
+            font-weight: 600;
+        }
+
+        .meta-line {
+            margin-top: 0.3mm;
+            font-size: 10.4px;
+            font-weight: 600;
+        }
+
+        .divider {
+            border-top: 1px dashed #000;
+            margin: 1.7mm 0;
+        }
+
+        .section-title {
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.7px;
+            margin-bottom: 0.9mm;
+        }
+
+        .info-table,
         .items-table,
         .totals-table {
             width: 100%;
@@ -99,54 +121,49 @@
             table-layout: fixed;
         }
 
-        .meta-table td {
-            padding: 0.8mm 0;
+        .info-table td {
+            border-bottom: 0.5px dashed #000;
+            padding: 0.75mm 0;
             vertical-align: top;
-            word-wrap: break-word;
-            overflow-wrap: break-word;
+            font-size: 10.8px;
         }
 
-        .meta-key {
-            width: 34%;
-            font-weight: 700;
+        .info-table tr:last-child td {
+            border-bottom: none;
         }
 
-        .meta-sep {
-            width: 4%;
-            text-align: center;
+        .info-key {
+            width: 38%;
+            font-weight: 600;
+            color: #222;
+            text-transform: uppercase;
+            font-size: 9.5px;
+            letter-spacing: 0.35px;
         }
 
-        .meta-value {
+        .info-value {
             width: 62%;
+            font-weight: 600;
+            word-break: break-word;
+            text-align: right;
         }
 
-        .items-table thead th {
-            font-size: 11px;
+        .items-table th {
+            border-top: 1px solid #000;
+            border-bottom: 1px solid #000;
+            padding: 0.8mm 0.65mm;
+            font-size: 9.7px;
             font-weight: 700;
             text-transform: uppercase;
-            border-top: 1.2px solid #000;
-            border-bottom: 1.2px solid #000;
-            padding: 1.4mm 0.9mm;
+            letter-spacing: 0.3px;
         }
 
         .items-table td {
-            padding: 1.35mm 0.9mm;
+            border-bottom: 0.5px dashed #000;
+            padding: 0.8mm 0.65mm;
+            font-size: 10.8px;
+            font-weight: 600;
             vertical-align: top;
-            border-bottom: 1px solid #000;
-            font-weight: 700;
-        }
-
-        /* Allow suppressing the separation line for item name rows and reduce vertical padding for combo rows */
-        .items-table tr.no-sep td {
-            border-bottom: none;
-            padding-top: 0.1mm;
-            padding-bottom: 0mm;
-        }
-
-        /* Reduce top padding for the detail row that follows the name row */
-        .items-table tr.no-sep + tr td {
-            padding-top: 0mm;
-            padding-bottom: 1mm;
         }
 
         .items-table tr:last-child td {
@@ -155,82 +172,119 @@
 
         .col-item {
             width: 60%;
+            text-align: left;
         }
 
         .col-qty {
-            width: 16%;
+            width: 14%;
             text-align: right;
             white-space: nowrap;
         }
 
         .col-amt {
-            width: 24%;
+            width: 26%;
             text-align: right;
             white-space: nowrap;
         }
 
         .category-row td {
-            border-bottom: 1.2px solid #000;
-            padding-top: 1.7mm;
-            padding-bottom: 1.1mm;
             font-weight: 700;
+            text-transform: uppercase;
+            border-bottom: 1px solid #000;
+            padding-top: 0.9mm;
+            padding-bottom: 0.65mm;
+            font-size: 10px;
         }
 
-        .item-name {
-            word-break: break-word;
+        .item-detail td {
+            border-bottom: none;
+            padding-top: 0.42mm;
+            padding-bottom: 0.36mm;
+            font-weight: 600;
+            padding-left: 1.45mm;
         }
 
         .item-sub {
             display: block;
-            font-size: 10px;
-            margin-top: 0.6mm;
-            font-weight: 700;
+            font-size: 9.5px;
+            margin-top: 0.2mm;
+            font-weight: 600;
+            opacity: 0.9;
+            word-break: break-word;
+        }
+
+        .totals-wrap {
+            border: 1px solid #000;
         }
 
         .totals-table td {
-            padding: 1.35mm 0.9mm;
-            border-bottom: 1px solid #000;
-            font-size: 12px;
+            border-bottom: 0.5px dashed #000;
+            padding: 0.95mm 0.7mm;
+            font-size: 10.8px;
+            font-weight: 600;
         }
 
         .totals-table tr:last-child td {
             border-bottom: none;
+            font-size: 12px;
+            font-weight: 700;
+            padding-top: 1.05mm;
+            padding-bottom: 1.05mm;
         }
 
         .totals-label {
-            width: 55%;
-            font-weight: 700;
+            width: 56%;
         }
 
         .totals-value {
-            width: 45%;
+            width: 44%;
             text-align: right;
-            font-weight: 800;
             white-space: nowrap;
         }
 
-        .totals-table tr:last-child td {
-            border-bottom: 1.5px solid #000;
+        .status-chip {
+            margin-top: 1mm;
+            display: inline-block;
+            border: 1px solid #000;
+            padding: 0.35mm 1.6mm;
+            font-size: 9.2px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.45px;
         }
 
         .footer {
-            margin-top: 2.2mm;
+            margin-top: 1.5mm;
             text-align: center;
+        }
+
+        .print-time {
+            font-size: 10.3px;
+            font-weight: 600;
+            margin-bottom: 0.7mm;
+        }
+
+        .footer-note {
+            font-size: 9.8px;
+            font-weight: 600;
+            line-height: 1.3;
+            margin-top: 0.55mm;
         }
 
         .print-actions {
-            text-align: center;
             margin: 8px 0;
+            text-align: center;
         }
 
         .print-actions button {
-            border: 1.2px solid #000;
+            border: 1px solid #000;
             background: #fff;
             color: #000;
-            padding: 6px 14px;
-            cursor: pointer;
-            font-size: 12px;
+            padding: 5px 12px;
+            font-size: 11.5px;
             font-weight: 700;
+            border-radius: 3px;
+            cursor: pointer;
         }
 
         @media print {
@@ -239,7 +293,7 @@
             }
 
             .receipt {
-                padding: 2.5mm 3mm;
+                padding: 1.8mm;
             }
         }
     </style>
@@ -247,64 +301,64 @@
 
 <body onload="window.print();">
     <div class="receipt">
-        <div class="center">
+        <div class="header-card center">
             @if (($enable_logo_in_print ?? '') == 'yes' && cache('logo'))
-                <img src="{{ cache('logo') }}" alt="Logo" style="max-width: 26mm; max-height: 14mm; margin-bottom: 1mm;">
+                <img src="{{ cache('logo') }}" alt="Logo" style="max-width: 22mm; max-height: 11.5mm; margin-bottom: 0.75mm;">
             @endif
-            <div class="subtitle">{{ $order->branch->location ?? ($order->branch->name ?? 'TAILORING') }}</div>
+            @if ($order->branch && ($order->branch->name ?? null))
+                <div class="shop-name">{{ $order->branch->name }}</div>
+            @endif
+            @if ($order->branch && ($order->branch->location ?? null))
+                <div class="shop-name">{{ $order->branch->location }}</div>
+            @endif
             @if ($order->branch && ($order->branch->mobile ?? null))
-                <div class="small bold">Mobile: {{ $order->branch->mobile }}</div>
+                <div class="meta-line">Mobile: {{ $order->branch->mobile }}</div>
             @endif
             @if (!empty($gst_no))
-                <div class="small">GST: {{ $gst_no }}</div>
+                <div class="meta-line">GST: {{ $gst_no }}</div>
             @endif
+
             <div class="title">Tailoring Receipt</div>
-            <div class="normal bold">Order #{{ $order->order_no }}</div>
+            <div class="order-ref">Order #{{ $order->order_no }}</div>
         </div>
 
-        <div class="line"></div>
-
-        <table class="meta-table">
+        <div class="section-title">Order Details</div>
+        <table class="info-table">
             <tr>
-                <td class="meta-key">Order No</td>
-                <td class="meta-sep">:</td>
-                <td class="meta-value bold">{{ $order->order_no }}</td>
+                <td class="info-key">Order No</td>
+                <td class="info-value">{{ $order->order_no }}</td>
             </tr>
             <tr>
-                <td class="meta-key">Order Date</td>
-                <td class="meta-sep">:</td>
-                <td class="meta-value">{{ $order->order_date ? $order->order_date->format('d/m/Y') : '-' }}</td>
+                <td class="info-key">Order Date</td>
+                <td class="info-value">{{ $order->order_date ? $order->order_date->format('d/m/Y') : '-' }}</td>
             </tr>
             <tr>
-                <td class="meta-key">Delivery</td>
-                <td class="meta-sep">:</td>
-                <td class="meta-value">{{ $order->delivery_date ? $order->delivery_date->format('d/m/Y') : '-' }}</td>
+                <td class="info-key">Delivery</td>
+                <td class="info-value">{{ $order->delivery_date ? $order->delivery_date->format('d/m/Y') : '-' }}</td>
             </tr>
             <tr>
-                <td class="meta-key">Customer</td>
-                <td class="meta-sep">:</td>
-                <td class="meta-value bold">{{ $order->customer_name ?: 'Walk-in Customer' }}</td>
+                <td class="info-key">Customer</td>
+                <td class="info-value">{{ $order->customer_name ?: 'Walk-in Customer' }}</td>
             </tr>
             @if ($order->customer_mobile)
                 <tr>
-                    <td class="meta-key">Mobile</td>
-                    <td class="meta-sep">:</td>
-                    <td class="meta-value">{{ $order->customer_mobile }}</td>
+                    <td class="info-key">Mobile</td>
+                    <td class="info-value">{{ $order->customer_mobile }}</td>
                 </tr>
             @endif
             <tr>
-                <td class="meta-key">Salesman</td>
-                <td class="meta-sep">:</td>
-                <td class="meta-value">{{ $order->salesman->name ?? '-' }}</td>
+                <td class="info-key">Salesman</td>
+                <td class="info-value">{{ $order->salesman->name ?? '-' }}</td>
             </tr>
         </table>
 
-        <div class="line"></div>
+        <div class="divider"></div>
 
+        <div class="section-title">Item Summary</div>
         <table class="items-table">
             <thead>
                 <tr>
-                    <th class="col-item left">Item / Category</th>
+                    <th class="col-item">Item / Category</th>
                     <th class="col-qty right">Qty</th>
                     <th class="col-amt right">Amount</th>
                 </tr>
@@ -318,19 +372,17 @@
                         $catAmount = $items->sum('total');
                     @endphp
                     <tr class="category-row">
-                        <td class="col-item left">{{ $catName }}</td>
+                        <td class="col-item">{{ $catName }}</td>
                         <td class="col-qty right">{{ round($catQty) }}</td>
                         <td class="col-amt right">{{ currency($catAmount) }}</td>
                     </tr>
                     @foreach ($items as $item)
-                        <tr class="no-sep">
-                            <td colspan="3" class="col-item left item-name">
+                        <tr class="item-detail">
+                            <td colspan="3" class="col-item">
                                 {{ $item->product_name }} x {{ round($item->quantity) }}
-                                <span class="item-sub">
-                                    @if ($item->product_color)
-                                        {{ $item->product_color }} |
-                                    @endif
-                                </span>
+                                @if ($item->product_color)
+                                    <span class="item-sub">{{ $item->product_color }}</span>
+                                @endif
                             </td>
                         </tr>
                     @endforeach
@@ -342,32 +394,35 @@
             </tbody>
         </table>
 
-        <div class="line"></div>
+        <div class="divider"></div>
 
-        <table class="totals-table">
-            <tr>
-                <td class="totals-label">Total</td>
-                <td class="totals-value">{{ currency($order->total) }}</td>
-            </tr>
-            <tr>
-                <td class="totals-label">Paid</td>
-                <td class="totals-value">{{ currency($order->paid) }}</td>
-            </tr>
-            <tr>
-                <td class="totals-label">Balance</td>
-                <td class="totals-value">{{ currency($order->balance) }}</td>
-            </tr>
-        </table>
+        <div class="section-title">Payment Summary</div>
+        <div class="totals-wrap">
+            <table class="totals-table">
+                <tr>
+                    <td class="totals-label">Grand Total</td>
+                    <td class="totals-value">{{ currency($order->total) }}</td>
+                </tr>
+                <tr>
+                    <td class="totals-label">Paid</td>
+                    <td class="totals-value">{{ currency($order->paid) }}</td>
+                </tr>
+                <tr>
+                    <td class="totals-label">Balance</td>
+                    <td class="totals-value">{{ currency($order->balance) }}</td>
+                </tr>
+            </table>
+        </div>
 
-        <div class="line"></div>
+        <div class="divider"></div>
 
         <div class="footer">
-            <div class="small bold">Printed: {{ now()->format('d/m/Y h:i A') }}</div>
+            <div class="print-time">Printed: {{ now()->format('d/m/Y h:i A') }}</div>
             @if (!empty($thermal_printer_footer_english))
-                <div class="small" style="margin-top: 1mm;">{!! $thermal_printer_footer_english !!}</div>
+                <div class="footer-note">{!! $thermal_printer_footer_english !!}</div>
             @endif
             @if (($thermal_printer_style ?? '') == 'with_arabic' && !empty($thermal_printer_footer_arabic))
-                <div class="small" dir="rtl" style="margin-top: 1mm;">{!! $thermal_printer_footer_arabic !!}</div>
+                <div class="footer-note" dir="rtl">{!! $thermal_printer_footer_arabic !!}</div>
             @endif
         </div>
     </div>
@@ -382,6 +437,7 @@
                 window.close();
             }, 5000);
         });
+
         setTimeout(function() {
             window.close();
         }, 60000);

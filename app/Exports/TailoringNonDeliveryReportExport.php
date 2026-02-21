@@ -21,6 +21,7 @@ class TailoringNonDeliveryReportExport implements FromQuery, WithEvents, WithHea
     public function query()
     {
         $allowedBranchIds = Auth::user()->branches->pluck('branch_id')->toArray();
+
         return $this->nonDeliveryRowsQuery($this->filters, $allowedBranchIds)
             ->orderBy('tailoring_orders.order_date', 'desc');
     }
