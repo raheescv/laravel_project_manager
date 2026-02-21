@@ -6,14 +6,14 @@
         <div class="container-fluid px-3 px-lg-4">
             @php
                 $statusColors = [
-                    'pending' => 'primary',
+                    'pending' => 'warning',
                     'confirmed' => 'primary',
-                    'completed' => 'primary',
-                    'cancelled' => 'primary',
-                    'delivered' => 'primary',
-                    'in_progress' => 'primary',
+                    'completed' => 'success',
+                    'cancelled' => 'danger',
+                    'delivered' => 'dark',
+                    'in_progress' => 'info',
                 ];
-                $orderStatusKey = strtolower((string) $order->status);
+                $orderStatusKey = $order->status;
                 $orderStatusColor = $statusColors[$orderStatusKey] ?? 'secondary';
             @endphp
 
@@ -24,7 +24,7 @@
                             <div class="d-flex align-items-center gap-2 flex-wrap">
                                 <h1 class="h4 mb-0 fw-bold"><i class="fa fa-file-text-o me-2"></i>Work Order #{{ $order->order_no }}</h1>
                                 <span class="badge rounded-pill text-bg-{{ $orderStatusColor }}">
-                                    {{ ucwords(str_replace('_', ' ', $order->status)) }}
+                                    {{ ucWords($order->status) }}
                                 </span>
                             </div>
                             <p class="text-muted mb-0 mt-1 small">
@@ -42,7 +42,7 @@
                             <a href="{{ route('tailoring::order::print-receipt-thermal', $order->id) }}" target="_blank" class="btn btn-outline-primary btn-sm">
                                 <i class="fa fa-print me-1"></i> Thermal Print
                             </a>
-                            <a href="{{ route('tailoring::job-completion::index') }}?order_no={{ $order->order_no }}" class="btn btn-outline-primary btn-sm">
+                            <a href="{{ route('tailoring::job-completion::index') }}?order_no={{ $order->order_no }}" class="btn btn-success btn-sm">
                                 <i class="fa fa-check-circle me-1"></i> Job Completion
                             </a>
                             <a href="{{ route('tailoring::order::edit', $order->id) }}" class="btn btn-primary btn-sm">

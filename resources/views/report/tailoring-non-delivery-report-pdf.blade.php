@@ -173,6 +173,7 @@
             'pending_qty' => true,
             'delivery_qty' => true,
             'order_status' => true,
+            'delivery_status' => true,
         ];
         $visibleColumns = array_merge($defaultVisible, (array) ($filters['visible_columns'] ?? []));
         $visibleCount = 1 + collect($visibleColumns)->filter()->count();
@@ -249,6 +250,9 @@
                         @if ($visibleColumns['order_status'] ?? true)
                             <th>Order Status</th>
                         @endif
+                        @if ($visibleColumns['delivery_status'] ?? true)
+                            <th>Delivery Status</th>
+                        @endif
                     </tr>
                 </thead>
                 <tbody>
@@ -293,6 +297,9 @@
                             @endif
                             @if ($visibleColumns['order_status'] ?? true)
                                 <td><span class="status">{{ ucWords($row->order_status) }}</span></td>
+                            @endif
+                            @if ($visibleColumns['delivery_status'] ?? true)
+                                <td><span class="status">{{ ucWords($row->delivery_status) }}</span></td>
                             @endif
                         </tr>
                     @empty
@@ -341,6 +348,9 @@
                             <th class="text-right">{{ round($totals['delivery_qty']) }}</th>
                         @endif
                         @if ($visibleColumns['order_status'] ?? true)
+                            <th></th>
+                        @endif
+                        @if ($visibleColumns['delivery_status'] ?? true)
                             <th></th>
                         @endif
                     </tr>

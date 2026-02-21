@@ -117,6 +117,17 @@
         </div>
     </div>
     <div class="card-body px-0 pb-0">
+        <div class="px-3 pb-2">
+            <div class="d-flex flex-wrap align-items-center gap-2 small">
+                <span class="text-muted fw-semibold me-1">Action Legend:</span>
+                <span class="badge bg-light text-dark border"><i class="fa fa-eye text-primary me-1"></i>View</span>
+                <span class="badge bg-light text-dark border"><i class="fa fa-list text-dark me-1"></i>Items</span>
+                <span class="badge bg-light text-dark border"><i class="fa fa-users text-info me-1"></i>Tailor Status</span>
+                <span class="badge bg-light text-success border border-success"><i class="fa fa-file-text-o me-1"></i>Collect Payment</span>
+                <span class="badge bg-light text-dark border"><i class="fa fa-check-circle text-success me-1"></i>Job Completion</span>
+                <span class="badge bg-light text-dark border"><i class="fa fa-edit text-warning me-1"></i>Edit</span>
+            </div>
+        </div>
         <div class="table-responsive">
             <table class="table table-striped table-hover table-sm align-middle mb-0 border-bottom">
                 <thead class="bg-light text-nowrap">

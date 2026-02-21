@@ -56,6 +56,7 @@ trait BuildsTailoringNonDeliveryQuery
                 tailoring_orders.order_date,
                 tailoring_orders.delivery_date,
                 tailoring_orders.status as order_status,
+                tailoring_orders.delivery_status as delivery_status,
                 tailoring_orders.grand_total as bill_amount,
                 tailoring_orders.paid as paid_amount,
                 tailoring_orders.balance as balance_amount,

@@ -81,10 +81,7 @@ class TailoringNonDeliveryReport extends Component
     public function updated($key, $value): void
     {
         if (str_starts_with($key, 'tailoring_non_delivery_report_visible_column.')) {
-            Configuration::updateOrCreate(
-                ['key' => 'tailoring_non_delivery_report_visible_column'],
-                ['value' => json_encode($this->tailoring_non_delivery_report_visible_column)]
-            );
+            Configuration::updateOrCreate(['key' => 'tailoring_non_delivery_report_visible_column'], ['value' => json_encode($this->tailoring_non_delivery_report_visible_column)]);
         } else {
             $this->resetPage();
         }
@@ -183,6 +180,7 @@ class TailoringNonDeliveryReport extends Component
             'pending_qty' => true,
             'delivery_qty' => true,
             'order_status' => true,
+            'delivery_status' => true,
         ];
     }
 
@@ -202,6 +200,7 @@ class TailoringNonDeliveryReport extends Component
             'pending_qty' => 'Pending Qty',
             'delivery_qty' => 'Delivery Qty',
             'order_status' => 'Order Status',
+            'delivery_status' => 'Delivery Status',
         ];
     }
 
@@ -224,13 +223,11 @@ class TailoringNonDeliveryReport extends Component
         $total = $this->nonDeliveryTotals($filters, $allowedBranchIds);
         $data = $rowsQuery->orderBy($this->nonDeliverySortField($this->sortField), $this->sortDirection)->paginate($this->limit);
 
-        $branchOptions = ['' => 'All Branches'] + Branch::whereIn('id', $allowedBranchIds)->pluck('name', 'id')->toArray();
         $categoryOptions = ['' => 'All Categories'] + TailoringCategory::ordered()->active()->pluck('name', 'id')->toArray();
 
         return view('livewire.report.tailoring-non-delivery-report', [
             'data' => $data,
             'total' => $total,
-            'branchOptions' => $branchOptions,
             'categoryOptions' => $categoryOptions,
             'statusOptions' => tailoringOrderStatuses(),
             'columnDefinitions' => $this->getColumnDefinitions(),

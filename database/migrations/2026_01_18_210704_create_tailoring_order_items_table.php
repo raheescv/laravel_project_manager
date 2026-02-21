@@ -52,14 +52,12 @@ return new class() extends Migration
 
             $table->date('item_completion_date')->nullable();
 
-            $table->decimal('completed_quantity', 8, 3)->default(0);
-            $table->decimal('pending_quantity', 8, 3)->storedAs('GREATEST(quantity - completed_quantity, 0)');
-            $table->decimal('delivered_quantity', 8, 3)->default(0);
+            $table->unsignedInteger('completed_quantity')->default(0);
+            $table->unsignedInteger('pending_quantity')->storedAs('CAST(GREATEST(quantity - completed_quantity, 0) AS UNSIGNED)');
+            $table->unsignedInteger('delivered_quantity')->default(0);
 
             $table->enum('completion_status', array_keys(tailoringOrderItemCompletionStatuses()))->storedAs("IF(completed_quantity >= quantity, 'completed', IF(completed_quantity > 0, 'partially completed', 'not completed'))");
             $table->enum('delivery_status', array_keys(tailoringOrderItemDeliveryStatuses()))->storedAs("IF(delivered_quantity >= quantity, 'delivered', IF(delivered_quantity > 0, 'partially delivered', 'not delivered'))");
-
-            $table->boolean('is_selected_for_completion')->default(false);
 
             // Derived status: prefer explicit CASE expression for readability
             $statusOptions = array_keys(tailoringOrderItemStatuses());

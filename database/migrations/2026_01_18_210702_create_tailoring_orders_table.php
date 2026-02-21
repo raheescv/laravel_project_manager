@@ -35,6 +35,7 @@ return new class() extends Migration
             $table->string('payment_method_ids')->nullable();
             $table->string('payment_method_name')->nullable();
             $table->enum('status', array_keys(tailoringOrderStatuses()))->default('pending');
+            $table->enum('delivery_status', array_keys(tailoringOrderDeliveryStatuses()))->default('not delivered');
             $table->text('notes')->nullable();
 
             $table->unsignedBigInteger('rack_id')->nullable();

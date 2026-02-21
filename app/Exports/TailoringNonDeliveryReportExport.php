@@ -70,6 +70,9 @@ class TailoringNonDeliveryReportExport implements FromQuery, WithEvents, WithHea
         if ($vis['order_status'] ?? true) {
             $out[] = 'Order Status';
         }
+        if ($vis['delivery_status'] ?? true) {
+            $out[] = 'Delivery Status';
+        }
 
         return $out;
     }
@@ -77,7 +80,6 @@ class TailoringNonDeliveryReportExport implements FromQuery, WithEvents, WithHea
     public function map($row): array
     {
         $vis = $this->visibleColumns();
-        $statusLabel = tailoringOrderStatuses()[$row->order_status] ?? ucfirst((string) $row->order_status);
         $out = [$row->id];
 
         if ($vis['order_no'] ?? true) {
@@ -117,7 +119,10 @@ class TailoringNonDeliveryReportExport implements FromQuery, WithEvents, WithHea
             $out[] = $row->delivery_qty ?? 0;
         }
         if ($vis['order_status'] ?? true) {
-            $out[] = $statusLabel;
+            $out[] = ucwords($row->order_status);
+        }
+        if ($vis['delivery_status'] ?? true) {
+            $out[] = ucwords($row->delivery_status);
         }
 
         return $out;
@@ -139,6 +144,7 @@ class TailoringNonDeliveryReportExport implements FromQuery, WithEvents, WithHea
             'pending_qty' => true,
             'delivery_qty' => true,
             'order_status' => true,
+            'delivery_status' => true,
         ];
 
         return array_merge($defaults, (array) ($this->filters['visible_columns'] ?? []));

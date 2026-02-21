@@ -622,8 +622,17 @@ if (! function_exists('tailoringOrderStatuses')) {
         return [
             'pending' => 'Pending',
             'completed' => 'Completed',
+        ];
+    }
+}
+
+if (! function_exists('tailoringOrderDeliveryStatuses')) {
+    function tailoringOrderDeliveryStatuses()
+    {
+        return [
+            'not delivered' => 'Not Delivered',
+            'partially delivered' => 'Partially Delivered',
             'delivered' => 'Delivered',
-            'cancelled' => 'Cancelled',
         ];
     }
 }

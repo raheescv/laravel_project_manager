@@ -630,6 +630,14 @@ class OrderController extends Controller
         return $this->respondWithActionResult($result);
     }
 
+    public function updateItemCompletion(Request $request, $itemId): JsonResponse
+    {
+        $action = new SaveItemCompletionAction();
+        $result = $action->execute($itemId, $request->all(), Auth::id());
+
+        return $this->respondWithActionResult($result);
+    }
+
     public function getRacks(): JsonResponse
     {
         $racks = Rack::active()->orderBy('name')->get(['id', 'name']);
@@ -677,14 +685,6 @@ class OrderController extends Controller
         $data = ['tailor_total_commission' => round($totalCommission, 2)];
 
         return $this->sendSuccess($data);
-    }
-
-    public function updateItemCompletion(Request $request, $itemId): JsonResponse
-    {
-        $action = new SaveItemCompletionAction();
-        $result = $action->execute($itemId, $request->all(), Auth::id());
-
-        return $this->respondWithActionResult($result);
     }
 
     public function getProductStock(Request $request, $productId): JsonResponse

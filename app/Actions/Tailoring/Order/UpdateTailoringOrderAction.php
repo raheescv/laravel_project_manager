@@ -93,7 +93,6 @@ class UpdateTailoringOrderAction
                 'wastage' => 0,
                 'completed_quantity' => 0,
                 'delivered_quantity' => 0,
-                'is_selected_for_completion' => false,
                 'tailor_assignments' => [],
                 'status' => 'pending',
             ];
@@ -115,7 +114,6 @@ class UpdateTailoringOrderAction
             $itemData['item_completion_date'],
             $itemData['completed_quantity'],
             $itemData['delivered_quantity'],
-            $itemData['is_selected_for_completion'],
             $itemData['tailor_assignment'],
             $itemData['tailor_assignments'],
             $itemData['status']

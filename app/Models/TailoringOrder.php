@@ -42,6 +42,7 @@ class TailoringOrder extends Model implements AuditableContracts
         'payment_method_ids',
         'payment_method_name',
         'status',
+        'delivery_status',
         'notes',
         'rack_id',
         'cutter_id',
