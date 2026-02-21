@@ -395,6 +395,21 @@
                                                 Upload up to 5 product images (JPG, PNG or GIF)
                                             </div>
                                         </div>
+                                        @if (isset($table_id) && auth()->user()->can('product.ai image generation'))
+                                            <div class="d-flex justify-content-end mt-2">
+                                                <button type="button" class="btn btn-sm btn-outline-primary" wire:click="downloadImageWithGemini"
+                                                    wire:loading.attr="disabled" wire:target="downloadImageWithGemini">
+                                                    <span wire:loading.remove wire:target="downloadImageWithGemini">
+                                                        <i class="fa fa-magic me-1"></i>
+                                                        Download Image With Gemini
+                                                    </span>
+                                                    <span wire:loading wire:target="downloadImageWithGemini">
+                                                        <i class="fa fa-spinner fa-spin me-1"></i>
+                                                        Downloading...
+                                                    </span>
+                                                </button>
+                                            </div>
+                                        @endif
                                     </div>
                                 </div>
                             </div>
