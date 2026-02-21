@@ -320,10 +320,10 @@
                                     </li>
                                 @endcan
                                 @can('tailoring order.receipts')
-                                    <li class="nav-item">
+                                    {{-- <li class="nav-item">
                                         <a href="{{ route('tailoring::receipts::index') }}"
                                             class="nav-link {{ request()->is(['tailoring/receipts']) ? 'active' : '' }}">Receipts</a>
-                                    </li>
+                                    </li> --}}
                                 @endcan
                                 @can('tailoring job completion.view')
                                     <li class="nav-item">

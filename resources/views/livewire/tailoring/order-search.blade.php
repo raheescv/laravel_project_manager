@@ -222,6 +222,9 @@
                                     <button type="button" class="btn btn-light border" title="View Full Items" wire:click="openItemsModal({{ $order->id }})">
                                         <i class="fa fa-list text-dark"></i>
                                     </button>
+                                    <button type="button" class="btn btn-light border" title="Order Action (Tailor Status)" wire:click="openTailorActionModal({{ $order->id }})">
+                                        <i class="fa fa-users text-info"></i>
+                                    </button>
                                     <button type="button" class="btn btn-success border" title="Collect Payment"
                                         wire:click="openReceiptModal({{ $order->account_id ?? 'null' }}, {{ json_encode($order->customer_name ?? '') }}, {{ json_encode($order->customer_mobile ?? '') }}, {{ json_encode($order->account?->name ?? ($order->customer_name ?? 'Customer')) }})">
                                         <i class="fa fa-file-text-o"></i>
@@ -261,14 +264,7 @@
                                                     @forelse (($orderItemsByOrder[$order->id] ?? []) as $item)
                                                         @php
                                                             $status = $item['status'] ?? '';
-                                                            $statusClass =
-                                                                $status === 'delivered'
-                                                                    ? 'dark'
-                                                                    : ($status === 'completed'
-                                                                        ? 'success'
-                                                                        : ($status === 'partially completed'
-                                                                            ? 'warning'
-                                                                            : 'secondary'));
+                                                            $statusClass = $status === 'delivered' ? 'dark' : ($status === 'completed' ? 'success' : ($status === 'partially completed' ? 'warning' : 'secondary'));
                                                         @endphp
                                                         <tr>
                                                             <td>{{ $item['item_no'] ?? '-' }}</td>
@@ -379,6 +375,9 @@
             </div>
         </div>
     </div>
+
+    @livewire('tailoring.order-tailor-action-modal')
+
     @push('scripts')
         <script>
             document.addEventListener('livewire:navigated', function() {
@@ -403,7 +402,7 @@
                     if (el && el.tomselect) el.tomselect.clear();
                 });
                 Livewire.on('toggle-order-items-modal', function() {
-                    $('#TailoringOrderItemsPreviewModal').modal('toggle');
+                    $('#TailoringOrderItemsPreviewModal').modal('show');
                 });
             });
         </script>

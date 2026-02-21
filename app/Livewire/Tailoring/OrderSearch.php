@@ -199,6 +199,11 @@ class OrderSearch extends Component
         $this->dispatch('toggle-order-items-modal');
     }
 
+    public function openTailorActionModal($orderId): void
+    {
+        $this->dispatch('open-tailor-action-modal', orderId: (int) $orderId);
+    }
+
     protected function getBaseQuery()
     {
         return TailoringOrder::query()

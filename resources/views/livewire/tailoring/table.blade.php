@@ -105,15 +105,7 @@
                                 <label class="form-label text-muted fw-semibold small mb-2" for="status">
                                     <i class="fa fa-flag me-1"></i> Status
                                 </label>
-                                <select class="form-select form-select-sm" id="status">
-                                    <option value="">All Statuses</option>
-                                    <option value="pending">Pending</option>
-                                    <option value="confirmed">Confirmed</option>
-                                    <option value="in_progress">In Progress</option>
-                                    <option value="completed">Completed</option>
-                                    <option value="delivered">Delivered</option>
-                                    <option value="cancelled">Cancelled</option>
-                                </select>
+                                {{ html()->select('status', tailoringOrderStatuses())->value(session('status'))->class('tomSelect')->id('status')->placeholder('All Statuses') }}
                             </div>
                         </div>
                         <div class="col-md-3">
