@@ -17,17 +17,7 @@
                                 class="fa fa-list text-slate-500"></i> {{ items.length }} items total</p>
                     </div>
                 </div>
-                <div
-                    class="flex items-center justify-between sm:justify-end gap-2 border-t sm:border-t-0 border-slate-200 pt-2 sm:pt-0">
-                    <span class="flex items-center gap-1 text-[11px] font-semibold text-slate-600"><i
-                            class="fa fa-check-square-o text-blue-600"></i> Select All</span>
-                    <label class="relative inline-flex items-center cursor-pointer shrink-0">
-                        <input type="checkbox" @change="handleSelectAll" :checked="allSelected" class="sr-only peer">
-                        <div
-                            class="w-11 h-6 bg-slate-300 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-200 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600 shadow-inner">
-                        </div>
-                    </label>
-                </div>
+                <div class="hidden sm:block"></div>
             </div>
         </div>
 
@@ -44,15 +34,12 @@
             <div class="hidden md:block overflow-x-auto">
                 <table class="w-full text-left border-collapse min-w-[700px] lg:min-w-[980px]">
                     <colgroup>
-                        <col class="w-12">
                         <col class="col-item-details">
                         <col class="col-material">
                         <col class="col-actions">
                     </colgroup>
                     <thead>
                         <tr class="bg-slate-100 border-b-2 border-slate-200">
-                            <th class="px-2.5 py-2 w-12"><input type="checkbox" @change="handleSelectAll"
-                                    :checked="allSelected" class="w-4 h-4 rounded border-slate-400 text-blue-600"></th>
                             <th class="px-2.5 py-2 text-[11px] font-bold text-slate-700 uppercase tracking-wide"><i
                                     class="fa fa-list text-blue-600"></i> Item Details</th>
                             <th class="px-2.5 py-2 text-[11px] font-bold text-slate-700 uppercase tracking-wide"><i
@@ -65,13 +52,7 @@
                     </thead>
                     <tbody class="bg-slate-50/30">
                         <template v-for="item in items" :key="item.id">
-                            <tr class="hover:bg-slate-100/60"
-                                :class="{ 'bg-blue-50/60': item.is_selected_for_completion }">
-                                <td class="px-2.5 py-2 align-top">
-                                    <input type="checkbox" :checked="item.is_selected_for_completion"
-                                        @change="toggleItemCompletion(item, $event)"
-                                        class="w-4 h-4 rounded border-slate-400 text-blue-600">
-                                </td>
+                            <tr class="hover:bg-slate-100/60">
                                 <td class="px-2.5 py-2 align-top">
                                     <div class="flex items-center gap-2 mb-1">
                                         <span
@@ -151,9 +132,7 @@
                                 </td>
                             </tr>
 
-                            <tr v-if="isExpanded(item.id)" class="bg-white border-b border-slate-200"
-                                :class="{ 'bg-blue-50/20': item.is_selected_for_completion }">
-                                <td></td>
+                            <tr v-if="isExpanded(item.id)" class="bg-white border-b border-slate-200">
                                 <td colspan="3" class="px-2.5 pb-2.5">
                                     <div
                                         class="rounded-2xl border border-blue-200/80 bg-gradient-to-br from-blue-50/80 to-slate-50 p-1.5 sm:p-2">
@@ -279,24 +258,18 @@
 
             <div class="md:hidden p-2 space-y-2">
                 <div v-for="item in items" :key="`mobile-${item.id}`"
-                    class="rounded-xl border border-slate-200 bg-slate-50/40 p-2"
-                    :class="{ 'bg-blue-50/60 border-blue-200': item.is_selected_for_completion }">
+                    class="rounded-xl border border-slate-200 bg-slate-50/40 p-2">
                     <div class="flex items-start justify-between gap-2">
-                        <div class="min-w-0 flex items-start gap-2">
-                            <input type="checkbox" :checked="item.is_selected_for_completion"
-                                @change="toggleItemCompletion(item, $event)"
-                                class="w-4 h-4 mt-0.5 rounded border-slate-400 text-blue-600 shrink-0">
-                            <div class="min-w-0">
-                                <div class="flex items-center gap-2 mb-1">
-                                    <span
-                                        class="text-[11px] font-bold text-blue-700 bg-blue-100 px-1.5 py-0.5 rounded border border-blue-200">#{{
-                                            item.item_no }}</span>
-                                    <span
-                                        class="text-[10px] font-semibold text-slate-600 uppercase tracking-wide truncate">{{
-                                            item.category?.name }}</span>
-                                </div>
-                                <div class="text-sm font-bold text-slate-800 leading-tight">{{ item.product_name }}
-                                </div>
+                        <div class="min-w-0">
+                            <div class="flex items-center gap-2 mb-1">
+                                <span
+                                    class="text-[11px] font-bold text-blue-700 bg-blue-100 px-1.5 py-0.5 rounded border border-blue-200">#{{
+                                        item.item_no }}</span>
+                                <span
+                                    class="text-[10px] font-semibold text-slate-600 uppercase tracking-wide truncate">{{
+                                        item.category?.name }}</span>
+                            </div>
+                            <div class="text-sm font-bold text-slate-800 leading-tight">{{ item.product_name }}
                             </div>
                         </div>
                         <button @click="toggleExpand(item.id)"
@@ -304,7 +277,6 @@
                             <i class="fa" :class="isExpanded(item.id) ? 'fa-chevron-up' : 'fa-chevron-down'"></i>
                         </button>
                     </div>
-
                     <div class="mt-2 text-[11px] text-slate-600">
                         Qty: <strong>{{ Number(item.quantity) }}</strong>
                         <span class="mx-1">|</span>
@@ -637,8 +609,6 @@ watch(() => items.value, (list) => {
     }
 }, { immediate: true })
 
-const allSelected = computed(() => items.value.length > 0 && items.value.every(item => item.is_selected_for_completion))
-
 const toggleExpand = (itemId) => {
     expandedRows.value[itemId] = !expandedRows.value[itemId]
 }
@@ -670,35 +640,6 @@ const applyBulkToAll = (item) => {
         if (bulk.rating !== null && bulk.rating !== '') assignment.rating = Number(bulk.rating)
         if (bulk.status) assignment.status = bulk.status
     })
-
-    recalculateFromAssignments(item)
-}
-
-const handleSelectAll = (event) => {
-    const isChecked = event.target.checked
-    const today = new Date().toISOString().split('T')[0]
-
-    items.value.forEach((item) => {
-        item.is_selected_for_completion = isChecked
-        if (isChecked) {
-            ensureAssignments(item).forEach((assignment) => {
-                if (!assignment.completion_date) assignment.completion_date = today
-            })
-        }
-        recalculateFromAssignments(item)
-    })
-}
-
-const toggleItemCompletion = (item, event) => {
-    const isChecked = event.target.checked
-    item.is_selected_for_completion = isChecked
-
-    if (isChecked) {
-        const today = new Date().toISOString().split('T')[0]
-        ensureAssignments(item).forEach((assignment) => {
-            if (!assignment.completion_date) assignment.completion_date = today
-        })
-    }
 
     recalculateFromAssignments(item)
 }
@@ -740,7 +681,6 @@ const saveItem = (item) => {
         delivered_quantity: item.delivered_quantity,
         completion_status: item.completion_status,
         delivery_status: item.delivery_status,
-        is_selected_for_completion: item.is_selected_for_completion,
     })
 }
 

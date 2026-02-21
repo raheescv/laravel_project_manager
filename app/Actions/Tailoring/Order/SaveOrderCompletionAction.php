@@ -42,11 +42,6 @@ class SaveOrderCompletionAction
 
             $order->save();
 
-            // selected_item_ids is part of the submit flow; update if provided
-            if (isset($data['selected_item_ids']) && is_array($data['selected_item_ids'])) {
-                $order->items()->whereIn('id', $data['selected_item_ids'])->update(['is_selected_for_completion' => true]);
-            }
-
             if (isset($data['items']) && is_array($data['items'])) {
                 (new ProcessOrderCompletionItemsAction())->execute($order, $data['items'], (int) $userId);
             }

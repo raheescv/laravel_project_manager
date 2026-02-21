@@ -630,15 +630,6 @@ class OrderController extends Controller
         return $this->respondWithActionResult($result);
     }
 
-    public function submitCompletion(Request $request, $id): JsonResponse
-    {
-        $action = new SaveOrderCompletionAction();
-        // submit flow: if completion_date not provided, set to today
-        $result = $action->execute($id, $request->all(), Auth::id(), ['default_completion_date' => true]);
-
-        return $this->respondWithActionResult($result);
-    }
-
     public function getRacks(): JsonResponse
     {
         $racks = Rack::active()->orderBy('name')->get(['id', 'name']);

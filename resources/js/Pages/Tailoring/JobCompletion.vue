@@ -101,11 +101,6 @@
                                     <i class="fa fa-refresh mr-1 text-xs"></i>
                                     Update Details
                                 </button>
-                                <button type="button" @click="handleSubmitCompletion"
-                                    class="w-full sm:w-auto inline-flex items-center justify-center px-3 py-1.5 border border-transparent text-xs font-semibold rounded-lg text-white shadow-lg focus:outline-none focus:ring-2 focus:ring-offset-2 transition-all duration-200 sm:hover:scale-105 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 focus:ring-green-500">
-                                    <i class="fa fa-check-circle mr-1 text-xs"></i>
-                                    Submit Completion
-                                </button>
                             </div>
                         </div>
                     </div>
@@ -200,12 +195,9 @@ const handleUpdateItem = async (itemId, itemData) => {
 const handleUpdateCompletion = async () => {
     if (!order.value) return
 
-    const selectedItems = order.value.items.filter(item => item.is_selected_for_completion).map(item => item.id)
-
     try {
         const response = await axios.put(`/tailoring/job-completion/${order.value.id}/completion`, {
             items: order.value.items,
-            selected_item_ids: selectedItems,
             rack_id: order.value.rack_id,
             cutter_id: order.value.cutter_id,
             cutter_rating: order.value.cutter_rating,
@@ -216,35 +208,6 @@ const handleUpdateCompletion = async () => {
         }
     } catch (error) {
         toast.error(error.response?.data?.message || 'Failed to update completion')
-    }
-}
-
-const handleSubmitCompletion = async () => {
-    if (!order.value) return
-
-    const selectedItems = order.value.items.filter(item => item.is_selected_for_completion).map(item => item.id)
-
-    if (selectedItems.length === 0) {
-        toast.error('Please select at least one item to complete')
-        return
-    }
-
-    try {
-        const response = await axios.post(`/tailoring/job-completion/${order.value.id}/completion/submit`, {
-            items: order.value.items,
-            selected_item_ids: selectedItems,
-            rack_id: order.value.rack_id,
-            cutter_id: order.value.cutter_id,
-            cutter_rating: order.value.cutter_rating,
-        })
-        if (response.data.success) {
-            order.value = response.data.data
-            toast.success('Completion submitted successfully')
-        } else {
-            toast.error(response.data.message || 'Failed to submit completion')
-        }
-    } catch (error) {
-        toast.error(error.response?.data?.message || 'Failed to submit completion')
     }
 }
 onMounted(() => {

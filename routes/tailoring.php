@@ -63,7 +63,6 @@ Route::middleware('auth')->group(function (): void {
         Route::get('order-by-number/{orderNo}', [OrderController::class, 'getOrderByOrderNumber'])->name('order-by-number');
         Route::post('search-orders', [OrderController::class, 'searchOrders'])->name('search-orders');
         Route::put('{id}/completion', [OrderController::class, 'updateCompletion'])->name('update-completion');
-        Route::post('{id}/completion/submit', [OrderController::class, 'submitCompletion'])->name('submit-completion');
         Route::put('item/{itemId}/completion', [OrderController::class, 'updateItemCompletion'])->name('update-item-completion');
         Route::get('racks', [OrderController::class, 'getRacks'])->name('racks');
         Route::get('tailors', [OrderController::class, 'getTailors'])->name('tailors');
