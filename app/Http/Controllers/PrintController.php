@@ -47,11 +47,13 @@ class PrintController extends Controller
 
     public function tailoringCustomerReceipt(Request $request)
     {
+        $enable_logo_in_print = Configuration::where('key', 'enable_logo_in_print')->value('value');
         $data = $this->getPaymentReceiptViewData($request, [
             'receiptTitle' => 'TAILORING PAYMENT RECEIPT',
             'referenceColumnLabel' => 'Order No',
             'referenceKey' => 'invoice_no',
             'footerMessage' => 'THANK YOU FOR YOUR PAYMENT',
+            'enable_logo_in_print' => $enable_logo_in_print,
             'pageTitle' => 'Tailoring Customer Receipt',
         ]);
 

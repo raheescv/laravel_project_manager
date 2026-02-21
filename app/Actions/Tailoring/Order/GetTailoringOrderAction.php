@@ -10,7 +10,7 @@ class GetTailoringOrderAction
     {
         try {
             $order = TailoringOrder::with([
-                'branch:id,name',
+                'branch:id,name,location,mobile',
                 'account:id,name,mobile',
                 'salesman:id,name',
                 'rack:id,name',

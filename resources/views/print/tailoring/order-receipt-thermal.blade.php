@@ -319,7 +319,7 @@
                     @endphp
                     <tr class="category-row">
                         <td class="col-item left">{{ $catName }}</td>
-                        <td class="col-qty right">{{ number_format((float) $catQty, 2) }}</td>
+                        <td class="col-qty right">{{ round($catQty) }}</td>
                         <td class="col-amt right">{{ currency($catAmount) }}</td>
                     </tr>
                     @foreach ($items as $item)
@@ -335,9 +335,9 @@
                         </tr>
                         <tr>
                             <td>
-                                {{ number_format((float) $item->quantity, 2) }} x {{ currency($item->stitch_rate) }}
+                                {{ round($item->quantity) }}
                             </td>
-                            <td class="col-qty right">{{ number_format((float) $item->quantity, 2) }}</td>
+                            <td class="col-qty right">{{ round($item->quantity) }}</td>
                             <td class="col-amt right">{{ currency($item->total) }}</td>
                         </tr>
                     @endforeach

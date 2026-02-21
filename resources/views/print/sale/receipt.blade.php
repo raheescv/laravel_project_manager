@@ -14,6 +14,7 @@
             margin: 0;
             padding: 0;
             box-sizing: border-box;
+            font-weight: 700;
         }
 
         @page {
@@ -30,8 +31,8 @@
             margin: 0;
             padding: 0;
             font-family: 'Courier New', monospace;
-            font-size: 12px;
-            line-height: 1.3;
+            font-size: 13px;
+            line-height: 1.35;
             color: #000;
             background: #fff;
         }
@@ -41,26 +42,28 @@
             max-width: 80mm;
             min-width: 80mm;
             height: auto;
-            padding: 3mm 4mm;
+            padding: 3mm;
             margin: 0;
             box-sizing: border-box;
         }
 
         /* Headers */
         h1 {
-            font-size: 16px;
+            font-size: 17px;
             font-weight: bold;
             text-align: center;
             margin: 0 0 3mm 0;
             text-transform: uppercase;
+            letter-spacing: 0.2px;
         }
 
         h2 {
-            font-size: 14px;
+            font-size: 15px;
             font-weight: bold;
             text-align: center;
             margin: 0 0 2mm 0;
             text-transform: uppercase;
+            letter-spacing: 0.2px;
         }
 
         p {
@@ -75,13 +78,13 @@
         }
 
         .header-info p {
-            font-size: 11px;
+            font-size: 12px;
             margin: 1mm 0;
         }
 
         .divider {
             border: none;
-            border-bottom: 1px dashed #000;
+            border-bottom: 1px solid #000;
             margin: 3mm 0;
             height: 0;
             width: 100%;
@@ -89,18 +92,27 @@
 
         .customer-info {
             margin-bottom: 4mm;
+            border: 1px solid #000;
+            padding: 2mm;
         }
 
         .customer-info p {
             display: flex;
             justify-content: space-between;
-            font-size: 11px;
+            font-size: 12px;
             margin: 1.5mm 0;
+            gap: 3mm;
         }
 
         .customer-info strong {
             font-weight: bold;
-            flex: 0 0 50%;
+            flex: 0 0 42%;
+        }
+
+        .customer-info span {
+            text-align: right;
+            flex: 1;
+            word-break: break-word;
         }
 
         /* Table */
@@ -108,7 +120,8 @@
             width: 100%;
             border-collapse: collapse;
             margin: 3mm 0;
-            font-size: 10px;
+            font-size: 11px;
+            border: 1px solid #000;
         }
 
         .receipt-table th {
@@ -116,14 +129,15 @@
             padding: 2mm 1mm;
             border-bottom: 1px solid #000;
             text-align: left;
-            font-size: 11px;
+            font-size: 12px;
+            background: #fff;
         }
 
         .receipt-table td {
-            padding: 1mm;
-            border: none;
+            padding: 1.5mm 1mm;
+            border-bottom: 1px solid #000;
             text-align: left;
-            font-size: 10px;
+            font-size: 11px;
             vertical-align: top;
         }
 
@@ -134,20 +148,21 @@
         /* Totals */
         .totals-section {
             margin-top: 4mm;
-            border-top: 1px solid #000;
-            padding-top: 3mm;
+            border: 1px solid #000;
+            padding: 2mm;
         }
 
         .total-row {
             display: flex;
             justify-content: space-between;
             margin: 1.5mm 0;
-            font-size: 11px;
+            font-size: 12px;
+            font-weight: bold;
         }
 
         .total-row.grand-total {
             font-weight: bold;
-            font-size: 13px;
+            font-size: 14px;
             border-top: 1px solid #000;
             padding-top: 3mm;
             margin-top: 3mm;
@@ -162,7 +177,7 @@
         }
 
         .footer p {
-            font-size: 10px;
+            font-size: 11px;
             margin: 1.5mm 0;
         }
 
@@ -199,7 +214,7 @@
                 margin: 0 !important;
                 padding: 0 !important;
                 font-family: 'Courier New', monospace !important;
-                font-size: 11px !important;
+                font-size: 13px !important;
                 overflow: visible !important;
             }
 
@@ -208,7 +223,7 @@
                 max-width: 80mm !important;
                 min-width: 80mm !important;
                 height: auto !important;
-                padding: 2mm 3mm !important;
+                padding: 2mm !important;
                 margin: 0 !important;
                 box-sizing: border-box !important;
             }
@@ -217,6 +232,8 @@
                 color: #000 !important;
                 -webkit-print-color-adjust: exact !important;
                 print-color-adjust: exact !important;
+                text-shadow: none !important;
+                box-shadow: none !important;
             }
         }
     </style>
@@ -226,6 +243,9 @@
     <div class="receipt-container">
         <!-- Header -->
         <div class="header-info">
+            @if (($enable_logo_in_print ?? '') == 'yes' && cache('logo'))
+                <img src="{{ cache('logo') }}" alt="Logo" style="max-width: 26mm; max-height: 14mm; margin-bottom: 1mm;">
+            @endif
             <h1>{{ $companyName }}</h1>
             @if ($companyAddress)
                 <p>{{ $companyAddress }}</p>
