@@ -262,10 +262,13 @@ const initializeProductSelect = () => {
                     const re = new RegExp(`(${query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi')
                     return escape(text).replace(re, '<span class="ts-highlight">$1</span>')
                 }
+                const stockQty = item.quantity
+                const stockText = stockQty === null ? '' : `Stock: ${escape(String(stockQty))}`
                 return `<div class="d-flex align-items-center justify-content-between py-1">
                     <div class="d-flex flex-column min-width-0">
                         <span class="fw-bold text-dark text-truncate small">${highlightText(item.name)}</span>
                         <span class="text-muted text-[0.65rem] opacity-75 text-truncate mb-0">${highlightText(item.code || item.barcode || '')}</span>
+                        ${stockText ? `<span class="text-slate-500 text-[0.6rem] opacity-80 text-truncate">${stockText}</span>` : ''}
                     </div>
                     <div class="text-blue-600 fw-black ms-3 small">${escape(item.mrp || 0)}</div>
                 </div>`

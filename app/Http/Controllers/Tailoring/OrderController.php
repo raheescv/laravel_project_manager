@@ -332,6 +332,7 @@ class OrderController extends Controller
                 'products.name',
                 'products.code',
                 'inventories.barcode',
+                'inventories.quantity',
                 'products.mrp',
             ]);
 
