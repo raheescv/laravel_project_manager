@@ -834,6 +834,24 @@ const handleCustomerSelected = (customer) => {
     }
 }
 
+const inferPaymentMethodFromPayments = (payments = []) => {
+    if (!Array.isArray(payments) || payments.length === 0) {
+        return 'credit'
+    }
+
+    const methodIds = [...new Set(
+        payments
+            .map(payment => Number(payment?.payment_method_id))
+            .filter(id => Number.isFinite(id) && id > 0)
+    )]
+
+    if (methodIds.length === 1 && (methodIds[0] === 1 || methodIds[0] === 2)) {
+        return methodIds[0]
+    }
+
+    return 'custom'
+}
+
 const loadMeasurementOptions = async () => {
     try {
         const response = await axios.get('/tailoring/order/measurement-options')
@@ -847,6 +865,10 @@ const loadMeasurementOptions = async () => {
 
 onMounted(() => {
     loadMeasurementOptions()
+
+    if (form.value.id) {
+        selectedPaymentMethod.value = inferPaymentMethodFromPayments(form.value.payments)
+    }
 
     // Initialize from existing order items
     if (props.order?.items?.length > 0) {
