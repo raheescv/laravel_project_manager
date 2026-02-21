@@ -325,20 +325,13 @@
                     @foreach ($items as $item)
                         <tr class="no-sep">
                             <td colspan="3" class="col-item left item-name">
-                                {{ $item->product_name }}
+                                {{ $item->product_name }} x {{ round($item->quantity) }}
                                 <span class="item-sub">
                                     @if ($item->product_color)
                                         {{ $item->product_color }} |
                                     @endif
                                 </span>
                             </td>
-                        </tr>
-                        <tr>
-                            <td>
-                                {{ round($item->quantity) }}
-                            </td>
-                            <td class="col-qty right">{{ round($item->quantity) }}</td>
-                            <td class="col-amt right">{{ currency($item->total) }}</td>
                         </tr>
                     @endforeach
                 @empty
