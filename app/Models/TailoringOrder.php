@@ -45,6 +45,7 @@ class TailoringOrder extends Model implements AuditableContracts
         'notes',
         'rack_id',
         'cutter_id',
+        'cutter_rating',
         'completion_date',
         'created_by',
         'updated_by',
@@ -65,6 +66,7 @@ class TailoringOrder extends Model implements AuditableContracts
         'grand_total' => 'decimal:2',
         'paid' => 'decimal:2',
         'balance' => 'decimal:2',
+        'cutter_rating' => 'integer',
     ];
 
     public static function rules($id = 0, $merge = [])

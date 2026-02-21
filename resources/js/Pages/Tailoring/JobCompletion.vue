@@ -72,7 +72,8 @@
                         </h6>
                         <div class="bg-gradient-to-r from-slate-50 to-blue-50 border border-slate-200 rounded-lg p-1">
                             <CompletionHeader :order="order" :racks="racks" :cutters="cutters"
-                                @update-rack="handleUpdateRack" @update-cutter="handleUpdateCutter" />
+                                @update-rack="handleUpdateRack" @update-cutter="handleUpdateCutter"
+                                @update-cutter-rating="handleUpdateCutterRating" />
                         </div>
                     </div>
                 </div>
@@ -176,6 +177,11 @@ const handleUpdateCutter = (cutterId) => {
     if (order.value) order.value.cutter_id = cutterId
 }
 
+const handleUpdateCutterRating = (rating) => {
+    if (!order.value) return
+    order.value.cutter_rating = rating === null || rating === undefined || rating === '' ? null : Number(rating)
+}
+
 const handleUpdateItem = async (itemId, itemData) => {
     try {
         const response = await axios.put(`/tailoring/job-completion/item/${itemId}/completion`, itemData)
@@ -202,6 +208,7 @@ const handleUpdateCompletion = async () => {
             selected_item_ids: selectedItems,
             rack_id: order.value.rack_id,
             cutter_id: order.value.cutter_id,
+            cutter_rating: order.value.cutter_rating,
         })
         if (response.data.success) {
             order.value = response.data.data
@@ -226,6 +233,9 @@ const handleSubmitCompletion = async () => {
         const response = await axios.post(`/tailoring/job-completion/${order.value.id}/completion/submit`, {
             items: order.value.items,
             selected_item_ids: selectedItems,
+            rack_id: order.value.rack_id,
+            cutter_id: order.value.cutter_id,
+            cutter_rating: order.value.cutter_rating,
         })
         if (response.data.success) {
             order.value = response.data.data

@@ -41,6 +41,7 @@ return new class() extends Migration
             $table->foreign('rack_id')->references('id')->on('racks')->onDelete('set null');
             $table->unsignedBigInteger('cutter_id')->nullable();
             $table->foreign('cutter_id')->references('id')->on('users')->onDelete('set null');
+            $table->unsignedTinyInteger('cutter_rating')->nullable();
             $table->date('completion_date')->nullable();
 
             $table->unsignedBigInteger('created_by')->references('id')->on('users');

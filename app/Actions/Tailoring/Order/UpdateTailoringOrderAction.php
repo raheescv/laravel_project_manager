@@ -83,7 +83,7 @@ class UpdateTailoringOrderAction
                 throw new Exception($response['message'], 1);
             }
 
-            $completionItemsData[] = array_merge( ['id' => $itemId], $this->completionData($itemData) );
+            $completionItemsData[] = array_merge(['id' => $itemId], $this->completionData($itemData));
         }
 
         foreach ($removedItemIds as $removedItemId) {
@@ -127,6 +127,7 @@ class UpdateTailoringOrderAction
     private function completionData(array $itemData): array
     {
         $data['used_quantity'] = $itemData['quantity'] * $itemData['quantity_per_item'];
+
         return $data;
     }
 

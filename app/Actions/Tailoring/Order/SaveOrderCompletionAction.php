@@ -29,6 +29,9 @@ class SaveOrderCompletionAction
             if (isset($data['cutter_id'])) {
                 $order->cutter_id = $data['cutter_id'];
             }
+            if (array_key_exists('cutter_rating', $data)) {
+                $order->cutter_rating = $data['cutter_rating'];
+            }
 
             // completion date: respect provided value; otherwise optionally set to today for submit flows
             if (isset($data['completion_date'])) {

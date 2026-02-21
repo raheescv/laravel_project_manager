@@ -59,7 +59,8 @@
                                     class="fa fa-building text-blue-600"></i> Material</th>
                             <th
                                 class="px-2.5 py-2 text-[11px] font-bold text-slate-700 uppercase tracking-wide text-center">
-                                <i class="fa fa-cogs text-blue-600"></i> Actions</th>
+                                <i class="fa fa-cogs text-blue-600"></i> Actions
+                            </th>
                         </tr>
                     </thead>
                     <tbody class="bg-slate-50/30">
@@ -75,18 +76,18 @@
                                     <div class="flex items-center gap-2 mb-1">
                                         <span
                                             class="text-[11px] font-bold text-blue-700 bg-blue-100 px-1.5 py-0.5 rounded-md border border-blue-200">#{{
-                                            item.item_no }}</span>
+                                                item.item_no }}</span>
                                         <span
                                             class="text-[11px] font-semibold text-slate-600 uppercase tracking-wide">{{
-                                            item.category?.name }}</span>
+                                                item.category?.name }}</span>
                                     </div>
                                     <div class="text-[13px] font-bold text-slate-800">{{ item.product_name }}</div>
                                     <div class="text-[11px] text-slate-600 mt-1">Qty: <strong>{{ Number(item.quantity)
-                                            }}</strong> | Price: <strong class="text-blue-700">{{
-                                            formatCurrency(item.total) }}</strong></div>
+                                    }}</strong> | Price: <strong class="text-blue-700">{{
+                                                formatCurrency(item.total) }}</strong></div>
                                     <div class="text-[11px] font-bold text-blue-700 mt-1">
                                         Completed Units: {{ Number(item.completed_quantity ?? 0) }} / {{
-                                        getUnitCount(item) }}
+                                            getUnitCount(item) }}
                                         <span class="mx-1">|</span>
                                         Total Commission: {{ formatCurrency(item.tailor_total_commission) }}
                                     </div>
@@ -174,13 +175,10 @@
                                                 <div>
                                                     <label class="text-xs font-semibold text-slate-700"><i
                                                             class="fa fa-user text-slate-500 mr-1"></i>Tailor</label>
-                                                    <VSelect
-                                                        :modelValue="getBulk(item).tailor_id"
+                                                    <VSelect :modelValue="getBulk(item).tailor_id"
                                                         @update:modelValue="getBulk(item).tailor_id = $event"
-                                                        :options="tailorOptions"
-                                                        placeholder="Select tailor"
-                                                        class="compact-vselect"
-                                                    />
+                                                        :options="tailorOptions" placeholder="Select tailor"
+                                                        class="compact-vselect" />
                                                 </div>
                                                 <div>
                                                     <label class="text-xs font-semibold text-slate-700"><i
@@ -199,10 +197,8 @@
                                                 <div>
                                                     <label class="text-xs font-semibold text-slate-700"><i
                                                             class="fa fa-star text-amber-500 mr-1"></i>Rating</label>
-                                                    <VSelect :modelValue="getBulk(item).rating"
-                                                        @update:modelValue="getBulk(item).rating = $event"
-                                                        :options="ratingOptions" placeholder="Select rating"
-                                                        class="compact-vselect" />
+                                                    <StarRating :modelValue="getBulk(item).rating" size="sm"
+                                                        @update:modelValue="getBulk(item).rating = $event" />
                                                 </div>
                                                 <div>
                                                     <label class="text-xs font-semibold text-slate-700"><i
@@ -232,13 +228,10 @@
                                                         <label class="text-xs font-semibold text-slate-700"><i
                                                                 class="fa fa-user text-slate-500 mr-1"></i>Assign
                                                             Tailor</label>
-                                                        <VSelect
-                                                            :modelValue="assignment.tailor_id"
+                                                        <VSelect :modelValue="assignment.tailor_id"
                                                             @update:modelValue="updateAssignmentField(item, index, 'tailor_id', $event)"
-                                                            :options="tailorOptions"
-                                                            placeholder="Select tailor"
-                                                            class="compact-vselect"
-                                                        />
+                                                            :options="tailorOptions" placeholder="Select tailor"
+                                                            class="compact-vselect" />
                                                     </div>
                                                     <div>
                                                         <label class="text-xs font-semibold text-slate-700"><i
@@ -261,14 +254,9 @@
                                                     <div>
                                                         <label class="text-xs font-semibold text-slate-700"><i
                                                                 class="fa fa-star text-amber-500 mr-1"></i>Rating</label>
-                                                        <div class="rating-stars-wrap mt-1">
-                                                            <button v-for="star in 5" :key="star" type="button"
-                                                                @click="updateAssignmentField(item, index, 'rating', star)"
-                                                                class="p-1"
-                                                                :class="star <= (assignment.rating || 0) ? 'text-amber-500' : 'text-slate-300 hover:text-amber-400'">
-                                                                <i class="fa fa-star"></i>
-                                                            </button>
-                                                        </div>
+                                                        <StarRating class="mt-1" :modelValue="assignment.rating"
+                                                            size="sm"
+                                                            @update:modelValue="updateAssignmentField(item, index, 'rating', $event)" />
                                                     </div>
                                                     <div>
                                                         <label class="text-xs font-semibold text-slate-700"><i
@@ -302,10 +290,10 @@
                                 <div class="flex items-center gap-2 mb-1">
                                     <span
                                         class="text-[11px] font-bold text-blue-700 bg-blue-100 px-1.5 py-0.5 rounded border border-blue-200">#{{
-                                        item.item_no }}</span>
+                                            item.item_no }}</span>
                                     <span
                                         class="text-[10px] font-semibold text-slate-600 uppercase tracking-wide truncate">{{
-                                        item.category?.name }}</span>
+                                            item.category?.name }}</span>
                                 </div>
                                 <div class="text-sm font-bold text-slate-800 leading-tight">{{ item.product_name }}
                                 </div>
@@ -340,7 +328,7 @@
                             <span class="inline-flex items-center gap-1 text-xs font-semibold text-slate-700"><i
                                     class="fa fa-cubes text-slate-500"></i>Current Stock</span>
                             <span class="text-sm font-bold text-slate-800">{{ (item.inventory?.quantity ?? 0).toFixed(3)
-                                }}</span>
+                            }}</span>
                         </div>
                         <div class="grid grid-cols-2 gap-2">
                             <div>
@@ -378,13 +366,9 @@
                                 <div>
                                     <label class="text-xs font-semibold text-slate-700"><i
                                             class="fa fa-user text-slate-500 mr-1"></i>Tailor</label>
-                                    <VSelect
-                                        :modelValue="getBulk(item).tailor_id"
-                                        @update:modelValue="getBulk(item).tailor_id = $event"
-                                        :options="tailorOptions"
-                                        placeholder="Select tailor"
-                                        class="compact-vselect"
-                                    />
+                                    <VSelect :modelValue="getBulk(item).tailor_id"
+                                        @update:modelValue="getBulk(item).tailor_id = $event" :options="tailorOptions"
+                                        placeholder="Select tailor" class="compact-vselect" />
                                 </div>
                                 <div class="grid grid-cols-2 gap-2">
                                     <div>
@@ -405,9 +389,8 @@
                                     <div>
                                         <label class="text-xs font-semibold text-slate-700"><i
                                                 class="fa fa-star text-amber-500 mr-1"></i>Rating</label>
-                                        <VSelect :modelValue="getBulk(item).rating"
-                                            @update:modelValue="getBulk(item).rating = $event" :options="ratingOptions"
-                                            placeholder="Select rating" class="compact-vselect" />
+                                        <StarRating :modelValue="getBulk(item).rating" size="sm"
+                                            @update:modelValue="getBulk(item).rating = $event" />
                                     </div>
                                     <div>
                                         <label class="text-xs font-semibold text-slate-700"><i
@@ -433,13 +416,10 @@
                                     <div>
                                         <label class="text-xs font-semibold text-slate-700"><i
                                                 class="fa fa-user text-slate-500 mr-1"></i>Assign Tailor</label>
-                                        <VSelect
-                                            :modelValue="assignment.tailor_id"
+                                        <VSelect :modelValue="assignment.tailor_id"
                                             @update:modelValue="updateAssignmentField(item, index, 'tailor_id', $event)"
-                                            :options="tailorOptions"
-                                            placeholder="Select tailor"
-                                            class="compact-vselect"
-                                        />
+                                            :options="tailorOptions" placeholder="Select tailor"
+                                            class="compact-vselect" />
                                     </div>
                                     <div class="grid grid-cols-2 gap-2">
                                         <div>
@@ -462,13 +442,8 @@
                                     <div>
                                         <label class="text-xs font-semibold text-slate-700"><i
                                                 class="fa fa-star text-amber-500 mr-1"></i>Rating</label>
-                                        <div class="rating-stars-wrap mt-1">
-                                            <button v-for="star in 5" :key="star" type="button"
-                                                @click="updateAssignmentField(item, index, 'rating', star)" class="p-1"
-                                                :class="star <= (assignment.rating || 0) ? 'text-amber-500' : 'text-slate-300 hover:text-amber-400'">
-                                                <i class="fa fa-star"></i>
-                                            </button>
-                                        </div>
+                                        <StarRating class="mt-1" :modelValue="assignment.rating" size="sm"
+                                            @update:modelValue="updateAssignmentField(item, index, 'rating', $event)" />
                                     </div>
                                     <div>
                                         <label class="text-xs font-semibold text-slate-700"><i
@@ -506,6 +481,7 @@
 import { computed, ref, watch } from 'vue'
 import MeasurementViewModal from '@/components/Tailoring/MeasurementViewModal.vue'
 import VSelect from '@/components/VSelect.vue'
+import StarRating from '@/components/Tailoring/StarRating.vue'
 
 const props = defineProps({
     items: {
@@ -545,15 +521,6 @@ const assignmentStatusOptions = [
     { value: 'pending', label: 'Pending' },
     { value: 'completed', label: 'Completed' },
     { value: 'delivered', label: 'Delivered' },
-]
-
-const ratingOptions = [
-    { value: null, label: '-' },
-    { value: 1, label: '1' },
-    { value: 2, label: '2' },
-    { value: 3, label: '3' },
-    { value: 4, label: '4' },
-    { value: 5, label: '5' },
 ]
 
 const selectedItemForView = ref(null)
@@ -822,34 +789,6 @@ const formatCurrency = (value) => parseFloat(value || 0).toFixed(2)
     border-radius: 0.75rem;
 }
 
-.completion-items-table .rating-stars-wrap {
-    width: 100%;
-    min-height: 40px;
-    display: flex;
-    align-items: center;
-    justify-content: space-evenly;
-    gap: 0.25rem;
-    border: 1px solid #cbd5e1;
-    border-radius: 0.75rem;
-    background: linear-gradient(135deg, #f8fafc 0%, #eff6ff 100%);
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.85);
-}
-
-.completion-items-table .rating-stars-wrap button {
-    width: 1.55rem;
-    height: 1.55rem;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 9999px;
-    font-size: 0.95rem;
-    transition: transform 120ms ease;
-}
-
-.completion-items-table .rating-stars-wrap button:hover {
-    transform: scale(1.08);
-}
-
 .completion-items-table .col-item-details {
     width: 46%;
 }
@@ -895,16 +834,6 @@ const formatCurrency = (value) => parseFloat(value || 0).toFixed(2)
 
     .completion-items-table .col-actions {
         width: 25%;
-    }
-
-    .completion-items-table .rating-stars-wrap {
-        min-height: 36px;
-    }
-
-    .completion-items-table .rating-stars-wrap button {
-        width: 1.35rem;
-        height: 1.35rem;
-        font-size: 0.85rem;
     }
 
     .completion-items-table :deep(.compact-vselect .multiselect__tags) {
