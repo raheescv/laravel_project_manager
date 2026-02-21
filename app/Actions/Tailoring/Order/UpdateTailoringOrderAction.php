@@ -108,16 +108,7 @@ class UpdateTailoringOrderAction
 
     private function baseItemData(array $itemData): array
     {
-        unset(
-            $itemData['used_quantity'],
-            $itemData['wastage'],
-            $itemData['item_completion_date'],
-            $itemData['completed_quantity'],
-            $itemData['delivered_quantity'],
-            $itemData['tailor_assignment'],
-            $itemData['tailor_assignments'],
-            $itemData['status']
-        );
+        unset($itemData['used_quantity'], $itemData['wastage'], $itemData['item_completion_date'], $itemData['completed_quantity'], $itemData['delivered_quantity'], $itemData['tailor_assignment'], $itemData['tailor_assignments'], $itemData['status']);
 
         return $itemData;
     }
