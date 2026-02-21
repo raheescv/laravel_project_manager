@@ -10,7 +10,7 @@
                     </div>
                     <div class="card-body">
                         <div class="grid grid-cols-6 gap-1">
-                            <div v-if="categoryModels.length > 0"
+                            <div
                                 class="field-wrap col-span-3 flex flex-row justify-between items-end gap-2">
                                 <div class="flex flex-col gap-1 flex-1 min-w-0">
                                     <label>Model</label>
