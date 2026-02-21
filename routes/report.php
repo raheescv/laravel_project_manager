@@ -18,6 +18,7 @@ Route::middleware('auth')->group(function (): void {
             Route::get('purchase_item', 'purchase_item')->name('purchase_item');
             Route::get('tailoring_order_item', 'tailoring_order_item')->name('tailoring_order_item')->can('report.tailoring order item');
             Route::get('tailoring_order_item_tailor', 'tailoring_order_item_tailor')->name('tailoring_order_item_tailor')->can('report.tailoring order item tailor');
+            Route::get('tailoring_non_delivery', 'tailoring_non_delivery')->name('tailoring_non_delivery')->can('report.tailoring non delivery');
             Route::get('purchase_return_item', 'purchase_return_item')->name('purchase_return_item');
             Route::get('day_book', 'day_book')->name('day_book');
 

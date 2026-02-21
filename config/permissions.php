@@ -99,6 +99,7 @@ return [
         'issue item',
         'issue aging',
         'tailoring order item',
+        'tailoring non delivery',
         'tailoring order item tailor',
     ],
     'log' => ['inventory'],

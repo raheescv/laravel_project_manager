@@ -36,6 +36,11 @@ class ReportController extends Controller
         return view('report.tailoring_order_item_tailor');
     }
 
+    public function tailoring_non_delivery()
+    {
+        return view('report.tailoring_non_delivery');
+    }
+
     public function purchase_return_item()
     {
         return view('report.purchase_return_item');
