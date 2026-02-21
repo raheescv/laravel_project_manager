@@ -705,6 +705,7 @@ const handleCreateOrder = () => {
         toast.error('Please add at least one item and customer name')
         return
     }
+    syncSelectedPaymentMethodFromPayments()
     showConfirmationModal.value = true
 }
 
@@ -782,6 +783,7 @@ const handleClear = () => {
 
 // Payment handling via confirmation flow
 const handlePayment = () => {
+    syncSelectedPaymentMethodFromPayments()
     showConfirmationModal.value = true
 }
 
@@ -834,9 +836,14 @@ const handleCustomerSelected = (customer) => {
     }
 }
 
-const inferPaymentMethodFromPayments = (payments = []) => {
+const inferPaymentMethodFromPayments = (payments = [], grandTotalAmount = 0) => {
     if (!Array.isArray(payments) || payments.length === 0) {
         return 'credit'
+    }
+
+    const totalPaidAmount = payments.reduce((sum, payment) => sum + parseFloat(payment?.amount || 0), 0)
+    if (payments.length > 1 || totalPaidAmount < (parseFloat(grandTotalAmount || 0) - 0.01)) {
+        return 'custom'
     }
 
     const methodIds = [...new Set(
@@ -850,6 +857,13 @@ const inferPaymentMethodFromPayments = (payments = []) => {
     }
 
     return 'custom'
+}
+
+const syncSelectedPaymentMethodFromPayments = (force = false) => {
+    const inferredMethod = inferPaymentMethodFromPayments(form.value.payments, grandTotal.value)
+    if (force || inferredMethod === 'custom') {
+        selectedPaymentMethod.value = inferredMethod
+    }
 }
 
 const loadMeasurementOptions = async () => {
@@ -867,7 +881,7 @@ onMounted(() => {
     loadMeasurementOptions()
 
     if (form.value.id) {
-        selectedPaymentMethod.value = inferPaymentMethodFromPayments(form.value.payments)
+        syncSelectedPaymentMethodFromPayments(true)
     }
 
     // Initialize from existing order items
