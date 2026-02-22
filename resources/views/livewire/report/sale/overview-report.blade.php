@@ -231,7 +231,7 @@
                         <div class="col-6">
                             <div class="text-center p-3 rounded bg-success bg-opacity-10">
                                 <div class="h4 fw-bold text-success mb-1">{{ currency($totalPayment) }}</div>
-                                <div class="text-muted small">Sales Payments</div>
+                                <div class="text-muted small">Sales + Tailoring Payments</div>
                                 <div class="text-success small">{{ $salePayments->sum('transaction_count') }} transactions</div>
                             </div>
                         </div>
@@ -315,7 +315,7 @@
                     <div class="d-flex justify-content-between align-items-center">
                         <h6 class="card-title mb-0 fw-bold">
                             <i class="fa fa-credit-card text-success me-2"></i>
-                            Sales Payment Summary
+                            Sales + Tailoring Payment Summary
                         </h6>
                         <span class="badge bg-success rounded-pill">{{ $salePayments->count() }}</span>
                     </div>
@@ -338,7 +338,7 @@
                                     <tr wire:key="sale-payment-{{ $index }}">
                                         <td class="ps-3">{{ $index + 1 }}</td>
 
-                                        <td>{{ $payment->branch_name }}</td>
+                                        <td>{{ $payment->branch_name??null }}</td>
 
                                         <td>{{ $payment->payment_method }}</td>
 
@@ -444,10 +444,9 @@
 
     </div>
 
-    <!-- Sales Details Tables -->
-    <div class="row g-4 mt-4">
-        <!-- Employee Sales Table -->
-        <div class="col-md-4">
+    <!-- Tailors Performance -->
+    <div class="row g-4 mt-1">
+        <div class="col-md-6">
             <div class="card border-0 shadow-sm">
                 <div class="card-header bg-transparent py-3">
                     <div class="d-flex justify-content-between align-items-center">
@@ -500,8 +499,109 @@
                 </div>
             </div>
         </div>
+        <div class="col-md-6">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-transparent py-3">
+                    <h6 class="card-title mb-0 fw-bold">Tailors Performance</h6>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="bg-light">
+                                <tr>
+                                    <th class="ps-3">#</th>
+                                    <th>Tailor</th>
+                                    <th class="text-end">Pending</th>
+                                    <th class="text-end">Completed</th>
+                                    <th class="text-end">Delivered</th>
+                                    <th class="text-end pe-3">Avg Star Rating</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @forelse ($tailorPerformance as $tailor)
+                                    <tr>
+                                        <td class="ps-3">{{ $loop->iteration }}</td>
+                                        <td>{{ $tailor->tailor }}</td>
+                                        <td class="text-end"><span class="badge bg-warning text-dark">{{ $tailor->pending_count }}</span></td>
+                                        <td class="text-end"><span class="badge bg-info">{{ $tailor->completed_count }}</span></td>
+                                        <td class="text-end"><span class="badge bg-success">{{ $tailor->delivered_count }}</span></td>
+                                        <td class="text-end pe-3">
+                                            <span class="fw-bold">{{ number_format((float) ($tailor->avg_rating ?? 0), 2) }}</span>
+                                            <span class="text-warning">★</span>
+                                        </td>
+                                    </tr>
+                                @empty
+                                    <tr>
+                                        <td colspan="6" class="text-center py-4 text-muted">No tailor performance data available</td>
+                                    </tr>
+                                @endforelse
+                            </tbody>
+                            <tfoot class="bg-light">
+                                <tr>
+                                    <td colspan="2" class="ps-3 fw-bold">Total</td>
+                                    <td class="text-end fw-bold">{{ $tailorPerformance->sum('pending_count') }}</td>
+                                    <td class="text-end fw-bold">{{ $tailorPerformance->sum('completed_count') }}</td>
+                                    <td class="text-end fw-bold">{{ $tailorPerformance->sum('delivered_count') }}</td>
+                                    <td></td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 
-        <!-- Product Sales Table -->
+    <!-- Tailoring Order Item Performance -->
+    <div class="row g-4 mt-1">
+
+    </div>
+
+    <div class="row g-4 mt-4">
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-transparent py-3">
+                    <h6 class="card-title mb-0 fw-bold">Tailoring Order Item Performance</h6>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="bg-light">
+                                <tr>
+                                    <th class="ps-3">#</th>
+                                    <th>Item</th>
+                                    <th class="text-end">Qty</th>
+                                    <th class="text-end pe-3">Amount</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @forelse ($tailoringItemPerformance as $item)
+                                    <tr>
+                                        <td class="ps-3">{{ $loop->iteration }}</td>
+                                        <td>{{ $item->product_name }}</td>
+                                        <td class="text-end">{{ number_format((float) $item->quantity, 0) }}</td>
+                                        <td class="text-end pe-3 fw-bold">{{ currency($item->total_amount) }}</td>
+                                    </tr>
+                                @empty
+                                    <tr>
+                                        <td colspan="8" class="text-center py-4 text-muted">No tailoring item performance data available</td>
+                                    </tr>
+                                @endforelse
+                            </tbody>
+                            @if ($tailoringItemPerformance->count() > 0)
+                                <tfoot class="bg-light">
+                                    <tr>
+                                        <td colspan="2" class="ps-3 fw-bold">Total</td>
+                                        <td class="text-end fw-bold">{{ number_format((float) $tailoringItemPerformance->sum('quantity'), 0) }}</td>
+                                        <td class="text-end pe-3 fw-bold">{{ currency($tailoringItemPerformance->sum('total_amount')) }}</td>
+                                    </tr>
+                                </tfoot>
+                            @endif
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
         <div class="col-md-8">
             <div class="card border-0 shadow-sm">
                 <div class="card-header bg-transparent py-3">
