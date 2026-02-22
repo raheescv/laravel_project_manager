@@ -42,6 +42,7 @@
                                             <i class="fa fa-arrows-v text-[10px]"></i>
                                         </div>
                                         <input v-model="measurements[m.field_key]" type="text" :placeholder="m.label"
+                                            :name="`measurement_${m.field_key}`" autocomplete="on"
                                             :class="m.field_key === 'length' ? 'pl-7' : ''" class="field-input" />
                                     </div>
                                 </div>
@@ -76,6 +77,7 @@
                                 <div v-if="m.field_type === 'input'" class="field-wrap col-span-1">
                                     <label> {{ m.label }} </label>
                                     <input v-model="measurements[m.field_key]" type="text" :placeholder="m.label"
+                                        :name="`measurement_${m.field_key}`" autocomplete="on"
                                         class="field-input" />
                                 </div>
                                 <div v-else-if="m.field_type === 'select'" class="field-wrap col-span-1">
@@ -109,6 +111,7 @@
                                 <div v-if="m.field_type === 'input'" class="field-wrap col-span-1">
                                     <label> {{ m.label }} </label>
                                     <input v-model="measurements[m.field_key]" type="text" :placeholder="m.label"
+                                        :name="`measurement_${m.field_key}`" autocomplete="on"
                                         class="field-input" />
                                 </div>
                                 <div v-else-if="m.field_type === 'select'" class="field-wrap col-span-1">
@@ -139,6 +142,7 @@
                     <div class="card-body field-wrap">
                         <label>Tailoring Notes</label>
                         <textarea v-model="measurements.tailoring_notes" rows="2"
+                            name="measurement_tailoring_notes" autocomplete="on"
                             placeholder="Special instructions or notes..."
                             class="field-input field-textarea"></textarea>
                     </div>
