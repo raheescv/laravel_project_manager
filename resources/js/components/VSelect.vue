@@ -1,6 +1,6 @@
 <template>
-    <div class="v-select-wrapper">
-        <Multiselect :model-value="selectedOption" :options="options" label="label" track-by="value"
+    <div ref="wrapperRef" class="v-select-wrapper">
+        <Multiselect ref="multiselectRef" :model-value="selectedOption" :options="options" label="label" track-by="value"
             :placeholder="placeholder" :searchable="true" :loading="loading" :internal-search="!remote"
             :allow-empty="true" use-teleport @update:model-value="onSelect" @search-change="onSearchChange">
             <template #option="{ option }">
@@ -26,7 +26,7 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed, nextTick, ref } from 'vue'
 import Multiselect from 'vue-multiselect'
 import 'vue-multiselect/dist/vue-multiselect.css'
 
@@ -52,10 +52,16 @@ const props = defineProps({
     remote: {
         type: Boolean,
         default: false
+    },
+    focusNextOnSelect: {
+        type: Boolean,
+        default: false
     }
 })
 
 const emit = defineEmits(['update:modelValue', 'change', 'search'])
+const wrapperRef = ref(null)
+const multiselectRef = ref(null)
 
 const selectedOption = computed(() => {
     if (props.modelValue === undefined || props.modelValue === null || props.modelValue === '') return null
@@ -66,6 +72,12 @@ function onSelect(option) {
     const value = option != null ? option.value : null
     emit('update:modelValue', value)
     emit('change', value)
+
+    if (props.focusNextOnSelect) {
+        nextTick(() => {
+            focusNextField()
+        })
+    }
 }
 
 function onSearchChange(term) {
@@ -73,6 +85,77 @@ function onSearchChange(term) {
         emit('search', term)
     }
 }
+
+function focusNextField() {
+    const root = wrapperRef.value
+    if (!root) return
+
+    const selector = [
+        'input:not([type="hidden"]):not([disabled])',
+        'select:not([disabled])',
+        'textarea:not([disabled])',
+        'button:not([disabled])',
+        'a[href]',
+        '[tabindex]:not([tabindex="-1"])'
+    ].join(', ')
+
+    const isVisibleFocusable = (el) => {
+        if (!(el instanceof HTMLElement)) return false
+        if (el.hasAttribute('disabled')) return false
+        return el.offsetParent !== null || el.getClientRects().length > 0
+    }
+
+    const focusables = Array.from(document.querySelectorAll(selector)).filter(isVisibleFocusable)
+    if (focusables.length === 0) return
+
+    // Anchor from this component, not from teleported dropdown option/input.
+    // This keeps "next field" stable even when options panel is rendered in <body>.
+    let currentIndex = -1
+    for (let i = focusables.length - 1; i >= 0; i -= 1) {
+        if (root.contains(focusables[i])) {
+            currentIndex = i
+            break
+        }
+    }
+
+    if (currentIndex === -1) {
+        const activeEl = document.activeElement instanceof HTMLElement ? document.activeElement : null
+        currentIndex = focusables.findIndex(el => {
+            if (!activeEl) return false
+            return el === activeEl || el.contains(activeEl)
+        })
+    }
+
+    if (currentIndex === -1) return
+    const nextEl = focusables[currentIndex + 1]
+    if (nextEl) {
+        nextEl.focus()
+        nextEl.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'nearest' })
+    }
+}
+
+function openDropdown() {
+    // vue-multiselect exposes activate/deactivate on component instance.
+    multiselectRef.value?.activate?.()
+    const input = wrapperRef.value?.querySelector('.multiselect__input, .multiselect__tags')
+    if (input instanceof HTMLElement) {
+        input.focus()
+        input.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'nearest' })
+    }
+}
+
+function focusDropdown() {
+    const input = wrapperRef.value?.querySelector('.multiselect__input, .multiselect__tags')
+    if (input instanceof HTMLElement) {
+        input.focus()
+        input.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'nearest' })
+    }
+}
+
+defineExpose({
+    open: openDropdown,
+    focus: focusDropdown
+})
 </script>
 
 <style scoped>

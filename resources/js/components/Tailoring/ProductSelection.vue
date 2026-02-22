@@ -38,43 +38,43 @@
                     <label class="field-label">Colour</label>
                     <div class="relative">
                         <i class="field-icon fa fa-paint-brush"></i>
-                        <input v-model="item.product_color" type="text" placeholder="—"
-                            @keydown.enter.prevent="handleAdd" class="field-input field-input-icon w-full" />
+                        <input ref="colorInputRef" v-model="item.product_color" type="text" placeholder="—"
+                         class="field-input field-input-icon w-full" />
                     </div>
                 </div>
                 <!-- Qty -->
                 <div>
                     <label class="field-label">No Of Qty</label>
-                    <input v-model.number="item.quantity" type="number" step="0.001" min="0.001" placeholder="0"
-                        @input="calculateAmount" @keydown.enter.prevent="handleAdd"
+                    <input v-model.number="item.quantity" type="number" step="0.001" min="0.001" max="100" placeholder="0"
+                        @input="calculateAmount"
                         class="field-input field-input-num w-full text-center" />
                 </div>
                 <!-- Qty/Item -->
                 <div>
                     <label class="field-label">Meter Per Item</label>
                     <input v-model.number="item.quantity_per_item" type="number" step="0.001" min="0.001"
-                        placeholder="1" @input="calculateAmount" @keydown.enter.prevent="handleAdd"
+                        placeholder="1" @input="calculateAmount"
                         class="field-input field-input-num w-full text-center" />
                 </div>
                 <!-- Price -->
                 <div>
                     <label class="field-label">Price</label>
                     <input v-model.number="item.unit_price" type="number" step="0.01" min="0" placeholder="0"
-                        @input="calculateAmount" @keydown.enter.prevent="handleAdd"
+                        @input="calculateAmount"
                         class="field-input field-input-num w-full" />
                 </div>
                 <!-- Stitch -->
                 <div>
                     <label class="field-label">Stitching Rate</label>
                     <input v-model.number="item.stitch_rate" type="number" step="0.01" min="0" placeholder="0"
-                        @input="calculateAmount" @keydown.enter.prevent="handleAdd"
+                        @input="calculateAmount"
                         class="field-input field-input-num w-full text-center" />
                 </div>
                 <!-- Tax -->
                 <div>
                     <label class="field-label">Tax %</label>
                     <input v-model.number="item.tax" type="number" step="0.01" min="0" placeholder="0"
-                        @input="calculateAmount" @keydown.enter.prevent="handleAdd"
+                        @input="calculateAmount"
                         class="field-input field-input-num w-full text-center" />
                 </div>
                 <!-- Total -->
@@ -88,7 +88,7 @@
                 <!-- Actions -->
                 <div
                     class="col-span-2 sm:col-span-3 md:col-span-4 lg:col-span-1 flex flex-col-reverse sm:flex-row gap-1.5 justify-end items-end">
-                    <button type="button" @click="handleClear" class="action-btn action-btn-secondary">
+                    <button type="button" @click="handleClear" tabindex="-1" class="action-btn action-btn-secondary">
                         <i class="fa fa-times"></i>
                         Clear
                     </button>
@@ -134,6 +134,7 @@ const emit = defineEmits(['update:modelValue', 'add-item', 'calculate-amount', '
 
 const toast = useToast()
 const productSelect = ref(null)
+const colorInputRef = ref(null)
 const barcodeInputRef = ref(null)
 let tomSelectInstance = null
 
@@ -151,6 +152,12 @@ const item = ref(props.modelValue || {
     tax: 0,
     total: 0,
 })
+
+const focusColorInput = () => {
+    nextTick(() => {
+        colorInputRef.value?.focus()
+    })
+}
 
 const lookupProductByBarcode = async (barcode) => {
     const code = String(barcode || '').trim().replace(/[^a-zA-Z0-9]/g, '')
@@ -193,6 +200,7 @@ const selectProduct = (product) => {
         tomSelectInstance.setValue(selectedInventoryId, true)
     }
     calculateAmount()
+    focusColorInput()
 }
 
 const handleBarcodeSubmit = async () => {
@@ -289,6 +297,7 @@ const initializeProductSelect = () => {
                     item.value.quantity = 1
                     item.value.quantity_per_item = item.value.quantity_per_item ?? 1
                     calculateAmount()
+                    focusColorInput()
                 }
             } else {
                 if (item.value.product_id) {

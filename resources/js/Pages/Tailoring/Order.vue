@@ -1,18 +1,18 @@
 <template>
-    <div class="min-h-screen bg-[#f8fafc] font-sans">
+    <div ref="pageRoot" class="min-h-screen bg-[#f8fafc] font-sans" @keydown="handleKeyboardNavigation">
         <!-- Page Header - SaleConfirmationModal style gradient -->
         <div
             class="bg-gradient-to-r from-blue-600 via-blue-700 to-indigo-700 pt-4 pb-16 px-3 relative overflow-hidden shadow-lg">
             <div class="max-w-[1600px] mx-auto relative z-10">
                 <!-- Breadcrumbs - light on gradient -->
                 <div class="flex items-center gap-2 text-white/80 text-xs mb-2 transition-all">
-                    <a href="/dashboard"
+                    <a href="/dashboard" tabindex="-1"
                         class="hover:text-white no-underline flex items-center gap-1 transition-colors">
                         <i class="fa fa-home"></i>
                         <span>Home</span>
                     </a>
                     <i class="fa fa-chevron-right text-[10px] opacity-60"></i>
-                    <a href="/tailoring/order"
+                    <a href="/tailoring/order" tabindex="-1"
                         class="hover:text-white no-underline flex items-center gap-1 transition-colors">
                         <i class="fa fa-scissors"></i>
                         <span>Tailoring</span>
@@ -34,12 +34,13 @@
                         </div>
                     </div>
                     <div class="flex flex-wrap gap-1.5">
-                        <a href="/tailoring/order"
+                        <a href="/tailoring/order" tabindex="-1"
                             class="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border border-white/20 bg-white/10 text-white hover:bg-white/20 transition-all no-underline">
                             <i class="fa fa-th-list text-xs"></i>
                             <span>Orders List</span>
                         </a>
-                        <a :href="form.id && form.order_no ? `/tailoring/job-completion?order_no=${form.order_no}` : '/tailoring/job-completion'"
+                        <a tabindex="-1"
+                            :href="form.id && form.order_no ? `/tailoring/job-completion?order_no=${form.order_no}` : '/tailoring/job-completion'"
                             class="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-white text-blue-700 hover:bg-white/95 shadow-sm transition-all no-underline">
                             <i class="fa fa-tasks text-xs"></i>
                             <span>Job Completion</span>
@@ -281,6 +282,82 @@ const editingModelIds = ref({}) // Map of categoryId -> modelId (when editing)
 const editingModelTypeIds = ref({}) // Map of categoryId -> modelTypeId (when editing)
 const showOldMeasurementModal = ref(false)
 const pendingOldMeasurementCategoryId = ref(null)
+const pageRoot = ref(null)
+
+const focusableSelector = [
+    'input:not([type="hidden"]):not([disabled])',
+    'select:not([disabled])',
+    'textarea:not([disabled])',
+    'button:not([disabled])',
+    'a[href]',
+    '[tabindex]:not([tabindex="-1"])'
+].join(', ')
+
+const isVisibleFocusable = (el) => {
+    if (!el || !(el instanceof HTMLElement)) return false
+    if (el.hasAttribute('disabled')) return false
+    if (el.getAttribute('aria-hidden') === 'true') return false
+    return el.offsetParent !== null || el.getClientRects().length > 0
+}
+
+const getFocusableElements = () => {
+    if (!pageRoot.value) return []
+    return Array.from(pageRoot.value.querySelectorAll(focusableSelector))
+        .filter(isVisibleFocusable)
+}
+
+const focusByStep = (currentTarget, step) => {
+    const focusableElements = getFocusableElements()
+    if (focusableElements.length === 0) return
+
+    const currentFocusable = currentTarget?.closest?.(focusableSelector) || currentTarget
+    const currentIndex = focusableElements.indexOf(currentFocusable)
+    const fallbackIndex = step > 0 ? -1 : 0
+    const baseIndex = currentIndex === -1 ? fallbackIndex : currentIndex
+    const nextIndex = (baseIndex + step + focusableElements.length) % focusableElements.length
+    const nextEl = focusableElements[nextIndex]
+    if (nextEl) {
+        nextEl.focus()
+        nextEl.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'nearest' })
+    }
+}
+
+const shouldSkipCustomHandling = (target) => {
+    if (!(target instanceof HTMLElement)) return true
+    if (target.isContentEditable) return true
+    if (target.closest('[contenteditable="true"]')) return true
+
+    const tagName = target.tagName?.toLowerCase()
+    if (tagName === 'textarea') return true
+
+    return false
+}
+
+const handleKeyboardNavigation = (event) => {
+    if (event.defaultPrevented || event.isComposing) return
+    if (!(event.target instanceof HTMLElement)) return
+    if (shouldSkipCustomHandling(event.target)) return
+
+    if (event.key === 'Enter' && !event.ctrlKey && !event.metaKey && !event.altKey && !event.shiftKey) {
+        const target = event.target.closest(focusableSelector) || event.target
+        event.preventDefault()
+
+        if (target instanceof HTMLButtonElement ||
+            (target instanceof HTMLInputElement && ['checkbox', 'radio'].includes(target.type))) {
+            target.click()
+        }
+
+        focusByStep(target, 1)
+        return
+    }
+
+    if (event.key === 'Tab' && event.shiftKey) {
+        const target = event.target.closest(focusableSelector) || event.target
+        event.preventDefault()
+        // Standard behavior override: Shift+Tab goes backward.
+        focusByStep(target, -1)
+    }
+}
 
 const getEditKey = (catId, modelId, modelTypeId) => `${catId}-${modelId ?? 'new'}-${modelTypeId ?? 'new'}`
 

@@ -16,7 +16,7 @@
                                     <label>Model</label>
                                     <VSelect v-model="measurements.tailoring_category_model_id"
                                         :options="categoryModels.map(m => ({ value: m.id, label: m.name }))"
-                                        placeholder="Select Model" @change="updateModelName" />
+                                        placeholder="Select Model" :focusNextOnSelect="true" @change="updateModelName" />
                                 </div>
                                 <button v-if="props.canQuickAddMeasurementOption" type="button" @click="addCategoryModel" class="btn-add-more">
                                     <i class="fa fa-plus text-[10px]"></i>
@@ -28,7 +28,7 @@
                                     <label>Model Type</label>
                                     <VSelect v-model="measurements.tailoring_category_model_type_id"
                                         :options="categoryModelTypes.map(t => ({ value: t.id, label: t.name }))"
-                                        placeholder="Select Model Type" @change="updateModelTypeName" />
+                                        placeholder="Select Model Type" :focusNextOnSelect="true" @change="updateModelTypeName" />
                                 </div>
                                 <button v-if="props.canQuickAddMeasurementOption" type="button" @click="addCategoryModelType" class="btn-add-more">
                                     <i class="fa fa-plus text-[10px]"></i>
@@ -50,7 +50,7 @@
                                     <div class="flex gap-1">
                                         <VSelect v-model="measurements[m.field_key]"
                                             :options="getOptions(m.options_source).map(o => ({ value: o.value, label: o.value }))"
-                                            :placeholder="`Select ${m.label}`" class="flex-1" />
+                                            :placeholder="`Select ${m.label}`" :focusNextOnSelect="true" class="flex-1" />
                                         <button v-if="m.options_source && props.canQuickAddMeasurementOption" type="button"
                                             @click="addOption(m.options_source)" class="btn-add-more">
                                             <i class="fa fa-plus text-[10px]"></i>
@@ -83,7 +83,7 @@
                                     <div class="flex gap-1">
                                         <VSelect v-model="measurements[m.field_key]"
                                             :options="getOptions(m.options_source).map(o => ({ value: o.value, label: o.value }))"
-                                            :placeholder="`Select ${m.label}`" class="flex-1" />
+                                            :placeholder="`Select ${m.label}`" :focusNextOnSelect="true" class="flex-1" />
                                         <button v-if="m.options_source && props.canQuickAddMeasurementOption" type="button"
                                             @click="addOption(m.options_source)" class="btn-add-more">
                                             <i class="fa fa-plus text-[10px]"></i>
@@ -116,7 +116,7 @@
                                     <div class="flex gap-1">
                                         <VSelect v-model="measurements[m.field_key]"
                                             :options="getOptions(m.options_source).map(o => ({ value: o.value, label: o.value }))"
-                                            placeholder="Select" class="flex-1" />
+                                            placeholder="Select" :focusNextOnSelect="true" class="flex-1" />
                                         <button v-if="m.options_source && props.canQuickAddMeasurementOption" type="button"
                                             @click="addOption(m.options_source)" class="btn-add-more">
                                             <i class="fa fa-plus text-[6px]"></i>
