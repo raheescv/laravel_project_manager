@@ -211,13 +211,13 @@
     @push('scripts')
         <script>
             $(document).ready(function() {
-                $('.customer_aging_table_change').on('change keyup', function() {
-                    Livewire.dispatch('customerAgingFilterChanged', [
-                        $('#from_date').val(),
-                        $('#to_date').val(),
-                        $('#customer_id').val() || null,
-                        $('#table_branch_id').val() || null
-                    ]);
+                $('.customer_aging_table_change').on('change', function() {
+                    Livewire.dispatch('customerAgingFilterChanged', {
+                        from_date: $('#from_date').val(),
+                        to_date: $('#to_date').val(),
+                        customer_id: $('#customer_id').val() || null,
+                        branch_id: $('#table_branch_id').val() || null
+                    });
                 });
             });
         </script>

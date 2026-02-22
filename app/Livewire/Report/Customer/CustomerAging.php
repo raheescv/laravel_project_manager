@@ -50,12 +50,21 @@ class CustomerAging extends Component
 
     public function mount()
     {
-        $this->from_date = date('Y-m-01', strtotime('-1 month'));
+        $this->from_date = date('Y-m-01');
         $this->to_date = date('Y-m-d');
     }
 
-    public function filterChanged($from_date, $to_date, $customer_id = null, $branch_id = null)
+    public function filterChanged($from_date = null, $to_date = null, $customer_id = null, $branch_id = null)
     {
+        // Backward compatibility: support array payloads dispatched from older scripts.
+        if (is_array($from_date)) {
+            $payload = $from_date;
+            $from_date = $payload['from_date'] ?? $payload[0] ?? $this->from_date;
+            $to_date = $payload['to_date'] ?? $payload[1] ?? $this->to_date;
+            $customer_id = $payload['customer_id'] ?? $payload[2] ?? null;
+            $branch_id = $payload['branch_id'] ?? $payload[3] ?? null;
+        }
+
         $this->from_date = $from_date;
         $this->to_date = $to_date;
         $this->customer_id = $customer_id;
