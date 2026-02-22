@@ -357,7 +357,6 @@ const handleAdd = () => {
         return
     }
     emit('add-item', { ...item.value })
-    handleClear()
 }
 
 let isUpdatingFromProps = false
