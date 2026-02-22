@@ -56,7 +56,7 @@
                 <tbody>
                     @forelse ($sales as $sale)
                         <tr>
-                            <td class="ps-3">
+                            <td class="ps-3 text-nowrap">
                                 <div class="d-flex align-items-center gap-2">
                                     <i class="demo-psi-building fs-5 text-warning"></i>
                                     <span>{{ $sale->customer_name }}</span>

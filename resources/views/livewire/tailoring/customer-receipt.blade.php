@@ -154,8 +154,13 @@
                     payment_ids: JSON.stringify(data.payment_ids || [])
                 });
                 const printUrl = '{{ route("print::tailoring::customer-receipt") }}?' + params.toString();
-                const printWindow = window.open(printUrl, '_blank', 'width=300,height=600');
-                if (printWindow) printWindow.focus();
+                const printLink = document.createElement('a');
+                printLink.href = printUrl;
+                printLink.target = '_blank';
+                printLink.rel = 'noopener noreferrer';
+                document.body.appendChild(printLink);
+                printLink.click();
+                printLink.remove();
             });
         </script>
     @endpush
