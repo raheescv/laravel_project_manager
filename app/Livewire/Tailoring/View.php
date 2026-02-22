@@ -7,6 +7,10 @@ use Livewire\Component;
 
 class View extends Component
 {
+    protected $listeners = [
+        'tailoring-measurement-updated' => 'loadOrder',
+    ];
+
     public $order_id;
 
     public $order;
@@ -39,6 +43,11 @@ class View extends Component
     public function setActiveTab($categoryId)
     {
         $this->activeCategoryTab = (string) $categoryId;
+    }
+
+    public function openMeasurementModal($itemId): void
+    {
+        $this->dispatch('open-tailoring-measurement-modal', itemId: (int) $itemId);
     }
 
     public function getCategoryTabsProperty()

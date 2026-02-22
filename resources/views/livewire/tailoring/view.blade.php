@@ -325,6 +325,9 @@
                                                     </div>
 
                                                     <div class="d-flex align-items-center gap-2">
+                                                        <button class="btn btn-primary btn-sm" type="button" wire:click="openMeasurementModal({{ $item->id }})">
+                                                            <i class="fa fa-pencil-square-o me-1"></i> Edit Measurements
+                                                        </button>
                                                         <button class="btn btn-outline-primary btn-sm" type="button" data-bs-toggle="collapse" data-bs-target="#{{ $itemCollapseId }}"
                                                             aria-expanded="{{ $loop->first ? 'true' : 'false' }}" aria-controls="{{ $itemCollapseId }}">
                                                             <i class="fa fa-chevron-down me-1"></i> Show Tailors
@@ -778,6 +781,9 @@
             </div>
         </div>
     </div>
+
+    <livewire:tailoring.measurement-edit-modal :order-id="$order->id" />
+
     <style>
         .tailoring-view-page {
             background: linear-gradient(180deg, #f3f6fb 0%, #f8fafc 42%, #ffffff 100%);
