@@ -22,7 +22,7 @@
             font-family: DejaVu Sans, Arial, Helvetica, sans-serif;
             background: #fff;
             color: #111;
-            font-size: 11px;
+            font-size: 14px;
             line-height: 1.35;
             font-weight: 700;
             text-rendering: geometricPrecision;
@@ -61,7 +61,7 @@
 
         .subtle {
             color: #111;
-            font-size: 10px;
+            font-size: 12px;
         }
 
         .center-title {
@@ -112,7 +112,7 @@
             align-items: center;
             gap: 4px;
             white-space: nowrap;
-            font-size: 12px;
+            font-size: 13px;
         }
 
         .measure-label {
@@ -146,7 +146,7 @@
         }
 
         .std-table th {
-            font-size: 9px;
+            font-size: 10px;
             font-weight: 700;
             text-transform: uppercase;
             letter-spacing: 0.5px;
@@ -179,7 +179,7 @@
         .ref-table th,
         .ref-table td {
             padding: 6px 7px;
-            font-size: 10px;
+            font-size: 13px;
             vertical-align: top;
         }
 
@@ -219,7 +219,7 @@
         .meta-strip td {
             border: 1.4px solid #111;
             padding: 5px 6px;
-            font-size: 10px;
+            font-size: 13px;
             width: 25%;
             font-weight: 700;
         }
@@ -238,7 +238,7 @@
 
         .line-field {
             margin-bottom: 7px;
-            font-size: 10px;
+            font-size: 13px;
         }
 
         .line-value {
@@ -249,9 +249,21 @@
             font-weight: 700;
         }
 
+        .personnel-row {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 12px;
+        }
+
+        .personnel-lines {
+            flex: 1 1 auto;
+            min-width: 0;
+        }
+
         .checklist {
             margin-top: 10px;
-            font-size: 10px;
+            font-size: 12px;
             display: inline-block;
         }
 
@@ -277,14 +289,14 @@
         }
 
         .rating-box {
-            float: right;
+            flex: 0 0 210px;
             width: 210px;
-            margin-top: 2px;
+            margin-top: 10px;
             text-align: center;
         }
 
         .rating-box .label {
-            font-size: 9px;
+            font-size: 12px;
             text-transform: uppercase;
             letter-spacing: 0.4px;
             color: #111;
@@ -326,7 +338,7 @@
             margin: 0 20px;
             padding-top: 5px;
             text-align: center;
-            font-size: 10px;
+            font-size: 13px;
             color: #111;
             text-transform: uppercase;
             font-weight: 700;
@@ -548,8 +560,22 @@
         <table class="bottom">
             <tr>
                 <td>
-                    <div class="line-field"><span class="bold">Cutting Master:</span><span class="line-value">{{ $order->cutter->name ?? '' }}</span></div>
-                    <div class="line-field"><span class="bold">Tailor Name:</span><span class="line-value">{{ $firstItem?->latestTailorAssignment?->tailor?->name ?? '' }}</span></div>
+                    <div class="personnel-row">
+                        <div class="personnel-lines">
+                            <div class="line-field"><span class="bold">Cutting Master:</span><span class="line-value">{{ $order->cutter->name ?? '' }}</span></div>
+                            <div class="line-field"><span class="bold">Tailor Name:</span><span class="line-value">{{ $firstItem?->latestTailorAssignment?->tailor?->name ?? '' }}</span></div>
+                        </div>
+                        <div class="rating-box">
+                            <div class="label">Rating</div>
+                            <div class="rating-stars">
+                                <span class="rating-star">☆</span>
+                                <span class="rating-star">☆</span>
+                                <span class="rating-star">☆</span>
+                                <span class="rating-star">☆</span>
+                                <span class="rating-star">☆</span>
+                            </div>
+                        </div>
+                    </div>
                     <div class="checklist">
                         <label class="check-item">
                             <input type="checkbox" class="check-input" {{ $bookingChecked ? 'checked' : '' }}>
@@ -563,16 +589,6 @@
                             <input type="checkbox" class="check-input" {{ $deliveredChecked ? 'checked' : '' }}>
                             <span>Delivered</span>
                         </label>
-                    </div>
-                    <div class="rating-box">
-                        <div class="label">Rating</div>
-                        <div class="rating-stars">
-                            <span class="rating-star">☆</span>
-                            <span class="rating-star">☆</span>
-                            <span class="rating-star">☆</span>
-                            <span class="rating-star">☆</span>
-                            <span class="rating-star">☆</span>
-                        </div>
                     </div>
                 </td>
                 <td>
