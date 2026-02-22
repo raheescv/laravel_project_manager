@@ -7,6 +7,8 @@ use App\Models\Sale;
 use App\Models\SaleItem;
 use App\Models\SaleReturn;
 use App\Models\SaleReturnItem;
+use App\Models\TailoringOrder;
+use App\Models\TailoringOrderItem;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Livewire\Component;
@@ -77,6 +79,23 @@ class DayWiseSaleReport extends Component
             ->toBase()
             ->get();
 
+        // Tailoring query - grouped by date
+        $tailoringSales = TailoringOrder::query()
+            ->when($from, fn ($q) => $q->where('tailoring_orders.order_date', '>=', $from))
+            ->when($to, fn ($q) => $q->where('tailoring_orders.order_date', '<=', $to))
+            ->when($this->branch_id, fn ($q) => $q->where('tailoring_orders.branch_id', $this->branch_id))
+            ->select(
+                DB::raw('tailoring_orders.order_date as date'),
+                DB::raw('COUNT(DISTINCT tailoring_orders.id) as count'),
+                DB::raw('SUM(total) as net_sale'),
+                DB::raw('SUM(gross_amount) as gross_sale'),
+                DB::raw('SUM(tax_amount) as tax_amount'),
+                DB::raw('SUM(other_discount) as discount')
+            )
+            ->groupBy('tailoring_orders.order_date')
+            ->toBase()
+            ->get();
+
         // Get quantities from sale_items grouped by date
         $saleQuantities = SaleItem::query()
             ->join('sales', 'sale_items.sale_id', '=', 'sales.id')
@@ -90,6 +109,22 @@ class DayWiseSaleReport extends Component
                 DB::raw('SUM(sale_items.base_unit_quantity) as base_unit_quantity')
             )
             ->groupBy('sales.date')
+            ->toBase()
+            ->get()
+            ->keyBy('date');
+
+        // Get quantities from tailoring_order_items grouped by date
+        $tailoringQuantities = TailoringOrderItem::query()
+            ->join('tailoring_orders', 'tailoring_order_items.tailoring_order_id', '=', 'tailoring_orders.id')
+            ->when($from, fn ($q) => $q->where('tailoring_orders.order_date', '>=', $from))
+            ->when($to, fn ($q) => $q->where('tailoring_orders.order_date', '<=', $to))
+            ->when($this->branch_id, fn ($q) => $q->where('tailoring_orders.branch_id', $this->branch_id))
+            ->select(
+                DB::raw('tailoring_orders.order_date as date'),
+                DB::raw('SUM(tailoring_order_items.quantity) as quantity'),
+                DB::raw('SUM(tailoring_order_items.quantity) as base_unit_quantity')
+            )
+            ->groupBy('tailoring_orders.order_date')
             ->toBase()
             ->get()
             ->keyBy('date');
@@ -115,19 +150,22 @@ class DayWiseSaleReport extends Component
         $quantities = [];
         $allDates = array_unique(array_merge(
             $saleQuantities->keys()->toArray(),
+            $tailoringQuantities->keys()->toArray(),
             $returnQuantities->keys()->toArray()
         ));
 
         foreach ($allDates as $date) {
             $saleQty = isset($saleQuantities[$date]) ? (float) $saleQuantities[$date]->quantity : 0;
             $saleBaseQty = isset($saleQuantities[$date]) ? (float) $saleQuantities[$date]->base_unit_quantity : 0;
+            $tailoringQty = isset($tailoringQuantities[$date]) ? (float) $tailoringQuantities[$date]->quantity : 0;
+            $tailoringBaseQty = isset($tailoringQuantities[$date]) ? (float) $tailoringQuantities[$date]->base_unit_quantity : 0;
             $returnQty = isset($returnQuantities[$date]) ? (float) $returnQuantities[$date]->quantity : 0;
             $returnBaseQty = isset($returnQuantities[$date]) ? (float) $returnQuantities[$date]->base_unit_quantity : 0;
 
             $quantities[$date] = (object) [
                 'date' => $date,
-                'quantity' => $saleQty - $returnQty,
-                'base_unit_quantity' => $saleBaseQty - $returnBaseQty,
+                'quantity' => ($saleQty + $tailoringQty) - $returnQty,
+                'base_unit_quantity' => ($saleBaseQty + $tailoringBaseQty) - $returnBaseQty,
             ];
         }
 
@@ -146,24 +184,55 @@ class DayWiseSaleReport extends Component
             ->get()
             ->keyBy('date');
 
-        // Build summary by combining sales and returns
-        $summary = [];
-
+        // Build combined daily sales map (Sale + Tailoring)
+        $combinedSales = [];
         foreach ($sales as $sale) {
             $key = $sale->date;
+            $combinedSales[$key] = [
+                'date' => $sale->date,
+                'count' => (int) $sale->count,
+                'net_sale' => (float) $sale->net_sale,
+                'gross_sale' => (float) $sale->gross_sale,
+                'tax_amount' => (float) $sale->tax_amount,
+                'discount' => (float) $sale->discount,
+            ];
+        }
+        foreach ($tailoringSales as $tailoring) {
+            $key = $tailoring->date;
+            if (! isset($combinedSales[$key])) {
+                $combinedSales[$key] = [
+                    'date' => $tailoring->date,
+                    'count' => 0,
+                    'net_sale' => 0,
+                    'gross_sale' => 0,
+                    'tax_amount' => 0,
+                    'discount' => 0,
+                ];
+            }
+            $combinedSales[$key]['count'] += (int) $tailoring->count;
+            $combinedSales[$key]['net_sale'] += (float) $tailoring->net_sale;
+            $combinedSales[$key]['gross_sale'] += (float) $tailoring->gross_sale;
+            $combinedSales[$key]['tax_amount'] += (float) $tailoring->tax_amount;
+            $combinedSales[$key]['discount'] += (float) $tailoring->discount;
+        }
+
+        // Build summary by combining sales/tailoring and returns
+        $summary = [];
+
+        foreach ($combinedSales as $key => $sale) {
             $returnAmount = isset($saleReturns[$key]) ? (float) $saleReturns[$key]->return_amount : 0;
             $quantity = isset($quantities[$key]) ? (float) $quantities[$key]->quantity : 0;
             $baseUnitQuantity = isset($quantities[$key]) ? (float) $quantities[$key]->base_unit_quantity : 0;
 
             $summary[$key] = [
-                'date' => $sale->date,
-                'count' => (int) $sale->count,
+                'date' => $sale['date'],
+                'count' => (int) $sale['count'],
                 'quantity' => $quantity,
                 'base_unit_quantity' => $baseUnitQuantity,
-                'net_sale' => (float) $sale->net_sale,
-                'gross_sale' => (float) $sale->gross_sale,
-                'tax_amount' => (float) $sale->tax_amount,
-                'discount' => (float) $sale->discount,
+                'net_sale' => (float) $sale['net_sale'],
+                'gross_sale' => (float) $sale['gross_sale'],
+                'tax_amount' => (float) $sale['tax_amount'],
+                'discount' => (float) $sale['discount'],
                 'return_amount' => $returnAmount,
             ];
         }

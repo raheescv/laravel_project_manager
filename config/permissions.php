@@ -38,7 +38,7 @@ return [
     ],
     'inventory transfer' => ['create', 'view', 'edit', 'edit completed', 'delete', 'import', 'export'],
     'issue' => ['create', 'view', 'edit', 'delete', 'print'],
-    'day session' => ['create', 'view','list', 'print'],
+    'day session' => ['create', 'view', 'list', 'print'],
     'category' => ['create', 'view', 'edit', 'delete', 'import', 'export'],
     'appointment' => ['create', 'view', 'edit', 'delete', 'export', 'checkout', 'dashboard'],
     'sale' => [

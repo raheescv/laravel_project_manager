@@ -197,7 +197,6 @@ class DailySalesInsightsReport extends Component
             ->when($from, fn ($q) => $q->where('tailoring_orders.order_date', '>=', $from))
             ->when($to, fn ($q) => $q->where('tailoring_orders.order_date', '<=', $to))
             ->when($this->branch_id, fn ($q) => $q->where('tailoring_orders.branch_id', $this->branch_id))
-            // ->whereIn('tailoring_orders.status', ['completed', 'delivered'])
             ->select(
                 DB::raw('tailoring_orders.order_date as date'),
                 'tailoring_orders.branch_id',
@@ -254,7 +253,6 @@ class DailySalesInsightsReport extends Component
             ->when($from, fn ($q) => $q->where('tailoring_payments.date', '>=', $from))
             ->when($to, fn ($q) => $q->where('tailoring_payments.date', '<=', $to))
             ->when($this->branch_id, fn ($q) => $q->where('tailoring_orders.branch_id', $this->branch_id))
-            // ->whereIn('tailoring_orders.status', ['completed', 'delivered'])
             ->select(
                 'tailoring_payments.date',
                 'tailoring_orders.branch_id',

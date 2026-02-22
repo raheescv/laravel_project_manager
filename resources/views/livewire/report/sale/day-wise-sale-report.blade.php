@@ -4,7 +4,7 @@
             <div class="d-flex align-items-center mb-4">
                 <div>
                     <h5 class="mb-0">Day Wise Sale Report</h5>
-                    <small class="text-muted">Daily sales breakdown with detailed metrics</small>
+                    <small class="text-muted">Daily Sales + Tailoring breakdown with detailed metrics</small>
                 </div>
             </div>
 

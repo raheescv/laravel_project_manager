@@ -3,6 +3,7 @@
 namespace App\Livewire\Report\Sale;
 
 use App\Models\Sale;
+use App\Models\TailoringOrder;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Livewire\Component;
@@ -16,8 +17,6 @@ class CalendarReport extends Component
     public $year;
 
     public $payment_method_id = '';
-
-    public $sale_type = '';
 
     public $view_mode = 'calendar'; // calendar or heatmap
 
@@ -115,9 +114,20 @@ class CalendarReport extends Component
             ->when($this->payment_method_id, function ($query) {
                 return $query->whereRaw('FIND_IN_SET(?, payment_method_ids)', [$this->payment_method_id]);
             })
-            ->when($this->sale_type, fn ($q) => $q->where('sale_type', $this->sale_type))
             ->with(['account:id,name,mobile', 'items.product:id,name'])
             ->select(['id', 'invoice_no', 'account_id', 'grand_total', 'created_at'])
+            ->orderBy('created_at', 'desc')
+            ->limit(15)
+            ->get();
+
+        $tailoringOrders = TailoringOrder::query()
+            ->where('order_date', $date)
+            ->when($this->branch_id, fn ($q) => $q->where('branch_id', $this->branch_id))
+            ->when($this->payment_method_id, function ($query) {
+                return $query->whereRaw('FIND_IN_SET(?, payment_method_ids)', [$this->payment_method_id]);
+            })
+            ->with(['account:id,name,mobile', 'items:id,tailoring_order_id'])
+            ->select(['id', 'order_no', 'account_id', 'grand_total', 'created_at'])
             ->orderBy('created_at', 'desc')
             ->limit(15)
             ->get();
@@ -125,8 +135,9 @@ class CalendarReport extends Component
         $this->day_details = [
             'date' => Carbon::parse($date)->format('D, M d, Y'),
             'sales' => $sales,
-            'total' => $sales->sum('grand_total'),
-            'count' => $sales->count(),
+            'tailoring_orders' => $tailoringOrders,
+            'total' => $sales->sum('grand_total') + $tailoringOrders->sum('grand_total'),
+            'count' => $sales->count() + $tailoringOrders->count(),
         ];
     }
 
@@ -162,17 +173,23 @@ class CalendarReport extends Component
             return ! is_null($day['date']);
         })->pluck('date')->toArray();
 
-        // Base query
+        // Base query (sales)
         $baseQuery = Sale::query()
             ->where('status', 'completed')
             ->when($this->branch_id, fn ($q) => $q->where('branch_id', $this->branch_id))
             ->when($this->payment_method_id, function ($query) {
                 return $query->whereRaw('FIND_IN_SET(?, payment_method_ids)', [$this->payment_method_id]);
-            })
-            ->when($this->sale_type, fn ($q) => $q->where('sale_type', $this->sale_type));
+            });
+
+        // Base query (tailoring)
+        $tailoringBaseQuery = TailoringOrder::query()
+            ->when($this->branch_id, fn ($q) => $q->where('branch_id', $this->branch_id))
+            ->when($this->payment_method_id, function ($query) {
+                return $query->whereRaw('FIND_IN_SET(?, payment_method_ids)', [$this->payment_method_id]);
+            });
 
         // Query for sales data for this month
-        $salesData = (clone $baseQuery)
+        $saleData = (clone $baseQuery)
             ->whereIn('date', $datesInMonth)
             ->select(
                 'date',
@@ -180,8 +197,29 @@ class CalendarReport extends Component
                 DB::raw('COUNT(id) as count')
             )
             ->groupBy('date')
-            ->get()
-            ->keyBy('date');
+            ->get();
+
+        $tailoringData = (clone $tailoringBaseQuery)
+            ->whereIn('order_date', $datesInMonth)
+            ->select(
+                DB::raw('order_date as date'),
+                DB::raw('SUM(grand_total) as total'),
+                DB::raw('COUNT(id) as count')
+            )
+            ->groupBy('order_date')
+            ->get();
+
+        $salesData = collect();
+        foreach ($saleData as $row) {
+            $salesData[$row->date] = (object) ['date' => $row->date, 'total' => (float) $row->total, 'count' => (int) $row->count];
+        }
+        foreach ($tailoringData as $row) {
+            if (! isset($salesData[$row->date])) {
+                $salesData[$row->date] = (object) ['date' => $row->date, 'total' => 0, 'count' => 0];
+            }
+            $salesData[$row->date]->total += (float) $row->total;
+            $salesData[$row->date]->count += (int) $row->count;
+        }
 
         // Get comparison data for previous month if enabled
         $prevMonthData = collect();
@@ -195,7 +233,7 @@ class CalendarReport extends Component
                 $prevMonthDays->push($date);
             }
 
-            $prevMonthData = (clone $baseQuery)
+            $prevSaleData = (clone $baseQuery)
                 ->whereIn('date', $prevMonthDays)
                 ->select(
                     'date',
@@ -203,13 +241,33 @@ class CalendarReport extends Component
                     DB::raw('COUNT(id) as count')
                 )
                 ->groupBy('date')
-                ->get()
-                ->keyBy(function ($item) {
-                    // Convert to current month's date (for comparison)
-                    $day = Carbon::parse($item->date)->day;
+                ->get();
 
-                    return $this->year.'-'.str_pad($this->month, 2, '0', STR_PAD_LEFT).'-'.str_pad($day, 2, '0', STR_PAD_LEFT);
-                });
+            $prevTailoringData = (clone $tailoringBaseQuery)
+                ->whereIn('order_date', $prevMonthDays)
+                ->select(
+                    DB::raw('order_date as date'),
+                    DB::raw('SUM(grand_total) as total'),
+                    DB::raw('COUNT(id) as count')
+                )
+                ->groupBy('order_date')
+                ->get();
+
+            $prevMonthData = collect();
+            foreach ($prevSaleData as $row) {
+                $day = Carbon::parse($row->date)->day;
+                $mappedDate = $this->year.'-'.str_pad($this->month, 2, '0', STR_PAD_LEFT).'-'.str_pad($day, 2, '0', STR_PAD_LEFT);
+                $prevMonthData[$mappedDate] = (object) ['date' => $mappedDate, 'total' => (float) $row->total, 'count' => (int) $row->count];
+            }
+            foreach ($prevTailoringData as $row) {
+                $day = Carbon::parse($row->date)->day;
+                $mappedDate = $this->year.'-'.str_pad($this->month, 2, '0', STR_PAD_LEFT).'-'.str_pad($day, 2, '0', STR_PAD_LEFT);
+                if (! isset($prevMonthData[$mappedDate])) {
+                    $prevMonthData[$mappedDate] = (object) ['date' => $mappedDate, 'total' => 0, 'count' => 0];
+                }
+                $prevMonthData[$mappedDate]->total += (float) $row->total;
+                $prevMonthData[$mappedDate]->count += (int) $row->count;
+            }
         }
 
         // Inject the sales data into our days collection

@@ -74,7 +74,8 @@
                                 </span>
                             </td>
                             <td class="text-nowrap">
-                                <a href="{{ route('sale::view', $sale->id) }}" class="text-primary fw-semibold text-decoration-none" target="_blank">
+                                <a href="{{ ($sale->source ?? 'sale') === 'tailoring' ? route('tailoring::order::show', $sale->id) : route('sale::view', $sale->id) }}"
+                                    class="text-primary fw-semibold text-decoration-none" target="_blank">
                                     {{ $sale->invoice_no }}
                                 </a>
                             </td>
@@ -222,4 +223,3 @@
         </script>
     @endpush
 </div>
-

@@ -239,7 +239,6 @@ class OverviewReport extends Component
             ->when($this->branchId, fn ($q) => $q->where('tailoring_orders.branch_id', $this->branchId))
             ->when($this->fromDate, fn ($q) => $q->where('tailoring_payments.date', '>=', $this->fromDate))
             ->when($this->toDate, fn ($q) => $q->where('tailoring_payments.date', '<=', $this->toDate))
-            // ->whereIn('tailoring_orders.status', ['completed', 'delivered'])
             ->select('accounts.name as payment_method')
             ->selectRaw("'tailoring' as payment_type")
             ->selectRaw('SUM(tailoring_payments.amount) as total')
@@ -455,7 +454,6 @@ class OverviewReport extends Component
             ->when($this->branchId, fn ($q) => $q->where('tailoring_orders.branch_id', $this->branchId))
             ->when($from, fn ($q) => $q->where('tailoring_orders.order_date', '>=', $from))
             ->when($to, fn ($q) => $q->where('tailoring_orders.order_date', '<=', $to))
-            // ->whereIn('tailoring_order_item_tailors.status', ['pending', 'completed', 'delivered'])
             ->select('users.id', 'users.name as tailor')
             ->selectRaw("SUM(CASE WHEN tailoring_order_item_tailors.status = 'pending' THEN 1 ELSE 0 END) as pending_count")
             ->selectRaw("SUM(CASE WHEN tailoring_order_item_tailors.status = 'completed' THEN 1 ELSE 0 END) as completed_count")
@@ -474,7 +472,6 @@ class OverviewReport extends Component
             ->when($this->branchId, fn ($q) => $q->where('tailoring_orders.branch_id', $this->branchId))
             ->when($from, fn ($q) => $q->where('tailoring_orders.order_date', '>=', $from))
             ->when($to, fn ($q) => $q->where('tailoring_orders.order_date', '<=', $to))
-            // ->whereIn('tailoring_orders.status', ['pending', 'completed', 'delivered'])
             ->select('tailoring_order_items.product_name')
             ->selectRaw('COALESCE(SUM(tailoring_order_items.quantity), 0) as quantity')
             ->selectRaw('COALESCE(SUM(tailoring_order_items.total), 0) as total_amount')
@@ -510,8 +507,7 @@ class OverviewReport extends Component
         $tailoringOrders = TailoringOrder::query()
             ->when($this->branchId, fn ($q) => $q->where('branch_id', $this->branchId))
             ->when($from, fn ($q) => $q->where('order_date', '>=', $from))
-            // ->whereIn('status', ['completed', 'delivered'])
-            ->when($to, fn ($q) => $q->where('order_date', '<=', $to)) ;
+            ->when($to, fn ($q) => $q->where('order_date', '<=', $to));
         $saleReturns = SaleReturn::query()->customerSearch($this->branchId, $from, $to);
         $tailorPerformance = $this->getTailorPerformance($from, $to);
         $tailoringItemPerformance = $this->getTailoringItemPerformance($from, $to);

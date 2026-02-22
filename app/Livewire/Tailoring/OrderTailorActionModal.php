@@ -4,10 +4,10 @@ namespace App\Livewire\Tailoring;
 
 use App\Actions\Tailoring\Order\SyncTailorAssignmentAction;
 use App\Models\TailoringOrder;
+use App\Models\TailoringOrderItem;
 use App\Models\TailoringOrderItemTailor;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
-use App\Models\TailoringOrderItem;
 
 class OrderTailorActionModal extends Component
 {

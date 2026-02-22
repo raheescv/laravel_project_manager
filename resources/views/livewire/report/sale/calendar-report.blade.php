@@ -4,7 +4,7 @@
             <div class="d-flex align-items-center mb-4">
                 <div>
                     <h5 class="mb-0">Sales Calendar View</h5>
-                    <small class="text-muted">Track your daily sales in a calendar format</small>
+                    <small class="text-muted">Track daily Sales + Tailoring activity in a calendar format</small>
                 </div>
                 <div class="ms-auto">
                     <!-- View Mode Buttons -->
@@ -46,16 +46,6 @@
                     </div>
                     <label class="form-label small text-muted mt-1">Payment Method</label>
                 </div>
-                <!-- Add Sale Type Filter -->
-                <div class="col-md-3" wire:ignore>
-                    <div class="input-group">
-                        <span class="input-group-text bg-light border-end-0">
-                            <i class="fa fa-tag text-success"></i>
-                        </span>
-                        {{ html()->select('sale_type', priceTypes())->class('form-control border-start-0 ps-0')->id('sale_type')->attribute('style', 'width:80%')->placeholder('All Sale Types') }}
-                    </div>
-                    <label class="form-label small text-muted mt-1">Sale Type</label>
-                </div>
                 <div class="col-md-3">
                     <div class="text-end">
                         <div class="btn-group">
@@ -67,10 +57,12 @@
                                 <i class="fa fa-chevron-right"></i>
                             </button>
                         </div>
-                        <button class="btn btn-sm btn-light ms-2" onclick="window.print()">
-                            <i class="fa fa-print me-1"></i> Print
-                        </button>
                     </div>
+                </div>
+                <div class="col-md-2">
+                    <button class="btn btn-sm btn-light ms-2" onclick="window.print()">
+                        <i class="fa fa-print me-1"></i> Print
+                    </button>
                 </div>
             </div>
         </div>
@@ -86,7 +78,7 @@
                             </div>
                             <div class="stats-content">
                                 <h3 class="stats-number">{{ number_format($monthlyCount) }}</h3>
-                                <p class="stats-label">Invoices This Month</p>
+                                <p class="stats-label">Transactions This Month</p>
                             </div>
                         </div>
                     </div>
@@ -97,7 +89,7 @@
                             </div>
                             <div class="stats-content">
                                 <h3 class="stats-number">{{ currency($monthlyTotal) }}</h3>
-                                <p class="stats-label">Total Sales This Month</p>
+                                <p class="stats-label">Total Sales + Tailoring</p>
                             </div>
                         </div>
                     </div>
@@ -357,12 +349,13 @@
                             </div>
                         </div>
 
-                        @if (count($day_details['sales']) > 0)
+                        @if (count($day_details['sales']) > 0 || count($day_details['tailoring_orders'] ?? []) > 0)
                             <div class="table-responsive">
                                 <table class="table table-sm table-striped">
                                     <thead>
                                         <tr>
-                                            <th>Invoice #</th>
+                                            <th>Type</th>
+                                            <th>Reference #</th>
                                             <th>Customer</th>
                                             <th class="text-end">Amount</th>
                                             <th>Time</th>
@@ -372,6 +365,7 @@
                                     <tbody>
                                         @foreach ($day_details['sales'] as $sale)
                                             <tr>
+                                                <td><span class="badge bg-primary-subtle text-primary">Sale</span></td>
                                                 <td>{{ $sale->invoice_no }}</td>
                                                 <td>{{ $sale->account->name }}</td>
                                                 <td class="text-end">{{ currency($sale->grand_total) }}</td>
@@ -379,12 +373,22 @@
                                                 <td class="text-end">{{ $sale->items->count() }}</td>
                                             </tr>
                                         @endforeach
+                                        @foreach ($day_details['tailoring_orders'] ?? [] as $order)
+                                            <tr>
+                                                <td><span class="badge bg-info-subtle text-info-emphasis">Tailoring</span></td>
+                                                <td>{{ $order->order_no }}</td>
+                                                <td>{{ $order->account?->name ?? '-' }}</td>
+                                                <td class="text-end">{{ currency($order->grand_total) }}</td>
+                                                <td>{{ \Carbon\Carbon::parse($order->created_at)->format('h:i A') }}</td>
+                                                <td class="text-end">{{ $order->items->count() }}</td>
+                                            </tr>
+                                        @endforeach
                                     </tbody>
                                 </table>
                             </div>
                         @else
                             <div class="text-center py-4">
-                                <p class="mb-0">No sales recorded for this day.</p>
+                                <p class="mb-0">No sales or tailoring transactions recorded for this day.</p>
                             </div>
                         @endif
                     </div>
