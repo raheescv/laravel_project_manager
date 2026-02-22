@@ -160,6 +160,13 @@
                                             <i class="fa fa-eye"></i>
                                         </a>
                                     @endcan
+                                    @can('issue.create')
+                                        @if ($item->type === 'issue')
+                                            <a href="{{ route('issue::create', ['type' => 'return', 'source_issue_id' => $item->id]) }}" class="btn btn-sm btn-outline-success" title="Return Items">
+                                                <i class="fa fa-undo"></i>
+                                            </a>
+                                        @endif
+                                    @endcan
                                     @can('issue.edit')
                                         <a href="{{ route('issue::edit', $item->id) }}" class="btn btn-sm btn-outline-primary" title="Edit">
                                             <i class="fa fa-pencil"></i>

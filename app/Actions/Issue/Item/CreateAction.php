@@ -20,6 +20,9 @@ class CreateAction
                 'tenant_id' => $issue->tenant_id,
                 'issue_id' => $data['issue_id'],
                 'product_id' => $data['product_id'],
+                'inventory_id' => $data['inventory_id'],
+                'source_issue_item_id' => $data['source_issue_item_id'] ?? null,
+                'source_item_order' => $data['source_item_order'] ?? null,
                 'quantity_in' => $data['quantity_in'] ?? 0,
                 'quantity_out' => $data['quantity_out'] ?? 0,
             ];

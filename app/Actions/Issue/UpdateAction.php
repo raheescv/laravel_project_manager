@@ -36,6 +36,7 @@ class UpdateAction
             $issueData = [
                 'type' => $data['type'],
                 'account_id' => $data['account_id'],
+                'source_issue_id' => $data['source_issue_id'] ?? null,
                 'date' => $data['date'],
                 'remarks' => $data['remarks'] ?? null,
                 'updated_by' => Auth::id(),
@@ -106,6 +107,9 @@ class UpdateAction
 
             return [$key => [
                 'product_id' => $i['product_id'] ?? null,
+                'inventory_id' => $i['inventory_id'] ?? null,
+                'source_issue_item_id' => $i['source_issue_item_id'] ?? null,
+                'source_item_order' => $i['source_item_order'] ?? null,
                 'quantity_in' => (float) ($i['quantity_in'] ?? 0),
                 'quantity_out' => (float) ($i['quantity_out'] ?? 0),
             ]];
@@ -118,6 +122,9 @@ class UpdateAction
             }
 
             return $item->product_id != $in['product_id']
+                || $item->inventory_id != $in['inventory_id']
+                || $item->source_issue_item_id != $in['source_issue_item_id']
+                || $item->source_item_order != $in['source_item_order']
                 || (float) $item->quantity_in !== $in['quantity_in']
                 || (float) $item->quantity_out !== $in['quantity_out'];
         });

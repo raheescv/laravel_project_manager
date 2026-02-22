@@ -18,6 +18,7 @@ class Issue extends Model implements AuditableContracts
         'tenant_id',
         'type',
         'account_id',
+        'source_issue_id',
         'date',
         'remarks',
         'signature',
@@ -32,6 +33,7 @@ class Issue extends Model implements AuditableContracts
         'no_of_items_out' => 'decimal:2',
         'no_of_items_in' => 'decimal:2',
         'balance' => 'decimal:2',
+        'source_issue_id' => 'integer',
         'created_by' => 'integer',
         'updated_by' => 'integer',
     ];
@@ -41,6 +43,7 @@ class Issue extends Model implements AuditableContracts
         return array_merge([
             'type' => ['required', 'in:issue,return'],
             'account_id' => ['required', 'exists:accounts,id'],
+            'source_issue_id' => ['nullable', 'exists:issues,id'],
             'date' => ['required', 'date'],
             'remarks' => ['nullable', 'string'],
             'signature' => ['nullable', 'string'],
@@ -70,5 +73,15 @@ class Issue extends Model implements AuditableContracts
     public function items(): HasMany
     {
         return $this->hasMany(IssueItem::class);
+    }
+
+    public function sourceIssue(): BelongsTo
+    {
+        return $this->belongsTo(Issue::class, 'source_issue_id');
+    }
+
+    public function returnIssues(): HasMany
+    {
+        return $this->hasMany(Issue::class, 'source_issue_id');
     }
 }

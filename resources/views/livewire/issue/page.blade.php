@@ -384,6 +384,11 @@
                                 <input type="text" wire:model="issues.remarks" class="form-control" id="remarks" placeholder="Optional notes">
                             </div>
                         </div>
+                        @if ($this->isReturnMode() && $source_issue_id)
+                            <div class="mt-3 text-muted small">
+                                <i class="fa fa-link me-1"></i> Returning from source issue <strong>#{{ $source_issue_id }}</strong>
+                            </div>
+                        @endif
                     </div>
 
                     <div class="content-card mb-3">
@@ -410,8 +415,8 @@
                         <div class="entry-card mb-3">
                             <div class="row align-items-end g-3">
                                 <div class="col-md-7" wire:ignore>
-                                    <label for="product_id" class="form-label">Product</label>
-                                    {{ html()->select('product_id', [])->value('')->class('select-product_id-list')->id('issue_product_id')->attribute('style', 'width:100%')->placeholder('Select Product') }}
+                                    <label for="inventory_id" class="form-label">Product (Inventory)</label>
+                                    {{ html()->select('inventory_id', [])->value('')->class('select-inventory-product_id-list')->id('issue_inventory_id')->attribute('style', 'width:100%')->placeholder('Select Product') }}
                                 </div>
                                 @if ($this->isReturnMode())
                                     <div class="col-md-2">
@@ -444,6 +449,11 @@
                                     <thead>
                                         <tr>
                                             <th>#</th>
+                                            @if ($this->isReturnMode())
+                                                <th>Source Order</th>
+                                                <th>Source Item ID</th>
+                                            @endif
+                                            <th>Inventory ID</th>
                                             <th>Product</th>
                                             <th class="text-end">{{ $this->isReturnMode() ? 'Qty In' : 'Qty Out' }}</th>
                                             <th class="text-center" style="width: 4rem;">Action</th>
@@ -453,6 +463,11 @@
                                         @foreach ($items as $item)
                                             <tr wire:key="item-{{ $item['key'] }}">
                                                 <td class="text-muted fw-medium">{{ $loop->iteration }}</td>
+                                                @if ($this->isReturnMode())
+                                                    <td class="text-muted">{{ $item['source_item_order'] ?? '-' }}</td>
+                                                    <td class="text-muted">#{{ $item['source_issue_item_id'] ?? '-' }}</td>
+                                                @endif
+                                                <td class="text-muted">#{{ $item['inventory_id'] ?? '-' }}</td>
                                                 <td class="fw-medium">{{ $item['name'] }}</td>
                                                 <td class="text-end">
                                                     @if ($this->isReturnMode())
@@ -473,14 +488,14 @@
                                         @endforeach
                                         @if (count($items) === 0)
                                             <tr>
-                                                <td colspan="4" class="empty-state">No items added yet. Start by scanning barcode or selecting a product.</td>
+                                                <td colspan="{{ $this->isReturnMode() ? 7 : 5 }}" class="empty-state">No items added yet. Start by scanning barcode or selecting a product.</td>
                                             </tr>
                                         @endif
                                     </tbody>
                                     @if (count($items) > 0)
                                         <tfoot>
                                             <tr>
-                                                <th colspan="2" class="text-end">Total</th>
+                                                <th colspan="{{ $this->isReturnMode() ? 5 : 3 }}" class="text-end">Total</th>
                                                 <th class="text-end">
                                                     {{ number_format(collect($items)->sum(fn($i) => (float) ($this->isReturnMode() ? $i['quantity_in'] ?? 0 : $i['quantity_out'] ?? 0)), 2) }}
                                                 </th>
@@ -517,18 +532,18 @@
     @push('scripts')
         <script>
             document.addEventListener('DOMContentLoaded', function() {
-                var productEl = document.querySelector('#issue_product_id');
+                var inventoryEl = document.querySelector('#issue_inventory_id');
                 window.addEventListener('OpenProductBox', function() {
-                    if (productEl && productEl.tomselect) {
-                        productEl.tomselect.clear();
-                        @this.set('product_id', '');
-                        productEl.tomselect.open();
+                    if (inventoryEl && inventoryEl.tomselect) {
+                        inventoryEl.tomselect.clear();
+                        @this.set('inventory_id', '');
+                        inventoryEl.tomselect.open();
                     }
                 });
             });
-            $('#issue_product_id').on('change', function(e) {
+            $('#issue_inventory_id').on('change', function(e) {
                 const value = $(this).val() || null;
-                @this.set('product_id', value);
+                @this.set('inventory_id', value);
             });
             $('#issue_account_id').on('change', function(e) {
                 const value = $(this).val() || null;

@@ -342,6 +342,9 @@
                     <div><strong>Ref:</strong> #{{ $model->id }}</div>
                     <div><strong>Date:</strong> {{ systemDate($model->date) }}</div>
                     <div><strong>Type:</strong> {{ $titleType }}</div>
+                    @if ($model->type === 'return' && $model->source_issue_id)
+                        <div><strong>Source Issue:</strong> #{{ $model->source_issue_id }}</div>
+                    @endif
                 </div>
             </div>
         </div>
@@ -364,6 +367,10 @@
             <thead>
                 <tr>
                     <th class="col-sn">SN</th>
+                    @if ($model->type === 'return')
+                        {{-- <th class="col-ref">Src Ord</th> --}}
+                        {{-- <th class="col-ref">Src Item</th> --}}
+                    @endif
                     <th class="col-ref">Item</th>
                     <th class="col-qty">Quantity</th>
                 </tr>
@@ -372,6 +379,10 @@
                 @foreach ($model->items as $item)
                     <tr>
                         <td class="col-sn">{{ $loop->iteration }}</td>
+                        @if ($model->type === 'return')
+                            {{-- <td class="col-ref">{{ $item->source_item_order ?? '-' }}</td> --}}
+                            {{-- <td class="col-ref">#{{ $item->source_issue_item_id ?? '-' }}</td> --}}
+                        @endif
                         <td class="col-ref">{{ $item?->product?->name ?? '' }}</td>
                         <td class="col-qty">
                             @if ($model->type === 'issue')

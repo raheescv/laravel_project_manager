@@ -38,7 +38,7 @@ class Table extends Component
 
     public function mount(): void
     {
-        $this->from_date = date('Y-m-d');
+        $this->from_date = date('Y-m-01');
         $this->to_date = date('Y-m-d');
     }
 

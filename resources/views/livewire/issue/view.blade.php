@@ -179,6 +179,35 @@
             padding-right: 1rem;
         }
 
+        .issue-view-page .table-issue-view tbody tr.return-ref-row td {
+            background: #ecfdf3;
+            border-top-color: #d1fae5;
+            border-bottom-color: #d1fae5;
+        }
+
+        .issue-view-page .table-issue-view tbody tr.return-ref-row td:first-child {
+            color: #047857;
+            font-weight: 700;
+        }
+
+        .issue-view-page .table-issue-view tbody tr.return-ref-total-row td {
+            background: #f0fdf4;
+            border-top: 1px dashed #86efac;
+            color: #166534;
+            font-weight: 600;
+        }
+
+        .issue-view-page .table-issue-view tbody tr.source-ref-row td {
+            background: #eff6ff;
+            border-top-color: #dbeafe;
+            border-bottom-color: #dbeafe;
+        }
+
+        .issue-view-page .table-issue-view tbody tr.source-ref-row td:first-child {
+            color: #1d4ed8;
+            font-weight: 700;
+        }
+
         .issue-view-page .table-issue-view tfoot th {
             font-size: 0.8rem;
             font-weight: 600;
@@ -211,6 +240,11 @@
                     <span class="fw-semibold text-body">{{ucFirst( $model->type) }} details</span>
                 </h5>
                 <div class="d-flex gap-2">
+                    @if ($model->type === 'issue')
+                        <a href="{{ route('issue::create', ['type' => 'return', 'source_issue_id' => $model->id]) }}" class="btn btn-sm btn-outline-success btn-header">
+                            <i class="fa fa-undo me-1"></i> Return Items
+                        </a>
+                    @endif
                     <a href="{{ route('issue::print', $model->id) }}" target="_blank" class="btn btn-sm btn-outline-secondary btn-header btn-print">
                         <i class="fa fa-print me-1"></i> Print
                     </a>
@@ -254,6 +288,19 @@
                         <p class="mb-0 text-body" style="font-size: 0.9rem;">{{ $model->remarks }}</p>
                     </div>
                 @endif
+                @if ($model->type === 'return' && $model->source_issue_id)
+                    <div class="remarks-box mt-2">
+                        <div class="label d-flex align-items-center gap-1">
+                            <i class="fa fa-link opacity-75" style="font-size: 0.7rem;"></i> Source Issue
+                        </div>
+                        <p class="mb-0 text-body" style="font-size: 0.9rem;">
+                            #{{ $model->source_issue_id }}
+                            @if ($model->sourceIssue?->date)
+                                ({{ systemDate($model->sourceIssue->date) }})
+                            @endif
+                        </p>
+                    </div>
+                @endif
             </div>
         </div>
 
@@ -270,6 +317,11 @@
                         <thead>
                             <tr>
                                 <th><i class="fa fa-hashtag text-muted me-1" style="font-size: 0.65rem;"></i>#</th>
+                                @if ($model->type === 'return')
+                                    <th><i class="fa fa-list-ol text-muted me-1" style="font-size: 0.65rem;"></i>Source Order</th>
+                                    <th><i class="fa fa-link text-muted me-1" style="font-size: 0.65rem;"></i>Source Item ID</th>
+                                @endif
+                                <th><i class="fa fa-barcode text-muted me-1" style="font-size: 0.65rem;"></i>Inventory ID</th>
                                 <th><i class="fa fa-cube text-muted me-1" style="font-size: 0.65rem;"></i>Product</th>
                                 <th class="text-end"><i class="fa fa-arrow-up text-muted me-1" style="font-size: 0.65rem;"></i>Qty Out</th>
                                 <th class="text-end"><i class="fa fa-arrow-down text-muted me-1" style="font-size: 0.65rem;"></i>Qty In</th>
@@ -277,24 +329,192 @@
                         </thead>
                         <tbody>
                             @foreach ($model->items as $item)
+                                @php
+                                    $returnRefs = $model->type === 'issue' ? $item->returnedItems->filter(fn($r) => $r->issue?->type === 'return') : collect();
+                                    $sourceRef = $model->type === 'return' ? $item->sourceIssueItem : null;
+                                @endphp
                                 <tr>
                                     <td class="text-muted">{{ $loop->iteration }}</td>
+                                    @if ($model->type === 'return')
+                                        <td class="text-muted">{{ $item->source_item_order ?? '—' }}</td>
+                                        <td class="text-muted">#{{ $item->source_issue_item_id ?? '—' }}</td>
+                                    @endif
+                                    <td class="text-muted">#{{ $item->inventory_id ?? '—' }}</td>
                                     <td>
                                         <span class="fw-medium">{{ $item->product?->name ?? '—' }}</span>
-                                        @if ($item->product?->code)
-                                            <small class="text-muted">({{ $item->product->code }})</small>
+                                        <div class="small text-muted mt-1">
+                                            @if ($item->product?->code)
+                                                <span class="me-2">Code: {{ $item->product->code }}</span>
+                                            @endif
+                                            @if ($item->inventory?->barcode)
+                                                <span class="me-2">Barcode: {{ $item->inventory->barcode }}</span>
+                                            @endif
+                                            @if ($item->inventory?->batch)
+                                                <span>Batch: {{ $item->inventory->batch }}</span>
+                                            @endif
+                                        </div>
+                                        @if ($model->type === 'return' && $item->sourceIssueItem?->issue_id)
+                                            <div class="small text-muted">
+                                                Source Issue: #{{ $item->sourceIssueItem->issue_id }}
+                                            </div>
                                         @endif
                                     </td>
                                     <td class="text-end">{{ $item->quantity_out > 0 ? currency($item->quantity_out) : '—' }}</td>
                                     <td class="text-end">{{ $item->quantity_in > 0 ? currency($item->quantity_in) : '—' }}</td>
                                 </tr>
+                                @if ($model->type === 'issue' && $returnRefs->isNotEmpty())
+                                    @foreach ($returnRefs as $ref)
+                                        <tr class="return-ref-row">
+                                            <td>↳</td>
+                                            <td class="text-muted">#{{ $item->inventory_id ?? '—' }}</td>
+                                            <td>
+                                                <span class="fw-semibold text-success">Returned Item</span>
+                                                <span class="ms-1">Ref</span>
+                                                <a href="{{ route('issue::view', $ref->issue_id) }}" class="text-decoration-none fw-semibold ms-1">#{{ $ref->issue_id }}</a>
+                                                <div class="small text-muted">
+                                                    Date: {{ $ref->issue?->date ? systemDate($ref->issue->date) : '—' }}
+                                                </div>
+                                            </td>
+                                            <td class="text-end">—</td>
+                                            <td class="text-end text-success fw-semibold">{{ number_format((float) $ref->quantity_in, 2) }}</td>
+                                        </tr>
+                                    @endforeach
+                                    <tr class="return-ref-total-row">
+                                        <td></td>
+                                        <td></td>
+                                        <td>Total Returned For This Item</td>
+                                        <td class="text-end">—</td>
+                                        <td class="text-end">{{ number_format((float) $returnRefs->sum('quantity_in'), 2) }}</td>
+                                    </tr>
+                                @endif
+                                @if ($model->type === 'return' && $sourceRef)
+                                    <tr class="source-ref-row">
+                                        <td>↳</td>
+                                        <td class="text-muted">{{ $item->source_item_order ?? '—' }}</td>
+                                        <td class="text-muted">#{{ $item->source_issue_item_id ?? '—' }}</td>
+                                        <td class="text-muted">#{{ $sourceRef->inventory_id ?? '—' }}</td>
+                                        <td>
+                                            <span class="fw-semibold text-primary">Source Issued Item</span>
+                                            <div class="small text-muted">
+                                                Ref:
+                                                @if ($sourceRef->issue_id)
+                                                    <a href="{{ route('issue::view', $sourceRef->issue_id) }}" class="text-decoration-none fw-semibold">#{{ $sourceRef->issue_id }}</a>
+                                                @else
+                                                    —
+                                                @endif
+                                                @if ($sourceRef->issue?->date)
+                                                    | Date: {{ systemDate($sourceRef->issue->date) }}
+                                                @endif
+                                            </div>
+                                            @if ($sourceRef->product?->name)
+                                                <div class="small text-muted">
+                                                    Product: {{ $sourceRef->product->name }}
+                                                    @if ($sourceRef->product?->code)
+                                                        ({{ $sourceRef->product->code }})
+                                                    @endif
+                                                </div>
+                                            @endif
+                                        </td>
+                                        <td class="text-end text-primary fw-semibold">{{ number_format((float) $sourceRef->quantity_out, 2) }}</td>
+                                        <td class="text-end">—</td>
+                                    </tr>
+                                @endif
                             @endforeach
                         </tbody>
                         <tfoot>
                             <tr class="fw-semibold">
-                                <th colspan="2" class="text-end"><i class="fa fa-calculator text-muted me-1"></i>Total</th>
+                                <th colspan="{{ $model->type === 'return' ? 5 : 3 }}" class="text-end"><i class="fa fa-calculator text-muted me-1"></i>Total</th>
                                 <th class="text-end">{{ number_format($model->items->sum('quantity_out'), 2) }}</th>
                                 <th class="text-end">{{ number_format($model->items->sum('quantity_in'), 2) }}</th>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        @php
+            $summaryRows = collect();
+
+            if ($model->type === 'issue') {
+                $summaryRows = $model->items
+                    ->groupBy(fn($item) => (string) ($item->inventory_id ?? '0'))
+                    ->map(function ($rows) {
+                        $first = $rows->first();
+                        $issued = (float) $rows->sum(fn($r) => (float) $r->quantity_out);
+                        $returned = (float) $rows->sum(fn($r) => (float) $r->returnedItems->filter(fn($x) => $x->issue?->type === 'return')->sum('quantity_in'));
+
+                        return [
+                            'inventory_id' => $first->inventory_id,
+                            'product_name' => $first->product?->name ?? '—',
+                            'issued' => $issued,
+                            'returned' => $returned,
+                            'balance' => $issued - $returned,
+                        ];
+                    })
+                    ->values();
+            } else {
+                $summaryRows = $model->items
+                    ->groupBy(fn($item) => (string) ($item->inventory_id ?? '0'))
+                    ->map(function ($rows) {
+                        $first = $rows->first();
+                        $issued = (float) $rows->sum(fn($r) => (float) ($r->sourceIssueItem?->quantity_out ?? 0));
+                        $returned = (float) $rows->sum(fn($r) => (float) $r->quantity_in);
+
+                        return [
+                            'inventory_id' => $first->inventory_id,
+                            'product_name' => $first->product?->name ?? ($first->sourceIssueItem?->product?->name ?? '—'),
+                            'issued' => $issued,
+                            'returned' => $returned,
+                            'balance' => $issued - $returned,
+                        ];
+                    })
+                    ->values();
+            }
+        @endphp
+
+        <div class="card shadow-sm mt-3 overflow-hidden">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0 small text-uppercase fw-semibold d-flex align-items-center gap-2" style="color: var(--iv-muted); letter-spacing: 0.05em;">
+                    <i class="fa fa-bar-chart" style="color: var(--iv-accent);"></i> Item Summary
+                </h5>
+                <span class="small text-muted">Total Issued vs Returned</span>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle table-sm mb-0">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Inventory ID</th>
+                                <th>Product</th>
+                                <th class="text-end">Total Issued</th>
+                                <th class="text-end">Total Returned</th>
+                                <th class="text-end">Balance</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @forelse ($summaryRows as $row)
+                                <tr>
+                                    <td class="text-muted">{{ $loop->iteration }}</td>
+                                    <td class="text-muted">#{{ $row['inventory_id'] ?? '—' }}</td>
+                                    <td>{{ $row['product_name'] }}</td>
+                                    <td class="text-end fw-semibold">{{ number_format((float) $row['issued'], 2) }}</td>
+                                    <td class="text-end text-success fw-semibold">{{ number_format((float) $row['returned'], 2) }}</td>
+                                    <td class="text-end fw-semibold {{ (float) $row['balance'] < 0 ? 'text-danger' : 'text-primary' }}">{{ number_format((float) $row['balance'], 2) }}</td>
+                                </tr>
+                            @empty
+                                <tr>
+                                    <td colspan="6" class="text-center text-muted py-3">No summary data.</td>
+                                </tr>
+                            @endforelse
+                        </tbody>
+                        <tfoot>
+                            <tr class="fw-semibold bg-light">
+                                <th colspan="3" class="text-end">Grand Total</th>
+                                <th class="text-end">{{ number_format((float) $summaryRows->sum('issued'), 2) }}</th>
+                                <th class="text-end text-success">{{ number_format((float) $summaryRows->sum('returned'), 2) }}</th>
+                                <th class="text-end {{ (float) $summaryRows->sum('balance') < 0 ? 'text-danger' : 'text-primary' }}">{{ number_format((float) $summaryRows->sum('balance'), 2) }}</th>
                             </tr>
                         </tfoot>
                     </table>

@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Traits\BelongsToTenant;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use OwenIt\Auditing\Auditable;
 use OwenIt\Auditing\Contracts\Auditable as AuditableContracts;
 
@@ -17,12 +18,18 @@ class IssueItem extends Model implements AuditableContracts
         'tenant_id',
         'issue_id',
         'product_id',
+        'inventory_id',
+        'source_issue_item_id',
+        'source_item_order',
         'quantity_in',
         'quantity_out',
     ];
 
     protected $casts = [
         'tenant_id' => 'integer',
+        'inventory_id' => 'integer',
+        'source_issue_item_id' => 'integer',
+        'source_item_order' => 'integer',
         'quantity_in' => 'decimal:2',
         'quantity_out' => 'decimal:2',
     ];
@@ -31,7 +38,10 @@ class IssueItem extends Model implements AuditableContracts
     {
         return array_merge([
             'issue_id' => ['required', 'exists:issues,id'],
+            'inventory_id' => ['required', 'exists:inventories,id'],
             'product_id' => ['required', 'exists:products,id'],
+            'source_issue_item_id' => ['nullable', 'exists:issue_items,id'],
+            'source_item_order' => ['nullable', 'integer', 'min:1'],
             'quantity_in' => [
                 'nullable',
                 'numeric',
@@ -62,5 +72,20 @@ class IssueItem extends Model implements AuditableContracts
     public function product(): BelongsTo
     {
         return $this->belongsTo(Product::class);
+    }
+
+    public function inventory(): BelongsTo
+    {
+        return $this->belongsTo(Inventory::class, 'inventory_id');
+    }
+
+    public function sourceIssueItem(): BelongsTo
+    {
+        return $this->belongsTo(IssueItem::class, 'source_issue_item_id');
+    }
+
+    public function returnedItems(): HasMany
+    {
+        return $this->hasMany(IssueItem::class, 'source_issue_item_id');
     }
 }

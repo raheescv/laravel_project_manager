@@ -64,6 +64,21 @@ class StockUpdateAction
     private function findInventory(IssueItem $item): Inventory
     {
         $branchId = session('branch_id');
+
+        if (! empty($item->inventory_id)) {
+            $inventoryQuery = Inventory::withoutGlobalScopes()->where('id', $item->inventory_id);
+            if ($branchId) {
+                $inventoryQuery->where('branch_id', $branchId);
+            }
+            $inventory = $inventoryQuery->first();
+
+            if (! $inventory) {
+                throw new Exception('Inventory not found for inventory ID: '.$item->inventory_id, 1);
+            }
+
+            return $inventory;
+        }
+
         if (! $branchId) {
             throw new Exception('Branch context is required to update inventory for issue.', 1);
         }

@@ -34,7 +34,7 @@ class IssueController extends Controller
 
     public function print(string $id)
     {
-        $model = Issue::with(['account:id,name,mobile', 'items.product:id,name,code', 'createdBy:id,name', 'updatedBy:id,name'])
+        $model = Issue::with(['account:id,name,mobile', 'items.product:id,name,code', 'items.inventory:id,product_id,barcode,batch', 'createdBy:id,name', 'updatedBy:id,name'])
             ->findOrFail((int) $id);
 
         $html = view('issue.print', compact('model'));

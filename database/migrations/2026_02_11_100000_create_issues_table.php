@@ -20,6 +20,10 @@ return new class() extends Migration
             $table->unsignedBigInteger('account_id');
             $table->foreign('account_id')->references('id')->on('accounts')->onDelete('cascade');
 
+            $table->unsignedBigInteger('source_issue_id')->nullable();
+            $table->foreign('source_issue_id')->references('id')->on('issues')->nullOnDelete();
+            $table->index('source_issue_id');
+
             $table->date('date');
             $table->text('remarks')->nullable();
             $table->decimal('no_of_items_out', 16, 2)->default(0);

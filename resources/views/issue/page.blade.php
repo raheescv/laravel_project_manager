@@ -24,6 +24,6 @@
     <x-account.customer-modal />
     @push('scripts')
         @include('components.select.customerSelect')
-        @include('components.select.productSelect')
+        @include('components.select.inventoryProductSelect')
     @endpush
 </x-app-layout>

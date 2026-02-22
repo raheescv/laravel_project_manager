@@ -13,12 +13,14 @@ class CreateAction
     {
         try {
             validationHelper(Issue::rules(), $data);
+            $items = $data['items'] ?? [];
 
             DB::beginTransaction();
 
             $data = [
                 'type' => $data['type'],
                 'account_id' => $data['account_id'],
+                'source_issue_id' => $data['source_issue_id'] ?? null,
                 'date' => $data['date'],
                 'remarks' => $data['remarks'] ?? null,
                 'no_of_items_out' => 0,
@@ -28,7 +30,7 @@ class CreateAction
             ];
             $issue = Issue::create($data);
 
-            foreach ($data['items'] ?? [] as $item) {
+            foreach ($items as $item) {
                 $item['issue_id'] = $issue->id;
                 $response = (new Item\CreateAction())->execute($item);
                 if (! $response['success']) {
