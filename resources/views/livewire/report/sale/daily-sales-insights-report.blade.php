@@ -4,7 +4,7 @@
             <div class="d-flex align-items-center mb-4">
                 <div>
                     <h5 class="mb-0">Daily Sales Insights</h5>
-                    <small class="text-muted">Track your daily sales performance and trends</small>
+                    <small class="text-muted">Track daily Sales + Tailoring performance and trends</small>
                 </div>
             </div>
 

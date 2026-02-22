@@ -8,6 +8,8 @@ use App\Models\Account;
 use App\Models\Models\Views\Ledger;
 use App\Models\Sale;
 use App\Models\SalePayment;
+use App\Models\TailoringOrder;
+use App\Models\TailoringPayment;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -168,9 +170,9 @@ class DailySalesInsightsReport extends Component
         // Standardize dates
         $from = $this->from_date ? Carbon::parse($this->from_date)->toDateString() : null;
         $to = $this->to_date ? Carbon::parse($this->to_date)->toDateString() : null;
+        $summarySortField = $this->sortField === 'branches.name' ? 'branch' : $this->sortField;
 
-        // Sales query
-        $sales = Sale::query()
+        $saleSummaryQuery = Sale::query()
             ->join('branches', 'branches.id', '=', 'branch_id')
             ->when($from, fn ($q) => $q->where('sales.date', '>=', $from))
             ->when($to, fn ($q) => $q->where('sales.date', '<=', $to))
@@ -188,13 +190,47 @@ class DailySalesInsightsReport extends Component
                 DB::raw('SUM(paid) as paid'),
                 DB::raw('SUM(balance) as credit')
             )
-            ->groupBy('sales.date', 'sales.branch_id', 'branches.name')
-            ->orderBy($this->sortField, $this->sortDirection)
-            ->toBase()
+            ->groupBy('sales.date', 'sales.branch_id', 'branches.name');
+
+        $tailoringSummaryQuery = TailoringOrder::query()
+            ->join('branches', 'branches.id', '=', 'tailoring_orders.branch_id')
+            ->when($from, fn ($q) => $q->where('tailoring_orders.order_date', '>=', $from))
+            ->when($to, fn ($q) => $q->where('tailoring_orders.order_date', '<=', $to))
+            ->when($this->branch_id, fn ($q) => $q->where('tailoring_orders.branch_id', $this->branch_id))
+            ->whereIn('tailoring_orders.status', ['completed', 'delivered'])
+            ->select(
+                DB::raw('tailoring_orders.order_date as date'),
+                'tailoring_orders.branch_id',
+                'branches.name as branch',
+                DB::raw('SUM(gross_amount) as item_total'),
+                DB::raw('COUNT(DISTINCT tailoring_orders.id) as no_of_invoices'),
+                DB::raw('SUM(total) as net_sales'),
+                DB::raw('SUM(other_discount) as sales_discount'),
+                DB::raw('SUM(grand_total) as total_sales'),
+                DB::raw('SUM(paid) as paid'),
+                DB::raw('SUM(balance) as credit')
+            )
+            ->groupBy('tailoring_orders.order_date', 'tailoring_orders.branch_id', 'branches.name');
+
+        $sales = DB::query()
+            ->fromSub($saleSummaryQuery->unionAll($tailoringSummaryQuery), 'combined_sales')
+            ->select(
+                'date',
+                'branch_id',
+                'branch',
+                DB::raw('SUM(item_total) as item_total'),
+                DB::raw('SUM(no_of_invoices) as no_of_invoices'),
+                DB::raw('SUM(net_sales) as net_sales'),
+                DB::raw('SUM(sales_discount) as sales_discount'),
+                DB::raw('SUM(total_sales) as total_sales'),
+                DB::raw('SUM(paid) as paid'),
+                DB::raw('SUM(credit) as credit')
+            )
+            ->groupBy('date', 'branch_id', 'branch')
+            ->orderBy($summarySortField, $this->sortDirection)
             ->get();
 
-        // Payments query
-        $payments = SalePayment::query()
+        $salePaymentsQuery = SalePayment::query()
             ->join('sales', 'sales.id', '=', 'sale_id')
             ->join('branches', 'branches.id', '=', 'sales.branch_id')
             ->join('accounts', 'accounts.id', '=', 'payment_method_id')
@@ -209,9 +245,36 @@ class DailySalesInsightsReport extends Component
                 'accounts.name as payment_method_name',
                 DB::raw('SUM(amount) as amount')
             )
-            ->groupBy('sale_payments.date', 'sales.branch_id', 'branches.name', 'accounts.name')
-            ->orderBy('sale_payments.date')
-            ->toBase()
+            ->groupBy('sale_payments.date', 'sales.branch_id', 'branches.name', 'accounts.name');
+
+        $tailoringPaymentsQuery = TailoringPayment::query()
+            ->join('tailoring_orders', 'tailoring_orders.id', '=', 'tailoring_payments.tailoring_order_id')
+            ->join('branches', 'branches.id', '=', 'tailoring_orders.branch_id')
+            ->join('accounts', 'accounts.id', '=', 'tailoring_payments.payment_method_id')
+            ->when($from, fn ($q) => $q->where('tailoring_payments.date', '>=', $from))
+            ->when($to, fn ($q) => $q->where('tailoring_payments.date', '<=', $to))
+            ->when($this->branch_id, fn ($q) => $q->where('tailoring_orders.branch_id', $this->branch_id))
+            ->whereIn('tailoring_orders.status', ['completed', 'delivered'])
+            ->select(
+                'tailoring_payments.date',
+                'tailoring_orders.branch_id',
+                'branches.name as branch',
+                'accounts.name as payment_method_name',
+                DB::raw('SUM(tailoring_payments.amount) as amount')
+            )
+            ->groupBy('tailoring_payments.date', 'tailoring_orders.branch_id', 'branches.name', 'accounts.name');
+
+        $payments = DB::query()
+            ->fromSub($salePaymentsQuery->unionAll($tailoringPaymentsQuery), 'combined_payments')
+            ->select(
+                'date',
+                'branch_id',
+                'branch',
+                'payment_method_name',
+                DB::raw('SUM(amount) as amount')
+            )
+            ->groupBy('date', 'branch_id', 'branch', 'payment_method_name')
+            ->orderBy('date')
             ->get();
 
         // Build summary
