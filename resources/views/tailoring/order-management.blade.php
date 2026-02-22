@@ -17,7 +17,7 @@
     <div class="content__boxed">
         <div class="content__wrap">
             <div class="card mb-3">
-                @livewire('tailoring.order-search')
+                @livewire('tailoring.order-management')
             </div>
         </div>
     </div>

@@ -44,10 +44,10 @@
                     <div class="row g-3">
                         <div class="col-md-4" wire:ignore>
                             <div class="form-group">
-                                <label class="form-label text-muted fw-semibold small mb-2" for="order_search_customer_id">
+                                <label class="form-label text-muted fw-semibold small mb-2" for="order_management_customer_id">
                                     <i class="demo-psi-building me-1"></i> Customer
                                 </label>
-                                {{ html()->select('customer_id', [])->value($customer_id ?? '')->class('select-customer_id-list')->id('order_search_customer_id')->placeholder('All Customers') }}
+                                {{ html()->select('customer_id', [])->value($customer_id ?? '')->class('select-customer_id-list')->id('order_management_customer_id')->placeholder('All Customers') }}
                             </div>
                         </div>
                         <div class="col-md-8">
@@ -249,7 +249,7 @@
                         </tr>
                         @if (in_array($order->id, $expandedOrderIds, true))
                             <tr class="bg-white">
-                                <td colspan="10" class="px-3 py-2">
+                                <td colspan="11" class="px-3 py-2">
                                     <div class="border rounded-3 shadow-sm overflow-hidden">
                                         <div class="px-3 py-2 bg-light border-bottom d-flex justify-content-between align-items-center">
                                             <div class="fw-semibold">Order Items</div>
@@ -338,10 +338,17 @@
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body p-0">
+                    <div id="tailoring_order_preview_context" class="d-none"
+                        data-account-id="{{ $selectedOrderDetails['account_id'] ?? '' }}"
+                        data-customer-name="{{ $selectedOrderDetails['customer_name'] ?? '' }}"
+                        data-customer-mobile="{{ $selectedOrderDetails['customer_mobile'] ?? '' }}"></div>
                     <div class="table-responsive">
                         <table class="table table-striped table-hover table-sm align-middle mb-0">
                             <thead class="bg-light text-nowrap">
                                 <tr>
+                                    <th class="ps-3" style="width: 44px;">
+                                        <input type="checkbox" id="tailoring_select_all_items" class="form-check-input">
+                                    </th>
                                     <th class="ps-3">#</th>
                                     <th>Product</th>
                                     <th>Category / Model</th>
@@ -355,6 +362,11 @@
                             <tbody>
                                 @forelse ($selectedOrderItems as $item)
                                     <tr>
+                                        <td class="ps-3">
+                                            <input type="checkbox" class="form-check-input tailoring-order-item-checkbox"
+                                                data-item-id="{{ $item['id'] }}"
+                                                data-prefill='@json($item['prefill'], JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT)'>
+                                        </td>
                                         <td class="ps-3">{{ $item['item_no'] }}</td>
                                         <td class="fw-semibold">{{ $item['product_name'] }}</td>
                                         <td>
@@ -374,12 +386,22 @@
                                     </tr>
                                 @empty
                                     <tr>
-                                        <td colspan="8" class="text-center text-muted py-3">No items in this order.</td>
+                                        <td colspan="9" class="text-center text-muted py-3">No items in this order.</td>
                                     </tr>
                                 @endforelse
                             </tbody>
                         </table>
                     </div>
+                </div>
+                <div class="modal-footer d-flex justify-content-between">
+                    <small class="text-muted">
+                        Selected:
+                        <span id="tailoring_selected_items_count">0</span>
+                    </small>
+                    <button type="button" id="tailoring_create_order_from_selected" class="btn btn-primary btn-sm" disabled>
+                        <i class="fa fa-plus-circle me-1"></i>
+                        Create New Order With Selected
+                    </button>
                 </div>
             </div>
         </div>
@@ -390,28 +412,133 @@
     @push('scripts')
         <script>
             document.addEventListener('livewire:navigated', function() {
-                bindOrderSearchCustomer();
+                bindOrderManagementCustomer();
             });
             document.addEventListener('DOMContentLoaded', function() {
-                bindOrderSearchCustomer();
+                bindOrderManagementCustomer();
             });
 
-            function bindOrderSearchCustomer() {
-                const el = document.getElementById('order_search_customer_id');
-                if (!el || el._orderSearchBound) return;
-                el._orderSearchBound = true;
-                $(el).off('change.order_search').on('change.order_search', function() {
+            function bindOrderManagementCustomer() {
+                const el = document.getElementById('order_management_customer_id');
+                if (!el || el._orderManagementBound) return;
+                el._orderManagementBound = true;
+                $(el).off('change.order_management').on('change.order_management', function() {
                     const value = $(this).val() || '';
                     @this.set('customer_id', value);
                 });
             }
+
+            function bindTailoringOrderItemsSelection() {
+                const modal = document.getElementById('TailoringOrderItemsPreviewModal');
+                if (!modal || modal._tailoringSelectionBound) return;
+                modal._tailoringSelectionBound = true;
+
+                const getItemCheckboxes = () => Array.from(modal.querySelectorAll('.tailoring-order-item-checkbox'));
+                const getSelectedCheckboxes = () => getItemCheckboxes().filter(cb => cb.checked);
+
+                const refreshSelectionState = () => {
+                    const selectAll = document.getElementById('tailoring_select_all_items');
+                    const createBtn = document.getElementById('tailoring_create_order_from_selected');
+                    const selectedCountEl = document.getElementById('tailoring_selected_items_count');
+                    const checkboxes = getItemCheckboxes();
+                    const selected = getSelectedCheckboxes();
+                    const hasItems = checkboxes.length > 0;
+
+                    if (selectedCountEl) selectedCountEl.textContent = String(selected.length);
+                    if (createBtn) createBtn.disabled = selected.length === 0;
+
+                    if (selectAll) {
+                        selectAll.checked = hasItems && selected.length === checkboxes.length;
+                        selectAll.indeterminate = selected.length > 0 && selected.length < checkboxes.length;
+                    }
+                };
+
+                const resetSelectionState = () => {
+                    const selectAll = document.getElementById('tailoring_select_all_items');
+                    getItemCheckboxes().forEach(cb => {
+                        cb.checked = false;
+                    });
+                    if (selectAll) {
+                        selectAll.checked = false;
+                        selectAll.indeterminate = false;
+                    }
+                    refreshSelectionState();
+                };
+
+                modal.addEventListener('change', function(event) {
+                    if (!event.target) return;
+
+                    if (event.target.id === 'tailoring_select_all_items') {
+                        getItemCheckboxes().forEach(cb => {
+                            cb.checked = !!event.target.checked;
+                        });
+                        refreshSelectionState();
+                        return;
+                    }
+
+                    if (event.target.classList.contains('tailoring-order-item-checkbox')) {
+                        refreshSelectionState();
+                    }
+                });
+
+                modal.addEventListener('click', function(event) {
+                    if (event.target?.id === 'tailoring_create_order_from_selected' || event.target?.closest?.('#tailoring_create_order_from_selected')) {
+                        const selectedItems = getSelectedCheckboxes()
+                            .map(cb => {
+                                try {
+                                    return JSON.parse(cb.getAttribute('data-prefill') || '{}');
+                                } catch (e) {
+                                    return null;
+                                }
+                            })
+                            .filter(Boolean);
+
+                        if (selectedItems.length === 0) {
+                            return;
+                        }
+
+                        const payload = {
+                            source: 'TailoringOrderItemsPreviewModal',
+                            created_at: new Date().toISOString(),
+                            customer: {
+                                account_id: document.getElementById('tailoring_order_preview_context')?.getAttribute('data-account-id') || null,
+                                customer_name: document.getElementById('tailoring_order_preview_context')?.getAttribute('data-customer-name') || '',
+                                customer_mobile: document.getElementById('tailoring_order_preview_context')?.getAttribute('data-customer-mobile') || ''
+                            },
+                            items: selectedItems
+                        };
+
+                        sessionStorage.setItem('tailoring_order_prefill_v1', JSON.stringify(payload));
+                        window.location.href = '/tailoring/order/create';
+                    }
+                });
+
+                modal.addEventListener('hidden.bs.modal', resetSelectionState);
+                refreshSelectionState();
+            }
+
             document.addEventListener('livewire:init', function() {
-                Livewire.on('order-search-clear-customer', function() {
-                    const el = document.getElementById('order_search_customer_id');
+                Livewire.on('order-management-clear-customer', function() {
+                    const el = document.getElementById('order_management_customer_id');
                     if (el && el.tomselect) el.tomselect.clear();
                 });
                 Livewire.on('toggle-order-items-modal', function() {
+                    bindTailoringOrderItemsSelection();
                     $('#TailoringOrderItemsPreviewModal').modal('show');
+                    setTimeout(() => {
+                        const selectAll = document.getElementById('tailoring_select_all_items');
+                        if (selectAll) {
+                            selectAll.checked = false;
+                            selectAll.indeterminate = false;
+                        }
+                        document.querySelectorAll('#TailoringOrderItemsPreviewModal .tailoring-order-item-checkbox').forEach(cb => {
+                            cb.checked = false;
+                        });
+                        const count = document.getElementById('tailoring_selected_items_count');
+                        if (count) count.textContent = '0';
+                        const btn = document.getElementById('tailoring_create_order_from_selected');
+                        if (btn) btn.disabled = true;
+                    }, 0);
                 });
             });
         </script>

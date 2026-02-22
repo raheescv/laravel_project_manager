@@ -7,7 +7,7 @@ use App\Models\TailoringOrderItem;
 use Livewire\Component;
 use Livewire\WithPagination;
 
-class OrderSearch extends Component
+class OrderManagement extends Component
 {
     use WithPagination;
 
@@ -69,7 +69,7 @@ class OrderSearch extends Component
         $this->pending_only = 1;
         $this->resetExpandedRows();
         $this->resetPage();
-        $this->dispatch('order-search-clear-customer');
+        $this->dispatch('order-management-clear-customer');
     }
 
     public function viewCustomerOrders($accountId = null, $customerName = '', $customerMobile = '')
@@ -155,8 +155,9 @@ class OrderSearch extends Component
     public function openItemsModal($orderId)
     {
         $order = TailoringOrder::with([
-            'items:id,tailoring_order_id,item_no,product_name,product_color,quantity,unit_price,total,tailoring_notes,tailoring_category_id,tailoring_category_model_id,tailoring_category_model_type_id,unit_id',
+            'items:id,tailoring_order_id,item_no,inventory_id,product_id,product_name,product_color,quantity,quantity_per_item,unit_price,stitch_rate,discount,tax,total,tailoring_notes,tailoring_category_id,tailoring_category_model_id,tailoring_category_model_type_id,unit_id',
             'items.category:id,name',
+            'items.category.activeMeasurements:id,tailoring_category_id,field_key',
             'items.categoryModel:id,name',
             'items.categoryModelType:id,name',
             'items.unit:id,name',
@@ -168,10 +169,13 @@ class OrderSearch extends Component
             return;
         }
 
+        $order->appendMeasurementsToItems();
+
         $this->selectedOrderDetails = [
             'id' => $order->id,
             'order_no' => $order->order_no,
             'order_date' => $order->order_date ? $order->order_date->format('Y-m-d') : null,
+            'account_id' => $order->account_id,
             'customer_name' => $order->account?->name ?? $order->customer_name,
             'customer_mobile' => $order->customer_mobile,
         ];
@@ -179,7 +183,37 @@ class OrderSearch extends Component
         $this->selectedOrderItems = $order->items
             ->sortBy('item_no')
             ->map(function ($item) {
+                $measurementData = [];
+                $activeMeasurementKeys = $item->category?->activeMeasurements?->pluck('field_key')->toArray() ?? [];
+                foreach ($activeMeasurementKeys as $fieldKey) {
+                    if (isset($item->{$fieldKey}) && $item->{$fieldKey} !== null && $item->{$fieldKey} !== '') {
+                        $measurementData[$fieldKey] = $item->{$fieldKey};
+                    }
+                }
+
+                $prefill = [
+                    'inventory_id' => $item->inventory_id,
+                    'product_id' => $item->product_id,
+                    'product_name' => $item->product_name,
+                    'product_color' => $item->product_color,
+                    'quantity' => (float) $item->quantity,
+                    'quantity_per_item' => (float) ($item->quantity_per_item ?: 1),
+                    'unit_price' => (float) $item->unit_price,
+                    'stitch_rate' => (float) ($item->stitch_rate ?: 0),
+                    'discount' => (float) ($item->discount ?: 0),
+                    'tax' => (float) ($item->tax ?: 0),
+                    'total' => (float) $item->total,
+                    'tailoring_notes' => $item->tailoring_notes,
+                    'tailoring_category_id' => (int) $item->tailoring_category_id,
+                    'tailoring_category_model_id' => $item->tailoring_category_model_id ? (int) $item->tailoring_category_model_id : null,
+                    'tailoring_category_model_name' => $item->categoryModel?->name,
+                    'tailoring_category_model_type_id' => $item->tailoring_category_model_type_id ? (int) $item->tailoring_category_model_type_id : null,
+                    'tailoring_category_model_type_name' => $item->categoryModelType?->name,
+                ];
+                $prefill = array_merge($prefill, $measurementData);
+
                 return [
+                    'id' => (int) $item->id,
                     'item_no' => $item->item_no,
                     'product_name' => $item->product_name,
                     'category' => $item->category?->name,
@@ -191,6 +225,7 @@ class OrderSearch extends Component
                     'unit_price' => (float) $item->unit_price,
                     'total' => (float) $item->total,
                     'notes' => $item->tailoring_notes,
+                    'prefill' => $prefill,
                 ];
             })
             ->values()
@@ -276,7 +311,7 @@ class OrderSearch extends Component
             'balance' => $total->balance ?? 0,
         ];
 
-        return view('livewire.tailoring.order-search', [
+        return view('livewire.tailoring.order-management', [
             'total' => $total,
             'customerSummary' => $customerSummary,
             'data' => $query->orderBy($this->sortField, $this->sortDirection)

@@ -222,7 +222,22 @@ watch(() => props.customers, (newVal) => {
 }, { deep: true })
 
 onMounted(() => {
-    if (!props.customerId && !props.customer) {
+    const prefillKey = 'tailoring_order_prefill_v1'
+    let hasPendingPrefill = false
+    try {
+        const raw = sessionStorage.getItem(prefillKey)
+        if (raw) {
+            const parsed = JSON.parse(raw)
+            hasPendingPrefill = Array.isArray(parsed?.items) && parsed.items.length > 0
+        }
+    } catch (e) {
+        hasPendingPrefill = false
+    }
+
+    const hasCustomerId = props.customerId !== null && props.customerId !== undefined && String(props.customerId).trim() !== ''
+    const hasCustomerName = props.customer !== null && props.customer !== undefined && String(props.customer).trim() !== ''
+
+    if (!hasPendingPrefill && !hasCustomerId && !hasCustomerName) {
         nextTick(() => {
             customerSelectRef.value?.focus?.()
         })

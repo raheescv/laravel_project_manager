@@ -32,9 +32,9 @@ Route::middleware('auth')->group(function (): void {
         });
     });
 
-    // Tailoring Order Search (must be before order routes to avoid conflict with {id})
-    Route::name('tailoring::order-search::')->prefix('tailoring/order-search')->controller(OrderController::class)->group(function (): void {
-        Route::get('', 'orderSearchPage')->name('index')->can('tailoring order.view');
+    // Tailoring Order Management (must be before order routes to avoid conflict with {id})
+    Route::name('tailoring::order-management::')->prefix('tailoring/order-management')->controller(OrderController::class)->group(function (): void {
+        Route::get('', 'orderManagementPage')->name('index')->can('tailoring order.view');
     });
 
     // Tailoring Order Routes

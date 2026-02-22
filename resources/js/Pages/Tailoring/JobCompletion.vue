@@ -205,6 +205,9 @@ const handleUpdateCompletion = async () => {
         if (response.data.success) {
             order.value = response.data.data
             toast.success('Completion updated successfully')
+            setTimeout(() => {
+                window.location.href = '/tailoring/order-management'
+            }, 500)
         }
     } catch (error) {
         toast.error(error.response?.data?.message || 'Failed to update completion')

@@ -283,6 +283,7 @@ const editingModelTypeIds = ref({}) // Map of categoryId -> modelTypeId (when ed
 const showOldMeasurementModal = ref(false)
 const pendingOldMeasurementCategoryId = ref(null)
 const pageRoot = ref(null)
+const PREFILL_STORAGE_KEY = 'tailoring_order_prefill_v1'
 
 const focusableSelector = [
     'input:not([type="hidden"]):not([disabled])',
@@ -404,6 +405,104 @@ const confirmationData = computed(() => {
 
 const getCategory = (id) => {
     return props.categories.find(c => c.id === id)
+}
+
+const initializeCategoryStateFromItems = (items = []) => {
+    const categoryIds = [...new Set((items || []).map(i => i.tailoring_category_id).filter(Boolean))]
+    selectedCategories.value = categoryIds
+
+    categoryIds.forEach(catId => {
+        const addKey = getEditKey(catId, 'new', 'new')
+        if (!measurements.value[addKey]) measurements.value[addKey] = {}
+        if (!currentItems.value[addKey]) {
+            currentItems.value[addKey] = {
+                inventory_id: null,
+                product_id: null,
+                product_name: '',
+                product_color: '',
+                quantity: 1,
+                quantity_per_item: 1,
+                unit_price: 0,
+                stitch_rate: 0,
+                tax: 0,
+                total: 0,
+            }
+        }
+    })
+
+    if (categoryIds.length > 0) {
+        activeCategoryTab.value = categoryIds[0]
+    }
+}
+
+const normalizePrefillItem = (rawItem = {}, index = 0) => {
+    const categoryId = Number(rawItem.tailoring_category_id || 0) || null
+    const modelId = rawItem.tailoring_category_model_id ? Number(rawItem.tailoring_category_model_id) : null
+    const modelTypeId = rawItem.tailoring_category_model_type_id ? Number(rawItem.tailoring_category_model_type_id) : null
+    const category = categoryId ? getCategory(categoryId) : null
+
+    const normalized = {
+        ...rawItem,
+        _temp_id: `prefill-${Date.now()}-${index}-${Math.random().toString(36).slice(2, 8)}`,
+        item_no: index + 1,
+        tailoring_category_id: categoryId,
+        tailoring_category_model_id: modelId,
+        tailoring_category_model_type_id: modelTypeId,
+        quantity: parseFloat(rawItem.quantity || 0) || 1,
+        quantity_per_item: parseFloat(rawItem.quantity_per_item || 1) || 1,
+        unit_price: parseFloat(rawItem.unit_price || 0) || 0,
+        stitch_rate: parseFloat(rawItem.stitch_rate || 0) || 0,
+        discount: parseFloat(rawItem.discount || 0) || 0,
+        tax: parseFloat(rawItem.tax || 0) || 0,
+        total: parseFloat(rawItem.total || 0) || 0,
+        category: category || null
+    }
+
+    return normalized
+}
+
+const hydrateFromOrderSearchPrefill = () => {
+    if (form.value.id) return
+
+    let payloadRaw = null
+    try {
+        payloadRaw = sessionStorage.getItem(PREFILL_STORAGE_KEY)
+    } catch (error) {
+        return
+    }
+
+    if (!payloadRaw) return
+
+    try {
+        const payload = JSON.parse(payloadRaw)
+        const prefillItems = Array.isArray(payload?.items)
+            ? payload.items.map((item, index) => normalizePrefillItem(item, index))
+            : []
+
+        if (prefillItems.length === 0) {
+            sessionStorage.removeItem(PREFILL_STORAGE_KEY)
+            return
+        }
+
+        const accountId = Number(payload?.customer?.account_id || 0)
+        form.value.account_id = accountId > 0 ? accountId : null
+        form.value.customer_name = payload?.customer?.customer_name || ''
+        form.value.customer_mobile = payload?.customer?.customer_mobile || ''
+        form.value.items = prefillItems
+
+        measurements.value = {}
+        currentItems.value = {}
+        editingItemIds.value = {}
+        editingModelIds.value = {}
+        editingModelTypeIds.value = {}
+        initializeCategoryStateFromItems(prefillItems)
+
+        toast.success('Selected items loaded for new order')
+        sessionStorage.removeItem(PREFILL_STORAGE_KEY)
+    } catch (error) {
+        console.error('Failed to read prefill data', error)
+        sessionStorage.removeItem(PREFILL_STORAGE_KEY)
+    }
 }
 
 // Methods
@@ -956,37 +1055,15 @@ const loadMeasurementOptions = async () => {
 
 onMounted(() => {
     loadMeasurementOptions()
+    hydrateFromOrderSearchPrefill()
 
     if (form.value.id) {
         syncSelectedPaymentMethodFromPayments(true)
     }
 
     // Initialize from existing order items
-    if (props.order?.items?.length > 0) {
-        const categoryIds = [...new Set(props.order.items.map(i => i.tailoring_category_id))]
-        selectedCategories.value = categoryIds
-
-        // Initialize add-new slots for each category (measurements keyed by category + model + model type)
-        categoryIds.forEach(catId => {
-            const addKey = getEditKey(catId, 'new', 'new')
-            measurements.value[addKey] = {}
-            currentItems.value[addKey] = {
-                inventory_id: null,
-                product_id: null,
-                product_name: '',
-                product_color: '',
-                quantity: 1,
-                quantity_per_item: 1,
-                unit_price: 0,
-                stitch_rate: 0,
-                tax: 0,
-                total: 0,
-            }
-        })
-
-        if (categoryIds.length > 0) {
-            activeCategoryTab.value = categoryIds[0]
-        }
+    if (form.value.items?.length > 0) {
+        initializeCategoryStateFromItems(form.value.items)
     }
 })
 </script>

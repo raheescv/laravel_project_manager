@@ -295,7 +295,7 @@
                     @if (auth()->user()->can('tailoring order.view') || auth()->user()->can('tailoring job completion.view'))
                         <li class="nav-item has-sub">
                             @php
-                                $list = ['tailoring/order', 'tailoring/order/create', 'tailoring/order/edit/*', 'tailoring/order/*', 'tailoring/order-search', 'tailoring/receipts', 'tailoring/job-completion', 'tailoring/job-completion/create', 'report/tailoring_order_item', 'report/tailoring_order_item_tailor', 'report/tailoring_non_delivery'];
+                                $list = ['tailoring/order', 'tailoring/order/create', 'tailoring/order/edit/*', 'tailoring/order/*', 'tailoring/order-management', 'tailoring/receipts', 'tailoring/job-completion', 'tailoring/job-completion/create', 'report/tailoring_order_item', 'report/tailoring_order_item_tailor', 'report/tailoring_non_delivery'];
                             @endphp
                             <a href="#" class="mininav-toggle nav-link {{ request()->is($list) ? 'active' : '' }}"><i class="fa fa-cut fs-5 me-2"></i>
                                 <span class="nav-label mininav-content ms-1 collapse show" style="">Tailoring</span>
@@ -310,13 +310,13 @@
                                 @can('tailoring order.view')
                                     <li class="nav-item">
                                         <a href="{{ route('tailoring::order::index') }}"
-                                            class="nav-link {{ request()->is(['tailoring/order', 'tailoring/order/edit/*', 'tailoring/order/*']) && !request()->is(['tailoring/order/create', 'tailoring/order-search']) ? 'active' : '' }}">Orders</a>
+                                            class="nav-link {{ request()->is(['tailoring/order', 'tailoring/order/edit/*', 'tailoring/order/*']) && !request()->is(['tailoring/order/create', 'tailoring/order-management']) ? 'active' : '' }}">Orders</a>
                                     </li>
                                 @endcan
                                 @can('tailoring order.view')
                                     <li class="nav-item">
-                                        <a href="{{ route('tailoring::order-search::index') }}"
-                                            class="nav-link {{ request()->is(['tailoring/order-search']) ? 'active' : '' }}">Order Management</a>
+                                        <a href="{{ route('tailoring::order-management::index') }}"
+                                            class="nav-link {{ request()->is(['tailoring/order-management']) ? 'active' : '' }}">Order Management</a>
                                     </li>
                                 @endcan
                                 @can('tailoring order.receipts')
