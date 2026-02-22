@@ -5,6 +5,8 @@ namespace App\Livewire\Report\Sale;
 use App\Exports\MonthlySaleReportExport;
 use App\Models\Sale;
 use App\Models\SalePayment;
+use App\Models\TailoringOrder;
+use App\Models\TailoringPayment;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Livewire\Component;
@@ -48,6 +50,16 @@ class MonthlySaleReport extends Component
             ->get()
             ->keyBy('month');
 
+        $tailoringSales = TailoringOrder::query()
+            ->when($this->branch_id, fn ($q) => $q->where('branch_id', $this->branch_id))
+            // ->whereIn('status', ['completed', 'delivered','pending'])
+            ->whereBetween('order_date', [$fromDate, $toDate])
+            ->select(DB::raw("DATE_FORMAT(order_date, '%Y-%m') as month"), DB::raw('SUM(gross_amount) as gross_sales'), DB::raw('SUM(item_discount + other_discount) as discount'), DB::raw('SUM(grand_total) as net_sale'))
+            ->groupBy('month')
+            ->orderBy('month', 'asc')
+            ->get()
+            ->keyBy('month');
+
         // Get payment data grouped by month
         $payments = SalePayment::query()
             ->join('sales', 'sale_payments.sale_id', '=', 'sales.id')
@@ -56,6 +68,17 @@ class MonthlySaleReport extends Component
             ->where('sales.status', 'completed')
             ->whereBetween('sale_payments.date', [$fromDate, $toDate])
             ->select(DB::raw("DATE_FORMAT(sale_payments.date, '%Y-%m') as month"), DB::raw('SUM(sale_payments.amount) as paid_total'), DB::raw('SUM(CASE WHEN LOWER(accounts.name) LIKE "%card%" OR LOWER(accounts.name) LIKE "%debit%" THEN sale_payments.amount ELSE 0 END) as card'), DB::raw('SUM(CASE WHEN LOWER(accounts.name) LIKE "%cash%" THEN sale_payments.amount ELSE 0 END) as cash'))
+            ->groupBy('month')
+            ->get()
+            ->keyBy('month');
+
+        $tailoringPayments = TailoringPayment::query()
+            ->join('tailoring_orders', 'tailoring_payments.tailoring_order_id', '=', 'tailoring_orders.id')
+            ->leftJoin('accounts', 'tailoring_payments.payment_method_id', '=', 'accounts.id')
+            ->when($this->branch_id, fn ($q) => $q->where('tailoring_orders.branch_id', $this->branch_id))
+            // ->whereIn('tailoring_orders.status', ['completed', 'delivered'])
+            ->whereBetween('tailoring_payments.date', [$fromDate, $toDate])
+            ->select(DB::raw("DATE_FORMAT(tailoring_payments.date, '%Y-%m') as month"), DB::raw('SUM(tailoring_payments.amount) as paid_total'), DB::raw('SUM(CASE WHEN LOWER(accounts.name) LIKE "%card%" OR LOWER(accounts.name) LIKE "%debit%" THEN tailoring_payments.amount ELSE 0 END) as card'), DB::raw('SUM(CASE WHEN LOWER(accounts.name) LIKE "%cash%" THEN tailoring_payments.amount ELSE 0 END) as cash'))
             ->groupBy('month')
             ->get()
             ->keyBy('month');
@@ -70,14 +93,16 @@ class MonthlySaleReport extends Component
             $monthName = $current->format('M Y');
 
             $sale = $sales[$monthKey] ?? null;
+            $tailoringSale = $tailoringSales[$monthKey] ?? null;
             $payment = $payments[$monthKey] ?? null;
+            $tailoringPayment = $tailoringPayments[$monthKey] ?? null;
 
-            $grossSales = $sale ? (float) $sale->gross_sales : 0;
-            $discount = $sale ? (float) $sale->discount : 0;
-            $netSale = $sale ? (float) $sale->net_sale : 0;
-            $paidTotal = $payment ? (float) $payment->paid_total : 0;
-            $card = $payment ? (float) $payment->card : 0;
-            $cash = $payment ? (float) $payment->cash : 0;
+            $grossSales = ($sale ? (float) $sale->gross_sales : 0) + ($tailoringSale ? (float) $tailoringSale->gross_sales : 0);
+            $discount = ($sale ? (float) $sale->discount : 0) + ($tailoringSale ? (float) $tailoringSale->discount : 0);
+            $netSale = ($sale ? (float) $sale->net_sale : 0) + ($tailoringSale ? (float) $tailoringSale->net_sale : 0);
+            $paidTotal = ($payment ? (float) $payment->paid_total : 0) + ($tailoringPayment ? (float) $tailoringPayment->paid_total : 0);
+            $card = ($payment ? (float) $payment->card : 0) + ($tailoringPayment ? (float) $tailoringPayment->card : 0);
+            $cash = ($payment ? (float) $payment->cash : 0) + ($tailoringPayment ? (float) $tailoringPayment->cash : 0);
             $credit = $netSale - $paidTotal;
 
             $allMonths[$monthKey] = [
