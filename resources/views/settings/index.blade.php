@@ -48,6 +48,14 @@
                                         <i class="demo-pli-data-storage me-2"></i>Universal UOM
                                     </button>
                                 </li>
+                                @if (auth()->user()->is_super_admin)
+                                    <li class="nav-item" role="presentation">
+                                        <button class="nav-link text-start rounded" data-bs-toggle="tab" data-bs-target="#tabsUniqueNoCounters" type="button" role="tab"
+                                            aria-selected="false" tabindex="-1">
+                                        <i class="fa fa-list-ol me-2"></i>Unique No Counters
+                                        </button>
+                                    </li>
+                                @endif
                                 <li class="nav-item" role="presentation">
                                     <button class="nav-link active text-start rounded" data-bs-toggle="tab" data-bs-target="#tabsCompanyProfile" type="button" role="tab" aria-selected="true"
                                         tabindex="0">
@@ -102,6 +110,11 @@
                                 <div id="tabsUniversalUom" class="tab-pane" role="tabpanel">
                                     @livewire('settings.universal-uom-configuration')
                                 </div>
+                                @if (auth()->user()->is_super_admin)
+                                    <div id="tabsUniqueNoCounters" class="tab-pane" role="tabpanel">
+                                        @livewire('settings.unique-no-counter-configuration')
+                                    </div>
+                                @endif
                                 <div id="tabsCompanyProfile" class="tab-pane fade active show" role="tabpanel">
                                     @livewire('settings.company-profile')
                                 </div>
