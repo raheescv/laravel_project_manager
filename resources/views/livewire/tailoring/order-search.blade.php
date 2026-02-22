@@ -120,7 +120,6 @@
         <div class="px-3 pb-2">
             <div class="d-flex flex-wrap align-items-center gap-2 small">
                 <span class="text-muted fw-semibold me-1">Action Legend:</span>
-                <span class="badge bg-light text-dark border"><i class="fa fa-eye text-primary me-1"></i>View</span>
                 <span class="badge bg-light text-dark border"><i class="fa fa-list text-dark me-1"></i>Items</span>
                 <span class="badge bg-light text-dark border"><i class="fa fa-users text-info me-1"></i>Tailor Status</span>
                 <span class="badge bg-light text-success border border-success"><i class="fa fa-file-text-o me-1"></i>Collect Payment</span>
@@ -147,9 +146,8 @@
                         <th class="text-nowrap">
                             <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="tailoring_orders.customer_mobile" label="Mobile" />
                         </th>
-                        <th>
-                            <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="tailoring_orders.status" label="Status" />
-                        </th>
+                        <th> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="tailoring_orders.status" label="Status" /> </th>
+                        <th> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="tailoring_orders.delivery_status" label="Delivery Status" /> </th>
                         <th class="text-nowrap text-end">
                             <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="tailoring_orders.grand_total" label="Grand Total" />
                         </th>
@@ -217,6 +215,9 @@
                                 </span>
                             </td>
                             <td>
+                                    {{ ucFirst($order->delivery_status) }}
+                            </td>
+                            <td>
                                 <div class="text-end fw-bold text-primary">{{ currency($order->grand_total) }}</div>
                             </td>
                             <td>
@@ -227,9 +228,6 @@
                             </td>
                             <td class="text-end">
                                 <div class="btn-group btn-group-sm">
-                                    <a href="{{ route('tailoring::order::show', $order->id) }}" class="btn btn-light border" title="View Details">
-                                        <i class="fa fa-eye text-primary"></i>
-                                    </a>
                                     <button type="button" class="btn btn-light border" title="View Full Items" wire:click="openItemsModal({{ $order->id }})">
                                         <i class="fa fa-list text-dark"></i>
                                     </button>
