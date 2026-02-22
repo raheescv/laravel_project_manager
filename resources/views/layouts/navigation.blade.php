@@ -316,7 +316,7 @@
                                 @can('tailoring order.view')
                                     <li class="nav-item">
                                         <a href="{{ route('tailoring::order-search::index') }}"
-                                            class="nav-link {{ request()->is(['tailoring/order-search']) ? 'active' : '' }}">Order Search</a>
+                                            class="nav-link {{ request()->is(['tailoring/order-search']) ? 'active' : '' }}">Order Management</a>
                                     </li>
                                 @endcan
                                 @can('tailoring order.receipts')

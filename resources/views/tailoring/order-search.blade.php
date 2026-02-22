@@ -5,12 +5,12 @@
                 <ol class="breadcrumb">
                     <li class="breadcrumb-item"><a href="{{ route('dashboard') }}">Home</a></li>
                     <li class="breadcrumb-item"><a href="{{ route('tailoring::order::index') }}">Tailoring</a></li>
-                    <li class="breadcrumb-item active" aria-current="page">Order Search</li>
+                    <li class="breadcrumb-item active" aria-current="page">Order Management</li>
                 </ol>
             </nav>
-            <h1 class="page-title mb-0 mt-2">Order Search</h1>
+            <h1 class="page-title mb-0 mt-2">Order Management</h1>
             <p class="lead">
-                Search tailoring orders by customer, mobile or order number.
+                Manage customer orders, payments, and status in one place.
             </p>
         </div>
     </div>
