@@ -74,94 +74,129 @@
         <hr>
 
         @php
-            $saleTransactions = collect($transactions)->where('source', 'Sale')->values();
-            $tailoringTransactions = collect($transactions)->where('source', 'Tailoring')->values();
-            $salePendingPayments = collect($pendingPayments)->where('source', 'Sale')->values();
-            $tailoringPendingPayments = collect($pendingPayments)->where('source', 'Tailoring')->values();
+            $dueRows = collect($dueTransactions ?? [])->values();
+            $pendingPaymentRows = collect($pendingPayments ?? [])->values();
         @endphp
 
-        <center><strong>SALE TRANSACTIONS</strong></center>
+        <center><strong>SALE + TAILORING TRANSACTIONS</strong></center>
         <table width="100%" cellpadding="2" cellspacing="0" border="1">
             <tr>
-                <th align="left">Date</th>
+                <th align="left">Type</th>
                 <th align="left">Reference</th>
-                <th align="left">Payment</th>
-                <th align="right">Total</th>
+                <th align="right">Amount</th>
+                <th align="right">Payment</th>
             </tr>
-            @forelse ($saleTransactions as $transaction)
+            @forelse ($transactions as $transaction)
                 <tr>
-                    <td><strong>{{ Carbon::parse($transaction['date'])->format('d/m') }}</strong></td>
+                    <td><strong>Invoice</strong></td>
                     <td><strong>{{ $transaction['reference_no'] ?? 'N/A' }}</strong></td>
-                    <td><strong>{{ $transaction['payment_method'] }}</strong></td>
                     <td align="right"><strong>{{ currency($transaction['amount']) }}</strong></td>
+                    <td align="right"><strong>_</strong></td>
                 </tr>
+                @foreach ($transaction['payment_rows'] ?? [] as $paymentRow)
+                    <tr>
+                        <td align="right"><strong>{{ $paymentRow['method'] }}</strong></td>
+                        <td><strong>{{ $transaction['reference_no'] ?? 'N/A' }}</strong></td>
+                        <td align="right"><strong>_</strong></td>
+                        <td align="right"><strong>{{ currency($paymentRow['amount']) }}</strong></td>
+                    </tr>
+                @endforeach
             @empty
                 <tr>
-                    <td colspan="4" align="center">No sale transactions.</td>
+                    <td colspan="4" align="center">No transactions.</td>
                 </tr>
             @endforelse
-
-            @foreach ($salePendingPayments as $pendingPayment)
-                <tr>
-                    <td><strong>{{ Carbon::parse($pendingPayment['date'])->format('d/m') }}</strong></td>
-                    <td><strong>{{ $pendingPayment['reference_no'] ?? 'N/A' }}</strong></td>
-                    <td><strong>{{ $pendingPayment['payment_method'] }} (Pending)</strong></td>
-                    <td align="right"><strong>{{ currency($pendingPayment['amount']) }}</strong></td>
-                </tr>
-            @endforeach
         </table>
 
-        <hr>
-
-        <center><strong>TAILORING TRANSACTIONS</strong></center>
+        <center><strong>DUE AMOUNT DETAILS</strong></center>
         <table width="100%" cellpadding="2" cellspacing="0" border="1">
             <tr>
-                <th align="left">Date</th>
+                <th align="left">Type</th>
                 <th align="left">Reference</th>
-                <th align="left">Payment</th>
-                <th align="right">Total</th>
+                <th align="right">Due Amount</th>
             </tr>
-            @forelse ($tailoringTransactions as $transaction)
+            @forelse ($dueRows as $dueRow)
                 <tr>
-                    <td><strong>{{ Carbon::parse($transaction['date'])->format('d/m') }}</strong></td>
-                    <td><strong>{{ $transaction['reference_no'] ?? 'N/A' }}</strong></td>
-                    <td><strong>{{ $transaction['payment_method'] }}</strong></td>
-                    <td align="right"><strong>{{ currency($transaction['amount']) }}</strong></td>
+                    <td><strong>{{ $dueRow['source'] }}</strong></td>
+                    <td><strong>{{ $dueRow['reference_no'] ?? 'N/A' }}</strong></td>
+                    <td align="right"><strong>{{ currency($dueRow['due_amount']) }}</strong></td>
                 </tr>
             @empty
                 <tr>
-                    <td colspan="4" align="center">No tailoring transactions.</td>
+                    <td colspan="3" align="center">No due amounts.</td>
                 </tr>
             @endforelse
+        </table>
 
-            @foreach ($tailoringPendingPayments as $pendingPayment)
+        <center><strong>DUE PAYMENT RECEIVED</strong></center>
+        <table width="100%" cellpadding="2" cellspacing="0" border="1">
+            <tr>
+                <th align="left">Type</th>
+                <th align="left">Reference</th>
+                <th align="left">Payment Method</th>
+                <th align="right">Amount</th>
+            </tr>
+            @forelse ($pendingPaymentRows as $pendingPayment)
                 <tr>
-                    <td><strong>{{ Carbon::parse($pendingPayment['date'])->format('d/m') }}</strong></td>
+                    <td><strong>{{ $pendingPayment['source'] ?? 'N/A' }}</strong></td>
                     <td><strong>{{ $pendingPayment['reference_no'] ?? 'N/A' }}</strong></td>
-                    <td><strong>{{ $pendingPayment['payment_method'] }} (Pending)</strong></td>
+                    <td><strong>{{ $pendingPayment['payment_method'] }}</strong></td>
                     <td align="right"><strong>{{ currency($pendingPayment['amount']) }}</strong></td>
                 </tr>
-            @endforeach
+            @empty
+                <tr>
+                    <td colspan="4" align="center">No due payment receipts.</td>
+                </tr>
+            @endforelse
         </table>
 
         <hr>
 
         <center><strong>TOTAL SUMMARY</strong></center>
         <table width="100%" cellpadding="2" cellspacing="0" border="1">
-            @forelse ($totals as $method => $total)
-                <tr>
-                    <td><strong>{{ strtoupper($method) }}</strong></td>
-                    <td align="right"><strong>{{ currency($total) }}</strong></td>
-                </tr>
-            @empty
-                <tr>
-                    <td><strong>TOTAL</strong></td>
-                    <td align="right"><strong>{{ currency(0) }}</strong></td>
-                </tr>
-            @endforelse
             <tr>
-                <td><strong>GRAND TOTAL</strong></td>
-                <td align="right"><strong>{{ currency(array_sum($totals)) }}</strong></td>
+                <td><strong>TOTAL CREDIT (UNPAID)</strong></td>
+                <td align="right"><strong>{{ currency($totals['credit']) }}</strong></td>
+            </tr>
+            <tr>
+                <td><strong>TOTAL CASH (INVOICE)</strong></td>
+                <td align="right"><strong>{{ currency($totals['cash']) }}</strong></td>
+            </tr>
+            <tr>
+                <td><strong>TOTAL CARD (INVOICE)</strong></td>
+                <td align="right"><strong>{{ currency($totals['card']) }}</strong></td>
+            </tr>
+            <tr>
+                <td><strong>TOTAL SALE + TAILORING AMOUNT</strong></td>
+                <td align="right"><strong>{{ currency($totals['sale_tailoring_amount']) }}</strong></td>
+            </tr>
+            <tr>
+                <td><strong>TOTAL PAYMENT (INVOICE)</strong></td>
+                <td align="right"><strong>{{ currency($totals['payment_total']) }}</strong></td>
+            </tr>
+            <tr>
+                <td><strong>TOTAL DUE PAYMENT CASH</strong></td>
+                <td align="right"><strong>{{ currency($totals['due_total_cash']) }}</strong></td>
+            </tr>
+            <tr>
+                <td><strong>TOTAL DUE PAYMENT CARD</strong></td>
+                <td align="right"><strong>{{ currency($totals['due_total_card']) }}</strong></td>
+            </tr>
+            <tr>
+                <td><strong>TOTAL DUE PAYMENT</strong></td>
+                <td align="right"><strong>{{ currency($totals['due_total']) }}</strong></td>
+            </tr>
+            <tr>
+                <td><strong>TOTAL CARD (INVOICE + DUE)</strong></td>
+                <td align="right"><strong>{{ currency($totals['card'] + $totals['due_total_card']) }}</strong></td>
+            </tr>
+            <tr>
+                <td><strong>TOTAL CASH (INVOICE + DUE)</strong></td>
+                <td align="right"><strong>{{ currency($totals['cash'] + $totals['due_total_cash']) }}</strong></td>
+            </tr>
+            <tr>
+                <td><strong>GRAND TOTAL PAYMENT</strong></td>
+                <td align="right"><strong>{{ currency($totals['payment_total'] + $totals['due_total']) }}</strong></td>
             </tr>
         </table>
 
