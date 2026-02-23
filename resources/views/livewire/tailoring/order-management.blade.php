@@ -113,6 +113,21 @@
                         </tr>
                     @endforelse
                 </tbody>
+                @if ($customerSummary->isNotEmpty())
+                    <tfoot>
+                        <tr class="table-light fw-semibold">
+                            <td class="ps-3">Total</td>
+                            <td class="text-end">{{ number_format($customerSummary->sum('order_count')) }}</td>
+                            <td class="text-end text-primary">{{ currency($customerSummary->sum('grand_total')) }}</td>
+                            <td class="text-end text-success">{{ currency($customerSummary->sum('paid')) }}</td>
+                            <td class="text-end {{ (float) $customerSummary->sum('balance') > 0 ? 'text-danger' : 'text-success' }}">
+                                {{ currency($customerSummary->sum('balance')) }}
+                            </td>
+                            <td>_</td>
+                            <td></td>
+                        </tr>
+                    </tfoot>
+                @endif
             </table>
         </div>
     </div>
