@@ -112,7 +112,7 @@
             align-items: center;
             gap: 4px;
             white-space: nowrap;
-            font-size: 13px;
+            font-size: 14px;
         }
 
         .measure-label {
@@ -120,7 +120,7 @@
             color: #111;
             font-weight: 700;
             flex: 0 0 auto;
-            font-size: 10px;
+            font-size: 11px;
         }
 
         .measure-value {
@@ -128,7 +128,7 @@
             color: #111;
             flex: 0 0 auto;
             white-space: nowrap;
-            font-size: 14px;
+            font-size: 15px;
         }
 
         .measure-line--stacked {
@@ -181,6 +181,20 @@
             padding: 6px 7px;
             font-size: 13px;
             vertical-align: top;
+            line-height: 1.25;
+            white-space: normal;
+        }
+
+        .ref-table th {
+            font-size: 12px;
+            overflow-wrap: break-word;
+            word-break: normal;
+            hyphens: auto;
+        }
+
+        .ref-table td {
+            overflow-wrap: anywhere;
+            word-break: break-word;
         }
 
         .ref-col-item {
@@ -419,28 +433,56 @@
 
         // Dynamic width allocation for per-item measurement columns
         $separateColumnWidths = [];
-        $separateColumnWraps = [];
         if (count($separate) > 0) {
-            $itemColWidth = 8; // fixed
-            $remainingWidth = 92;
+            $itemColWidth = 7; // compact fixed width for item index
+            $remainingWidth = 100 - $itemColWidth;
             $weights = [];
+            $contentMeta = [];
 
             foreach ($separate as $fieldKey => $entry) {
-                $labelLen = mb_strlen((string) ($entry['label'] ?? ''));
+                $label = (string) ($entry['label'] ?? '');
+                $labelLen = mb_strlen($label);
+                $labelLongestToken = collect(preg_split('/\s+/', trim($label)) ?: [])->map(fn($part) => mb_strlen($part))->max() ?? 0;
                 $maxValueLen = collect($items)->map(function ($item) use ($fieldKey) {
                     return mb_strlen((string) ($item->$fieldKey ?? ''));
                 })->max() ?? 0;
+                $maxValueTokenLen = collect($items)->map(function ($item) use ($fieldKey) {
+                    $value = trim((string) ($item->$fieldKey ?? ''));
+                    $parts = preg_split('/[\s\-\/]+/', $value) ?: [];
 
-                // Common-sense weight: value length dominates, label still matters
-                $weights[$fieldKey] = max(8, (int) round(($labelLen * 0.7) + ($maxValueLen * 0.9)));
-                $separateColumnWraps[$fieldKey] = $maxValueLen > 22;
+                    return collect($parts)->map(fn($part) => mb_strlen($part))->max() ?? 0;
+                })->max() ?? 0;
+
+                // Consider both TH and TD needs so short columns stay compact and long tokens get room.
+                $contentMeta[$fieldKey] = [
+                    'label' => $labelLen,
+                    'label_token' => $labelLongestToken,
+                    'value' => $maxValueLen,
+                    'value_token' => $maxValueTokenLen,
+                ];
+
+                $headerNeed = max((int) round($labelLen * 0.6), (int) round($labelLongestToken * 1.4));
+                $valueNeed = max((int) round($maxValueLen * 0.45), (int) round($maxValueTokenLen * 1.3));
+                $combinedNeed = max($headerNeed, $valueNeed);
+
+                if ($combinedNeed <= 8) {
+                    $weights[$fieldKey] = 5; // compact columns (e.g. type/model short codes)
+                } elseif ($combinedNeed <= 13) {
+                    $weights[$fieldKey] = 8;
+                } else {
+                    $weights[$fieldKey] = max(10, $combinedNeed);
+                }
             }
 
             $totalWeight = array_sum($weights) ?: 1;
 
             foreach ($weights as $fieldKey => $weight) {
                 $width = ($weight / $totalWeight) * $remainingWidth;
-                $separateColumnWidths[$fieldKey] = max(8, min(34, round($width, 2)));
+                $meta = $contentMeta[$fieldKey];
+                $isCompact = ($meta['value_token'] <= 6 && $meta['label_token'] <= 8);
+                $minWidth = $isCompact ? 6 : 8;
+                $maxWidth = ($meta['value_token'] >= 16 || $meta['value'] >= 24) ? 42 : 36;
+                $separateColumnWidths[$fieldKey] = max($minWidth, min($maxWidth, round($width, 2)));
             }
         }
     @endphp
@@ -483,12 +525,12 @@
             <table class="std-table ref-table">
                 <thead>
                     <tr>
-                        <th class="ref-col-item">Item</th>
+                        <th class="ref-col-item" style="width: {{ $itemColWidth ?? 7 }}%;">Item</th>
                         @foreach ($separate as $fieldKey => $entry)
                             @php
                                 $width = $separateColumnWidths[$fieldKey] ?? 12;
                             @endphp
-                            <th style="width: {{ $width }}%; white-space: nowrap;">{{ $entry['label'] }}</th>
+                            <th style="width: {{ $width }}%;">{{ $entry['label'] }}</th>
                         @endforeach
                     </tr>
                 </thead>
@@ -499,9 +541,8 @@
                             @foreach ($separate as $fieldKey => $entry)
                                 @php
                                     $width = $separateColumnWidths[$fieldKey] ?? 12;
-                                    $allowWrap = (bool) ($separateColumnWraps[$fieldKey] ?? false);
                                 @endphp
-                                <td class="bold" style="width: {{ $width }}%; {{ $allowWrap ? 'white-space: normal; overflow-wrap: anywhere;' : 'white-space: nowrap;' }}">{{ $item->$fieldKey ?? '-' }}</td>
+                                <td class="bold" style="width: {{ $width }}%;">{{ $item->$fieldKey ?? '-' }}</td>
                             @endforeach
                         </tr>
                     @endforeach
