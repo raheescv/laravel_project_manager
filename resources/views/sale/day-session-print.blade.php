@@ -78,7 +78,7 @@
             $pendingPaymentRows = collect($pendingPayments ?? [])->values();
         @endphp
 
-        <center><strong>SALE + TAILORING TRANSACTIONS</strong></center>
+        <center><strong>SALE TRANSACTIONS</strong></center>
         <table width="100%" cellpadding="2" cellspacing="0" border="1">
             <tr>
                 <th align="left">Type</th>
@@ -167,7 +167,7 @@
                 <td align="right"><strong>{{ currency($totals['card']) }}</strong></td>
             </tr>
             <tr>
-                <td><strong>TOTAL SALE + TAILORING AMOUNT</strong></td>
+                <td><strong>TOTAL SALE AMOUNT</strong></td>
                 <td align="right"><strong>{{ currency($totals['sale_tailoring_amount']) }}</strong></td>
             </tr>
             <tr>
