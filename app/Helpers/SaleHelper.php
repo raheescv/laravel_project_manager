@@ -134,25 +134,113 @@ class SaleHelper
 
         $transactions = collect();
         foreach ($sales as $sale) {
-            $transactions->push([
-                'source' => 'Sale',
-                'date' => $sale->date,
-                'reference_no' => $sale->invoice_no,
-                'payment_method' => $sale->payment_method_name,
-                'amount' => (float) $sale->grand_total,
-            ]);
+            $grandTotal = (float) ($sale->grand_total ?? 0);
+            $paidAmount = (float) ($sale->paid ?? 0);
+            $isPartial = $paidAmount > 0 && $paidAmount < $grandTotal;
+
+            if ($isPartial) {
+                $transactions->push([
+                    'source' => 'Sale',
+                    'date' => $sale->date,
+                    'reference_no' => $sale->invoice_no,
+                    'payment_method' => 'Amount',
+                    'amount' => $grandTotal,
+                    'sort_rank' => 1,
+                ]);
+
+                $paymentRows = $sale->payments
+                    ->filter(fn ($payment) => (float) ($payment->amount ?? 0) > 0)
+                    ->map(function ($payment) use ($sale) {
+                        $methodName = $payment->paymentMethod?->name ?: ($sale->payment_method_name ?: 'Payment');
+
+                        return [
+                            'source' => 'Sale',
+                            'date' => $sale->date,
+                            'reference_no' => $sale->invoice_no,
+                            'payment_method' => $methodName.' Payment',
+                            'amount' => (float) ($payment->amount ?? 0),
+                            'sort_rank' => 2,
+                        ];
+                    });
+
+                if ($paymentRows->isEmpty() && $paidAmount > 0) {
+                    $paymentRows = collect([[
+                        'source' => 'Sale',
+                        'date' => $sale->date,
+                        'reference_no' => $sale->invoice_no,
+                        'payment_method' => ($sale->payment_method_name ?: 'Payment').' Payment',
+                        'amount' => $paidAmount,
+                        'sort_rank' => 2,
+                    ]]);
+                }
+
+                $transactions = $transactions->concat($paymentRows);
+            } else {
+                $transactions->push([
+                    'source' => 'Sale',
+                    'date' => $sale->date,
+                    'reference_no' => $sale->invoice_no,
+                    'payment_method' => $sale->payment_method_name,
+                    'amount' => $grandTotal,
+                    'sort_rank' => 1,
+                ]);
+            }
         }
         foreach ($tailoringOrders as $order) {
-            $transactions->push([
-                'source' => 'Tailoring',
-                'date' => $order->order_date,
-                'reference_no' => $order->order_no,
-                'payment_method' => $order->payment_method_name,
-                'amount' => (float) $order->grand_total,
-            ]);
+            $grandTotal = (float) ($order->grand_total ?? 0);
+            $paidAmount = (float) ($order->paid ?? 0);
+            $isPartial = $paidAmount > 0 && $paidAmount < $grandTotal;
+
+            if ($isPartial) {
+                $transactions->push([
+                    'source' => 'Tailoring',
+                    'date' => $order->order_date,
+                    'reference_no' => $order->order_no,
+                    'payment_method' => 'Amount',
+                    'amount' => $grandTotal,
+                    'sort_rank' => 1,
+                ]);
+
+                $paymentRows = $order->payments
+                    ->filter(fn ($payment) => (float) ($payment->amount ?? 0) > 0)
+                    ->map(function ($payment) use ($order) {
+                        $methodName = $payment->paymentMethod?->name ?: ($order->payment_method_name ?: 'Payment');
+
+                        return [
+                            'source' => 'Tailoring',
+                            'date' => $order->order_date,
+                            'reference_no' => $order->order_no,
+                            'payment_method' => $methodName.' Payment',
+                            'amount' => (float) ($payment->amount ?? 0),
+                            'sort_rank' => 2,
+                        ];
+                    });
+
+                if ($paymentRows->isEmpty() && $paidAmount > 0) {
+                    $paymentRows = collect([[
+                        'source' => 'Tailoring',
+                        'date' => $order->order_date,
+                        'reference_no' => $order->order_no,
+                        'payment_method' => ($order->payment_method_name ?: 'Payment').' Payment',
+                        'amount' => $paidAmount,
+                        'sort_rank' => 2,
+                    ]]);
+                }
+
+                $transactions = $transactions->concat($paymentRows);
+            } else {
+                $transactions->push([
+                    'source' => 'Tailoring',
+                    'date' => $order->order_date,
+                    'reference_no' => $order->order_no,
+                    'payment_method' => $order->payment_method_name,
+                    'amount' => $grandTotal,
+                    'sort_rank' => 1,
+                ]);
+            }
         }
         $transactions = $transactions->sortBy(function (array $row) {
-            return sprintf('%s|%s', $row['date'], $row['reference_no'] ?? '');
+            return sprintf('%s|%s|%02d', $row['date'], $row['reference_no'] ?? '', (int) ($row['sort_rank'] ?? 1));
         })->values();
 
         $paymentMethods = Account::whereIn('id', cache('payment_methods', []))->get();
