@@ -46,7 +46,7 @@
                     <div class="col-12">
                         <h6 class="mb-3 text-muted d-flex align-items-center">
                             <i class="fa fa-credit-card me-2"></i>
-                            Payment Methods Summary
+                            Sale + Tailoring Payment Summary
                             <span class="badge bg-light text-dark ms-2">{{ count($paymentSummary) }} Methods</span>
                         </h6>
                     </div>
@@ -54,17 +54,17 @@
                         <div class="col-xl-3 col-lg-4 col-md-6">
                             <div
                                 class="card h-100 shadow-sm border-0
-                                @if (strtolower($payment['payment_method_name']) === 'cash') bg-success
-                                @elseif(strtolower($payment['payment_method_name']) === 'card') bg-primary
+                                @if (strtolower($payment->payment_method_name) === 'cash') bg-success
+                                @elseif(strtolower($payment->payment_method_name) === 'card') bg-primary
                                 @else bg-info @endif
                                 text-white">
                                 <div class="card-body p-4">
                                     <div class="d-flex align-items-center justify-content-between mb-3">
                                         <div class="d-flex align-items-center">
                                             <div class="bg-white bg-opacity-25 rounded-3 p-3 me-3 d-flex align-items-center justify-content-center">
-                                                @if (strtolower($payment['payment_method_name']) === 'cash')
+                                                @if (strtolower($payment->payment_method_name) === 'cash')
                                                     <i class="fa fa-money fs-4"></i>
-                                                @elseif(strtolower($payment['payment_method_name']) === 'card')
+                                                @elseif(strtolower($payment->payment_method_name) === 'card')
                                                     <i class="fa fa-credit-card fs-4"></i>
                                                 @else
                                                     <i class="fa fa-wallet fs-4"></i>
@@ -72,25 +72,25 @@
                                             </div>
                                             <div>
                                                 <h6 class="mb-0 fw-bold text-uppercase small">
-                                                    {{ $payment['payment_method_name'] }}
+                                                    {{ $payment->payment_method_name }}
                                                 </h6>
                                                 <small class="opacity-75">Payment Method</small>
                                             </div>
                                         </div>
                                         <span class="badge bg-white bg-opacity-25 rounded-pill px-3 py-2">
-                                            {{ $totals['paid']!=0 ? number_format(($payment['total_paid'] / $totals['paid']) * 100, 1) : 0 }}%
+                                            {{ $paymentSummaryTotal != 0 ? number_format(($payment->total_paid / $paymentSummaryTotal) * 100, 1) : 0 }}%
                                         </span>
                                     </div>
 
                                     <div class="mb-3">
-                                        <h3 class="mb-1 fw-bold">{{ currency($payment['total_paid']) }}</h3>
+                                        <h3 class="mb-1 fw-bold">{{ currency($payment->total_paid) }}</h3>
                                         <small class="opacity-75">Total Collected</small>
                                     </div>
 
                                     <div class="d-flex justify-content-between align-items-center pt-3 border-top border-white border-opacity-25">
                                         <div class="d-flex align-items-center">
                                             <i class="fa fa-chart-line me-2 opacity-75"></i>
-                                            <span class="small">{{ $payment['count'] }} Transactions</span>
+                                            <span class="small">{{ $payment->count }} Transactions</span>
                                         </div>
                                         <div class="d-flex align-items-center">
                                             <span class="badge bg-light text-success rounded-circle me-2" style="width: 8px; height: 8px;"></span>
@@ -104,50 +104,61 @@
                 </div>
             @endif
 
-            @if (count($tailoringPaymentSummary) > 0)
-                <div class="row g-3 mb-4">
-                    <div class="col-12">
-                        <h6 class="mb-3 text-muted d-flex align-items-center">
-                            <i class="fa fa-scissors me-2"></i>
-                            Tailoring Payment Summary
-                            <span class="badge bg-light text-dark ms-2">{{ count($tailoringPaymentSummary) }} Methods</span>
-                        </h6>
-                    </div>
-                    @foreach ($tailoringPaymentSummary as $payment)
-                        <div class="col-xl-3 col-lg-4 col-md-6">
-                            <div class="card h-100 shadow-sm border-0 bg-info text-white">
-                                <div class="card-body p-4">
-                                    <div class="d-flex align-items-center justify-content-between mb-3">
-                                        <div class="d-flex align-items-center">
-                                            <div class="bg-white bg-opacity-25 rounded-3 p-3 me-3 d-flex align-items-center justify-content-center">
-                                                <i class="fa fa-wallet fs-4"></i>
-                                            </div>
-                                            <div>
-                                                <h6 class="mb-0 fw-bold text-uppercase small">{{ $payment['payment_method_name'] }}</h6>
-                                                <small class="opacity-75">Payment Method</small>
-                                            </div>
-                                        </div>
-                                        <span class="badge bg-white bg-opacity-25 rounded-pill px-3 py-2">
-                                            {{ $tailoringTotals['paid']!=0 ? number_format(($payment['total_paid'] / $tailoringTotals['paid']) * 100, 1) : 0 }}%
-                                        </span>
-                                    </div>
-                                    <div class="mb-3">
-                                        <h3 class="mb-1 fw-bold">{{ currency($payment['total_paid']) }}</h3>
-                                        <small class="opacity-75">Total Collected</small>
-                                    </div>
-                                    <div class="d-flex justify-content-between align-items-center pt-3 border-top border-white border-opacity-25">
-                                        <div class="d-flex align-items-center">
-                                            <i class="fa fa-chart-line me-2 opacity-75"></i>
-                                            <span class="small">{{ $payment['count'] }} Orders</span>
-                                        </div>
-                                        <span class="small opacity-75">Tailoring</span>
-                                    </div>
+            <div class="table-responsive mb-4">
+                <h6 class="mb-2 text-muted"><i class="fa fa-exchange me-2"></i>Combined Payments (Sale + Tailoring)</h6>
+                <table class="table table-sm table-hover mb-0" style="background-color: white;">
+                    <thead style="background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);">
+                        <tr>
+                            <th style="color: #495057; font-weight: 600; border-bottom: 2px solid #dee2e6; padding: 12px;">Date</th>
+                            <th style="color: #495057; font-weight: 600; border-bottom: 2px solid #dee2e6; padding: 12px;">Source</th>
+                            <th style="color: #495057; font-weight: 600; border-bottom: 2px solid #dee2e6; padding: 12px;">Reference</th>
+                            <th style="color: #495057; font-weight: 600; border-bottom: 2px solid #dee2e6; padding: 12px;">Customer</th>
+                            <th style="color: #495057; font-weight: 600; border-bottom: 2px solid #dee2e6; padding: 12px;">Mobile</th>
+                            <th style="color: #495057; font-weight: 600; border-bottom: 2px solid #dee2e6; padding: 12px;">Payment Method</th>
+                            <th class="text-end" style="color: #495057; font-weight: 600; border-bottom: 2px solid #dee2e6; padding: 12px;">Amount</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @forelse ($combinedPayments as $payment)
+                            <tr style="border-bottom: 1px solid #f8f9fa;">
+                                <td style="vertical-align: middle;">{{ systemDate($payment->payment_date) }}</td>
+                                <td style="vertical-align: middle;">
+                                    <span class="badge {{ $payment->source === 'Sale' ? 'bg-primary' : 'bg-success' }}">{{ $payment->source }}</span>
+                                </td>
+                                <td style="vertical-align: middle;">
+                                    <span class="fw-bold" style="color: #4a6fa5;">{{ $payment->reference_no }}</span>
+                                </td>
+                                <td style="vertical-align: middle;">{{ $payment->customer_name ?: '-' }}</td>
+                                <td style="vertical-align: middle;">{{ $payment->customer_mobile ?: '-' }}</td>
+                                <td style="vertical-align: middle;">{{ $payment->payment_method_name }}</td>
+                                <td class="text-end" style="vertical-align: middle;">
+                                    <span class="fw-bold text-success">{{ currency($payment->amount) }}</span>
+                                </td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="7" class="text-center text-muted py-4">No combined payments found.</td>
+                            </tr>
+                        @endforelse
+                    </tbody>
+                    <tfoot>
+                        <tr>
+                            <td colspan="6" class="text-end fw-bold" style="color: #495057; padding: 20px 12px; font-size: 16px;">
+                                <div class="d-flex align-items-center justify-content-end">
+                                    <i class="fa fa-calculator me-2" style="color: #6c757d;"></i>
+                                    Totals:
                                 </div>
-                            </div>
-                        </div>
-                    @endforeach
+                            </td>
+                            <td class="text-end fw-bold" style="color: #b8860b; padding: 20px 12px; font-size: 16px;">
+                                {{ currency($combinedPayments->sum('amount')) }}
+                            </td>
+                        </tr>
+                    </tfoot>
+                </table>
+                <div class="mt-3">
+                    {{ $combinedPayments->links() }}
                 </div>
-            @endif
+            </div>
 
             <!-- Enhanced Data Table -->
             <div class="table-responsive">
@@ -243,20 +254,12 @@
                                 <td style=" vertical-align: middle;">
                                     <div>
                                         <div class="fw-medium" style="color: #495057;">
-                                            @php
-                                                $customer_name = $sale->customer_name;
-                                                $customer_mobile = $sale->customer_mobile;
-                                                if ($sale->account && $sale->account->name) {
-                                                    $customer_name = $sale->account->name;
-                                                    $customer_mobile = $sale->account->mobile;
-                                                }
-                                            @endphp
-                                            {{ $customer_name }}
+                                            {{ $sale->account->name ?? $sale->customer_name }}
                                         </div>
-                                        @if ($customer_mobile)
+                                        @if (($sale->account->mobile ?? $sale->customer_mobile))
                                             <small class="text-muted d-flex align-items-center mt-1">
                                                 <i class="fa fa-phone me-1" style="font-size: 10px;"></i>
-                                                {{ $customer_mobile }}
+                                                {{ $sale->account->mobile ?? $sale->customer_mobile }}
                                             </small>
                                         @endif
                                     </div>
@@ -375,19 +378,11 @@
                                     </div>
                                 </td>
                                 <td>
-                                    @php
-                                        $customer_name = $order->customer_name;
-                                        $customer_mobile = $order->customer_mobile;
-                                        if ($order->account && $order->account->name) {
-                                            $customer_name = $order->account->name;
-                                            $customer_mobile = $order->account->mobile;
-                                        }
-                                    @endphp
-                                    <div class="fw-medium" style="color: #495057;">{{ $customer_name }}</div>
-                                    @if ($customer_mobile)
+                                    <div class="fw-medium" style="color: #495057;">{{ $order->account->name ?? $order->customer_name }}</div>
+                                    @if (($order->account->mobile ?? $order->customer_mobile))
                                         <small class="text-muted d-flex align-items-center mt-1">
                                             <i class="fa fa-phone me-1" style="font-size: 10px;"></i>
-                                            {{ $customer_mobile }}
+                                            {{ $order->account->mobile ?? $order->customer_mobile }}
                                         </small>
                                     @endif
                                 </td>

@@ -6,9 +6,7 @@ use App\Models\Account;
 use App\Models\Configuration;
 use App\Models\Sale;
 use App\Models\SaleDaySession;
-use App\Models\SalePayment;
-use App\Models\TailoringOrder;
-use App\Models\TailoringPayment;
+use App\Services\SaleDaySessionDataService;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\View;
 
@@ -120,16 +118,16 @@ class SaleHelper
     public function daySessionReportView(SaleDaySession $session)
     {
         $id = $session->id;
+        $sessionDataService = app(SaleDaySessionDataService::class);
 
-        $sales = Sale::withoutGlobalScopes()
-            ->completed()
-            ->where('sale_day_session_id', $id)
+        $sales = $sessionDataService
+            ->salesQueryForSession($id, true)
             ->with(['branch', 'payments.paymentMethod'])
             ->orderBy('created_at', 'asc')
             ->get();
 
-        $tailoringOrders = TailoringOrder::withoutGlobalScopes()
-            ->where('sale_day_session_id', $id)
+        $tailoringOrders = $sessionDataService
+            ->tailoringOrdersQueryForSession($id, true)
             ->with(['branch', 'payments.paymentMethod'])
             ->orderBy('created_at', 'asc')
             ->get();
@@ -158,14 +156,12 @@ class SaleHelper
         })->values();
 
         $paymentMethods = Account::whereIn('id', cache('payment_methods', []))->get();
-        $totals['credit'] = $sales->sum('balance');
+        $totals['credit'] = $sales->sum('balance')+$tailoringOrders->sum('balance');
         foreach ($paymentMethods as $method) {
             $totals[$method->name] = 0;
         }
-        $payments = SalePayment::whereDate('date', date('Y-m-d', strtotime($session->opened_at)))
-            ->whereHas('sale', function ($query) use ($session) {
-                $query->where('branch_id', $session->branch_id)->where('status', 'completed');
-            })
+        $payments = $sessionDataService
+            ->salePaymentsQueryForSessionOpenDateBranch($session)
             ->get();
         $pendingPayments = [];
         foreach ($payments as $payment) {
@@ -184,11 +180,9 @@ class SaleHelper
             $totals[$payment->name] += $payment->amount;
         }
 
-        $tailoringPayments = TailoringPayment::whereDate('date', date('Y-m-d', strtotime($session->opened_at)))
+        $tailoringPayments = $sessionDataService
+            ->tailoringPaymentsQueryForSessionOpenDateBranch($session)
             ->with('order')
-            ->whereHas('order', function ($query) use ($session) {
-                $query->where('branch_id', $session->branch_id);
-            })
             ->get();
         foreach ($tailoringPayments as $payment) {
             if (! $payment->order || $payment->order->sale_day_session_id != $id) {
