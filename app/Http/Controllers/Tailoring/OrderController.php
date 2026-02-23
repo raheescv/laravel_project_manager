@@ -23,6 +23,7 @@ use App\Models\CustomerType;
 use App\Models\Inventory;
 use App\Models\Product;
 use App\Models\Rack;
+use App\Models\SaleDaySession;
 use App\Models\TailoringCategory;
 use App\Models\TailoringCategoryMeasurement;
 use App\Models\TailoringCategoryModel;
@@ -85,11 +86,14 @@ class OrderController extends Controller
             ->keyBy('id')
             ->toArray();
 
+        $openSession = SaleDaySession::getOpenSessionForBranch(session('branch_id'));
+        $date = $openSession ? $openSession->opened_at->format('Y-m-d') : date('Y-m-d');
+
         $orderData = [
             'id' => null,
             'order_no' => '',
-            'order_date' => date('Y-m-d'),
-            'delivery_date' => date('Y-m-d', strtotime('+7 days')),
+            'order_date' => $date,
+            'delivery_date' => date('Y-m-d', strtotime($date.' +7 days')),
             'customer_id' => null,
             'customer_name' => '',
             'customer_mobile' => '',

@@ -244,7 +244,7 @@ class SaleHelper
         })->values();
 
         $paymentMethods = Account::whereIn('id', cache('payment_methods', []))->get();
-        $totals['credit'] = $sales->sum('balance')+$tailoringOrders->sum('balance');
+        $totals['credit'] = $sales->sum('balance') + $tailoringOrders->sum('balance');
         foreach ($paymentMethods as $method) {
             $totals[$method->name] = 0;
         }

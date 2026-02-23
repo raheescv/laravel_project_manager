@@ -4,6 +4,7 @@ namespace App\Livewire\Tailoring;
 
 use App\Actions\Tailoring\ReceiptAction;
 use App\Models\Account;
+use App\Models\SaleDaySession;
 use App\Models\TailoringOrder;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -22,6 +23,8 @@ class CustomerReceipt extends Component
     public $customer_mobile = '';
 
     public $order_orders = [];  // order_id => ['balance' => x, 'payment' => x, 'selected' => bool]
+
+    public $session_date;
 
     public $checkAll = false;
 
@@ -46,8 +49,11 @@ class CustomerReceipt extends Component
             ? $this->default_payment_method_id
             : (array_key_first($this->paymentMethods) ?: 1);
 
+        $openSession = SaleDaySession::getOpenSessionForBranch(session('branch_id'));
+        $this->session_date = $openSession ? $openSession->opened_at->format('Y-m-d') : date('Y-m-d');
+
         $this->payment = [
-            'date' => date('Y-m-d'),
+            'date' => $this->session_date,
             'amount' => 0,
             'remarks' => '',
             'payment_method_id' => $this->default_payment_method_id,
@@ -70,7 +76,7 @@ class CustomerReceipt extends Component
     {
         $defaultPaymentMethodId = $this->default_payment_method_id;
         $this->payment = [
-            'date' => date('Y-m-d'),
+            'date' => $this->session_date,
             'amount' => 0,
             'remarks' => '',
             'payment_method_id' => $defaultPaymentMethodId,

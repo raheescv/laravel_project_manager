@@ -8,6 +8,7 @@ use App\Models\TailoringOrder;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
 use Livewire\WithPagination;
+use App\Models\SaleDaySession;
 
 class Table extends Component
 {
@@ -58,7 +59,10 @@ class Table extends Component
             'balance' => true,
             'actions' => true,
         ];
-        $this->from_date = date('Y-m-d');
+        $openSession = SaleDaySession::getOpenSessionForBranch(session('branch_id'));
+        $from_date = $openSession ? $openSession->opened_at->format('Y-m-d') : date('Y-m-d');
+
+        $this->from_date = $from_date;
         $this->to_date = date('Y-m-d');
         $this->branch_id = session('branch_id');
     }
