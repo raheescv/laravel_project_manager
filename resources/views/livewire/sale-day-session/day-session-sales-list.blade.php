@@ -305,7 +305,7 @@
 
                         @if ($sales->count() === 0)
                             <tr>
-                                <td colspan="10" class="text-center" style="padding: 40px 20px;">
+                                <td colspan="11" class="text-center" style="padding: 40px 20px;">
                                     <div class="d-flex flex-column align-items-center">
                                         <div class="rounded-circle d-flex align-items-center justify-content-center mb-3" style="width: 60px; height: 60px; background-color: #f8f9fa;">
                                             <i class="fa fa-shopping-cart" style="color: #6c757d; font-size: 24px;"></i>
@@ -411,7 +411,7 @@
                         @endforeach
                         @if ($tailoringOrders->count() === 0)
                             <tr>
-                                <td colspan="10" class="text-center" style="padding: 30px 20px;">
+                                <td colspan="11" class="text-center" style="padding: 30px 20px;">
                                     <div class="d-flex flex-column align-items-center">
                                         <div class="rounded-circle d-flex align-items-center justify-content-center mb-3" style="width: 60px; height: 60px; background-color: #f8f9fa;">
                                             <i class="fa fa-scissors" style="color: #6c757d; font-size: 24px;"></i>
