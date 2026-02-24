@@ -82,7 +82,7 @@
                                 </div>
                                 <div>
                                     <h6 class="mb-1 text-muted">Sales Summary</h6>
-                                    <h4 class="mb-0 fw-bold" style="color: #2c3e50;">{{ $session->sales->count() }} Transactions</h4>
+                                    <h4 class="mb-0 fw-bold" style="color: #2c3e50;">{{ $session->sales->count() + $session->tailoringOrders->count() }} Invoices</h4>
                                 </div>
                             </div>
                             <div class="border-top pt-3">
