@@ -194,6 +194,12 @@
                             <th style="cursor: pointer; color: #495057; font-weight: 600; border-bottom: 2px solid #dee2e6; padding: 15px 12px;">
                                 <div class="d-flex align-items-center">
                                     <i class="fa fa-calendar me-2" style="color: #6c757d; font-size: 14px;"></i>
+                                    <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="created_at" label="Created At" />
+                                </div>
+                            </th>
+                            <th style="cursor: pointer; color: #495057; font-weight: 600; border-bottom: 2px solid #dee2e6; padding: 15px 12px;">
+                                <div class="d-flex align-items-center">
+                                    <i class="fa fa-calendar me-2" style="color: #6c757d; font-size: 14px;"></i>
                                     <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="date" label="Date" />
                                 </div>
                             </th>
@@ -243,8 +249,8 @@
                                         #{{ $sale->id }}
                                     </span>
                                 </td>
-                                <td style=" vertical-align: middle;">
-                                    <div class="fw-bold" style="color: #4a6fa5;">
+                                <td style=" vertical-align: middle; ">
+                                    <div class="fw-bold text-nowrap" style="color: #4a6fa5; ">
                                         <a href="{{ route('sale::view', $sale->id) }}">
                                             <i class="fa fa-eye me-2" style="font-size: 12px;"></i>
                                             {{ $sale->invoice_no }}
@@ -253,7 +259,7 @@
                                 </td>
                                 <td style=" vertical-align: middle;">
                                     <div>
-                                        <div class="fw-medium" style="color: #495057;">
+                                        <div class="fw-medium text-nowrap" style="color: #495057;">
                                             {{ $sale->account->name ?? $sale->customer_name }}
                                         </div>
                                         @if (($sale->account->mobile ?? $sale->customer_mobile))
@@ -264,8 +270,14 @@
                                         @endif
                                     </div>
                                 </td>
-                                <td style=" vertical-align: middle;">
-                                    <div class="d-flex align-items-center">
+                                <td style=" vertical-align: middle; text-nowrap">
+                                    <div class="d-flex align-items-center text-nowrap">
+                                        <i class="fa fa-calendar-o me-2" style="color: #6c757d; font-size: 12px;"></i>
+                                        <span style="color: #495057;">{{ systemDateTime($sale->created_at) }}</span>
+                                    </div>
+                                </td>
+                                <td style=" vertical-align: middle; text-nowrap">
+                                    <div class="d-flex align-items-center text-nowrap">
                                         <i class="fa fa-calendar-o me-2" style="color: #6c757d; font-size: 12px;"></i>
                                         <span style="color: #495057;">{{ systemDate($sale->date) }}</span>
                                     </div>
@@ -307,7 +319,7 @@
                     </tbody>
                     <tfoot style="background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); border-top: 2px solid #dee2e6;">
                         <tr>
-                            <td colspan="4" class="text-end fw-bold" style="color: #495057; padding: 20px 12px; font-size: 16px;">
+                            <td colspan="5" class="text-end fw-bold" style="color: #495057; padding: 20px 12px; font-size: 16px;">
                                 <div class="d-flex align-items-center justify-content-end">
                                     <i class="fa fa-calculator me-2" style="color: #6c757d;"></i>
                                     Session Totals:
@@ -356,6 +368,7 @@
                             <th>ID</th>
                             <th>Order No</th>
                             <th>Customer</th>
+                            <th>Created At</th>
                             <th>Date</th>
                             <th class="text-end">Total</th>
                             <th class="text-end">Discount</th>
@@ -386,6 +399,7 @@
                                         </small>
                                     @endif
                                 </td>
+                                <td><span style="color: #495057;">{{ systemDateTime($order->created_at) }}</span></td>
                                 <td><span style="color: #495057;">{{ systemDate($order->order_date) }}</span></td>
                                 <td class="text-end"><span class="fw-bold" style="color: #b8860b; font-size: 15px;">{{ currency($order->total) }}</span></td>
                                 <td class="text-end"><span style="color: #dc3545;">{{ $order->item_discount != 0 ? currency($order->item_discount) : '-' }}</span></td>
@@ -411,7 +425,7 @@
                     </tbody>
                     <tfoot style="background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); border-top: 2px solid #dee2e6;">
                         <tr>
-                            <td colspan="4" class="text-end fw-bold" style="color: #495057; padding: 20px 12px; font-size: 16px;">Tailoring Totals:</td>
+                            <td colspan="5" class="text-end fw-bold" style="color: #495057; padding: 20px 12px; font-size: 16px;">Tailoring Totals:</td>
                             <td class="text-end fw-bold" style="color: #b8860b; padding: 20px 12px; font-size: 16px;">{{ currency($tailoringTotals['total']) }}</td>
                             <td class="text-end fw-bold" style="color: #dc3545; padding: 20px 12px; font-size: 16px;">{{ currency($tailoringTotals['item_discount']) }}</td>
                             <td class="text-end fw-bold" style="color: #5a9fd4; padding: 20px 12px; font-size: 16px;">{{ currency($tailoringTotals['tax_amount']) }}</td>
