@@ -72,6 +72,16 @@
                                 Nationality Wise
                             </a>
                         </li>
+                        <li class="nav-item">
+                            <a class="nav-link" data-bs-toggle="tab" href="#customer-tailoring">
+                                Tailoring
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" data-bs-toggle="tab" href="#customer-tailoring-items">
+                                Tailoring Items
+                            </a>
+                        </li>
                     </ul>
                 </div>
                 <div class="card-body">
@@ -90,6 +100,12 @@
                         </div>
                         <div class="tab-pane fade" id="customer-location">
                             @livewire('report.customer.customer-location')
+                        </div>
+                        <div class="tab-pane fade" id="customer-tailoring">
+                            @livewire('report.customer.customer-tailoring')
+                        </div>
+                        <div class="tab-pane fade" id="customer-tailoring-items">
+                            @livewire('report.customer.customer-tailoring-items')
                         </div>
                     </div>
                 </div>
