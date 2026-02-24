@@ -1,5 +1,91 @@
-<div>
+<div class="dsi-page">
     <style>
+        .dsi-page {
+            --dsi-slate: #0f172a;
+            --dsi-muted: #64748b;
+            --dsi-surface: #ffffff;
+            --dsi-border: #e2e8f0;
+            --dsi-indigo: #4f46e5;
+            --dsi-cyan: #0891b2;
+            --dsi-emerald: #059669;
+            --dsi-rose: #e11d48;
+            --dsi-amber: #d97706;
+        }
+
+        .dsi-card {
+            border: 1px solid var(--dsi-border);
+            border-radius: 14px;
+            background: var(--dsi-surface);
+            box-shadow: 0 8px 22px rgba(15, 23, 42, 0.05);
+        }
+
+        .dsi-kpi {
+            border-radius: 12px;
+            border: 1px solid var(--dsi-border);
+            background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+            padding: 12px 14px;
+            height: 100%;
+        }
+
+        .dsi-kpi-label {
+            font-size: 12px;
+            color: var(--dsi-muted);
+            letter-spacing: 0.2px;
+            text-transform: uppercase;
+            font-weight: 700;
+        }
+
+        .dsi-kpi-value {
+            margin-top: 4px;
+            font-size: 18px;
+            font-weight: 800;
+            color: var(--dsi-slate);
+        }
+
+        .dsi-accent-indigo {
+            border-left: 4px solid var(--dsi-indigo);
+        }
+
+        .dsi-accent-cyan {
+            border-left: 4px solid var(--dsi-cyan);
+        }
+
+        .dsi-accent-emerald {
+            border-left: 4px solid var(--dsi-emerald);
+        }
+
+        .dsi-accent-rose {
+            border-left: 4px solid var(--dsi-rose);
+        }
+
+        .dsi-accent-amber {
+            border-left: 4px solid var(--dsi-amber);
+        }
+
+        .dsi-table {
+            border-collapse: separate;
+            border-spacing: 0;
+        }
+
+        .dsi-table thead th {
+            position: sticky;
+            top: 0;
+            z-index: 2;
+        }
+
+        .dsi-table tbody tr:nth-child(even) {
+            background-color: #fcfdff;
+        }
+
+        .dsi-table tbody tr:hover {
+            background-color: #f1f5f9;
+        }
+
+        .dsi-table td,
+        .dsi-table th {
+            border-color: #e9edf5 !important;
+        }
+
         .dsi-main-head {
             background: linear-gradient(135deg, #f8f9ff 0%, #e8f7ff 100%);
             color: #1f2937;
@@ -32,7 +118,7 @@
         }
     </style>
 
-    <div class="card shadow-sm">
+    <div class="card shadow-sm dsi-card">
         <div class="card-header bg-white py-3">
             <div class="d-flex align-items-center mb-4">
                 <div>
@@ -73,7 +159,40 @@
         </div>
     </div>
 
-    <div class="card mt-3">
+    <div class="row g-3 mt-1">
+        <div class="col-md-6 col-xl">
+            <div class="dsi-kpi dsi-accent-indigo">
+                <div class="dsi-kpi-label">Net Sales</div>
+                <div class="dsi-kpi-value">{{ currency($total['net_sales'] ?? 0) }}</div>
+            </div>
+        </div>
+        <div class="col-md-6 col-xl">
+            <div class="dsi-kpi dsi-accent-cyan">
+                <div class="dsi-kpi-label">Total Sales</div>
+                <div class="dsi-kpi-value">{{ currency($total['total_sales'] ?? 0) }}</div>
+            </div>
+        </div>
+        <div class="col-md-6 col-xl">
+            <div class="dsi-kpi dsi-accent-emerald">
+                <div class="dsi-kpi-label">Invoices</div>
+                <div class="dsi-kpi-value">{{ number_format($total['no_of_invoices'] ?? 0) }}</div>
+            </div>
+        </div>
+        <div class="col-md-6 col-xl">
+            <div class="dsi-kpi dsi-accent-rose">
+                <div class="dsi-kpi-label">Discount</div>
+                <div class="dsi-kpi-value">{{ currency($total['sales_discount'] ?? 0) }}</div>
+            </div>
+        </div>
+        <div class="col-md-6 col-xl">
+            <div class="dsi-kpi dsi-accent-amber">
+                <div class="dsi-kpi-label">Credit</div>
+                <div class="dsi-kpi-value">{{ currency($total['credit'] ?? 0) }}</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card mt-3 dsi-card">
         <div class="card-body p-4">
             <div wire:ignore>
                 <canvas id="salesChart" height="300"></canvas>
@@ -81,7 +200,7 @@
         </div>
     </div>
 
-    <div class="card mt-3">
+    <div class="card mt-3 dsi-card">
         <div class="card-header bg-white p-3 border-bottom">
             <div class="d-flex justify-content-between align-items-center">
                 <h6 class="mb-0 text-muted">Detailed Sales Data</h6>
@@ -94,7 +213,7 @@
         </div>
         <div class="card-body p-0">
             <div class="table-responsive">
-                <table class="table table-hover align-middle mb-0">
+                <table class="table table-hover align-middle mb-0 dsi-table">
                     <thead class="bg-light text-nowrap">
                         <tr class="text-capitalize">
                             <th class="border-bottom px-3 py-3 dsi-main-head" rowspan="2">
