@@ -111,11 +111,23 @@ class SaleHelper
         return $this->daySessionReportView($session);
     }
 
+    public function daySessionReportPdf($id)
+    {
+        $session = SaleDaySession::with(['branch', 'opener', 'closer'])->findOrFail($id);
+
+        return $this->daySessionReportPdfView($session);
+    }
+
     /**
      * Build the day session report view for a given session (e.g. for PDF export).
      */
     public function daySessionReportView(SaleDaySession $session)
     {
         return app(BuildDaySessionReportAction::class)->execute($session);
+    }
+
+    public function daySessionReportPdfView(SaleDaySession $session)
+    {
+        return app(BuildDaySessionReportAction::class)->executePdf($session);
     }
 }

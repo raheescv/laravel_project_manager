@@ -9,6 +9,16 @@ class BuildDaySessionReportAction
 {
     public function execute(SaleDaySession $session)
     {
+        return view('sale.day-session-print', $this->buildPayload($session));
+    }
+
+    public function executePdf(SaleDaySession $session)
+    {
+        return view('sale.day-session-print-pdf', $this->buildPayload($session));
+    }
+
+    private function buildPayload(SaleDaySession $session): array
+    {
         $sessionDataService = app(SaleDaySessionDataService::class);
         $sessionDate = date('Y-m-d', strtotime($session->opened_at));
 
@@ -53,7 +63,7 @@ class BuildDaySessionReportAction
 
         $totals['due_total'] = (float) $totals['due_total_cash'] + (float) $totals['due_total_card'];
 
-        return view('sale.day-session-print', compact('session', 'pendingPayments', 'transactions', 'dueTransactions', 'totals'));
+        return compact('session', 'pendingPayments', 'transactions', 'dueTransactions', 'totals');
     }
 
     private function loadSessionSales(SaleDaySessionDataService $service, int $sessionId, string $sessionDate)

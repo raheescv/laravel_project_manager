@@ -19,6 +19,11 @@ class PrintController extends Controller
         return SaleHelper::daySessionReport($id);
     }
 
+    public function daySessionReportPdf($id)
+    {
+        return SaleHelper::daySessionReportPdf($id);
+    }
+
     public function customerReceipt(Request $request)
     {
         $data = $this->getPaymentReceiptViewData($request, [

@@ -16,6 +16,9 @@
                     </p>
                 </div>
                 <div class="text-end">
+                    <a href="{{ route('print::sale::day-session-report-pdf', $session->id) }}" class="btn btn-info text-white me-2" target="_blank" title="Print PDF Report">
+                        <i class="fa fa-file-pdf-o me-2"></i>Print PDF
+                    </a>
                     <a href="{{ route('print::sale::day-session-report', $session->id) }}" class="btn btn-success text-white me-2" target="_blank" title="Print Thermal Receipt">
                         <i class="fa fa-print me-2"></i>Print
                     </a>
