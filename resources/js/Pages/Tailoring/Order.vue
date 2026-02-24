@@ -177,7 +177,8 @@
             @close="showConfirmationModal = false" @submit="processSubmitOrder" />
 
         <CustomPaymentModal :show="showCustomPaymentModal" :total-amount="grandTotal" :payment-methods="paymentMethods"
-            :initial-payments="form.payments" @close="showCustomPaymentModal = false" @save="handleCustomPaymentSave" />
+            :initial-payments="form.payments" :session-date="form.order_date" @close="showCustomPaymentModal = false"
+            @save="handleCustomPaymentSave" />
 
         <OldMeasurementModal :show="showOldMeasurementModal" :account-id="form.account_id"
             :category-id="pendingOldMeasurementCategoryId"

@@ -28,7 +28,7 @@ class TailoringPayment extends Model implements AuditableContracts
     ];
 
     protected $casts = [
-        'date' => 'date',
+        'date' => 'date:Y-m-d',
         'amount' => 'decimal:2',
     ];
 

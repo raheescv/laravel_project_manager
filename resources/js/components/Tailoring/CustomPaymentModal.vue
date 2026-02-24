@@ -180,6 +180,10 @@ export default {
         initialPayments: {
             type: Array,
             default: () => []
+        },
+        sessionDate: {
+            type: String,
+            default: ''
         }
     },
     emits: ['close', 'save'],
@@ -190,10 +194,14 @@ export default {
             return new Date().toISOString().split('T')[0]
         }
 
+        const getDefaultPaymentDate = () => {
+            return /^\d{4}-\d{2}-\d{2}$/.test(props.sessionDate || '') ? props.sessionDate : getTodayDate()
+        }
+
         const paymentForm = ref({
             payment_method_id: '',
             amount: '',
-            date: getTodayDate()
+            date: getDefaultPaymentDate()
         })
 
         const payments = ref([])
@@ -239,12 +247,12 @@ export default {
                 paymentForm.value = {
                     payment_method_id: '',
                     amount: currentBalance > 0 ? currentBalance : props.totalAmount,
-                    date: getTodayDate()
+                    date: getDefaultPaymentDate()
                 }
                 payments.value = [...(props.initialPayments || []).map(p => ({
                     ...p,
                     name: p.name || p.payment_method_name || p.paymentMethod?.name || '',
-                    date: p.date || getTodayDate()
+                    date: p.date || getDefaultPaymentDate()
                 }))]
                 errorMessage.value = ''
             }
