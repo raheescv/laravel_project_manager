@@ -159,19 +159,12 @@ class DailySalesInsightsReport extends Component
 
     public function render()
     {
-        // Get payment methods (cached)
-        $paymentMethods = Account::whereIn('id', cache('payment_methods', []))
-            ->pluck('name', 'id')
-            ->toArray();
-
-        // Helper: zero-filled array for payment method columns
-        $emptyPaymentColumns = array_fill_keys(array_values($paymentMethods), 0);
+        $paymentMethodColumns = $this->buildPaymentMethodColumns();
+        $emptyPaymentColumns = $this->buildEmptyPaymentColumns($paymentMethodColumns);
 
         // Standardize dates
         $from = $this->from_date ? Carbon::parse($this->from_date)->toDateString() : null;
         $to = $this->to_date ? Carbon::parse($this->to_date)->toDateString() : null;
-        $summarySortField = $this->sortField === 'branches.name' ? 'branch' : $this->sortField;
-
         $saleSummaryQuery = Sale::query()
             ->join('branches', 'branches.id', '=', 'branch_id')
             ->when($from, fn ($q) => $q->where('sales.date', '>=', $from))
@@ -182,13 +175,10 @@ class DailySalesInsightsReport extends Component
                 'sales.date',
                 'sales.branch_id',
                 'branches.name as branch',
-                DB::raw('SUM(gross_amount) as item_total'),
                 DB::raw('COUNT(DISTINCT sales.id) as no_of_invoices'),
                 DB::raw('SUM(total) as net_sales'),
                 DB::raw('SUM(other_discount) as sales_discount'),
-                DB::raw('SUM(grand_total) as total_sales'),
-                DB::raw('SUM(paid) as paid'),
-                DB::raw('SUM(balance) as credit')
+                DB::raw('SUM(grand_total) as total_sales')
             )
             ->groupBy('sales.date', 'sales.branch_id', 'branches.name');
 
@@ -201,13 +191,10 @@ class DailySalesInsightsReport extends Component
                 DB::raw('tailoring_orders.order_date as date'),
                 'tailoring_orders.branch_id',
                 'branches.name as branch',
-                DB::raw('SUM(gross_amount) as item_total'),
                 DB::raw('COUNT(DISTINCT tailoring_orders.id) as no_of_invoices'),
                 DB::raw('SUM(total) as net_sales'),
                 DB::raw('SUM(other_discount) as sales_discount'),
-                DB::raw('SUM(grand_total) as total_sales'),
-                DB::raw('SUM(paid) as paid'),
-                DB::raw('SUM(balance) as credit')
+                DB::raw('SUM(grand_total) as total_sales')
             )
             ->groupBy('tailoring_orders.order_date', 'tailoring_orders.branch_id', 'branches.name');
 
@@ -217,16 +204,107 @@ class DailySalesInsightsReport extends Component
                 'date',
                 'branch_id',
                 'branch',
-                DB::raw('SUM(item_total) as item_total'),
                 DB::raw('SUM(no_of_invoices) as no_of_invoices'),
                 DB::raw('SUM(net_sales) as net_sales'),
                 DB::raw('SUM(sales_discount) as sales_discount'),
-                DB::raw('SUM(total_sales) as total_sales'),
-                DB::raw('SUM(paid) as paid'),
-                DB::raw('SUM(credit) as credit')
+                DB::raw('SUM(total_sales) as total_sales')
             )
             ->groupBy('date', 'branch_id', 'branch')
-            ->orderBy($summarySortField, $this->sortDirection)
+            ->get();
+
+        // Invoice-day payments: only payments recorded on the same day as the sale/order.
+        $saleInvoicePaymentsQuery = SalePayment::query()
+            ->join('sales', 'sales.id', '=', 'sale_id')
+            ->join('branches', 'branches.id', '=', 'sales.branch_id')
+            ->when($from, fn ($q) => $q->where('sales.date', '>=', $from))
+            ->when($to, fn ($q) => $q->where('sales.date', '<=', $to))
+            ->when($this->branch_id, fn ($q) => $q->where('sales.branch_id', $this->branch_id))
+            ->where('sales.status', 'completed')
+            ->whereColumn('sale_payments.date', 'sales.date')
+            ->select(
+                'sales.date as date',
+                'sales.branch_id',
+                'branches.name as branch',
+                DB::raw('SUM(sale_payments.amount) as amount')
+            )
+            ->groupBy('sales.date', 'sales.branch_id', 'branches.name');
+
+        $tailoringInvoicePaymentsQuery = TailoringPayment::query()
+            ->join('tailoring_orders', 'tailoring_orders.id', '=', 'tailoring_payments.tailoring_order_id')
+            ->join('branches', 'branches.id', '=', 'tailoring_orders.branch_id')
+            ->when($from, fn ($q) => $q->where('tailoring_orders.order_date', '>=', $from))
+            ->when($to, fn ($q) => $q->where('tailoring_orders.order_date', '<=', $to))
+            ->when($this->branch_id, fn ($q) => $q->where('tailoring_orders.branch_id', $this->branch_id))
+            ->whereColumn('tailoring_payments.date', 'tailoring_orders.order_date')
+            ->select(
+                'tailoring_orders.order_date as date',
+                'tailoring_orders.branch_id',
+                'branches.name as branch',
+                DB::raw('SUM(tailoring_payments.amount) as amount')
+            )
+            ->groupBy('tailoring_orders.order_date', 'tailoring_orders.branch_id', 'branches.name');
+
+        $invoicePayments = DB::query()
+            ->fromSub($saleInvoicePaymentsQuery->unionAll($tailoringInvoicePaymentsQuery), 'combined_invoice_payments')
+            ->select(
+                'date',
+                'branch_id',
+                'branch',
+                DB::raw('SUM(amount) as amount')
+            )
+            ->groupBy('date', 'branch_id', 'branch')
+            ->get();
+
+        $invoicePaidByDayBranch = $invoicePayments
+            ->mapWithKeys(fn ($payment) => [$this->summaryKey($payment->date, $payment->branch_id) => (float) $payment->amount])
+            ->toArray();
+
+        $saleInvoicePaymentsByMethodQuery = SalePayment::query()
+            ->join('sales', 'sales.id', '=', 'sale_id')
+            ->join('branches', 'branches.id', '=', 'sales.branch_id')
+            ->join('accounts', 'accounts.id', '=', 'payment_method_id')
+            ->when($from, fn ($q) => $q->where('sale_payments.date', '>=', $from))
+            ->when($to, fn ($q) => $q->where('sale_payments.date', '<=', $to))
+            ->when($this->branch_id, fn ($q) => $q->where('sales.branch_id', $this->branch_id))
+            ->where('sales.status', 'completed')
+            ->whereColumn('sale_payments.date', 'sales.date')
+            ->select(
+                'sale_payments.date',
+                'sales.branch_id',
+                'branches.name as branch',
+                'accounts.name as payment_method_name',
+                DB::raw('SUM(amount) as amount')
+            )
+            ->groupBy('sale_payments.date', 'sales.branch_id', 'branches.name', 'accounts.name');
+
+        $tailoringInvoicePaymentsByMethodQuery = TailoringPayment::query()
+            ->join('tailoring_orders', 'tailoring_orders.id', '=', 'tailoring_payments.tailoring_order_id')
+            ->join('branches', 'branches.id', '=', 'tailoring_orders.branch_id')
+            ->join('accounts', 'accounts.id', '=', 'tailoring_payments.payment_method_id')
+            ->when($from, fn ($q) => $q->where('tailoring_payments.date', '>=', $from))
+            ->when($to, fn ($q) => $q->where('tailoring_payments.date', '<=', $to))
+            ->when($this->branch_id, fn ($q) => $q->where('tailoring_orders.branch_id', $this->branch_id))
+            ->whereColumn('tailoring_payments.date', 'tailoring_orders.order_date')
+            ->select(
+                'tailoring_payments.date',
+                'tailoring_orders.branch_id',
+                'branches.name as branch',
+                'accounts.name as payment_method_name',
+                DB::raw('SUM(tailoring_payments.amount) as amount')
+            )
+            ->groupBy('tailoring_payments.date', 'tailoring_orders.branch_id', 'branches.name', 'accounts.name');
+
+        $invoicePaymentsByMethod = DB::query()
+            ->fromSub($saleInvoicePaymentsByMethodQuery->unionAll($tailoringInvoicePaymentsByMethodQuery), 'combined_invoice_payments_by_method')
+            ->select(
+                'date',
+                'branch_id',
+                'branch',
+                'payment_method_name',
+                DB::raw('SUM(amount) as amount')
+            )
+            ->groupBy('date', 'branch_id', 'branch', 'payment_method_name')
+            ->orderBy('date')
             ->get();
 
         $salePaymentsQuery = SalePayment::query()
@@ -275,11 +353,61 @@ class DailySalesInsightsReport extends Component
             ->orderBy('date')
             ->get();
 
+        $saleDuePaymentsQuery = SalePayment::query()
+            ->join('sales', 'sales.id', '=', 'sale_id')
+            ->join('branches', 'branches.id', '=', 'sales.branch_id')
+            ->join('accounts', 'accounts.id', '=', 'payment_method_id')
+            ->when($from, fn ($q) => $q->where('sale_payments.date', '>=', $from))
+            ->when($to, fn ($q) => $q->where('sale_payments.date', '<=', $to))
+            ->when($this->branch_id, fn ($q) => $q->where('sales.branch_id', $this->branch_id))
+            ->where('sales.status', 'completed')
+            ->whereColumn('sale_payments.date', '!=', 'sales.date')
+            ->select(
+                'sale_payments.date',
+                'sales.branch_id',
+                'branches.name as branch',
+                'accounts.name as payment_method_name',
+                DB::raw('SUM(amount) as amount')
+            )
+            ->groupBy('sale_payments.date', 'sales.branch_id', 'branches.name', 'accounts.name');
+
+        $tailoringDuePaymentsQuery = TailoringPayment::query()
+            ->join('tailoring_orders', 'tailoring_orders.id', '=', 'tailoring_payments.tailoring_order_id')
+            ->join('branches', 'branches.id', '=', 'tailoring_orders.branch_id')
+            ->join('accounts', 'accounts.id', '=', 'tailoring_payments.payment_method_id')
+            ->when($from, fn ($q) => $q->where('tailoring_payments.date', '>=', $from))
+            ->when($to, fn ($q) => $q->where('tailoring_payments.date', '<=', $to))
+            ->when($this->branch_id, fn ($q) => $q->where('tailoring_orders.branch_id', $this->branch_id))
+            ->whereColumn('tailoring_payments.date', '!=', 'tailoring_orders.order_date')
+            ->select(
+                'tailoring_payments.date',
+                'tailoring_orders.branch_id',
+                'branches.name as branch',
+                'accounts.name as payment_method_name',
+                DB::raw('SUM(tailoring_payments.amount) as amount')
+            )
+            ->groupBy('tailoring_payments.date', 'tailoring_orders.branch_id', 'branches.name', 'accounts.name');
+
+        $duePayments = DB::query()
+            ->fromSub($saleDuePaymentsQuery->unionAll($tailoringDuePaymentsQuery), 'combined_due_payments')
+            ->select(
+                'date',
+                'branch_id',
+                'branch',
+                'payment_method_name',
+                DB::raw('SUM(amount) as amount')
+            )
+            ->groupBy('date', 'branch_id', 'branch', 'payment_method_name')
+            ->orderBy('date')
+            ->get();
+
         // Build summary
         $summary = [];
 
         foreach ($sales as $sale) {
-            $key = "{$sale->date}_{$sale->branch_id}";
+            $key = $this->summaryKey($sale->date, $sale->branch_id);
+            $paid = (float) ($invoicePaidByDayBranch[$key] ?? 0);
+            $credit = max((float) $sale->total_sales - $paid, 0);
 
             $summary[$key] = array_merge([
                 'date' => $sale->date,
@@ -288,58 +416,151 @@ class DailySalesInsightsReport extends Component
                 'no_of_invoices' => (int) $sale->no_of_invoices,
                 'sales_discount' => (float) $sale->sales_discount,
                 'total_sales' => (float) $sale->total_sales,
-                'credit' => (float) $sale->credit,
-                'paid' => (float) $sale->paid,
-                'item_total' => (float) $sale->item_total,
+                'credit' => $credit,
+                'paid' => $paid,
             ], $emptyPaymentColumns);
         }
 
-        foreach ($payments as $payment) {
-            $key = "{$payment->date}_{$payment->branch_id}";
-            $methodName = ucwords(strtolower($payment->payment_method_name));
+        $this->mergePaymentCollectionIntoSummary($summary, $payments, 'total', $invoicePaidByDayBranch, $emptyPaymentColumns);
+        $this->mergePaymentCollectionIntoSummary($summary, $invoicePaymentsByMethod, 'invoice', $invoicePaidByDayBranch, $emptyPaymentColumns);
+        $this->mergePaymentCollectionIntoSummary($summary, $duePayments, 'due', $invoicePaidByDayBranch, $emptyPaymentColumns);
 
-            // Create default row if not exists
-            if (! isset($summary[$key])) {
-                $summary[$key] = array_merge([
-                    'date' => $payment->date,
-                    'branch_name' => $payment->branch,
-                    'net_sales' => 0,
-                    'no_of_invoices' => 0,
-                    'sales_discount' => 0,
-                    'total_sales' => 0,
-                    'credit' => 0,
-                    'paid' => 0,
-                    'item_total' => 0,
-                ], $emptyPaymentColumns);
-            }
-
-            // Ensure payment method key exists
-            if (! isset($summary[$key][$methodName])) {
-                $summary[$key][$methodName] = 0;
-            }
-
-            // Fill the correct method
-            $summary[$key][$methodName] += (float) $payment->amount;
-        }
+        $sortedSummary = $this->sortSummaryData($summary);
+        $summaryCollection = collect($sortedSummary);
 
         // Compute totals
         $total = [];
-        $summaryCollection = collect($summary);
 
-        foreach (['net_sales', 'no_of_invoices', 'sales_discount', 'total_sales', 'credit', 'paid', 'item_total'] as $field) {
+        foreach (['net_sales', 'no_of_invoices', 'sales_discount', 'total_sales', 'credit', 'paid'] as $field) {
             $total[$field] = $summaryCollection->sum($field);
         }
 
-        foreach ($paymentMethods as $name) {
-            $total[$name] = $summaryCollection->sum($name);
+        foreach ($paymentMethodColumns as $column) {
+            $total[$column['invoice_key']] = $summaryCollection->sum($column['invoice_key']);
+            $total[$column['due_key']] = $summaryCollection->sum($column['due_key']);
+            $total[$column['total_key']] = $summaryCollection->sum($column['total_key']);
         }
 
         $this->prepareSalesChartData($summaryCollection);
 
         return view('livewire.report.sale.daily-sales-insights-report', [
-            'data' => $summary,
+            'data' => $sortedSummary,
             'total' => $total,
-            'paymentMethods' => $paymentMethods,
+            'paymentMethodColumns' => $paymentMethodColumns,
         ]);
+    }
+
+    private function normalizePaymentMethodName(?string $name): string
+    {
+        return ucwords(strtolower(trim((string) $name)));
+    }
+
+    private function paymentMethodColumnKey(string $prefix, string $methodName): string
+    {
+        $key = preg_replace('/[^a-z0-9]+/i', '_', strtolower(trim($methodName)));
+
+        return $prefix.'_'.trim($key ?? '', '_');
+    }
+
+    private function sortSummaryData(array $summary): array
+    {
+        $data = array_values($summary);
+        $sortFieldMap = [
+            'branches.name' => 'branch_name',
+        ];
+        $sortField = $sortFieldMap[$this->sortField] ?? $this->sortField;
+        $direction = $this->sortDirection === 'asc' ? 1 : -1;
+
+        usort($data, function (array $a, array $b) use ($sortField, $direction): int {
+            $valueA = $a[$sortField] ?? null;
+            $valueB = $b[$sortField] ?? null;
+
+            if ($sortField === 'date') {
+                return $direction * strcmp((string) $valueA, (string) $valueB);
+            }
+
+            if (is_numeric($valueA) || is_numeric($valueB)) {
+                return $direction * ((float) $valueA <=> (float) $valueB);
+            }
+
+            return $direction * strnatcasecmp((string) $valueA, (string) $valueB);
+        });
+
+        return $data;
+    }
+
+    private function buildPaymentMethodColumns(): array
+    {
+        $paymentMethodNames = Account::whereIn('id', cache('payment_methods', []))
+            ->pluck('name', 'id')
+            ->values()
+            ->map(fn ($name) => $this->normalizePaymentMethodName($name))
+            ->unique()
+            ->values()
+            ->all();
+
+        return array_map(function (string $name): array {
+            return [
+                'name' => $name,
+                'invoice_key' => $this->paymentMethodColumnKey('invoice', $name),
+                'due_key' => $this->paymentMethodColumnKey('due', $name),
+                'total_key' => $this->paymentMethodColumnKey('total', $name),
+            ];
+        }, $paymentMethodNames);
+    }
+
+    private function buildEmptyPaymentColumns(array $paymentMethodColumns): array
+    {
+        $empty = [];
+        foreach ($paymentMethodColumns as $column) {
+            $empty[$column['invoice_key']] = 0;
+            $empty[$column['due_key']] = 0;
+            $empty[$column['total_key']] = 0;
+        }
+
+        return $empty;
+    }
+
+    private function mergePaymentCollectionIntoSummary(array &$summary, $payments, string $type, array $invoicePaidByDayBranch, array $emptyPaymentColumns): void
+    {
+        foreach ($payments as $payment) {
+            $key = $this->summaryKey($payment->date, $payment->branch_id);
+            $methodName = $this->normalizePaymentMethodName($payment->payment_method_name);
+            $columnKey = $this->paymentMethodColumnKey($type, $methodName);
+
+            if (! isset($summary[$key])) {
+                $summary[$key] = $this->buildEmptySummaryRow(
+                    (string) $payment->date,
+                    (string) $payment->branch,
+                    (float) ($invoicePaidByDayBranch[$key] ?? 0),
+                    $emptyPaymentColumns
+                );
+            }
+
+            if (! isset($summary[$key][$columnKey])) {
+                $summary[$key][$columnKey] = 0;
+            }
+
+            $summary[$key][$columnKey] += (float) $payment->amount;
+        }
+    }
+
+    private function buildEmptySummaryRow(string $date, string $branchName, float $paid, array $emptyPaymentColumns): array
+    {
+        return array_merge([
+            'date' => $date,
+            'branch_name' => $branchName,
+            'net_sales' => 0,
+            'no_of_invoices' => 0,
+            'sales_discount' => 0,
+            'total_sales' => 0,
+            'credit' => 0,
+            'paid' => $paid,
+        ], $emptyPaymentColumns);
+    }
+
+    private function summaryKey(string $date, int $branchId): string
+    {
+        return "{$date}_{$branchId}";
     }
 }
