@@ -118,8 +118,8 @@
                                                             @click="applyCartMeasurementPreset(preset)"
                                                             class="w-full text-left p-2 rounded-md hover:bg-emerald-50 border border-transparent hover:border-emerald-200 transition-colors">
                                                             <div class="text-xs font-semibold text-slate-800 truncate">
-                                                                {{ preset.tailoring_category_model_name || 'Model -' }} /
-                                                                {{ preset.tailoring_category_model_type_name || 'Type -' }}
+                                                                {{ getCartPresetModelName(preset) }} /
+                                                                {{ getCartPresetModelTypeName(preset) }}
                                                             </div>
                                                             <div class="text-[0.68rem] text-slate-500 truncate">
                                                                 {{ getCartMeasurementPreview(preset) }}
@@ -634,6 +634,28 @@ const getCartMeasurementPreview = (item) => {
     }
 
     return parts.length ? parts.join(' | ') : 'No measurement preview'
+}
+
+const getCartPresetModelName = (item) => {
+    const name = item?.tailoring_category_model_name
+        || item?.category_model?.name
+        || item?.categoryModel?.name
+        || item?.model_name
+
+    if (name) return name
+    if (item?.tailoring_category_model_id) return `Model #${item.tailoring_category_model_id}`
+    return 'Model -'
+}
+
+const getCartPresetModelTypeName = (item) => {
+    const name = item?.tailoring_category_model_type_name
+        || item?.category_model_type?.name
+        || item?.categoryModelType?.name
+        || item?.model_type_name
+
+    if (name) return name
+    if (item?.tailoring_category_model_type_id) return `Type #${item.tailoring_category_model_type_id}`
+    return 'Type -'
 }
 
 const applyCartMeasurementPreset = (sourceItem) => {

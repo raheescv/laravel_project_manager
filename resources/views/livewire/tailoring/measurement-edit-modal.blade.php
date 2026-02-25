@@ -13,7 +13,7 @@
                 </div>
                 <div class="modal-body bg-body-tertiary p-4">
                     @if (!empty($measurementModalMeta))
-                        <div class="d-flex flex-wrap gap-2 mb-4">
+                        <div class="d-flex flex-wrap gap-2 mb-3">
                             <span class="badge text-dark bg-white border border-secondary-subtle rounded-pill px-3 py-2"><i class="fa fa-folder-open-o me-1"></i>{{ $measurementModalMeta['category_name'] ?? 'Category' }}</span>
                             <span class="badge text-dark bg-white border border-secondary-subtle rounded-pill px-3 py-2"><i class="fa fa-object-group me-1"></i>{{ $measurementModalMeta['model_name'] ?? 'Model' }}</span>
                             @if (!empty($measurementModalMeta['model_type_name']))
@@ -21,6 +21,40 @@
                             @endif
                         </div>
                     @endif
+
+                    <div class="card border shadow-sm mb-4">
+                        <div class="card-body py-3">
+                            <div class="row g-2 align-items-end">
+                                <div class="col-md-9">
+                                    <label class="form-label text-uppercase text-secondary fw-bold small mb-1">
+                                        <i class="fa fa-clone me-1"></i>Copy Measurements From Other Item
+                                    </label>
+                                    <select class="form-select" wire:model="measurementCopySourceItemId"
+                                        @disabled(empty($measurementCopyOptions))>
+                                        <option value="">Select source item</option>
+                                        @foreach ($measurementCopyOptions as $option)
+                                            <option value="{{ $option['id'] }}">
+                                                {{ $option['label'] }} | {{ $option['model'] }} / {{ $option['model_type'] }}
+                                                @if (!empty($option['preview']))
+                                                    | {{ $option['preview'] }}
+                                                @endif
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                    @if (empty($measurementCopyOptions))
+                                        <div class="small text-muted mt-1">No other items available in this category.</div>
+                                    @endif
+                                </div>
+                                <div class="col-md-3 d-grid">
+                                    <button type="button" class="btn btn-outline-primary"
+                                        wire:click="applyMeasurementsFromSource"
+                                        @disabled(empty($measurementCopyOptions))>
+                                        <i class="fa fa-arrow-down me-1"></i>Apply
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
 
                     @php
                         $modalSectionLabels = [

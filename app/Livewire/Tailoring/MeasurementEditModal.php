@@ -3,6 +3,8 @@
 namespace App\Livewire\Tailoring;
 
 use App\Models\TailoringMeasurementOption;
+use App\Models\TailoringCategoryModel;
+use App\Models\TailoringCategoryModelType;
 use App\Models\TailoringOrderItem;
 use App\Models\TailoringOrderMeasurement;
 use Livewire\Component;
@@ -28,6 +30,10 @@ class MeasurementEditModal extends Component
     public $measurementModalOptions = [];
 
     public $measurementModalNotes = '';
+
+    public $measurementCopyOptions = [];
+
+    public $measurementCopySourceItemId = '';
 
     public function mount($orderId): void
     {
@@ -60,18 +66,34 @@ class MeasurementEditModal extends Component
 
         $this->measurementModalItemId = $item->id;
         $this->measurementModalItemTitle = 'Item #'.$item->item_no.' - '.($item->product_name ?? 'Product');
+        $resolvedModelName = $item->categoryModel?->name;
+        if (! $resolvedModelName && $item->tailoring_category_model_id) {
+            $resolvedModelName = TailoringCategoryModel::query()
+                ->whereKey($item->tailoring_category_model_id)
+                ->value('name');
+        }
+
+        $resolvedModelTypeName = $item->categoryModelType?->name;
+        if (! $resolvedModelTypeName && $item->tailoring_category_model_type_id) {
+            $resolvedModelTypeName = TailoringCategoryModelType::query()
+                ->whereKey($item->tailoring_category_model_type_id)
+                ->value('name');
+        }
+
         $this->measurementModalMeta = [
             'category_id' => $item->tailoring_category_id,
             'category_name' => $item->category?->name ?? 'Category',
             'model_id' => $item->tailoring_category_model_id,
-            'model_name' => $item->categoryModel?->name ?? 'Standard',
+            'model_name' => $resolvedModelName ?? 'Standard',
             'model_type_id' => $item->tailoring_category_model_type_id,
-            'model_type_name' => $item->categoryModelType?->name,
+            'model_type_name' => $resolvedModelTypeName,
         ];
 
         $this->measurementModalSections = [];
         $this->measurementModalForm = [];
         $this->measurementModalOptions = [];
+        $this->measurementCopyOptions = [];
+        $this->measurementCopySourceItemId = '';
 
         $measurementRow = TailoringOrderMeasurement::query()
             ->where('tailoring_order_id', $this->orderId)
@@ -133,6 +155,67 @@ class MeasurementEditModal extends Component
             $this->measurementModalForm[$fieldKey] = is_scalar($currentValue) ? (string) $currentValue : '';
         }
 
+        $fieldKeys = collect($this->measurementModalForm)->keys()->values()->all();
+        $sourceItems = TailoringOrderItem::query()
+            ->with(['categoryModel', 'categoryModelType'])
+            ->where('tailoring_order_id', $this->orderId)
+            ->where('tailoring_category_id', $item->tailoring_category_id)
+            ->where('id', '!=', $item->id)
+            ->orderBy('item_no')
+            ->get();
+
+        $modelNameMap = TailoringCategoryModel::query()
+            ->whereIn('id', $sourceItems->pluck('tailoring_category_model_id')->filter()->unique()->values())
+            ->pluck('name', 'id');
+
+        $modelTypeNameMap = TailoringCategoryModelType::query()
+            ->whereIn('id', $sourceItems->pluck('tailoring_category_model_type_id')->filter()->unique()->values())
+            ->pluck('name', 'id');
+
+        $this->measurementCopyOptions = $sourceItems->map(function ($sourceItem) use ($fieldKeys, $modelNameMap, $modelTypeNameMap) {
+            $sourceMeasurementRow = TailoringOrderMeasurement::query()
+                ->where('tailoring_order_id', $this->orderId)
+                ->where('tailoring_category_id', $sourceItem->tailoring_category_id)
+                ->where('tailoring_category_model_id', $sourceItem->tailoring_category_model_id)
+                ->when(
+                    $sourceItem->tailoring_category_model_type_id,
+                    fn ($q) => $q->where('tailoring_category_model_type_id', $sourceItem->tailoring_category_model_type_id),
+                    fn ($q) => $q->whereNull('tailoring_category_model_type_id')
+                )
+                ->latest('id')
+                ->first();
+            $sourceSavedData = is_array($sourceMeasurementRow?->data) ? $sourceMeasurementRow->data : [];
+
+            $preview = [];
+            foreach ($fieldKeys as $fieldKey) {
+                $itemValue = $sourceItem->{$fieldKey} ?? null;
+                $value = ($itemValue !== null && $itemValue !== '') ? $itemValue : ($sourceSavedData[$fieldKey] ?? null);
+                if ($value !== null && $value !== '') {
+                    $preview[] = (string) $value;
+                    if (count($preview) >= 3) {
+                        break;
+                    }
+                }
+            }
+
+            $modelName = $sourceItem->categoryModel?->name
+                ?? ($modelNameMap[$sourceItem->tailoring_category_model_id] ?? null)
+                ?? ($sourceSavedData['tailoring_category_model_name'] ?? null)
+                ?? 'Model';
+            $modelTypeName = $sourceItem->categoryModelType?->name
+                ?? ($modelTypeNameMap[$sourceItem->tailoring_category_model_type_id] ?? null)
+                ?? ($sourceSavedData['tailoring_category_model_type_name'] ?? null)
+                ?? '-';
+
+            return [
+                'id' => (int) $sourceItem->id,
+                'label' => 'Item #'.$sourceItem->item_no.' - '.($sourceItem->product_name ?? 'Item'),
+                'model' => $modelName,
+                'model_type' => $modelTypeName,
+                'preview' => implode(' | ', $preview),
+            ];
+        })->values()->all();
+
         $this->measurementModalNotes = (string) ($item->tailoring_notes ?? ($measurementRow?->tailoring_notes ?? ''));
 
         $this->dispatch('tailoring-measurement-modal-open');
@@ -186,6 +269,65 @@ class MeasurementEditModal extends Component
         $this->dispatch('tailoring-measurement-modal-close');
         $this->dispatch('tailoring-measurement-updated');
         $this->dispatch('success', ['message' => 'Measurements updated successfully']);
+    }
+
+    public function applyMeasurementsFromSource(): void
+    {
+        if (! $this->measurementModalItemId) {
+            $this->dispatch('error', ['message' => 'No item selected']);
+
+            return;
+        }
+
+        $sourceItemId = (int) $this->measurementCopySourceItemId;
+        if (! $sourceItemId) {
+            $this->dispatch('error', ['message' => 'Please select a source item']);
+
+            return;
+        }
+
+        $sourceItem = TailoringOrderItem::query()
+            ->where('tailoring_order_id', $this->orderId)
+            ->where('id', $sourceItemId)
+            ->first();
+
+        if (! $sourceItem) {
+            $this->dispatch('error', ['message' => 'Source item not found']);
+
+            return;
+        }
+
+        $sourceMeasurementRow = TailoringOrderMeasurement::query()
+            ->where('tailoring_order_id', $this->orderId)
+            ->where('tailoring_category_id', $sourceItem->tailoring_category_id)
+            ->where('tailoring_category_model_id', $sourceItem->tailoring_category_model_id)
+            ->when(
+                $sourceItem->tailoring_category_model_type_id,
+                fn ($q) => $q->where('tailoring_category_model_type_id', $sourceItem->tailoring_category_model_type_id),
+                fn ($q) => $q->whereNull('tailoring_category_model_type_id')
+            )
+            ->latest('id')
+            ->first();
+        $sourceSavedData = is_array($sourceMeasurementRow?->data) ? $sourceMeasurementRow->data : [];
+
+        $lockedFields = [
+            'tailoring_category_model_id',
+            'tailoring_category_model_name',
+            'tailoring_category_model_type_id',
+            'tailoring_category_model_type_name',
+        ];
+
+        foreach (array_keys($this->measurementModalForm) as $fieldKey) {
+            if (in_array((string) $fieldKey, $lockedFields, true)) {
+                continue;
+            }
+            $itemValue = $sourceItem->{$fieldKey} ?? null;
+            $value = ($itemValue !== null && $itemValue !== '') ? $itemValue : ($sourceSavedData[$fieldKey] ?? '');
+            $this->measurementModalForm[$fieldKey] = is_scalar($value) ? (string) $value : '';
+        }
+
+        $this->measurementModalNotes = (string) ($sourceItem->tailoring_notes ?? ($sourceMeasurementRow?->tailoring_notes ?? ''));
+        $this->dispatch('success', ['message' => 'Measurements copied from selected item']);
     }
 
     public function render()
