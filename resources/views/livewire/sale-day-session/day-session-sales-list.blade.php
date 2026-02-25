@@ -109,9 +109,10 @@
                 <table class="table table-sm table-hover mb-0" style="background-color: white;">
                     <thead style="background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);">
                         <tr>
-                            <th style="color: #495057; font-weight: 600; border-bottom: 2px solid #dee2e6; padding: 12px;">Date</th>
+                            <th style="color: #495057; font-weight: 600; border-bottom: 2px solid #dee2e6; padding: 12px;">Payment Date</th>
                             <th style="color: #495057; font-weight: 600; border-bottom: 2px solid #dee2e6; padding: 12px;">Source</th>
                             <th style="color: #495057; font-weight: 600; border-bottom: 2px solid #dee2e6; padding: 12px;">Reference</th>
+                            <th style="color: #495057; font-weight: 600; border-bottom: 2px solid #dee2e6; padding: 12px;">Invoice Date</th>
                             <th style="color: #495057; font-weight: 600; border-bottom: 2px solid #dee2e6; padding: 12px;">Customer</th>
                             <th style="color: #495057; font-weight: 600; border-bottom: 2px solid #dee2e6; padding: 12px;">Mobile</th>
                             <th style="color: #495057; font-weight: 600; border-bottom: 2px solid #dee2e6; padding: 12px;">Payment Method</th>
@@ -128,6 +129,7 @@
                                 <td style="vertical-align: middle;">
                                     <span class="fw-bold" style="color: #4a6fa5;">{{ $payment->reference_no }}</span>
                                 </td>
+                                <td style="vertical-align: middle;">{{ systemDate($payment->invoice_date) }}</td>
                                 <td style="vertical-align: middle;">{{ $payment->customer_name ?: '-' }}</td>
                                 <td style="vertical-align: middle;">{{ $payment->customer_mobile ?: '-' }}</td>
                                 <td style="vertical-align: middle;">{{ $payment->payment_method_name }}</td>
@@ -137,13 +139,13 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="7" class="text-center text-muted py-4">No combined payments found.</td>
+                                <td colspan="8" class="text-center text-muted py-4">No combined payments found.</td>
                             </tr>
                         @endforelse
                     </tbody>
                     <tfoot>
                         <tr>
-                            <td colspan="6" class="text-end fw-bold" style="color: #495057; padding: 20px 12px; font-size: 16px;">
+                            <td colspan="7" class="text-end fw-bold" style="color: #495057; padding: 20px 12px; font-size: 16px;">
                                 <div class="d-flex align-items-center justify-content-end">
                                     <i class="fa fa-calculator me-2" style="color: #6c757d;"></i>
                                     Totals:

@@ -88,9 +88,9 @@
                             <div class="border-top pt-3">
                                 <div class="d-flex justify-content-between align-items-center">
                                     <div>
-                                        <small class="text-muted d-block">Total Revenue</small>
+                                        <small class="text-muted d-block">Total Sale</small>
                                         <span class="fw-bold" style="color: #28a745; font-size: 1.25rem;">
-                                            {{ number_format($session->sales->sum('paid'), 2) }}
+                                            {{ number_format($session->sales->sum('grand_total') + $session->tailoringOrders->sum('grand_total'), 2) }}
                                         </span>
                                     </div>
                                     <div class="text-end">
