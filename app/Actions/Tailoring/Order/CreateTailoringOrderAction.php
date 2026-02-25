@@ -107,7 +107,7 @@ class CreateTailoringOrderAction
     {
         foreach ($data as $value) {
             $value['tailoring_order_id'] = $this->model->id;
-            $value['date'] =$this->model->order_date;
+            $value['date'] = $this->model->order_date;
             $response = (new CreateAction())->execute($value, $this->userId);
             if (! $response['success']) {
                 throw new Exception($response['message'], 1);

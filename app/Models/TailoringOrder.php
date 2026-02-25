@@ -274,7 +274,7 @@ class TailoringOrder extends Model implements AuditableContracts
         $this->gross_amount = $this->items->sum('gross_amount');
         $this->item_discount = $this->items->sum('discount');
         $this->tax_amount = $this->items->sum('tax_amount');
-        $this->stitch_amount = $this->items->sum(fn ($item) => $item->stitch_rate * $item->quantity);
+        $this->stitch_amount = $this->items->sum('total_stitch_amount');
         $this->paid = $this->payments->sum('amount');
     }
 

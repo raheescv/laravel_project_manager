@@ -2,10 +2,10 @@
 
 namespace App\Livewire\SaleDaySession;
 
+use App\Models\Branch;
 use App\Models\SaleDaySession;
 use Livewire\Component;
 use Livewire\WithPagination;
-use App\Models\Branch;
 
 class SaleDaySessionsReport extends Component
 {

@@ -4,11 +4,11 @@ namespace App\Livewire\Tailoring;
 
 use App\Actions\Tailoring\Order\DeleteTailoringOrderAction;
 use App\Models\Configuration;
+use App\Models\SaleDaySession;
 use App\Models\TailoringOrder;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
 use Livewire\WithPagination;
-use App\Models\SaleDaySession;
 
 class Table extends Component
 {

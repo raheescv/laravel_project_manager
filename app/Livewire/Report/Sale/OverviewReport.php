@@ -311,7 +311,7 @@ class OverviewReport extends Component
                 COALESCE(SUM(grand_total), 0) as net_sales,
                 COALESCE(SUM(total), 0) as total_sales,
                 COALESCE(SUM(balance), 0) as sale_balance,
-                COALESCE(SUM(other_discount), 0) + COALESCE(SUM(item_discount), 0) as sale_discount,
+                COALESCE(SUM(other_discount), 0) + COALESCE(SUM(item_discount), 0) - COALESCE(SUM(round_off), 0) as sale_discount,
                 COUNT(CASE WHEN balance > 0 THEN 1 END) as sale_balance_count,
                 COUNT(*) as no_of_sales
             ')
@@ -323,7 +323,7 @@ class OverviewReport extends Component
                 COALESCE(SUM(grand_total), 0) as net_sales,
                 COALESCE(SUM(total), 0) as total_sales,
                 COALESCE(SUM(balance), 0) as sale_balance,
-                COALESCE(SUM(other_discount), 0) + COALESCE(SUM(item_discount), 0) as sale_discount,
+                COALESCE(SUM(other_discount), 0) + COALESCE(SUM(item_discount), 0) - COALESCE(SUM(round_off), 0)  as sale_discount,
                 COUNT(CASE WHEN balance > 0 THEN 1 END) as sale_balance_count,
                 COUNT(*) as no_of_sales
             ')
