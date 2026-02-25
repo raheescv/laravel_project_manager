@@ -23,9 +23,9 @@
             </div>
         </div>
 
-        <!-- Grid Layout -->
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-            <!-- Dimensions Column -->
+        <!-- Single column, full width (col-12) -->
+        <div class="flex flex-col gap-3 w-full">
+            <!-- Dimensions -->
             <div class="flex flex-col gap-1.5">
                 <h6 class="text-xs font-bold text-slate-800 flex items-center gap-1">
                     <i class="fa fa-arrows-alt text-blue-500 text-xs"></i>
@@ -44,7 +44,7 @@
                 </div>
             </div>
 
-            <!-- Components Column -->
+            <!-- Components -->
             <div class="flex flex-col gap-1.5">
                 <h6 class="text-xs font-bold text-slate-800 flex items-center gap-1">
                     <i class="fa fa-puzzle-piece text-blue-500 text-xs"></i>
@@ -63,8 +63,8 @@
                 </div>
             </div>
 
-            <!-- Styles Column -->
-            <div class="flex flex-col gap-1.5 lg:col-span-1">
+            <!-- Styles & Models -->
+            <div class="flex flex-col gap-1.5">
                 <h6 class="text-xs font-bold text-slate-800 flex items-center gap-1">
                     <i class="fa fa-cut text-blue-500 text-xs"></i>
                     <span>Styles & Models</span>

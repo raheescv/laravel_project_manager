@@ -92,12 +92,42 @@
                                                 <i class="fa fa-pencil-square-o text-amber-500 text-xs"></i>
                                                 <span>{{ getCategory(activeCategoryTab)?.name }} Measurements</span>
                                             </h6>
-                                            <button type="button" @click="openPreviousMeasurements"
-                                                :disabled="!form.account_id"
-                                                class="shrink-0 inline-flex items-center justify-center px-3 py-1.5 rounded-lg text-xs font-semibold border border-slate-200 bg-white text-slate-700 hover:bg-blue-50 hover:border-blue-200 disabled:opacity-50 disabled:cursor-not-allowed transition-all">
-                                                <i class="fa fa-history text-blue-500 text-xs mr-1"></i>
-                                                Use Previous
-                                            </button>
+                                            <div class="relative flex items-center gap-1.5">
+                                                <button type="button" @click="openPreviousMeasurements"
+                                                    :disabled="!form.account_id"
+                                                    class="shrink-0 inline-flex items-center justify-center px-3 py-1.5 rounded-lg text-xs font-semibold border border-slate-200 bg-white text-slate-700 hover:bg-blue-50 hover:border-blue-200 disabled:opacity-50 disabled:cursor-not-allowed transition-all">
+                                                    <i class="fa fa-history text-blue-500 text-xs mr-1"></i>
+                                                    Use Previous
+                                                </button>
+                                                <button type="button" @click="toggleCartMeasurementPicker"
+                                                    :disabled="!cartMeasurementPresets.length"
+                                                    class="shrink-0 inline-flex items-center justify-center px-3 py-1.5 rounded-lg text-xs font-semibold border border-slate-200 bg-white text-slate-700 hover:bg-emerald-50 hover:border-emerald-200 disabled:opacity-50 disabled:cursor-not-allowed transition-all">
+                                                    <i class="fa fa-clone text-emerald-500 text-xs mr-1"></i>
+                                                    From Cart
+                                                </button>
+
+                                                <div v-if="showCartMeasurementPicker"
+                                                    class="absolute right-0 top-full mt-1.5 w-[360px] max-w-[92vw] rounded-lg border border-slate-200 bg-white shadow-xl z-30 overflow-hidden">
+                                                    <div
+                                                        class="px-2.5 py-2 text-[0.65rem] font-bold text-slate-500 uppercase tracking-wider border-b border-slate-100 bg-slate-50">
+                                                        Use Current Cart Measurements
+                                                    </div>
+                                                    <div class="max-h-72 overflow-y-auto p-1">
+                                                        <button v-for="(preset, idx) in cartMeasurementPresets"
+                                                            :key="preset.id || idx" type="button"
+                                                            @click="applyCartMeasurementPreset(preset)"
+                                                            class="w-full text-left p-2 rounded-md hover:bg-emerald-50 border border-transparent hover:border-emerald-200 transition-colors">
+                                                            <div class="text-xs font-semibold text-slate-800 truncate">
+                                                                {{ preset.tailoring_category_model_name || 'Model -' }} /
+                                                                {{ preset.tailoring_category_model_type_name || 'Type -' }}
+                                                            </div>
+                                                            <div class="text-[0.68rem] text-slate-500 truncate">
+                                                                {{ getCartMeasurementPreview(preset) }}
+                                                            </div>
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
                                         </div>
                                         <div class="bg-slate-50 border border-slate-200 rounded-lg p-1.5">
                                             <MeasurementForm v-if="activeEditKey && measurements[activeEditKey]"
@@ -283,6 +313,7 @@ const editingModelIds = ref({}) // Map of categoryId -> modelId (when editing)
 const editingModelTypeIds = ref({}) // Map of categoryId -> modelTypeId (when editing)
 const showOldMeasurementModal = ref(false)
 const pendingOldMeasurementCategoryId = ref(null)
+const showCartMeasurementPicker = ref(false)
 const pageRoot = ref(null)
 const PREFILL_STORAGE_KEY = 'tailoring_order_prefill_v1'
 
@@ -368,6 +399,22 @@ const activeEditKey = computed(() => {
     const modelId = editingModelIds.value[activeCategoryTab.value]
     const modelTypeId = editingModelTypeIds.value[activeCategoryTab.value]
     return getEditKey(activeCategoryTab.value, modelId, modelTypeId)
+})
+
+const cartMeasurementPresets = computed(() => {
+    const categoryId = Number(activeCategoryTab.value || 0)
+    if (!categoryId) return []
+
+    const category = getCategory(categoryId)
+    if (!category) return []
+
+    const measurementKeys = (category.active_measurements || []).map(m => m.field_key)
+    const keysToCheck = [...new Set([...measurementKeys, 'tailoring_notes'])]
+
+    return (form.value.items || []).filter(item => {
+        if (Number(item.tailoring_category_id) !== categoryId) return false
+        return keysToCheck.some(key => item[key] !== undefined && item[key] !== null && item[key] !== '')
+    })
 })
 
 const canSubmit = computed(() => {
@@ -508,6 +555,7 @@ const hydrateFromOrderSearchPrefill = () => {
 
 // Methods
 const handleCategorySelection = (categoryIds) => {
+    showCartMeasurementPicker.value = false
     const prev = [...selectedCategories.value]
     const newlyAdded = categoryIds.filter(id => !prev.includes(id))
     const removed = prev.filter(id => !categoryIds.includes(id))
@@ -568,8 +616,72 @@ const handleOldMeasurementSkip = () => {
     pendingOldMeasurementCategoryId.value = null
 }
 
+const toggleCartMeasurementPicker = () => {
+    showCartMeasurementPicker.value = !showCartMeasurementPicker.value
+}
+
+const getCartMeasurementPreview = (item) => {
+    const category = getCategory(activeCategoryTab.value)
+    const measurementFields = (category?.active_measurements || [])
+    const parts = []
+
+    for (const field of measurementFields) {
+        const value = item?.[field.field_key]
+        if (value !== undefined && value !== null && value !== '') {
+            parts.push(`${field.label}: ${value}`)
+            if (parts.length >= 3) break
+        }
+    }
+
+    return parts.length ? parts.join(' | ') : 'No measurement preview'
+}
+
+const applyCartMeasurementPreset = (sourceItem) => {
+    if (!activeCategoryTab.value || !sourceItem) return
+
+    const categoryId = activeCategoryTab.value
+    const category = getCategory(categoryId)
+    const editKey = activeEditKey.value || getEditKey(
+        categoryId,
+        editingModelIds.value[categoryId],
+        editingModelTypeIds.value[categoryId]
+    )
+
+    if (!measurements.value[editKey]) {
+        measurements.value[editKey] = {}
+    }
+
+    const current = measurements.value[editKey]
+    const preservedModelFields = {
+        tailoring_category_model_id: current.tailoring_category_model_id,
+        tailoring_category_model_name: current.tailoring_category_model_name,
+        tailoring_category_model_type_id: current.tailoring_category_model_type_id,
+        tailoring_category_model_type_name: current.tailoring_category_model_type_name,
+    }
+
+    const measurementKeys = (category?.active_measurements || []).map(m => m.field_key)
+    const keysToCopy = [...new Set([...measurementKeys, 'tailoring_notes'])]
+    const nextValues = {}
+
+    keysToCopy.forEach((key) => {
+        if (sourceItem[key] !== undefined) {
+            nextValues[key] = sourceItem[key]
+        }
+    })
+
+    measurements.value[editKey] = {
+        ...current,
+        ...nextValues,
+        ...preservedModelFields
+    }
+
+    showCartMeasurementPicker.value = false
+    toast.success('Cart measurements applied')
+}
+
 const openPreviousMeasurements = () => {
     if (!activeCategoryTab.value || !form.value.account_id) return
+    showCartMeasurementPicker.value = false
     pendingOldMeasurementCategoryId.value = activeCategoryTab.value
     showOldMeasurementModal.value = true
 }
@@ -815,6 +927,7 @@ const handleEditItem = async (item) => {
 }
 
 const handleItemClear = (categoryId) => {
+    showCartMeasurementPicker.value = false
     // Clear editing state when user clicks clear on the form
     editingItemIds.value[categoryId] = null
     editingModelIds.value[categoryId] = null
