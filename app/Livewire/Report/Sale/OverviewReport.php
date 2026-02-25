@@ -420,28 +420,49 @@ class OverviewReport extends Component
                 $query->where('products.name', 'like', '%'.trim($this->productSearch).'%');
             });
 
+        $totalTailoringProducts = TailoringOrderItem::query()
+            ->join('tailoring_orders', 'tailoring_orders.id', '=', 'tailoring_order_items.tailoring_order_id')
+            ->leftJoin('products', 'products.id', '=', 'tailoring_order_items.product_id')
+            ->when($this->branchId, fn ($q) => $q->where('tailoring_orders.branch_id', $this->branchId))
+            ->when($this->fromDate, fn ($q) => $q->where('tailoring_orders.order_date', '>=', $this->fromDate))
+            ->when($this->toDate, fn ($q) => $q->where('tailoring_orders.order_date', '<=', $this->toDate))
+            ->when($this->productSearch, function ($query) {
+                $value = '%'.trim($this->productSearch).'%';
+                $query->where(function ($q) use ($value) {
+                    $q->where('tailoring_order_items.product_name', 'like', $value)
+                        ->orWhere('products.name', 'like', $value);
+                });
+            });
+
         $totalProductQuantity = $totalProducts->sum('sale_items.base_unit_quantity');
+        $totalTailoringQuantity = $totalTailoringProducts->sum('tailoring_order_items.quantity');
         $totalReturnedQuantity = $totalReturnedProducts->sum('sale_return_items.base_unit_quantity');
-        $itemTotal = $totalProducts->sum('sale_items.total');
+        $itemTotal = $totalProducts->sum('sale_items.total') + $totalTailoringProducts->sum('tailoring_order_items.total');
         $totalSaleReturnAmount = $totalReturnedProducts->sum('sale_return_items.total');
         $netItemTotal = $itemTotal - $totalSaleReturnAmount;
 
         $productSale = (clone $totalProducts)
             ->where('products.type', 'product')
             ->sum('sale_items.total');
+        $tailoringProductSale = (clone $totalTailoringProducts)
+            ->where('products.type', 'product')
+            ->sum('tailoring_order_items.total');
 
         $serviceSale = (clone $totalProducts)
             ->where('products.type', 'service')
             ->sum('sale_items.total');
+        $tailoringServiceSale = (clone $totalTailoringProducts)
+            ->where('products.type', 'service')
+            ->sum('tailoring_order_items.total');
 
         return [
-            'totalProductQuantity' => $totalProductQuantity,
+            'totalProductQuantity' => $totalProductQuantity + $totalTailoringQuantity,
             'totalReturnedQuantity' => $totalReturnedQuantity,
             'itemTotal' => $itemTotal,
             'totalSaleReturnAmount' => $totalSaleReturnAmount,
             'netItemTotal' => $netItemTotal,
-            'productSale' => $productSale,
-            'serviceSale' => $serviceSale,
+            'productSale' => $productSale + $tailoringProductSale,
+            'serviceSale' => $serviceSale + $tailoringServiceSale,
         ];
     }
 
