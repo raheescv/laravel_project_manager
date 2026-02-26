@@ -34,6 +34,12 @@
                         </div>
                     </div>
                     <div class="flex flex-wrap gap-1.5">
+                        <button v-if="canManageQuickAddConfiguration" type="button"
+                            @click="showQuickAddConfigModal = true"
+                            class="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border border-white/20 bg-white/10 text-white hover:bg-white/20 transition-all">
+                            <i class="fa fa-cog text-xs"></i>
+                            <span>Quick Add Config</span>
+                        </button>
                         <a href="/tailoring/order" tabindex="-1"
                             class="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border border-white/20 bg-white/10 text-white hover:bg-white/20 transition-all no-underline">
                             <i class="fa fa-th-list text-xs"></i>
@@ -134,7 +140,7 @@
                                                 :key="activeEditKey" v-model="measurements[activeEditKey]"
                                                 :category="getCategory(activeCategoryTab)"
                                                 :measurementOptions="measurementOptions"
-                                                :canQuickAddMeasurementOption="props.canQuickAddMeasurementOption"
+                                                :canQuickAddMeasurementOption="canQuickAddMeasurementOption"
                                                 @add-option="handleAddMeasurementOption" />
                                         </div>
                                     </div>
@@ -210,6 +216,10 @@
             :initial-payments="form.payments" :session-date="form.order_date" @close="showCustomPaymentModal = false"
             @save="handleCustomPaymentSave" />
 
+        <QuickAddConfigModal :show="showQuickAddConfigModal" :enabled="quickAddEnabled"
+            :isQuickAddActive="canQuickAddMeasurementOption" @update:show="showQuickAddConfigModal = $event"
+            @update:enabled="quickAddEnabled = $event" />
+
         <OldMeasurementModal :show="showOldMeasurementModal" :account-id="form.account_id"
             :category-id="pendingOldMeasurementCategoryId"
             :category-name="getCategory(pendingOldMeasurementCategoryId)?.name"
@@ -226,7 +236,8 @@
 import {
     ref,
     computed,
-    onMounted
+    onMounted,
+    watch
 } from 'vue'
 import {
     router,
@@ -246,6 +257,7 @@ import CustomerModal from '@/components/CustomerModal.vue'
 import SaleConfirmationModal from '@/components/Tailoring/SaleConfirmationModal.vue'
 import CustomPaymentModal from '@/components/Tailoring/CustomPaymentModal.vue'
 import OldMeasurementModal from '@/components/Tailoring/OldMeasurementModal.vue'
+import QuickAddConfigModal from '@/components/Tailoring/QuickAddConfigModal.vue'
 import BarcodeScanner from '@/components/BarcodeScanner.vue'
 import axios from 'axios'
 
@@ -256,6 +268,14 @@ const props = defineProps({
     canQuickAddMeasurementOption: {
         type: Boolean,
         default: false
+    },
+    canManageQuickAddConfiguration: {
+        type: Boolean,
+        default: false
+    },
+    quickAddEnabledByDefault: {
+        type: Boolean,
+        default: true
     },
     salesmen: Object,
     customers: Object,
@@ -314,8 +334,11 @@ const editingModelTypeIds = ref({}) // Map of categoryId -> modelTypeId (when ed
 const showOldMeasurementModal = ref(false)
 const pendingOldMeasurementCategoryId = ref(null)
 const showCartMeasurementPicker = ref(false)
+const showQuickAddConfigModal = ref(false)
 const pageRoot = ref(null)
 const PREFILL_STORAGE_KEY = 'tailoring_order_prefill_v1'
+const QUICK_ADD_STORAGE_KEY = 'tailoring_order_quick_add_enabled_v1'
+const quickAddEnabled = ref(!!props.quickAddEnabledByDefault)
 
 const focusableSelector = [
     'input:not([type="hidden"]):not([disabled])',
@@ -416,6 +439,12 @@ const cartMeasurementPresets = computed(() => {
         return keysToCheck.some(key => item[key] !== undefined && item[key] !== null && item[key] !== '')
     })
 })
+
+const canQuickAddMeasurementOption = computed(() => {
+    return props.canQuickAddMeasurementOption && quickAddEnabled.value
+})
+
+const canManageQuickAddConfiguration = computed(() => props.canManageQuickAddConfiguration)
 
 const canSubmit = computed(() => {
     return form.value.items.length > 0 && form.value.customer_name
@@ -1189,8 +1218,27 @@ const loadMeasurementOptions = async () => {
     }
 }
 
+const loadQuickAddSetting = () => {
+    try {
+        const stored = localStorage.getItem(QUICK_ADD_STORAGE_KEY)
+        if (stored === null) return
+        quickAddEnabled.value = stored === 'true'
+    } catch (error) {
+        console.error('Failed to load quick add setting', error)
+    }
+}
+
+watch(quickAddEnabled, (value) => {
+    try {
+        localStorage.setItem(QUICK_ADD_STORAGE_KEY, value ? 'true' : 'false')
+    } catch (error) {
+        console.error('Failed to persist quick add setting', error)
+    }
+})
+
 onMounted(() => {
     loadMeasurementOptions()
+    loadQuickAddSetting()
     hydrateFromOrderSearchPrefill()
 
     if (form.value.id) {

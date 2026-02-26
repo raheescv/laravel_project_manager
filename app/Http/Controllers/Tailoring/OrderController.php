@@ -125,6 +125,8 @@ class OrderController extends Controller
             'categories' => $categories,
             'measurementOptions' => $measurementOptions,
             'canQuickAddMeasurementOption' => Auth::user()?->can('tailoring measurement option.quick add') ?? false,
+            'canManageQuickAddConfiguration' => Auth::user()?->can('tailoring measurement option.quick add') ?? false,
+            'quickAddEnabledByDefault' => true,
             'salesmen' => $salesmen,
             'customers' => $customers,
             'paymentMethods' => $paymentMethods,
