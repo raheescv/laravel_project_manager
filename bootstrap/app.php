@@ -20,6 +20,7 @@ return Application::configure(basePath: dirname(__DIR__))
             __DIR__.'/../routes/accounts.php',
             __DIR__.'/../routes/inventory.php',
             __DIR__.'/../routes/issue.php',
+            __DIR__.'/../routes/ticket.php',
             __DIR__.'/../routes/print.php',
             __DIR__.'/../routes/report.php',
             __DIR__.'/../routes/settings.php',

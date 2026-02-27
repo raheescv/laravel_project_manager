@@ -676,6 +676,22 @@
                             </li>
                         @endif
                     @endif
+
+                    @if (auth()->user()->can('ticket.view') || auth()->user()->can('ticket.create'))
+                        <ul class="mainnav__menu nav flex-column">
+                            <li class="nav-item">
+                                @php
+                                    $ticketList = ['ticket'];
+                                @endphp
+                                <a href="{{ route('ticket::index') }}" class="nav-link mininav-toggle {{ request()->is($ticketList) ? 'active' : '' }}">
+                                    <i class="fa fa-ticket fs-5 me-2"></i>
+                                    <span class="nav-label mininav-content ms-1 collapse show" style="">
+                                        Tickets
+                                    </span>
+                                </a>
+                            </li>
+                        </ul>
+                    @endif
                     @if (auth()->user()->can('log.inventory'))
                         <li class="nav-item has-sub">
                             <a href="#" class="mininav-toggle nav-link {{ request()->is(['log/inventory', 'api_log', 'visitor-analytics', 'health']) ? 'active' : '' }}"><i
