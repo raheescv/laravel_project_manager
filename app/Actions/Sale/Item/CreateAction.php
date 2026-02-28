@@ -2,6 +2,7 @@
 
 namespace App\Actions\Sale\Item;
 
+use App\Models\Configuration;
 use App\Models\SaleItem;
 use Exception;
 
@@ -37,6 +38,10 @@ class CreateAction
 
     private function validateDuplicate(array $data): void
     {
+        if ((Configuration::where('key', 'sale_item_row_mode')->value('value') ?? 'merge') === 'separate') {
+            return;
+        }
+
         $duplicate = SaleItem::where('product_id', $data['product_id'])
             ->where('employee_id', $data['employee_id'])
             ->where('sale_id', $data['sale_id'])

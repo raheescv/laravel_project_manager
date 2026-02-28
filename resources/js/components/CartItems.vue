@@ -21,6 +21,11 @@
                     </div>
                 </div>
                 <div class="flex gap-1">
+                    <button v-if="canFeedback" type="button" @click="$emit('open-feedback')"
+                        class="h-6 w-6 flex items-center justify-center bg-blue-100 text-blue-600 rounded-md hover:bg-blue-600 hover:text-white transition-all duration-200"
+                        title="Feedback">
+                        <i class="fa fa-comment text-xs"></i>
+                    </button>
                     <button type="button" @click="$emit('view-cart-items')"
                         class="h-6 w-6 flex items-center justify-center bg-indigo-100 text-indigo-600 rounded-md hover:bg-indigo-600 hover:text-white transition-all duration-200"
                         title="View Items">
@@ -179,6 +184,10 @@ export default {
             type: Number,
             default: 0
         },
+        canFeedback: {
+            type: Boolean,
+            default: false
+        },
         cartHeight: {
             type: String,
             default: 'calc(40vh - 100px)'
@@ -196,7 +205,8 @@ export default {
         'edit-cart-item',
         'increase-quantity',
         'decrease-quantity',
-        'manage-combo-offer'
+        'manage-combo-offer',
+        'open-feedback'
     ],
     computed: {
         badgeWidth() {

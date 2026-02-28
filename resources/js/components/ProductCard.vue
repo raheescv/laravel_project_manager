@@ -67,6 +67,7 @@
 <script>
 export default {
     name: 'ProductCard',
+    emits: ['product-selected'],
 
     props: {
         product: {
@@ -100,7 +101,7 @@ export default {
                 id: productId
             };
 
-            this.$emit('click', cleanProduct);
+            this.$emit('product-selected', cleanProduct);
         },
         formatPrice(price) {
             return price ? parseFloat(price).toFixed(2) : '0.00';
@@ -203,4 +204,3 @@ export default {
     }
 }
 </style>
-

@@ -280,20 +280,12 @@
                             </thead>
                             <tbody>
                                 @php
-                                    $result = [];
-                                    foreach ($items as $key => $value) {
-                                        [$parent, $sub] = explode('-', $key);
-                                        if (!isset($result[$parent])) {
-                                            $result[$parent] = [];
-                                        }
-                                        $result[$parent][$sub] = $value;
-                                    }
-                                    $data = $result;
+                                    $data = collect($items)->groupBy('employee_id');
                                 @endphp
                                 @foreach ($data as $employee_id => $groupedItems)
                                     <tr>
                                         @php
-                                            $first = array_values($groupedItems)[0];
+                                            $first = $groupedItems->first();
                                         @endphp
                                         <th colspan="9" class="bg-light">
                                             <i class="demo-psi-user me-2"></i>

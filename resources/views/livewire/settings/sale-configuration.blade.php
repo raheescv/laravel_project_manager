@@ -97,6 +97,13 @@
                         <small class="form-text text-muted">When enabled, all open day sessions will be automatically closed daily at midnight with closing amount set to expected amount.</small>
                     </div>
                 </div>
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label class="form-label fw-medium" for="sale_item_row_mode">Same Product Cart Rows</label>
+                        {{ html()->select('sale_item_row_mode', ['merge' => 'Single Row (merge quantity)', 'separate' => 'Multiple Rows (add separately)'])->value('')->class('form-select')->placeholder('Choose how repeated product clicks behave')->attribute('wire:model', 'sale_item_row_mode') }}
+                        <small class="form-text text-muted">Controls whether clicking the same product card adds quantity to the existing cart row or creates a new row.</small>
+                    </div>
+                </div>
                 <div class="col-12">
                     <div class="form-group">
                         <label class="form-label fw-medium" for="thermal_printer_footer_english">Thermal Printer Footer (English)</label>

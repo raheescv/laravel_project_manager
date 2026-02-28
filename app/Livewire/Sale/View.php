@@ -34,7 +34,7 @@ class View extends Component
             $this->sales = $this->sale->toArray();
             $item_ids = [];
             $this->items = $this->sale->items->mapWithKeys(function ($item) use (&$item_ids) {
-                $key = $item['employee_id'].'-'.$item['inventory_id'];
+                $key = $item['employee_id'].'-'.$item['inventory_id'].'-'.$item['id'];
                 $item_ids[] = $item['id'];
 
                 return [

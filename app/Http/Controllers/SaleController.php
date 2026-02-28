@@ -33,6 +33,7 @@ class SaleController extends Controller
     {
         $showColleague = Configuration::where('key', 'show_colleague')->value('value') ?? 'yes';
         $branchWiseEmployeeList = Configuration::where('key', 'branch_wise_employee_list')->value('value') ?? 'no';
+        $saleItemRowMode = Configuration::where('key', 'sale_item_row_mode')->value('value') ?? 'merge';
         $categories = Category::withCount('products')->where('sale_visibility_flag', true)->having('products_count', '>', 0)->get()->toArray();
 
         $employees = User::employee()->where('is_active', true);
@@ -161,8 +162,9 @@ class SaleController extends Controller
                 // Transform sale items to match POS item structure (as object with keys)
                 $cartItems = [];
                 foreach ($sale->items as $item) {
-                    $key = $item->employee_id.'-'.$item->inventory_id;
+                    $key = $this->buildSaleItemKey($item->employee_id, $item->inventory_id, $item->id);
                     $cartItems[$key] = [
+                        'key' => $key,
                         'id' => $item->id,
                         'product_id' => $item->product_id,
                         'inventory_id' => $item->inventory_id,
@@ -220,7 +222,7 @@ class SaleController extends Controller
                     foreach ($sale->comboOffers as $saleComboOffer) {
                         $comboOfferItems = [];
                         foreach ($saleComboOffer->items as $item) {
-                            $key = $item->employee_id.'-'.$item->inventory_id;
+                            $key = $this->buildSaleItemKey($item->employee_id, $item->inventory_id, $item->id);
                             $comboOfferPrice = (float) ($item->unit_price - $item->discount);
                             $discount = (float) ($item->unit_price - $comboOfferPrice);
 
@@ -283,11 +285,19 @@ class SaleController extends Controller
             'defaultProductType' => $defaultProductType,
             'defaultCustomerEnabled' => $useDefaultCustomer,
             'defaultQuantity' => $defaultQuantity,
+            'saleItemRowMode' => $saleItemRowMode,
             'canEditItemPrice' => Auth::user()->can('sale.item price edit'),
             'canFeedback' => Auth::user()->can('sale.feedback'),
         ];
 
         return inertia('Sale/POS', $data);
+    }
+
+    private function buildSaleItemKey(int $employeeId, int $inventoryId, int|string|null $suffix = null): string
+    {
+        $baseKey = $employeeId.'-'.$inventoryId;
+
+        return $suffix === null ? $baseKey : $baseKey.'-'.$suffix;
     }
 
     public function view($id)

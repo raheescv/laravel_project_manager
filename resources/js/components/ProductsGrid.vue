@@ -2,7 +2,7 @@
     <div class="products-grid-container">
         <div class="products-grid">
             <product-card v-for="product in validProducts" :key="product.id" :product="product"
-                :lowStockThreshold="lowStockThreshold" @click="handleCardClick" />
+                :lowStockThreshold="lowStockThreshold" @product-selected="handleCardClick" />
         </div>
 
         <!-- Empty state when no products -->
