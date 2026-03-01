@@ -105,7 +105,7 @@
             @endif
 
             <div class="table-responsive mb-4">
-                <h6 class="mb-2 text-muted"><i class="fa fa-exchange me-2"></i>Combined Payments (Sale + Tailoring)</h6>
+                <h6 class="mb-2 text-muted"><i class="fa fa-exchange me-2"></i>Payments</h6>
                 <table class="table table-sm table-hover mb-0" style="background-color: white;">
                     <thead style="background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);">
                         <tr>
@@ -264,7 +264,7 @@
                                         <div class="fw-medium text-nowrap" style="color: #495057;">
                                             {{ $sale->account->name ?? $sale->customer_name }}
                                         </div>
-                                        @if (($sale->account->mobile ?? $sale->customer_mobile))
+                                        @if ($sale->account->mobile ?? $sale->customer_mobile)
                                             <small class="text-muted d-flex align-items-center mt-1">
                                                 <i class="fa fa-phone me-1" style="font-size: 10px;"></i>
                                                 {{ $sale->account->mobile ?? $sale->customer_mobile }}
@@ -361,95 +361,96 @@
                     {{ $sales->links() }}
                 </div>
             </div>
-
-            <div class="table-responsive mt-4">
-                <h6 class="mb-2 text-muted"><i class="fa fa-scissors me-2"></i>Tailoring Module</h6>
-                <table class="table table-sm table-hover mb-0" style="background-color: white;">
-                    <thead style="background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);">
-                        <tr>
-                            <th>ID</th>
-                            <th>Order No</th>
-                            <th>Customer</th>
-                            <th>Created At</th>
-                            <th>Date</th>
-                            <th class="text-end">Total</th>
-                            <th class="text-end">Discount</th>
-                            <th class="text-end">Tax</th>
-                            <th class="text-end">Payment Method</th>
-                            <th class="text-end">Paid</th>
-                            <th class="text-end">Balance</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach ($tailoringOrders as $order)
-                            <tr style="border-bottom: 1px solid #f8f9fa;">
-                                <td><span class="badge" style="background-color: #e9ecef; color: #495057;">#{{ $order->id }}</span></td>
-                                <td>
-                                    <div class="fw-bold" style="color: #4a6fa5;">
-                                        <a href="{{ route('tailoring::order::show', $order->id) }}">
-                                            <i class="fa fa-eye me-2" style="font-size: 12px;"></i>
-                                            {{ $order->order_no }}
-                                        </a>
-                                    </div>
-                                </td>
-                                <td>
-                                    <div class="fw-medium" style="color: #495057;">{{ $order->account->name ?? $order->customer_name }}</div>
-                                    @if (($order->account->mobile ?? $order->customer_mobile))
-                                        <small class="text-muted d-flex align-items-center mt-1">
-                                            <i class="fa fa-phone me-1" style="font-size: 10px;"></i>
-                                            {{ $order->account->mobile ?? $order->customer_mobile }}
-                                        </small>
-                                    @endif
-                                </td>
-                                <td><span style="color: #495057;">{{ systemDateTime($order->created_at) }}</span></td>
-                                <td><span style="color: #495057;">{{ systemDate($order->order_date) }}</span></td>
-                                <td class="text-end"><span class="fw-bold" style="color: #b8860b; font-size: 15px;">{{ currency($order->total) }}</span></td>
-                                <td class="text-end"><span style="color: #dc3545;">{{ $order->item_discount != 0 ? currency($order->item_discount) : '-' }}</span></td>
-                                <td class="text-end"><span style="color: #5a9fd4;">{{ $order->tax_amount != 0 ? currency($order->tax_amount) : '-' }}</span></td>
-                                <td class="text-end"><span class="fw-bold" style="color: #28a745; font-size: 15px;">{{ $order->payment_method_name ?: '-' }}</span></td>
-                                <td class="text-end"><span class="fw-bold" style="color: #28a745; font-size: 15px;">{{ currency($order->paid) }}</span></td>
-                                <td class="text-end"><span class="fw-bold" style="color: red; font-size: 15px;">{{ $order->balance != 0 ? currency($order->balance) : '-' }}</span></td>
-                            </tr>
-                        @endforeach
-                        @if ($tailoringOrders->count() === 0)
+            @if (auth()->user()->can('tailoring order.view'))
+                <div class="table-responsive mt-4">
+                    <h6 class="mb-2 text-muted"><i class="fa fa-scissors me-2"></i>Tailoring Module</h6>
+                    <table class="table table-sm table-hover mb-0" style="background-color: white;">
+                        <thead style="background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);">
                             <tr>
-                                <td colspan="11" class="text-center" style="padding: 30px 20px;">
-                                    <div class="d-flex flex-column align-items-center">
-                                        <div class="rounded-circle d-flex align-items-center justify-content-center mb-3" style="width: 60px; height: 60px; background-color: #f8f9fa;">
-                                            <i class="fa fa-scissors" style="color: #6c757d; font-size: 24px;"></i>
-                                        </div>
-                                        <h6 style="color: #6c757d; margin-bottom: 8px;">No Tailoring Orders Found</h6>
-                                        <p class="text-muted mb-0">No tailoring orders have been recorded for this day session yet.</p>
-                                    </div>
-                                </td>
+                                <th>ID</th>
+                                <th>Order No</th>
+                                <th>Customer</th>
+                                <th>Created At</th>
+                                <th>Date</th>
+                                <th class="text-end">Total</th>
+                                <th class="text-end">Discount</th>
+                                <th class="text-end">Tax</th>
+                                <th class="text-end">Payment Method</th>
+                                <th class="text-end">Paid</th>
+                                <th class="text-end">Balance</th>
                             </tr>
-                        @endif
-                    </tbody>
-                    <tfoot style="background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); border-top: 2px solid #dee2e6;">
-                        <tr>
-                            <td colspan="5" class="text-end fw-bold" style="color: #495057; padding: 20px 12px; font-size: 16px;">Tailoring Totals:</td>
-                            <td class="text-end fw-bold" style="color: #b8860b; padding: 20px 12px; font-size: 16px;">{{ currency($tailoringTotals['total']) }}</td>
-                            <td class="text-end fw-bold" style="color: #dc3545; padding: 20px 12px; font-size: 16px;">{{ currency($tailoringTotals['item_discount']) }}</td>
-                            <td class="text-end fw-bold" style="color: #5a9fd4; padding: 20px 12px; font-size: 16px;">{{ currency($tailoringTotals['tax_amount']) }}</td>
-                            <td class="text-end fw-bold" style="padding: 20px 12px; font-size: 16px;"></td>
-                            <td class="text-end fw-bold" style="color: #28a745; padding: 20px 12px; font-size: 16px;">{{ currency($tailoringTotals['paid']) }}</td>
-                            <td class="text-end fw-bold" style="color: #28a745; padding: 20px 12px; font-size: 16px;">{{ currency($tailoringTotals['balance']) }}</td>
-                        </tr>
-                    </tfoot>
-                </table>
-            </div>
+                        </thead>
+                        <tbody>
+                            @foreach ($tailoringOrders as $order)
+                                <tr style="border-bottom: 1px solid #f8f9fa;">
+                                    <td><span class="badge" style="background-color: #e9ecef; color: #495057;">#{{ $order->id }}</span></td>
+                                    <td>
+                                        <div class="fw-bold" style="color: #4a6fa5;">
+                                            <a href="{{ route('tailoring::order::show', $order->id) }}">
+                                                <i class="fa fa-eye me-2" style="font-size: 12px;"></i>
+                                                {{ $order->order_no }}
+                                            </a>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="fw-medium" style="color: #495057;">{{ $order->account->name ?? $order->customer_name }}</div>
+                                        @if ($order->account->mobile ?? $order->customer_mobile)
+                                            <small class="text-muted d-flex align-items-center mt-1">
+                                                <i class="fa fa-phone me-1" style="font-size: 10px;"></i>
+                                                {{ $order->account->mobile ?? $order->customer_mobile }}
+                                            </small>
+                                        @endif
+                                    </td>
+                                    <td><span style="color: #495057;">{{ systemDateTime($order->created_at) }}</span></td>
+                                    <td><span style="color: #495057;">{{ systemDate($order->order_date) }}</span></td>
+                                    <td class="text-end"><span class="fw-bold" style="color: #b8860b; font-size: 15px;">{{ currency($order->total) }}</span></td>
+                                    <td class="text-end"><span style="color: #dc3545;">{{ $order->item_discount != 0 ? currency($order->item_discount) : '-' }}</span></td>
+                                    <td class="text-end"><span style="color: #5a9fd4;">{{ $order->tax_amount != 0 ? currency($order->tax_amount) : '-' }}</span></td>
+                                    <td class="text-end"><span class="fw-bold" style="color: #28a745; font-size: 15px;">{{ $order->payment_method_name ?: '-' }}</span></td>
+                                    <td class="text-end"><span class="fw-bold" style="color: #28a745; font-size: 15px;">{{ currency($order->paid) }}</span></td>
+                                    <td class="text-end"><span class="fw-bold" style="color: red; font-size: 15px;">{{ $order->balance != 0 ? currency($order->balance) : '-' }}</span></td>
+                                </tr>
+                            @endforeach
+                            @if ($tailoringOrders->count() === 0)
+                                <tr>
+                                    <td colspan="11" class="text-center" style="padding: 30px 20px;">
+                                        <div class="d-flex flex-column align-items-center">
+                                            <div class="rounded-circle d-flex align-items-center justify-content-center mb-3" style="width: 60px; height: 60px; background-color: #f8f9fa;">
+                                                <i class="fa fa-scissors" style="color: #6c757d; font-size: 24px;"></i>
+                                            </div>
+                                            <h6 style="color: #6c757d; margin-bottom: 8px;">No Tailoring Orders Found</h6>
+                                            <p class="text-muted mb-0">No tailoring orders have been recorded for this day session yet.</p>
+                                        </div>
+                                    </td>
+                                </tr>
+                            @endif
+                        </tbody>
+                        <tfoot style="background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); border-top: 2px solid #dee2e6;">
+                            <tr>
+                                <td colspan="5" class="text-end fw-bold" style="color: #495057; padding: 20px 12px; font-size: 16px;">Tailoring Totals:</td>
+                                <td class="text-end fw-bold" style="color: #b8860b; padding: 20px 12px; font-size: 16px;">{{ currency($tailoringTotals['total']) }}</td>
+                                <td class="text-end fw-bold" style="color: #dc3545; padding: 20px 12px; font-size: 16px;">{{ currency($tailoringTotals['item_discount']) }}</td>
+                                <td class="text-end fw-bold" style="color: #5a9fd4; padding: 20px 12px; font-size: 16px;">{{ currency($tailoringTotals['tax_amount']) }}</td>
+                                <td class="text-end fw-bold" style="padding: 20px 12px; font-size: 16px;"></td>
+                                <td class="text-end fw-bold" style="color: #28a745; padding: 20px 12px; font-size: 16px;">{{ currency($tailoringTotals['paid']) }}</td>
+                                <td class="text-end fw-bold" style="color: #28a745; padding: 20px 12px; font-size: 16px;">{{ currency($tailoringTotals['balance']) }}</td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
 
-            <div class="d-flex justify-content-between align-items-center mt-4">
-                <div class="text-muted">
-                    <small>
-                        Showing {{ $tailoringOrders->firstItem() ?? 0 }} to {{ $tailoringOrders->lastItem() ?? 0 }}
-                        of {{ $tailoringOrders->total() }} tailoring orders
-                    </small>
+                <div class="d-flex justify-content-between align-items-center mt-4">
+                    <div class="text-muted">
+                        <small>
+                            Showing {{ $tailoringOrders->firstItem() ?? 0 }} to {{ $tailoringOrders->lastItem() ?? 0 }}
+                            of {{ $tailoringOrders->total() }} tailoring orders
+                        </small>
+                    </div>
+                    <div>
+                        {{ $tailoringOrders->links() }}
+                    </div>
                 </div>
-                <div>
-                    {{ $tailoringOrders->links() }}
-                </div>
-            </div>
+            @endif
         </div>
     </div>
 </div>

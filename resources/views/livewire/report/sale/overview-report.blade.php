@@ -231,7 +231,7 @@
                         <div class="col-6">
                             <div class="text-center p-3 rounded bg-success bg-opacity-10">
                                 <div class="h4 fw-bold text-success mb-1">{{ currency($totalPayment) }}</div>
-                                <div class="text-muted small">Sales + Tailoring Payments</div>
+                                <div class="text-muted small">Sales Payments</div>
                                 <div class="text-success small">{{ $salePayments->sum('transaction_count') }} transactions</div>
                             </div>
                         </div>
@@ -315,7 +315,7 @@
                     <div class="d-flex justify-content-between align-items-center">
                         <h6 class="card-title mb-0 fw-bold">
                             <i class="fa fa-credit-card text-success me-2"></i>
-                            Sales + Tailoring Payment Summary
+                            Sales Payment Summary
                         </h6>
                         <span class="badge bg-success rounded-pill">{{ $salePayments->count() }}</span>
                     </div>
@@ -553,10 +553,7 @@
     </div>
 
     <!-- Tailoring Order Item Performance -->
-    <div class="row g-4 mt-1">
-
-    </div>
-
+    @if(auth()->user()->can('tailoring order.view'))
     <div class="row g-4 mt-4">
         <div class="col-md-4">
             <div class="card border-0 shadow-sm">
@@ -666,6 +663,7 @@
             </div>
         </div>
     </div>
+    @endif
 
 
     @push('scripts')
