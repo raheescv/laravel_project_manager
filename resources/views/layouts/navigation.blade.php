@@ -353,7 +353,16 @@
                         </li>
                     @endif
 
-                    @if (auth()->user()->can('sale.view') || auth()->user()->can('report.sale item'))
+                    @if (
+                        auth()->user()->can('sale.view') ||
+                            auth()->user()->can('sale.create') ||
+                            auth()->user()->can('report.sale item') ||
+                            auth()->user()->can('sale.receipts') ||
+                            auth()->user()->can('sales return.view') ||
+                            auth()->user()->can('sales return.create') ||
+                            auth()->user()->can('report.sale return item') ||
+                            auth()->user()->can('sales return.payments')
+                    )
                         <li class="nav-item has-sub">
                             @php
                                 $list = [
@@ -366,6 +375,12 @@
                                     'sale/view/*',
                                     'report/sale_item',
                                     'sale/receipts',
+                                    'sale_return',
+                                    'sale_return/create',
+                                    'sale_return/edit/*',
+                                    'sale_return/view/*',
+                                    // 'report/sale_return_item',
+                                    'sale_return/payments',
                                 ];
                             @endphp
                             <a href="#" class="mininav-toggle nav-link {{ request()->is($list) ? 'active' : '' }}"><i class="fa fa-shopping-cart fs-5 me-2"></i>
@@ -391,6 +406,27 @@
                                 @can('sale.receipts')
                                     <li class="nav-item">
                                         <a href="{{ route('sale::receipts') }}" class="nav-link {{ request()->is(['sale/receipts']) ? 'active' : '' }}">Receipts</a>
+                                    </li>
+                                @endcan
+                                @can('sales return.create')
+                                    <li class="nav-item">
+                                        <a href="{{ route('sale_return::create') }}" class="nav-link {{ request()->is(['sale_return/create']) ? 'active' : '' }}">Return Create</a>
+                                    </li>
+                                @endcan
+                                @can('sales return.view')
+                                    <li class="nav-item">
+                                        <a href="{{ route('sale_return::index') }}"
+                                            class="nav-link {{ request()->is(['sale_return', 'sale_return/edit/*', 'sale_return/view/*']) ? 'active' : '' }}">Return List</a>
+                                    </li>
+                                @endcan
+                                @can('report.sale return item')
+                                    {{-- <li class="nav-item">
+                                        <a href="{{ route('report::sale_return_item') }}" class="nav-link {{ request()->is(['report/sale_return_item']) ? 'active' : '' }}">Return Item Wise Report</a>
+                                    </li> --}}
+                                @endcan
+                                @can('sales return.payments')
+                                    <li class="nav-item">
+                                        <a href="{{ route('sale_return::payments') }}" class="nav-link {{ request()->is(['sale_return/payments']) ? 'active' : '' }}">Return Payments</a>
                                     </li>
                                 @endcan
                             </ul>
@@ -425,43 +461,19 @@
                             </ul>
                         </li>
                     @endif
-                    @if (auth()->user()->can('sales return.view') || auth()->user()->can('report.sale return item'))
+                    @if (
+                        auth()->user()->can('purchase.view') ||
+                            auth()->user()->can('purchase.create') ||
+                            auth()->user()->can('report.purchase item') ||
+                            auth()->user()->can('purchase.payments') ||
+                            auth()->user()->can('purchase return.view') ||
+                            auth()->user()->can('purchase return.create') ||
+                            auth()->user()->can('report.purchase return item') ||
+                            auth()->user()->can('purchase return.payments')
+                    )
                         <li class="nav-item has-sub">
                             <a href="#"
-                                class="mininav-toggle nav-link {{ request()->is(['sale_return', 'sale_return/create', 'sale_return/edit/*', 'sale_return/view/*', 'report/sale_return_item', 'sale_return/payments']) ? 'active' : '' }}">
-                                <i class="fa fa-rotate-left fs-5 me-2"></i>
-                                <span class="nav-label mininav-content ms-1 collapse show" style="">Sale Return</span>
-                            </a>
-                            <ul class="mininav-content nav collapse">
-                                <li data-popper-arrow class="arrow"></li>
-                                @can('sales return.create')
-                                    <li class="nav-item">
-                                        <a href="{{ route('sale_return::create') }}" class="nav-link {{ request()->is(['sale_return/create']) ? 'active' : '' }}">Create</a>
-                                    </li>
-                                @endcan
-                                @can('sales return.view')
-                                    <li class="nav-item">
-                                        <a href="{{ route('sale_return::index') }}"
-                                            class="nav-link {{ request()->is(['sale_return', 'sale_return/edit/*', 'sale_return/view/*']) ? 'active' : '' }}">List</a>
-                                    </li>
-                                @endcan
-                                @can('report.sale return item')
-                                    <li class="nav-item">
-                                        <a href="{{ route('report::sale_return_item') }}" class="nav-link {{ request()->is(['report/sale_return_item']) ? 'active' : '' }}">Item Wise Report</a>
-                                    </li>
-                                @endcan
-                                @can('sales return.payments')
-                                    <li class="nav-item">
-                                        <a href="{{ route('sale_return::payments') }}" class="nav-link {{ request()->is(['sale/receipts']) ? 'active' : '' }}">Payments</a>
-                                    </li>
-                                @endcan
-                            </ul>
-                        </li>
-                    @endif
-                    @if (auth()->user()->can('purchase.view') || auth()->user()->can('report.purchase item'))
-                        <li class="nav-item has-sub">
-                            <a href="#"
-                                class="mininav-toggle nav-link {{ request()->is(['purchase', 'purchase/create', 'purchase/edit/*', 'report/purchase_item', 'purchase/payments']) ? 'active' : '' }}"><i
+                                class="mininav-toggle nav-link {{ request()->is(['purchase', 'purchase/create', 'purchase/edit/*', 'report/purchase_item', 'purchase/payments', 'purchase_return', 'purchase_return/create', 'purchase_return/edit/*', 'purchase_return/view/*', 'report/purchase_return_item', 'purchase_return/payments']) ? 'active' : '' }}"><i
                                     class="fa fa-cart-plus fs-5 me-2"></i>
                                 <span class="nav-label mininav-content ms-1 collapse show" style="">Purchase</span>
                             </a>
@@ -487,37 +499,25 @@
                                         <a href="{{ route('purchase::payments') }}" class="nav-link {{ request()->is(['purchase/payments']) ? 'active' : '' }}">Payments</a>
                                     </li>
                                 @endcan
-                            </ul>
-                        </li>
-                    @endif
-                    @if (auth()->user()->can('purchase return.view') || auth()->user()->can('report.purchase return item'))
-                        <li class="nav-item has-sub">
-                            <a href="#"
-                                class="mininav-toggle nav-link {{ request()->is(['purchase_return', 'purchase_return/create', 'purchase_return/edit/*', 'purchase_return/view/*', 'purchase_return/payments']) ? 'active' : '' }}"><i
-                                    class="fa fa-reply fs-5 me-2"></i>
-                                <span class="nav-label mininav-content ms-1 collapse show" style="">Purchase Return</span>
-                            </a>
-                            <ul class="mininav-content nav collapse">
-                                <li data-popper-arrow class="arrow"></li>
                                 @can('purchase return.create')
                                     <li class="nav-item">
-                                        <a href="{{ route('purchase_return::create') }}" class="nav-link {{ request()->is(['purchase_return/create']) ? 'active' : '' }}">Create</a>
+                                        <a href="{{ route('purchase_return::create') }}" class="nav-link {{ request()->is(['purchase_return/create']) ? 'active' : '' }}">Return Create</a>
                                     </li>
                                 @endcan
                                 @can('purchase return.view')
                                     <li class="nav-item">
                                         <a href="{{ route('purchase_return::index') }}"
-                                            class="nav-link {{ request()->is(['purchase_return', 'purchase_return/edit/*', 'purchase_return/view/*']) ? 'active' : '' }}">List</a>
+                                            class="nav-link {{ request()->is(['purchase_return', 'purchase_return/edit/*', 'purchase_return/view/*']) ? 'active' : '' }}">Return List</a>
                                     </li>
                                 @endcan
                                 @can('report.purchase return item')
                                     <li class="nav-item">
-                                        <a href="{{ route('report::purchase_item') }}" class="nav-link {{ request()->is(['report/purchase_item']) ? 'active' : '' }}">Item Wise Report</a>
+                                        <a href="{{ route('report::purchase_return_item') }}" class="nav-link {{ request()->is(['report/purchase_return_item']) ? 'active' : '' }}">Return Item Wise Report</a>
                                     </li>
                                 @endcan
                                 @can('purchase return.payments')
                                     <li class="nav-item">
-                                        <a href="{{ route('purchase_return::payments') }}" class="nav-link {{ request()->is(['purchase_return/payments']) ? 'active' : '' }}">Payments</a>
+                                        <a href="{{ route('purchase_return::payments') }}" class="nav-link {{ request()->is(['purchase_return/payments']) ? 'active' : '' }}">Return Payments</a>
                                     </li>
                                 @endcan
                             </ul>
@@ -574,9 +574,9 @@
                                     </li>
                                 @endcan
                                 @can('cheque.view')
-                                    <li class="nav-item">
+                                    {{-- <li class="nav-item">
                                         <a href="{{ route('account::cheque::index') }}" class="nav-link {{ request()->is(['account/cheque*']) ? 'active' : '' }}">Cheque Print</a>
-                                    </li>
+                                    </li> --}}
                                 @endcan
                                 @can('report.day book')
                                     <li class="nav-item">

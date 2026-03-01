@@ -93,6 +93,13 @@
             letter-spacing: 0.5px;
         }
 
+        .company-logo img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            display: block;
+        }
+
         .product-size {
             font-size: {{ $settings['size']['font_size'] }}px;
             text-align: {{ $settings['size']['align'] }};
@@ -179,7 +186,7 @@
                     <div class="barcode-container">
                         @if ($settings['product_name']['visible'] ?? true)
                             <div id="product-name" class="barcode-element product-name" draggable="true" style="{{ getElementStyle('product_name', $settings) }}">
-                                <b>{{ substr($item->product->name, 0, (int) $settings['product_name']['char_limit']) }}</b>
+                                <bdo dir="ltr">{{ mb_substr($item->product->name, 0, (int) $settings['product_name']['char_limit']) }}</bdo>
                                 <div class="element-handle top-left"></div>
                                 <div class="element-handle top-right"></div>
                             </div>
@@ -187,7 +194,7 @@
 
                         @if ($settings['product_name_arabic']['visible'] ?? true)
                             <div id="product-name-arabic" class="barcode-element product-name-arabic" draggable="true" style="{{ getElementStyle('product_name_arabic', $settings) }}">
-                                <bdo dir="rtl">{{ substr($item->product->name_arabic, 0, (int) $settings['product_name_arabic']['char_limit']) }}</bdo>
+                                <bdo dir="rtl">{{ mb_substr($item->product->name_arabic, 0, (int) $settings['product_name_arabic']['char_limit']) }}</bdo>
                                 <div class="element-handle top-left"></div>
                                 <div class="element-handle top-right"></div>
                             </div>
@@ -214,6 +221,12 @@
                         @if ($settings['company_name']['visible'] ?? true)
                             <div class="barcode-element company-name" style="{{ getElementStyle('company_name', $settings) }}">
                                 {{ $company_name }}
+                            </div>
+                        @endif
+
+                        @if (($settings['logo']['visible'] ?? false) && !empty($company_logo))
+                            <div class="barcode-element company-logo" style="{{ getElementStyle('logo', $settings) }}">
+                                <img src="{{ $company_logo }}" alt="Company Logo">
                             </div>
                         @endif
 

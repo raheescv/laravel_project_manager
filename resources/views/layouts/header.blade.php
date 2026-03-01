@@ -1,4 +1,50 @@
 <header class="header">
+    <style>
+        .header-mega-section {
+            padding: 0.5rem 0;
+        }
+
+        .header-mega-section + .header-mega-section {
+            border-top: 1px solid rgba(0, 0, 0, 0.08);
+            margin-top: 0.5rem;
+            padding-top: 0.75rem;
+        }
+
+        .header-mega-title {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.75rem;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: #6c757d;
+            margin-bottom: 0.35rem;
+            padding: 0.25rem 1rem;
+        }
+
+        .header-mega-child {
+            padding-left: 2.5rem;
+        }
+
+        .header-mega-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 1rem 1.25rem;
+        }
+
+        .header-mega-grid .header-mega-section + .header-mega-section {
+            border-top: 0;
+            margin-top: 0;
+            padding-top: 0.5rem;
+        }
+
+        @media (max-width: 767.98px) {
+            .header-mega-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
     <div class="header__inner">
         <!-- Brand -->
         <div class="header__brand">
@@ -45,96 +91,116 @@
                                         </div>
                                         <h5 class="flex-grow-1 m-0">Report</h5>
                                     </div>
-                                    @can('report.customer')
-                                        <a href="{{ route('report::customer') }}" class="list-group-item list-group-item-action">
-                                            <i class="fa fa-users fs-5 me-2"></i>Customer Report
-                                        </a>
-                                    @endcan
-                                    @can('report.employee')
-                                        <a href="{{ route('report::employee') }}" class="list-group-item list-group-item-action">
-                                            <i class="fa fa-user fs-5 me-2"></i>Employee Report
-                                        </a>
-                                    @endcan
-                                    @can('report.daily sales insights')
-                                        <a href="{{ route('report::daily_sales_insights') }}" class="list-group-item list-group-item-action">
-                                            <i class="fa fa-file-text-o fs-5 me-2"></i>Daily Sales Insights
-                                        </a>
-                                    @endcan
-                                    @can('report.monthly sale')
-                                        <a href="{{ route('report::monthly_sale') }}" class="list-group-item list-group-item-action">
-                                            <i class="fa fa-file-text-o fs-5 me-2"></i>Monthly Sale Report
-                                        </a>
-                                    @endcan
-                                    @can('report.sales overview')
-                                        <a href="{{ route('report::sales_overview') }}" class="list-group-item list-group-item-action">
-                                            <i class="fa fa-bar-chart fs-5 me-2"></i>Sales Overview
-                                        </a>
-                                    @endcan
-                                    @can('report.sale and sales return items')
-                                        <a href="{{ route('report::sale_mixed_items') }}" class="list-group-item list-group-item-action">
-                                            <i class="fa fa-bar-chart fs-5 me-2"></i>Sale & Sales Return Items
-                                        </a>
-                                    @endcan
-                                    @can('report.sale calendar')
-                                        <a href="{{ route('report::sale_calendar') }}" class="list-group-item list-group-item-action">
-                                            <i class="fa fa-calendar fs-5 me-2"></i>Sales Calendar
-                                        </a>
-                                    @endcan
-                                    @can('report.profit loss')
-                                        <a href="{{ route('report::profit_loss') }}" class="list-group-item list-group-item-action">
-                                            <i class="fa fa-usd fs-5 me-2"></i>Profit & Loss
-                                        </a>
-                                    @endcan
-                                    @can('report.trial balance')
-                                        <a href="{{ route('report::trial_balance') }}" class="list-group-item list-group-item-action">
-                                            <i class="fa fa-calculator fs-5 me-2"></i>Trial Balance
-                                        </a>
-                                    @endcan
-                                    @can('report.balance sheet')
-                                        <a href="{{ route('report::balance_sheet') }}" class="list-group-item list-group-item-action">
-                                            <i class="fa fa-file-o fs-5 me-2"></i>Balance Sheet
-                                        </a>
-                                    @endcan
-                                    @can('report.stock analysis')
-                                        <a href="{{ route('report::stock_analysis') }}" class="list-group-item list-group-item-action">
-                                            <i class="fa fa-cubes fs-5 me-2"></i>Stock Analysis
-                                        </a>
-                                    @endcan
-                                    @can('report.employee productivity')
-                                        <a href="{{ route('report::employee_productivity') }}" class="list-group-item list-group-item-action">
-                                            <i class="fa fa-trophy fs-5 me-2"></i>Employee Productivity
-                                        </a>
-                                    @endcan
-                                    @can('report.customer callback reminder')
-                                        <a href="{{ route('report::customer_callback_reminder') }}" class="list-group-item list-group-item-action">
-                                            <i class="fa fa-phone fs-5 me-2"></i>Customer Callback Reminder
-                                        </a>
-                                    @endcan
-                                    @can('report.vendor aging')
-                                        <a href="{{ route('report::vendor_aging') }}" class="list-group-item list-group-item-action">
-                                            <i class="fa fa-calendar fs-5 me-2"></i>Vendor Aging
-                                        </a>
-                                    @endcan
-                                    @can('report.customer aging')
-                                        <a href="{{ route('report::customer_aging') }}" class="list-group-item list-group-item-action">
-                                            <i class="fa fa-calendar fs-5 me-2"></i>Customer Aging
-                                        </a>
-                                    @endcan
-                                    @can('report.day wise sale')
-                                        <a href="{{ route('report::day_wise_sale') }}" class="list-group-item list-group-item-action">
-                                            <i class="fa fa-calendar fs-5 me-2"></i>Day Wise Sale Report
-                                        </a>
-                                    @endcan
-                                    @can('report.day wise tax report')
-                                        <a href="{{ route('report::day_wise_tax_report') }}" class="list-group-item list-group-item-action">
-                                            <i class="fa fa-calendar fs-5 me-2"></i>Day Wise Tax Report
-                                        </a>
-                                    @endcan
-                                    @can('report.tax report')
-                                        <a href="{{ route('report::tax_report') }}" class="list-group-item list-group-item-action">
-                                            <i class="fa fa-calendar fs-5 me-2"></i>Tax Report
-                                        </a>
-                                    @endcan
+                                    <div class="header-mega-grid">
+                                        <div class="header-mega-section">
+                                            <div class="header-mega-title">
+                                                <i class="fa fa-line-chart"></i>
+                                                <span>Sales</span>
+                                            </div>
+                                            @can('report.daily sales insights')
+                                                <a href="{{ route('report::daily_sales_insights') }}" class="list-group-item list-group-item-action header-mega-child">
+                                                    <i class="fa fa-file-text-o fs-5 me-2"></i>Daily Sales Insights
+                                                </a>
+                                            @endcan
+                                            @can('report.monthly sale')
+                                                <a href="{{ route('report::monthly_sale') }}" class="list-group-item list-group-item-action header-mega-child">
+                                                    <i class="fa fa-file-text-o fs-5 me-2"></i>Monthly Sale Report
+                                                </a>
+                                            @endcan
+                                            @can('report.sales overview')
+                                                <a href="{{ route('report::sales_overview') }}" class="list-group-item list-group-item-action header-mega-child">
+                                                    <i class="fa fa-bar-chart fs-5 me-2"></i>Sales Overview
+                                                </a>
+                                            @endcan
+                                            @can('report.sale and sales return items')
+                                                <a href="{{ route('report::sale_mixed_items') }}" class="list-group-item list-group-item-action header-mega-child">
+                                                    <i class="fa fa-bar-chart fs-5 me-2"></i>Sale & Sales Return Items
+                                                </a>
+                                            @endcan
+                                            @can('report.sale calendar')
+                                                <a href="{{ route('report::sale_calendar') }}" class="list-group-item list-group-item-action header-mega-child">
+                                                    <i class="fa fa-calendar fs-5 me-2"></i>Sales Calendar
+                                                </a>
+                                            @endcan
+                                            @can('report.day wise sale')
+                                                <a href="{{ route('report::day_wise_sale') }}" class="list-group-item list-group-item-action header-mega-child">
+                                                    <i class="fa fa-calendar fs-5 me-2"></i>Day Wise Sale Report
+                                                </a>
+                                            @endcan
+                                        </div>
+                                        <div class="header-mega-section">
+                                            <div class="header-mega-title">
+                                                <i class="fa fa-calculator"></i>
+                                                <span>Finance</span>
+                                            </div>
+                                            @can('report.profit loss')
+                                                <a href="{{ route('report::profit_loss') }}" class="list-group-item list-group-item-action header-mega-child">
+                                                    <i class="fa fa-usd fs-5 me-2"></i>Profit & Loss
+                                                </a>
+                                            @endcan
+                                            @can('report.trial balance')
+                                                <a href="{{ route('report::trial_balance') }}" class="list-group-item list-group-item-action header-mega-child">
+                                                    <i class="fa fa-calculator fs-5 me-2"></i>Trial Balance
+                                                </a>
+                                            @endcan
+                                            @can('report.balance sheet')
+                                                <a href="{{ route('report::balance_sheet') }}" class="list-group-item list-group-item-action header-mega-child">
+                                                    <i class="fa fa-file-o fs-5 me-2"></i>Balance Sheet
+                                                </a>
+                                            @endcan
+                                            @can('report.day wise tax report')
+                                                <a href="{{ route('report::day_wise_tax_report') }}" class="list-group-item list-group-item-action header-mega-child">
+                                                    <i class="fa fa-calendar fs-5 me-2"></i>Day Wise Tax Report
+                                                </a>
+                                            @endcan
+                                            @can('report.tax report')
+                                                <a href="{{ route('report::tax_report') }}" class="list-group-item list-group-item-action header-mega-child">
+                                                    <i class="fa fa-calendar fs-5 me-2"></i>Tax Report
+                                                </a>
+                                            @endcan
+                                        </div>
+                                        <div class="header-mega-section">
+                                            <div class="header-mega-title">
+                                                <i class="fa fa-users"></i>
+                                                <span>People & Inventory</span>
+                                            </div>
+                                            @can('report.customer')
+                                                <a href="{{ route('report::customer') }}" class="list-group-item list-group-item-action header-mega-child">
+                                                    <i class="fa fa-users fs-5 me-2"></i>Customer Report
+                                                </a>
+                                            @endcan
+                                            @can('report.employee')
+                                                <a href="{{ route('report::employee') }}" class="list-group-item list-group-item-action header-mega-child">
+                                                    <i class="fa fa-user fs-5 me-2"></i>Employee Report
+                                                </a>
+                                            @endcan
+                                            @can('report.employee productivity')
+                                                <a href="{{ route('report::employee_productivity') }}" class="list-group-item list-group-item-action header-mega-child">
+                                                    <i class="fa fa-trophy fs-5 me-2"></i>Employee Productivity
+                                                </a>
+                                            @endcan
+                                            @can('report.customer callback reminder')
+                                                <a href="{{ route('report::customer_callback_reminder') }}" class="list-group-item list-group-item-action header-mega-child">
+                                                    <i class="fa fa-phone fs-5 me-2"></i>Customer Callback Reminder
+                                                </a>
+                                            @endcan
+                                            @can('report.vendor aging')
+                                                <a href="{{ route('report::vendor_aging') }}" class="list-group-item list-group-item-action header-mega-child">
+                                                    <i class="fa fa-calendar fs-5 me-2"></i>Vendor Aging
+                                                </a>
+                                            @endcan
+                                            @can('report.customer aging')
+                                                <a href="{{ route('report::customer_aging') }}" class="list-group-item list-group-item-action header-mega-child">
+                                                    <i class="fa fa-calendar fs-5 me-2"></i>Customer Aging
+                                                </a>
+                                            @endcan
+                                            @can('report.stock analysis')
+                                                <a href="{{ route('report::stock_analysis') }}" class="list-group-item list-group-item-action header-mega-child">
+                                                    <i class="fa fa-cubes fs-5 me-2"></i>Stock Analysis
+                                                </a>
+                                            @endcan
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -155,121 +221,147 @@
                                         </div>
                                         <h5 class="flex-grow-1 m-0">Settings</h5>
                                     </div>
-                                    @can('customer.view')
-                                        <a href="{{ route('account::customer::index') }}" class="list-group-item list-group-item-action">
-                                            <i class="fa fa-users fs-5 me-2"></i>Customers
-                                        </a>
-                                    @endcan
-                                    @can('vendor.view')
-                                        <a href="{{ route('account::vendor::index') }}" class="list-group-item list-group-item-action">
-                                            <i class="fa fa-truck fs-5 me-2"></i>Vendors
-                                        </a>
-                                    @endcan
-                                    @can('product.view')
-                                        <a href="{{ route('product::index') }}" class="list-group-item list-group-item-action">
-                                            <i class="fa fa-cubes fs-5 me-2"></i>Product
-                                        </a>
-                                    @endcan
-                                    @can('service.view')
-                                        <a href="{{ route('service::index') }}" class="list-group-item list-group-item-action">
-                                            <i class="fa fa-wrench fs-5 me-2"></i>Service
-                                        </a>
-                                    @endcan
-                                    @can('combo offer.view')
-                                        <a href="{{ route('combo_offer::index') }}" class="list-group-item list-group-item-action">
-                                            <i class="fa fa-gift fs-5 me-2"></i>Combo Offer
-                                        </a>
-                                    @endcan
-                                    @can('branch.view')
-                                        <a href="{{ route('settings::branch::index') }}" class="list-group-item list-group-item-action">
-                                            <i class="fa fa-building fs-5 me-2"></i>Branch
-                                        </a>
-                                    @endcan
-                                    @can('category.view')
-                                        <a href="{{ route('settings::category::index') }}" class="list-group-item list-group-item-action">
-                                            <i class="fa fa-folder fs-5 me-2"></i>Category
-                                        </a>
-                                    @endcan
-                                    @can('account category.view')
-                                        <a href="{{ route('settings::account_category::index') }}" class="list-group-item list-group-item-action">
-                                            <i class="fa fa-folder-open fs-5 me-2"></i>Account Category
-                                        </a>
-                                    @endcan
-                                    @can('country.view')
-                                        <a href="{{ route('settings::country::index') }}" class="list-group-item list-group-item-action">
-                                            <i class="fa fa-globe fs-5 me-2"></i>Country
-                                        </a>
-                                    @endcan
-                                    @can('package category.view')
-                                        <a href="{{ route('settings::package_category::index') }}" class="list-group-item list-group-item-action">
-                                            <i class="fa fa-globe fs-5 me-2"></i>Package Category
-                                        </a>
-                                    @endcan
-                                    @can('customer type.view')
-                                        <a href="{{ route('settings::customer_type::index') }}" class="list-group-item list-group-item-action">
-                                            <i class="fa fa-tags fs-5 me-2"></i>Customer Type
-                                        </a>
-                                    @endcan
-                                    @can('unit.view')
-                                        <a href="{{ route('settings::unit::index') }}" class="list-group-item list-group-item-action">
-                                            <i class="fa fa-cubes fs-5 me-2"></i>Unit
-                                        </a>
-                                    @endcan
-                                    @can('designation.view')
-                                        <a href="{{ route('settings::designation::index') }}" class="list-group-item list-group-item-action">
-                                            <i class="fa fa-briefcase fs-5 me-2"></i>Designation
-                                        </a>
-                                    @endcan
-                                    @can('rack.view')
-                                        <a href="{{ route('settings::rack::index') }}" class="list-group-item list-group-item-action">
-                                            <i class="fa fa-archive fs-5 me-2"></i>Rack
-                                        </a>
-                                    @endcan
-                                    @can('tailoring category.view')
-                                        <a href="{{ route('settings::tailoring_category::index') }}" class="list-group-item list-group-item-action">
-                                            <i class="fa fa-scissors fs-5 me-2"></i>Tailoring Category
-                                        </a>
-                                    @endcan
-                                    @can('tailoring measurement option.view')
-                                        <a href="{{ route('settings::tailoring_measurement_option::index') }}" class="list-group-item list-group-item-action">
-                                            <i class="fa fa-sliders fs-5 me-2"></i>Tailoring Measurement Option
-                                        </a>
-                                    @endcan
-                                    @can('department.view')
-                                        <a href="{{ route('settings::department::index') }}" class="list-group-item list-group-item-action">
-                                            <i class="fa fa-sitemap fs-5 me-2"></i>Department
-                                        </a>
-                                    @endcan
-                                    @can('brand.view')
-                                        <a href="{{ route('settings::brand::index') }}" class="list-group-item list-group-item-action">
-                                            <i class="fa fa-certificate fs-5 me-2"></i>Brand
-                                        </a>
-                                    @endcan
-                                    @can('configuration.barcode')
-                                        <a href="{{ route('inventory::barcode::configuration') }}" class="list-group-item list-group-item-action">
-                                            <i class="fa fa-barcode fs-5 me-2"></i>Barcode Configuration
-                                        </a>
-                                    @endcan
-                                    @can('configuration.cheque')
-                                        {{-- <a href="{{ route('account::cheque::configuration') }}" class="list-group-item list-group-item-action">
-                                            <i class="fa fa-money-check fs-5 me-2"></i>Cheque Configuration
-                                        </a> --}}
-                                    @endcan
-                                    @can('api_log.moq settings')
-                                        <a href="{{ route('api_log::moq-settings') }}" class="list-group-item list-group-item-action">
-                                            <i class="fa fa-cog fs-5 me-2"></i>Moq Settings
-                                        </a>
-                                    @endcan
-                                    @can('configuration.settings')
-                                        <a href="{{ route('settings::index') }}" class="list-group-item list-group-item-action">
-                                            <i class="fa fa-cogs fs-5 me-2"></i>Settings
-                                        </a>
-                                    @endcan
-                                    @can('backup.view')
-                                        <a href="{{ route('backup::index') }}" class="list-group-item list-group-item-action">
-                                            <i class="fa fa-database fs-5 me-2"></i>Backup
-                                        </a>
-                                    @endcan
+                                    <div class="header-mega-grid">
+                                        <div class="header-mega-section">
+                                            <div class="header-mega-title">
+                                                <i class="fa fa-cubes"></i>
+                                                <span>Catalog</span>
+                                            </div>
+                                            @can('product.view')
+                                                <a href="{{ route('product::index') }}" class="list-group-item list-group-item-action header-mega-child">
+                                                    <i class="fa fa-cubes fs-5 me-2"></i>Product
+                                                </a>
+                                            @endcan
+                                            @can('service.view')
+                                                <a href="{{ route('service::index') }}" class="list-group-item list-group-item-action header-mega-child">
+                                                    <i class="fa fa-wrench fs-5 me-2"></i>Service
+                                                </a>
+                                            @endcan
+                                            @can('combo offer.view')
+                                                <a href="{{ route('combo_offer::index') }}" class="list-group-item list-group-item-action header-mega-child">
+                                                    <i class="fa fa-gift fs-5 me-2"></i>Combo Offer
+                                                </a>
+                                            @endcan
+                                            @can('category.view')
+                                                <a href="{{ route('settings::category::index') }}" class="list-group-item list-group-item-action header-mega-child">
+                                                    <i class="fa fa-folder fs-5 me-2"></i>Category
+                                                </a>
+                                            @endcan
+                                            @can('unit.view')
+                                                <a href="{{ route('settings::unit::index') }}" class="list-group-item list-group-item-action header-mega-child">
+                                                    <i class="fa fa-cubes fs-5 me-2"></i>Unit
+                                                </a>
+                                            @endcan
+                                            @can('rack.view')
+                                                <a href="{{ route('settings::rack::index') }}" class="list-group-item list-group-item-action header-mega-child">
+                                                    <i class="fa fa-archive fs-5 me-2"></i>Rack
+                                                </a>
+                                            @endcan
+                                            @can('brand.view')
+                                                <a href="{{ route('settings::brand::index') }}" class="list-group-item list-group-item-action header-mega-child">
+                                                    <i class="fa fa-certificate fs-5 me-2"></i>Brand
+                                                </a>
+                                            @endcan
+                                            @can('tailoring category.view')
+                                                <a href="{{ route('settings::tailoring_category::index') }}" class="list-group-item list-group-item-action header-mega-child">
+                                                    <i class="fa fa-scissors fs-5 me-2"></i>Tailoring Category
+                                                </a>
+                                            @endcan
+                                            @can('tailoring measurement option.view')
+                                                <a href="{{ route('settings::tailoring_measurement_option::index') }}" class="list-group-item list-group-item-action header-mega-child">
+                                                    <i class="fa fa-sliders fs-5 me-2"></i>Tailoring Measurement Option
+                                                </a>
+                                            @endcan
+                                            @can('package category.view')
+                                                <a href="{{ route('settings::package_category::index') }}" class="list-group-item list-group-item-action header-mega-child">
+                                                    <i class="fa fa-globe fs-5 me-2"></i>Package Category
+                                                </a>
+                                            @endcan
+                                        </div>
+                                        <div class="header-mega-section">
+                                            <div class="header-mega-title">
+                                                <i class="fa fa-users"></i>
+                                                <span>People</span>
+                                            </div>
+                                            @can('customer.view')
+                                                <a href="{{ route('account::customer::index') }}" class="list-group-item list-group-item-action header-mega-child">
+                                                    <i class="fa fa-users fs-5 me-2"></i>Customers
+                                                </a>
+                                            @endcan
+                                            @can('vendor.view')
+                                                <a href="{{ route('account::vendor::index') }}" class="list-group-item list-group-item-action header-mega-child">
+                                                    <i class="fa fa-truck fs-5 me-2"></i>Vendors
+                                                </a>
+                                            @endcan
+                                            @can('customer type.view')
+                                                <a href="{{ route('settings::customer_type::index') }}" class="list-group-item list-group-item-action header-mega-child">
+                                                    <i class="fa fa-tags fs-5 me-2"></i>Customer Type
+                                                </a>
+                                            @endcan
+                                            @can('designation.view')
+                                                <a href="{{ route('settings::designation::index') }}" class="list-group-item list-group-item-action header-mega-child">
+                                                    <i class="fa fa-briefcase fs-5 me-2"></i>Designation
+                                                </a>
+                                            @endcan
+                                            @can('department.view')
+                                                <a href="{{ route('settings::department::index') }}" class="list-group-item list-group-item-action header-mega-child">
+                                                    <i class="fa fa-sitemap fs-5 me-2"></i>Department
+                                                </a>
+                                            @endcan
+                                            <div class="header-mega-section">
+                                                <div class="header-mega-title">
+                                                    <i class="fa fa-cog"></i>
+                                                    <span>System</span>
+                                                </div>
+                                                @can('configuration.barcode')
+                                                    <a href="{{ route('inventory::barcode::configuration') }}" class="list-group-item list-group-item-action header-mega-child">
+                                                        <i class="fa fa-barcode fs-5 me-2"></i>Barcode Configuration
+                                                    </a>
+                                                @endcan
+                                                @can('configuration.cheque')
+                                                    {{-- <a href="{{ route('account::cheque::configuration') }}" class="list-group-item list-group-item-action">
+                                                        <i class="fa fa-money-check fs-5 me-2"></i>Cheque Configuration
+                                                    </a> --}}
+                                                @endcan
+                                                @can('api_log.moq settings')
+                                                    <a href="{{ route('api_log::moq-settings') }}" class="list-group-item list-group-item-action header-mega-child">
+                                                        <i class="fa fa-cog fs-5 me-2"></i>Moq Settings
+                                                    </a>
+                                                @endcan
+                                                @can('configuration.settings')
+                                                    <a href="{{ route('settings::index') }}" class="list-group-item list-group-item-action header-mega-child">
+                                                        <i class="fa fa-cogs fs-5 me-2"></i>Settings
+                                                    </a>
+                                                @endcan
+                                                @can('backup.view')
+                                                    <a href="{{ route('backup::index') }}" class="list-group-item list-group-item-action header-mega-child">
+                                                        <i class="fa fa-database fs-5 me-2"></i>Backup
+                                                    </a>
+                                                @endcan
+                                            </div>
+                                        </div>
+                                        <div class="header-mega-section">
+                                            <div class="header-mega-title">
+                                                <i class="fa fa-building"></i>
+                                                <span>Organization</span>
+                                            </div>
+                                            @can('branch.view')
+                                                <a href="{{ route('settings::branch::index') }}" class="list-group-item list-group-item-action header-mega-child">
+                                                    <i class="fa fa-building fs-5 me-2"></i>Branch
+                                                </a>
+                                            @endcan
+                                            @can('country.view')
+                                                <a href="{{ route('settings::country::index') }}" class="list-group-item list-group-item-action header-mega-child">
+                                                    <i class="fa fa-globe fs-5 me-2"></i>Country
+                                                </a>
+                                            @endcan
+                                            @can('account category.view')
+                                                <a href="{{ route('settings::account_category::index') }}" class="list-group-item list-group-item-action header-mega-child">
+                                                    <i class="fa fa-folder-open fs-5 me-2"></i>Account Category
+                                                </a>
+                                            @endcan
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>

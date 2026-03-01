@@ -12,12 +12,14 @@
                 <div class="action-buttons-wrapper mb-2 mb-md-2">
                     <div class="d-flex flex-wrap gap-1 justify-content-end">
                         @can('customer.view')
-                            <a href="{{ route('account::customer::statement', $accounts['id'] ?? '') }}" target="_blank"
-                                class="btn btn-info btn-sm d-flex align-items-center gap-1 shadow-lg hover-lift rounded-pill px-2 px-md-3 py-1" data-bs-toggle="tooltip" data-bs-placement="left"
-                                title="Generate Customer Statement PDF">
-                                <i class="fa fa-file-pdf-o"></i>
-                                <span class="d-none d-md-inline fw-semibold">Statement</span>
-                            </a>
+                            @if ($accounts)
+                                <a href="{{ route('account::customer::statement', $accounts['id'] ?? '') }}" target="_blank"
+                                    class="btn btn-info btn-sm d-flex align-items-center gap-1 shadow-lg hover-lift rounded-pill px-2 px-md-3 py-1" data-bs-toggle="tooltip" data-bs-placement="left"
+                                    title="Generate Customer Statement PDF">
+                                    <i class="fa fa-file-pdf-o"></i>
+                                    <span class="d-none d-md-inline fw-semibold">Statement</span>
+                                </a>
+                            @endif
                         @endcan
                         <button type="button" id="CustomerEdit" class="btn btn-premium btn-sm d-flex align-items-center gap-1 shadow-lg hover-lift rounded-pill px-2 px-md-3 py-1"
                             data-bs-toggle="tooltip" data-bs-placement="left" title="Edit Customer Details">
@@ -37,8 +39,8 @@
                                     <img class="img-fluid rounded-circle shadow-lg customer-avatar-img" src="{{ secure_asset('assets/img/profile-photos/1.png') }}" alt="Profile Picture">
 
                                     <!-- Status Indicator -->
-                                    <div class="position-absolute bottom-0 end-0 bg-success rounded-circle border-3 border-white shadow-sm pulse-animation status-indicator"
-                                        data-bs-toggle="tooltip" title="Active Customer">
+                                    <div class="position-absolute bottom-0 end-0 bg-success rounded-circle border-3 border-white shadow-sm pulse-animation status-indicator" data-bs-toggle="tooltip"
+                                        title="Active Customer">
                                         <i class="fa fa-check text-white"></i>
                                     </div>
                                 </div>
@@ -78,7 +80,8 @@
                                 <div class="col-6 col-sm-4 col-lg-6">
                                     <div class="contact-card text-center p-2 rounded-3 shadow-sm h-100 hover-card">
                                         <div class="contact-icon mb-1">
-                                            <div class="icon-circle bg-primary bg-gradient d-inline-flex align-items-center justify-content-center rounded-circle shadow" style="width: 40px; height: 40px;">
+                                            <div class="icon-circle bg-primary bg-gradient d-inline-flex align-items-center justify-content-center rounded-circle shadow"
+                                                style="width: 40px; height: 40px;">
                                                 <i class="fa fa-mobile text-white" style="font-size: 0.9rem;"></i>
                                             </div>
                                         </div>
@@ -92,7 +95,8 @@
                                 <div class="col-6 col-sm-4 col-lg-6">
                                     <div class="contact-card text-center p-2 rounded-3 shadow-sm h-100 hover-card">
                                         <div class="contact-icon mb-1">
-                                            <div class="icon-circle bg-success bg-gradient d-inline-flex align-items-center justify-content-center rounded-circle shadow" style="width: 40px; height: 40px;">
+                                            <div class="icon-circle bg-success bg-gradient d-inline-flex align-items-center justify-content-center rounded-circle shadow"
+                                                style="width: 40px; height: 40px;">
                                                 <i class="fa fa-envelope text-white" style="font-size: 0.9rem;"></i>
                                             </div>
                                         </div>
@@ -106,7 +110,8 @@
                                 <div class="col-12 col-sm-4 col-lg-12">
                                     <div class="contact-card text-center p-2 rounded-3 shadow-sm h-100 hover-card">
                                         <div class="contact-icon mb-1">
-                                            <div class="icon-circle bg-warning bg-gradient d-inline-flex align-items-center justify-content-center rounded-circle shadow" style="width: 40px; height: 40px;">
+                                            <div class="icon-circle bg-warning bg-gradient d-inline-flex align-items-center justify-content-center rounded-circle shadow"
+                                                style="width: 40px; height: 40px;">
                                                 <i class="fa fa-calendar text-white" style="font-size: 0.9rem;"></i>
                                             </div>
                                         </div>
@@ -133,8 +138,8 @@
         <div class="tab-base">
             <ul class="nav nav-underline nav-component border-bottom flex-nowrap overflow-x-auto" role="tablist" style="scrollbar-width: thin;">
                 <li class="nav-item flex-shrink-0" role="presentation">
-                    <button class="nav-link px-2 px-md-3 @if ($selected_tab === 'Sales') active @endif" data-bs-toggle="tab" data-bs-target="#tab-Sales" type="button" role="tab" aria-controls="home"
-                        aria-selected="true" wire:click="$set('selected_tab', 'Sales')">
+                    <button class="nav-link px-2 px-md-3 @if ($selected_tab === 'Sales') active @endif" data-bs-toggle="tab" data-bs-target="#tab-Sales" type="button" role="tab"
+                        aria-controls="home" aria-selected="true" wire:click="$set('selected_tab', 'Sales')">
                         <span class="d-none d-sm-inline">Sales</span>
                         <span class="d-sm-none">Sales</span>
                     </button>
@@ -154,15 +159,16 @@
                     </button>
                 </li>
                 <li class="nav-item flex-shrink-0" role="presentation">
-                    <button class="nav-link px-2 px-md-3 @if ($selected_tab === 'SaleProductSummary') active @endif" data-bs-toggle="tab" data-bs-target="#tab-SaleProductSummary" type="button" role="tab"
-                        aria-controls="profile" aria-selected="false" tabindex="-1" wire:click="$set('selected_tab', 'SaleProductSummary')">
+                    <button class="nav-link px-2 px-md-3 @if ($selected_tab === 'SaleProductSummary') active @endif" data-bs-toggle="tab" data-bs-target="#tab-SaleProductSummary" type="button"
+                        role="tab" aria-controls="profile" aria-selected="false" tabindex="-1" wire:click="$set('selected_tab', 'SaleProductSummary')">
                         <span class="d-none d-md-inline">Sale Item Summary</span>
                         <span class="d-md-none">Summary</span>
                     </button>
                 </li>
                 @can('account note.view')
                     <li class="nav-item flex-shrink-0" role="presentation">
-                        <button class="nav-link px-2 px-md-3" data-bs-toggle="tab" data-bs-target="#tab-Notes" type="button" role="tab" aria-controls="contact" aria-selected="false" tabindex="-1">
+                        <button class="nav-link px-2 px-md-3" data-bs-toggle="tab" data-bs-target="#tab-Notes" type="button" role="tab" aria-controls="contact" aria-selected="false"
+                            tabindex="-1">
                             Notes
                         </button>
                     </li>
@@ -259,11 +265,13 @@
                         </div>
                         <div class="col-md-4 d-flex align-items-end">
                             @can('customer.view')
-                                <a href="{{ route('account::customer::statement', $accounts['id'] ?? '') }}@if ($sale_from_date || $sale_to_date) ?from_date={{ $sale_from_date }}&to_date={{ $sale_to_date }} @endif"
-                                    target="_blank" class="btn btn-info btn-sm d-flex align-items-center gap-2 shadow-sm" title="Generate Statement PDF">
-                                    <i class="fa fa-file-pdf-o"></i>
-                                    <span>Generate Statement</span>
-                                </a>
+                                @if ($accounts)
+                                    <a href="{{ route('account::customer::statement', $accounts['id'] ?? '') }}@if ($sale_from_date || $sale_to_date) ?from_date={{ $sale_from_date }}&to_date={{ $sale_to_date }} @endif"
+                                        target="_blank" class="btn btn-info btn-sm d-flex align-items-center gap-2 shadow-sm" title="Generate Statement PDF">
+                                        <i class="fa fa-file-pdf-o"></i>
+                                        <span>Generate Statement</span>
+                                    </a>
+                                @endif
                             @endcan
                         </div>
                     </div>
@@ -597,9 +605,9 @@
             }
 
             /* .card:hover {
-                transform: translateY(-2px);
-                box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1) !important;
-            } */
+                        transform: translateY(-2px);
+                        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1) !important;
+                    } */
 
             .bg-light {
                 background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%) !important;
@@ -607,9 +615,9 @@
             }
 
             /* .bg-light:hover {
-                transform: translateY(-2px);
-                box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-            } */
+                        transform: translateY(-2px);
+                        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+                    } */
 
             /* Customer Details Hero Section */
             .customer-details-hero .card {
@@ -638,11 +646,11 @@
             }
 
             /* .btn-premium:hover {
-                background: linear-gradient(135deg, #5a2d91 0%, #d63384 100%);
-                transform: translateY(-3px);
-                box-shadow: 0 10px 30px rgba(111, 66, 193, 0.5);
-                color: white;
-            } */
+                        background: linear-gradient(135deg, #5a2d91 0%, #d63384 100%);
+                        transform: translateY(-3px);
+                        box-shadow: 0 10px 30px rgba(111, 66, 193, 0.5);
+                        color: white;
+                    } */
 
             /* Customer Avatar */
             .customer-avatar {
@@ -710,12 +718,13 @@
                 backdrop-filter: blur(10px);
                 transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             }
-/*
-            .hover-card:hover {
-                transform: translateY(-8px) scale(1.02);
-                box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
-                background: rgba(255, 255, 255, 0.95);
-            } */
+
+            /*
+                    .hover-card:hover {
+                        transform: translateY(-8px) scale(1.02);
+                        box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+                        background: rgba(255, 255, 255, 0.95);
+                    } */
 
             /* Icon Circles */
             .icon-circle {
@@ -737,8 +746,8 @@
             }
 
             /* .badge:hover {
-                transform: scale(1.05);
-            } */
+                        transform: scale(1.05);
+                    } */
 
             /* Responsive Enhancements */
             @media (max-width: 768px) {

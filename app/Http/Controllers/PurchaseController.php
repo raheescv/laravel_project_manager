@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Configuration;
 use App\Models\Purchase;
 use App\Models\PurchaseItem;
+use App\Support\BarcodeTemplateConfiguration;
 use Illuminate\Http\Request;
 use Spatie\Browsershot\Browsershot;
 
@@ -40,13 +41,12 @@ class PurchaseController extends Controller
             return redirect()->route('purchase::index')->with('error', 'No items to print. Please add products to cart first.');
         }
 
-        // Load barcode settings
-        $settings = Configuration::where('key', 'barcode_configurations')->value('value');
-        $settings = json_decode($settings, true) ?? [];
+        $settings = BarcodeTemplateConfiguration::resolveSettings(request('template'))['settings'];
         $company_name = Configuration::where('key', 'company_name')->value('value') ?? config('app.name');
+        $company_logo = cache('logo', asset('assets/img/logo.svg'));
 
         // Generate HTML using Blade view
-        $html = view('purchase.barcode-print', compact('purchaseItems', 'settings', 'company_name'))->render();
+        $html = view('purchase.barcode-print', compact('purchaseItems', 'settings', 'company_name', 'company_logo'))->render();
 
         // FIXED Browsershot settings (Windows Compatible)
         $pdf = Browsershot::html($html)

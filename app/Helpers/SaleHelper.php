@@ -6,6 +6,7 @@ use App\Actions\Sale\BuildDaySessionReportAction;
 use App\Models\Configuration;
 use App\Models\Sale;
 use App\Models\SaleDaySession;
+use App\Support\BarcodeTemplateConfiguration;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\View;
 
@@ -32,8 +33,7 @@ class SaleHelper
         $enable_barcode_in_print = Configuration::where('key', 'enable_barcode_in_print')->value('value') ?? 'yes';
         $print_item_label = Configuration::where('key', 'print_item_label')->value('value') ?? 'product';
         $print_quantity_label = Configuration::where('key', 'print_quantity_label')->value('value') ?? 'quantity';
-        $barcodeSettings = Configuration::where('key', 'barcode_configurations')->value('value');
-        $barcodeSettings = $barcodeSettings ? json_decode($barcodeSettings, true) : [];
+        $barcodeSettings = BarcodeTemplateConfiguration::resolveSettings()['settings'];
         $barcodeType = $barcodeSettings['barcode']['type'] ?? 'C128';
         $payments = $sale->payments()->with('paymentMethod:id,name,alias_name')->get(['amount', 'payment_method_id'])->toArray();
         $data = compact(

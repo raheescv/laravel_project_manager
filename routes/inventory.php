@@ -31,7 +31,12 @@ Route::middleware('auth')->group(function (): void {
         Route::name('barcode::')->prefix('barcode')->group(function (): void {
             Route::get('print/{type?}/{id?}', [BarcodeController::class, 'print'])->name('print');
             Route::get('view/{id?}', [BarcodeController::class, 'print'])->name('view');
+            Route::get('preview/{id?}', [BarcodeController::class, 'preview'])->name('preview');
             Route::get('configuration', [BarcodeController::class, 'configuration'])->name('configuration')->can('configuration.barcode');
+            Route::get('configuration/{templateKey}', [BarcodeController::class, 'configurationEdit'])->name('configuration.edit')->can('configuration.barcode');
+            Route::get('configuration/{templateKey}/data', [BarcodeController::class, 'configurationData'])->name('configuration.data')->can('configuration.barcode');
+            Route::post('configuration/{templateKey}/save', [BarcodeController::class, 'saveConfigurationTemplate'])->name('configuration.save')->can('configuration.barcode');
+            Route::post('configuration/{templateKey}/reset', [BarcodeController::class, 'resetConfigurationTemplate'])->name('configuration.reset')->can('configuration.barcode');
             Route::name('cart::')->prefix('cart')->group(function (): void {
                 Route::get('', [BarcodeController::class, 'index'])->name('index')->can('inventory.barcode cart');
                 Route::get('print', [BarcodeController::class, 'cartPrint'])->name('print');

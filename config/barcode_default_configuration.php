@@ -35,6 +35,9 @@ return [
         'visible' => false,
         'char_limit' => 50,
     ],
+    'logo' => [
+        'visible' => false,
+    ],
     'price' => [
         'font_size' => 16,
         'align' => 'left',
@@ -69,6 +72,12 @@ return [
             'left' => 2,
             'width' => 180,
             'height' => 12,
+        ],
+        'logo' => [
+            'top' => 78,
+            'left' => 2,
+            'width' => 28,
+            'height' => 18,
         ],
         'price' => [
             'top' => 78,

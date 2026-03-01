@@ -39,6 +39,24 @@
 
         /* Using system fonts instead of DejaVu Sans */
 
+        html {
+            overflow: hidden;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            @if (!empty($isPreview))
+                min-height: 100vh;
+                display: flex;
+                align-items: flex-start;
+                justify-content: center;
+                padding-top: 28px;
+                background: #ffffff;
+            @endif
+        }
+
         .barcode-container {
             position: relative;
             width: {{ $settings['width'] ?? 40 }}mm;
@@ -64,6 +82,8 @@
             text-align: {{ $settings['product_name']['align'] }};
             line-height: 1.1;
             font-weight: 600;
+            direction: ltr;
+            unicode-bidi: isolate;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
@@ -91,6 +111,13 @@
             text-align: {{ $settings['company_name']['align'] }};
             font-weight: bold;
             letter-spacing: 0.5px;
+        }
+
+        .company-logo img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            display: block;
         }
 
         .product-size {
@@ -164,7 +191,7 @@
     </style>
 </head>
 
-<body style="margin:0;padding:0;">
+<body>
     <div class="barcode-container">
         @if (($settings['size']['visible'] ?? true) && !empty($product->size))
             <div id="product-size" class="barcode-element"
@@ -174,7 +201,7 @@
         @endif
         @if ($settings['product_name']['visible'] ?? true)
             <div id="product-name" class="barcode-element product-name" draggable="true" style="{{ getElementStyle('product_name', $settings) }}">
-                <b>{{ substr($product->name, 0, (int) $settings['product_name']['char_limit']) }}</b>
+                <bdo dir="ltr">{{ mb_substr($product->name, 0, (int) $settings['product_name']['char_limit']) }}</bdo>
                 <div class="element-handle top-left"></div>
                 <div class="element-handle top-right"></div>
             </div>
@@ -182,7 +209,7 @@
 
         @if ($settings['product_name_arabic']['visible'] ?? true)
             <div id="product-name-arabic" class="barcode-element product-name-arabic" draggable="true" style="{{ getElementStyle('product_name_arabic', $settings) }}">
-                <bdo dir="rtl">{{ substr($product->name_arabic, 0, (int) $settings['product_name_arabic']['char_limit']) }}</bdo>
+                <bdo dir="rtl">{{ mb_substr($product->name_arabic, 0, (int) $settings['product_name_arabic']['char_limit']) }}</bdo>
                 <div class="element-handle top-left"></div>
                 <div class="element-handle top-right"></div>
             </div>
@@ -209,6 +236,12 @@
         @if ($settings['company_name']['visible'] ?? true)
             <div class="barcode-element company-name" style="{{ getElementStyle('company_name', $settings) }}">
                 {{ $company_name }}
+            </div>
+        @endif
+
+        @if (($settings['logo']['visible'] ?? false) && !empty($company_logo))
+            <div class="barcode-element company-logo" style="{{ getElementStyle('logo', $settings) }}">
+                <img src="{{ $company_logo }}" alt="Company Logo">
             </div>
         @endif
 
