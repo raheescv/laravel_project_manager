@@ -66,6 +66,13 @@
             box-sizing: border-box;
             font-family: Arial, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
             page-break-inside: avoid;
+            background: #fff;
+            border: 2px solid transparent;
+            border-radius: 0;
+            @if (!empty($isPreview))
+                border-color: #bfdbfe;
+                box-shadow: inset 0 0 0 1px rgba(191, 219, 254, 0.4);
+            @endif
         }
 
         .barcode-element {

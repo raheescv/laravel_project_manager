@@ -110,7 +110,13 @@
         </div>
 
         <div class="barcode-preview-stage">
-          <iframe :src="previewUrl" class="barcode-preview-stage__frame" scrolling="no"></iframe>
+          <div class="barcode-preview-stage__sheet" :style="previewSheetStyle">
+            <iframe
+              :src="previewUrl"
+              class="barcode-preview-stage__frame"
+              scrolling="no"
+            ></iframe>
+          </div>
         </div>
       </section>
 
@@ -238,6 +244,22 @@ const selectedElementBox = computed(() => {
   }
 
   return settings.value.elements[key]
+})
+const previewSheetStyle = computed(() => {
+  const width = Number(settings.value.width || 50)
+  const height = Number(settings.value.height || 30)
+  const longerSide = Math.max(width, height)
+  const scale = Math.max(12, Math.min(22, 900 / longerSide))
+  const renderedWidth = Math.round(width * scale)
+  const renderedHeight = Math.round(height * scale)
+
+  return {
+    width: `${renderedWidth}px`,
+    height: `${renderedHeight}px`,
+    aspectRatio: `${width} / ${height}`,
+    maxWidth: '100%',
+    maxHeight: '100%',
+  }
 })
 
 async function loadData() {
@@ -643,17 +665,25 @@ onBeforeUnmount(clearAutoSaveTimer)
   justify-content: center;
 }
 
-.barcode-preview-stage__frame {
-  width: min(100%, 760px);
-  height: 420px;
-  max-height: 100%;
-  overflow: hidden;
-  border: 0;
-  border-radius: 16px;
+.barcode-preview-stage__sheet {
+  flex: 0 1 auto;
+  display: flex;
+  align-items: stretch;
+  justify-content: stretch;
+  border-radius: 24px;
+  border: 2px solid #bfdbfe;
   background: #fff;
   box-shadow: 0 18px 34px rgba(15, 23, 42, 0.08);
-  outline: 2px solid rgba(191, 219, 254, 0.9);
-  outline-offset: -2px;
+  overflow: hidden;
+}
+
+.barcode-preview-stage__frame {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  border: 0;
+  background: #fff;
+  display: block;
 }
 
 .barcode-field-grid {
