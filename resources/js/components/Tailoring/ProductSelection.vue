@@ -88,15 +88,15 @@
                 <!-- Actions -->
                 <div
                     class="col-span-2 sm:col-span-3 md:col-span-4 lg:col-span-1 flex flex-col-reverse sm:flex-row gap-1.5 justify-end items-end">
-                    <button type="button" @click="handleClear" tabindex="-1" class="action-btn action-btn-secondary">
-                        <i class="fa fa-times"></i>
-                        Clear
-                    </button>
                     <button type="button" @click="handleAdd" :disabled="isLoading" class="action-btn"
                         :class="isEditing ? 'action-btn-edit' : 'action-btn-add'">
                         <i v-if="isLoading" class="fa fa-spinner fa-spin"></i>
                         <i v-else :class="isEditing ? 'fa fa-save' : 'fa fa-plus'"></i>
                         {{ isLoading ? 'Wait...' : (isEditing ? 'Update' : 'Add') }}
+                    </button>
+                    <button type="button" @click="handleClear" tabindex="-1" class="action-btn action-btn-secondary">
+                        <i class="fa fa-times"></i>
+                        Clear
                     </button>
                 </div>
             </div>
