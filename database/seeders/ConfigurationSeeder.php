@@ -26,6 +26,7 @@ class ConfigurationSeeder extends Seeder
         Configuration::updateOrCreate(['tenant_id' => 1, 'key' => 'default_product_type'], ['value' => 'service']);
         Configuration::updateOrCreate(['tenant_id' => 1, 'key' => 'default_purchase_branch_id'], ['value' => json_encode([1])]);
         Configuration::updateOrCreate(['tenant_id' => 1, 'key' => 'sale_item_row_mode'], ['value' => 'merge']);
+        Configuration::updateOrCreate(['tenant_id' => 1, 'key' => 'purchase_item_row_mode'], ['value' => 'merge']);
         Configuration::updateOrCreate(['tenant_id' => 1, 'key' => 'print_item_label'], ['value' => 'product']);
         Configuration::updateOrCreate(['tenant_id' => 1, 'key' => 'enable_barcode_in_print'], ['value' => 'yes']);
         $saleVisibleColumns = [

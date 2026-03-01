@@ -15,6 +15,11 @@
                     {{ html()->input('number', 'default_quantity')->value('')->class('form-control form-control-sm')->attribute('step','0.001')->placeholder('Enter default quantity (e.g., 1)')->attribute('wire:model', 'default_quantity') }}
                     <small class="form-text text-muted">Default quantity when adding a new item to purchase.</small>
                 </div>
+                <div class="col-12 col-md-6">
+                    <label class="form-label fw-medium small mb-1" for="purchase_item_row_mode">Same Product Cart Rows</label>
+                    {{ html()->select('purchase_item_row_mode', ['merge' => 'Single Row (merge quantity)', 'separate' => 'Multiple Rows (add separately)'])->value('')->class('form-select form-select-sm')->placeholder('Choose how repeated product selection behaves')->attribute('wire:model', 'purchase_item_row_mode') }}
+                    <small class="form-text text-muted">Controls whether selecting the same product again merges quantity or adds a separate purchase row.</small>
+                </div>
             </div>
         </div>
         <div class="card-footer bg-light text-end py-2 px-3">
@@ -24,5 +29,4 @@
         </div>
     </form>
 </div>
-
 

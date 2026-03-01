@@ -43,9 +43,12 @@ class Page extends Component
 
     public $default_payment_method_id = 1;
 
+    public $purchase_item_row_mode = 'merge';
+
     public function mount($table_id = null)
     {
         $this->table_id = $table_id;
+        $this->purchase_item_row_mode = Configuration::where('key', 'purchase_item_row_mode')->value('value') ?? 'merge';
         $this->paymentMethods = Account::where('id', $this->default_payment_method_id)->pluck('name', 'id')->toArray();
 
         $this->payment_method_name = '';
@@ -74,7 +77,7 @@ class Page extends Component
             $this->purchases = $this->purchase->toArray();
             $this->accounts = [];
             $this->items = $this->purchase->items->mapWithKeys(function ($item) {
-                $key = $item['product_id'];
+                $key = $this->buildItemKey($item['product_id'], $item['id'] ?? null);
 
                 return [
                     $key => [
@@ -188,8 +191,8 @@ class Page extends Component
     {
         $product = Product::find($this->product_id);
         if ($product) {
-            $this->addToCart($product);
-            $this->cartCalculator($product->id);
+            $key = $this->addToCart($product);
+            $this->cartCalculator($key);
             $this->dispatch('OpenProductBox');
         }
     }
@@ -210,9 +213,8 @@ class Page extends Component
         if ($key) {
             $this->singleCartCalculator($key);
         } else {
-            foreach ($this->items as $value) {
-                $key = $value['product_id'];
-                $this->singleCartCalculator($key);
+            foreach (array_keys($this->items) as $itemKey) {
+                $this->singleCartCalculator($itemKey);
             }
         }
     }
@@ -252,10 +254,10 @@ class Page extends Component
 
     public function addToCart($product)
     {
-        $key = $product->id;
         $product->load(['unit', 'units.subUnit']);
 
         $defaultQuantity = (float) (Configuration::where('key', 'purchase_default_quantity')->value('value') ?? '1');
+        $key = $this->findMatchingItemKey((int) $product->id) ?? $this->buildItemKey((int) $product->id);
 
         $single = [
             'key' => $key,
@@ -277,7 +279,8 @@ class Page extends Component
         }
         $this->singleCartCalculator($key);
         $this->mainCalculator();
-        // $this->dispatch('success', ['message' => 'item added successfully']);
+
+        return $key;
     }
 
     public function getProductUnits($product)
@@ -479,5 +482,35 @@ class Page extends Component
     public function render()
     {
         return view('livewire.purchase.page');
+    }
+
+    protected function buildItemKey(int $productId, int|string|null $suffix = null): string
+    {
+        $baseKey = (string) $productId;
+
+        if ($suffix !== null) {
+            return $baseKey.'-'.$suffix;
+        }
+
+        if ($this->purchase_item_row_mode === 'separate') {
+            return $baseKey.'-'.uniqid();
+        }
+
+        return $baseKey;
+    }
+
+    protected function findMatchingItemKey(int $productId): ?string
+    {
+        if ($this->purchase_item_row_mode === 'separate') {
+            return null;
+        }
+
+        foreach ($this->items as $key => $item) {
+            if ((int) ($item['product_id'] ?? 0) === $productId) {
+                return $key;
+            }
+        }
+
+        return null;
     }
 }
