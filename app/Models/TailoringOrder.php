@@ -50,6 +50,7 @@ class TailoringOrder extends Model implements AuditableContracts
         'cutter_id',
         'cutter_rating',
         'completion_date',
+        'cutting_slip_printed_at',
         'created_by',
         'updated_by',
         'deleted_by',
@@ -59,6 +60,7 @@ class TailoringOrder extends Model implements AuditableContracts
         'order_date' => 'date:Y-m-d',
         'delivery_date' => 'date:Y-m-d',
         'completion_date' => 'date:Y-m-d',
+        'cutting_slip_printed_at' => 'datetime',
         'gross_amount' => 'decimal:2',
         'item_discount' => 'decimal:2',
         'tax_amount' => 'decimal:2',
@@ -251,6 +253,9 @@ class TailoringOrder extends Model implements AuditableContracts
                 }
 
                 return $q;
+            })
+            ->when($filters['only_unprinted_cutting_slips'] ?? false, function ($q) {
+                return $q->whereNull('tailoring_orders.cutting_slip_printed_at');
             })
             ->when(($filters['from_date'] ?? '') && ($filters['date_type'] ?? ''), function ($q) use ($filters) {
                 $dateField = ($filters['date_type'] ?? 'order_date') === 'delivery_date' ? 'delivery_date' : 'order_date';

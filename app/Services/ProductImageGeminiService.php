@@ -107,9 +107,11 @@ class ProductImageGeminiService
                         ->generate('gemini', $model);
                 } catch (RateLimitedException $e) {
                     $lastError = $e;
+
                     continue;
                 } catch (\Throwable $e) {
                     $lastError = $e;
+
                     continue;
                 }
             }
@@ -179,14 +181,14 @@ class ProductImageGeminiService
             // $department !== '' ? "Department reference: {$department}." : null,
             $description !== '' ? "Product details: {$description}." : null,
             $brand !== '' ? "Brand reference: {$brand}." : null,
-            "Side profile, perfectly centered.",
-            "85mm lens, f/11, ISO 100.",
-            "Softbox lighting left and right.",
-            "Clean pure white seamless background.",
-            "Natural soft shadow below shoe.",
-            "High-detail texture, sharp stitching.",
-            "No logo, no watermark, no text.",
-            "E-commerce catalog style.",
+            'Side profile, perfectly centered.',
+            '85mm lens, f/11, ISO 100.',
+            'Softbox lighting left and right.',
+            'Clean pure white seamless background.',
+            'Natural soft shadow below shoe.',
+            'High-detail texture, sharp stitching.',
+            'No logo, no watermark, no text.',
+            'E-commerce catalog style.',
         ]);
 
         return implode(' ', $parts);

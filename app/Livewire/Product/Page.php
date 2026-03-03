@@ -10,8 +10,8 @@ use App\Actions\Product\UpdateAction;
 use App\Models\Configuration;
 use App\Models\Department;
 use App\Models\Product;
-use App\Services\ProductImageGeminiService;
 use App\Models\Unit;
+use App\Services\ProductImageGeminiService;
 use Faker\Factory;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -318,7 +318,7 @@ class Page extends Component
                 throw new \Exception('Product not found.');
             }
 
-            $response = app(ProductImageGeminiService::class)->generateAndAttach( $product, null, true );
+            $response = app(ProductImageGeminiService::class)->generateAndAttach($product, null, true);
 
             if (! ($response['success'] ?? false)) {
                 throw new \Exception($response['message'] ?? 'Failed to generate product image.');

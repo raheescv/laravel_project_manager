@@ -98,4 +98,3 @@ class DownloadProductImageCommand extends Command
         return self::SUCCESS;
     }
 }
-

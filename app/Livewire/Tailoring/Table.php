@@ -24,6 +24,8 @@ class Table extends Component
 
     public $payment_status = '';
 
+    public $only_unprinted_cutting_slips = false;
+
     public $date_type = 'order_date';
 
     public $from_date = '';
@@ -138,6 +140,21 @@ class Table extends Component
         $this->dispatch('Tailoring-Refresh-Component');
     }
 
+    public function printSelectedCuttingSlips(): void
+    {
+        if (empty($this->selected)) {
+            $this->dispatch('error', ['message' => 'No orders selected for cutting slip print.']);
+
+            return;
+        }
+        $this->dispatch('open-tailoring-cutting-slips', link: route('tailoring::order::print-cutting-slips', [
+            'ids' => array_values(array_map('intval', $this->selected)),
+        ]));
+
+        $this->selected = [];
+        $this->selectAll = false;
+    }
+
     protected function getBaseQuery()
     {
         $filters = [
@@ -146,6 +163,7 @@ class Table extends Component
             'customer_id' => $this->customer_id,
             'status' => $this->status,
             'payment_status' => $this->payment_status,
+            'only_unprinted_cutting_slips' => $this->only_unprinted_cutting_slips,
             'date_type' => $this->date_type,
             'from_date' => $this->from_date,
             'to_date' => $this->to_date,

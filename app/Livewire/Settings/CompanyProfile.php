@@ -12,6 +12,7 @@ class CompanyProfile extends Component
     use WithFilePond;
 
     public $company_name;
+
     public $company_description;
 
     public $mobile;

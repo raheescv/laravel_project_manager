@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cutting Slip - {{ $order->order_no }}</title>
+    <title>Cutting Slips</title>
     <style>
         * {
             box-sizing: border-box;
@@ -39,6 +39,11 @@
             border: 1.6px solid #111;
             padding: 10px 12px;
             overflow: hidden;
+        }
+
+        .sheet-break {
+            margin-bottom: 12px;
+            page-break-after: always;
         }
 
         .header {
@@ -388,6 +393,10 @@
                 overflow: hidden;
             }
 
+            .sheet-break {
+                margin-bottom: 0;
+            }
+
             .no-print {
                 display: none !important;
             }
@@ -400,14 +409,18 @@
 </head>
 
 <body>
-    @php
-        $items = $items ?? $order->items;
-    @endphp
+    @foreach ($slips as $slip)
+        @php
+            $order = $slip['order'];
+            $items = $slip['items'];
+            $sheetClass = $loop->last ? '' : 'sheet-break';
+        @endphp
 
-    @include('print.tailoring.partials.cutting-slip-sheet')
+        @include('print.tailoring.partials.cutting-slip-sheet')
+    @endforeach
 
     <div class="no-print">
-        <button onclick="window.print()">Print Cutting Slip</button>
+        <button onclick="window.print()">Print Cutting Slips</button>
     </div>
 </body>
 
