@@ -88,7 +88,7 @@
             <td style="width: 34%;">
                 <div class="left-title">{{ $order->customer_name ?: 'Walk-in Customer' }}</div>
                 <div class="subtle">Mobile: {{ $order->customer_mobile ?? '-' }}</div>
-                <div class="subtle">Work Order: {{ $order->order_no }}</div>
+                <div class="work_order_no">Work Order: {{ $order->order_no }}</div>
             </td>
             <td style="width: 32%;">
                 <div class="center-title">{{ strtoupper($firstItem?->category?->name ?? 'TAILORING') }} CUTTING SLIP</div>

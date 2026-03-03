@@ -64,6 +64,11 @@
             font-size: 12px;
         }
 
+        .work_order_no {
+            font-size: 14px;
+            font-weight: 700;
+        }
+
         .center-title {
             text-align: center;
             font-size: 15px;
