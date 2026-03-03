@@ -17,7 +17,7 @@
         body {
             font-family: Arial, Helvetica, sans-serif;
             font-size: 12px;
-            color: #0f172a;
+            color: #000;
             margin: 0;
             padding: 0;
             background: #fff;
@@ -40,7 +40,7 @@
 
         .title p {
             margin: 0;
-            color: #475569;
+            color: #000;
             font-size: 12px;
         }
 
@@ -52,7 +52,7 @@
 
         .meta-grid td {
             width: 25%;
-            border: 1px solid #e2e8f0;
+            border: 1px solid #000;
             padding: 8px;
             vertical-align: top;
         }
@@ -60,7 +60,7 @@
         .meta-label {
             display: block;
             font-size: 11px;
-            color: #64748b;
+            color: #000;
             margin-bottom: 2px;
             text-transform: uppercase;
         }
@@ -73,7 +73,7 @@
             margin: 14px 0 6px;
             font-size: 13px;
             font-weight: 700;
-            color: #1d4ed8;
+            color: #000;
             text-transform: uppercase;
             letter-spacing: 0.2px;
         }
@@ -86,13 +86,13 @@
 
         .report-table th,
         .report-table td {
-            border: 1px solid #dbe2ea;
+            border: 1px solid #000;
             padding: 7px 8px;
             vertical-align: top;
         }
 
         .report-table thead th {
-            background: #f1f5f9;
+            background: #fff;
             text-align: left;
             font-size: 11px;
             text-transform: uppercase;
@@ -104,7 +104,7 @@
         }
 
         .muted {
-            color: #64748b;
+            color: #333;
         }
 
         .payment-breakdown span {
@@ -132,31 +132,31 @@
         }
 
         .summary-card {
-            border: 1px solid #dbe2ea;
-            border-left: 4px solid #2563eb;
-            border-radius: 8px;
+            border: 1px solid #000;
+            border-left: 4px solid #000;
+            border-radius: 0;
             padding: 8px 10px;
-            background: #f8fbff;
+            background: #fff;
         }
 
         .summary-card.warm {
-            border-left-color: #ea580c;
-            background: #fffaf5;
+            border-left-color: #000;
+            background: #fff;
         }
 
         .summary-card.success {
-            border-left-color: #059669;
-            background: #f3fff9;
+            border-left-color: #000;
+            background: #fff;
         }
 
         .summary-card.payment-group {
-            border-left-color: #0ea5e9;
-            background: #f6fbff;
+            border-left-color: #000;
+            background: #fff;
         }
 
         .summary-label {
             display: block;
-            color: #64748b;
+            color: #000;
             font-size: 10px;
             text-transform: uppercase;
             letter-spacing: 0.2px;
@@ -166,7 +166,7 @@
 
         .summary-value {
             display: block;
-            color: #0f172a;
+            color: #000;
             font-size: 14px;
             font-weight: 800;
         }
@@ -179,8 +179,8 @@
         }
 
         .group-chip {
-            border: 1px solid #dbe2ea;
-            border-radius: 6px;
+            border: 1px solid #000;
+            border-radius: 0;
             padding: 6px 8px;
             background: #fff;
         }
@@ -197,7 +197,7 @@
         .footer {
             margin-top: 12px;
             text-align: right;
-            color: #64748b;
+            color: #000;
             font-size: 11px;
         }
     </style>
