@@ -11,6 +11,7 @@ use App\Models\Department;
 use App\Models\Unit;
 use App\Services\ProductImageFolderMatcher;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
 use Livewire\Component;
 use Livewire\WithFileUploads;
@@ -221,7 +222,7 @@ class Import extends Component
                 throw new \RuntimeException('Unable to create a temporary file for Dropbox download.');
             }
 
-            $response = \Illuminate\Support\Facades\Http::timeout(300)
+            $response = Http::timeout(300)
                 ->withOptions(['sink' => $temporaryZipPath, 'allow_redirects' => true])
                 ->get($downloadUrl);
 
