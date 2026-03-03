@@ -8,7 +8,6 @@ use App\Jobs\Product\ImportProductImagesFromDropboxJob;
 use App\Jobs\Product\ImportProductJob;
 use App\Models\Category;
 use App\Models\Department;
-use App\Models\Product;
 use App\Models\Unit;
 use App\Services\ProductImageFolderMatcher;
 use Illuminate\Support\Facades\Auth;
@@ -215,32 +214,29 @@ class Import extends Component
         ]);
 
         try {
-            $detectedCodes = collect($matcher->collectCodesFromDropboxFolder($this->dropboxFolderUrl))
-                ->filter()
-                ->values();
+            $downloadUrl = $matcher->buildDropboxDownloadUrl($this->dropboxFolderUrl);
+            $temporaryZipPath = tempnam(sys_get_temp_dir(), 'dropbox-folder-');
 
-            $matchingProducts = Product::query()
-                ->whereIn('code', $detectedCodes->all())
-                ->orderBy('code')
-                ->get(['id', 'code', 'name']);
+            if ($temporaryZipPath === false) {
+                throw new \RuntimeException('Unable to create a temporary file for Dropbox download.');
+            }
 
-            $matchedCodes = $matchingProducts
-                ->pluck('code')
-                ->map(fn (string $code) => $matcher->normalizeCode($code))
-                ->unique()
-                ->values();
+            $response = \Illuminate\Support\Facades\Http::timeout(300)
+                ->withOptions(['sink' => $temporaryZipPath, 'allow_redirects' => true])
+                ->get($downloadUrl);
 
-            $missingCodes = $detectedCodes
-                ->reject(fn (string $code) => $matchedCodes->contains($code))
-                ->values();
+            if (! $response->successful()) {
+                @unlink($temporaryZipPath);
 
-            $this->dropboxMatchSummary = [
-                'total_file_codes' => $detectedCodes->count(),
-                'matching_product_codes' => $matchedCodes->count(),
-                'missing_product_codes' => $missingCodes->count(),
-                'matched_products' => $matchingProducts->toArray(),
-                'missing_codes' => $missingCodes->take(50)->all(),
-            ];
+                throw new \RuntimeException('Dropbox folder download failed.');
+            }
+
+            try {
+                $this->dropboxMatchSummary = $matcher->summarizeMatchesFromZip($temporaryZipPath);
+            } finally {
+                @unlink($temporaryZipPath);
+            }
+
             $this->dropboxImportSummary = null;
             $this->dropboxImportQueued = false;
         } catch (\Throwable $exception) {

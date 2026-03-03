@@ -90,27 +90,33 @@
                                             @enderror
                                             <div class="form-text">
                                                 We compare image filenames from the shared folder against existing <code>product code</code> values.
-                                                Example: <code>ABC123.jpg</code> matches product code <code>ABC123</code>.
+                                                Examples: <code>ABC123.jpg</code>, <code>ABC123-1.jpg</code>, and <code>ABC123_front.png</code> all match product code <code>ABC123</code>.
                                             </div>
 
                                             @if ($dropboxMatchSummary)
                                                 <div class="row g-3 mt-3">
-                                                    <div class="col-md-4">
+                                                    <div class="col-md-3">
                                                         <div class="border rounded-3 p-3 bg-light h-100">
-                                                            <div class="small text-muted text-uppercase fw-semibold">Folder Codes Found</div>
-                                                            <div class="fs-4 fw-bold">{{ $dropboxMatchSummary['total_file_codes'] }}</div>
+                                                            <div class="small text-muted text-uppercase fw-semibold">Image Files Found</div>
+                                                            <div class="fs-4 fw-bold">{{ $dropboxMatchSummary['total_image_files'] }}</div>
                                                         </div>
                                                     </div>
-                                                    <div class="col-md-4">
+                                                    <div class="col-md-3">
                                                         <div class="border rounded-3 p-3 bg-light h-100">
-                                                            <div class="small text-muted text-uppercase fw-semibold">Matching Product Codes</div>
+                                                            <div class="small text-muted text-uppercase fw-semibold">Matched Image Files</div>
+                                                            <div class="fs-4 fw-bold text-success">{{ $dropboxMatchSummary['matched_image_files'] }}</div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-md-3">
+                                                        <div class="border rounded-3 p-3 bg-light h-100">
+                                                            <div class="small text-muted text-uppercase fw-semibold">Matched Product Codes</div>
                                                             <div class="fs-4 fw-bold text-success">{{ $dropboxMatchSummary['matching_product_codes'] }}</div>
                                                         </div>
                                                     </div>
-                                                    <div class="col-md-4">
+                                                    <div class="col-md-3">
                                                         <div class="border rounded-3 p-3 bg-light h-100">
-                                                            <div class="small text-muted text-uppercase fw-semibold">Missing Product Codes</div>
-                                                            <div class="fs-4 fw-bold text-danger">{{ $dropboxMatchSummary['missing_product_codes'] }}</div>
+                                                            <div class="small text-muted text-uppercase fw-semibold">Unmatched Image Files</div>
+                                                            <div class="fs-4 fw-bold text-danger">{{ $dropboxMatchSummary['missing_image_files'] }}</div>
                                                         </div>
                                                     </div>
                                                 </div>

@@ -81,7 +81,9 @@ it('switches to a separate image upload tab on the import screen', function (): 
         ->call('setStepOneTab', 'images')
         ->assertSet('stepOneTab', 'images')
         ->assertSee('Dropbox Folder Match Check')
-        ->assertSee('Upload Product Images');
+        ->assertSee('Upload Product Images')
+        ->assertSee('ABC123-1.jpg')
+        ->assertSee('ABC123_front.png');
 });
 
 it('runs dropbox product image imports inside the tenant context', function (): void {

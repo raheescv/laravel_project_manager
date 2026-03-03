@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\Product;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -88,13 +89,62 @@ class ProductImageFolderMatcher
         return array_values(array_unique(array_column($entries, 'normalized_code')));
     }
 
+    public function summarizeMatchesFromZip(string $zipPath): array
+    {
+        $entries = collect($this->collectImageEntriesFromZip($zipPath));
+        [$productsByCode, $sortedProductCodes] = $this->loadProductsForMatching();
+
+        $matchedProducts = collect();
+        $missingCodes = collect();
+        $detectedCodes = collect();
+        $matchedImageFiles = 0;
+
+        foreach ($entries as $entry) {
+            $matchedCode = $this->resolveMatchingCode($entry['normalized_code'], $sortedProductCodes);
+
+            if ($matchedCode === null) {
+                $missingCodes->push($entry['normalized_code']);
+                $detectedCodes->push($entry['normalized_code']);
+
+                continue;
+            }
+
+            /** @var Product|null $product */
+            $product = $productsByCode->get($matchedCode);
+
+            if (! $product) {
+                $missingCodes->push($entry['normalized_code']);
+                $detectedCodes->push($entry['normalized_code']);
+
+                continue;
+            }
+
+            $matchedProducts->put($product->id, [
+                'id' => $product->id,
+                'code' => $product->code,
+                'name' => $product->name,
+            ]);
+
+            $detectedCodes->push($matchedCode);
+            $matchedImageFiles++;
+        }
+
+        return [
+            'total_image_files' => $entries->count(),
+            'matched_image_files' => $matchedImageFiles,
+            'missing_image_files' => $entries->count() - $matchedImageFiles,
+            'total_file_codes' => $detectedCodes->unique()->count(),
+            'matching_product_codes' => $matchedProducts->count(),
+            'missing_product_codes' => $missingCodes->unique()->count(),
+            'matched_products' => $matchedProducts->values()->all(),
+            'missing_codes' => $missingCodes->unique()->take(50)->values()->all(),
+        ];
+    }
+
     public function importMatchedImagesFromZip(string $zipPath): array
     {
         $entries = collect($this->collectImageEntriesFromZip($zipPath));
-        $productsByCode = Product::query()
-            ->get(['id', 'code', 'name', 'thumbnail'])
-            ->filter(fn (Product $product) => $this->normalizeCode((string) $product->code) !== '')
-            ->keyBy(fn (Product $product) => $this->normalizeCode((string) $product->code));
+        [$productsByCode, $sortedProductCodes] = $this->loadProductsForMatching();
 
         $zip = new ZipArchive();
         $openResult = $zip->open($zipPath);
@@ -104,6 +154,9 @@ class ProductImageFolderMatcher
         }
 
         $summary = [
+            'total_image_files' => $entries->count(),
+            'matched_image_files' => 0,
+            'missing_image_files' => 0,
             'total_file_codes' => $entries->pluck('normalized_code')->unique()->count(),
             'matched_product_codes' => 0,
             'imported_images' => 0,
@@ -115,13 +168,24 @@ class ProductImageFolderMatcher
 
         $matchedProducts = collect();
         $missingCodes = collect();
+        $detectedCodes = collect();
 
         foreach ($entries as $entry) {
+            $matchedCode = $this->resolveMatchingCode($entry['normalized_code'], $sortedProductCodes);
+
+            if ($matchedCode === null) {
+                $missingCodes->push($entry['normalized_code']);
+                $detectedCodes->push($entry['normalized_code']);
+
+                continue;
+            }
+
             /** @var Product|null $product */
-            $product = $productsByCode->get($entry['normalized_code']);
+            $product = $productsByCode->get($matchedCode);
 
             if (! $product) {
                 $missingCodes->push($entry['normalized_code']);
+                $detectedCodes->push($entry['normalized_code']);
 
                 continue;
             }
@@ -131,6 +195,7 @@ class ProductImageFolderMatcher
                 'code' => $product->code,
                 'name' => $product->name,
             ]);
+            $detectedCodes->push($matchedCode);
 
             $existingImage = $product->images()
                 ->where('method', 'normal')
@@ -166,10 +231,13 @@ class ProductImageFolderMatcher
             }
 
             $summary['imported_images']++;
+            $summary['matched_image_files']++;
         }
 
         $zip->close();
 
+        $summary['missing_image_files'] = $summary['total_image_files'] - $summary['matched_image_files'];
+        $summary['total_file_codes'] = $detectedCodes->unique()->count();
         $summary['matched_product_codes'] = $matchedProducts->count();
         $summary['missing_product_codes'] = $missingCodes->unique()->count();
         $summary['matched_products'] = $matchedProducts->values()->all();
@@ -224,6 +292,46 @@ class ProductImageFolderMatcher
     public function normalizeCode(string $value): string
     {
         return strtolower(trim($value));
+    }
+
+    protected function loadProductsForMatching(): array
+    {
+        $productsByCode = Product::query()
+            ->get(['id', 'code', 'name', 'thumbnail'])
+            ->filter(fn (Product $product) => $this->normalizeCode((string) $product->code) !== '')
+            ->keyBy(fn (Product $product) => $this->normalizeCode((string) $product->code));
+
+        $sortedProductCodes = $productsByCode
+            ->keys()
+            ->sortByDesc(fn (string $code) => strlen($code))
+            ->values();
+
+        return [$productsByCode, $sortedProductCodes];
+    }
+
+    protected function resolveMatchingCode(string $filenameCode, Collection $sortedProductCodes): ?string
+    {
+        foreach ($sortedProductCodes as $productCode) {
+            if ($filenameCode === $productCode) {
+                return $productCode;
+            }
+
+            if (! str_starts_with($filenameCode, $productCode)) {
+                continue;
+            }
+
+            $suffix = substr($filenameCode, strlen($productCode));
+
+            if ($suffix === '') {
+                return $productCode;
+            }
+
+            if (preg_match('/^[-_\s(]/', $suffix) === 1) {
+                return $productCode;
+            }
+        }
+
+        return null;
     }
 
     protected function generateStoredFilename(string $originalName, string $extension): string
