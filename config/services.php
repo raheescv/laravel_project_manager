@@ -73,4 +73,7 @@ return [
         'bot_token' => env('TELEGRAM_BOT_TOKEN'),
         'bot_username' => env('TELEGRAM_BOT_USERNAME'),
     ],
+    'gemini' => [
+        'image_models' => env('GEMINI_IMAGE_MODELS', 'gemini-2.5-flash-image-preview,gemini-3-pro-image-preview'),
+    ],
 ];

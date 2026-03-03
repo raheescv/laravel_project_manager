@@ -11,6 +11,7 @@ use App\Models\Configuration;
 use App\Models\Department;
 use App\Models\Product;
 use App\Models\Unit;
+use App\Services\ProductImageGeminiService;
 use Faker\Factory;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -298,6 +299,34 @@ class Page extends Component
             $this->dispatch('success', ['message' => $response['message']]);
             $this->mount($this->type, $this->table_id);
         } catch (\Exception $e) {
+            $this->dispatch('error', ['message' => $e->getMessage()]);
+        }
+    }
+
+    public function downloadImageWithGemini()
+    {
+        if (! $this->table_id) {
+            $this->dispatch('error', ['message' => 'Please save the product before downloading an AI image.']);
+
+            return;
+        }
+
+        try {
+            $product = Product::find($this->table_id);
+
+            if (! $product) {
+                throw new \Exception('Product not found.');
+            }
+
+            $response = app(ProductImageGeminiService::class)->generateAndAttach($product, null, true);
+
+            if (! ($response['success'] ?? false)) {
+                throw new \Exception($response['message'] ?? 'Failed to generate product image.');
+            }
+
+            $this->mount($this->type, $this->table_id, $dropdownValues = false);
+            $this->dispatch('success', ['message' => $response['message']]);
+        } catch (\Throwable $e) {
             $this->dispatch('error', ['message' => $e->getMessage()]);
         }
     }

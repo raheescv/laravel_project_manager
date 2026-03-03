@@ -16,6 +16,7 @@ use App\Actions\Tailoring\Payment\CreateAction as PaymentCreateAction;
 use App\Actions\Tailoring\Payment\DeleteAction as PaymentDeleteAction;
 use App\Actions\Tailoring\Payment\UpdateAction as PaymentUpdateAction;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Tailoring\PrintTailoringCuttingSlipsRequest;
 use App\Models\Account;
 use App\Models\Configuration;
 use App\Models\Country;
@@ -36,6 +37,7 @@ use App\Traits\ApiResponseTrait;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 
@@ -722,29 +724,101 @@ class OrderController extends Controller
             return redirect()->back()->with('error', $result['message']);
         }
 
-        $order = $result['data'];
+        $slip = $this->buildCuttingSlipForOrder($result['data'], (string) $categoryId, (string) $modelId);
 
-        // Filter items by category and model
-        $filteredItems = $order->items->filter(function ($item) use ($categoryId, $modelId) {
-            $catMatch = (string) $item->tailoring_category_id === (string) $categoryId;
-            $modelMatch = true;
-            if ($modelId !== 'all') {
-                $modelMatch = (string) $item->tailoring_category_model_id === (string) $modelId;
-            }
-
-            return $catMatch && $modelMatch;
-        });
-
-        if ($filteredItems->isEmpty()) {
+        if ($slip === null) {
             return redirect()->back()->with('error', 'No items found for the selected category/model');
         }
 
+        $this->markCuttingSlipsPrinted(collect([$slip]));
+
         return view('print.tailoring.cutting-slip', [
+            'order' => $slip['order'],
+            'items' => $slip['items'],
+            'categoryId' => $slip['categoryId'],
+            'modelId' => $slip['modelId'],
+        ]);
+    }
+
+    public function printCuttingSlips(PrintTailoringCuttingSlipsRequest $request)
+    {
+        $orders = TailoringOrder::query()
+            ->whereIn('id', $request->validated('ids'))
+            ->with([
+                'branch:id,name,location,mobile',
+                'account:id,name,mobile',
+                'salesman:id,name',
+                'cutter:id,name',
+                'items' => function ($query): void {
+                    $query->with([
+                        'category' => function ($q): void {
+                            $q->with('activeMeasurements');
+                        },
+                        'categoryModel:id,name',
+                        'categoryModelType:id,name',
+                        'product:id,name,barcode',
+                        'latestTailorAssignment.tailor:id,name',
+                    ])->orderBy('item_no');
+                },
+            ])
+            ->orderByDesc('id')
+            ->get();
+
+        $slips = $orders
+            ->flatMap(function (TailoringOrder $order): Collection {
+                return $order->items
+                    ->groupBy(fn ($item) => (string) ($item->tailoring_category_id ?? 'other'))
+                    ->map(fn (Collection $items, string $categoryId) => $this->buildCuttingSlipForOrder($order, $categoryId, 'all'))
+                    ->filter()
+                    ->values();
+            })
+            ->values();
+
+        if ($slips->isEmpty()) {
+            return redirect()->back()->with('error', 'No cutting slips found for the selected orders.');
+        }
+
+        $this->markCuttingSlipsPrinted($slips);
+
+        return view('print.tailoring.cutting-slips', [
+            'slips' => $slips,
+        ]);
+    }
+
+    protected function buildCuttingSlipForOrder(TailoringOrder $order, string $categoryId, string $modelId = 'all'): ?array
+    {
+        $items = $order->items
+            ->filter(function ($item) use ($categoryId, $modelId): bool {
+                $categoryMatches = (string) ($item->tailoring_category_id ?? 'other') === $categoryId;
+                $modelMatches = $modelId === 'all' || (string) $item->tailoring_category_model_id === $modelId;
+
+                return $categoryMatches && $modelMatches;
+            })
+            ->values();
+
+        if ($items->isEmpty()) {
+            return null;
+        }
+
+        return [
             'order' => $order,
-            'items' => $filteredItems,
+            'items' => $items,
             'categoryId' => $categoryId,
             'modelId' => $modelId,
-        ]);
+        ];
+    }
+
+    protected function markCuttingSlipsPrinted(Collection $slips): void
+    {
+        $orderIds = $slips->pluck('order.id')->filter()->unique()->values();
+
+        if ($orderIds->isEmpty()) {
+            return;
+        }
+
+        TailoringOrder::query()
+            ->whereIn('id', $orderIds)
+            ->update(['cutting_slip_printed_at' => now()]);
     }
 
     public function printOrderReceipt($id)

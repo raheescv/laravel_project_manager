@@ -18,7 +18,7 @@ return [
     'employee commission' => ['create', 'view', 'edit', 'delete'],
     'role' => ['create', 'view', 'edit', 'delete', 'permissions'],
     'branch' => ['create', 'view', 'edit', 'delete'],
-    'product' => ['create', 'view', 'edit', 'delete', 'import', 'export'],
+    'product' => ['create', 'view', 'edit', 'delete', 'import', 'export', 'ai image generation'],
     'service' => ['create', 'view', 'edit', 'delete', 'import', 'export'],
     'combo offer' => ['create', 'view', 'edit', 'delete'],
     'package category' => ['create', 'view', 'edit', 'delete'],

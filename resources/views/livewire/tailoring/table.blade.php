@@ -8,6 +8,11 @@
                             <i class="demo-pli-file-excel me-1"></i> Export
                         </button>
                     @endcan
+                    @can('tailoring order.view')
+                        <button class="btn btn-sm btn-outline-primary" title="Print cutting slips for selected orders" wire:click="printSelectedCuttingSlips()">
+                            <i class="fa fa-print me-1"></i> Print Cutting Slips
+                        </button>
+                    @endcan
                     @can('tailoring order.delete')
                         <button class="btn btn-sm btn-outline-danger" title="Delete selected items" wire:click="delete()" wire:confirm="Are you sure you want to delete the selected items?">
                             <i class="demo-pli-recycling me-1"></i> Delete
@@ -120,6 +125,17 @@
                                 </select>
                             </div>
                         </div>
+                        <div class="col-md-3">
+                            <div class="form-group">
+                                <label class="form-label text-muted fw-semibold small mb-2 d-block" for="only_unprinted_cutting_slips">
+                                    <i class="fa fa-print me-1"></i> Cutting Slip Filter
+                                </label>
+                                <div class="form-check form-switch mt-1">
+                                    <input type="checkbox" class="form-check-input" id="only_unprinted_cutting_slips" wire:model.live="only_unprinted_cutting_slips">
+                                    <label class="form-check-label small fw-semibold" for="only_unprinted_cutting_slips">Only unprinted slips</label>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -205,6 +221,18 @@
                                             <small class="text-muted ms-2">
                                                 <i class="fa fa-truck fs-6 text-info"></i>
                                                 {{ systemDate($order->delivery_date) }}
+                                            </small>
+                                        @endif
+                                        <br>
+                                        @if ($order->cutting_slip_printed_at)
+                                            <small class="text-success">
+                                                <i class="fa fa-print fs-6"></i>
+                                                Printed {{ $order->cutting_slip_printed_at->format('d/m/Y h:i A') }}
+                                            </small>
+                                        @else
+                                            <small class="text-warning">
+                                                <i class="fa fa-print fs-6"></i>
+                                                Not printed
                                             </small>
                                         @endif
                                     </div>
@@ -314,6 +342,14 @@
     @push('scripts')
         <script>
             $(document).ready(function() {
+                Livewire.on('open-tailoring-cutting-slips', (event) => {
+                    const link = event?.link ?? event?.[0]?.link ?? event?.detail?.[0]?.link;
+
+                    if (link) {
+                        window.open(link, '_blank');
+                    }
+                });
+
                 $('#branch_id').on('change', function(e) {
                     const value = $(this).val() || null;
                     @this.set('branch_id', value);

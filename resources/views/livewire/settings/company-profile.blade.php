@@ -23,6 +23,12 @@
                     </label>
                     {{ html()->input('gst_no')->value('')->class('form-control form-control-sm')->placeholder('Enter your GST number')->attribute('wire:model', 'gst_no') }}
                 </div>
+                <div class="col-12 col-md-12">
+                    <label class="form-label fw-medium small mb-1" for="company_name">
+                        <i class="fa fa-building me-1"></i>Company Description
+                    </label>
+                    {{ html()->textarea('company_description')->value('')->class('form-control form-control-sm')->placeholder('Enter your company description')->attribute('wire:model', 'company_description') }}
+                </div>
                 <div class="col-12">
                     <label class="form-label fw-medium small mb-1 d-block">
                         <i class="fa fa-image me-1"></i>Company Logo
