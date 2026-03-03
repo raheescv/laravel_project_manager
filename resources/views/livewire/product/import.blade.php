@@ -48,25 +48,164 @@
                         @if ($step == 1)
                             <div class="text-center py-5">
                                 <div class="mb-4">
-                                    <i class="fa fa-cloud-upload text-primary animate-bounce" style="font-size: 5rem;"></i>
+                                    <i class="fa {{ $stepOneTab === 'images' ? 'fa-images' : 'fa-cloud-upload' }} text-primary animate-bounce" style="font-size: 5rem;"></i>
                                 </div>
-                                <h2 class="fw-bold">Upload Your Spreadsheet</h2>
-                                <p class="text-muted mb-4 fs-5">Supported formats: XLSX, XLS, CSV. Max size: 10MB.</p>
+                                <h2 class="fw-bold">{{ $stepOneTab === 'images' ? 'Upload Product Images' : 'Upload Your Spreadsheet' }}</h2>
+                                <p class="text-muted mb-4 fs-5">
+                                    {{ $stepOneTab === 'images' ? 'Match Dropbox image filenames to product codes and import them in the background.' : 'Supported formats: XLSX, XLS, CSV. Max size: 10MB.' }}
+                                </p>
 
-                                <div class="upload-zone mx-auto" style="max-width: 600px;">
-                                    <input type="file" wire:model="file" class="upload-input" accept=".xlsx,.xls,.csv">
-                                    <div wire:loading.remove wire:target="file">
-                                        <div class="dz-message-text p-5">
-                                            <i class="fa fa-plus-circle fs-1 text-primary mb-3"></i>
-                                            <h4 class="mb-1">Click to browse or drag and drop</h4>
-                                            <span class="text-muted">Files will be uploaded automatically</span>
+                                <div class="mx-auto mb-4" style="max-width: 900px;">
+                                    <div class="d-inline-flex rounded-3 border bg-white p-1 shadow-sm">
+                                        <button type="button"
+                                            class="btn {{ $stepOneTab === 'spreadsheet' ? 'btn-primary' : 'btn-outline-primary border-0' }}"
+                                            wire:click="setStepOneTab('spreadsheet')">
+                                            <i class="fa fa-file-excel me-2"></i>Spreadsheet Import
+                                        </button>
+                                        <button type="button"
+                                            class="btn {{ $stepOneTab === 'images' ? 'btn-primary' : 'btn-outline-primary border-0' }}"
+                                            wire:click="setStepOneTab('images')">
+                                            <i class="fa fa-images me-2"></i>Image Upload
+                                        </button>
+                                    </div>
+                                </div>
+
+                                @if ($stepOneTab === 'images')
+                                    <div class="card border shadow-none mx-auto mb-4 text-start" style="max-width: 900px;">
+                                        <div class="card-header bg-white py-3">
+                                            <h5 class="mb-0 fw-bold"><i class="fa fa-dropbox me-2 text-primary"></i>Dropbox Folder Match Check</h5>
+                                        </div>
+                                        <div class="card-body">
+                                            <label for="dropboxFolderUrl" class="form-label fw-semibold">Shared Dropbox folder link</label>
+                                            <div class="input-group">
+                                                <input type="url" id="dropboxFolderUrl" wire:model.defer="dropboxFolderUrl" class="form-control"
+                                                    placeholder="https://www.dropbox.com/scl/fo/...">
+                                                <button type="button" class="btn btn-primary" wire:click="checkDropboxFolderMatches" wire:loading.attr="disabled" wire:target="checkDropboxFolderMatches">
+                                                    <span wire:loading.remove wire:target="checkDropboxFolderMatches">Check Matches</span>
+                                                    <span wire:loading wire:target="checkDropboxFolderMatches">Checking...</span>
+                                                </button>
+                                            </div>
+                                            @error('dropboxFolderUrl')
+                                                <div class="text-danger small mt-2">{{ $message }}</div>
+                                            @enderror
+                                            <div class="form-text">
+                                                We compare image filenames from the shared folder against existing <code>product code</code> values.
+                                                Example: <code>ABC123.jpg</code> matches product code <code>ABC123</code>.
+                                            </div>
+
+                                            @if ($dropboxMatchSummary)
+                                                <div class="row g-3 mt-3">
+                                                    <div class="col-md-4">
+                                                        <div class="border rounded-3 p-3 bg-light h-100">
+                                                            <div class="small text-muted text-uppercase fw-semibold">Folder Codes Found</div>
+                                                            <div class="fs-4 fw-bold">{{ $dropboxMatchSummary['total_file_codes'] }}</div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-md-4">
+                                                        <div class="border rounded-3 p-3 bg-light h-100">
+                                                            <div class="small text-muted text-uppercase fw-semibold">Matching Product Codes</div>
+                                                            <div class="fs-4 fw-bold text-success">{{ $dropboxMatchSummary['matching_product_codes'] }}</div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-md-4">
+                                                        <div class="border rounded-3 p-3 bg-light h-100">
+                                                            <div class="small text-muted text-uppercase fw-semibold">Missing Product Codes</div>
+                                                            <div class="fs-4 fw-bold text-danger">{{ $dropboxMatchSummary['missing_product_codes'] }}</div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                @if (!empty($dropboxMatchSummary['matched_products']))
+                                                    <div class="mt-4">
+                                                        <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-2">
+                                                            <h6 class="fw-bold mb-0">Matched Products</h6>
+                                                            <button type="button" class="btn btn-success btn-sm" wire:click="importDropboxFolderImages"
+                                                                wire:loading.attr="disabled" wire:target="importDropboxFolderImages">
+                                                                <span wire:loading.remove wire:target="importDropboxFolderImages">
+                                                                    <i class="fa fa-image me-1"></i> Import Matched Images
+                                                                </span>
+                                                                <span wire:loading wire:target="importDropboxFolderImages">Queueing...</span>
+                                                            </button>
+                                                        </div>
+                                                        <div class="table-responsive">
+                                                            <table class="table table-sm table-bordered align-middle mb-0">
+                                                                <thead class="table-light">
+                                                                    <tr>
+                                                                        <th style="width: 120px;">Code</th>
+                                                                        <th>Name</th>
+                                                                    </tr>
+                                                                </thead>
+                                                                <tbody>
+                                                                    @foreach ($dropboxMatchSummary['matched_products'] as $product)
+                                                                        <tr>
+                                                                            <td>{{ $product['code'] }}</td>
+                                                                            <td>{{ $product['name'] }}</td>
+                                                                        </tr>
+                                                                    @endforeach
+                                                                </tbody>
+                                                            </table>
+                                                        </div>
+                                                    </div>
+                                                @endif
+
+                                                @if ($dropboxImportQueued)
+                                                    <div class="alert alert-info mt-4 mb-0">
+                                                        Matched product images have been queued for background import.
+                                                    </div>
+                                                @endif
+
+                                                @if ($dropboxImportSummary)
+                                                    <div class="row g-3 mt-4">
+                                                        <div class="col-md-4">
+                                                            <div class="border rounded-3 p-3 bg-light h-100">
+                                                                <div class="small text-muted text-uppercase fw-semibold">Imported Images</div>
+                                                                <div class="fs-4 fw-bold text-success">{{ $dropboxImportSummary['imported_images'] }}</div>
+                                                            </div>
+                                                        </div>
+                                                        <div class="col-md-4">
+                                                            <div class="border rounded-3 p-3 bg-light h-100">
+                                                                <div class="small text-muted text-uppercase fw-semibold">Skipped Duplicates</div>
+                                                                <div class="fs-4 fw-bold">{{ $dropboxImportSummary['skipped_duplicates'] }}</div>
+                                                            </div>
+                                                        </div>
+                                                        <div class="col-md-4">
+                                                            <div class="border rounded-3 p-3 bg-light h-100">
+                                                                <div class="small text-muted text-uppercase fw-semibold">Matched Product Codes</div>
+                                                                <div class="fs-4 fw-bold">{{ $dropboxImportSummary['matched_product_codes'] }}</div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                @endif
+
+                                                @if (!empty($dropboxMatchSummary['missing_codes']))
+                                                    <div class="mt-4">
+                                                        <h6 class="fw-bold mb-2">Missing Codes (first 50)</h6>
+                                                        <div class="d-flex flex-wrap gap-2">
+                                                            @foreach ($dropboxMatchSummary['missing_codes'] as $code)
+                                                                <span class="badge bg-danger-subtle text-danger border">{{ $code }}</span>
+                                                            @endforeach
+                                                        </div>
+                                                    </div>
+                                                @endif
+                                            @endif
                                         </div>
                                     </div>
-                                    <div wire:loading wire:target="file" class="p-5">
-                                        <div class="spinner-border text-primary mb-3" role="status"></div>
-                                        <h4>Uploading file, please wait...</h4>
+                                @else
+                                    <div class="upload-zone mx-auto" style="max-width: 600px;">
+                                        <input type="file" wire:model="file" class="upload-input" accept=".xlsx,.xls,.csv">
+                                        <div wire:loading.remove wire:target="file">
+                                            <div class="dz-message-text p-5">
+                                                <i class="fa fa-plus-circle fs-1 text-primary mb-3"></i>
+                                                <h4 class="mb-1">Click to browse or drag and drop</h4>
+                                                <span class="text-muted">Files will be uploaded automatically</span>
+                                            </div>
+                                        </div>
+                                        <div wire:loading wire:target="file" class="p-5">
+                                            <div class="spinner-border text-primary mb-3" role="status"></div>
+                                            <h4>Uploading file, please wait...</h4>
+                                        </div>
                                     </div>
-                                </div>
+                                @endif
                             </div>
                         @endif
 

@@ -4,10 +4,13 @@ namespace App\Livewire\Product;
 
 use App\Exports\Templates\ProductImportTemplate;
 use App\Imports\ProductImport;
+use App\Jobs\Product\ImportProductImagesFromDropboxJob;
 use App\Jobs\Product\ImportProductJob;
 use App\Models\Category;
 use App\Models\Department;
+use App\Models\Product;
 use App\Models\Unit;
+use App\Services\ProductImageFolderMatcher;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use Livewire\Component;
@@ -30,6 +33,16 @@ class Import extends Component
     public $previewData = [];
 
     public $filePath;
+
+    public string $stepOneTab = 'spreadsheet';
+
+    public $dropboxFolderUrl = '';
+
+    public $dropboxMatchSummary = null;
+
+    public $dropboxImportSummary = null;
+
+    public bool $dropboxImportQueued = false;
 
     // Available fields for mapping
     public $availableFields = [
@@ -150,6 +163,15 @@ class Import extends Component
         $this->step = $step;
     }
 
+    public function setStepOneTab(string $tab): void
+    {
+        if (! in_array($tab, ['spreadsheet', 'images'], true)) {
+            return;
+        }
+
+        $this->stepOneTab = $tab;
+    }
+
     public function sample()
     {
         return Excel::download(new ProductImportTemplate(), 'product_import_template.xlsx');
@@ -179,6 +201,81 @@ class Import extends Component
 
         $this->dispatch('success', ['message' => 'Import started in background']);
         $this->step = 4;
+    }
+
+    public function checkDropboxFolderMatches(ProductImageFolderMatcher $matcher): void
+    {
+        $this->stepOneTab = 'images';
+
+        $this->validate([
+            'dropboxFolderUrl' => 'required|url',
+        ], [
+            'dropboxFolderUrl.required' => 'Please enter a Dropbox folder link.',
+            'dropboxFolderUrl.url' => 'Please enter a valid Dropbox folder link.',
+        ]);
+
+        try {
+            $detectedCodes = collect($matcher->collectCodesFromDropboxFolder($this->dropboxFolderUrl))
+                ->filter()
+                ->values();
+
+            $matchingProducts = Product::query()
+                ->whereIn('code', $detectedCodes->all())
+                ->orderBy('code')
+                ->get(['id', 'code', 'name']);
+
+            $matchedCodes = $matchingProducts
+                ->pluck('code')
+                ->map(fn (string $code) => $matcher->normalizeCode($code))
+                ->unique()
+                ->values();
+
+            $missingCodes = $detectedCodes
+                ->reject(fn (string $code) => $matchedCodes->contains($code))
+                ->values();
+
+            $this->dropboxMatchSummary = [
+                'total_file_codes' => $detectedCodes->count(),
+                'matching_product_codes' => $matchedCodes->count(),
+                'missing_product_codes' => $missingCodes->count(),
+                'matched_products' => $matchingProducts->toArray(),
+                'missing_codes' => $missingCodes->take(50)->all(),
+            ];
+            $this->dropboxImportSummary = null;
+            $this->dropboxImportQueued = false;
+        } catch (\Throwable $exception) {
+            $this->dropboxMatchSummary = null;
+            $this->dropboxImportSummary = null;
+            $this->dropboxImportQueued = false;
+            $this->dispatch('error', ['message' => $exception->getMessage()]);
+        }
+    }
+
+    public function importDropboxFolderImages(): void
+    {
+        $this->stepOneTab = 'images';
+
+        $this->validate([
+            'dropboxFolderUrl' => 'required|url',
+        ], [
+            'dropboxFolderUrl.required' => 'Please enter a Dropbox folder link.',
+            'dropboxFolderUrl.url' => 'Please enter a valid Dropbox folder link.',
+        ]);
+
+        try {
+            ImportProductImagesFromDropboxJob::dispatch(
+                $this->dropboxFolderUrl,
+                session('tenant_id')
+            );
+
+            $this->dropboxImportSummary = null;
+            $this->dropboxImportQueued = true;
+            $this->dispatch('success', ['message' => 'Dropbox image import queued. Images will be imported in the background.']);
+        } catch (\Throwable $exception) {
+            $this->dropboxImportSummary = null;
+            $this->dropboxImportQueued = false;
+            $this->dispatch('error', ['message' => $exception->getMessage()]);
+        }
     }
 
     public function render()
