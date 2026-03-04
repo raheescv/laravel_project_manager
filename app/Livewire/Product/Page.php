@@ -11,7 +11,7 @@ use App\Models\Configuration;
 use App\Models\Department;
 use App\Models\Product;
 use App\Models\Unit;
-use App\Services\ProductImageGeminiService;
+use App\Services\ProductImageAiService;
 use Faker\Factory;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -49,6 +49,8 @@ class Page extends Component
     public $brands;
 
     public $relatedProducts = [];
+
+    public $previewImage = null;
 
     public function refresh()
     {
@@ -268,11 +270,21 @@ class Page extends Component
     {
         try {
             $this->product->update(['thumbnail' => $path]);
+            $this->products['thumbnail'] = $path;
             $this->dispatch('success', ['message' => 'Thumbnail Updated Successfully']);
         } catch (\Exception $e) {
-            DB::rollback();
             $this->dispatch('error', ['message' => $e->getMessage()]);
         }
+    }
+
+    public function setPreview($path)
+    {
+        $this->previewImage = $path;
+    }
+
+    public function closePreview()
+    {
+        $this->previewImage = null;
     }
 
     public function unitDelete($id)
@@ -303,7 +315,7 @@ class Page extends Component
         }
     }
 
-    public function downloadImageWithGemini()
+    public function downloadImageWithAi()
     {
         if (! $this->table_id) {
             $this->dispatch('error', ['message' => 'Please save the product before downloading an AI image.']);
@@ -318,7 +330,7 @@ class Page extends Component
                 throw new \Exception('Product not found.');
             }
 
-            $response = app(ProductImageGeminiService::class)->generateAndAttach($product, null, true);
+            $response = app(ProductImageAiService::class)->generateAndAttach($product, null, true);
 
             if (! ($response['success'] ?? false)) {
                 throw new \Exception($response['message'] ?? 'Failed to generate product image.');

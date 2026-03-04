@@ -1,4 +1,55 @@
 <div class="py-3">
+    <style>
+        .image-gallery-item {
+            transition: all 0.3s ease;
+            cursor: pointer;
+            overflow: hidden;
+            border-radius: 8px;
+            position: relative;
+        }
+        .image-gallery-item:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+        }
+        .image-gallery-item .overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.4);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            z-index: 1;
+        }
+        .image-gallery-item:hover .overlay {
+            opacity: 1;
+        }
+        .image-gallery-item .btn-actions {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            z-index: 2;
+            display: flex;
+            gap: 5px;
+        }
+        .image-gallery-item .badge-main {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            z-index: 2;
+        }
+        .ratio-1x1 {
+            aspect-ratio: 1 / 1;
+        }
+        .object-fit-cover {
+            object-fit: cover;
+        }
+    </style>
+
     <form wire:submit="save">
         <div class="row mb-2">
             <div class="col-md-6">
@@ -397,13 +448,13 @@
                                         </div>
                                         @if (isset($table_id) && auth()->user()->can('product.ai image generation'))
                                             <div class="d-flex justify-content-end mt-2">
-                                                <button type="button" class="btn btn-sm btn-outline-primary" wire:click="downloadImageWithGemini"
-                                                    wire:loading.attr="disabled" wire:target="downloadImageWithGemini">
-                                                    <span wire:loading.remove wire:target="downloadImageWithGemini">
+                                                <button type="button" class="btn btn-sm btn-outline-primary" wire:click="downloadImageWithAi"
+                                                    wire:loading.attr="disabled" wire:target="downloadImageWithAi">
+                                                    <span wire:loading.remove wire:target="downloadImageWithAi">
                                                         <i class="fa fa-magic me-1"></i>
-                                                        Download Image With Gemini
+                                                        Download Image With AI
                                                     </span>
-                                                    <span wire:loading wire:target="downloadImageWithGemini">
+                                                    <span wire:loading wire:target="downloadImageWithAi">
                                                         <i class="fa fa-spinner fa-spin me-1"></i>
                                                         Downloading...
                                                     </span>
@@ -709,18 +760,58 @@
                                                     @endif
                                                 @endif
                                                 <div id="tabImages" class="tab-pane fade @if ($selectedTab == 'Images') active show @endif" role="tabpanel">
-                                                    <div class="col-12">
-                                                        <div class="row g-1 mb-3">
-                                                            @foreach ($products['images'] as $item)
-                                                                <div class="col-4 position-relative pointer">
-                                                                    <img class="img-fluid rounded" width="100%" height="10%" src="{{ $item['path'] }}" alt="thumbs" loading="lazy"
-                                                                        wire:confirm="Are you sure you want this as the default image?" wire:click="defaultImage('{{ $item['path'] }}')">
-                                                                    <i class="fa fa-trash fs-5 me-2 pointer position-absolute top-0 end-0 m-2"
-                                                                        wire:confirm="Are you sure you want to delete this image?" wire:click="deleteImage('{{ $item['id'] }}')">
-                                                                    </i>
+                                                    <div class="p-3">
+                                                        <div class="row g-3">
+                                                            @foreach ($products['images'] as $index => $item)
+                                                                <div class="col-6 col-md-4 col-xl-3" wire:key="image-{{ $item['id'] ?? $index }}">
+                                                                    <div class="image-gallery-item card border-0 shadow-sm h-100">
+                                                                        @if (($products['thumbnail'] ?? null) == $item['path'])
+                                                                            <div class="badge-main">
+                                                                                <span class="badge bg-success shadow-sm">
+                                                                                    <i class="fa fa-check-circle me-1"></i>Default
+                                                                                </span>
+                                                                            </div>
+                                                                        @endif
+                                                                        
+                                                                        <div class="btn-actions">
+                                                                            @if (($products['thumbnail'] ?? null) != $item['path'])
+                                                                                <button type="button" 
+                                                                                    wire:click="defaultImage('{{ $item['path'] }}')"
+                                                                                    class="btn btn-sm btn-light border shadow-sm text-warning" 
+                                                                                    title="Set as Default">
+                                                                                    <i class="fa fa-star"></i>
+                                                                                </button>
+                                                                            @endif
+                                                                            <button type="button" 
+                                                                                wire:click="deleteImage('{{ $item['id'] }}')"
+                                                                                wire:confirm="Are you sure you want to delete this image?"
+                                                                                class="btn btn-sm btn-light border shadow-sm text-danger" 
+                                                                                title="Delete Image">
+                                                                                <i class="fa fa-trash"></i>
+                                                                            </button>
+                                                                        </div>
+
+                                                                        <div class="ratio ratio-1x1 bg-light rounded" wire:click="setPreview('{{ $item['path'] }}')">
+                                                                            <img class="object-fit-cover w-100 h-100 rounded" 
+                                                                                src="{{ $item['path'] }}" 
+                                                                                alt="Product Image" 
+                                                                                loading="lazy">
+                                                                            <div class="overlay rounded">
+                                                                                <i class="fa fa-search-plus text-white fs-3"></i>
+                                                                                <span class="text-white ms-2 fw-medium">Preview</span>
+                                                                            </div>
+                                                                        </div>
+                                                                    </div>
                                                                 </div>
                                                             @endforeach
                                                         </div>
+                                                        
+                                                        @if(empty($products['images']))
+                                                            <div class="text-center py-5">
+                                                                <i class="fa fa-image fs-1 text-muted opacity-25 mb-3"></i>
+                                                                <p class="text-muted">No images found for this product.</p>
+                                                            </div>
+                                                        @endif
                                                     </div>
                                                 </div>
                                                 @if (isset($table_id) && $type == 'product')
@@ -819,6 +910,27 @@
             </div>
         </div>
     </form>
+
+    @if($previewImage)
+        <div class="modal fade show d-block" style="background: rgba(0,0,0,0.85); z-index: 9999;" tabindex="-1" role="dialog">
+            <div class="modal-dialog modal-dialog-centered modal-xl" role="document">
+                <div class="modal-content bg-transparent border-0 shadow-none">
+                    <div class="position-absolute top-0 end-0 m-2 m-md-4" style="z-index: 10000;">
+                        <button type="button" class="btn btn-light rounded-circle p-2 shadow" wire:click="closePreview" aria-label="Close">
+                            <i class="fa fa-times fs-4"></i>
+                        </button>
+                    </div>
+                    <div class="modal-body p-0 text-center" wire:click="closePreview">
+                        <img src="{{ $previewImage }}" 
+                            class="img-fluid rounded shadow-lg mx-auto d-block" 
+                            style="max-height: 92vh; width: auto; transition: transform 0.3s;" 
+                            alt="Preview"
+                            onclick="event.stopPropagation()">
+                    </div>
+                </div>
+            </div>
+        </div>
+    @endif
     @push('scripts')
         @filepondScripts
         <script>

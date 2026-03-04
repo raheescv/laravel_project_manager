@@ -17,6 +17,10 @@ use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
 use Inertia\Inertia;
+use Laravel\Ai\Ai;
+use App\Ai\Providers\FixedOpenAiProvider;
+use Laravel\Ai\Gateway\Prism\PrismGateway;
+use Illuminate\Contracts\Events\Dispatcher;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -91,5 +95,28 @@ class AppServiceProvider extends ServiceProvider
         // Gate::after(function ($user, $ability) {
         //     return $user->hasRole('Super Admin') || $user->hasPermissionTo($ability);
         // });
+
+        $this->registerFixedAiProvider();
+    }
+
+    /**
+     * Register the fixed OpenAI provider that removes the 'moderation' parameter 
+     * which causes 400 errors in the current version of the AI SDK.
+     */
+    protected function registerFixedAiProvider(): void
+    {
+        try {
+            if (class_exists(Ai::class)) {
+                Ai::extend('openai', function ($app, array $config) {
+                    return new FixedOpenAiProvider(
+                        new PrismGateway($app['events']),
+                        $config,
+                        $app->make(Dispatcher::class)
+                    );
+                });
+            }
+        } catch (\Throwable $e) {
+            report($e);
+        }
     }
 }

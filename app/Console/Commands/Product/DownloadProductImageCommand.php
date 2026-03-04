@@ -3,7 +3,7 @@
 namespace App\Console\Commands\Product;
 
 use App\Models\Product;
-use App\Services\ProductImageGeminiService;
+use App\Services\ProductImageAiService;
 use Illuminate\Console\Command;
 
 class DownloadProductImageCommand extends Command
@@ -14,18 +14,19 @@ class DownloadProductImageCommand extends Command
                             {--prompt= : Optional custom prompt}
                             {--set-thumbnail : Set generated image as thumbnail}';
 
-    protected $description = 'Download product images with Gemini and attach them to products';
+    protected $description = 'Download product images with AI and attach them to products';
 
     public function __construct(
-        protected ProductImageGeminiService $productImageGeminiService
+        protected ProductImageAiService $productImageAiService
     ) {
         parent::__construct();
     }
 
     public function handle(): int
     {
-        if (! config('ai.providers.gemini.key')) {
-            $this->error('GEMINI_API_KEY is missing. Please set it in your environment.');
+        $provider = config('ai.default_for_images', 'openai');
+        if (! config("ai.providers.{$provider}.key")) {
+            $this->error(strtoupper($provider)."_API_KEY is missing. Please set it in your environment.");
 
             return self::FAILURE;
         }
@@ -81,7 +82,7 @@ class DownloadProductImageCommand extends Command
     {
         $this->line("Generating image for Product #{$product->id} - {$product->name}");
 
-        $response = $this->productImageGeminiService->generateAndAttach(
+        $response = $this->productImageAiService->generateAndAttach(
             $product,
             $prompt,
             $setThumbnail

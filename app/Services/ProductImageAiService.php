@@ -10,7 +10,7 @@ use Laravel\Ai\Exceptions\RateLimitedException;
 use Laravel\Ai\Image;
 use Laravel\Ai\Responses\ImageResponse;
 
-class ProductImageGeminiService
+class ProductImageAiService
 {
     private const MAX_ATTEMPTS = 3;
 
@@ -18,21 +18,20 @@ class ProductImageGeminiService
 
     private const COOL_DOWN_SECONDS = 90;
 
-    private const COOL_DOWN_CACHE_KEY = 'ai:gemini:image:cooldown_until';
+    private const COOL_DOWN_CACHE_KEY = 'ai:image:cooldown_until';
 
     public function generateAndAttach(Product $product, ?string $prompt = null, bool $setAsThumbnail = true): array
     {
         try {
             $remainingCoolDown = $this->remainingCoolDownSeconds();
-            // if ($remainingCoolDown > 0) {
-            //     return [
-            //         'success' => false,
-            //         'message' => "Gemini free API is rate limited. Please retry after {$remainingCoolDown} seconds.",
-            //     ];
-            // }
+            if ($remainingCoolDown > 0) {
+                return [
+                    'success' => false,
+                    'message' => "AI service is rate limited. Please retry after {$remainingCoolDown} seconds.",
+                ];
+            }
 
             $finalPrompt = trim($prompt ?: $this->buildPrompt($product));
-            dd($finalPrompt);
             if ($finalPrompt === '') {
                 return [
                     'success' => false,
@@ -42,7 +41,7 @@ class ProductImageGeminiService
             $response = $this->generateWithRetry($finalPrompt);
             $generatedImage = $response->firstImage();
             $extension = $this->extensionFromMime($generatedImage->mime);
-            $filename = 'gemini-'.now()->format('YmdHis').'-'.Str::random(8).$extension;
+            $filename = 'ai-'.now()->format('YmdHis').'-'.Str::random(8).$extension;
 
             $storedPath = $response->storePubliclyAs(
                 'products/'.$product->id,
@@ -71,7 +70,7 @@ class ProductImageGeminiService
 
             return [
                 'success' => true,
-                'message' => 'Product image downloaded successfully with Gemini.',
+                'message' => 'Product image generated successfully with '.config('ai.default_for_images').'.',
                 'data' => $productImage,
                 'path' => $publicPath,
                 'prompt' => $finalPrompt,
@@ -82,7 +81,7 @@ class ProductImageGeminiService
             $message = $e->getMessage();
             if ($e instanceof RateLimitedException || str_contains(strtolower($message), 'rate limit')) {
                 $this->startCoolDown();
-                $message = 'Gemini free API is rate limited. Please retry after '.$this->remainingCoolDownSeconds().' seconds.';
+                $message = 'AI service is rate limited. Please retry after '.$this->remainingCoolDownSeconds().' seconds.';
             }
 
             return [
@@ -96,23 +95,37 @@ class ProductImageGeminiService
     {
         $attempt = 0;
         $lastError = null;
-        $models = $this->imageModels();
+        $provider = config('ai.default_for_images', 'openai');
+        $models = $this->imageModels($provider);
 
         while ($attempt < self::MAX_ATTEMPTS) {
-            foreach ($models as $model) {
+            if (empty($models)) {
                 try {
                     return Image::of($prompt)
+                        ->timeout(120)
                         ->square()
                         ->quality('low')
-                        ->generate('gemini', $model);
+                        ->generate();
                 } catch (RateLimitedException $e) {
                     $lastError = $e;
-
-                    continue;
                 } catch (\Throwable $e) {
                     $lastError = $e;
-
-                    continue;
+                }
+            } else {
+                foreach ($models as $model) {
+                    try {
+                        return Image::of($prompt)
+                            ->timeout(120)
+                            ->square()
+                            ->quality('low')
+                            ->generate($provider, $model);
+                    } catch (RateLimitedException $e) {
+                        $lastError = $e;
+                        continue;
+                    } catch (\Throwable $e) {
+                        $lastError = $e;
+                        continue;
+                    }
                 }
             }
 
@@ -132,9 +145,10 @@ class ProductImageGeminiService
         throw $lastError ?: new \RuntimeException('Image generation failed after retries.');
     }
 
-    private function imageModels(): array
+    private function imageModels(string $provider): array
     {
-        $configured = config('services.gemini.image_models', []);
+        $key = "services.{$provider}.image_models";
+        $configured = config($key, []);
 
         if (is_string($configured)) {
             $configured = array_map('trim', explode(',', $configured));
@@ -146,10 +160,11 @@ class ProductImageGeminiService
             return $models;
         }
 
-        return [
-            'gemini-2.5-flash-image-preview',
-            'gemini-3-pro-image-preview',
-        ];
+        return match($provider) {
+            'openai' => ['dall-e-3'],
+            'gemini' => ['gemini-2.0-flash-exp'], // Updated default model for Gemini if used
+            default => [],
+        };
     }
 
     private function startCoolDown(): void
@@ -168,27 +183,23 @@ class ProductImageGeminiService
 
     private function buildPrompt(Product $product): string
     {
-        $product->loadMissing('mainCategory', 'department');
+        $product->loadMissing('brand');
 
         $name = trim((string) $product->name);
-        $category = trim((string) optional($product->mainCategory)->name);
-        $department = trim((string) optional($product->department)->name);
         $brand = trim((string) optional($product->brand)->name);
+        $color = trim((string) ($product->color ?? ''));
+        $size = trim((string) ($product->size ?? ''));
         $description = trim((string) ($product->description ?? ''));
+
+        $subjectParts = array_filter([$brand, $name, $size !== '' ? "size {$size}" : null, $color !== '' ? "in {$color} color" : null]);
+        $subject = implode(' ', $subjectParts);
+
         $parts = array_filter([
-            "Ultra-realistic studio product photography of {$name}.",
-            // $category !== '' ? "Category reference: {$category}." : null,
-            // $department !== '' ? "Department reference: {$department}." : null,
-            $description !== '' ? "Product details: {$description}." : null,
-            $brand !== '' ? "Brand reference: {$brand}." : null,
-            'Side profile, perfectly centered.',
-            '85mm lens, f/11, ISO 100.',
-            'Softbox lighting left and right.',
-            'Clean pure white seamless background.',
-            'Natural soft shadow below shoe.',
-            'High-detail texture, sharp stitching.',
-            'No logo, no watermark, no text.',
-            'E-commerce catalog style.',
+            "Ultra realistic studio product photography of {$subject}.",
+            $description !== '' ? "Product features: {$description}." : null,
+            'Side profile, perfectly centered, 85mm lens, studio softbox lighting from left and right.',
+            'Clean pure white background, natural soft contact shadow, ecommerce catalog style, ultra detailed texture.',
+            'Strictly avoid: text, watermark, logo distortion, blurry details, extra shoes, people, or background objects.',
         ]);
 
         return implode(' ', $parts);

@@ -76,4 +76,7 @@ return [
     'gemini' => [
         'image_models' => env('GEMINI_IMAGE_MODELS', 'gemini-2.5-flash-image-preview,gemini-3-pro-image-preview'),
     ],
+    'openai' => [
+        'image_models' => env('OPENAI_IMAGE_MODELS', 'dall-e-3'),
+    ],
 ];
