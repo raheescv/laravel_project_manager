@@ -59,10 +59,12 @@
                                             <div class="grid grid-cols-2 gap-1.5 sm:grid-cols-none sm:gap-1.5 sm:flex sm:flex-row">
                                                 <button type="button" @click="viewCustomerDetails"
                                                     :disabled="!form.account_id || form.account_id === 3" :class="[
-                                                        'w-full sm:w-auto px-2.5 py-2 sm:py-1 rounded-lg transition-all duration-200 shadow-md hover:shadow-lg transform active:scale-95 font-semibold text-xs sm:text-xs flex items-center justify-center min-h-[40px] sm:min-h-[28px] touch-manipulation border-2',
+                                                        'w-full sm:w-auto px-2.5 py-2 sm:py-1 rounded-lg transition-all duration-200 shadow-md hover:shadow-lg transform active:scale-95 font-semibold text-xs sm:text-xs flex items-center justify-center min-h-[40px] sm:min-h-[28px] touch-manipulation border-2 relative',
                                                         (!form.account_id || form.account_id === 3) ?
                                                             'bg-gray-200 text-gray-500 cursor-not-allowed border-gray-300/50' :
-                                                            'bg-gradient-to-r from-purple-500 via-pink-500 to-rose-500 text-white hover:from-purple-600 hover:via-pink-600 hover:to-rose-600 border-purple-400/30'
+                                                            hasCustomerFeedbacks ?
+                                                                'bg-gradient-to-r from-purple-500 via-pink-500 to-rose-500 text-white hover:from-purple-600 hover:via-pink-600 hover:to-rose-600 border-purple-400/30 button-glow' :
+                                                                'bg-gradient-to-r from-purple-500 via-pink-500 to-rose-500 text-white hover:from-purple-600 hover:via-pink-600 hover:to-rose-600 border-purple-400/30'
                                                     ]">
                                                     <i class="fa fa-eye text-sm mr-1.5 sm:mr-1"></i>
                                                     <span class="text-sm sm:text-xs">View</span>
@@ -100,9 +102,10 @@
                                             <i class="fa fa-user-tie text-purple-600 mr-2 text-sm"></i>
                                             <span>Employee</span>
                                         </label>
-                                        <SearchableSelect v-model="form.employee_id" :options="employees"
+                                        <SearchableSelect ref="employeeSelectRef" v-model="form.employee_id" :options="employees"
                                             placeholder="Select employee..." filter-placeholder="Search employees..."
                                             :visibleItems="8"
+                                            data-employee-select="true"
                                             input-class="w-full rounded-lg border-2 border-purple-200/60 shadow-md focus:border-purple-500 focus:ring-2 focus:ring-purple-500/30 transition-all duration-200 bg-white/95 backdrop-blur-sm hover:shadow-lg hover:border-purple-300 text-sm sm:text-sm py-2 sm:py-2 px-3 min-h-[40px] sm:min-h-[36px] font-medium" />
                                     </div>
                                     <div class="space-y-1.5">
@@ -183,28 +186,31 @@
                                 <!-- Cart Items Component -->
                                 <CartItems :items="form.items" :total-quantity="totalQuantity" :cart-height="cartHeight"
                                     :max-height="windowWidth >= 1024 ? '100%' : windowWidth >= 768 ? '500px' : '350px'"
+                                    :can-feedback="canFeedback"
                                     @view-cart-items="viewCartItems" @clear-cart="clearCart"
                                     @update-item-quantity="updateItemQuantity" @edit-cart-item="editCartItem"
                                     @remove-cart-item="removeCartItem" @increase-quantity="increaseQuantity"
                                     @decrease-quantity="decreaseQuantity" @manage-combo-offer="manageComboOffer"
+                                    @open-feedback="openFeedback"
                                     item-class="min-h-[64px] py-4" />
 
 
 
                                 <!-- Discount Only (full width) -->
-                                <div class="p-2 sm:p-3 border-t border-slate-200">
-                                    <div class="mb-2 sm:mb-3">
+                                <div class="p-1.5 sm:p-2 border-t border-slate-200">
+                                    <div class="mb-1.5 sm:mb-2">
                                         <label class="block text-xs font-semibold text-slate-700 mb-1">
                                             <i class="fa fa-tag mr-1 text-blue-500"></i>
                                             Discount
                                         </label>
-                                        <div class="relative">
+                                        <div
+                                            class="flex items-stretch rounded-xl border-2 border-blue-400/60 bg-blue-50/50 shadow-sm overflow-hidden discount-input-shell">
                                             <input v-model.number="form.other_discount" @input="calculateTotals"
                                                 type="number" step="0.01" min="0"
-                                                class="w-full text-xs sm:text-sm py-2 sm:py-2.5 rounded border-slate-300 focus:border-blue-500 focus:ring-blue-500 min-h-[44px] sm:min-h-[40px] pr-12"
+                                                class="w-full border-0 bg-transparent text-sm sm:text-sm py-2.5 sm:py-2.5 px-3 focus:ring-0 focus:outline-none min-h-[44px] sm:min-h-[40px]"
                                                 placeholder="0">
                                             <button type="button" @click="convertDiscountToPercentage"
-                                                class="absolute right-2 top-1/2 transform -translate-y-1/2 bg-blue-500 text-white px-2 py-1 rounded text-xs font-semibold hover:bg-blue-600 transition-colors">
+                                                class="shrink-0 m-1.5 px-3 sm:px-3 py-1.5 sm:py-1 rounded-lg bg-blue-500 text-white text-xs font-semibold hover:bg-blue-600 transition-colors min-w-[48px] sm:min-w-[44px]">
                                                 %
                                             </button>
                                         </div>
@@ -212,23 +218,23 @@
 
                                     <!-- Enhanced Order Total - Mobile optimized -->
                                     <div
-                                        class="bg-gradient-to-br from-white via-indigo-50/40 to-purple-50/30 rounded-2xl p-3 sm:p-4 mb-3 sm:mb-4 border border-indigo-200/50 shadow-xl relative overflow-hidden mobile-summary-card">
+                                        class="bg-gradient-to-br from-white via-indigo-50/40 to-purple-50/30 rounded-2xl p-1 sm:p-1.5 mb-1 sm:mb-1.5 border border-indigo-200/50 shadow-xl relative overflow-hidden mobile-summary-card">
                                         <!-- Decorative background elements -->
                                         <div class="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-blue-200/20 to-purple-200/20 rounded-full blur-2xl -mr-16 -mt-16"></div>
                                         <div class="absolute bottom-0 left-0 w-24 h-24 bg-gradient-to-tr from-emerald-200/20 to-teal-200/20 rounded-full blur-xl -ml-12 -mb-12"></div>
 
-                                        <div class="relative z-10 space-y-2.5 sm:space-y-3">
-                                            <div class="flex justify-between items-center py-1.5 px-2 bg-white/60 backdrop-blur-sm rounded-lg border border-slate-100">
+                                        <div class="relative z-10 space-y-1">
+                                            <div class="flex justify-between items-center py-0.5 px-1.5 bg-white/60 backdrop-blur-sm rounded-lg border border-slate-100 min-h-[44px] sm:min-h-[42px]">
                                                 <span class="text-slate-700 font-semibold flex items-center text-sm">
                                                     <span class="hidden sm:inline"><i class="fa fa-calculator text-indigo-600 mr-2 text-sm"></i> Sub Total</span>
                                                     <span class="sm:hidden"><i class="fa fa-calculator text-indigo-600 mr-2 text-sm"></i> Subtotal</span>
                                                 </span>
                                                 <span
-                                                    class="font-bold text-slate-900 bg-gradient-to-r from-indigo-50 to-blue-50 px-3 py-1.5 rounded-lg shadow-md text-sm border border-indigo-100">
+                                                    class="font-bold text-slate-900 bg-gradient-to-r from-indigo-50 to-blue-50 px-2 py-0.5 rounded-lg shadow-md text-sm border border-indigo-100 min-w-[104px] text-center">
                                                     {{ formatNumber(form.total) }}
                                                 </span>
                                             </div>
-                                            <div class="flex justify-between items-center py-1.5 px-2 bg-white/60 backdrop-blur-sm rounded-lg border border-red-100" v-if="form.other_discount > 0">
+                                            <div class="flex justify-between items-center py-0.5 px-1.5 bg-white/60 backdrop-blur-sm rounded-lg border border-red-100 min-h-[44px] sm:min-h-[42px]" v-if="form.other_discount > 0">
                                                 <span class="font-semibold flex items-center text-sm text-red-700">
 
                                                     <span class="hidden sm:inline">
@@ -242,31 +248,31 @@
                                                     </span>
                                                 </span>
                                                 <span
-                                                    class="font-bold bg-gradient-to-r from-red-50 to-pink-50 text-red-700 px-3 py-1.5 rounded-lg shadow-md text-sm border border-red-100">
+                                                    class="font-bold bg-gradient-to-r from-red-50 to-pink-50 text-red-700 px-2 py-0.5 rounded-lg shadow-md text-sm border border-red-100 min-w-[104px] text-center">
                                                     -{{ formatNumber(form.other_discount) }}
                                                 </span>
                                             </div>
-                                            <div class="flex justify-between items-center py-1.5 px-2 bg-white/60 backdrop-blur-sm rounded-lg border border-blue-100" v-if="Math.abs(form.round_off) > 0.01">
+                                            <div class="flex justify-between items-center py-0.5 px-1.5 bg-white/60 backdrop-blur-sm rounded-lg border border-blue-100 min-h-[44px] sm:min-h-[42px]" v-if="Math.abs(form.round_off) > 0.01">
                                                 <span class="font-semibold flex items-center text-sm text-blue-700">
                                                     <i class="fa fa-adjust text-blue-600 mr-2 text-sm"></i>
                                                     <span class="hidden sm:inline">Round Off</span>
                                                     <span class="sm:hidden">Round</span>
                                                 </span>
                                                 <span
-                                                    class="font-bold bg-gradient-to-r from-blue-50 to-cyan-50 text-blue-700 px-3 py-1.5 rounded-lg shadow-md text-sm border border-blue-100">{{
+                                                    class="font-bold bg-gradient-to-r from-blue-50 to-cyan-50 text-blue-700 px-2 py-0.5 rounded-lg shadow-md text-sm border border-blue-100 min-w-[104px] text-center">{{
                                                         Number(form.round_off).toFixed(2) }}</span>
                                             </div>
                                             <div
-                                                class="border-t-2 border-indigo-200/60 pt-3 sm:pt-3 flex justify-between items-center bg-gradient-to-r from-emerald-50/50 to-green-50/50 -mx-3 sm:-mx-4 px-3 sm:px-4 pb-2 rounded-b-2xl">
+                                                class="border-t-2 border-indigo-200/60 pt-0.5 flex justify-between items-center bg-gradient-to-r from-emerald-50/50 to-green-50/50 -mx-1 sm:-mx-1.5 px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-b-2xl min-h-[68px] sm:min-h-[64px]">
                                                 <span
-                                                    class="font-bold text-lg sm:text-xl text-slate-800 flex items-center">
+                                                    class="font-bold text-base sm:text-lg text-slate-800 flex items-center leading-none">
                                                     <i class="fa fa-receipt text-emerald-600 mr-2 text-lg"></i>
                                                     <span class="hidden sm:inline">Total</span>
                                                     <span class="sm:hidden">Total</span>
                                                 </span>
                                                 <div
-                                                    class="bg-gradient-to-r from-emerald-500 via-green-500 to-teal-500 text-white px-4 sm:px-6 py-2.5 sm:py-3 rounded-xl shadow-2xl transform hover:scale-105 transition-transform duration-200 border-2 border-emerald-400/30">
-                                                    <span class="text-xl sm:text-2xl font-black tracking-tight">
+                                                    class="bg-gradient-to-r from-emerald-500 via-green-500 to-teal-500 text-white px-3.5 sm:px-4 py-1 sm:py-1.5 rounded-xl shadow-2xl transform hover:scale-105 transition-transform duration-200 border-2 border-emerald-400/30 min-w-[120px] sm:min-w-[132px] text-center">
+                                                    <span class="text-base sm:text-lg font-black tracking-tight leading-none">
                                                         {{ formatNumber(form.grand_total) }}
                                                     </span>
                                                 </div>
@@ -275,36 +281,25 @@
                                     </div>
 
                                     <!-- Action Buttons - Enhanced mobile/tablet optimized -->
-                                    <div class="space-y-3 sm:space-y-3 mobile-action-buttons">
-                                        <button v-if="canFeedback" type="button" @click="openFeedback"
-                                            class="w-full bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-500 text-white py-3.5 sm:py-3 md:py-2.5 px-4 rounded-2xl text-sm sm:text-sm font-bold hover:from-blue-600 hover:via-indigo-600 hover:to-purple-600 transition-all duration-300 shadow-xl hover:shadow-2xl transform active:scale-95 relative overflow-hidden group min-h-[52px] sm:min-h-[48px] border-2 border-blue-400/30">
-                                            <div
-                                                class="absolute inset-0 bg-gradient-to-r from-white/30 via-white/10 to-transparent opacity-0 group-active:opacity-100 transition-opacity duration-200">
-                                            </div>
-                                            <div class="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700"></div>
-                                            <div class="relative z-10 flex items-center justify-center">
-                                                <i class="fa fa-comment mr-2 text-base"></i>
-                                                <span class="text-base">Feedback</span>
-                                            </div>
-                                        </button>
-                                        <div class="grid grid-cols-2 gap-3 sm:gap-3">
+                                    <div class="space-y-2 sm:space-y-2 mobile-action-buttons">
+                                        <div class="grid grid-cols-2 gap-2 sm:gap-2">
                                             <button type="button" @click="saveDraft"
-                                                class="bg-gradient-to-r from-slate-500 via-slate-600 to-gray-600 text-white py-3.5 sm:py-3 md:py-2.5 px-3 sm:px-4 rounded-2xl text-sm sm:text-sm font-bold hover:from-slate-600 hover:via-slate-700 hover:to-gray-700 transition-all duration-300 shadow-xl hover:shadow-2xl transform active:scale-95 relative overflow-hidden group min-h-[52px] sm:min-h-[48px] border-2 border-slate-400/30">
+                                                class="bg-gradient-to-r from-slate-500 via-slate-600 to-gray-600 text-white py-2.5 sm:py-2.5 md:py-2 px-3 sm:px-4 rounded-xl text-sm sm:text-sm font-bold hover:from-slate-600 hover:via-slate-700 hover:to-gray-700 transition-all duration-300 shadow-lg hover:shadow-xl transform active:scale-95 relative overflow-hidden group min-h-[44px] sm:min-h-[42px] border-2 border-slate-400/30">
                                                 <div
                                                     class="absolute inset-0 bg-gradient-to-r from-white/30 via-white/10 to-transparent opacity-0 group-active:opacity-100 transition-opacity duration-200">
                                                 </div>
                                                 <div class="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700"></div>
                                                 <div class="relative z-10 flex items-center justify-center">
-                                                    <i class="fa fa-save mr-2 text-base"></i>
-                                                    <span class="text-base">Draft</span>
+                                                    <i class="fa fa-save mr-2 text-sm"></i>
+                                                    <span class="text-sm">Draft</span>
                                                 </div>
                                             </button>
                                             <button type="button" @click="submitSale"
                                                 :disabled="Object.keys(form.items).length === 0" :class="[
-                                                    'py-3.5 sm:py-3 md:py-2.5 px-3 sm:px-4 rounded-2xl text-sm sm:text-sm font-bold transition-all duration-300 shadow-xl relative overflow-hidden group min-h-[52px] sm:min-h-[48px] border-2',
+                                                    'py-2.5 sm:py-2.5 md:py-2 px-3 sm:px-4 rounded-xl text-sm sm:text-sm font-bold transition-all duration-300 shadow-lg relative overflow-hidden group min-h-[44px] sm:min-h-[42px] border-2',
                                                     Object.keys(form.items).length === 0 ?
                                                         'bg-gray-400 text-gray-500 cursor-not-allowed border-gray-300/30' :
-                                                        'bg-gradient-to-r from-green-500 via-emerald-500 to-teal-500 text-white hover:from-green-600 hover:via-emerald-600 hover:to-teal-600 hover:shadow-2xl transform active:scale-95 border-green-400/30 btn-pulse'
+                                                        'bg-gradient-to-r from-green-500 via-emerald-500 to-teal-500 text-white hover:from-green-600 hover:via-emerald-600 hover:to-teal-600 hover:shadow-xl transform active:scale-95 border-green-400/30 btn-pulse'
                                                 ]">
                                                 <div v-if="Object.keys(form.items).length > 0"
                                                     class="absolute inset-0 bg-gradient-to-r from-white/30 via-white/10 to-transparent opacity-0 group-active:opacity-100 transition-opacity duration-200">
@@ -312,8 +307,8 @@
                                                 <div v-if="Object.keys(form.items).length > 0"
                                                     class="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700"></div>
                                                 <div class="relative z-10 flex items-center justify-center">
-                                                    <i class="fa fa-check-circle mr-2 text-base"></i>
-                                                    <span class="text-base font-extrabold">Submit</span>
+                                                    <i class="fa fa-check-circle mr-2 text-sm"></i>
+                                                    <span class="text-sm font-extrabold">Submit</span>
                                                 </div>
                                             </button>
                                         </div>
@@ -341,9 +336,9 @@
             :countries="countries" @close="showCustomerModal = false" @customer-saved="handleCustomerSaved"
             @customer-selected="handleCustomerSelected" />
 
-        <!-- Customer Details Modal -->
-        <CustomerDetailsModal :show="showCustomerDetailsModal" :customer-id="selectedCustomerId"
-            @close="showCustomerDetailsModal = false" @edit="handleCustomerEdit" />
+        <!-- Customer Details Modal (using CustomerModal in view mode) -->
+        <CustomerModal :show="showCustomerDetailsModal" mode="view" :customer-id="selectedCustomerId"
+            @close="showCustomerDetailsModal = false" @customerSaved="handleCustomerEdit" />
 
         <!-- Custom Payment Modal -->
         <CustomPaymentModal :show="showCustomPaymentModal" :total-amount="form.grand_total"
@@ -387,12 +382,13 @@ import ProductsGrid from '@/components/ProductsGrid.vue'
 import SaleConfirmationModal from '@/components/SaleConfirmationModal.vue'
 import SearchableSelect from '@/components/SearchableSelectFixed.vue'
 import ComboOfferModal from '@/components/ComboOfferModal.vue'
-import CustomerDetailsModal from '@/components/CustomerDetailsModal.vue'
+
 import {
     useForm
 } from '@inertiajs/vue3'
 import {
     computed,
+    nextTick,
     onMounted,
     onUnmounted,
     ref,
@@ -422,7 +418,7 @@ export default {
         SaleConfirmationModal,
         EditItemModal,
         ComboOfferModal,
-        CustomerDetailsModal
+
     },
     props: {
         categories: Array,
@@ -454,6 +450,10 @@ export default {
             type: Number,
             default: 0.001
         },
+        saleItemRowMode: {
+            type: String,
+            default: 'merge'
+        },
         canEditItemPrice: {
             type: Boolean,
             default: false
@@ -470,6 +470,7 @@ export default {
         // Reactive data
         const loading = ref(false)
         const products = ref([])
+        const employeeSelectRef = ref(null)
         // Initialize serverCustomers with default customer and props.customers
         const serverCustomers = ref({
             ...(props.defaultCustomerEnabled ? {
@@ -737,6 +738,19 @@ export default {
             loadProducts()
         }, 300)
 
+        const createTempCartRowKey = () => `tmp-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
+
+        const buildCartItemKey = (item) => {
+            const baseKey = `${item.employee_id}-${item.inventory_id}`
+
+            if (props.saleItemRowMode === 'separate') {
+                const suffix = item.id ?? item.cart_row_key ?? createTempCartRowKey()
+                return `${baseKey}-${suffix}`
+            }
+
+            return baseKey
+        }
+
         const searchByBarcode = debounce(async () => {
             if (!barcodeKey.value) return
 
@@ -760,24 +774,52 @@ export default {
 
         const addProductToCart = async (product) => {
             if (!form.employee_id) {
-                toast.error('Please select an employee first')
+                toast.error('Please select an employee first.')
+                // Open the employee dropdown
+                await nextTick()
+                // Small delay to ensure DOM is ready and ref is set
+                setTimeout(() => {
+                    if (employeeSelectRef.value) {
+                        // Use the focus method which opens dropdown and focuses input
+                        if (employeeSelectRef.value.focus) {
+                            employeeSelectRef.value.focus()
+                        } else if (employeeSelectRef.value.openDropdown) {
+                            employeeSelectRef.value.openDropdown()
+                        }
+                    } else {
+                        // Fallback: try to find and click the input directly
+                        const employeeInput = document.querySelector('input[placeholder*="employee" i]')
+                        if (employeeInput) {
+                            employeeInput.focus()
+                            employeeInput.click()
+                            employeeInput.scrollIntoView({ behavior: 'smooth', block: 'center' })
+                        }
+                    }
+                }, 200)
                 return
             }
 
-            if (!product?.id) {
+            // Check for id in multiple possible locations
+            const productId = product?.id || product?.product_id || product?.inventory_id;
+            if (!productId) {
+                console.error('addProductToCart: Invalid product data - missing id:', product);
                 toast.error('Invalid product data')
                 return
             }
 
             try {
                 const response = await axios.post('/pos/add-item', {
-                    inventory_id: product.id,
+                    inventory_id: productId,
                     employee_id: form.employee_id,
-                    sale_type: form.sale_type
+                    sale_type: form.sale_type,
+                    unit_id: product?.unit_id || null
                 })
 
                 const item = response.data
-                const key = `${item.employee_id}-${item.inventory_id}`
+                if (props.saleItemRowMode === 'separate' && !item.id && !item.cart_row_key) {
+                    item.cart_row_key = createTempCartRowKey()
+                }
+                const key = buildCartItemKey(item)
 
                 if (form.items[key]) {
                     // default quantity taken from the settings
@@ -942,6 +984,7 @@ export default {
         const showComboOfferModal = ref(false)
         const showCustomerDetailsModal = ref(false)
         const selectedCustomerId = ref(null)
+        const hasCustomerFeedbacks = ref(false)
 
         // Handler for saving from EditItemModal
         const onEditItemSave = (updatedItem) => {
@@ -1025,8 +1068,30 @@ export default {
                     const normalized = normalizeCustomerData(customer)
                     form.customer_mobile = normalized.mobile
                 }
+                // Check if customer has feedbacks
+                checkCustomerFeedbacks(selectedValue)
             } else {
                 form.customer_mobile = ''
+                hasCustomerFeedbacks.value = false
+            }
+        }
+
+        const checkCustomerFeedbacks = async (customerId) => {
+            if (!customerId || customerId === 3) {
+                hasCustomerFeedbacks.value = false
+                return
+            }
+
+            try {
+                const response = await axios.get(`/account/customer/${customerId}/details`)
+                if (response.data?.feedbacks && Array.isArray(response.data.feedbacks) && response.data.feedbacks.length > 0) {
+                    hasCustomerFeedbacks.value = true
+                } else {
+                    hasCustomerFeedbacks.value = false
+                }
+            } catch (error) {
+                // Silently fail - don't show error for this check
+                hasCustomerFeedbacks.value = false
             }
         }
 
@@ -1453,8 +1518,11 @@ export default {
                     const normalized = normalizeCustomerData(customer)
                     form.customer_mobile = normalized.mobile
                 }
+                // Check if customer has feedbacks
+                checkCustomerFeedbacks(newCustomerId)
             } else {
                 form.customer_mobile = ''
+                hasCustomerFeedbacks.value = false
             }
         }, {
             immediate: true
@@ -1560,6 +1628,8 @@ export default {
             showComboOfferModal,
             showCustomerDetailsModal,
             selectedCustomerId,
+            hasCustomerFeedbacks,
+            employeeSelectRef,
 
             // Computed
             totalQuantity,
@@ -1593,6 +1663,7 @@ export default {
             handleCustomerChange,
             handleCustomerSaved,
             handleCustomerSelected,
+            checkCustomerFeedbacks,
             handleCustomPaymentSave,
             closeCustomPaymentModal,
             viewDraftSales,
@@ -1640,5 +1711,19 @@ export default {
     z-index: 40;
     inset: 0;
     background-color: rgba(0, 0, 0, 0.5);
+}
+
+.button-glow {
+    animation: glow-pulse 2s ease-in-out infinite;
+    box-shadow: 0 0 10px rgba(168, 85, 247, 0.6), 0 0 20px rgba(236, 72, 153, 0.4), 0 0 30px rgba(244, 63, 94, 0.3);
+}
+
+@keyframes glow-pulse {
+    0%, 100% {
+        box-shadow: 0 0 10px rgba(168, 85, 247, 0.6), 0 0 20px rgba(236, 72, 153, 0.4), 0 0 30px rgba(244, 63, 94, 0.3);
+    }
+    50% {
+        box-shadow: 0 0 15px rgba(168, 85, 247, 0.8), 0 0 30px rgba(236, 72, 153, 0.6), 0 0 45px rgba(244, 63, 94, 0.5);
+    }
 }
 </style>

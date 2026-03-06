@@ -38,7 +38,6 @@
         }
 
         /* Using system fonts instead of DejaVu Sans */
-
         .barcode-container {
             position: relative;
             width: {{ $settings['width'] ?? 40 }}mm;
@@ -91,6 +90,13 @@
             text-align: {{ $settings['company_name']['align'] }};
             font-weight: bold;
             letter-spacing: 0.5px;
+        }
+
+        .company-logo img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            display: block;
         }
 
         .product-size {
@@ -172,14 +178,33 @@
     <div class="barcode-grid">
         @foreach ($cartItems as $item)
             @php
-                $inventory = \App\Models\Inventory::with('product')->find($item['inventory_id']);
+                $itemType = $item['item_type'] ?? 'inventory';
+                $product = null;
+                $barcode = '';
+                $conversionFactor = 1;
+
+                if ($itemType === 'product_unit') {
+                    $productUnit = \App\Models\ProductUnit::with('product', 'subUnit')->find($item['product_unit_id'] ?? null);
+                    if ($productUnit) {
+                        $product = $productUnit->product;
+                        $barcode = $productUnit->barcode;
+                        $conversionFactor = $productUnit->conversion_factor;
+                    }
+                } else {
+                    $inventory = \App\Models\Inventory::with('product')->find($item['inventory_id'] ?? null);
+                    if ($inventory) {
+                        $product = $inventory->product;
+                        $barcode = $inventory->barcode;
+                        $conversionFactor = 1;
+                    }
+                }
             @endphp
-            @if ($inventory)
+            @if ($product)
                 @for ($i = 1; $i <= $item['quantity']; $i++)
                     <div class="barcode-container">
                         @if ($settings['product_name']['visible'] ?? true)
                             <div id="product-name" class="barcode-element product-name" draggable="true" style="{{ getElementStyle('product_name', $settings) }}">
-                                <b>{{ substr($inventory->product->name, 0, (int) $settings['product_name']['char_limit']) }}</b>
+                                <bdo dir="ltr">{{ mb_substr($product->name, 0, (int) $settings['product_name']['char_limit']) }}</bdo>
                                 <div class="element-handle top-left"></div>
                                 <div class="element-handle top-right"></div>
                             </div>
@@ -187,7 +212,7 @@
 
                         @if ($settings['product_name_arabic']['visible'] ?? true)
                             <div id="product-name-arabic" class="barcode-element product-name-arabic" draggable="true" style="{{ getElementStyle('product_name_arabic', $settings) }}">
-                                <bdo dir="rtl">{{ substr($inventory->product->name_arabic, 0, (int) $settings['product_name_arabic']['char_limit']) }}</bdo>
+                                <bdo dir="rtl">{{ mb_substr($product->name_arabic ?? '', 0, (int) $settings['product_name_arabic']['char_limit']) }}</bdo>
                                 <div class="element-handle top-left"></div>
                                 <div class="element-handle top-right"></div>
                             </div>
@@ -201,13 +226,13 @@
                                     $height = $settings['elements']['barcode']['height'] ?? 40;
                                     $showCode = $settings['barcode']['show_value'] ?? true;
                                 @endphp
-                                <img src="data:image/png;base64,{{ DNS1D::getBarcodePNG($inventory->barcode, $barcodeType, $scale, $height, [0, 0, 0], $showCode) }}" alt="{{ $inventory->barcode }}">
+                                <img src="data:image/png;base64,{{ DNS1D::getBarcodePNG($barcode, $barcodeType, $scale, $height, [0, 0, 0], $showCode) }}" alt="{{ $barcode }}">
                             </div>
                         @endif
 
-                        @if ($settings['size']['visible'] ?? true && !empty($inventory->product->size))
+                        @if ($settings['size']['visible'] ?? true && !empty($product->size))
                             <div class="barcode-element product-size" style="{{ getElementStyle('size', $settings) }}">
-                                {{ $inventory->product->size }}
+                                {{ $product->size }}
                             </div>
                         @endif
 
@@ -217,15 +242,21 @@
                             </div>
                         @endif
 
+                        @if (($settings['logo']['visible'] ?? false) && !empty($company_logo))
+                            <div class="barcode-element company-logo" style="{{ getElementStyle('logo', $settings) }}">
+                                <img src="{{ $company_logo }}" alt="Company Logo">
+                            </div>
+                        @endif
+
                         @if ($settings['price']['visible'] ?? true)
                             <div class="barcode-element price" style="{{ getElementStyle('price', $settings) }}">
-                                {{ number_format($inventory->product->mrp, 2) }}
+                                {{ number_format($product->mrp * $conversionFactor, 2) }}
                             </div>
                         @endif
 
                         @if ($settings['price_arabic']['visible'] ?? true)
                             <div class="barcode-element price-arabic" style="{{ getElementStyle('price_arabic', $settings) }}">
-                                {{ arabicNumber($inventory->product->mrp) }}
+                                {{ arabicNumber($product->mrp * $conversionFactor) }}
                             </div>
                         @endif
                     </div>

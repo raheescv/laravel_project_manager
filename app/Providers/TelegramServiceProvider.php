@@ -14,7 +14,7 @@ class TelegramServiceProvider extends ServiceProvider
     public function register(): void
     {
         $this->app->singleton(Api::class, function ($app) {
-            return new Api(config('telegram.bot_token'));
+            return new Api(config('services.telegram.bot_token'));
         });
 
         $this->app->singleton(TelegramHelper::class, function ($app) {

@@ -26,7 +26,7 @@ class IncomeExpenseBarChart extends Component
         }
 
         $income = JournalEntry::incomeList($filter)
-            ->select(DB::raw('DATE_FORMAT(date, "%Y-%m") as month'), DB::raw('SUM(debit) as total'))
+            ->select(DB::raw('DATE_FORMAT(date, "%Y-%m") as month'), DB::raw('SUM(credit) as total'))
             ->groupBy('month')
             ->pluck('total', 'month')
             ->toArray();

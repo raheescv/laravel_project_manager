@@ -9,6 +9,7 @@ class JournalDeleteAction
         try {
             $model->journals()->each(function ($journal) use ($user_id): void {
                 $journal->entries()->update(['deleted_by' => $user_id]);
+                // $journal->entriesCounterAccounts()->delete();
                 $journal->entries()->delete();
                 $journal->delete();
             });

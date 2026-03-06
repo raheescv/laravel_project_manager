@@ -38,7 +38,7 @@
                                 <td>{{ $item->mobile }}</td>
                                 <td>{{ $item->employee }}</td>
                                 <td>{{ $item->product }}</td>
-                                <td class="text-end">{{ number_format($item->quantity) }}</td>
+                                <td class="text-end">{{ number_format($item->base_unit_quantity) }}</td>
                                 <td class="text-end">{{ currency($item->total) }}</td>
                             </tr>
                         @endforeach

@@ -24,6 +24,18 @@
                 border-bottom: none;
                 padding: 1.5rem;
             }
+
+            .btn-link[data-bs-toggle="collapse"] i {
+                transition: transform 0.3s ease;
+            }
+
+            .btn-link[data-bs-toggle="collapse"][aria-expanded="true"] i {
+                transform: rotate(180deg);
+            }
+
+            .table-modern .collapse.show {
+                display: table-row;
+            }
         </style>
     @endpush
     @if ($product->type == 'product')
@@ -239,11 +251,11 @@
                                     <th> Branch </th>
                                     <th> Employee </th>
                                     <th> Barcode </th>
-                                    <th> batch </th>
+                                    <th> Batch </th>
                                     <th class="text-end"> cost </th>
                                     <th class="text-end">
                                         @if ($product->type == 'product')
-                                            quantity
+                                            quantity ({{ $product->unit?->name ?? 'Base Unit' }})
                                         @else
                                             Used Count
                                         @endif
@@ -257,7 +269,15 @@
                             <tbody>
                                 @foreach ($data as $item)
                                     <tr>
-                                        <td>{{ $item->id }}</td>
+                                        <td>
+                                            @if ($product->type == 'product' && $product->units->count() > 0)
+                                                <button class="btn btn-sm btn-link p-0" type="button" data-bs-toggle="collapse" data-bs-target="#productUnits{{ $item->id }}"
+                                                    aria-expanded="false" aria-controls="productUnits{{ $item->id }}">
+                                                    <i class="fa fa-chevron-down"></i>
+                                                </button>
+                                            @endif
+                                            {{ $item->id }}
+                                        </td>
                                         <td>{{ $item->branch?->name }}</td>
                                         <td>
                                             {{ $item->employee?->name }}
@@ -267,7 +287,7 @@
                                         </td>
                                         <td>
                                             {{ $item->barcode }}
-                                            <a href="{{ route('inventory::barcode::print', $item->id) }}"><i class="fa fa-2x fa-print pull-right"></i></a>
+                                            <a href="{{ route('inventory::barcode::print', ['type' => 'inventory', 'id' => $item->id]) }}"><i class="fa fa-2x fa-print pull-right"></i></a>
                                         </td>
                                         <td>{{ $item->batch }}</td>
                                         <td class="text-end">{{ currency($item->cost) }}</td>
@@ -307,6 +327,46 @@
                                             </td>
                                         @endif
                                     </tr>
+                                    @if ($product->type == 'product' && $product->units->count() > 0)
+                                        <tr class="collapse" id="productUnits{{ $item->id }}">
+                                            <td colspan="9" class="p-0">
+                                                <div class="p-3 bg-light">
+                                                    <h6 class="mb-3">Product Units</h6>
+                                                    <table style="width: 50%; margin: 0 auto;" class="table table-sm table-bordered mb-0">
+                                                        <thead>
+                                                            <tr>
+                                                                <th>Unit</th>
+                                                                <th class="text-end">Conversion Factor</th>
+                                                                <th class="text-end">Quantity</th>
+                                                                <th>Barcode</th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody>
+                                                            @foreach ($product->units as $productUnit)
+                                                                <tr>
+                                                                    <td>{{ $productUnit->subUnit?->name ?? 'N/A' }}</td>
+                                                                    <td class="text-end">{{ number_format($productUnit->conversion_factor, 3) }}</td>
+                                                                    <td class="text-end">
+                                                                        @if ($item->quantity > 0)
+                                                                            {{ number_format($item->quantity / $productUnit->conversion_factor, 3) }}
+                                                                        @else
+                                                                            {{ number_format(0, 3) }}
+                                                                        @endif
+                                                                    </td>
+                                                                    <td>
+                                                                        {{ $productUnit->barcode ?? 'N/A' }}
+                                                                        <a href="{{ route('inventory::barcode::print', ['type' => 'product_unit', 'id' => $productUnit->id]) }}">
+                                                                            <i class="fa fa-2x fa-print pull-right"></i>
+                                                                        </a>
+                                                                    </td>
+                                                                </tr>
+                                                            @endforeach
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    @endif
                                 @endforeach
                             </tbody>
                             <tfoot>
@@ -365,95 +425,185 @@
         <div class="row">
             <div class="col-md-12">
                 <div class="card modern-card mb-3">
-                    <div class="card-header">
-                        <h3>Log</h3>
-                        <div class="row">
-                            <div class="col-lg-4">
-                                <div wire:ignore>
-                                    {{ html()->select('branch_id', [session('branch_id') => session('branch_name')])->value(session('branch_id'))->class('select-assigned-branch_id-list')->id('branch_id')->placeholder('All') }}
-                                </div>
-                            </div>
-                            <div class="col-lg-4">
-                                <div wire:ignore>
-                                    {{ html()->select('employee_id', [])->value('')->class('select-employee_id-list')->id('employee_id')->placeholder('All Employees') }}
-                                </div>
-                            </div>
-                            <div class="col-lg-4">
-                                <div class="row ">
-                                    <input type="text" wire:model.live="log_search" autofocus placeholder="Search..." class="form-control" autocomplete="off">
-                                </div>
-                            </div>
-                        </div>
+                    <div class="card-header pb-0">
+                        <ul class="nav nav-tabs nav-tabs-bordered" role="tablist">
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link @if ($selectedTab == 'log') active @endif d-flex align-items-center gap-2" wire:click="tabSelect('log')" type="button"
+                                    role="tab">
+                                    <i class="fa fa-history text-primary"></i>
+                                    Log
+                                </button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link @if ($selectedTab == 'image') active @endif d-flex align-items-center gap-2" wire:click="tabSelect('image')" type="button"
+                                    role="tab">
+                                    <i class="fa fa-image text-danger"></i>
+                                    Product Image
+                                </button>
+                            </li>
+                        </ul>
                     </div>
                     <div class="card-body p-4">
-                        <div class="table-responsive">
-                            <table class="table table-hover align-middle text-capitalize table-modern">
-                                <thead>
-                                    <tr class="text-capitalize">
-                                        <th width="5%"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="id" label="#" /> </th>
-                                        <th> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="created_at" label="date" /> </th>
-                                        <th> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="branch_id" label="Branch" /> </th>
-                                        <th> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="employee_id" label="Employee" /> </th>
-                                        <th> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="barcode" label="barcode" /> </th>
-                                        <th> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="batch" label="batch" /> </th>
-                                        <th class="text-end"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="cost" label="cost" /> </th>
-                                        <th class="text-end"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="quantity_in" label="In" /> </th>
-                                        <th class="text-end"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="quantity_out" label="out" /> </th>
-                                        <th class="text-end"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="balance" label="balance" /> </th>
-                                        <th width="40%"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="remarks" label="remarks" /> </th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    @foreach ($logs as $item)
-                                        <tr>
-                                            <td>{{ $item->id }}</td>
-                                            <td>{{ systemDateTime($item->created_at) }}</td>
-                                            <td>{{ $item->branch?->name }}</td>
-                                            <td>{{ $item->employee?->name }}</td>
-                                            <td>{{ $item->barcode }}</td>
-                                            <td>{{ $item->batch }}</td>
-                                            <td class="text-end">{{ currency($item->cost) }}</td>
-                                            <td class="text-end">{{ $item->quantity_in }}</td>
-                                            <td class="text-end">{{ $item->quantity_out }}</td>
-                                            <td class="text-end">
-                                                @if ($product->type == 'product')
-                                                    {{ $item->balance }}
-                                                @else
-                                                    {{ $item->balance * -1 }}
-                                                @endif
-                                            </td>
-                                            <td>
-                                                @php
-                                                    switch ($item->model) {
-                                                        case 'Sale':
-                                                            $href = route('sale::view', $item->model_id);
-                                                            break;
-                                                        case 'SaleReturn':
-                                                            $href = route('sale_return::view', $item->model_id);
-                                                            break;
-                                                        case 'InventoryTransfer':
-                                                            $href = route('inventory::transfer::view', $item->model_id);
-                                                            break;
-                                                        case 'Purchase':
-                                                            $href = route('purchase::edit', $item->model_id);
-                                                            break;
-                                                        default:
-                                                            $href = '';
-                                                            break;
-                                                    }
-                                                @endphp
-                                                @if ($href)
-                                                    <a href="{{ $href }}">{{ $item->remarks }}</a>
-                                                @else
-                                                    {{ $item->remarks }}
-                                                @endif
-                                            </td>
-                                        </tr>
-                                    @endforeach
-                                </tbody>
-                            </table>
+                        <div class="tab-content">
+                            <div class="tab-pane fade @if ($selectedTab == 'log') active show @endif" role="tabpanel">
+                                <div class="row mb-4">
+                                    <div class="col-lg-4">
+                                        <div wire:ignore>
+                                            {{ html()->select('branch_id', [session('branch_id') => session('branch_name')])->value(session('branch_id'))->class('select-assigned-branch_id-list')->id('branch_id')->placeholder('All') }}
+                                        </div>
+                                    </div>
+                                    <div class="col-lg-4">
+                                        <div wire:ignore>
+                                            {{ html()->select('employee_id', [])->value('')->class('select-employee_id-list')->id('employee_id')->placeholder('All Employees') }}
+                                        </div>
+                                    </div>
+                                    <div class="col-lg-4">
+                                        <div class="row">
+                                            <input type="text" wire:model.live="log_search" autofocus placeholder="Search logs..." class="form-control" autocomplete="off">
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="table-responsive">
+                                    <table class="table table-hover table-sm align-middle text-capitalize table-modern">
+                                        <thead>
+                                            <tr class="text-capitalize">
+                                                <th width="5%">
+                                                    <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="id" label="#" />
+                                                </th>
+                                                <th class="text-nowrap">
+                                                    <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="created_at" label="date" />
+                                                </th>
+                                                <th>
+                                                    <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="branch_id" label="Branch" />
+                                                </th>
+                                                <th>
+                                                    <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="employee_id" label="Employee" />
+                                                </th>
+                                                <th>
+                                                    <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="barcode" label="barcode" />
+                                                </th>
+                                                <th>
+                                                    <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="batch" label="batch" />
+                                                </th>
+                                                <th class="text-end">
+                                                    <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="cost" label="cost" />
+                                                </th>
+                                                <th class="text-end">
+                                                    <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="quantity_in" label="In" />
+                                                </th>
+                                                <th class="text-end">
+                                                    <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="quantity_out" label="out" />
+                                                </th>
+                                                <th class="text-end">
+                                                    <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="balance" label="balance" />
+                                                </th>
+                                                <th width="40%">
+                                                    <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="remarks" label="remarks" />
+                                                </th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @foreach ($logs as $item)
+                                                <tr>
+                                                    <td>{{ $item->id }}</td>
+                                                    <td class="text-nowrap">{{ systemDateTime($item->created_at) }}</td>
+                                                    <td>{{ $item->branch?->name }}</td>
+                                                    <td>{{ $item->employee?->name }}</td>
+                                                    <td>{{ $item->barcode }}</td>
+                                                    <td>{{ $item->batch }}</td>
+                                                    <td class="text-end">{{ currency($item->cost) }}</td>
+                                                    <td class="text-end">{{ $item->quantity_in }}</td>
+                                                    <td class="text-end">{{ $item->quantity_out }}</td>
+                                                    <td class="text-end">
+                                                        @if ($product->type == 'product')
+                                                            {{ $item->balance }}
+                                                        @else
+                                                            {{ $item->balance * -1 }}
+                                                        @endif
+                                                    </td>
+                                                    <td>
+                                                        @php
+                                                            switch ($item->model) {
+                                                                case 'Sale':
+                                                                    $href = route('sale::view', $item->model_id);
+                                                                    break;
+                                                                case 'SaleReturn':
+                                                                    $href = route('sale_return::view', $item->model_id);
+                                                                    break;
+                                                                case 'InventoryTransfer':
+                                                                    $href = route('inventory::transfer::view', $item->model_id);
+                                                                    break;
+                                                                case 'Purchase':
+                                                                    $href = route('purchase::edit', $item->model_id);
+                                                                    break;
+                                                                default:
+                                                                    $href = '';
+                                                                    break;
+                                                            }
+                                                        @endphp
+                                                        @if ($href)
+                                                            <a href="{{ $href }}">{{ $item->remarks }}</a>
+                                                        @else
+                                                            {{ $item->remarks }}
+                                                        @endif
+                                                    </td>
+                                                </tr>
+                                            @endforeach
+                                        </tbody>
+                                    </table>
+                                </div>
+                                {{ $logs->links() }}
+                            </div>
+                            <div class="tab-pane fade @if ($selectedTab == 'image') active show @endif" role="tabpanel">
+                                <div class="row g-4">
+                                    <div class="col-md-12">
+                                        <div class="d-flex flex-wrap gap-3">
+                                            @if ($product->thumbnail)
+                                                <div class="card border shadow-sm" style="width: 200px;">
+                                                    <img src="{{ url($product->thumbnail) }}" class="card-img-top" alt="Thumbnail" style="height: 200px; object-fit: cover;">
+                                                    <div class="card-footer bg-light text-center small py-2">
+                                                        Main Thumbnail
+                                                    </div>
+                                                </div>
+                                            @endif
+
+                                            @foreach ($product->images as $image)
+                                                <div class="card border shadow-sm" style="width: 200px;">
+                                                    <img src="{{ url($image->path) }}" class="card-img-top" alt="{{ $image->name }}" style="height: 200px; object-fit: cover;">
+                                                    <div class="card-footer bg-light text-center small py-2">
+                                                        {{ $image->name ?: 'Product Image' }}
+                                                    </div>
+                                                </div>
+                                            @endforeach
+
+                                            @if (!$product->thumbnail && count($product->images) == 0)
+                                                <div class="col-12 text-center py-5">
+                                                    <i class="fa fa-image fa-4x text-muted mb-3"></i>
+                                                    <p class="text-muted">No images available for this product.</p>
+                                                </div>
+                                            @endif
+                                        </div>
+
+                                        @if ($product->angleImages()->count() > 0)
+                                            <hr class="my-5">
+                                            <h5 class="mb-4">360° View Images</h5>
+                                            <div class="row row-cols-2 row-cols-md-4 row-cols-lg-6 g-3">
+                                                @foreach ($product->angleImages()->orderedByAngle()->get() as $image)
+                                                    <div class="col">
+                                                        <div class="card h-100 border text-center shadow-sm">
+                                                            <img src="{{ url($image->path) }}" class="card-img-top" alt="360 Image" style="height: 120px; object-fit: cover;">
+                                                            <div class="card-footer bg-light small py-1">
+                                                                {{ $image->degree }}°
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                @endforeach
+                                            </div>
+                                        @endif
+                                    </div>
+                                </div>
+                            </div>
                         </div>
-                        {{ $logs->links() }}
                     </div>
                 </div>
             </div>
@@ -613,6 +763,19 @@
 
             window.addEventListener('RefreshInventoryTable', event => {
                 Livewire.dispatch("Inventory-Refresh-Component");
+            });
+
+            // Handle collapse toggle for product units
+            document.addEventListener('DOMContentLoaded', function() {
+                document.querySelectorAll('[data-bs-toggle="collapse"]').forEach(function(button) {
+                    button.addEventListener('click', function() {
+                        const target = document.querySelector(this.getAttribute('data-bs-target'));
+                        if (target) {
+                            const isExpanded = this.getAttribute('aria-expanded') === 'true';
+                            this.setAttribute('aria-expanded', !isExpanded);
+                        }
+                    });
+                });
             });
         </script>
     @endpush

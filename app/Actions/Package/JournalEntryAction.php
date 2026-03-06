@@ -114,6 +114,7 @@ class JournalEntryAction
     protected function buildJournalData(Package $package, string $model, int $modelId): array
     {
         return [
+            'tenant_id' => $package->tenant_id,
             'date' => $package->start_date,
             'branch_id' => session('branch_id'),
             'description' => "Package:{$package->id}",

@@ -4,15 +4,19 @@ namespace App\Models;
 
 use App\Models\Scopes\AssignedBranchScope;
 use App\Models\Scopes\CurrentBranchScope;
+use App\Traits\BelongsToTenant;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use OwenIt\Auditing\Auditable;
 use OwenIt\Auditing\Contracts\Auditable as AuditableContracts;
 
 class SaleDaySession extends Model implements AuditableContracts
 {
     use Auditable;
+    use BelongsToTenant;
 
     protected $fillable = [
+        'tenant_id',
         'branch_id',
         'opened_by',
         'closed_by',
@@ -40,6 +44,11 @@ class SaleDaySession extends Model implements AuditableContracts
         static::addGlobalScope(new AssignedBranchScope());
     }
 
+    public function tenant(): BelongsTo
+    {
+        return $this->belongsTo(Tenant::class, 'tenant_id');
+    }
+
     public function branch()
     {
         return $this->belongsTo(Branch::class);
@@ -58,6 +67,11 @@ class SaleDaySession extends Model implements AuditableContracts
     public function sales()
     {
         return $this->hasMany(Sale::class, 'sale_day_session_id')->where('status', 'completed');
+    }
+
+    public function tailoringOrders()
+    {
+        return $this->hasMany(TailoringOrder::class, 'sale_day_session_id');
     }
 
     public function scopeOpen($query)
@@ -99,7 +113,11 @@ class SaleDaySession extends Model implements AuditableContracts
 
         // Calculate total sales amount for this session
         $totalSalesAmount = $this->sales->sum('paid');
-        $this->expected_amount = $this->opening_amount + $totalSalesAmount;
+        $totalTailoringAmount = TailoringPayment::whereHas('order', function ($query) {
+            $query->where('sale_day_session_id', $this->id);
+        })->sum('amount');
+
+        $this->expected_amount = $this->opening_amount + $totalSalesAmount + $totalTailoringAmount;
 
         $this->status = 'closed';
         $this->notes = $notes;

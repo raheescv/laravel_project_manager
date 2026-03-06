@@ -10,6 +10,9 @@ return new class() extends Migration
     {
         Schema::create('sale_returns', function (Blueprint $table) {
             $table->id();
+            $table->unsignedBigInteger('tenant_id');
+            $table->foreign('tenant_id')->references('id')->on('tenants')->onDelete('cascade');
+            $table->index('tenant_id');
             $table->string('reference_no')->nullable();
             $table->unsignedBigInteger('branch_id')->references('id')->on('branches');
             $table->unsignedBigInteger('account_id')->references('id')->on('accounts');
@@ -34,6 +37,9 @@ return new class() extends Migration
             $table->unsignedBigInteger('created_by')->references('id')->on('users');
             $table->unsignedBigInteger('updated_by')->nullable()->references('id')->on('users');
             $table->unsignedBigInteger('deleted_by')->nullable()->references('id')->on('users');
+
+            $table->index(['tenant_id', 'branch_id'], 'sale_returns_branch_id_index');
+            $table->index(['tenant_id', 'date', 'branch_id', 'status'], 'sale_returns_tenant_date_branch_status_index');
 
             $table->softDeletes();
             $table->timestamps();

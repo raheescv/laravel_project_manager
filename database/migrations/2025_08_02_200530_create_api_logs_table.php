@@ -10,6 +10,9 @@ return new class() extends Migration
     {
         Schema::create('api_logs', function (Blueprint $table) {
             $table->id();
+            $table->unsignedBigInteger('tenant_id');
+            $table->foreign('tenant_id')->references('id')->on('tenants')->onDelete('cascade');
+            $table->index('tenant_id');
             $table->string('endpoint');
             $table->string('method', 8)->default('POST');
             $table->text('request')->nullable();

@@ -4,6 +4,7 @@ namespace App\Livewire\Log;
 
 use App\Exports\InventoryLogExport;
 use App\Jobs\Export\ExportInventoryLogJob;
+use App\Models\Configuration;
 use App\Models\InventoryLog;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
@@ -26,6 +27,8 @@ class Inventory extends Component
 
     public $limit = 10;
 
+    public $inventory_log_visible_column = [];
+
     public $sortField = 'inventory_logs.id';
 
     public $sortDirection = 'desc';
@@ -34,10 +37,43 @@ class Inventory extends Component
 
     public function mount()
     {
+        $this->inventory_log_visible_column = json_decode(Configuration::where('key', 'inventory_log_visible_column')->value('value'), true) ?? [
+            'id' => true,
+            'date' => true,
+            'branch' => true,
+            'department' => true,
+            'main_category' => true,
+            'product' => true,
+            'barcode' => true,
+            'batch' => true,
+            'quantity_in' => true,
+            'quantity_out' => true,
+            'balance' => true,
+            'remarks' => true,
+            'user' => true,
+        ];
         $this->from_date = date('Y-m-d', strtotime('-1 days'));
         $this->to_date = date('Y-m-d');
         $this->branch_id = session('branch_id');
+    }
 
+    public function getColumnDefinitions()
+    {
+        return [
+            'id' => '#',
+            'date' => 'Date',
+            'branch' => 'Branch',
+            'department' => 'Department',
+            'main_category' => 'Main Category',
+            'product' => 'Product',
+            'barcode' => 'Barcode',
+            'batch' => 'Batch',
+            'quantity_in' => 'In',
+            'quantity_out' => 'Out',
+            'balance' => 'Balance',
+            'remarks' => 'Remarks',
+            'user' => 'User',
+        ];
     }
 
     public function export()
@@ -99,7 +135,23 @@ class Inventory extends Component
 
     public function updated($key, $value)
     {
+        if (str_starts_with($key, 'inventory_log_visible_column.')) {
+            Configuration::updateOrCreate(
+                ['key' => 'inventory_log_visible_column'],
+                ['value' => json_encode($this->inventory_log_visible_column)]
+            );
+
+            return;
+        }
         $this->resetPage();
+    }
+
+    public function updatedInventoryLogVisibleColumn($value)
+    {
+        Configuration::updateOrCreate(
+            ['key' => 'inventory_log_visible_column'],
+            ['value' => json_encode($this->inventory_log_visible_column)]
+        );
     }
 
     public function render()
@@ -143,12 +195,17 @@ class Inventory extends Component
                 'inventory_logs.balance',
                 'inventory_logs.remarks',
                 'inventory_logs.user_name',
+                'inventory_logs.model',
+                'inventory_logs.model_id',
                 'inventory_logs.created_at',
             )
             ->where('products.type', 'product')
             ->latest();
         $data = $data->paginate($this->limit);
 
-        return view('livewire.log.inventory', ['data' => $data]);
+        return view('livewire.log.inventory', [
+            'data' => $data,
+            'columnDefinitions' => $this->getColumnDefinitions(),
+        ]);
     }
 }

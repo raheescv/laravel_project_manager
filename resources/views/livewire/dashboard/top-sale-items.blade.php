@@ -17,7 +17,7 @@
                     @foreach ($topItems as $item)
                         <tr>
                             <td>{{ $loop->iteration }}</td>
-                            <td>{{ $item->product->name }}</td>
+                            <td>{{ $item->item_name }}</td>
                             <td class="text-end">{{ $item->total_quantity }}</td>
                             <td class="text-end">{{ currency($item->total_amount) }}</td>
                         </tr>

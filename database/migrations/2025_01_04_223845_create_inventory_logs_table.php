@@ -10,8 +10,11 @@ return new class() extends Migration
     {
         Schema::create('inventory_logs', function (Blueprint $table) {
             $table->id();
+            $table->unsignedBigInteger('tenant_id');
+            $table->foreign('tenant_id')->references('id')->on('tenants')->onDelete('cascade');
+            $table->index('tenant_id');
             $table->unsignedBigInteger('branch_id')->index();
-            $table->unsignedBigInteger('employee_id')->nullable()->after('branch_id')->index();
+            $table->unsignedBigInteger('employee_id')->nullable()->index();
             $table->foreign('employee_id')->references('id')->on('users')->onDelete('cascade');
             $table->unsignedBigInteger('product_id')->index();
             $table->double('quantity_in', 8, 3);
@@ -28,6 +31,10 @@ return new class() extends Migration
 
             $table->unsignedBigInteger('user_id');
             $table->string('user_name');
+
+            $table->index(['tenant_id', 'employee_id'], 'inventory_logs_tenant_employee_id_index');
+            $table->index(['tenant_id', 'branch_id'], 'inventory_logs_tenant_branch_id_index');
+            $table->index(['tenant_id', 'product_id'], 'inventory_logs_tenant_product_id_index');
 
             $table->timestamps();
         });

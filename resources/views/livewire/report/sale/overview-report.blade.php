@@ -1,11 +1,11 @@
 @php
     // Pre-calculate common values to avoid repetition
     $netPayment = $totalPayment - $saleReturnPayments->sum('total');
-    $collectionRate = $totalPayment > 0 ? ($totalPayment / $totalSales) * 100 : 0;
+    $collectionRate = $totalSales > 0 ? ($totalPayment > 0 ? ($totalPayment / $totalSales) * 100 : 0) : 0;
     $successRate = $noOfSales > 0 ? (($noOfSales - $noOfSalesReturns) / $noOfSales) * 100 : 0;
     $totalTransactions = $salePayments->sum('transaction_count') + $saleReturnPayments->sum('transaction_count');
     $allPaymentMethods = $salePayments->pluck('payment_method')->merge($saleReturnPayments->pluck('payment_method'))->unique();
-
+    $allPaymentMethods[] = 'credit';
     // Payment method icons mapping
     $paymentIcons = [
         'cash' => ['icon' => 'fa-money', 'color' => 'text-success'],
@@ -60,13 +60,24 @@
                     <div class="row g-4">
                         @foreach ($allPaymentMethods as $method)
                             @php
-                                $saleAmount = $salePayments->where('payment_method', $method)->first()?->total ?? 0;
-                                $returnAmount = $saleReturnPayments->where('payment_method', $method)->first()?->total ?? 0;
-                                $netAmount = $saleAmount - $returnAmount;
-                                $saleCount = $salePayments->where('payment_method', $method)->first()?->transaction_count ?? 0;
-                                $returnCount = $saleReturnPayments->where('payment_method', $method)->first()?->transaction_count ?? 0;
-                                $methodLower = strtolower($method);
-                                $iconData = $paymentIcons[$methodLower] ?? $paymentIcons['default'];
+                                if ($method != 'credit') {
+                                    $saleAmount = $salePayments->where('payment_method', $method)->first()?->total ?? 0;
+                                    $returnAmount = $saleReturnPayments->where('payment_method', $method)->first()?->total ?? 0;
+                                    $netAmount = $saleAmount - $returnAmount;
+                                    $saleCount = $salePayments->where('payment_method', $method)->first()?->transaction_count ?? 0;
+                                    $returnCount = $saleReturnPayments->where('payment_method', $method)->first()?->transaction_count ?? 0;
+                                    $methodLower = strtolower($method);
+                                    $iconData = $paymentIcons[$methodLower] ?? $paymentIcons['default'];
+                                } else {
+                                    $saleAmount = $saleBalance;
+                                    $returnAmount = $saleReturnBalance;
+                                    $netAmount = $saleAmount - $returnAmount;
+                                    $saleCount = $saleBalanceCount;
+                                    $returnCount = $saleReturnBalanceCount;
+                                    $iconData = $paymentIcons['default'];
+                                    $method = 'Credit';
+                                    $methodLower = 'credit';
+                                }
                             @endphp
 
                             <div class="col-md-4 col-lg-4">
@@ -112,7 +123,7 @@
 
                     <!-- Financial Stats -->
                     <div class="row g-4 mt-4">
-                        <div class="col-md-6">
+                        <div class="col-md-4">
                             <div class="card bg-primary bg-gradient border-0">
                                 <div class="card-body">
                                     <div class="d-flex align-items-center">
@@ -120,14 +131,14 @@
                                             <i class="fa fa-money fa-2x text-white"></i>
                                         </div>
                                         <div class="flex-grow-1 ms-3">
-                                            <h6 class="text-white mb-1">Net Sales</h6>
-                                            <h4 class="mb-0 text-white">{{ currency($netSales, 0) }}</h4>
+                                            <h6 class="text-white mb-1">Gross Sales</h6>
+                                            <h4 class="mb-0 text-white">{{ currency($grossSales, 0) }}</h4>
                                         </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
-                        <div class="col-md-6">
+                        <div class="col-md-4">
                             <div class="card bg-info bg-gradient border-0">
                                 <div class="card-body">
                                     <div class="d-flex align-items-center">
@@ -137,6 +148,21 @@
                                         <div class="flex-grow-1 ms-3">
                                             <h6 class="text-white mb-1">Discounts</h6>
                                             <h4 class="mb-0 text-white">{{ currency($saleDiscount, 0) }}</h4>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card bg-success bg-gradient border-0">
+                                <div class="card-body">
+                                    <div class="d-flex align-items-center">
+                                        <div class="flex-shrink-0">
+                                            <i class="fa fa-money fa-2x text-white"></i>
+                                        </div>
+                                        <div class="flex-grow-1 ms-3">
+                                            <h6 class="text-white mb-1">Net Sales</h6>
+                                            <h4 class="mb-0 text-white">{{ currency($netSales, 0) }}</h4>
                                         </div>
                                     </div>
                                 </div>
@@ -160,7 +186,7 @@
                             </div>
                         </div>
                         <div class="col-md-4">
-                            <div class="card bg-success bg-gradient border-0">
+                            <div class="card bg-danger bg-gradient border-0">
                                 <div class="card-body">
                                     <div class="d-flex align-items-center">
                                         <div class="flex-shrink-0">
@@ -312,7 +338,7 @@
                                     <tr wire:key="sale-payment-{{ $index }}">
                                         <td class="ps-3">{{ $index + 1 }}</td>
 
-                                        <td>{{ $payment->branch_name }}</td>
+                                        <td>{{ $payment->branch_name ?? null }}</td>
 
                                         <td>{{ $payment->payment_method }}</td>
 
@@ -418,10 +444,9 @@
 
     </div>
 
-    <!-- Sales Details Tables -->
-    <div class="row g-4 mt-4">
-        <!-- Employee Sales Table -->
-        <div class="col-md-4">
+    <!-- Tailors Performance -->
+    <div class="row g-4 mt-1">
+        <div class="col-md-6">
             <div class="card border-0 shadow-sm">
                 <div class="card-header bg-transparent py-3">
                     <div class="d-flex justify-content-between align-items-center">
@@ -474,72 +499,173 @@
                 </div>
             </div>
         </div>
-
-        <!-- Product Sales Table -->
-        <div class="col-md-8">
-            <div class="card border-0 shadow-sm">
-                <div class="card-header bg-transparent py-3">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <h6 class="card-title mb-0 fw-bold">Product Performance</h6>
-                        <div class="d-flex gap-2">
-                            <select wire:model.live="productPerPage" class="form-select form-select-sm" style="width: 80px">
-                                <option value="10">10</option>
-                                <option value="25">25</option>
-                                <option value="50">50</option>
-                            </select>
-                            <input type="search" wire:model.live.debounce.300ms="productSearch" class="form-control form-control-sm" placeholder="Search product...">
+        @if (auth()->user()->can('tailoring order.view'))
+            <div class="col-md-6">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-header bg-transparent py-3">
+                        <h6 class="card-title mb-0 fw-bold">Tailors Performance</h6>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle mb-0">
+                                <thead class="bg-light">
+                                    <tr>
+                                        <th class="ps-3">#</th>
+                                        <th>Tailor</th>
+                                        <th class="text-end">Pending</th>
+                                        <th class="text-end">Completed</th>
+                                        <th class="text-end">Delivered</th>
+                                        <th class="text-end pe-3">Avg Star Rating</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @forelse ($tailorPerformance as $tailor)
+                                        <tr>
+                                            <td class="ps-3">{{ $loop->iteration }}</td>
+                                            <td>{{ $tailor->tailor }}</td>
+                                            <td class="text-end"><span class="badge bg-warning text-dark">{{ $tailor->pending_count }}</span></td>
+                                            <td class="text-end"><span class="badge bg-info">{{ $tailor->completed_count }}</span></td>
+                                            <td class="text-end"><span class="badge bg-success">{{ $tailor->delivered_count }}</span></td>
+                                            <td class="text-end pe-3">
+                                                <span class="fw-bold">{{ number_format((float) ($tailor->avg_rating ?? 0), 2) }}</span>
+                                                <span class="text-warning">★</span>
+                                            </td>
+                                        </tr>
+                                    @empty
+                                        <tr>
+                                            <td colspan="6" class="text-center py-4 text-muted">No tailor performance data available</td>
+                                        </tr>
+                                    @endforelse
+                                </tbody>
+                                <tfoot class="bg-light">
+                                    <tr>
+                                        <td colspan="2" class="ps-3 fw-bold">Total</td>
+                                        <td class="text-end fw-bold">{{ $tailorPerformance->sum('pending_count') }}</td>
+                                        <td class="text-end fw-bold">{{ $tailorPerformance->sum('completed_count') }}</td>
+                                        <td class="text-end fw-bold">{{ $tailorPerformance->sum('delivered_count') }}</td>
+                                        <td></td>
+                                    </tr>
+                                </tfoot>
+                            </table>
                         </div>
                     </div>
                 </div>
-                <div class="card-body p-0">
-                    <div class="table-responsive">
-                        <table class="table table-hover align-middle mb-0">
-                            <thead class="bg-light">
-                                <tr>
-                                    <th class="ps-3">#</th>
-                                    <th>Name</th>
-                                    <th class="text-end">Sold Qty</th>
-                                    <th class="text-end">Returned Qty</th>
-                                    <th class="text-end">Sale Total</th>
-                                    <th class="text-end">Return Total</th>
-                                    <th class="text-end pe-3">Net Amount</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @foreach ($products as $item)
-                                    <tr wire:key="{{ $item->id }}">
-                                        <td class="ps-3">{{ $loop->iteration }}</td>
-                                        <td>{{ $item->product }}</td>
-                                        <td class="text-end">{{ number_format($item->sales_quantity) }}</td>
-                                        <td class="text-end">{{ number_format($item->return_quantity) }}</td>
-                                        <td class="text-end">{{ currency($item->sale_total ?? 0) }}</td>
-                                        <td class="text-end text-warning">{{ currency($item->sale_return_total ?? 0) }}</td>
-                                        <td class="text-end pe-3 fw-bold {{ ($item->net_amount ?? 0) >= 0 ? 'text-success' : 'text-danger' }}">{{ currency($item->net_amount ?? 0) }}</td>
-                                    </tr>
-                                @endforeach
-                            </tbody>
+            </div>
+        @endif
+    </div>
 
-                            <tfoot class="bg-light">
-                                <tr>
-                                    <td colspan="2" class="ps-3 fw-bold">Total</td>
-                                    <td class="text-end fw-bold">{{ number_format($totalProductQuantity) }}</td>
-                                    <td class="text-end fw-bold">{{ number_format($totalReturnedQuantity ?? 0) }}</td>
-                                    <td class="text-end fw-bold">{{ currency($itemTotal) }}</td>
-                                    <td class="text-end fw-bold text-warning">{{ currency($totalSaleReturnAmount ?? 0) }}</td>
-                                    <td class="text-end pe-3 fw-bold {{ ($netItemTotal ?? 0) >= 0 ? 'text-success' : 'text-danger' }}">{{ currency($netItemTotal ?? 0) }}</td>
-                                </tr>
-                            </tfoot>
-                        </table>
+    <!-- Tailoring Order Item Performance -->
+    @if (auth()->user()->can('tailoring order.view'))
+        <div class="row g-4 mt-4">
+            <div class="col-md-4">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-header bg-transparent py-3">
+                        <h6 class="card-title mb-0 fw-bold">Tailoring Order Item Performance</h6>
                     </div>
-                    @if ($products->hasPages())
-                        <div class="p-3 border-top">
-                            {{ $products->links() }}
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle mb-0">
+                                <thead class="bg-light">
+                                    <tr>
+                                        <th class="ps-3">#</th>
+                                        <th>Item</th>
+                                        <th class="text-end">Qty</th>
+                                        <th class="text-end pe-3">Amount</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @forelse ($tailoringItemPerformance as $item)
+                                        <tr>
+                                            <td class="ps-3">{{ $loop->iteration }}</td>
+                                            <td>{{ $item->product_name }}</td>
+                                            <td class="text-end">{{ number_format((float) $item->quantity, 0) }}</td>
+                                            <td class="text-end pe-3 fw-bold">{{ currency($item->total_amount) }}</td>
+                                        </tr>
+                                    @empty
+                                        <tr>
+                                            <td colspan="8" class="text-center py-4 text-muted">No tailoring item performance data available</td>
+                                        </tr>
+                                    @endforelse
+                                </tbody>
+                                @if ($tailoringItemPerformance->count() > 0)
+                                    <tfoot class="bg-light">
+                                        <tr>
+                                            <td colspan="2" class="ps-3 fw-bold">Total</td>
+                                            <td class="text-end fw-bold">{{ number_format((float) $tailoringItemPerformance->sum('quantity'), 0) }}</td>
+                                            <td class="text-end pe-3 fw-bold">{{ currency($tailoringItemPerformance->sum('total_amount')) }}</td>
+                                        </tr>
+                                    </tfoot>
+                                @endif
+                            </table>
                         </div>
-                    @endif
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-8">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-header bg-transparent py-3">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h6 class="card-title mb-0 fw-bold">Product/Service Performance</h6>
+                            <div class="d-flex gap-2">
+                                <select wire:model.live="productPerPage" class="form-select form-select-sm" style="width: 80px">
+                                    <option value="10">10</option>
+                                    <option value="25">25</option>
+                                    <option value="50">50</option>
+                                </select>
+                                <input type="search" wire:model.live.debounce.300ms="productSearch" class="form-control form-control-sm" placeholder="Search product...">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle mb-0">
+                                <thead class="bg-light">
+                                    <tr>
+                                        <th class="ps-3"><x-sortable-header :direction="$productSortDirection" :sortField="$productSortField" field="product.id" label="#" /></th>
+                                        <th><x-sortable-header :direction="$productSortDirection" :sortField="$productSortField" field="product.product" label="Name" /></th>
+                                        <th class="text-end"><x-sortable-header :direction="$productSortDirection" :sortField="$productSortField" field="product.sales_quantity" label="Sold Qty" /></th>
+                                        <th class="text-end"><x-sortable-header :direction="$productSortDirection" :sortField="$productSortField" field="product.return_quantity" label="Returned Qty" /></th>
+                                        <th class="text-end"><x-sortable-header :direction="$productSortDirection" :sortField="$productSortField" field="product.sale_total" label="Sale Total" /></th>
+                                        <th class="text-end"><x-sortable-header :direction="$productSortDirection" :sortField="$productSortField" field="product.sale_return_total" label="Return Total" /></th>
+                                        <th class="text-end pe-3"><x-sortable-header :direction="$productSortDirection" :sortField="$productSortField" field="product.net_amount" label="Net Amount" /></th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach ($products as $item)
+                                        <tr wire:key="{{ $item->id }}">
+                                            <td class="ps-3">{{ $loop->iteration }}</td>
+                                            <td>{{ $item->product }}</td>
+                                            <td class="text-end">{{ number_format($item->sales_quantity) }}</td>
+                                            <td class="text-end">{{ number_format($item->return_quantity) }}</td>
+                                            <td class="text-end">{{ currency($item->sale_total ?? 0) }}</td>
+                                            <td class="text-end text-warning">{{ currency($item->sale_return_total ?? 0) }}</td>
+                                            <td class="text-end pe-3 fw-bold {{ ($item->net_amount ?? 0) >= 0 ? 'text-success' : 'text-danger' }}">{{ currency($item->net_amount ?? 0) }}</td>
+                                        </tr>
+                                    @endforeach
+                                </tbody>
+
+                                <tfoot class="bg-light">
+                                    <tr>
+                                        <td colspan="2" class="ps-3 fw-bold">Total</td>
+                                        <td class="text-end fw-bold">{{ number_format($totalProductQuantity) }}</td>
+                                        <td class="text-end fw-bold">{{ number_format($totalReturnedQuantity ?? 0) }}</td>
+                                        <td class="text-end fw-bold">{{ currency($itemTotal) }}</td>
+                                        <td class="text-end fw-bold text-warning">{{ currency($totalSaleReturnAmount ?? 0) }}</td>
+                                        <td class="text-end pe-3 fw-bold {{ ($netItemTotal ?? 0) >= 0 ? 'text-success' : 'text-danger' }}">{{ currency($netItemTotal ?? 0) }}</td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                        @if ($products->hasPages())
+                            <div class="p-3 border-top">
+                                {{ $products->links() }}
+                            </div>
+                        @endif
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
+    @endif
 
 
     @push('scripts')

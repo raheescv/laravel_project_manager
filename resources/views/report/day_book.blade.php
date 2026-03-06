@@ -23,5 +23,6 @@
     </div>
     @push('scripts')
         <x-select.accountSelect />
+        <x-select.branchSelect />
     @endpush
 </x-app-layout>

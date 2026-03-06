@@ -124,6 +124,30 @@
                 @this.set('payment.payment_method_id', value);
                 $('#payment').select();
             });
+
+            // Listen for print event from Livewire
+            window.addEventListener('print-sale-return-payment-receipt', event => {
+                const data = event.detail[0];
+
+                // Build query parameters
+                const params = new URLSearchParams({
+                    customer_name: data.customer_name || '',
+                    payment_date: data.payment_date || '',
+                    payment_method_id: data.payment_method || '',
+                    total_amount: data.total_amount || 0,
+                    receipt_data: JSON.stringify(data.receipt_data || []),
+                    payment_ids: JSON.stringify(data.payment_ids || [])
+                });
+
+                // Open print window
+                const printUrl = '{{ route("print::sale_return::payment-receipt") }}?' + params.toString();
+                const printWindow = window.open(printUrl, '_blank', 'width=300,height=600');
+
+                // Focus on the print window
+                if (printWindow) {
+                    printWindow.focus();
+                }
+            });
         </script>
     @endpush
 </div>

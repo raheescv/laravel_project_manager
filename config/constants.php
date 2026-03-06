@@ -1,10 +1,14 @@
 <?php
 
 return [
+    'force_https' => env('FORCE_HTTPS', false),
     'auto_pull_enabled' => env('AUTO_PULL_ENABLED', false),
     'auto_pull_branch' => env('AUTO_PULL_BRANCH', 'main'),
     'whatsapp_port' => env('WHATSAPP_PORT'),
     'whatsapp_server_url' => env('WHATSAPP_SERVER_URL'),
+    'trading' => [
+        'enabled' => env('TRADING_ENABLED', false),
+    ],
     'data_depth' => [
         'totalbuyqty' => 'Total buying quantity',
         'totalsellqty' => 'Total selling quantity',

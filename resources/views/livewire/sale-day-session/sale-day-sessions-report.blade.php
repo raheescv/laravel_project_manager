@@ -132,9 +132,12 @@
                                             </div>
                                         </div>
                                         <div class="flex-grow-1">
-                                            <div class="small text-muted mb-1 fw-medium">Total Sales</div>
+                                            <div class="small text-muted mb-1 fw-medium">Total Invoices</div>
                                             <div class="h4 mb-0 fw-bold" style="color: #4a6fa5;">
-                                                {{ number_format($summary['total_sales']) }}
+                                                {{ number_format($summary['total_invoices']) }}
+                                            </div>
+                                            <div class="small text-muted mt-1">
+                                                Sales: {{ number_format($summary['total_sales']) }} | Tailoring: {{ number_format($summary['total_tailoring']) }}
                                             </div>
                                         </div>
                                     </div>
@@ -149,9 +152,12 @@
                                             </div>
                                         </div>
                                         <div class="flex-grow-1">
-                                            <div class="small text-muted mb-1 fw-medium">Total Sales Amount</div>
+                                            <div class="small text-muted mb-1 fw-medium">Total Collection Amount</div>
                                             <div class="h4 mb-0 fw-bold" style="color: #b8860b;">
-                                                {{ number_format($summary['total_sales_amount'], 2) }}
+                                                {{ number_format($summary['total_collection_amount'], 2) }}
+                                            </div>
+                                            <div class="small text-muted mt-1">
+                                                Sales: {{ number_format($summary['total_sales_amount'], 2) }} | Tailoring: {{ number_format($summary['total_tailoring_amount'], 2) }}
                                             </div>
                                         </div>
                                     </div>
@@ -233,6 +239,12 @@
                                     <th style="border-bottom: 2px solid #e9ecef;" class="text-end">
                                         <i class="fa fa-money me-1" style="color: #6c757d;"></i>Sales Amount
                                     </th>
+                                    <th style="border-bottom: 2px solid #e9ecef;" class="text-end">
+                                        <i class="fa fa-scissors me-1" style="color: #6c757d;"></i>Tailoring Count
+                                    </th>
+                                    <th style="border-bottom: 2px solid #e9ecef;" class="text-end">
+                                        <i class="fa fa-money me-1" style="color: #6c757d;"></i>Tailoring Amount
+                                    </th>
                                     <th wire:click="sortBy('difference_amount')" style="cursor: pointer; border-bottom: 2px solid #e9ecef;" class="text-end">
                                         <i class="fa fa-calculator me-1" style="color: #6c757d;"></i>Difference
                                         @if ($sortField === 'difference_amount')
@@ -287,6 +299,16 @@
                                             </span>
                                         </td>
                                         <td class="text-end">
+                                            <span class="badge" style="background-color: #17a2b8; color: white;">
+                                                {{ $session->tailoring_orders_count }}
+                                            </span>
+                                        </td>
+                                        <td class="text-end">
+                                            <span class="fw-bold" style="color: #17a2b8;">
+                                                {{ number_format($session->tailoring_orders_sum_paid ?? 0, 2) }}
+                                            </span>
+                                        </td>
+                                        <td class="text-end">
                                             @if ($session->status == 'closed')
                                                 <span class="fw-bold @if ($session->difference_amount < 0) text-danger @elseif($session->difference_amount > 0) text-success @else text-muted @endif">
                                                     @if ($session->difference_amount != 0)
@@ -309,7 +331,7 @@
 
                                 @if ($sessions->count() === 0)
                                     <tr>
-                                        <td colspan="9" class="text-center py-4" style="color: #6c757d;">
+                                        <td colspan="11" class="text-center py-4" style="color: #6c757d;">
                                             <i class="fa fa-info-circle me-2"></i>No day sessions found matching the criteria.
                                         </td>
                                     </tr>

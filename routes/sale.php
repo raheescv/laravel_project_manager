@@ -27,9 +27,9 @@ Route::middleware('auth')->group(function (): void {
         Route::get('invoices', 'get')->name('invoice-list');
         Route::get('receipts', 'receipts')->name('receipts')->can('sale.receipts');
 
-        Route::get('day-management', 'dayManagement')->name('day-management')->can('sale.view');
-        Route::get('day-session/{id}', 'daySession')->name('day-session')->can('sale.view');
-        Route::get('day-sessions-report', 'daySessionsReport')->name('day-sessions-report')->can('sale.view');
+        Route::get('day-management', 'dayManagement')->name('day-management')->can('day session.create');
+        Route::get('day-session/{id}', 'daySession')->name('day-session')->can('day session.view');
+        Route::get('day-sessions-report', 'daySessionsReport')->name('day-sessions-report')->can('day session.list');
     });
     Route::name('sale_return::')->prefix('sale_return')->controller(SaleReturnController::class)->group(function (): void {
         Route::get('', 'index')->name('index')->can('sales return.view');

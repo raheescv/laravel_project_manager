@@ -1,7 +1,8 @@
 <?php
 
 use App\Models\Country;
-use App\Models\Product;
+use App\Services\TenantService;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Storage;
@@ -125,6 +126,38 @@ if (! function_exists('systemDateTime')) {
 }
 
 /**
+ * Human-readable day-relative label for a date (no time): "today", "1 day before", "2 days before", etc.
+ *
+ * @param  string|\Carbon\Carbon|\DateTimeInterface|null  $date
+ * @return string
+ */
+if (! function_exists('relativeDayLabel')) {
+    function relativeDayLabel($date)
+    {
+        if (! $date) {
+            return '';
+        }
+        $issueDay = Carbon::parse($date)->startOfDay();
+        $daysDiff = $issueDay->diffInDays(now()->startOfDay(), false);
+
+        if ($daysDiff == 0) {
+            return 'today';
+        }
+        if ($daysDiff == 1) {
+            return '1 day before';
+        }
+        if ($daysDiff > 1) {
+            return $daysDiff.' days before';
+        }
+        if ($daysDiff == -1) {
+            return '1 day after';
+        }
+
+        return abs($daysDiff).' days after';
+    }
+}
+
+/**
  * Extract numeric value from string
  *
  * @param  mixed  $value  The value to extract numeric from
@@ -240,47 +273,10 @@ if (! function_exists('fileUpload')) {
 if (! function_exists('generateBarcode')) {
     function generateBarcode()
     {
-        $maxBarcode = Product::max('barcode') ?? '0';
-        $barcode = 0;
-        // If maxBarcode is purely numeric, handle as before
-        if (is_numeric($maxBarcode)) {
-            $numericPart = (int) $maxBarcode;
-            // Ensure we start from at least 8000
-            if ($numericPart < 8000) {
-                $numericPart = 8000;
-            }
-            $barcode = $numericPart + 1;
-        } else {
-            // Extract prefix and numeric part (e.g., "TFQ01" -> prefix: "TFQ", number: "01")
-            if (preg_match('/^([^0-9]*)(\d+)$/', $maxBarcode, $matches)) {
-                $prefix = $matches[1];
-                $numericPart = (int) $matches[2];
-                $paddingLength = strlen($matches[2]); // Preserve original padding length
-
-                // Increment the numeric part
-                $numericPart++;
-
-                // Reconstruct barcode with same prefix and padding
-                $barcode = $prefix.str_pad($numericPart, $paddingLength, '0', STR_PAD_LEFT);
-            }
-        }
-
-        // Ensure uniqueness
-        while (Product::where('barcode', $barcode)->exists()) {
-            if (is_numeric($barcode)) {
-                $barcode = (int) $barcode + 1;
-            } else {
-                // Extract and increment numeric part
-                if (preg_match('/^([^0-9]*)(\d+)$/', $barcode, $matches)) {
-                    $prefix = $matches[1];
-                    $numericPart = (int) $matches[2] + 1;
-                    $paddingLength = strlen($matches[2]);
-                    $barcode = $prefix.str_pad($numericPart, $paddingLength, '0', STR_PAD_LEFT);
-                } else {
-                    $barcode = (int) $barcode + 1;
-                }
-            }
-        }
+        // Get next unique number from UniqueNoCounter
+        $uniqueNumber = getNextUniqueNumber('Barcode');
+        // Ensure minimum of 8000 for numeric barcode
+        $barcode = (string) max(1, $uniqueNumber);
 
         return $barcode;
     }
@@ -337,6 +333,25 @@ if (! function_exists('appointmentStatuses')) {
             'completed' => 'Completed',
             'cancelled' => 'Cancelled',
             'no response' => 'No Response',
+        ];
+    }
+}
+if (! function_exists('stockCheckStatuses')) {
+    function stockCheckStatuses()
+    {
+        return [
+            'pending' => 'Pending',
+            'completed' => 'Completed',
+            'cancelled' => 'Cancelled',
+        ];
+    }
+}
+if (! function_exists('stockCheckItemStatuses')) {
+    function stockCheckItemStatuses()
+    {
+        return [
+            'pending' => 'Pending',
+            'completed' => 'Completed',
         ];
     }
 }
@@ -466,11 +481,37 @@ if (! function_exists('getNextSaleInvoiceNo')) {
         return $invoice;
     }
 }
+if (! function_exists('getNextTailorOrderNo')) {
+    function getNextTailorOrderNo()
+    {
+        $branchCode = session('branch_code', 'M');
+        $prefix = 'TA-';
+        $prefix = '';
+
+        if ($branchCode) {
+            $prefix .= $branchCode.'-';
+        }
+
+        $year = now()->format('y');
+
+        $orderPrefix = $prefix.$year.'-';
+
+        $number = getNextUniqueNumber('TailoringOrder');
+
+        return $orderPrefix.str_pad($number, 4, '0', STR_PAD_LEFT);
+    }
+}
 if (! function_exists('getNextUniqueNumber')) {
     function getNextUniqueNumber($segment = 'Sale')
     {
         $branchCode = session('branch_code', 'M');
         $country_id = cache('country_id', Country::QATAR);
+
+        // Get tenant_id from session or TenantService (e.g. when running inside a job)
+        $tenantId = session('tenant_id') ?? app(TenantService::class)->getCurrentTenantId();
+        if (! $tenantId) {
+            throw new \Exception('Tenant ID is required to generate unique number');
+        }
 
         if ($country_id == Country::INDIA) {
             $year = now()->format('y').'/'.now()->addYear()->format('y');
@@ -479,13 +520,17 @@ if (! function_exists('getNextUniqueNumber')) {
             }
         } else {
             $year = now()->format('y');
+            if ($segment == 'Barcode') {
+                $year = 1;
+            }
         }
 
         DB::statement('SET @out_unique_no = 0;');
         $yearEscaped = DB::getPdo()->quote($year);
+        $tenantIdEscaped = DB::getPdo()->quote($tenantId);
         $branchCodeEscaped = DB::getPdo()->quote($branchCode);
         $segmentEscaped = DB::getPdo()->quote($segment);
-        DB::statement("CALL getNextUniqueNumber($yearEscaped, $branchCodeEscaped, $segmentEscaped, @out_unique_no);");
+        DB::statement("CALL getNextUniqueNumber($tenantIdEscaped, $yearEscaped, $branchCodeEscaped, $segmentEscaped, @out_unique_no);");
 
         $result = DB::select('SELECT @out_unique_no as unique_no');
 
@@ -567,6 +612,61 @@ if (! function_exists('packageStatuses')) {
             'in_progress' => 'In Progress',
             'completed' => 'Completed',
             'cancelled' => 'Cancelled',
+        ];
+    }
+}
+
+if (! function_exists('tailoringOrderStatuses')) {
+    function tailoringOrderStatuses()
+    {
+        return [
+            'pending' => 'Pending',
+            'completed' => 'Completed',
+        ];
+    }
+}
+
+if (! function_exists('tailoringOrderDeliveryStatuses')) {
+    function tailoringOrderDeliveryStatuses()
+    {
+        return [
+            'not delivered' => 'Not Delivered',
+            'partially delivered' => 'Partially Delivered',
+            'delivered' => 'Delivered',
+        ];
+    }
+}
+
+if (! function_exists('tailoringOrderItemStatuses')) {
+    function tailoringOrderItemStatuses()
+    {
+        return [
+            'pending' => 'Pending',
+            'partially completed' => 'Partially Completed',
+            'completed' => 'Completed',
+            'delivered' => 'Delivered',
+        ];
+    }
+}
+
+if (! function_exists('tailoringOrderItemCompletionStatuses')) {
+    function tailoringOrderItemCompletionStatuses()
+    {
+        return [
+            'not completed' => 'Not Completed',
+            'partially completed' => 'Partially Completed',
+            'completed' => 'Completed',
+        ];
+    }
+}
+
+if (! function_exists('tailoringOrderItemDeliveryStatuses')) {
+    function tailoringOrderItemDeliveryStatuses()
+    {
+        return [
+            'not delivered' => 'Not Delivered',
+            'partially delivered' => 'Partially Delivered',
+            'delivered' => 'Delivered',
         ];
     }
 }

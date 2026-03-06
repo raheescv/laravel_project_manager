@@ -4,7 +4,9 @@ namespace App\Models;
 
 use App\Models\Models\Views\Ledger;
 use App\Models\Scopes\AssignedBranchScope;
+use App\Traits\BelongsToTenant;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use OwenIt\Auditing\Auditable;
 use OwenIt\Auditing\Contracts\Auditable as AuditableContracts;
@@ -12,11 +14,13 @@ use OwenIt\Auditing\Contracts\Auditable as AuditableContracts;
 class SaleReturn extends Model implements AuditableContracts
 {
     use Auditable;
+    use BelongsToTenant;
     use SoftDeletes;
 
     const ADDITIONAL_DISCOUNT_DESCRIPTION = 'Additional Discount Provided on Sales Return';
 
     protected $fillable = [
+        'tenant_id',
         'reference_no',
         'branch_id',
         'account_id',
@@ -73,8 +77,14 @@ class SaleReturn extends Model implements AuditableContracts
     public function scopeCustomerSearch($query, $branch_id = null, $from = null, $to = null)
     {
         return $query->when($branch_id, fn ($q) => $q->where('branch_id', $branch_id))
+            ->where('status', 'completed')
             ->when($from, fn ($q) => $q->where('date', '>=', $from))
             ->when($to, fn ($q) => $q->where('date', '<=', $to));
+    }
+
+    public function tenant(): BelongsTo
+    {
+        return $this->belongsTo(Tenant::class, 'tenant_id');
     }
 
     public function branch()

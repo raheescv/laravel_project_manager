@@ -32,15 +32,18 @@ class SaleController extends Controller
     public function posPage($id = null)
     {
         $showColleague = Configuration::where('key', 'show_colleague')->value('value') ?? 'yes';
-        $categories = Category::withCount('products')
-            ->where('sale_visibility_flag', true)
-            ->having('products_count', '>', 0)
-            ->get()
-            ->toArray();
+        $branchWiseEmployeeList = Configuration::where('key', 'branch_wise_employee_list')->value('value') ?? 'no';
+        $saleItemRowMode = Configuration::where('key', 'sale_item_row_mode')->value('value') ?? 'merge';
+        $categories = Category::withCount('products')->where('sale_visibility_flag', true)->having('products_count', '>', 0)->get()->toArray();
 
         $employees = User::employee()->where('is_active', true);
         if ($showColleague == 'no' && Auth::user()->type == 'employee') {
             $employees = $employees->where('id', Auth::id());
+        }
+        if ($branchWiseEmployeeList === 'yes' && session('branch_id')) {
+            $employees = $employees->whereHas('branches', function ($query): void {
+                $query->where('user_has_branches.branch_id', session('branch_id'));
+            });
         }
         $employees = $employees->pluck('name', 'id')->toArray();
 
@@ -61,7 +64,9 @@ class SaleController extends Controller
         $paymentMethodIds = json_decode(Configuration::where('key', 'payment_methods')->value('value'), true);
         $paymentMethods = [];
         if ($paymentMethodIds) {
-            $paymentMethods = Account::whereIn('id', $paymentMethodIds)->get(['name', 'id'])->toArray();
+            $paymentMethods = Account::whereIn('id', $paymentMethodIds)
+                ->get(['name', 'id'])
+                ->toArray();
         }
 
         // Get default product type from configuration
@@ -70,10 +75,14 @@ class SaleController extends Controller
         // Get default quantity from configuration
         $defaultQuantity = (float) (Configuration::where('key', 'default_quantity')->value('value') ?? '0.001');
 
+        $defaultEmployeeId = null;
+        if (User::employee()->count() == 1) {
+            $defaultEmployeeId = User::employee()->first(['id'])->id;
+        }
         // Default sale data
         $saleData = [
             'id' => null,
-            'employee_id' => '',
+            'employee_id' => $defaultEmployeeId,
             'sale_type' => 'normal',
             'account_id' => $useDefaultCustomer ? 3 : null,
             'account_name' => $useDefaultCustomer ? 'General Customer' : null,
@@ -98,11 +107,7 @@ class SaleController extends Controller
                     'account:id,name,mobile',
                     'branch:id,name',
                     'items' => function ($query): void {
-                        $query->with([
-                            'product:id,name,mrp,size,barcode',
-                            'employee:id,name',
-                            'assistant:id,name',
-                        ]);
+                        $query->with(['product:id,name,mrp,size,barcode,unit_id', 'product.unit:id,name', 'product.units.subUnit:id,name', 'employee:id,name', 'assistant:id,name', 'unit:id,name']);
                     },
                     'comboOffers.comboOffer:id,name',
                     'createdUser:id,name',
@@ -116,7 +121,7 @@ class SaleController extends Controller
                     $customers[$sale->account_id] = [
                         'id' => $sale->account->id,
                         'name' => $sale->account->name,
-                        'mobile' => $sale->account->mobile ?? $sale->customer_mobile ?? '',
+                        'mobile' => $sale->account->mobile ?? ($sale->customer_mobile ?? ''),
                     ];
                 } elseif ($sale->account_id && $sale->account_id !== 3 && $sale->customer_name) {
                     // Handle case where account relation doesn't exist but we have customer data
@@ -157,8 +162,9 @@ class SaleController extends Controller
                 // Transform sale items to match POS item structure (as object with keys)
                 $cartItems = [];
                 foreach ($sale->items as $item) {
-                    $key = $item->employee_id.'-'.$item->inventory_id;
+                    $key = $this->buildSaleItemKey($item->employee_id, $item->inventory_id, $item->id);
                     $cartItems[$key] = [
+                        'key' => $key,
                         'id' => $item->id,
                         'product_id' => $item->product_id,
                         'inventory_id' => $item->inventory_id,
@@ -179,6 +185,9 @@ class SaleController extends Controller
                         'employee_name' => $item->employee->name ?? 'Unknown Employee',
                         'assistant_id' => $item->assistant_id,
                         'assistant_name' => $item->assistant->name ?? 'Unknown Assistant',
+                        'unit_id' => $item->unit_id ?? $item->product->unit_id,
+                        'unit_name' => $item->unit->name ?? ($item->product->unit->name ?? ''),
+                        'units' => $item->product->getResolvedUnits(),
                         'combo_offer_price' => 0,
                         'combo_offer_id' => null,
                     ];
@@ -192,14 +201,16 @@ class SaleController extends Controller
                 } elseif ($sale->payments->count() > 1 || $sale->balance != 0) {
                     $saleData['payment_method'] = 'custom';
                     $saleData['custom_payment_data'] = [
-                        'payments' => $sale->payments->map(function ($payment) {
-                            return [
-                                'id' => $payment->id,
-                                'amount' => (float) $payment->amount,
-                                'payment_method_id' => $payment->payment_method_id,
-                                'name' => $payment->paymentMethod->name ?? 'Unknown',
-                            ];
-                        })->toArray(),
+                        'payments' => $sale->payments
+                            ->map(function ($payment) {
+                                return [
+                                    'id' => $payment->id,
+                                    'amount' => (float) $payment->amount,
+                                    'payment_method_id' => $payment->payment_method_id,
+                                    'name' => $payment->paymentMethod->name ?? 'Unknown',
+                                ];
+                            })
+                            ->toArray(),
                         'totalPaid' => (float) $sale->payments->sum('amount'),
                         'balanceDue' => (float) ($sale->grand_total - $sale->payments->sum('amount')),
                     ];
@@ -211,7 +222,7 @@ class SaleController extends Controller
                     foreach ($sale->comboOffers as $saleComboOffer) {
                         $comboOfferItems = [];
                         foreach ($saleComboOffer->items as $item) {
-                            $key = $item->employee_id.'-'.$item->inventory_id;
+                            $key = $this->buildSaleItemKey($item->employee_id, $item->inventory_id, $item->id);
                             $comboOfferPrice = (float) ($item->unit_price - $item->discount);
                             $discount = (float) ($item->unit_price - $comboOfferPrice);
 
@@ -255,7 +266,6 @@ class SaleController extends Controller
                 } else {
                     $saleData['comboOffers'] = [];
                 }
-
             } catch (\Exception $e) {
                 // If sale not found or error, use default data but show the ID for error handling
                 $saleData['id'] = $id;
@@ -275,11 +285,19 @@ class SaleController extends Controller
             'defaultProductType' => $defaultProductType,
             'defaultCustomerEnabled' => $useDefaultCustomer,
             'defaultQuantity' => $defaultQuantity,
+            'saleItemRowMode' => $saleItemRowMode,
             'canEditItemPrice' => Auth::user()->can('sale.item price edit'),
             'canFeedback' => Auth::user()->can('sale.feedback'),
         ];
 
         return inertia('Sale/POS', $data);
+    }
+
+    private function buildSaleItemKey(int $employeeId, int $inventoryId, int|string|null $suffix = null): string
+    {
+        $baseKey = $employeeId.'-'.$inventoryId;
+
+        return $suffix === null ? $baseKey : $baseKey.'-'.$suffix;
     }
 
     public function view($id)

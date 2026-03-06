@@ -26,6 +26,21 @@ class ReportController extends Controller
         return view('report.purchase_item');
     }
 
+    public function tailoring_order_item()
+    {
+        return view('report.tailoring_order_item');
+    }
+
+    public function tailoring_order_item_tailor()
+    {
+        return view('report.tailoring_order_item_tailor');
+    }
+
+    public function tailoring_non_delivery()
+    {
+        return view('report.tailoring_non_delivery');
+    }
+
     public function purchase_return_item()
     {
         return view('report.purchase_return_item');
@@ -36,9 +51,9 @@ class ReportController extends Controller
         return view('report.day_book');
     }
 
-    public function sale_summary()
+    public function dailySalesInsights()
     {
-        return view('report.sale_summary');
+        return view('report.daily-sales-insights-report');
     }
 
     public function sales_overview()
@@ -126,5 +141,20 @@ class ReportController extends Controller
     public function tax_report()
     {
         return view('report.tax_report');
+    }
+
+    public function monthly_sale()
+    {
+        return view('report.monthly_sale');
+    }
+
+    public function issue_item()
+    {
+        return view('report.issue_item');
+    }
+
+    public function issue_aging()
+    {
+        return view('report.issue_aging');
     }
 }

@@ -14,7 +14,7 @@
     </div>
     <div class="card-body px-0 pb-0">
         <div class="table-responsive">
-            <table class="table table-striped table-hover align-middle mb-0 border-bottom">
+            <table class="table table-striped table-hover table-sm align-middle mb-0 border-bottom">
                 <thead class="bg-light text-nowrap">
                     <tr>
                         <th class="ps-3">
@@ -56,7 +56,7 @@
                 <tbody>
                     @forelse ($sales as $sale)
                         <tr>
-                            <td class="ps-3">
+                            <td class="ps-3 text-nowrap">
                                 <div class="d-flex align-items-center gap-2">
                                     <i class="demo-psi-building fs-5 text-warning"></i>
                                     <span>{{ $sale->customer_name }}</span>
@@ -74,7 +74,8 @@
                                 </span>
                             </td>
                             <td class="text-nowrap">
-                                <a href="{{ route('sale::view', $sale->id) }}" class="text-primary fw-semibold text-decoration-none" target="_blank">
+                                <a href="{{ ($sale->source ?? 'sale') === 'tailoring' ? route('tailoring::order::show', $sale->id) : route('sale::view', $sale->id) }}"
+                                    class="text-primary fw-semibold text-decoration-none" target="_blank">
                                     {{ $sale->invoice_no }}
                                 </a>
                             </td>
@@ -210,16 +211,15 @@
     @push('scripts')
         <script>
             $(document).ready(function() {
-                $('.customer_aging_table_change').on('change keyup', function() {
-                    Livewire.dispatch('customerAgingFilterChanged', [
-                        $('#from_date').val(),
-                        $('#to_date').val(),
-                        $('#customer_id').val() || null,
-                        $('#table_branch_id').val() || null
-                    ]);
+                $('.customer_aging_table_change').on('change', function() {
+                    Livewire.dispatch('customerAgingFilterChanged', {
+                        from_date: $('#from_date').val(),
+                        to_date: $('#to_date').val(),
+                        customer_id: $('#customer_id').val() || null,
+                        branch_id: $('#table_branch_id').val() || null
+                    });
                 });
             });
         </script>
     @endpush
 </div>
-

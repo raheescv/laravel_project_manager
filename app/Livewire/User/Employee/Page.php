@@ -42,44 +42,49 @@ class Page extends Component
             $name = '';
             $code = '';
             $email = '';
-            $password = '';
             if (! app()->isProduction()) {
                 $name = $faker->name;
                 $code = $faker->hexcolor;
                 $email = $faker->email;
-                $password = $faker->password;
             }
             $this->users = [
                 'type' => 'employee',
                 'code' => $code,
                 'name' => $name,
                 'email' => $email,
-                'password' => $password,
+                'password' => '',
+                'designation_id' => '',
+                'order_no' => '',
             ];
         } else {
-            $user = User::find($this->table_id);
+            $user = User::with('designation')->find($this->table_id);
             $this->users = $user->toArray();
             $this->selectedRoles = $user->roles->pluck('name')->toArray();
         }
+        $this->dispatch('SelectDropDownValues', $this->users);
     }
 
     protected function rules()
     {
         $rules = [
             'users.name' => ['required'],
+            'users.designation_id' => ['required'],
             'users.email' => ['required', 'unique:users,email,'.$this->table_id],
             'users.max_discount_per_sale' => ['nullable', 'numeric', 'min:0', 'max:100'],
+            'users.order_no' => ['nullable', 'integer'],
         ];
-        if (! $this->table_id) {
-            $rules['users.password'] = ['required'];
-        }
+        // if (! $this->table_id) {
+        //     $rules['users.password'] = ['required'];
+        // }
 
         return $rules;
     }
 
     protected $messages = [
         'users.name.required' => 'The name field is required',
+        'users.designation_id.required' => 'The designation field is required',
         'users.name.unique' => 'The name is already Registered',
+        'users.email.unique' => 'The email is already Registered',
         'users.code.required' => 'The code field is required',
         'users.code.unique' => 'The code is already Registered',
         'users.code.max' => 'The code field must not be greater than 20 characters.',
@@ -123,8 +128,6 @@ class Page extends Component
     {
         $roles = Role::orderBy('name')->get();
 
-        return view('livewire.user.employee.page', [
-            'roles' => $roles,
-        ]);
+        return view('livewire.user.employee.page', ['roles' => $roles]);
     }
 }

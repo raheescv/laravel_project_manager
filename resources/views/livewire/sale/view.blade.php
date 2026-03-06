@@ -267,6 +267,7 @@
                                 <tr class="bg-primary text-white">
                                     <th class="text-white rounded-start">SL No</th>
                                     <th width="20%" class="text-white">Product/Service</th>
+                                    <th class="text-white text-end">Unit</th>
                                     <th class="text-white text-end">Unit Price</th>
                                     <th class="text-white text-end">Quantity</th>
                                     <th class="text-white text-end">Discount</th>
@@ -279,22 +280,14 @@
                             </thead>
                             <tbody>
                                 @php
-                                    $result = [];
-                                    foreach ($items as $key => $value) {
-                                        [$parent, $sub] = explode('-', $key);
-                                        if (!isset($result[$parent])) {
-                                            $result[$parent] = [];
-                                        }
-                                        $result[$parent][$sub] = $value;
-                                    }
-                                    $data = $result;
+                                    $data = collect($items)->groupBy('employee_id');
                                 @endphp
                                 @foreach ($data as $employee_id => $groupedItems)
                                     <tr>
                                         @php
-                                            $first = array_values($groupedItems)[0];
+                                            $first = $groupedItems->first();
                                         @endphp
-                                        <th colspan="8" class="bg-light">
+                                        <th colspan="9" class="bg-light">
                                             <i class="demo-psi-user me-2"></i>
                                             {{ $first['employee_name'] }}
                                         </th>
@@ -320,6 +313,7 @@
                                                     </div>
                                                 </div>
                                             </td>
+                                            <td class="text-end">{{ $item['unit'] }}</td>
                                             <td class="text-end">{{ currency($item['unit_price']) }}</td>
                                             <td class="text-end">{{ currency($item['quantity'], 3) }}</td>
                                             <td class="text-end">
@@ -349,7 +343,7 @@
                                     $items = collect($items);
                                 @endphp
                                 <tr>
-                                    <th colspan="3" class="text-end">Total</th>
+                                    <th colspan="4" class="text-end">Total</th>
                                     <th class="text-end">{{ currency($items->sum('quantity'), 3) }}</th>
                                     <th class="text-end">{{ currency($items->sum('discount')) }}</th>
                                     <th class="text-end">{{ currency($items->sum('tax_amount')) }}</th>
@@ -679,6 +673,7 @@
                                         <th class="text-white text-end">SL No</th>
                                         <th width="20%" class="text-white">Product/Service</th>
                                         <th class="text-white text-end">Unit Price</th>
+                                        <th class="text-white text-end">Unit</th>
                                         <th class="text-white text-end">Quantity</th>
                                         <th class="text-white text-end">Discount</th>
                                         <th class="text-white text-end">Tax %</th>
@@ -696,6 +691,7 @@
                                                 </a>
                                             </td>
                                             <td class="text-end">{{ currency($item['unit_price']) }}</td>
+                                            <td class="text-end">{{ $item->unit?->name }}</td>
                                             <td class="text-end">{{ currency($item['quantity'], 3) }}</td>
                                             <td class="text-end">{{ currency($item['discount']) }}</td>
                                             <td class="text-end">{{ currency($item['tax_amount']) }} ({{ round($item['tax'], 2) }}%)</td>
@@ -706,7 +702,7 @@
                                 </tbody>
                                 <tfoot class="bg-light">
                                     <tr>
-                                        <th colspan="3" class="text-end">Total</th>
+                                        <th colspan="4" class="text-end">Total</th>
                                         <th class="text-end">{{ currency($sale_return_items->sum('quantity')) }}</th>
                                         <th class="text-end">{{ currency($sale_return_items->sum('discount')) }}</th>
                                         <th class="text-end">{{ currency($sale_return_items->sum('tax_amount')) }}</th>
@@ -797,7 +793,7 @@
                                             @foreach ($sale->items as $item)
                                                 @foreach ($item->audits as $audit)
                                                     <tr>
-                                                        <td>{{ $audit->created_at }}</td>
+                                                        <td class="text-nowrap">{{ $audit->created_at }}</td>
                                                         <td>{{ $audit->user?->name }}</td>
                                                         <td>{{ $audit->event }}</td>
                                                         @foreach ($itemColumns as $key)
@@ -838,7 +834,7 @@
                                             @foreach ($sale->payments as $payment)
                                                 @foreach ($payment->audits as $audit)
                                                     <tr>
-                                                        <td>{{ $audit->created_at }}</td>
+                                                        <td class="text-nowrap">{{ $audit->created_at }}</td>
                                                         <td>{{ $audit->user?->name }}</td>
                                                         <td>{{ $audit->event }}</td>
                                                         @foreach ($paymentColumns as $key)

@@ -11,7 +11,7 @@ class View extends Component
 
     public function mount($id)
     {
-        $this->purchaseReturn = PurchaseReturn::with(['items.product', 'account', 'payments.paymentMethod'])
+        $this->purchaseReturn = PurchaseReturn::with(['items.product', 'items.unit', 'account', 'payments.paymentMethod'])
             ->findOrFail($id);
     }
 

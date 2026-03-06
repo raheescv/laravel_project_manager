@@ -21,7 +21,7 @@ class View extends Component
     {
         $this->table_id = $table_id;
         if ($this->table_id) {
-            $this->sale_return = SaleReturn::with('account:id,name', 'branch:id,name', 'items.product:id,name', 'items.employee:id,name', 'createdUser:id,name', 'updatedUser:id,name')->find($this->table_id);
+            $this->sale_return = SaleReturn::with('account:id,name', 'branch:id,name', 'items.product:id,name', 'items.employee:id,name', 'items.unit:id,name', 'createdUser:id,name', 'updatedUser:id,name')->find($this->table_id);
             if (! $this->sale_return) {
                 return redirect()->route('sale_return::index');
             }
@@ -42,6 +42,7 @@ class View extends Component
                             'product_id' => $item['product_id'],
                             'employee_id' => $item['employee_id'],
                             'name' => $item['name'],
+                            'unit_name' => $item['unit_name'],
                             'employee_name' => $item['employee_name'],
                             'tax_amount' => $item['tax_amount'],
                             'unit_price' => $item['unit_price'],

@@ -15,6 +15,12 @@
     </div>
     <div class="content__boxed">
         <div class="content__wrap">
+            @if (session('error'))
+                <div class="alert alert-danger alert-dismissible fade show mb-3" role="alert">
+                    {{ session('error') }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            @endif
             <div class="card mb-3">
                 @livewire('notification.table')
             </div>

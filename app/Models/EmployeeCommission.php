@@ -2,12 +2,16 @@
 
 namespace App\Models;
 
+use App\Traits\BelongsToTenant;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class EmployeeCommission extends Model
 {
+    use BelongsToTenant;
+
     protected $fillable = [
+        'tenant_id',
         'product_id',
         'employee_id',
         'commission_percentage',
@@ -16,6 +20,11 @@ class EmployeeCommission extends Model
     protected $casts = [
         'commission_percentage' => 'decimal:2',
     ];
+
+    public function tenant(): BelongsTo
+    {
+        return $this->belongsTo(Tenant::class, 'tenant_id');
+    }
 
     public function product(): BelongsTo
     {

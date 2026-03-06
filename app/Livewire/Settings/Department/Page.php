@@ -53,7 +53,7 @@ class Page extends Component
     protected function rules()
     {
         return [
-            'departments.name' => Rule::unique('departments', 'name')->ignore($this->table_id)->whereNull('deleted_at'),
+            'departments.name' => Rule::unique('departments', 'name')->where('tenant_id', session('tenant_id'))->ignore($this->table_id)->whereNull('deleted_at'),
         ];
     }
 

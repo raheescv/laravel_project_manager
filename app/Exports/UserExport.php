@@ -16,21 +16,19 @@ class UserExport implements FromQuery, WithHeadings, WithMapping
 
     public function query()
     {
-        $query = User::query()
-            ->when($this->filters['type'] ?? '', function ($query, $value) {
-                return $query->where('type', $value);
-            });
-
-        return $query;
+        return User::getFilteredQuery($this->filters)
+            ->with(['designation']);
     }
 
     public function headings(): array
     {
         return [
             '#',
+            'Order No',
             'Type',
             'Name',
             'Code',
+            'Designation',
             'Email',
             'Mobile',
             'Is Admin',
@@ -54,9 +52,11 @@ class UserExport implements FromQuery, WithHeadings, WithMapping
     {
         return [
             $row->id,
+            $row->order_no,
             $row->type,
             $row->name,
             $row->code,
+            $row->designation?->name,
             $row->email,
             $row->mobile,
             $row->is_admin ? 'Yes' : 'No',

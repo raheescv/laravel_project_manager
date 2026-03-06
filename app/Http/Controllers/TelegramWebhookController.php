@@ -19,11 +19,14 @@ class TelegramWebhookController extends Controller
     {
         try {
             $update = $request->all();
+            if (empty($update) && $request->getContent()) {
+                $update = json_decode($request->getContent(), true) ?? [];
+            }
             $this->telegram->handleUpdate($update);
 
             return response()->json(['success' => true]);
         } catch (\Exception $e) {
-            Log::error('Telegram webhook error: '.$e->getMessage());
+            Log::error('Telegram webhook error: '.$e->getMessage(), ['trace' => $e->getTraceAsString()]);
 
             return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
         }

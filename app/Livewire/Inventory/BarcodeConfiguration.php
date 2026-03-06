@@ -2,12 +2,20 @@
 
 namespace App\Livewire\Inventory;
 
-use App\Models\Configuration;
+use App\Support\BarcodeTemplateConfiguration;
 use Livewire\Component;
 
 class BarcodeConfiguration extends Component
 {
     public $barcode;
+
+    public array $templates = [];
+
+    public string $selectedTemplateKey = BarcodeTemplateConfiguration::DEFAULT_TEMPLATE_KEY;
+
+    public string $defaultPrintTemplateKey = BarcodeTemplateConfiguration::DEFAULT_TEMPLATE_KEY;
+
+    public string $templateName = 'Default';
 
     public $activeElement = null;
 
@@ -46,109 +54,82 @@ class BarcodeConfiguration extends Component
         'reloadPreview' => '$refresh',
     ];
 
-    public function mount()
+    public function mount(?string $templateKey = null)
     {
-        $saved = Configuration::where('key', 'barcode_configurations')->value('value');
-        $defaults = $this->getDefaultSettings();
-        if ($saved) {
-            $decoded = json_decode($saved, true);
-            $this->barcode = is_array($decoded) ? array_replace_recursive($defaults, $decoded) : $defaults;
-        } else {
-            $this->barcode = $defaults;
+        if ($templateKey) {
+            $this->selectedTemplateKey = $templateKey;
         }
+
+        $this->loadConfiguration();
     }
 
     protected function getDefaultSettings()
     {
-        return [
-            'width' => 50,
-            'height' => 30,
-            'product_name' => [
-                'font_size' => 9,
-                'align' => 'left',
-                'visible' => true,
-                'char_limit' => 40,
-            ],
-            'size' => [
-                'font_size' => 10,
-                'align' => 'left',
-                'visible' => true,
-            ],
-            'product_name_arabic' => [
-                'font_size' => 8,
-                'align' => 'right',
-                'visible' => true,
-                'char_limit' => 32,
-            ],
-            'barcode' => [
-                'font_size' => 12,
-                'align' => 'center',
-                'visible' => true,
-                'show_value' => true,
-                'scale' => 3,
-                'type' => 'C128',
-            ],
-            'price' => [
-                'font_size' => 16,
-                'align' => 'left',
-                'visible' => true,
-            ],
-            'price_arabic' => [
-                'font_size' => 14,
-                'align' => 'right',
-                'visible' => true,
-            ],
-            'company_name' => [
-                'font_size' => 8,
-                'align' => 'center',
-                'visible' => true,
-                'char_limit' => 50,
-            ],
-            'elements' => [
-                'product_name' => [
-                    'top' => 1,
-                    'left' => 2,
-                    'width' => 180,
-                    'height' => 15,
-                ],
-                'size' => [
-                    'top' => 16,
-                    'left' => 2,
-                    'width' => 60,
-                    'height' => 14,
-                ],
-                'product_name_arabic' => [
-                    'top' => 16,
-                    'left' => 2,
-                    'width' => 180,
-                    'height' => 15,
-                ],
-                'barcode' => [
-                    'top' => 32,
-                    'left' => 2,
-                    'width' => 180,
-                    'height' => 42,
-                ],
-                'price' => [
-                    'top' => 78,
-                    'left' => 2,
-                    'width' => 85,
-                    'height' => 18,
-                ],
-                'price_arabic' => [
-                    'top' => 78,
-                    'left' => 95,
-                    'width' => 85,
-                    'height' => 18,
-                ],
-                'company_name' => [
-                    'top' => 98,
-                    'left' => 2,
-                    'width' => 180,
-                    'height' => 12,
-                ],
-            ],
+        return BarcodeTemplateConfiguration::defaultSettings();
+    }
+
+    protected function loadConfiguration(): void
+    {
+        $configuration = BarcodeTemplateConfiguration::getConfiguration();
+        $this->templates = $configuration['templates'];
+        $this->defaultPrintTemplateKey = $configuration['default_template'];
+
+        if (! isset($this->templates[$this->selectedTemplateKey])) {
+            $this->selectedTemplateKey = $this->defaultPrintTemplateKey;
+        }
+
+        $this->loadSelectedTemplate();
+    }
+
+    protected function loadSelectedTemplate(): void
+    {
+        $template = $this->templates[$this->selectedTemplateKey] ?? null;
+        if (! $template) {
+            $this->selectedTemplateKey = array_key_first($this->templates);
+            $template = $this->templates[$this->selectedTemplateKey];
+        }
+
+        $this->templateName = $template['name'];
+        $this->barcode = BarcodeTemplateConfiguration::normalizeSettings($template['settings'] ?? []);
+    }
+
+    protected function syncCurrentTemplate(): void
+    {
+        if (! isset($this->templates[$this->selectedTemplateKey])) {
+            return;
+        }
+
+        $selectedType = $this->barcode['barcode']['type'] ?? 'C128';
+        if (! array_key_exists($selectedType, $this->barcodeTypes)) {
+            $this->barcode['barcode']['type'] = 'C128';
+        }
+
+        $name = trim($this->templateName) !== '' ? trim($this->templateName) : 'Untitled Template';
+
+        $this->templates[$this->selectedTemplateKey] = [
+            'name' => $name,
+            'settings' => BarcodeTemplateConfiguration::normalizeSettings($this->barcode ?? []),
         ];
+    }
+
+    protected function persistConfiguration(bool $showMessage = true): void
+    {
+        $this->syncCurrentTemplate();
+
+        if (! isset($this->templates[$this->defaultPrintTemplateKey])) {
+            $this->defaultPrintTemplateKey = $this->selectedTemplateKey;
+        }
+
+        BarcodeTemplateConfiguration::saveConfiguration([
+            'default_template' => $this->defaultPrintTemplateKey,
+            'templates' => $this->templates,
+        ]);
+
+        if ($showMessage) {
+            $this->dispatch('success', ['message' => 'Settings saved successfully']);
+        }
+
+        $this->dispatch('reloadIframe');
     }
 
     public function updateElementPosition($elementId, $position)
@@ -203,25 +184,29 @@ class BarcodeConfiguration extends Component
         }
     }
 
+    public function updatingSelectedTemplateKey($value)
+    {
+        $this->syncCurrentTemplate();
+    }
+
+    public function updatedSelectedTemplateKey($value)
+    {
+        if (! isset($this->templates[$value])) {
+            $this->selectedTemplateKey = array_key_first($this->templates);
+        }
+
+        $this->loadSelectedTemplate();
+        $this->dispatch('reloadIframe');
+    }
+
     public function save($showMessage = true)
     {
-        $selectedType = $this->barcode['barcode']['type'] ?? 'C128';
-        if (! array_key_exists($selectedType, $this->barcodeTypes)) {
-            $this->barcode['barcode']['type'] = 'C128';
-        }
-
-        Configuration::updateOrCreate(['key' => 'barcode_configurations'], ['value' => json_encode($this->barcode)]);
-        if ($showMessage) {
-            $this->dispatch('success', ['message' => 'Settings saved successfully']);
-        }
-
-        $this->dispatch('reloadIframe');
+        $this->persistConfiguration($showMessage);
     }
 
     public function resetToDefaults()
     {
-        $barcode = config('barcode_default_configuration');
-        $this->barcode = $barcode;
+        $this->barcode = BarcodeTemplateConfiguration::defaultSettings();
         $this->save(false);
         $this->dispatch('success', ['message' => 'Settings reset to default successfully']);
     }

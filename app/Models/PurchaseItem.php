@@ -15,9 +15,12 @@ class PurchaseItem extends Model implements AuditableContracts
     protected $fillable = [
         'purchase_id',
         'product_id',
+        'unit_id',
         'batch',
         'unit_price',
         'quantity',
+        'conversion_factor',
+
         'discount',
         'tax',
         'created_by',
@@ -45,6 +48,11 @@ class PurchaseItem extends Model implements AuditableContracts
     public function purchase()
     {
         return $this->belongsTo(Purchase::class);
+    }
+
+    public function unit()
+    {
+        return $this->belongsTo(Unit::class);
     }
 
     public function getNameAttribute()

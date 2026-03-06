@@ -1,20 +1,16 @@
 <?php
 
 use App\Models\Configuration;
-use Illuminate\Foundation\Inspiring;
-use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Schedule;
 use Spatie\Health\Commands\RunHealthChecksCommand;
-
-Artisan::command('inspire', function (): void {
-    $this->comment(Inspiring::quote());
-})->purpose('Display an inspiring quote')->hourly();
 
 Schedule::command('backup:run --only-db')->daily();
 Schedule::command('backup:clean')->daily();
 
 if (config('constants.auto_pull_enabled')) {
-    Schedule::command('git:auto-pull '.config('constants.auto_pull_branch').' --force --build')->everyMinute()->withoutOverlapping();
+    Schedule::command('git:auto-pull '.config('constants.auto_pull_branch').' --force --build')
+        ->everyMinute()
+        ->withoutOverlapping();
 }
 
 // Process any remaining visitor batches that haven't reached batch size
@@ -29,13 +25,15 @@ Schedule::command('sale-day-sessions:close-daily')
         return Configuration::where('key', 'auto_close_day_sessions_enabled')->value('value') === 'yes';
     });
 
+Schedule::command('send:daily-sale-summary')->dailyAt('00:10');
+
 // Optimized unified trading commands
 // Schedule::command('trade:unified --action=buy')->everyFiveMinutes()->between('05:10', '09:55');
 // Schedule::command('trade:unified --action=sell')->everyFiveMinutes()->between('05:20', '09:55');
 // Schedule::command('trade:unified --action=sell --sell-all')->dailyAt('09:55');
 
 // Quick trading: Buy best stock and sell losing positions every 5 minutes
-Schedule::command('trade:quick')->everyTwoMinutes()->between('04:30', '09:30')->weekdays();
+// Schedule::command('trade:quick')->everyTwoMinutes()->between('04:30', '09:30')->weekdays();
 
 // Force sell all stocks after 09:50 (Monday to Friday only)
-Schedule::command('trade:quick --sell-all')->dailyAt('09:31')->weekdays();
+// Schedule::command('trade:quick --sell-all')->dailyAt('09:31')->weekdays();

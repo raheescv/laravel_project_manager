@@ -6,6 +6,8 @@ use App\Helpers\Facades\MoqSolutionsHelper;
 use App\Models\Branch;
 use App\Models\Sale;
 use App\Models\SaleDaySession;
+use App\Models\TailoringOrder;
+use App\Models\TailoringPayment;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Livewire\Component;
@@ -75,14 +77,22 @@ class BranchSaleDaySessionManager extends Component
         }
 
         $sales = Sale::completed()->where('sale_day_session_id', $this->currentSession->id)->get();
+        $tailoringOrders = TailoringOrder::where('sale_day_session_id', $this->currentSession->id)->get();
+        $tailoringPaymentsAmount = TailoringPayment::whereHas('order', function ($query) {
+            $query->where('sale_day_session_id', $this->currentSession->id);
+        })->sum('amount');
+        $salesAmount = $sales->sum('paid');
+        $totalAmount = $salesAmount + $tailoringPaymentsAmount;
 
         $this->sessionStats = [
             'total_sales' => $sales->count(),
-            'total_amount' => $sales->sum('paid'),
+            'total_tailoring_orders' => $tailoringOrders->count(),
+            'total_tailoring_amount' => $tailoringPaymentsAmount,
+            'total_amount' => $totalAmount,
             'opened_at' => $this->currentSession->opened_at->format('Y-m-d H:i:s'),
             'opened_by' => $this->currentSession->opener->name ?? 'Unknown',
             'opening_amount' => $this->currentSession->opening_amount,
-            'expected_amount' => $this->currentSession->opening_amount + $sales->sum('paid'),
+            'expected_amount' => $this->currentSession->opening_amount + $totalAmount,
         ];
 
         // Set the default closing amount to the expected amount

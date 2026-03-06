@@ -1,82 +1,129 @@
 <div>
-    <div class="card-header">
-        <div class="row">
-            <div class="col-md-6 d-flex gap-1 align-items-center mb-3">
+    <div class="card-header bg-white">
+        <div class="row g-3">
+            <div class="col-md-4 d-flex align-items-center">
                 <div class="btn-group">
-
                 </div>
             </div>
-            <div class="col-md-6 d-flex gap-1 align-items-center justify-content-md-end mb-3">
-                <div class="form-group">
-                    <select wire:model.live="limit" class="form-control">
-                        <option value="10">10</option>
-                        <option value="100">100</option>
-                        <option value="500">500</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <input type="text" wire:model.live="search" autofocus placeholder="Search..." class="form-control" autocomplete="off">
+            <div class="col-md-8">
+                <div class="d-flex gap-2 justify-content-md-end align-items-center">
+                    <div class="form-group">
+                        <select wire:model.live="limit" class="form-select form-select-sm">
+                            <option value="10">10 rows</option>
+                            <option value="100">100 rows</option>
+                            <option value="500">500 rows</option>
+                        </select>
+                    </div>
+                    <div class="form-group" style="width: 250px;">
+                        <div class="input-group input-group-sm">
+                            <span class="input-group-text border-end-0">
+                                <i class="demo-pli-magnifi-glass"></i>
+                            </span>
+                            <input type="text" wire:model.live="search" class="form-control border-start-0" placeholder="Search receipts..." autofocus>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
-        <hr>
-        <div class="col-lg-12">
-            <div class="row">
-                <div class="col-md-3">
-                    <b><label for="from_date">From Date</label></b>
-                    {{ html()->date('from_date')->value('')->class('form-control')->id('unit_id')->attribute('wire:model.live', 'from_date') }}
-                </div>
-                <div class="col-md-3">
-                    <b><label for="to_date">To Date</label></b>
-                    {{ html()->date('to_date')->value('')->class('form-control')->id('unit_id')->attribute('wire:model.live', 'to_date') }}
-                </div>
-                <div class="col-md-3" wire:ignore>
-                    <b><label for="customer_id">Customer</label></b>
-                    {{ html()->select('customer_id', [])->value('')->class('select-customer_id-list')->id('customer_id')->placeholder('All') }}
-                </div>
-                <div class="col-md-3" wire:ignore>
-                    <b><label for="branch_id">Branch</label></b>
-                    {{ html()->select('branch_id', [auth()->user()->default_branch_id => auth()->user()->branch?->name])->value(auth()->user()->default_branch_id)->class('select-assigned-branch_id-list')->id('branch_id')->placeholder('All') }}
+        <hr class="mt-3 mb-0">
+        {{-- filter area --}}
+        <div class="col-12 mt-3">
+            <div class="bg-light rounded-3 border shadow-sm">
+                <div class="p-3">
+                    <div class="row g-3">
+                        <div class="col-md-3">
+                            <div class="form-group">
+                                <label class="form-label text-muted fw-semibold small mb-2" for="from_date">
+                                    <i class="demo-psi-calendar-4 me-1"></i> From Date
+                                </label>
+                                {{ html()->date('from_date')->value('')->class('form-control form-control-sm')->id('from_date')->attribute('wire:model.live', 'from_date') }}
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="form-group">
+                                <label class="form-label text-muted fw-semibold small mb-2" for="to_date">
+                                    <i class="demo-psi-calendar-4 me-1"></i> To Date
+                                </label>
+                                {{ html()->date('to_date')->value('')->class('form-control form-control-sm')->id('to_date')->attribute('wire:model.live', 'to_date') }}
+                            </div>
+                        </div>
+                        <div class="col-md-3" wire:ignore>
+                            <div class="form-group">
+                                <label class="form-label text-muted fw-semibold small mb-2" for="customer_id">
+                                    <i class="demo-psi-building me-1"></i> Customer
+                                </label>
+                                {{ html()->select('customer_id', [])->value('')->class('select-customer_id-list')->id('customer_id')->placeholder('All Customers') }}
+                            </div>
+                        </div>
+                        <div class="col-md-3" wire:ignore>
+                            <div class="form-group">
+                                <label class="form-label text-muted fw-semibold small mb-2" for="branch_id">
+                                    <i class="demo-psi-home me-1"></i> Branch
+                                </label>
+                                {{ html()->select('branch_id', [session('branch_id') => session('branch_name')])->class('select-assigned-branch_id-list')->id('branch_id')->placeholder('All Branches') }}
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
-    <div class="card-body">
+    <div class="card-body px-0 pb-0">
         <div class="table-responsive">
-            <table class="table table-striped align-middle table-sm table-bordered">
-                <thead>
+            <table class="table table-striped table-hover table-sm align-middle mb-0 border-bottom">
+                <thead class="bg-light text-nowrap">
                     <tr>
-                        <th class="text-end" width="5%">
+                        <th class="ps-3" width="5%">
                             <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="account_id" label="#" />
                         </th>
                         <th> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="accounts.name" label="Customer" /> </th>
-                        <th class="text-end"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="sales.total" label="total" /> </th>
-                        <th class="text-end"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="sales.paid" label="paid" /> </th>
-                        <th class="text-end"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="sales.balance" label="balance" /> </th>
+                        <th class="text-nowrap text-end"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="sales.total" label="total" /> </th>
+                        <th class="text-nowrap text-end"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="sales.paid" label="paid" /> </th>
+                        <th class="text-nowrap text-end"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="sales.balance" label="balance" /> </th>
                     </tr>
                 </thead>
                 <tbody>
                     @foreach ($data as $item)
                         <tr>
-                            <td class="text-end"> {{ $loop->iteration }} </td>
-                            <td>{{ $item->name }} ({{ $item->count }})
-                                <b class="pull-right pointer" wire:click="openSalesList('{{ $item->name }}','{{ $item->account_id }}')">
-                                    <i class="fa fa-2x fa-money"></i>
-                                </b>
+                            <td class="ps-3">
+                                <span class="text-muted">#{{ $loop->iteration }}</span>
                             </td>
-                            <td class="text-end">{{ currency($item->grand_total) }}</td>
-                            <td class="text-end">{{ currency($item->paid) }}</td>
-                            <td class="text-end">{{ currency($item->balance) }}</td>
+                            <td class="text-nowrap">
+                                <div class="d-flex align-items-center justify-content-between gap-2">
+                                    <div class="d-flex align-items-center gap-2">
+                                        <i class="demo-psi-building fs-5 text-warning"></i>
+                                        <span>{{ $item->name }} ({{ $item->count }})</span>
+                                    </div>
+                                    <b class="pointer" wire:click="openSalesList('{{ $item->name }}','{{ $item->account_id }}')" title="View Sales">
+                                        <i class="fa fa-money fs-5 text-success"></i>
+                                    </b>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="text-end fw-semibold">{{ currency($item->grand_total) }}</div>
+                            </td>
+                            <td>
+                                <div class="text-end text-success fw-semibold">{{ currency($item->paid) }}</div>
+                            </td>
+                            <td>
+                                <div class="text-end text-danger fw-semibold">{{ $item->balance != 0 ? currency($item->balance) : '_' }}</div>
+                            </td>
                         </tr>
                     @endforeach
                 </tbody>
-                <tfoot>
-                    <tr>
+                <tfoot class="table-group-divider">
+                    <tr class="bg-light">
+                        <th class="ps-3"><strong>TOTALS</strong></th>
                         <th></th>
-                        <th></th>
-                        <th class="text-end">{{ currency($total['grand_total']) }}</th>
-                        <th class="text-end">{{ currency($total['paid']) }}</th>
-                        <th class="text-end">{{ currency($total['balance']) }}</th>
+                        <th>
+                            <div class="text-end fw-bold text-primary">{{ currency($total['grand_total']) }}</div>
+                        </th>
+                        <th>
+                            <div class="text-end text-success fw-bold">{{ currency($total['paid']) }}</div>
+                        </th>
+                        <th>
+                            <div class="text-end text-danger fw-bold">{{ currency($total['balance']) }}</div>
+                        </th>
                     </tr>
                 </tfoot>
             </table>

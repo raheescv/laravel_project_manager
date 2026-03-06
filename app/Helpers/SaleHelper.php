@@ -2,10 +2,11 @@
 
 namespace App\Helpers;
 
-use App\Models\Account;
+use App\Actions\Sale\BuildDaySessionReportAction;
 use App\Models\Configuration;
 use App\Models\Sale;
 use App\Models\SaleDaySession;
+use App\Support\BarcodeTemplateConfiguration;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\View;
 
@@ -32,8 +33,7 @@ class SaleHelper
         $enable_barcode_in_print = Configuration::where('key', 'enable_barcode_in_print')->value('value') ?? 'yes';
         $print_item_label = Configuration::where('key', 'print_item_label')->value('value') ?? 'product';
         $print_quantity_label = Configuration::where('key', 'print_quantity_label')->value('value') ?? 'quantity';
-        $barcodeSettings = Configuration::where('key', 'barcode_configurations')->value('value');
-        $barcodeSettings = $barcodeSettings ? json_decode($barcodeSettings, true) : [];
+        $barcodeSettings = BarcodeTemplateConfiguration::resolveSettings()['settings'];
         $barcodeType = $barcodeSettings['barcode']['type'] ?? 'C128';
         $payments = $sale->payments()->with('paymentMethod:id,name,alias_name')->get(['amount', 'payment_method_id'])->toArray();
         $data = compact(
@@ -108,23 +108,26 @@ class SaleHelper
     {
         $session = SaleDaySession::with(['branch', 'opener', 'closer'])->findOrFail($id);
 
-        $sales = Sale::completed()->where('sale_day_session_id', $id)
-            ->with(['branch', 'payments.paymentMethod'])
-            ->orderBy('created_at', 'asc')
-            ->get();
+        return $this->daySessionReportView($session);
+    }
 
-        $paymentMethods = Account::whereIn('id', cache('payment_methods', []))->get();
-        $totals['credit'] = $sales->sum('balance');
-        foreach ($paymentMethods as $method) {
-            $totals[$method->name] = 0;
-        }
-        foreach ($sales as $sale) {
-            foreach ($sale->payments as $payment) {
-                $amount = $payment->amount ?? 0;
-                $totals[$payment->name] += $amount;
-            }
-        }
+    public function daySessionReportPdf($id)
+    {
+        $session = SaleDaySession::with(['branch', 'opener', 'closer'])->findOrFail($id);
 
-        return view('sale.day-session-print', compact('session', 'sales', 'totals'));
+        return $this->daySessionReportPdfView($session);
+    }
+
+    /**
+     * Build the day session report view for a given session (e.g. for PDF export).
+     */
+    public function daySessionReportView(SaleDaySession $session)
+    {
+        return app(BuildDaySessionReportAction::class)->execute($session);
+    }
+
+    public function daySessionReportPdfView(SaleDaySession $session)
+    {
+        return app(BuildDaySessionReportAction::class)->executePdf($session);
     }
 }

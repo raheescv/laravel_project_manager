@@ -2,7 +2,7 @@
 
 namespace App\Actions\V1\Product;
 
-use App\Http\Requests\V1\GetProductRequest;
+use App\Http\Requests\V1\GetProductsRequest;
 use App\Http\Resources\V1\ProductResource;
 use App\Models\Product;
 
@@ -11,7 +11,7 @@ class GetProductsAction
     /**
      * Execute the action to get products with filtering and pagination.
      */
-    public function execute(GetProductRequest $request): array
+    public function execute(GetProductsRequest $request): array
     {
         $filters = $request->validatedWithDefaults();
 

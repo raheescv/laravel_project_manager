@@ -46,11 +46,15 @@
                 <table class="table table-hover table-sm">
                     <thead>
                         <tr class="bg-primary">
-                            <th width='40%' class="text-white">Customer</th>
+                            <th class="text-white text-nowrap">Customer</th>
                             <th class="text-white">Mobile</th>
                             <th class="text-white">Nationality</th>
-                            <th class="text-white">First Visit Date</th>
+                            <th class="text-white text-nowrap">First Visit Date</th>
+                            <th class="text-white text-end">Sales Total</th>
+                            <th class="text-white text-end">Tailoring Total</th>
                             <th class="text-white text-end">Total</th>
+                            <th class="text-white text-end">Sales Visits</th>
+                            <th class="text-white text-end">Tailoring Visits</th>
                             <th class="text-white text-end">No Of Visits</th>
                             <th class="text-white">Status</th>
                         </tr>
@@ -61,11 +65,15 @@
                                 <td>{{ $visit->name }}</td>
                                 <td>{{ $visit->mobile }}</td>
                                 <td>{{ $visit->nationality }}</td>
-                                <td>{{ systemDate($visit->first_sale_date ?? '') }}</td>
+                                <td>{{ systemDate($visit->first_visit_date ?? '') }}</td>
+                                <td class="text-end">{{ currency($visit->sale_total ?? 0) }}</td>
+                                <td class="text-end">{{ currency($visit->tailoring_total ?? 0) }}</td>
                                 <td class="text-end">{{ currency($visit->total) }}</td>
+                                <td class="text-end">{{ $visit->sale_visits ?? 0 }}</td>
+                                <td class="text-end">{{ $visit->tailoring_visits ?? 0 }}</td>
                                 <td class="text-end">{{ $visit->visits }}</td>
                                 <td>
-                                    @if ($visit->is_new_customer)
+                                    @if (! empty($visit->first_visit_date) && $visit->first_visit_date >= $from_date && $visit->first_visit_date <= $to_date)
                                         <span class="badge bg-success">New</span>
                                     @else
                                         <span class="badge bg-secondary">Existing</span>

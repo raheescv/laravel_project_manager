@@ -30,6 +30,7 @@ class SaleMixedItemColumnVisibility extends Component
             'cost' => true,
             'unit_price' => true,
             'quantity' => true,
+            'base_unit_quantity' => false,
             'gross_amount' => true,
             'discount' => true,
             'net_amount' => true,
@@ -49,6 +50,12 @@ class SaleMixedItemColumnVisibility extends Component
             ['key' => 'sale_mixed_item_report_visible_column'],
             ['value' => json_encode($this->sale_mixed_item_report_visible_column)]
         );
+    }
+
+    public function resetToDefaults(): void
+    {
+        $this->sale_mixed_item_report_visible_column = $this->getDefaultColumns();
+        Configuration::updateOrCreate(['key' => 'sale_mixed_item_report_visible_column'], ['value' => json_encode($this->sale_mixed_item_report_visible_column)]);
     }
 
     public function render()

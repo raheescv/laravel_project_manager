@@ -4,9 +4,12 @@ namespace App\Providers;
 
 use App\Models\Branch;
 use App\Models\Configuration;
+use App\Notifications\DatabaseChannel;
+use App\Services\TenantService;
 use Dedoc\Scramble\Scramble;
 use Dedoc\Scramble\Support\Generator\OpenApi;
 use Dedoc\Scramble\Support\Generator\SecurityScheme;
+use Illuminate\Notifications\Channels\DatabaseChannel as BaseDatabaseChannel;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
@@ -14,12 +17,22 @@ use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
 use Inertia\Inertia;
+use Laravel\Ai\Ai;
+use App\Ai\Providers\FixedOpenAiProvider;
+use Laravel\Ai\Gateway\Prism\PrismGateway;
+use Illuminate\Contracts\Events\Dispatcher;
 
 class AppServiceProvider extends ServiceProvider
 {
     public function register(): void
     {
-        //
+        // Register TenantService as singleton to maintain state across the request
+        $this->app->singleton(TenantService::class);
+
+        // Bind custom database channel to replace the default one
+        $this->app->singleton(BaseDatabaseChannel::class, function ($app) {
+            return new DatabaseChannel($app['db']);
+        });
     }
 
     public function boot(): void
@@ -35,7 +48,7 @@ class AppServiceProvider extends ServiceProvider
                 );
             });
         // Force HTTPS for assets when the app is served over HTTPS
-        if (request()->isSecure() || env('FORCE_HTTPS', false) || env('APP_URL', '')->startsWith('https://')) {
+        if (request()->isSecure() || config('constants.force_https', false) || str_starts_with(config('app.url', ''), 'https://')) {
             URL::forceScheme('https');
         }
 
@@ -46,7 +59,9 @@ class AppServiceProvider extends ServiceProvider
         }
         if (Schema::hasTable('accounts')) {
             Cache::remember('accounts_slug_id_map', now()->addYear(), function () {
-                return DB::table('accounts')->where('is_locked', 1)->pluck('id', 'slug')->toArray();
+                if (Schema::hasColumn('accounts', 'slug')) {
+                    return DB::table('accounts')->where('is_locked', 1)->pluck('id', 'slug')->toArray();
+                }
             });
         }
         if (Schema::hasTable('configurations')) {
@@ -80,5 +95,28 @@ class AppServiceProvider extends ServiceProvider
         // Gate::after(function ($user, $ability) {
         //     return $user->hasRole('Super Admin') || $user->hasPermissionTo($ability);
         // });
+
+        $this->registerFixedAiProvider();
+    }
+
+    /**
+     * Register the fixed OpenAI provider that removes the 'moderation' parameter 
+     * which causes 400 errors in the current version of the AI SDK.
+     */
+    protected function registerFixedAiProvider(): void
+    {
+        try {
+            if (class_exists(Ai::class)) {
+                Ai::extend('openai', function ($app, array $config) {
+                    return new FixedOpenAiProvider(
+                        new PrismGateway($app['events']),
+                        $config,
+                        $app->make(Dispatcher::class)
+                    );
+                });
+            }
+        } catch (\Throwable $e) {
+            report($e);
+        }
     }
 }

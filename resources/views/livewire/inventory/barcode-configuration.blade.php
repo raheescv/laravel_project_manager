@@ -7,6 +7,9 @@
                         <i class="fa fa-barcode me-2"></i>
                         Barcode Design Configuration
                     </h5>
+                    <a href="{{ route('inventory::barcode::configuration') }}" class="btn btn-outline-secondary btn-sm">
+                        <i class="fa fa-arrow-left me-1"></i>Back to Templates
+                    </a>
                 </div>
             </div>
             <div class="card-body">
@@ -337,14 +340,14 @@
                                             onclick="return confirm('Are you sure you want to reset all settings to default? This action cannot be undone.')">
                                         <i class="fa fa-undo me-1"></i>Reset
                                     </button>
-                                    <button type="button" class="btn btn-outline-primary" onclick="window.open('{{ route('inventory::barcode::print') }}', '_blank')">
+                                    <button type="button" class="btn btn-outline-primary" onclick="window.open('{{ route('inventory::barcode::print') }}?template={{ $selectedTemplateKey }}', '_blank')">
                                         <i class="fa fa-print me-1"></i>Print
                                     </button>
                                 </div>
                             </div>
                             <div class="card-body p-0">
                                 <div class="position-relative">
-                                    <iframe src="{{ route('inventory::barcode::view') }}" id="barcodeSample" class="w-100 border-0" style="height: 130px"></iframe>
+                                    <iframe src="{{ route('inventory::barcode::view') }}?template={{ $selectedTemplateKey }}" id="barcodeSample" class="w-100 border-0" style="height: 130px"></iframe>
                                     <div class="position-absolute top-0 start-0 w-100 h-100"
                                         style="background-image: linear-gradient(rgba(0,0,0,.1) 1px, transparent 1px), linear-gradient(90deg, rgba(0,0,0,.1) 1px, transparent 1px); background-size: 20px 20px;">
                                     </div>

@@ -42,6 +42,12 @@ class ColumnVisibility extends Component
         Configuration::updateOrCreate(['key' => 'inventory_visible_column'], ['value' => json_encode($this->inventory_visible_column)]);
     }
 
+    public function resetToDefaults()
+    {
+        $this->inventory_visible_column = $this->getDefaultColumns();
+        Configuration::updateOrCreate(['key' => 'inventory_visible_column'], ['value' => json_encode($this->inventory_visible_column)]);
+    }
+
     public function render()
     {
         return view('livewire.inventory.column-visibility');

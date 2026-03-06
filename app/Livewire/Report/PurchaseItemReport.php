@@ -115,7 +115,7 @@ class PurchaseItemReport extends Component
 
     public function render()
     {
-        $data = PurchaseItem::with('purchase:id,date,invoice_no,branch_id', 'product:id,name')->orderBy($this->sortField, $this->sortDirection)
+        $data = PurchaseItem::with('purchase:id,date,invoice_no,branch_id', 'unit:id,name', 'product:id,name,unit_id')->orderBy($this->sortField, $this->sortDirection)
             ->join('purchases', 'purchases.id', '=', 'purchase_items.purchase_id')
             ->when($this->search, function ($query, $value) {
                 return $query->where(function ($q) use ($value): void {
@@ -150,6 +150,7 @@ class PurchaseItemReport extends Component
         $data = $data->paginate($this->limit);
 
         $total['quantity'] = $totalRow->sum('purchase_items.quantity');
+        $total['base_unit_quantity'] = $totalRow->sum('purchase_items.base_unit_quantity');
         $total['gross_amount'] = $totalRow->sum('purchase_items.gross_amount');
         $total['discount'] = $totalRow->sum('purchase_items.discount');
         $total['net_amount'] = $totalRow->sum('purchase_items.net_amount');

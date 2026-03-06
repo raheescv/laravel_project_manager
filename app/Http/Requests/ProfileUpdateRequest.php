@@ -23,7 +23,7 @@ class ProfileUpdateRequest extends FormRequest
                 'lowercase',
                 'email',
                 'max:255',
-                Rule::unique(User::class)->ignore($this->user()->id),
+                Rule::unique(User::class)->where('tenant_id', session('tenant_id'))->ignore($this->user()->id),
             ],
         ];
     }

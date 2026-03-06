@@ -10,6 +10,9 @@ return new class() extends Migration
     {
         Schema::create('user_attendances', function (Blueprint $table) {
             $table->id();
+            $table->unsignedBigInteger('tenant_id');
+            $table->foreign('tenant_id')->references('id')->on('tenants')->onDelete('cascade');
+            $table->index('tenant_id');
             $table->foreignId('employee_id')->constrained('users')->onDelete('cascade');
             $table->date('date');
             $table->timestamps();

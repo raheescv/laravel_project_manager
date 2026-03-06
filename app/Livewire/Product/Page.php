@@ -11,6 +11,7 @@ use App\Models\Configuration;
 use App\Models\Department;
 use App\Models\Product;
 use App\Models\Unit;
+use App\Services\ProductImageAiService;
 use Faker\Factory;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -48,6 +49,8 @@ class Page extends Component
     public $brands;
 
     public $relatedProducts = [];
+
+    public $previewImage = null;
 
     public function refresh()
     {
@@ -143,7 +146,7 @@ class Page extends Component
     {
         $rules = [
             'products.name' => ['required'],
-            'products.code' => ['required'],
+            // 'products.code' => ['required'],
             'products.unit_id' => ['required'],
             'products.department_id' => ['required'],
             'products.main_category_id' => ['required'],
@@ -162,8 +165,8 @@ class Page extends Component
         'products.name.required' => 'The name field is required',
         'products.name.unique' => 'The name is already Registered',
         'products.name.max' => 'The name field must not be greater than 20 characters.',
-        'products.code.required' => 'The code field is required',
-        'products.code.max' => 'The code field must not be greater than 20 characters.',
+        // 'products.code.required' => 'The code field is required',
+        // 'products.code.max' => 'The code field must not be greater than 20 characters.',
         'products.unit_id' => 'The unit field is required.',
         'products.department_id' => 'The department  field is required.',
         'products.main_category_id' => 'The main category field is required.',
@@ -267,11 +270,21 @@ class Page extends Component
     {
         try {
             $this->product->update(['thumbnail' => $path]);
+            $this->products['thumbnail'] = $path;
             $this->dispatch('success', ['message' => 'Thumbnail Updated Successfully']);
         } catch (\Exception $e) {
-            DB::rollback();
             $this->dispatch('error', ['message' => $e->getMessage()]);
         }
+    }
+
+    public function setPreview($path)
+    {
+        $this->previewImage = $path;
+    }
+
+    public function closePreview()
+    {
+        $this->previewImage = null;
     }
 
     public function unitDelete($id)
@@ -298,6 +311,34 @@ class Page extends Component
             $this->dispatch('success', ['message' => $response['message']]);
             $this->mount($this->type, $this->table_id);
         } catch (\Exception $e) {
+            $this->dispatch('error', ['message' => $e->getMessage()]);
+        }
+    }
+
+    public function downloadImageWithAi()
+    {
+        if (! $this->table_id) {
+            $this->dispatch('error', ['message' => 'Please save the product before downloading an AI image.']);
+
+            return;
+        }
+
+        try {
+            $product = Product::find($this->table_id);
+
+            if (! $product) {
+                throw new \Exception('Product not found.');
+            }
+
+            $response = app(ProductImageAiService::class)->generateAndAttach($product, null, true);
+
+            if (! ($response['success'] ?? false)) {
+                throw new \Exception($response['message'] ?? 'Failed to generate product image.');
+            }
+
+            $this->mount($this->type, $this->table_id, $dropdownValues = false);
+            $this->dispatch('success', ['message' => $response['message']]);
+        } catch (\Throwable $e) {
             $this->dispatch('error', ['message' => $e->getMessage()]);
         }
     }

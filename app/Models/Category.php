@@ -3,15 +3,19 @@
 namespace App\Models;
 
 use App\Actions\Settings\Category\CreateAction;
+use App\Traits\BelongsToTenant;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Validation\Rule;
 
 class Category extends Model
 {
+    use BelongsToTenant;
     use HasFactory;
 
     protected $fillable = [
+        'tenant_id',
         'parent_id',
         'name',
         'sale_visibility_flag',
@@ -25,9 +29,16 @@ class Category extends Model
 
     public static function rules($id = 0, $merge = [])
     {
+        $tenantId = self::getCurrentTenantId();
+
         return array_merge([
-            'name' => ['required', Rule::unique(self::class)->ignore($id)],
+            'name' => ['required', Rule::unique(self::class)->where('tenant_id', $tenantId)->ignore($id)],
         ], $merge);
+    }
+
+    public function tenant(): BelongsTo
+    {
+        return $this->belongsTo(Tenant::class, 'tenant_id');
     }
 
     public function parent()

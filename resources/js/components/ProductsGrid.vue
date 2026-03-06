@@ -2,7 +2,7 @@
     <div class="products-grid-container">
         <div class="products-grid">
             <product-card v-for="product in validProducts" :key="product.id" :product="product"
-                :lowStockThreshold="lowStockThreshold" @click="handleCardClick" />
+                :lowStockThreshold="lowStockThreshold" @product-selected="handleCardClick" />
         </div>
 
         <!-- Empty state when no products -->
@@ -58,9 +58,19 @@ export default {
             if (!product) {
                 console.error('ProductsGrid received undefined or null product');
                 return;
-            } else if (!product.id) {
+            }
+            
+            // Check if product has id - handle both direct id and nested id
+            const productId = product.id || product.product_id || product.inventory_id;
+            if (!productId) {
                 console.error('ProductsGrid received product missing id:', product);
+                console.error('Product keys:', Object.keys(product || {}));
                 return;
+            }
+
+            // Ensure product has id property for consistency
+            if (!product.id && productId) {
+                product.id = productId;
             }
 
             this.$emit('product-selected', product);

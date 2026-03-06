@@ -61,6 +61,7 @@
                             <th>#</th>
                             <th>{{ __('Product') }}</th>
                             <th>{{ __('Quantity') }}</th>
+                            <th>{{ __('Unit') }}</th>
                             <th>{{ __('Unit Price') }}</th>
                             <th>{{ __('Discount') }}</th>
                             <th>{{ __('Tax %') }}</th>
@@ -74,6 +75,7 @@
                                 <td>{{ $index + 1 }}</td>
                                 <td>{{ $item->product->name }}</td>
                                 <td>{{ $item->quantity }}</td>
+                                <td>{{ $item->unit?->name }}</td>
                                 <td>{{ number_format($item->unit_price, 2) }}</td>
                                 <td>{{ number_format($item->discount, 2) }}</td>
                                 <td>{{ $item->tax }}%</td>
@@ -84,15 +86,15 @@
                     </tbody>
                     <tfoot>
                         <tr>
-                            <td colspan="7" class="text-right"><strong>{{ __('Subtotal') }}:</strong></td>
+                            <td colspan="8" class="text-right"><strong>{{ __('Subtotal') }}:</strong></td>
                             <td>{{ number_format($purchaseReturn->total, 2) }}</td>
                         </tr>
                         <tr>
-                            <td colspan="7" class="text-right"><strong>{{ __('Additional Discount') }}:</strong></td>
+                            <td colspan="8" class="text-right"><strong>{{ __('Additional Discount') }}:</strong></td>
                             <td>{{ number_format($purchaseReturn->other_discount, 2) }}</td>
                         </tr>
                         <tr>
-                            <td colspan="7" class="text-right"><strong>{{ __('Grand Total') }}:</strong></td>
+                            <td colspan="8" class="text-right"><strong>{{ __('Grand Total') }}:</strong></td>
                             <td>{{ number_format($purchaseReturn->grand_total, 2) }}</td>
                         </tr>
                     </tfoot>

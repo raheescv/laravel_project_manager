@@ -12,6 +12,7 @@ class JournalDeleteAction
         try {
             $model->journals()->each(function ($journal) use ($userId): void {
                 $journal->entries()->update(['deleted_by' => $userId]);
+                // $journal->entriesCounterAccounts()->delete();
                 $journal->entries()->delete();
                 $journal->delete();
             });
@@ -29,12 +30,14 @@ class JournalDeleteAction
     public function executeByEntryId($id, $userId)
     {
         try {
-            $model = JournalEntry::where('model', 'PackagePayment')->where('model_id', $id)->first();
-            if (! $model) {
+            $journalEntry = JournalEntry::where('model', 'PackagePayment')->where('model_id', $id)->first();
+            if (! $journalEntry) {
                 throw new Exception("Journal Entry not found with the specified ID: $id.", 1);
             }
-            $journal = $model->journal;
+            $journal = $journalEntry->journal;
+
             $journal->entries()->update(['deleted_by' => $userId]);
+            // $journal->entriesCounterAccounts()->delete();
             $journal->entries()->delete();
             $journal->delete();
 

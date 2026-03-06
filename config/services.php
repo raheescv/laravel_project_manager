@@ -49,11 +49,11 @@ return [
         'base_url' => env('FLAT_TRADE_BASE_URL', 'https://piconnect.flattrade.in/PiConnectTP'),
         'auth_url' => env('FLAT_TRADE_AUTH_URL', 'https://auth.flattrade.in'),
         'auth_api_url' => env('FLAT_TRADE_AUTH_API_URL', 'https://authapi.flattrade.in'),
-        'api_key' => env('FLAT_TRADE_API_KEY'),
-        'api_secret' => env('FLAT_TRADE_API_SECRET'),
-        'client_id' => env('FLAT_TRADE_CLIENT_ID'),
-        'client_secret' => env('FLAT_TRADE_CLIENT_SECRET'),
-        'j_key' => env('FLAT_TRADE_J_KEY'),
+        'api_key' => env('FLAT_TRADE_API_KEY', ''),
+        'api_secret' => env('FLAT_TRADE_API_SECRET', ''),
+        'client_id' => env('FLAT_TRADE_CLIENT_ID', ''),
+        'client_secret' => env('FLAT_TRADE_CLIENT_SECRET', ''),
+        'j_key' => env('FLAT_TRADE_J_KEY', ''),
     ],
     'shopify' => [
         'store_url' => env('SHOPIFY_STORE_URL', 'https://ahlanfun.myshopify.com'),
@@ -64,5 +64,19 @@ return [
         'access_token' => env('META_WHATSAPP_ACCESS_TOKEN'),
         'template_name' => env('META_WHATSAPP_TEMPLATE_NAME', 'invoice_slip'),
         'base_url' => env('META_WHATSAPP_BASE_URL', 'https://wa-api.cloud/api/v1'),
+    ],
+    'pusher' => [
+        'pusher_app_key' => env('PUSHER_APP_KEY'),
+        'pusher_app_cluster' => env('PUSHER_APP_CLUSTER'),
+    ],
+    'telegram' => [
+        'bot_token' => env('TELEGRAM_BOT_TOKEN'),
+        'bot_username' => env('TELEGRAM_BOT_USERNAME'),
+    ],
+    'gemini' => [
+        'image_models' => env('GEMINI_IMAGE_MODELS', 'gemini-2.5-flash-image-preview,gemini-3-pro-image-preview'),
+    ],
+    'openai' => [
+        'image_models' => env('OPENAI_IMAGE_MODELS', 'dall-e-3'),
     ],
 ];

@@ -43,7 +43,7 @@
                 </div>
                 <div class="col-md-3" wire:ignore>
                     <label for="from_branch_id" class="form-label">From Branch</label>
-                    {{ html()->select('from_branch_id', [auth()->user()->default_branch_id => auth()->user()->branch?->name])->value(auth()->user()->default_branch_id)->class('select-branch_id-list')->id('from_branch_id')->placeholder('All') }}
+                    {{ html()->select('from_branch_id', [session('branch_id') => session('branch_name')])->class('select-branch_id-list')->id('from_branch_id')->placeholder('All') }}
                 </div>
                 <div class="col-md-3" wire:ignore>
                     <label for="to_branch_id" class="form-label">To Branch</label>

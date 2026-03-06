@@ -3,6 +3,7 @@
 namespace App\Imports;
 
 use App\Actions\Product\Inventory\UpdateAction;
+use App\Actions\Product\UpdateAction as ProductUpdateAction;
 use App\Events\FileImportCompleted;
 use App\Events\FileImportProgress;
 use App\Models\Inventory;
@@ -25,14 +26,16 @@ class ProductImport implements ToCollection, WithBatchInserts, WithChunkReading,
 
     private array $trashedProducts = [];
 
-    public function __construct(private int $userId, private int $totalRows, private int $branchId) {}
+    public function __construct(private int $userId, private int $totalRows, private int $branchId, private array $mappings = []) {}
 
     public function collection(Collection $rows)
     {
         $this->preloadExistingProducts($rows);
 
         $filteredRows = $rows->filter(function ($row) {
-            return $row->filter()->isNotEmpty() && ! empty($row['name']);
+            $nameColumn = $this->mappings['name'] ?? 'name';
+
+            return $row->filter()->isNotEmpty() && ! empty($row[$nameColumn]);
         });
 
         $processedInBatch = 0;
@@ -51,7 +54,8 @@ class ProductImport implements ToCollection, WithBatchInserts, WithChunkReading,
 
     private function preloadExistingProducts(Collection $rows): void
     {
-        $productNames = $rows->pluck('name')->filter()->unique()->toArray();
+        $nameColumn = $this->mappings['name'] ?? 'name';
+        $productNames = $rows->pluck($nameColumn)->filter()->unique()->toArray();
 
         if (empty($productNames)) {
             return;
@@ -64,19 +68,24 @@ class ProductImport implements ToCollection, WithBatchInserts, WithChunkReading,
 
     private function processProductRow($value): void
     {
-        $productData = $value->toArray();
-        if (empty($productData['barcode'])) {
-            $productData['barcode'] = generateBarcode();
+        $productRow = [];
+        foreach ($this->mappings as $internalField => $excelHeader) {
+            if ($excelHeader && isset($value[$excelHeader])) {
+                $productRow[$internalField] = $value[$excelHeader];
+            }
         }
-        $data = Product::constructData($productData, $this->userId);
-        $data['name'] = trim($data['name']);
-        if (empty($data['name'])) {
+
+        $productRow['name'] = trim($productRow['name']);
+        if (empty($productRow['name'])) {
             return;
         }
-        $productName = $data['name'];
-        $quantity = $value['stock'] ?? 0;
 
-        $uploadType = $productData['upload_type'] ?? 'new';
+        $data = Product::constructData($productRow, $this->userId);
+
+        $productName = $data['name'];
+        $quantity = $productRow['stock'] ?? $value['stock'] ?? 0;
+
+        $uploadType = $productRow['upload_type'] ?? $value['upload_type'] ?? 'new';
         $uploadType = strtolower($uploadType);
 
         if ($uploadType == 'new') {
@@ -93,14 +102,21 @@ class ProductImport implements ToCollection, WithBatchInserts, WithChunkReading,
             }
             validationHelper(Product::rules($data, $data['id']), $data, 'Product');
 
-            $inventory = Inventory::where('branch_id', $this->branchId)->where('product_id', $model->id)->first();
-            $inventoryData = $inventory->toArray();
-            $inventoryData['quantity'] = $quantity;
-            $inventoryData['remarks'] = 'Bulk Update';
+            $productResponse = (new ProductUpdateAction())->execute($data, $data['id'], $this->userId);
+            if (! $productResponse['success']) {
+                throw new Exception($productResponse['message'], 1);
+            }
 
-            $response = (new UpdateAction())->execute($inventoryData, $inventory->id);
-            if (! $response['success']) {
-                throw new Exception($response['message'], 1);
+            $inventory = Inventory::where('branch_id', $this->branchId)->where('product_id', $model->id)->first();
+            if ($inventory) {
+                $inventoryData = $inventory->toArray();
+                $inventoryData['quantity'] = $quantity;
+                $inventoryData['remarks'] = 'Bulk Update';
+
+                $inventoryResponse = (new UpdateAction())->execute($inventoryData, $inventory->id);
+                if (! $inventoryResponse['success']) {
+                    throw new Exception($inventoryResponse['message'], 1);
+                }
             }
         }
     }

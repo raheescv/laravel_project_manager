@@ -4,6 +4,7 @@ namespace App\Livewire\Report\Customer;
 
 use App\Exports\CustomerAgingExport;
 use App\Models\Sale;
+use App\Models\TailoringOrder;
 use Carbon\Carbon;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Livewire\Component;
@@ -49,12 +50,21 @@ class CustomerAging extends Component
 
     public function mount()
     {
-        $this->from_date = date('Y-m-01', strtotime('-1 month'));
+        $this->from_date = date('Y-m-01');
         $this->to_date = date('Y-m-d');
     }
 
-    public function filterChanged($from_date, $to_date, $customer_id = null, $branch_id = null)
+    public function filterChanged($from_date = null, $to_date = null, $customer_id = null, $branch_id = null)
     {
+        // Backward compatibility: support array payloads dispatched from older scripts.
+        if (is_array($from_date)) {
+            $payload = $from_date;
+            $from_date = $payload['from_date'] ?? $payload[0] ?? $this->from_date;
+            $to_date = $payload['to_date'] ?? $payload[1] ?? $this->to_date;
+            $customer_id = $payload['customer_id'] ?? $payload[2] ?? null;
+            $branch_id = $payload['branch_id'] ?? $payload[3] ?? null;
+        }
+
         $this->from_date = $from_date;
         $this->to_date = $to_date;
         $this->customer_id = $customer_id;
@@ -112,7 +122,7 @@ class CustomerAging extends Component
         }
     }
 
-    protected function getBaseQuery()
+    protected function getSalesBaseQuery()
     {
         return Sale::query()
             ->join('accounts', 'sales.account_id', '=', 'accounts.id')
@@ -125,13 +135,36 @@ class CustomerAging extends Component
             ->select('accounts.id as account_id', 'accounts.name as customer_name', 'accounts.mobile as customer_mobile', 'accounts.credit_period_days', 'sales.id', 'sales.invoice_no', 'sales.date as invoice_date', 'sales.due_date as sale_due_date', 'sales.grand_total as invoice_amount', 'sales.paid as amount_paid', 'sales.balance as outstanding_balance');
     }
 
+    protected function getTailoringBaseQuery()
+    {
+        return TailoringOrder::query()
+            ->join('accounts', 'tailoring_orders.account_id', '=', 'accounts.id')
+            //
+            ->where('tailoring_orders.balance', '>', 0)
+            ->when($this->branch_id, fn ($q, $value) => $q->where('tailoring_orders.branch_id', $value))
+            ->when($this->customer_id, fn ($q, $value) => $q->where('tailoring_orders.account_id', $value))
+            ->when($this->from_date ?? '', fn ($q, $value) => $q->whereDate('tailoring_orders.order_date', '>=', date('Y-m-d', strtotime($value))))
+            ->when($this->to_date ?? '', fn ($q, $value) => $q->whereDate('tailoring_orders.order_date', '<=', date('Y-m-d', strtotime($value))))
+            ->select('accounts.id as account_id', 'accounts.name as customer_name', 'accounts.mobile as customer_mobile', 'accounts.credit_period_days', 'tailoring_orders.id', 'tailoring_orders.order_no as invoice_no', 'tailoring_orders.order_date as invoice_date', 'tailoring_orders.delivery_date as sale_due_date', 'tailoring_orders.grand_total as invoice_amount', 'tailoring_orders.paid as amount_paid', 'tailoring_orders.balance as outstanding_balance');
+    }
+
     protected function getProcessedSales($applySorting = true)
     {
         // Get all data for calculations
-        $allSales = $this->getBaseQuery()->get();
+        $allSales = $this->getSalesBaseQuery()->get()->map(function ($sale) {
+            $sale->source = 'sale';
+
+            return $sale;
+        });
+        $allTailoring = $this->getTailoringBaseQuery()->get()->map(function ($order) {
+            $order->source = 'tailoring';
+
+            return $order;
+        });
+        $allRows = $allSales->concat($allTailoring);
 
         // Process each sale to add calculated fields
-        $processedSales = $allSales->map(function ($sale) {
+        $processedSales = $allRows->map(function ($sale) {
             // Calculate due date
             $dueDate = $this->calculateDueDate($sale->invoice_date, $sale->credit_period_days, $sale->sale_due_date ?? null);
 
@@ -141,7 +174,9 @@ class CustomerAging extends Component
             // Get aging buckets
             $aging = $this->getAgingBucket($daysOverdue, $sale->outstanding_balance);
 
-            return (object) array_merge($sale->toArray(), [
+            $row = $sale->toArray();
+
+            return (object) array_merge($row, [
                 'due_date' => $dueDate,
                 'days_overdue' => $daysOverdue,
                 'aging_0_30' => $aging['0-30'],

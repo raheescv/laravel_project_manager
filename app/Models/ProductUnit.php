@@ -2,11 +2,27 @@
 
 namespace App\Models;
 
+use App\Traits\BelongsToTenant;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Facades\Cache;
 
 class ProductUnit extends Model
 {
+    use BelongsToTenant;
+
+    protected static function booted(): void
+    {
+        static::saved(function (ProductUnit $pu): void {
+            Cache::increment('product_units_version_'.$pu->product_id);
+        });
+        static::deleted(function (ProductUnit $pu): void {
+            Cache::increment('product_units_version_'.$pu->product_id);
+        });
+    }
+
     protected $fillable = [
+        'tenant_id',
         'product_id',
         'sub_unit_id',
         'conversion_factor',
@@ -31,5 +47,10 @@ class ProductUnit extends Model
     public function product()
     {
         return $this->belongsTo(Product::class);
+    }
+
+    public function tenant(): BelongsTo
+    {
+        return $this->belongsTo(Tenant::class, 'tenant_id');
     }
 }

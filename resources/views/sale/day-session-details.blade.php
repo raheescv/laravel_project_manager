@@ -16,6 +16,9 @@
                     </p>
                 </div>
                 <div class="text-end">
+                    <a href="{{ route('print::sale::day-session-report-pdf', $session->id) }}" class="btn btn-info text-white me-2" target="_blank" title="Print PDF Report">
+                        <i class="fa fa-file-pdf-o me-2"></i>Print PDF
+                    </a>
                     <a href="{{ route('print::sale::day-session-report', $session->id) }}" class="btn btn-success text-white me-2" target="_blank" title="Print Thermal Receipt">
                         <i class="fa fa-print me-2"></i>Print
                     </a>
@@ -79,15 +82,15 @@
                                 </div>
                                 <div>
                                     <h6 class="mb-1 text-muted">Sales Summary</h6>
-                                    <h4 class="mb-0 fw-bold" style="color: #2c3e50;">{{ $session->sales->count() }} Transactions</h4>
+                                    <h4 class="mb-0 fw-bold" style="color: #2c3e50;">{{ $session->sales->count() + $session->tailoringOrders->count() }} Invoices</h4>
                                 </div>
                             </div>
                             <div class="border-top pt-3">
                                 <div class="d-flex justify-content-between align-items-center">
                                     <div>
-                                        <small class="text-muted d-block">Total Revenue</small>
+                                        <small class="text-muted d-block">Total Sale</small>
                                         <span class="fw-bold" style="color: #28a745; font-size: 1.25rem;">
-                                            {{ number_format($session->sales->sum('paid'), 2) }}
+                                            {{ number_format($session->sales->sum('grand_total') + $session->tailoringOrders->sum('grand_total'), 2) }}
                                         </span>
                                     </div>
                                     <div class="text-end">
@@ -282,7 +285,7 @@
                         <div class="card-header bg-white py-3">
                             <h5 class="mb-0 d-flex align-items-center">
                                 <i class="fa fa-list me-2" style="color: #4a6fa5;"></i>
-                                Session Sales Details
+                                Session Sales Details (Including Tailoring Module)
                             </h5>
                         </div>
                         <div class="card-body p-0">

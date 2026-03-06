@@ -3,6 +3,8 @@
 namespace App\Livewire\Report\Customer;
 
 use App\Models\Sale;
+use App\Models\TailoringOrder;
+use Illuminate\Support\Facades\DB;
 use Livewire\Component;
 use Livewire\WithPagination;
 
@@ -51,29 +53,63 @@ class CustomerVisitHistory extends Component
 
     public function render()
     {
-        $query = Sale::query()
-            ->join('accounts', 'sales.account_id', '=', 'accounts.id')
-            ->select('accounts.id', 'accounts.name', 'accounts.mobile', 'accounts.nationality')
+        $salesActivity = Sale::query()
             ->when($this->branch_id, fn ($q, $value) => $q->where('sales.branch_id', $value))
-            ->when($this->customer_id, fn ($q, $value) => $q->where('account_id', $value))
-            ->when($this->nationality, fn ($q, $value) => $q->where('accounts.nationality', $value))
+            ->when($this->customer_id, fn ($q, $value) => $q->where('sales.account_id', $value))
             ->when($this->from_date ?? '', fn ($q, $value) => $q->whereDate('sales.date', '>=', date('Y-m-d', strtotime($value))))
             ->when($this->to_date ?? '', fn ($q, $value) => $q->whereDate('sales.date', '<=', date('Y-m-d', strtotime($value))))
             ->completed()
-            ->selectRaw('sum(sales.grand_total) as total')
-            ->selectRaw('count(*) as visits')
-            ->selectSub(function ($query): void {
-                $query->from('sales')->select('date')->whereColumn('account_id', 'accounts.id')->orderBy('date', 'asc')->limit(1);
-            }, 'first_sale_date')
-            ->selectRaw('CASE WHEN (SELECT MIN(date) FROM sales WHERE account_id = accounts.id) BETWEEN ? AND ? THEN true ELSE false END as is_new_customer', [$this->from_date, $this->to_date])
-            ->groupBy('account_id')
+            ->whereNotNull('sales.account_id')
+            ->selectRaw('sales.account_id as account_id')
+            ->selectRaw('COUNT(*) as sale_visits')
+            ->selectRaw('SUM(sales.grand_total) as sale_total')
+            ->selectRaw('0 as tailoring_visits')
+            ->selectRaw('0 as tailoring_total')
+            ->selectRaw('MIN(sales.date) as first_visit_date')
+            ->groupBy('sales.account_id');
+
+        $tailoringActivity = TailoringOrder::query()
+            ->when($this->branch_id, fn ($q, $value) => $q->where('tailoring_orders.branch_id', $value))
+            ->when($this->customer_id, fn ($q, $value) => $q->where('tailoring_orders.account_id', $value))
+            ->when($this->from_date ?? '', fn ($q, $value) => $q->whereDate('tailoring_orders.order_date', '>=', date('Y-m-d', strtotime($value))))
+            ->when($this->to_date ?? '', fn ($q, $value) => $q->whereDate('tailoring_orders.order_date', '<=', date('Y-m-d', strtotime($value))))
+            ->whereNotNull('tailoring_orders.account_id')
+            ->selectRaw('tailoring_orders.account_id as account_id')
+            ->selectRaw('0 as sale_visits')
+            ->selectRaw('0 as sale_total')
+            ->selectRaw('COUNT(*) as tailoring_visits')
+            ->selectRaw('SUM(tailoring_orders.grand_total) as tailoring_total')
+            ->selectRaw('MIN(tailoring_orders.order_date) as first_visit_date')
+            ->groupBy('tailoring_orders.account_id');
+
+        $activity = $salesActivity->unionAll($tailoringActivity);
+
+        $query = DB::query()
+            ->fromSub($activity, 'activity')
+            ->join('accounts', 'accounts.id', '=', 'activity.account_id')
+            ->select('accounts.id', 'accounts.name', 'accounts.mobile', 'accounts.nationality')
+            ->selectRaw('SUM(activity.sale_total) as sale_total')
+            ->selectRaw('SUM(activity.tailoring_total) as tailoring_total')
+            ->selectRaw('SUM(activity.sale_visits) as sale_visits')
+            ->selectRaw('SUM(activity.tailoring_visits) as tailoring_visits')
+            ->selectRaw('(SUM(activity.sale_total) + SUM(activity.tailoring_total)) as total')
+            ->selectRaw('(SUM(activity.sale_visits) + SUM(activity.tailoring_visits)) as visits')
+            ->selectRaw('MIN(activity.first_visit_date) as first_visit_date')
+            ->when($this->nationality, fn ($q, $value) => $q->where('accounts.nationality', $value))
+            ->groupBy('accounts.id', 'accounts.name', 'accounts.mobile', 'accounts.nationality')
             ->orderByRaw('visits DESC');
 
         // Calculate statistics
         $statistics = clone $query;
         $statistics = collect($statistics->get());
         $this->totalCustomers = $statistics->count();
-        $this->newCustomers = $statistics->where('is_new_customer', true)->count();
+        $this->newCustomers = $statistics->filter(function ($row) {
+            if (! $row->first_visit_date) {
+                return false;
+            }
+
+            return $row->first_visit_date >= $this->from_date && $row->first_visit_date <= $this->to_date;
+        })->count();
         $this->existingCustomers = $this->totalCustomers - $this->newCustomers;
 
         $visits = $query->paginate($this->perPage);

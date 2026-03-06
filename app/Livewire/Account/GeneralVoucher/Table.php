@@ -100,7 +100,12 @@ class Table extends Component
     public function updatedSelectAll($value)
     {
         if ($value) {
-            $this->selected = $this->dataFunction()->limit(2000)->pluck('journal_id')->unique()->toArray();
+            $this->selected = $this->dataFunction()
+                ->select('journal_id')
+                ->distinct()
+                ->limit(2000)
+                ->pluck('journal_id')
+                ->toArray();
         } else {
             $this->selected = [];
         }

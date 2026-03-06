@@ -81,6 +81,8 @@ class Page extends Component
 
     public $default_payment_method_id = 1;
 
+    public $sale_item_row_mode = 'merge';
+
     // Add new properties for caching
     protected $cachePrefix = 'sale_page_';
 
@@ -97,6 +99,7 @@ class Page extends Component
     {
         $this->category_id = 'favorite';
         $this->table_id = $table_id;
+        $this->sale_item_row_mode = Configuration::where('key', 'sale_item_row_mode')->value('value') ?? 'merge';
 
         // Batch load all required data in parallel
         $this->loadInitialData();
@@ -318,7 +321,7 @@ class Page extends Component
     protected function processItems($items)
     {
         return $items->mapWithKeys(function ($item) {
-            $key = $item['employee_id'].'-'.$item['inventory_id'];
+            $key = $this->buildItemKey($item['employee_id'], $item['inventory_id'], $item['id'] ?? null);
 
             return [$key => $this->formatItem($item)];
         })->toArray();
@@ -372,7 +375,6 @@ class Page extends Component
 
     public function addToCart($inventory)
     {
-        $key = $this->employee_id.'-'.$inventory->id;
         $product = $inventory->product;
 
         // Pre-calculate sale type price and discount
@@ -380,7 +382,6 @@ class Page extends Component
         $discount = $product->mrp - $saleTypePrice;
 
         $single = [
-            'key' => $key,
             'inventory_id' => $inventory->id,
             'barcode' => $inventory->barcode,
             'employee_id' => $this->employee_id,
@@ -394,9 +395,13 @@ class Page extends Component
             'tax' => 0,
         ];
 
-        if (isset($this->items[$key])) {
-            $this->items[$key]['quantity'] += 1;
+        $existingKey = $this->findMatchingItemKey($single);
+        if ($existingKey !== null) {
+            $this->items[$existingKey]['quantity'] += 1;
+            $key = $existingKey;
         } else {
+            $key = $this->buildItemKey($this->employee_id, $inventory->id);
+            $single['key'] = $key;
             $this->items[$key] = $single;
         }
 
@@ -518,7 +523,7 @@ class Page extends Component
     {
         return [
             'id' => $item['id'],
-            'key' => $item['employee_id'].'-'.$item['inventory_id'],
+            'key' => $this->buildItemKey($item['employee_id'], $item['inventory_id'], $item['id'] ?? null),
             'employee_id' => $item['employee_id'],
             'assistant_id' => $item['assistant_id'],
             'inventory_id' => $item['inventory_id'],
@@ -659,7 +664,6 @@ class Page extends Component
         }
         if ($inventory) {
             $this->addToCart($inventory);
-            $this->cartCalculator($this->employee_id.'-'.$inventory->id);
             $this->dispatch('OpenProductBox');
         }
     }
@@ -701,9 +705,8 @@ class Page extends Component
         if ($key) {
             $this->singleCartCalculator($key);
         } else {
-            foreach ($this->items as $value) {
-                $key = $value['employee_id'].'-'.$value['inventory_id'];
-                $this->singleCartCalculator($key);
+            foreach (array_keys($this->items) as $itemKey) {
+                $this->singleCartCalculator($itemKey);
             }
         }
     }
@@ -847,7 +850,7 @@ class Page extends Component
     public function editedItem($id, $item)
     {
         $oldId = $id;
-        $newId = $item['employee_id'].'-'.implode('-', array_slice(explode('-', $id), 1));
+        $newId = $this->buildEditedItemKey($item, $id);
         if ($newId != $oldId) {
             unset($this->items[$oldId]);
             $item['employee_name'] = User::find($item['employee_id'])->name;
@@ -898,6 +901,51 @@ class Page extends Component
     {
         $this->payments = $payments;
         $this->sales = $sales;
+    }
+
+    protected function buildItemKey(int $employeeId, int $inventoryId, int|string|null $suffix = null): string
+    {
+        $baseKey = $employeeId.'-'.$inventoryId;
+
+        if ($suffix !== null) {
+            return $baseKey.'-'.$suffix;
+        }
+
+        if ($this->sale_item_row_mode === 'separate') {
+            return $baseKey.'-'.uniqid();
+        }
+
+        return $baseKey;
+    }
+
+    protected function findMatchingItemKey(array $item): ?string
+    {
+        if ($this->sale_item_row_mode === 'separate') {
+            return null;
+        }
+
+        foreach ($this->items as $key => $existingItem) {
+            if (
+                (int) ($existingItem['employee_id'] ?? 0) === (int) ($item['employee_id'] ?? 0)
+                && (int) ($existingItem['inventory_id'] ?? 0) === (int) ($item['inventory_id'] ?? 0)
+            ) {
+                return $key;
+            }
+        }
+
+        return null;
+    }
+
+    protected function buildEditedItemKey(array $item, string $currentKey): string
+    {
+        if ($this->sale_item_row_mode !== 'separate') {
+            return $item['employee_id'].'-'.$item['inventory_id'];
+        }
+
+        $parts = explode('-', $currentKey, 3);
+        $suffix = $item['id'] ?? ($parts[2] ?? uniqid());
+
+        return $this->buildItemKey($item['employee_id'], $item['inventory_id'], $suffix);
     }
 
     public function addPayment()

@@ -52,7 +52,6 @@ class CustomerSales extends Component
     {
         $query = Sale::query()
             ->join('accounts', 'sales.account_id', '=', 'accounts.id')
-            ->withCount('items')
             ->completed()
             ->when($this->branch_id, fn ($q, $value) => $q->where('sales.branch_id', $value))
             ->when($this->customer_id, fn ($q, $value) => $q->where('sales.account_id', $value))
@@ -62,8 +61,9 @@ class CustomerSales extends Component
             ->select(
                 'accounts.name as customer',
                 'accounts.mobile',
-                'sales.*',
+                'sales.*'
             )
+            ->withCount('items')
             ->orderByDesc('date');
         // Calculate totals
         $totals = $query->get();

@@ -32,6 +32,7 @@ class DayWiseSaleReportExport implements FromCollection, WithColumnFormatting, W
             'Date',
             'Count',
             'Quantity',
+            'Base Unit Quantity',
             'Net Sale',
             'Gross Sale',
             'Tax Amount',
@@ -46,6 +47,7 @@ class DayWiseSaleReportExport implements FromCollection, WithColumnFormatting, W
             systemDate($row['date']),
             $row['count'],
             $row['quantity'],
+            $row['base_unit_quantity'],
             $row['net_sale'],
             $row['gross_sale'],
             $row['tax_amount'],
@@ -63,6 +65,7 @@ class DayWiseSaleReportExport implements FromCollection, WithColumnFormatting, W
             'F' => NumberFormat::FORMAT_NUMBER_00,
             'G' => NumberFormat::FORMAT_NUMBER_00,
             'H' => NumberFormat::FORMAT_NUMBER_00,
+            'I' => NumberFormat::FORMAT_NUMBER_00,
         ];
     }
 
@@ -91,14 +94,15 @@ class DayWiseSaleReportExport implements FromCollection, WithColumnFormatting, W
                 $sheet->setCellValue("A{$totalRows}", 'TOTAL');
                 $sheet->setCellValue("B{$totalRows}", $this->total['count'] ?? 0);
                 $sheet->setCellValue("C{$totalRows}", $this->total['quantity'] ?? 0);
-                $sheet->setCellValue("D{$totalRows}", $this->total['net_sale'] ?? 0);
-                $sheet->setCellValue("E{$totalRows}", $this->total['gross_sale'] ?? 0);
-                $sheet->setCellValue("F{$totalRows}", $this->total['tax_amount'] ?? 0);
-                $sheet->setCellValue("G{$totalRows}", $this->total['discount'] ?? 0);
-                $sheet->setCellValue("H{$totalRows}", $this->total['return_amount'] ?? 0);
+                $sheet->setCellValue("D{$totalRows}", $this->total['base_unit_quantity'] ?? 0);
+                $sheet->setCellValue("E{$totalRows}", $this->total['net_sale'] ?? 0);
+                $sheet->setCellValue("F{$totalRows}", $this->total['gross_sale'] ?? 0);
+                $sheet->setCellValue("G{$totalRows}", $this->total['tax_amount'] ?? 0);
+                $sheet->setCellValue("H{$totalRows}", $this->total['discount'] ?? 0);
+                $sheet->setCellValue("I{$totalRows}", $this->total['return_amount'] ?? 0);
 
                 // Style totals row
-                $sheet->getStyle("A{$totalRows}:H{$totalRows}")->applyFromArray([
+                $sheet->getStyle("A{$totalRows}:I{$totalRows}")->applyFromArray([
                     'font' => ['bold' => true],
                     'fill' => [
                         'fillType' => 'solid',
@@ -111,7 +115,7 @@ class DayWiseSaleReportExport implements FromCollection, WithColumnFormatting, W
 
                 // Add borders to all data rows
                 if ($endRow >= 2) {
-                    $sheet->getStyle("A2:H{$endRow}")->applyFromArray([
+                    $sheet->getStyle("A2:I{$endRow}")->applyFromArray([
                         'borders' => [
                             'allBorders' => ['borderStyle' => 'thin'],
                         ],
@@ -119,14 +123,14 @@ class DayWiseSaleReportExport implements FromCollection, WithColumnFormatting, W
                 }
 
                 // Auto-fit columns
-                foreach (range('A', 'H') as $column) {
+                foreach (range('A', 'I') as $column) {
                     $sheet->getColumnDimension($column)->setAutoSize(true);
                 }
 
                 // Add title if filters are provided
                 if (! empty($this->filters)) {
                     $sheet->insertNewRowBefore(1, 2);
-                    $sheet->mergeCells('A1:H1');
+                    $sheet->mergeCells('A1:I1');
                     $title = 'DAY WISE SALE REPORT';
                     if (isset($this->filters['from_date']) && isset($this->filters['to_date'])) {
                         $title .= ' - '.systemDate($this->filters['from_date']).' to '.systemDate($this->filters['to_date']);

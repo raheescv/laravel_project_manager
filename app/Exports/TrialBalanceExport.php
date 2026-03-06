@@ -33,7 +33,7 @@ class TrialBalanceExport implements FromCollection, WithColumnFormatting, WithEv
 
     private const HEADER_ROW = 1;
 
-    private const LAST_COLUMN = 'C';
+    private const LAST_COLUMN = 'E';
 
     // Color constants - Professional corporate palette
     private const HEADER_BG = '2C3E50'; // Professional dark blue-gray
@@ -81,10 +81,15 @@ class TrialBalanceExport implements FromCollection, WithColumnFormatting, WithEv
                 if ($key === 'uncategorized') {
                     // Handle uncategorized accounts
                     foreach ($item as $account) {
+                        $debit = $account['debit'] ?? 0;
+                        $credit = $account['credit'] ?? 0;
+                        $balance = is_numeric($debit) && is_numeric($credit) ? round($debit - $credit, 2) : '';
                         $rows[] = [
-                            'account_name' => str_repeat('  ', $indent).$account['name'],
-                            'debit' => $account['debit'] ?? 0,
-                            'credit' => $account['credit'] ?? 0,
+                            'account_name' => $account['name'],
+                            'group' => '',
+                            'debit' => $debit,
+                            'credit' => $credit,
+                            'balance' => $balance,
                         ];
                     }
                 } elseif (isset($item['name'])) {
@@ -92,20 +97,32 @@ class TrialBalanceExport implements FromCollection, WithColumnFormatting, WithEv
                     $isCategory = isset($item['groups']) || isset($item['directAccounts']);
 
                     if ($isCategory) {
+                        $categoryName = $item['name'];
+                        $categoryDebit = $item['debit'] ?? 0;
+                        $categoryCredit = $item['credit'] ?? 0;
+                        $categoryBalance = is_numeric($categoryDebit) && is_numeric($categoryCredit) ? round($categoryDebit - $categoryCredit, 2) : '';
+
                         // Category header
                         $rows[] = [
-                            'account_name' => str_repeat('  ', $indent).$item['name'],
-                            'debit' => $item['debit'] ?? 0,
-                            'credit' => $item['credit'] ?? 0,
+                            'account_name' => $categoryName,
+                            'group' => '',
+                            'debit' => $categoryDebit,
+                            'credit' => $categoryCredit,
+                            'balance' => $categoryBalance,
                         ];
 
                         // Direct accounts under category
                         if (isset($item['directAccounts'])) {
                             foreach ($item['directAccounts'] as $account) {
+                                $debit = $account['debit'] ?? 0;
+                                $credit = $account['credit'] ?? 0;
+                                $balance = is_numeric($debit) && is_numeric($credit) ? round($debit - $credit, 2) : '';
                                 $rows[] = [
-                                    'account_name' => str_repeat('  ', $indent + 1).$account['name'],
-                                    'debit' => $account['debit'] ?? 0,
-                                    'credit' => $account['credit'] ?? 0,
+                                    'account_name' => $account['name'],
+                                    'group' => $categoryName,
+                                    'debit' => $debit,
+                                    'credit' => $credit,
+                                    'balance' => $balance,
                                 ];
                             }
                         }
@@ -113,19 +130,32 @@ class TrialBalanceExport implements FromCollection, WithColumnFormatting, WithEv
                         // Groups under category
                         if (isset($item['groups'])) {
                             foreach ($item['groups'] as $group) {
+                                $groupName = $group['name'];
+                                $groupDebit = $group['debit'] ?? 0;
+                                $groupCredit = $group['credit'] ?? 0;
+                                $groupBalance = is_numeric($groupDebit) && is_numeric($groupCredit) ? round($groupDebit - $groupCredit, 2) : '';
+
+                                // Group header
                                 $rows[] = [
-                                    'account_name' => str_repeat('  ', $indent + 1).$group['name'],
-                                    'debit' => $group['debit'] ?? 0,
-                                    'credit' => $group['credit'] ?? 0,
+                                    'account_name' => $groupName,
+                                    'group' => $categoryName,
+                                    'debit' => $groupDebit,
+                                    'credit' => $groupCredit,
+                                    'balance' => $groupBalance,
                                 ];
 
                                 // Accounts under group
                                 if (isset($group['accounts'])) {
                                     foreach ($group['accounts'] as $account) {
+                                        $debit = $account['debit'] ?? 0;
+                                        $credit = $account['credit'] ?? 0;
+                                        $balance = is_numeric($debit) && is_numeric($credit) ? round($debit - $credit, 2) : '';
                                         $rows[] = [
-                                            'account_name' => str_repeat('  ', $indent + 2).$account['name'],
-                                            'debit' => $account['debit'] ?? 0,
-                                            'credit' => $account['credit'] ?? 0,
+                                            'account_name' => $account['name'],
+                                            'group' => $groupName,
+                                            'debit' => $debit,
+                                            'credit' => $credit,
+                                            'balance' => $balance,
                                         ];
                                     }
                                 }
@@ -138,69 +168,99 @@ class TrialBalanceExport implements FromCollection, WithColumnFormatting, WithEv
 
         // Assets Section
         if (! empty($this->data['assetsTree'])) {
-            $rows[] = ['account_name' => 'ASSETS', 'debit' => '', 'credit' => ''];
+            $rows[] = ['account_name' => 'ASSETS', 'group' => '', 'debit' => '', 'credit' => '', 'balance' => ''];
             $flattenTree($this->data['assetsTree'], 'assets');
+            $totalAssetsDebit = $this->data['totalAssetsDebit'] ?? 0;
+            $totalAssetsCredit = $this->data['totalAssetsCredit'] ?? 0;
+            $totalAssetsBalance = is_numeric($totalAssetsDebit) && is_numeric($totalAssetsCredit) ? round($totalAssetsDebit - $totalAssetsCredit, 2) : '';
             $rows[] = [
                 'account_name' => 'Total Assets',
-                'debit' => $this->data['totalAssetsDebit'] ?? 0,
-                'credit' => $this->data['totalAssetsCredit'] ?? 0,
+                'group' => '',
+                'debit' => $totalAssetsDebit,
+                'credit' => $totalAssetsCredit,
+                'balance' => $totalAssetsBalance,
             ];
-            $rows[] = ['account_name' => '', 'debit' => '', 'credit' => '']; // Empty row
+            $rows[] = ['account_name' => '', 'group' => '', 'debit' => '', 'credit' => '', 'balance' => '']; // Empty row
         }
 
         // Liabilities Section
         if (! empty($this->data['liabilitiesTree'])) {
-            $rows[] = ['account_name' => 'LIABILITIES', 'debit' => '', 'credit' => ''];
+            $rows[] = ['account_name' => 'LIABILITIES', 'group' => '', 'debit' => '', 'credit' => '', 'balance' => ''];
             $flattenTree($this->data['liabilitiesTree'], 'liabilities');
+            $totalLiabilitiesDebit = $this->data['totalLiabilitiesDebit'] ?? 0;
+            $totalLiabilitiesCredit = $this->data['totalLiabilitiesCredit'] ?? 0;
+            $totalLiabilitiesBalance = is_numeric($totalLiabilitiesDebit) && is_numeric($totalLiabilitiesCredit) ? round($totalLiabilitiesDebit - $totalLiabilitiesCredit, 2) : '';
             $rows[] = [
                 'account_name' => 'Total Liabilities',
-                'debit' => $this->data['totalLiabilitiesDebit'] ?? 0,
-                'credit' => $this->data['totalLiabilitiesCredit'] ?? 0,
+                'group' => '',
+                'debit' => $totalLiabilitiesDebit,
+                'credit' => $totalLiabilitiesCredit,
+                'balance' => $totalLiabilitiesBalance,
             ];
-            $rows[] = ['account_name' => '', 'debit' => '', 'credit' => '']; // Empty row
+            $rows[] = ['account_name' => '', 'group' => '', 'debit' => '', 'credit' => '', 'balance' => '']; // Empty row
         }
 
         // Equity Section
         if (! empty($this->data['equityTree'])) {
-            $rows[] = ['account_name' => 'EQUITY', 'debit' => '', 'credit' => ''];
+            $rows[] = ['account_name' => 'EQUITY', 'group' => '', 'debit' => '', 'credit' => '', 'balance' => ''];
             $flattenTree($this->data['equityTree'], 'equity');
+            $totalEquityDebit = $this->data['totalEquityDebit'] ?? 0;
+            $totalEquityCredit = $this->data['totalEquityCredit'] ?? 0;
+            $totalEquityBalance = is_numeric($totalEquityDebit) && is_numeric($totalEquityCredit) ? round($totalEquityDebit - $totalEquityCredit, 2) : '';
             $rows[] = [
                 'account_name' => 'Total Equity',
-                'debit' => $this->data['totalEquityDebit'] ?? 0,
-                'credit' => $this->data['totalEquityCredit'] ?? 0,
+                'group' => '',
+                'debit' => $totalEquityDebit,
+                'credit' => $totalEquityCredit,
+                'balance' => $totalEquityBalance,
             ];
-            $rows[] = ['account_name' => '', 'debit' => '', 'credit' => '']; // Empty row
+            $rows[] = ['account_name' => '', 'group' => '', 'debit' => '', 'credit' => '', 'balance' => '']; // Empty row
         }
 
         // Income Section
         if (! empty($this->data['incomeTree'])) {
-            $rows[] = ['account_name' => 'INCOME', 'debit' => '', 'credit' => ''];
+            $rows[] = ['account_name' => 'INCOME', 'group' => '', 'debit' => '', 'credit' => '', 'balance' => ''];
             $flattenTree($this->data['incomeTree'], 'income');
+            $totalIncomeDebit = $this->data['totalIncomeDebit'] ?? 0;
+            $totalIncomeCredit = $this->data['totalIncomeCredit'] ?? 0;
+            $totalIncomeBalance = is_numeric($totalIncomeDebit) && is_numeric($totalIncomeCredit) ? round($totalIncomeDebit - $totalIncomeCredit, 2) : '';
             $rows[] = [
                 'account_name' => 'Total Income',
-                'debit' => $this->data['totalIncomeDebit'] ?? 0,
-                'credit' => $this->data['totalIncomeCredit'] ?? 0,
+                'group' => '',
+                'debit' => $totalIncomeDebit,
+                'credit' => $totalIncomeCredit,
+                'balance' => $totalIncomeBalance,
             ];
-            $rows[] = ['account_name' => '', 'debit' => '', 'credit' => '']; // Empty row
+            $rows[] = ['account_name' => '', 'group' => '', 'debit' => '', 'credit' => '', 'balance' => '']; // Empty row
         }
 
         // Expenses Section
         if (! empty($this->data['expensesTree'])) {
-            $rows[] = ['account_name' => 'EXPENSES', 'debit' => '', 'credit' => ''];
+            $rows[] = ['account_name' => 'EXPENSES', 'group' => '', 'debit' => '', 'credit' => '', 'balance' => ''];
             $flattenTree($this->data['expensesTree'], 'expenses');
+            $totalExpensesDebit = $this->data['totalExpensesDebit'] ?? 0;
+            $totalExpensesCredit = $this->data['totalExpensesCredit'] ?? 0;
+            $totalExpensesBalance = is_numeric($totalExpensesDebit) && is_numeric($totalExpensesCredit) ? round($totalExpensesDebit - $totalExpensesCredit, 2) : '';
             $rows[] = [
                 'account_name' => 'Total Expenses',
-                'debit' => $this->data['totalExpensesDebit'] ?? 0,
-                'credit' => $this->data['totalExpensesCredit'] ?? 0,
+                'group' => '',
+                'debit' => $totalExpensesDebit,
+                'credit' => $totalExpensesCredit,
+                'balance' => $totalExpensesBalance,
             ];
-            $rows[] = ['account_name' => '', 'debit' => '', 'credit' => '']; // Empty row
+            $rows[] = ['account_name' => '', 'group' => '', 'debit' => '', 'credit' => '', 'balance' => '']; // Empty row
         }
 
         // Grand Total
+        $totalDebit = $this->data['totalDebit'] ?? 0;
+        $totalCredit = $this->data['totalCredit'] ?? 0;
+        $grandTotalBalance = is_numeric($totalDebit) && is_numeric($totalCredit) ? round($totalDebit - $totalCredit, 2) : '';
         $rows[] = [
             'account_name' => 'GRAND TOTAL',
-            'debit' => $this->data['totalDebit'] ?? 0,
-            'credit' => $this->data['totalCredit'] ?? 0,
+            'group' => '',
+            'debit' => $totalDebit,
+            'credit' => $totalCredit,
+            'balance' => $grandTotalBalance,
         ];
 
         return new Collection($rows);
@@ -208,23 +268,26 @@ class TrialBalanceExport implements FromCollection, WithColumnFormatting, WithEv
 
     public function headings(): array
     {
-        return ['Account Name', 'Debit', 'Credit'];
+        return ['Group', 'Account Name', 'Debit', 'Credit', 'Balance'];
     }
 
     public function map($row): array
     {
         return [
+            $row['group'] ?? '',
             $row['account_name'] ?? '',
             is_numeric($row['debit']) ? $row['debit'] : '',
             is_numeric($row['credit']) ? $row['credit'] : '',
+            is_numeric($row['balance']) ? $row['balance'] : ($row['balance'] ?? ''),
         ];
     }
 
     public function columnFormats(): array
     {
         return [
-            'B' => NumberFormat::FORMAT_NUMBER_00,
             'C' => NumberFormat::FORMAT_NUMBER_00,
+            'D' => NumberFormat::FORMAT_NUMBER_00,
+            'E' => NumberFormat::FORMAT_NUMBER_00,
         ];
     }
 
@@ -251,6 +314,7 @@ class TrialBalanceExport implements FromCollection, WithColumnFormatting, WithEv
                 $this->addHeaderRows($sheet);
                 $this->styleColumnHeaders($sheet);
                 $this->styleSectionHeaders($sheet);
+                $this->styleCategoryAndGroupRows($sheet);
                 $this->styleTotalRows($sheet);
                 $this->addBorders($sheet);
                 $this->autoSizeColumns($sheet);
@@ -317,7 +381,8 @@ class TrialBalanceExport implements FromCollection, WithColumnFormatting, WithEv
         ];
 
         for ($row = $dataStartRow; $row <= $highestRow; $row++) {
-            $accountName = $sheet->getCell("A{$row}")->getValue();
+            // Check account name column (B) for section headers
+            $accountName = $sheet->getCell("B{$row}")->getValue();
 
             // Style section headers (ASSETS, LIABILITIES, etc.)
             if (isset($sectionColors[$accountName])) {
@@ -341,13 +406,110 @@ class TrialBalanceExport implements FromCollection, WithColumnFormatting, WithEv
         }
     }
 
+    protected function styleCategoryAndGroupRows(Worksheet $sheet): void
+    {
+        $highestRow = $sheet->getHighestRow();
+        $dataStartRow = self::HEADER_ROW_COUNT + 2;
+
+        $sectionHeaders = ['ASSETS', 'LIABILITIES', 'EQUITY', 'INCOME', 'EXPENSES'];
+        $totalKeywords = ['Total Assets', 'Total Liabilities', 'Total Equity', 'Total Income', 'Total Expenses', 'GRAND TOTAL'];
+
+        for ($row = $dataStartRow; $row <= $highestRow; $row++) {
+            $group = trim($sheet->getCell("A{$row}")->getValue() ?? '');
+            $accountName = trim($sheet->getCell("B{$row}")->getValue() ?? '');
+
+            // Skip section headers and totals (handled separately)
+            if (in_array($accountName, $sectionHeaders) || in_array($accountName, $totalKeywords)) {
+                continue;
+            }
+
+            // Style category rows (rows where group is empty but account name is not empty and not a section header)
+            if (empty($group) && ! empty($accountName)) {
+                // This is a category header
+                $sheet->getStyle("A{$row}:".self::LAST_COLUMN."{$row}")->applyFromArray([
+                    'font' => ['bold' => true, 'size' => 11, 'color' => ['rgb' => '000000']],
+                    'fill' => [
+                        'fillType' => Fill::FILL_SOLID,
+                        'startColor' => ['rgb' => self::SECTION_BG],
+                    ],
+                    'alignment' => ['horizontal' => Alignment::HORIZONTAL_LEFT],
+                ]);
+            } elseif (! empty($group) && empty($accountName)) {
+                // Row with group but no account name - likely a group header row
+                $sheet->getStyle("A{$row}:".self::LAST_COLUMN."{$row}")->applyFromArray([
+                    'font' => ['bold' => true, 'size' => 10, 'color' => ['rgb' => '000000']],
+                    'fill' => [
+                        'fillType' => Fill::FILL_SOLID,
+                        'startColor' => ['rgb' => 'F5F5F5'],
+                    ],
+                    'alignment' => ['horizontal' => Alignment::HORIZONTAL_LEFT],
+                ]);
+            } elseif (! empty($group) && ! empty($accountName)) {
+                // Check if this is a group header by checking if the account name appears as a group in the next row
+                $isGroupHeader = false;
+                if ($row < $highestRow) {
+                    $nextRowGroup = trim($sheet->getCell('A'.($row + 1))->getValue() ?? '');
+                    // If next row's group matches this row's account name, this is a group header
+                    if ($nextRowGroup === $accountName) {
+                        $isGroupHeader = true;
+                    }
+                }
+
+                if ($isGroupHeader) {
+                    // This is a group header
+                    $sheet->getStyle("A{$row}:".self::LAST_COLUMN."{$row}")->applyFromArray([
+                        'font' => ['bold' => true, 'size' => 10, 'color' => ['rgb' => '000000']],
+                        'fill' => [
+                            'fillType' => Fill::FILL_SOLID,
+                            'startColor' => ['rgb' => 'F5F5F5'],
+                        ],
+                        'alignment' => ['horizontal' => Alignment::HORIZONTAL_LEFT],
+                    ]);
+                } else {
+                    // This is a regular account - use alternating row colors for better readability
+                    $isEvenRow = ($row % 2 === 0);
+                    $bgColor = $isEvenRow ? 'FAFAFA' : 'FFFFFF';
+
+                    // Apply fill and alignment together to ensure all cells get the background
+                    $sheet->getStyle("A{$row}:".self::LAST_COLUMN."{$row}")->applyFromArray([
+                        'font' => ['color' => ['rgb' => '000000']],
+                        'fill' => [
+                            'fillType' => Fill::FILL_SOLID,
+                            'startColor' => ['rgb' => $bgColor],
+                        ],
+                    ]);
+
+                    // Apply alignment with fill to ensure background is preserved
+                    $sheet->getStyle("A{$row}:B{$row}")->applyFromArray([
+                        'font' => ['color' => ['rgb' => '000000']],
+                        'alignment' => ['horizontal' => Alignment::HORIZONTAL_LEFT],
+                        'fill' => [
+                            'fillType' => Fill::FILL_SOLID,
+                            'startColor' => ['rgb' => $bgColor],
+                        ],
+                    ]);
+
+                    $sheet->getStyle("C{$row}:E{$row}")->applyFromArray([
+                        'font' => ['color' => ['rgb' => '000000']],
+                        'alignment' => ['horizontal' => Alignment::HORIZONTAL_RIGHT],
+                        'fill' => [
+                            'fillType' => Fill::FILL_SOLID,
+                            'startColor' => ['rgb' => $bgColor],
+                        ],
+                    ]);
+                }
+            }
+        }
+    }
+
     protected function styleTotalRows(Worksheet $sheet): void
     {
         $highestRow = $sheet->getHighestRow();
         $dataStartRow = self::HEADER_ROW_COUNT + 2;
 
         for ($row = $dataStartRow; $row <= $highestRow; $row++) {
-            $accountName = $sheet->getCell("A{$row}")->getValue();
+            // Check account name column (B) for total rows
+            $accountName = $sheet->getCell("B{$row}")->getValue();
 
             // Style total rows (Total Assets, Total Liabilities, etc. and GRAND TOTAL)
             if (str_starts_with($accountName, 'Total ') || $accountName === 'GRAND TOTAL') {
@@ -373,13 +535,15 @@ class TrialBalanceExport implements FromCollection, WithColumnFormatting, WithEv
     protected function styleColumnHeaders(Worksheet $sheet): void
     {
         $headerRow = self::HEADER_ROW_COUNT + 1;
+
+        // Style all headers with common properties
         $sheet->getStyle("A{$headerRow}:".self::LAST_COLUMN."{$headerRow}")->applyFromArray([
             'font' => ['bold' => true, 'size' => 11, 'color' => ['rgb' => self::COLUMN_HEADER_TEXT]],
             'fill' => [
                 'fillType' => Fill::FILL_SOLID,
                 'startColor' => ['rgb' => self::COLUMN_HEADER_BG],
             ],
-            'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER, 'vertical' => Alignment::VERTICAL_CENTER],
+            'vertical' => Alignment::VERTICAL_CENTER,
             'borders' => [
                 'allBorders' => [
                     'borderStyle' => Border::BORDER_THIN,
@@ -387,6 +551,17 @@ class TrialBalanceExport implements FromCollection, WithColumnFormatting, WithEv
                 ],
             ],
         ]);
+
+        // Left align Group and Account Name columns
+        $sheet->getStyle("A{$headerRow}:B{$headerRow}")->applyFromArray([
+            'alignment' => ['horizontal' => Alignment::HORIZONTAL_LEFT],
+        ]);
+
+        // Center align Debit, Credit, and Balance columns
+        $sheet->getStyle("C{$headerRow}:E{$headerRow}")->applyFromArray([
+            'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER],
+        ]);
+
         $sheet->getRowDimension($headerRow)->setRowHeight(25);
     }
 
@@ -413,8 +588,11 @@ class TrialBalanceExport implements FromCollection, WithColumnFormatting, WithEv
         }
 
         // Set minimum column widths
-        $sheet->getColumnDimension('A')->setWidth(50);
-        $sheet->getColumnDimension('B')->setWidth(18);
+        // A = Group, B = Account Name, C = Debit, D = Credit, E = Balance
+        $sheet->getColumnDimension('A')->setWidth(30);
+        $sheet->getColumnDimension('B')->setWidth(50);
         $sheet->getColumnDimension('C')->setWidth(18);
+        $sheet->getColumnDimension('D')->setWidth(18);
+        $sheet->getColumnDimension('E')->setWidth(18);
     }
 }

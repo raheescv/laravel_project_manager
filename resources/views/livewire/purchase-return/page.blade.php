@@ -95,14 +95,13 @@
                                         <tr>
                                             <th>#</th>
                                             <th style="width: 30%">Product</th>
+                                            <th>Unit</th>
                                             <th class="text-end">Unit Price</th>
                                             <th class="text-end">Qty</th>
                                             <th class="text-end">Discount</th>
                                             <th class="text-end">Tax</th>
                                             <th class="text-end">Total</th>
-                                            @if ($purchase_returns['status'] == 'draft')
                                                 <th class="text-center" style="width: 80px">Action</th>
-                                            @endif
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -117,7 +116,16 @@
                                                         </div>
                                                     </div>
                                                 </td>
-                                                @if ($purchase_returns['status'] == 'draft')
+                                                <td>
+                                                    <div class="input-group input-group-sm">
+                                                        <select class="form-select form-select-sm border-0 bg-light"
+                                                            wire:model.live="items.{{ $item['key'] }}.unit_id">
+                                                            @foreach ($item['units'] as $unit)
+                                                                <option value="{{ $unit['id'] }}">{{ $unit['name'] }}</option>
+                                                            @endforeach
+                                                        </select>
+                                                    </div>
+                                                </td>
                                                     <td>
                                                         <div class="input-group input-group-sm">
                                                             {{ html()->number('unit_price')->value($item['unit_price'])->class('form-control form-control-sm text-end border-0 bg-light')->attribute('step', 'any')->attribute('wire:model.lazy', 'items.' . $item['key'] . '.unit_price') }}
@@ -145,18 +153,11 @@
                                                             <i class="demo-pli-recycling"></i>
                                                         </button>
                                                     </td>
-                                                @else
-                                                    <td class="text-end">{{ currency($item['unit_price']) }}</td>
-                                                    <td class="text-end">{{ $item['quantity'] }}</td>
-                                                    <td class="text-end">{{ currency($item['discount']) }}</td>
-                                                    <td class="text-end">{{ currency($item['tax']) }}</td>
-                                                    <td class="text-end fw-bold">{{ currency($item['total']) }}</td>
-                                                @endif
                                             </tr>
                                         @endforeach
                                         @if (count($items) == 0)
                                             <tr>
-                                                <td colspan="7" class="text-center py-4 text-muted">
+                                                <td colspan="9" class="text-center py-4 text-muted">
                                                     <i class="demo-psi-cart-2 fs-1 mb-2 d-block"></i>
                                                     No items added yet
                                                 </td>
@@ -168,14 +169,12 @@
                                             $items = collect($items);
                                         @endphp
                                         <tr class="bg-light">
-                                            <th colspan="3" class="text-end py-3">Total</th>
+                                            <th colspan="4" class="text-end py-3">Total</th>
                                             <th class="text-end py-3"><b>{{ $items->sum('quantity') }}</b></th>
                                             <th class="text-end py-3"><b>{{ $items->sum('discount') }}</b></th>
                                             <th class="text-end py-3"><b>{{ $items->sum('tax_amount') }}</b></th>
                                             <th class="text-end py-3"><b>{{ currency($items->sum('total')) }}</b></th>
-                                            @if ($purchase_returns['status'] == 'draft')
                                                 <th></th>
-                                            @endif
                                         </tr>
                                     </tfoot>
                                 </table>
@@ -395,14 +394,12 @@
                                 </div>
 
                                 <div class="d-flex justify-content-end gap-2">
-                                    @if ($purchase_returns['status'] == 'draft')
                                         <button type="button" wire:click='save("draft")' class="btn btn-light">
                                             <i class="demo-psi-file me-1"></i> Save Draft
                                         </button>
                                         <button type="submit" wire:confirm="Are you sure to submit this?" class="btn btn-primary">
                                             <i class="demo-psi-printer me-1"></i> Submit Return
                                         </button>
-                                    @else
                                         @if ($purchase_returns['status'] != 'cancelled')
                                             @can('purchase.cancel')
                                                 <button type="button" wire:click='save("cancelled")' wire:confirm="Are you sure to cancel this?" class="btn btn-danger">
@@ -410,7 +407,6 @@
                                                 </button>
                                             @endcan
                                         @endif
-                                    @endif
                                 </div>
                             </div>
                         </div>
