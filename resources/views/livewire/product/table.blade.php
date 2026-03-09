@@ -29,6 +29,12 @@
                                 <span class="d-none d-md-inline">Import</span>
                             </a>
                         @endcan
+                        @can('product.view')
+                            <a class="btn btn-secondary btn-sm d-flex align-items-center text-white shadow-sm" title="Image Gallery" data-bs-toggle="tooltip" href="{{ route('product::gallery') }}">
+                                <i class="demo-psi-camera me-md-1 fs-5"></i>
+                                <span class="d-none d-md-inline">Gallery</span>
+                            </a>
+                        @endcan
                     </div>
                 </div>
                 <div class="col-md-6">
@@ -398,6 +404,14 @@
                         <a class="dropdown-item d-flex align-items-center" href="{{ route('product::import') }}">
                             <i class="demo-pli-download-from-cloud me-2 text-info"></i>
                             Advanced Import
+                        </a>
+                    </li>
+                @endcan
+                @can('product.view')
+                    <li>
+                        <a class="dropdown-item d-flex align-items-center" href="{{ route('product::gallery') }}">
+                            <i class="demo-psi-camera me-2 text-secondary"></i>
+                            Image Gallery
                         </a>
                     </li>
                 @endcan

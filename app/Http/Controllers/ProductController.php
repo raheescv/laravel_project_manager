@@ -25,6 +25,11 @@ class ProductController extends Controller
         return view('product.import');
     }
 
+    public function gallery()
+    {
+        return view('product.gallery');
+    }
+
     public function get(Request $request)
     {
         $list = (new Product())->getDropDownList($request->all());
