@@ -760,9 +760,12 @@ class OrderController extends Controller
                         'latestTailorAssignment.tailor:id,name',
                     ])->orderBy('item_no');
                 },
+                'measurements.category.activeMeasurements',
             ])
             ->orderByDesc('id')
             ->get();
+
+        $orders->each->appendMeasurementsToItems();
 
         $slips = $orders
             ->flatMap(function (TailoringOrder $order): Collection {
