@@ -115,4 +115,33 @@ return [
     'tailoring measurement option' => ['create', 'view', 'edit', 'delete', 'quick add'],
     'tailoring order' => ['view', 'create', 'edit', 'delete', 'export', 'view journal entries', 'receipts'],
     'tailoring job completion' => ['view', 'create', 'edit', 'delete'],
+
+    // Property Management
+    'property' => ['create', 'view', 'edit', 'delete', 'export'],
+    'property group' => ['create', 'view', 'edit', 'delete'],
+    'property building' => ['create', 'view', 'edit', 'delete'],
+    'property type' => ['create', 'view', 'edit', 'delete'],
+    'tenant detail' => ['create', 'view', 'edit', 'delete'],
+
+    // RentOut - Rent Module
+    'rent out' => [
+        'create', 'view', 'edit', 'delete', 'export',
+        'vacate', 'extend', 'book', 'cancel',
+        'approve', 'financial approve', 'complete',
+        'view journal entries',
+    ],
+    'rent out security' => ['create', 'view', 'edit', 'delete'],
+    'rent out cheque' => ['create', 'view', 'edit', 'delete', 'update status'],
+    'rent out utility' => ['create', 'view', 'edit', 'delete'],
+    'rent out service' => ['create', 'view', 'edit', 'delete'],
+    'rent out payment term' => ['create', 'view', 'edit', 'delete'],
+    'rent out note' => ['create', 'view', 'delete'],
+
+    // RentOut - Lease/Sale Module
+    'rent out lease' => [
+        'create', 'view', 'edit', 'delete', 'export',
+        'vacate', 'extend', 'book', 'cancel',
+        'approve', 'financial approve', 'complete',
+        'view journal entries',
+    ],
 ];

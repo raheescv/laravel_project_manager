@@ -360,6 +360,11 @@
                                                     <i class="fa fa-folder-open fs-5 me-2"></i>Account Category
                                                 </a>
                                             @endcan
+                                            @can('property type.view')
+                                                <a href="{{ route('property::type::index') }}" class="list-group-item list-group-item-action header-mega-child">
+                                                    <i class="fa fa-building-o fs-5 me-2"></i>Property Type
+                                                </a>
+                                            @endcan
                                         </div>
                                     </div>
                                 </div>
