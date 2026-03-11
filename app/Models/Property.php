@@ -73,6 +73,9 @@ class Property extends Model implements AuditableContracts
         $self = $self->when($request['building_id'] ?? '', function ($query, $value) {
             return $query->where('property_building_id', $value);
         });
+        $self = $self->when($request['vacant_only'] ?? '', function ($query) {
+            return $query->where('status', PropertyStatus::Vacant);
+        });
         $self = $self->limit(10);
         $self = $self->get()->map(function ($item) {
             return [

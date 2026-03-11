@@ -20,66 +20,72 @@
                 </div>
             </div>
             <div class="card-body py-4">
+                @php
+                    $groupOptions = [];
+                    if (!empty($rentouts['property_group_id'])) {
+                        $group = \App\Models\PropertyGroup::find($rentouts['property_group_id']);
+                        if ($group) $groupOptions[$group->id] = $group->name;
+                    }
+                    $buildingOptions = [];
+                    if (!empty($rentouts['property_building_id'])) {
+                        $building = \App\Models\PropertyBuilding::find($rentouts['property_building_id']);
+                        if ($building) $buildingOptions[$building->id] = $building->name;
+                    }
+                    $typeOptions = [];
+                    if (!empty($rentouts['property_type_id'])) {
+                        $propType = \App\Models\PropertyType::find($rentouts['property_type_id']);
+                        if ($propType) $typeOptions[$propType->id] = $propType->name;
+                    }
+                    $propertyOptions = [];
+                    if (!empty($rentouts['property_id'])) {
+                        $prop = \App\Models\Property::with('building')->find($rentouts['property_id']);
+                        if ($prop) $propertyOptions[$prop->id] = $prop->number . ($prop->building ? ' - ' . $prop->building->name : '');
+                    }
+                    $customerOptions = [];
+                    if (!empty($rentouts['account_id'])) {
+                        $customer = \App\Models\Account::find($rentouts['account_id']);
+                        if ($customer) $customerOptions[$customer->id] = $customer->name;
+                    }
+                @endphp
                 <div class="row g-3">
                     <div class="col-md-3" wire:ignore>
                         <label class="form-label fw-semibold small"><i class="demo-psi-map-marker-2 text-primary me-1"></i> Group/Project</label>
-                        <select class="select-property_group_id" id="sale_property_group_id">
-                            <option value="">Select Group</option>
-                            @if(isset($rentouts['property_group_id']) && $rentouts['property_group_id'])
-                                @php $group = \App\Models\PropertyGroup::find($rentouts['property_group_id']); @endphp
-                                @if($group)
-                                    <option value="{{ $group->id }}" selected>{{ $group->name }}</option>
-                                @endif
-                            @endif
-                        </select>
+                        {{ html()->select('property_group_id', $groupOptions)->value($rentouts['property_group_id'] ?? '')->class('form-select select-property_group_id')->id('property_group_id')->placeholder('Select Group') }}
                     </div>
                     <div class="col-md-3" wire:ignore>
                         <label class="form-label fw-semibold small"><i class="demo-psi-building text-success me-1"></i> Building</label>
-                        <select class="form-select select-property_building_id" id="sale_property_building_id">
-                            <option value="">Select Building</option>
-                            @if(isset($rentouts['property_building_id']) && $rentouts['property_building_id'])
-                                @php $building = \App\Models\PropertyBuilding::find($rentouts['property_building_id']); @endphp
-                                @if($building)
-                                    <option value="{{ $building->id }}" selected>{{ $building->name }}</option>
-                                @endif
-                            @endif
-                        </select>
+                        {{ html()->select('property_building_id', $buildingOptions)->value($rentouts['property_building_id'] ?? '')->class('form-select select-property_building_id')->id('property_building_id')->placeholder('Select Building') }}
                     </div>
                     <div class="col-md-3" wire:ignore>
                         <label class="form-label fw-semibold small"><i class="demo-psi-home text-info me-1"></i> Type</label>
-                        <select class="form-select select-property_type_id" id="sale_property_type_id">
-                            <option value="">Select Type</option>
-                            @if(isset($rentouts['property_type_id']) && $rentouts['property_type_id'])
-                                @php $propType = \App\Models\PropertyType::find($rentouts['property_type_id']); @endphp
-                                @if($propType)
-                                    <option value="{{ $propType->id }}" selected>{{ $propType->name }}</option>
-                                @endif
-                            @endif
-                        </select>
+                        {{ html()->select('property_type_id', $typeOptions)->value($rentouts['property_type_id'] ?? '')->class('form-select select-property_type_id')->id('property_type_id')->placeholder('Select Type') }}
                     </div>
-                    <div class="col-md-3" wire:ignore>
-                        <label class="form-label fw-semibold small"><i class="demo-psi-key text-warning me-1"></i> Property No *</label>
-                        <select class="form-select select-property_id" id="sale_property_id">
-                            <option value="">Select Property</option>
-                            @if(isset($rentouts['property_id']) && $rentouts['property_id'])
-                                @php $prop = \App\Models\Property::with('building')->find($rentouts['property_id']); @endphp
-                                @if($prop)
-                                    <option value="{{ $prop->id }}" selected>{{ $prop->number }}{{ $prop->building ? ' - ' . $prop->building->name : '' }}</option>
-                                @endif
-                            @endif
-                        </select>
+                    <div class="col-md-3">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <label class="form-label fw-semibold small mb-0"><i class="demo-psi-key text-warning me-1"></i> Property No *</label>
+                            <label class="form-check-label small text-muted d-flex align-items-center gap-1">
+                                <input type="checkbox" class="form-check-input form-check-input-sm" wire:model.live="vacant_only" id="vacant_only">
+                                Vacant Only
+                            </label>
+                        </div>
+                        <div wire:ignore>
+                            {{ html()->select('property_id', $propertyOptions)->value($rentouts['property_id'] ?? '')->class('form-select select-property_id')->id('property_id')->placeholder('Search Here') }}
+                        </div>
                     </div>
-                    <div class="col-md-6" wire:ignore>
-                        <label class="form-label fw-semibold small"><i class="demo-psi-male text-danger me-1"></i> Customer *</label>
-                        <select class="form-select select-account_id" id="sale_account_id">
-                            <option value="">Select Customer</option>
-                            @if(isset($rentouts['account_id']) && $rentouts['account_id'])
-                                @php $customer = \App\Models\Account::find($rentouts['account_id']); @endphp
-                                @if($customer)
-                                    <option value="{{ $customer->id }}" selected>{{ $customer->name }}</option>
+                    <div class="col-md-6">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <label class="form-label fw-semibold small mb-0"><i class="demo-psi-male text-danger me-1"></i> Customer *</label>
+                            <div class="d-flex gap-2">
+                                @if(isset($rentouts['account_id']) && $rentouts['account_id'])
+                                    <a href="#" class="btn btn-sm btn-outline-primary py-0 px-2 edit_customer" title="Edit Customer">
+                                        <i class="demo-psi-pen-5"></i> Edit
+                                    </a>
                                 @endif
-                            @endif
-                        </select>
+                            </div>
+                        </div>
+                        <div wire:ignore>
+                            {{ html()->select('account_id', $customerOptions)->value($rentouts['account_id'] ?? '')->class('form-select select-customer_id')->id('account_id')->placeholder('Search Customer Name') }}
+                        </div>
                     </div>
                 </div>
             </div>
@@ -165,15 +171,14 @@
                 <div class="row g-3">
                     <div class="col-md-4" wire:ignore>
                         <label class="form-label fw-semibold small"><i class="demo-psi-male text-primary me-1"></i> Salesman</label>
-                        <select class="form-select select-salesman_id" id="sale_salesman_id">
-                            <option value="">Select Salesman</option>
-                            @if(isset($rentouts['salesman_id']) && $rentouts['salesman_id'])
-                                @php $salesman = \App\Models\User::find($rentouts['salesman_id']); @endphp
-                                @if($salesman)
-                                    <option value="{{ $salesman->id }}" selected>{{ $salesman->name }}</option>
-                                @endif
-                            @endif
-                        </select>
+                        @php
+                            $salesmanOptions = [];
+                            if (!empty($rentouts['salesman_id'])) {
+                                $sm = \App\Models\User::find($rentouts['salesman_id']);
+                                if ($sm) $salesmanOptions[$sm->id] = $sm->name;
+                            }
+                        @endphp
+                        {{ html()->select('salesman_id', $salesmanOptions)->value($rentouts['salesman_id'] ?? '')->class('form-select select-employee_id-list')->id('salesman_id')->placeholder('Select Employee') }}
                     </div>
                 </div>
 
@@ -285,7 +290,7 @@
             <div class="card-body py-3">
                 <div class="d-flex justify-content-between align-items-center">
                     <a href="{{ $type === 'Booking' ? route('property::sale::booking') : route('property::sale::index') }}" class="btn btn-light d-inline-flex align-items-center gap-2">
-                        <i class="demo-psi-arrow-left fs-5"></i>
+                        <i class="demo-psi-arrow-left-2 fs-5"></i>
                         <span>Back to List</span>
                     </a>
                     <div class="d-flex gap-2">
@@ -316,26 +321,132 @@
         <x-select.propertyBuildingSelect />
         <x-select.propertyTypeSelect />
         <x-select.propertySelect />
+        <x-select.customerSelect />
+        <x-select.employeeSelect />
 
         <script type="text/javascript">
             $(document).ready(function() {
-                $('#sale_property_group_id').on('change', function() {
+                // Property selects
+                $('#property_group_id').on('change', function() {
                     @this.set('rentouts.property_group_id', $(this).val());
                 });
-                $('#sale_property_building_id').on('change', function() {
+                $('#property_building_id').on('change', function() {
                     @this.set('rentouts.property_building_id', $(this).val());
                 });
-                $('#sale_property_type_id').on('change', function() {
+                $('#property_type_id').on('change', function() {
                     @this.set('rentouts.property_type_id', $(this).val());
                 });
-                $('#sale_property_id').on('change', function() {
+                $('#property_id').on('change', function() {
                     @this.set('rentouts.property_id', $(this).val());
                 });
-                $('#sale_account_id').on('change', function() {
+
+                // Re-initialize property TomSelect to support vacant_only filter
+                var propTs = document.querySelector('#property_id').tomselect;
+                if (propTs) {
+                    propTs.settings.load = function(query, callback) {
+                        var url = "{{ route('property::property::list') }}";
+                        url += '?query=' + encodeURIComponent(query);
+                        var vacantOnly = document.querySelector('#vacant_only');
+                        if (vacantOnly && vacantOnly.checked) {
+                            url += '&vacant_only=1';
+                        }
+                        fetch(url).then(response => response.json()).then(json => {
+                            callback(json.items);
+                        }).catch(() => {
+                            callback();
+                        });
+                    };
+                }
+
+                // Customer select
+                $('#account_id').on('change', function() {
                     @this.set('rentouts.account_id', $(this).val());
                 });
-                $('#sale_salesman_id').on('change', function() {
+
+                // Salesman select
+                $('#salesman_id').on('change', function() {
                     @this.set('rentouts.salesman_id', $(this).val());
+                });
+
+                // Edit customer button
+                $(document).on('click', '.edit_customer', function(e) {
+                    e.preventDefault();
+                    var customer_id = @this.rentouts['account_id'];
+                    if (!customer_id) return;
+                    Livewire.dispatch("Customer-Page-Update-Component", { id: customer_id });
+                });
+
+                // Auto-populate selects on edit
+                window.addEventListener('RentOutSelectValues', event => {
+                    var data = event.detail[0];
+                    if (data.property_group_id) {
+                        var groupTs = document.querySelector('#property_group_id').tomselect;
+                        if (groupTs && data.group_name) {
+                            groupTs.addOption({ id: data.property_group_id, name: data.group_name });
+                            groupTs.addItem(data.property_group_id);
+                        }
+                    }
+                    if (data.property_building_id) {
+                        var buildingTs = document.querySelector('#property_building_id').tomselect;
+                        if (buildingTs && data.building_name) {
+                            buildingTs.addOption({ id: data.property_building_id, name: data.building_name });
+                            buildingTs.addItem(data.property_building_id);
+                        }
+                    }
+                    if (data.property_type_id) {
+                        var typeTs = document.querySelector('#property_type_id').tomselect;
+                        if (typeTs && data.type_name) {
+                            typeTs.addOption({ id: data.property_type_id, name: data.type_name });
+                            typeTs.addItem(data.property_type_id);
+                        }
+                    }
+                    if (data.property_id) {
+                        var propTs = document.querySelector('#property_id').tomselect;
+                        if (propTs && data.property_name) {
+                            propTs.addOption({ id: data.property_id, name: data.property_name });
+                            propTs.addItem(data.property_id);
+                        }
+                    }
+                    if (data.account_id) {
+                        var custTs = document.querySelector('#account_id').tomselect;
+                        if (custTs && data.customer_name) {
+                            custTs.addOption({ id: data.account_id, name: data.customer_name });
+                            custTs.addItem(data.account_id);
+                        }
+                    }
+                    if (data.salesman_id) {
+                        var empTs = document.querySelector('#salesman_id').tomselect;
+                        if (empTs && data.salesman_name) {
+                            empTs.addOption({ id: data.salesman_id, name: data.salesman_name });
+                            empTs.addItem(data.salesman_id);
+                        }
+                    }
+                });
+
+                // Auto-fill group/building/type when property is selected
+                window.addEventListener('PropertyAutoFill', event => {
+                    var data = event.detail[0];
+                    if (data.property_group_id) {
+                        var groupTs = document.querySelector('#property_group_id').tomselect;
+                        if (groupTs) {
+                            groupTs.addOption({ id: data.property_group_id, name: data.group_name });
+                            groupTs.setValue(data.property_group_id, true);
+                        }
+                    }
+                    if (data.property_building_id) {
+                        var buildingTs = document.querySelector('#property_building_id').tomselect;
+                        if (buildingTs) {
+                            buildingTs.addOption({ id: data.property_building_id, name: data.building_name });
+                            buildingTs.setValue(data.property_building_id, true);
+                        }
+                    }
+                    if (data.property_type_id) {
+                        var typeTs = document.querySelector('#property_type_id').tomselect;
+                        if (typeTs) {
+                            typeTs.addOption({ id: data.property_type_id, name: data.type_name });
+                            typeTs.setValue(data.property_type_id, true);
+                        }
+                    }
                 });
             });
         </script>

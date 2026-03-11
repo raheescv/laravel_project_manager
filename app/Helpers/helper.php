@@ -763,3 +763,20 @@ if (! function_exists('securityTypeOptions')) {
         return enumOptions(\App\Enums\RentOut\SecurityType::class);
     }
 }
+
+if (! function_exists('paymentTermLabels')) {
+    function paymentTermLabels(): array
+    {
+        return [
+            'rent payment' => 'Rent Payment',
+            'installment' => 'Installment',
+            'down payment' => 'Down Payment',
+            'handover payment' => 'Handover Payment',
+            'balloon payment' => 'Balloon Payment',
+            'booking amount' => 'Booking Amount',
+            'registration' => 'Registration',
+            'maintenance' => 'Maintenance',
+            'other' => 'Other',
+        ];
+    }
+}

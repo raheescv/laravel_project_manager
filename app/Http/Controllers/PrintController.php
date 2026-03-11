@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Helpers\Facades\SaleHelper;
 use App\Models\Account;
 use App\Models\Configuration;
+use App\Models\RentOut;
 use Illuminate\Http\Request;
 
 class PrintController extends Controller
@@ -63,6 +64,82 @@ class PrintController extends Controller
         ]);
 
         return view('print.tailoring.customer-receipt-thermal', $data);
+    }
+
+    public function rentoutStatement($id)
+    {
+        $rentOut = RentOut::with([
+            'customer', 'property', 'building', 'group', 'type',
+            'paymentTerms', 'journals',
+        ])->findOrFail($id);
+
+        $payments = collect();
+
+        // Add payment term debits
+        foreach ($rentOut->paymentTerms as $term) {
+            $payments->push([
+                'date' => $term->due_date?->format('d-m-Y') ?? '',
+                'payment_mode' => 'Rent Due',
+                'cheque_no' => '',
+                'debit' => $term->total ?? 0,
+                'credit' => 0,
+                'remark' => $term->remarks ?? '',
+            ]);
+        }
+
+        // Add journal credits (actual payments)
+        foreach ($rentOut->journals as $journal) {
+            if (($journal->credit ?? 0) > 0) {
+                $payments->push([
+                    'date' => $journal->date?->format('d-m-Y') ?? '',
+                    'payment_mode' => $journal->payment_mode ?? '',
+                    'cheque_no' => $journal->cheque_no ?? '',
+                    'debit' => 0,
+                    'credit' => $journal->credit ?? 0,
+                    'remark' => $journal->remark ?? '',
+                ]);
+            }
+        }
+
+        return view('print.rentout.statement', compact('rentOut', 'payments'));
+    }
+
+    public function rentoutUtilitiesStatement($id)
+    {
+        $rentOut = RentOut::with([
+            'customer', 'property', 'building', 'group', 'type',
+            'utilityTerms.utility', 'journals',
+        ])->findOrFail($id);
+
+        $payments = collect();
+
+        // Add utility term debits
+        foreach ($rentOut->utilityTerms as $uTerm) {
+            $payments->push([
+                'date' => $uTerm->date?->format('d-m-Y') ?? '',
+                'utility' => $uTerm->utility?->name ?? '',
+                'payment_mode' => 'Utility Due',
+                'debit' => $uTerm->amount ?? 0,
+                'credit' => 0,
+                'remark' => $uTerm->remarks ?? '',
+            ]);
+        }
+
+        // Add utility payment credits from journals
+        foreach ($rentOut->journals as $journal) {
+            if (($journal->credit ?? 0) > 0 && str_contains(strtolower($journal->category ?? ''), 'utility')) {
+                $payments->push([
+                    'date' => $journal->date?->format('d-m-Y') ?? '',
+                    'utility' => $journal->category ?? '',
+                    'payment_mode' => $journal->payment_mode ?? '',
+                    'debit' => 0,
+                    'credit' => $journal->credit ?? 0,
+                    'remark' => $journal->remark ?? '',
+                ]);
+            }
+        }
+
+        return view('print.rentout.utilities-statement', compact('rentOut', 'payments'));
     }
 
     /**

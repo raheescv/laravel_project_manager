@@ -2,24 +2,22 @@
 
 namespace App\Livewire\RentOut\Sale;
 
-use App\Models\RentOut;
+use App\Livewire\RentOut\Concerns\HasPaymentTermManagement;
 use Livewire\Component;
 
 class View extends Component
 {
-    public $rentOut;
+    use HasPaymentTermManagement;
 
     public function mount($id)
     {
-        $this->rentOut = RentOut::with([
-            'customer',
-            'property',
-            'building',
-            'group',
-            'salesman',
-            'paymentTerms',
-            'securities',
-        ])->find($id);
+        $this->loadRentOut($id);
+        $this->resetSingleTerm();
+    }
+
+    protected function defaultTermLabel(): string
+    {
+        return 'installment';
     }
 
     public function render()

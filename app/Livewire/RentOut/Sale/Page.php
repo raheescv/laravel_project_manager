@@ -27,6 +27,8 @@ class Page extends Component
 
     public $days = 0;
 
+    public $vacant_only = true;
+
     public function mount($type = 'Rentout', $table_id = null)
     {
         $this->type = $type;
@@ -37,7 +39,7 @@ class Page extends Component
     public function loadData()
     {
         if ($this->table_id) {
-            $item = RentOut::find($this->table_id);
+            $item = RentOut::with(['property.building.group', 'property.type', 'customer', 'salesman'])->find($this->table_id);
             if (! $item) {
                 session()->flash('error', 'Record not found');
 
@@ -47,6 +49,21 @@ class Page extends Component
             $this->rentouts['agreement_type'] = $item->agreement_type?->value ?? 'lease';
             $this->rentouts['status'] = $item->status?->value ?? '';
             $this->rentouts['collection_payment_mode'] = $item->collection_payment_mode?->value ?? '';
+
+            $this->dispatch('RentOutSelectValues', [
+                'property_group_id' => $item->property_group_id,
+                'group_name' => $item->property?->building?->group?->name,
+                'property_building_id' => $item->property_building_id,
+                'building_name' => $item->property?->building?->name,
+                'property_type_id' => $item->property_type_id,
+                'type_name' => $item->property?->type?->name,
+                'property_id' => $item->property_id,
+                'property_name' => $item->property ? $item->property->number . ($item->property->building ? ' - ' . $item->property->building->name : '') : '',
+                'account_id' => $item->account_id,
+                'customer_name' => $item->customer?->name,
+                'salesman_id' => $item->salesman_id,
+                'salesman_name' => $item->salesman?->name,
+            ]);
         } else {
             $this->rentouts = [
                 'agreement_type' => AgreementType::Lease->value,
@@ -121,9 +138,20 @@ class Page extends Component
 
     public function propertyCheck()
     {
-        $property = Property::find($this->rentouts['property_id']);
+        $property = Property::with(['building.group', 'type'])->find($this->rentouts['property_id']);
         if ($property) {
             $this->rentouts['rent'] = $property->rent ?? 0;
+            $this->rentouts['property_building_id'] = $property->property_building_id;
+            $this->rentouts['property_group_id'] = $property->property_group_id ?? $property->building?->property_group_id;
+            $this->rentouts['property_type_id'] = $property->property_type_id;
+            $this->dispatch('PropertyAutoFill', [
+                'property_group_id' => $this->rentouts['property_group_id'],
+                'group_name' => $property->building?->group?->name,
+                'property_building_id' => $property->property_building_id,
+                'building_name' => $property->building?->name,
+                'property_type_id' => $property->property_type_id,
+                'type_name' => $property->type?->name,
+            ]);
             $this->rentCalculator();
         }
     }
