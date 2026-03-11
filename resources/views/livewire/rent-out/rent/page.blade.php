@@ -284,12 +284,7 @@
                     </div>
                     <div class="col-md-3">
                         <label class="form-label fw-semibold small"><i class="demo-psi-coins text-success me-1"></i> Payment Mode</label>
-                        <select class="form-select" id="collection_payment_mode" wire:model.live="rentouts.collection_payment_mode">
-                            <option value="">Select...</option>
-                            @foreach(\App\Enums\RentOut\PaymentMode::cases() as $mode)
-                                <option value="{{ $mode->value }}">{{ $mode->label() }}</option>
-                            @endforeach
-                        </select>
+                        {{ html()->select('collection_payment_mode', paymentModeOptions())->value($rentouts['collection_payment_mode'] ?? '')->class('form-select')->id('collection_payment_mode')->attribute('wire:model.live', 'rentouts.collection_payment_mode')->placeholder('Select...') }}
                     </div>
                     @if(($rentouts['collection_payment_mode'] ?? '') && $rentouts['collection_payment_mode'] !== 'cash')
                         <div class="col-md-3">

@@ -10,7 +10,7 @@ class CreateAction
     public function execute($data)
     {
         try {
-            $data['name'] = trim($data['name']);
+            $data['number'] = trim($data['number']);
             validationHelper(Property::rules(), $data, 'Property');
 
             $building = PropertyBuilding::find($data['property_building_id']);
@@ -19,7 +19,7 @@ class CreateAction
             }
 
             $exists = Property::withTrashed()
-                ->where('name', $data['name'])
+                ->where('number', $data['number'])
                 ->where('property_building_id', $data['property_building_id'])
                 ->first();
             if ($exists) {

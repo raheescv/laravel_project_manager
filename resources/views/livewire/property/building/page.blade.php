@@ -33,7 +33,7 @@
                 <div class="col-md-6">
                     <label class="form-label fw-semibold">Group/Project <span class="text-danger">*</span></label>
                     <div wire:ignore>
-                        <select class="select-property_group_id form-control" id="modal_property_group_id" placeholder="Search Here">
+                        <select class="select-property_group_id" id="modal_property_group_id" placeholder="Search Here">
                             <option value="">Search Here</option>
                         </select>
                     </div>
@@ -152,12 +152,7 @@
                 </div>
                 <div class="col-md-4">
                     <div class="form-floating">
-                        <select class="form-select @error('formData.ownership') is-invalid @enderror" id="ownership" wire:model="formData.ownership">
-                            <option value="">Please Select</option>
-                            @foreach(\App\Enums\Property\BuildingOwnership::cases() as $ownership)
-                                <option value="{{ $ownership->value }}">{{ $ownership->label() }}</option>
-                            @endforeach
-                        </select>
+                        {{ html()->select('ownership', buildingOwnershipOptions())->value($formData['ownership'] ?? '')->class('form-select' . ($errors->has('formData.ownership') ? ' is-invalid' : ''))->id('ownership')->attribute('wire:model', 'formData.ownership')->placeholder('Please Select') }}
                         <label for="ownership">Owner Mode</label>
                         @error('formData.ownership')
                             <div class="invalid-feedback">{{ $message }}</div>

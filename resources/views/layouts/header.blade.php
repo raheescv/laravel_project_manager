@@ -360,9 +360,30 @@
                                                     <i class="fa fa-folder-open fs-5 me-2"></i>Account Category
                                                 </a>
                                             @endcan
+                                        </div>
+                                        <div class="header-mega-section">
+                                            <div class="header-mega-title">
+                                                <i class="fa fa-building-o"></i>
+                                                <span>Property</span>
+                                            </div>
+                                            @can('property.view')
+                                                <a href="{{ route('property::property::index') }}" class="list-group-item list-group-item-action header-mega-child">
+                                                    <i class="fa fa-home fs-5 me-2"></i>Properties
+                                                </a>
+                                            @endcan
+                                            @can('property group.view')
+                                                <a href="{{ route('property::group::index') }}" class="list-group-item list-group-item-action header-mega-child">
+                                                    <i class="fa fa-group fs-5 me-2"></i>Groups
+                                                </a>
+                                            @endcan
+                                            @can('property building.view')
+                                                <a href="{{ route('property::building::index') }}" class="list-group-item list-group-item-action header-mega-child">
+                                                    <i class="fa fa-building fs-5 me-2"></i>Buildings
+                                                </a>
+                                            @endcan
                                             @can('property type.view')
                                                 <a href="{{ route('property::type::index') }}" class="list-group-item list-group-item-action header-mega-child">
-                                                    <i class="fa fa-building-o fs-5 me-2"></i>Property Type
+                                                    <i class="fa fa-tags fs-5 me-2"></i>Property Types
                                                 </a>
                                             @endcan
                                         </div>

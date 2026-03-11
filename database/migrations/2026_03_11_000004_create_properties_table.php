@@ -15,8 +15,7 @@ return new class extends Migration
             $table->foreignId('property_group_id')->constrained('property_groups')->cascadeOnDelete();
             $table->foreignId('property_building_id')->constrained('property_buildings')->cascadeOnDelete();
             $table->foreignId('property_type_id')->nullable()->constrained('property_types')->nullOnDelete();
-            $table->string('name');
-            $table->string('number')->nullable();
+            $table->string('number');
             $table->string('code')->nullable();
             $table->string('unit_no')->nullable();
             $table->string('floor')->nullable();

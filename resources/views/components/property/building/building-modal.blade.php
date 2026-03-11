@@ -1,5 +1,5 @@
 <div class="modal" id="PropertyBuildingModal" aria-hidden="true">
-    <div class="modal-dialog">
+    <div class="modal-dialog modal-lg">
         <div class="modal-content">
             @livewire('property.building.page')
         </div>

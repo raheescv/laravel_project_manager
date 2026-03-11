@@ -15,8 +15,7 @@ return new class extends Migration
             $table->string('name');
             $table->string('arabic_name')->nullable();
             $table->string('description')->nullable();
-            $table->string('lease_agreement_no')->nullable();
-            $table->string('year')->nullable();
+            $table->integer('lease_agreement_years')->nullable();
             $table->unsignedBigInteger('created_by')->nullable();
             $table->unsignedBigInteger('updated_by')->nullable();
             $table->softDeletes();

@@ -1,117 +1,176 @@
-<div class="card border-0 shadow-sm">
-    <div class="card-header bg-white py-3">
-        <div class="row g-3 align-items-center">
-            <div class="col-12 col-md-6 d-flex gap-2">
-                @can('property building.create')
-                    <button class="btn btn-primary d-inline-flex align-items-center gap-2" id="PropertyBuildingAdd">
-                        <i class="demo-psi-add fs-5"></i>
-                        <span>Add New</span>
-                    </button>
-                @endcan
-                @can('property building.delete')
-                    @if(count($selected) > 0)
-                        <button class="btn btn-outline-danger d-inline-flex align-items-center gap-2" wire:click="delete()" wire:confirm="Are you sure you want to delete the selected items?">
-                            <i class="demo-pli-recycling fs-5"></i>
-                            <span>Delete</span>
+<div>
+    <div class="card shadow-sm">
+        <div class="card-header bg-light py-3">
+            <div class="row mt-3">
+                <div class="col-md-6 d-flex flex-wrap gap-2 align-items-center mb-3 mb-md-0">
+                    @can('property building.create')
+                        <button class="btn btn-primary d-flex align-items-center shadow-sm" id="PropertyBuildingAdd">
+                            <i class="fa fa-plus-circle me-2"></i>
+                            Add New Building
                         </button>
-                    @endif
-                @endcan
-            </div>
-            <div class="col-12 col-md-6">
-                <div class="d-flex flex-wrap gap-2 justify-content-md-end">
-                    <div class="d-flex bg-light rounded-2 px-2">
-                        <span class="d-flex align-items-center text-muted">
-                            <i class="demo-psi-list-view fs-6"></i>
-                        </span>
-                        <select wire:model.live="limit" class="form-select bg-transparent border-0 fw-semibold py-2" style="width: 80px; box-shadow: none; font-size: 0.875rem;">
-                            <option value="10">10</option>
-                            <option value="100">100</option>
-                            <option value="500">500</option>
-                        </select>
+                    @endcan
+                    <div class="btn-group shadow-sm">
+                        @can('property building.delete')
+                            <button class="btn btn-danger btn-sm d-flex align-items-center" title="Delete Selected" data-bs-toggle="tooltip" wire:click="delete()"
+                                wire:confirm="Are you sure you want to delete the selected items?">
+                                <i class="fa fa-trash me-md-1 fs-5"></i>
+                                <span class="d-none d-md-inline">Delete</span>
+                            </button>
+                        @endcan
                     </div>
-                    <div class="d-flex bg-light rounded-2 px-2 flex-grow-1 flex-md-grow-0" style="min-width: 250px;">
-                        <span class="d-flex align-items-center text-muted">
-                            <i class="demo-psi-magnifi-glass fs-6"></i>
-                        </span>
-                        <input type="text" wire:model.live="search" autofocus placeholder="Search buildings..." class="form-control bg-transparent border-0 py-2" style="box-shadow: none; font-size: 0.875rem;" autocomplete="off">
+                </div>
+
+                <div class="col-md-6">
+                    <div class="row g-2 align-items-center">
+                        <div class="col-auto">
+                            <label class="form-label mb-0 text-muted small fw-semibold">Show:</label>
+                        </div>
+                        <div class="col-auto">
+                            <select wire:model.live="limit" class="form-select form-select-sm border-secondary-subtle shadow-sm">
+                                <option value="10">10</option>
+                                <option value="100">100</option>
+                                <option value="500">500</option>
+                            </select>
+                        </div>
+                        <div class="col">
+                            <div class="input-group input-group-sm">
+                                <span class="input-group-text bg-white border-secondary-subtle">
+                                    <i class="fa fa-search"></i>
+                                </span>
+                                <input type="text" wire:model.live="search" autofocus placeholder="Search buildings..." class="form-control form-control-sm border-secondary-subtle shadow-sm"
+                                    autocomplete="off">
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
-    </div>
-    <div class="card-body p-0">
-        <div class="table-responsive">
-            <table class="table table-hover align-middle mb-0">
-                <thead class="table-light">
-                    <tr>
-                        <th class="ps-4" width="80">
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" wire:model.live="selectAll" id="selectAll">
-                            </div>
-                        </th>
-                        <th width="10%"> <x-sortable-header field="id" label="ID" :sortField="$sortField" :direction="$sortDirection" /> </th>
-                        <th> <x-sortable-header field="name" label="Name" :sortField="$sortField" :direction="$sortDirection" /> </th>
-                        <th>Group</th>
-                        <th>Location</th>
-                        <th>Ownership</th>
-                        <th>Status</th>
-                        <th width="10%" class="text-end pe-4">Action</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @forelse ($data as $item)
-                        <tr>
-                            <td class="ps-4">
-                                <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" value="{{ $item->id }}" wire:model.live="selected">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle border-bottom mb-0 table-sm">
+                    <thead class="bg-light text-muted">
+                        <tr class="text-capitalize small">
+                            <th class="fw-semibold py-2">
+                                <div class="form-check ms-1">
+                                    <input type="checkbox" wire:model.live="selectAll" class="form-check-input shadow-sm" id="selectAllCheckbox" />
+                                    <label class="form-check-label" for="selectAllCheckbox">
+                                        <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="id" label="ID" />
+                                    </label>
                                 </div>
-                            </td>
-                            <td><span class="badge bg-light text-dark border">#{{ $item->id }}</span></td>
-                            <td class="fw-semibold text-dark">{{ $item->name }}</td>
-                            <td>{{ $item->group?->name }}</td>
-                            <td>{{ $item->location }}</td>
-                            <td>{{ $item->ownership?->label() }}</td>
-                            <td>
-                                <span class="badge bg-{{ $item->status === 'active' ? 'success' : 'secondary' }}">{{ ucfirst($item->status) }}</span>
-                            </td>
-                            <td class="text-end pe-4">
-                                @can('property building.edit')
-                                    <button table_id="{{ $item->id }}" class="btn btn-icon btn-sm btn-hover btn-light edit" title="Edit Building">
-                                        <i class="demo-psi-pencil fs-5 text-muted"></i>
-                                    </button>
-                                @endcan
-                            </td>
+                            </th>
+                            <th class="fw-semibold"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="name" label="Name" /> </th>
+                            <th class="fw-semibold">Arabic Name</th>
+                            <th class="fw-semibold">Group</th>
+                            <th class="fw-semibold"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="created_at" label="Date Created" /> </th>
+                            <th class="fw-semibold">No Of Properties</th>
+                            <th class="fw-semibold">Vacant</th>
+                            <th class="fw-semibold">Ownership</th>
+                            <th class="fw-semibold">Status</th>
+                            <th class="fw-semibold text-center">Actions</th>
                         </tr>
-                    @empty
-                        <tr>
-                            <td colspan="8" class="text-center py-5 text-muted">No buildings found matching your search.</td>
-                        </tr>
-                    @endforelse
-                </tbody>
-            </table>
+                    </thead>
+                    <tbody>
+                        @forelse ($data as $item)
+                            <tr>
+                                <td>
+                                    <div class="form-check ms-1">
+                                        <input type="checkbox" value="{{ $item->id }}" wire:model.live="selected" class="form-check-input shadow-sm" id="checkbox{{ $item->id }}" />
+                                        <label class="form-check-label" for="checkbox{{ $item->id }}">{{ $item->id }}</label>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="fw-medium text-dark">
+                                        <i class="fa fa-building me-1 text-primary opacity-75"></i>{{ $item->name }}
+                                    </span>
+                                </td>
+                                <td>
+                                    @if($item->arabic_name)
+                                        <i class="fa fa-language me-1 text-muted"></i>{{ $item->arabic_name }}
+                                    @else
+                                        -
+                                    @endif
+                                </td>
+                                <td>
+                                    @if($item->group?->name)
+                                        <i class="fa fa-object-group me-1 text-muted"></i>{{ $item->group->name }}
+                                    @else
+                                        -
+                                    @endif
+                                </td>
+                                <td>
+                                    <i class="fa fa-calendar me-1 text-muted"></i>{{ $item->created_at?->format('d-m-Y') }}
+                                </td>
+                                <td>
+                                    <i class="fa fa-home me-1 text-muted"></i>{{ $item->properties_count ?? 0 }}
+                                </td>
+                                <td>
+                                    <span class="text-success"><i class="fa fa-check-circle me-1"></i>{{ $item->vacant_count ?? 0 }}</span>
+                                </td>
+                                <td>
+                                    @if($item->ownership)
+                                        <i class="fa fa-key me-1 text-muted"></i>{{ $item->ownership?->label() }}
+                                    @else
+                                        -
+                                    @endif
+                                </td>
+                                <td>
+                                    <span class="badge bg-{{ $item->status === 'active' ? 'success' : 'secondary' }}">
+                                        {{ ucfirst($item->status) }}
+                                    </span>
+                                </td>
+                                <td class="text-center">
+                                    <div class="btn-group btn-group-sm" role="group">
+                                        @can('property building.edit')
+                                            <button table_id="{{ $item->id }}" class="btn btn-light btn-sm edit" title="Edit" data-bs-toggle="tooltip">
+                                                <i class="fa fa-eye"></i>
+                                            </button>
+                                        @endcan
+                                    </div>
+                                </td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="10" class="text-center py-5 text-muted">
+                                    <i class="fa fa-building fa-3x mb-3 d-block opacity-25"></i>
+                                    No buildings found matching your search.
+                                </td>
+                            </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+            <div class="p-3 border-top">
+                {{ $data->links() }}
+            </div>
         </div>
-    </div>
-    @if($data->hasPages())
-        <div class="card-footer bg-white py-3">
-            {{ $data->links() }}
-        </div>
-    @endif
 
-    @push('scripts')
-        <script>
-            $(document).ready(function() {
-                $(document).on('click', '.edit', function() {
-                    Livewire.dispatch("PropertyBuilding-Page-Update-Component", {
-                        id: $(this).attr('table_id')
+        <div class="position-fixed bottom-0 end-0 mb-4 me-4 d-md-none">
+            <button id="PropertyBuildingAddMobile" class="btn btn-primary rounded-circle shadow btn-lg">
+                <i class="fa fa-plus"></i>
+            </button>
+        </div>
+
+        @push('scripts')
+            <script>
+                $(document).ready(function() {
+                    const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+                    tooltipTriggerList.map(function(tooltipTriggerEl) {
+                        return new bootstrap.Tooltip(tooltipTriggerEl, { boundary: document.body });
+                    });
+
+                    $(document).on('click', '.edit', function() {
+                        Livewire.dispatch("PropertyBuilding-Page-Update-Component", {
+                            id: $(this).attr('table_id')
+                        });
+                    });
+                    $('#PropertyBuildingAdd, #PropertyBuildingAddMobile').click(function() {
+                        Livewire.dispatch("PropertyBuilding-Page-Create-Component");
+                    });
+                    window.addEventListener('RefreshPropertyBuildingTable', event => {
+                        Livewire.dispatch("PropertyBuilding-Refresh-Component");
                     });
                 });
-                $('#PropertyBuildingAdd').click(function() {
-                    Livewire.dispatch("PropertyBuilding-Page-Create-Component");
-                });
-                window.addEventListener('RefreshPropertyBuildingTable', event => {
-                    Livewire.dispatch("PropertyBuilding-Refresh-Component");
-                });
-            });
-        </script>
-    @endpush
+            </script>
+        @endpush
+    </div>
 </div>

@@ -33,7 +33,7 @@
                 <div class="col-md-4">
                     <label class="form-label fw-semibold">Building <span class="text-danger">*</span></label>
                     <div wire:ignore>
-                        <select class="select-property_building_id form-control" id="modal_property_building_id" placeholder="Search Here">
+                        <select class="select-property_building_id" id="modal_property_building_id" placeholder="Search Here">
                             <option value="">Search Here</option>
                         </select>
                     </div>
@@ -59,7 +59,7 @@
                 <div class="col-md-4">
                     <label class="form-label fw-semibold">Type <span class="text-danger">*</span></label>
                     <div wire:ignore>
-                        <select class="select-property_type_id form-control" id="modal_property_type_id" placeholder="Search Here">
+                        <select class="select-property_type_id" id="modal_property_type_id" placeholder="Search Here">
                             <option value="">Search Here</option>
                         </select>
                     </div>

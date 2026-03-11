@@ -23,12 +23,7 @@
                         <span class="d-flex align-items-center text-muted">
                             <i class="demo-psi-filter fs-6"></i>
                         </span>
-                        <select wire:model.live="statusFilter" class="form-select bg-transparent border-0 fw-semibold py-2" style="width: 120px; box-shadow: none; font-size: 0.875rem;">
-                            <option value="">All Status</option>
-                            @foreach(\App\Enums\RentOut\RentOutStatus::cases() as $status)
-                                <option value="{{ $status->value }}">{{ $status->label() }}</option>
-                            @endforeach
-                        </select>
+                        {{ html()->select('statusFilter', rentOutStatusOptions())->value($statusFilter)->class('form-select bg-transparent border-0 fw-semibold py-2')->style('width: 120px; box-shadow: none; font-size: 0.875rem;')->attribute('wire:model.live', 'statusFilter')->placeholder('All Status') }}
                     </div>
                     <div class="d-flex bg-light rounded-2 px-2">
                         <span class="d-flex align-items-center text-muted">

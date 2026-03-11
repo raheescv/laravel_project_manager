@@ -16,6 +16,7 @@ class PropertyType extends Model implements AuditableContracts
     protected $fillable = [
         'tenant_id',
         'name',
+        'arabic_name',
         'description',
         'created_by',
         'updated_by',

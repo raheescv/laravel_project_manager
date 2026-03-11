@@ -31,6 +31,15 @@
                 </div>
                 <div class="col-md-12">
                     <div class="form-floating">
+                        <input type="text" class="form-control @error('formData.arabic_name') is-invalid @enderror" id="arabic_name" placeholder="Enter Arabic Name" wire:model="formData.arabic_name" dir="rtl">
+                        <label for="arabic_name">Arabic Name</label>
+                        @error('formData.arabic_name')
+                            <div class="invalid-feedback">{{ $message }}</div>
+                        @enderror
+                    </div>
+                </div>
+                <div class="col-md-12">
+                    <div class="form-floating">
                         <textarea class="form-control @error('formData.description') is-invalid @enderror" id="description" placeholder="Description" wire:model="formData.description" style="height: 100px"></textarea>
                         <label for="description">Description</label>
                         @error('formData.description')

@@ -43,6 +43,7 @@ class Page extends Component
             }
             $this->formData = [
                 'name' => $name,
+                'arabic_name' => '',
                 'description' => '',
             ];
         } else {

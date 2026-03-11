@@ -3,6 +3,7 @@
 namespace App\Livewire\Property\Building;
 
 use App\Actions\PropertyBuilding\DeleteAction;
+use App\Enums\Property\PropertyStatus;
 use App\Models\PropertyBuilding;
 use Illuminate\Support\Facades\DB;
 use Livewire\Component;
@@ -86,12 +87,14 @@ class Table extends Component
     public function render()
     {
         $data = PropertyBuilding::with('group')
+            ->withCount(['properties', 'properties as vacant_count' => function ($query) {
+                $query->where('status', PropertyStatus::Vacant);
+            }])
             ->orderBy($this->sortField, $this->sortDirection)
             ->when($this->search ?? '', function ($query, $value) {
                 return $query->where('name', 'like', "%{$value}%")
                     ->orWhere('location', 'like', "%{$value}%");
             })
-            ->latest()
             ->paginate($this->limit);
 
         return view('livewire.property.building.table', [

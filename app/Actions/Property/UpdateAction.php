@@ -13,7 +13,7 @@ class UpdateAction
             if (! $model) {
                 throw new \Exception("Property not found with the specified ID: $id.", 1);
             }
-            $data['name'] = trim($data['name']);
+            $data['number'] = trim($data['number']);
             validationHelper(Property::rules($id), $data);
             $model->update($data);
             $return['success'] = true;

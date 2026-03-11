@@ -786,47 +786,6 @@
                         </li>
                     @endif
 
-                    @if (auth()->user()->can('property.view') ||
-                            auth()->user()->can('property group.view') ||
-                            auth()->user()->can('property building.view') ||
-                            auth()->user()->can('property type.view'))
-                        <li class="nav-item has-sub">
-                            @php
-                                $propertyList = [
-                                    'property/group',
-                                    'property/building',
-                                    'property/properties',
-                                    'property/type',
-                                ];
-                            @endphp
-                            <a href="#" class="mininav-toggle nav-link {{ request()->is($propertyList) ? 'active' : '' }}"><i class="fa fa-building-o fs-5 me-2"></i>
-                                <span class="nav-label mininav-content ms-1 collapse show" style="">Property</span>
-                            </a>
-                            <ul class="mininav-content nav collapse">
-                                <li data-popper-arrow class="arrow"></li>
-                                @can('property group.view')
-                                    <li class="nav-item">
-                                        <a href="{{ route('property::group::index') }}" class="nav-link {{ request()->is(['property/group']) ? 'active' : '' }}">Groups</a>
-                                    </li>
-                                @endcan
-                                @can('property building.view')
-                                    <li class="nav-item">
-                                        <a href="{{ route('property::building::index') }}" class="nav-link {{ request()->is(['property/building']) ? 'active' : '' }}">Buildings</a>
-                                    </li>
-                                @endcan
-                                @can('property.view')
-                                    <li class="nav-item">
-                                        <a href="{{ route('property::property::index') }}" class="nav-link {{ request()->is(['property/properties']) ? 'active' : '' }}">Properties</a>
-                                    </li>
-                                @endcan
-                                @can('property type.view')
-                                    <li class="nav-item">
-                                        <a href="{{ route('property::type::index') }}" class="nav-link {{ request()->is(['property/type']) ? 'active' : '' }}">Property Types</a>
-                                    </li>
-                                @endcan
-                            </ul>
-                        </li>
-                    @endif
 
                     @if (auth()->user()->is_super_admin)
                         <li class="nav-item">

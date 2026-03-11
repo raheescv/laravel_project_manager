@@ -19,8 +19,7 @@ class PropertyGroup extends Model implements AuditableContracts
         'name',
         'arabic_name',
         'description',
-        'lease_agreement_no',
-        'year',
+        'lease_agreement_years',
         'created_by',
         'updated_by',
     ];

@@ -21,7 +21,6 @@ class Property extends Model implements AuditableContracts
         'property_group_id',
         'property_building_id',
         'property_type_id',
-        'name',
         'number',
         'code',
         'unit_no',
@@ -58,7 +57,7 @@ class Property extends Model implements AuditableContracts
         return [
             'property_building_id' => 'required|exists:property_buildings,id',
             'property_type_id' => 'required|exists:property_types,id',
-            'name' => 'required|string|max:255',
+            'number' => 'required|string|max:255',
         ];
     }
 
@@ -68,8 +67,7 @@ class Property extends Model implements AuditableContracts
         $self = $self->when($request['query'] ?? '', function ($query, $value) {
             return $query->where(function ($q) use ($value): void {
                 $value = trim($value);
-                $q->where('number', 'like', "%{$value}%")
-                    ->orWhere('name', 'like', "%{$value}%");
+                $q->where('number', 'like', "%{$value}%");
             });
         });
         $self = $self->when($request['building_id'] ?? '', function ($query, $value) {

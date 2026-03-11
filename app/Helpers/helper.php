@@ -694,3 +694,72 @@ if (! function_exists('https_asset')) {
         }
     }
 }
+
+if (! function_exists('enumOptions')) {
+    /**
+     * Convert a backed enum class to a [value => label] array for html()->select().
+     * Expects each case to have a label() method.
+     */
+    function enumOptions(string $enumClass): array
+    {
+        return collect($enumClass::cases())
+            ->mapWithKeys(fn ($case) => [$case->value => $case->label()])
+            ->toArray();
+    }
+}
+
+if (! function_exists('buildingOwnershipOptions')) {
+    function buildingOwnershipOptions(): array
+    {
+        return enumOptions(\App\Enums\Property\BuildingOwnership::class);
+    }
+}
+
+if (! function_exists('propertyStatusOptions')) {
+    function propertyStatusOptions(): array
+    {
+        return enumOptions(\App\Enums\Property\PropertyStatus::class);
+    }
+}
+
+if (! function_exists('rentOutStatusOptions')) {
+    function rentOutStatusOptions(): array
+    {
+        return enumOptions(\App\Enums\RentOut\RentOutStatus::class);
+    }
+}
+
+if (! function_exists('paymentModeOptions')) {
+    function paymentModeOptions(): array
+    {
+        return enumOptions(\App\Enums\RentOut\PaymentMode::class);
+    }
+}
+
+if (! function_exists('agreementTypeOptions')) {
+    function agreementTypeOptions(): array
+    {
+        return enumOptions(\App\Enums\RentOut\AgreementType::class);
+    }
+}
+
+if (! function_exists('chequeStatusOptions')) {
+    function chequeStatusOptions(): array
+    {
+        return enumOptions(\App\Enums\RentOut\ChequeStatus::class);
+    }
+}
+
+if (! function_exists('securityStatusOptions')) {
+    function securityStatusOptions(): array
+    {
+        return enumOptions(\App\Enums\RentOut\SecurityStatus::class);
+    }
+}
+
+if (! function_exists('securityTypeOptions')) {
+    function securityTypeOptions(): array
+    {
+        return enumOptions(\App\Enums\RentOut\SecurityType::class);
+    }
+}

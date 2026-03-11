@@ -43,20 +43,11 @@
                 </div>
 
                 {{-- Row 3: Lease Agreement No, Year --}}
-                <div class="col-md-6">
+                <div class="col-md-12">
                     <div class="form-floating">
-                        <input type="text" class="form-control @error('formData.lease_agreement_no') is-invalid @enderror" id="lease_agreement_no" placeholder="Lease Agreement No" wire:model="formData.lease_agreement_no">
-                        <label for="lease_agreement_no">Lease Agreement No</label>
-                        @error('formData.lease_agreement_no')
-                            <div class="invalid-feedback">{{ $message }}</div>
-                        @enderror
-                    </div>
-                </div>
-                <div class="col-md-6">
-                    <div class="form-floating">
-                        <input type="number" class="form-control @error('formData.year') is-invalid @enderror" id="year" placeholder="Lease Agreement Years" wire:model="formData.year" min="0" step="1">
-                        <label for="year">Lease Agreement Years</label>
-                        @error('formData.year')
+                        <input type="number" class="form-control @error('formData.lease_agreement_years') is-invalid @enderror" id="lease_agreement_years" placeholder="Lease Agreement Years" wire:model="formData.year" min="0" step="1">
+                        <label for="lease_agreement_years">Lease Agreement Years</label>
+                        @error('formData.lease_agreement_years')
                             <div class="invalid-feedback">{{ $message }}</div>
                         @enderror
                     </div>
