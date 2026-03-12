@@ -8,7 +8,7 @@ class FixedOpenAiProvider extends BaseOpenAiProvider
 {
     /**
      * Get the default / normalized image options for the provider.
-     * 
+     *
      * Overridden to remove the 'moderation' parameter which causes 400 errors with OpenAI's DALL-E 3 API.
      */
     public function defaultImageOptions(?string $size = null, $quality = null): array

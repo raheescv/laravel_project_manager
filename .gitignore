@@ -27,3 +27,4 @@ template
 /public/node/.wwebjs_auth
 .qodo
 dump.rdb
+.cache/*

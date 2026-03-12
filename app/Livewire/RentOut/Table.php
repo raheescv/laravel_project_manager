@@ -3,7 +3,6 @@
 namespace App\Livewire\RentOut;
 
 use App\Actions\RentOut\DeleteAction;
-use App\Enums\RentOut\AgreementType;
 use App\Models\RentOut;
 use App\Support\RentOutConfig;
 use Illuminate\Support\Facades\DB;
@@ -26,15 +25,82 @@ class Table extends Component
 
     public $sortDirection = 'desc';
 
-    public $statusFilter = '';
-
     public $agreementType = 'lease';
+
+    // Filters (TomSelect-driven)
+    public $filterGroup = '';
+
+    public $filterBuilding = '';
+
+    public $filterProperty = '';
+
+    public $filterCustomer = '';
+
+    public $filterStatus = '';
+
+    // Date filters
+    public $fromDate = '';
+
+    public $toDate = '';
+
+    // Utility filters
+    public $electricityFilter = '';
+
+    public $acFilter = '';
+
+    public $wifiFilter = '';
+
+    // Column visibility
+    public $columns = [
+        'id' => true,
+        'customer' => true,
+        'property' => true,
+        'building' => true,
+        'start_date' => true,
+        'end_date' => true,
+        'rent' => true,
+        'status' => true,
+    ];
 
     protected $paginationTheme = 'bootstrap';
 
     public function mount($agreementType = 'lease')
     {
         $this->agreementType = $agreementType;
+    }
+
+    public function toggleColumn($column)
+    {
+        if (isset($this->columns[$column])) {
+            $this->columns[$column] = ! $this->columns[$column];
+        }
+    }
+
+    public function resetFilters()
+    {
+        $this->reset([
+            'filterGroup', 'filterBuilding', 'filterProperty', 'filterCustomer',
+            'filterStatus', 'fromDate', 'toDate', 'electricityFilter', 'acFilter', 'wifiFilter',
+        ]);
+        $this->dispatch('reset-rent-out-filters');
+        $this->resetPage();
+    }
+
+    public function getActiveFilterCountProperty(): int
+    {
+        $count = 0;
+        foreach (['filterGroup', 'filterBuilding', 'filterProperty', 'filterCustomer', 'filterStatus', 'fromDate', 'toDate'] as $filter) {
+            if ($this->{$filter} !== '' && $this->{$filter} !== null) {
+                $count++;
+            }
+        }
+        foreach (['electricityFilter', 'acFilter', 'wifiFilter'] as $filter) {
+            if ($this->{$filter} !== '' && $this->{$filter} !== null) {
+                $count++;
+            }
+        }
+
+        return $count;
     }
 
     public function getConfigProperty(): RentOutConfig
@@ -62,7 +128,7 @@ class Table extends Component
                     throw new \Exception($response['message'], 1);
                 }
             }
-            $this->dispatch('success', ['message' => 'Successfully Deleted ' . count($this->selected) . ' items']);
+            $this->dispatch('success', ['message' => 'Successfully Deleted '.count($this->selected).' items']);
             DB::commit();
             if (count($this->selected) > 10) {
                 $this->resetPage();
@@ -119,8 +185,35 @@ class Table extends Component
                         });
                 });
             })
-            ->when($this->statusFilter ?? '', function ($query, $value) {
+            ->when($this->filterStatus ?? '', function ($query, $value) {
                 return $query->where('status', $value);
+            })
+            ->when($this->filterGroup ?? '', function ($query, $value) {
+                return $query->where('property_group_id', $value);
+            })
+            ->when($this->filterBuilding ?? '', function ($query, $value) {
+                return $query->where('property_building_id', $value);
+            })
+            ->when($this->filterProperty ?? '', function ($query, $value) {
+                return $query->where('property_id', $value);
+            })
+            ->when($this->filterCustomer ?? '', function ($query, $value) {
+                return $query->where('account_id', $value);
+            })
+            ->when($this->fromDate ?? '', function ($query, $value) {
+                return $query->whereDate('start_date', '>=', $value);
+            })
+            ->when($this->toDate ?? '', function ($query, $value) {
+                return $query->whereDate('end_date', '<=', $value);
+            })
+            ->when($this->electricityFilter !== '' && $this->electricityFilter !== null ? true : false, function ($query) {
+                return $query->where('include_electricity_water', $this->electricityFilter);
+            })
+            ->when($this->acFilter !== '' && $this->acFilter !== null ? true : false, function ($query) {
+                return $query->where('include_ac', $this->acFilter);
+            })
+            ->when($this->wifiFilter !== '' && $this->wifiFilter !== null ? true : false, function ($query) {
+                return $query->where('include_wifi', $this->wifiFilter);
             })
             ->latest()
             ->paginate($this->limit);

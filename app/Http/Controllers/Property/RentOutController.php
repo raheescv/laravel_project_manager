@@ -27,7 +27,7 @@ class RentOutController extends Controller
         return view('property.rent-out.index', compact('config'));
     }
 
-    public function create(Request $request, $id = null)
+    public function page(Request $request, $id = null)
     {
         $config = $this->getConfig($request);
 
@@ -48,7 +48,7 @@ class RentOutController extends Controller
         return view('property.rent-out.booking', compact('config'));
     }
 
-    public function bookingCreate(Request $request, $id = null)
+    public function bookingPage(Request $request, $id = null)
     {
         $config = $this->getConfig($request);
 

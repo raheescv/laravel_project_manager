@@ -18,11 +18,11 @@ class UtilityTermModal extends Component
 
     public array $form = [
         'rent_out_id' => null,
-        'utility_id'  => null,
-        'amount'      => 0,
-        'balance'     => 0,
-        'date'        => '',
-        'remarks'     => '',
+        'utility_id' => null,
+        'amount' => 0,
+        'balance' => 0,
+        'date' => '',
+        'remarks' => '',
     ];
 
     public string $fromDate = '';
@@ -38,11 +38,11 @@ class UtilityTermModal extends Component
     {
         $this->form = [
             'rent_out_id' => $form['rent_out_id'] ?? null,
-            'utility_id'  => $form['utility_id'] ?? null,
-            'amount'      => $form['amount'] ?? 0,
-            'balance'     => $form['balance'] ?? 0,
-            'date'        => $form['date'] ?? now()->format('Y-m-d'),
-            'remarks'     => $form['remarks'] ?? '',
+            'utility_id' => $form['utility_id'] ?? null,
+            'amount' => $form['amount'] ?? 0,
+            'balance' => $form['balance'] ?? 0,
+            'date' => $form['date'] ?? now()->format('Y-m-d'),
+            'remarks' => $form['remarks'] ?? '',
         ];
         $this->editingId = $editingId;
         $this->utilities = $utilities;
@@ -73,9 +73,9 @@ class UtilityTermModal extends Component
         for ($i = 0; $i < $this->noOfTerms; $i++) {
             $this->generatedTerms[] = [
                 'rent_out_id' => $this->form['rent_out_id'],
-                'utility_id'  => $this->form['utility_id'],
-                'date'        => $startPeriod->copy()->addMonths($i)->format('Y-m-d'),
-                'amount'      => $this->form['amount'],
+                'utility_id' => $this->form['utility_id'],
+                'date' => $startPeriod->copy()->addMonths($i)->format('Y-m-d'),
+                'amount' => $this->form['amount'],
             ];
         }
     }
@@ -106,33 +106,33 @@ class UtilityTermModal extends Component
     {
         $this->validate([
             'form.utility_id' => 'required',
-            'form.amount'     => 'required|numeric|min:0.01',
+            'form.amount' => 'required|numeric|min:0.01',
         ], [
             'form.utility_id.required' => 'Please select a utility.',
-            'form.amount.required'     => 'Amount is required.',
-            'form.amount.min'          => 'Amount must be greater than zero.',
+            'form.amount.required' => 'Amount is required.',
+            'form.amount.min' => 'Amount must be greater than zero.',
         ]);
 
         $rentOut = RentOut::find($this->form['rent_out_id']);
 
         $data = [
             'rent_out_id' => $this->form['rent_out_id'],
-            'utility_id'  => $this->form['utility_id'],
-            'amount'      => $this->form['amount'],
-            'balance'     => $this->form['balance'] ?? 0,
-            'date'        => $this->form['date'],
-            'remarks'     => $this->form['remarks'] ?? '',
-            'tenant_id'   => $rentOut->tenant_id,
-            'branch_id'   => $rentOut->branch_id,
-            'created_by'  => $rentOut->created_by,
+            'utility_id' => $this->form['utility_id'],
+            'amount' => $this->form['amount'],
+            'balance' => $this->form['balance'] ?? 0,
+            'date' => $this->form['date'],
+            'remarks' => $this->form['remarks'] ?? '',
+            'tenant_id' => $rentOut->tenant_id,
+            'branch_id' => $rentOut->branch_id,
+            'created_by' => $rentOut->created_by,
         ];
 
         try {
             DB::beginTransaction();
             if ($this->editingId) {
-                $response = (new UpdateAction)->execute($data, $this->editingId);
+                $response = (new UpdateAction())->execute($data, $this->editingId);
             } else {
-                $response = (new CreateAction)->execute($data);
+                $response = (new CreateAction())->execute($data);
             }
             if (! $response['success']) {
                 throw new \Exception($response['message']);
@@ -153,18 +153,18 @@ class UtilityTermModal extends Component
 
         try {
             DB::beginTransaction();
-            $action = new CreateAction;
+            $action = new CreateAction();
             foreach ($this->generatedTerms as $term) {
                 $data = [
                     'rent_out_id' => $term['rent_out_id'],
-                    'utility_id'  => $term['utility_id'],
-                    'amount'      => $term['amount'],
-                    'balance'     => $term['amount'],
-                    'date'        => $term['date'],
-                    'remarks'     => '',
-                    'tenant_id'   => $rentOut->tenant_id,
-                    'branch_id'   => $rentOut->branch_id,
-                    'created_by'  => $rentOut->created_by,
+                    'utility_id' => $term['utility_id'],
+                    'amount' => $term['amount'],
+                    'balance' => $term['amount'],
+                    'date' => $term['date'],
+                    'remarks' => '',
+                    'tenant_id' => $rentOut->tenant_id,
+                    'branch_id' => $rentOut->branch_id,
+                    'created_by' => $rentOut->created_by,
                 ];
                 $response = $action->execute($data);
                 if (! $response['success']) {

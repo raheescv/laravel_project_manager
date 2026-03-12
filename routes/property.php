@@ -4,10 +4,11 @@ use App\Http\Controllers\Property\PropertyBuildingController;
 use App\Http\Controllers\Property\PropertyController;
 use App\Http\Controllers\Property\PropertyGroupController;
 use App\Http\Controllers\Property\PropertyTypeController;
-use App\Http\Controllers\Property\RentOutPaymentController;
 use App\Http\Controllers\Property\RentOutController;
+use App\Http\Controllers\Property\RentOutPaymentController;
 use App\Http\Controllers\Property\RentOutReportController;
 use App\Http\Controllers\Property\TenantDetailController;
+use App\Http\Controllers\Property\UtilityController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware('auth')->group(function (): void {
@@ -36,14 +37,22 @@ Route::middleware('auth')->group(function (): void {
             Route::get('list', 'get')->name('list');
         });
 
+        // Utilities (Settings)
+        Route::name('utility::')->prefix('utility')->controller(UtilityController::class)->group(function (): void {
+            Route::get('', 'index')->name('index')->can('utility.view');
+            Route::get('list', 'get')->name('list');
+        });
+
         // RentOut - Rent Module (agreement_type = rental)
         Route::name('rent::')->prefix('rent')->group(function (): void {
             Route::controller(RentOutController::class)->group(function (): void {
                 Route::get('', 'index')->name('index')->can('rent out.view');
-                Route::get('create/{id?}', 'create')->name('create')->can('rent out.create');
+                Route::get('create/{id?}', 'page')->name('create')->can('rent out.create');
+                Route::get('edit/{id}', 'page')->name('edit')->can('rent out.edit');
                 Route::get('view/{id}', 'view')->name('view')->can('rent out.view');
                 Route::get('booking', 'booking')->name('booking')->can('rent out.view');
-                Route::get('booking/create/{id?}', 'bookingCreate')->name('booking.create')->can('rent out.create');
+                Route::get('booking/create/{id?}', 'bookingPage')->name('booking.create')->can('rent out.create');
+                Route::get('booking/edit/{id}', 'bookingPage')->name('booking.edit')->can('rent out.edit');
                 Route::get('booking/view/{id}', 'bookingView')->name('booking.view')->can('rent out.view');
             });
 
@@ -61,10 +70,12 @@ Route::middleware('auth')->group(function (): void {
         Route::name('sale::')->prefix('sale')->group(function (): void {
             Route::controller(RentOutController::class)->group(function (): void {
                 Route::get('', 'index')->name('index')->can('rent out lease.view');
-                Route::get('create/{id?}', 'create')->name('create')->can('rent out lease.create');
+                Route::get('create/{id?}', 'page')->name('create')->can('rent out lease.create');
+                Route::get('edit/{id}', 'page')->name('edit')->can('rent out lease.create');
                 Route::get('view/{id}', 'view')->name('view')->can('rent out lease.view');
                 Route::get('booking', 'booking')->name('booking')->can('rent out lease.view');
-                Route::get('booking/create/{id?}', 'bookingCreate')->name('booking.create')->can('rent out lease.create');
+                Route::get('booking/create/{id?}', 'bookingPage')->name('booking.create')->can('rent out lease.create');
+                Route::get('booking/edit/{id}', 'bookingPage')->name('booking.edit')->can('rent out lease.create');
                 Route::get('booking/view/{id}', 'bookingView')->name('booking.view')->can('rent out lease.view');
             });
 

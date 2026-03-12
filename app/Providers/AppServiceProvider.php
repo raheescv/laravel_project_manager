@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Ai\Providers\FixedOpenAiProvider;
 use App\Models\Branch;
 use App\Models\Configuration;
 use App\Notifications\DatabaseChannel;
@@ -9,6 +10,7 @@ use App\Services\TenantService;
 use Dedoc\Scramble\Scramble;
 use Dedoc\Scramble\Support\Generator\OpenApi;
 use Dedoc\Scramble\Support\Generator\SecurityScheme;
+use Illuminate\Contracts\Events\Dispatcher;
 use Illuminate\Notifications\Channels\DatabaseChannel as BaseDatabaseChannel;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
@@ -18,9 +20,7 @@ use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
 use Inertia\Inertia;
 use Laravel\Ai\Ai;
-use App\Ai\Providers\FixedOpenAiProvider;
 use Laravel\Ai\Gateway\Prism\PrismGateway;
-use Illuminate\Contracts\Events\Dispatcher;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -100,7 +100,7 @@ class AppServiceProvider extends ServiceProvider
     }
 
     /**
-     * Register the fixed OpenAI provider that removes the 'moderation' parameter 
+     * Register the fixed OpenAI provider that removes the 'moderation' parameter
      * which causes 400 errors in the current version of the AI SDK.
      */
     protected function registerFixedAiProvider(): void

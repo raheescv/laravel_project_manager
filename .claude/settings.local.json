@@ -7,7 +7,16 @@
       "Bash(vendor/bin/pint --dirty --format agent)",
       "Bash(php artisan migrate)",
       "Bash(php artisan migrate --force)",
-      "Bash(php artisan:*)"
+      "Bash(php artisan:*)",
+      "Bash(mkdir -p /Users/Shared/sites/personal/main_projects/project_manager/app/Actions/Settings/Utility)",
+      "Bash(mkdir -p /Users/Shared/sites/personal/main_projects/project_manager/app/Livewire/Settings/Utility)",
+      "Bash(mkdir -p /Users/Shared/sites/personal/main_projects/project_manager/app/Http/Controllers/Property)",
+      "Bash(mkdir -p /Users/Shared/sites/personal/main_projects/project_manager/resources/views/livewire/settings/utility)",
+      "Bash(mkdir -p /Users/Shared/sites/personal/main_projects/project_manager/resources/views/components/settings/utility)",
+      "Bash(mkdir -p /Users/Shared/sites/personal/main_projects/project_manager/resources/views/property/utility)",
+      "Bash(npx puppeteer:*)",
+      "Bash(PUPPETEER_CACHE_DIR=.cache/puppeteer npx puppeteer browsers install chrome-headless-shell)",
+      "Bash(chmod -R 755 .cache/puppeteer)"
     ]
   }
 }

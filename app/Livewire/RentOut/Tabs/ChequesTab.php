@@ -83,7 +83,7 @@ class ChequesTab extends Component
     {
         try {
             DB::beginTransaction();
-            $response = (new UpdateStatusAction)->execute($id, $status);
+            $response = (new UpdateStatusAction())->execute($id, $status);
             if (! $response['success']) {
                 throw new \Exception($response['message']);
             }
@@ -100,7 +100,7 @@ class ChequesTab extends Component
     {
         try {
             DB::beginTransaction();
-            $response = (new DeleteAction)->execute($id);
+            $response = (new DeleteAction())->execute($id);
             if (! $response['success']) {
                 throw new \Exception($response['message']);
             }

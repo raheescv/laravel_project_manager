@@ -87,7 +87,7 @@
                                     </a>
                                 @endcan
                                 @can($config->editPermission)
-                                    <a href="{{ route($config->bookingCreateRoute, $item->id) }}" class="btn btn-icon btn-sm btn-hover btn-light" title="Edit Booking">
+                                    <a href="{{ route($config->bookingEditRoute, $item->id) }}" class="btn btn-icon btn-sm btn-hover btn-light" title="Edit Booking">
                                         <i class="demo-psi-pencil fs-5 text-muted"></i>
                                     </a>
                                 @endcan

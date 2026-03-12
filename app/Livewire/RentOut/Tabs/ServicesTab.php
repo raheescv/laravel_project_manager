@@ -58,7 +58,7 @@ class ServicesTab extends Component
     {
         try {
             DB::beginTransaction();
-            $response = (new DeleteAction)->execute($id);
+            $response = (new DeleteAction())->execute($id);
             if (! $response['success']) {
                 throw new \Exception($response['message']);
             }

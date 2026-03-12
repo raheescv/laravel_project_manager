@@ -4,7 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration
+return new class() extends Migration
 {
     public function up(): void
     {
@@ -14,9 +14,9 @@ return new class extends Migration
             $table->unsignedBigInteger('branch_id');
             $table->foreignId('property_id')->constrained('properties');
             $table->unsignedBigInteger('property_building_id');
-            $table->unsignedBigInteger('property_type_id')->nullable();
+            $table->unsignedBigInteger('property_type_id');
             $table->unsignedBigInteger('property_group_id');
-            $table->unsignedBigInteger('account_id'); // customer
+            $table->unsignedBigInteger('account_id')->references('id')->on('accounts');
             $table->unsignedBigInteger('salesman_id')->nullable();
 
             // Agreement details

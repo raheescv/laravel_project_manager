@@ -177,6 +177,11 @@ class RentOut extends Model implements AuditableContracts
         return $this->belongsTo(Account::class, 'account_id');
     }
 
+    public function account(): BelongsTo
+    {
+        return $this->belongsTo(Account::class, 'account_id');
+    }
+
     public function salesman(): BelongsTo
     {
         return $this->belongsTo(User::class, 'salesman_id');

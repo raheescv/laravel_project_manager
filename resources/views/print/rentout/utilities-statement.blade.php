@@ -4,73 +4,19 @@
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     <style>
-        body {
-            font-family: 'Arial', sans-serif;
-            margin: 0;
-            padding: 20px;
-            color: #333;
-        }
-
-        .header {
-            border-bottom: 2px solid #e0e0e0;
-            padding-bottom: 15px;
-            margin-bottom: 15px;
-        }
-
-        .header h2 {
-            font-size: 1.4em;
-            color: #2c3e50;
-            margin: 0 0 5px 0;
-        }
-
-        .header .contact {
-            font-size: 11px;
-            color: #555;
-            line-height: 1.6;
-        }
-
-        .title-bar {
-            background: #eee;
-            text-align: center;
-            padding: 10px;
-            font-size: 16px;
-            color: #3c3d4e;
-            margin-bottom: 5px;
-        }
-
-        .info-table {
-            width: 100%;
-            margin: 10px 0;
-            border-collapse: collapse;
-        }
-
-        .info-table td {
-            padding: 4px 8px;
-            font-size: 13px;
-            vertical-align: top;
-        }
-
-        .info-table b {
-            color: #2c3e50;
-        }
-
-        .data-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 10px;
-        }
-
         .data-table th {
-            font-size: 13px;
+            font-size: 14px;
+            page-break-after: always;
             background: #1b7bbc;
-            color: #fff;
-            padding: 6px 10px;
+            text-align: right;
             border: 0;
+            color: #fff;
+            padding: 5px 10px;
         }
 
         .data-table td {
-            font-size: 12px;
-            padding: 5px 10px;
+            font-size: 13px;
+            padding: 4px 10px;
             color: #333;
         }
 
@@ -82,158 +28,263 @@
             background: #d9f0fb;
         }
 
-        .data-table tfoot th {
-            background: #1b7bbc;
-            color: #fff;
-            padding: 6px 10px;
-            font-size: 13px;
+        .header-container {
+            padding: 10px 0;
+            margin-bottom: 10px;
+            border-bottom: 2px solid #e0e0e0;
+            overflow: hidden;
         }
 
-        .text-right {
-            text-align: right;
+        .header-container::after {
+            content: "";
+            display: table;
+            clear: both;
         }
 
-        .text-left {
-            text-align: left;
+        .company-info {
+            float: left;
+            width: 55%;
+            padding-right: 10px;
+            box-sizing: border-box;
         }
 
-        .text-center {
+        .company-info h2 {
+            font-size: 1.6em;
+            font-weight: 600;
+            color: #2c3e50;
+            margin: 0 0 6px 0;
+            letter-spacing: 0.5px;
+        }
+
+        .company-info .contact-details {
+            font-size: 11px;
+            color: #555;
+            line-height: 1.8;
+        }
+
+        .company-info .contact-details a {
+            color: #0087C3;
+            text-decoration: none;
+        }
+
+        .logo-container {
+            float: right;
+            width: 200px;
+            min-height: 80px;
+            background: linear-gradient(135deg, rgba(0, 135, 195, 0.03) 0%, rgba(0, 174, 239, 0.03) 100%);
+            border-radius: 12px;
+            padding: 5px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            position: relative;
+            overflow: hidden;
             text-align: center;
         }
 
-        .text-upper {
-            text-transform: uppercase;
+        .logo-container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            border: 1px solid rgba(0, 135, 195, 0.1);
+            border-radius: 12px;
+            pointer-events: none;
+        }
+
+        .logo-container img {
+            max-width: 180px;
+            max-height: 80px;
+            height: auto;
+            width: auto;
+            position: relative;
+            z-index: 1;
+            display: block;
+            margin: 5px auto;
+        }
+
+        #details {
+            margin-bottom: 8px !important;
+        }
+
+        table {
+            margin-bottom: 3px !important;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
         }
     </style>
 </head>
+@php
+    $total_paid = $payments->sum('credit');
+    $isRental = $rentOut->agreement_type?->value === 'rental';
+@endphp
 
-<body>
-    @php
-        $companyName = \App\Models\Configuration::where('key', 'company_name')->value('value') ?? config('app.name');
-        $companyPhone = \App\Models\Configuration::where('key', 'company_phone')->value('value') ?? '';
-        $companyAddress = \App\Models\Configuration::where('key', 'company_address')->value('value') ?? '';
-        $companyEmail = \App\Models\Configuration::where('key', 'company_email')->value('value') ?? '';
-        $totalPaid = $payments->sum('credit');
-        $totalDebit = $payments->sum('debit');
-        $balance = $totalDebit - $totalPaid;
-        $isRental = $rentOut->agreement_type?->value === 'rental';
-    @endphp
-
-    <div class="header">
-        <h2>{{ $companyName }}</h2>
-        <div class="contact">
-            @if($companyPhone)<strong>Phone:</strong> {{ $companyPhone }}<br>@endif
-            @if($companyAddress){{ $companyAddress }}<br>@endif
-            @if($companyEmail){{ $companyEmail }}@endif
-        </div>
-    </div>
-
-    <div class="title-bar">
-        Utility Statement for <b>{{ $rentOut->reference_no }}</b>
-    </div>
-    <div class="title-bar">
-        <b>{{ $rentOut->customer?->name }}</b>
-    </div>
-
-    <table class="info-table">
-        <tr>
-            <td width="55%" valign="top">
-                <table width="100%">
-                    <tr>
-                        <td width="35%"><b>Agreement Type</b></td>
-                        <td width="65%"><b>: {{ $isRental ? 'Rental' : 'Sales' }}</b></td>
-                    </tr>
-                    <tr>
-                        <td><b>Group</b></td>
-                        <td class="text-upper"><b>: {{ $rentOut->group?->name }}</b></td>
-                    </tr>
-                    <tr>
-                        <td><b>Building</b></td>
-                        <td class="text-upper"><b>: {{ $rentOut->building?->name }}</b></td>
-                    </tr>
-                    <tr>
-                        <td><b>Type</b></td>
-                        <td class="text-upper"><b>: {{ $rentOut->type?->name }}</b></td>
-                    </tr>
-                    <tr>
-                        <td><b>Property/Unit</b></td>
-                        <td class="text-upper"><b>: {{ $rentOut->property?->number }}</b></td>
-                    </tr>
-                    <tr>
-                        <td><b>Payout Frequency</b></td>
-                        <td class="text-upper"><b>: {{ $rentOut->payment_frequency }}</b></td>
-                    </tr>
-                </table>
-            </td>
-            <td width="45%" valign="top">
-                <table width="100%">
-                    <tr>
-                        <td width="60%">Agreement Begins</td>
-                        <td width="40%" class="text-right">{{ $rentOut->start_date?->format('d-m-Y') }}</td>
-                    </tr>
-                    <tr>
-                        <td>Agreement Ends</td>
-                        <td class="text-right">{{ $rentOut->end_date?->format('d-m-Y') }}</td>
-                    </tr>
-                    @if($rentOut->vacate_date)
-                        <tr>
-                            <td>Vacate Date</td>
-                            <td class="text-right">{{ $rentOut->vacate_date->format('d-m-Y') }}</td>
-                        </tr>
-                    @endif
-                    <tr>
-                        <td>{{ $isRental ? 'Rent' : 'Unit Sale Price' }}</td>
-                        <td class="text-right">{{ number_format($rentOut->rent, 2) }}</td>
-                    </tr>
-                    <tr>
-                        <td>Total Amount To Pay</td>
-                        <td class="text-right">{{ number_format($totalDebit, 2) }}</td>
-                    </tr>
-                    <tr>
-                        <td>Total Paid</td>
-                        <td class="text-right">{{ number_format($totalPaid, 2) }}</td>
-                    </tr>
-                    <tr>
-                        <td>Remaining To Be Paid</td>
-                        <td class="text-right">{{ number_format($balance, 2) }}</td>
-                    </tr>
-                </table>
-            </td>
-        </tr>
-    </table>
-
-    <table class="data-table">
-        <thead>
+<body style="page-break-after: initial;">
+    <div class="wrapper">
+        <header class="header-container clearfix">
+            <div class="company-info">
+                <h2 class="name">{{ $companyName }}</h2>
+                <div class="contact-details">
+                    @if($companyPhone)<strong>Phone:</strong> {{ $companyPhone }}<br>@endif
+                    @if($companyAddress){{ $companyAddress }}<br>@endif
+                    @if($companyEmail)<a href="mailto:{{ $companyEmail }}">{{ $companyEmail }}</a>@endif
+                </div>
+            </div>
+            @if($companyLogo)
+                <div class="logo-container">
+                    <img src="{{ $companyLogo }}" alt="Company Logo">
+                </div>
+            @endif
+        </header>
+        <table width="100%" style="page-break-after: initial;">
             <tr>
-                <th width="15%" class="text-left">Date</th>
-                <th width="18%" class="text-left">Utility</th>
-                <th width="12%" class="text-left">Payment Mode</th>
-                <th width="12%" class="text-right">Debit</th>
-                <th width="12%" class="text-right">Credit</th>
-                <th width="31%" class="text-left">Remarks</th>
+                <td style="font-family: 'Arial', sans-serif; text-align: center; background: #eee; font-size: 16px; padding: 10px 0 10px; color: #3c3d4e;">
+                    Utility Statement for <b>{{ $rentOut->reference_no }}</b>
+                </td>
             </tr>
-        </thead>
-        <tbody>
-            @foreach($payments as $payment)
+            <tr>
+                <td style="font-family: 'Arial', sans-serif; text-align: center; background: #eee; font-size: 16px; padding: 10px 0 10px; color: #3c3d4e;">
+                    <b>{{ $rentOut->customer?->name }}</b>
+                </td>
+            </tr>
+            @if(isset($fromDate) && isset($toDate) && $fromDate && $toDate)
                 <tr>
-                    <td class="text-left">{{ $payment['date'] }}</td>
-                    <td class="text-left">{{ $payment['utility'] ?? '' }}</td>
-                    <td class="text-left">{{ $payment['payment_mode'] ?? '' }}</td>
-                    <td class="text-right">{{ $payment['debit'] ? number_format($payment['debit'], 2) : '-' }}</td>
-                    <td class="text-right">{{ $payment['credit'] ? number_format($payment['credit'], 2) : '-' }}</td>
-                    <td class="text-left" style="font-style: italic;">{{ $payment['remark'] ?? '' }}</td>
+                    <td style="font-family: 'Arial', sans-serif; text-align: center; background: #f8f9fa; font-size: 14px; padding: 8px 0 8px; color: #495057; border-top: 1px solid #dee2e6;">
+                        <b>Period: {{ systemDate($fromDate) }} to {{ systemDate($toDate) }}</b>
+                    </td>
                 </tr>
-            @endforeach
-        </tbody>
-        <tfoot>
-            <tr>
-                <th colspan="3" class="text-left">Total</th>
-                <th class="text-right">{{ number_format($totalDebit, 2) }}</th>
-                <th class="text-right">{{ number_format($totalPaid, 2) }}</th>
-                <th></th>
+            @endif
+            <tr style="page-break-after: auto;">
+                <td style="color: #3c3c3d; padding: 0 0 20px;">
+                    <div style="border-radius: 3px; background: #fdfdfd; padding: 0; border-bottom: 1px solid #eee;">
+                        <table width="100%" style="margin: 10px 0;">
+                            <tr>
+                                <td width="55%" valign="top" style="font-family: 'Arial', sans-serif; text-align: left; font-size: 14px;">
+                                    <table width="100%">
+                                        <tr>
+                                            <td width="35%"><b>Agreement Type</b></td>
+                                            <td width="65%">
+                                                <b>:
+                                                    @if(!$isRental)
+                                                        Sales
+                                                    @else
+                                                        Rental
+                                                    @endif
+                                                </b>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td width="35%" valign="top"><b>Group</b></td>
+                                            <td width="65%" style="text-transform: uppercase;"><b>: {{ $rentOut->group?->name }}</b></td>
+                                        </tr>
+                                        <tr>
+                                            <td width="35%" valign="top"><b>Building</b></td>
+                                            <td width="65%" style="text-transform: uppercase;"><b>: {{ $rentOut->building?->name }}</b></td>
+                                        </tr>
+                                        <tr>
+                                            <td width="35%" valign="top"><b>Type</b></td>
+                                            <td width="65%" style="text-transform: uppercase;"><b>: {{ $rentOut->type?->name }}</b></td>
+                                        </tr>
+                                        <tr>
+                                            <td width="35%" valign="top"><b>Property/Unit</b></td>
+                                            <td width="65%" style="text-transform: uppercase;"><b>: {{ $rentOut->property?->number }}</b></td>
+                                        </tr>
+                                        <tr>
+                                            <td width="35%" valign="top"><b>Payout Frequency</b></td>
+                                            <td width="65%" style="text-transform: uppercase;"><b>: {{ $rentOut->payment_frequency }}</b></td>
+                                        </tr>
+                                    </table>
+                                </td>
+                                <td width="45%" valign="top" style="font-family: 'Arial', sans-serif; text-align: center; font-size: 14px;">
+                                    <table width="100%">
+                                        <tr>
+                                            <td width="60%">Agreement Begins</td>
+                                            <td width="40%" style="text-align: right;">{{ systemDate($rentOut->start_date) }}</td>
+                                        </tr>
+                                        <tr>
+                                            <td width="60%">Agreement Ends</td>
+                                            <td width="40%" style="text-align: right;">{{ systemDate($rentOut->end_date) }}</td>
+                                        </tr>
+                                        @if($rentOut->vacate_date)
+                                            <tr>
+                                                <td width="60%">Vacate Date</td>
+                                                <td width="40%" style="text-align: right;">{{ systemDate($rentOut->vacate_date) }}</td>
+                                            </tr>
+                                        @endif
+                                        <tr>
+                                            @if(!$isRental)
+                                                <td width="60%">Unit Sale Price</td>
+                                            @else
+                                                <td width="60%">Rent</td>
+                                            @endif
+                                            <td width="40%" style="text-align: right;">{{ currency($rentOut->rent) }}</td>
+                                        </tr>
+                                        @php
+                                            $totalAmountToPay = $payments->sum('debit');
+                                            $balance = $totalAmountToPay - $total_paid;
+                                        @endphp
+                                        @if($isRental)
+                                            <tr>
+                                                <td width="60%">Total Amount To Pay</td>
+                                                <td width="40%" style="text-align: right;">{{ currency($totalAmountToPay) }}</td>
+                                            </tr>
+                                        @endif
+                                        <tr>
+                                            <td width="60%">Total Paid</td>
+                                            <td width="40%" style="text-align: right;">{{ currency($total_paid) }}</td>
+                                        </tr>
+                                        <tr>
+                                            <td width="60%">Remaining To Be Paid</td>
+                                            <td width="40%" style="text-align: right;">{{ currency($balance) }}</td>
+                                        </tr>
+                                    </table>
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                </td>
             </tr>
-        </tfoot>
-    </table>
+        </table>
+    </div>
+    <div style="border-radius: 3px; padding: 0; overflow: hidden; border: 1px solid #eee; page-break-after: auto;">
+        <table class="data-table" border="0" cellpadding="0" cellspacing="0" width="100%"
+            style="font-family: 'Arial', sans-serif; text-align: right; font-size: 14px; page-break-after: inherit;">
+            <thead>
+                <tr>
+                    <th width="15%" style="text-align: left;">Date</th>
+                    <th width="18%" style="text-align: left;">Utility</th>
+                    <th width="8%" style="text-align: left;">Payment Mode</th>
+                    <th width="12%" style="text-align: right;">Debit</th>
+                    <th width="12%" style="text-align: right;">Credit</th>
+                    <th width="35%" style="text-align: left;">Remarks</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr></tr>
+                @foreach($payments as $single)
+                    <tr>
+                        <td width="15%" style="text-align: left">{{ systemDate($single['date']) }}</td>
+                        <td width="18%" style="text-align: left">{{ $single['utility'] }}</td>
+                        <td width="8%" style="text-align: left">{{ $single['payment_mode'] }}</td>
+                        <td width="12%">{{ $single['debit'] ? currency($single['debit']) : '-' }}</td>
+                        <td width="12%">{{ $single['credit'] ? currency($single['credit']) : '-' }}</td>
+                        <td width="35%" style="text-align: left; font-style: italic;">{{ $single['remark'] ?? '' }}</td>
+                    </tr>
+                @endforeach
+            </tbody>
+            <tfoot>
+                <tr>
+                    <th colspan="3">Total</th>
+                    <th>{{ currency($payments->sum('debit')) }}</th>
+                    <th>{{ currency($payments->sum('credit')) }}</th>
+                    <th></th>
+                </tr>
+            </tfoot>
+        </table>
+    </div>
 </body>
 
 </html>

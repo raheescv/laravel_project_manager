@@ -44,18 +44,18 @@ class UtilitiesTab extends Component
 
     public function openUtilityTermModal()
     {
-        $rentOut   = RentOut::find($this->rentOutId);
+        $rentOut = RentOut::find($this->rentOutId);
         $utilities = Utility::orderBy('name')->get(['id', 'name']);
 
         $this->dispatch('open-utility-term-modal',
             form: [
                 'rent_out_id' => $rentOut->id,
-                'utility_id'  => $utilities->first()?->id ?? '',
-                'amount'      => 0,
-                'balance'     => 0,
-                'date'        => now()->format('Y-m-d'),
-                'from_date'   => $rentOut->start_date?->format('Y-m-d') ?? now()->format('Y-m-d'),
-                'remarks'     => '',
+                'utility_id' => $utilities->first()?->id ?? '',
+                'amount' => 0,
+                'balance' => 0,
+                'date' => now()->format('Y-m-d'),
+                'from_date' => $rentOut->start_date?->format('Y-m-d') ?? now()->format('Y-m-d'),
+                'remarks' => '',
             ],
             editingId: null,
             utilities: $utilities->toArray(),
@@ -74,11 +74,11 @@ class UtilitiesTab extends Component
         $this->dispatch('open-utility-term-modal',
             form: [
                 'rent_out_id' => $term->rent_out_id,
-                'utility_id'  => $term->utility_id,
-                'amount'      => $term->amount,
-                'balance'     => $term->balance,
-                'date'        => $term->date?->format('Y-m-d') ?? '',
-                'remarks'     => $term->remarks ?? '',
+                'utility_id' => $term->utility_id,
+                'amount' => $term->amount,
+                'balance' => $term->balance,
+                'date' => $term->date?->format('Y-m-d') ?? '',
+                'remarks' => $term->remarks ?? '',
             ],
             editingId: $id,
             utilities: $utilities->toArray(),
@@ -89,7 +89,7 @@ class UtilitiesTab extends Component
     {
         try {
             DB::beginTransaction();
-            $response = (new TermDeleteAction)->execute($id);
+            $response = (new TermDeleteAction())->execute($id);
             if (! $response['success']) {
                 throw new \Exception($response['message']);
             }
@@ -112,7 +112,7 @@ class UtilitiesTab extends Component
 
         try {
             DB::beginTransaction();
-            $action = new TermDeleteAction;
+            $action = new TermDeleteAction();
             foreach ($this->selectedTerms as $id) {
                 $response = $action->execute($id);
                 if (! $response['success']) {

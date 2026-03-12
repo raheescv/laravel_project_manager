@@ -63,9 +63,9 @@ class SinglePaymentTermModal extends Component
         try {
             DB::beginTransaction();
             if ($this->editingTermId) {
-                $response = (new UpdateAction)->execute($data, $this->editingTermId);
+                $response = (new UpdateAction())->execute($data, $this->editingTermId);
             } else {
-                $response = (new CreateAction)->execute($data);
+                $response = (new CreateAction())->execute($data);
             }
             if (! $response['success']) {
                 throw new \Exception($response['message']);

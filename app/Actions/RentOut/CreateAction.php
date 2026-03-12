@@ -3,8 +3,6 @@
 namespace App\Actions\RentOut;
 
 use App\Enums\Property\PropertyStatus;
-use App\Enums\RentOut\AgreementType;
-use App\Enums\RentOut\RentOutStatus;
 use App\Models\Property;
 use App\Models\RentOut;
 

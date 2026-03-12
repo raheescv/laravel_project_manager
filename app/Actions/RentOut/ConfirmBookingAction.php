@@ -2,7 +2,7 @@
 
 namespace App\Actions\RentOut;
 
-use App\Enums\Property\PropertyStatus;
+use App\Enums\RentOut\RentOutBookingStatus;
 use App\Enums\RentOut\RentOutStatus;
 use App\Models\RentOut;
 
@@ -16,15 +16,9 @@ class ConfirmBookingAction
                 throw new \Exception("Booked RentOut not found with the specified ID: $id.");
             }
 
-            $model->update(['status' => RentOutStatus::Occupied->value]);
-
-            $property = $model->property;
-            if ($property) {
-                $property->update([
-                    'status' => PropertyStatus::Occupied->value,
-                    'availability_status' => 'sold',
-                ]);
-            }
+            $model->update([
+                'booking_status' => RentOutBookingStatus::Submitted->value,
+            ]);
 
             $return['success'] = true;
             $return['message'] = 'Booking confirmed successfully';

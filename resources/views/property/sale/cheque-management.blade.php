@@ -3,21 +3,18 @@
         <div class="content__wrap">
             <nav aria-label="breadcrumb">
                 <ol class="breadcrumb">
-                    <li class="breadcrumb-item"><a href="{{ route('dashboard') }}">Home</a></li>
-                    <li class="breadcrumb-item active" aria-current="page">Sale Cheque Management</li>
+                    <li class="breadcrumb-item"><a href="{{ route('dashboard') }}"><i class="demo-psi-home"></i></a></li>
+                    <li class="breadcrumb-item">Properties</li>
+                    <li class="breadcrumb-item">Cheque Managements</li>
                 </ol>
             </nav>
             <h1 class="page-title mb-0 mt-2">Sale Cheque Management</h1>
-            <p class="lead">
-                Manage cheques for sale agreements
-            </p>
+            <p class="lead">Manage cheques for sale agreements</p>
         </div>
     </div>
     <div class="content__boxed">
         <div class="content__wrap">
-            <div class="card mb-3">
-                @livewire('rent-out.sale.cheque-table')
-            </div>
+            @livewire('rent-out.cheque-management-table', ['agreementType' => 'lease'])
         </div>
     </div>
 </x-app-layout>

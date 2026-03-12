@@ -62,7 +62,7 @@ class BookingTable extends Component
                     throw new \Exception($response['message'], 1);
                 }
             }
-            $this->dispatch('success', ['message' => 'Successfully Deleted ' . count($this->selected) . ' items']);
+            $this->dispatch('success', ['message' => 'Successfully Deleted '.count($this->selected).' items']);
             DB::commit();
             if (count($this->selected) > 10) {
                 $this->resetPage();

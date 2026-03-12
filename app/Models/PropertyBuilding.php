@@ -62,6 +62,9 @@ class PropertyBuilding extends Model implements AuditableContracts
                 $q->where('name', 'like', "%{$value}%");
             });
         });
+        $self = $self->when($request['property_group_id'] ?? '', function ($query, $value) {
+            return $query->where('property_group_id', $value);
+        });
         $self = $self->limit(10);
         $self = $self->get(['name', 'id'])->toArray();
         $return['items'] = $self;

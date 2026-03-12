@@ -26,7 +26,7 @@ class DownloadProductImageCommand extends Command
     {
         $provider = config('ai.default_for_images', 'openai');
         if (! config("ai.providers.{$provider}.key")) {
-            $this->error(strtoupper($provider)."_API_KEY is missing. Please set it in your environment.");
+            $this->error(strtoupper($provider).'_API_KEY is missing. Please set it in your environment.');
 
             return self::FAILURE;
         }

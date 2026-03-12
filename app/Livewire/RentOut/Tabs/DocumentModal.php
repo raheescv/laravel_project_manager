@@ -58,7 +58,7 @@ class DocumentModal extends Component
                 'remarks' => $this->remarks ?? '',
             ];
 
-            $response = (new CreateAction)->execute($data);
+            $response = (new CreateAction())->execute($data);
             if (! $response['success']) {
                 throw new \Exception($response['message']);
             }

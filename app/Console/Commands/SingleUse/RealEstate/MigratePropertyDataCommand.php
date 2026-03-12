@@ -514,7 +514,6 @@ class MigratePropertyDataCommand extends Command
         $this->info("Migrated {$records->count()} rent out cheques.");
     }
 
-
     private function migrateUtilities(): void
     {
         $this->info('Migrating utilities -> utilities...');
@@ -523,14 +522,14 @@ class MigratePropertyDataCommand extends Command
 
         foreach ($records as $row) {
             $data = [
-                'id'          => $row->id,
-                'tenant_id'   => $this->tenantId,
-                'name'        => $row->name,
+                'id' => $row->id,
+                'tenant_id' => $this->tenantId,
+                'name' => $row->name,
                 'description' => $row->description ?? null,
-                'created_by'  => $row->created_by ?? null,
-                'deleted_at'  => $row->deleted_at ?? null,
-                'created_at'  => $row->created_at ?? now(),
-                'updated_at'  => $row->updated_at ?? now(),
+                'created_by' => $row->created_by ?? null,
+                'deleted_at' => $row->deleted_at ?? null,
+                'created_at' => $row->created_at ?? now(),
+                'updated_at' => $row->updated_at ?? now(),
             ];
 
             if (! $this->dryRun) {

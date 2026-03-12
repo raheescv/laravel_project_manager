@@ -666,6 +666,7 @@
                                 $rentOutList = [
                                     'property/rent',
                                     'property/rent/*',
+                                    'property/rent/booking/view/*',
                                     'property/tenant',
                                     'property/report/customer-property',
                                     'property/report/security',
@@ -673,13 +674,13 @@
                                 ];
                             @endphp
                             <a href="#" class="mininav-toggle nav-link {{ request()->is($rentOutList) ? 'active' : '' }}"><i class="fa fa-home fs-5 me-2"></i>
-                                <span class="nav-label mininav-content ms-1 collapse show" style="">Rentout</span>
+                                <span class="nav-label mininav-content ms-1 collapse show" style="">Rent Out</span>
                             </a>
                             <ul class="mininav-content nav collapse">
                                 <li data-popper-arrow class="arrow"></li>
                                 @can('rent out.view')
                                     <li class="nav-item">
-                                        <a href="{{ route('property::rent::booking') }}" class="nav-link {{ request()->is(['property/rent/booking']) ? 'active' : '' }}">Booking</a>
+                                        <a href="{{ route('property::rent::booking') }}" class="nav-link {{ request()->is(['property/rent/booking','property/rent/booking/view/*','property/rent/booking/create','property/rent/booking/edit/*']) ? 'active' : '' }}">Booking</a>
                                     </li>
                                 @endcan
                                 @can('tenant detail.view')
@@ -749,6 +750,8 @@
                                 $salesList = [
                                     'property/sale',
                                     'property/sale/*',
+                                    'property/sale/booking/edit/*',
+                                    'property/sale/booking/view/*',
                                     'property/report/service-charge',
                                 ];
                             @endphp
@@ -759,12 +762,12 @@
                                 <li data-popper-arrow class="arrow"></li>
                                 @can('rent out lease.view')
                                     <li class="nav-item">
-                                        <a href="{{ route('property::sale::index') }}" class="nav-link {{ request()->is(['property/sale', 'property/sale/view/*']) ? 'active' : '' }}">Sales</a>
+                                        <a href="{{ route('property::sale::index') }}" class="nav-link {{ request()->is(['property/sale', 'property/sale/view/*','property/sale/edit/*','property/sale/create']) ? 'active' : '' }}">Sales</a>
                                     </li>
                                 @endcan
                                 @can('rent out lease.view')
                                     <li class="nav-item">
-                                        <a href="{{ route('property::sale::booking') }}" class="nav-link {{ request()->is(['property/sale/booking']) ? 'active' : '' }}">Booking</a>
+                                        <a href="{{ route('property::sale::booking') }}" class="nav-link {{ request()->is(['property/sale/booking','property/sale/booking/edit/*','property/sale/booking/view/*','property/sale/booking/create']) ? 'active' : '' }}">Booking</a>
                                     </li>
                                 @endcan
                                 @can('rent out lease.payment')

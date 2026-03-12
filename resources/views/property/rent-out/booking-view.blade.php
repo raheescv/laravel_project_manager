@@ -17,7 +17,7 @@
     </div>
     <div class="content__boxed">
         <div class="content__wrap">
-            @livewire('rent-out.view', ['id' => $id, 'agreementType' => $config->typeKey])
+            @livewire('rent-out.view', ['id' => $id, 'agreementType' => $config->typeKey, 'isBooking' => true])
         </div>
     </div>
 

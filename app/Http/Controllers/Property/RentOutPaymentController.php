@@ -8,16 +8,16 @@ class RentOutPaymentController extends Controller
 {
     public function payments($agreementType = 'rental')
     {
-        if ($agreementType === 'lease') {
-            return view('property.sale.payments');
-        }
+        $title = $agreementType === 'lease' ? 'Sale Payments' : 'Rental Payments';
+        $subtitle = $agreementType === 'lease' ? 'Manage sale payments' : 'Manage rental payments';
+        $breadcrumb = $agreementType === 'lease' ? 'sale' : 'rental';
 
-        return view('property.rent.payments');
+        return view('property.rent-out.payments', compact('agreementType', 'title', 'subtitle', 'breadcrumb'));
     }
 
     public function utilities()
     {
-        return view('property.rent.utilities');
+        return view('property.rent-out.utilities');
     }
 
     public function services()
@@ -32,11 +32,11 @@ class RentOutPaymentController extends Controller
 
     public function chequeManagement($agreementType = 'rental')
     {
-        if ($agreementType === 'lease') {
-            return view('property.sale.cheque-management');
-        }
+        $title = $agreementType === 'lease' ? 'Sale Cheque Management' : 'Cheque Management';
+        $subtitle = $agreementType === 'lease' ? 'Manage cheques for sale agreements' : 'Manage cheques for rental agreements';
+        $breadcrumb = $agreementType === 'lease' ? 'sale' : 'rental';
 
-        return view('property.rent.cheque-management');
+        return view('property.rent-out.cheque-management', compact('agreementType', 'title', 'subtitle', 'breadcrumb'));
     }
 
     public function paymentHistory($agreementType = 'rental')

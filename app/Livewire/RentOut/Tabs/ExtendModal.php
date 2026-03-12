@@ -75,7 +75,7 @@ class ExtendModal extends Component
 
         try {
             DB::beginTransaction();
-            $response = (new ExtendAction)->execute($data);
+            $response = (new ExtendAction())->execute($data);
             if (! $response['success']) {
                 throw new \Exception($response['message']);
             }

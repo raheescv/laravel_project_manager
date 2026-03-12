@@ -1,5 +1,7 @@
 <script type="text/javascript">
     $('.select-property_building_id-list').each(function() {
+        var $el = $(this);
+        var groupSelector = $el.data('group-select') || null;
         new TomSelect(this, {
             plugins: ['clear_button', 'remove_button'],
             persist: false,
@@ -8,7 +10,13 @@
             searchField: ['name', 'id'],
             load: function(query, callback) {
                 var url = "{{ route('property::building::list') }}";
-                fetch(url + '?query=' + encodeURIComponent(query))
+                var params = 'query=' + encodeURIComponent(query);
+                if (groupSelector) {
+                    var groupEl = document.querySelector(groupSelector);
+                    var groupId = groupEl && groupEl.tomselect ? groupEl.tomselect.getValue() : (groupEl ? groupEl.value : '');
+                    if (groupId) params += '&property_group_id=' + encodeURIComponent(groupId);
+                }
+                fetch(url + '?' + params)
                     .then(response => {
                         if (!response.ok) throw new Error('Network response was not ok');
                         return response.json();
@@ -33,6 +41,8 @@
         });
     });
     $('.select-property_building_id').each(function() {
+        var $el = $(this);
+        var groupSelector = $el.data('group-select') || null;
         new TomSelect(this, {
             persist: false,
             valueField: 'id',
@@ -40,7 +50,13 @@
             searchField: ['name', 'id'],
             load: function(query, callback) {
                 var url = "{{ route('property::building::list') }}";
-                fetch(url + '?query=' + encodeURIComponent(query)).then(response => response.json()).then(json => {
+                var params = 'query=' + encodeURIComponent(query);
+                if (groupSelector) {
+                    var groupEl = document.querySelector(groupSelector);
+                    var groupId = groupEl && groupEl.tomselect ? groupEl.tomselect.getValue() : (groupEl ? groupEl.value : '');
+                    if (groupId) params += '&property_group_id=' + encodeURIComponent(groupId);
+                }
+                fetch(url + '?' + params).then(response => response.json()).then(json => {
                     callback(json.items);
                 }).catch(() => {
                     callback();

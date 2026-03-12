@@ -92,9 +92,9 @@ class SecurityModal extends Component
         try {
             DB::beginTransaction();
             if ($this->editingId) {
-                $response = (new UpdateAction)->execute($data, $this->editingId);
+                $response = (new UpdateAction())->execute($data, $this->editingId);
             } else {
-                $response = (new CreateAction)->execute($data);
+                $response = (new CreateAction())->execute($data);
             }
             if (! $response['success']) {
                 throw new \Exception($response['message']);

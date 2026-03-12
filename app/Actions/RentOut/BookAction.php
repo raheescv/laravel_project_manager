@@ -13,7 +13,6 @@ class BookAction
         try {
             $data['created_by'] = $userId;
             $data['branch_id'] = $data['branch_id'] ?? session('branch_id');
-            $data['tenant_id'] = $data['tenant_id'] ?? auth()->user()->tenant_id;
             $data['status'] = RentOutStatus::Booked->value;
 
             validationHelper(RentOut::$bookingRules, $data, 'RentOut Booking');
@@ -21,10 +20,10 @@ class BookAction
             $rentOut = RentOut::create($data);
 
             // Update property status to booked
-            $property = $rentOut->property;
-            if ($property) {
-                $property->update(['status' => PropertyStatus::Booked->value]);
-            }
+            // $property = $rentOut->property;
+            // if ($property) {
+            // $property->update(['status' => PropertyStatus::Booked->value]);
+            // }
 
             // Handle management fee journal entry
             if (! empty($data['management_fee']) && $data['management_fee'] > 0) {

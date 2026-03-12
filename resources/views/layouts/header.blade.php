@@ -391,6 +391,11 @@
                                                     <i class="fa fa-tags fs-5 me-2"></i>Property Types
                                                 </a>
                                             @endcan
+                                            @can('utility.view')
+                                                <a href="{{ route('property::utility::index') }}" class="list-group-item list-group-item-action header-mega-child">
+                                                    <i class="fa fa-bolt fs-5 me-2"></i>Utilities
+                                                </a>
+                                            @endcan
                                         </div>
                                     </div>
                                 </div>

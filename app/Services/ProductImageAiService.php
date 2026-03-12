@@ -121,9 +121,11 @@ class ProductImageAiService
                             ->generate($provider, $model);
                     } catch (RateLimitedException $e) {
                         $lastError = $e;
+
                         continue;
                     } catch (\Throwable $e) {
                         $lastError = $e;
+
                         continue;
                     }
                 }
@@ -160,7 +162,7 @@ class ProductImageAiService
             return $models;
         }
 
-        return match($provider) {
+        return match ($provider) {
             'openai' => ['dall-e-3'],
             'gemini' => ['gemini-2.0-flash-exp'], // Updated default model for Gemini if used
             default => [],

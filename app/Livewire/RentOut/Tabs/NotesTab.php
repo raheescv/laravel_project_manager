@@ -11,6 +11,7 @@ use Livewire\Component;
 class NotesTab extends Component
 {
     public $rentOutId;
+
     public $newNote = '';
 
     public function mount($rentOutId)

@@ -7,44 +7,88 @@ use App\Enums\RentOut\AgreementType;
 class RentOutConfig
 {
     public bool $isRental;
+
     public bool $isLease;
+
     public string $typeKey;
 
     // Labels
     public string $singularLabel;
+
     public string $pluralLabel;
+
     public string $amountLabel;
+
     public string $unitPriceLabel;
+
     public string $detailsLabel;
+
     public string $periodLabel;
+
     public string $bookingLabel;
+
     public string $defaultTermLabel;
+
     public string $searchPlaceholder;
+
     public string $bookingSearchPlaceholder;
+
     public string $notFoundMessage;
+
     public string $emptyMessage;
+
     public string $bookingEmptyMessage;
+
     public string $subtitle;
+
     public string $bookingSubtitle;
 
     // Routes
     public string $indexRoute;
+
     public string $createRoute;
+
+    public string $editRoute;
+
     public string $viewRoute;
+
     public string $bookingRoute;
+
     public string $bookingCreateRoute;
+
+    public string $bookingEditRoute;
+
     public string $bookingViewRoute;
 
     // Permissions
     public string $viewPermission;
+
     public string $createPermission;
+
     public string $editPermission;
+
     public string $deletePermission;
+
+    // Booking Permissions
+    public string $bookingEditPermission;
+
+    public string $bookingCancelPermission;
+
+    public string $bookingConfirmPermission;
+
+    public string $bookingFinancialApprovePermission;
+
+    public string $bookingApprovePermission;
+
+    public string $bookingCompletePermission;
 
     // Events
     public string $refreshEvent;
+
     public string $refreshTableEvent;
+
     public string $bookingRefreshEvent;
+
     public string $bookingRefreshTableEvent;
 
     public function __construct(public AgreementType $agreementType)
@@ -99,21 +143,31 @@ class RentOutConfig
     protected function initRoutes(): void
     {
         $prefix = $this->isRental ? 'property::rent::' : 'property::sale::';
-        $this->indexRoute = $prefix . 'index';
-        $this->createRoute = $prefix . 'create';
-        $this->viewRoute = $prefix . 'view';
-        $this->bookingRoute = $prefix . 'booking';
-        $this->bookingCreateRoute = $prefix . 'booking.create';
-        $this->bookingViewRoute = $prefix . 'booking.view';
+        $this->indexRoute = $prefix.'index';
+        $this->createRoute = $prefix.'create';
+        $this->editRoute = $prefix.'edit';
+        $this->viewRoute = $prefix.'view';
+        $this->bookingRoute = $prefix.'booking';
+        $this->bookingCreateRoute = $prefix.'booking.create';
+        $this->bookingEditRoute = $prefix.'booking.edit';
+        $this->bookingViewRoute = $prefix.'booking.view';
     }
 
     protected function initPermissions(): void
     {
         $prefix = $this->isRental ? 'rent out' : 'rent out lease';
-        $this->viewPermission = $prefix . '.view';
-        $this->createPermission = $prefix . '.create';
-        $this->editPermission = $prefix . '.edit';
-        $this->deletePermission = $prefix . '.delete';
+        $this->viewPermission = $prefix.'.view';
+        $this->createPermission = $prefix.'.create';
+        $this->editPermission = $prefix.'.edit';
+        $this->deletePermission = $prefix.'.delete';
+
+        $bookingPrefix = $this->isRental ? 'rent out booking' : 'rent out lease booking';
+        $this->bookingEditPermission = $bookingPrefix.'.edit';
+        $this->bookingCancelPermission = $bookingPrefix.'.cancel';
+        $this->bookingConfirmPermission = $bookingPrefix.'.confirm';
+        $this->bookingFinancialApprovePermission = $bookingPrefix.'.financial approved';
+        $this->bookingApprovePermission = $bookingPrefix.'.approved';
+        $this->bookingCompletePermission = $bookingPrefix.'.completed';
     }
 
     protected function initEvents(): void
@@ -128,6 +182,7 @@ class RentOutConfig
     public static function make(string $type): self
     {
         $agreementType = AgreementType::from($type);
+
         return new self($agreementType);
     }
 }

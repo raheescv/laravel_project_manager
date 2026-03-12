@@ -146,7 +146,7 @@ class MultiplePaymentTermModal extends Component
                     'discount' => $item['discount'] ?? 0,
                     'remarks' => $item['remark'] ?? '',
                 ];
-                $response = (new CreateAction)->execute($data);
+                $response = (new CreateAction())->execute($data);
                 if (! $response['success']) {
                     throw new \Exception($response['message']);
                 }

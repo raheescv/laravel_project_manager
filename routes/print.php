@@ -12,8 +12,10 @@ Route::middleware('auth')->group(function (): void {
             Route::get('customer-receipt', 'customerReceipt')->name('customer-receipt');
         });
         Route::name('rentout::')->prefix('rentout')->group(function (): void {
-            Route::get('statement/{id}', 'rentoutStatement')->name('statement');
-            Route::get('utilities-statement/{id}', 'rentoutUtilitiesStatement')->name('utilities-statement');
+            Route::get('statement/{id}/{fromDate?}/{toDate?}', 'rentoutStatement')->name('statement');
+            Route::get('utilities-statement/{id}/{fromDate?}/{toDate?}', 'rentoutUtilitiesStatement')->name('utilities-statement');
+            Route::get('reservation-form/{id}', 'reservationForm')->name('reservation-form');
+            Route::get('residential-lease/{id}/{type?}', 'residentialLease')->name('residential-lease');
         });
         Route::name('sale_return::')->prefix('sale-return')->group(function (): void {
             Route::get('payment-receipt', 'saleReturnPaymentReceipt')->name('payment-receipt');

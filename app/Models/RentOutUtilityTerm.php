@@ -47,8 +47,8 @@ class RentOutUtilityTerm extends Model implements AuditableContracts
     {
         return [
             'rent_out_id' => 'required|exists:rent_outs,id',
-            'utility_id'  => 'required|exists:utilities,id',
-            'amount'      => 'required|numeric|min:0',
+            'utility_id' => 'required|exists:utilities,id',
+            'amount' => 'required|numeric|min:0',
         ];
     }
 

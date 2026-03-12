@@ -11,12 +11,16 @@ use Livewire\Component;
 class PaySelectedModal extends Component
 {
     public $rentOutId;
+
     public $showModal = false;
+
     public $saving = false;
 
     // Header fields
     public $payDate;
+
     public $payPaymentMode = 'cash';
+
     public $payRemark = '';
 
     // Row data

@@ -1,12 +1,17 @@
 <div>
     @if ($rentOut)
-        @include('livewire.rent-out.partials.rent-out-view', [
-            'indexRoute' => $config->indexRoute,
-            'indexLabel' => $config->pluralLabel,
-            'editPermission' => $config->editPermission,
-            'editRoute' => $config->createRoute,
-            'bookingRoute' => $config->bookingCreateRoute,
-        ])
+        @php
+            $data = [
+                'indexRoute' => $config->indexRoute,
+                'indexLabel' => $config->pluralLabel,
+                'editPermission' => $config->editPermission,
+                'editRoute' => $config->editRoute,
+                'bookingRoute' => $config->bookingEditRoute,
+                'isBooking' => $isBooking,
+                'config' => $config,
+            ];
+        @endphp
+        @include('livewire.rent-out.partials.rent-out-view', $data)
     @else
         <div class="card border-0 shadow-sm">
             <div class="card-body text-center py-5">

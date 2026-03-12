@@ -6,25 +6,29 @@ use App\Actions\RentOut\BookAction;
 use App\Actions\RentOut\ConfirmBookingAction;
 use App\Actions\RentOut\CreateAction;
 use App\Actions\RentOut\UpdateAction;
-use App\Enums\RentOut\AgreementType;
 use App\Enums\RentOut\RentOutStatus;
 use App\Models\Property;
 use App\Models\RentOut;
 use App\Support\RentOutConfig;
 use Carbon\Carbon;
 use Carbon\CarbonPeriod;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Livewire\Component;
 
 class Page extends Component
 {
-    public $type = 'Rentout';
+    public $type = 'RentOut';
 
     public $table_id;
 
     public $agreementType = 'lease';
 
-    public $rentouts;
+    public $preFilledDropDowns;
+
+    public $rent_outs;
+
+    public $rentOut;
 
     public $months = 0;
 
@@ -32,7 +36,7 @@ class Page extends Component
 
     public $vacant_only = true;
 
-    public function mount($type = 'Rentout', $table_id = null, $agreementType = 'lease')
+    public function mount($type = 'RentOut', $table_id = null, $agreementType = 'lease')
     {
         $this->type = $type;
         $this->table_id = $table_id;
@@ -48,33 +52,55 @@ class Page extends Component
     public function loadData()
     {
         if ($this->table_id) {
-            $item = RentOut::with(['property.building.group', 'property.type', 'customer', 'salesman'])->find($this->table_id);
-            if (! $item) {
+            $this->rentOut = RentOut::with(['property.building.group', 'property.type', 'customer', 'salesman'])->find($this->table_id);
+            if (! $this->rentOut) {
                 session()->flash('error', 'Record not found');
 
                 return redirect()->route($this->config->indexRoute);
             }
-            $this->rentouts = $item->toArray();
-            $this->rentouts['agreement_type'] = $item->agreement_type?->value ?? $this->agreementType;
-            $this->rentouts['status'] = $item->status?->value ?? '';
-            $this->rentouts['collection_payment_mode'] = $item->collection_payment_mode?->value ?? '';
+            $this->rent_outs = $this->rentOut->toArray();
+            $this->rent_outs['agreement_type'] = $this->rentOut->agreement_type?->value ?? $this->agreementType;
+            $this->rent_outs['status'] = $this->rentOut->status?->value ?? '';
+            $this->rent_outs['collection_payment_mode'] = $this->rentOut->collection_payment_mode?->value ?? '';
+            $property_name = $this->rentOut->property ? $this->rentOut->property->number.($this->rentOut->property->building ? ' - '.$this->rentOut->property->building->name : '') : '';
+            $this->preFilledDropDowns = [
+                'group' => [
+                    $this->rentOut->property_group_id => $this->rentOut->property?->group?->name,
+                ],
+                'building' => [
+                    $this->rentOut->property_building_id => $this->rentOut->property?->building?->name,
+                ],
+                'type' => [
+                    $this->rentOut->property_type_id => $this->rentOut->property?->type?->name,
+                ],
+                'property' => [
+                    $this->rentOut->property_id => $property_name,
+                ],
+                'account' => [
+                    $this->rentOut->account_id => $this->rentOut->customer?->name,
+                ],
+            ];
+
+            if (! empty($this->rentOut->salesman_id)) {
+                $this->preFilledDropDowns['salesman'] = [$this->rentOut->salesman_id => $this->rentOut->salesman?->name];
+            }
 
             $this->dispatch('RentOutSelectValues', [
-                'property_group_id' => $item->property_group_id,
-                'group_name' => $item->property?->building?->group?->name,
-                'property_building_id' => $item->property_building_id,
-                'building_name' => $item->property?->building?->name,
-                'property_type_id' => $item->property_type_id,
-                'type_name' => $item->property?->type?->name,
-                'property_id' => $item->property_id,
-                'property_name' => $item->property ? $item->property->number . ($item->property->building ? ' - ' . $item->property->building->name : '') : '',
-                'account_id' => $item->account_id,
-                'customer_name' => $item->customer?->name,
-                'salesman_id' => $item->salesman_id,
-                'salesman_name' => $item->salesman?->name,
+                'property_group_id' => $this->rentOut->property_group_id,
+                'group_name' => $this->rentOut->property?->building?->group?->name,
+                'property_building_id' => $this->rentOut->property_building_id,
+                'building_name' => $this->rentOut->property?->building?->name,
+                'property_type_id' => $this->rentOut->property_type_id,
+                'type_name' => $this->rentOut->property?->type?->name,
+                'property_id' => $this->rentOut->property_id,
+                'property_name' => $property_name,
+                'account_id' => $this->rentOut->account_id,
+                'customer_name' => $this->rentOut->customer?->name,
+                'salesman_id' => $this->rentOut->salesman_id,
+                'salesman_name' => $this->rentOut->salesman?->name,
             ]);
         } else {
-            $this->rentouts = [
+            $this->rent_outs = [
                 'agreement_type' => $this->agreementType,
                 'account_id' => '',
                 'property_group_id' => '',
@@ -93,7 +119,7 @@ class Page extends Component
                 'free_month' => 0,
                 'total' => 0,
                 'collection_starting_day' => 1,
-                'collection_payment_mode' => '',
+                'collection_payment_mode' => 'cash',
                 'collection_bank_name' => '',
                 'collection_cheque_no' => '',
                 'management_fee' => 0,
@@ -119,13 +145,13 @@ class Page extends Component
 
     public function updated($key, $value)
     {
-        if (in_array($key, ['rentouts.start_date', 'rentouts.end_date'])) {
+        if (in_array($key, ['rent_outs.start_date', 'rent_outs.end_date'])) {
             $this->monthCalculator();
         }
-        if ($key === 'rentouts.property_id' && $value) {
+        if ($key === 'rent_outs.property_id' && $value) {
             $this->propertyCheck();
         }
-        if (in_array($key, ['rentouts.rent', 'rentouts.discount', 'rentouts.no_of_terms'])) {
+        if (in_array($key, ['rent_outs.rent', 'rent_outs.discount', 'rent_outs.no_of_terms'])) {
             $this->rentCalculator();
         }
     }
@@ -135,8 +161,8 @@ class Page extends Component
         $this->days = 0;
         $this->months = 0;
         try {
-            $startDate = Carbon::parse($this->rentouts['start_date']);
-            $endDate = Carbon::parse($this->rentouts['end_date']);
+            $startDate = Carbon::parse($this->rent_outs['start_date']);
+            $endDate = Carbon::parse($this->rent_outs['end_date']);
             $this->months = count(CarbonPeriod::create($startDate, '1 month', $endDate));
             $this->days = $startDate->diffInDays($endDate);
         } catch (\Exception $e) {
@@ -147,14 +173,14 @@ class Page extends Component
 
     public function propertyCheck()
     {
-        $property = Property::with(['building.group', 'type'])->find($this->rentouts['property_id']);
+        $property = Property::with(['building.group', 'type'])->find($this->rent_outs['property_id']);
         if ($property) {
-            $this->rentouts['rent'] = $property->rent ?? 0;
-            $this->rentouts['property_building_id'] = $property->property_building_id;
-            $this->rentouts['property_group_id'] = $property->property_group_id ?? $property->building?->property_group_id;
-            $this->rentouts['property_type_id'] = $property->property_type_id;
+            $this->rent_outs['rent'] = $property->rent ?? 0;
+            $this->rent_outs['property_building_id'] = $property->property_building_id;
+            $this->rent_outs['property_group_id'] = $property->property_group_id ?? $property->building?->property_group_id;
+            $this->rent_outs['property_type_id'] = $property->property_type_id;
             $this->dispatch('PropertyAutoFill', [
-                'property_group_id' => $this->rentouts['property_group_id'],
+                'property_group_id' => $this->rent_outs['property_group_id'],
                 'group_name' => $property->building?->group?->name,
                 'property_building_id' => $property->property_building_id,
                 'building_name' => $property->building?->name,
@@ -167,18 +193,17 @@ class Page extends Component
 
     public function rentCalculator()
     {
-        $noOfTerms = is_numeric($this->rentouts['no_of_terms']) ? $this->rentouts['no_of_terms'] : 0;
-        $rent = is_numeric($this->rentouts['rent']) ? $this->rentouts['rent'] : 0;
-        $discount = is_numeric($this->rentouts['discount']) ? $this->rentouts['discount'] : 0;
-        $this->rentouts['total'] = ($noOfTerms * $rent) - $discount;
+        $noOfTerms = is_numeric($this->rent_outs['no_of_terms']) ? $this->rent_outs['no_of_terms'] : 0;
+        $rent = is_numeric($this->rent_outs['rent']) ? $this->rent_outs['rent'] : 0;
+        $discount = is_numeric($this->rent_outs['discount']) ? $this->rent_outs['discount'] : 0;
+        $this->rent_outs['total'] = $noOfTerms * $rent - $discount;
     }
 
     public function cancel()
     {
         try {
             DB::beginTransaction();
-            $rentOut = RentOut::find($this->table_id);
-            $rentOut->update(['status' => RentOutStatus::Cancelled->value]);
+            $this->rentOut->update(['status' => RentOutStatus::Cancelled->value]);
             DB::commit();
             $this->dispatch('success', ['message' => 'Successfully cancelled the booking']);
             $this->loadData();
@@ -192,14 +217,16 @@ class Page extends Component
     {
         try {
             DB::beginTransaction();
-            $response = (new ConfirmBookingAction())->execute($this->table_id, auth()->id());
+            $response = (new ConfirmBookingAction())->execute($this->table_id, Auth::id());
             if (! $response['success']) {
                 throw new \Exception($response['message']);
             }
             DB::commit();
             $this->dispatch('success', ['message' => $response['message']]);
 
-            return redirect()->route($this->config->viewRoute, $this->table_id);
+            $redirectRoute = $this->type === 'Booking' ? $this->config->bookingViewRoute : $this->config->viewRoute;
+
+            return redirect()->route($redirectRoute, $this->table_id);
         } catch (\Exception $e) {
             DB::rollback();
             $this->dispatch('error', ['message' => $e->getMessage()]);
@@ -212,15 +239,15 @@ class Page extends Component
             DB::beginTransaction();
             if ($this->type === 'Booking') {
                 if (! $this->table_id) {
-                    $response = (new BookAction())->execute($this->rentouts, auth()->id());
+                    $response = (new BookAction())->execute($this->rent_outs, Auth::id());
                 } else {
-                    $response = (new UpdateAction())->execute($this->rentouts, $this->table_id, auth()->id());
+                    $response = (new UpdateAction())->execute($this->rent_outs, $this->table_id, Auth::id());
                 }
             } else {
                 if (! $this->table_id) {
-                    $response = (new CreateAction())->execute($this->rentouts, auth()->id());
+                    $response = (new CreateAction())->execute($this->rent_outs, Auth::id());
                 } else {
-                    $response = (new UpdateAction())->execute($this->rentouts, $this->table_id, auth()->id());
+                    $response = (new UpdateAction())->execute($this->rent_outs, $this->table_id, Auth::id());
                 }
             }
             if (! $response['success']) {
@@ -231,9 +258,7 @@ class Page extends Component
             $rentOut = $response['data'];
             $this->table_id = $rentOut->id;
 
-            $redirectRoute = $this->type === 'Booking'
-                ? $this->config->bookingCreateRoute
-                : $this->config->createRoute;
+            $redirectRoute = $this->type === 'Booking' ? $this->config->bookingEditRoute : $this->config->editRoute;
 
             return redirect()->route($redirectRoute, $this->table_id);
         } catch (\Exception $e) {

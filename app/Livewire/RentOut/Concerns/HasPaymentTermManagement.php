@@ -26,6 +26,11 @@ trait HasPaymentTermManagement
             'services',
             'utilityTerms.utility',
             'journals',
+            'createdBy',
+            'submittedBy',
+            'financialApprovedBy',
+            'approvedBy',
+            'completedBy',
         ])->find($id ?? $this->rentOut->id);
     }
 

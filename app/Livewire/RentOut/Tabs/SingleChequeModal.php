@@ -86,7 +86,7 @@ class SingleChequeModal extends Component
                     'branch_id' => $rentOut->branch_id,
                     'created_by' => $rentOut->created_by,
                 ];
-                $response = (new CreateAction)->execute($data);
+                $response = (new CreateAction())->execute($data);
                 if (! $response['success']) {
                     throw new \Exception($response['message']);
                 }

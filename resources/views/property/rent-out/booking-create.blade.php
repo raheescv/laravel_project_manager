@@ -4,8 +4,9 @@
             <nav aria-label="breadcrumb">
                 <ol class="breadcrumb">
                     <li class="breadcrumb-item"><a href="{{ route('dashboard') }}">Home</a></li>
-                    <li class="breadcrumb-item"><a
-                            href="{{ route($config->bookingRoute) }}">{{ $config->bookingLabel }}</a></li>
+                    <li class="breadcrumb-item">
+                        <a href="{{ route($config->bookingRoute) }}">{{ $config->bookingLabel }}</a>
+                    </li>
                     <li class="breadcrumb-item active" aria-current="page">{{ $id ? 'Edit' : 'Create' }}
                         {{ $config->bookingLabel }}</li>
                 </ol>
@@ -21,4 +22,5 @@
             @livewire('rent-out.page', ['type' => 'Booking', 'table_id' => $id, 'agreementType' => $config->typeKey])
         </div>
     </div>
+    <x-account.customer-modal />
 </x-app-layout>

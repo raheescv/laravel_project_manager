@@ -57,7 +57,7 @@ class ServiceModal extends Component
                     'amount' => $this->form['amount'],
                     'description' => $this->form['description'] ?? '',
                 ];
-                $response = (new UpdateAction)->execute($data, $this->editingId);
+                $response = (new UpdateAction())->execute($data, $this->editingId);
             } else {
                 $rentOut = RentOut::findOrFail($this->form['rent_out_id']);
                 $data = [
@@ -69,7 +69,7 @@ class ServiceModal extends Component
                     'branch_id' => $rentOut->branch_id,
                     'created_by' => $rentOut->created_by,
                 ];
-                $response = (new CreateAction)->execute($data);
+                $response = (new CreateAction())->execute($data);
             }
 
             if (! $response['success']) {

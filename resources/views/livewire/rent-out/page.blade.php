@@ -20,64 +20,28 @@
                 </div>
             </div>
             <div class="card-body py-4">
-                @php
-                    $groupOptions = [];
-                    if (!empty($rentouts['property_group_id'])) {
-                        $group = \App\Models\PropertyGroup::find($rentouts['property_group_id']);
-                        if ($group) {
-                            $groupOptions[$group->id] = $group->name;
-                        }
-                    }
-                    $buildingOptions = [];
-                    if (!empty($rentouts['property_building_id'])) {
-                        $building = \App\Models\PropertyBuilding::find($rentouts['property_building_id']);
-                        if ($building) {
-                            $buildingOptions[$building->id] = $building->name;
-                        }
-                    }
-                    $typeOptions = [];
-                    if (!empty($rentouts['property_type_id'])) {
-                        $propType = \App\Models\PropertyType::find($rentouts['property_type_id']);
-                        if ($propType) {
-                            $typeOptions[$propType->id] = $propType->name;
-                        }
-                    }
-                    $propertyOptions = [];
-                    if (!empty($rentouts['property_id'])) {
-                        $prop = \App\Models\Property::with('building')->find($rentouts['property_id']);
-                        if ($prop) {
-                            $propertyOptions[$prop->id] =
-                                $prop->number . ($prop->building ? ' - ' . $prop->building->name : '');
-                        }
-                    }
-                    $customerOptions = [];
-                    if (!empty($rentouts['account_id'])) {
-                        $customer = \App\Models\Account::find($rentouts['account_id']);
-                        if ($customer) {
-                            $customerOptions[$customer->id] = $customer->name;
-                        }
-                    }
-                @endphp
                 <div class="row g-3">
                     <div class="col-md-3" wire:ignore>
                         <label class="form-label fw-semibold small"><i class="fa fa-map-marker text-primary me-1"></i>
                             Group/Project</label>
-                        {{ html()->select('property_group_id', $groupOptions)->value($rentouts['property_group_id'] ?? '')->class('form-select select-property_group_id')->id('property_group_id')->placeholder('Select Group') }}
+                        {{ html()->select('property_group_id', $preFilledDropDowns['group'] ?? [])->value($rent_outs['property_group_id'] ?? '')->class('select-property_group_id')->id('property_group_id')->placeholder('Select Group') }}
                     </div>
                     <div class="col-md-3" wire:ignore>
                         <label class="form-label fw-semibold small"><i class="fa fa-building text-success me-1"></i>
                             Building</label>
-                        {{ html()->select('property_building_id', $buildingOptions)->value($rentouts['property_building_id'] ?? '')->class('form-select select-property_building_id')->id('property_building_id')->placeholder('Select Building') }}
+                        {{ html()->select('property_building_id', $preFilledDropDowns['building'] ?? [])->value($rent_outs['property_building_id'] ?? '')->class('select-property_building_id')->id('property_building_id')->placeholder('Select Building')->attribute('data-group-select', '#property_group_id') }}
                     </div>
                     <div class="col-md-2" wire:ignore>
                         <label class="form-label fw-semibold small"><i class="fa fa-home text-info me-1"></i>
                             Type</label>
-                        {{ html()->select('property_type_id', $typeOptions)->value($rentouts['property_type_id'] ?? '')->class('form-select select-property_type_id')->id('property_type_id')->placeholder('Select Type') }}
+                        {{ html()->select('property_type_id', $preFilledDropDowns['type'] ?? [])->value($rent_outs['property_type_id'] ?? '')->class('select-property_type_id')->id('property_type_id')->placeholder('Select Type') }}
                     </div>
                     <div class="col-md-4">
                         <div class="d-flex justify-content-between align-items-center mb-1">
-                            <label class="form-label fw-semibold small mb-0"><i class="fa fa-key text-warning me-1"></i>
-                                Property No/Unit *</label>
+                            <label class="form-label fw-semibold small mb-0">
+                                <i class="fa fa-key text-warning me-1"></i>
+                                Property No/Unit *
+                            </label>
                             <label class="form-check-label small text-muted d-flex align-items-center gap-1">
                                 <input type="checkbox" class="form-check-input form-check-input-sm"
                                     wire:model.live="vacant_only" id="vacant_only">
@@ -85,7 +49,7 @@
                             </label>
                         </div>
                         <div wire:ignore>
-                            {{ html()->select('property_id', $propertyOptions)->value($rentouts['property_id'] ?? '')->class('form-select select-property_id')->id('property_id')->placeholder('Search Here') }}
+                            {{ html()->select('property_id', $preFilledDropDowns['property'] ?? [])->value($rent_outs['property_id'] ?? '')->class('select-property_id')->id('property_id')->required(true)->placeholder('Search Here')->attribute('data-building-select', '#property_building_id')->attribute('data-group-select', '#property_group_id')->attribute('data-type-select', '#property_type_id') }}
                         </div>
                     </div>
                     <div class="col-md-6">
@@ -93,7 +57,7 @@
                             <label class="form-label fw-semibold small mb-0"><i class="fa fa-user text-danger me-1"></i>
                                 Customer *</label>
                             <div class="d-flex gap-2">
-                                @if (isset($rentouts['account_id']) && $rentouts['account_id'])
+                                @if (isset($rent_outs['account_id']) && $rent_outs['account_id'])
                                     <a href="#" class="btn btn-sm btn-outline-primary py-0 px-2 edit_customer"
                                         title="Edit Customer">
                                         <i class="fa fa-pencil"></i> Edit
@@ -102,7 +66,7 @@
                             </div>
                         </div>
                         <div wire:ignore>
-                            {{ html()->select('account_id', $customerOptions)->value($rentouts['account_id'] ?? '')->class('form-select select-customer_id')->id('account_id')->placeholder('Search Customer Name') }}
+                            {{ html()->select('account_id', $preFilledDropDowns['account'] ?? [])->value($rent_outs['account_id'] ?? '')->class('select-customer_id')->id('account_id')->placeholder('Search Customer Name') }}
                         </div>
                     </div>
                 </div>
@@ -127,12 +91,12 @@
                     <div class="col-md-3">
                         <label class="form-label fw-semibold small"><i class="fa fa-calendar-o text-primary me-1"></i>
                             Start Date *</label>
-                        <input type="date" class="form-control" wire:model.live="rentouts.start_date">
+                        <input type="date" class="form-control" wire:model.live="rent_outs.start_date">
                     </div>
                     <div class="col-md-3">
-                        <label class="form-label fw-semibold small"><i class="fa fa-calendar text-danger me-1"></i> End
-                            Date *</label>
-                        <input type="date" class="form-control" wire:model.live="rentouts.end_date">
+                        <label class="form-label fw-semibold small">
+                            <i class="fa fa-calendar text-danger me-1"></i> End Date *</label>
+                        <input type="date" class="form-control" wire:model.live="rent_outs.end_date">
                     </div>
                     <div class="col-md-6">
                         <label class="form-label fw-semibold small"><i class="fa fa-clock-o text-info me-1"></i>
@@ -161,12 +125,12 @@
                     <div class="col-md-3">
                         <label class="form-label fw-semibold small"><i class="fa fa-list-ol text-info me-1"></i> No of
                             Terms</label>
-                        <input type="number" class="form-control" wire:model.live="rentouts.no_of_terms">
+                        <input type="number" class="form-control" wire:model.live="rent_outs.no_of_terms">
                     </div>
                     <div class="col-md-3">
                         <label class="form-label fw-semibold small"><i class="fa fa-repeat text-primary me-1"></i>
                             Payment Frequency</label>
-                        <select class="form-select" wire:model="rentouts.payment_frequency">
+                        <select class="form-select" wire:model="rent_outs.payment_frequency">
                             <option value="Monthly">Monthly</option>
                             <option value="Quarterly">Quarterly</option>
                             <option value="Half Yearly">Half Yearly</option>
@@ -177,16 +141,17 @@
                     <div class="col-md-3">
                         <label class="form-label fw-semibold small"><i class="fa fa-money text-warning me-1"></i>
                             {{ $config->unitPriceLabel }}</label>
-                        <input type="number" class="form-control" wire:model.live="rentouts.rent" step="0.01">
+                        <input type="number" class="form-control" wire:model.live="rent_outs.rent" step="0.01">
                     </div>
                     @if ($config->isRental)
                         <div class="col-md-3">
-                            <label class="form-label fw-semibold small"><i class="fa fa-calculator text-success me-1"></i>
+                            <label class="form-label fw-semibold small"><i
+                                    class="fa fa-calculator text-success me-1"></i>
                                 Total Amount</label>
                             <div
                                 class="bg-success bg-opacity-10 border border-success border-opacity-25 rounded-3 p-3 text-center">
                                 <span
-                                    class="fs-4 fw-bold text-success">{{ number_format($rentouts['total'] ?? 0, 2) }}</span>
+                                    class="fs-4 fw-bold text-success">{{ number_format($rent_outs['total'] ?? 0, 2) }}</span>
                             </div>
                         </div>
                     @endif
@@ -205,24 +170,18 @@
             <div class="card-body py-4">
                 <div class="row g-3">
                     <div class="col-md-{{ $config->isRental ? '3' : '4' }}" wire:ignore>
-                        <label class="form-label fw-semibold small"><i class="fa fa-user text-primary me-1"></i>
-                            Salesman</label>
-                        @php
-                            $salesmanOptions = [];
-                            if (!empty($rentouts['salesman_id'])) {
-                                $sm = \App\Models\User::find($rentouts['salesman_id']);
-                                if ($sm) {
-                                    $salesmanOptions[$sm->id] = $sm->name;
-                                }
-                            }
-                        @endphp
-                        {{ html()->select('salesman_id', $salesmanOptions)->value($rentouts['salesman_id'] ?? '')->class('form-select select-employee_id-list')->id('salesman_id')->placeholder('Select Employee') }}
+                        <label class="form-label fw-semibold small">
+                            <i class="fa fa-user text-primary me-1"></i>
+                            Salesman
+                        </label>
+                        {{ html()->select('salesman_id', $preFilledDropDowns['salesman'] ?? [])->value($rent_outs['salesman_id'] ?? '')->class('select-employee_id-list')->id('salesman_id')->placeholder('Select Employee') }}
                     </div>
                     @if ($config->isRental)
                         <div class="col-md-3">
-                            <label class="form-label fw-semibold small"><i class="fa fa-bookmark text-warning me-1"></i>
+                            <label class="form-label fw-semibold small"><i
+                                    class="fa fa-bookmark text-warning me-1"></i>
                                 Booking Type *</label>
-                            <select class="form-select" wire:model="rentouts.booking_type">
+                            <select class="form-select" wire:model="rent_outs.booking_type">
                                 <option value="Long Term">Long Term</option>
                                 <option value="Short Term">Short Term</option>
                                 <option value="Commercial">Commercial</option>
@@ -237,7 +196,7 @@
                                         <span
                                             class="input-group-text bg-warning bg-opacity-10 border-warning border-opacity-25"><i
                                                 class="fa fa-bolt text-warning"></i></span>
-                                        <select class="form-select" wire:model="rentouts.include_electricity_water">
+                                        <select class="form-select" wire:model="rent_outs.include_electricity_water">
                                             <option value="Included">Elec & Water: Incl.</option>
                                             <option value="Excluded">Elec & Water: Excl.</option>
                                         </select>
@@ -248,7 +207,7 @@
                                         <span
                                             class="input-group-text bg-info bg-opacity-10 border-info border-opacity-25"><i
                                                 class="fa fa-asterisk text-info"></i></span>
-                                        <select class="form-select" wire:model="rentouts.include_ac">
+                                        <select class="form-select" wire:model="rent_outs.include_ac">
                                             <option value="Included">AC: Included</option>
                                             <option value="Excluded">AC: Excluded</option>
                                         </select>
@@ -259,7 +218,7 @@
                                         <span
                                             class="input-group-text bg-success bg-opacity-10 border-success border-opacity-25"><i
                                                 class="fa fa-wifi text-success"></i></span>
-                                        <select class="form-select" wire:model="rentouts.include_wifi">
+                                        <select class="form-select" wire:model="rent_outs.include_wifi">
                                             <option value="Included">WiFi: Included</option>
                                             <option value="Excluded">WiFi: Excluded</option>
                                         </select>
@@ -274,7 +233,7 @@
                     <div class="col-md-12">
                         <label class="form-label fw-semibold small"><i class="fa fa-comment text-muted me-1"></i>
                             Remark</label>
-                        <textarea class="form-control" wire:model="rentouts.remark" rows="3"
+                        <textarea class="form-control" wire:model="rent_outs.remark" rows="3"
                             placeholder="Add any additional notes or remarks here..."></textarea>
                     </div>
                 </div>
@@ -288,13 +247,13 @@
                     <div class="col-md-6">
                         <label class="form-label fw-semibold small"><i class="fa fa-file-text text-primary me-1"></i>
                             Cancellation Policy (English)</label>
-                        <input type="text" class="form-control" wire:model="rentouts.cancellation_policy_en"
+                        <input type="text" class="form-control" wire:model="rent_outs.cancellation_policy_en"
                             placeholder="Enter cancellation policy in English...">
                     </div>
                     <div class="col-md-6">
                         <label class="form-label fw-semibold small"><i class="fa fa-file-text text-success me-1"></i>
                             Cancellation Policy (Arabic)</label>
-                        <input type="text" class="form-control" wire:model="rentouts.cancellation_policy_ar"
+                        <input type="text" class="form-control" wire:model="rent_outs.cancellation_policy_ar"
                             dir="rtl" placeholder="...أدخل قاعدة الإلغاء باللغة العربية">
                     </div>
                 </div>
@@ -302,13 +261,13 @@
                     <div class="col-md-6">
                         <label class="form-label fw-semibold small"><i
                                 class="fa fa-credit-card text-primary me-1"></i> Payment Terms (English)</label>
-                        <input type="text" class="form-control" wire:model="rentouts.payment_terms_en"
+                        <input type="text" class="form-control" wire:model="rent_outs.payment_terms_en"
                             placeholder="Enter payment terms in English...">
                     </div>
                     <div class="col-md-6">
                         <label class="form-label fw-semibold small"><i
                                 class="fa fa-credit-card text-success me-1"></i> Payment Terms (Arabic)</label>
-                        <input type="text" class="form-control" wire:model="rentouts.payment_terms_ar"
+                        <input type="text" class="form-control" wire:model="rent_outs.payment_terms_ar"
                             dir="rtl" placeholder="...أدخل شروط الدفع باللغة العربية">
                     </div>
                 </div>
@@ -317,13 +276,13 @@
                         <label class="form-label fw-semibold small"><i
                                 class="fa fa-credit-card text-warning me-1"></i> Payment Terms Extended
                             (English)</label>
-                        <input type="text" class="form-control" wire:model="rentouts.payment_terms_extended_en"
+                        <input type="text" class="form-control" wire:model="rent_outs.payment_terms_extended_en"
                             placeholder="Enter extended payment terms in English...">
                     </div>
                     <div class="col-md-6">
                         <label class="form-label fw-semibold small"><i class="fa fa-credit-card text-info me-1"></i>
                             Payment Terms Extended (Arabic)</label>
-                        <input type="text" class="form-control" wire:model="rentouts.payment_terms_extended_ar"
+                        <input type="text" class="form-control" wire:model="rent_outs.payment_terms_extended_ar"
                             dir="rtl" placeholder="...أدخل شروط الدفع الممتدة باللغة العربية">
                     </div>
                 </div>
@@ -344,18 +303,18 @@
                         <div class="col-md-3">
                             <label class="form-label fw-semibold small"><i class="fa fa-money text-success me-1"></i>
                                 Amount</label>
-                            <input type="number" class="form-control" wire:model="rentouts.down_payment"
+                            <input type="number" class="form-control" wire:model="rent_outs.down_payment"
                                 step="0.01">
                         </div>
                         <div class="col-md-3">
-                            <label class="form-label fw-semibold small"><i
-                                    class="fa fa-credit-card text-primary me-1"></i> Payment Mode</label>
-                            {{ html()->select('down_payment_mode', paymentModeOptions())->value($rentouts['down_payment_mode'] ?? '')->class('form-select')->attribute('wire:model', 'rentouts.down_payment_mode')->placeholder('Select...') }}
+                            <label class="form-label fw-semibold small">
+                                <i class="fa fa-credit-card text-primary me-1"></i> Payment Mode</label>
+                            {{ html()->select('down_payment_mode', paymentModeOptions())->value($rent_outs['down_payment_mode'] ?? '')->class('form-select')->attribute('wire:model', 'rent_outs.down_payment_mode')->placeholder('Select...') }}
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label fw-semibold small"><i
-                                    class="fa fa-comment text-muted me-1"></i> Remarks</label>
-                            <input type="text" class="form-control" wire:model="rentouts.down_payment_remarks"
+                            <label class="form-label fw-semibold small"><i class="fa fa-comment text-muted me-1"></i>
+                                Remarks</label>
+                            <input type="text" class="form-control" wire:model="rent_outs.down_payment_remarks"
                                 placeholder="Add payment details or notes here...">
                         </div>
                     </div>
@@ -376,25 +335,26 @@
                     <div class="col-md-3">
                         <label class="form-label fw-semibold small"><i class="fa fa-calendar text-warning me-1"></i>
                             Collection Starting Day</label>
-                        <input type="number" class="form-control" wire:model="rentouts.collection_starting_day"
+                        <input type="number" class="form-control" wire:model="rent_outs.collection_starting_day"
                             min="1" max="28">
                     </div>
                     <div class="col-md-3">
-                        <label class="form-label fw-semibold small"><i class="fa fa-money text-success me-1"></i>
-                            Payment Mode</label>
-                        {{ html()->select('collection_payment_mode', paymentModeOptions())->value($rentouts['collection_payment_mode'] ?? '')->class('form-select')->attribute('wire:model.live', 'rentouts.collection_payment_mode')->placeholder('Select...') }}
+                        <label class="form-label fw-semibold small">
+                            <i class="fa fa-money text-success me-1"></i>
+                            Payment Mode *</label>
+                        {{ html()->select('collection_payment_mode', paymentModeOptions())->value($rent_outs['collection_payment_mode'] ?? '')->class('form-select')->attribute('wire:model.live', 'rent_outs.collection_payment_mode')->required(true)->placeholder('Select...') }}
                     </div>
-                    @if (($rentouts['collection_payment_mode'] ?? '') && $rentouts['collection_payment_mode'] !== 'cash')
+                    @if (($rent_outs['collection_payment_mode'] ?? '') && $rent_outs['collection_payment_mode'] !== 'cash')
                         <div class="col-md-3">
                             <label class="form-label fw-semibold small"><i
                                     class="fa fa-university text-primary me-1"></i> Bank Name</label>
-                            <input type="text" class="form-control" wire:model="rentouts.collection_bank_name"
+                            <input type="text" class="form-control" wire:model="rent_outs.collection_bank_name"
                                 placeholder="Enter bank name">
                         </div>
                         <div class="col-md-3">
                             <label class="form-label fw-semibold small"><i class="fa fa-file-text text-info me-1"></i>
                                 Cheque Starting No</label>
-                            <input type="text" class="form-control" wire:model="rentouts.collection_cheque_no"
+                            <input type="text" class="form-control" wire:model="rent_outs.collection_cheque_no"
                                 placeholder="Enter cheque number">
                         </div>
                     @endif
@@ -412,10 +372,10 @@
                         <span>Back to List</span>
                     </a>
                     <div class="d-flex gap-2">
-                        @if (isset($rentouts['id']) &&
+                        @if (isset($rent_outs['id']) &&
                                 $type === 'Booking' &&
-                                ($rentouts['status'] ?? '') === 'booked' &&
-                                !($rentouts['submitted_by'] ?? null))
+                                ($rent_outs['status'] ?? '') === 'booked' &&
+                                !($rent_outs['submitted_by'] ?? null))
                             <button type="button" wire:click="confirm"
                                 class="btn btn-primary d-inline-flex align-items-center gap-2">
                                 <i class="fa fa-check-circle"></i>
@@ -428,7 +388,7 @@
                                 <span>Cancel Booking</span>
                             </button>
                         @endif
-                        @if (!isset($rentouts['status']) || ($rentouts['status'] ?? '') !== 'cancelled')
+                        @if (!isset($rent_outs['status']) || ($rent_outs['status'] ?? '') !== 'cancelled')
                             <button type="submit"
                                 class="btn btn-success d-inline-flex align-items-center gap-2 px-4">
                                 <i class="fa fa-check"></i>
@@ -451,31 +411,60 @@
 
         <script type="text/javascript">
             $(document).ready(function() {
-                // Property selects
+                // ── Helper: clear & reload a TomSelect by ID ──
+                function clearAndReload(id) {
+                    var el = document.getElementById(id);
+                    if (el && el.tomselect) {
+                        el.tomselect.clear();
+                        el.tomselect.clearOptions();
+                        el.tomselect.load('');
+                    }
+                }
+
+                // ── Cascade: Group → Building → Property, Type → Property ──
                 $('#property_group_id').on('change', function() {
-                    @this.set('rentouts.property_group_id', $(this).val());
+                    @this.set('rent_outs.property_group_id', $(this).val());
+                    clearAndReload('property_building_id');
+                    clearAndReload('property_id');
+                    @this.set('rent_outs.property_building_id', '');
+                    @this.set('rent_outs.property_id', '');
                 });
                 $('#property_building_id').on('change', function() {
-                    @this.set('rentouts.property_building_id', $(this).val());
+                    @this.set('rent_outs.property_building_id', $(this).val());
+                    clearAndReload('property_id');
+                    @this.set('rent_outs.property_id', '');
                 });
                 $('#property_type_id').on('change', function() {
-                    @this.set('rentouts.property_type_id', $(this).val());
+                    @this.set('rent_outs.property_type_id', $(this).val());
+                    clearAndReload('property_id');
+                    @this.set('rent_outs.property_id', '');
                 });
                 $('#property_id').on('change', function() {
-                    @this.set('rentouts.property_id', $(this).val());
+                    @this.set('rent_outs.property_id', $(this).val());
                 });
 
                 // Re-initialize property TomSelect to support vacant_only filter
                 var propTs = document.querySelector('#property_id').tomselect;
                 if (propTs) {
+                    var origLoad = propTs.settings.load;
                     propTs.settings.load = function(query, callback) {
                         var url = "{{ route('property::property::list') }}";
-                        url += '?query=' + encodeURIComponent(query);
+                        var params = 'query=' + encodeURIComponent(query);
+                        // Cascade params from data attributes
+                        var buildingEl = document.querySelector('#property_building_id');
+                        var buildingId = buildingEl && buildingEl.tomselect ? buildingEl.tomselect.getValue() : '';
+                        if (buildingId) params += '&building_id=' + encodeURIComponent(buildingId);
+                        var groupEl = document.querySelector('#property_group_id');
+                        var groupId = groupEl && groupEl.tomselect ? groupEl.tomselect.getValue() : '';
+                        if (groupId) params += '&property_group_id=' + encodeURIComponent(groupId);
+                        var typeEl = document.querySelector('#property_type_id');
+                        var typeId = typeEl && typeEl.tomselect ? typeEl.tomselect.getValue() : '';
+                        if (typeId) params += '&property_type_id=' + encodeURIComponent(typeId);
                         var vacantOnly = document.querySelector('#vacant_only');
                         if (vacantOnly && vacantOnly.checked) {
-                            url += '&vacant_only=1';
+                            params += '&vacant_only=1';
                         }
-                        fetch(url).then(response => response.json()).then(json => {
+                        fetch(url + '?' + params).then(response => response.json()).then(json => {
                             callback(json.items);
                         }).catch(() => {
                             callback();
@@ -485,18 +474,18 @@
 
                 // Customer select
                 $('#account_id').on('change', function() {
-                    @this.set('rentouts.account_id', $(this).val());
+                    @this.set('rent_outs.account_id', $(this).val());
                 });
 
                 // Salesman select
                 $('#salesman_id').on('change', function() {
-                    @this.set('rentouts.salesman_id', $(this).val());
+                    @this.set('rent_outs.salesman_id', $(this).val());
                 });
 
                 // Edit customer button
                 $(document).on('click', '.edit_customer', function(e) {
                     e.preventDefault();
-                    var customer_id = @this.rentouts['account_id'];
+                    var customer_id = @this.rent_outs['account_id'];
                     if (!customer_id) return;
                     Livewire.dispatch("Customer-Page-Update-Component", {
                         id: customer_id
@@ -504,7 +493,7 @@
                 });
 
                 // Auto-populate selects on edit
-                window.addEventListener('RentOutSelectValues', event => {
+                window.addEventListener('Rent_OutSelectValues', event => {
                     var data = event.detail[0];
                     if (data.property_group_id) {
                         var groupTs = document.querySelector('#property_group_id').tomselect;

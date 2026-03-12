@@ -4,7 +4,6 @@ namespace App\Livewire\RentOut\Tabs;
 
 use App\Actions\RentOut\Document\DeleteAction;
 use App\Models\DocumentType;
-use App\Models\RentOut;
 use App\Models\RentOutDocument;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
@@ -70,7 +69,7 @@ class DocumentsTab extends Component
     {
         try {
             DB::beginTransaction();
-            $response = (new DeleteAction)->execute($id);
+            $response = (new DeleteAction())->execute($id);
             if (! $response['success']) {
                 throw new \Exception($response['message']);
             }
@@ -93,7 +92,7 @@ class DocumentsTab extends Component
 
         try {
             DB::beginTransaction();
-            $action = new DeleteAction;
+            $action = new DeleteAction();
             foreach ($this->selectedDocs as $id) {
                 $response = $action->execute($id);
                 if (! $response['success']) {

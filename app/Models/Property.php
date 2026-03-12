@@ -73,18 +73,27 @@ class Property extends Model implements AuditableContracts
         $self = $self->when($request['building_id'] ?? '', function ($query, $value) {
             return $query->where('property_building_id', $value);
         });
+        $self = $self->when($request['property_group_id'] ?? '', function ($query, $value) {
+            return $query->where('property_group_id', $value);
+        });
+        $self = $self->when($request['property_type_id'] ?? '', function ($query, $value) {
+            return $query->where('property_type_id', $value);
+        });
         $self = $self->when($request['vacant_only'] ?? '', function ($query) {
-            return $query->where('status', PropertyStatus::Vacant);
+            return $query->vacant();
+        });
+        $self = $self->when($request['available_only'] ?? '', function ($query) {
+            return $query->available();
         });
         $self = $self->limit(10);
         $self = $self->get()->map(function ($item) {
             return [
                 'id' => $item->id,
-                'name' => $item->number . ($item->building ? ' - ' . $item->building->name : ''),
+                'name' => $item->number.($item->building ? ' - '.$item->building->name : ''),
             ];
         })->toArray();
         $return['items'] = $self;
-
+    info($return);
         return $return;
     }
 
@@ -125,6 +134,16 @@ class Property extends Model implements AuditableContracts
         });
     }
 
+    public function scopeAvailable($query)
+    {
+        return $query->where('status', 'available');
+    }
+
+    public function scopeVacant($query)
+    {
+        return $query->where('status', PropertyStatus::Vacant);
+    }
+
     public function scopeEmpty($query)
     {
         return $query->where('status', PropertyStatus::Vacant);
@@ -133,10 +152,5 @@ class Property extends Model implements AuditableContracts
     public function scopeOccupied($query)
     {
         return $query->where('status', PropertyStatus::Occupied);
-    }
-
-    public function scopeBooked($query)
-    {
-        return $query->where('status', PropertyStatus::Booked);
-    }
+}
 }
