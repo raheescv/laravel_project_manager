@@ -1,5 +1,8 @@
 {{-- Management Sections - Tabbed Navigation --}}
-<div class="card shadow-sm mb-4" x-data="{ activeTab: 'PaymentTab' }" wire:ignore.self>
+@php
+    $defaultLabel = $isRental ? 'rent payment' : 'installment';
+@endphp
+<div class="card shadow-sm mb-4" x-data="{ activeTab: 'PaymentTab' }">
     <div class="card-header bg-light py-3 border-bottom">
         <h6 class="mb-0 fw-semibold"><i class="fa fa-folder-open me-2 text-primary"></i>Management Sections</h6>
     </div>
@@ -79,49 +82,49 @@
         {{-- Tab Content --}}
         <div class="p-3">
             <div x-show="activeTab === 'PaymentTab'">
-                @include('livewire.rent-out.partials.tabs.payment-tab')
+                @livewire('rent-out.tabs.payment-tab', ['rentOutId' => $rentOut->id], key('payment-tab-'.$rentOut->id))
             </div>
 
             <div x-show="activeTab === 'PaymentTermTab'">
-                @include('livewire.rent-out.partials.tabs.payment-terms-tab')
+                @livewire('rent-out.tabs.payment-terms-tab', ['rentOutId' => $rentOut->id, 'isRental' => $isRental, 'defaultLabel' => $defaultLabel], key('payment-terms-tab-'.$rentOut->id))
             </div>
 
             @if($isRental)
                 <div x-show="activeTab === 'UtilitiesTab'">
-                    @include('livewire.rent-out.partials.tabs.utilities-tab')
+                    @livewire('rent-out.tabs.utilities-tab', ['rentOutId' => $rentOut->id], key('utilities-tab-'.$rentOut->id))
                 </div>
             @endif
 
             <div x-show="activeTab === 'ServicesTab'">
-                @include('livewire.rent-out.partials.tabs.services-tab')
+                @livewire('rent-out.tabs.services-tab', ['rentOutId' => $rentOut->id], key('services-tab-'.$rentOut->id))
             </div>
 
             <div x-show="activeTab === 'ChequeTab'">
-                @include('livewire.rent-out.partials.tabs.cheques-tab')
+                @livewire('rent-out.tabs.cheques-tab', ['rentOutId' => $rentOut->id], key('cheques-tab-'.$rentOut->id))
             </div>
 
             <div x-show="activeTab === 'SecurityTab'">
-                @include('livewire.rent-out.partials.tabs.security-tab')
+                @livewire('rent-out.tabs.security-tab', ['rentOutId' => $rentOut->id], key('security-tab-'.$rentOut->id))
             </div>
 
             <div x-show="activeTab === 'ExtendTab'">
-                @include('livewire.rent-out.partials.tabs.extend-tab')
+                @livewire('rent-out.tabs.extend-tab', ['rentOutId' => $rentOut->id], key('extend-tab-'.$rentOut->id))
             </div>
 
             <div x-show="activeTab === 'NotesTab'">
-                @include('livewire.rent-out.partials.tabs.notes-tab')
+                @livewire('rent-out.tabs.notes-tab', ['rentOutId' => $rentOut->id], key('notes-tab-'.$rentOut->id))
             </div>
 
             <div x-show="activeTab === 'TransactionTab'">
-                @include('livewire.rent-out.partials.tabs.transactions-tab')
+                @livewire('rent-out.tabs.transactions-tab', ['rentOutId' => $rentOut->id], key('transactions-tab-'.$rentOut->id))
             </div>
 
             <div x-show="activeTab === 'MaintenanceTab'">
-                @include('livewire.rent-out.partials.tabs.maintenance-tab')
+                @livewire('rent-out.tabs.maintenance-tab', ['rentOutId' => $rentOut->id], key('maintenance-tab-'.$rentOut->id))
             </div>
 
             <div x-show="activeTab === 'DocumentsTab'">
-                @include('livewire.rent-out.partials.tabs.documents-tab')
+                @livewire('rent-out.tabs.documents-tab', ['rentOutId' => $rentOut->id], key('documents-tab-'.$rentOut->id))
             </div>
         </div>
     </div>

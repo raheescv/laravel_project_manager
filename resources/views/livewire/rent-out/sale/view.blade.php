@@ -16,6 +16,3 @@
         </div>
     @endif
 </div>
-
-{{-- Scripts --}}
-@include('livewire.rent-out.partials.payment-term-scripts')

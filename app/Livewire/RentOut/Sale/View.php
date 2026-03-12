@@ -14,11 +14,6 @@ class View extends Component
         $this->loadRentOut($id);
     }
 
-    protected function defaultTermLabel(): string
-    {
-        return 'installment';
-    }
-
     public function render()
     {
         return view('livewire.rent-out.sale.view');

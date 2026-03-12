@@ -24,4 +24,7 @@
     @include('components.rent-out.single-payment-term-modal')
     @include('components.rent-out.multiple-payment-term-modal')
     @include('components.rent-out.pay-selected-modal')
+
+    {{-- Scripts --}}
+    @include('livewire.rent-out.partials.payment-term-scripts')
 </x-app-layout>
