@@ -52,6 +52,8 @@ class RentOutDocument extends Model implements AuditableContracts
 
     public function getUrlAttribute(): string
     {
-        return Storage::url($this->path);
+        $path = preg_replace('#^public/#', '', $this->path);
+
+        return Storage::disk('public')->url($path);
     }
 }

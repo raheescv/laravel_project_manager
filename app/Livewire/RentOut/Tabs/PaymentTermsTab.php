@@ -24,6 +24,12 @@ class PaymentTermsTab extends Component
         $this->defaultLabel = $defaultLabel;
     }
 
+    #[On('rent-out-updated')]
+    public function refreshData()
+    {
+        // Forces Livewire to re-render with fresh data from getRentOut()
+    }
+
     protected function getRentOut()
     {
         return RentOut::with(['customer', 'property', 'paymentTerms'])->find($this->rentOutId);

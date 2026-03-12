@@ -54,7 +54,7 @@ class DocumentModal extends Component
                 'rent_out_id' => $this->rentOutId,
                 'document_type_id' => $this->documentTypeId,
                 'name' => $originalName,
-                'path' => 'public/'.$path,
+                'path' => $path,
                 'remarks' => $this->remarks ?? '',
             ];
 

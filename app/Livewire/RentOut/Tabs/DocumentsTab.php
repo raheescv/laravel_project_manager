@@ -56,13 +56,14 @@ class DocumentsTab extends Component
     public function downloadDocument($id)
     {
         $doc = RentOutDocument::find($id);
-        if (! $doc || ! Storage::exists($doc->path)) {
+        $path = $doc ? preg_replace('#^public/#', '', $doc->path) : null;
+        if (! $doc || ! Storage::disk('public')->exists($path)) {
             $this->dispatch('error', message: 'File not found.');
 
             return;
         }
 
-        return Storage::download($doc->path, $doc->name);
+        return Storage::disk('public')->download($path, $doc->name);
     }
 
     public function deleteDocument($id)

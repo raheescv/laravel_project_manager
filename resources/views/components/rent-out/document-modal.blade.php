@@ -10,11 +10,5 @@
         window.addEventListener('ToggleDocumentModal', event => {
             $('#DocumentModal').modal('toggle');
         });
-                window.addEventListener('ClearDocumentModal', event => {
-                    var ts = document.querySelector('#docModalDocumentTypeSelect')?.tomselect;
-                    if (ts) {
-                        ts.clear();
-                    }
-                });
     </script>
 @endpush

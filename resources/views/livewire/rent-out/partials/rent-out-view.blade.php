@@ -11,9 +11,9 @@
 @php
     $isRental         = $rentOut->agreement_type?->value === 'rental';
     $title            = $isRental ? 'Rental Agreement' : 'Sale Agreement';
-    $accentColor      = $isRental ? '#4f72b8' : '#3a9e7a';
-    $accentDark       = $isRental ? '#3558a0' : '#267a5a';
-    $accentDeep       = $isRental ? '#1e2f5e' : '#0f3323';
+    $accentColor      = $isRental ? '#0891b2' : '#24447f';
+    $accentDark       = $isRental ? '#0e7490' : '#1b3460';
+    $accentDeep       = $isRental ? '#164e63' : '#0f1c33';
 
     $totalRent        = $rentOut->paymentTerms->sum('amount');
     $totalDiscount    = $rentOut->paymentTerms->sum('discount');
@@ -111,8 +111,7 @@
         </div>
         <div class="progress" style="height:6px; background:rgba(255,255,255,.2); border-radius:10px;">
             <div class="progress-bar"
-                 style="background: linear-gradient(90deg, #a8d8b0, #6ec68a);"
-                 style="width:{{ $paidPercent }}%; border-radius:10px;"
+                 style="background: linear-gradient(90deg, #fbbf24, #10b981, #059669); width:{{ $paidPercent }}%; border-radius:10px;"
                  role="progressbar"
                  aria-valuenow="{{ $paidPercent }}" aria-valuemin="0" aria-valuemax="100">
             </div>
@@ -122,40 +121,62 @@
 
 {{-- ═══════════════════ STAT PILLS ═══════════════════ --}}
 <div class="row g-3 mb-4">
+    @php
+        $daysColor   = $daysRemaining > 0 ? '#059669' : '#dc2626';
+        $daysBorder  = $daysRemaining > 0 ? '#059669' : '#dc2626';
+        $daysBg      = $daysRemaining > 0 ? '#ecfdf5' : '#fef2f2';
+        $daysIconBg  = $daysRemaining > 0 ? 'rgba(5,150,105,.12)' : 'rgba(220,38,38,.12)';
+    @endphp
     <div class="col-6 col-md-3">
-        <div class="card border-0 shadow-sm text-center py-3 h-100"
-             style="background: {{ $daysRemaining > 0 ? '#f0faf5' : '#fef6f6' }}; border-left: 3px solid {{ $daysRemaining > 0 ? '#6ab89a' : '#d9796a' }} !important;">
-            <div class="small mb-1" style="color: #6c757d;"><i class="fa fa-calendar me-1"></i>Days {{ $daysRemaining > 0 ? 'Remaining' : 'Overdue' }}</div>
-            <div class="fw-bold fs-4" style="color: {{ $daysRemaining > 0 ? '#2e7d56' : '#b94a3a' }};">
-                {{ abs($daysRemaining) }}
+        <div class="card border-0 text-center py-3 h-100"
+             style="background: {{ $daysBg }}; border-left: 3px solid {{ $daysBorder }} !important; box-shadow: 0 2px 8px rgba(0,0,0,.06); border-radius: 8px;">
+            <div class="d-flex justify-content-center mb-2">
+                <span class="d-inline-flex align-items-center justify-content-center rounded-circle" style="width:32px; height:32px; background:{{ $daysIconBg }};">
+                    <i class="fa fa-calendar" style="color:{{ $daysColor }}; font-size:.85rem;"></i>
+                </span>
             </div>
-            <div class="small" style="color: {{ $daysRemaining > 0 ? '#4a9e72' : '#c25a4a' }};">
-                {{ $daysRemaining > 0 ? 'days left' : 'expired' }}
+            <div class="small mb-1" style="color:#64748b;">Days {{ $daysRemaining > 0 ? 'Remaining' : 'Overdue' }}</div>
+            <div class="fw-bold fs-3" style="color:{{ $daysColor }};">{{ abs($daysRemaining) }}</div>
+            <div class="small" style="color:#94a3b8;">{{ $daysRemaining > 0 ? 'days left' : 'expired' }}</div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="card border-0 text-center py-3 h-100"
+             style="background: #eef2f9; border-left: 3px solid #24447f !important; box-shadow: 0 2px 8px rgba(0,0,0,.06); border-radius: 8px;">
+            <div class="d-flex justify-content-center mb-2">
+                <span class="d-inline-flex align-items-center justify-content-center rounded-circle" style="width:32px; height:32px; background:rgba(36,68,127,.12);">
+                    <i class="fa fa-check-square-o" style="color:#24447f; font-size:.85rem;"></i>
+                </span>
             </div>
+            <div class="small mb-1" style="color:#64748b;">Paid Instalments</div>
+            <div class="fw-bold fs-3" style="color:#24447f;">{{ $paidMonths }}</div>
+            <div class="small" style="color:#94a3b8;">of {{ $totalMonths }} total</div>
         </div>
     </div>
     <div class="col-6 col-md-3">
-        <div class="card border-0 shadow-sm text-center py-3 h-100"
-             style="background: #f0f4ff; border-left: 3px solid #7b9fd4 !important;">
-            <div class="small mb-1" style="color: #6c757d;"><i class="fa fa-check-square-o me-1"></i>Paid Instalments</div>
-            <div class="fw-bold fs-4" style="color: #3d5fa8;">{{ $paidMonths }}</div>
-            <div class="small" style="color: #8fa8d4;">of {{ $totalMonths }} total</div>
+        <div class="card border-0 text-center py-3 h-100"
+             style="background: #ecfeff; border-left: 3px solid #0891b2 !important; box-shadow: 0 2px 8px rgba(0,0,0,.06); border-radius: 8px;">
+            <div class="d-flex justify-content-center mb-2">
+                <span class="d-inline-flex align-items-center justify-content-center rounded-circle" style="width:32px; height:32px; background:rgba(8,145,178,.12);">
+                    <i class="fa fa-check-circle" style="color:#0891b2; font-size:.85rem;"></i>
+                </span>
+            </div>
+            <div class="small mb-1" style="color:#64748b;">Collected</div>
+            <div class="fw-bold fs-5" style="color:#0e7490;">{{ number_format($totalPaid, 2) }}</div>
+            <div class="small" style="color:#94a3b8;">received</div>
         </div>
     </div>
     <div class="col-6 col-md-3">
-        <div class="card border-0 shadow-sm text-center py-3 h-100"
-             style="background: #f0faf5; border-left: 3px solid #6ab89a !important;">
-            <div class="small mb-1" style="color: #6c757d;"><i class="fa fa-check-circle me-1"></i>Collected</div>
-            <div class="fw-bold fs-6" style="color: #2e7d56;">{{ number_format($totalPaid, 2) }}</div>
-            <div class="small" style="color: #4a9e72;">received</div>
-        </div>
-    </div>
-    <div class="col-6 col-md-3">
-        <div class="card border-0 shadow-sm text-center py-3 h-100"
-             style="background: #fef6f6; border-left: 3px solid #d9796a !important;">
-            <div class="small mb-1" style="color: #6c757d;"><i class="fa fa-hourglass-half me-1"></i>Outstanding</div>
-            <div class="fw-bold fs-6" style="color: #b94a3a;">{{ number_format($totalPending, 2) }}</div>
-            <div class="small" style="color: #c25a4a;">balance due</div>
+        <div class="card border-0 text-center py-3 h-100"
+             style="background: #fffbeb; border-left: 3px solid #f59e0b !important; box-shadow: 0 2px 8px rgba(0,0,0,.06); border-radius: 8px;">
+            <div class="d-flex justify-content-center mb-2">
+                <span class="d-inline-flex align-items-center justify-content-center rounded-circle" style="width:32px; height:32px; background:rgba(245,158,11,.12);">
+                    <i class="fa fa-clock-o" style="color:#d97706; font-size:.85rem;"></i>
+                </span>
+            </div>
+            <div class="small mb-1" style="color:#64748b;">Outstanding</div>
+            <div class="fw-bold fs-5" style="color:#d97706;">{{ number_format($totalPending, 2) }}</div>
+            <div class="small" style="color:#94a3b8;">balance due</div>
         </div>
     </div>
 </div>
@@ -165,17 +186,18 @@
 
     {{-- ── Column 1: Property & Customer ── --}}
     <div class="col-lg-4">
-        <div class="card border-0 shadow-sm h-100">
-            <div class="card-header py-2 px-3 text-white fw-semibold small"
-                 style="background: linear-gradient(135deg, #5b7fb5, #3f6096);">
+        <div class="card border-0 h-100" style="box-shadow: 0 2px 12px rgba(0,0,0,.08); border-radius: 8px; overflow:hidden;">
+            <div class="card-header py-2 px-3 text-white fw-semibold small position-relative overflow-hidden"
+                 style="background: linear-gradient(135deg, #3b6cb5, #24447f); border:none;">
                 <i class="fa fa-building me-2"></i>Property & Customer
+                <i class="fa fa-building position-absolute" style="right:12px; top:50%; transform:translateY(-50%); font-size:1.5rem; opacity:.15;"></i>
             </div>
             <div class="card-body p-0">
                 <table class="table table-sm table-hover align-middle mb-0" style="font-size:.82rem;">
                     <tbody>
                         <tr>
                             <td class="fw-semibold text-muted ps-3 py-2" style="width:42%;">Reference No</td>
-                            <td class="py-2 fw-bold" style="color:#3d5fa8;">{{ $rentOut->agreement_no }}</td>
+                            <td class="py-2 fw-bold" style="color:#24447f;">{{ $rentOut->agreement_no }}</td>
                         </tr>
                         <tr>
                             <td class="fw-semibold text-muted ps-3 py-2">Group</td>
@@ -228,10 +250,11 @@
 
     {{-- ── Column 2: Agreement Details ── --}}
     <div class="col-lg-4">
-        <div class="card border-0 shadow-sm h-100">
-            <div class="card-header py-2 px-3 text-white fw-semibold small"
-                 style="background: linear-gradient(135deg, #3a9d8f, #2a7a6d);">
+        <div class="card border-0 h-100" style="box-shadow: 0 2px 12px rgba(0,0,0,.08); border-radius: 8px; overflow:hidden;">
+            <div class="card-header py-2 px-3 text-white fw-semibold small position-relative overflow-hidden"
+                 style="background: linear-gradient(135deg, #0ba5c9, #0e7490); border:none;">
                 <i class="fa fa-file-text-o me-2"></i>{{ $title }} Details
+                <i class="fa fa-file-text-o position-absolute" style="right:12px; top:50%; transform:translateY(-50%); font-size:1.5rem; opacity:.15;"></i>
             </div>
             <div class="card-body p-0">
                 <table class="table table-sm table-hover align-middle mb-0" style="font-size:.82rem;">
@@ -287,11 +310,11 @@
                             <td class="fw-semibold text-muted ps-3 py-2">
                                 {{ $isRental ? 'Monthly Rent' : 'Sale Price' }}
                             </td>
-                            <td class="py-2 fw-bold" style="color:#2e7d56;">{{ number_format($rentOut->rent, 2) }}</td>
+                            <td class="py-2 fw-bold" style="color: var(--color-success, #059669);">{{ number_format($rentOut->rent, 2) }}</td>
                         </tr>
                         <tr>
                             <td class="fw-semibold text-muted ps-3 py-2">Security Amount</td>
-                            <td class="py-2 fw-bold" style="color:#2a7a8a;">{{ number_format($securityTotal, 2) }}</td>
+                            <td class="py-2 fw-bold" style="color:#0e7490;">{{ number_format($securityTotal, 2) }}</td>
                         </tr>
                     </tbody>
                 </table>
@@ -303,21 +326,21 @@
                     </div>
                     <div class="row g-2 text-center">
                         <div class="col-4">
-                            <div class="rounded py-2 px-1" style="background:#eef2ff; border:1px solid #c7d3f0;">
+                            <div class="rounded py-2 px-1" style="background:#ecfeff; border:1px solid #a5f3fc;">
                                 <div class="text-muted" style="font-size:.68rem;">Total</div>
-                                <div class="fw-bold small" style="color:#3d5fa8;">{{ number_format($totalRent, 2) }}</div>
+                                <div class="fw-bold small" style="color:#0e7490;">{{ number_format($totalRent, 2) }}</div>
                             </div>
                         </div>
                         <div class="col-4">
-                            <div class="rounded py-2 px-1" style="background:#fff8ec; border:1px solid #f0d9a0;">
+                            <div class="rounded py-2 px-1" style="background: var(--color-warning-bg, #fffbeb); border:1px solid #f5d98a;">
                                 <div class="text-muted" style="font-size:.68rem;">Discount</div>
-                                <div class="fw-bold small" style="color:#a07820;">{{ number_format($totalDiscount, 2) }}</div>
+                                <div class="fw-bold small" style="color: var(--color-warning, #d97706);">{{ number_format($totalDiscount, 2) }}</div>
                             </div>
                         </div>
                         <div class="col-4">
-                            <div class="rounded py-2 px-1" style="background:#f0faf5; border:1px solid #a8d8be;">
+                            <div class="rounded py-2 px-1" style="background: var(--color-success-bg, #ecfdf5); border:1px solid #86dbb5;">
                                 <div class="text-muted" style="font-size:.68rem;">Paid</div>
-                                <div class="fw-bold small" style="color:#2e7d56;">{{ number_format($totalPaid, 2) }}</div>
+                                <div class="fw-bold small" style="color: var(--color-success, #059669);">{{ number_format($totalPaid, 2) }}</div>
                             </div>
                         </div>
                     </div>
@@ -328,10 +351,11 @@
 
     {{-- ── Column 3: Collection & Payment Status ── --}}
     <div class="col-lg-4">
-        <div class="card border-0 shadow-sm h-100">
-            <div class="card-header py-2 px-3 text-white fw-semibold small"
-                 style="background: linear-gradient(135deg, #4a9e72, #317a52);">
+        <div class="card border-0 h-100" style="box-shadow: 0 2px 12px rgba(0,0,0,.08); border-radius: 8px; overflow:hidden;">
+            <div class="card-header py-2 px-3 text-white fw-semibold small position-relative overflow-hidden"
+                 style="background: linear-gradient(135deg, #10b981, #047857); border:none;">
                 <i class="fa fa-money me-2"></i>Collection Information
+                <i class="fa fa-money position-absolute" style="right:12px; top:50%; transform:translateY(-50%); font-size:1.5rem; opacity:.15;"></i>
             </div>
             <div class="card-body p-0">
                 <table class="table table-sm table-hover align-middle mb-0" style="font-size:.82rem;">
@@ -367,11 +391,11 @@
                         <span class="small fw-semibold text-muted">
                             <i class="fa fa-list me-1"></i> Payment Breakdown
                         </span>
-                        <span class="badge rounded-pill" style="background:#5b7fb5;">{{ $paidMonths }}/{{ $totalMonths }} paid</span>
+                        <span class="badge rounded-pill" style="background: linear-gradient(135deg, #0891b2, #0e7490);">{{ $paidMonths }}/{{ $totalMonths }} paid</span>
                     </div>
                     <table class="table table-sm table-bordered mb-0" style="font-size:.78rem;">
                         <thead>
-                            <tr style="background: #4a5568; color: #e2e8f0;">
+                            <tr style="background: linear-gradient(135deg, #0891b2, #0e7490); color: #ffffff;">
                                 <th class="py-1 px-2 fw-semibold border-0">Type</th>
                                 <th class="py-1 px-2 text-end fw-semibold border-0">Paid</th>
                                 <th class="py-1 px-2 text-end fw-semibold border-0">Pending</th>
@@ -383,16 +407,16 @@
                                     <i class="fa fa-{{ $isRental ? 'home' : 'tag' }} me-1 text-muted"></i>
                                     {{ $isRental ? 'Rent' : 'Sale' }}
                                 </td>
-                                <td class="py-1 px-2 text-end fw-bold" style="color:#2e7d56;">{{ number_format($totalPaid, 2) }}</td>
-                                <td class="py-1 px-2 text-end fw-bold" style="color:#b94a3a;">{{ number_format($totalPending, 2) }}</td>
+                                <td class="py-1 px-2 text-end fw-bold" style="color: var(--color-success, #059669);">{{ number_format($totalPaid, 2) }}</td>
+                                <td class="py-1 px-2 text-end fw-bold" style="color: var(--color-error, #dc2626);">{{ number_format($totalPending, 2) }}</td>
                             </tr>
                             @if($isRental)
                             <tr>
                                 <td class="py-1 px-2 fw-semibold">
                                     <i class="fa fa-bolt me-1 text-muted"></i> Utilities
                                 </td>
-                                <td class="py-1 px-2 text-end fw-bold" style="color:#2e7d56;">{{ number_format($utilitiesPaid, 2) }}</td>
-                                <td class="py-1 px-2 text-end fw-bold" style="color:#b94a3a;">{{ number_format($utilitiesPending, 2) }}</td>
+                                <td class="py-1 px-2 text-end fw-bold" style="color: var(--color-success, #059669);">{{ number_format($utilitiesPaid, 2) }}</td>
+                                <td class="py-1 px-2 text-end fw-bold" style="color: var(--color-error, #dc2626);">{{ number_format($utilitiesPending, 2) }}</td>
                             </tr>
                             @endif
                             @if($rentOut->management_fee > 0)
@@ -400,7 +424,7 @@
                                 <td class="py-1 px-2 fw-semibold">
                                     <i class="fa fa-briefcase me-1 text-muted"></i> Mgmt Fee
                                 </td>
-                                <td class="py-1 px-2 text-end fw-bold" style="color:#2e7d56;">{{ number_format($rentOut->management_fee, 2) }}</td>
+                                <td class="py-1 px-2 text-end fw-bold" style="color: var(--color-success, #059669);">{{ number_format($rentOut->management_fee, 2) }}</td>
                                 <td class="py-1 px-2 text-end fw-bold">—</td>
                             </tr>
                             @endif

@@ -11,8 +11,9 @@ class DeleteAction
     {
         try {
             $model = RentOutDocument::findOrFail($id);
-            if ($model->path && Storage::exists($model->path)) {
-                Storage::delete($model->path);
+            $path = preg_replace('#^public/#', '', $model->path);
+            if ($path && Storage::disk('public')->exists($path)) {
+                Storage::disk('public')->delete($path);
             }
             $model->delete();
             $return['success'] = true;
