@@ -5,9 +5,8 @@ use App\Http\Controllers\Property\PropertyController;
 use App\Http\Controllers\Property\PropertyGroupController;
 use App\Http\Controllers\Property\PropertyTypeController;
 use App\Http\Controllers\Property\RentOutPaymentController;
-use App\Http\Controllers\Property\RentOutRentController;
+use App\Http\Controllers\Property\RentOutController;
 use App\Http\Controllers\Property\RentOutReportController;
-use App\Http\Controllers\Property\RentOutSaleController;
 use App\Http\Controllers\Property\TenantDetailController;
 use Illuminate\Support\Facades\Route;
 
@@ -39,7 +38,7 @@ Route::middleware('auth')->group(function (): void {
 
         // RentOut - Rent Module (agreement_type = rental)
         Route::name('rent::')->prefix('rent')->group(function (): void {
-            Route::controller(RentOutRentController::class)->group(function (): void {
+            Route::controller(RentOutController::class)->group(function (): void {
                 Route::get('', 'index')->name('index')->can('rent out.view');
                 Route::get('create/{id?}', 'create')->name('create')->can('rent out.create');
                 Route::get('view/{id}', 'view')->name('view')->can('rent out.view');
@@ -60,7 +59,7 @@ Route::middleware('auth')->group(function (): void {
 
         // RentOut - Sale/Lease Module (agreement_type = lease)
         Route::name('sale::')->prefix('sale')->group(function (): void {
-            Route::controller(RentOutSaleController::class)->group(function (): void {
+            Route::controller(RentOutController::class)->group(function (): void {
                 Route::get('', 'index')->name('index')->can('rent out lease.view');
                 Route::get('create/{id?}', 'create')->name('create')->can('rent out lease.create');
                 Route::get('view/{id}', 'view')->name('view')->can('rent out lease.view');

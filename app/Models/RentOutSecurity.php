@@ -22,6 +22,8 @@ class RentOutSecurity extends Model implements AuditableContracts
         'rent_out_id',
         'amount',
         'payment_mode',
+        'bank_name',
+        'cheque_no',
         'status',
         'type',
         'due_date',

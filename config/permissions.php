@@ -121,6 +121,7 @@ return [
     'property group' => ['create', 'view', 'edit', 'delete'],
     'property building' => ['create', 'view', 'edit', 'delete'],
     'property type' => ['create', 'view', 'edit', 'delete'],
+    'document type' => ['create', 'view', 'edit', 'delete'],
     'tenant detail' => ['create', 'view', 'edit', 'delete'],
 
     // RentOut - Rent Module

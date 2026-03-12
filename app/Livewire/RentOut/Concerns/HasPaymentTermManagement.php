@@ -24,7 +24,6 @@ trait HasPaymentTermManagement
             'extends',
             'notes.creator',
             'services',
-            'utilities',
             'utilityTerms.utility',
             'journals',
         ])->find($id ?? $this->rentOut->id);

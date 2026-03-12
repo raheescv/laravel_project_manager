@@ -36,20 +36,6 @@ class BookAction
                 (new JournalEntryAction())->executeDownPayment($rentOut, $userId);
             }
 
-            // Handle utilities
-            if (! empty($data['utilities'])) {
-                foreach ($data['utilities'] as $utilityId => $checked) {
-                    if ($checked) {
-                        (new Utility\CreateAction())->execute([
-                            'rent_out_id' => $rentOut->id,
-                            'utility_id' => $utilityId,
-                            'tenant_id' => $rentOut->tenant_id,
-                            'branch_id' => $rentOut->branch_id,
-                        ]);
-                    }
-                }
-            }
-
             $return['success'] = true;
             $return['message'] = 'Successfully Created Booking';
             $return['data'] = $rentOut;

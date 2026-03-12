@@ -11,6 +11,7 @@ use App\Http\Controllers\Settings\BranchController;
 use App\Http\Controllers\Settings\CategoryController;
 use App\Http\Controllers\Settings\CountryController;
 use App\Http\Controllers\Settings\CustomerTypeController;
+use App\Http\Controllers\Settings\DocumentTypeController;
 use App\Http\Controllers\Settings\DepartmentController;
 use App\Http\Controllers\Settings\DesignationController;
 use App\Http\Controllers\Settings\RackController;
@@ -75,6 +76,10 @@ Route::middleware('auth')->group(function (): void {
         });
         Route::name('working_day::')->prefix('working-day')->controller(\App\Http\Controllers\Settings\WorkingDayController::class)->group(function (): void {
             Route::get('', 'index')->name('index')->can('configuration.settings');
+        });
+        Route::name('document_type::')->prefix('document-type')->controller(DocumentTypeController::class)->group(function (): void {
+            Route::get('', 'index')->name('index')->can('document type.view');
+            Route::get('list', 'get')->name('list');
         });
         Route::name('brand::')->prefix('brand')->controller(BrandController::class)->group(function (): void {
             Route::get('', 'index')->name('index')->can('brand.view');

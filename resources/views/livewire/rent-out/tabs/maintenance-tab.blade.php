@@ -1,4 +1,12 @@
 <div>
+    {{-- Summary --}}
+    <div class="d-flex justify-content-between align-items-center mb-2">
+        <div class="small text-muted">
+            <i class="fa fa-wrench me-1"></i>
+            <strong>{{ count($rentOut->maintenances ?? []) }}</strong> maintenance record(s)
+        </div>
+    </div>
+
     <div class="table-responsive">
         <table class="table table-hover align-middle border-bottom mb-0 table-sm">
             <thead class="bg-light text-muted">

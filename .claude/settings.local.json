@@ -6,7 +6,8 @@
       "Bash(php artisan make:migration add_id_expiry_date_and_remarks_to_accounts_table --table=accounts --no-interaction)",
       "Bash(vendor/bin/pint --dirty --format agent)",
       "Bash(php artisan migrate)",
-      "Bash(php artisan migrate --force)"
+      "Bash(php artisan migrate --force)",
+      "Bash(php artisan:*)"
     ]
   }
 }

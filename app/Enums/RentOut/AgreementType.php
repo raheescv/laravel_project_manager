@@ -14,4 +14,9 @@ enum AgreementType: string
             self::Lease => 'Lease / Sale',
         };
     }
+
+    public function config(): \App\Support\RentOutConfig
+    {
+        return new \App\Support\RentOutConfig($this);
+    }
 }

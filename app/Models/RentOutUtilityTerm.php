@@ -17,9 +17,12 @@ class RentOutUtilityTerm extends Model implements AuditableContracts
         'tenant_id',
         'branch_id',
         'rent_out_id',
-        'rent_out_utility_id',
+        'utility_id',
         'amount',
         'balance',
+        'paid',
+        'payment_mode',
+        'paid_date',
         'date',
         'remarks',
         'created_by',
@@ -27,16 +30,25 @@ class RentOutUtilityTerm extends Model implements AuditableContracts
 
     protected $casts = [
         'date' => 'date',
+        'paid_date' => 'date',
         'amount' => 'decimal:2',
         'balance' => 'decimal:2',
+        'paid' => 'decimal:2',
     ];
+
+    protected static function booted(): void
+    {
+        static::saving(function (self $model) {
+            $model->balance = $model->amount - ($model->paid ?? 0);
+        });
+    }
 
     public static function rules($id = 0): array
     {
         return [
             'rent_out_id' => 'required|exists:rent_outs,id',
-            'rent_out_utility_id' => 'required|exists:rent_out_utilities,id',
-            'amount' => 'required|numeric|min:0',
+            'utility_id'  => 'required|exists:utilities,id',
+            'amount'      => 'required|numeric|min:0',
         ];
     }
 
@@ -47,6 +59,6 @@ class RentOutUtilityTerm extends Model implements AuditableContracts
 
     public function utility(): BelongsTo
     {
-        return $this->belongsTo(RentOutUtility::class, 'rent_out_utility_id');
+        return $this->belongsTo(Utility::class);
     }
 }

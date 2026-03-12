@@ -21,10 +21,7 @@ class DeleteAction
             $model->securities()->delete();
             $model->extends()->delete();
             $model->cheques()->delete();
-            $model->utilities()->each(function ($utility) {
-                $utility->terms()->delete();
-                $utility->delete();
-            });
+            $model->utilityTerms()->delete();
             $model->services()->delete();
             $model->notes()->delete();
 

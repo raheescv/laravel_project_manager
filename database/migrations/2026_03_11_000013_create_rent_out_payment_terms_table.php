@@ -13,12 +13,17 @@ return new class extends Migration
             $table->unsignedBigInteger('tenant_id');
             $table->unsignedBigInteger('branch_id');
             $table->foreignId('rent_out_id')->constrained('rent_outs')->cascadeOnDelete();
+            $table->string('label')->nullable();
             $table->decimal('amount', 16, 2)->default(0);
             $table->decimal('discount', 16, 2)->default(0);
             $table->decimal('total', 16, 2)->default(0);
+            $table->decimal('paid', 16, 2)->default(0);
+            $table->decimal('balance', 16, 2)->default(0);
             $table->date('due_date');
             $table->date('paid_date')->nullable();
             $table->string('status')->default('pending'); // pending, paid, overdue, cancelled
+            $table->string('payment_mode')->nullable();
+            $table->string('cheque_no')->nullable();
             $table->text('remarks')->nullable();
             $table->unsignedBigInteger('created_by')->nullable();
             $table->softDeletes();

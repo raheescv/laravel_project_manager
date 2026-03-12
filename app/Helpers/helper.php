@@ -736,6 +736,13 @@ if (! function_exists('paymentModeOptions')) {
     }
 }
 
+if (! function_exists('paymentMethodsOptions')) {
+    function paymentMethodsOptions(): array
+    {
+        return \App\Models\Account::whereIn('id', cache('payment_methods', []))->pluck('name', 'id')->toArray();
+    }
+}
+
 if (! function_exists('agreementTypeOptions')) {
     function agreementTypeOptions(): array
     {

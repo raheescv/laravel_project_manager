@@ -360,6 +360,11 @@
                                                     <i class="fa fa-folder-open fs-5 me-2"></i>Account Category
                                                 </a>
                                             @endcan
+                                            @can('document type.view')
+                                                <a href="{{ route('settings::document_type::index') }}" class="list-group-item list-group-item-action header-mega-child">
+                                                    <i class="fa fa-file-text-o fs-5 me-2"></i>Document Types
+                                                </a>
+                                            @endcan
                                         </div>
                                         <div class="header-mega-section">
                                             <div class="header-mega-title">

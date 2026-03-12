@@ -1,4 +1,16 @@
 <div>
+    {{-- Action Buttons --}}
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <div class="small text-muted">
+            <i class="fa fa-plus-circle me-1"></i>
+            <strong>{{ $rentOut->extends->count() }}</strong> extension(s)
+        </div>
+        <button type="button" class="btn btn-sm btn-primary shadow-sm" wire:click="openExtendModal">
+            <i class="fa fa-plus me-1"></i> Add Extension
+        </button>
+    </div>
+
+    {{-- Table --}}
     <div class="table-responsive">
         <table class="table table-hover align-middle border-bottom mb-0 table-sm">
             <thead class="bg-light text-muted">
@@ -9,6 +21,7 @@
                     <th class="fw-semibold py-2 text-end">Rent Amount</th>
                     <th class="fw-semibold py-2">Payment Mode</th>
                     <th class="fw-semibold py-2">Remarks</th>
+                    <th class="fw-semibold py-2 text-center" style="width: 70px;">Actions</th>
                 </tr>
             </thead>
             <tbody>
@@ -20,9 +33,15 @@
                         <td class="text-end fw-medium">{{ number_format($extend->rent_amount, 2) }}</td>
                         <td>{{ $extend->payment_mode?->label() }}</td>
                         <td>{{ $extend->remarks }}</td>
+                        <td class="text-center">
+                            <button type="button" class="btn btn-light btn-sm" wire:click="deleteExtend({{ $extend->id }})"
+                                wire:confirm="Are you sure you want to delete this extension?" title="Delete">
+                                <i class="fa fa-trash text-danger"></i>
+                            </button>
+                        </td>
                     </tr>
                 @empty
-                    <tr><td colspan="6" class="text-center text-muted py-3">No extensions found</td></tr>
+                    <tr><td colspan="7" class="text-center text-muted py-3">No extensions found</td></tr>
                 @endforelse
             </tbody>
         </table>
