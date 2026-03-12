@@ -19,4 +19,9 @@
             @livewire('rent-out.rent.view', ['id' => $id])
         </div>
     </div>
+
+    {{-- Modals --}}
+    @include('components.rent-out.single-payment-term-modal')
+    @include('components.rent-out.multiple-payment-term-modal')
+    @include('components.rent-out.pay-selected-modal')
 </x-app-layout>

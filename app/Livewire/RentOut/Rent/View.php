@@ -12,7 +12,6 @@ class View extends Component
     public function mount($id)
     {
         $this->loadRentOut($id);
-        $this->resetSingleTerm();
     }
 
     protected function defaultTermLabel(): string

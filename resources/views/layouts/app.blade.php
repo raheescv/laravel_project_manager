@@ -199,39 +199,31 @@
             });
 
             window.addEventListener('success', event => {
-                if (typeof(event.detail[0].title) != "undefined" && typeof(event.detail[0].message) != "undefined") {
-                    toastr.info(event.detail[0].message, event.detail[0].title);
-                    return false;
-                }
-                if (typeof(event.detail[0].title) != "undefined") {
-                    toastr.info(event.detail[0].title);
-                    return false;
-                }
-                if (typeof(event.detail[0].message) != "undefined") {
-                    toastr.info(event.detail[0].message);
-                    return false;
+                var data = event.detail[0] || event.detail;
+                if (data && data.title && data.message) {
+                    toastr.info(data.message, data.title);
+                } else if (data && data.title) {
+                    toastr.info(data.title);
+                } else if (data && data.message) {
+                    toastr.info(data.message);
                 }
             });
             window.addEventListener('warning', event => {
-                if (typeof(event.detail[0].title) != "undefined" && typeof(event.detail[0].message) != "undefined") {
-                    toastr.warning(event.detail[0].message, event.detail[0].title);
-                    return false;
-                }
-                if (typeof(event.detail[0].title) != "undefined") {
-                    toastr.warning(event.detail[0].title);
-                    return false;
-                }
-                if (typeof(event.detail[0].message) != "undefined") {
-                    toastr.warning(event.detail[0].message);
-                    return false;
+                var data = event.detail[0] || event.detail;
+                if (data && data.title && data.message) {
+                    toastr.warning(data.message, data.title);
+                } else if (data && data.title) {
+                    toastr.warning(data.title);
+                } else if (data && data.message) {
+                    toastr.warning(data.message);
                 }
             });
             window.addEventListener('error', event => {
-                if (typeof(event.detail) != "undefined") {
-                    toastr.error(event.detail[0].message)
-                }
-                if (typeof(event.error) != "undefined") {
-                    toastr.error(event.error.message)
+                var data = event.detail[0] || event.detail;
+                if (data && data.message) {
+                    toastr.error(data.message);
+                } else if (event.error && event.error.message) {
+                    toastr.error(event.error.message);
                 }
             });
         });

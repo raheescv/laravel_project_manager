@@ -7,31 +7,13 @@ use App\Actions\RentOut\PaymentTerm\DeleteAction;
 use App\Actions\RentOut\PaymentTerm\UpdateAction;
 use App\Models\RentOut;
 use App\Models\RentOutPaymentTerm;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Livewire\Attributes\On;
 
 trait HasPaymentTermManagement
 {
     public $rentOut;
-
-    // Single Term Modal
-    public $showSingleTermModal = false;
-    public $editingTermId = null;
-    public $singleTerm = [];
-
-    // Multiple Term Modal
-    public $showMultipleTermModal = false;
-    public $multipleTermFromDate;
-    public $multipleTermNoOfTerms;
-    public $multipleTermRent;
-    public $multipleTermList = [];
-
-    // Pay Selected Modal
-    public $showPaySelectedModal = false;
-    public $selectedTermIds = [];
-    public $payDate;
-    public $payPaymentMode = 'cash';
-    public $payRemark = '';
-    public $cashTerms = [];
 
     // Note
     public $newNote = '';
@@ -68,69 +50,61 @@ trait HasPaymentTermManagement
 
     // ─── Single Term ────────────────────────────────────────────
 
-    public function resetSingleTerm()
-    {
-        $this->singleTerm = [
-            'rent_out_id' => $this->rentOut->id ?? null,
-            'due_date' => now()->format('Y-m-d'),
-            'label' => '',
-            'amount' => $this->rentOut->rent ?? 0,
-            'discount' => 0,
-            'remarks' => '',
-        ];
-        $this->editingTermId = null;
-    }
-
     public function openSingleTermModal()
     {
-        $this->resetSingleTerm();
-        $this->showSingleTermModal = true;
+        $this->dispatch('open-single-term-modal',
+            form: [
+                'rent_out_id' => $this->rentOut->id,
+                'due_date' => now()->format('Y-m-d'),
+                'label' => '',
+                'amount' => $this->rentOut->rent ?? 0,
+                'discount' => 0,
+                'remarks' => '',
+            ],
+            editingTermId: null,
+        );
     }
 
     public function editPaymentTerm($id)
     {
         $term = RentOutPaymentTerm::find($id);
         if ($term) {
-            $this->editingTermId = $id;
-            $this->singleTerm = [
-                'rent_out_id' => $term->rent_out_id,
-                'due_date' => $term->due_date?->format('Y-m-d'),
-                'label' => $term->label ?? '',
-                'amount' => $term->amount,
-                'discount' => $term->discount,
-                'remarks' => $term->remarks,
-            ];
-            $this->showSingleTermModal = true;
+            $this->dispatch('open-single-term-modal',
+                form: [
+                    'rent_out_id' => $term->rent_out_id,
+                    'due_date' => $term->due_date?->format('Y-m-d'),
+                    'label' => $term->label ?? '',
+                    'amount' => $term->amount,
+                    'discount' => $term->discount,
+                    'remarks' => $term->remarks,
+                ],
+                editingTermId: $id,
+            );
         }
     }
 
-    public function saveSingleTerm()
+    #[On('saveSingleTermFromModal')]
+    public function saveSingleTermFromModal($form, $editingTermId = null)
     {
-        $this->validate([
-            'singleTerm.due_date' => 'required|date',
-            'singleTerm.amount' => 'required|numeric|min:0',
-        ], [
-            'singleTerm.due_date.required' => 'Date is required.',
-            'singleTerm.amount.required' => 'Amount is required.',
-        ]);
+        $form['rent_out_id'] = $this->rentOut->id;
 
         try {
             DB::beginTransaction();
-            if ($this->editingTermId) {
-                $response = (new UpdateAction())->execute($this->singleTerm, $this->editingTermId);
+            if ($editingTermId) {
+                $response = (new UpdateAction())->execute($form, $editingTermId);
             } else {
-                $response = (new CreateAction())->execute($this->singleTerm);
+                $response = (new CreateAction())->execute($form);
             }
             if (! $response['success']) {
                 throw new \Exception($response['message']);
             }
             DB::commit();
-            $this->showSingleTermModal = false;
             $this->loadRentOut();
-            $this->dispatch('success', ['message' => $response['message']]);
+            $this->dispatch('single-term-saved');
+            $this->dispatch('success', message: $response['message']);
         } catch (\Exception $e) {
             DB::rollback();
-            $this->dispatch('error', ['message' => $e->getMessage()]);
+            $this->dispatch('error', message: $e->getMessage());
         }
     }
 
@@ -138,79 +112,42 @@ trait HasPaymentTermManagement
 
     public function openMultipleTermModal()
     {
-        $this->multipleTermNoOfTerms = $this->rentOut->no_of_terms ?? 12;
-        $this->multipleTermRent = $this->rentOut->rent ?? 0;
+        $noOfTerms = $this->rentOut->no_of_terms ?? 12;
+        $rent = $this->rentOut->rent ?? 0;
 
         $lastTerm = $this->rentOut->paymentTerms->sortByDesc('due_date')->first();
         if ($lastTerm) {
-            $this->multipleTermFromDate = date('Y-m-d', strtotime('+1 month', strtotime($lastTerm->due_date)));
+            $fromDate = date('Y-m-d', strtotime('+1 month', strtotime($lastTerm->due_date)));
         } else {
             $day = str_pad($this->rentOut->collection_starting_day ?? 1, 2, '0', STR_PAD_LEFT);
-            $this->multipleTermFromDate = date("Y-m-{$day}", strtotime($this->rentOut->start_date));
+            $fromDate = date("Y-m-{$day}", strtotime($this->rentOut->start_date));
         }
 
-        $this->generateMultipleTermList();
-        $this->showMultipleTermModal = true;
+        $this->dispatch('open-multiple-term-modal',
+            fromDate: $fromDate,
+            noOfTerms: $noOfTerms,
+            rent: $rent,
+            frequency: $this->rentOut->payment_frequency ?? 'Monthly',
+            endDate: $this->rentOut->end_date?->format('Y-m-d'),
+            info: [
+                'rent' => $rent,
+                'noOfTerms' => $noOfTerms,
+                'frequency' => strtoupper($this->rentOut->payment_frequency ?? 'Monthly'),
+                'startDate' => $this->rentOut->start_date?->format('d-m-Y'),
+                'endDate' => $this->rentOut->end_date?->format('d-m-Y'),
+            ],
+        );
     }
 
-    public function updatedMultipleTermFromDate()
-    {
-        $this->generateMultipleTermList();
-    }
-
-    public function updatedMultipleTermNoOfTerms()
-    {
-        $this->generateMultipleTermList();
-    }
-
-    public function updatedMultipleTermRent()
-    {
-        $this->generateMultipleTermList();
-    }
-
-    public function generateMultipleTermList()
-    {
-        $this->multipleTermList = [];
-        $frequency = $this->rentOut->payment_frequency ?? 'Monthly';
-        [$unit, $multiplier] = $this->getPaymentFrequency($frequency);
-
-        for ($i = 0; $i < $this->multipleTermNoOfTerms; $i++) {
-            $increment = $i * $multiplier;
-            $date = date('Y-m-d', strtotime("+{$increment} {$unit}", strtotime($this->multipleTermFromDate)));
-
-            if (strtotime($date) <= strtotime($this->rentOut->end_date)) {
-                $this->multipleTermList[] = [
-                    'date' => $date,
-                    'rent' => $this->multipleTermRent,
-                    'discount' => 0,
-                ];
-            }
-        }
-    }
-
-    private function getPaymentFrequency($frequency): array
-    {
-        return match ($frequency) {
-            'Daily' => ['days', 1],
-            'Weekly' => ['weeks', 1],
-            'Bi-Weekly' => ['weeks', 2],
-            'Monthly' => ['months', 1],
-            'Quarterly' => ['months', 3],
-            'Half Yearly' => ['months', 6],
-            'Yearly' => ['years', 1],
-            'One Time' => ['years', 100],
-            default => ['months', 1],
-        };
-    }
-
-    public function saveMultipleTerms()
+    #[On('saveMultipleTermsFromModal')]
+    public function saveMultipleTermsFromModal($terms)
     {
         try {
             DB::beginTransaction();
-            if (! count($this->multipleTermList)) {
+            if (! count($terms)) {
                 throw new \Exception('No terms to create.');
             }
-            foreach ($this->multipleTermList as $item) {
+            foreach ($terms as $item) {
                 $data = [
                     'rent_out_id' => $this->rentOut->id,
                     'due_date' => $item['date'],
@@ -224,16 +161,28 @@ trait HasPaymentTermManagement
                 }
             }
             DB::commit();
-            $this->showMultipleTermModal = false;
             $this->loadRentOut();
-            $this->dispatch('success', ['message' => 'Successfully created ' . count($this->multipleTermList) . ' payment terms.']);
+            $this->dispatch('multiple-terms-saved');
+            $this->dispatch('success', message: 'Successfully created ' . count($terms) . ' payment terms.');
         } catch (\Exception $e) {
             DB::rollback();
-            $this->dispatch('error', ['message' => $e->getMessage()]);
+            $this->dispatch('error', message: $e->getMessage());
         }
     }
 
     // ─── Delete Payment Terms ───────────────────────────────────
+
+    #[On('deleteSelectedTermsFromJS')]
+    public function deleteSelectedTermsFromJS($ids)
+    {
+        $this->deleteSelectedTerms($ids);
+    }
+
+    #[On('paySelectedTermsFromJS')]
+    public function paySelectedTermsFromJS($ids)
+    {
+        $this->openPaySelectedModal($ids);
+    }
 
     public function deletePaymentTerm($id)
     {
@@ -245,10 +194,10 @@ trait HasPaymentTermManagement
             }
             DB::commit();
             $this->loadRentOut();
-            $this->dispatch('success', ['message' => $response['message']]);
+            $this->dispatch('success', message: $response['message']);
         } catch (\Exception $e) {
             DB::rollback();
-            $this->dispatch('error', ['message' => $e->getMessage()]);
+            $this->dispatch('error', message: $e->getMessage());
         }
     }
 
@@ -264,10 +213,10 @@ trait HasPaymentTermManagement
             }
             DB::commit();
             $this->loadRentOut();
-            $this->dispatch('success', ['message' => 'Successfully deleted ' . count($ids) . ' payment term(s).']);
+            $this->dispatch('success', message: 'Successfully deleted ' . count($ids) . ' payment term(s).');
         } catch (\Exception $e) {
             DB::rollback();
-            $this->dispatch('error', ['message' => $e->getMessage()]);
+            $this->dispatch('error', message: $e->getMessage());
         }
     }
 
@@ -275,13 +224,8 @@ trait HasPaymentTermManagement
 
     public function openPaySelectedModal($ids)
     {
-        $this->selectedTermIds = $ids;
-        $this->payDate = now()->format('Y-m-d');
-        $this->payPaymentMode = 'cash';
-        $this->payRemark = '';
-
         $terms = RentOutPaymentTerm::whereIn('id', $ids)->where('balance', '>', 0)->get();
-        $this->cashTerms = $terms->map(function ($term) {
+        $cashTerms = $terms->map(function ($term) {
             return [
                 'id' => $term->id,
                 'date' => $term->due_date?->format('d-m-Y'),
@@ -294,29 +238,34 @@ trait HasPaymentTermManagement
             ];
         })->toArray();
 
-        $this->showPaySelectedModal = true;
+        $this->dispatch('open-pay-selected-modal',
+            payDate: now()->format('Y-m-d'),
+            payPaymentMode: 'cash',
+            cashTerms: $cashTerms,
+        );
     }
 
-    public function submitPayment()
+    #[On('submitPaymentFromModal')]
+    public function submitPaymentFromModal($payDate, $payPaymentMode, $payRemark, $cashTerms)
     {
         try {
             DB::beginTransaction();
-            foreach ($this->cashTerms as $cashTerm) {
+            foreach ($cashTerms as $cashTerm) {
                 $term = RentOutPaymentTerm::find($cashTerm['id']);
                 if ($term && $cashTerm['amount'] > 0) {
                     $term->paid = ($term->paid ?? 0) + $cashTerm['amount'];
-                    $term->payment_mode = $cashTerm['payment_mode'] ?? $this->payPaymentMode;
-                    $term->paid_date = $this->payDate;
+                    $term->payment_mode = $cashTerm['payment_mode'] ?? $payPaymentMode;
+                    $term->paid_date = $payDate;
                     $term->save();
                 }
             }
             DB::commit();
-            $this->showPaySelectedModal = false;
             $this->loadRentOut();
-            $this->dispatch('success', ['message' => 'Payment submitted successfully.']);
+            $this->dispatch('payment-submitted');
+            $this->dispatch('success', message: 'Payment submitted successfully.');
         } catch (\Exception $e) {
             DB::rollback();
-            $this->dispatch('error', ['message' => $e->getMessage()]);
+            $this->dispatch('error', message: $e->getMessage());
         }
     }
 
@@ -339,10 +288,10 @@ trait HasPaymentTermManagement
             DB::commit();
             $this->newNote = '';
             $this->loadRentOut();
-            $this->dispatch('success', ['message' => 'Note added successfully.']);
+            $this->dispatch('success', message: 'Note added successfully.');
         } catch (\Exception $e) {
             DB::rollback();
-            $this->dispatch('error', ['message' => $e->getMessage()]);
+            $this->dispatch('error', message: $e->getMessage());
         }
     }
 
@@ -356,10 +305,10 @@ trait HasPaymentTermManagement
             }
             DB::commit();
             $this->loadRentOut();
-            $this->dispatch('success', ['message' => 'Note deleted successfully.']);
+            $this->dispatch('success', message: 'Note deleted successfully.');
         } catch (\Exception $e) {
             DB::rollback();
-            $this->dispatch('error', ['message' => $e->getMessage()]);
+            $this->dispatch('error', message: $e->getMessage());
         }
     }
 }

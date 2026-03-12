@@ -32,7 +32,7 @@
         if (!confirm('Are you sure you want to delete ' + ids.length + ' selected term(s)?')) {
             return;
         }
-        @this.deleteSelectedTerms(ids);
+        Livewire.dispatch('deleteSelectedTermsFromJS', { ids: ids });
     }
 
     function paySelectedTerms() {
@@ -41,7 +41,7 @@
             alert('Please select at least one row for payment.');
             return;
         }
-        @this.openPaySelectedModal(ids);
+        Livewire.dispatch('paySelectedTermsFromJS', { ids: ids });
     }
 </script>
 @endpush
