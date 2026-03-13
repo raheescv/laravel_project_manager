@@ -78,6 +78,11 @@ trait HasRentOutReportFilters
         return in_array($column, $this->visibleColumns);
     }
 
+    public function resetColumns(): void
+    {
+        $this->visibleColumns = $this->getDefaultColumns();
+    }
+
     public function sortBy(string $field): void
     {
         if ($this->sortField === $field) {

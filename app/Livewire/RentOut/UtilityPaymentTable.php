@@ -127,6 +127,12 @@ class UtilityPaymentTable extends Component
         $this->filterUtility = '';
         $this->filterPaidStatus = 'pending';
         parent::resetFilters();
+        $this->js("
+            ['utility_filterGroup', 'utility_filterBuilding', 'utility_filterProperty', 'utility_filterCustomer'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el && el.tomSelect) { el.tomSelect.clear(); }
+            });
+        ");
     }
 
     public function render()

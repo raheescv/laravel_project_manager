@@ -4,6 +4,7 @@ namespace App\Actions\RentOut;
 
 use App\Models\RentOut;
 use Exception;
+use Illuminate\Support\Facades\Auth;
 
 class UpdateBookingStatusAction
 {
@@ -17,7 +18,7 @@ class UpdateBookingStatusAction
 
             $oldStatus = $model->booking_status;
             $date = now();
-            $userId = auth()->id();
+            $userId = Auth::id();
             $data = ['booking_status' => $status];
 
             switch ($status) {

@@ -3,11 +3,14 @@
 namespace App\Livewire\RentOut;
 
 use App\Actions\RentOut\DeleteAction;
+use App\Exports\RentOut\RentOutTableExport;
+use App\Models\Configuration;
 use App\Models\RentOut;
 use App\Support\RentOutConfig;
 use Illuminate\Support\Facades\DB;
 use Livewire\Component;
 use Livewire\WithPagination;
+use Maatwebsite\Excel\Facades\Excel;
 
 class Table extends Component
 {
@@ -51,29 +54,54 @@ class Table extends Component
     public $wifiFilter = '';
 
     // Column visibility
-    public $columns = [
-        'id' => true,
-        'customer' => true,
-        'property' => true,
-        'building' => true,
-        'start_date' => true,
-        'end_date' => true,
-        'rent' => true,
-        'status' => true,
-    ];
+    public $columns = [];
 
     protected $paginationTheme = 'bootstrap';
+
+    protected function getDefaultColumns()
+    {
+        return [
+            'id' => true,
+            'customer' => true,
+            'property' => true,
+            'building' => true,
+            'start_date' => true,
+            'end_date' => true,
+            'rent' => true,
+            'status' => true,
+        ];
+    }
+
+    protected function getConfigKey()
+    {
+        return 'rent_out_'.$this->agreementType.'_visible_column';
+    }
 
     public function mount($agreementType = 'lease')
     {
         $this->agreementType = $agreementType;
+        $config = Configuration::where('key', $this->getConfigKey())->value('value');
+        $this->columns = $config ? json_decode($config, true) : $this->getDefaultColumns();
     }
 
     public function toggleColumn($column)
     {
         if (isset($this->columns[$column])) {
             $this->columns[$column] = ! $this->columns[$column];
+            Configuration::updateOrCreate(
+                ['key' => $this->getConfigKey()],
+                ['value' => json_encode($this->columns)]
+            );
         }
+    }
+
+    public function resetColumns()
+    {
+        $this->columns = $this->getDefaultColumns();
+        Configuration::updateOrCreate(
+            ['key' => $this->getConfigKey()],
+            ['value' => json_encode($this->columns)]
+        );
     }
 
     public function resetFilters()
@@ -159,6 +187,26 @@ class Table extends Component
         }
     }
 
+    public function download()
+    {
+        $filters = [
+            'agreementType' => $this->agreementType,
+            'filterGroup' => $this->filterGroup,
+            'filterBuilding' => $this->filterBuilding,
+            'filterProperty' => $this->filterProperty,
+            'filterCustomer' => $this->filterCustomer,
+            'filterStatus' => $this->filterStatus,
+            'fromDate' => $this->fromDate,
+            'toDate' => $this->toDate,
+            'electricityFilter' => $this->electricityFilter,
+            'acFilter' => $this->acFilter,
+            'wifiFilter' => $this->wifiFilter,
+            'search' => $this->search,
+        ];
+
+        return Excel::download(new RentOutTableExport($filters), 'rent-out-'.$this->agreementType.'-'.now()->format('Y-m-d').'.xlsx');
+    }
+
     public function sortBy($field)
     {
         if ($this->sortField === $field) {
@@ -181,7 +229,7 @@ class Table extends Component
                             $q->where('name', 'like', "%{$value}%");
                         })
                         ->orWhereHas('property', function ($q) use ($value) {
-                            $q->where('name', 'like', "%{$value}%");
+                            $q->where('number', 'like', "%{$value}%");
                         });
                 });
             })

@@ -43,6 +43,12 @@
                                     </button>
                                 </li>
                                 <li class="nav-item" role="presentation">
+                                    <button class="nav-link text-start rounded" data-bs-toggle="tab" data-bs-target="#tabsRentOutSettings" type="button" role="tab" aria-selected="false"
+                                        tabindex="-1">
+                                        <i class="demo-pli-home me-2"></i>Rent Out Settings
+                                    </button>
+                                </li>
+                                <li class="nav-item" role="presentation">
                                     <button class="nav-link text-start rounded" data-bs-toggle="tab" data-bs-target="#tabsUniversalUom" type="button" role="tab" aria-selected="false"
                                         tabindex="-1">
                                         <i class="demo-pli-data-storage me-2"></i>Universal UOM
@@ -106,6 +112,9 @@
                                 </div>
                                 <div id="tabsTailoringSettings" class="tab-pane" role="tabpanel">
                                     @livewire('settings.tailoring-configuration')
+                                </div>
+                                <div id="tabsRentOutSettings" class="tab-pane" role="tabpanel">
+                                    @livewire('settings.rent-out-configuration')
                                 </div>
                                 <div id="tabsUniversalUom" class="tab-pane" role="tabpanel">
                                     @livewire('settings.universal-uom-configuration')

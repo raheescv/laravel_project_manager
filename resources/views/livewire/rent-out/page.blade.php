@@ -306,10 +306,12 @@
                             <input type="number" class="form-control" wire:model="rent_outs.down_payment"
                                 step="0.01">
                         </div>
-                        <div class="col-md-3">
+                        <div class="col-md-3" wire:ignore>
                             <label class="form-label fw-semibold small">
-                                <i class="fa fa-credit-card text-primary me-1"></i> Payment Mode</label>
-                            {{ html()->select('down_payment_mode', paymentModeOptions())->value($rent_outs['down_payment_mode'] ?? '')->class('form-select')->attribute('wire:model', 'rent_outs.down_payment_mode')->placeholder('Select...') }}
+                                <i class="fa fa-credit-card text-primary me-1"></i> Payment Method</label>
+                            <select id="down_payment_payment_method_id" class="select-payment_method_id-list">
+                                <option value="">Select...</option>
+                            </select>
                         </div>
                         <div class="col-md-6">
                             <label class="form-label fw-semibold small"><i class="fa fa-comment text-muted me-1"></i>
@@ -408,6 +410,7 @@
         <x-select.propertySelect />
         <x-select.customerSelect />
         <x-select.employeeSelect />
+        <x-select.paymentMethodSelect />
 
         <script type="text/javascript">
             $(document).ready(function() {
@@ -482,6 +485,11 @@
                     @this.set('rent_outs.salesman_id', $(this).val());
                 });
 
+                // Down payment payment method select
+                $('#down_payment_payment_method_id').on('change', function() {
+                    @this.set('rent_outs.down_payment_payment_method_id', $(this).val() || null);
+                });
+
                 // Edit customer button
                 $(document).on('click', '.edit_customer', function(e) {
                     e.preventDefault();
@@ -553,6 +561,16 @@
                                 name: data.salesman_name
                             });
                             empTs.addItem(data.salesman_id);
+                        }
+                    }
+                    if (data.down_payment_payment_method_id) {
+                        var dpTs = document.querySelector('#down_payment_payment_method_id').tomselect;
+                        if (dpTs && data.down_payment_payment_method_name) {
+                            dpTs.addOption({
+                                id: data.down_payment_payment_method_id,
+                                name: data.down_payment_payment_method_name
+                            });
+                            dpTs.addItem(data.down_payment_payment_method_id);
                         }
                     }
                 });

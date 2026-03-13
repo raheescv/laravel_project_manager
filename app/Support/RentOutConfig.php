@@ -70,17 +70,29 @@ class RentOutConfig
     public string $deletePermission;
 
     // Booking Permissions
+    public string $bookingViewPermission;
+
+    public string $bookingCreatePermission;
+
     public string $bookingEditPermission;
 
-    public string $bookingCancelPermission;
+    public string $bookingDeletePermission;
 
-    public string $bookingConfirmPermission;
+    public string $bookingSubmittedPermission;
 
     public string $bookingFinancialApprovePermission;
 
     public string $bookingApprovePermission;
 
     public string $bookingCompletePermission;
+
+    public string $bookingCancelPermission;
+
+    public string $bookingConfirmPermission;
+
+    public string $bookingReservationFormPermission;
+
+    public string $bookingResidentialLeasePermission;
 
     // Events
     public string $refreshEvent;
@@ -162,12 +174,18 @@ class RentOutConfig
         $this->deletePermission = $prefix.'.delete';
 
         $bookingPrefix = $this->isRental ? 'rent out booking' : 'rent out lease booking';
+        $this->bookingViewPermission = $bookingPrefix.'.view';
+        $this->bookingCreatePermission = $bookingPrefix.'.create';
         $this->bookingEditPermission = $bookingPrefix.'.edit';
-        $this->bookingCancelPermission = $bookingPrefix.'.cancel';
-        $this->bookingConfirmPermission = $bookingPrefix.'.confirm';
+        $this->bookingDeletePermission = $bookingPrefix.'.delete';
+        $this->bookingSubmittedPermission = $bookingPrefix.'.submitted';
         $this->bookingFinancialApprovePermission = $bookingPrefix.'.financial approved';
         $this->bookingApprovePermission = $bookingPrefix.'.approved';
         $this->bookingCompletePermission = $bookingPrefix.'.completed';
+        $this->bookingCancelPermission = $bookingPrefix.'.cancel';
+        $this->bookingConfirmPermission = $bookingPrefix.'.confirm';
+        $this->bookingReservationFormPermission = $bookingPrefix.'.reservation form';
+        $this->bookingResidentialLeasePermission = $bookingPrefix.'.residential lease';
     }
 
     protected function initEvents(): void

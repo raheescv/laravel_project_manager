@@ -1,11 +1,26 @@
 @php
-    $footerLogo = \App\Models\Configuration::where('key', 'rentout_agreement_logo_footer')->value('value');
-    $footerLogoUrl = $footerLogo ? asset('storage/' . $footerLogo) : null;
+    $footerLogo = \App\Models\Configuration::where('key', 'rent_out_agreement_logo_footer')->value('value');
+    $footerLogoUrl = null;
+    if ($footerLogo) {
+        $footerLogoPath = storage_path('app/public/' . $footerLogo);
+        if (file_exists($footerLogoPath)) {
+            $footerLogoUrl = 'data:image/' . pathinfo($footerLogoPath, PATHINFO_EXTENSION) . ';base64,' . base64_encode(file_get_contents($footerLogoPath));
+        }
+    }
+
     $headerLogo = \App\Models\Configuration::where('key', 'residential_lease_logo')->value('value');
-    $headerLogoUrl = $headerLogo ? asset('storage/' . $headerLogo) : null;
-    $agreementImagesJson = \App\Models\Configuration::where('key', 'rentout_agreement_images')->value('value');
+    $headerLogoUrl = null;
+    if ($headerLogo) {
+        $headerLogoPath = storage_path('app/public/' . $headerLogo);
+        if (file_exists($headerLogoPath)) {
+            $headerLogoUrl = 'data:image/' . pathinfo($headerLogoPath, PATHINFO_EXTENSION) . ';base64,' . base64_encode(file_get_contents($headerLogoPath));
+        }
+    }
+
+    $agreementImagesJson = \App\Models\Configuration::where('key', 'rent_out_agreement_images')->value('value');
     $agreementImages = $agreementImagesJson ? json_decode($agreementImagesJson, true) : [];
     $agreementImages = is_array($agreementImages) ? $agreementImages : [];
+
     $bondPaperMode = \App\Models\Configuration::where('key', 'reservation_bond_paper_mode')->value('value') === 'yes';
     $logoHeight = (int) (\App\Models\Configuration::where('key', 'reservation_logo_height')->value('value') ?: 80);
     $footerHeight = (int) (\App\Models\Configuration::where('key', 'reservation_footer_height')->value('value') ?: 50);
@@ -353,8 +368,13 @@
 
     @foreach($agreementImages as $imgPath)
         @if($imgPath)
-            <div class="page-break"></div>
-            <img width="100%" src="{{ asset('storage/' . $imgPath) }}">
+            @php
+                $imgFullPath = storage_path('app/public/' . $imgPath);
+            @endphp
+            @if(file_exists($imgFullPath))
+                <div class="page-break"></div>
+                <img width="100%" src="data:image/{{ pathinfo($imgFullPath, PATHINFO_EXTENSION) }};base64,{{ base64_encode(file_get_contents($imgFullPath)) }}">
+            @endif
         @endif
     @endforeach
 </body>

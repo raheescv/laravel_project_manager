@@ -140,11 +140,10 @@ class JournalEntryAction
                 'created_by' => $this->userId,
             ];
 
-            $accounts = Cache::get('accounts_slug_id_map', []);
             $entries = [];
 
             $remarks = $rentOut->down_payment_remarks ?: 'RentOut Down Payment: '.$rentOut->id;
-            $paymentMethodId = $accounts[$rentOut->down_payment_mode] ?? $accounts['cash'] ?? 0;
+            $paymentMethodId = $rentOut->down_payment_payment_method_id ?? 0;
 
             $entries[] = $this->makeEntryPair(
                 $paymentMethodId,

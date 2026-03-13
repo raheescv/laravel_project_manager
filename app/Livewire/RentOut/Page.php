@@ -98,6 +98,8 @@ class Page extends Component
                 'customer_name' => $this->rentOut->customer?->name,
                 'salesman_id' => $this->rentOut->salesman_id,
                 'salesman_name' => $this->rentOut->salesman?->name,
+                'down_payment_payment_method_id' => $this->rentOut->down_payment_payment_method_id,
+                'down_payment_payment_method_name' => $this->rentOut->downPaymentPaymentMethod?->name,
             ]);
         } else {
             $this->rent_outs = [
@@ -123,10 +125,10 @@ class Page extends Component
                 'collection_bank_name' => '',
                 'collection_cheque_no' => '',
                 'management_fee' => 0,
-                'management_fee_payment_mode' => '',
+                'management_fee_payment_method_id' => null,
                 'management_fee_remarks' => '',
                 'down_payment' => 0,
-                'down_payment_mode' => '',
+                'down_payment_payment_method_id' => null,
                 'down_payment_remarks' => '',
                 'include_electricity_water' => 'Included',
                 'include_ac' => 'Included',

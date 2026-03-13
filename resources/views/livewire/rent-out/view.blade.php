@@ -6,8 +6,6 @@
                 'indexLabel' => $config->pluralLabel,
                 'editPermission' => $config->editPermission,
                 'editRoute' => $config->editRoute,
-                'bookingRoute' => $config->bookingEditRoute,
-                'isBooking' => $isBooking,
                 'config' => $config,
             ];
         @endphp
@@ -20,5 +18,4 @@
             </div>
         </div>
     @endif
-
 </div>

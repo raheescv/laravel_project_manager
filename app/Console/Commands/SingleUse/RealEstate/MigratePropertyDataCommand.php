@@ -2,9 +2,11 @@
 
 namespace App\Console\Commands\SingleUse\RealEstate;
 
+use App\Models\Account;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 
 class MigratePropertyDataCommand extends Command
 {
@@ -80,6 +82,10 @@ class MigratePropertyDataCommand extends Command
         DB::statement('SET FOREIGN_KEY_CHECKS=0;');
 
         try {
+            $this->migrateAccountHeads();
+            $this->migrateCustomers();
+            $this->migrateVendors();
+
             $this->migratePropertyGroups();
             $this->migratePropertyBuildings();
             $this->migratePropertyTypes();
@@ -155,6 +161,141 @@ class MigratePropertyDataCommand extends Command
         return $this->paymentModeMap[$modeId] ?? 'cash';
     }
 
+    private function migrateAccountHeads(): void
+    {
+        $this->info('Migrating account_heads -> accounts...');
+
+        // Migrate payment mode accounts (asset accounts like Cash, Bank, etc.)
+        $accountHeads = DB::connection('mysql2')
+            ->table('account_heads')
+            ->whereIn('account_category_id', [16, 17])
+            ->get();
+        $bar = $this->output->createProgressBar($accountHeads->count());
+
+        foreach ($accountHeads as $row) {
+            $name = ucfirst(strtolower($row->name));
+
+            $data = [
+                'tenant_id' => $this->tenantId,
+                'account_type' => 'asset',
+                'name' => $name,
+                'slug' => Str::slug($name),
+                'second_reference_no' => $row->id,
+            ];
+
+            if (! $this->dryRun) {
+                Account::updateOrCreate(
+                    ['tenant_id' => $this->tenantId, 'account_type' => 'asset', 'name' => $name],
+                    $data
+                );
+            }
+            $bar->advance();
+        }
+
+        $bar->finish();
+        $this->newLine();
+        $this->info("Migrated {$accountHeads->count()} payment mode account heads.");
+    }
+
+    private function migrateCustomers(): void
+    {
+        $this->info('Migrating customers -> accounts...');
+        $customers = DB::connection('mysql2')
+            ->table('customers')
+            ->join('account_heads', 'customers.account_head_id', '=', 'account_heads.id')
+            ->where('account_heads.id', '!=', 2)
+            ->select('customers.*', 'customers.account_head_id')
+            ->get();
+        $bar = $this->output->createProgressBar($customers->count());
+
+        foreach ($customers as $row) {
+            $name = explode('@', $row->name);
+            $nationality = $this->normalizeNationality($row->nationality ?? null);
+
+            $data = [
+                'tenant_id' => $this->tenantId,
+                'account_type' => 'asset',
+                'second_reference_no' => $row->account_head_id,
+                'model' => 'customer',
+                'name' => ucfirst(strtolower($name[0])),
+                'email' => $row->email ?? null,
+                'mobile' => $row->mobile ?? null,
+                'whatsapp_mobile' => $row->whatsapp_no ?? null,
+                'nationality' => $nationality,
+                'dob' => ($row->dob ?? null) !== '0000-00-00' ? ($row->dob ?? null) : null,
+                'id_no' => $row->id_no ?? null,
+                'company' => $row->company ?? null,
+                'created_at' => $row->created_at ?? now(),
+                'updated_at' => $row->updated_at ?? now(),
+            ];
+
+            if (! $this->dryRun) {
+                DB::table('accounts')->insertOrIgnore($data);
+            }
+            $bar->advance();
+        }
+
+        $bar->finish();
+        $this->newLine();
+        $this->info("Migrated {$customers->count()} customers.");
+    }
+
+    private function migrateVendors(): void
+    {
+        $this->info('Migrating vendors -> accounts...');
+        $vendors = DB::connection('mysql2')
+            ->table('vendors')
+            ->join('account_heads', 'vendors.account_head_id', '=', 'account_heads.id')
+            ->select('vendors.*', 'vendors.account_head_id')
+            ->get();
+        $bar = $this->output->createProgressBar($vendors->count());
+
+        foreach ($vendors as $row) {
+            $data = [
+                'tenant_id' => $this->tenantId,
+                'account_type' => 'liability',
+                'second_reference_no' => $row->account_head_id,
+                'model' => 'vendor',
+                'name' => ucfirst(strtolower($row->name)),
+                'email' => $row->email ?? null,
+                'mobile' => $row->mobile ?? null,
+                'place' => $row->place ?? null,
+                'created_at' => $row->created_at ?? now(),
+                'updated_at' => $row->updated_at ?? now(),
+            ];
+
+            if (! $this->dryRun) {
+                DB::table('accounts')->insertOrIgnore($data);
+            }
+            $bar->advance();
+        }
+
+        $bar->finish();
+        $this->newLine();
+        $this->info("Migrated {$vendors->count()} vendors.");
+    }
+
+    private function normalizeNationality(?string $nationality): ?string
+    {
+        if (! $nationality) {
+            return null;
+        }
+
+        return match (strtolower(trim($nationality))) {
+            'indian/tamel', 'indian/kerala', 'kerala', 'keral', 'indian' => 'India',
+            'qatari', 'qatary', 'qatar' => 'Qatar',
+            'egyptian', 'egyp' => 'Egypt',
+            'nigeria' => 'Nigeria',
+            'moroccan' => 'Morocco',
+            'philipines' => 'Philippines',
+            'saudi' => 'Saudi Arabia',
+            'tunisian' => 'Tunisia',
+            'seria' => 'Syria',
+            'pakistanis' => 'Pakistan',
+            default => $nationality,
+        };
+    }
+
     private function migratePropertyGroups(): void
     {
         $this->info('Migrating property_groups...');
@@ -212,7 +353,9 @@ class MigratePropertyDataCommand extends Command
                 'amount' => $row->amount ?? null,
                 'ownership' => $this->buildingOwnershipMap[$row->owner ?? 1] ?? 'own',
                 'status' => $row->status ?? 'active',
-                'account_id' => $row->account_head_id ?? null,
+                'account_id' => $row->account_head_id
+                    ? Account::where('second_reference_no', $row->account_head_id)->value('id')
+                    : null,
                 'remark' => $row->remark ?? null,
                 'deleted_at' => $row->deleted_at ?? null,
                 'created_at' => $row->created_at ?? now(),
@@ -329,7 +472,9 @@ class MigratePropertyDataCommand extends Command
                 'property_building_id' => $row->property_building_id ?? 0,
                 'property_type_id' => $row->property_type_id ?? null,
                 'property_group_id' => $row->property_group_id ?? 0,
-                'account_id' => $row->customer_id,
+                'account_id' => $row->customer_id
+                    ? Account::where('second_reference_no', $row->customer_id)->value('id')
+                    : null,
                 'salesman_id' => $row->salesman_id ?? null,
                 'agreement_type' => $row->agreement_type ?? 'rental',
                 'booking_type' => $row->booking_type ?? null,
@@ -349,10 +494,10 @@ class MigratePropertyDataCommand extends Command
                 'collection_bank_name' => $row->collection_bank_name ?? null,
                 'collection_cheque_no' => $row->collection_cheque_no ?? null,
                 'management_fee' => $row->management_fee ?? 0,
-                'management_fee_payment_mode' => $this->resolvePaymentMode($row->management_fee_payment_mode_id ?? null),
+                'management_fee_payment_method_id' => $row->management_fee_payment_mode_id ?? null,
                 'management_fee_remarks' => $row->management_fee_remarks ?? null,
                 'down_payment' => $row->down_payment ?? 0,
-                'down_payment_mode' => $this->resolvePaymentMode($row->down_payment_mode_id ?? null),
+                'down_payment_payment_method_id' => $row->down_payment_mode_id ?? null,
                 'down_payment_remarks' => $row->down_payment_remarks ?? null,
                 'include_electricity_water' => $row->include_electricity_water ?? null,
                 'include_ac' => $row->include_ac ?? null,

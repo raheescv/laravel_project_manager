@@ -1,8 +1,22 @@
 @php
     $companyLogo = \App\Models\Configuration::where('key', 'company_logo')->value('value');
-    $companyLogoUrl = $companyLogo ? asset('storage/' . $companyLogo) : null;
-    $footerLogo = \App\Models\Configuration::where('key', 'rentout_agreement_logo_footer')->value('value');
-    $footerLogoUrl = $footerLogo ? asset('storage/' . $footerLogo) : null;
+    $companyLogoUrl = null;
+    if ($companyLogo) {
+        $companyLogoPath = storage_path('app/public/' . $companyLogo);
+        if (file_exists($companyLogoPath)) {
+            $companyLogoUrl = 'data:image/' . pathinfo($companyLogoPath, PATHINFO_EXTENSION) . ';base64,' . base64_encode(file_get_contents($companyLogoPath));
+        }
+    }
+
+    $footerLogo = \App\Models\Configuration::where('key', 'rent_out_agreement_logo_footer')->value('value');
+    $footerLogoUrl = null;
+    if ($footerLogo) {
+        $footerLogoPath = storage_path('app/public/' . $footerLogo);
+        if (file_exists($footerLogoPath)) {
+            $footerLogoUrl = 'data:image/' . pathinfo($footerLogoPath, PATHINFO_EXTENSION) . ';base64,' . base64_encode(file_get_contents($footerLogoPath));
+        }
+    }
+
     $bondPaperMode = \App\Models\Configuration::where('key', 'reservation_bond_paper_mode')->value('value') === 'yes';
     $logoHeight = (int) (\App\Models\Configuration::where('key', 'reservation_logo_height')->value('value') ?: 80);
     $footerHeight = (int) (\App\Models\Configuration::where('key', 'reservation_footer_height')->value('value') ?: 50);

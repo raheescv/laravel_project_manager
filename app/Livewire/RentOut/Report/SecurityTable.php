@@ -95,6 +95,12 @@ class SecurityTable extends Component
         $this->filterPaymentMethod = '';
         $this->filterSecurityStatus = '';
         parent::resetFilters();
+        $this->js("
+            ['security_filterGroup', 'security_filterBuilding', 'security_filterProperty', 'security_filterCustomer'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el && el.tomSelect) { el.tomSelect.clear(); }
+            });
+        ");
     }
 
     public function render()

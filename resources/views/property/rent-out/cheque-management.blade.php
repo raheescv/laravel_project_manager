@@ -17,4 +17,10 @@
             @livewire('rent-out.cheque-management-table', ['agreementType' => $agreementType])
         </div>
     </div>
+    @push('scripts')
+        <x-select.propertyGroupSelect />
+        <x-select.propertyBuildingSelect />
+        <x-select.propertySelect />
+        <x-select.customerSelect />
+    @endpush
 </x-app-layout>

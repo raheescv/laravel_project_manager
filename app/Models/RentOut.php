@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Enums\RentOut\AgreementType;
 use App\Enums\RentOut\PaymentMode;
+use App\Enums\RentOut\RentOutBookingStatus;
 use App\Enums\RentOut\RentOutStatus;
 use App\Traits\BelongsToTenant;
 use Carbon\Carbon;
@@ -45,10 +46,10 @@ class RentOut extends Model implements AuditableContracts
         'collection_bank_name',
         'collection_cheque_no',
         'management_fee',
-        'management_fee_payment_mode',
+        'management_fee_payment_method_id',
         'management_fee_remarks',
         'down_payment',
-        'down_payment_mode',
+        'down_payment_payment_method_id',
         'down_payment_remarks',
         'include_electricity_water',
         'include_ac',
@@ -82,6 +83,7 @@ class RentOut extends Model implements AuditableContracts
     protected $casts = [
         'agreement_type' => AgreementType::class,
         'status' => RentOutStatus::class,
+        'booking_status' => RentOutBookingStatus::class,
         'collection_payment_mode' => PaymentMode::class,
         'start_date' => 'date',
         'end_date' => 'date',
@@ -205,6 +207,16 @@ class RentOut extends Model implements AuditableContracts
     public function type(): BelongsTo
     {
         return $this->belongsTo(PropertyType::class, 'property_type_id');
+    }
+
+    public function managementFeePaymentMethod(): BelongsTo
+    {
+        return $this->belongsTo(Account::class, 'management_fee_payment_method_id');
+    }
+
+    public function downPaymentPaymentMethod(): BelongsTo
+    {
+        return $this->belongsTo(Account::class, 'down_payment_payment_method_id');
     }
 
     public function securities(): HasMany

@@ -79,6 +79,7 @@ class ChequeManagementTable extends Component
         $this->statusChangeJournalDate = now()->format('Y-m-d');
         $this->statusChangeRemark = '';
         $this->showStatusModal = true;
+        $this->dispatch('open-status-modal');
     }
 
     public function updateChequeStatus(): void
@@ -140,6 +141,12 @@ class ChequeManagementTable extends Component
     {
         $this->filterStatus = '';
         parent::resetFilters();
+        $this->js("
+            ['cheque_filterGroup', 'cheque_filterBuilding', 'cheque_filterProperty', 'cheque_filterCustomer'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el && el.tomSelect) { el.tomSelect.clear(); }
+            });
+        ");
     }
 
     /**

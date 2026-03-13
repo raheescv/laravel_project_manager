@@ -16,7 +16,9 @@
       "Bash(mkdir -p /Users/Shared/sites/personal/main_projects/project_manager/resources/views/property/utility)",
       "Bash(npx puppeteer:*)",
       "Bash(PUPPETEER_CACHE_DIR=.cache/puppeteer npx puppeteer browsers install chrome-headless-shell)",
-      "Bash(chmod -R 755 .cache/puppeteer)"
+      "Bash(chmod -R 755 .cache/puppeteer)",
+      "Bash(find /Users/Shared/sites/personal/main_projects/project_manager/app/Exports -name *RentOut* -o -name *Booking*)",
+      "Bash(grep -E \"\\\\.php$\")"
     ]
   }
 }

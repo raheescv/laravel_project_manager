@@ -93,7 +93,7 @@ class Property extends Model implements AuditableContracts
             ];
         })->toArray();
         $return['items'] = $self;
-    info($return);
+
         return $return;
     }
 
@@ -152,5 +152,5 @@ class Property extends Model implements AuditableContracts
     public function scopeOccupied($query)
     {
         return $query->where('status', PropertyStatus::Occupied);
-}
+    }
 }

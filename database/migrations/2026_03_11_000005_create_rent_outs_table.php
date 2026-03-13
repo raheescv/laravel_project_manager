@@ -44,12 +44,14 @@ return new class() extends Migration
 
             // Management fee
             $table->decimal('management_fee', 16, 2)->default(0);
-            $table->string('management_fee_payment_mode')->nullable();
+            $table->unsignedBigInteger('management_fee_payment_method_id')->nullable();
+            $table->foreign('management_fee_payment_method_id')->references('id')->on('accounts')->nullOnDelete();
             $table->text('management_fee_remarks')->nullable();
 
             // Down payment
             $table->decimal('down_payment', 16, 2)->default(0);
-            $table->string('down_payment_mode')->nullable();
+            $table->unsignedBigInteger('down_payment_payment_method_id')->nullable();
+            $table->foreign('down_payment_payment_method_id')->references('id')->on('accounts')->nullOnDelete();
             $table->text('down_payment_remarks')->nullable();
 
             // Includes

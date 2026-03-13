@@ -132,6 +132,12 @@ return [
         'approve', 'financial approve', 'complete',
         'view journal entries',
     ],
+    'rent out booking' => [
+        'create', 'view', 'edit', 'delete',
+        'submitted', 'financial approved', 'approved', 'completed',
+        'cancel', 'confirm',
+        'reservation form', 'residential lease',
+    ],
     'rent out security' => ['create', 'view', 'edit', 'delete'],
     'rent out cheque' => ['create', 'view', 'edit', 'delete', 'update status'],
     'rent out utility' => ['create', 'view', 'edit', 'delete'],
@@ -145,5 +151,11 @@ return [
         'vacate', 'extend', 'book', 'cancel',
         'approve', 'financial approve', 'complete',
         'view journal entries',
+    ],
+    'rent out lease booking' => [
+        'create', 'view', 'edit', 'delete',
+        'submitted', 'financial approved', 'approved', 'completed',
+        'cancel', 'confirm',
+        'reservation form', 'residential lease',
     ],
 ];
