@@ -58,7 +58,7 @@
     {{-- Service Transactions --}}
     @if($servicePayments->count() > 0)
         <h6 class="fw-bold small text-muted mb-2"><i class="fa fa-exchange me-1"></i> Service Transactions</h6>
-        <div class="table-responsive" style="overflow-x: auto; overflow-y: visible;">
+        <div class="table-responsive" style="overflow: visible;">
             <table class="table table-hover align-middle border-bottom mb-0 table-sm">
                 <thead class="bg-light text-muted">
                     <tr class="text-capitalize small">
@@ -124,7 +124,7 @@
                                         onmouseout="this.style.background='#f0f2f5'; this.style.color='#495057';">
                                         <i class="fa fa-ellipsis-v" style="font-size: 16px;"></i>
                                     </button>
-                                    <ul class="dropdown-menu dropdown-menu-end shadow-sm border-0" style="min-width: 140px;">
+                                    <ul class="dropdown-menu dropdown-menu-end shadow-sm border-0" style="min-width: 140px; z-index: 1050;">
                                         <li>
                                             <a class="dropdown-item small py-2" href="#" wire:click.prevent="editPayment({{ $payment->id }})">
                                                 <i class="fa fa-pencil text-primary me-2"></i> Edit

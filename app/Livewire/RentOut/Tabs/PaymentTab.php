@@ -91,6 +91,11 @@ class PaymentTab extends Component
         $this->dispatch('rent-out-updated');
     }
 
+    public function editPayment($paymentId)
+    {
+        $this->dispatch('edit-payout-payment', paymentId: $paymentId);
+    }
+
     public function openPayoutModal()
     {
         $this->dispatch('open-payout-modal', rentOutId: $this->rentOutId);

@@ -110,7 +110,7 @@
     </div>
 
     {{-- Table --}}
-    <div class="table-responsive">
+    <div class="table-responsive" style="overflow: visible;">
         <table class="table table-hover align-middle border-bottom mb-0 table-sm">
             <thead class="bg-light text-muted">
                 <tr class="text-capitalize small">
@@ -180,7 +180,16 @@
                                     aria-expanded="false">
                                     <i class="fa fa-ellipsis-v text-muted"></i>
                                 </button>
-                                <ul class="dropdown-menu dropdown-menu-end shadow-sm">
+                                <ul class="dropdown-menu dropdown-menu-end shadow-sm" style="z-index: 1050;">
+                                    <li>
+                                        <a class="dropdown-item small" href="#"
+                                            wire:click.prevent="editPayment({{ $payment->id }})">
+                                            <i class="fa fa-pencil me-2 text-primary"></i> Edit
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <hr class="dropdown-divider">
+                                    </li>
                                     <li>
                                         <a class="dropdown-item small"
                                             href="{{ route('print::rentout::payment-receipt', $payment->id) }}"

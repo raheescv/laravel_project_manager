@@ -2,7 +2,7 @@
     {{-- Header --}}
     <div class="modal-header bg-warning text-dark border-0 py-2 px-3">
         <h6 class="modal-title fw-bold mb-0">
-            <i class="fa fa-share me-2"></i> Payout
+            <i class="fa {{ $editingId ? 'fa-pencil' : 'fa-share' }} me-2"></i> {{ $editingId ? 'Edit Payment' : 'Payout' }}
         </h6>
         <button type="button" class="btn-close btn-sm" data-bs-dismiss="modal"></button>
     </div>
@@ -51,9 +51,9 @@
         <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">
             <i class="fa fa-times me-1"></i> Close
         </button>
-        <button type="button" class="btn btn-sm btn-warning" wire:click="save" wire:loading.attr="disabled">
-            <span wire:loading.remove wire:target="save"><i class="fa fa-share me-1"></i> Process Payout</span>
-            <span wire:loading wire:target="save"><i class="fa fa-spinner fa-spin me-1"></i> Processing...</span>
+        <button type="button" class="btn btn-sm btn-{{ $editingId ? 'primary' : 'warning' }}" wire:click="save" wire:loading.attr="disabled">
+            <span wire:loading.remove wire:target="save"><i class="fa {{ $editingId ? 'fa-save' : 'fa-share' }} me-1"></i> {{ $editingId ? 'Update Payment' : 'Process Payout' }}</span>
+            <span wire:loading wire:target="save"><i class="fa fa-spinner fa-spin me-1"></i> {{ $editingId ? 'Updating...' : 'Processing...' }}</span>
         </button>
     </div>
 </div>

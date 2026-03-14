@@ -3,6 +3,7 @@
 namespace App\Livewire\RentOut\Tabs;
 
 use App\Actions\RentOut\Payment\StorePaymentAction;
+use App\Models\RentOutPayment;
 use Illuminate\Support\Facades\DB;
 use Livewire\Attributes\On;
 use Livewire\Component;
@@ -10,6 +11,8 @@ use Livewire\Component;
 class PayoutModal extends Component
 {
     public ?int $rentOutId = null;
+
+    public ?int $editingId = null;
 
     public array $form = [
         'date' => '',
@@ -22,12 +25,31 @@ class PayoutModal extends Component
     public function openModal($rentOutId)
     {
         $this->rentOutId = $rentOutId;
+        $this->editingId = null;
         $this->form = [
             'date' => now()->format('Y-m-d'),
             'amount' => 0,
             'account_id' => '',
             'remark' => '',
         ];
+        $this->resetValidation();
+        $this->dispatch('TogglePayoutModal');
+    }
+
+    #[On('edit-payout-payment')]
+    public function editPayment($paymentId)
+    {
+        $payment = RentOutPayment::findOrFail($paymentId);
+        $this->rentOutId = $payment->rent_out_id;
+        $this->editingId = $payment->id;
+
+        $this->form = [
+            'date' => $payment->date?->format('Y-m-d') ?? now()->format('Y-m-d'),
+            'amount' => $payment->debit > 0 ? $payment->debit : $payment->credit,
+            'account_id' => $payment->account_id ?? '',
+            'remark' => $payment->remark ?? '',
+        ];
+
         $this->resetValidation();
         $this->dispatch('TogglePayoutModal');
     }
@@ -48,7 +70,29 @@ class PayoutModal extends Component
         try {
             DB::beginTransaction();
 
-            $response = (new StorePaymentAction())->execute([
+            $action = new StorePaymentAction();
+
+            if ($this->editingId) {
+                $response = $action->update($this->editingId, [
+                    'date' => $this->form['date'],
+                    'amount' => $this->form['amount'],
+                    'account_id' => $this->form['account_id'],
+                    'remark' => $this->form['remark'] ?? '',
+                ]);
+
+                if (! $response['success']) {
+                    throw new \Exception($response['message']);
+                }
+
+                DB::commit();
+                $this->dispatch('TogglePayoutModal');
+                $this->dispatch('rent-out-updated');
+                $this->dispatch('success', message: 'Payment updated successfully.');
+
+                return;
+            }
+
+            $response = $action->execute([
                 'rent_out_id' => $this->rentOutId,
                 'date' => $this->form['date'],
                 'credit' => 0,
