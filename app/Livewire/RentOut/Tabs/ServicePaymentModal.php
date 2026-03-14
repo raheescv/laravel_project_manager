@@ -3,7 +3,7 @@
 namespace App\Livewire\RentOut\Tabs;
 
 use App\Actions\RentOut\Payment\StorePaymentAction;
-use App\Models\RentOut;
+use App\Models\Account;
 use App\Models\RentOutPayment;
 use Illuminate\Support\Facades\DB;
 use Livewire\Attributes\On;
@@ -52,22 +52,7 @@ class ServicePaymentModal extends Component
         try {
             DB::beginTransaction();
 
-            $rentOut = RentOut::findOrFail($this->rentOutId);
-
-            // Single debit entry — charge to customer, no payment received
-            $response = (new StorePaymentAction())->execute([
-                'rent_out_id' => $this->rentOutId,
-                'date' => $this->form['date'],
-                'credit' => 0,
-                'debit' => $this->form['amount'],
-                'account_id' => $rentOut->account_id,
-                'source' => 'Service',
-                'group' => 'Service',
-                'category' => $this->form['category'],
-                'payment_type' => 'Services',
-                'remark' => $this->form['remark'] ?? '',
-                'created_by' => auth()->id(),
-            ]);
+            $response = (new StorePaymentAction())->charge($this->rentOutId, $this->servicePaymentData());
 
             if (! $response['success']) {
                 throw new \Exception($response['message']);
@@ -101,41 +86,7 @@ class ServicePaymentModal extends Component
         try {
             DB::beginTransaction();
 
-            $rentOut = RentOut::findOrFail($this->rentOutId);
-
-            // Entry 1: Debit — charge to customer
-            $response = (new StorePaymentAction())->execute([
-                'rent_out_id' => $this->rentOutId,
-                'date' => $this->form['date'],
-                'credit' => 0,
-                'debit' => $this->form['amount'],
-                'account_id' => $rentOut->account_id,
-                'source' => 'Service',
-                'group' => 'Service',
-                'category' => $this->form['category'],
-                'payment_type' => 'Services',
-                'remark' => $this->form['remark'] ?? '',
-                'created_by' => auth()->id(),
-            ]);
-
-            if (! $response['success']) {
-                throw new \Exception($response['message']);
-            }
-
-            // Entry 2: Credit — payment received
-            $response = (new StorePaymentAction())->execute([
-                'rent_out_id' => $this->rentOutId,
-                'date' => $this->form['date'],
-                'credit' => $this->form['amount'],
-                'debit' => 0,
-                'account_id' => $this->form['account_id'],
-                'source' => 'Service',
-                'group' => 'Service Payment',
-                'category' => $this->form['category'],
-                'payment_type' => 'Services',
-                'remark' => $this->form['remark'] ?? '',
-                'created_by' => auth()->id(),
-            ]);
+            $response = (new StorePaymentAction())->chargeAndPay($this->rentOutId, $this->servicePaymentData());
 
             if (! $response['success']) {
                 throw new \Exception($response['message']);
@@ -151,6 +102,21 @@ class ServicePaymentModal extends Component
         }
     }
 
+    protected function servicePaymentData(): array
+    {
+        return [
+            'date' => $this->form['date'],
+            'amount' => $this->form['amount'],
+            'account_id' => $this->form['account_id'] ?? '',
+            'source' => 'Service',
+            'group' => 'Service',
+            'category' => $this->form['category'],
+            'payment_type' => 'Services',
+            'remark' => $this->form['remark'] ?? '',
+            'created_by' => auth()->id(),
+        ];
+    }
+
     public function render()
     {
         $serviceCharges = collect();
@@ -161,6 +127,15 @@ class ServicePaymentModal extends Component
                 ->groupBy('category')
                 ->get();
         }
+
+        // Resolve category IDs to names
+        $categoryIds = $serviceCharges->pluck('category')->filter()->unique()->values()->toArray();
+        $categoryNames = Account::whereIn('id', $categoryIds)->pluck('name', 'id')->toArray();
+
+        // Add category_name to each row
+        $serviceCharges->each(function ($row) use ($categoryNames) {
+            $row->category_name = $categoryNames[$row->category] ?? $row->category;
+        });
 
         return view('livewire.rent-out.tabs.service-payment-modal', [
             'paymentMethods' => paymentMethodsOptions(),

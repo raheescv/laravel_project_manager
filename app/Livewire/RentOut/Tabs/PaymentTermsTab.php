@@ -17,11 +17,25 @@ class PaymentTermsTab extends Component
 
     public $defaultLabel = 'rent payment';
 
+    public $sortField = 'due_date';
+
+    public $sortDirection = 'asc';
+
     public function mount($rentOutId, $isRental = false, $defaultLabel = 'rent payment')
     {
         $this->rentOutId = $rentOutId;
         $this->isRental = $isRental;
         $this->defaultLabel = $defaultLabel;
+    }
+
+    public function sortBy($field)
+    {
+        if ($this->sortField === $field) {
+            $this->sortDirection = $this->sortDirection === 'asc' ? 'desc' : 'asc';
+        } else {
+            $this->sortField = $field;
+            $this->sortDirection = 'asc';
+        }
     }
 
     #[On('rent-out-updated')]
@@ -32,7 +46,9 @@ class PaymentTermsTab extends Component
 
     protected function getRentOut()
     {
-        return RentOut::with(['customer', 'property', 'paymentTerms'])->find($this->rentOutId);
+        return RentOut::with(['customer', 'property', 'paymentTerms' => function ($query) {
+            $query->orderBy($this->sortField, $this->sortDirection);
+        }])->find($this->rentOutId);
     }
 
     // ─── Single Term ────────────────────────────────────────────

@@ -14,6 +14,10 @@ class UtilitiesTab extends Component
 {
     public $rentOutId;
 
+    public $sortField = 'date';
+
+    public $sortDirection = 'asc';
+
     public array $selectedTerms = [];
 
     public bool $selectAll = false;
@@ -21,6 +25,16 @@ class UtilitiesTab extends Component
     public function mount($rentOutId)
     {
         $this->rentOutId = $rentOutId;
+    }
+
+    public function sortBy($field)
+    {
+        if ($this->sortField === $field) {
+            $this->sortDirection = $this->sortDirection === 'asc' ? 'desc' : 'asc';
+        } else {
+            $this->sortField = $field;
+            $this->sortDirection = 'asc';
+        }
     }
 
     #[On('rent-out-updated')]
@@ -143,7 +157,9 @@ class UtilitiesTab extends Component
 
     public function render()
     {
-        $rentOut = RentOut::with(['utilityTerms.utility'])->find($this->rentOutId);
+        $rentOut = RentOut::with(['utilityTerms' => function ($query) {
+            $query->orderBy($this->sortField, $this->sortDirection);
+        }, 'utilityTerms.utility'])->find($this->rentOutId);
 
         return view('livewire.rent-out.tabs.utilities-tab', [
             'rentOut' => $rentOut,

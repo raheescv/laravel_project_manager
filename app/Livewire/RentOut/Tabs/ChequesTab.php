@@ -13,10 +13,24 @@ use Livewire\Component;
 class ChequesTab extends Component
 {
     public $rentOutId;
+    public $sortField = 'date';
+    public $sortDirection = 'asc';
+    public array $selectedCheques = [];
+    public bool $selectAll = false;
 
     public function mount($rentOutId)
     {
         $this->rentOutId = $rentOutId;
+    }
+
+    public function sortBy($field)
+    {
+        if ($this->sortField === $field) {
+            $this->sortDirection = $this->sortDirection === 'asc' ? 'desc' : 'asc';
+        } else {
+            $this->sortField = $field;
+            $this->sortDirection = 'asc';
+        }
     }
 
     #[On('rent-out-updated')]
@@ -96,17 +110,39 @@ class ChequesTab extends Component
         }
     }
 
-    public function deleteCheque($id)
+    public function updatedSelectAll($value)
     {
+        if ($value) {
+            $this->selectedCheques = RentOutCheque::where('rent_out_id', $this->rentOutId)
+                ->pluck('id')
+                ->map(fn ($id) => (string) $id)
+                ->toArray();
+        } else {
+            $this->selectedCheques = [];
+        }
+    }
+
+    public function deleteSelected()
+    {
+        if (empty($this->selectedCheques)) {
+            $this->dispatch('error', message: 'No cheques selected.');
+            return;
+        }
+
         try {
             DB::beginTransaction();
-            $response = (new DeleteAction())->execute($id);
-            if (! $response['success']) {
-                throw new \Exception($response['message']);
+            foreach ($this->selectedCheques as $id) {
+                $response = (new DeleteAction())->execute($id);
+                if (! $response['success']) {
+                    throw new \Exception($response['message']);
+                }
             }
             DB::commit();
+            $count = count($this->selectedCheques);
+            $this->selectedCheques = [];
+            $this->selectAll = false;
             $this->dispatch('rent-out-updated');
-            $this->dispatch('success', message: $response['message']);
+            $this->dispatch('success', message: "Successfully deleted {$count} cheque(s).");
         } catch (\Exception $e) {
             DB::rollback();
             $this->dispatch('error', message: $e->getMessage());
@@ -115,7 +151,9 @@ class ChequesTab extends Component
 
     public function render()
     {
-        $rentOut = RentOut::with('cheques')->find($this->rentOutId);
+        $rentOut = RentOut::with(['cheques' => function ($query) {
+            $query->orderBy($this->sortField, $this->sortDirection);
+        }])->find($this->rentOutId);
 
         return view('livewire.rent-out.tabs.cheques-tab', [
             'rentOut' => $rentOut,

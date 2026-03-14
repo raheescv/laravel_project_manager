@@ -36,13 +36,28 @@
                         </div>
                     </th>
                     <th class="fw-semibold py-2">#</th>
-                    <th class="fw-semibold py-2">Due Date</th>
-                    <th class="fw-semibold py-2">Label</th>
-                    <th class="fw-semibold py-2 text-end">{{ $isRental ? 'Rent' : 'Installment' }}</th>
-                    <th class="fw-semibold py-2 text-end">Discount</th>
-                    <th class="fw-semibold py-2 text-end">Amount</th>
-                    <th class="fw-semibold py-2 text-end">Paid</th>
-                    <th class="fw-semibold py-2 text-end">Balance</th>
+                    @php
+                        $sortableColumns = [
+                            'due_date' => ['label' => 'Due Date', 'class' => ''],
+                            'label' => ['label' => 'Label', 'class' => ''],
+                            'amount' => ['label' => $isRental ? 'Rent' : 'Installment', 'class' => 'text-end'],
+                            'discount' => ['label' => 'Discount', 'class' => 'text-end'],
+                            'total' => ['label' => 'Amount', 'class' => 'text-end'],
+                            'paid' => ['label' => 'Paid', 'class' => 'text-end'],
+                            'balance' => ['label' => 'Balance', 'class' => 'text-end'],
+                        ];
+                    @endphp
+                    @foreach ($sortableColumns as $field => $col)
+                        <th class="fw-semibold py-2 {{ $col['class'] }}" style="cursor: pointer; user-select: none;"
+                            wire:click="sortBy('{{ $field }}')">
+                            {{ $col['label'] }}
+                            @if ($sortField === $field)
+                                <i class="fa fa-sort-{{ $sortDirection === 'asc' ? 'up' : 'down' }} ms-1"></i>
+                            @else
+                                <i class="fa fa-sort ms-1 opacity-25"></i>
+                            @endif
+                        </th>
+                    @endforeach
                     <th class="fw-semibold py-2 text-center">Actions</th>
                 </tr>
             </thead>

@@ -152,7 +152,7 @@
                                 value="{{ $payment->id }}">
                         </td>
                         <td class="small">{{ $index + 1 }}</td>
-                        <td class="small">{{ $payment->date?->format('d-m-Y') ?? '' }}</td>
+                        <td class="small text-nowrap">{{ $payment->date?->format('d-m-Y') ?? '' }}</td>
                         <td>
                             <span
                                 class="badge bg-{{ match ($payment->source) {
@@ -164,9 +164,9 @@
                                     default => 'light text-dark',
                                 } }} bg-opacity-75 small">{{ $payment->source }}</span>
                         </td>
-                        <td class="small">{{ $payment->group ?? '' }}</td>
-                        <td class="small">{{ $payment->category ?? '' }}</td>
-                        <td class="small">{{ $payment->account?->name ?? '' }}</td>
+                        <td class="small text-nowrap">{{ $payment->group ?? '' }}</td>
+                        <td class="small text-nowrap">{{ $payment->category?->name ?? '' }}</td>
+                        <td class="small text-nowrap">{{ $payment->account?->name ?? '' }}</td>
                         <td class="text-end text-success fw-medium small">
                             {{ $payment->credit > 0 ? number_format($payment->credit, 2) : '' }}
                         </td>
@@ -182,12 +182,16 @@
                                 </button>
                                 <ul class="dropdown-menu dropdown-menu-end shadow-sm">
                                     <li>
-                                        <a class="dropdown-item small" href="{{ route('print::rentout::payment-receipt', $payment->id) }}" target="_blank">
+                                        <a class="dropdown-item small"
+                                            href="{{ route('print::rentout::payment-receipt', $payment->id) }}"
+                                            target="_blank">
                                             <i class="fa fa-print me-2 text-primary"></i> Print Receipt
                                         </a>
                                     </li>
                                     <li>
-                                        <a class="dropdown-item small" href="{{ route('print::rentout::payment-voucher', $payment->id) }}" target="_blank">
+                                        <a class="dropdown-item small"
+                                            href="{{ route('print::rentout::payment-voucher', $payment->id) }}"
+                                            target="_blank">
                                             <i class="fa fa-file-text-o me-2 text-info"></i> Print Voucher
                                         </a>
                                     </li>
@@ -195,7 +199,9 @@
                                         <hr class="dropdown-divider">
                                     </li>
                                     <li>
-                                        <a class="dropdown-item small" href="{{  route('audit::index',['model'=>'RentOutPayment','id'=>$payment->id])  }}" target="_blank">
+                                        <a class="dropdown-item small"
+                                            href="{{ route('audit::index', ['model' => 'RentOutPayment', 'id' => $payment->id]) }}"
+                                            target="_blank">
                                             <i class="fa fa-history me-2 text-secondary"></i> Audit History
                                         </a>
                                     </li>

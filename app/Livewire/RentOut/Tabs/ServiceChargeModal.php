@@ -54,9 +54,15 @@ class ServiceChargeModal extends Component
         $this->dispatch('ToggleServiceChargeModal');
     }
 
-    public function updated($property)
+    public function updated($key, $value)
     {
-        if (in_array($property, ['startDate', 'endDate', 'perSqMeterPrice', 'unitSize'])) {
+        if (in_array($key, ['startDate', 'endDate', 'perSqMeterPrice', 'unitSize'])) {
+
+            if ($key == 'perSqMeterPrice') {
+                if (! is_numeric($value)) {
+                    $this->perSqMeterPrice = 0;
+                }
+            }
             $this->calculateFields();
         }
     }
@@ -66,31 +72,35 @@ class ServiceChargeModal extends Component
         $start = Carbon::parse($this->startDate);
         $end = Carbon::parse($this->endDate);
 
-        $this->noOfDays = max($end->diffInDays($start) + 1, 0);
+        $this->noOfDays = max($start->diffInDays($end) + 1, 0);
         $this->noOfMonths = round($this->noOfDays / 30);
         $this->perDayPrice = round($this->unitSize * $this->perSqMeterPrice * 12 / 365, 2);
         $this->amount = round($this->noOfDays * $this->perDayPrice, 2);
-        $this->description = 'Service charge for the period '
-            .Carbon::parse($this->startDate)->format('d-m-Y')
-            .' to '
-            .Carbon::parse($this->endDate)->format('d-m-Y');
+
+        $startDate = systemDate($this->startDate);
+        $endDate = systemDate($this->endDate);
+        $this->description = 'Service charge for the period '.$startDate.' to '.$endDate;
     }
+
+    protected $rules = [
+        'date' => 'required|date',
+        'startDate' => 'required|date',
+        'endDate' => 'required|date',
+        'amount' => 'required|numeric|min:0.01',
+        'perSqMeterPrice' => 'required|numeric|min:0.01',
+    ];
+
+    protected $messages = [
+        'date.required' => 'Date is required.',
+        'startDate.required' => 'Start date is required.',
+        'endDate.required' => 'End date is required.',
+        'amount.min' => 'Amount must be greater than zero.',
+        'perSqMeterPrice.min' => 'Per sq meter price must be greater than zero.',
+    ];
 
     public function save()
     {
-        $this->validate([
-            'date' => 'required|date',
-            'startDate' => 'required|date',
-            'endDate' => 'required|date',
-            'amount' => 'required|numeric|min:0.01',
-            'perSqMeterPrice' => 'required|numeric|min:0.01',
-        ], [
-            'date.required' => 'Date is required.',
-            'startDate.required' => 'Start date is required.',
-            'endDate.required' => 'End date is required.',
-            'amount.min' => 'Amount must be greater than zero.',
-            'perSqMeterPrice.min' => 'Per sq meter price must be greater than zero.',
-        ]);
+        $this->validate();
 
         try {
             DB::beginTransaction();
@@ -109,12 +119,9 @@ class ServiceChargeModal extends Component
             ]);
 
             // Store as RentOutPayment (debit entry — charge to customer, no payment yet)
-            $response = (new StorePaymentAction())->execute([
-                'rent_out_id' => $this->rentOutId,
+            $response = (new StorePaymentAction())->charge($this->rentOutId, [
                 'date' => $this->date,
-                'credit' => 0,
-                'debit' => $this->amount,
-                'account_id' => $rentOut->account_id,
+                'amount' => $this->amount,
                 'source' => 'ServiceCharge',
                 'group' => 'Service Charge',
                 'category' => 'Service Charge',

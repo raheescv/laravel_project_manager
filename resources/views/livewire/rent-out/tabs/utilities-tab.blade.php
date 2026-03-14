@@ -39,12 +39,27 @@
                         <input type="checkbox" class="form-check-input" wire:model.live="selectAll">
                     </th>
                     <th class="fw-semibold py-2">#</th>
-                    <th class="fw-semibold py-2">Utility</th>
-                    <th class="fw-semibold py-2">Date</th>
-                    <th class="fw-semibold py-2 text-end">Amount</th>
-                    <th class="fw-semibold py-2 text-end">Paid</th>
-                    <th class="fw-semibold py-2 text-end">Balance</th>
-                    <th class="fw-semibold py-2">Remarks</th>
+                    @php
+                        $sortableColumns = [
+                            'utility_id' => ['label' => 'Utility', 'class' => ''],
+                            'date' => ['label' => 'Date', 'class' => ''],
+                            'amount' => ['label' => 'Amount', 'class' => 'text-end'],
+                            'paid' => ['label' => 'Paid', 'class' => 'text-end'],
+                            'balance' => ['label' => 'Balance', 'class' => 'text-end'],
+                            'remarks' => ['label' => 'Remarks', 'class' => ''],
+                        ];
+                    @endphp
+                    @foreach ($sortableColumns as $field => $col)
+                        <th class="fw-semibold py-2 {{ $col['class'] }}" style="cursor: pointer; user-select: none;"
+                            wire:click="sortBy('{{ $field }}')">
+                            {{ $col['label'] }}
+                            @if ($sortField === $field)
+                                <i class="fa fa-sort-{{ $sortDirection === 'asc' ? 'up' : 'down' }} ms-1"></i>
+                            @else
+                                <i class="fa fa-sort ms-1 opacity-25"></i>
+                            @endif
+                        </th>
+                    @endforeach
                     <th class="fw-semibold py-2 text-center" style="width: 90px;">Actions</th>
                 </tr>
             </thead>

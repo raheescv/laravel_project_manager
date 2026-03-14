@@ -6,7 +6,7 @@
                     {{-- Header --}}
                     <div class="modal-header py-2 px-3 text-white border-0"
                         style="background: linear-gradient(135deg, #3a9e7a, #2e7d56);">
-                        <h6 class="modal-title fw-bold mb-0">
+                        <h6 class="modal-title fw-bold mb-0 text-white">
                             <i class="fa fa-check-square-o me-2"></i>
                             {{ $editingId ? 'Edit Cheque' : 'Add Cheque' }}
                         </h6>

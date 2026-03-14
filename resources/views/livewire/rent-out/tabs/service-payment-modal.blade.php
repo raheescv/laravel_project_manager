@@ -6,6 +6,15 @@
         </h6>
         <button type="button" class="btn-close btn-close-white btn-sm" data-bs-dismiss="modal"></button>
     </div>
+    <div class="modal-header">
+        @if ($this->getErrorBag()->count())
+            <ol>
+                @foreach ($this->getErrorBag()->toArray() as $value)
+                    <li style="color:red">* {{ $value[0] }}</li>
+                @endforeach
+            </ol>
+        @endif
+    </div>
 
     {{-- Body --}}
     <div class="modal-body p-3">
@@ -28,7 +37,7 @@
                         @php $balance = $row->credit - $row->debit; @endphp
                         @if ($balance != 0)
                             <tr class="small">
-                                <td>{{ $row->category }}</td>
+                                <td>{{ $row->category_name ?? $row->category }}</td>
                                 <td class="text-end">{{ number_format($row->credit, 2) }}</td>
                                 <td class="text-end">{{ number_format($row->debit, 2) }}</td>
                                 <td class="text-end fw-bold">{{ number_format($balance, 2) }}</td>
@@ -45,7 +54,7 @@
 
         {{-- Payment Form --}}
         <div class="row g-3">
-            <div class="col-6">
+            <div class="col-md-6 col-12">
                 <label class="form-label fw-semibold small mb-1">
                     <i class="fa fa-calendar me-1 text-muted"></i> Date <span class="text-danger">*</span>
                 </label>
@@ -54,7 +63,7 @@
                     <small class="text-danger">{{ $message }}</small>
                 @enderror
             </div>
-            <div class="col-6">
+            <div class="col-md-6 col-12">
                 <label class="form-label fw-semibold small mb-1">
                     <i class="fa fa-money me-1 text-muted"></i> Amount <span class="text-danger">*</span>
                 </label>
@@ -63,36 +72,28 @@
                     <small class="text-danger">{{ $message }}</small>
                 @enderror
             </div>
-            <div class="col-6">
+            <div class="col-md-6 col-12" wire:ignore>
                 <label class="form-label fw-semibold small mb-1">
                     <i class="fa fa-tag me-1 text-muted"></i> Category <span class="text-danger">*</span>
                 </label>
-                <select class="select-account_id-list" wire:model="form.category">
+                <select class="select-account_id-list" wire:model="form.category" id="service_payment_category_id">
                     <option value="">Please Select Any</option>
                 </select>
-                @error('form.category')
-                    <small class="text-danger">{{ $message }}</small>
-                @enderror
             </div>
-            <div class="col-6">
+            <div class="col-md-6 col-12" wire:ignore>
                 <label class="form-label fw-semibold small mb-1">
                     <i class="fa fa-credit-card me-1 text-muted"></i> Payment Mode <span class="text-danger">*</span>
                 </label>
-                <select class="select-payment_method_id-list" wire:model="form.account_id">
+                <select class="select-payment_method_id-list" wire:model="form.account_id"
+                    id="service_account_id_account_id">
                     <option value="">Please Select Any</option>
-                    @foreach ($paymentMethods as $value => $label)
-                        <option value="{{ $value }}">{{ $label }}</option>
-                    @endforeach
                 </select>
-                @error('form.account_id')
-                    <small class="text-danger">{{ $message }}</small>
-                @enderror
             </div>
-            <div class="col-12">
+            <div class="col-12 mt-3">
                 <label class="form-label fw-semibold small mb-1">
                     <i class="fa fa-comment-o me-1 text-muted"></i> Remark
                 </label>
-                <textarea class="form-control form-control-sm" wire:model="form.remark" rows="2" placeholder="Optional remark..."></textarea>
+                <textarea class="form-control form-control-sm" wire:model="form.remark" rows="3" placeholder="Optional remark..."></textarea>
             </div>
         </div>
     </div>
@@ -103,4 +104,31 @@
             <span wire:loading wire:target="payNow"><i class="fa fa-spinner fa-spin me-1"></i> Saving...</span>
         </button>
     </div>
+    @push('scripts')
+        <script>
+            document.addEventListener('livewire:init', function() {
+                function resetTomSelect(id) {
+                    var el = document.getElementById(id);
+                    if (el && el.tomselect) {
+                        el.tomselect.clear();
+                        el.tomselect.clearOptions();
+                    }
+                }
+
+                Livewire.on('ToggleServicePaymentModal', () => {
+                    setTimeout(() => {
+                        resetTomSelect('service_payment_category_id');
+                        resetTomSelect('service_account_id_account_id');
+                    }, 100);
+                });
+
+                $('#service_payment_category_id').on('change', function() {
+                    @this.set('form.category', $(this).val());
+                });
+                $('#service_account_id_account_id').on('change', function() {
+                    @this.set('form.account_id', $(this).val());
+                });
+            });
+        </script>
+    @endpush
 </div>
