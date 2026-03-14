@@ -2,7 +2,7 @@
 
 namespace App\Livewire\RentOut\Tabs;
 
-use App\Models\RentOut;
+use App\Models\RentOutPayment;
 use Livewire\Attributes\On;
 use Livewire\Component;
 
@@ -10,9 +10,23 @@ class TransactionsTab extends Component
 {
     public $rentOutId;
 
+    public $sortField = 'date';
+
+    public $sortDirection = 'desc';
+
     public function mount($rentOutId)
     {
         $this->rentOutId = $rentOutId;
+    }
+
+    public function sortBy($field)
+    {
+        if ($this->sortField === $field) {
+            $this->sortDirection = $this->sortDirection === 'asc' ? 'desc' : 'asc';
+        } else {
+            $this->sortField = $field;
+            $this->sortDirection = 'asc';
+        }
     }
 
     #[On('rent-out-updated')]
@@ -20,8 +34,13 @@ class TransactionsTab extends Component
 
     public function render()
     {
-        $rentOut = RentOut::with('journals')->find($this->rentOutId);
+        $payments = RentOutPayment::with('account')
+            ->where('rent_out_id', $this->rentOutId)
+            ->orderBy($this->sortField, $this->sortDirection)
+            ->get();
 
-        return view('livewire.rent-out.tabs.transactions-tab', ['rentOut' => $rentOut]);
+        return view('livewire.rent-out.tabs.transactions-tab', [
+            'payments' => $payments,
+        ]);
     }
 }
