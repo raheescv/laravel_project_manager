@@ -82,6 +82,7 @@ class MigratePropertyDataCommand extends Command
         DB::statement('SET FOREIGN_KEY_CHECKS=0;');
 
         try {
+            $this->migrateUsers();
             $this->migrateAccountHeads();
             $this->migrateCustomers();
             $this->migrateVendors();
@@ -161,6 +162,100 @@ class MigratePropertyDataCommand extends Command
         return $this->paymentModeMap[$modeId] ?? 'cash';
     }
 
+    private function migrateUsers(): void
+    {
+        $this->info('Migrating users...');
+        $users = DB::connection('mysql2')->table('users')->get();
+        $bar = $this->output->createProgressBar($users->count());
+
+        foreach ($users as $row) {
+            $data = [
+                'id' => $row->id,
+                'tenant_id' => $this->tenantId,
+                'type' => 'user',
+                'name' => $row->name,
+                'code' => $row->code ?? null,
+                'email' => $row->email,
+                'mobile' => $row->mobile ?? null,
+                'is_admin' => $row->is_admin ?? 0,
+                'default_branch_id' => $row->default_branch_id ?? null,
+                'designation_id' => $row->designation_id ?? null,
+                'order_no' => $row->order_no ?? 1,
+                'email_verified_at' => $row->email_verified_at ?? null,
+                'password' => $row->password,
+                'pin' => $row->pin ?? null,
+                'dob' => ($row->dob ?? null) !== '0000-00-00' ? ($row->dob ?? null) : null,
+                'doj' => ($row->doj ?? null) !== '0000-00-00' ? ($row->doj ?? null) : null,
+                'place' => $row->place ?? null,
+                'nationality' => $row->nationality ?? null,
+                'allowance' => $row->allowance ?? null,
+                'salary' => $row->salary ?? null,
+                'hra' => $row->hra ?? null,
+                'max_discount_per_sale' => $row->max_discount_per_sale ?? 100,
+                'is_locked' => $row->is_locked ?? 0,
+                'is_active' => $row->is_active ?? 1,
+                'second_reference_no' => $row->id,
+                'created_at' => $row->created_at ?? now(),
+                'updated_at' => $row->updated_at ?? now(),
+            ];
+
+            if (! $this->dryRun) {
+                DB::table('users')->updateOrInsert(['id' => $row->id], $data);
+            }
+            $bar->advance();
+        }
+
+        $bar->finish();
+        $this->newLine();
+        $this->info("Migrated {$users->count()} users.");
+
+        // Migrate employees from old employees table as type='employee'
+        $this->info('Migrating employees -> users (type=employee)...');
+        $employees = DB::connection('mysql2')->table('employees')->get();
+        $bar = $this->output->createProgressBar($employees->count());
+
+        foreach ($employees as $row) {
+            $data = [
+                'tenant_id' => $this->tenantId,
+                'type' => 'employee',
+                'name' => $row->name,
+                'code' => $row->code ?? null,
+                'email' => $row->email ?? $row->name.'@employee.local',
+                'mobile' => $row->mobile ?? null,
+                'is_admin' => 0,
+                'default_branch_id' => $row->branch_id ?? null,
+                'designation_id' => $row->designation_id ?? null,
+                'order_no' => $row->order_no ?? 1,
+                'password' => $row->password ?? bcrypt('password'),
+                'pin' => $row->pin ?? null,
+                'dob' => ($row->dob ?? null) !== '0000-00-00' ? ($row->dob ?? null) : null,
+                'doj' => ($row->doj ?? null) !== '0000-00-00' ? ($row->doj ?? null) : null,
+                'place' => $row->place ?? null,
+                'nationality' => $row->nationality ?? null,
+                'allowance' => $row->allowance ?? null,
+                'salary' => $row->salary ?? null,
+                'hra' => $row->hra ?? null,
+                'is_locked' => $row->is_locked ?? 0,
+                'is_active' => $row->is_active ?? 1,
+                'second_reference_no' => 'emp_'.$row->id,
+                'created_at' => $row->created_at ?? now(),
+                'updated_at' => $row->updated_at ?? now(),
+            ];
+
+            if (! $this->dryRun) {
+                DB::table('users')->updateOrInsert(
+                    ['tenant_id' => $this->tenantId, 'email' => $data['email']],
+                    $data
+                );
+            }
+            $bar->advance();
+        }
+
+        $bar->finish();
+        $this->newLine();
+        $this->info("Migrated {$employees->count()} employees as users (type=employee).");
+    }
+
     private function migrateAccountHeads(): void
     {
         $this->info('Migrating account_heads -> accounts...');
@@ -204,7 +299,7 @@ class MigratePropertyDataCommand extends Command
             ->table('customers')
             ->join('account_heads', 'customers.account_head_id', '=', 'account_heads.id')
             ->where('account_heads.id', '!=', 2)
-            ->select('customers.*', 'customers.account_head_id')
+            ->select('customers.*', 'customers.account_head_id', 'account_heads.name as name')
             ->get();
         $bar = $this->output->createProgressBar($customers->count());
 
@@ -246,7 +341,7 @@ class MigratePropertyDataCommand extends Command
         $vendors = DB::connection('mysql2')
             ->table('vendors')
             ->join('account_heads', 'vendors.account_head_id', '=', 'account_heads.id')
-            ->select('vendors.*', 'vendors.account_head_id')
+            ->select('vendors.*', 'vendors.account_head_id', 'account_heads.name as name')
             ->get();
         $bar = $this->output->createProgressBar($vendors->count());
 
@@ -494,10 +589,14 @@ class MigratePropertyDataCommand extends Command
                 'collection_bank_name' => $row->collection_bank_name ?? null,
                 'collection_cheque_no' => $row->collection_cheque_no ?? null,
                 'management_fee' => $row->management_fee ?? 0,
-                'management_fee_payment_method_id' => $row->management_fee_payment_mode_id ?? null,
+                'management_fee_payment_method_id' => ($row->management_fee_payment_mode_id ?? null)
+                    ? Account::where('second_reference_no', $row->management_fee_payment_mode_id)->where('tenant_id', $this->tenantId)->value('id')
+                    : null,
                 'management_fee_remarks' => $row->management_fee_remarks ?? null,
                 'down_payment' => $row->down_payment ?? 0,
-                'down_payment_payment_method_id' => $row->down_payment_mode_id ?? null,
+                'down_payment_payment_method_id' => ($row->down_payment_mode_id ?? null)
+                    ? Account::where('second_reference_no', $row->down_payment_mode_id)->where('tenant_id', $this->tenantId)->value('id')
+                    : null,
                 'down_payment_remarks' => $row->down_payment_remarks ?? null,
                 'include_electricity_water' => $row->include_electricity_water ?? null,
                 'include_ac' => $row->include_ac ?? null,
@@ -526,7 +625,8 @@ class MigratePropertyDataCommand extends Command
                 'financial_approved_at' => $row->financial_approved_at ?? null,
                 'completed_by' => $row->completed_by ?? null,
                 'completed_at' => $row->completed_at ?? null,
-                'deleted_at' => $row->deleted_at ?? null,
+                // Booked records (status=4) should not be soft-deleted
+                'deleted_at' => ($row->status ?? 1) == 4 ? null : ($row->deleted_at ?? null),
                 'created_at' => $row->created_at ?? now(),
                 'updated_at' => $row->updated_at ?? now(),
             ];
@@ -715,6 +815,7 @@ class MigratePropertyDataCommand extends Command
                 'paid_date' => null,
                 'date' => $row->date ?? null,
                 'remarks' => null,
+                'deleted_at' => $row->deleted_at ?? null,
                 'created_at' => $row->created_at ?? now(),
                 'updated_at' => $row->updated_at ?? now(),
             ];
@@ -732,35 +833,11 @@ class MigratePropertyDataCommand extends Command
 
     private function migrateRentOutServices(): void
     {
-        $this->info('Migrating rentout_services -> rent_out_services...');
-        // In old project, rentout_services is just a lookup table (id, name)
-        // In new project, rent_out_services belongs to a rent_out with amount
-        // We'll migrate the service names as standalone records
+        // In old project, rentout_services is just a lookup table (id, name) with no rent_out FK.
+        // In new project, rent_out_services requires a rent_out_id FK.
+        // These schemas are incompatible — skipping to avoid FK violations.
         $records = DB::connection('mysql2')->table('rentout_services')->get();
-        $bar = $this->output->createProgressBar($records->count());
-
-        foreach ($records as $row) {
-            $data = [
-                'id' => $row->id,
-                'tenant_id' => $this->tenantId,
-                'branch_id' => 1,
-                'rent_out_id' => 0, // No rent_out association in old schema
-                'name' => $row->name,
-                'amount' => 0,
-                'description' => null,
-                'created_at' => $row->created_at ?? now(),
-                'updated_at' => $row->updated_at ?? now(),
-            ];
-
-            if (! $this->dryRun) {
-                DB::table('rent_out_services')->updateOrInsert(['id' => $row->id], $data);
-            }
-            $bar->advance();
-        }
-
-        $bar->finish();
-        $this->newLine();
-        $this->info("Migrated {$records->count()} rent out services.");
+        $this->warn("Skipped {$records->count()} rentout_services (old table is a lookup with no rent_out FK, incompatible with new schema).");
     }
 
     private function migrateRentOutNotes(): void
@@ -776,6 +853,7 @@ class MigratePropertyDataCommand extends Command
                 'rent_out_id' => $row->rentout_id,
                 'note' => $row->notes ?? '',
                 'created_by' => null,
+                'deleted_at' => $row->deleted_at ?? null,
                 'created_at' => $row->created_at ?? now(),
                 'updated_at' => $row->updated_at ?? now(),
             ];
@@ -817,10 +895,13 @@ class MigratePropertyDataCommand extends Command
                 'amount' => $row->rent ?? 0,
                 'discount' => $row->discount ?? 0,
                 'total' => $row->amount ?? 0,
+                'paid' => $row->paid ?? 0,
+                'balance' => max(($row->amount ?? 0) - ($row->paid ?? 0), 0),
                 'due_date' => $row->date,
                 'paid_date' => null,
                 'status' => ($row->paid ?? 0) >= ($row->amount ?? 0) && ($row->amount ?? 0) > 0 ? 'paid' : 'pending',
                 'remarks' => $row->remark ?? null,
+                'deleted_at' => $row->deleted_at ?? null,
                 'created_at' => $row->created_at ?? now(),
                 'updated_at' => $row->updated_at ?? now(),
             ];
@@ -892,6 +973,7 @@ class MigratePropertyDataCommand extends Command
                 'path' => $row->path,
                 'remarks' => $row->remarks ?? null,
                 'created_by' => null,
+                'deleted_at' => $row->deleted_at ?? null,
                 'created_at' => $row->created_at ?? now(),
                 'updated_at' => $row->updated_at ?? now(),
             ];

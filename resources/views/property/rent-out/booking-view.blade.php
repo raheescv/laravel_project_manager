@@ -12,14 +12,18 @@
     @livewire('rent-out.tabs.single-cheque-modal')
     @livewire('rent-out.tabs.multiple-cheque-modal')
     @livewire('rent-out.tabs.extend-modal')
-    @livewire('rent-out.tabs.service-modal')
     @livewire('rent-out.tabs.utility-term-modal')
     <x-rent-out.document-modal />
+    <x-rent-out.service-modal />
+    <x-rent-out.service-charge-modal />
+    <x-rent-out.service-payment-modal />
+    <x-rent-out.payout-modal />
 
     {{-- Scripts --}}
     @include('livewire.rent-out.partials.payment-term-scripts')
     @push('scripts')
         <x-select.documentTypeSelect />
         <x-select.paymentMethodSelect />
+        <x-select.accountSelect />
     @endpush
 </x-app-layout>

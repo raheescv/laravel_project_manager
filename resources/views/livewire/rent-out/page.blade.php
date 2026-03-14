@@ -125,7 +125,7 @@
                     <div class="col-md-3">
                         <label class="form-label fw-semibold small"><i class="fa fa-list-ol text-info me-1"></i> No of
                             Terms</label>
-                        <input type="number" class="form-control" wire:model.live="rent_outs.no_of_terms">
+                        <input type="number" class="form-control" wire:model.lazy="rent_outs.no_of_terms">
                     </div>
                     <div class="col-md-3">
                         <label class="form-label fw-semibold small"><i class="fa fa-repeat text-primary me-1"></i>
@@ -141,7 +141,7 @@
                     <div class="col-md-3">
                         <label class="form-label fw-semibold small"><i class="fa fa-money text-warning me-1"></i>
                             {{ $config->unitPriceLabel }}</label>
-                        <input type="number" class="form-control" wire:model.live="rent_outs.rent" step="0.01">
+                        <input type="number" class="form-control" wire:model.lazy="rent_outs.rent" step="0.01">
                     </div>
                     @if ($config->isRental)
                         <div class="col-md-3">
@@ -501,8 +501,8 @@
                 });
 
                 // Auto-populate selects on edit
-                window.addEventListener('Rent_OutSelectValues', event => {
-                    var data = event.detail[0];
+                Livewire.on('RentOutSelectValues', (params) => {
+                    var data = params[0];
                     if (data.property_group_id) {
                         var groupTs = document.querySelector('#property_group_id').tomselect;
                         if (groupTs && data.group_name) {
@@ -576,8 +576,8 @@
                 });
 
                 // Auto-fill group/building/type when property is selected
-                window.addEventListener('PropertyAutoFill', event => {
-                    var data = event.detail[0];
+                Livewire.on('PropertyAutoFill', (params) => {
+                    var data = params[0];
                     if (data.property_group_id) {
                         var groupTs = document.querySelector('#property_group_id').tomselect;
                         if (groupTs) {

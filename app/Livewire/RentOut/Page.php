@@ -52,7 +52,7 @@ class Page extends Component
     public function loadData()
     {
         if ($this->table_id) {
-            $this->rentOut = RentOut::with(['property.building.group', 'property.type', 'customer', 'salesman'])->find($this->table_id);
+            $this->rentOut = RentOut::with(['property.building.group', 'property.type', 'customer', 'salesman', 'downPaymentPaymentMethod'])->find($this->table_id);
             if (! $this->rentOut) {
                 session()->flash('error', 'Record not found');
 
@@ -62,6 +62,8 @@ class Page extends Component
             $this->rent_outs['agreement_type'] = $this->rentOut->agreement_type?->value ?? $this->agreementType;
             $this->rent_outs['status'] = $this->rentOut->status?->value ?? '';
             $this->rent_outs['collection_payment_mode'] = $this->rentOut->collection_payment_mode?->value ?? '';
+            $this->rent_outs['start_date'] = $this->rentOut->start_date?->format('Y-m-d') ?? '';
+            $this->rent_outs['end_date'] = $this->rentOut->end_date?->format('Y-m-d') ?? '';
             $property_name = $this->rentOut->property ? $this->rentOut->property->number.($this->rentOut->property->building ? ' - '.$this->rentOut->property->building->name : '') : '';
             $this->preFilledDropDowns = [
                 'group' => [

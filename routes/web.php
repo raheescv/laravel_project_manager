@@ -45,7 +45,7 @@ Route::middleware('auth')->group(function (): void {
         Route::get('excel-view', 'excelView')->name('excel-view');
     });
     Route::name('audit::')->prefix('audit')->controller(AuditController::class)->group(function (): void {
-        Route::get('{modal}/{id}', 'index')->name('index');
+        Route::get('{model}/{id}', 'index')->name('index');
     });
     Route::name('backup::')->prefix('backup')->controller(BackupController::class)->group(function (): void {
         Route::get('/', 'index')->name('index')->can('backup.view');

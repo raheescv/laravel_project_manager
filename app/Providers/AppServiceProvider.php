@@ -83,7 +83,9 @@ class AppServiceProvider extends ServiceProvider
                 return $themeSettings ? json_decode($themeSettings, true) : null;
             });
             Cache::remember('logo', now()->addYear(), function () {
-                return Configuration::where('key', 'logo')->value('value') ?? asset('assets/img/logo.svg');
+                $logo = Configuration::where('key', 'logo')->value('value');
+
+                return asset($logo);
             });
             Cache::remember('mobile', now()->addYear(), function () {
                 return Configuration::where('key', 'mobile')->value('value');

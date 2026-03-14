@@ -37,7 +37,7 @@ class View extends Component
 
     public function saveVacate()
     {
-        $result = (new VacateAction)->execute($this->rentOut->id, $this->vacateDate ?: null);
+        $result = (new VacateAction())->execute($this->rentOut->id, $this->vacateDate ?: null);
 
         if ($result['success']) {
             $this->showVacateModal = false;

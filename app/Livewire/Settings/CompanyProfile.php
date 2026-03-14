@@ -52,7 +52,7 @@ class CompanyProfile extends Component
         try {
             if ($this->logo) {
                 // throw new \Exception('Please wait for the loading to complete', 1);
-                $logo = url('storage/'.$this->logo->store('company_image', 'public'));
+                $logo = $this->logo->store('rent_out_logos', 'public');
                 Configuration::updateOrCreate(['key' => 'logo'], ['value' => $logo]);
                 Cache::forget('logo');
             }

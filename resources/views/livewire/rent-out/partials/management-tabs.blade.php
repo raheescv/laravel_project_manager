@@ -28,7 +28,11 @@
                         ['key' => 'ChequeTab', 'icon' => 'fa-check-square-o', 'label' => 'Cheques'],
                         ['key' => 'SecurityTab', 'icon' => 'fa-shield', 'label' => 'Security'],
                         ['key' => 'ExtendTab', 'icon' => 'fa-plus-circle', 'label' => 'Extend'],
-                        ['key' => 'AgreementPointsTab', 'icon' => 'fa-list-ol', 'label' => 'Agmt Points'],
+                    ]);
+                    if ($rentOut->status === \App\Enums\RentOut\RentOutStatus::Booked) {
+                        $tabs[] = ['key' => 'AgreementPointsTab', 'icon' => 'fa-list-ol', 'label' => 'Agmt Points'];
+                    }
+                    $tabs = array_merge($tabs, [
                         ['key' => 'NotesTab', 'icon' => 'fa-file-text-o', 'label' => 'Notes'],
                         ['key' => 'TransactionTab', 'icon' => 'fa-exchange', 'label' => 'Transactions'],
                         ['key' => 'MaintenanceTab', 'icon' => 'fa-wrench', 'label' => 'Maintenance'],
@@ -82,9 +86,11 @@
                 @livewire('rent-out.tabs.extend-tab', ['rentOutId' => $rentOut->id], key('extend-tab-' . $rentOut->id))
             </div>
 
-            <div x-show="activeTab === 'AgreementPointsTab'" x-transition:enter.duration.150ms>
-                @livewire('rent-out.tabs.agreement-points-tab', ['rentOutId' => $rentOut->id], key('agreement-points-tab-' . $rentOut->id))
-            </div>
+            @if ($rentOut->status === \App\Enums\RentOut\RentOutStatus::Booked)
+                <div x-show="activeTab === 'AgreementPointsTab'" x-transition:enter.duration.150ms>
+                    @livewire('rent-out.tabs.agreement-points-tab', ['rentOutId' => $rentOut->id], key('agreement-points-tab-' . $rentOut->id))
+                </div>
+            @endif
 
             <div x-show="activeTab === 'NotesTab'" x-transition:enter.duration.150ms>
                 @livewire('rent-out.tabs.notes-tab', ['rentOutId' => $rentOut->id], key('notes-tab-' . $rentOut->id))

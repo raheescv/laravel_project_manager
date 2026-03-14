@@ -8,6 +8,7 @@ use App\Helpers\Facades\SaleHelper;
 use App\Models\Account;
 use App\Models\Configuration;
 use App\Models\RentOut;
+use App\Models\RentOutPayment;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -185,6 +186,38 @@ class PrintController extends Controller
         return $pdf->stream('rentout_utilities_statement.pdf');
     }
 
+    public function rentOutPaymentReceipt($id)
+    {
+        $payment = RentOutPayment::with(['account', 'rentOut.customer', 'rentOut.property', 'rentOut.building'])->findOrFail($id);
+        $rentOut = $payment->rentOut;
+
+        $data = array_merge(
+            compact('payment', 'rentOut'),
+            $this->getCompanyInfo()
+        );
+
+        $pdf = Pdf::loadView('print.rentout.receipt', $data);
+        $pdf->setPaper('a4', 'portrait');
+
+        return $pdf->stream("receipt_{$payment->id}.pdf");
+    }
+
+    public function rentOutPaymentVoucher($id)
+    {
+        $payment = RentOutPayment::with(['account', 'rentOut.customer', 'rentOut.property', 'rentOut.building'])->findOrFail($id);
+        $rentOut = $payment->rentOut;
+
+        $data = array_merge(
+            compact('payment', 'rentOut'),
+            $this->getCompanyInfo()
+        );
+
+        $pdf = Pdf::loadView('print.rentout.voucher', $data);
+        $pdf->setPaper('a4', 'portrait');
+
+        return $pdf->stream("voucher_{$payment->id}.pdf");
+    }
+
     public function reservationForm($id)
     {
         return (new GenerateReservationFormAction())->execute($id);
@@ -210,8 +243,7 @@ class PrintController extends Controller
 
     private function getCompanyLogoPath(): ?string
     {
-        $logo = Configuration::where('key', 'company_logo')->value('value');
-
+        $logo = Configuration::where('key', 'logo')->value('value');
         if (! $logo) {
             return null;
         }

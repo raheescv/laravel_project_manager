@@ -53,7 +53,7 @@ class RentOutConfiguration extends Component
     ];
 
     private array $logoKeys = [
-        'rental_reservation_logo_file' => 'company_logo',
+        'rental_reservation_logo_file' => 'rental_reservation_logo',
         'lease_reservation_logo_file' => 'lease_reservation_logo',
         'lease_residential_logo_file' => 'lease_residential_logo',
         'rental_residential_logo_file' => 'residential_lease_logo',
@@ -72,7 +72,7 @@ class RentOutConfiguration extends Component
         $this->reservation_bond_paper_mode = $this->reservation_bond_paper_mode ?: 'no';
 
         // Load existing logo paths
-        $this->existing_rental_reservation_logo = Configuration::where('key', 'company_logo')->value('value');
+        $this->existing_rental_reservation_logo = Configuration::where('key', 'rental_reservation_logo')->value('value');
         $this->existing_lease_reservation_logo = Configuration::where('key', 'lease_reservation_logo')->value('value');
         $this->existing_lease_residential_logo = Configuration::where('key', 'lease_residential_logo')->value('value');
         $this->existing_rental_residential_logo = Configuration::where('key', 'residential_lease_logo')->value('value');
@@ -123,7 +123,7 @@ class RentOutConfiguration extends Component
         }
 
         // Refresh existing logo previews
-        $this->existing_rental_reservation_logo = Configuration::where('key', 'company_logo')->value('value');
+        $this->existing_rental_reservation_logo = Configuration::where('key', 'rental_reservation_logo')->value('value');
         $this->existing_lease_reservation_logo = Configuration::where('key', 'lease_reservation_logo')->value('value');
         $this->existing_lease_residential_logo = Configuration::where('key', 'lease_residential_logo')->value('value');
         $this->existing_rental_residential_logo = Configuration::where('key', 'residential_lease_logo')->value('value');

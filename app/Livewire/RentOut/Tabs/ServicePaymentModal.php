@@ -4,11 +4,12 @@ namespace App\Livewire\RentOut\Tabs;
 
 use App\Actions\RentOut\Payment\StorePaymentAction;
 use App\Models\RentOut;
+use App\Models\RentOutPayment;
 use Illuminate\Support\Facades\DB;
 use Livewire\Attributes\On;
 use Livewire\Component;
 
-class ServiceModal extends Component
+class ServicePaymentModal extends Component
 {
     public ?int $rentOutId = null;
 
@@ -20,7 +21,7 @@ class ServiceModal extends Component
         'remark' => '',
     ];
 
-    #[On('open-service-modal')]
+    #[On('open-service-payment-modal')]
     public function openModal($rentOutId)
     {
         $this->rentOutId = $rentOutId;
@@ -32,7 +33,7 @@ class ServiceModal extends Component
             'remark' => '',
         ];
         $this->resetValidation();
-        $this->dispatch('ToggleServiceModal');
+        $this->dispatch('ToggleServicePaymentModal');
     }
 
     public function payLater()
@@ -73,7 +74,7 @@ class ServiceModal extends Component
             }
 
             DB::commit();
-            $this->dispatch('ToggleServiceModal');
+            $this->dispatch('ToggleServicePaymentModal');
             $this->dispatch('rent-out-updated');
             $this->dispatch('success', message: 'Service charge recorded (Pay Later).');
         } catch (\Exception $e) {
@@ -141,7 +142,7 @@ class ServiceModal extends Component
             }
 
             DB::commit();
-            $this->dispatch('ToggleServiceModal');
+            $this->dispatch('ToggleServicePaymentModal');
             $this->dispatch('rent-out-updated');
             $this->dispatch('success', message: 'Service payment recorded (Pay Now).');
         } catch (\Exception $e) {
@@ -152,8 +153,18 @@ class ServiceModal extends Component
 
     public function render()
     {
-        return view('livewire.rent-out.tabs.service-modal', [
+        $serviceCharges = collect();
+        if ($this->rentOutId) {
+            $serviceCharges = RentOutPayment::where('rent_out_id', $this->rentOutId)
+                ->whereIn('source', ['Service', 'ServiceCharge'])
+                ->selectRaw('category, sum(credit) as credit, sum(debit) as debit')
+                ->groupBy('category')
+                ->get();
+        }
+
+        return view('livewire.rent-out.tabs.service-payment-modal', [
             'paymentMethods' => paymentMethodsOptions(),
+            'serviceCharges' => $serviceCharges,
         ]);
     }
 }

@@ -2,10 +2,7 @@
 
 namespace App\Livewire\RentOut\Tabs;
 
-use App\Actions\RentOut\Service\DeleteAction;
-use App\Models\RentOut;
-use App\Models\RentOutService;
-use Illuminate\Support\Facades\DB;
+use App\Models\RentOutPayment;
 use Livewire\Attributes\On;
 use Livewire\Component;
 
@@ -23,60 +20,36 @@ class ServicesTab extends Component
 
     public function openServiceModal()
     {
-        $rentOut = RentOut::find($this->rentOutId);
-
-        $this->dispatch('open-service-modal',
-            form: [
-                'rent_out_id' => $rentOut->id,
-                'name' => '',
-                'amount' => 0,
-                'description' => '',
-            ],
-            editingId: null,
-        );
+        $this->dispatch('open-service-modal', rentOutId: $this->rentOutId);
     }
 
-    public function editService($id)
+    public function openServiceChargeModal()
     {
-        $service = RentOutService::find($id);
-        if (! $service) {
-            return;
-        }
-
-        $this->dispatch('open-service-modal',
-            form: [
-                'rent_out_id' => $service->rent_out_id,
-                'name' => $service->name ?? '',
-                'amount' => $service->amount,
-                'description' => $service->description ?? '',
-            ],
-            editingId: $id,
-        );
+        $this->dispatch('open-service-charge-modal', rentOutId: $this->rentOutId);
     }
 
-    public function deleteService($id)
+    public function openServicePaymentModal()
     {
-        try {
-            DB::beginTransaction();
-            $response = (new DeleteAction())->execute($id);
-            if (! $response['success']) {
-                throw new \Exception($response['message']);
-            }
-            DB::commit();
-            $this->dispatch('rent-out-updated');
-            $this->dispatch('success', message: $response['message']);
-        } catch (\Exception $e) {
-            DB::rollback();
-            $this->dispatch('error', message: $e->getMessage());
-        }
+        $this->dispatch('open-service-payment-modal', rentOutId: $this->rentOutId);
     }
 
     public function render()
     {
-        $rentOut = RentOut::with('services')->find($this->rentOutId);
+        $servicePayments = RentOutPayment::with('account')
+            ->where('rent_out_id', $this->rentOutId)
+            ->whereIn('source', ['Service', 'ServiceCharge'])
+            ->orderBy('date', 'desc')
+            ->get();
+
+        $categorySummary = RentOutPayment::where('rent_out_id', $this->rentOutId)
+            ->whereIn('source', ['Service', 'ServiceCharge'])
+            ->selectRaw('category, sum(credit) as credit, sum(debit) as debit')
+            ->groupBy('category')
+            ->get();
 
         return view('livewire.rent-out.tabs.services-tab', [
-            'rentOut' => $rentOut,
+            'servicePayments' => $servicePayments,
+            'categorySummary' => $categorySummary,
         ]);
     }
 }

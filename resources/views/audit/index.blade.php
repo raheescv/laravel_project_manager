@@ -7,17 +7,15 @@
                     <li class="breadcrumb-item active" aria-current="page">Audit History</li>
                 </ol>
             </nav>
-            <h1 class="page-title mb-0 mt-2">Audit History for the {{ $model }}</h1>
-            <p class="lead">
-                A table is an arrangement of Audit History
+            <h1 class="page-title mb-0 mt-2">Audit History — {{ $model }}</h1>
+            <p class="lead text-muted">
+                View complete change history and track all modifications
             </p>
         </div>
     </div>
     <div class="content__boxed">
         <div class="content__wrap">
-            <div class="card mb-3">
-                @livewire('audit.table', ['model' => $model, 'table_id' => $id])
-            </div>
+            @livewire('audit.table', ['model' => $model, 'table_id' => $id])
         </div>
     </div>
 </x-app-layout>

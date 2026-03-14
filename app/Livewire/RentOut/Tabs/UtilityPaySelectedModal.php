@@ -2,8 +2,10 @@
 
 namespace App\Livewire\RentOut\Tabs;
 
+use App\Actions\RentOut\Payment\StorePaymentAction;
 use App\Models\RentOut;
 use App\Models\RentOutUtilityTerm;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Livewire\Attributes\On;
 use Livewire\Component;
@@ -19,7 +21,7 @@ class UtilityPaySelectedModal extends Component
     // Header fields
     public $payDate;
 
-    public $payPaymentMode = 'cash';
+    public $payPaymentMode = 1;
 
     public $payRemark = '';
 
@@ -50,13 +52,13 @@ class UtilityPaySelectedModal extends Component
                 'utility' => $term->utility?->name ?? '',
                 'balance' => (float) $term->balance,
                 'amount' => (float) $term->balance,
-                'payment_mode' => 'cash',
+                'payment_mode' => 1,
                 'remark' => '',
             ];
         })->toArray();
 
         $this->payDate = now()->format('Y-m-d');
-        $this->payPaymentMode = 'cash';
+        $this->payPaymentMode = 1;
         $this->payRemark = '';
         $this->saving = false;
         $this->showModal = true;
@@ -82,13 +84,34 @@ class UtilityPaySelectedModal extends Component
 
         try {
             DB::beginTransaction();
+            $rentOut = RentOut::find($this->rentOutId);
             foreach ($this->cashTerms as $cashTerm) {
-                $term = RentOutUtilityTerm::find($cashTerm['id']);
+                $term = RentOutUtilityTerm::with('utility')->find($cashTerm['id']);
                 if ($term && $cashTerm['amount'] > 0) {
+                    $paymentMode = $cashTerm['payment_mode'] ?? $this->payPaymentMode;
                     $term->paid = ($term->paid ?? 0) + $cashTerm['amount'];
-                    $term->payment_mode = $cashTerm['payment_mode'] ?? $this->payPaymentMode;
+                    $term->payment_mode = $paymentMode;
                     $term->paid_date = $this->payDate;
                     $term->save();
+
+                    $response = (new StorePaymentAction())->execute([
+                        'rent_out_id' => $this->rentOutId,
+                        'date' => $this->payDate,
+                        'credit' => $cashTerm['amount'],
+                        'debit' => 0,
+                        'account_id' => $paymentMode,
+                        'source' => 'UtilityTerm',
+                        'source_id' => $term->id,
+                        'group' => 'Utility Payment',
+                        'category' => $term->utility?->name ?? '',
+                        'payment_type' => 'Utility',
+                        'remark' => $cashTerm['remark'] ?? '',
+                        'created_by' => Auth::id(),
+                    ]);
+
+                    if (! $response['success']) {
+                        throw new \Exception($response['message']);
+                    }
                 }
             }
             DB::commit();
