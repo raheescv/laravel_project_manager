@@ -18,7 +18,10 @@
       "Bash(PUPPETEER_CACHE_DIR=.cache/puppeteer npx puppeteer browsers install chrome-headless-shell)",
       "Bash(chmod -R 755 .cache/puppeteer)",
       "Bash(find /Users/Shared/sites/personal/main_projects/project_manager/app/Exports -name *RentOut* -o -name *Booking*)",
-      "Bash(grep -E \"\\\\.php$\")"
+      "Bash(grep -E \"\\\\.php$\")",
+      "Bash(php -l app/Actions/RentOut/Cheque/UpdateStatusAction.php)",
+      "Bash(php -l app/Livewire/RentOut/ChequeManagementTable.php)",
+      "Bash(php -l app/Livewire/RentOut/Tabs/ChequesTab.php)"
     ]
   }
 }

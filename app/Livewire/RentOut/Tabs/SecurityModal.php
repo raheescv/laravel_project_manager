@@ -13,8 +13,6 @@ use Livewire\Component;
 
 class SecurityModal extends Component
 {
-    public bool $showModal = false;
-
     public ?int $editingId = null;
 
     public array $form = [
@@ -46,7 +44,7 @@ class SecurityModal extends Component
         $this->rentOutId = $form['rent_out_id'] ?? null;
         $this->editingId = $editingId;
         $this->resetValidation();
-        $this->showModal = true;
+        $this->dispatch('ToggleSecurityModal');
     }
 
     public function save()
@@ -100,18 +98,13 @@ class SecurityModal extends Component
                 throw new \Exception($response['message']);
             }
             DB::commit();
-            $this->showModal = false;
+            $this->dispatch('ToggleSecurityModal');
             $this->dispatch('rent-out-updated');
             $this->dispatch('success', message: $response['message']);
         } catch (\Exception $e) {
             DB::rollback();
             $this->dispatch('error', message: $e->getMessage());
         }
-    }
-
-    public function close()
-    {
-        $this->showModal = false;
     }
 
     public function render()

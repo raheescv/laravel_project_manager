@@ -5,14 +5,14 @@
         </div>
     </div>
 
-    {{-- Livewire Modals --}}
-    @livewire('rent-out.tabs.single-payment-term-modal')
-    @livewire('rent-out.tabs.multiple-payment-term-modal')
-    @livewire('rent-out.tabs.security-modal')
-    @livewire('rent-out.tabs.single-cheque-modal')
-    @livewire('rent-out.tabs.multiple-cheque-modal')
-    @livewire('rent-out.tabs.extend-modal')
-    @livewire('rent-out.tabs.utility-term-modal')
+    {{-- Modals --}}
+    <x-rent-out.single-payment-term-modal />
+    <x-rent-out.multiple-payment-term-modal />
+    <x-rent-out.security-modal />
+    <x-rent-out.single-cheque-modal />
+    <x-rent-out.multiple-cheque-modal />
+    <x-rent-out.extend-modal />
+    <x-rent-out.utility-term-modal />
     <x-rent-out.document-modal />
     <x-rent-out.service-modal />
     <x-rent-out.service-charge-modal />

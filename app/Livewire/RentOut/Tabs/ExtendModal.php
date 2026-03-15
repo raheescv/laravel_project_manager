@@ -10,8 +10,6 @@ use Livewire\Component;
 
 class ExtendModal extends Component
 {
-    public bool $showModal = false;
-
     public ?int $editingId = null;
 
     public array $form = [
@@ -36,7 +34,7 @@ class ExtendModal extends Component
         ];
         $this->editingId = $editingId;
         $this->resetValidation();
-        $this->showModal = true;
+        $this->dispatch('ToggleExtendModal');
     }
 
     public function save()
@@ -80,18 +78,13 @@ class ExtendModal extends Component
                 throw new \Exception($response['message']);
             }
             DB::commit();
-            $this->showModal = false;
+            $this->dispatch('ToggleExtendModal');
             $this->dispatch('rent-out-updated');
             $this->dispatch('success', message: $response['message']);
         } catch (\Exception $e) {
             DB::rollback();
             $this->dispatch('error', message: $e->getMessage());
         }
-    }
-
-    public function close()
-    {
-        $this->showModal = false;
     }
 
     public function render()

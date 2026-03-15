@@ -111,5 +111,5 @@
     </div>
 </div>
 
-@livewire('rent-out.tabs.pay-selected-modal', ['rentOutId' => $rentOut->id], key('pay-selected-modal-' . $rentOut->id))
-@livewire('rent-out.tabs.utility-pay-selected-modal', ['rentOutId' => $rentOut->id], key('utility-pay-selected-modal-' . $rentOut->id))
+<x-rent-out.pay-selected-modal :rentOutId="$rentOut->id" />
+<x-rent-out.utility-pay-selected-modal :rentOutId="$rentOut->id" />

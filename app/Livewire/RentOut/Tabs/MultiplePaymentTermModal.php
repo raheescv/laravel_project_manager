@@ -10,8 +10,6 @@ use Livewire\Component;
 
 class MultiplePaymentTermModal extends Component
 {
-    public bool $showModal = false;
-
     public ?int $rentOutId = null;
 
     public string $defaultLabel = 'rent payment';
@@ -53,7 +51,7 @@ class MultiplePaymentTermModal extends Component
         $this->rentOutId = $rentOutId;
         $this->defaultLabel = $defaultLabel;
         $this->generatePreview();
-        $this->showModal = true;
+        $this->dispatch('ToggleMultiplePaymentTermModal');
     }
 
     public function updatedFromDate()
@@ -152,18 +150,13 @@ class MultiplePaymentTermModal extends Component
                 }
             }
             DB::commit();
-            $this->showModal = false;
+            $this->dispatch('ToggleMultiplePaymentTermModal');
             $this->dispatch('rent-out-updated');
             $this->dispatch('success', message: 'Successfully created '.count($this->previewList).' payment terms.');
         } catch (\Exception $e) {
             DB::rollback();
             $this->dispatch('error', message: $e->getMessage());
         }
-    }
-
-    public function close()
-    {
-        $this->showModal = false;
     }
 
     public function getPreviewTotalProperty(): float

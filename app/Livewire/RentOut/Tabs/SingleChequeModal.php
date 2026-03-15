@@ -12,8 +12,6 @@ use Livewire\Component;
 
 class SingleChequeModal extends Component
 {
-    public bool $showModal = false;
-
     public ?int $editingId = null;
 
     public array $form = [
@@ -42,7 +40,7 @@ class SingleChequeModal extends Component
         ];
         $this->editingId = $editingId;
         $this->resetValidation();
-        $this->showModal = true;
+        $this->dispatch('ToggleSingleChequeModal');
     }
 
     public function save()
@@ -94,18 +92,13 @@ class SingleChequeModal extends Component
             }
 
             DB::commit();
-            $this->showModal = false;
+            $this->dispatch('ToggleSingleChequeModal');
             $this->dispatch('rent-out-updated');
             $this->dispatch('success', message: $message);
         } catch (\Exception $e) {
             DB::rollback();
             $this->dispatch('error', message: $e->getMessage());
         }
-    }
-
-    public function close()
-    {
-        $this->showModal = false;
     }
 
     public function render()

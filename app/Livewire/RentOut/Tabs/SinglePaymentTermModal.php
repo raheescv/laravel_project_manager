@@ -10,8 +10,6 @@ use Livewire\Component;
 
 class SinglePaymentTermModal extends Component
 {
-    public bool $showModal = false;
-
     public ?int $editingTermId = null;
 
     public array $form = [
@@ -37,7 +35,7 @@ class SinglePaymentTermModal extends Component
         $this->rentOutId = $form['rent_out_id'] ?? null;
         $this->editingTermId = $editingTermId;
         $this->resetValidation();
-        $this->showModal = true;
+        $this->dispatch('ToggleSinglePaymentTermModal');
     }
 
     public function save()
@@ -71,18 +69,13 @@ class SinglePaymentTermModal extends Component
                 throw new \Exception($response['message']);
             }
             DB::commit();
-            $this->showModal = false;
+            $this->dispatch('ToggleSinglePaymentTermModal');
             $this->dispatch('rent-out-updated');
             $this->dispatch('success', message: $response['message']);
         } catch (\Exception $e) {
             DB::rollback();
             $this->dispatch('error', message: $e->getMessage());
         }
-    }
-
-    public function close()
-    {
-        $this->showModal = false;
     }
 
     public function render()

@@ -13,8 +13,6 @@ class PaySelectedModal extends Component
 {
     public $rentOutId;
 
-    public $showModal = false;
-
     public $saving = false;
 
     // Header fields
@@ -61,7 +59,7 @@ class PaySelectedModal extends Component
         $this->payPaymentMode = 1;
         $this->payRemark = '';
         $this->saving = false;
-        $this->showModal = true;
+        $this->dispatch('TogglePaySelectedModal');
     }
 
     public function applyModeToAll()
@@ -119,7 +117,7 @@ class PaySelectedModal extends Component
                 }
             }
             DB::commit();
-            $this->showModal = false;
+            $this->dispatch('TogglePaySelectedModal');
             $this->dispatch('rent-out-updated');
             $this->dispatch('success', message: 'Payment submitted successfully.');
         } catch (\Exception $e) {
@@ -128,11 +126,6 @@ class PaySelectedModal extends Component
         }
 
         $this->saving = false;
-    }
-
-    public function closeModal()
-    {
-        $this->showModal = false;
     }
 
     public function getPayingTotalProperty()

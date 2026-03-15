@@ -12,8 +12,6 @@ use Livewire\Component;
 
 class UtilityTermModal extends Component
 {
-    public bool $showModal = false;
-
     public ?int $editingId = null;
 
     public array $form = [
@@ -50,7 +48,7 @@ class UtilityTermModal extends Component
         $this->noOfTerms = 2;
         $this->generatedTerms = [];
         $this->resetValidation();
-        $this->showModal = true;
+        $this->dispatch('ToggleUtilityTermModal');
     }
 
     public function generate()
@@ -138,7 +136,7 @@ class UtilityTermModal extends Component
                 throw new \Exception($response['message']);
             }
             DB::commit();
-            $this->showModal = false;
+            $this->dispatch('ToggleUtilityTermModal');
             $this->dispatch('rent-out-updated');
             $this->dispatch('success', message: $response['message']);
         } catch (\Exception $e) {
@@ -172,18 +170,13 @@ class UtilityTermModal extends Component
                 }
             }
             DB::commit();
-            $this->showModal = false;
+            $this->dispatch('ToggleUtilityTermModal');
             $this->dispatch('rent-out-updated');
             $this->dispatch('success', message: 'Utility terms generated successfully.');
         } catch (\Exception $e) {
             DB::rollback();
             $this->dispatch('error', message: $e->getMessage());
         }
-    }
-
-    public function close()
-    {
-        $this->showModal = false;
     }
 
     public function render()

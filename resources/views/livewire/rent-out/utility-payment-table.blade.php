@@ -7,7 +7,6 @@
                     <thead class="table-light">
                         <tr>
                             <th>Utility</th>
-                            <th></th>
                             <th class="text-end">Amount</th>
                             <th class="text-end">Paid</th>
                             <th class="text-end">Balance</th>
@@ -17,7 +16,6 @@
                         @foreach($summary as $row)
                             <tr class="{{ $row['name'] === 'Total' ? 'fw-bold table-secondary' : '' }}">
                                 <td>{{ $row['name'] }}</td>
-                                <td></td>
                                 <td class="text-end">{{ number_format($row['amount'], 2) }}</td>
                                 <td class="text-end">{{ number_format($row['paid'], 2) }}</td>
                                 <td class="text-end {{ $row['balance'] > 0 ? 'text-danger fw-bold' : '' }}">{{ number_format($row['balance'], 2) }}</td>
@@ -38,10 +36,6 @@
                     <button wire:click="download" class="btn btn-success btn-sm d-flex align-items-center shadow-sm">
                         <i class="fa fa-file-excel-o me-md-1 fs-5"></i>
                         <span class="d-none d-md-inline">Excel</span>
-                    </button>
-                    <button wire:click="updatedSelectAll(true)" class="btn btn-outline-primary btn-sm d-flex align-items-center shadow-sm">
-                        <i class="fa fa-check-square-o me-md-1"></i>
-                        <span class="d-none d-md-inline">Select all</span>
                     </button>
                     @if(count($selected) > 0)
                         <button wire:click="paySelected" class="btn btn-primary btn-sm d-flex align-items-center shadow-sm">

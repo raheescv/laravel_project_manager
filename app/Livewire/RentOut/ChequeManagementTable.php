@@ -7,7 +7,9 @@ use App\Enums\RentOut\AgreementType;
 use App\Enums\RentOut\ChequeStatus;
 use App\Exports\RentOut\ChequeExport;
 use App\Livewire\RentOut\Concerns\HasRentOutReportFilters;
+use App\Models\Property;
 use App\Models\RentOutCheque;
+use App\Models\RentOutPaymentTerm;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
 use Livewire\Component;
@@ -26,8 +28,6 @@ class ChequeManagementTable extends Component
     public $filterStatus = '';
 
     // Status change modal
-    public bool $showStatusModal = false;
-
     public $statusChangeStatus = '';
 
     public $statusChangePaymentMethod = '';
@@ -35,6 +35,12 @@ class ChequeManagementTable extends Component
     public $statusChangeJournalDate = '';
 
     public $statusChangeRemark = '';
+
+    public array $pendingCheques = [];
+
+    public array $availableTerms = [];
+
+    public $selectedTermId = null;
 
     public function mount(string $agreementType = 'rental'): void
     {
@@ -78,8 +84,7 @@ class ChequeManagementTable extends Component
         $this->statusChangePaymentMethod = '';
         $this->statusChangeJournalDate = now()->format('Y-m-d');
         $this->statusChangeRemark = '';
-        $this->showStatusModal = true;
-        $this->dispatch('open-status-modal');
+        $this->dispatch('ToggleChequeStatusModal');
     }
 
     public function updateChequeStatus(): void
@@ -91,25 +96,107 @@ class ChequeManagementTable extends Component
         try {
             DB::beginTransaction();
 
+            $unmatchedCheques = [];
+
             foreach ($this->selected as $id) {
                 $cheque = RentOutCheque::findOrFail($id);
-                (new UpdateStatusAction())->execute($cheque, [
+                $response = (new UpdateStatusAction())->execute($cheque, [
                     'status' => $this->statusChangeStatus,
                     'payment_method' => $this->statusChangePaymentMethod,
                     'journal_date' => $this->statusChangeJournalDate,
                     'remark' => $this->statusChangeRemark,
                 ]);
+
+                if (! $response['success']) {
+                    throw new \Exception($response['message']);
+                }
+
+                // Collect cheques that need term selection
+                if (! empty($response['has_unpaid_terms'])) {
+                    $unmatchedCheques[] = [
+                        'id' => $cheque->id,
+                        'cheque_no' => $cheque->cheque_no,
+                        'amount' => $cheque->amount,
+                        'date' => $cheque->date?->format('d-m-Y'),
+                        'customer' => $cheque->rentOut?->customer?->name ?? '',
+                        'available_terms' => $response['available_terms'],
+                    ];
+                }
             }
 
             DB::commit();
-            $this->dispatch('success', ['message' => 'Successfully updated '.count($this->selected).' cheque(s).']);
-            $this->showStatusModal = false;
+
+            if (! empty($unmatchedCheques)) {
+                // Show term selector for cheques without matching date
+                $this->pendingCheques = $unmatchedCheques;
+                $this->availableTerms = $unmatchedCheques[0]['available_terms'] ?? [];
+                $this->selectedTermId = null;
+                $this->dispatch('ToggleChequeStatusModal');
+                $this->dispatch('ToggleChequeTermSelectorModal');
+            } else {
+                $this->dispatch('success', ['message' => 'Successfully updated '.count($this->selected).' cheque(s).']);
+                $this->dispatch('ToggleChequeStatusModal');
+                $this->selected = [];
+                $this->selectAll = false;
+            }
+        } catch (\Exception $e) {
+            DB::rollBack();
+            $this->dispatch('error', ['message' => $e->getMessage()]);
+        }
+    }
+
+    public function confirmTermPayment(): void
+    {
+        if (! $this->selectedTermId || empty($this->pendingCheques)) {
+            $this->dispatch('error', ['message' => 'Please select a payment term.']);
+
+            return;
+        }
+
+        try {
+            DB::beginTransaction();
+
+            $action = new UpdateStatusAction();
+            $term = RentOutPaymentTerm::findOrFail($this->selectedTermId);
+
+            foreach ($this->pendingCheques as $pendingCheque) {
+                $cheque = RentOutCheque::find($pendingCheque['id']);
+                if ($cheque) {
+                    $action->payTermWithCheque(
+                        $pendingCheque['id'],
+                        $term,
+                        $this->statusChangePaymentMethod ?: null,
+                        $this->statusChangeJournalDate ?: null,
+                        $this->statusChangeRemark ?: null,
+                    );
+                }
+            }
+
+            DB::commit();
+            $this->dispatch('success', ['message' => 'Cheque(s) cleared and payment term paid successfully.']);
+            $this->closeTermSelector();
             $this->selected = [];
             $this->selectAll = false;
         } catch (\Exception $e) {
             DB::rollBack();
             $this->dispatch('error', ['message' => $e->getMessage()]);
         }
+    }
+
+    public function skipTermPayment(): void
+    {
+        $this->dispatch('success', ['message' => 'Cheque status updated without payment.']);
+        $this->closeTermSelector();
+        $this->selected = [];
+        $this->selectAll = false;
+    }
+
+    public function closeTermSelector(): void
+    {
+        $this->dispatch('ToggleChequeTermSelectorModal');
+        $this->pendingCheques = [];
+        $this->availableTerms = [];
+        $this->selectedTermId = null;
     }
 
     public function deselectAll(): void
@@ -171,9 +258,11 @@ class ChequeManagementTable extends Component
 
     public function render()
     {
+        $ownership = Property::pluck('ownership','ownership')->toArray();
         return view('livewire.rent-out.cheque-management-table', [
             'data' => $this->buildQuery()->paginate($this->limit),
             'chequeStatuses' => ChequeStatus::cases(),
+            'ownerships' => $ownership,
             ...$this->getFilterData(),
         ]);
     }

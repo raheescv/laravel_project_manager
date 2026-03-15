@@ -11,8 +11,6 @@ use Livewire\Component;
 
 class MultipleChequeModal extends Component
 {
-    public bool $showModal = false;
-
     public ?int $rentOutId = null;
 
     // Form fields
@@ -53,7 +51,7 @@ class MultipleChequeModal extends Component
         $this->multiFrequency = $frequency;
         $this->multiPayeeName = $payeeName;
         $this->generatePreview();
-        $this->showModal = true;
+        $this->dispatch('ToggleMultipleChequeModal');
     }
 
     public function updatedMultiStartNo()
@@ -186,18 +184,13 @@ class MultipleChequeModal extends Component
             }
 
             DB::commit();
-            $this->showModal = false;
+            $this->dispatch('ToggleMultipleChequeModal');
             $this->dispatch('rent-out-updated');
             $this->dispatch('success', message: 'Successfully created '.count($this->previewList).' cheques.');
         } catch (\Exception $e) {
             DB::rollback();
             $this->dispatch('error', message: $e->getMessage());
         }
-    }
-
-    public function close()
-    {
-        $this->showModal = false;
     }
 
     public function getPreviewTotalProperty(): float

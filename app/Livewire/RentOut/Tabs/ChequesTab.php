@@ -6,6 +6,7 @@ use App\Actions\RentOut\Cheque\DeleteAction;
 use App\Actions\RentOut\Cheque\UpdateStatusAction;
 use App\Models\RentOut;
 use App\Models\RentOutCheque;
+use App\Models\RentOutPaymentTerm;
 use Illuminate\Support\Facades\DB;
 use Livewire\Attributes\On;
 use Livewire\Component;
@@ -17,6 +18,17 @@ class ChequesTab extends Component
     public $sortDirection = 'asc';
     public array $selectedCheques = [];
     public bool $selectAll = false;
+
+    // Term selector for cheque clearance
+    public $pendingChequeId = null;
+
+    public $pendingChequeAmount = 0;
+
+    public $pendingChequeDate = '';
+
+    public array $availableTerms = [];
+
+    public $selectedTermId = null;
 
     public function mount($rentOutId)
     {
@@ -103,11 +115,72 @@ class ChequesTab extends Component
             }
             DB::commit();
             $this->dispatch('rent-out-updated');
-            $this->dispatch('success', message: $response['message']);
+
+            // Check if we need to show term selector
+            if (! empty($response['has_unpaid_terms'])) {
+                $cheque = RentOutCheque::find($id);
+                $this->pendingChequeId = $id;
+                $this->pendingChequeAmount = $cheque->amount ?? 0;
+                $this->pendingChequeDate = $cheque->date?->format('d-m-Y') ?? '';
+                $this->availableTerms = $response['available_terms'];
+                $this->selectedTermId = null;
+                $this->dispatch('ToggleTermSelectorModal');
+            } else {
+                $this->dispatch('success', message: $response['message']);
+            }
         } catch (\Exception $e) {
             DB::rollback();
             $this->dispatch('error', message: $e->getMessage());
         }
+    }
+
+    public function confirmTermPayment()
+    {
+        if (! $this->selectedTermId || ! $this->pendingChequeId) {
+            $this->dispatch('error', message: 'Please select a payment term.');
+
+            return;
+        }
+
+        try {
+            DB::beginTransaction();
+
+            $cheque = RentOutCheque::find($this->pendingChequeId);
+            $term = RentOutPaymentTerm::find($this->selectedTermId);
+
+            if (! $cheque || ! $term) {
+                throw new \Exception('Cheque or payment term not found.');
+            }
+
+            $response = (new UpdateStatusAction())->payTermWithCheque($cheque, $term);
+            if (! $response['success']) {
+                throw new \Exception($response['message']);
+            }
+
+            DB::commit();
+            $this->dispatch('rent-out-updated');
+            $this->dispatch('success', message: 'Cheque cleared and payment term paid successfully.');
+            $this->closeTermSelector();
+        } catch (\Exception $e) {
+            DB::rollback();
+            $this->dispatch('error', message: $e->getMessage());
+        }
+    }
+
+    public function skipTermPayment()
+    {
+        $this->dispatch('success', message: 'Cheque status updated without payment.');
+        $this->closeTermSelector();
+    }
+
+    public function closeTermSelector()
+    {
+        $this->dispatch('ToggleTermSelectorModal');
+        $this->pendingChequeId = null;
+        $this->pendingChequeAmount = 0;
+        $this->pendingChequeDate = '';
+        $this->availableTerms = [];
+        $this->selectedTermId = null;
     }
 
     public function updatedSelectAll($value)
