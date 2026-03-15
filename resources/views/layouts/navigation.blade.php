@@ -725,7 +725,7 @@
                                 @endcan
                                 @can('rent out.view')
                                     <li class="nav-item">
-                                        <a href="{{ route('property::report::customer-property') }}" class="nav-link {{ request()->is(['property/report/customer-property']) ? 'active' : '' }}">Customer Property Report</a>
+                                        <a href="{{ route('property::report::customer-property') }}" class="nav-link {{ request()->is(['property/report/customer-property']) ? 'active' : '' }}">Customer Property</a>
                                     </li>
                                 @endcan
                                 @can('rent out security.view')

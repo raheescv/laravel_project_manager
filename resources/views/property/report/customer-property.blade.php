@@ -20,4 +20,11 @@
             </div>
         </div>
     </div>
+    @push('scripts')
+        <x-select.propertyGroupSelect />
+        <x-select.propertyBuildingSelect />
+        <x-select.propertyTypeSelect />
+        <x-select.propertySelect />
+        <x-select.customerSelect />
+    @endpush
 </x-app-layout>
