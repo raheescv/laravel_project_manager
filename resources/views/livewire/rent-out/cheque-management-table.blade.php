@@ -123,31 +123,38 @@
 
             {{-- ═══ Filter Row 2: Dates + Ownership + Status ═══ --}}
             <div class="row g-3 mt-1">
-                <div class="col-md-4 col-lg">
+                <div class="col-md-3 col-lg">
                     <label class="form-label fw-medium">
                         <i class="fa fa-calendar text-primary me-1 small"></i> From Date
                     </label>
-                    <input type="date" wire:model="dateFrom" class="form-control form-control-sm border-secondary-subtle shadow-sm">
+                    <input type="date" wire:model="dateFrom"
+                        class="form-control form-control-sm border-secondary-subtle shadow-sm">
                 </div>
-                <div class="col-md-4 col-lg">
+                <div class="col-md-3 col-lg">
                     <label class="form-label fw-medium">
                         <i class="fa fa-calendar-check-o text-primary me-1 small"></i> To Date
                     </label>
-                    <input type="date" wire:model="dateTo" class="form-control form-control-sm border-secondary-subtle shadow-sm">
+                    <input type="date" wire:model="dateTo"
+                        class="form-control form-control-sm border-secondary-subtle shadow-sm">
                 </div>
-                <div class="col-md-4 col-lg">
+                <div class="col-md-3 col-lg" wire:ignore>
                     <label class="form-label fw-medium">
                         <i class="fa fa-id-card text-primary me-1 small"></i> Ownership
                     </label>
-                    <input type="text" wire:model="filterOwnership" class="form-control form-control-sm border-secondary-subtle shadow-sm">
+                    <select wire:model="filterOwnership" class="tomSelect" multiple id="ownership">
+                        @foreach ($ownerships as $key => $value)
+                            <option value="{{ $value }}">{{ $value }}</option>
+                        @endforeach
+                    </select>
                 </div>
-                <div class="col-md-4 col-lg">
+                <div class="col-md-6 col-lg">
                     <label class="form-label fw-medium">
                         <i class="fa fa-flag text-primary me-1 small"></i> Status
                     </label>
-                    <select wire:model="filterStatus" class="form-select form-select-sm border-secondary-subtle shadow-sm">
+                    <select wire:model="filterStatus"
+                        class="form-select form-select-sm border-secondary-subtle shadow-sm">
                         <option value="">All</option>
-                        @foreach($chequeStatuses as $status)
+                        @foreach ($chequeStatuses as $status)
                             <option value="{{ $status->value }}">{{ $status->label() }}</option>
                         @endforeach
                     </select>
@@ -157,7 +164,8 @@
             {{-- ═══ Reset Filters + Apply ═══ --}}
             <div class="row mt-3">
                 <div class="col-12 d-flex gap-2">
-                    <button wire:click="applyFilters" class="btn btn-sm btn-primary d-flex align-items-center gap-1 shadow-sm">
+                    <button wire:click="applyFilters"
+                        class="btn btn-sm btn-primary d-flex align-items-center gap-1 shadow-sm">
                         <i class="fa fa-filter"></i> Apply
                     </button>
                     <button wire:click="resetFilters"
@@ -165,8 +173,9 @@
                         <i class="fa fa-times"></i>
                         Reset Filters
                     </button>
-                    @if(count($selected) > 0)
-                        <button wire:click="openStatusModal" class="btn btn-warning btn-sm d-flex align-items-center shadow-sm">
+                    @if (count($selected) > 0)
+                        <button wire:click="openStatusModal"
+                            class="btn btn-warning btn-sm d-flex align-items-center shadow-sm">
                             <i class="fa fa-exchange me-md-1"></i>
                             Status Change ({{ count($selected) }})
                         </button>
@@ -188,38 +197,43 @@
                                         class="form-check-input shadow-sm" id="selectAllCheckbox" />
                                 </div>
                             </th>
-                            @if($this->isColumnVisible('date'))
+                            @if ($this->isColumnVisible('date'))
                                 <th class="fw-semibold">
-                                    <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="date" label="Date" />
+                                    <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="date"
+                                        label="Date" />
                                 </th>
                             @endif
-                            @if($this->isColumnVisible('customer'))
+                            @if ($this->isColumnVisible('customer'))
                                 <th class="fw-semibold">
-                                    <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="rent_out_id" label="Customer" />
+                                    <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="rent_out_id"
+                                        label="Customer" />
                                 </th>
                             @endif
-                            @if($this->isColumnVisible('building'))
+                            @if ($this->isColumnVisible('building'))
                                 <th class="fw-semibold">Building</th>
                             @endif
-                            @if($this->isColumnVisible('property'))
+                            @if ($this->isColumnVisible('property'))
                                 <th class="fw-semibold">Property No/Unit</th>
                             @endif
-                            @if($this->isColumnVisible('bank'))
+                            @if ($this->isColumnVisible('bank'))
                                 <th class="fw-semibold">Bank</th>
                             @endif
-                            @if($this->isColumnVisible('cheque_no'))
+                            @if ($this->isColumnVisible('cheque_no'))
                                 <th class="fw-semibold">
-                                    <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="cheque_no" label="Cheque No" />
+                                    <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="cheque_no"
+                                        label="Cheque No" />
                                 </th>
                             @endif
-                            @if($this->isColumnVisible('amount'))
+                            @if ($this->isColumnVisible('amount'))
                                 <th class="fw-semibold text-end">
-                                    <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="amount" label="Amount" />
+                                    <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="amount"
+                                        label="Amount" />
                                 </th>
                             @endif
-                            @if($this->isColumnVisible('status'))
+                            @if ($this->isColumnVisible('status'))
                                 <th class="fw-semibold">
-                                    <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="status" label="Status" />
+                                    <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="status"
+                                        label="Status" />
                                 </th>
                             @endif
                         </tr>
@@ -237,47 +251,50 @@
                                             id="checkbox{{ $item->id }}" />
                                     </div>
                                 </td>
-                                @if($this->isColumnVisible('date'))
+                                @if ($this->isColumnVisible('date'))
                                     <td>
-                                        <i class="fa fa-calendar me-1 text-muted opacity-75"></i>{{ $item->date?->format('d-m-Y') }}
+                                        <i
+                                            class="fa fa-calendar me-1 text-muted opacity-75"></i>{{ $item->date?->format('d-m-Y') }}
                                     </td>
                                 @endif
-                                @if($this->isColumnVisible('customer'))
+                                @if ($this->isColumnVisible('customer'))
                                     <td>
                                         <i class="fa fa-user me-1 text-muted opacity-75"></i>
                                         {{ $item->rentOut?->customer?->name }}
                                     </td>
                                 @endif
-                                @if($this->isColumnVisible('building'))
+                                @if ($this->isColumnVisible('building'))
                                     <td>
                                         <i class="fa fa-building-o me-1 text-muted opacity-75"></i>
                                         {{ $item->rentOut?->building?->name }}
                                     </td>
                                 @endif
-                                @if($this->isColumnVisible('property'))
+                                @if ($this->isColumnVisible('property'))
                                     <td>
-                                        <a href="{{ route('property::rent::view', $item->rent_out_id) }}" class="text-decoration-none">
+                                        <a href="{{ route('property::rent::view', $item->rent_out_id) }}"
+                                            class="text-decoration-none">
                                             <i class="fa fa-home me-1 text-muted opacity-75"></i>
                                             {{ $item->rentOut?->property?->number }}
                                         </a>
                                     </td>
                                 @endif
-                                @if($this->isColumnVisible('bank'))
+                                @if ($this->isColumnVisible('bank'))
                                     <td>
                                         <i class="fa fa-university me-1 text-muted opacity-75"></i>
                                         {{ $item->bank_name }}
                                     </td>
                                 @endif
-                                @if($this->isColumnVisible('cheque_no'))
+                                @if ($this->isColumnVisible('cheque_no'))
                                     <td>{{ $item->cheque_no }}</td>
                                 @endif
-                                @if($this->isColumnVisible('amount'))
+                                @if ($this->isColumnVisible('amount'))
                                     <td class="text-end fw-medium">{{ number_format($item->amount, 2) }}</td>
                                 @endif
-                                @if($this->isColumnVisible('status'))
+                                @if ($this->isColumnVisible('status'))
                                     <td>
-                                        @if($item->status)
-                                            <span class="badge bg-{{ $item->status->color() }}">{{ $item->status->label() }}</span>
+                                        @if ($item->status)
+                                            <span
+                                                class="badge bg-{{ $item->status->color() }}">{{ $item->status->label() }}</span>
                                         @endif
                                     </td>
                                 @endif
@@ -293,97 +310,13 @@
                     </tbody>
                 </table>
             </div>
-            @if($data->hasPages())
+            @if ($data->hasPages())
                 <div class="p-3 border-top">
                     {{ $data->links() }}
                 </div>
             @endif
         </div>
     </div>
-
-    {{-- Status Change Modal --}}
-    @if($showStatusModal)
-        <div class="modal fade show d-block" tabindex="-1" style="background: rgba(0,0,0,0.5);">
-            <div class="modal-dialog modal-dialog-centered">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title">Rentout Cheque Management Model</h5>
-                        <button type="button" class="btn-close" wire:click="$set('showStatusModal', false)"></button>
-                    </div>
-                    <div class="modal-body">
-                        <div class="mb-3">
-                            <label class="form-label fw-bold">Status</label>
-                            <div class="input-group">
-                                <span class="input-group-text"><i class="demo-psi-check"></i></span>
-                                <select wire:model="statusChangeStatus" class="form-select">
-                                    @foreach($chequeStatuses as $status)
-                                        <option value="{{ $status->value }}">{{ $status->label() }}</option>
-                                    @endforeach
-                                </select>
-                            </div>
-                        </div>
-
-                        <div class="mb-3" wire:ignore>
-                            <label class="form-label fw-bold">Payment Method</label>
-                            <div class="input-group">
-                                <span class="input-group-text"><i class="demo-psi-credit-card"></i></span>
-                                <select id="statusChangePaymentMethod" class="form-select" placeholder="Select Payment Method">
-                                </select>
-                            </div>
-                        </div>
-
-                        <div class="mb-3">
-                            <label class="form-label fw-bold">Journal Date</label>
-                            <div class="input-group">
-                                <span class="input-group-text"><i class="demo-psi-calendar"></i></span>
-                                <input type="date" wire:model="statusChangeJournalDate" class="form-control">
-                            </div>
-                        </div>
-
-                        <div class="mb-3">
-                            <label class="form-label fw-bold">Remark</label>
-                            <div class="input-group">
-                                <span class="input-group-text"><i class="demo-psi-speech-bubble"></i></span>
-                                <input type="text" wire:model="statusChangeRemark" class="form-control" placeholder="Enter your remark">
-                            </div>
-                        </div>
-
-                        <div class="mb-0">
-                            <label class="form-label fw-bold">Selected Cheques:</label>
-                            <div class="table-responsive" style="max-height: 200px; overflow-y: auto;">
-                                <table class="table table-sm table-bordered mb-0">
-                                    <thead class="table-light">
-                                        <tr>
-                                            <th>#</th>
-                                            <th>Customer</th>
-                                            <th>Cheque No</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        @foreach($this->selectedCheques as $index => $cheque)
-                                            <tr>
-                                                <td>{{ $index + 1 }}</td>
-                                                <td>{{ $cheque['customer'] }}</td>
-                                                <td>{{ $cheque['cheque_no'] }}</td>
-                                            </tr>
-                                        @endforeach
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" wire:click="$set('showStatusModal', false)">
-                            <i class="demo-psi-cross me-1"></i> Close
-                        </button>
-                        <button type="button" class="btn btn-success" wire:click="updateChequeStatus">
-                            <i class="demo-psi-check me-1"></i> Update
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    @endif
 
     @push('scripts')
         <script>
@@ -415,62 +348,9 @@
                 $('#cheque_filterCustomer').on('change', function(e) {
                     @this.set('filterCustomer', $(this).val() || '');
                 });
-
-                // Initialize TomSelect for Payment Method in status modal
-                function initPaymentMethodSelect() {
-                    setTimeout(() => {
-                        var el = document.getElementById('statusChangePaymentMethod');
-                        if (el && !el.tomSelect) {
-                            new TomSelect(el, {
-                                persist: false,
-                                valueField: 'id',
-                                nameField: 'name',
-                                searchField: ['name', 'id'],
-                                load: function(query, callback) {
-                                    var url = "{{ route('account::list') }}";
-                                    url += '?query=' + encodeURIComponent(query);
-                                    url += '&is_payment_method=1';
-                                    fetch(url)
-                                        .then(response => {
-                                            if (!response.ok) throw new Error('Network response was not ok');
-                                            return response.json();
-                                        })
-                                        .then(json => callback(json.items))
-                                        .catch(err => {
-                                            console.error('Error loading data:', err);
-                                            callback();
-                                        });
-                                },
-                                onFocus: function() {
-                                    this.load('');
-                                },
-                                onChange: function(value) {
-                                    @this.set('statusChangePaymentMethod', value);
-                                },
-                                render: {
-                                    option: function(item, escape) {
-                                        return `<div>${escape(item.name || item.text || '')}</div>`;
-                                    },
-                                    item: function(item, escape) {
-                                        return `<div>${escape(item.name || item.text || '')}</div>`;
-                                    },
-                                },
-                            });
-                        }
-                    }, 100);
-                }
-
-                window.addEventListener('open-status-modal', () => {
-                    initPaymentMethodSelect();
+                $('#ownership').on('change', function(e) {
+                    @this.set('filterOwnership', $(this).val() || '');
                 });
-
-                // Also try on Livewire morphdom updates (Livewire 3)
-                Livewire.hook('morph.updated', ({el}) => {
-                    if (document.getElementById('statusChangePaymentMethod') && !document.getElementById('statusChangePaymentMethod').tomSelect) {
-                        initPaymentMethodSelect();
-                    }
-                });
-
             });
         </script>
     @endpush

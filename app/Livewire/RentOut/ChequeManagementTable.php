@@ -2,16 +2,14 @@
 
 namespace App\Livewire\RentOut;
 
-use App\Actions\RentOut\Cheque\UpdateStatusAction;
 use App\Enums\RentOut\AgreementType;
 use App\Enums\RentOut\ChequeStatus;
 use App\Exports\RentOut\ChequeExport;
 use App\Livewire\RentOut\Concerns\HasRentOutReportFilters;
 use App\Models\Property;
 use App\Models\RentOutCheque;
-use App\Models\RentOutPaymentTerm;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Support\Facades\DB;
+use Livewire\Attributes\On;
 use Livewire\Component;
 use Livewire\WithPagination;
 use Maatwebsite\Excel\Facades\Excel;
@@ -25,27 +23,11 @@ class ChequeManagementTable extends Component
     public string $agreementType = 'rental';
 
     // Cheque-specific filter
-    public $filterStatus = '';
-
-    // Status change modal
-    public $statusChangeStatus = '';
-
-    public $statusChangePaymentMethod = '';
-
-    public $statusChangeJournalDate = '';
-
-    public $statusChangeRemark = '';
-
-    public array $pendingCheques = [];
-
-    public array $availableTerms = [];
-
-    public $selectedTermId = null;
+    public array $filterStatus = ['uncleared', 'submitted'];
 
     public function mount(string $agreementType = 'rental'): void
     {
         $this->agreementType = $agreementType;
-        $this->statusChangeJournalDate = now()->format('Y-m-d');
     }
 
     public function getDefaultColumns(): array
@@ -68,7 +50,7 @@ class ChequeManagementTable extends Component
             ->tap(fn ($q) => $this->applyRentOutFilters($q))
             ->tap(fn ($q) => $this->applyDateFilter($q, 'date'))
             ->tap(fn ($q) => $this->applySearch($q))
-            ->when($this->filterStatus, fn ($q, $v) => $q->where('status', $v))
+            ->when(!empty($this->filterStatus), fn ($q) => $q->whereIn('status', $this->filterStatus))
             ->orderBy($this->sortField === 'id' ? 'rent_out_cheques.id' : $this->sortField, $this->sortDirection);
     }
 
@@ -80,123 +62,14 @@ class ChequeManagementTable extends Component
             return;
         }
 
-        $this->statusChangeStatus = ChequeStatus::Cleared->value;
-        $this->statusChangePaymentMethod = '';
-        $this->statusChangeJournalDate = now()->format('Y-m-d');
-        $this->statusChangeRemark = '';
-        $this->dispatch('ToggleChequeStatusModal');
+        $this->dispatch('open-cheque-status-modal', selectedIds: $this->selected);
     }
 
-    public function updateChequeStatus(): void
+    #[On('cheque-table-refresh')]
+    public function refreshTable(): void
     {
-        $this->validate([
-            'statusChangeStatus' => 'required',
-        ]);
-
-        try {
-            DB::beginTransaction();
-
-            $unmatchedCheques = [];
-
-            foreach ($this->selected as $id) {
-                $cheque = RentOutCheque::findOrFail($id);
-                $response = (new UpdateStatusAction())->execute($cheque, [
-                    'status' => $this->statusChangeStatus,
-                    'payment_method' => $this->statusChangePaymentMethod,
-                    'journal_date' => $this->statusChangeJournalDate,
-                    'remark' => $this->statusChangeRemark,
-                ]);
-
-                if (! $response['success']) {
-                    throw new \Exception($response['message']);
-                }
-
-                // Collect cheques that need term selection
-                if (! empty($response['has_unpaid_terms'])) {
-                    $unmatchedCheques[] = [
-                        'id' => $cheque->id,
-                        'cheque_no' => $cheque->cheque_no,
-                        'amount' => $cheque->amount,
-                        'date' => $cheque->date?->format('d-m-Y'),
-                        'customer' => $cheque->rentOut?->customer?->name ?? '',
-                        'available_terms' => $response['available_terms'],
-                    ];
-                }
-            }
-
-            DB::commit();
-
-            if (! empty($unmatchedCheques)) {
-                // Show term selector for cheques without matching date
-                $this->pendingCheques = $unmatchedCheques;
-                $this->availableTerms = $unmatchedCheques[0]['available_terms'] ?? [];
-                $this->selectedTermId = null;
-                $this->dispatch('ToggleChequeStatusModal');
-                $this->dispatch('ToggleChequeTermSelectorModal');
-            } else {
-                $this->dispatch('success', ['message' => 'Successfully updated '.count($this->selected).' cheque(s).']);
-                $this->dispatch('ToggleChequeStatusModal');
-                $this->selected = [];
-                $this->selectAll = false;
-            }
-        } catch (\Exception $e) {
-            DB::rollBack();
-            $this->dispatch('error', ['message' => $e->getMessage()]);
-        }
-    }
-
-    public function confirmTermPayment(): void
-    {
-        if (! $this->selectedTermId || empty($this->pendingCheques)) {
-            $this->dispatch('error', ['message' => 'Please select a payment term.']);
-
-            return;
-        }
-
-        try {
-            DB::beginTransaction();
-
-            $action = new UpdateStatusAction();
-            $term = RentOutPaymentTerm::findOrFail($this->selectedTermId);
-
-            foreach ($this->pendingCheques as $pendingCheque) {
-                $cheque = RentOutCheque::find($pendingCheque['id']);
-                if ($cheque) {
-                    $action->payTermWithCheque(
-                        $pendingCheque['id'],
-                        $term,
-                        $this->statusChangePaymentMethod ?: null,
-                        $this->statusChangeJournalDate ?: null,
-                        $this->statusChangeRemark ?: null,
-                    );
-                }
-            }
-
-            DB::commit();
-            $this->dispatch('success', ['message' => 'Cheque(s) cleared and payment term paid successfully.']);
-            $this->closeTermSelector();
-            $this->selected = [];
-            $this->selectAll = false;
-        } catch (\Exception $e) {
-            DB::rollBack();
-            $this->dispatch('error', ['message' => $e->getMessage()]);
-        }
-    }
-
-    public function skipTermPayment(): void
-    {
-        $this->dispatch('success', ['message' => 'Cheque status updated without payment.']);
-        $this->closeTermSelector();
         $this->selected = [];
         $this->selectAll = false;
-    }
-
-    public function closeTermSelector(): void
-    {
-        $this->dispatch('ToggleChequeTermSelectorModal');
-        $this->pendingCheques = [];
-        $this->availableTerms = [];
-        $this->selectedTermId = null;
     }
 
     public function deselectAll(): void
@@ -226,7 +99,7 @@ class ChequeManagementTable extends Component
 
     public function resetFilters(): void
     {
-        $this->filterStatus = '';
+        $this->filterStatus = ['uncleared', 'submitted'];
         parent::resetFilters();
         $this->js("
             ['cheque_filterGroup', 'cheque_filterBuilding', 'cheque_filterProperty', 'cheque_filterCustomer'].forEach(id => {
@@ -234,26 +107,6 @@ class ChequeManagementTable extends Component
                 if (el && el.tomSelect) { el.tomSelect.clear(); }
             });
         ");
-    }
-
-    /**
-     * Get selected cheques info for the modal display.
-     */
-    public function getSelectedChequesProperty(): array
-    {
-        if (empty($this->selected)) {
-            return [];
-        }
-
-        return RentOutCheque::with('rentOut.customer')
-            ->whereIn('id', $this->selected)
-            ->get()
-            ->map(fn ($c) => [
-                'id' => $c->id,
-                'customer' => $c->rentOut?->customer?->name,
-                'cheque_no' => $c->cheque_no,
-            ])
-            ->toArray();
     }
 
     public function render()

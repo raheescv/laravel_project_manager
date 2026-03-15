@@ -17,4 +17,7 @@
             @livewire('rent-out.cheque-management-table', ['agreementType' => 'rental'])
         </div>
     </div>
+
+    <x-rent-out.cheque-status-modal />
+    <x-rent-out.cheque-term-selector-modal />
 </x-app-layout>
