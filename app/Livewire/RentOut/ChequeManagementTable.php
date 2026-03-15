@@ -102,10 +102,14 @@ class ChequeManagementTable extends Component
         $this->filterStatus = ['uncleared', 'submitted'];
         parent::resetFilters();
         $this->js("
-            ['cheque_filterGroup', 'cheque_filterBuilding', 'cheque_filterProperty', 'cheque_filterCustomer'].forEach(id => {
+            ['cheque_filterGroup', 'cheque_filterBuilding', 'cheque_filterProperty', 'cheque_filterCustomer', 'ownership'].forEach(id => {
                 const el = document.getElementById(id);
                 if (el && el.tomSelect) { el.tomSelect.clear(); }
             });
+            var statusEl = document.getElementById('cheque_filterStatus');
+            if (statusEl && statusEl.tomSelect) {
+                statusEl.tomSelect.setValue(['uncleared', 'submitted']);
+            }
         ");
     }
 

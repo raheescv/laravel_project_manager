@@ -147,15 +147,14 @@
                         @endforeach
                     </select>
                 </div>
-                <div class="col-md-6 col-lg">
+                <div class="col-md-6 col-lg" wire:ignore>
                     <label class="form-label fw-medium">
                         <i class="fa fa-flag text-primary me-1 small"></i> Status
                     </label>
-                    <select wire:model="filterStatus"
-                        class="form-select form-select-sm border-secondary-subtle shadow-sm">
-                        <option value="">All</option>
+                    <select wire:model="filterStatus" class="tomSelect" multiple id="cheque_filterStatus">
                         @foreach ($chequeStatuses as $status)
-                            <option value="{{ $status->value }}">{{ $status->label() }}</option>
+                            <option value="{{ $status->value }}"
+                                @if(in_array($status->value, $filterStatus)) selected @endif>{{ $status->label() }}</option>
                         @endforeach
                     </select>
                 </div>
@@ -350,6 +349,9 @@
                 });
                 $('#ownership').on('change', function(e) {
                     @this.set('filterOwnership', $(this).val() || '');
+                });
+                $('#cheque_filterStatus').on('change', function(e) {
+                    @this.set('filterStatus', $(this).val() || []);
                 });
             });
         </script>
