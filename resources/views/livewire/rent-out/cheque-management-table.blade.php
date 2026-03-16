@@ -113,31 +113,7 @@
                     </label>
                     {{ html()->select('filterProperty', [])->value('')->class('select-property_id-list border-secondary-subtle shadow-sm')->id('cheque_filterProperty')->placeholder('All Properties')->attribute('wire:model', 'filterProperty')->attribute('data-building-select', '#cheque_filterBuilding')->attribute('data-group-select', '#cheque_filterGroup') }}
                 </div>
-                <div class="col-md-4 col-lg" wire:ignore>
-                    <label class="form-label fw-medium">
-                        <i class="fa fa-user text-primary me-1 small"></i> Customer
-                    </label>
-                    {{ html()->select('filterCustomer', [])->value('')->class('select-customer_id-list border-secondary-subtle shadow-sm')->id('cheque_filterCustomer')->placeholder('All Customers')->attribute('wire:model', 'filterCustomer') }}
-                </div>
-            </div>
-
-            {{-- ═══ Filter Row 2: Dates + Ownership + Status ═══ --}}
-            <div class="row g-3 mt-1">
-                <div class="col-md-3 col-lg">
-                    <label class="form-label fw-medium">
-                        <i class="fa fa-calendar text-primary me-1 small"></i> From Date
-                    </label>
-                    <input type="date" wire:model="dateFrom"
-                        class="form-control form-control-sm border-secondary-subtle shadow-sm">
-                </div>
-                <div class="col-md-3 col-lg">
-                    <label class="form-label fw-medium">
-                        <i class="fa fa-calendar-check-o text-primary me-1 small"></i> To Date
-                    </label>
-                    <input type="date" wire:model="dateTo"
-                        class="form-control form-control-sm border-secondary-subtle shadow-sm">
-                </div>
-                <div class="col-md-3 col-lg" wire:ignore>
+                <div class="col-md-3 col-lg-3" wire:ignore>
                     <label class="form-label fw-medium">
                         <i class="fa fa-id-card text-primary me-1 small"></i> Ownership
                     </label>
@@ -147,22 +123,46 @@
                         @endforeach
                     </select>
                 </div>
-                <div class="col-md-6 col-lg" wire:ignore>
+            </div>
+
+            {{-- ═══ Filter Row 2: Dates, Customer, Status ═══ --}}
+            <div class="row g-3 mt-1">
+                <div class="col-md-3 col-lg-3">
+                    <label class="form-label fw-medium">
+                        <i class="fa fa-calendar text-primary me-1 small"></i> From Date
+                    </label>
+                    <input type="date" wire:model="dateFrom"
+                        class="form-control form-control-sm border-secondary-subtle shadow-sm">
+                </div>
+                <div class="col-md-3 col-lg-3">
+                    <label class="form-label fw-medium">
+                        <i class="fa fa-calendar-check-o text-primary me-1 small"></i> To Date
+                    </label>
+                    <input type="date" wire:model="dateTo"
+                        class="form-control form-control-sm border-secondary-subtle shadow-sm">
+                </div>
+                <div class="col-md-3 col-lg-3" wire:ignore>
+                    <label class="form-label fw-medium">
+                        <i class="fa fa-user text-primary me-1 small"></i> Customer
+                    </label>
+                    {{ html()->select('filterCustomer', [])->value('')->class('select-customer_id-list border-secondary-subtle shadow-sm')->id('cheque_filterCustomer')->placeholder('All Customers')->attribute('wire:model', 'filterCustomer') }}
+                </div>
+                <div class="col-md-3 col-lg-3" wire:ignore>
                     <label class="form-label fw-medium">
                         <i class="fa fa-flag text-primary me-1 small"></i> Status
                     </label>
                     <select wire:model="filterStatus" class="tomSelect" multiple id="cheque_filterStatus">
                         @foreach ($chequeStatuses as $status)
                             <option value="{{ $status->value }}"
-                                @if(in_array($status->value, $filterStatus)) selected @endif>{{ $status->label() }}</option>
+                                @if (in_array($status->value, $filterStatus)) selected @endif>{{ $status->label() }}</option>
                         @endforeach
                     </select>
                 </div>
             </div>
 
-            {{-- ═══ Reset Filters + Apply ═══ --}}
+            {{-- ═══ Action Buttons ═══ --}}
             <div class="row mt-3">
-                <div class="col-12 d-flex gap-2">
+                <div class="col-12 d-flex flex-wrap gap-2 align-items-center">
                     <button wire:click="applyFilters"
                         class="btn btn-sm btn-primary d-flex align-items-center gap-1 shadow-sm">
                         <i class="fa fa-filter"></i> Apply
@@ -322,10 +322,10 @@
             $(document).ready(function() {
                 function clearAndReload(id) {
                     var el = document.getElementById(id);
-                    if (el && el.tomSelect) {
-                        el.tomSelect.clear();
-                        el.tomSelect.clearOptions();
-                        el.tomSelect.load('');
+                    if (el && el.tomselect) {
+                        el.tomselect.clear();
+                        el.tomselect.clearOptions();
+                        el.tomselect.load('');
                     }
                 }
 

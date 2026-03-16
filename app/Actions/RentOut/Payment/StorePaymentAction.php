@@ -3,6 +3,7 @@
 namespace App\Actions\RentOut\Payment;
 
 use App\Actions\Journal\CreateAction as JournalCreateAction;
+use App\Models\Journal;
 use App\Models\RentOut;
 use App\Models\RentOutPayment;
 
@@ -92,14 +93,37 @@ class StorePaymentAction
         try {
             $payment = RentOutPayment::findOrFail($paymentId);
 
+            $newDebit = $payment->debit > 0 ? ($data['amount'] ?? $payment->debit) : 0;
+            $newCredit = $payment->credit > 0 ? ($data['amount'] ?? $payment->credit) : 0;
+
             $payment->update([
                 'date' => $data['date'] ?? $payment->date,
-                'debit' => $payment->debit > 0 ? ($data['amount'] ?? $payment->debit) : 0,
-                'credit' => $payment->credit > 0 ? ($data['amount'] ?? $payment->credit) : 0,
+                'debit' => $newDebit,
+                'credit' => $newCredit,
                 'category' => $data['category'] ?? $payment->category,
                 'account_id' => $data['account_id'] ?? $payment->account_id,
                 'remark' => $data['remark'] ?? $payment->remark,
+                'reason' => $data['reason'] ?? $payment->reason,
+                'cheque_no' => $data['cheque_no'] ?? $payment->cheque_no,
+                'cheque_date' => $data['cheque_date'] ?? $payment->cheque_date,
+                'bank_name' => $data['bank_name'] ?? $payment->bank_name,
             ]);
+
+            // Sync journal entries if journal exists
+            if ($payment->journal_id) {
+                $amount = max($newCredit, $newDebit);
+                $journal = Journal::find($payment->journal_id);
+                if ($journal) {
+                    $journal->entries()->each(function ($entry) use ($amount) {
+                        if ($entry->debit > 0) {
+                            $entry->update(['debit' => $amount]);
+                        }
+                        if ($entry->credit > 0) {
+                            $entry->update(['credit' => $amount]);
+                        }
+                    });
+                }
+            }
 
             return [
                 'success' => true,
@@ -127,15 +151,23 @@ class StorePaymentAction
                 'branch_id' => $rentOut->branch_id,
                 'rent_out_id' => $rentOut->id,
                 'date' => $data['date'],
+                'due_date' => $data['due_date'] ?? null,
+                'paid_date' => $data['paid_date'] ?? null,
+                'cheque_date' => $data['cheque_date'] ?? null,
+                'cheque_no' => $data['cheque_no'] ?? null,
+                'bank_name' => $data['bank_name'] ?? null,
                 'credit' => $data['credit'] ?? 0,
                 'debit' => $data['debit'] ?? 0,
                 'account_id' => $data['account_id'],
                 'source' => $data['source'],
                 'source_id' => $data['source_id'] ?? null,
+                'model' => $data['model'] ?? null,
+                'model_id' => $data['model_id'] ?? null,
                 'group' => $data['group'] ?? null,
                 'category' => $data['category'] ?? null,
                 'payment_type' => $data['payment_type'] ?? null,
                 'remark' => $data['remark'] ?? null,
+                'reason' => $data['reason'] ?? null,
                 'voucher_no' => $data['voucher_no'] ?? null,
                 'created_by' => $data['created_by'] ?? $rentOut->created_by,
             ]);
@@ -169,10 +201,16 @@ class StorePaymentAction
                 throw new \Exception($journalResponse['message']);
             }
 
+            // Store journal reference back on the payment record
+            $journal = $journalResponse['data'];
+            $payment->update([
+                'journal_id' => $journal->id,
+            ]);
+
             return [
                 'success' => true,
                 'message' => 'Payment recorded successfully',
-                'data' => $payment,
+                'data' => $payment->fresh(),
             ];
         } catch (\Throwable $th) {
             return [

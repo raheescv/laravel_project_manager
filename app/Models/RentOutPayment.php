@@ -18,21 +18,34 @@ class RentOutPayment extends Model implements AuditableContracts
         'branch_id',
         'rent_out_id',
         'date',
+        'due_date',
+        'paid_date',
+        'cheque_date',
+        'cheque_no',
+        'bank_name',
         'credit',
         'debit',
         'account_id',
         'source',
         'source_id',
+        'model',
+        'model_id',
+        'journal_id',
+        'journal_entry_id',
         'group',
         'category',
         'payment_type',
         'remark',
+        'reason',
         'voucher_no',
         'created_by',
     ];
 
     protected $casts = [
         'date' => 'date',
+        'due_date' => 'date',
+        'paid_date' => 'date',
+        'cheque_date' => 'date',
         'credit' => 'decimal:2',
         'debit' => 'decimal:2',
     ];
@@ -45,6 +58,34 @@ class RentOutPayment extends Model implements AuditableContracts
     public function account(): BelongsTo
     {
         return $this->belongsTo(Account::class, 'account_id');
+    }
+
+    public function journal(): BelongsTo
+    {
+        return $this->belongsTo(Journal::class);
+    }
+
+    public function journalEntry(): BelongsTo
+    {
+        return $this->belongsTo(JournalEntry::class);
+    }
+
+    /**
+     * Get the source model (RentOutPaymentTerm, RentOutUtilityTerm, RentOutService, etc.)
+     */
+    public function sourceModel()
+    {
+        if (! $this->model || ! $this->model_id) {
+            return null;
+        }
+
+        $modelClass = 'App\\Models\\'.$this->model;
+
+        if (! class_exists($modelClass)) {
+            return null;
+        }
+
+        return $modelClass::find($this->model_id);
     }
 
     public function scopeReceipts($query)
@@ -65,5 +106,21 @@ class RentOutPayment extends Model implements AuditableContracts
     public function scopeByGroup($query, string $group)
     {
         return $query->where('group', $group);
+    }
+
+    public function scopeByModel($query, string $model, ?int $modelId = null)
+    {
+        $query->where('model', $model);
+
+        if ($modelId !== null) {
+            $query->where('model_id', $modelId);
+        }
+
+        return $query;
+    }
+
+    public function scopeByJournal($query, int $journalId)
+    {
+        return $query->where('journal_id', $journalId);
     }
 }

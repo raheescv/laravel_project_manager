@@ -108,7 +108,7 @@ class ServiceChargeModal extends Component
             $rentOut = RentOut::findOrFail($this->rentOutId);
 
             // Store as a RentOutService record
-            RentOutService::create([
+            $service = RentOutService::create([
                 'tenant_id' => $rentOut->tenant_id,
                 'branch_id' => $rentOut->branch_id,
                 'rent_out_id' => $this->rentOutId,
@@ -123,6 +123,10 @@ class ServiceChargeModal extends Component
                 'date' => $this->date,
                 'amount' => $this->amount,
                 'source' => 'ServiceCharge',
+                'model' => 'RentOutService',
+                'model_id' => $service->id,
+                'paid_date' => $this->date,
+                'reason' => 'Service Charge',
                 'group' => 'Service Charge',
                 'category' => 'Service Charge',
                 'payment_type' => 'Services',

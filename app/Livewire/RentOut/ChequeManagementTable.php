@@ -100,15 +100,24 @@ class ChequeManagementTable extends Component
     public function resetFilters(): void
     {
         $this->filterStatus = ['uncleared', 'submitted'];
-        parent::resetFilters();
+        $this->filterGroup = '';
+        $this->filterBuilding = '';
+        $this->filterType = '';
+        $this->filterProperty = '';
+        $this->filterCustomer = '';
+        $this->filterOwnership = '';
+        $this->dateFrom = now()->startOfMonth()->format('Y-m-d');
+        $this->dateTo = now()->endOfMonth()->format('Y-m-d');
+        $this->search = '';
+        $this->resetPage();
         $this->js("
             ['cheque_filterGroup', 'cheque_filterBuilding', 'cheque_filterProperty', 'cheque_filterCustomer', 'ownership'].forEach(id => {
                 const el = document.getElementById(id);
-                if (el && el.tomSelect) { el.tomSelect.clear(); }
+                if (el && el.tomselect) { el.tomselect.clear(); }
             });
             var statusEl = document.getElementById('cheque_filterStatus');
-            if (statusEl && statusEl.tomSelect) {
-                statusEl.tomSelect.setValue(['uncleared', 'submitted']);
+            if (statusEl && statusEl.tomselect) {
+                statusEl.tomselect.setValue(['uncleared', 'submitted']);
             }
         ");
     }

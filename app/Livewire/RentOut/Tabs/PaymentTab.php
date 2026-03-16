@@ -2,6 +2,7 @@
 
 namespace App\Livewire\RentOut\Tabs;
 
+use App\Models\Journal;
 use App\Models\RentOutPayment;
 use Livewire\Attributes\On;
 use Livewire\Component;
@@ -73,9 +74,17 @@ class PaymentTab extends Component
             return;
         }
 
-        RentOutPayment::whereIn('id', $this->selectedIds)
+        $payments = RentOutPayment::whereIn('id', $this->selectedIds)
             ->where('rent_out_id', $this->rentOutId)
-            ->delete();
+            ->get();
+
+        // Delete associated journals
+        $journalIds = $payments->pluck('journal_id')->filter()->unique()->values()->toArray();
+        if ($journalIds) {
+            Journal::whereIn('id', $journalIds)->delete();
+        }
+
+        $payments->each->delete();
 
         $this->selectedIds = [];
         $this->selectAll = false;
@@ -84,9 +93,16 @@ class PaymentTab extends Component
 
     public function deletePayment($id)
     {
-        RentOutPayment::where('id', $id)
+        $payment = RentOutPayment::where('id', $id)
             ->where('rent_out_id', $this->rentOutId)
-            ->delete();
+            ->first();
+
+        if ($payment) {
+            if ($payment->journal_id) {
+                Journal::where('id', $payment->journal_id)->delete();
+            }
+            $payment->delete();
+        }
 
         $this->dispatch('rent-out-updated');
     }

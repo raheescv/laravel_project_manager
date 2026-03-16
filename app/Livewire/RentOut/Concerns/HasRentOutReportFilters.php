@@ -155,7 +155,7 @@ trait HasRentOutReportFilters
                 return $q->whereHas($rentOutRelation, fn ($r) => $r->where('account_id', $value));
             })
             ->when($this->filterOwnership, function ($q, $value) use ($rentOutRelation) {
-                return $q->whereHas("{$rentOutRelation}.property", fn ($p) => $p->whereIn('ownership', $value));
+                return $q->whereHas("{$rentOutRelation}.property", fn ($p) => $p->where('ownership', $value));
             });
     }
 

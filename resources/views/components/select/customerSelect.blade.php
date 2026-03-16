@@ -82,6 +82,14 @@
     .select-customer_id-list .ts-control {
         padding: 0.5rem 0.75rem;
         min-height: 42px;
+        display: flex;
+        align-items: center;
+    }
+
+    .select-customer_id .ts-wrapper .clear-button,
+    .select-customer_id-list .ts-wrapper .clear-button {
+        display: flex;
+        align-items: center;
     }
 
     .select-customer_id .ts-control>input,

@@ -53,7 +53,7 @@ class ChequeTermSelectorModal extends Component
                 $cheque = RentOutCheque::find($pendingCheque['id']);
                 if ($cheque) {
                     $action->payTermWithCheque(
-                        $pendingCheque['id'],
+                        $cheque,
                         $term,
                         $this->statusChangePaymentMethod ?: null,
                         $this->statusChangeJournalDate ?: null,

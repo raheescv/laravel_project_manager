@@ -121,10 +121,15 @@
                     @php
                         $sortableColumns = [
                             'date' => ['label' => 'Date', 'class' => ''],
+                            'due_date' => ['label' => 'Due Date', 'class' => ''],
+                            'paid_date' => ['label' => 'Paid Date', 'class' => ''],
                             'source' => ['label' => 'Source', 'class' => ''],
+                            'model' => ['label' => 'Model', 'class' => ''],
                             'group' => ['label' => 'Group', 'class' => ''],
                             'category' => ['label' => 'Category', 'class' => ''],
+                            'reason' => ['label' => 'Reason', 'class' => ''],
                             'account_id' => ['label' => 'Payment Mode', 'class' => ''],
+                            'cheque_no' => ['label' => 'Cheque No', 'class' => ''],
                             'credit' => ['label' => 'Credit', 'class' => 'text-end'],
                             'debit' => ['label' => 'Debit', 'class' => 'text-end'],
                             'remark' => ['label' => 'Remark', 'class' => ''],
@@ -153,6 +158,8 @@
                         </td>
                         <td class="small">{{ $index + 1 }}</td>
                         <td class="small text-nowrap">{{ $payment->date?->format('d-m-Y') ?? '' }}</td>
+                        <td class="small text-nowrap">{{ $payment->due_date?->format('d-m-Y') ?? '' }}</td>
+                        <td class="small text-nowrap">{{ $payment->paid_date?->format('d-m-Y') ?? '' }}</td>
                         <td>
                             <span
                                 class="badge bg-{{ match ($payment->source) {
@@ -164,9 +171,16 @@
                                     default => 'light text-dark',
                                 } }} bg-opacity-75 small">{{ $payment->source }}</span>
                         </td>
+                        <td class="small text-nowrap">
+                            @if ($payment->model)
+                                <span class="badge bg-light text-dark border small">{{ $payment->model }}</span>
+                            @endif
+                        </td>
                         <td class="small text-nowrap">{{ $payment->group ?? '' }}</td>
                         <td class="small text-nowrap">{{ $payment->category?->name ?? '' }}</td>
+                        <td class="small text-nowrap">{{ $payment->reason ?? '' }}</td>
                         <td class="small text-nowrap">{{ $payment->account?->name ?? '' }}</td>
+                        <td class="small text-nowrap">{{ $payment->cheque_no ?? '' }}</td>
                         <td class="text-end text-success fw-medium small">
                             {{ $payment->credit > 0 ? number_format($payment->credit, 2) : '' }}
                         </td>
@@ -230,14 +244,14 @@
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="11" class="text-center text-muted py-3">No payment records found</td>
+                        <td colspan="16" class="text-center text-muted py-3">No payment records found</td>
                     </tr>
                 @endforelse
             </tbody>
             @if ($payments->count() > 0)
                 <tfoot class="table-light">
                     <tr class="fw-bold small">
-                        <td colspan="7" class="py-2 text-end">Total</td>
+                        <td colspan="12" class="py-2 text-end">Total</td>
                         <td class="py-2 text-end text-success">{{ number_format($payments->sum('credit'), 2) }}</td>
                         <td class="py-2 text-end text-danger">{{ number_format($payments->sum('debit'), 2) }}</td>
                         <td colspan="2"></td>
