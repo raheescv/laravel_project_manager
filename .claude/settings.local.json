@@ -22,7 +22,8 @@
       "Bash(php -l app/Actions/RentOut/Cheque/UpdateStatusAction.php)",
       "Bash(php -l app/Livewire/RentOut/ChequeManagementTable.php)",
       "Bash(php -l app/Livewire/RentOut/Tabs/ChequesTab.php)",
-      "Bash(find /Users/Shared/sites/personal/main_projects/project_manager/app/Actions/RentOut -type f -name *.php)"
+      "Bash(find /Users/Shared/sites/personal/main_projects/project_manager/app/Actions/RentOut -type f -name *.php)",
+      "Bash(security find-certificate:*)"
     ]
   }
 }
