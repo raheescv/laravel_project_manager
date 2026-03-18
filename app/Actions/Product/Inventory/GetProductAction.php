@@ -131,7 +131,9 @@ class GetProductAction
 
     private function applyBranchFilter(Builder $query, array $filters): void
     {
-        $query->whereIn('inventories.branch_id', $filters['branch_id']);
+        if (! empty($filters['branch_id'])) {
+            $query->whereIn('inventories.branch_id', $filters['branch_id']);
+        }
     }
 
     private function applyNonZeroFilter(Builder $query, array $filters): void
