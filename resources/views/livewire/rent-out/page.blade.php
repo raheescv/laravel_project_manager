@@ -609,6 +609,23 @@
                         }
                     }
                 });
+                
+                window.addEventListener('AddToCustomerSelectBox', event => {
+                    var data = event.detail[0];
+                    var el = document.querySelector('#account_id');
+                    if (el && el.tomselect) {
+                        var tomSelectInstance = el.tomselect;
+                        if (data['name']) {
+                            tomSelectInstance.addOption({
+                                id: data['id'],
+                                name: data['name'],
+                                mobile: data['mobile'] || '',
+                            });
+                        }
+                        tomSelectInstance.addItem(data['id']);
+                        @this.set('rent_outs.account_id', data['id']);
+                    }
+                });
             });
         </script>
     @endpush

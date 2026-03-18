@@ -12,7 +12,7 @@
         @endphp
 
         <style>
-            .bk-card { transition: transform .2s, box-shadow .2s; border-radius: 10px !important; overflow: hidden; }
+            .bk-card { transition: transform .2s, box-shadow .2s; border-radius: 10px !important; overflow: visible; }
             .bk-card:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0,0,0,.07) !important; }
             .bk-row { transition: background .15s; }
             .bk-row:hover { background: #f8fafc; }
@@ -265,7 +265,7 @@
 
         {{-- MANAGEMENT FEE CONFIG (Submitted) --}}
         @if ($rentOut->booking_status === RentOutBookingStatus::Submitted)
-            <div class="card border-0 shadow-sm mb-3 av bk-card">
+            <div class="card border-0 shadow-sm mb-3 av bk-card" style="position: relative; z-index: 10;">
                 <div class="card-header bk-hdr border-bottom">
                     <div class="d-flex align-items-center gap-2">
                         <div class="bk-hdr-icon" style="background: #f5f3ff;">

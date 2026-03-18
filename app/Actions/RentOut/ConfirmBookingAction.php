@@ -29,7 +29,7 @@ class ConfirmBookingAction
             }
             // 1. Set status to Occupied
             $model->update([
-                'booking_status' => RentOutBookingStatus::Created->value,
+                'booking_status' => RentOutBookingStatus::Submitted->value,
             ]);
 
             // // 2. Update property status
