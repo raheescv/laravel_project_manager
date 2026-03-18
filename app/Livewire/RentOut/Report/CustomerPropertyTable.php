@@ -49,7 +49,7 @@ class CustomerPropertyTable extends Component
         return RentOut::query()
             ->with([
                 'customer', 'property', 'building', 'group', 'type',
-                'rentOutPayments', 'paymentTerms', 'cheques', 'utilityTerms.utility',
+                'rentOutTransactions', 'paymentTerms', 'cheques', 'utilityTerms.utility',
             ])
             ->when($this->filterCustomer, fn ($q, $v) => $q->where('account_id', $v))
             ->when($this->filterGroup, fn ($q, $v) => $q->where('property_group_id', $v))

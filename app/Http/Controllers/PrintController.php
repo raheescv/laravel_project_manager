@@ -8,7 +8,7 @@ use App\Helpers\Facades\SaleHelper;
 use App\Models\Account;
 use App\Models\Configuration;
 use App\Models\RentOut;
-use App\Models\RentOutPayment;
+use App\Models\RentOutTransaction;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -188,7 +188,7 @@ class PrintController extends Controller
 
     public function rentOutPaymentReceipt($id)
     {
-        $payment = RentOutPayment::with(['account', 'rentOut.customer', 'rentOut.property', 'rentOut.building'])->findOrFail($id);
+        $payment = RentOutTransaction::with(['account', 'rentOut.customer', 'rentOut.property', 'rentOut.building'])->findOrFail($id);
         $rentOut = $payment->rentOut;
 
         $data = array_merge(
@@ -204,7 +204,7 @@ class PrintController extends Controller
 
     public function rentOutPaymentVoucher($id)
     {
-        $payment = RentOutPayment::with(['account', 'rentOut.customer', 'rentOut.property', 'rentOut.building'])->findOrFail($id);
+        $payment = RentOutTransaction::with(['account', 'rentOut.customer', 'rentOut.property', 'rentOut.building'])->findOrFail($id);
         $rentOut = $payment->rentOut;
 
         $data = array_merge(

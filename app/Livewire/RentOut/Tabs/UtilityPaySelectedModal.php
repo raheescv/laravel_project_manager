@@ -2,7 +2,7 @@
 
 namespace App\Livewire\RentOut\Tabs;
 
-use App\Actions\RentOut\Payment\StorePaymentAction;
+use App\Actions\RentOut\Payment\StoreTransactionAction;
 use App\Models\RentOut;
 use App\Models\RentOutUtilityTerm;
 use Illuminate\Support\Facades\Auth;
@@ -92,7 +92,7 @@ class UtilityPaySelectedModal extends Component
                     $term->paid_date = $this->payDate;
                     $term->save();
 
-                    $response = (new StorePaymentAction())->execute([
+                    $response = (new StoreTransactionAction())->execute([
                         'rent_out_id' => $this->rentOutId,
                         'date' => $this->payDate,
                         'credit' => $cashTerm['amount'],

@@ -2,7 +2,7 @@
 
 namespace App\Livewire\RentOut\Tabs;
 
-use App\Actions\RentOut\Payment\StorePaymentAction;
+use App\Actions\RentOut\Payment\StoreTransactionAction;
 use App\Models\RentOut;
 use App\Models\RentOutPaymentTerm;
 use Illuminate\Support\Facades\DB;
@@ -114,7 +114,7 @@ class PaySelectedModal extends Component
                         'remark' => $cashTerm['remark'] ?? '',
                         'created_by' => auth()->id(),
                     ];
-                    $response = (new StorePaymentAction())->execute($data);
+                    $response = (new StoreTransactionAction())->execute($data);
 
                     if (! $response['success']) {
                         throw new \Exception($response['message']);

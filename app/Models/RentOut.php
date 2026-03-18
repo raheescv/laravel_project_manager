@@ -259,9 +259,9 @@ class RentOut extends Model implements AuditableContracts
         return $this->hasMany(RentOutPaymentTerm::class);
     }
 
-    public function rentOutPayments(): HasMany
+    public function rentOutTransactions(): HasMany
     {
-        return $this->hasMany(RentOutPayment::class);
+        return $this->hasMany(RentOutTransaction::class);
     }
 
     public function journals(): HasMany

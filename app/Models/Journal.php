@@ -81,8 +81,8 @@ class Journal extends Model implements AuditableContracts
         return $this->belongsTo(User::class, 'created_by');
     }
 
-    public function rentOutPayment()
+    public function rentOutTransaction()
     {
-        return $this->hasOne(RentOutPayment::class, 'journal_id');
+        return $this->hasOne(RentOutTransaction::class, 'journal_id');
     }
 }

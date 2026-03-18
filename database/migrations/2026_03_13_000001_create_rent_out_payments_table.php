@@ -8,7 +8,7 @@ return new class() extends Migration
 {
     public function up(): void
     {
-        Schema::create('rent_out_payments', function (Blueprint $table) {
+        Schema::create('rent_out_transactions', function (Blueprint $table) {
             $table->id();
             $table->unsignedBigInteger('tenant_id');
             $table->unsignedBigInteger('branch_id');
@@ -36,6 +36,6 @@ return new class() extends Migration
 
     public function down(): void
     {
-        Schema::dropIfExists('rent_out_payments');
+        Schema::dropIfExists('rent_out_transactions');
     }
 };

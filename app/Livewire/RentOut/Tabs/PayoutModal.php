@@ -2,8 +2,8 @@
 
 namespace App\Livewire\RentOut\Tabs;
 
-use App\Actions\RentOut\Payment\StorePaymentAction;
-use App\Models\RentOutPayment;
+use App\Actions\RentOut\Payment\StoreTransactionAction;
+use App\Models\RentOutTransaction;
 use Illuminate\Support\Facades\DB;
 use Livewire\Attributes\On;
 use Livewire\Component;
@@ -39,7 +39,7 @@ class PayoutModal extends Component
     #[On('edit-payout-payment')]
     public function editPayment($paymentId)
     {
-        $payment = RentOutPayment::findOrFail($paymentId);
+        $payment = RentOutTransaction::findOrFail($paymentId);
         $this->rentOutId = $payment->rent_out_id;
         $this->editingId = $payment->id;
 
@@ -70,7 +70,7 @@ class PayoutModal extends Component
         try {
             DB::beginTransaction();
 
-            $action = new StorePaymentAction();
+            $action = new StoreTransactionAction();
 
             if ($this->editingId) {
                 $response = $action->update($this->editingId, [

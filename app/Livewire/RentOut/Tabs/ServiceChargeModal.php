@@ -2,7 +2,7 @@
 
 namespace App\Livewire\RentOut\Tabs;
 
-use App\Actions\RentOut\Payment\StorePaymentAction;
+use App\Actions\RentOut\Payment\StoreTransactionAction;
 use App\Models\RentOut;
 use App\Models\RentOutService;
 use Carbon\Carbon;
@@ -118,8 +118,8 @@ class ServiceChargeModal extends Component
                 'created_by' => auth()->id(),
             ]);
 
-            // Store as RentOutPayment (debit entry — charge to customer, no payment yet)
-            $response = (new StorePaymentAction())->charge($this->rentOutId, [
+            // Store as RentOutTransaction (debit entry — charge to customer, no payment yet)
+            $response = (new StoreTransactionAction())->charge($this->rentOutId, [
                 'date' => $this->date,
                 'amount' => $this->amount,
                 'source' => 'ServiceCharge',

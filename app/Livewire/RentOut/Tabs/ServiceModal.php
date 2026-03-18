@@ -2,8 +2,8 @@
 
 namespace App\Livewire\RentOut\Tabs;
 
-use App\Actions\RentOut\Payment\StorePaymentAction;
-use App\Models\RentOutPayment;
+use App\Actions\RentOut\Payment\StoreTransactionAction;
+use App\Models\RentOutTransaction;
 use Illuminate\Support\Facades\DB;
 use Livewire\Attributes\On;
 use Livewire\Component;
@@ -47,7 +47,7 @@ class ServiceModal extends Component
     #[On('edit-service-payment')]
     public function editPayment($paymentId)
     {
-        $payment = RentOutPayment::findOrFail($paymentId);
+        $payment = RentOutTransaction::findOrFail($paymentId);
         $this->rentOutId = $payment->rent_out_id;
         $this->editingId = $payment->id;
 
@@ -83,7 +83,7 @@ class ServiceModal extends Component
         try {
             DB::beginTransaction();
 
-            $response = (new StorePaymentAction())->charge($this->rentOutId, $this->servicePaymentData());
+            $response = (new StoreTransactionAction())->charge($this->rentOutId, $this->servicePaymentData());
 
             if (! $response['success']) {
                 throw new \Exception($response['message']);
@@ -117,7 +117,7 @@ class ServiceModal extends Component
         try {
             DB::beginTransaction();
 
-            $action = new StorePaymentAction();
+            $action = new StoreTransactionAction();
 
             if ($this->editingId) {
                 $response = $action->update($this->editingId, [

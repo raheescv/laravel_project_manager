@@ -4,7 +4,7 @@ namespace App\Livewire\RentOut\Tabs;
 
 use App\Models\Account;
 use App\Models\Journal;
-use App\Models\RentOutPayment;
+use App\Models\RentOutTransaction;
 use Livewire\Attributes\On;
 use Livewire\Component;
 
@@ -45,7 +45,7 @@ class ServicesTab extends Component
     public function updatedSelectAll($value)
     {
         if ($value) {
-            $this->selectedPayments = RentOutPayment::where('rent_out_id', $this->rentOutId)
+            $this->selectedPayments = RentOutTransaction::where('rent_out_id', $this->rentOutId)
                 ->whereIn('source', ['Service', 'ServiceCharge'])
                 ->pluck('id')
                 ->map(fn ($id) => (string) $id)
@@ -83,7 +83,7 @@ class ServicesTab extends Component
             return;
         }
 
-        $payments = RentOutPayment::whereIn('id', $this->selectedPayments)
+        $payments = RentOutTransaction::whereIn('id', $this->selectedPayments)
             ->where('rent_out_id', $this->rentOutId)
             ->get();
 
@@ -103,7 +103,7 @@ class ServicesTab extends Component
 
     public function render()
     {
-        $servicePayments = RentOutPayment::with('account')
+        $servicePayments = RentOutTransaction::with('account')
             ->where('rent_out_id', $this->rentOutId)
             ->whereIn('source', ['Service', 'ServiceCharge'])
             ->orderBy($this->sortField, $this->sortDirection)
@@ -113,7 +113,7 @@ class ServicesTab extends Component
         $categoryIds = $servicePayments->pluck('category')->filter()->unique()->values()->toArray();
         $categoryNames = Account::whereIn('id', $categoryIds)->pluck('name', 'id')->toArray();
 
-        $categorySummary = RentOutPayment::where('rent_out_id', $this->rentOutId)
+        $categorySummary = RentOutTransaction::where('rent_out_id', $this->rentOutId)
             ->whereIn('source', ['Service', 'ServiceCharge'])
             ->selectRaw('category, sum(credit) as credit, sum(debit) as debit')
             ->groupBy('category')

@@ -5,7 +5,7 @@ use App\Http\Controllers\Property\PropertyController;
 use App\Http\Controllers\Property\PropertyGroupController;
 use App\Http\Controllers\Property\PropertyTypeController;
 use App\Http\Controllers\Property\RentOutController;
-use App\Http\Controllers\Property\RentOutPaymentController;
+use App\Http\Controllers\Property\RentOutTransactionController;
 use App\Http\Controllers\Property\RentOutReportController;
 use App\Http\Controllers\Property\TenantDetailController;
 use App\Http\Controllers\Property\UtilityController;
@@ -56,7 +56,7 @@ Route::middleware('auth')->group(function (): void {
                 Route::get('booking/view/{id}', 'bookingView')->name('booking.view')->can('rent out.view');
             });
 
-            Route::controller(RentOutPaymentController::class)->group(function (): void {
+            Route::controller(RentOutTransactionController::class)->group(function (): void {
                 Route::get('payments', 'payments')->name('payments')->defaults('agreement_type', 'rental')->can('rent out.payment');
                 Route::get('utilities', 'utilities')->name('utilities')->can('rent out utility.view');
                 Route::get('services', 'services')->name('services')->can('rent out service.view');
@@ -79,7 +79,7 @@ Route::middleware('auth')->group(function (): void {
                 Route::get('booking/view/{id}', 'bookingView')->name('booking.view')->can('rent out lease.view');
             });
 
-            Route::controller(RentOutPaymentController::class)->group(function (): void {
+            Route::controller(RentOutTransactionController::class)->group(function (): void {
                 Route::get('payments', 'payments')->name('payments')->defaults('agreement_type', 'lease')->can('rent out lease.payment');
                 Route::get('cheque-management', 'chequeManagement')->name('cheque-management')->defaults('agreement_type', 'lease')->can('rent out lease.cheque management');
             });

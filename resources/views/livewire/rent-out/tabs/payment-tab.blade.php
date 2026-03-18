@@ -3,9 +3,8 @@
     <div class="d-flex justify-content-between align-items-center mb-3">
         <div class="small text-muted">
             <i class="fa fa-credit-card me-1"></i>
-            <strong>{{ $payments->count() }}</strong> payment record(s)
-            &middot; Credit: <strong class="text-success">{{ number_format($payments->sum('credit'), 2) }}</strong>
-            &middot; Debit: <strong class="text-danger">{{ number_format($payments->sum('debit'), 2) }}</strong>
+            <strong>{{ $payments->count() }}</strong> payment(s) received
+            &middot; Total: <strong class="text-success">{{ number_format($payments->sum('credit'), 2) }}</strong>
         </div>
         <div class="d-flex gap-2">
             @if (count($selectedIds) > 0)
@@ -41,10 +40,6 @@
                                     <span class="text-muted">{{ $summary->count }}x</span>
                                     &middot; <span
                                         class="text-success">{{ number_format($summary->total_credit, 2) }}</span>
-                                    @if ($summary->total_debit > 0)
-                                        &middot; <span
-                                            class="text-danger">{{ number_format($summary->total_debit, 2) }}</span>
-                                    @endif
                                 </div>
                             </div>
                         </div>
@@ -124,14 +119,12 @@
                             'due_date' => ['label' => 'Due Date', 'class' => ''],
                             'paid_date' => ['label' => 'Paid Date', 'class' => ''],
                             'source' => ['label' => 'Source', 'class' => ''],
-                            'model' => ['label' => 'Model', 'class' => ''],
                             'group' => ['label' => 'Group', 'class' => ''],
                             'category' => ['label' => 'Category', 'class' => ''],
                             'reason' => ['label' => 'Reason', 'class' => ''],
                             'account_id' => ['label' => 'Payment Mode', 'class' => ''],
                             'cheque_no' => ['label' => 'Cheque No', 'class' => ''],
-                            'credit' => ['label' => 'Credit', 'class' => 'text-end'],
-                            'debit' => ['label' => 'Debit', 'class' => 'text-end'],
+                            'credit' => ['label' => 'Amount', 'class' => 'text-end'],
                             'remark' => ['label' => 'Remark', 'class' => ''],
                         ];
                     @endphp
@@ -171,21 +164,13 @@
                                     default => 'light text-dark',
                                 } }} bg-opacity-75 small">{{ $payment->source }}</span>
                         </td>
-                        <td class="small text-nowrap">
-                            @if ($payment->model)
-                                <span class="badge bg-light text-dark border small">{{ $payment->model }}</span>
-                            @endif
-                        </td>
                         <td class="small text-nowrap">{{ $payment->group ?? '' }}</td>
                         <td class="small text-nowrap">{{ $payment->category?->name ?? '' }}</td>
                         <td class="small text-nowrap">{{ $payment->reason ?? '' }}</td>
                         <td class="small text-nowrap">{{ $payment->account?->name ?? '' }}</td>
                         <td class="small text-nowrap">{{ $payment->cheque_no ?? '' }}</td>
                         <td class="text-end text-success fw-medium small">
-                            {{ $payment->credit > 0 ? number_format($payment->credit, 2) : '' }}
-                        </td>
-                        <td class="text-end text-danger fw-medium small">
-                            {{ $payment->debit > 0 ? number_format($payment->debit, 2) : '' }}
+                            {{ number_format($payment->credit, 2) }}
                         </td>
                         <td class="small text-muted">{{ $payment->remark ?? '' }}</td>
                         <td class="text-center">
@@ -223,7 +208,7 @@
                                     </li>
                                     <li>
                                         <a class="dropdown-item small"
-                                            href="{{ route('audit::index', ['model' => 'RentOutPayment', 'id' => $payment->id]) }}"
+                                            href="{{ route('audit::index', ['model' => 'RentOutTransaction', 'id' => $payment->id]) }}"
                                             target="_blank">
                                             <i class="fa fa-history me-2 text-secondary"></i> Audit History
                                         </a>
@@ -244,16 +229,15 @@
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="16" class="text-center text-muted py-3">No payment records found</td>
+                        <td colspan="14" class="text-center text-muted py-3">No payment records found</td>
                     </tr>
                 @endforelse
             </tbody>
             @if ($payments->count() > 0)
                 <tfoot class="table-light">
                     <tr class="fw-bold small">
-                        <td colspan="12" class="py-2 text-end">Total</td>
+                        <td colspan="11" class="py-2 text-end">Total</td>
                         <td class="py-2 text-end text-success">{{ number_format($payments->sum('credit'), 2) }}</td>
-                        <td class="py-2 text-end text-danger">{{ number_format($payments->sum('debit'), 2) }}</td>
                         <td colspan="2"></td>
                     </tr>
                 </tfoot>

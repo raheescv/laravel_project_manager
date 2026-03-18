@@ -4,7 +4,7 @@ namespace App\Http\Controllers\Property;
 
 use App\Http\Controllers\Controller;
 
-class RentOutPaymentController extends Controller
+class RentOutTransactionController extends Controller
 {
     public function payments($agreementType = 'rental')
     {

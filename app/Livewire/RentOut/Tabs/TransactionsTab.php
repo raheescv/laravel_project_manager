@@ -2,7 +2,7 @@
 
 namespace App\Livewire\RentOut\Tabs;
 
-use App\Models\RentOutPayment;
+use App\Models\RentOutTransaction;
 use Livewire\Attributes\On;
 use Livewire\Component;
 
@@ -34,7 +34,7 @@ class TransactionsTab extends Component
 
     public function render()
     {
-        $payments = RentOutPayment::with('account')
+        $payments = RentOutTransaction::with('account')
             ->where('rent_out_id', $this->rentOutId)
             ->orderBy($this->sortField, $this->sortDirection)
             ->get();

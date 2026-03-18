@@ -3,7 +3,7 @@
 namespace App\Livewire\RentOut\Tabs;
 
 use App\Models\Journal;
-use App\Models\RentOutPayment;
+use App\Models\RentOutTransaction;
 use Livewire\Attributes\On;
 use Livewire\Component;
 
@@ -74,7 +74,7 @@ class PaymentTab extends Component
             return;
         }
 
-        $payments = RentOutPayment::whereIn('id', $this->selectedIds)
+        $payments = RentOutTransaction::whereIn('id', $this->selectedIds)
             ->where('rent_out_id', $this->rentOutId)
             ->get();
 
@@ -93,7 +93,7 @@ class PaymentTab extends Component
 
     public function deletePayment($id)
     {
-        $payment = RentOutPayment::where('id', $id)
+        $payment = RentOutTransaction::where('id', $id)
             ->where('rent_out_id', $this->rentOutId)
             ->first();
 
@@ -119,8 +119,9 @@ class PaymentTab extends Component
 
     protected function getFilteredPayments()
     {
-        $query = RentOutPayment::with('account')
-            ->where('rent_out_id', $this->rentOutId);
+        $query = RentOutTransaction::with('account')
+            ->where('rent_out_id', $this->rentOutId)
+            ->where('credit', '>', 0);
 
         if ($this->filterSource) {
             $query->where('source', $this->filterSource);
@@ -145,21 +146,25 @@ class PaymentTab extends Component
     {
         $payments = $this->getFilteredPayments();
 
-        // Source summary
-        $sourceSummary = RentOutPayment::where('rent_out_id', $this->rentOutId)
-            ->selectRaw('source, SUM(credit) as total_credit, SUM(debit) as total_debit, COUNT(*) as count')
+        // Source summary (receipts only)
+        $sourceSummary = RentOutTransaction::where('rent_out_id', $this->rentOutId)
+            ->where('credit', '>', 0)
+            ->selectRaw('source, SUM(credit) as total_credit, COUNT(*) as count')
             ->groupBy('source')
             ->get();
 
-        // Available filter options
-        $sources = RentOutPayment::where('rent_out_id', $this->rentOutId)
+        // Available filter options (receipts only)
+        $sources = RentOutTransaction::where('rent_out_id', $this->rentOutId)
+            ->where('credit', '>', 0)
             ->distinct()->pluck('source')->filter()->sort()->values();
 
-        $categories = RentOutPayment::where('rent_out_id', $this->rentOutId)
+        $categories = RentOutTransaction::where('rent_out_id', $this->rentOutId)
+            ->where('credit', '>', 0)
             ->distinct()->pluck('category')->filter()->sort()->values();
 
-        $paymentModes = RentOutPayment::with('account')
+        $paymentModes = RentOutTransaction::with('account')
             ->where('rent_out_id', $this->rentOutId)
+            ->where('credit', '>', 0)
             ->whereNotNull('account_id')
             ->get()
             ->pluck('account.name', 'account_id')

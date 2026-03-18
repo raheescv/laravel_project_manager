@@ -23,7 +23,12 @@
       "Bash(php -l app/Livewire/RentOut/ChequeManagementTable.php)",
       "Bash(php -l app/Livewire/RentOut/Tabs/ChequesTab.php)",
       "Bash(find /Users/Shared/sites/personal/main_projects/project_manager/app/Actions/RentOut -type f -name *.php)",
-      "Bash(security find-certificate:*)"
+      "Bash(security find-certificate:*)",
+      "Bash(grep -r \"RentOutPayment\\\\|rent_out_payment\\\\|rentOutPayment\\\\|PaymentTable\\\\|TransactionsTab\\\\|StorePaymentAction\" /Users/Shared/sites/personal/main_projects/project_manager/resources --include=*.blade.php --include=*.php)",
+      "Bash(grep -r \"RentOutPayment\\\\|rent_out_payment\\\\|rentOutPayment\" /Users/Shared/sites/personal/main_projects/project_manager/app --include=*.php)",
+      "Bash(grep -r \"RentOutPayment\\\\|rent_out_payment\\\\|rentOutPayment\" /Users/Shared/sites/personal/main_projects/project_manager/database --include=*.php)",
+      "Bash(grep -r \"PaymentExport\\\\|RentOutPayment\" /Users/Shared/sites/personal/main_projects/project_manager --include=*.php)",
+      "Bash(grep -r \"RentOutPayment\\\\|rent_out_payment\\\\|rentOutPayment\\\\|rent-out-payment\" /Users/Shared/sites/personal/main_projects/project_manager/resources/views --include=*.blade.php)"
     ]
   }
 }

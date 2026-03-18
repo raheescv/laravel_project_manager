@@ -2,7 +2,7 @@
 
 namespace App\Actions\RentOut\Cheque;
 
-use App\Actions\RentOut\Payment\StorePaymentAction;
+use App\Actions\RentOut\Payment\StoreTransactionAction;
 use App\Models\RentOutCheque;
 use App\Models\RentOutPaymentTerm;
 
@@ -150,6 +150,6 @@ class UpdateStatusAction
             'created_by' => auth()->id(),
         ];
 
-        return (new StorePaymentAction())->execute($data);
+        return (new StoreTransactionAction())->execute($data);
     }
 }

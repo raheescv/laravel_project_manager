@@ -9,9 +9,11 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use OwenIt\Auditing\Auditable;
 use OwenIt\Auditing\Contracts\Auditable as AuditableContracts;
 
-class RentOutPayment extends Model implements AuditableContracts
+class RentOutTransaction extends Model implements AuditableContracts
 {
     use Auditable, BelongsToTenant, SoftDeletes;
+
+    protected $table = 'rent_out_transactions';
 
     protected $fillable = [
         'tenant_id',

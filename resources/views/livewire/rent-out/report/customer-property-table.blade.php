@@ -47,12 +47,12 @@
                         <div class="col-md-6 p-4 border-end">
                             <div class="d-flex justify-content-between align-items-center mb-3">
                                 <h5 class="fw-bold mb-0">Rentout - Payments</h5>
-                                <span class="text-muted">All payments: <strong>{{ number_format($rentOut->rentOutPayments->sum('credit'), 2) }}</strong></span>
+                                <span class="text-muted">All payments: <strong>{{ number_format($rentOut->rentOutTransactions->sum('credit'), 2) }}</strong></span>
                             </div>
 
                             @php
-                                $totalRentPayments = $rentOut->rentOutPayments->where('group', 'rent')->sum('credit');
-                                $utilitiesPayments = $rentOut->rentOutPayments->where('group', 'utility')->sum('credit');
+                                $totalRentPayments = $rentOut->rentOutTransactions->where('group', 'rent')->sum('credit');
+                                $utilitiesPayments = $rentOut->rentOutTransactions->where('group', 'utility')->sum('credit');
                                 $totalRentToPay = $rentOut->total ?? 0;
                                 $rentProgress = $totalRentToPay > 0 ? min(100, ($totalRentPayments / $totalRentToPay) * 100) : 0;
                                 $totalUtilityToPay = $rentOut->utilityTerms->sum('amount');
@@ -181,7 +181,7 @@
                                 </thead>
                                 <tbody>
                                     @php
-                                        $payments = $rentOut->rentOutPayments->where('credit', '>', 0)->sortByDesc('date');
+                                        $payments = $rentOut->rentOutTransactions->where('credit', '>', 0)->sortByDesc('date');
                                     @endphp
                                     <tr class="fw-bold bg-light">
                                         <td>{{ $payments->count() }}</td>

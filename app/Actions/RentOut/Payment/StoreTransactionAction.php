@@ -5,9 +5,9 @@ namespace App\Actions\RentOut\Payment;
 use App\Actions\Journal\CreateAction as JournalCreateAction;
 use App\Models\Journal;
 use App\Models\RentOut;
-use App\Models\RentOutPayment;
+use App\Models\RentOutTransaction;
 
-class StorePaymentAction
+class StoreTransactionAction
 {
     /**
      * Charge customer (debit entry only — no payment received yet).
@@ -64,7 +64,7 @@ class StorePaymentAction
     public function revert(int $paymentId): array
     {
         try {
-            $payment = RentOutPayment::findOrFail($paymentId);
+            $payment = RentOutTransaction::findOrFail($paymentId);
 
             return $this->execute([
                 'rent_out_id' => $payment->rent_out_id,
@@ -91,7 +91,7 @@ class StorePaymentAction
     public function update(int $paymentId, array $data): array
     {
         try {
-            $payment = RentOutPayment::findOrFail($paymentId);
+            $payment = RentOutTransaction::findOrFail($paymentId);
 
             $newDebit = $payment->debit > 0 ? ($data['amount'] ?? $payment->debit) : 0;
             $newCredit = $payment->credit > 0 ? ($data['amount'] ?? $payment->credit) : 0;
@@ -136,7 +136,7 @@ class StorePaymentAction
     }
 
     /**
-     * Store a RentOutPayment record and create a corresponding journal entry.
+     * Store a RentOutTransaction record and create a corresponding journal entry.
      *
      * For receipts (money IN): credit > 0, journal = Dr PaymentMethod, Cr Customer
      * For payouts (money OUT): debit > 0, journal = Dr Customer, Cr PaymentMethod
@@ -146,7 +146,7 @@ class StorePaymentAction
         try {
             $rentOut = RentOut::findOrFail($data['rent_out_id']);
 
-            $payment = RentOutPayment::create([
+            $payment = RentOutTransaction::create([
                 'tenant_id' => $rentOut->tenant_id,
                 'branch_id' => $rentOut->branch_id,
                 'rent_out_id' => $rentOut->id,

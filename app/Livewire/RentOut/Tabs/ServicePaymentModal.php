@@ -2,9 +2,9 @@
 
 namespace App\Livewire\RentOut\Tabs;
 
-use App\Actions\RentOut\Payment\StorePaymentAction;
+use App\Actions\RentOut\Payment\StoreTransactionAction;
 use App\Models\Account;
-use App\Models\RentOutPayment;
+use App\Models\RentOutTransaction;
 use Illuminate\Support\Facades\DB;
 use Livewire\Attributes\On;
 use Livewire\Component;
@@ -52,7 +52,7 @@ class ServicePaymentModal extends Component
         try {
             DB::beginTransaction();
 
-            $response = (new StorePaymentAction())->charge($this->rentOutId, $this->servicePaymentData());
+            $response = (new StoreTransactionAction())->charge($this->rentOutId, $this->servicePaymentData());
 
             if (! $response['success']) {
                 throw new \Exception($response['message']);
@@ -86,7 +86,7 @@ class ServicePaymentModal extends Component
         try {
             DB::beginTransaction();
 
-            $response = (new StorePaymentAction())->chargeAndPay($this->rentOutId, $this->servicePaymentData());
+            $response = (new StoreTransactionAction())->chargeAndPay($this->rentOutId, $this->servicePaymentData());
 
             if (! $response['success']) {
                 throw new \Exception($response['message']);
@@ -124,7 +124,7 @@ class ServicePaymentModal extends Component
     {
         $serviceCharges = collect();
         if ($this->rentOutId) {
-            $serviceCharges = RentOutPayment::where('rent_out_id', $this->rentOutId)
+            $serviceCharges = RentOutTransaction::where('rent_out_id', $this->rentOutId)
                 ->whereIn('source', ['Service', 'ServiceCharge'])
                 ->selectRaw('category, sum(credit) as credit, sum(debit) as debit')
                 ->groupBy('category')
