@@ -2,6 +2,7 @@ import React, { useEffect, useState, useRef } from 'react';
 import axios from 'axios';
 import AsyncSelect from 'react-select/async';
 import { BarcodeScanner } from '@thewirv/react-barcode-scanner';
+import { Head } from '@inertiajs/react';
 
 export default function ProductSearch() {
     // Filters
@@ -31,12 +32,10 @@ export default function ProductSearch() {
     const rowRefs = useRef({});
     const debounceRef = useRef(null);
 
-    // Fetch on page/sort changes
     useEffect(() => {
         fetchProducts(page);
     }, [page, sortField, sortDirection]);
 
-    // Debounced fetch on filter changes
     useEffect(() => {
         clearTimeout(debounceRef.current);
         debounceRef.current = setTimeout(() => {
@@ -46,7 +45,6 @@ export default function ProductSearch() {
         return () => clearTimeout(debounceRef.current);
     }, [productName, productCode, productBarcode, branchIds, showNonZeroOnly, showBarcodeCodes, limit]);
 
-    // Scroll to highlighted row
     useEffect(() => {
         if (highlightedSKU && rowRefs.current[highlightedSKU]) {
             rowRefs.current[highlightedSKU].scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -69,10 +67,8 @@ export default function ProductSearch() {
                 sortField,
                 sortDirection,
             };
-
             const res = await axios.get('/inventory/product/getProduct', { params });
             const { data, total_quantity, links, per_page, total } = res.data;
-
             setProducts(data || []);
             setTotalQuantity(total_quantity || 0);
             setMeta({
@@ -145,7 +141,6 @@ export default function ProductSearch() {
     async function applyScannedCode(code) {
         beep();
         if (!code) return;
-
         setScannedCode(code);
         setHighlightedSKU(code);
         setPage(1);
@@ -202,8 +197,10 @@ export default function ProductSearch() {
     }
 
     function renderSortIcon(field) {
-        if (sortField !== field) return null;
-        return sortDirection === 'asc' ? ' \u25B2' : ' \u25BC';
+        if (sortField !== field) return <i className="fa fa-sort ms-1" style={{ opacity: 0.2 }} />;
+        return sortDirection === 'asc'
+            ? <i className="fa fa-sort-asc ms-1 text-primary" />
+            : <i className="fa fa-sort-desc ms-1 text-primary" />;
     }
 
     function renderPagination() {
@@ -214,86 +211,92 @@ export default function ProductSearch() {
         const maxButtons = 5;
         let start = Math.max(1, current - Math.floor(maxButtons / 2));
         let end = Math.min(last, start + maxButtons - 1);
-        if (end - start < maxButtons - 1) {
-            start = Math.max(1, end - maxButtons + 1);
-        }
+        if (end - start < maxButtons - 1) start = Math.max(1, end - maxButtons + 1);
 
-        if (current > 1) {
-            pages.push(
-                <button key="prev" className="btn btn-sm btn-outline-primary me-1" onClick={() => goToPage(current - 1)}>
-                    <i className="fa fa-chevron-left" />
-                </button>
-            );
-        }
+        pages.push(
+            <li key="first" className={`page-item ${current === 1 ? 'disabled' : ''}`}>
+                <button className="page-link" onClick={() => goToPage(1)}><i className="fa fa-angle-double-left" /></button>
+            </li>
+        );
+        pages.push(
+            <li key="prev" className={`page-item ${current === 1 ? 'disabled' : ''}`}>
+                <button className="page-link" onClick={() => goToPage(current - 1)}><i className="fa fa-angle-left" /></button>
+            </li>
+        );
 
         for (let p = start; p <= end; p++) {
             pages.push(
-                <button
-                    key={p}
-                    className={`btn btn-sm me-1 ${p === current ? 'btn-primary' : 'btn-outline-primary'}`}
-                    onClick={() => goToPage(p)}
-                >
-                    {p}
-                </button>
+                <li key={p} className={`page-item ${p === current ? 'active' : ''}`}>
+                    <button className="page-link" onClick={() => goToPage(p)}>{p}</button>
+                </li>
             );
         }
 
-        if (current < last) {
-            pages.push(
-                <button key="next" className="btn btn-sm btn-outline-primary" onClick={() => goToPage(current + 1)}>
-                    <i className="fa fa-chevron-right" />
-                </button>
-            );
-        }
+        pages.push(
+            <li key="next" className={`page-item ${current === last ? 'disabled' : ''}`}>
+                <button className="page-link" onClick={() => goToPage(current + 1)}><i className="fa fa-angle-right" /></button>
+            </li>
+        );
+        pages.push(
+            <li key="last" className={`page-item ${current === last ? 'disabled' : ''}`}>
+                <button className="page-link" onClick={() => goToPage(last)}><i className="fa fa-angle-double-right" /></button>
+            </li>
+        );
 
-        return <div className="d-flex flex-wrap gap-1">{pages}</div>;
+        return <nav><ul className="pagination pagination-sm mb-0">{pages}</ul></nav>;
     }
 
     const sortableHeader = (field, label, icon, align = '') => (
         <th
-            className={`border-0 ${align} user-select-none`}
-            style={{ cursor: 'pointer', whiteSpace: 'nowrap', fontSize: '0.8rem' }}
+            className={`${align} user-select-none`}
+            style={{ cursor: 'pointer', whiteSpace: 'nowrap', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.5px', fontWeight: 600, color: '#6c757d', borderBottom: '2px solid #dee2e6' }}
             onClick={() => changeSort(field)}
         >
-            <i className={`fa fa-${icon} me-1 text-muted`} />
+            <i className={`fa fa-${icon} me-1`} style={{ opacity: 0.5 }} />
             <span className="d-none d-md-inline">{label}</span>
             {renderSortIcon(field)}
         </th>
     );
 
-    // Mobile card view for each product row
     function renderMobileCards() {
         return (
-            <div className="d-md-none p-2">
-                {products.map(item => (
+            <div className="d-md-none">
+                {products.map((item, idx) => (
                     <div
                         key={item.inventory_id}
-                        className={`card mb-2 ${item.barcode === highlightedSKU ? 'border-success bg-success bg-opacity-10' : ''}`}
+                        className={`p-3 ${idx !== products.length - 1 ? 'border-bottom' : ''} ${item.barcode === highlightedSKU ? 'bg-success bg-opacity-10' : ''}`}
                         ref={el => { if (el) rowRefs.current[item.barcode] = el; }}
                     >
-                        <div className="card-body p-2">
-                            <div className="d-flex justify-content-between align-items-start mb-1">
-                                <div>
-                                    <span className="fw-bold">{item.name}</span>
-                                    <br />
-                                    <small className="text-muted">
+                        <div className="d-flex justify-content-between align-items-start">
+                            <div style={{ minWidth: 0, flex: 1 }}>
+                                <div className="fw-semibold text-dark" style={{ fontSize: '0.9rem' }}>{item.name}</div>
+                                <div className="mt-1 d-flex flex-wrap gap-2">
+                                    <span className="badge bg-light text-dark border" style={{ fontSize: '0.7rem' }}>
                                         <i className="fa fa-barcode me-1" />{item.code}
-                                        {item.size && <span className="ms-2"><i className="fa fa-arrows-h me-1" />{item.size}</span>}
-                                    </small>
+                                    </span>
+                                    {item.size && (
+                                        <span className="badge bg-light text-dark border" style={{ fontSize: '0.7rem' }}>
+                                            <i className="fa fa-arrows-h me-1" />{item.size}
+                                        </span>
+                                    )}
+                                    {item.barcode && (
+                                        <span className="badge bg-light text-dark border" style={{ fontSize: '0.7rem' }}>
+                                            <i className="fa fa-qrcode me-1" />{item.barcode}
+                                        </span>
+                                    )}
                                 </div>
-                                <span className={`badge ${item.quantity > 0 ? 'bg-success' : 'bg-danger'} fs-6`}>
-                                    {item.quantity}
-                                </span>
                             </div>
-                            <div className="d-flex justify-content-between align-items-center">
-                                <small className="text-muted">
-                                    {item.barcode && <span><i className="fa fa-qrcode me-1" />{item.barcode}</span>}
-                                </small>
-                                <small>
-                                    <span className="text-muted me-2"><i className="fa fa-money me-1" />{item.mrp}</span>
-                                    <span className="text-muted"><i className="fa fa-building me-1" />{item.branch_name}</span>
-                                </small>
-                            </div>
+                            <span className={`badge rounded-pill ms-2 ${item.quantity > 0 ? 'bg-success' : 'bg-danger'}`} style={{ fontSize: '0.85rem', minWidth: '40px' }}>
+                                {item.quantity}
+                            </span>
+                        </div>
+                        <div className="d-flex justify-content-between align-items-center mt-2">
+                            <small className="text-muted">
+                                <i className="fa fa-building me-1" />{item.branch_name}
+                            </small>
+                            <small className="fw-semibold text-dark">
+                                <i className="fa fa-money me-1 text-muted" />{item.mrp}
+                            </small>
                         </div>
                     </div>
                 ))}
@@ -301,203 +304,328 @@ export default function ProductSearch() {
         );
     }
 
+    const hasActiveFilters = productName || productCode || productBarcode || branchIds.length > 0 || showBarcodeCodes;
+
     return (
-        <div className="card shadow-sm border-0">
-            {/* Filters */}
-            <div className="card-body bg-light pb-2">
-                <div className="row g-2 g-md-3 align-items-end">
-                    <div className="col-12 col-sm-6 col-md-3">
-                        <label className="form-label fw-semibold mb-1 small">
-                            <i className="fa fa-tag me-1 text-muted" />Product Name
-                        </label>
-                        <div className="input-group input-group-sm">
-                            <span className="input-group-text bg-white border-end-0"><i className="fa fa-search text-muted" /></span>
-                            <input
-                                className="form-control border-start-0"
-                                value={productName}
-                                onChange={(e) => { setProductName(e.target.value); setProductBarcode(''); }}
-                                placeholder="Search by name..."
-                            />
-                        </div>
-                    </div>
+        <>
+            <Head title="Product Inventory" />
 
-                    <div className="col-6 col-sm-6 col-md-2">
-                        <label className="form-label fw-semibold mb-1 small">
-                            <i className="fa fa-code me-1 text-muted" />Product Code
-                        </label>
-                        <div className="input-group input-group-sm">
-                            <span className="input-group-text bg-white border-end-0"><i className="fa fa-code text-muted" /></span>
-                            <input
-                                className="form-control border-start-0"
-                                value={productCode}
-                                onChange={(e) => { setProductCode(e.target.value); setProductBarcode(''); }}
-                                placeholder="Code..."
-                            />
+            {/* Page Header — Nifty style */}
+            <div className="content__header content__boxed overlapping">
+                <div className="content__wrap">
+                    <nav aria-label="breadcrumb">
+                        <ol className="breadcrumb mb-0">
+                            <li className="breadcrumb-item"><a href="/">Home</a></li>
+                            <li className="breadcrumb-item"><a href="/inventory">Inventory</a></li>
+                            <li className="breadcrumb-item active" aria-current="page">Product Search</li>
+                        </ol>
+                    </nav>
+                    <div className="d-flex flex-wrap justify-content-between align-items-end mt-2 gap-2">
+                        <div>
+                            <h1 className="page-title mb-0" style={{ fontSize: '1.5rem' }}>
+                                <i className="fa fa-search me-2 text-primary" />Product Inventory
+                            </h1>
+                            <p className="text-muted mb-0 mt-1 d-none d-sm-block" style={{ fontSize: '0.85rem' }}>
+                                Search, filter, and manage product stock across branches
+                            </p>
                         </div>
-                    </div>
-
-                    <div className="col-6 col-sm-6 col-md-2">
-                        <label className="form-label fw-semibold mb-1 small">
-                            <i className="fa fa-barcode me-1 text-muted" />Barcode
-                        </label>
-                        <div className="input-group input-group-sm">
-                            <span className="input-group-text bg-white border-end-0"><i className="fa fa-barcode text-muted" /></span>
-                            <input
-                                id="productBarcodeInput"
-                                className="form-control border-start-0 barcode-input"
-                                value={productBarcode}
-                                onChange={(e) => setProductBarcode(e.target.value)}
-                                placeholder="Barcode..."
-                            />
-                        </div>
-                    </div>
-
-                    <div className="col-12 col-sm-6 col-md-3">
-                        <label className="form-label fw-semibold mb-1 small">
-                            <i className="fa fa-building me-1 text-muted" />Branch
-                        </label>
-                        <AsyncSelect
-                            isMulti
-                            cacheOptions
-                            defaultOptions
-                            loadOptions={loadBranchOptions}
-                            value={branchIds}
-                            onChange={(vals) => { setBranchIds(vals || []); setProductBarcode(''); }}
-                            placeholder="Select branch..."
-                            styles={{
-                                control: (base) => ({ ...base, minHeight: '31px', fontSize: '0.875rem' }),
-                                valueContainer: (base) => ({ ...base, padding: '0 6px' }),
-                                indicatorsContainer: (base) => ({ ...base, height: '31px' }),
-                            }}
-                        />
-                    </div>
-
-                    <div className="col-12 col-sm-6 col-md-2 d-flex flex-row flex-md-column gap-2 gap-md-1">
-                        <div className="form-check form-switch mb-0">
-                            <input className="form-check-input" type="checkbox" checked={showNonZeroOnly} onChange={(e) => setShowNonZeroOnly(e.target.checked)} id="showNonZeroOnly" />
-                            <label className="form-check-label small" htmlFor="showNonZeroOnly">
-                                <i className="fa fa-cubes me-1 text-muted" />In stock
-                            </label>
-                        </div>
-                        <div className="form-check form-switch mb-0">
-                            <input className="form-check-input" type="checkbox" checked={showBarcodeCodes} onChange={(e) => setShowBarcodeCodes(e.target.checked)} id="showBarcodeCodes" />
-                            <label className="form-check-label small" htmlFor="showBarcodeCodes">
-                                <i className="fa fa-qrcode me-1 text-muted" />Barcode SKU
-                            </label>
+                        <div className="d-flex gap-2">
+                            <button
+                                className="btn btn-sm btn-primary"
+                                onClick={() => { setScannerOpen(true); setScannedCode(''); }}
+                            >
+                                <i className="fa fa-camera me-1" /> Scan Barcode
+                            </button>
                         </div>
                     </div>
                 </div>
+            </div>
 
-                {/* Actions Row */}
-                <div className="d-flex flex-wrap justify-content-between align-items-center mt-3 pt-2 border-top gap-2">
-                    <div className="d-flex gap-2 align-items-center">
-                        <button className="btn btn-outline-secondary btn-sm" onClick={clearFilters}>
-                            <i className="fa fa-times me-1" /> Clear
-                        </button>
-                        <button className="btn btn-outline-primary btn-sm" onClick={() => { setScannerOpen(true); setScannedCode(''); }}>
-                            <i className="fa fa-camera me-1" /> Scan
-                        </button>
-                        {loading && (
-                            <span className="text-muted small ms-2">
-                                <span className="spinner-border spinner-border-sm me-1" role="status" />
-                                Searching...
-                            </span>
+            {/* Main Content */}
+            <div className="content__boxed">
+                <div className="content__wrap">
+
+                    {/* Summary Cards */}
+                    <div className="row g-2 g-md-3 mb-3">
+                        <div className="col-6 col-md-3">
+                            <div className="card border-0 shadow-sm h-100">
+                                <div className="card-body p-3 d-flex align-items-center">
+                                    <div className="rounded-circle d-flex align-items-center justify-content-center me-3" style={{ width: 42, height: 42, backgroundColor: '#e8f4fd' }}>
+                                        <i className="fa fa-cubes text-primary" />
+                                    </div>
+                                    <div>
+                                        <div className="text-muted" style={{ fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Total Quantity</div>
+                                        <div className="fw-bold text-dark" style={{ fontSize: '1.2rem' }}>{totalQuantity.toLocaleString()}</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div className="col-6 col-md-3">
+                            <div className="card border-0 shadow-sm h-100">
+                                <div className="card-body p-3 d-flex align-items-center">
+                                    <div className="rounded-circle d-flex align-items-center justify-content-center me-3" style={{ width: 42, height: 42, backgroundColor: '#e8fdf0' }}>
+                                        <i className="fa fa-list text-success" />
+                                    </div>
+                                    <div>
+                                        <div className="text-muted" style={{ fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Total Records</div>
+                                        <div className="fw-bold text-dark" style={{ fontSize: '1.2rem' }}>{meta.total.toLocaleString()}</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div className="col-6 col-md-3">
+                            <div className="card border-0 shadow-sm h-100">
+                                <div className="card-body p-3 d-flex align-items-center">
+                                    <div className="rounded-circle d-flex align-items-center justify-content-center me-3" style={{ width: 42, height: 42, backgroundColor: '#fef4e8' }}>
+                                        <i className="fa fa-building text-warning" />
+                                    </div>
+                                    <div>
+                                        <div className="text-muted" style={{ fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Branches</div>
+                                        <div className="fw-bold text-dark" style={{ fontSize: '1.2rem' }}>{branchIds.length > 0 ? branchIds.length : 'All'}</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div className="col-6 col-md-3">
+                            <div className="card border-0 shadow-sm h-100">
+                                <div className="card-body p-3 d-flex align-items-center">
+                                    <div className="rounded-circle d-flex align-items-center justify-content-center me-3" style={{ width: 42, height: 42, backgroundColor: '#f4e8fd' }}>
+                                        <i className="fa fa-filter" style={{ color: '#8b5cf6' }} />
+                                    </div>
+                                    <div>
+                                        <div className="text-muted" style={{ fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Page</div>
+                                        <div className="fw-bold text-dark" style={{ fontSize: '1.2rem' }}>{meta.current_page} / {meta.last_page}</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Filters Card */}
+                    <div className="card border-0 shadow-sm mb-3">
+                        <div className="card-header bg-white border-bottom py-3">
+                            <div className="d-flex justify-content-between align-items-center">
+                                <h5 className="mb-0" style={{ fontSize: '0.95rem' }}>
+                                    <i className="fa fa-filter me-2 text-muted" />Filters
+                                    {hasActiveFilters && (
+                                        <span className="badge bg-primary rounded-pill ms-2" style={{ fontSize: '0.65rem' }}>Active</span>
+                                    )}
+                                </h5>
+                                <div className="d-flex align-items-center gap-2">
+                                    {loading && (
+                                        <span className="text-primary" style={{ fontSize: '0.8rem' }}>
+                                            <i className="fa fa-spinner fa-spin me-1" />Loading...
+                                        </span>
+                                    )}
+                                    {hasActiveFilters && (
+                                        <button className="btn btn-outline-secondary btn-sm" onClick={clearFilters} style={{ fontSize: '0.75rem' }}>
+                                            <i className="fa fa-times me-1" /> Clear All
+                                        </button>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+                        <div className="card-body py-3">
+                            <div className="row g-2 g-md-3 align-items-end">
+                                <div className="col-12 col-sm-6 col-lg-3">
+                                    <label className="form-label mb-1" style={{ fontSize: '0.75rem', fontWeight: 600, color: '#6c757d', textTransform: 'uppercase', letterSpacing: '0.3px' }}>
+                                        <i className="fa fa-tag me-1" />Product Name
+                                    </label>
+                                    <div className="input-group input-group-sm">
+                                        <span className="input-group-text bg-white"><i className="fa fa-search text-muted" /></span>
+                                        <input
+                                            className="form-control"
+                                            value={productName}
+                                            onChange={(e) => { setProductName(e.target.value); setProductBarcode(''); }}
+                                            placeholder="Search by name..."
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="col-6 col-sm-6 col-lg-2">
+                                    <label className="form-label mb-1" style={{ fontSize: '0.75rem', fontWeight: 600, color: '#6c757d', textTransform: 'uppercase', letterSpacing: '0.3px' }}>
+                                        <i className="fa fa-code me-1" />Product Code
+                                    </label>
+                                    <div className="input-group input-group-sm">
+                                        <span className="input-group-text bg-white"><i className="fa fa-code text-muted" /></span>
+                                        <input
+                                            className="form-control"
+                                            value={productCode}
+                                            onChange={(e) => { setProductCode(e.target.value); setProductBarcode(''); }}
+                                            placeholder="Code..."
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="col-6 col-sm-6 col-lg-2">
+                                    <label className="form-label mb-1" style={{ fontSize: '0.75rem', fontWeight: 600, color: '#6c757d', textTransform: 'uppercase', letterSpacing: '0.3px' }}>
+                                        <i className="fa fa-barcode me-1" />Barcode
+                                    </label>
+                                    <div className="input-group input-group-sm">
+                                        <span className="input-group-text bg-white"><i className="fa fa-barcode text-muted" /></span>
+                                        <input
+                                            id="productBarcodeInput"
+                                            className="form-control barcode-input"
+                                            value={productBarcode}
+                                            onChange={(e) => setProductBarcode(e.target.value)}
+                                            placeholder="Barcode..."
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="col-12 col-sm-6 col-lg-3">
+                                    <label className="form-label mb-1" style={{ fontSize: '0.75rem', fontWeight: 600, color: '#6c757d', textTransform: 'uppercase', letterSpacing: '0.3px' }}>
+                                        <i className="fa fa-building me-1" />Branch
+                                    </label>
+                                    <AsyncSelect
+                                        isMulti
+                                        cacheOptions
+                                        defaultOptions
+                                        loadOptions={loadBranchOptions}
+                                        value={branchIds}
+                                        onChange={(vals) => { setBranchIds(vals || []); setProductBarcode(''); }}
+                                        placeholder="All branches..."
+                                        styles={{
+                                            control: (base) => ({ ...base, minHeight: '31px', fontSize: '0.875rem', borderColor: '#dee2e6' }),
+                                            valueContainer: (base) => ({ ...base, padding: '0 6px' }),
+                                            indicatorsContainer: (base) => ({ ...base, height: '31px' }),
+                                        }}
+                                    />
+                                </div>
+
+                                <div className="col-12 col-sm-6 col-lg-2 d-flex flex-row flex-lg-column gap-3 gap-lg-1 pt-1">
+                                    <div className="form-check form-switch mb-0">
+                                        <input className="form-check-input" type="checkbox" checked={showNonZeroOnly} onChange={(e) => setShowNonZeroOnly(e.target.checked)} id="showNonZeroOnly" />
+                                        <label className="form-check-label" htmlFor="showNonZeroOnly" style={{ fontSize: '0.8rem' }}>
+                                              &nbsp; In stock
+                                        </label>
+                                    </div>
+                                    <div className="form-check form-switch mb-0">
+                                        <input className="form-check-input" type="checkbox" checked={showBarcodeCodes} onChange={(e) => setShowBarcodeCodes(e.target.checked)} id="showBarcodeCodes" />
+                                        <label className="form-check-label" htmlFor="showBarcodeCodes" style={{ fontSize: '0.8rem' }}>
+                                             &nbsp; Barcode SKU
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Data Table Card */}
+                    <div className="card border-0 shadow-sm">
+                        {/* Table Toolbar */}
+                        <div className="card-header bg-white border-bottom py-2">
+                            <div className="d-flex flex-wrap justify-content-between align-items-center gap-2">
+                                <div className="text-muted" style={{ fontSize: '0.8rem' }}>
+                                    Showing <strong className="text-dark">{products.length}</strong> of <strong className="text-dark">{meta.total}</strong> results
+                                </div>
+                                <div className="d-flex align-items-center gap-2">
+                                    <span className="text-muted d-none d-sm-inline" style={{ fontSize: '0.8rem' }}>Rows:</span>
+                                    <select
+                                        className="form-select form-select-sm"
+                                        style={{ width: '80px', fontSize: '0.8rem' }}
+                                        value={limit}
+                                        onChange={(e) => { setLimit(parseInt(e.target.value)); setPage(1); }}
+                                    >
+                                        <option value={10}>10</option>
+                                        <option value={25}>25</option>
+                                        <option value={50}>50</option>
+                                        <option value={100}>100</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Table / Cards */}
+                        {products.length > 0 ? (
+                            <>
+                                <div className="table-responsive d-none d-md-block">
+                                    <table className="table table-hover mb-0 align-middle" style={{ fontSize: '0.85rem' }}>
+                                        <thead>
+                                            <tr>
+                                                {sortableHeader('products.code', 'SKU', 'barcode', 'text-end')}
+                                                {sortableHeader('products.name', 'Name', 'tag')}
+                                                {sortableHeader('products.size', 'Size', 'arrows-h', 'text-end')}
+                                                {sortableHeader('inventories.barcode', 'Barcode', 'qrcode', 'text-end')}
+                                                {sortableHeader('products.mrp', 'Price', 'money', 'text-end')}
+                                                {sortableHeader('branches.name', 'Branch', 'building')}
+                                                {sortableHeader('inventories.quantity', 'Qty', 'cubes', 'text-end')}
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {products.map(item => (
+                                                <tr
+                                                    key={item.inventory_id}
+                                                    className={item.barcode === highlightedSKU ? 'table-success' : ''}
+                                                    ref={el => { if (el) rowRefs.current[item.barcode] = el; }}
+                                                    style={{ transition: 'background-color 0.3s' }}
+                                                >
+                                                    <td className="text-end">
+                                                        <span className="badge bg-light text-primary border" style={{ fontFamily: 'monospace', fontSize: '0.8rem' }}>{item.code}</span>
+                                                    </td>
+                                                    <td className="fw-medium">{item.name}</td>
+                                                    <td className="text-end text-muted">{item.size}</td>
+                                                    <td className="text-end" style={{ fontFamily: 'monospace', fontSize: '0.8rem' }}>{item.barcode}</td>
+                                                    <td className="text-end fw-medium">{item.mrp}</td>
+                                                    <td>
+                                                        <span className="badge bg-light text-dark border" style={{ fontSize: '0.75rem' }}>
+                                                            <i className="fa fa-building me-1" style={{ opacity: 0.4 }} />{item.branch_name}
+                                                        </span>
+                                                    </td>
+                                                    <td className="text-end">
+                                                        <span
+                                                            className={`badge rounded-pill ${item.quantity > 0 ? 'bg-success' : 'bg-danger'}`}
+                                                            style={{ fontSize: '0.8rem', minWidth: '36px' }}
+                                                        >
+                                                            {item.quantity}
+                                                        </span>
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                                {renderMobileCards()}
+                            </>
+                        ) : (
+                            <div className="text-center py-5">
+                                <i className="fa fa-search fa-3x mb-3 d-block" style={{ opacity: 0.15 }} />
+                                <p className="text-muted mb-1">No products found</p>
+                                <small className="text-muted">Try adjusting your filters or search terms</small>
+                            </div>
                         )}
-                    </div>
-                    <div className="d-flex align-items-center gap-2">
-                        <small className="text-muted d-none d-sm-inline">Per page:</small>
-                        <select
-                            className="form-select form-select-sm"
-                            style={{ width: '70px' }}
-                            value={limit}
-                            onChange={(e) => { setLimit(parseInt(e.target.value)); setPage(1); }}
-                        >
-                            <option value={10}>10</option>
-                            <option value={25}>25</option>
-                            <option value={50}>50</option>
-                            <option value={100}>100</option>
-                        </select>
-                    </div>
-                </div>
-            </div>
 
-            {/* Product Table (desktop) / Cards (mobile) */}
-            <div className="card-body p-0">
-                {products.length > 0 ? (
-                    <>
-                        {/* Desktop table */}
-                        <div className="table-responsive d-none d-md-block">
-                            <table className="table table-hover table-striped mb-0 align-middle">
-                                <thead className="table-light">
-                                    <tr>
-                                        {sortableHeader('products.code', 'SKU', 'barcode', 'text-end')}
-                                        {sortableHeader('products.name', 'Name', 'tag')}
-                                        {sortableHeader('products.size', 'Size', 'arrows-h', 'text-end')}
-                                        {sortableHeader('inventories.barcode', 'Barcode', 'barcode', 'text-end')}
-                                        {sortableHeader('products.mrp', 'Price', 'money', 'text-end')}
-                                        {sortableHeader('branches.name', 'Branch', 'building')}
-                                        {sortableHeader('inventories.quantity', 'QTY', 'cubes', 'text-end')}
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {products.map(item => (
-                                        <tr
-                                            key={item.inventory_id}
-                                            className={item.barcode === highlightedSKU ? 'table-success' : ''}
-                                            ref={el => { if (el) rowRefs.current[item.barcode] = el; }}
-                                        >
-                                            <td className="text-end"><code className="text-primary">{item.code}</code></td>
-                                            <td>{item.name}</td>
-                                            <td className="text-end"><code className="text-primary">{item.size}</code></td>
-                                            <td className="text-end"><code className="text-primary">{item.barcode}</code></td>
-                                            <td className="text-end"><code className="text-primary">{item.mrp}</code></td>
-                                            <td><span className="fw-medium">{item.branch_name}</span></td>
-                                            <td className="text-end">
-                                                <span className={`badge fs-6 ${item.quantity > 0 ? 'bg-success' : 'bg-danger'}`}>
-                                                    {item.quantity}
-                                                </span>
-                                            </td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
+                        {/* Footer */}
+                        <div className="card-footer bg-white border-top py-2">
+                            <div className="d-flex flex-wrap justify-content-between align-items-center gap-2">
+                                <div className="text-muted" style={{ fontSize: '0.8rem' }}>
+                                    <i className="fa fa-cubes me-1" />
+                                    Total Qty: <strong className="text-dark">{totalQuantity.toLocaleString()}</strong>
+                                </div>
+                                {renderPagination()}
+                            </div>
                         </div>
-
-                        {/* Mobile cards */}
-                        {renderMobileCards()}
-                    </>
-                ) : (
-                    <div className="text-center py-5 text-muted">
-                        <i className="fa fa-search fa-2x mb-2 d-block" style={{ opacity: 0.3 }} />
-                        No products found.
                     </div>
-                )}
-            </div>
 
-            {/* Footer: Total + Pagination */}
-            <div className="card-footer d-flex flex-wrap justify-content-between align-items-center gap-2">
-                <small className="text-muted">
-                    <i className="fa fa-cubes me-1" />
-                    Total Qty: <strong className="text-dark">{totalQuantity}</strong>
-                    <span className="mx-2">|</span>
-                    {meta.total} items
-                </small>
-                {renderPagination()}
+                </div>
             </div>
 
             {/* Scanner Modal */}
             {scannerOpen && (
                 <div
                     className="position-fixed top-0 start-0 w-100 h-100 d-flex justify-content-center align-items-center"
-                    style={{ backgroundColor: 'rgba(0,0,0,0.75)', zIndex: 9999 }}
+                    style={{ backgroundColor: 'rgba(0,0,0,0.6)', zIndex: 9999, backdropFilter: 'blur(4px)' }}
+                    onClick={(e) => { if (e.target === e.currentTarget) setScannerOpen(false); }}
                 >
-                    <div className="bg-white rounded-3 shadow-lg p-3" style={{ width: '400px', maxWidth: '92vw' }}>
-                        <div className="d-flex justify-content-between align-items-center mb-2">
-                            <h6 className="mb-0"><i className="fa fa-camera me-2" />Barcode Scanner</h6>
-                            <button className="btn-close" onClick={() => setScannerOpen(false)} />
+                    <div className="bg-white rounded-3 shadow-lg" style={{ width: '420px', maxWidth: '92vw', overflow: 'hidden' }}>
+                        <div className="d-flex justify-content-between align-items-center p-3 border-bottom">
+                            <h6 className="mb-0" style={{ fontSize: '0.95rem' }}>
+                                <i className="fa fa-camera me-2 text-primary" />Barcode Scanner
+                            </h6>
+                            <button className="btn-close btn-close-sm" onClick={() => setScannerOpen(false)} />
                         </div>
 
-                        <div className="position-relative rounded overflow-hidden" style={{ height: '280px' }}>
+                        <div className="position-relative" style={{ height: '260px', backgroundColor: '#1a1a1a' }}>
                             <BarcodeScanner
                                 containerStyle={{ width: '100%', height: '100%' }}
                                 onSuccess={(text) => {
@@ -507,37 +635,39 @@ export default function ProductSearch() {
                                 }}
                                 onError={(err) => console.error(err)}
                             />
-                            <div
-                                className="position-absolute top-0 start-0 w-100 h-100"
-                                style={{ border: '2px dashed rgba(255,0,0,0.5)', pointerEvents: 'none' }}
-                            />
+                            <div className="position-absolute top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center" style={{ pointerEvents: 'none' }}>
+                                <div style={{ width: '70%', height: '50%', border: '2px dashed rgba(255,255,255,0.4)', borderRadius: '8px' }} />
+                            </div>
                         </div>
 
-                        <div className="mt-3">
-                            <label className="form-label small text-muted mb-1">
+                        <div className="p-3">
+                            <label className="form-label mb-1 text-muted" style={{ fontSize: '0.75rem' }}>
                                 <i className="fa fa-pencil me-1" />Or enter manually
                             </label>
-                            <input
-                                type="text"
-                                className="form-control form-control-sm"
-                                placeholder="Type barcode and press Enter"
-                                onKeyDown={(e) => {
-                                    if (e.key === 'Enter' && e.target.value.trim()) {
-                                        const code = e.target.value.trim().replace(/[^a-zA-Z0-9]/g, '');
-                                        setProductBarcode(code);
-                                        applyScannedCode(code);
-                                        setScannerOpen(false);
-                                    }
-                                }}
-                            />
+                            <div className="input-group input-group-sm">
+                                <span className="input-group-text bg-white"><i className="fa fa-barcode text-muted" /></span>
+                                <input
+                                    type="text"
+                                    className="form-control"
+                                    placeholder="Type barcode and press Enter"
+                                    autoFocus
+                                    onKeyDown={(e) => {
+                                        if (e.key === 'Enter' && e.target.value.trim()) {
+                                            const code = e.target.value.trim().replace(/[^a-zA-Z0-9]/g, '');
+                                            setProductBarcode(code);
+                                            applyScannedCode(code);
+                                            setScannerOpen(false);
+                                        }
+                                    }}
+                                />
+                            </div>
+                            <button className="btn btn-outline-secondary btn-sm mt-3 w-100" onClick={() => setScannerOpen(false)}>
+                                Cancel
+                            </button>
                         </div>
-
-                        <button className="btn btn-danger btn-sm mt-3 w-100" onClick={() => setScannerOpen(false)}>
-                            <i className="fa fa-times me-1" /> Close
-                        </button>
                     </div>
                 </div>
             )}
-        </div>
+        </>
     );
 }
