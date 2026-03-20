@@ -7,9 +7,9 @@ use App\Actions\Sale\Item\DeleteAction as ItemDeleteAction;
 use App\Actions\Sale\Payment\DeleteAction as PaymentDeleteAction;
 use App\Actions\Sale\Pos\AddItemAction;
 use App\Actions\Sale\Pos\GetProductByBarcodeAction;
+use App\Actions\Sale\Pos\GetProductsAction;
 use App\Actions\Sale\UpdateAction;
 use App\Http\Controllers\Controller;
-use App\Models\Inventory;
 use App\Models\Sale;
 use App\Models\SalePayment;
 use Exception;
@@ -22,82 +22,13 @@ class POSController extends Controller
 {
     public function getProducts(Request $request)
     {
-        try {
-            $query = Inventory::with(['product']);
+        $result = (new GetProductsAction())->execute($request->only(['type', 'category_id', 'search', 'sale_type']), session('branch_id'));
 
-            $query = $query->whereNull('inventories.employee_id');
-            $query = $query->where('inventories.branch_id', session('branch_id'));
-
-            $query->whereHas('product', function ($q): void {
-                $q->where('is_selling', true)
-                    ->whereHas('mainCategory', function ($categoryQuery): void {
-                        $categoryQuery->where('sale_visibility_flag', true);
-                    });
-            });
-            // Filter by category
-            if ($request->type) {
-                $query->whereHas('product', function ($q) use ($request): void {
-                    $q->where('type', $request->type);
-                });
-            }
-            if ($request->category_id && $request->category_id !== 'favorite') {
-                $query->whereHas('product', function ($q) use ($request): void {
-                    $q->where('main_category_id', $request->category_id);
-                });
-            } elseif ($request->category_id === 'favorite') {
-                $query->whereHas('product', function ($q): void {
-                    $q->where('is_favorite', true);
-                });
-            }
-
-            // Filter by search term
-            if ($request->search) {
-                $search = trim($request->search);
-                $query->whereHas('product', function ($q) use ($search): void {
-                    $q->where('name', 'LIKE', "%{$search}%")->orWhere('barcode', 'LIKE', "%{$search}%");
-                });
-            }
-
-            // Filter by sale type for pricing
-            $saleType = $request->sale_type ?? 'normal';
-
-            $products = $query
-                ->limit(50)
-                ->get()
-                ->map(function ($inventory) use ($saleType) {
-                    $price = $inventory->product->saleTypePrice($saleType);
-
-                    $imageUrl = cache('logo');
-                    if ($inventory->product->thumbnail) {
-                        $imageUrl = $inventory->product->thumbnail;
-                    }
-
-                    return [
-                        'id' => $inventory->id,
-                        'name' => $inventory->product->name,
-                        'type' => $inventory->product->type,
-                        'barcode' => $inventory->product->barcode,
-                        'size' => $inventory->product->size,
-                        'code' => $inventory->product->code,
-                        'mrp' => $price,
-                        'stock' => $inventory->quantity ?? 0,
-                        'category_id' => $inventory->product->main_category_id,
-                        'product_id' => $inventory->product_id,
-                        'branch_id' => $inventory->branch_id,
-                        'image' => $imageUrl,
-                        'unit_id' => $inventory->product->unit_id,
-                        'unit_name' => $inventory->product->unit->name ?? '',
-                        'conversion_factor' => 1,
-                        'units' => $inventory->product->getResolvedUnits(),
-                    ];
-                });
-
-            return response()->json($products);
-        } catch (\Exception $e) {
-            Log::error('Error loading products: '.$e->getMessage());
-
+        if (! $result['success']) {
             return response()->json(['error' => 'Failed to load products'], 500);
         }
+
+        return response()->json($result['data']);
     }
 
     public function getProductByBarcode(Request $request)
