@@ -13,27 +13,20 @@ class GetProductsAction
             $branchId = $branchId ?? session('branch_id');
             $saleType = $filters['sale_type'] ?? 'normal';
 
-            $products = Inventory::with(['product'])
+            $products = Inventory::with(['product', 'product.unit'])
+                ->join('products', 'inventories.product_id', '=', 'products.id')
+                ->join('categories', 'products.main_category_id', '=', 'categories.id')
+                ->select('inventories.*')
                 ->whereNull('inventories.employee_id')
                 ->where('inventories.branch_id', $branchId)
-                ->whereHas('product', function ($q) use ($filters): void {
-                    $q->where('is_selling', true)
-                        ->whereHas('mainCategory', fn ($c) => $c->where('sale_visibility_flag', true));
-
-                    if (! empty($filters['type'])) {
-                        $q->where('type', $filters['type']);
-                    }
-
-                    if (! empty($filters['category_id']) && $filters['category_id'] !== 'favorite') {
-                        $q->where('main_category_id', $filters['category_id']);
-                    } elseif (isset($filters['category_id']) && $filters['category_id'] === 'favorite') {
-                        $q->where('is_favorite', true);
-                    }
-
-                    if (! empty($filters['search'])) {
-                        $search = trim($filters['search']);
-                        $q->where(fn ($s) => $s->where('name', 'LIKE', "%{$search}%")->orWhere('barcode', 'LIKE', "%{$search}%"));
-                    }
+                ->where('products.is_selling', true)
+                ->where('categories.sale_visibility_flag', true)
+                ->when(! empty($filters['type']), fn ($q) => $q->where('products.type', $filters['type']))
+                ->when(! empty($filters['category_id']) && $filters['category_id'] !== 'favorite', fn ($q) => $q->where('products.main_category_id', $filters['category_id']))
+                ->when(isset($filters['category_id']) && $filters['category_id'] === 'favorite', fn ($q) => $q->where('products.is_favorite', true))
+                ->when(! empty($filters['search']), function ($q) use ($filters): void {
+                    $search = trim($filters['search']);
+                    $q->where(fn ($s) => $s->where('products.name', 'LIKE', "%{$search}%")->orWhere('products.barcode', 'LIKE', "%{$search}%"));
                 })
                 ->limit(50)
                 ->get()
