@@ -71,9 +71,8 @@ class AccountViewExport implements FromCollection, WithColumnFormatting, WithEve
     protected function getOpeningBalanceQuery()
     {
         return $this->getBaseQuery()
-            ->with('account')
             ->when($this->filters['from_date'] ?? '', function ($query, $value) {
-                return $query->where('date', '<', date('Y-m-d', strtotime($value)));
+                return $query->whereDate('date', '<', date('Y-m-d', strtotime($value)));
             })
             ->selectRaw('ROUND(SUM(debit),2) as debit, ROUND(SUM(credit),2) as credit');
     }
@@ -97,12 +96,10 @@ class AccountViewExport implements FromCollection, WithColumnFormatting, WithEve
 
     protected function getBaseQuery()
     {
-        $accountId = $this->account->id;
-
-        return JournalEntry::where(function ($query) use ($accountId) {
-            // Check single counter_account_id (backward compatibility)
-            $query->where('counter_account_id', $accountId);
-        });
+        return JournalEntry::where('account_id', $this->account->id)
+            ->when($this->filters['branch_id'] ?? '', function ($query, $value) {
+                return $query->where('branch_id', $value);
+            });
     }
 
     protected function getTransactionsQuery()
@@ -121,10 +118,13 @@ class AccountViewExport implements FromCollection, WithColumnFormatting, WithEve
                 });
             })
             ->when($this->filters['from_date'] ?? '', function ($query, $value) {
-                return $query->where('date', '>=', date('Y-m-d', strtotime($value)));
+                return $query->whereDate('date', '>=', date('Y-m-d', strtotime($value)));
             })
             ->when($this->filters['to_date'] ?? '', function ($query, $value) {
-                return $query->where('date', '<=', date('Y-m-d', strtotime($value)));
+                return $query->whereDate('date', '<=', date('Y-m-d', strtotime($value)));
+            })
+            ->when($this->filters['filter_account_id'] ?? '', function ($query, $value) {
+                return $query->where('account_id', $value);
             })
             ->orderBy('date', 'ASC')
             ->orderBy('id', 'ASC');
