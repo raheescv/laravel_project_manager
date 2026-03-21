@@ -14,9 +14,13 @@ use Livewire\Component;
 class ChequesTab extends Component
 {
     public $rentOutId;
+
     public $sortField = 'date';
+
     public $sortDirection = 'asc';
+
     public array $selectedCheques = [];
+
     public bool $selectAll = false;
 
     // Term selector for cheque clearance
@@ -199,6 +203,7 @@ class ChequesTab extends Component
     {
         if (empty($this->selectedCheques)) {
             $this->dispatch('error', message: 'No cheques selected.');
+
             return;
         }
 

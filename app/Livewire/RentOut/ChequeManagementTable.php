@@ -50,7 +50,7 @@ class ChequeManagementTable extends Component
             ->tap(fn ($q) => $this->applyRentOutFilters($q))
             ->tap(fn ($q) => $this->applyDateFilter($q, 'date'))
             ->tap(fn ($q) => $this->applySearch($q))
-            ->when(!empty($this->filterStatus), fn ($q) => $q->whereIn('status', $this->filterStatus))
+            ->when(! empty($this->filterStatus), fn ($q) => $q->whereIn('status', $this->filterStatus))
             ->orderBy($this->sortField === 'id' ? 'rent_out_cheques.id' : $this->sortField, $this->sortDirection);
     }
 
@@ -124,7 +124,8 @@ class ChequeManagementTable extends Component
 
     public function render()
     {
-        $ownership = Property::pluck('ownership','ownership')->toArray();
+        $ownership = Property::pluck('ownership', 'ownership')->toArray();
+
         return view('livewire.rent-out.cheque-management-table', [
             'data' => $this->buildQuery()->paginate($this->limit),
             'chequeStatuses' => ChequeStatus::cases(),
