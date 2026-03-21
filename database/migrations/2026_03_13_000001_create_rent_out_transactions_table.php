@@ -35,8 +35,6 @@ return new class() extends Migration
             $table->string('reason')->nullable();
             $table->string('voucher_no')->nullable();
 
-
-
             $table->unsignedBigInteger('created_by')->nullable();
             $table->softDeletes();
             $table->timestamps();

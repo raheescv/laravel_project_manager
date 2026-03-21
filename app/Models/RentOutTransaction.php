@@ -78,13 +78,13 @@ class RentOutTransaction extends Model implements AuditableContracts
     public function sourceModel()
     {
         if (! $this->model || ! $this->model_id) {
-            return null;
+            return;
         }
 
         $modelClass = 'App\\Models\\'.$this->model;
 
         if (! class_exists($modelClass)) {
-            return null;
+            return;
         }
 
         return $modelClass::find($this->model_id);
