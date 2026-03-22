@@ -11,12 +11,13 @@ use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\PhysicalVisitorController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\PublicScanController;
+use App\Http\Controllers\PurchaseRequestController;
 use App\Http\Controllers\UserAttendanceController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\VisitorAnalyticsController;
 use Illuminate\Support\Facades\Route;
 
-require __DIR__.'/auth.php';
+require __DIR__ . '/auth.php';
 
 Route::get('/home', [PublicScanController::class, 'home'])->name('public_home');
 Route::get('/scan', [PublicScanController::class, 'index'])->name('scan.index');
@@ -63,6 +64,17 @@ Route::middleware('auth')->group(function (): void {
     Route::get('visitor-analytics', [VisitorAnalyticsController::class, 'index'])->name('visitor-analytics')->can('visitor analytics.view');
 
     Route::get('health', [HealthController::class, 'index'])->name('health')->can('system health.view');
+
+    // Purchase Request Routes
+    Route::name('purchase-request::')->prefix('purchase-requests')->controller(PurchaseRequestController::class)->group(function (): void {
+        Route::get('', 'index')->name('index');
+        Route::get('create', 'create')->name('create');
+        Route::post('', 'store')->name('store');
+        Route::get('{purchaseRequest}', 'show');
+        Route::get('{purchaseRequest}/edit', 'edit')->name('edit');
+        Route::put('{purchaseRequest}', 'update')->name('update');
+        Route::delete('{purchaseRequest}', 'destroy')->name('destroy');
+    });
 });
 
 // Physical Visitor Management Routes
