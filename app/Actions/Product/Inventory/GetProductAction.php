@@ -65,7 +65,7 @@ class GetProductAction
 
     private function buildQuery(array $filters): Builder
     {
-        $query = Inventory::query()
+        $query = Inventory::withoutGlobalScopes()
             ->join('products', 'inventories.product_id', '=', 'products.id')
             ->join('branches', 'inventories.branch_id', '=', 'branches.id')
             ->where('products.type', '=', 'product');
