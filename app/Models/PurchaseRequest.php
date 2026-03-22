@@ -15,7 +15,7 @@ use OwenIt\Auditing\Auditable;
 use OwenIt\Auditing\Contracts\Auditable as AuditableContracts;
 
 #[UsePolicy(PurchaseRequestPolicy::class)]
-class PurchaseRequest extends Model  implements AuditableContracts
+class PurchaseRequest extends Model implements AuditableContracts
 {
     use Auditable, BelongsToTenant, SoftDeletes;
 
@@ -93,15 +93,15 @@ class PurchaseRequest extends Model  implements AuditableContracts
     {
         if (isset($filters['search']) && $filters['search']) {
             $query->where(function ($q) use ($filters) {
-                $q->where('id', 'like', '%' . $filters['search'] . '%')
+                $q->where('id', 'like', '%'.$filters['search'].'%')
                     ->orWhereHas('branch', function ($q) use ($filters) {
-                        $q->where('name', 'like', '%' . $filters['search'] . '%');
+                        $q->where('name', 'like', '%'.$filters['search'].'%');
                     })
                     ->orWhereHas('creator', function ($q) use ($filters) {
-                        $q->where('name', 'like', '%' . $filters['search'] . '%');
+                        $q->where('name', 'like', '%'.$filters['search'].'%');
                     })
                     ->orWhereHas('decisionMaker', function ($q) use ($filters) {
-                        $q->where('name', 'like', '%' . $filters['search'] . '%');
+                        $q->where('name', 'like', '%'.$filters['search'].'%');
                     });
             });
         }

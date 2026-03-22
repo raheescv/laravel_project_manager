@@ -2,8 +2,8 @@
 
 namespace App\Livewire\PurchaseRequest;
 
-use App\Models\PurchaseRequest;
 use App\Actions\PurchaseRequest\DeleteAction;
+use App\Models\PurchaseRequest;
 use Livewire\Attributes\Computed;
 use Livewire\Component;
 use Livewire\WithPagination;
@@ -13,17 +13,22 @@ class Table extends Component
     use WithPagination;
 
     public ?string $search = null;
+
     public ?int $branch_id = null;
+
     // public ?int $created_by = null;
     // public ?int $decision_by = null;
     public ?string $status = null;
+
     public int $limit = 10;
 
     public array $selected = [];
-    public string $sortField = 'id';
-    public string $sortDirection = 'desc';
-    protected $paginationTheme = 'bootstrap';
 
+    public string $sortField = 'id';
+
+    public string $sortDirection = 'desc';
+
+    protected $paginationTheme = 'bootstrap';
 
     #[Computed()]
     public function requests()
@@ -40,7 +45,7 @@ class Table extends Component
 
         $query->filter($filters);
 
-        if (auth()->user()->can('purchase request.view own') && !auth()->user()->can('purchase request.view any')) {
+        if (auth()->user()->can('purchase request.view own') && ! auth()->user()->can('purchase request.view any')) {
             $query->ownedBy(auth()->id());
         }
 

@@ -9,6 +9,7 @@ use Illuminate\Auth\Access\HandlesAuthorization;
 class PurchaseRequestPolicy
 {
     use HandlesAuthorization;
+
     /**
      * Determine whether the user can view any models.
      */
@@ -48,7 +49,6 @@ class PurchaseRequestPolicy
     {
         return $user->can('purchase request.delete') && $user->id === $purchaseRequest->created_by;
     }
-
 
     /**
      * Determine whether the user can make purchase request decision.

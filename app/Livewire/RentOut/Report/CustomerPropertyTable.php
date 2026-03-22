@@ -2,7 +2,6 @@
 
 namespace App\Livewire\RentOut\Report;
 
-use App\Models\Account;
 use App\Models\PropertyBuilding;
 use App\Models\PropertyGroup;
 use App\Models\PropertyType;

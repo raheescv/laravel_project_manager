@@ -13,7 +13,7 @@ class CreateUpdateAction
             validationHelper($this->rules(), $data);
 
             $return = [];
-            DB::transaction(function () use ($data,  &$return, $purchase_request_id) {
+            DB::transaction(function () use ($data, &$return, $purchase_request_id) {
                 $purchase_request = PurchaseRequest::updateOrCreate([
                     'id' => $purchase_request_id,
                 ], [
@@ -21,7 +21,7 @@ class CreateUpdateAction
                     'tenant_id' => session('tenant_id'),
                 ]);
                 foreach ($data['products'] as $product) {
-                    $product =  $purchase_request->products()->updateOrCreate([
+                    $product = $purchase_request->products()->updateOrCreate([
                         'id' => $product['id'] ?? null,
                         'purchase_request_id' => $purchase_request->id,
                     ], [
@@ -38,6 +38,7 @@ class CreateUpdateAction
             $return['success'] = false;
             $return['message'] = $e->getMessage();
         }
+
         return $return;
     }
 

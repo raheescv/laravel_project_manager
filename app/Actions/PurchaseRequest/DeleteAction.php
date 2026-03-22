@@ -14,7 +14,7 @@ class DeleteAction
             $ids = is_array($ids) ? $ids : [$ids];
 
             $return = [];
-            DB::transaction(function () use ($ids,  &$return) {
+            DB::transaction(function () use ($ids, &$return) {
                 PurchaseRequest::whereIn('id', $ids)->where('status', PurchaseRequestStatus::PENDING)->delete();
 
                 $return['success'] = true;
@@ -24,6 +24,7 @@ class DeleteAction
             $return['success'] = false;
             $return['message'] = $e->getMessage();
         }
+
         return $return;
     }
 }

@@ -11,6 +11,7 @@ use Livewire\Component;
 class Page extends Component
 {
     public PurchaseRequest $purchase_request;
+
     public array $products = [];
 
     public function mount(?int $purchase_request_id = null)
