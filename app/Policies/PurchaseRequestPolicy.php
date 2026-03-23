@@ -39,7 +39,7 @@ class PurchaseRequestPolicy
      */
     public function update(User $user, PurchaseRequest $purchaseRequest): bool
     {
-        return $user->can('purchase request.edit') && $user->id === $purchaseRequest->created_by;
+        return $user->can('purchase request.edit') && $user->id === $purchaseRequest->created_by && $purchaseRequest->status === \App\Enums\PurchaseRequest\PurchaseRequestStatus::PENDING;
     }
 
     /**
@@ -47,15 +47,15 @@ class PurchaseRequestPolicy
      */
     public function delete(User $user, PurchaseRequest $purchaseRequest): bool
     {
-        return $user->can('purchase request.delete') && $user->id === $purchaseRequest->created_by;
+        return $user->can('purchase request.delete') && $user->id === $purchaseRequest->created_by && $purchaseRequest->status === \App\Enums\PurchaseRequest\PurchaseRequestStatus::PENDING;
     }
 
     /**
      * Determine whether the user can make purchase request decision.
      */
-    public function decide(User $user)
+    public function decide(User $user, PurchaseRequest $purchaseRequest): bool
     {
-        return $user->can('purchase request.decide');
+        return $user->can('purchase request.decide') && $purchaseRequest->status === \App\Enums\PurchaseRequest\PurchaseRequestStatus::PENDING;
     }
 
     /**

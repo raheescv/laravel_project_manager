@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Models\PurchaseRequest;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
-use Illuminate\Http\Request;
 use Illuminate\Routing\Controller as BaseController;
 
 class PurchaseRequestController extends BaseController
@@ -37,7 +36,7 @@ class PurchaseRequestController extends BaseController
      */
     public function show(PurchaseRequest $purchaseRequest)
     {
-        // return view('purchase-request.update', compact('purchaseRequest'));
+        return view('purchase-request.view', compact('purchaseRequest'));
     }
 
     /**
@@ -48,11 +47,10 @@ class PurchaseRequestController extends BaseController
         return view('purchase-request.update', compact('purchaseRequest'));
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(PurchaseRequest $purchaseRequest)
+    public function decision(PurchaseRequest $purchaseRequest)
     {
-        //
+        $this->authorize('decide', $purchaseRequest);
+
+        return view('purchase-request.decision', compact('purchaseRequest'));
     }
 }

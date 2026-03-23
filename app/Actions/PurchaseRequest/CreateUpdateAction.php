@@ -20,6 +20,11 @@ class CreateUpdateAction
                     'branch_id' => session('branch_id'),
                     'tenant_id' => session('tenant_id'),
                 ]);
+
+                $deletedIds = $purchase_request->products()->whereNotIn('id', collect($data['products'])->pluck('id'))->pluck('id');
+
+                $purchase_request->products()->whereIn('id', $deletedIds)->delete();
+
                 foreach ($data['products'] as $product) {
                     $product = $purchase_request->products()->updateOrCreate([
                         'id' => $product['id'] ?? null,

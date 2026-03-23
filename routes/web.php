@@ -69,11 +69,9 @@ Route::middleware('auth')->group(function (): void {
     Route::name('purchase-request::')->prefix('purchase-requests')->controller(PurchaseRequestController::class)->group(function (): void {
         Route::get('', 'index')->name('index');
         Route::get('create', 'create')->name('create');
-        Route::post('', 'store')->name('store');
-        Route::get('{purchaseRequest}', 'show');
+        Route::get('{purchaseRequest}/decision', 'decision')->name('decision');
+        Route::get('{purchaseRequest}', 'show')->name('view');
         Route::get('{purchaseRequest}/edit', 'edit')->name('edit');
-        Route::put('{purchaseRequest}', 'update')->name('update');
-        Route::delete('{purchaseRequest}', 'destroy')->name('destroy');
     });
 });
 

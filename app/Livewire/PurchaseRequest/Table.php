@@ -80,6 +80,13 @@ class Table extends Component
         }
     }
 
+    public function updated($name, $value)
+    {
+        if (in_array($name, ['search', 'branch_id', 'status'])) {
+            $this->resetPage();
+        }
+    }
+
     public function render()
     {
         return view('livewire.purchase-request.table');
