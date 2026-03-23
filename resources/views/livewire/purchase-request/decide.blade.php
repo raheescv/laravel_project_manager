@@ -1,7 +1,6 @@
 <div>
     <form wire:submit="submitAction">
 
-        <!-- ERRORS -->
         @if ($errors->any())
             <div class="mb-4 alert alert-danger">
                 <ul class="mb-0 ps-3">
@@ -12,7 +11,6 @@
             </div>
         @endif
 
-        <!-- REQUEST DETAILS -->
         <div class="mb-4 border-0 shadow-sm card">
             <div class="bg-white card-header">
                 <h5 class="mb-0 fw-bold">Purchase Request Details</h5>
@@ -35,7 +33,6 @@
             </div>
         </div>
 
-        <!-- PRODUCTS (READ ONLY) -->
         <div class="mb-4 border-0 shadow-sm card">
             <div class="bg-white card-header">
                 <h5 class="mb-0 fw-bold">Products</h5>
@@ -64,7 +61,6 @@
             </div>
         </div>
 
-        <!-- APPROVAL ACTION -->
         <div class="mb-4 border-0 shadow-sm card">
             <div class="bg-white card-header">
                 <h5 class="mb-0 fw-bold">Approval Action</h5>
@@ -72,13 +68,11 @@
 
             <div class="card-body">
 
-                <!-- REMARKS -->
                 <div class="mb-3">
                     <label class="form-label fw-semibold">Remarks</label>
                     <textarea class="form-control" rows="3" wire:model="remarks" placeholder="Enter remarks (required for rejection)"></textarea>
                 </div>
 
-                <!-- ACTION BUTTONS -->
                 <div class="gap-2 d-flex justify-content-end">
 
                     <button type="button" class="btn btn-danger" wire:click="reject">
