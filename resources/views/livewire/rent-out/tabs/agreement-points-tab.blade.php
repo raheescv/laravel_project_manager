@@ -4,13 +4,15 @@
         <h6 class="fw-semibold mb-0">
             <i class="fa fa-file-text-o me-2 text-primary"></i>Reservation Fees & Disclaimer
         </h6>
-        <div class="d-flex gap-2">
+        <div class="d-flex gap-1">
             <button type="button" wire:click="addPoint"
-                class="btn btn-sm btn-primary d-flex align-items-center shadow-sm">
+                class="btn btn-outline-primary d-inline-flex align-items-center"
+                style="font-size: .7rem; padding: .2rem .5rem; border-radius: 4px;">
                 <i class="fa fa-plus me-1"></i> Add Point
             </button>
             <button type="button" wire:click="save"
-                class="btn btn-sm btn-success d-flex align-items-center shadow-sm">
+                class="btn btn-outline-success d-inline-flex align-items-center"
+                style="font-size: .7rem; padding: .2rem .5rem; border-radius: 4px;">
                 <i class="fa fa-save me-1"></i> Save
             </button>
         </div>

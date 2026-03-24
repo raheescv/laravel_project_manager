@@ -1,27 +1,29 @@
 <div>
     {{-- Action Buttons --}}
-    <div class="d-flex flex-wrap gap-2 align-items-center mb-3">
-        <button type="button" class="btn btn-primary d-flex align-items-center shadow-sm"
+    <div class="d-flex flex-wrap gap-1 align-items-center mb-2">
+        <button type="button" class="btn btn-outline-primary d-inline-flex align-items-center"
+            style="font-size: .7rem; padding: .2rem .5rem; border-radius: 4px;"
             wire:click="openSingleTermModal">
-            <i class="fa fa-plus me-2"></i> Add Single Term
+            <i class="fa fa-plus me-1"></i> Single Term
         </button>
-        <button type="button" class="btn btn-primary d-flex align-items-center shadow-sm"
+        <button type="button" class="btn btn-outline-primary d-inline-flex align-items-center"
+            style="font-size: .7rem; padding: .2rem .5rem; border-radius: 4px;"
             wire:click="openMultipleTermModal">
-            <i class="fa fa-plus-circle me-2"></i> Add Multiple Term
+            <i class="fa fa-plus-circle me-1"></i> Multiple Terms
         </button>
-        <div class="btn-group shadow-sm">
-            <button type="button" class="btn btn-success btn-sm d-flex align-items-center" onclick="paySelectedTerms()"
-                title="Pay Selected" data-bs-toggle="tooltip">
-                <i class="fa fa-money me-md-1"></i>
-                <span class="d-none d-md-inline">Pay Selected</span>
-            </button>
-            <button type="button" class="btn btn-danger btn-sm d-flex align-items-center"
-                onclick="deleteSelectedTerms()" title="Delete Selected" data-bs-toggle="tooltip">
-                <i class="fa fa-trash me-md-1"></i>
-                <span class="d-none d-md-inline">Delete Selected</span>
-            </button>
-        </div>
-        <span class="badge bg-light text-dark border ms-auto">
+        <button type="button" class="btn btn-outline-success d-inline-flex align-items-center"
+            style="font-size: .7rem; padding: .2rem .5rem; border-radius: 4px;"
+            onclick="paySelectedTerms()" title="Pay Selected" data-bs-toggle="tooltip">
+            <i class="fa fa-money me-1"></i>
+            <span class="d-none d-sm-inline">Pay Selected</span>
+        </button>
+        <button type="button" class="btn btn-outline-danger d-inline-flex align-items-center"
+            style="font-size: .7rem; padding: .2rem .5rem; border-radius: 4px;"
+            onclick="deleteSelectedTerms()" title="Delete Selected" data-bs-toggle="tooltip">
+            <i class="fa fa-trash me-1"></i>
+            <span class="d-none d-sm-inline">Delete Selected</span>
+        </button>
+        <span class="badge bg-light text-dark border ms-auto" style="font-size: .65rem;">
             <i class="fa fa-list me-1 opacity-50"></i>{{ $rentOut->paymentTerms->count() }} rows
         </span>
     </div>

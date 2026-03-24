@@ -5,7 +5,9 @@
             <i class="fa fa-plus-circle me-1"></i>
             <strong>{{ $rentOut->extends->count() }}</strong> extension(s)
         </div>
-        <button type="button" class="btn btn-sm btn-primary shadow-sm" wire:click="openExtendModal">
+        <button type="button" class="btn btn-outline-primary d-inline-flex align-items-center"
+            style="font-size: .7rem; padding: .2rem .5rem; border-radius: 4px;"
+            wire:click="openExtendModal">
             <i class="fa fa-plus me-1"></i> Add Extension
         </button>
     </div>

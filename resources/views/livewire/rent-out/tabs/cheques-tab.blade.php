@@ -6,17 +6,23 @@
             <strong>{{ $rentOut->cheques->count() }}</strong> cheque(s)
             &middot; Total: <strong class="text-primary">{{ number_format($rentOut->cheques->sum('amount'), 2) }}</strong>
         </div>
-        <div class="d-flex gap-2">
+        <div class="d-flex gap-1">
             @if(count($selectedCheques) > 0)
-                <button type="button" class="btn btn-sm btn-danger shadow-sm" wire:click="deleteSelected"
+                <button type="button" class="btn btn-outline-danger d-inline-flex align-items-center"
+                    style="font-size: .7rem; padding: .2rem .5rem; border-radius: 4px;"
+                    wire:click="deleteSelected"
                     wire:confirm="Are you sure you want to delete {{ count($selectedCheques) }} selected cheque(s)?">
                     <i class="fa fa-trash me-1"></i> Delete ({{ count($selectedCheques) }})
                 </button>
             @endif
-            <button type="button" class="btn btn-sm btn-primary shadow-sm" wire:click="openSingleChequeModal">
+            <button type="button" class="btn btn-outline-primary d-inline-flex align-items-center"
+                style="font-size: .7rem; padding: .2rem .5rem; border-radius: 4px;"
+                wire:click="openSingleChequeModal">
                 <i class="fa fa-plus me-1"></i> Single Cheque
             </button>
-            <button type="button" class="btn btn-sm btn-outline-primary shadow-sm" wire:click="openMultipleChequeModal">
+            <button type="button" class="btn btn-outline-primary d-inline-flex align-items-center"
+                style="font-size: .7rem; padding: .2rem .5rem; border-radius: 4px;"
+                wire:click="openMultipleChequeModal">
                 <i class="fa fa-copy me-1"></i> Multiple Cheques
             </button>
         </div>
