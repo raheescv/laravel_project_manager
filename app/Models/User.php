@@ -178,33 +178,33 @@ class User extends Authenticatable implements AuditableContracts
             });
     }
 
-    public function getDropDownList($request)
+    public function getDropDownList(array $request)
     {
-        $self = self::orderBy('name');
-        $self = $self->when($request['query'] ?? '', function ($query, $value) {
-            return $query->where(function ($q) use ($value): void {
-                $value = trim($value);
-                $q->where('name', 'like', "%{$value}%")
-                    ->orWhere('code', 'like', "%{$value}%")
-                    ->orWhere('mobile', 'like', "%{$value}%")
-                    ->orWhere('email', 'like', "%{$value}%");
-            });
-        });
-        $self = $self->whereHas('branches', function ($query) {
-            return $query->where('user_has_branches.branch_id', session('branch_id'));
-        });
-        $self = $self->when($request['type'] ?? '', function ($query, $value) {
-            return $query->where('type', $value);
-        });
-        $self = $self->active();
-        $self = $self->limit(10);
-        $self = $self->get(['name', 'email', 'mobile', 'id'])->toArray();
+        $self = self::orderBy('name', 'ASC')
+            ->when($request['query'] ?? '', function ($query, $value) {
+                return $query->where(function ($q) use ($value): void {
+                    $value = trim($value);
+                    $q->where('name', 'like', "%{$value}%")
+                        ->orWhere('code', 'like', "%{$value}%")
+                        ->orWhere('mobile', 'like', "%{$value}%")
+                        ->orWhere('email', 'like', "%{$value}%");
+                });
+            })
+            ->whereHas('branches', function ($query) {
+                return $query->where('user_has_branches.branch_id', session('branch_id'));
+            })
+            ->when($request['type'] ?? '', function ($query, $value) {
+                return $query->where('type', $value);
+            })
+            ->active()
+            ->limit(10)
+            ->get(['name', 'email', 'mobile', 'id'])->toArray();
         $return['items'] = $self;
 
         return $return;
     }
 
-    public static function validateMaxDiscount($max_discount_per_sale, $grossAmount, $totalDiscount)
+    public static function validateMaxDiscount(float $max_discount_per_sale, float $grossAmount, float $totalDiscount)
     {
         if (! $max_discount_per_sale) {
             return; // No limit set, allow any discount
