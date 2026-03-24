@@ -2,10 +2,9 @@
 
 namespace App\Livewire\RentOut\Tabs;
 
-use App\Actions\RentOut\Payment\StoreTransactionAction;
+use App\Helpers\Facades\RentOutTransactionHelper;
 use App\Models\RentOut;
 use App\Models\RentOutUtilityTerm;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Livewire\Attributes\On;
 use Livewire\Component;
@@ -92,25 +91,14 @@ class UtilityPaySelectedModal extends Component
                     $term->paid_date = $this->payDate;
                     $term->save();
 
-                    $response = (new StoreTransactionAction())->execute([
-                        'rent_out_id' => $this->rentOutId,
-                        'date' => $this->payDate,
-                        'credit' => $cashTerm['amount'],
-                        'debit' => 0,
-                        'account_id' => $paymentMode,
-                        'source' => 'UtilityTerm',
-                        'source_id' => $term->id,
-                        'model' => 'RentOutUtilityTerm',
-                        'model_id' => $term->id,
-                        'due_date' => $term->date?->format('Y-m-d'),
-                        'paid_date' => $this->payDate,
-                        'reason' => $term->utility?->name ?? 'Utility Payment',
-                        'group' => 'Utility Payment',
-                        'category' => $term->utility?->name ?? '',
-                        'payment_type' => 'Utility',
-                        'remark' => $cashTerm['remark'] ?? '',
-                        'created_by' => Auth::id(),
-                    ]);
+                    $response = RentOutTransactionHelper::storeUtilityPayment(
+                        $this->rentOutId,
+                        $term,
+                        $cashTerm['amount'],
+                        $paymentMode,
+                        $this->payDate,
+                        $cashTerm['remark'] ?? ''
+                    );
 
                     if (! $response['success']) {
                         throw new \Exception($response['message']);

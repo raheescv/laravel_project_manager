@@ -2,8 +2,9 @@
 
 namespace App\Actions\RentOut;
 
-use App\Enums\Property\PropertyStatus;
+use App\Enums\RentOut\RentOutBookingStatus;
 use App\Enums\RentOut\RentOutStatus;
+use App\Helpers\Facades\RentOutTransactionHelper;
 use App\Models\RentOut;
 
 class BookAction
@@ -14,25 +15,26 @@ class BookAction
             $data['created_by'] = $userId;
             $data['branch_id'] = $data['branch_id'] ?? session('branch_id');
             $data['status'] = RentOutStatus::Booked->value;
+            $data['booking_status'] = RentOutBookingStatus::Created->value;
 
             validationHelper(RentOut::$bookingRules, $data, 'RentOut Booking');
 
             $rentOut = RentOut::create($data);
 
-            // Update property status to booked
-            // $property = $rentOut->property;
-            // if ($property) {
-            // $property->update(['status' => PropertyStatus::Booked->value]);
-            // }
-
-            // Handle management fee journal entry
+            // Handle management fee via RentOutTransaction
             if (! empty($data['management_fee']) && $data['management_fee'] > 0) {
-                (new JournalEntryAction())->executeManagementFee($rentOut, $userId);
+                $response = RentOutTransactionHelper::storeManagementFee($rentOut, $userId);
+                if (! $response['success']) {
+                    throw new \Exception($response['message']);
+                }
             }
 
-            // Handle down payment
+            // Handle down payment via RentOutTransaction
             if (! empty($data['down_payment']) && $data['down_payment'] > 0) {
-                (new JournalEntryAction())->executeDownPayment($rentOut, $userId);
+                $response = RentOutTransactionHelper::storeDownPayment($rentOut, $userId);
+                if (! $response['success']) {
+                    throw new \Exception($response['message']);
+                }
             }
 
             $return['success'] = true;

@@ -2,7 +2,7 @@
 
 namespace App\Livewire\RentOut\Tabs;
 
-use App\Actions\RentOut\Payment\StoreTransactionAction;
+use App\Helpers\Facades\RentOutTransactionHelper;
 use App\Models\RentOut;
 use App\Models\RentOutPaymentTerm;
 use Illuminate\Support\Facades\DB;
@@ -95,26 +95,14 @@ class PaySelectedModal extends Component
                     $term->paid_date = $this->payDate;
                     $term->save();
 
-                    $data = [
-                        'rent_out_id' => $this->rentOutId,
-                        'date' => $this->payDate,
-                        'credit' => $cashTerm['amount'],
-                        'debit' => 0,
-                        'account_id' => $paymentMode,
-                        'source' => 'PaymentTerm',
-                        'source_id' => $term->id,
-                        'model' => 'RentOutPaymentTerm',
-                        'model_id' => $term->id,
-                        'due_date' => $term->due_date?->format('Y-m-d'),
-                        'paid_date' => $this->payDate,
-                        'reason' => $term->label ?? 'Rent Payment',
-                        'group' => 'Rent Payment',
-                        'category' => $term->label ?? '',
-                        'payment_type' => 'Rent',
-                        'remark' => $cashTerm['remark'] ?? '',
-                        'created_by' => auth()->id(),
-                    ];
-                    $response = (new StoreTransactionAction())->execute($data);
+                    $response = RentOutTransactionHelper::storeRentPayment(
+                        $this->rentOutId,
+                        $term,
+                        $cashTerm['amount'],
+                        $paymentMode,
+                        $this->payDate,
+                        $cashTerm['remark'] ?? ''
+                    );
 
                     if (! $response['success']) {
                         throw new \Exception($response['message']);

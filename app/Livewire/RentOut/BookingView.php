@@ -9,6 +9,7 @@ use App\Enums\RentOut\RentOutStatus;
 use App\Livewire\RentOut\Concerns\HasPaymentTermManagement;
 use App\Models\RentOut;
 use App\Support\RentOutConfig;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Livewire\Attributes\On;
 use Livewire\Component;
@@ -27,7 +28,7 @@ class BookingView extends Component
     public $management_fee_remarks;
 
     // Overlap data for confirmation modal
-    public $overlappingRentouts = [];
+    public $overlappingRentOuts = [];
 
     public $showOverlapModal = false;
 
@@ -119,7 +120,7 @@ class BookingView extends Component
             );
 
             if ($overlaps->isNotEmpty()) {
-                $this->overlappingRentouts = $overlaps->map(fn ($r) => [
+                $this->overlappingRentOuts = $overlaps->map(fn ($r) => [
                     'id' => $r->id,
                     'customer' => $r->customer?->name ?? 'N/A',
                     'start_date' => $r->start_date?->format('d M Y'),
@@ -142,9 +143,9 @@ class BookingView extends Component
         try {
             DB::beginTransaction();
             $this->showOverlapModal = false;
-            $this->overlappingRentouts = [];
+            $this->overlappingRentOuts = [];
 
-            $response = (new ConfirmBookingAction())->execute($this->rentOut->id);
+            $response = (new ConfirmBookingAction())->execute($this->rentOut->id, Auth::id());
             if (! $response['success']) {
                 throw new \Exception($response['message']);
             }
@@ -162,7 +163,7 @@ class BookingView extends Component
     public function closeOverlapModal()
     {
         $this->showOverlapModal = false;
-        $this->overlappingRentouts = [];
+        $this->overlappingRentOuts = [];
     }
 
     public function render()

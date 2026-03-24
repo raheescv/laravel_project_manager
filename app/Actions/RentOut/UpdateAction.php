@@ -2,6 +2,7 @@
 
 namespace App\Actions\RentOut;
 
+use App\Helpers\Facades\RentOutTransactionHelper;
 use App\Models\RentOut;
 
 class UpdateAction
@@ -17,10 +18,15 @@ class UpdateAction
             validationHelper(RentOut::rules($id), $data);
             $model->update($data);
 
-            // Handle down payment journal if changed
+            // Handle down payment via RentOutTransaction
             if (! empty($data['down_payment']) && $data['down_payment'] > 0) {
                 $model->refresh();
-                (new JournalEntryAction())->executeDownPayment($model, $userId ?? $model->created_by);
+                $createdBy = $userId ?? $model->created_by;
+
+                $response = RentOutTransactionHelper::storeDownPayment($model, $createdBy);
+                if (! $response['success']) {
+                    throw new \Exception($response['message']);
+                }
             }
 
             $return['success'] = true;

@@ -6,6 +6,7 @@ use App\Actions\Journal\CreateAction as JournalCreateAction;
 use App\Models\Journal;
 use App\Models\RentOut;
 use App\Models\RentOutTransaction;
+use Illuminate\Support\Facades\Auth;
 
 class StoreTransactionAction
 {
@@ -78,7 +79,7 @@ class StoreTransactionAction
                 'category' => $payment->category,
                 'payment_type' => $payment->payment_type,
                 'remark' => 'Reversal: '.($payment->remark ?? ''),
-                'created_by' => auth()->id(),
+                'created_by' => Auth::id(),
             ]);
         } catch (\Throwable $th) {
             return ['success' => false, 'message' => $th->getMessage()];

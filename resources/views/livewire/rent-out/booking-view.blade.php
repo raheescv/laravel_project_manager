@@ -448,7 +448,7 @@
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    @foreach ($overlappingRentouts as $overlap)
+                                    @foreach ($overlappingRentOuts as $overlap)
                                         <tr>
                                             <td class="py-1 px-2">{{ $overlap['id'] }}</td>
                                             <td class="py-1 px-2">{{ $overlap['customer'] }}</td>
