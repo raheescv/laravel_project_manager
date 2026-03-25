@@ -7,6 +7,7 @@ use App\Http\Controllers\FamilyTreeController;
 use App\Http\Controllers\HealthController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\ImageGenComfyController;
+use App\Http\Controllers\LocalPurchaseOrderController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\PhysicalVisitorController;
 use App\Http\Controllers\ProfileController;
@@ -17,7 +18,7 @@ use App\Http\Controllers\UserController;
 use App\Http\Controllers\VisitorAnalyticsController;
 use Illuminate\Support\Facades\Route;
 
-require __DIR__.'/auth.php';
+require __DIR__ . '/auth.php';
 
 Route::get('/home', [PublicScanController::class, 'home'])->name('public_home');
 Route::get('/scan', [PublicScanController::class, 'index'])->name('scan.index');
@@ -72,6 +73,13 @@ Route::middleware('auth')->group(function (): void {
         Route::get('{purchaseRequest}/decision', 'decision')->name('decision');
         Route::get('{purchaseRequest}', 'show')->name('view');
         Route::get('{purchaseRequest}/edit', 'edit')->name('edit');
+    });
+
+    // LPO
+    Route::name('lpo::')->prefix('local-purchase-orders')->controller(LocalPurchaseOrderController::class)->group(function (): void {
+        Route::get('', 'index')->name('index');
+        Route::get('create', 'create')->name('create');
+        Route::get('{localPurchaseOrder}', 'show')->name('view');
     });
 });
 

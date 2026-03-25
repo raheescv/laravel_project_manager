@@ -45,7 +45,7 @@
 
             <div class="py-5 card-body">
 
-                <div class="table-responsive">
+                <div>
                     <table class="table align-middle table-bordered">
                         <thead class="table-light">
                             <tr>
@@ -63,7 +63,8 @@
                                             this.tom = new TomSelect(this.$refs.select, {
                                                 create: false,
                                                 sortField: 'text',
-                                                documentParent: 'body',
+                                                documentParent: document.body,
+                                                dropdownParent: document.getElementById('app'), // Ensure dropdown is not cut off
                                                 hideSelected: true,
                                                 items: row.product_id ? [row.product_id] : [],
                                                 onChange: (value) => {
@@ -76,6 +77,7 @@
                                                 },
                                                 options: this.getProductOptions(),
                                             });
+                                    
                                         }
                                     }">
                                         <select x-model="row.product_id" x-bind:id="'product_' + index" x-ref="select"
@@ -164,7 +166,9 @@
                     },
 
                     init() {
-                        this.items = this.entangled;
+                        if (this.entangled.length) {
+                            this.items = this.entangled;
+                        }
                     },
 
                 }

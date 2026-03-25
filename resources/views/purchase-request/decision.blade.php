@@ -18,7 +18,7 @@
     </div>
     <div class="content__boxed">
         <div class="content__wrap">
-            @livewire('purchase-request.decide', ['purchase_request_id' => $purchaseRequest->id])
+            @livewire('purchase-request.view', ['purchase_request_id' => $purchaseRequest->id, 'is_approvable' => true])
         </div>
     </div>
 </x-app-layout>

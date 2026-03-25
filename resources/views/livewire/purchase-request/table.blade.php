@@ -118,6 +118,10 @@
                                 label="Approved/Rejected On" />
                         </th>
                         <th>
+                            <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="created_at"
+                                label="Purchase Request Date" />
+                        </th>
+                        <th>
                             Actions
                         </th>
                     </tr>
@@ -157,6 +161,12 @@
                                         <span>{{ systemDateTime($item->decision_at) }}</span>
                                     </div>
                                 @endif
+                            </td>
+                            <td class="text-nowrap">
+                                <div class="gap-2 d-flex align-items-center">
+                                    <i class="demo-psi-calendar-4 fs-5 text-primary"></i>
+                                    <span>{{ systemDateTime($item->created_at) }}</span>
+                                </div>
                             </td>
                             <td class="text-nowrap">
                                 <div class="gap-2 d-flex align-items-center">

@@ -926,6 +926,30 @@
                         </li>
                     @endif
 
+                    @if (auth()->user()->can('local purchase order.view any') || auth()->user()->can('local purchase order.view own'))
+                        <li class="nav-item has-sub">
+                            <a href="#"
+                                class="mininav-toggle nav-link {{ request()->routeIs('lpo::*') ? 'active' : '' }}"><i
+                                    class="fa fa-user fs-5 me-2"></i>
+                                <span class="nav-label mininav-content ms-1 collapse show" style="">Local
+                                    Purchase Orders</span>
+                            </a>
+                            <ul class="mininav-content nav collapse">
+                                <li data-popper-arrow class="arrow"></li>
+                                <li class="nav-item">
+                                    <a href="{{ route('lpo::index') }}"
+                                        class="nav-link {{ request()->is(['local-purchase-orders']) ? 'active' : '' }}">List</a>
+                                </li>
+                                @can('local purchase order.create')
+                                    <li class="nav-item">
+                                        <a href="{{ route('lpo::create') }}"
+                                            class="nav-link {{ request()->is(['local-purchase-orders/create']) ? 'active' : '' }}">Create</a>
+                                    </li>
+                                @endcan
+                            </ul>
+                        </li>
+                    @endif
+
                     @if (auth()->user()->can('user.view') || auth()->user()->can('role.view'))
                         <li class="nav-item has-sub">
                             <a href="#"

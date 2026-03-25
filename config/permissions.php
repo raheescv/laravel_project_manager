@@ -226,4 +226,13 @@ return [
         'delete-own',
         'decide',
     ],
+
+    // Local Purchase Order Module
+    'local purchase order' => [
+        'create',
+        'view any',
+        'view own',
+        'delete-own',
+        'decide',
+    ],
 ];
