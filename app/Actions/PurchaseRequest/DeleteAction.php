@@ -15,10 +15,29 @@ class DeleteAction
 
             $return = [];
             DB::transaction(function () use ($ids, &$return) {
-                PurchaseRequest::whereIn('id', $ids)->where('status', PurchaseRequestStatus::PENDING)->delete();
+                $requests = PurchaseRequest::whereIn('id', $ids)->get();
+
+                $deletable = $requests->filter(
+                    fn($r) => $r->status === PurchaseRequestStatus::PENDING
+                );
+
+                $nonDeletable = $requests->filter(
+                    fn($r) => $r->status !== PurchaseRequestStatus::PENDING
+                );
+                PurchaseRequest::whereIn('id', $deletable->pluck('id'))->delete();
 
                 $return['success'] = true;
-                $return['message'] = __('Successfully deleted purchase requests');
+                if ($nonDeletable->isEmpty()) {
+                    $return['message'] = 'All selected records deleted successfully';
+                } else {
+                    $return['message'] =
+                        'Some records could not be deleted because they are not in pending status';
+
+                    $return['data'] = [
+                        'deleted_ids' => $deletable->pluck('id'),
+                        'skipped_ids' => $nonDeletable->pluck('id'),
+                    ];
+                }
             });
         } catch (\Throwable $e) {
             $return['success'] = false;

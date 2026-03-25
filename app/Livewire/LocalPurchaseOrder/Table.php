@@ -79,10 +79,11 @@ class Table extends Component
 
     public function delete()
     {
-        if (auth()->user()->cannot('local purchase request.delete-any')) {
+        if (auth()->user()->cannot('local purchase order.delete-own')) {
             $this->dispatch('error', [
                 'message' => 'You do not have permission to delete purchase requests.',
             ]);
+            return;
         }
 
         $response = (new DeleteAction())->execute($this->selected);
