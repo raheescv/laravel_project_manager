@@ -11,8 +11,8 @@
             </div>
         @endif
 
-        <div class="mb-4 card shadow-sm">
-            <div class="card-header bg-white">
+        <div class="mb-4 shadow-sm card">
+            <div class="bg-white card-header">
                 <h5 class="mb-0 fw-bold">Order Details</h5>
             </div>
 
@@ -38,10 +38,10 @@
             </div>
         </div>
 
-        <div class="mb-4 card shadow-sm" x-data="purchaseOrderProducts(@entangle('items'))" x-init="init()"
+        <div class="mb-4 shadow-sm card" x-data="purchaseOrderProducts(@entangle('items'))" x-init="init()"
             @merge-products.window="mergeProducts($event.detail)">
 
-            <div class="card-header bg-white d-flex justify-content-between">
+            <div class="bg-white card-header d-flex justify-content-between">
                 <h5 class="mb-0 fw-bold">Products</h5>
 
                 <button type="button" class="btn btn-sm btn-primary" @click="addRow()">
@@ -51,7 +51,7 @@
 
             <div class="card-body">
 
-                <table class="table table-bordered align-middle">
+                <table class="table align-middle table-bordered">
                     <thead>
                         <tr>
                             <th width="50%">Product</th>
@@ -74,7 +74,7 @@
                                 </td>
 
                                 <td>
-                                    <input type="number" class="form-control" x-model="row.rate">
+                                    <input type="number" class="form-control" x-model="row.rate" step="0.01">
                                 </td>
 
                                 <td class="text-center">
@@ -97,11 +97,11 @@
             </div>
         </div>
 
-        <div class="card shadow-sm">
+        <div class="shadow-sm card">
             <div class="card-body d-flex justify-content-between">
                 <a href="#" class="btn btn-light">Back</a>
 
-                <button class="btn btn-success px-4">
+                <button class="px-4 btn btn-success">
                     Save
                 </button>
             </div>
@@ -124,7 +124,7 @@
 
                         <div class="col-md-4 border-end">
 
-                            <h6 class="fw-bold mb-3">Purchase Requests</h6>
+                            <h6 class="mb-3 fw-bold">Purchase Requests</h6>
 
                             <div class="list-group">
 
@@ -146,7 +146,7 @@
                         <div class="col-md-8">
 
                             <template x-if="!selectedPr">
-                                <div class="text-center text-muted py-5">
+                                <div class="py-5 text-center text-muted">
                                     Select a Purchase Request to view products
                                 </div>
                             </template>
@@ -154,7 +154,7 @@
                             <template x-if="selectedPr">
                                 <div>
 
-                                    <h6 class="fw-bold mb-3">
+                                    <h6 class="mb-3 fw-bold">
                                         Products in PR #<span x-text="selectedPr.id"></span>
                                     </h6>
 

@@ -2,7 +2,7 @@
 
 namespace App\Policies;
 
-use App\Enums\PurchaseOrder\PurchaseOrderStatus;
+use App\Enums\LocalPurchaseOrder\LocalPurchaseOrderStatus;
 use App\Models\LocalPurchaseOrder;
 use App\Models\User;
 
@@ -48,7 +48,7 @@ class LocalPurchaseOrderPolicy
     public function delete(User $user, LocalPurchaseOrder $order): bool
     {
         return $user->can('local purchase order.delete-own') &&
-            $order->status === PurchaseOrderStatus::PENDING;
+            $order->status === LocalPurchaseOrderStatus::PENDING;
     }
 
     /**
@@ -70,9 +70,9 @@ class LocalPurchaseOrderPolicy
     /**
      * Cancel LPO
      */
-    public function cancel(User $user, LocalPurchaseOrder $order): bool
+    public function decide(User $user, LocalPurchaseOrder $order): bool
     {
-        return $user->can('local purchase order.cancel') &&
-            $order->status === PurchaseOrderStatus::PENDING;
+        return $user->can('local purchase order.decide') &&
+            $order->status === LocalPurchaseOrderStatus::PENDING;
     }
 }

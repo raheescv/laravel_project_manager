@@ -80,6 +80,7 @@ Route::middleware('auth')->group(function (): void {
         Route::get('', 'index')->name('index');
         Route::get('create', 'create')->name('create');
         Route::get('{localPurchaseOrder}', 'show')->name('view');
+        Route::get('{localPurchaseOrder}/decision', 'decision')->name('decision');
     });
 });
 

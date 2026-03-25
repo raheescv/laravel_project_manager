@@ -30,7 +30,7 @@ class LocalPurchaseOrder extends Model
     ];
 
     protected $casts = [
-        'status' => PurchaseOrderStatus::class,
+        'status' => LocalPurchaseOrderStatus::class,
         'decision_at' => 'datetime',
     ];
 
@@ -39,6 +39,17 @@ class LocalPurchaseOrder extends Model
         static::creating(function ($model) {
             $model->created_by = auth()->id();
         });
+    }
+
+    public function branch(): BelongsTo
+    {
+        return $this->belongsTo(Branch::class);
+    }
+
+
+    public function tenant(): BelongsTo
+    {
+        return $this->belongsTo(Tenant::class, 'tenant_id');
     }
 
     public function vendor(): BelongsTo

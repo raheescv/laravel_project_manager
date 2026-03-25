@@ -3,7 +3,9 @@
 namespace App\Livewire\LocalPurchaseOrder;
 
 use App\Actions\LocalPurchaseOrder\DeleteAction;
+use App\Models\Account;
 use App\Models\LocalPurchaseOrder;
+use App\Models\Product;
 use Livewire\Attributes\Computed;
 use Livewire\Component;
 use Livewire\WithPagination;
@@ -13,6 +15,7 @@ class Table extends Component
     use WithPagination;
 
     public ?string $search = null;
+    public ?int $branch_id = null;
     public ?int $vendor_id = null;
     public ?int $product_id = null;
 
@@ -50,6 +53,18 @@ class Table extends Component
         }
 
         return $query->orderBy($this->sortField, $this->sortDirection)->paginate($this->limit);
+    }
+
+    #[Computed(true)]
+    public function vendors()
+    {
+        return Account::select('id', 'name')->vendor()->latest()->get()->pluck('name', 'id');
+    }
+
+    #[Computed(true)]
+    public function products()
+    {
+        return Product::select('id', 'name')->orderBy('name')->get()->pluck('name', 'id');
     }
 
     public function sortBy($field)

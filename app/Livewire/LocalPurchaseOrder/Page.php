@@ -36,23 +36,6 @@ class Page extends Component
             ]);
     }
 
-    public function getProductsFromRequests($ids)
-    {
-        return PurchaseRequest::with('products')
-            ->whereIn('id', $ids)
-            ->get()
-            ->flatMap(function ($pr) {
-                return $pr->products->map(function ($p) {
-                    return [
-                        'product_id' => $p->product_id,
-                        'quantity' => $p->quantity,
-                        'rate' => 0,
-                    ];
-                });
-            })
-            ->values();
-    }
-
     public function getApprovedPurchaseRequestsWithProducts()
     {
         return PurchaseRequest::with('products.product')
