@@ -3,6 +3,7 @@
 namespace App\Livewire\Dashboard;
 
 use App\Services\FlatTradeService;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use Livewire\Component;
@@ -73,7 +74,7 @@ class MarketInfo extends Component
         } catch (\Exception $e) {
             Log::error('Market data loading failed', [
                 'error' => $e->getMessage(),
-                'user_id' => auth()->id(),
+                'user_id' => Auth::id(),
                 'exchange' => $this->exchange,
             ]);
 

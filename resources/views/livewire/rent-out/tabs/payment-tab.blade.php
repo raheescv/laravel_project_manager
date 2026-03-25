@@ -6,14 +6,18 @@
             <strong>{{ $payments->count() }}</strong> payment(s) received
             &middot; Total: <strong class="text-success">{{ number_format($payments->sum('credit'), 2) }}</strong>
         </div>
-        <div class="d-flex gap-2">
+        <div class="d-flex gap-1">
             @if (count($selectedIds) > 0)
-                <button type="button" class="btn btn-sm btn-outline-danger" wire:click="deleteSelected"
+                <button type="button" class="btn btn-outline-danger d-inline-flex align-items-center"
+                    style="font-size: .7rem; padding: .2rem .5rem; border-radius: 4px;"
+                    wire:click="deleteSelected"
                     wire:confirm="Are you sure you want to delete {{ count($selectedIds) }} selected record(s)?">
                     <i class="fa fa-trash me-1"></i> Delete ({{ count($selectedIds) }})
                 </button>
             @endif
-            <button type="button" class="btn btn-sm btn-warning" wire:click="openPayoutModal">
+            <button type="button" class="btn btn-outline-warning d-inline-flex align-items-center"
+                style="font-size: .7rem; padding: .2rem .5rem; border-radius: 4px;"
+                wire:click="openPayoutModal">
                 <i class="fa fa-share me-1"></i> Payout
             </button>
         </div>

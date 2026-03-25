@@ -12,21 +12,27 @@
     {{-- Action Buttons --}}
     <div class="d-flex flex-wrap gap-1 mb-2">
         @if ($rentOut->utilityTerms->count() > 0)
-            <button type="button" class="btn btn-sm btn-outline-danger" wire:click="deleteSelected"
+            <button type="button" class="btn btn-outline-danger d-inline-flex align-items-center"
+                style="font-size: .7rem; padding: .2rem .5rem; border-radius: 4px;"
+                wire:click="deleteSelected"
                 wire:confirm="Are you sure you want to delete the selected ({{ count($selectedTerms) }}) rows?">
                 <i class="fa fa-trash me-1"></i> Delete Selected
                 @if (count($selectedTerms) > 0)
-                    <span class="badge bg-danger ms-1">{{ count($selectedTerms) }}</span>
+                    <span class="badge bg-danger ms-1" style="font-size: .6rem;">{{ count($selectedTerms) }}</span>
                 @endif
             </button>
-            <button type="button" class="btn btn-sm btn-outline-success" wire:click="paySelected">
+            <button type="button" class="btn btn-outline-success d-inline-flex align-items-center"
+                style="font-size: .7rem; padding: .2rem .5rem; border-radius: 4px;"
+                wire:click="paySelected">
                 <i class="fa fa-money me-1"></i> Pay Selected
                 @if (count($selectedTerms) > 0)
-                    <span class="badge bg-success ms-1">{{ count($selectedTerms) }}</span>
+                    <span class="badge bg-success ms-1" style="font-size: .6rem;">{{ count($selectedTerms) }}</span>
                 @endif
             </button>
         @endif
-        <button type="button" class="btn btn-sm btn-primary shadow-sm ms-auto" wire:click="openUtilityTermModal">
+        <button type="button" class="btn btn-outline-primary d-inline-flex align-items-center ms-auto"
+            style="font-size: .7rem; padding: .2rem .5rem; border-radius: 4px;"
+            wire:click="openUtilityTermModal">
             <i class="fa fa-plus me-1"></i> Add Term
         </button>
     </div>

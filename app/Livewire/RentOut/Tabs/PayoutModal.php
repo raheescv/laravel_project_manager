@@ -2,7 +2,7 @@
 
 namespace App\Livewire\RentOut\Tabs;
 
-use App\Actions\RentOut\Payment\StoreTransactionAction;
+use App\Helpers\Facades\RentOutTransactionHelper;
 use App\Models\RentOutTransaction;
 use Illuminate\Support\Facades\DB;
 use Livewire\Attributes\On;
@@ -70,10 +70,8 @@ class PayoutModal extends Component
         try {
             DB::beginTransaction();
 
-            $action = new StoreTransactionAction();
-
             if ($this->editingId) {
-                $response = $action->update($this->editingId, [
+                $response = RentOutTransactionHelper::update($this->editingId, [
                     'date' => $this->form['date'],
                     'amount' => $this->form['amount'],
                     'account_id' => $this->form['account_id'],
@@ -92,23 +90,13 @@ class PayoutModal extends Component
                 return;
             }
 
-            $response = $action->execute([
-                'rent_out_id' => $this->rentOutId,
-                'date' => $this->form['date'],
-                'credit' => 0,
-                'debit' => $this->form['amount'],
-                'account_id' => $this->form['account_id'],
-                'source' => 'Payout',
-                'model' => 'RentOut',
-                'model_id' => $this->rentOutId,
-                'paid_date' => $this->form['date'],
-                'reason' => $this->form['remark'] ?: 'Payout',
-                'group' => 'Payout',
-                'category' => 'Payout',
-                'payment_type' => 'Payout',
-                'remark' => $this->form['remark'] ?? '',
-                'created_by' => auth()->id(),
-            ]);
+            $response = RentOutTransactionHelper::storePayout(
+                $this->rentOutId,
+                $this->form['date'],
+                $this->form['amount'],
+                $this->form['account_id'],
+                $this->form['remark'] ?? ''
+            );
 
             if (! $response['success']) {
                 throw new \Exception($response['message']);

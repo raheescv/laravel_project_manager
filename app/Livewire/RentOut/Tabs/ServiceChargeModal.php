@@ -2,10 +2,11 @@
 
 namespace App\Livewire\RentOut\Tabs;
 
-use App\Actions\RentOut\Payment\StoreTransactionAction;
+use App\Helpers\Facades\RentOutTransactionHelper;
 use App\Models\RentOut;
 use App\Models\RentOutService;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Livewire\Attributes\On;
 use Livewire\Component;
@@ -108,6 +109,7 @@ class ServiceChargeModal extends Component
             $rentOut = RentOut::findOrFail($this->rentOutId);
 
             // Store as a RentOutService record
+            /** @var RentOutService $service */
             $service = RentOutService::create([
                 'tenant_id' => $rentOut->tenant_id,
                 'branch_id' => $rentOut->branch_id,
@@ -115,24 +117,17 @@ class ServiceChargeModal extends Component
                 'name' => 'Service Charge',
                 'amount' => $this->amount,
                 'description' => $this->description,
-                'created_by' => auth()->id(),
+                'created_by' => Auth::id(),
             ]);
 
             // Store as RentOutTransaction (debit entry — charge to customer, no payment yet)
-            $response = (new StoreTransactionAction())->charge($this->rentOutId, [
-                'date' => $this->date,
-                'amount' => $this->amount,
-                'source' => 'ServiceCharge',
-                'model' => 'RentOutService',
-                'model_id' => $service->id,
-                'paid_date' => $this->date,
-                'reason' => 'Service Charge',
-                'group' => 'Service Charge',
-                'category' => 'Service Charge',
-                'payment_type' => 'Services',
-                'remark' => $this->remark ?: $this->description,
-                'created_by' => auth()->id(),
-            ]);
+            $response = RentOutTransactionHelper::storeServiceCharge(
+                $this->rentOutId,
+                $this->date,
+                $this->amount,
+                $service->id,
+                $this->remark ?: $this->description
+            );
 
             if (! $response['success']) {
                 throw new \Exception($response['message']);

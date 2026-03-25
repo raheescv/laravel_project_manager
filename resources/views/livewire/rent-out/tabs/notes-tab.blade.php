@@ -10,8 +10,10 @@
             </div>
         </div>
         <div class="col-auto">
-            <button type="button" class="btn btn-primary btn-sm d-flex align-items-center shadow-sm" wire:click="addNote">
-                <i class="fa fa-plus me-2"></i> Add Note
+            <button type="button" class="btn btn-outline-primary d-inline-flex align-items-center"
+                style="font-size: .7rem; padding: .2rem .5rem; border-radius: 4px;"
+                wire:click="addNote">
+                <i class="fa fa-plus me-1"></i> Add Note
             </button>
         </div>
     </div>

@@ -12,15 +12,19 @@
             {{ html()->select('document_type_id', [])->value('')->class('select-document_type_id')->id('docTabFilterDocumentType')->placeholder('All Document Types') }}
         </div>
 
-        <button type="button" class="btn btn-sm btn-outline-danger" wire:click="deleteSelected"
+        <button type="button" class="btn btn-outline-danger d-inline-flex align-items-center"
+            style="font-size: .7rem; padding: .2rem .5rem; border-radius: 4px;"
+            wire:click="deleteSelected"
             wire:confirm="Are you sure you want to delete the selected ({{ count($selectedDocs) }}) documents?">
             <i class="fa fa-trash me-1"></i> Delete Selected
             @if (count($selectedDocs) > 0)
-                <span class="badge bg-danger ms-1">{{ count($selectedDocs) }}</span>
+                <span class="badge bg-danger ms-1" style="font-size: .6rem;">{{ count($selectedDocs) }}</span>
             @endif
         </button>
 
-        <button type="button" class="btn btn-sm btn-primary shadow-sm ms-auto" wire:click="openDocumentModal">
+        <button type="button" class="btn btn-outline-primary d-inline-flex align-items-center ms-auto"
+            style="font-size: .7rem; padding: .2rem .5rem; border-radius: 4px;"
+            wire:click="openDocumentModal">
             <i class="fa fa-upload me-1"></i> Upload Document
         </button>
     </div>

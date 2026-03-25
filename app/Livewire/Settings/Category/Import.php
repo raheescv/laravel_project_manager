@@ -3,6 +3,7 @@
 namespace App\Livewire\Settings\Category;
 
 use App\Jobs\Category\ImportCategoryJob;
+use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
 use Livewire\WithFileUploads;
 
@@ -27,7 +28,7 @@ class Import extends Component
             'file' => 'required|file|mimes:csv,xlsx|max:10240',
         ]);
         $filePath = $this->file->store('imports', 'public');
-        ImportCategoryJob::dispatch(auth()->id(), $filePath);
+        ImportCategoryJob::dispatch(Auth::id(), $filePath);
     }
 
     public function render()

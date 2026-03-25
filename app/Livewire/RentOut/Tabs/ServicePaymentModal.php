@@ -2,7 +2,7 @@
 
 namespace App\Livewire\RentOut\Tabs;
 
-use App\Actions\RentOut\Payment\StoreTransactionAction;
+use App\Helpers\Facades\RentOutTransactionHelper;
 use App\Models\Account;
 use App\Models\RentOutTransaction;
 use Illuminate\Support\Facades\DB;
@@ -52,7 +52,7 @@ class ServicePaymentModal extends Component
         try {
             DB::beginTransaction();
 
-            $response = (new StoreTransactionAction())->charge($this->rentOutId, $this->servicePaymentData());
+            $response = RentOutTransactionHelper::storeServicePayLater($this->rentOutId, $this->form);
 
             if (! $response['success']) {
                 throw new \Exception($response['message']);
@@ -86,7 +86,7 @@ class ServicePaymentModal extends Component
         try {
             DB::beginTransaction();
 
-            $response = (new StoreTransactionAction())->chargeAndPay($this->rentOutId, $this->servicePaymentData());
+            $response = RentOutTransactionHelper::storeServicePayNow($this->rentOutId, $this->form);
 
             if (! $response['success']) {
                 throw new \Exception($response['message']);
@@ -100,24 +100,6 @@ class ServicePaymentModal extends Component
             DB::rollback();
             $this->dispatch('error', message: $e->getMessage());
         }
-    }
-
-    protected function servicePaymentData(): array
-    {
-        return [
-            'date' => $this->form['date'],
-            'amount' => $this->form['amount'],
-            'account_id' => $this->form['account_id'] ?? '',
-            'source' => 'Service',
-            'model' => 'RentOutService',
-            'paid_date' => $this->form['date'],
-            'reason' => $this->form['category'] ?: 'Service Payment',
-            'group' => 'Service',
-            'category' => $this->form['category'],
-            'payment_type' => 'Services',
-            'remark' => $this->form['remark'] ?? '',
-            'created_by' => auth()->id(),
-        ];
     }
 
     public function render()

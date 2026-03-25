@@ -6,18 +6,26 @@
         </div>
         <div class="d-flex gap-1 flex-wrap">
             @if(count($selectedPayments) > 0)
-                <button type="button" class="btn btn-sm btn-danger" wire:click="deleteSelected"
+                <button type="button" class="btn btn-outline-danger d-inline-flex align-items-center"
+                    style="font-size: .7rem; padding: .2rem .5rem; border-radius: 4px;"
+                    wire:click="deleteSelected"
                     wire:confirm="Are you sure you want to delete {{ count($selectedPayments) }} selected payment(s)?">
                     <i class="fa fa-trash me-1"></i> Delete ({{ count($selectedPayments) }})
                 </button>
             @endif
-            <button type="button" class="btn btn-sm btn-primary" wire:click="openServiceModal">
+            <button type="button" class="btn btn-outline-primary d-inline-flex align-items-center"
+                style="font-size: .7rem; padding: .2rem .5rem; border-radius: 4px;"
+                wire:click="openServiceModal">
                 <i class="fa fa-plus me-1"></i> Add Service
             </button>
-            <button type="button" class="btn btn-sm btn-info text-white" wire:click="openServiceChargeModal">
+            <button type="button" class="btn btn-outline-info d-inline-flex align-items-center"
+                style="font-size: .7rem; padding: .2rem .5rem; border-radius: 4px;"
+                wire:click="openServiceChargeModal">
                 <i class="fa fa-calculator me-1"></i> Service Charge
             </button>
-            <button type="button" class="btn btn-sm btn-success" wire:click="openServicePaymentModal">
+            <button type="button" class="btn btn-outline-success d-inline-flex align-items-center"
+                style="font-size: .7rem; padding: .2rem .5rem; border-radius: 4px;"
+                wire:click="openServicePaymentModal">
                 <i class="fa fa-money me-1"></i> Pay Existing
             </button>
         </div>

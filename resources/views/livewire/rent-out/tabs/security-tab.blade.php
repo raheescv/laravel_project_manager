@@ -6,7 +6,9 @@
             <strong>{{ $rentOut->securities->count() }}</strong> security deposit(s)
             &middot; Total: <strong class="text-primary">{{ number_format($rentOut->securities->sum('amount'), 2) }}</strong>
         </div>
-        <button type="button" class="btn btn-sm btn-primary shadow-sm" wire:click="openSecurityModal">
+        <button type="button" class="btn btn-outline-primary d-inline-flex align-items-center"
+            style="font-size: .7rem; padding: .2rem .5rem; border-radius: 4px;"
+            wire:click="openSecurityModal">
             <i class="fa fa-plus me-1"></i> Add Security
         </button>
     </div>

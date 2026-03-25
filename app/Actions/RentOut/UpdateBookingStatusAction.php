@@ -2,6 +2,7 @@
 
 namespace App\Actions\RentOut;
 
+use App\Helpers\Facades\RentOutTransactionHelper;
 use App\Models\RentOut;
 use Exception;
 use Illuminate\Support\Facades\Auth;
@@ -11,6 +12,7 @@ class UpdateBookingStatusAction
     public function execute($id, $status)
     {
         try {
+            /** @var RentOut|null $model */
             $model = RentOut::find($id);
             if (! $model) {
                 throw new Exception('RentOut not found.');
@@ -20,22 +22,21 @@ class UpdateBookingStatusAction
             $date = now();
             $userId = Auth::id();
             $data = ['booking_status' => $status];
-
             switch ($status) {
-                case 'submitted':
-                    if (in_array($oldStatus, ['financial approved', 'approved', 'completed'])) {
-                        throw new Exception('Changing back to a previous status is not allowed.');
-                    }
-                    $data['submitted_at'] = $date;
-                    $data['submitted_by'] = $userId;
-                    break;
-
                 case 'financial approved':
                     if (in_array($oldStatus, ['approved', 'completed'])) {
                         throw new Exception('Changing back to a previous status is not allowed.');
                     }
                     $data['financial_approved_at'] = $date;
                     $data['financial_approved_by'] = $userId;
+
+                    // Handle management fee via RentOutTransaction
+                    if ($model['management_fee'] > 0) {
+                        $response = RentOutTransactionHelper::storeManagementFee($model, $userId);
+                        if (! $response['success']) {
+                            throw new Exception($response['message'], 1);
+                        }
+                    }
                     break;
 
                 case 'approved':
@@ -53,7 +54,6 @@ class UpdateBookingStatusAction
             }
 
             $model->update($data);
-
             return [
                 'success' => true,
                 'message' => 'Successfully updated status.',

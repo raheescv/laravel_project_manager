@@ -6,6 +6,7 @@ return [
     App\Providers\HorizonServiceProvider::class,
     App\Providers\MoqSolutionsProvider::class,
     App\Providers\OllamaProvider::class,
+    App\Providers\RentOutTransactionProvider::class,
     App\Providers\OpenAIServiceProvider::class,
     App\Providers\SaleProvider::class,
     App\Providers\TelegramServiceProvider::class,

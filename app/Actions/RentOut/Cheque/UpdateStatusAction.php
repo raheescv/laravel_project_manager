@@ -2,7 +2,7 @@
 
 namespace App\Actions\RentOut\Cheque;
 
-use App\Actions\RentOut\Payment\StoreTransactionAction;
+use App\Helpers\Facades\RentOutTransactionHelper;
 use App\Models\RentOutCheque;
 use App\Models\RentOutPaymentTerm;
 
@@ -126,30 +126,13 @@ class UpdateStatusAction
             $paymentMethodId = array_key_first($paymentMethods) ?? 1;
         }
 
-        // Create payment record
-        $data = [
-            'rent_out_id' => $cheque->rent_out_id,
-            'date' => $journalDate ?? $cheque->date->format('Y-m-d'),
-            'credit' => $payAmount,
-            'debit' => 0,
-            'account_id' => $paymentMethodId,
-            'source' => 'PaymentTerm',
-            'source_id' => $term->id,
-            'model' => 'RentOutCheque',
-            'model_id' => $cheque->id,
-            'due_date' => $term->due_date?->format('Y-m-d'),
-            'paid_date' => $journalDate ?? $cheque->date->format('Y-m-d'),
-            'cheque_date' => $cheque->date->format('Y-m-d'),
-            'cheque_no' => $cheque->cheque_no,
-            'bank_name' => $cheque->bank_name,
-            'reason' => 'Cheque #'.($cheque->cheque_no ?? '').' cleared',
-            'group' => 'Rent Payment',
-            'category' => $term->label ?? '',
-            'payment_type' => 'Cheque',
-            'remark' => $remark ?: ('Cheque #'.($cheque->cheque_no ?? '').' cleared'),
-            'created_by' => auth()->id(),
-        ];
-
-        return (new StoreTransactionAction())->execute($data);
+        return RentOutTransactionHelper::storeChequePayment(
+            $cheque,
+            $term,
+            $payAmount,
+            $paymentMethodId,
+            $journalDate,
+            $remark ?? ''
+        );
     }
 }
