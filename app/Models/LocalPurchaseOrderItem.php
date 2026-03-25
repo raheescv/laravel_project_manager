@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 class LocalPurchaseOrderItem extends Model
 {
     use SoftDeletes;
+
     protected $fillable = [
         'local_purchase_order_id',
         'product_id',

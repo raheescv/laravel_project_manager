@@ -19,6 +19,6 @@ enum LocalPurchaseOrderStatus: string
 
     public static function values(): array
     {
-        return collect(self::cases())->mapWithKeys(fn($case) => [$case->value => $case->label()])->toArray();
+        return collect(self::cases())->mapWithKeys(fn ($case) => [$case->value => $case->label()])->toArray();
     }
 }

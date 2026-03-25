@@ -17,7 +17,9 @@ class Page extends Component
     public array $items = [];
 
     public $vendors = [];
+
     public $productOptions = [];
+
     public $approvedPurchaseRequests = [];
 
     public function mount()
@@ -30,9 +32,9 @@ class Page extends Component
             ->with('branch')
             ->latest()
             ->get()
-            ->map(fn($pr) => [
+            ->map(fn ($pr) => [
                 'id' => $pr->id,
-                'label' => "PR-{$pr->id} ({$pr->branch->name})"
+                'label' => "PR-{$pr->id} ({$pr->branch->name})",
             ]);
     }
 
@@ -50,7 +52,7 @@ class Page extends Component
                             'name' => $p->product->name,
                             'quantity' => $p->quantity,
                         ];
-                    })
+                    }),
                 ];
             });
     }

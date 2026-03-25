@@ -14,7 +14,7 @@ class LocalPurchaseOrderPolicy
     public function viewAny(User $user): bool
     {
         return $user->can('local purchase order.view any') ||
-            $user->can('local purchase order.view own');;
+            $user->can('local purchase order.view own');
     }
 
     /**

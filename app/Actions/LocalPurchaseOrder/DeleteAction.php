@@ -20,11 +20,11 @@ class DeleteAction
                 $orders = LocalPurchaseOrder::whereIn('id', $ids)->get();
 
                 $deletable = $orders->filter(
-                    fn($o) => $o->status === LocalPurchaseOrderStatus::PENDING
+                    fn ($o) => $o->status === LocalPurchaseOrderStatus::PENDING
                 );
 
                 $nonDeletable = $orders->filter(
-                    fn($o) => $o->status !== LocalPurchaseOrderStatus::PENDING
+                    fn ($o) => $o->status !== LocalPurchaseOrderStatus::PENDING
                 );
 
                 LocalPurchaseOrder::whereIn('id', $deletable->pluck('id'))->delete();
@@ -46,7 +46,7 @@ class DeleteAction
         } catch (\Throwable $e) {
             return [
                 'success' => false,
-                'message' => $e->getMessage()
+                'message' => $e->getMessage(),
             ];
         }
 

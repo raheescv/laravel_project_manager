@@ -2,7 +2,6 @@
 
 namespace App\Actions\LocalPurchaseOrder;
 
-
 use App\Models\LocalPurchaseOrder;
 use App\Models\LocalPurchaseOrderItem;
 use Illuminate\Support\Facades\DB;
@@ -64,7 +63,7 @@ class CreateAction
         return [
             'vendor_id' => [
                 'required',
-                Rule::exists('accounts', 'id')->where(fn($q) => $q->where('model', 'Vendor')),
+                Rule::exists('accounts', 'id')->where(fn ($q) => $q->where('model', 'Vendor')),
             ],
             'items' => ['required', 'array', 'min:1'],
             'items.*.product_id' => ['required', 'exists:products,id'],

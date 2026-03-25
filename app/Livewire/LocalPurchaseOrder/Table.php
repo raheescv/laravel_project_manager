@@ -15,8 +15,11 @@ class Table extends Component
     use WithPagination;
 
     public ?string $search = null;
+
     public ?int $branch_id = null;
+
     public ?int $vendor_id = null;
+
     public ?int $product_id = null;
 
     // public ?int $created_by = null;
@@ -83,6 +86,7 @@ class Table extends Component
             $this->dispatch('error', [
                 'message' => 'You do not have permission to delete purchase requests.',
             ]);
+
             return;
         }
 
@@ -102,6 +106,7 @@ class Table extends Component
             $this->resetPage();
         }
     }
+
     public function render()
     {
         return view('livewire.local-purchase-order.table');

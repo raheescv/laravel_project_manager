@@ -9,7 +9,9 @@ use Livewire\Component;
 class View extends Component
 {
     public PurchaseRequest $purchase_request;
+
     public bool $is_approvable = false;
+
     public string $remarks = '';
 
     public function mount(int $purchase_request_id, bool $is_approvable = false)

@@ -54,6 +54,7 @@ class UpdateBookingStatusAction
             }
 
             $model->update($data);
+
             return [
                 'success' => true,
                 'message' => 'Successfully updated status.',

@@ -3,7 +3,6 @@
 namespace App\Models;
 
 use App\Enums\LocalPurchaseOrder\LocalPurchaseOrderStatus;
-use App\Enums\PurchaseOrder\PurchaseOrderStatus;
 use App\Policies\LocalPurchaseOrderPolicy;
 use App\Traits\BelongsToTenant;
 use Illuminate\Database\Eloquent\Attributes\UsePolicy;
@@ -15,7 +14,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 #[UsePolicy(LocalPurchaseOrderPolicy::class)]
 class LocalPurchaseOrder extends Model
 {
-    use SoftDeletes, BelongsToTenant;
+    use BelongsToTenant, SoftDeletes;
 
     protected $fillable = [
         'vendor_id',
@@ -45,7 +44,6 @@ class LocalPurchaseOrder extends Model
     {
         return $this->belongsTo(Branch::class);
     }
-
 
     public function tenant(): BelongsTo
     {
@@ -98,15 +96,15 @@ class LocalPurchaseOrder extends Model
         if (isset($filters['search']) && $filters['search']) {
             $term = trim($filters['search']);
             $query->where(function ($q) use ($term) {
-                $q->where('id', 'like', '%' . $term . '%')
+                $q->where('id', 'like', '%'.$term.'%')
                     ->orWhereHas('branch', function ($q) use ($term) {
-                        $q->where('name', 'like', '%' . $term . '%');
+                        $q->where('name', 'like', '%'.$term.'%');
                     })
                     ->orWhereHas('creator', function ($q) use ($term) {
-                        $q->where('name', 'like', '%' . $term . '%');
+                        $q->where('name', 'like', '%'.$term.'%');
                     })
                     ->orWhereHas('decisionMaker', function ($q) use ($term) {
-                        $q->where('name', 'like', '%' . $term . '%');
+                        $q->where('name', 'like', '%'.$term.'%');
                     });
             });
         }
