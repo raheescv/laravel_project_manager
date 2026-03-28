@@ -351,7 +351,11 @@
                                         </div>
                                     </td>
                                     <td class="text-center">
-                                        @if ($percent >= 100)
+                                        @if ($percent > 100)
+                                            <span class="badge bg-danger bg-opacity-10 text-danger rounded-pill px-2 py-1">
+                                                <i class="fa fa-exclamation-circle me-1"></i> Excess
+                                            </span>
+                                        @elseif ($percent == 100)
                                             <span class="badge bg-success bg-opacity-10 text-success rounded-pill px-2 py-1">
                                                 <i class="fa fa-check-circle me-1"></i> Full
                                             </span>
