@@ -45,7 +45,7 @@ class LocalPurchaseOrderPolicy
      */
     public function delete(User $user, LocalPurchaseOrder $order): bool
     {
-        return $user->can('local purchase order.delete-own') && $order->status === LocalPurchaseOrderStatus::PENDING;
+        return $user->can('local purchase order.delete') && $order->status === LocalPurchaseOrderStatus::PENDING;
     }
 
     /**

@@ -3,10 +3,10 @@
 namespace App\Livewire\LocalPurchaseOrder;
 
 use App\Actions\LocalPurchaseOrder\DeleteAction;
-use App\Models\Account;
 use App\Models\LocalPurchaseOrder;
-use App\Models\Product;
+use Exception;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Livewire\Attributes\Computed;
 use Livewire\Component;
 use Livewire\WithPagination;
@@ -66,18 +66,6 @@ class Table extends Component
         return $query->orderBy($this->sortField, $this->sortDirection)->paginate($this->limit);
     }
 
-    #[Computed(true)]
-    public function vendors()
-    {
-        return Account::select('id', 'name')->vendor()->latest()->get()->pluck('name', 'id');
-    }
-
-    #[Computed(true)]
-    public function products()
-    {
-        return Product::select('id', 'name')->orderBy('name')->get()->pluck('name', 'id');
-    }
-
     public function sortBy($field)
     {
         if ($this->sortField === $field) {
@@ -90,21 +78,23 @@ class Table extends Component
 
     public function delete()
     {
-        if (Auth::user()->cannot('local purchase order.delete-own')) {
-            $this->dispatch('error', [
-                'message' => 'You do not have permission to delete purchase requests.',
-            ]);
+        try {
+            DB::beginTransaction();
+            if (Auth::user()->cannot('local purchase order.delete')) {
+                throw new Exception('You do not have permission to delete purchase requests', 1);
+            }
 
-            return;
-        }
-
-        $response = (new DeleteAction())->execute($this->selected);
-
-        if ($response['success']) {
-            $this->dispatch('success', ['message' => $response['message']]);
+            $response = (new DeleteAction())->execute($this->selected);
+            if (! $response['success']) {
+                throw new Exception($response['message'], 1);
+            }
             $this->selected = [];
-        } else {
-            $this->dispatch('error', ['message' => $response['message']]);
+
+            DB::commit();
+            $this->dispatch('success', ['message' => $response['message']]);
+        } catch (Exception $e) {
+            DB::rollback();
+            $this->dispatch('error', ['message' => $e->getMessage()]);
         }
     }
 

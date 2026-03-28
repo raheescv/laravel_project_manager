@@ -26,7 +26,7 @@ return new class() extends Migration
             $table->foreignId('decision_by')->nullable()->constrained('users')->nullOnDelete();
             $table->timestamp('decision_at')->nullable();
             $table->text('decision_note')->nullable();
-            
+
             $table->string('status')->default(LocalPurchaseOrderStatus::PENDING->value);
 
             $table->foreignId('created_by')->constrained('users')->cascadeOnDelete();

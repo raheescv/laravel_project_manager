@@ -223,7 +223,7 @@ return [
         'edit',
         'view',
         'delete-any',
-        'delete-own',
+        'delete',
         'decide',
     ],
 
@@ -232,7 +232,7 @@ return [
         'create',
         'edit',
         'view',
-        'delete-own',
+        'delete',
         'decide',
     ],
 ];

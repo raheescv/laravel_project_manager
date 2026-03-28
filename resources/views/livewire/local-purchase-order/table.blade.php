@@ -27,7 +27,7 @@
                             Create
                         </a>
                     @endcan
-                    @can('local purchase order.delete-any')
+                    @can('local purchase order.delete')
                         <button class="btn btn-sm btn-outline-danger" title="Delete selected items" wire:click="delete()"
                             wire:confirm="Are you sure you want to delete the selected items?" x-show="selected.length > 0">
                             <i class="demo-pli-recycling me-1"></i> Delete
