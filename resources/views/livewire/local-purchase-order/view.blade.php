@@ -209,10 +209,12 @@
                                     <span class="text-muted small">{{ $item->product->code ?? '-' }}</span>
                                 </td>
                                 <td>
-                                    <span class="badge bg-primary bg-opacity-10 text-primary">{{ $item->product->mainCategory?->name ?? '-' }}</span>
+                                    <span
+                                        class="badge bg-primary bg-opacity-10 text-primary">{{ $item->product->mainCategory?->name ?? '-' }}</span>
                                 </td>
                                 <td>
-                                    <span class="badge bg-secondary bg-opacity-10 text-secondary">{{ $item->product->subCategory?->name ?? '-' }}</span>
+                                    <span
+                                        class="badge bg-secondary bg-opacity-10 text-secondary">{{ $item->product->subCategory?->name ?? '-' }}</span>
                                 </td>
                                 <td>
                                     <span class="text-muted">{{ $item->product->brand?->name ?? '-' }}</span>
@@ -247,7 +249,8 @@
                                 <td colspan="7" class="fw-bold border-0 rounded-start">Total</td>
                                 <td class="fw-bold text-end border-0">{{ $order->items->sum('quantity') }}</td>
                                 <td class="border-0"></td>
-                                <td class="fw-bold text-end border-0 rounded-end">{{ number_format($order->items->sum(fn($i) => $i->quantity * $i->rate), 2) }}</td>
+                                <td class="fw-bold text-end border-0 rounded-end">
+                                    {{ number_format($order->items->sum(fn($i) => $i->quantity * $i->rate), 2) }}</td>
                             </tr>
                         </tfoot>
                     @endif
@@ -255,6 +258,132 @@
             </div>
         </div>
     </div>
+
+    {{-- Fulfillment Summary --}}
+    @if ($order->grns->count() && $order->items->count())
+        @php
+            $allGrnItems = $order->grns->flatMap->items;
+            $receivedByProduct = $allGrnItems->groupBy('product_id')->map(fn($items) => $items->sum('quantity'));
+            $totalOrdered = $order->items->sum('quantity');
+            $totalReceived = $receivedByProduct->sum();
+            $overallPercent = $totalOrdered > 0 ? round(($totalReceived / $totalOrdered) * 100) : 0;
+        @endphp
+
+        <div class="mb-4 card border-0 shadow-sm">
+            <div class="card-body p-3">
+                <div class="d-flex align-items-center justify-content-between mb-3">
+                    <div class="d-flex align-items-center">
+                        <div class="icon-box bg-primary bg-opacity-10 rounded-circle p-2 me-2">
+                            <i class="fa fa-tasks text-primary fs-4"></i>
+                        </div>
+                        <div>
+                            <h5 class="mb-0 fw-bold">Fulfillment Summary</h5>
+                            <small class="text-muted">Ordered vs Received across all GRNs</small>
+                        </div>
+                    </div>
+                    <div class="d-flex align-items-center gap-2">
+                        <span
+                            class="badge bg-{{ $overallPercent >= 100 ? 'success' : ($overallPercent > 0 ? 'warning' : 'secondary') }} rounded-pill px-3 py-2">
+                            {{ $overallPercent }}% Fulfilled
+                        </span>
+                    </div>
+                </div>
+
+                {{-- Overall Progress --}}
+                <div class="mb-3">
+                    <div class="progress" style="height: 8px;">
+                        <div class="progress-bar bg-{{ $overallPercent >= 100 ? 'success' : ($overallPercent >= 50 ? 'info' : 'warning') }}"
+                            style="width: {{ min($overallPercent, 100) }}%"></div>
+                    </div>
+                    <div class="d-flex justify-content-between mt-1">
+                        <small class="text-muted">Total Ordered: <strong>{{ $totalOrdered }}</strong></small>
+                        <small class="text-muted">Total Received: <strong class="text-success">{{ $totalReceived }}</strong></small>
+                    </div>
+                </div>
+
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead>
+                            <tr class="bg-light">
+                                <th class="border-0 rounded-start">#</th>
+                                <th class="border-0">Product</th>
+                                <th class="border-0 text-end">Ordered</th>
+                                <th class="border-0 text-end">Received</th>
+                                <th class="border-0 text-end">Pending</th>
+                                <th class="border-0" style="width: 200px;">Progress</th>
+                                <th class="border-0 text-center rounded-end">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach ($order->items as $index => $item)
+                                @php
+                                    $received = $receivedByProduct->get($item->product_id, 0);
+                                    $pending = $item->quantity - $received;
+                                    $percent = $item->quantity > 0 ? round(($received / $item->quantity) * 100) : 0;
+                                @endphp
+                                <tr>
+                                    <td>
+                                        <span class="badge bg-light text-muted rounded-pill">{{ $index + 1 }}</span>
+                                    </td>
+                                    <td>
+                                        <span class="fw-medium">{{ $item->product->name }}</span>
+                                    </td>
+                                    <td class="text-end">
+                                        <span class="fw-medium">{{ $item->quantity }}</span>
+                                    </td>
+                                    <td class="text-end">
+                                        <span class="fw-bold text-success">{{ $received }}</span>
+                                    </td>
+                                    <td class="text-end">
+                                        @if ($pending != 0)
+                                            <span class="fw-medium text-danger">{{ $pending }}</span>
+                                        @else
+                                            <span class="text-muted">0</span>
+                                        @endif
+                                    </td>
+                                    <td>
+                                        <div class="d-flex align-items-center gap-2">
+                                            <div class="progress flex-grow-1" style="height: 6px;">
+                                                <div class="progress-bar bg-{{ $percent >= 100 ? 'success' : ($percent > 0 ? 'warning' : 'secondary') }}"
+                                                    style="width: {{ min($percent, 100) }}%"></div>
+                                            </div>
+                                            <small class="text-muted fw-semibold" style="width: 35px;">{{ $percent }}%</small>
+                                        </div>
+                                    </td>
+                                    <td class="text-center">
+                                        @if ($percent >= 100)
+                                            <span class="badge bg-success bg-opacity-10 text-success rounded-pill px-2 py-1">
+                                                <i class="fa fa-check-circle me-1"></i> Full
+                                            </span>
+                                        @elseif ($percent > 0)
+                                            <span class="badge bg-warning bg-opacity-10 text-warning rounded-pill px-2 py-1">
+                                                <i class="fa fa-clock-o me-1"></i> Partial
+                                            </span>
+                                        @else
+                                            <span class="badge bg-secondary bg-opacity-10 text-secondary rounded-pill px-2 py-1">
+                                                <i class="fa fa-minus-circle me-1"></i> None
+                                            </span>
+                                        @endif
+                                    </td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                        <tfoot>
+                            <tr class="bg-light">
+                                <td colspan="2" class="fw-bold border-0 rounded-start">Total</td>
+                                <td class="fw-bold text-end border-0">{{ $totalOrdered }}</td>
+                                <td class="fw-bold text-end border-0 text-success">{{ $totalReceived }}</td>
+                                <td class="fw-bold text-end border-0 {{ $totalOrdered - $totalReceived > 0 ? 'text-danger' : '' }}">
+                                    {{ $totalOrdered - $totalReceived }}</td>
+                                <td class="border-0"></td>
+                                <td class="border-0 rounded-end"></td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
+        </div>
+    @endif
 
     {{-- GRN Received Items --}}
     @if ($order->grns->count())
@@ -284,7 +413,8 @@
                                     {{ \Carbon\Carbon::parse($grn->date)->format('d M Y') }}
                                 </span>
                             </div>
-                            <span class="badge bg-{{ $grn->status->value === 'accepted' ? 'success' : ($grn->status->value === 'pending' ? 'warning' : 'danger') }} rounded-pill">
+                            <span
+                                class="badge bg-{{ $grn->status->value === 'accepted' ? 'success' : ($grn->status->value === 'pending' ? 'warning' : 'danger') }} rounded-pill">
                                 {{ $grn->status->label() }}
                             </span>
                         </div>
@@ -342,10 +472,12 @@
                 </div>
 
                 <div class="d-flex justify-content-end gap-2">
-                    <button type="button" class="btn btn-danger px-4" wire:click="reject" wire:confirm="Are you sure you want to reject this order?">
+                    <button type="button" class="btn btn-danger px-4" wire:click="reject"
+                        wire:confirm="Are you sure you want to reject this order?">
                         <i class="fa fa-times me-1"></i> Reject
                     </button>
-                    <button type="button" class="btn btn-success px-4" wire:click="approve" wire:confirm="Are you sure you want to approve this order?">
+                    <button type="button" class="btn btn-success px-4" wire:click="approve"
+                        wire:confirm="Are you sure you want to approve this order?">
                         <i class="fa fa-check me-1"></i> Approve
                     </button>
                 </div>
