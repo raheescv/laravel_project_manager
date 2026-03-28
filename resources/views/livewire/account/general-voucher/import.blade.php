@@ -1,21 +1,21 @@
 <div>
     <div class="card shadow-sm">
         <div class="card-header bg-light py-3">
-            <div class="row align-items-center">
+            <div class="row mt-3">
                 <div class="col-md-6 d-flex flex-wrap gap-2 align-items-center mb-3 mb-md-0">
                     <a href="{{ route('account::general-voucher::index') }}" class="btn btn-primary d-flex align-items-center shadow-sm">
-                        <i class="fa fa-arrow-left me-2"></i>
+                        <i class="demo-pli-arrow-left me-2 fs-5"></i>
                         Back to Vouchers
                     </a>
                     <div class="btn-group shadow-sm">
                         <button class="btn btn-success btn-sm d-flex align-items-center" wire:click="sample">
-                            <i class="fa fa-download me-md-1 fs-5"></i>
+                            <i class="demo-pli-download-from-cloud me-md-1 fs-5"></i>
                             <span class="d-none d-md-inline">Download Template</span>
                         </button>
                     </div>
                 </div>
                 <div class="col-md-6">
-                    <div class="d-flex justify-content-end gap-2">
+                    <div class="d-flex justify-content-end gap-2 flex-wrap">
                         @foreach (['Upload File', 'Map Columns', 'Preview', 'Importing'] as $i => $label)
                             @php $num = $i + 1; @endphp
                             <div class="step-item {{ $step == $num ? 'active' : '' }} {{ $step > $num ? 'completed' : '' }}">
@@ -319,9 +319,12 @@
         .upload-input {
             position: absolute;
             inset: 0;
+            width: 100%;
+            height: 100%;
             opacity: 0;
             cursor: pointer;
             z-index: 2;
+            font-size: 0;
         }
 
         .step-icon {
