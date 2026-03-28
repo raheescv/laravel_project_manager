@@ -235,4 +235,13 @@ return [
         'delete',
         'decide',
     ],
+
+    // GRN Module
+    'grn' => [
+        'create',
+        'view',
+        'edit',
+        'delete',
+        'decide',
+    ],
 ];

@@ -83,6 +83,15 @@ Route::middleware('auth')->group(function (): void {
         Route::get('{localPurchaseOrder}', 'show')->name('view');
         Route::get('{localPurchaseOrder}/decision', 'decision')->name('decision');
     });
+
+    // GRN
+    Route::name('grn::')->prefix('grns')->controller(GrnController::class)->group(function (): void {
+        Route::get('', 'index')->name('index');
+        Route::get('create', 'create')->name('create');
+        Route::get('{grn}/edit', 'edit')->name('edit');
+        Route::get('{grn}', 'show')->name('view');
+        Route::get('{grn}/decision', 'decision')->name('decision');
+    });
 });
 
 // Physical Visitor Management Routes

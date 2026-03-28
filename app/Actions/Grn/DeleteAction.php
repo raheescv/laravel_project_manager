@@ -1,9 +1,9 @@
 <?php
 
-namespace App\Actions\LocalPurchaseOrder;
+namespace App\Actions\Grn;
 
-use App\Enums\LocalPurchaseOrder\LocalPurchaseOrderStatus;
-use App\Models\LocalPurchaseOrder;
+use App\Enums\Grn\GrnStatus;
+use App\Models\Grn;
 
 class DeleteAction
 {
@@ -14,20 +14,25 @@ class DeleteAction
 
             $return = [];
 
-            $orders = LocalPurchaseOrder::whereIn('id', $ids)->get();
+            $grns = Grn::whereIn('id', $ids)->get();
 
-            $deletable = $orders->filter(fn($o) => $o->status === LocalPurchaseOrderStatus::PENDING);
+            $deletable = $grns->filter(
+                fn ($g) => $g->status === GrnStatus::PENDING
+            );
 
-            $nonDeletable = $orders->filter(fn($o) => $o->status !== LocalPurchaseOrderStatus::PENDING);
+            $nonDeletable = $grns->filter(
+                fn ($g) => $g->status !== GrnStatus::PENDING
+            );
 
-            LocalPurchaseOrder::whereIn('id', $deletable->pluck('id'))->delete();
+            Grn::whereIn('id', $deletable->pluck('id'))->delete();
 
             $return['success'] = true;
 
             if ($nonDeletable->isEmpty()) {
                 $return['message'] = 'All selected records deleted successfully';
             } else {
-                $return['message'] = 'Some records could not be deleted because they are not in pending status';
+                $return['message'] =
+                    'Some records could not be deleted because they are not in pending status';
 
                 $return['data'] = [
                     'deleted_ids' => $deletable->pluck('id'),
