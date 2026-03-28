@@ -23,20 +23,11 @@ return new class() extends Migration
             $table->index('local_purchase_order_item_id');
             $table->index('product_id');
 
-            $table->foreign('grn_id')
-                ->references('id')
-                ->on('grns')
-                ->onDelete('cascade');
+            $table->foreign('grn_id')->references('id')->on('grns')->onDelete('cascade');
 
-            $table->foreign('local_purchase_order_item_id')
-                ->references('id')
-                ->on('local_purchase_order_items')
-                ->onDelete('restrict');
+            $table->foreign('local_purchase_order_item_id')->references('id')->on('local_purchase_order_items')->onDelete('restrict');
 
-            $table->foreign('product_id')
-                ->references('id')
-                ->on('products')
-                ->onDelete('restrict');
+            $table->foreign('product_id')->references('id')->on('products')->onDelete('restrict');
         });
     }
 

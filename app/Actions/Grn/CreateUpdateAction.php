@@ -3,6 +3,7 @@
 namespace App\Actions\Grn;
 
 use App\Models\Grn;
+use App\Models\LocalPurchaseOrder;
 
 class CreateUpdateAction
 {
@@ -11,11 +12,12 @@ class CreateUpdateAction
         try {
             validationHelper($this->rules(), $data);
 
-            $grnNo = $data['grn_no'] ?? $this->generateGrnNo();
+            $lpo = LocalPurchaseOrder::findOrFail($data['local_purchase_order_id']);
 
             $saveData = [
-                'grn_no' => $grnNo,
-                'local_purchase_order_id' => $data['local_purchase_order_id'],
+                'grn_no' => $data['grn_no'] ?? generateGrnNo(),
+                'local_purchase_order_id' => $lpo->id,
+                'vendor_id' => $lpo->vendor_id,
                 'date' => $data['date'],
                 'remarks' => $data['remarks'] ?? null,
                 'tenant_id' => session('tenant_id'),
@@ -65,19 +67,5 @@ class CreateUpdateAction
             'items.*.product_id' => ['required', 'exists:products,id'],
             'items.*.quantity' => ['required', 'numeric', 'min:0.01'],
         ];
-    }
-
-    private function generateGrnNo(): string
-    {
-        $prefix = 'GRN-'.date('Ymd').'-';
-        $lastGrn = Grn::where('grn_no', 'like', $prefix.'%')->orderBy('grn_no', 'desc')->first();
-
-        if ($lastGrn) {
-            $lastNumber = (int) str_replace($prefix, '', $lastGrn->grn_no);
-
-            return $prefix.str_pad($lastNumber + 1, 3, '0', STR_PAD_LEFT);
-        }
-
-        return $prefix.'001';
     }
 }

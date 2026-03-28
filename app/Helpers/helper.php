@@ -582,6 +582,27 @@ if (! function_exists('getNextSaleInvoiceNo')) {
         return $invoice;
     }
 }
+if (! function_exists('generateGrnNo')) {
+    function generateGrnNo()
+    {
+        $branchCode = session('branch_code', 'M');
+        $prefix = 'GRN-';
+
+        if ($branchCode) {
+            $prefix .= $branchCode.'-';
+        }
+        $year = now()->format('y');
+
+        $invoicePrefix = $prefix.$year.'-';
+
+        $number = getNextUniqueNumber('Grn');
+
+        // Generate the invoice number
+        $invoice = $invoicePrefix.str_pad($number, 4, '0', STR_PAD_LEFT);
+
+        return $invoice;
+    }
+}
 if (! function_exists('getNextTailorOrderNo')) {
     function getNextTailorOrderNo()
     {

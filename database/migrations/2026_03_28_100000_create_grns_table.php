@@ -14,6 +14,7 @@ return new class() extends Migration
             $table->unsignedBigInteger('tenant_id');
             $table->unsignedBigInteger('branch_id');
             $table->unsignedBigInteger('local_purchase_order_id');
+            $table->unsignedBigInteger('vendor_id');
             $table->date('date');
             $table->unsignedBigInteger('created_by');
             $table->enum('status', ['pending', 'accepted', 'rejected'])->default('pending');
@@ -27,14 +28,12 @@ return new class() extends Migration
             $table->index('tenant_id');
             $table->index('branch_id');
             $table->index('local_purchase_order_id');
+            $table->index('vendor_id');
             $table->index('created_by');
             $table->index('date');
             $table->index('status');
 
-            $table->foreign('local_purchase_order_id')
-                ->references('id')
-                ->on('local_purchase_orders')
-                ->onDelete('restrict');
+            $table->foreign('local_purchase_order_id')->references('id')->on('local_purchase_orders')->onDelete('restrict');
         });
     }
 

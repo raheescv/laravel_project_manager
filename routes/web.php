@@ -4,6 +4,7 @@ use App\Http\Controllers\AppointmentController;
 use App\Http\Controllers\AuditController;
 use App\Http\Controllers\BackupController;
 use App\Http\Controllers\FamilyTreeController;
+use App\Http\Controllers\GrnController;
 use App\Http\Controllers\HealthController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\ImageGenComfyController;

@@ -24,29 +24,33 @@ class Page extends Component
 
     public $approvedLpos = [];
 
+    public ?string $vendor_name = null;
+
     public function mount(?int $grn_id = null)
     {
         $this->approvedLpos = LocalPurchaseOrder::approved()
             ->with('branch', 'vendor')
-            ->latest()
             ->get()
-            ->map(fn ($lpo) => [
-                'id' => $lpo->id,
-                'label' => "LPO #{$lpo->id} - {$lpo->vendor?->name} ({$lpo->branch?->name})",
+            ->mapWithKeys(fn ($lpo) => [
+                $lpo->id => "LPO #{$lpo->id} - {$lpo->vendor?->name} ({$lpo->branch?->name})",
             ]);
 
         $this->date = date('Y-m-d');
 
         if ($grn_id) {
-            $grn = Grn::with('items')->findOrFail($grn_id);
+            $grn = Grn::with(['items.product', 'items.localPurchaseOrderItem', 'localPurchaseOrder.vendor'])->findOrFail($grn_id);
             $this->grn_id = $grn->id;
             $this->local_purchase_order_id = $grn->local_purchase_order_id;
+            $this->vendor_name = $grn->localPurchaseOrder?->vendor?->name;
             $this->date = $grn->date;
             $this->remarks = $grn->remarks;
             $this->items = $grn->items->map(fn ($item) => [
                 'id' => $item->id,
                 'local_purchase_order_item_id' => $item->local_purchase_order_item_id,
                 'product_id' => $item->product_id,
+                'product_name' => $item->product?->name,
+                'ordered_quantity' => $item->localPurchaseOrderItem?->quantity,
+                'rate' => $item->localPurchaseOrderItem?->rate,
                 'quantity' => $item->quantity,
             ])->toArray();
         }
@@ -55,12 +59,23 @@ class Page extends Component
     public function getLpoItems()
     {
         if (! $this->local_purchase_order_id) {
+            $this->vendor_name = null;
+
             return [];
         }
 
-        return LocalPurchaseOrder::with('items.product')
-            ->find($this->local_purchase_order_id)
-            ?->items
+        $lpo = LocalPurchaseOrder::with(['items.product', 'vendor'])
+            ->find($this->local_purchase_order_id);
+
+        if (! $lpo) {
+            $this->vendor_name = null;
+
+            return [];
+        }
+
+        $this->vendor_name = $lpo->vendor?->name;
+
+        return $lpo->items
             ->map(fn ($item) => [
                 'local_purchase_order_item_id' => $item->id,
                 'product_id' => $item->product_id,
@@ -69,7 +84,7 @@ class Page extends Component
                 'rate' => $item->rate,
                 'quantity' => $item->quantity,
             ])
-            ->toArray() ?? [];
+            ->toArray();
     }
 
     public function save()

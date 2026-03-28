@@ -21,6 +21,7 @@ class Grn extends Model
         'tenant_id',
         'branch_id',
         'local_purchase_order_id',
+        'vendor_id',
         'date',
         'created_by',
         'status',
@@ -38,6 +39,11 @@ class Grn extends Model
     public function branch(): BelongsTo
     {
         return $this->belongsTo(Branch::class);
+    }
+
+    public function vendor(): BelongsTo
+    {
+        return $this->belongsTo(Account::class, 'vendor_id');
     }
 
     public function tenant(): BelongsTo
