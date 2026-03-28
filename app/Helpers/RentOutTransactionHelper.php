@@ -53,7 +53,7 @@ class RentOutTransactionHelper
             'source' => 'rent_out',
             'group' => 'Management Fee',
             'category' => 'management_fee',
-            'remark' => $rentOut->management_fee_remarks ?:'Management fee for RentOut:'.$rentOut->id,
+            'remark' => $rentOut->management_fee_remarks ?: 'Management fee for RentOut:'.$rentOut->id,
             'created_by' => $userId,
         ]);
     }
