@@ -53,19 +53,6 @@
                                 placeholder="Search local purchase orders..." autofocus>
                         </div>
                     </div>
-                    {{-- <div class="dropdown">
-                        <button class="btn btn-sm btn-outline-primary" data-bs-toggle="dropdown" aria-expanded="false">
-                            <i class="demo-pli-layout-grid me-1"></i> Columns
-                        </button>
-                        <ul class="shadow-sm dropdown-menu dropdown-menu-end">
-                            <li>
-                                <a class="dropdown-item" data-bs-toggle="offcanvas"
-                                    data-bs-target="#purchaseColumnVisibility" aria-controls="purchaseColumnVisibility">
-                                    <i class="demo-pli-column-width me-2"></i>Column Visibility
-                                </a>
-                            </li>
-                        </ul>
-                    </div> --}}
                 </div>
             </div>
         </div>
@@ -79,11 +66,11 @@
         <div class="mt-3 col-12">
             <div class="p-3 rounded bg-light">
                 <div class="row g-3">
-                    <div class="col-md-5" wire:ignore>
+                    <div class="col-md-6" wire:ignore>
                         <label class="form-label" for="vendor_id">
                             <i class="fa fa-flag me-1"></i> Vendors
                         </label>
-                        {{ html()->select('vendor_id', $this->vendors)->value($this->vendor_id)->class('select-vendor_id-list')->id('vendor_id')->placeholder('All Vendors') }}
+                        {{ html()->select('vendor_id', [])->value($this->vendor_id)->class('select-vendor_id-list')->id('vendor_id')->placeholder('All Vendors') }}
                     </div>
                     <div class="col-md-3" wire:ignore>
                         <label class="form-label" for="branch_id">
@@ -116,7 +103,7 @@
         </div>
     </div>
     <div class="px-0 pb-0 card-body">
-        <div class="table-responsive">
+        <div class="table-responsive" style="overflow: visible;">
             <table class="table mb-0 align-middle table-striped table-hover table-sm border-bottom">
                 <thead class="bg-light text-nowrap">
                     <tr>
@@ -130,24 +117,15 @@
                                 <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="id" label="#" />
                             </div>
                         </th>
-                        <th>
-                            Products
-                        </th>
-                        <th class="text-nowrap">
-                            <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="status" label="Status" />
-                        </th>
-                        <th>
-                            Approved/Rejected By
-                        </th>
-                        <th>
-                            <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="decision_at" label="Approved/Rejected On" />
-                        </th>
-                        <th>
-                            <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="created_at" label="local purchase order Date" />
-                        </th>
-                        <th>
-                            Actions
-                        </th>
+                        <th> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="date" label="Date" /> </th>
+                        <th> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="vendor_id" label="Vendor" /> </th>
+                        <th> Products </th>
+                        <th class="text-nowrap"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="status" label="Status" /> </th>
+                        <th> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="decision_by" label="Approved/Rejected By" />
+                        <th> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="decision_at" label="Approved/Rejected On" />
+                        <th class="text-end"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="total" label="total" /> </th>
+                        <th> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="created_at" label="Created At" /> </th>
+                        <th> Actions </th>
                     </tr>
                 </thead>
                 <tbody>
@@ -164,9 +142,16 @@
                             </td>
                             <td class="text-nowrap">
                                 <div class="gap-2 d-flex align-items-center">
-                                    <span>{{ $item->items_count }}</span>
+                                    <i class="demo-psi-calendar-4 fs-5 text-primary"></i>
+                                    <span>{{ systemDate($item->date) }}</span>
                                 </div>
                             </td>
+                            <td class="text-nowrap">
+                                <a class="dropdown-item" href="{{ route('lpo::view', $item->id) }}">
+                                    {{ $item->vendor?->name }}
+                                </a>
+                            </td>
+                            <td class="text-end"> {{ $item->items_count }} </td>
                             <td>
                                 <div
                                     class="badge bg-{{ $item->status === LocalPurchaseOrderStatus::APPROVED ? 'success' : ($item->status === LocalPurchaseOrderStatus::PENDING ? 'warning' : 'danger') }} bg-opacity-10 text-{{ $item->status === LocalPurchaseOrderStatus::APPROVED ? 'success' : ($item->status === LocalPurchaseOrderStatus::PENDING ? 'warning' : 'danger') }}">
@@ -186,6 +171,7 @@
                                     </div>
                                 @endif
                             </td>
+                            <td class="text-end"><i class="fa fa-money text-muted me-1"></i>{{ currency($item->total) }}</td>
                             <td class="text-nowrap">
                                 <div class="gap-2 d-flex align-items-center">
                                     <i class="demo-psi-calendar-4 fs-5 text-primary"></i>
@@ -193,18 +179,34 @@
                                 </div>
                             </td>
                             <td class="text-nowrap">
-                                <div class="gap-2 d-flex align-items-center">
-                                    @can('decide', $item)
-                                        <a href="{{ route('lpo::decision', $item->id) }}" class="btn btn-sm btn-outline-success">
-                                            <i class="demo-pli-check me-1"></i> Approve/Reject
-                                        </a>
-                                    @endcan
-
-                                    @can('view', $item)
-                                        <a href="{{ route('lpo::view', $item->id) }}" class="btn btn-sm btn-outline-info">
-                                            <i class="demo-pli-magnifi-glass me-1"></i> View
-                                        </a>
-                                    @endcan
+                                <div class="dropdown">
+                                    <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown"
+                                        aria-expanded="false">
+                                        Actions
+                                    </button>
+                                    <ul class="dropdown-menu dropdown-menu-end">
+                                        @can('view', $item)
+                                            <li>
+                                                <a class="dropdown-item" href="{{ route('lpo::view', $item->id) }}">
+                                                    <i class="demo-pli-magnifi-glass me-2"></i> View
+                                                </a>
+                                            </li>
+                                        @endcan
+                                        @can('update', $item)
+                                            <li>
+                                                <a class="dropdown-item" href="{{ route('lpo::edit', $item->id) }}">
+                                                    <i class="demo-pli-file-edit me-2"></i> Edit
+                                                </a>
+                                            </li>
+                                        @endcan
+                                        @can('decide', $item)
+                                            <li>
+                                                <a class="dropdown-item" href="{{ route('lpo::decision', $item->id) }}">
+                                                    <i class="demo-pli-check me-2"></i> Approve/Reject
+                                                </a>
+                                            </li>
+                                        @endcan
+                                    </ul>
                                 </div>
                             </td>
                         </tr>

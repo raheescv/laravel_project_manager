@@ -887,9 +887,9 @@
                         </li>
                     @endif
 
-                    @if (auth()->user()->can('purchase request.view any') ||
+                    @if (auth()->user()->can('purchase request.view') ||
                             auth()->user()->can('purchase request.view own') ||
-                            auth()->user()->can('local purchase order.view any') ||
+                            auth()->user()->can('local purchase order.view') ||
                             auth()->user()->can('local purchase order.view own'))
                         <li class="nav-item has-sub">
                             <a href="#" class="mininav-toggle nav-link {{ request()->routeIs(['purchase-request::*','lpo::*']) ? 'active' : '' }}"><i
@@ -920,6 +920,7 @@
                                         $lpo = [
                                             'local-purchase-orders',
                                             'local-purchase-orders/create',
+                                            'local-purchase-orders/*',
                                         ];
                                     @endphp
                                     <a href="{{ route('lpo::index') }}" class="nav-link {{ request()->is($lpo) ? 'active' : '' }}">

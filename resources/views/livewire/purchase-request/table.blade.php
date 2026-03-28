@@ -175,19 +175,19 @@
                             </td>
                             <td class="text-nowrap">
                                 <div class="gap-2 d-flex align-items-center">
-                                    @can('update', $item)
+                                    @can('purchase request.edit', $item)
                                         <a href="{{ route('purchase-request::edit', $item->id) }}" class="btn btn-sm btn-outline-primary">
                                             <i class="demo-pli-file-edit me-1"></i> Edit
                                         </a>
                                     @endcan
 
-                                    @can('decide', $item)
+                                    @can('purchase request.decide', $item)
                                         <a href="{{ route('purchase-request::decision', $item->id) }}" class="btn btn-sm btn-outline-success">
                                             <i class="demo-pli-check me-1"></i> Approve/Reject
                                         </a>
                                     @endcan
 
-                                    @can('view', $item)
+                                    @can('purchase request.view', $item)
                                         <a href="{{ route('purchase-request::view', $item->id) }}" class="btn btn-sm btn-outline-info">
                                             <i class="demo-pli-magnifi-glass me-1"></i> View
                                         </a>

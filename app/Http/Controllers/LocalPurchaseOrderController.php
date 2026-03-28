@@ -27,6 +27,11 @@ class LocalPurchaseOrderController extends BaseController
         return view('local-purchase-order.create');
     }
 
+    public function edit(LocalPurchaseOrder $localPurchaseOrder)
+    {
+        return view('local-purchase-order.edit', compact('localPurchaseOrder'));
+    }
+
     public function show(LocalPurchaseOrder $localPurchaseOrder)
     {
         return view('local-purchase-order.view', compact('localPurchaseOrder'));

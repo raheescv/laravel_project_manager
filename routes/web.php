@@ -79,6 +79,7 @@ Route::middleware('auth')->group(function (): void {
     Route::name('lpo::')->prefix('local-purchase-orders')->controller(LocalPurchaseOrderController::class)->group(function (): void {
         Route::get('', 'index')->name('index');
         Route::get('create', 'create')->name('create');
+        Route::get('{localPurchaseOrder}/edit', 'edit')->name('edit');
         Route::get('{localPurchaseOrder}', 'show')->name('view');
         Route::get('{localPurchaseOrder}/decision', 'decision')->name('decision');
     });

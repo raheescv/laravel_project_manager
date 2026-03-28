@@ -46,7 +46,7 @@ class Table extends Component
     #[Computed()]
     public function requests()
     {
-        $query = LocalPurchaseOrder::query()->with(['branch', 'tenant', 'creator', 'decisionMaker'])->withCount('items');
+        $query = LocalPurchaseOrder::query()->with(['branch', 'tenant', 'creator', 'decisionMaker', 'vendor'])->withCount('items');
 
         $filters = [
             'search' => $this->search,
@@ -59,7 +59,7 @@ class Table extends Component
 
         $query->filter($filters);
 
-        if (Auth::user()->can('local purchase request.view own') && ! Auth::user()->can('local purchase request.view any')) {
+        if (Auth::user()->can('local purchase request.view own') && ! Auth::user()->can('local purchase request.view')) {
             $query->ownedBy(Auth::id());
         }
 

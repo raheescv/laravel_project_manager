@@ -154,7 +154,7 @@
             <div class="d-flex align-items-center justify-content-between mb-3">
                 <div class="d-flex align-items-center">
                     <div class="icon-box bg-info bg-opacity-10 rounded-circle p-2 me-2">
-                        <i class="demo-psi-basket-items text-info fs-4"></i>
+                         <i class="demo-psi-basket-coins text-info fs-4"></i>
                     </div>
                     <h5 class="mb-0 fw-bold">Products</h5>
                 </div>

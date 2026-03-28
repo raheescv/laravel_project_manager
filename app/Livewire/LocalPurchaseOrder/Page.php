@@ -2,15 +2,23 @@
 
 namespace App\Livewire\LocalPurchaseOrder;
 
-use App\Actions\LocalPurchaseOrder\CreateAction;
+use App\Actions\LocalPurchaseOrder\CreateUpdateAction;
 use App\Models\Account;
+use App\Models\LocalPurchaseOrder;
 use App\Models\Product;
 use App\Models\PurchaseRequest;
+use Exception;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Livewire\Component;
 
 class Page extends Component
 {
+    public ?int $order_id = null;
+
     public ?int $vendor_id = null;
+
+    public ?string $date = null;
 
     public array $selectedRequests = [];
 
@@ -22,11 +30,11 @@ class Page extends Component
 
     public $approvedPurchaseRequests = [];
 
-    public function mount()
+    public function mount(?int $order_id = null)
     {
         $this->vendors = Account::select('id', 'name')->vendor()->latest()->get();
 
-        $this->productOptions = Product::select('id', 'name')->orderBy('name')->get();
+        $this->productOptions = Product::select('id', 'name', 'cost')->orderBy('name')->get();
 
         $this->approvedPurchaseRequests = PurchaseRequest::approved()
             ->with('branch')
@@ -36,6 +44,21 @@ class Page extends Component
                 'id' => $pr->id,
                 'label' => "PR-{$pr->id} ({$pr->branch->name})",
             ]);
+
+        $this->date = date('Y-m-d');
+
+        if ($order_id) {
+            $order = LocalPurchaseOrder::with('items')->findOrFail($order_id);
+            $this->order_id = $order->id;
+            $this->vendor_id = $order->vendor_id;
+            $this->date = $order->date;
+            $this->items = $order->items->map(fn ($item) => [
+                'id' => $item->id,
+                'product_id' => $item->product_id,
+                'quantity' => $item->quantity,
+                'rate' => $item->rate,
+            ])->toArray();
+        }
     }
 
     public function getApprovedPurchaseRequestsWithProducts()
@@ -59,17 +82,23 @@ class Page extends Component
 
     public function save()
     {
-        $response = (new CreateAction())->execute([
-            'vendor_id' => $this->vendor_id,
-            'items' => $this->items,
-        ]);
-
-        if ($response['success']) {
+        try {
+            DB::beginTransaction();
+            $data = [
+                'vendor_id' => $this->vendor_id,
+                'date' => $this->date,
+                'items' => $this->items,
+            ];
+            $response = (new CreateUpdateAction())->execute($data, Auth::id(), $this->order_id);
+            if (! $response['success']) {
+                throw new Exception($response['message'], 1);
+            }
+            DB::commit();
             $this->dispatch('success', ['message' => $response['message']]);
-
             $this->redirectRoute('lpo::index');
-        } else {
-            $this->dispatch('error', ['message' => $response['message']]);
+        } catch (Exception $e) {
+            DB::rollback();
+            $this->dispatch('error', ['message' => $e->getMessage()]);
         }
     }
 

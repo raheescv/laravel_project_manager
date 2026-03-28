@@ -13,7 +13,7 @@ class LocalPurchaseOrderPolicy
      */
     public function viewAny(User $user): bool
     {
-        return $user->can('local purchase order.view any') ||
+        return $user->can('local purchase order.view') ||
             $user->can('local purchase order.view own');
     }
 
@@ -22,7 +22,7 @@ class LocalPurchaseOrderPolicy
      */
     public function view(User $user, LocalPurchaseOrder $order): bool
     {
-        return $user->can('local purchase order.view any') ||
+        return $user->can('local purchase order.view') ||
             ($user->can('local purchase order.view own') && $order->created_by === $user->id);
     }
 
@@ -39,7 +39,9 @@ class LocalPurchaseOrderPolicy
      */
     public function update(User $user, LocalPurchaseOrder $order): bool
     {
-        return false;
+        return $user->can('local purchase order.create') &&
+            $order->created_by === $user->id &&
+            $order->status === LocalPurchaseOrderStatus::PENDING;
     }
 
     /**

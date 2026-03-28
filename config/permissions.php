@@ -219,9 +219,9 @@ return [
     // Purchase Request Module
     'purchase request' => [
         'create',
-        'view any',
-        'view own',
+        'view',
         'edit',
+        'view',
         'delete-any',
         'delete-own',
         'decide',
@@ -230,8 +230,8 @@ return [
     // Local Purchase Order Module
     'local purchase order' => [
         'create',
-        'view any',
-        'view own',
+        'edit',
+        'view',
         'delete-own',
         'decide',
     ],

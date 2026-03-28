@@ -20,7 +20,8 @@ class LocalPurchaseOrder extends Model
         'tenant_id',
         'branch_id',
         'vendor_id',
-        'total_amount',
+        'date',
+        'total',
         'decision_by',
         'decision_at',
         'decision_note',
@@ -93,6 +94,7 @@ class LocalPurchaseOrder extends Model
                 $term = trim($term);
                 $query->where(function ($q) use ($term) {
                     $q->where('id', 'like', '%'.$term.'%')
+                        ->orWhereHas('vendor', fn ($q) => $q->where('name', 'like', '%'.$term.'%'))
                         ->orWhereHas('creator', fn ($q) => $q->where('name', 'like', '%'.$term.'%'))
                         ->orWhereHas('decisionMaker', fn ($q) => $q->where('name', 'like', '%'.$term.'%'));
                 });
@@ -102,7 +104,7 @@ class LocalPurchaseOrder extends Model
             ->when($filters['created_by'] ?? null, fn ($query, $value) => $query->where('created_by', $value))
             ->when($filters['decision_by'] ?? null, fn ($query, $value) => $query->where('decision_by', $value))
             ->when($filters['vendor_id'] ?? null, fn ($query, $value) => $query->where('vendor_id', $value))
-            ->when($filters['from_date'] ?? null, fn ($query, $value) => $query->whereDate('created_at', '>=', date('Y-m-d', strtotime($value))))
-            ->when($filters['to_date'] ?? null, fn ($query, $value) => $query->whereDate('created_at', '<=', date('Y-m-d', strtotime($value))));
+            ->when($filters['from_date'] ?? null, fn ($query, $value) => $query->whereDate('date', '>=', date('Y-m-d', strtotime($value))))
+            ->when($filters['to_date'] ?? null, fn ($query, $value) => $query->whereDate('date', '<=', date('Y-m-d', strtotime($value))));
     }
 }
