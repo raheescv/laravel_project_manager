@@ -38,35 +38,83 @@
         <div class="card-body">
             {{-- ══════════════ STEP 1: Upload ══════════════ --}}
             @if ($step == 1)
-                <div class="text-center py-5">
-                    <div class="mb-4">
-                        <i class="fa fa-cloud-upload text-primary" style="font-size: 4rem;"></i>
-                    </div>
-                    <h4 class="fw-bold">Upload Your Spreadsheet</h4>
-                    <p class="text-muted mb-4">Supported formats: XLSX, XLS, CSV. Max size: 10MB.</p>
-
-                    <div class="upload-zone mx-auto" style="max-width: 500px;">
-                        <input type="file" wire:model="file" class="upload-input" accept=".xlsx,.xls,.csv">
-                        <div wire:loading.remove wire:target="file">
-                            <div class="p-5">
-                                <i class="fa fa-plus-circle fs-1 text-primary mb-3"></i>
-                                <h5 class="mb-1">Click to browse or drag and drop</h5>
-                                <span class="text-muted small">Files will be uploaded automatically</span>
+                <div class="row py-4">
+                    {{-- Left: Upload Zone --}}
+                    <div class="col-lg-5 mb-4 mb-lg-0">
+                        <div class="upload-zone text-center h-100 d-flex flex-column justify-content-center">
+                            <input type="file" wire:model="file" class="upload-input" accept=".xlsx,.xls,.csv">
+                            <div wire:loading.remove wire:target="file">
+                                <div class="py-4 px-3">
+                                    <i class="fa fa-cloud-upload text-primary mb-2" style="font-size: 2.5rem;"></i>
+                                    <p class="fw-semibold mb-1">Drop your file here, or <span class="text-primary">browse</span></p>
+                                    <span class="text-muted small">XLSX, XLS, CSV &middot; Max 10 MB</span>
+                                </div>
+                            </div>
+                            <div wire:loading wire:target="file">
+                                <div class="py-4 px-3">
+                                    <div class="spinner-border spinner-border-sm text-primary mb-2"></div>
+                                    <p class="fw-semibold mb-0">Uploading...</p>
+                                </div>
                             </div>
                         </div>
-                        <div wire:loading wire:target="file" class="p-5">
-                            <div class="spinner-border text-primary mb-3" role="status"></div>
-                            <h5>Uploading file, please wait...</h5>
-                        </div>
                     </div>
 
-                    <div class="mx-auto mt-4 text-start" style="max-width: 600px;">
-                        <p class="text-muted small mb-2 fw-semibold"><i class="fa fa-info-circle me-1 text-primary"></i> How It Works</p>
-                        <div class="row g-2 small text-muted">
-                            <div class="col-md-6"><i class="fa fa-check text-success me-1"></i> Rows with same <strong>Reference Number</strong> become one voucher</div>
-                            <div class="col-md-6"><i class="fa fa-check text-success me-1"></i> Account heads are <strong>auto-created</strong> if they don't exist</div>
-                            <div class="col-md-6"><i class="fa fa-check text-success me-1"></i> Debits must equal credits per voucher</div>
-                            <div class="col-md-6"><i class="fa fa-check text-success me-1"></i> Large files processed in the <strong>background</strong></div>
+                    {{-- Right: How It Works --}}
+                    <div class="col-lg-7">
+                        <h6 class="fw-bold text-uppercase small text-muted mb-3"><i class="fa fa-lightbulb-o me-1"></i> How It Works</h6>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <div class="d-flex gap-2">
+                                    <div class="flex-shrink-0">
+                                        <span class="d-inline-flex align-items-center justify-content-center rounded-circle bg-primary bg-opacity-10 text-primary" style="width:32px;height:32px;">
+                                            <i class="fa fa-link"></i>
+                                        </span>
+                                    </div>
+                                    <div>
+                                        <div class="fw-semibold small">Group by Reference</div>
+                                        <p class="text-muted small mb-0">Rows with the same <strong>Reference Number</strong> are combined into a single voucher entry.</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="d-flex gap-2">
+                                    <div class="flex-shrink-0">
+                                        <span class="d-inline-flex align-items-center justify-content-center rounded-circle bg-success bg-opacity-10 text-success" style="width:32px;height:32px;">
+                                            <i class="fa fa-magic"></i>
+                                        </span>
+                                    </div>
+                                    <div>
+                                        <div class="fw-semibold small">Auto-Create Accounts</div>
+                                        <p class="text-muted small mb-0">Account heads that don't exist will be <strong>automatically created</strong> with the given type and category.</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="d-flex gap-2">
+                                    <div class="flex-shrink-0">
+                                        <span class="d-inline-flex align-items-center justify-content-center rounded-circle bg-warning bg-opacity-10 text-warning" style="width:32px;height:32px;">
+                                            <i class="fa fa-balance-scale"></i>
+                                        </span>
+                                    </div>
+                                    <div>
+                                        <div class="fw-semibold small">Balance Validation</div>
+                                        <p class="text-muted small mb-0">Each voucher is validated so that <strong>total debits = total credits</strong> before saving.</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="d-flex gap-2">
+                                    <div class="flex-shrink-0">
+                                        <span class="d-inline-flex align-items-center justify-content-center rounded-circle bg-info bg-opacity-10 text-info" style="width:32px;height:32px;">
+                                            <i class="fa fa-cogs"></i>
+                                        </span>
+                                    </div>
+                                    <div>
+                                        <div class="fw-semibold small">Background Processing</div>
+                                        <p class="text-muted small mb-0">Large files are processed in the <strong>background</strong> with real-time progress updates.</p>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -128,35 +176,61 @@
 
             {{-- ══════════════ STEP 3: Preview ══════════════ --}}
             @if ($step == 3)
-                <div class="table-responsive mb-4">
-                    <table class="table table-bordered table-sm mb-0">
-                        <thead class="table-light">
-                            <tr>
-                                @foreach ($mappings as $field => $header)
-                                    @if ($header)
-                                        <th class="p-2 fw-bold text-nowrap small">
-                                            {{ $availableFields[$field] }}
-                                            <div class="fw-normal text-muted" style="font-size: .7rem;">({{ $header }})</div>
-                                        </th>
-                                    @endif
-                                @endforeach
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach ($previewData as $row)
-                                <tr>
-                                    @foreach ($mappings as $field => $header)
-                                        @if ($header)
-                                            <td class="p-2 text-nowrap small">{{ $row[array_search($header, $headers)] ?? '-' }}</td>
-                                        @endif
+                @php
+                    $mappedFields = array_filter($mappings);
+                    $colCount = count($mappedFields);
+                @endphp
+                <div class="excel-sheet-wrapper">
+                    {{-- Formula bar --}}
+                    <div class="excel-formula-bar d-flex align-items-center gap-2 px-2 py-1">
+                        <span class="excel-cell-ref px-2 py-1 small fw-bold">A1</span>
+                        <span class="text-muted small"><i class="fa fa-table me-1"></i> Preview &middot; First {{ count($previewData) }} rows of your file</span>
+                        <span class="ms-auto text-muted small">{{ $colCount }} columns mapped</span>
+                    </div>
+
+                    <div class="table-responsive excel-grid">
+                        <table class="table table-bordered mb-0 excel-table">
+                            {{-- Column letters row --}}
+                            <thead>
+                                <tr class="excel-col-header">
+                                    <th class="excel-row-num"></th>
+                                    @php $colLetter = 'A'; @endphp
+                                    @foreach ($mappedFields as $field => $header)
+                                        <th>{{ $colLetter++ }}</th>
                                     @endforeach
                                 </tr>
-                            @endforeach
-                        </tbody>
-                    </table>
+                                {{-- Field names row --}}
+                                <tr class="excel-header-row">
+                                    <th class="excel-row-num">1</th>
+                                    @foreach ($mappedFields as $field => $header)
+                                        <th>
+                                            <div class="fw-semibold">{{ $availableFields[$field] }}</div>
+                                            <div class="excel-field-hint">{{ $header }}</div>
+                                        </th>
+                                    @endforeach
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach ($previewData as $rowIndex => $row)
+                                    <tr>
+                                        <td class="excel-row-num">{{ $rowIndex + 2 }}</td>
+                                        @foreach ($mappedFields as $field => $header)
+                                            <td class="excel-cell">{{ $row[array_search($header, $headers)] ?? '' }}</td>
+                                        @endforeach
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+
+                    {{-- Sheet tabs --}}
+                    <div class="excel-sheet-tabs d-flex align-items-center gap-1 px-2 py-1">
+                        <span class="excel-tab active"><i class="fa fa-file-excel-o me-1"></i> Sheet1</span>
+                        <span class="excel-tab-add"><i class="fa fa-plus"></i></span>
+                    </div>
                 </div>
 
-                <div class="d-flex justify-content-center gap-2">
+                <div class="d-flex justify-content-center gap-2 mt-3">
                     <button class="btn btn-outline-secondary px-4" wire:click="goToStep(2)">
                         <i class="fa fa-arrow-left me-1"></i> Back to Mapping
                     </button>
@@ -230,27 +304,24 @@
 @push('styles')
     <style>
         .upload-zone {
-            border: 3px dashed var(--bs-border-color, #dee2e6);
-            border-radius: 16px;
+            border: 2px dashed var(--bs-border-color, #dee2e6);
+            border-radius: 12px;
             position: relative;
             background: var(--bs-tertiary-bg, #f8f9fa);
-            transition: all 0.3s ease;
+            transition: border-color .2s;
+            cursor: pointer;
         }
 
         .upload-zone:hover {
             border-color: var(--bs-primary);
-            background: var(--bs-body-bg, #fff);
         }
 
         .upload-input {
             position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
+            inset: 0;
             opacity: 0;
             cursor: pointer;
-            z-index: 10;
+            z-index: 2;
         }
 
         .step-icon {
@@ -277,6 +348,164 @@
             border-color: var(--bs-success);
             background: var(--bs-success);
             color: #fff;
+        }
+
+        /* ── Excel-like spreadsheet view ── */
+        .excel-sheet-wrapper {
+            border: 1px solid #b4b4b4;
+            border-radius: 4px;
+            overflow: hidden;
+            background: #fff;
+        }
+
+        [data-bs-theme="dark"] .excel-sheet-wrapper {
+            border-color: var(--bs-border-color);
+            background: var(--bs-body-bg);
+        }
+
+        .excel-formula-bar {
+            background: #f3f3f3;
+            border-bottom: 1px solid #d4d4d4;
+            min-height: 28px;
+        }
+
+        [data-bs-theme="dark"] .excel-formula-bar {
+            background: var(--bs-tertiary-bg);
+            border-color: var(--bs-border-color);
+        }
+
+        .excel-cell-ref {
+            background: #fff;
+            border: 1px solid #d4d4d4;
+            font-family: 'Segoe UI', Calibri, sans-serif;
+            min-width: 50px;
+            text-align: center;
+        }
+
+        [data-bs-theme="dark"] .excel-cell-ref {
+            background: var(--bs-body-bg);
+            border-color: var(--bs-border-color);
+        }
+
+        .excel-grid {
+            margin: 0;
+        }
+
+        .excel-table {
+            font-family: 'Segoe UI', Calibri, Arial, sans-serif;
+            font-size: 12px;
+            border-collapse: collapse;
+        }
+
+        .excel-table th,
+        .excel-table td {
+            border: 1px solid #d4d4d4 !important;
+            padding: 3px 8px !important;
+            vertical-align: middle;
+        }
+
+        [data-bs-theme="dark"] .excel-table th,
+        [data-bs-theme="dark"] .excel-table td {
+            border-color: var(--bs-border-color) !important;
+        }
+
+        .excel-col-header th {
+            background: #e8e8e8;
+            color: #444;
+            text-align: center;
+            font-weight: normal;
+            font-size: 11px;
+            padding: 2px 8px !important;
+        }
+
+        [data-bs-theme="dark"] .excel-col-header th {
+            background: var(--bs-tertiary-bg);
+            color: var(--bs-body-color);
+        }
+
+        .excel-header-row th {
+            background: #e2efda;
+            color: #1a3a1a;
+            font-size: 11px;
+            white-space: nowrap;
+        }
+
+        [data-bs-theme="dark"] .excel-header-row th {
+            background: rgba(var(--bs-success-rgb), 0.15);
+            color: var(--bs-body-color);
+        }
+
+        .excel-field-hint {
+            font-weight: normal;
+            color: #777;
+            font-size: 10px;
+        }
+
+        .excel-row-num {
+            background: #e8e8e8 !important;
+            color: #444;
+            text-align: center !important;
+            font-weight: normal;
+            width: 40px;
+            min-width: 40px;
+            font-size: 11px;
+        }
+
+        [data-bs-theme="dark"] .excel-row-num {
+            background: var(--bs-tertiary-bg) !important;
+            color: var(--bs-body-color);
+        }
+
+        .excel-cell {
+            background: #fff;
+            white-space: nowrap;
+        }
+
+        [data-bs-theme="dark"] .excel-cell {
+            background: var(--bs-body-bg);
+        }
+
+        .excel-cell:hover {
+            outline: 2px solid #217346;
+            outline-offset: -1px;
+            z-index: 1;
+            position: relative;
+        }
+
+        .excel-sheet-tabs {
+            background: #e8e8e8;
+            border-top: 1px solid #d4d4d4;
+        }
+
+        [data-bs-theme="dark"] .excel-sheet-tabs {
+            background: var(--bs-tertiary-bg);
+            border-color: var(--bs-border-color);
+        }
+
+        .excel-tab {
+            background: #fff;
+            border: 1px solid #d4d4d4;
+            border-bottom: none;
+            padding: 3px 14px;
+            font-size: 11px;
+            border-radius: 3px 3px 0 0;
+            cursor: default;
+        }
+
+        [data-bs-theme="dark"] .excel-tab {
+            background: var(--bs-body-bg);
+            border-color: var(--bs-border-color);
+        }
+
+        .excel-tab.active {
+            font-weight: 600;
+        }
+
+        .excel-tab-add {
+            color: #777;
+            font-size: 11px;
+            padding: 3px 8px;
+            cursor: default;
         }
     </style>
 @endpush
