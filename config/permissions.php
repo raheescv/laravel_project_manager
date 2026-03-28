@@ -216,40 +216,8 @@ return [
         'residential lease',
     ],
 
-    // Purchase Request Module
-    'purchase request' => [
-        'create',
-        'view',
-        'edit',
-        'view',
-        'delete-any',
-        'delete',
-        'decide',
-    ],
-
-    // Local Purchase Order Module
-    'local purchase order' => [
-        'create',
-        'edit',
-        'view',
-        'delete',
-        'decide',
-    ],
-
-    // GRN Module
-    'grn' => [
-        'create',
-        'view',
-        'edit',
-        'delete',
-        'decide',
-    ],
-    // LPO purchase Module
-    'lpo-purchase' => [
-        'create',
-        'view',
-        'edit',
-        'delete',
-        'decide',
-    ],
+    'purchase request' => ['create', 'view', 'edit', 'view', 'delete', 'decide'],
+    'local purchase order' => ['create', 'edit', 'view', 'delete', 'decide'],
+    'grn' => ['create', 'view', 'edit', 'delete', 'decide'],
+    'lpo-purchase' => ['create', 'view', 'edit', 'delete', 'decide'],
 ];

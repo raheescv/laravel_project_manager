@@ -85,7 +85,7 @@ class Table extends Component
     {
         try {
             DB::beginTransaction();
-            if (Auth::user()->cannot('purchase request.delete-any')) {
+            if (Auth::user()->cannot('purchase request.delete')) {
                 throw new Exception('You do not have permission to delete purchase requests', 1);
             }
 
