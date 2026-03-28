@@ -202,7 +202,8 @@
                                             <tr>
                                                 <th width="5%"></th>
                                                 <th>Product</th>
-                                                <th width="20%">Qty</th>
+                                                <th class="text-end" width="20%">Qty</th>
+                                                <th class="text-end" width="20%">Rate</th>
                                             </tr>
                                         </thead>
 
@@ -215,7 +216,8 @@
                                                     </td>
 
                                                     <td x-text="product.name"></td>
-                                                    <td x-text="product.quantity"></td>
+                                                    <td class="text-end" x-text="product.quantity"></td>
+                                                    <td class="text-end" x-text="product.rate"></td>
                                                 </tr>
                                             </template>
                                         </tbody>
@@ -302,7 +304,7 @@
                             this.selected[key] = {
                                 product_id: product.product_id,
                                 quantity: product.quantity,
-                                rate: 0,
+                                rate: product.rate || 0,
                                 purchase_request_id: prId
                             };
                         }

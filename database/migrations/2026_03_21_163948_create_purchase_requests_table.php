@@ -18,11 +18,8 @@ return new class() extends Migration
             $table->foreignId('tenant_id')->constrained('tenants')->cascadeOnDelete();
             $table->foreignId('branch_id')->constrained('branches')->cascadeOnDelete();
             $table->foreignId('created_by')->constrained('users')->cascadeOnDelete();
-            $table->enum('status', PurchaseRequestStatus::values())->default(PurchaseRequestStatus::PENDING->value);
-            $table->foreignId('decision_by')
-                ->nullable()
-                ->constrained('users')
-                ->nullOnDelete();
+            $table->enum('status', array_keys(PurchaseRequestStatus::values()))->default(PurchaseRequestStatus::PENDING->value);
+            $table->foreignId('decision_by')->nullable()->constrained('users')->nullOnDelete();
 
             $table->timestamp('decision_at')->nullable();
             $table->text('decision_note')->nullable();

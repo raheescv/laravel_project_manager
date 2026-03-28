@@ -16,7 +16,7 @@ class PurchaseRequestPolicy
      */
     public function viewAny(User $user): bool
     {
-        return $user->can('purchase request.view') || $user->can('purchase request.view own');
+        return $user->can('purchase request.view');
     }
 
     /**
@@ -24,7 +24,7 @@ class PurchaseRequestPolicy
      */
     public function view(User $user, PurchaseRequest $purchaseRequest): bool
     {
-        return $user->can('purchase request.view') || ($user->id === $purchaseRequest->created_by && $user->can('purchase request.view own'));
+        return $user->can('purchase request.view');
     }
 
     /**

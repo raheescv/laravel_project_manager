@@ -16,11 +16,13 @@
     @php
         $statusColor = match ($purchase_request->status) {
             PurchaseRequestStatus::APPROVED => 'success',
+            PurchaseRequestStatus::COMPLETED => 'success',
             PurchaseRequestStatus::REJECTED => 'danger',
             default => 'warning',
         };
         $statusIcon = match ($purchase_request->status) {
             PurchaseRequestStatus::APPROVED => 'fa fa-check-circle',
+            PurchaseRequestStatus::COMPLETED => 'fa fa-check-circle',
             PurchaseRequestStatus::REJECTED => 'fa fa-times-circle',
             default => 'fa fa-clock-o',
         };
@@ -255,6 +257,18 @@
                     </button>
                     <button type="button" class="btn btn-success px-4" wire:click="approve" wire:confirm="Are you sure you want to approve this request?">
                         <i class="fa fa-check me-1"></i> Approve
+                    </button>
+                </div>
+            </div>
+        </div>
+    @endif
+    {{-- Approval Action --}}
+    @if ($purchase_request->status != PurchaseRequestStatus::COMPLETED)
+        <div class="mb-4 card border-0 shadow-sm border-top border-3 border-warning">
+            <div class="card-body p-4">
+                <div class="d-flex justify-content-end gap-2">
+                    <button type="button" class="btn btn-success px-4" wire:click="completed" wire:confirm="Are you sure you want to complete this request?">
+                        <i class="fa fa-check me-1"></i> Mark As Completed
                     </button>
                 </div>
             </div>

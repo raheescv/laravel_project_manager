@@ -6,6 +6,7 @@ enum PurchaseRequestStatus: string
 {
     case PENDING = 'pending';
     case APPROVED = 'approved';
+    case COMPLETED = 'completed';
     case REJECTED = 'rejected';
 
     public function label(): string
@@ -13,6 +14,7 @@ enum PurchaseRequestStatus: string
         return match ($this) {
             self::PENDING => 'Pending',
             self::APPROVED => 'Approved',
+            self::COMPLETED => 'Completed',
             self::REJECTED => 'Rejected',
         };
     }

@@ -53,6 +53,15 @@ class View extends Component
         $this->navigateBack();
     }
 
+    public function completed()
+    {
+        $this->purchase_request->update(['status' => PurchaseRequestStatus::COMPLETED]);
+
+        $this->dispatch('success', ['message' => 'Completed successfully']);
+
+        $this->navigateBack();
+    }
+
     private function navigateBack()
     {
         return $this->redirect(route('purchase-request::view', $this->purchase_request->id), true);

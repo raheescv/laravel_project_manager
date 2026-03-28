@@ -64,7 +64,7 @@ class Page extends Component
     public function getApprovedPurchaseRequestsWithProducts()
     {
         return PurchaseRequest::with('products.product')
-            ->where('status', 'approved')
+            ->approved()
             ->get()
             ->map(function ($pr) {
                 return [
@@ -74,6 +74,7 @@ class Page extends Component
                             'product_id' => $p->product_id,
                             'name' => $p->product->name,
                             'quantity' => $p->quantity,
+                            'rate' => $p->product->cost,
                         ];
                     }),
                 ];
