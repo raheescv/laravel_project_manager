@@ -24,7 +24,7 @@
                 <div class="d-flex align-items-center">
                     <div class="rounded-circle bg-primary bg-opacity-10 d-flex align-items-center justify-content-center me-3"
                         style="width: 40px; height: 40px;">
-                        <i class="fa fa-file-invoice text-primary"></i>
+                        <i class="fa fa-file-text text-primary"></i>
                     </div>
                     <div>
                         <h5 class="mb-0 fw-bold">GRN Details</h5>
@@ -103,7 +103,7 @@
                     <div class="d-flex align-items-center gap-2" x-show="items.length > 0">
                         <button type="button" class="btn btn-sm btn-outline-success rounded-pill px-3"
                             @click="receiveAll()" title="Set all quantities to ordered amounts">
-                            <i class="fa fa-check-double me-1"></i> Receive All
+                            <i class="fa fa-check me-1"></i> Receive All
                         </button>
                         <span class="badge bg-primary bg-opacity-10 text-primary rounded-pill px-3 py-2"
                             x-text="items.length + ' item' + (items.length > 1 ? 's' : '')"></span>
@@ -128,7 +128,7 @@
                         <div class="mb-3">
                             <div class="rounded-circle bg-light d-inline-flex align-items-center justify-content-center"
                                 style="width: 80px; height: 80px;">
-                                <i class="fa fa-dolly fa-2x text-muted opacity-50"></i>
+                                <i class="fa fa-inbox fa-2x text-muted opacity-50"></i>
                             </div>
                         </div>
                         <h6 class="text-muted fw-semibold">No Items Loaded</h6>
