@@ -40,6 +40,7 @@ class CreateUpdateAction
                     'local_purchase_order_item_id' => $item['local_purchase_order_item_id'],
                     'product_id' => $item['product_id'],
                     'quantity' => $item['quantity'],
+                    'rate' => $item['rate'] ?? 0,
                 ];
 
                 $grn->items()->updateOrCreate($findData, $saveItemData);

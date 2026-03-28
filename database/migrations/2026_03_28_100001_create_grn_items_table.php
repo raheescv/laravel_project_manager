@@ -15,6 +15,8 @@ return new class() extends Migration
             $table->unsignedBigInteger('local_purchase_order_item_id');
             $table->unsignedBigInteger('product_id');
             $table->decimal('quantity', 12, 2);
+            $table->decimal('rate', 12, 2)->default(0);
+            $table->decimal('total', 16, 4)->storedAs('quantity * rate');
             $table->timestamps();
             $table->softDeletes();
 

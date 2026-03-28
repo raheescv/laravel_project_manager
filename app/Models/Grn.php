@@ -71,6 +71,16 @@ class Grn extends Model
         return $this->belongsTo(User::class, 'decision_by');
     }
 
+    public function journal()
+    {
+        return $this->hasOne(Journal::class, 'model_id')->where('model', 'Grn');
+    }
+
+    public function journals(): HasMany
+    {
+        return $this->hasMany(Journal::class, 'model_id')->where('model', 'Grn');
+    }
+
     public function scopePending($query)
     {
         return $query->where('status', GrnStatus::PENDING);

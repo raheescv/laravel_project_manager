@@ -16,6 +16,8 @@ class GrnItem extends Model
         'local_purchase_order_item_id',
         'product_id',
         'quantity',
+        'rate',
+        // 'total',
     ];
 
     public function grn()

@@ -2,8 +2,13 @@
 
 namespace App\Livewire\Grn;
 
+use App\Actions\Grn\JournalEntryAction;
+use App\Actions\Grn\StockUpdateAction;
 use App\Enums\Grn\GrnStatus;
 use App\Models\Grn;
+use Exception;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Livewire\Component;
 
 class View extends Component
@@ -16,24 +21,56 @@ class View extends Component
 
     public function mount(int $grn_id, bool $is_approvable = false)
     {
-        $this->grn = Grn::with(['localPurchaseOrder.vendor', 'creator', 'branch', 'decisionMaker', 'items.product.brand', 'items.product.mainCategory', 'items.product.subCategory', 'items.product.unit'])
-            ->findOrFail($grn_id);
+        $this->grn = Grn::with([
+            'localPurchaseOrder.vendor',
+            'creator',
+            'branch',
+            'decisionMaker',
+            'items.product.brand',
+            'items.product.mainCategory',
+            'items.product.subCategory',
+            'items.product.unit',
+            'items.localPurchaseOrderItem',
+            'journals.entries.account',
+            'journals.entries.counterAccount',
+        ])->findOrFail($grn_id);
 
         $this->is_approvable = $is_approvable;
     }
 
     public function accept()
     {
-        $this->grn->update([
-            'status' => GrnStatus::ACCEPTED,
-            'decision_by' => auth()->id(),
-            'decision_at' => now(),
-            'decision_note' => $this->remarks,
-        ]);
+        try {
+            DB::beginTransaction();
 
-        $this->dispatch('success', ['message' => 'GRN accepted successfully']);
+            $this->grn->update([
+                'status' => GrnStatus::ACCEPTED,
+                'decision_by' => Auth::id(),
+                'decision_at' => now(),
+                'decision_note' => $this->remarks,
+            ]);
 
-        $this->navigateBack();
+            // Stock update
+            $this->grn->load(['items.product', 'items.localPurchaseOrderItem']);
+            $stockResponse = (new StockUpdateAction())->execute($this->grn, Auth::id(), 'receive');
+            if (! $stockResponse['success']) {
+                throw new Exception('GRN accepted but stock update failed: '.$stockResponse['message']);
+            }
+
+            // Journal entry
+            $this->grn->load(['vendor', 'localPurchaseOrder.vendor']);
+            $journalResponse = (new JournalEntryAction())->execute($this->grn, Auth::id());
+            if (! $journalResponse['success']) {
+                throw new Exception('GRN accepted but journal entry failed: '.$journalResponse['message']);
+            }
+
+            DB::commit();
+            $this->dispatch('success', ['message' => 'GRN accepted successfully. Stock and journal entries updated.']);
+            $this->navigateBack();
+        } catch (Exception $e) {
+            DB::rollback();
+            $this->dispatch('error', ['message' => $e->getMessage()]);
+        }
     }
 
     public function reject()
@@ -42,16 +79,23 @@ class View extends Component
             'remarks' => 'required|string|min:3',
         ]);
 
-        $this->grn->update([
-            'status' => GrnStatus::REJECTED,
-            'decision_by' => auth()->id(),
-            'decision_at' => now(),
-            'decision_note' => $this->remarks,
-        ]);
+        try {
+            DB::beginTransaction();
 
-        $this->dispatch('success', ['message' => 'GRN rejected successfully']);
+            $this->grn->update([
+                'status' => GrnStatus::REJECTED,
+                'decision_by' => Auth::id(),
+                'decision_at' => now(),
+                'decision_note' => $this->remarks,
+            ]);
 
-        $this->navigateBack();
+            DB::commit();
+            $this->dispatch('success', ['message' => 'GRN rejected successfully']);
+            $this->navigateBack();
+        } catch (Exception $e) {
+            DB::rollback();
+            $this->dispatch('error', ['message' => $e->getMessage()]);
+        }
     }
 
     private function navigateBack()

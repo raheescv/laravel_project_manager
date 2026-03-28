@@ -38,10 +38,24 @@
                             <h5 class="mb-0 fw-bold">GRN {{ $grn->grn_no }}</h5>
                             <small class="text-muted">{{ $grn->branch?->name }}</small>
                         </div>
-                        <span class="badge bg-{{ $statusColor }} rounded-pill px-3 py-2 fs-6">
-                            <i class="{{ $statusIcon }} me-1"></i>
-                            {{ $grn->status->label() }}
-                        </span>
+                        <div class="d-flex align-items-center gap-2">
+                            @if ($grn->status === GrnStatus::PENDING)
+                                @can('grn.create')
+                                    <a href="{{ route('grn::edit', $grn->id) }}" class="btn btn-sm btn-outline-primary">
+                                        <i class="fa fa-pencil me-1"></i> Edit
+                                    </a>
+                                @endcan
+                                @can('grn.decide')
+                                    <a href="{{ route('grn::decision', $grn->id) }}" class="btn btn-sm btn-outline-warning">
+                                        <i class="fa fa-gavel me-1"></i> Accept / Reject
+                                    </a>
+                                @endcan
+                            @endif
+                            <span class="badge bg-{{ $statusColor }} rounded-pill px-3 py-2 fs-6">
+                                <i class="{{ $statusIcon }} me-1"></i>
+                                {{ $grn->status->label() }}
+                            </span>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -75,7 +89,7 @@
                                     <i class="demo-psi-calendar-4 text-primary me-2"></i>
                                     <small class="text-muted">Date</small>
                                 </div>
-                                <div class="fw-medium">{{ $grn->date ? \Carbon\Carbon::parse($grn->date)->format('d M Y') : '-' }}</div>
+                                <div class="fw-medium">{{ systemDate($grn->date) }}</div>
                             </div>
                         </div>
                         <div class="col-6">
@@ -274,6 +288,99 @@
             </div>
         </div>
     </div>
+
+    {{-- Journal Entries --}}
+    @if ($grn->journals->count())
+        @php
+            $vendorId = $grn->vendor_id ?? $grn->localPurchaseOrder?->vendor_id;
+        @endphp
+        <div class="mb-4 card border-0 shadow-sm">
+            <div class="card-body p-3">
+                <div class="d-flex align-items-center justify-content-between mb-3">
+                    <div class="d-flex align-items-center">
+                        <div class="icon-box rounded-circle p-2 me-2" style="background-color: rgba(111, 66, 193, 0.1);">
+                            <i class="fa fa-book fs-4" style="color: #6f42c1;"></i>
+                        </div>
+                        <h5 class="mb-0 fw-bold">Journal Entries</h5>
+                    </div>
+                    <span class="badge rounded-pill px-3 py-2" style="background-color: rgba(111, 66, 193, 0.1); color: #6f42c1;">
+                        {{ $grn->journals->count() }} {{ Str::plural('journal', $grn->journals->count()) }}
+                    </span>
+                </div>
+
+                @foreach ($grn->journals as $journal)
+                    <div class="mb-3 {{ !$loop->last ? 'border-bottom pb-3' : '' }}">
+                        <div class="d-flex align-items-center justify-content-between mb-2">
+                            <div>
+                                <span class="fw-semibold text-dark">{{ $journal->description }}</span>
+                                @if ($journal->reference_number)
+                                    <span class="badge bg-light text-muted ms-2">Ref: {{ $journal->reference_number }}</span>
+                                @endif
+                            </div>
+                            <small class="text-muted">
+                                <i class="fa fa-calendar me-1"></i>
+                                {{ $journal->date ? \Carbon\Carbon::parse($journal->date)->format('d M Y') : '-' }}
+                            </small>
+                        </div>
+
+                        <div class="table-responsive">
+                            <table class="table table-sm table-hover align-middle mb-0">
+                                <thead>
+                                    <tr class="bg-light">
+                                        <th class="border-0 rounded-start small text-muted fw-semibold">Account</th>
+                                        <th class="border-0 small text-muted fw-semibold">Remarks</th>
+                                        <th class="border-0 text-end small text-muted fw-semibold" style="width: 130px;">Debit</th>
+                                        <th class="border-0 text-end rounded-end small text-muted fw-semibold" style="width: 130px;">Credit</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach ($journal->entries->where('account_id', '!=', $vendorId) as $entry)
+                                        <tr>
+                                            <td>
+                                                <div class="d-flex align-items-center">
+                                                    <i class="fa fa-{{ $entry->debit > 0 ? 'arrow-up text-success' : 'arrow-down text-danger' }} me-2 small"></i>
+                                                    <span class="fw-medium">{{ $entry->account?->name ?? '-' }}</span>
+                                                </div>
+                                            </td>
+                                            <td class="text-muted small">{{ $entry->remarks ?? '-' }}</td>
+                                            <td class="text-end">
+                                                @if ($entry->debit > 0)
+                                                    <span class="fw-medium text-success">{{ number_format($entry->debit, 2) }}</span>
+                                                @else
+                                                    <span class="text-muted">-</span>
+                                                @endif
+                                            </td>
+                                            <td class="text-end">
+                                                @if ($entry->credit > 0)
+                                                    <span class="fw-medium text-danger">{{ number_format($entry->credit, 2) }}</span>
+                                                @else
+                                                    <span class="text-muted">-</span>
+                                                @endif
+                                            </td>
+                                        </tr>
+                                    @endforeach
+                                </tbody>
+                                <tfoot>
+                                    @php
+                                        $filteredEntries = $journal->entries->where('account_id', '!=', $vendorId);
+                                    @endphp
+                                    <tr class="bg-light border-top">
+                                        <td colspan="2" class="border-0 fw-bold text-end">Total</td>
+                                        <td class="border-0 text-end fw-bold text-success">
+                                            {{ number_format($filteredEntries->sum('debit'), 2) }}
+                                        </td>
+                                        <td class="border-0 text-end fw-bold text-danger">
+                                            {{ number_format($filteredEntries->sum('credit'), 2) }}
+                                        </td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                    </div>
+                @endforeach
+            </div>
+        </div>
+    @endif
 
     {{-- Approval Action --}}
     @if ($grn->status == GrnStatus::PENDING && $is_approvable)
