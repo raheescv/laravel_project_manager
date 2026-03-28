@@ -2,6 +2,7 @@
 
 namespace App\Policies;
 
+use App\Enums\PurchaseRequest\PurchaseRequestStatus;
 use App\Models\PurchaseRequest;
 use App\Models\User;
 use Illuminate\Auth\Access\HandlesAuthorization;
@@ -39,7 +40,7 @@ class PurchaseRequestPolicy
      */
     public function update(User $user, PurchaseRequest $purchaseRequest): bool
     {
-        return $user->can('purchase request.edit') && $user->id === $purchaseRequest->created_by && $purchaseRequest->status === \App\Enums\PurchaseRequest\PurchaseRequestStatus::PENDING;
+        return $user->can('purchase request.edit') && $purchaseRequest->status === PurchaseRequestStatus::PENDING;
     }
 
     /**
@@ -47,7 +48,7 @@ class PurchaseRequestPolicy
      */
     public function delete(User $user, PurchaseRequest $purchaseRequest): bool
     {
-        return $user->can('purchase request.delete') && $user->id === $purchaseRequest->created_by && $purchaseRequest->status === \App\Enums\PurchaseRequest\PurchaseRequestStatus::PENDING;
+        return $user->can('purchase request.delete') && $purchaseRequest->status === PurchaseRequestStatus::PENDING;
     }
 
     /**
@@ -55,7 +56,7 @@ class PurchaseRequestPolicy
      */
     public function decide(User $user, PurchaseRequest $purchaseRequest): bool
     {
-        return $user->can('purchase request.decide') && $purchaseRequest->status === \App\Enums\PurchaseRequest\PurchaseRequestStatus::PENDING;
+        return $user->can('purchase request.decide') && $purchaseRequest->status === PurchaseRequestStatus::PENDING;
     }
 
     /**

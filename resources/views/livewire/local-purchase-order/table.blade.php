@@ -185,27 +185,29 @@
                                         Actions
                                     </button>
                                     <ul class="dropdown-menu dropdown-menu-end">
-                                        @can('view', $item)
+                                        @can('local purchase order.view', $item)
                                             <li>
                                                 <a class="dropdown-item" href="{{ route('lpo::view', $item->id) }}">
                                                     <i class="demo-pli-magnifi-glass me-2"></i> View
                                                 </a>
                                             </li>
                                         @endcan
-                                        @can('update', $item)
-                                            <li>
-                                                <a class="dropdown-item" href="{{ route('lpo::edit', $item->id) }}">
-                                                    <i class="demo-pli-file-edit me-2"></i> Edit
-                                                </a>
-                                            </li>
-                                        @endcan
-                                        @can('decide', $item)
-                                            <li>
-                                                <a class="dropdown-item" href="{{ route('lpo::decision', $item->id) }}">
-                                                    <i class="demo-pli-check me-2"></i> Approve/Reject
-                                                </a>
-                                            </li>
-                                        @endcan
+                                        @if (!$item->decision_at)
+                                            @can('local purchase order.edit', $item)
+                                                <li>
+                                                    <a class="dropdown-item" href="{{ route('lpo::edit', $item->id) }}">
+                                                        <i class="demo-pli-file-edit me-2"></i> Edit
+                                                    </a>
+                                                </li>
+                                            @endcan
+                                            @can('local purchase order.decide', $item)
+                                                <li>
+                                                    <a class="dropdown-item" href="{{ route('lpo::decision', $item->id) }}">
+                                                        <i class="demo-pli-check me-2"></i> Approve/Reject
+                                                    </a>
+                                                </li>
+                                            @endcan
+                                        @endif
                                     </ul>
                                 </div>
                             </td>
