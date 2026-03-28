@@ -1,86 +1,89 @@
 <div>
-    <div class="card-header bg-white p-4">
-        <!-- Header Actions -->
-        <div class="d-flex justify-content-between align-items-center mb-4">
-            <div class="d-flex align-items-center gap-3">
-                <div class="btn-group">
+    <div class="card-header bg-light py-3">
+        <div class="row mt-3">
+            <div class="col-md-6 d-flex flex-wrap gap-2 align-items-center mb-3 mb-md-0">
+                @can('general voucher.create')
+                    <button class="btn btn-primary d-flex align-items-center shadow-sm" id="PageAdd">
+                        <i class="demo-psi-add me-2 fs-5"></i>
+                        Add New
+                    </button>
+                @endcan
+                <div class="btn-group shadow-sm">
                     @can('general voucher.create')
-                        <button class="btn btn-primary btn-sm d-inline-flex align-items-center gap-2" id="PageAdd">
-                            <i class="demo-psi-add fs-5"></i>
-                            Add New
-                        </button>
+                        <a href="{{ route('account::general-voucher::import') }}" class="btn btn-success btn-sm d-flex align-items-center" title="Import Vouchers" data-bs-toggle="tooltip">
+                            <i class="demo-pli-download-from-cloud me-md-1 fs-5"></i>
+                            <span class="d-none d-md-inline">Import</span>
+                        </a>
                     @endcan
                     @can('general voucher.delete')
-                        <button class="btn btn-outline-danger btn-sm d-inline-flex align-items-center gap-2" wire:click="delete()" wire:confirm="Are you sure you want to delete the selected items?">
-                            <i class="demo-pli-recycling fs-5"></i>
-                            Delete
+                        <button class="btn btn-danger btn-sm d-flex align-items-center" title="Delete Selected" data-bs-toggle="tooltip" wire:click="delete()" wire:confirm="Are you sure you want to delete the selected items?">
+                            <i class="demo-pli-recycling me-md-1 fs-5"></i>
+                            <span class="d-none d-md-inline">Delete</span>
                         </button>
                     @endcan
+                    <button class="btn btn-outline-primary btn-sm d-flex align-items-center" data-bs-toggle="offcanvas" data-bs-target="#generalVoucherColumnVisibility" aria-controls="generalVoucherColumnVisibility" title="Column Visibility">
+                        <i class="demo-pli-layout-grid me-md-1 fs-5"></i>
+                        <span class="d-none d-md-inline">Columns</span>
+                    </button>
                 </div>
             </div>
-            <div class="d-flex gap-2 align-items-center">
-                <div class="input-group input-group-sm" style="width: 120px;">
-                    <select wire:model.live="limit" class="form-select border-start-0">
-                        <option value="10">10 rows</option>
-                        <option value="100">100 rows</option>
-                        <option value="500">500 rows</option>
-                    </select>
-                </div>
-                <div class="input-group input-group-sm" style="width: 200px;">
-                    <span class="input-group-text bg-light border-end-0">
-                        <i class="fa fa-search"></i>
-                    </span>
-                    <input type="text" wire:model.live="filter.search" class="form-control border-start-0" placeholder="Search vouchers..." autofocus>
-                </div>
-                <div class="dropdown">
-                    <button class="btn btn-sm btn-outline-primary" data-bs-toggle="dropdown" aria-expanded="false">
-                        <i class="demo-pli-layout-grid me-1"></i> Columns
-                    </button>
-                    <ul class="dropdown-menu dropdown-menu-end shadow-sm">
-                        <li>
-                            <a class="dropdown-item" data-bs-toggle="offcanvas" data-bs-target="#generalVoucherColumnVisibility" aria-controls="generalVoucherColumnVisibility">
-                                <i class="demo-pli-column-width me-2"></i>Column Visibility
-                            </a>
-                        </li>
-                    </ul>
+
+            <div class="col-md-6">
+                <div class="row g-2 align-items-center">
+                    <div class="col-auto">
+                        <label class="form-label mb-0 text-muted small fw-semibold">Show:</label>
+                    </div>
+                    <div class="col-auto">
+                        <select wire:model.live="limit" class="form-select form-select-sm border-secondary-subtle shadow-sm">
+                            <option value="10">10</option>
+                            <option value="100">100</option>
+                            <option value="500">500</option>
+                        </select>
+                    </div>
+                    <div class="col">
+                        <div class="input-group input-group-sm">
+                            <span class="input-group-text bg-white border-secondary-subtle">
+                                <i class="fa fa-search"></i>
+                            </span>
+                            <input type="text" wire:model.live="filter.search" autofocus placeholder="Search vouchers..." class="form-control form-control-sm border-secondary-subtle shadow-sm"
+                                autocomplete="off">
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
-
-        <!-- Filter Section -->
-        <div class="bg-light rounded-3 border p-3 mt-3">
-            <div class="row g-3">
-                <div class="col-md-2">
-                    <div class="form-group">
-                        <label class="form-label text-muted small fw-semibold mb-2">
-                            <i class="fa fa-calendar me-1"></i> From Date
-                        </label>
-                        {{ html()->date('from_date')->value('')->class('form-control form-control-sm')->id('from_date')->attribute('wire:model.live', 'filter.from_date') }}
-                    </div>
+        <hr class="my-3">
+        <div class="row g-3">
+            <div class="col-md-2">
+                <div class="form-group">
+                    <label class="form-label text-muted small fw-semibold mb-2">
+                        <i class="fa fa-calendar me-1"></i> From Date
+                    </label>
+                    {{ html()->date('from_date')->value('')->class('form-control form-control-sm border-secondary-subtle shadow-sm')->id('from_date')->attribute('wire:model.live', 'filter.from_date') }}
                 </div>
-                <div class="col-md-2">
-                    <div class="form-group">
-                        <label class="form-label text-muted small fw-semibold mb-2">
-                            <i class="fa fa-calendar me-1"></i> To Date
-                        </label>
-                        {{ html()->date('to_date')->value('')->class('form-control form-control-sm')->id('to_date')->attribute('wire:model.live', 'filter.to_date') }}
-                    </div>
+            </div>
+            <div class="col-md-2">
+                <div class="form-group">
+                    <label class="form-label text-muted small fw-semibold mb-2">
+                        <i class="fa fa-calendar me-1"></i> To Date
+                    </label>
+                    {{ html()->date('to_date')->value('')->class('form-control form-control-sm border-secondary-subtle shadow-sm')->id('to_date')->attribute('wire:model.live', 'filter.to_date') }}
                 </div>
-                <div class="col-md-5" wire:ignore>
-                    <div class="form-group">
-                        <label class="form-label text-muted small fw-semibold mb-2">
-                            <i class="fa fa-building me-1"></i> Account
-                        </label>
-                        {{ html()->select('account_id', [])->value('')->class('select-account_id-list')->id('account_id')->attribute('wire:model', 'filter.account_id')->placeholder('Select Account') }}
-                    </div>
+            </div>
+            <div class="col-md-5" wire:ignore>
+                <div class="form-group">
+                    <label class="form-label text-muted small fw-semibold mb-2">
+                        <i class="fa fa-building me-1"></i> Account
+                    </label>
+                    {{ html()->select('account_id', [])->value('')->class('select-account_id-list')->id('account_id')->attribute('wire:model', 'filter.account_id')->placeholder('Select Account') }}
                 </div>
-                <div class="col-md-3" wire:ignore>
-                    <div class="form-group">
-                        <label class="form-label text-muted small fw-semibold mb-2">
-                            <i class="fa fa-building me-1"></i> Branch
-                        </label>
-                        {{ html()->select('branch_id', [])->value('')->class('select-branch_id-list')->id('branch_id')->attribute('wire:model', 'filter.branch_id')->placeholder('Select Branch') }}
-                    </div>
+            </div>
+            <div class="col-md-3" wire:ignore>
+                <div class="form-group">
+                    <label class="form-label text-muted small fw-semibold mb-2">
+                        <i class="fa fa-building me-1"></i> Branch
+                    </label>
+                    {{ html()->select('branch_id', [])->value('')->class('select-branch_id-list')->id('branch_id')->attribute('wire:model', 'filter.branch_id')->placeholder('Select Branch') }}
                 </div>
             </div>
         </div>
@@ -262,14 +265,14 @@
                                 </td>
                             @endif
                             <td class="align-middle text-center">
-                                <div class="btn-group" role="group">
+                                <div class="btn-group btn-group-sm" role="group">
                                     @can('general voucher.edit')
-                                        <button class="btn btn-sm btn-outline-primary edit" table_id="{{ $item->journal_id }}" title="Edit">
-                                            <i class="fa fa-edit"></i>
+                                        <button class="btn btn-xs btn-outline-primary edit px-2 py-1" table_id="{{ $item->journal_id }}" title="Edit">
+                                            <i class="fa fa-edit small"></i>
                                         </button>
                                     @endcan
-                                    <a href="{{ route('account::general-voucher::print', $item->journal_id) }}" target="_blank" class="btn btn-sm btn-outline-success" title="Print Voucher">
-                                        <i class="fa fa-print"></i>
+                                    <a href="{{ route('account::general-voucher::print', $item->journal_id) }}" target="_blank" class="btn btn-xs btn-outline-success px-2 py-1" title="Print Voucher">
+                                        <i class="fa fa-print small"></i>
                                     </a>
                                 </div>
                             </td>

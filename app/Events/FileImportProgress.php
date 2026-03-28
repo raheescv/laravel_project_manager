@@ -12,7 +12,7 @@ class FileImportProgress implements ShouldBroadcast
 {
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
-    public function __construct(public $user_id, public $type, public $progress) {}
+    public function __construct(public $user_id, public $type, public $progress, public $message = null) {}
 
     public function broadcastOn()
     {

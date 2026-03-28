@@ -18,6 +18,11 @@ class GeneralVoucherController extends Controller
         return view('accounts.general-voucher.index');
     }
 
+    public function import()
+    {
+        return view('accounts.general-voucher.import');
+    }
+
     public function print($id)
     {
         $journal = Journal::where('id', $id)
