@@ -339,7 +339,7 @@ class Page extends Component
             unset($this->items[$targetKey]);
             $this->items = array_values($this->items);
             $this->mainCalculator();
-            $this->dispatch('success', ['message' => 'item removed successfully']);
+            $this->dispatch('item-removed-success', ['message' => 'item removed successfully']);
         } catch (\Throwable $th) {
             $this->dispatch('error', ['message' => $th->getMessage()]);
         }
