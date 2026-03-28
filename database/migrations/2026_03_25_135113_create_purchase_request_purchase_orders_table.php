@@ -15,23 +15,19 @@ return new class() extends Migration
         Schema::create('local_purchase_orders', function (Blueprint $table) {
             $table->id();
 
-            $table->foreignId('vendor_id')->references('id')->on('accounts')->cascadeOnDelete();
-
             $table->foreignId('tenant_id')->constrained('tenants')->cascadeOnDelete();
             $table->foreignId('branch_id')->constrained('branches')->cascadeOnDelete();
 
-            $table->foreignId('created_by')->constrained('users')->cascadeOnDelete();
+            $table->foreignId('vendor_id')->references('id')->on('accounts')->cascadeOnDelete();
 
-            $table->decimal('total_amount', 12, 2)->default(0);
-            $table->foreignId('decision_by')
-                ->nullable()
-                ->constrained('users')
-                ->nullOnDelete();
+            $table->decimal('total', 12, 2)->default(0);
+            $table->foreignId('decision_by')->nullable()->constrained('users')->nullOnDelete();
 
             $table->timestamp('decision_at')->nullable();
             $table->text('decision_note')->nullable();
             $table->string('status')->default(LocalPurchaseOrderStatus::PENDING->value);
 
+            $table->foreignId('created_by')->constrained('users')->cascadeOnDelete();
             $table->timestamps();
             $table->softDeletes();
 

@@ -4,7 +4,6 @@ namespace App\Actions\PurchaseRequest;
 
 use App\Enums\PurchaseRequest\PurchaseRequestStatus;
 use App\Models\PurchaseRequest;
-use Illuminate\Support\Facades\DB;
 
 class DeleteAction
 {
@@ -14,31 +13,25 @@ class DeleteAction
             $ids = is_array($ids) ? $ids : [$ids];
 
             $return = [];
-            DB::transaction(function () use ($ids, &$return) {
-                $requests = PurchaseRequest::whereIn('id', $ids)->get();
+            $requests = PurchaseRequest::whereIn('id', $ids)->get();
 
-                $deletable = $requests->filter(
-                    fn ($r) => $r->status === PurchaseRequestStatus::PENDING
-                );
+            $deletable = $requests->filter(fn($r) => $r->status === PurchaseRequestStatus::PENDING);
 
-                $nonDeletable = $requests->filter(
-                    fn ($r) => $r->status !== PurchaseRequestStatus::PENDING
-                );
-                PurchaseRequest::whereIn('id', $deletable->pluck('id'))->delete();
+            $nonDeletable = $requests->filter(fn($r) => $r->status !== PurchaseRequestStatus::PENDING);
+            PurchaseRequest::whereIn('id', $deletable->pluck('id'))->delete();
 
-                $return['success'] = true;
-                if ($nonDeletable->isEmpty()) {
-                    $return['message'] = 'All selected records deleted successfully';
-                } else {
-                    $return['message'] =
-                        'Some records could not be deleted because they are not in pending status';
+            if ($nonDeletable->isEmpty()) {
+                $return['message'] = 'All selected records deleted successfully';
+            } else {
+                $return['message'] = 'Some records could not be deleted because they are not in pending status';
+            }
 
-                    $return['data'] = [
-                        'deleted_ids' => $deletable->pluck('id'),
-                        'skipped_ids' => $nonDeletable->pluck('id'),
-                    ];
-                }
-            });
+            $data = [
+                'deleted_ids' => $deletable->pluck('id'),
+                'skipped_ids' => $nonDeletable->pluck('id'),
+            ];
+            $return['success'] = true;
+            $return['data'] = $data;
         } catch (\Throwable $e) {
             $return['success'] = false;
             $return['message'] = $e->getMessage();

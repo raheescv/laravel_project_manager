@@ -17,15 +17,15 @@ class LocalPurchaseOrder extends Model
     use BelongsToTenant, SoftDeletes;
 
     protected $fillable = [
-        'vendor_id',
         'tenant_id',
         'branch_id',
-        'created_by',
+        'vendor_id',
         'total_amount',
         'decision_by',
         'decision_at',
         'decision_note',
         'status',
+        'created_by',
     ];
 
     protected $casts = [
@@ -33,12 +33,7 @@ class LocalPurchaseOrder extends Model
         'decision_at' => 'datetime',
     ];
 
-    protected static function booted()
-    {
-        static::creating(function ($model) {
-            $model->created_by = auth()->id();
-        });
-    }
+    protected static function booted() {}
 
     public function branch(): BelongsTo
     {

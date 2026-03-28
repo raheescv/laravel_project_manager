@@ -21,6 +21,12 @@
         <div class="row g-3">
             <div class="col-md-4 d-flex align-items-center">
                 <div class="btn-group">
+                    @can('purchase request.create')
+                        <a class="btn btn-primary d-flex align-items-center shadow-sm" href="{{ route('purchase-request::create') }}">
+                            <i class="demo-psi-add me-2"></i>
+                            Create
+                        </a>
+                    @endcan
                     @can('purchase request.delete-any')
                         <button class="btn btn-sm btn-outline-danger" title="Delete selected items" wire:click="delete()"
                             wire:confirm="Are you sure you want to delete the selected items?" x-show="selected.length > 0">
@@ -43,23 +49,10 @@
                             <span class="input-group-text border-end-0">
                                 <i class="demo-pli-magnifi-glass"></i>
                             </span>
-                            <input type="text" wire:model.live.debounce.500ms="search"
-                                class="form-control border-start-0" placeholder="Search purchase requests..." autofocus>
+                            <input type="text" wire:model.live.debounce.500ms="search" class="form-control border-start-0"
+                                placeholder="Search purchase requests..." autofocus>
                         </div>
                     </div>
-                    {{-- <div class="dropdown">
-                        <button class="btn btn-sm btn-outline-primary" data-bs-toggle="dropdown" aria-expanded="false">
-                            <i class="demo-pli-layout-grid me-1"></i> Columns
-                        </button>
-                        <ul class="shadow-sm dropdown-menu dropdown-menu-end">
-                            <li>
-                                <a class="dropdown-item" data-bs-toggle="offcanvas"
-                                    data-bs-target="#purchaseColumnVisibility" aria-controls="purchaseColumnVisibility">
-                                    <i class="demo-pli-column-width me-2"></i>Column Visibility
-                                </a>
-                            </li>
-                        </ul>
-                    </div> --}}
                 </div>
             </div>
         </div>
@@ -77,13 +70,37 @@
                         <label class="form-label" for="branch_id">
                             <i class="demo-psi-home me-1"></i> Branch
                         </label>
-                        {{ html()->select('branch_id', [session('branch_id') => session('branch_name')])->class('select-assigned-branch_id-list form-control form-control-s')->id('branch_id')->placeholder('All Branches') }}
+                        {{ html()->select('branch_id', [session('branch_id') => session('branch_name')])->value(session('branch_id'))->class('select-assigned-branch_id-list')->id('branch_id')->placeholder('All Branches') }}
                     </div>
                     <div class="col-md-3" wire:ignore>
                         <label class="form-label" for="status">
                             <i class="fa fa-flag me-1"></i> Status
                         </label>
                         {{ html()->select('status', PurchaseRequestStatus::values())->value($status)->class('form-control form-control-sm')->id('status')->placeholder('All Statuses') }}
+                    </div>
+                    <div class="col-md-3" wire:ignore>
+                        <label class="form-label" for="created_by">
+                            <i class="demo-psi-male me-1"></i> Created By
+                        </label>
+                        {{ html()->select('created_by', [])->value('')->class('select-user_id-list')->id('created_by')->placeholder('All Users') }}
+                    </div>
+                    <div class="col-md-3" wire:ignore>
+                        <label class="form-label" for="decision_by">
+                            <i class="demo-psi-male me-1"></i> Decision Maker
+                        </label>
+                        {{ html()->select('decision_by', [])->value('')->class('select-user_id-list')->id('decision_by')->placeholder('All Users') }}
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label" for="from_date">
+                            <i class="demo-psi-calendar-4 me-1"></i> From Date
+                        </label>
+                        <input type="date" wire:model.live="from_date" class="form-control form-control-sm" id="from_date">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label" for="to_date">
+                            <i class="demo-psi-calendar-4 me-1"></i> To Date
+                        </label>
+                        <input type="date" wire:model.live="to_date" class="form-control form-control-sm" id="to_date">
                     </div>
                 </div>
             </div>
@@ -97,33 +114,22 @@
                         <th class="ps-3">
                             <div class="d-flex align-items-center">
                                 <div class="form-check me-2">
-                                    <input type="checkbox" class="form-check-input" x-on:change="toggleSelectAll()"
-                                        x-model="selectAll" id="selectAll">
+                                    <input type="checkbox" class="form-check-input" x-on:change="toggleSelectAll()" x-model="selectAll"
+                                        id="selectAll">
                                     <label class="form-check-label" for="selectAll"></label>
                                 </div>
                                 <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="id" label="#" />
                             </div>
                         </th>
-                        <th>
-                            Products
+                        <th> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="created_at" label="Request Date" /> </th>
+                        <th> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="created_by" label="Created By" /> </th>
+                        <th class="text-end"> Products </th>
+                        <th> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="decision_by" label="Approved/Rejected By" />
+                        <th> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="decision_at" label="Approved/Rejected On" />
                         </th>
-                        <th class="text-nowrap">
-                            <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="status" label="Status" />
+                        <th class="text-nowrap"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="status" label="Status" />
                         </th>
-                        <th>
-                            Approved/Rejected By
-                        </th>
-                        <th>
-                            <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="decision_at"
-                                label="Approved/Rejected On" />
-                        </th>
-                        <th>
-                            <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="created_at"
-                                label="Purchase Request Date" />
-                        </th>
-                        <th>
-                            Actions
-                        </th>
+                        <th> Actions </th>
                     </tr>
                 </thead>
                 <tbody>
@@ -132,23 +138,22 @@
                             <td class="ps-3">
                                 <div class="gap-2 d-flex align-items-center">
                                     <div class="mb-0 form-check">
-                                        <input type="checkbox" class="form-check-input" value="{{ $item->id }}"
-                                            x-model="selected" id="checkbox_{{ $item->id }}">
+                                        <input type="checkbox" class="form-check-input" value="{{ $item->id }}" x-model="selected"
+                                            id="checkbox_{{ $item->id }}">
                                     </div>
                                     <span class="text-muted">#{{ $item->id }}</span>
                                 </div>
                             </td>
                             <td class="text-nowrap">
                                 <div class="gap-2 d-flex align-items-center">
-                                    <span>{{ $item->products_count }}</span>
+                                    <i class="demo-psi-calendar-4 fs-5 text-primary"></i>
+                                    <span>{{ systemDateTime($item->created_at) }}</span>
                                 </div>
                             </td>
-                            <td>
-                                <div
-                                    class="badge bg-{{ $item->status === PurchaseRequestStatus::APPROVED ? 'success' : ($item->status === PurchaseRequestStatus::PENDING ? 'warning' : 'danger') }} bg-opacity-10 text-{{ $item->status === PurchaseRequestStatus::APPROVED ? 'success' : ($item->status === PurchaseRequestStatus::PENDING ? 'warning' : 'danger') }}">
-                                    {{ $item->status->label() }}
-                                </div>
+                            <td class="text-nowrap">
+                                <span>{{ $item->creator?->name }}</span>
                             </td>
+                            <td class="text-end"> {{ $item->products_count }} </td>
                             <td class="text-nowrap">
                                 <div class="gap-2 d-flex align-items-center">
                                     <span>{{ $item->decisionMaker?->name }}</span>
@@ -162,31 +167,28 @@
                                     </div>
                                 @endif
                             </td>
-                            <td class="text-nowrap">
-                                <div class="gap-2 d-flex align-items-center">
-                                    <i class="demo-psi-calendar-4 fs-5 text-primary"></i>
-                                    <span>{{ systemDateTime($item->created_at) }}</span>
+                            <td>
+                                <div
+                                    class="badge bg-{{ $item->status === PurchaseRequestStatus::APPROVED ? 'success' : ($item->status === PurchaseRequestStatus::PENDING ? 'warning' : 'danger') }} bg-opacity-10 text-{{ $item->status === PurchaseRequestStatus::APPROVED ? 'success' : ($item->status === PurchaseRequestStatus::PENDING ? 'warning' : 'danger') }}">
+                                    {{ $item->status->label() }}
                                 </div>
                             </td>
                             <td class="text-nowrap">
                                 <div class="gap-2 d-flex align-items-center">
                                     @can('update', $item)
-                                        <a href="{{ route('purchase-request::edit', $item->id) }}"
-                                            class="btn btn-sm btn-outline-primary">
+                                        <a href="{{ route('purchase-request::edit', $item->id) }}" class="btn btn-sm btn-outline-primary">
                                             <i class="demo-pli-file-edit me-1"></i> Edit
                                         </a>
                                     @endcan
 
                                     @can('decide', $item)
-                                        <a href="{{ route('purchase-request::decision', $item->id) }}"
-                                            class="btn btn-sm btn-outline-success">
+                                        <a href="{{ route('purchase-request::decision', $item->id) }}" class="btn btn-sm btn-outline-success">
                                             <i class="demo-pli-check me-1"></i> Approve/Reject
                                         </a>
                                     @endcan
 
                                     @can('view', $item)
-                                        <a href="{{ route('purchase-request::view', $item->id) }}"
-                                            class="btn btn-sm btn-outline-info">
+                                        <a href="{{ route('purchase-request::view', $item->id) }}" class="btn btn-sm btn-outline-info">
                                             <i class="demo-pli-magnifi-glass me-1"></i> View
                                         </a>
                                     @endcan
@@ -209,6 +211,14 @@
                 $('#status').on('change', function(e) {
                     const value = $(this).val() || null;
                     @this.set('status', value);
+                });
+                $('#created_by').on('change', function(e) {
+                    const value = $(this).val() || null;
+                    @this.set('created_by', value);
+                });
+                $('#decision_by').on('change', function(e) {
+                    const value = $(this).val() || null;
+                    @this.set('decision_by', value);
                 });
             });
         </script>

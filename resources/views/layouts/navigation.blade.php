@@ -907,21 +907,26 @@
                             <a href="#"
                                 class="mininav-toggle nav-link {{ request()->routeIs('purchase-request::*') ? 'active' : '' }}"><i
                                     class="fa fa-user fs-5 me-2"></i>
-                                <span class="nav-label mininav-content ms-1 collapse show" style="">Purchase
-                                    Requests</span>
+                                <span class="nav-label mininav-content ms-1 collapse show" style="">
+                                    Purchase
+                                </span>
                             </a>
                             <ul class="mininav-content nav collapse">
                                 <li data-popper-arrow class="arrow"></li>
                                 <li class="nav-item">
-                                    <a href="{{ route('purchase-request::index') }}"
-                                        class="nav-link {{ request()->is(['purchase-requests']) ? 'active' : '' }}">List</a>
+                                    @php
+                                        $purchaseRequest = [
+                                            'purchase-requests',
+                                            'purchase-requests/create',
+                                            'purchase-requests/*/edit',
+                                            'purchase-requests/*/decision',
+                                            'purchase-requests/*',
+                                        ];
+                                    @endphp
+                                    <a href="{{ route('purchase-request::index') }}" class="nav-link {{ request()->is($purchaseRequest) ? 'active' : '' }}">
+                                        Purchase Requests
+                                    </a>
                                 </li>
-                                @can('purchase request.create')
-                                    <li class="nav-item">
-                                        <a href="{{ route('purchase-request::create') }}"
-                                            class="nav-link {{ request()->is(['purchase-requests/create']) ? 'active' : '' }}">Create</a>
-                                    </li>
-                                @endcan
                             </ul>
                         </li>
                     @endif

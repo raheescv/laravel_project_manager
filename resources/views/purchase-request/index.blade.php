@@ -20,9 +20,8 @@
             </div>
         </div>
     </div>
-    {{-- <x-purchase.column-visibility-canvas /> --}}
-    {{-- @push('scripts')
-        @include('components.select.vendorSelect')
+     @push('scripts')
         @include('components.select.branchSelect')
-    @endpush --}}
+        @include('components.select.userSelect')
+    @endpush
 </x-app-layout>

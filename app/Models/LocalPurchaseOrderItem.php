@@ -2,19 +2,21 @@
 
 namespace App\Models;
 
+use App\Traits\BelongsToTenant;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class LocalPurchaseOrderItem extends Model
 {
-    use SoftDeletes;
+    use BelongsToTenant, SoftDeletes;
 
     protected $fillable = [
+        'tenant_id',
         'local_purchase_order_id',
         'product_id',
         'quantity',
         'rate',
-        'total',
+        // 'total',
     ];
 
     public function order()

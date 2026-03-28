@@ -37,10 +37,6 @@ class PurchaseRequest extends Model implements AuditableContracts
     protected static function booted()
     {
         static::addGlobalScope(new AssignedBranchScope());
-
-        static::creating(function ($model) {
-            $model->created_by = auth()->id();
-        });
     }
 
     public function tenant(): BelongsTo
@@ -91,36 +87,26 @@ class PurchaseRequest extends Model implements AuditableContracts
     // Filter
     public function scopeFilter($query, $filters)
     {
-        if (isset($filters['search']) && $filters['search']) {
-            $query->where(function ($q) use ($filters) {
-                $q->where('id', 'like', '%'.$filters['search'].'%')
-                    ->orWhereHas('branch', function ($q) use ($filters) {
-                        $q->where('name', 'like', '%'.$filters['search'].'%');
+        $query->when($filters['search'] ?? null, function ($q, $search) {
+            $q->where(function ($q) use ($search) {
+                $q->where('id', 'like', '%'.$search.'%')
+                    ->orWhereHas('branch', function ($q) use ($search) {
+                        $q->where('name', 'like', '%'.$search.'%');
                     })
-                    ->orWhereHas('creator', function ($q) use ($filters) {
-                        $q->where('name', 'like', '%'.$filters['search'].'%');
+                    ->orWhereHas('creator', function ($q) use ($search) {
+                        $q->where('name', 'like', '%'.$search.'%');
                     })
-                    ->orWhereHas('decisionMaker', function ($q) use ($filters) {
-                        $q->where('name', 'like', '%'.$filters['search'].'%');
+                    ->orWhereHas('decisionMaker', function ($q) use ($search) {
+                        $q->where('name', 'like', '%'.$search.'%');
                     });
             });
-        }
-
-        if (isset($filters['status']) && $filters['status']) {
-            $query->where('status', $filters['status']);
-        }
-
-        if (isset($filters['branch_id']) && $filters['branch_id']) {
-            $query->where('branch_id', $filters['branch_id']);
-        }
-
-        if (isset($filters['created_by']) && $filters['created_by']) {
-            $query->where('created_by', $filters['created_by']);
-        }
-
-        if (isset($filters['decision_by']) && $filters['decision_by']) {
-            $query->where('decision_by', $filters['decision_by']);
-        }
+        })
+            ->when($filters['status'] ?? null, fn ($q, $status) => $q->where('status', $status))
+            ->when($filters['branch_id'] ?? null, fn ($q, $branchId) => $q->where('branch_id', $branchId))
+            ->when($filters['created_by'] ?? null, fn ($q, $createdBy) => $q->where('created_by', $createdBy))
+            ->when($filters['decision_by'] ?? null, fn ($q, $decisionBy) => $q->where('decision_by', $decisionBy))
+            ->when($filters['from_date'] ?? null, fn ($q, $fromDate) => $q->whereDate('created_at', '>=', $fromDate))
+            ->when($filters['to_date'] ?? null, fn ($q, $toDate) => $q->whereDate('created_at', '<=', $toDate));
 
         return $query;
     }

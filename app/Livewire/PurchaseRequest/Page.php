@@ -5,6 +5,9 @@ namespace App\Livewire\PurchaseRequest;
 use App\Actions\PurchaseRequest\CreateUpdateAction;
 use App\Models\Product;
 use App\Models\PurchaseRequest;
+use Exception;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Livewire\Attributes\Computed;
 use Livewire\Component;
 
@@ -36,17 +39,21 @@ class Page extends Component
 
     public function save()
     {
-        $response = (new CreateUpdateAction())->execute([
-            'products' => $this->products,
-        ], $this->purchase_request->id ?? null);
-
-        if ($response['success']) {
+        try {
+            DB::beginTransaction();
+            $response = (new CreateUpdateAction())->execute($this->products, Auth::id(), $this->purchase_request->id ?? null);
+            if (! $response['success']) {
+                throw new Exception($response['message'], 1);
+            }
             $this->purchase_request = $response['data'];
             $this->dispatch('success', ['message' => $response['message']]);
 
             $this->redirectRoute('purchase-request::index');
-        } else {
-            $this->dispatch('error', ['message' => $response['message']]);
+            DB::commit();
+
+        } catch (Exception $e) {
+            DB::rollback();
+            $this->dispatch('error', ['message' => $e->getMessage()]);
         }
     }
 
