@@ -275,7 +275,8 @@ class Page extends Component
         if (isset($this->items[$key])) {
             $this->items[$key]['quantity'] += $defaultQuantity;
         } else {
-            $this->items[$key] = $single;
+            // Prepend new item so last added appears first
+            $this->items = [$key => $single] + $this->items;
         }
         $this->singleCartCalculator($key);
         $this->mainCalculator();
@@ -307,15 +308,36 @@ class Page extends Component
 
     public function removeItem($index)
     {
+        $this->skipRender();
+
         try {
-            $id = $this->items[$index]['id'] ?? '';
+            // Find the item - by array key first, then by 'key' property
+            $targetKey = null;
+            if (isset($this->items[$index])) {
+                $targetKey = $index;
+            } else {
+                foreach ($this->items as $arrKey => $item) {
+                    if (($item['key'] ?? '') == $index || $arrKey == $index) {
+                        $targetKey = $arrKey;
+                        break;
+                    }
+                }
+            }
+
+            if ($targetKey === null) {
+                throw new \Exception('Item not found', 1);
+            }
+
+            $id = $this->items[$targetKey]['id'] ?? '';
             if ($id) {
                 $response = (new ItemDeleteAction())->execute($id);
                 if (! $response['success']) {
                     throw new \Exception($response['message'], 1);
                 }
             }
-            unset($this->items[$index]);
+
+            unset($this->items[$targetKey]);
+            $this->items = array_values($this->items);
             $this->mainCalculator();
             $this->dispatch('success', ['message' => 'item removed successfully']);
         } catch (\Throwable $th) {
@@ -334,6 +356,7 @@ class Page extends Component
                 }
             }
             unset($this->payments[$index]);
+            $this->payments = array_values($this->payments);
             $this->mainCalculator();
             $this->dispatch('success', ['message' => 'Payment removed successfully']);
         } catch (\Throwable $th) {

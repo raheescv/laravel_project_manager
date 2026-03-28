@@ -9,6 +9,7 @@ use App\Http\Controllers\HealthController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\ImageGenComfyController;
 use App\Http\Controllers\LocalPurchaseOrderController;
+use App\Http\Controllers\LpoPurchaseController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\PhysicalVisitorController;
 use App\Http\Controllers\ProfileController;
@@ -92,6 +93,15 @@ Route::middleware('auth')->group(function (): void {
         Route::get('{grn}/edit', 'edit')->name('edit');
         Route::get('{grn}', 'show')->name('view');
         Route::get('{grn}/decision', 'decision')->name('decision');
+    });
+
+    // LPO Purchase
+    Route::name('lpo-purchase::')->prefix('lpo-purchases')->controller(LpoPurchaseController::class)->group(function (): void {
+        Route::get('', 'index')->name('index');
+        Route::get('create', 'create')->name('create');
+        Route::get('{purchase}/edit', 'edit')->name('edit');
+        Route::get('{purchase}', 'show')->name('view');
+        Route::get('{purchase}/decision', 'decision')->name('decision');
     });
 });
 

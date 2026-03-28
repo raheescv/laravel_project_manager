@@ -244,4 +244,12 @@ return [
         'delete',
         'decide',
     ],
+    // LPO purchase Module
+    'lpo-purchase' => [
+        'create',
+        'view',
+        'edit',
+        'delete',
+        'decide',
+    ],
 ];
