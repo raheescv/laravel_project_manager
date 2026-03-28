@@ -16,7 +16,7 @@ class View extends Component
 
     public function mount(int $local_purchase_order_id, bool $is_approvable = false)
     {
-        $this->order = LocalPurchaseOrder::with(['vendor', 'creator', 'branch', 'decisionMaker', 'items.product.brand', 'items.product.mainCategory', 'items.product.subCategory', 'items.product.unit'])
+        $this->order = LocalPurchaseOrder::with(['vendor', 'creator', 'branch', 'decisionMaker', 'items.product.brand', 'items.product.mainCategory', 'items.product.subCategory', 'items.product.unit', 'grns.items.product'])
             ->findOrFail($local_purchase_order_id);
 
         $this->is_approvable = $is_approvable;

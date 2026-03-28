@@ -58,6 +58,9 @@ return new class() extends Migration
 
             $table->unsignedBigInteger('created_by');
             $table->unsignedBigInteger('updated_by');
+            
+            $table->index(['tenant_id', 'is_selling', 'main_category_id'], 'idx_products_selling_category');
+            $table->index(['tenant_id', 'name', 'barcode'], 'idx_products_name_barcode');
 
             $table->softDeletes();
             $table->timestamps();

@@ -95,6 +95,7 @@ Route::middleware('auth')->group(function (): void {
         Route::get('create', 'page')->name('create')->can('product.create');
         Route::get('edit/{id}', 'page')->name('edit')->can('product.view');
         Route::get('import', 'import')->name('import')->can('product.create');
+        Route::get('gallery', 'gallery')->name('gallery')->can('product.view');
         Route::get('list', 'get')->name('list');
     });
     Route::name('service::')->prefix('service')->controller(ServiceController::class)->group(function (): void {

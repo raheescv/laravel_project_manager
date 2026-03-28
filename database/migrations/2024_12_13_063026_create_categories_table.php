@@ -19,6 +19,7 @@ return new class() extends Migration
             $table->boolean('sale_visibility_flag')->default(true);
             $table->boolean('online_visibility_flag')->default(true);
             $table->timestamps();
+            $table->index(['tenant_id', 'sale_visibility_flag'], 'idx_categories_sale_visibility');
         });
     }
 

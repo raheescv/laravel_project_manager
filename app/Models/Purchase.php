@@ -23,6 +23,7 @@ class Purchase extends Model implements AuditableContracts
         'invoice_no',
         'branch_id',
         'account_id',
+        'local_purchase_order_id',
         'date',
         'delivery_date',
         'gross_amount',
@@ -34,11 +35,18 @@ class Purchase extends Model implements AuditableContracts
         'paid',
         'address',
         'status',
+        'decision_by',
+        'decision_at',
+        'decision_note',
         'signature',
         'created_by',
         'updated_by',
         'cancelled_by',
         'deleted_by',
+    ];
+
+    protected $casts = [
+        'decision_at' => 'datetime',
     ];
 
     public static function rules($id = null, $merge = [])
@@ -119,6 +127,58 @@ class Purchase extends Model implements AuditableContracts
     public function ledgers()
     {
         return $this->hasMany(Ledger::class, 'model_id')->where('model', 'Purchase');
+    }
+
+    public function localPurchaseOrder()
+    {
+        return $this->belongsTo(LocalPurchaseOrder::class);
+    }
+
+    public function decisionMaker()
+    {
+        return $this->belongsTo(User::class, 'decision_by');
+    }
+
+    public function scopeDecisionPending($query)
+    {
+        return $query->where('status', 'pending');
+    }
+
+    public function scopeDecisionAccepted($query)
+    {
+        return $query->where('status', 'accepted');
+    }
+
+    public function scopeDecisionRejected($query)
+    {
+        return $query->where('status', 'rejected');
+    }
+
+    public function scopeLpoBased($query)
+    {
+        return $query->whereNotNull('local_purchase_order_id');
+    }
+
+    public function scopeLpoPurchaseFilter($query, $filters)
+    {
+        return $query
+            ->when($filters['search'] ?? null, function ($query, $term) {
+                $term = trim($term);
+                $query->where(function ($q) use ($term) {
+                    $q->where('invoice_no', 'like', '%'.$term.'%')
+                        ->orWhereHas('account', fn ($q) => $q->where('name', 'like', '%'.$term.'%'))
+                        ->orWhereHas('createdUser', fn ($q) => $q->where('name', 'like', '%'.$term.'%'))
+                        ->orWhereHas('decisionMaker', fn ($q) => $q->where('name', 'like', '%'.$term.'%'));
+                });
+            })
+            ->when($filters['status'] ?? null, fn ($query, $value) => $query->where('status', $value))
+            ->when($filters['branch_id'] ?? null, fn ($query, $value) => $query->where('branch_id', $value))
+            ->when($filters['vendor_id'] ?? null, fn ($query, $value) => $query->where('account_id', $value))
+            ->when($filters['created_by'] ?? null, fn ($query, $value) => $query->where('created_by', $value))
+            ->when($filters['decision_by'] ?? null, fn ($query, $value) => $query->where('decision_by', $value))
+            ->when($filters['local_purchase_order_id'] ?? null, fn ($query, $value) => $query->where('local_purchase_order_id', $value))
+            ->when($filters['from_date'] ?? null, fn ($query, $value) => $query->whereDate('date', '>=', date('Y-m-d', strtotime($value))))
+            ->when($filters['to_date'] ?? null, fn ($query, $value) => $query->whereDate('date', '<=', date('Y-m-d', strtotime($value))));
     }
 
     public function getDropDownList($request)

@@ -235,4 +235,21 @@ return [
         'delete',
         'decide',
     ],
+
+    // GRN Module
+    'grn' => [
+        'create',
+        'view',
+        'edit',
+        'delete',
+        'decide',
+    ],
+    // LPO purchase Module
+    'lpo-purchase' => [
+        'create',
+        'view',
+        'edit',
+        'delete',
+        'decide',
+    ],
 ];

@@ -4,10 +4,12 @@ use App\Http\Controllers\AppointmentController;
 use App\Http\Controllers\AuditController;
 use App\Http\Controllers\BackupController;
 use App\Http\Controllers\FamilyTreeController;
+use App\Http\Controllers\GrnController;
 use App\Http\Controllers\HealthController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\ImageGenComfyController;
 use App\Http\Controllers\LocalPurchaseOrderController;
+use App\Http\Controllers\LpoPurchaseController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\PhysicalVisitorController;
 use App\Http\Controllers\ProfileController;
@@ -82,6 +84,24 @@ Route::middleware('auth')->group(function (): void {
         Route::get('{localPurchaseOrder}/edit', 'edit')->name('edit');
         Route::get('{localPurchaseOrder}', 'show')->name('view');
         Route::get('{localPurchaseOrder}/decision', 'decision')->name('decision');
+    });
+
+    // GRN
+    Route::name('grn::')->prefix('grns')->controller(GrnController::class)->group(function (): void {
+        Route::get('', 'index')->name('index');
+        Route::get('create', 'create')->name('create');
+        Route::get('{grn}/edit', 'edit')->name('edit');
+        Route::get('{grn}', 'show')->name('view');
+        Route::get('{grn}/decision', 'decision')->name('decision');
+    });
+
+    // LPO Purchase
+    Route::name('lpo-purchase::')->prefix('lpo-purchases')->controller(LpoPurchaseController::class)->group(function (): void {
+        Route::get('', 'index')->name('index');
+        Route::get('create', 'create')->name('create');
+        Route::get('{purchase}/edit', 'edit')->name('edit');
+        Route::get('{purchase}', 'show')->name('view');
+        Route::get('{purchase}/decision', 'decision')->name('decision');
     });
 });
 

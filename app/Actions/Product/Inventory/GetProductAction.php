@@ -65,7 +65,7 @@ class GetProductAction
 
     private function buildQuery(array $filters): Builder
     {
-        $query = Inventory::query()
+        $query = Inventory::withoutGlobalScopes()
             ->join('products', 'inventories.product_id', '=', 'products.id')
             ->join('branches', 'inventories.branch_id', '=', 'branches.id')
             ->where('products.type', '=', 'product');
@@ -131,7 +131,9 @@ class GetProductAction
 
     private function applyBranchFilter(Builder $query, array $filters): void
     {
-        $query->where('inventories.branch_id', session('branch_id'));
+        if (! empty($filters['branch_id'])) {
+            $query->whereIn('inventories.branch_id', $filters['branch_id']);
+        }
     }
 
     private function applyNonZeroFilter(Builder $query, array $filters): void

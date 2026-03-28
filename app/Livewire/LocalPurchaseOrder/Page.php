@@ -65,6 +65,7 @@ class Page extends Component
     {
         return PurchaseRequest::with('products.product')
             ->approved()
+            ->latest()
             ->get()
             ->map(function ($pr) {
                 return [
