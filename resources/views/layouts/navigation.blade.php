@@ -890,7 +890,7 @@
                     @if (auth()->user()->can('purchase request.view') || auth()->user()->can('local purchase order.view') || auth()->user()->can('grn.view') || auth()->user()->can('lpo-purchase.view'))
                         <li class="nav-item has-sub">
                             <a href="#"
-                                class="mininav-toggle nav-link {{ request()->routeIs(['purchase-request::*', 'lpo::*', 'grn::*', 'lpo-purchase::*']) ? 'active' : '' }}"><i
+                                class="mininav-toggle nav-link {{ request()->routeIs(['purchase-request::*', 'lpo::*', 'grn::*', 'lpo-purchase::*', 'purchase-vendor::*']) ? 'active' : '' }}"><i
                                     class="fa fa-user fs-5 me-2"></i>
                                 <span class="nav-label mininav-content ms-1 collapse show" style="">
                                     Purchase
@@ -935,6 +935,14 @@
                                     @endphp
                                     <a href="{{ route('lpo-purchase::index') }}" class="nav-link {{ request()->is($lpoPurchase) ? 'active' : '' }}">
                                         LPO Purchase
+                                    </a>
+                                </li>
+                                <li class="nav-item">
+                                    @php
+                                        $purchaseVendor = ['purchase-vendors', 'purchase-vendors/*'];
+                                    @endphp
+                                    <a href="{{ route('purchase-vendor::index') }}" class="nav-link {{ request()->is($purchaseVendor) ? 'active' : '' }}">
+                                        Vendors
                                     </a>
                                 </li>
                             </ul>
