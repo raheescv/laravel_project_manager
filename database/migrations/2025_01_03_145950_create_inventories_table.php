@@ -34,6 +34,7 @@ return new class() extends Migration
             $table->index(['tenant_id', 'employee_id'], 'inventories_tenant_employee_id_index');
             $table->index(['tenant_id', 'branch_id'], 'inventories_tenant_branch_id_index');
             $table->index(['tenant_id', 'product_id'], 'inventories_tenant_product_id_index');
+            $table->index(['tenant_id', 'branch_id', 'employee_id'], 'idx_inventories_branch_employee');
             $table->softDeletes();
             $table->timestamps();
         });
