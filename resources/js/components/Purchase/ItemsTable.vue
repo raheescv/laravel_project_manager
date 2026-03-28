@@ -299,15 +299,13 @@ const handleUnitChange = (key, unitId) => {
     })
 }
 
-const handleRemoveItem = async (key) => {
-    if (confirm('Are you sure?')) {
-        try {
-            await call('removeItem', key)
-            emit('item-removed', key)
-        } catch (error) {
-            console.error('Error removing item:', error)
-        }
-    }
+const handleRemoveItem = (key) => {
+    if (!confirm('Are you sure?')) return
+    call('removeItem', key).then(() => {
+        emit('item-removed', key)
+    }).catch((error) => {
+        console.error('Error removing item:', error)
+    })
 }
 
 const initializeProductSelect = () => {
