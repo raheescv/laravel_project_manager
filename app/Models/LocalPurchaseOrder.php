@@ -88,48 +88,21 @@ class LocalPurchaseOrder extends Model
     // Filter
     public function scopeFilter($query, $filters)
     {
-        if (isset($filters['search']) && $filters['search']) {
-            $term = trim($filters['search']);
-            $query->where(function ($q) use ($term) {
-                $q->where('id', 'like', '%'.$term.'%')
-                    ->orWhereHas('branch', function ($q) use ($term) {
-                        $q->where('name', 'like', '%'.$term.'%');
-                    })
-                    ->orWhereHas('creator', function ($q) use ($term) {
-                        $q->where('name', 'like', '%'.$term.'%');
-                    })
-                    ->orWhereHas('decisionMaker', function ($q) use ($term) {
-                        $q->where('name', 'like', '%'.$term.'%');
-                    });
-            });
-        }
-
-        if (isset($filters['status']) && $filters['status']) {
-            $query->where('status', $filters['status']);
-        }
-
-        if (isset($filters['branch_id']) && $filters['branch_id']) {
-            $query->where('branch_id', $filters['branch_id']);
-        }
-
-        if (isset($filters['created_by']) && $filters['created_by']) {
-            $query->where('created_by', $filters['created_by']);
-        }
-
-        if (isset($filters['decision_by']) && $filters['decision_by']) {
-            $query->where('decision_by', $filters['decision_by']);
-        }
-
-        if (isset($filters['vendor_id']) && $filters['vendor_id']) {
-            $query->where('vendor_id', $filters['vendor_id']);
-        }
-
-        if (isset($filters['product_id']) && $filters['product_id']) {
-            $query->whereHas('items', function ($q) use ($filters) {
-                $q->where('product_id', $filters['product_id']);
-            });
-        }
-
-        return $query;
+        return $query
+            ->when($filters['search'] ?? null, function ($query, $term) {
+                $term = trim($term);
+                $query->where(function ($q) use ($term) {
+                    $q->where('id', 'like', '%'.$term.'%')
+                        ->orWhereHas('creator', fn ($q) => $q->where('name', 'like', '%'.$term.'%'))
+                        ->orWhereHas('decisionMaker', fn ($q) => $q->where('name', 'like', '%'.$term.'%'));
+                });
+            })
+            ->when($filters['status'] ?? null, fn ($query, $value) => $query->where('status', $value))
+            ->when($filters['branch_id'] ?? null, fn ($query, $value) => $query->where('branch_id', $value))
+            ->when($filters['created_by'] ?? null, fn ($query, $value) => $query->where('created_by', $value))
+            ->when($filters['decision_by'] ?? null, fn ($query, $value) => $query->where('decision_by', $value))
+            ->when($filters['vendor_id'] ?? null, fn ($query, $value) => $query->where('vendor_id', $value))
+            ->when($filters['from_date'] ?? null, fn ($query, $value) => $query->whereDate('created_at', '>=', date('Y-m-d', strtotime($value))))
+            ->when($filters['to_date'] ?? null, fn ($query, $value) => $query->whereDate('created_at', '<=', date('Y-m-d', strtotime($value))));
     }
 }

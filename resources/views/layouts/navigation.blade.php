@@ -139,14 +139,14 @@
         <div class="pb-5 mainnav__top-content scrollable-content">
             <div id="_dm-mainnavProfile" class="my-3 mainnav__widget hv-outline-parent">
                 <div class="py-2 text-center mininav-toggle">
-                    <img class="mainnav__avatar img-md rounded-circle hv-oc"
-                        src="{{ secure_asset('assets/img/profile-photos/1.png') }}" alt="Profile Picture">
+                    <img class="mainnav__avatar img-md rounded-circle hv-oc" src="{{ secure_asset('assets/img/profile-photos/1.png') }}"
+                        alt="Profile Picture">
                 </div>
                 <div class="mininav-content collapse d-mn-max">
                     <span data-popper-arrow class="arrow"></span>
                     <div class="d-grid">
-                        <button class="p-2 border-0 mainnav-widget-toggle d-block btn" data-bs-toggle="collapse"
-                            data-bs-target="#usernav" aria-expanded="false" aria-controls="usernav">
+                        <button class="p-2 border-0 mainnav-widget-toggle d-block btn" data-bs-toggle="collapse" data-bs-target="#usernav"
+                            aria-expanded="false" aria-controls="usernav">
                             <span class="dropdown-toggle d-flex justify-content-center align-items-center">
                                 <h5 class="mb-0 me-3">{{ auth()->user()->name }} </h5>
                             </span>
@@ -169,8 +169,7 @@
             </div>
             <ul class="mainnav__menu nav flex-column">
                 <li class="nav-item">
-                    <a href="{{ route('home') }}"
-                        class="nav-link mininav-toggle {{ request()->is(['/', 'dashboard']) ? 'active' : '' }}">
+                    <a href="{{ route('home') }}" class="nav-link mininav-toggle {{ request()->is(['/', 'dashboard']) ? 'active' : '' }}">
                         <i class="fa fa-dashboard fs-5 me-2"></i>
                         <span class="nav-label mininav-content ms-1 collapse show" style="">
                             Dashboard
@@ -202,11 +201,9 @@
                                     'inventory/stock-check/*',
                                 ];
                             @endphp
-                            <a href="#"
-                                class="mininav-toggle nav-link {{ request()->is($list) ? 'active' : '' }}"><i
+                            <a href="#" class="mininav-toggle nav-link {{ request()->is($list) ? 'active' : '' }}"><i
                                     class="fa fa-cubes fs-5 me-2"></i>
-                                <span class="nav-label mininav-content ms-1 collapse show"
-                                    style="">Inventory</span>
+                                <span class="nav-label mininav-content ms-1 collapse show" style="">Inventory</span>
                             </a>
                             <ul class="mininav-content nav collapse">
                                 <li data-popper-arrow class="arrow"></li>
@@ -277,8 +274,7 @@
                                     'property/report/daybook',
                                 ];
                             @endphp
-                            <a href="#"
-                                class="mininav-toggle nav-link {{ request()->is($rentOutList) ? 'active' : '' }}"><i
+                            <a href="#" class="mininav-toggle nav-link {{ request()->is($rentOutList) ? 'active' : '' }}"><i
                                     class="fa fa-home fs-5 me-2"></i>
                                 <span class="nav-label mininav-content ms-1 collapse show" style="">Rent
                                     Out</span>
@@ -381,8 +377,7 @@
                                     'property/report/service-charge',
                                 ];
                             @endphp
-                            <a href="#"
-                                class="mininav-toggle nav-link {{ request()->is($salesList) ? 'active' : '' }}"><i
+                            <a href="#" class="mininav-toggle nav-link {{ request()->is($salesList) ? 'active' : '' }}"><i
                                     class="fa fa-hand-o-right fs-5 me-2"></i>
                                 <span class="nav-label mininav-content ms-1 collapse show" style="">Sales</span>
                             </a>
@@ -440,8 +435,7 @@
                                     'report/issue_aging',
                                 ];
                             @endphp
-                            <a href="#"
-                                class="mininav-toggle nav-link {{ request()->is($issueList) ? 'active' : '' }}"><i
+                            <a href="#" class="mininav-toggle nav-link {{ request()->is($issueList) ? 'active' : '' }}"><i
                                     class="fa fa-exchange fs-5 me-2"></i>
                                 <span class="nav-label mininav-content ms-1 collapse show" style="">Issue</span>
                             </a>
@@ -488,8 +482,7 @@
                             <a href="#"
                                 class="mininav-toggle nav-link {{ request()->is(['appointment/employee-calendar', 'appointment']) ? 'active' : '' }}"><i
                                     class="fa fa-calendar fs-5 me-2"></i>
-                                <span class="nav-label mininav-content ms-1 collapse show"
-                                    style="">Appointments</span>
+                                <span class="nav-label mininav-content ms-1 collapse show" style="">Appointments</span>
                             </a>
                             <ul class="mininav-content nav collapse">
                                 <li data-popper-arrow class="arrow"></li>
@@ -528,11 +521,9 @@
                                     'report/tailoring_non_delivery',
                                 ];
                             @endphp
-                            <a href="#"
-                                class="mininav-toggle nav-link {{ request()->is($list) ? 'active' : '' }}"><i
+                            <a href="#" class="mininav-toggle nav-link {{ request()->is($list) ? 'active' : '' }}"><i
                                     class="fa fa-cut fs-5 me-2"></i>
-                                <span class="nav-label mininav-content ms-1 collapse show"
-                                    style="">Tailoring</span>
+                                <span class="nav-label mininav-content ms-1 collapse show" style="">Tailoring</span>
                             </a>
                             <ul class="mininav-content nav collapse">
                                 <li data-popper-arrow class="arrow"></li>
@@ -622,8 +613,7 @@
                                     'sale_return/payments',
                                 ];
                             @endphp
-                            <a href="#"
-                                class="mininav-toggle nav-link {{ request()->is($list) ? 'active' : '' }}"><i
+                            <a href="#" class="mininav-toggle nav-link {{ request()->is($list) ? 'active' : '' }}"><i
                                     class="fa fa-shopping-cart fs-5 me-2"></i>
                                 <span class="nav-label mininav-content ms-1 collapse show" style="">Sale</span>
                             </a>
@@ -689,8 +679,7 @@
                             @php
                                 $list = ['sale/day-management', 'sale/day-sessions-report', 'sale/day-session/*'];
                             @endphp
-                            <a href="#"
-                                class="mininav-toggle nav-link {{ request()->is($list) ? 'active' : '' }}"><i
+                            <a href="#" class="mininav-toggle nav-link {{ request()->is($list) ? 'active' : '' }}"><i
                                     class="fa fa-shopping-cart fs-5 me-2"></i>
                                 <span class="nav-label mininav-content ms-1 collapse show" style="">Day
                                     Session</span>
@@ -726,8 +715,7 @@
                             <a href="#"
                                 class="mininav-toggle nav-link {{ request()->is(['purchase', 'purchase/create', 'purchase/edit/*', 'report/purchase_item', 'purchase/payments', 'purchase_return', 'purchase_return/create', 'purchase_return/edit/*', 'purchase_return/view/*', 'report/purchase_return_item', 'purchase_return/payments']) ? 'active' : '' }}"><i
                                     class="fa fa-cart-plus fs-5 me-2"></i>
-                                <span class="nav-label mininav-content ms-1 collapse show"
-                                    style="">Purchase</span>
+                                <span class="nav-label mininav-content ms-1 collapse show" style="">Purchase</span>
                             </a>
                             <ul class="mininav-content nav collapse">
                                 <li data-popper-arrow class="arrow"></li>
@@ -792,8 +780,7 @@
                             <a href="#"
                                 class="mininav-toggle nav-link {{ request()->is(['package', 'package/create', 'package/edit/*']) ? 'active' : '' }}"><i
                                     class="fa fa-gift fs-5 me-2"></i>
-                                <span class="nav-label mininav-content ms-1 collapse show"
-                                    style="">Package</span>
+                                <span class="nav-label mininav-content ms-1 collapse show" style="">Package</span>
                             </a>
                             <ul class="mininav-content nav collapse">
                                 <li data-popper-arrow class="arrow"></li>
@@ -817,8 +804,7 @@
                             <a href="#"
                                 class="mininav-toggle nav-link {{ request()->is(['account', 'account/expense', 'account/income', 'account/general-voucher', 'account/cheque*', 'account/view/*', 'report/day_book', 'account/bank-reconciliation']) ? 'active' : '' }}"><i
                                     class="fa fa-bank fs-5 me-2"></i>
-                                <span class="nav-label mininav-content ms-1 collapse show"
-                                    style="">Account</span>
+                                <span class="nav-label mininav-content ms-1 collapse show" style="">Account</span>
                             </a>
                             <ul class="mininav-content nav collapse">
                                 <li data-popper-arrow class="arrow"></li>
@@ -875,8 +861,7 @@
                             <a href="#"
                                 class="mininav-toggle nav-link {{ request()->is(['users/employee', 'users/employee/attendance', 'users/employee/commission']) ? 'active' : '' }}"><i
                                     class="fa fa-users fs-5 me-2"></i>
-                                <span class="nav-label mininav-content ms-1 collapse show"
-                                    style="">Employee</span>
+                                <span class="nav-label mininav-content ms-1 collapse show" style="">Employee</span>
                             </a>
                             <ul class="mininav-content nav collapse">
                                 <li data-popper-arrow class="arrow"></li>
@@ -902,10 +887,12 @@
                         </li>
                     @endif
 
-                    @if (auth()->user()->can('purchase request.view any') || auth()->user()->can('purchase request.view own'))
+                    @if (auth()->user()->can('purchase request.view any') ||
+                            auth()->user()->can('purchase request.view own') ||
+                            auth()->user()->can('local purchase order.view any') ||
+                            auth()->user()->can('local purchase order.view own'))
                         <li class="nav-item has-sub">
-                            <a href="#"
-                                class="mininav-toggle nav-link {{ request()->routeIs('purchase-request::*') ? 'active' : '' }}"><i
+                            <a href="#" class="mininav-toggle nav-link {{ request()->routeIs(['purchase-request::*','lpo::*']) ? 'active' : '' }}"><i
                                     class="fa fa-user fs-5 me-2"></i>
                                 <span class="nav-label mininav-content ms-1 collapse show" style="">
                                     Purchase
@@ -923,34 +910,22 @@
                                             'purchase-requests/*',
                                         ];
                                     @endphp
-                                    <a href="{{ route('purchase-request::index') }}" class="nav-link {{ request()->is($purchaseRequest) ? 'active' : '' }}">
+                                    <a href="{{ route('purchase-request::index') }}"
+                                        class="nav-link {{ request()->is($purchaseRequest) ? 'active' : '' }}">
                                         Purchase Requests
                                     </a>
                                 </li>
-                            </ul>
-                        </li>
-                    @endif
-
-                    @if (auth()->user()->can('local purchase order.view any') || auth()->user()->can('local purchase order.view own'))
-                        <li class="nav-item has-sub">
-                            <a href="#"
-                                class="mininav-toggle nav-link {{ request()->routeIs('lpo::*') ? 'active' : '' }}"><i
-                                    class="fa fa-user fs-5 me-2"></i>
-                                <span class="nav-label mininav-content ms-1 collapse show" style="">Local
-                                    Purchase Orders</span>
-                            </a>
-                            <ul class="mininav-content nav collapse">
-                                <li data-popper-arrow class="arrow"></li>
                                 <li class="nav-item">
-                                    <a href="{{ route('lpo::index') }}"
-                                        class="nav-link {{ request()->is(['local-purchase-orders']) ? 'active' : '' }}">List</a>
+                                    @php
+                                        $lpo = [
+                                            'local-purchase-orders',
+                                            'local-purchase-orders/create',
+                                        ];
+                                    @endphp
+                                    <a href="{{ route('lpo::index') }}" class="nav-link {{ request()->is($lpo) ? 'active' : '' }}">
+                                        LPO
+                                    </a>
                                 </li>
-                                @can('local purchase order.create')
-                                    <li class="nav-item">
-                                        <a href="{{ route('lpo::create') }}"
-                                            class="nav-link {{ request()->is(['local-purchase-orders/create']) ? 'active' : '' }}">Create</a>
-                                    </li>
-                                @endcan
                             </ul>
                         </li>
                     @endif
@@ -994,11 +969,9 @@
                     @if (auth()->user()->is_super_admin)
                         @if (auth()->user()->can('flat_trade.view'))
                             <li class="nav-item has-sub">
-                                <a href="#"
-                                    class="mininav-toggle nav-link {{ request()->is(['flat_trade/*']) ? 'active' : '' }}"><i
+                                <a href="#" class="mininav-toggle nav-link {{ request()->is(['flat_trade/*']) ? 'active' : '' }}"><i
                                         class="fa fa-chart-line fs-5 me-2"></i>
-                                    <span class="nav-label mininav-content ms-1 collapse show"
-                                        style="">FlatTrade</span>
+                                    <span class="nav-label mininav-content ms-1 collapse show" style="">FlatTrade</span>
                                 </a>
                                 <ul class="mininav-content nav collapse">
                                     <li data-popper-arrow class="arrow"></li>
@@ -1073,8 +1046,7 @@
                                 @endcan
                                 @can('system health.view')
                                     <li class="nav-item">
-                                        <a href="{{ route('health') }}"
-                                            class="nav-link {{ request()->is(['health']) ? 'active' : '' }}">System
+                                        <a href="{{ route('health') }}" class="nav-link {{ request()->is(['health']) ? 'active' : '' }}">System
                                             Health</a>
                                     </li>
                                 @endcan
@@ -1096,8 +1068,7 @@
                         <li class="nav-item">
                             <form method="POST" action="{{ route('logout') }}">
                                 @csrf
-                                <x-dropdown-link :href="route('logout')"
-                                    onclick="event.preventDefault(); this.closest('form').submit();">
+                                <x-dropdown-link :href="route('logout')" onclick="event.preventDefault(); this.closest('form').submit();">
                                     {{ __('Log Out') }}
                                 </x-dropdown-link>
                             </form>

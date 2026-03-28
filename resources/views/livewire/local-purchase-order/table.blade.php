@@ -21,7 +21,13 @@
         <div class="row g-3">
             <div class="col-md-4 d-flex align-items-center">
                 <div class="btn-group">
-                    @can('purchase request.delete-any')
+                    @can('local purchase order.create')
+                        <a class="btn btn-primary d-flex align-items-center shadow-sm" href="{{ route('lpo::create') }}">
+                            <i class="demo-psi-add me-2"></i>
+                            Create
+                        </a>
+                    @endcan
+                    @can('local purchase order.delete-any')
                         <button class="btn btn-sm btn-outline-danger" title="Delete selected items" wire:click="delete()"
                             wire:confirm="Are you sure you want to delete the selected items?" x-show="selected.length > 0">
                             <i class="demo-pli-recycling me-1"></i> Delete
@@ -43,8 +49,8 @@
                             <span class="input-group-text border-end-0">
                                 <i class="demo-pli-magnifi-glass"></i>
                             </span>
-                            <input type="text" wire:model.live.debounce.500ms="search"
-                                class="form-control border-start-0" placeholder="Search purchase requests..." autofocus>
+                            <input type="text" wire:model.live.debounce.500ms="search" class="form-control border-start-0"
+                                placeholder="Search local purchase orders..." autofocus>
                         </div>
                     </div>
                     {{-- <div class="dropdown">
@@ -73,11 +79,17 @@
         <div class="mt-3 col-12">
             <div class="p-3 rounded bg-light">
                 <div class="row g-3">
+                    <div class="col-md-5" wire:ignore>
+                        <label class="form-label" for="vendor_id">
+                            <i class="fa fa-flag me-1"></i> Vendors
+                        </label>
+                        {{ html()->select('vendor_id', $this->vendors)->value($this->vendor_id)->class('select-vendor_id-list')->id('vendor_id')->placeholder('All Vendors') }}
+                    </div>
                     <div class="col-md-3" wire:ignore>
                         <label class="form-label" for="branch_id">
                             <i class="demo-psi-home me-1"></i> Branch
                         </label>
-                        {{ html()->select('branch_id', [session('branch_id') => session('branch_name')])->class('select-assigned-branch_id-list form-control form-control-s')->id('branch_id')->placeholder('All Branches') }}
+                        {{ html()->select('branch_id', [session('branch_id') => session('branch_name')])->value(session('branch_id'))->class('select-assigned-branch_id-list')->id('branch_id')->placeholder('All Branches') }}
                     </div>
                     <div class="col-md-3" wire:ignore>
                         <label class="form-label" for="status">
@@ -85,17 +97,19 @@
                         </label>
                         {{ html()->select('status', LocalPurchaseOrderStatus::values())->value($status)->class('form-control form-control-sm')->id('status')->placeholder('All Statuses') }}
                     </div>
-                    <div class="col-md-3" wire:ignore>
-                        <label class="form-label" for="product_id">
-                            <i class="fa fa-flag me-1"></i> Products
-                        </label>
-                        {{ html()->select('product_id', $this->products)->value($this->product_id)->class('form-control form-control-sm')->id('product_id')->placeholder('All Products') }}
-                    </div>
-                    <div class="col-md-3" wire:ignore>
-                        <label class="form-label" for="vendor_id">
-                            <i class="fa fa-flag me-1"></i> Vendors
-                        </label>
-                        {{ html()->select('vendor_id', $this->vendors)->value($this->vendor_id)->class('form-control form-control-sm')->id('vendor_id')->placeholder('All Vendors') }}
+                    <div class="row g-2">
+                        <div class="col-md-2">
+                            <label class="form-label" for="from_date">
+                                <i class="demo-psi-calendar-4 me-1"></i> From Date
+                            </label>
+                            <input type="date" wire:model.live="from_date" class="form-control form-control-sm" id="from_date">
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label" for="to_date">
+                                <i class="demo-psi-calendar-4 me-1"></i> To Date
+                            </label>
+                            <input type="date" wire:model.live="to_date" class="form-control form-control-sm" id="to_date">
+                        </div>
                     </div>
                 </div>
             </div>
@@ -109,8 +123,8 @@
                         <th class="ps-3">
                             <div class="d-flex align-items-center">
                                 <div class="form-check me-2">
-                                    <input type="checkbox" class="form-check-input" x-on:change="toggleSelectAll()"
-                                        x-model="selectAll" id="selectAll">
+                                    <input type="checkbox" class="form-check-input" x-on:change="toggleSelectAll()" x-model="selectAll"
+                                        id="selectAll">
                                     <label class="form-check-label" for="selectAll"></label>
                                 </div>
                                 <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="id" label="#" />
@@ -126,12 +140,10 @@
                             Approved/Rejected By
                         </th>
                         <th>
-                            <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="decision_at"
-                                label="Approved/Rejected On" />
+                            <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="decision_at" label="Approved/Rejected On" />
                         </th>
                         <th>
-                            <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="created_at"
-                                label="Purchase Request Date" />
+                            <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="created_at" label="local purchase order Date" />
                         </th>
                         <th>
                             Actions
@@ -144,8 +156,8 @@
                             <td class="ps-3">
                                 <div class="gap-2 d-flex align-items-center">
                                     <div class="mb-0 form-check">
-                                        <input type="checkbox" class="form-check-input" value="{{ $item->id }}"
-                                            x-model="selected" id="checkbox_{{ $item->id }}">
+                                        <input type="checkbox" class="form-check-input" value="{{ $item->id }}" x-model="selected"
+                                            id="checkbox_{{ $item->id }}">
                                     </div>
                                     <span class="text-muted">#{{ $item->id }}</span>
                                 </div>
@@ -183,8 +195,7 @@
                             <td class="text-nowrap">
                                 <div class="gap-2 d-flex align-items-center">
                                     @can('decide', $item)
-                                        <a href="{{ route('lpo::decision', $item->id) }}"
-                                            class="btn btn-sm btn-outline-success">
+                                        <a href="{{ route('lpo::decision', $item->id) }}" class="btn btn-sm btn-outline-success">
                                             <i class="demo-pli-check me-1"></i> Approve/Reject
                                         </a>
                                     @endcan

@@ -27,8 +27,7 @@
                     <div class="col-md-6">
 
                         <label class="form-label">Purchase Requests</label>
-                        <button type="button"
-                            class="btn btn-outline-primary w-100 d-flex justify-content-between align-items-center"
+                        <button type="button" class="btn btn-outline-primary w-100 d-flex justify-content-between align-items-center"
                             @click="$dispatch('open-pr-modal')">
                             Select Products from Purchase Requests
                         </button>
@@ -38,8 +37,7 @@
             </div>
         </div>
 
-        <div class="mb-4 shadow-sm card" x-data="purchaseOrderProducts(@entangle('items'))" x-init="init()"
-            @merge-products.window="mergeProducts($event.detail)">
+        <div class="mb-4 shadow-sm card" x-data="purchaseOrderProducts(@entangle('items'))" x-init="init()" @merge-products.window="mergeProducts($event.detail)">
 
             <div class="bg-white card-header d-flex justify-content-between">
                 <h5 class="mb-0 fw-bold">Products</h5>
@@ -130,8 +128,7 @@
 
                                 <template x-for="pr in prs" :key="pr.id">
                                     <button type="button" class="list-group-item list-group-item-action"
-                                        :class="{ 'active': selectedPr && selectedPr.id === pr.id }"
-                                        @click="selectPr(pr)">
+                                        :class="{ 'active': selectedPr && selectedPr.id === pr.id }" @click="selectPr(pr)">
 
                                         <div class="fw-semibold">PR #<span x-text="pr.id"></span></div>
 
@@ -171,8 +168,7 @@
                                             <template x-for="product in selectedPr.products" :key="product.product_id">
                                                 <tr>
                                                     <td>
-                                                        <input type="checkbox"
-                                                            :checked="isSelected(selectedPr.id, product.product_id)"
+                                                        <input type="checkbox" :checked="isSelected(selectedPr.id, product.product_id)"
                                                             @change="toggleProduct(selectedPr.id, product)">
                                                     </td>
 

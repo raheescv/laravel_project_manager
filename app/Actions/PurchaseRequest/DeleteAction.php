@@ -15,9 +15,9 @@ class DeleteAction
             $return = [];
             $requests = PurchaseRequest::whereIn('id', $ids)->get();
 
-            $deletable = $requests->filter(fn($r) => $r->status === PurchaseRequestStatus::PENDING);
+            $deletable = $requests->filter(fn ($r) => $r->status === PurchaseRequestStatus::PENDING);
 
-            $nonDeletable = $requests->filter(fn($r) => $r->status !== PurchaseRequestStatus::PENDING);
+            $nonDeletable = $requests->filter(fn ($r) => $r->status !== PurchaseRequestStatus::PENDING);
             PurchaseRequest::whereIn('id', $deletable->pluck('id'))->delete();
 
             if ($nonDeletable->isEmpty()) {

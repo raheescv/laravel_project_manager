@@ -6,6 +6,7 @@ use App\Actions\LocalPurchaseOrder\DeleteAction;
 use App\Models\Account;
 use App\Models\LocalPurchaseOrder;
 use App\Models\Product;
+use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\Computed;
 use Livewire\Component;
 use Livewire\WithPagination;
@@ -20,11 +21,11 @@ class Table extends Component
 
     public ?int $vendor_id = null;
 
-    public ?int $product_id = null;
-
-    // public ?int $created_by = null;
-    // public ?int $decision_by = null;
     public ?string $status = null;
+
+    public ?string $from_date = null;
+
+    public ?string $to_date = null;
 
     public int $limit = 10;
 
@@ -36,6 +37,12 @@ class Table extends Component
 
     protected $paginationTheme = 'bootstrap';
 
+    public function mount()
+    {
+        $this->from_date = date('Y-m-01');
+        $this->to_date = date('Y-m-d');
+    }
+
     #[Computed()]
     public function requests()
     {
@@ -45,14 +52,15 @@ class Table extends Component
             'search' => $this->search,
             'branch_id' => $this->branch_id,
             'vendor_id' => $this->vendor_id,
-            'product_id' => $this->product_id,
             'status' => $this->status,
+            'from_date' => $this->from_date,
+            'to_date' => $this->to_date,
         ];
 
         $query->filter($filters);
 
-        if (auth()->user()->can('local purchase request.view own') && ! auth()->user()->can('local purchase request.view any')) {
-            $query->ownedBy(auth()->id());
+        if (Auth::user()->can('local purchase request.view own') && ! Auth::user()->can('local purchase request.view any')) {
+            $query->ownedBy(Auth::id());
         }
 
         return $query->orderBy($this->sortField, $this->sortDirection)->paginate($this->limit);
@@ -82,7 +90,7 @@ class Table extends Component
 
     public function delete()
     {
-        if (auth()->user()->cannot('local purchase order.delete-own')) {
+        if (Auth::user()->cannot('local purchase order.delete-own')) {
             $this->dispatch('error', [
                 'message' => 'You do not have permission to delete purchase requests.',
             ]);
@@ -102,7 +110,7 @@ class Table extends Component
 
     public function updated($name, $value)
     {
-        if (in_array($name, ['search', 'branch_id', 'status', 'vendor_id', 'product_id'])) {
+        if (in_array($name, ['search', 'branch_id', 'status', 'vendor_id', 'product_id', 'from_date', 'to_date'])) {
             $this->resetPage();
         }
     }
