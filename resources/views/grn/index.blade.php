@@ -22,5 +22,8 @@
     </div>
     @push('scripts')
         @include('components.select.branchSelect')
+        @include('components.select.vendorSelect')
+        @include('components.select.userSelect')
+        @include('components.select.lpoSelect')
     @endpush
 </x-app-layout>

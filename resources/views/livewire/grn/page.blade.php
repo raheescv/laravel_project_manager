@@ -35,18 +35,23 @@
 
             <div class="card-body px-4 py-4">
                 <div class="row g-3">
-                    <div class="col-md-5" wire:ignore>
+                    <div class="col-md-4" wire:ignore>
                         <label class="form-label fw-semibold">
                             <i class="fa fa-shopping-cart text-muted me-1"></i> Local Purchase Order
                         </label>
                         {{ html()->select('local_purchase_order_id', $approvedLpos)->value($this->local_purchase_order_id)->class('tomSelect')->id('lpo_id')->placeholder('Select LPO') }}
+                        @if ($local_purchase_order_id)
+                            <a href="{{ route('lpo::view', $local_purchase_order_id) }}" target="_blank" class="small text-primary mt-1 d-inline-block">
+                                <i class="fa fa-external-link me-1"></i> View LPO #{{ $local_purchase_order_id }}
+                            </a>
+                        @endif
                     </div>
 
                     <div class="col-md-4">
                         <label class="form-label fw-semibold">
                             <i class="fa fa-building text-muted me-1"></i> Vendor
                         </label>
-                        <div class="form-control bg-light border-dashed d-flex align-items-center" style="min-height: 38px;">
+                        <div class="form-control bg-light d-flex align-items-center" style="min-height: 38px;">
                             @if ($vendor_name)
                                 <span class="fw-medium">{{ $vendor_name }}</span>
                             @else
@@ -55,7 +60,7 @@
                         </div>
                     </div>
 
-                    <div class="col-md-3">
+                    <div class="col-md-4">
                         <label class="form-label fw-semibold">
                             <i class="fa fa-calendar text-muted me-1"></i> Received Date
                         </label>
@@ -82,7 +87,7 @@
                     <div class="d-flex align-items-center">
                         <div class="rounded-circle bg-success bg-opacity-10 d-flex align-items-center justify-content-center me-3"
                             style="width: 40px; height: 40px;">
-                            <i class="fa fa-boxes-stacked text-success"></i>
+                            <i class="fa fa-cubes text-success"></i>
                         </div>
                         <div>
                             <h5 class="mb-0 fw-bold">Received Items</h5>
@@ -139,7 +144,6 @@
                                 <tr class="bg-light">
                                     <th class="ps-4 text-muted fw-semibold text-uppercase small" style="width: 50px;">#</th>
                                     <th class="text-muted fw-semibold text-uppercase small">Product</th>
-                                    <th class="text-end text-muted fw-semibold text-uppercase small" style="width: 110px;">Rate</th>
                                     <th class="text-center text-muted fw-semibold text-uppercase small" style="width: 120px;">Ordered</th>
                                     <th class="text-center text-muted fw-semibold text-uppercase small" style="width: 160px;">Received</th>
                                     <th class="text-center text-muted fw-semibold text-uppercase small" style="width: 100px;">Status</th>
@@ -159,7 +163,6 @@
                                                 </div>
                                             </div>
                                         </td>
-                                        <td class="text-end text-muted" x-text="Number(row.rate || 0).toFixed(2)"></td>
                                         <td class="text-center">
                                             <span class="badge bg-light text-dark border px-3 py-2" x-text="row.ordered_quantity"></span>
                                         </td>

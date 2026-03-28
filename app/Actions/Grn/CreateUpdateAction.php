@@ -44,6 +44,7 @@ class CreateUpdateAction
 
                 $grn->items()->updateOrCreate($findData, $saveItemData);
             }
+            $grn->items()->where('quantity', 0)->delete();
 
             return [
                 'success' => true,
@@ -65,7 +66,7 @@ class CreateUpdateAction
             'date' => ['required', 'date'],
             'items' => ['required', 'array', 'min:1'],
             'items.*.product_id' => ['required', 'exists:products,id'],
-            'items.*.quantity' => ['required', 'numeric', 'min:0.01'],
+            'items.*.quantity' => ['required', 'numeric', 'min:0'],
         ];
     }
 }

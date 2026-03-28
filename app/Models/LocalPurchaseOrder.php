@@ -66,6 +66,11 @@ class LocalPurchaseOrder extends Model
         return $this->belongsTo(User::class, 'decision_by');
     }
 
+    public function grns(): HasMany
+    {
+        return $this->hasMany(Grn::class);
+    }
+
     public function scopePending($query)
     {
         return $query->where('status', LocalPurchaseOrderStatus::PENDING);

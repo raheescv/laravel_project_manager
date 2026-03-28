@@ -84,7 +84,25 @@
                                     <i class="demo-psi-shopping-cart text-primary me-2"></i>
                                     <small class="text-muted">LPO</small>
                                 </div>
-                                <div class="fw-medium">LPO #{{ $grn->localPurchaseOrder?->id }} - {{ $grn->localPurchaseOrder?->vendor?->name ?? '-' }}</div>
+                                <div class="fw-medium">
+                                    @if ($grn->localPurchaseOrder)
+                                        <a href="{{ route('lpo::view', $grn->localPurchaseOrder->id) }}" class="text-primary text-decoration-none">
+                                            LPO #{{ $grn->localPurchaseOrder->id }}
+                                            <i class="fa fa-external-link-alt small ms-1"></i>
+                                        </a>
+                                    @else
+                                        -
+                                    @endif
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="p-2 rounded bg-light bg-opacity-50">
+                                <div class="d-flex align-items-center mb-1">
+                                    <i class="fa fa-building text-primary me-2"></i>
+                                    <small class="text-muted">Vendor</small>
+                                </div>
+                                <div class="fw-medium">{{ $grn->vendor?->name ?? $grn->localPurchaseOrder?->vendor?->name ?? '-' }}</div>
                             </div>
                         </div>
                         <div class="col-6">

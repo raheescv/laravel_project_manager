@@ -105,7 +105,9 @@ class Grn extends Model
             })
             ->when($filters['status'] ?? null, fn ($query, $value) => $query->where('status', $value))
             ->when($filters['branch_id'] ?? null, fn ($query, $value) => $query->where('branch_id', $value))
+            ->when($filters['vendor_id'] ?? null, fn ($query, $value) => $query->where('vendor_id', $value))
             ->when($filters['created_by'] ?? null, fn ($query, $value) => $query->where('created_by', $value))
+            ->when($filters['decision_by'] ?? null, fn ($query, $value) => $query->where('decision_by', $value))
             ->when($filters['local_purchase_order_id'] ?? null, fn ($query, $value) => $query->where('local_purchase_order_id', $value))
             ->when($filters['from_date'] ?? null, fn ($query, $value) => $query->whereDate('date', '>=', date('Y-m-d', strtotime($value))))
             ->when($filters['to_date'] ?? null, fn ($query, $value) => $query->whereDate('date', '<=', date('Y-m-d', strtotime($value))));

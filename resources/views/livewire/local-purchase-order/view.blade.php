@@ -256,6 +256,70 @@
         </div>
     </div>
 
+    {{-- GRN Received Items --}}
+    @if ($order->grns->count())
+        <div class="mb-4 card border-0 shadow-sm">
+            <div class="card-body p-3">
+                <div class="d-flex align-items-center justify-content-between mb-3">
+                    <div class="d-flex align-items-center">
+                        <div class="icon-box bg-success bg-opacity-10 rounded-circle p-2 me-2">
+                            <i class="fa fa-cubes text-success fs-4"></i>
+                        </div>
+                        <h5 class="mb-0 fw-bold">Goods Received (GRN)</h5>
+                    </div>
+                    <span class="badge bg-success bg-opacity-10 text-success rounded-pill px-3 py-2">
+                        {{ $order->grns->count() }} GRN{{ $order->grns->count() > 1 ? 's' : '' }}
+                    </span>
+                </div>
+
+                @foreach ($order->grns as $grn)
+                    <div class="border rounded mb-3">
+                        <div class="bg-light px-3 py-2 d-flex align-items-center justify-content-between border-bottom">
+                            <div class="d-flex align-items-center">
+                                <a href="{{ route('grn::view', $grn->id) }}" class="fw-semibold text-primary text-decoration-none">
+                                    <i class="fa fa-file-text me-1"></i> {{ $grn->grn_no }}
+                                </a>
+                                <span class="text-muted ms-3 small">
+                                    <i class="demo-psi-calendar-4 me-1"></i>
+                                    {{ \Carbon\Carbon::parse($grn->date)->format('d M Y') }}
+                                </span>
+                            </div>
+                            <span class="badge bg-{{ $grn->status->value === 'accepted' ? 'success' : ($grn->status->value === 'pending' ? 'warning' : 'danger') }} rounded-pill">
+                                {{ $grn->status->label() }}
+                            </span>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table table-sm align-middle mb-0">
+                                <thead>
+                                    <tr class="bg-light bg-opacity-50">
+                                        <th class="border-0 ps-3">#</th>
+                                        <th class="border-0">Product</th>
+                                        <th class="border-0 text-end pe-3">Received Qty</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach ($grn->items as $grnIndex => $grnItem)
+                                        <tr>
+                                            <td class="ps-3">
+                                                <span class="badge bg-light text-muted rounded-pill">{{ $grnIndex + 1 }}</span>
+                                            </td>
+                                            <td>
+                                                <span class="fw-medium">{{ $grnItem->product?->name }}</span>
+                                            </td>
+                                            <td class="text-end pe-3">
+                                                <span class="fw-bold text-success">{{ $grnItem->quantity }}</span>
+                                            </td>
+                                        </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                @endforeach
+            </div>
+        </div>
+    @endif
+
     {{-- Approval Action --}}
     @if ($order->status == LocalPurchaseOrderStatus::PENDING && $is_approvable)
         <div class="mb-4 card border-0 shadow-sm border-top border-3 border-warning">

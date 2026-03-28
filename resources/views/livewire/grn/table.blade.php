@@ -73,10 +73,34 @@
                         {{ html()->select('branch_id', [session('branch_id') => session('branch_name')])->value(session('branch_id'))->class('select-assigned-branch_id-list')->id('branch_id')->placeholder('All Branches') }}
                     </div>
                     <div class="col-md-3" wire:ignore>
+                        <label class="form-label" for="vendor_id">
+                            <i class="fa fa-building me-1"></i> Vendor
+                        </label>
+                        {{ html()->select('vendor_id', [])->value($this->vendor_id)->class('select-vendor_id-list')->id('vendor_id')->placeholder('All Vendors') }}
+                    </div>
+                    <div class="col-md-3" wire:ignore>
                         <label class="form-label" for="status">
                             <i class="fa fa-flag me-1"></i> Status
                         </label>
                         {{ html()->select('status', GrnStatus::values())->value($status)->class('form-control form-control-sm')->id('status')->placeholder('All Statuses') }}
+                    </div>
+                    <div class="col-md-3" wire:ignore>
+                        <label class="form-label" for="local_purchase_order_id">
+                            <i class="fa fa-shopping-cart me-1"></i> LPO
+                        </label>
+                        {{ html()->select('local_purchase_order_id', [])->value($this->local_purchase_order_id)->class('select-lpo_id-list')->id('local_purchase_order_id')->placeholder('All LPOs') }}
+                    </div>
+                    <div class="col-md-3" wire:ignore>
+                        <label class="form-label" for="created_by">
+                            <i class="fa fa-user me-1"></i> Created By
+                        </label>
+                        {{ html()->select('created_by', [])->value($this->created_by)->class('select-user_id-list')->id('created_by')->placeholder('All Users') }}
+                    </div>
+                    <div class="col-md-3" wire:ignore>
+                        <label class="form-label" for="decision_by">
+                            <i class="fa fa-user-check me-1"></i> Decision By
+                        </label>
+                        {{ html()->select('decision_by', [])->value($this->decision_by)->class('select-user_id-list')->id('decision_by')->placeholder('All Users') }}
                     </div>
                     <div class="col-md-3">
                         <label class="form-label" for="from_date">
@@ -112,6 +136,7 @@
                         <th> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="grn_no" label="GRN No" /> </th>
                         <th> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="date" label="Date" /> </th>
                         <th> LPO </th>
+                        <th> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="vendor_id" label="Vendor" /> </th>
                         <th> Items </th>
                         <th class="text-nowrap"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="status" label="Status" /> </th>
                         <th> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="created_by" label="Created By" /> </th>
@@ -145,6 +170,9 @@
                             </td>
                             <td class="text-nowrap">
                                 LPO #{{ $item->localPurchaseOrder?->id }}
+                            </td>
+                            <td class="text-nowrap">
+                                {{ $item->vendor?->name ?? '-' }}
                             </td>
                             <td class="text-end"> {{ $item->items_count }} </td>
                             <td>
@@ -215,6 +243,22 @@
                 $('#status').on('change', function(e) {
                     const value = $(this).val() || null;
                     @this.set('status', value);
+                });
+                $('#vendor_id').on('change', function(e) {
+                    const value = $(this).val() || null;
+                    @this.set('vendor_id', value);
+                });
+                $('#local_purchase_order_id').on('change', function(e) {
+                    const value = $(this).val() || null;
+                    @this.set('local_purchase_order_id', value);
+                });
+                $('#created_by').on('change', function(e) {
+                    const value = $(this).val() || null;
+                    @this.set('created_by', value);
+                });
+                $('#decision_by').on('change', function(e) {
+                    const value = $(this).val() || null;
+                    @this.set('decision_by', value);
                 });
             });
         </script>

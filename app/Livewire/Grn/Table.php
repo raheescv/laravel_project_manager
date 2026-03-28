@@ -21,6 +21,14 @@ class Table extends Component
 
     public ?string $status = null;
 
+    public ?int $vendor_id = null;
+
+    public ?int $local_purchase_order_id = null;
+
+    public ?int $created_by = null;
+
+    public ?int $decision_by = null;
+
     public ?string $from_date = null;
 
     public ?string $to_date = null;
@@ -44,12 +52,16 @@ class Table extends Component
     #[Computed()]
     public function grns()
     {
-        $query = Grn::query()->with(['branch', 'tenant', 'creator', 'decisionMaker', 'localPurchaseOrder'])->withCount('items');
+        $query = Grn::query()->with(['branch', 'tenant', 'creator', 'decisionMaker', 'localPurchaseOrder', 'vendor'])->withCount('items');
 
         $filters = [
             'search' => $this->search,
             'branch_id' => $this->branch_id,
             'status' => $this->status,
+            'vendor_id' => $this->vendor_id,
+            'local_purchase_order_id' => $this->local_purchase_order_id,
+            'created_by' => $this->created_by,
+            'decision_by' => $this->decision_by,
             'from_date' => $this->from_date,
             'to_date' => $this->to_date,
         ];
@@ -97,7 +109,7 @@ class Table extends Component
 
     public function updated($name, $value)
     {
-        if (in_array($name, ['search', 'branch_id', 'status', 'from_date', 'to_date'])) {
+        if (in_array($name, ['search', 'branch_id', 'status', 'vendor_id', 'local_purchase_order_id', 'created_by', 'decision_by', 'from_date', 'to_date'])) {
             $this->resetPage();
         }
     }

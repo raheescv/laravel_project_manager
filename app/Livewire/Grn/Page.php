@@ -38,21 +38,28 @@ class Page extends Component
         $this->date = date('Y-m-d');
 
         if ($grn_id) {
-            $grn = Grn::with(['items.product', 'items.localPurchaseOrderItem', 'localPurchaseOrder.vendor'])->findOrFail($grn_id);
+            $grn = Grn::with(['items', 'localPurchaseOrder.items.product', 'localPurchaseOrder.vendor'])->findOrFail($grn_id);
             $this->grn_id = $grn->id;
             $this->local_purchase_order_id = $grn->local_purchase_order_id;
             $this->vendor_name = $grn->localPurchaseOrder?->vendor?->name;
             $this->date = $grn->date;
             $this->remarks = $grn->remarks;
-            $this->items = $grn->items->map(fn ($item) => [
-                'id' => $item->id,
-                'local_purchase_order_item_id' => $item->local_purchase_order_item_id,
-                'product_id' => $item->product_id,
-                'product_name' => $item->product?->name,
-                'ordered_quantity' => $item->localPurchaseOrderItem?->quantity,
-                'rate' => $item->localPurchaseOrderItem?->rate,
-                'quantity' => $item->quantity,
-            ])->toArray();
+
+            $grnItems = $grn->items->keyBy('local_purchase_order_item_id');
+
+            $this->items = $grn->localPurchaseOrder->items->map(function ($lpoItem) use ($grnItems) {
+                $grnItem = $grnItems->get($lpoItem->id);
+
+                return [
+                    'id' => $grnItem?->id,
+                    'local_purchase_order_item_id' => $lpoItem->id,
+                    'product_id' => $lpoItem->product_id,
+                    'product_name' => $lpoItem->product?->name,
+                    'ordered_quantity' => $lpoItem->quantity,
+                    'rate' => $lpoItem->rate,
+                    'quantity' => $grnItem?->quantity ?? 0,
+                ];
+            })->toArray();
         }
     }
 
