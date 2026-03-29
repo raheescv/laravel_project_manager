@@ -417,31 +417,6 @@ class Create extends Component
         }
     }
 
-    public function collectPayment(): void
-    {
-        try {
-            if (! $this->payment_mode_id) {
-                throw new Exception('Please select a payment mode');
-            }
-
-            DB::beginTransaction();
-
-            $response = (new StatusChangeAction())->execute($this->table_id, SupplyRequestStatus::COMPLETED->value, Auth::id(), $this->payment_mode_id);
-
-            if (! $response['success']) {
-                throw new Exception($response['message']);
-            }
-
-            DB::commit();
-
-            $this->mount($this->table_id);
-            $this->dispatch('success', ['message' => 'Payment collected and marked as completed']);
-        } catch (Exception $e) {
-            DB::rollback();
-            $this->dispatch('error', ['message' => $e->getMessage()]);
-        }
-    }
-
     public function render()
     {
         return view('livewire.supply-request.create');
