@@ -112,10 +112,18 @@ Route::middleware('auth')->group(function (): void {
         Route::get('{id}', 'show')->name('view');
     });
 
-    // Supply Request
+    // Supply Request - Add
     Route::name('supply-request::')->prefix('supply-requests')->controller(SupplyRequestController::class)->group(function (): void {
-        Route::get('', 'index')->name('index');
-        Route::get('create', 'create')->name('create');
+        Route::get('', 'index')->name('index')->defaults('type', 'Add');
+        Route::get('create', 'create')->name('create')->defaults('type', 'Add');
+        Route::get('{id}/edit', 'edit')->name('edit');
+        Route::get('{id}/print/{mode?}', 'print')->name('print');
+    });
+
+    // Supply Request - Return
+    Route::name('supply-return::')->prefix('supply-returns')->controller(SupplyRequestController::class)->group(function (): void {
+        Route::get('', 'index')->name('index')->defaults('type', 'Return');
+        Route::get('create', 'create')->name('create')->defaults('type', 'Return');
         Route::get('{id}/edit', 'edit')->name('edit');
         Route::get('{id}/print/{mode?}', 'print')->name('print');
     });

@@ -17,6 +17,9 @@ return new class() extends Migration
             $table->string('order_no')->nullable();
             $table->string('contact_person')->nullable();
             $table->unsignedBigInteger('property_id')->nullable();
+            $table->unsignedBigInteger('property_group_id')->nullable();
+            $table->unsignedBigInteger('property_building_id')->nullable();
+            $table->unsignedBigInteger('property_type_id')->nullable();
             $table->enum('type', ['Add', 'Return'])->default('Add');
             $table->decimal('total', 16, 2)->default(0);
             $table->decimal('other_charges', 16, 2)->default(0);
@@ -39,6 +42,9 @@ return new class() extends Migration
 
             $table->foreign('tenant_id')->references('id')->on('tenants')->onDelete('cascade');
             $table->foreign('property_id')->references('id')->on('properties')->onDelete('set null');
+            $table->foreign('property_group_id')->references('id')->on('property_groups')->onDelete('set null');
+            $table->foreign('property_building_id')->references('id')->on('property_buildings')->onDelete('set null');
+            $table->foreign('property_type_id')->references('id')->on('property_types')->onDelete('set null');
             $table->index(['tenant_id', 'branch_id']);
             $table->index('date');
             $table->index('status');

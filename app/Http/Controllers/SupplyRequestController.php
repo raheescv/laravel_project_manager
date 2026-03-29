@@ -10,19 +10,23 @@ class SupplyRequestController extends Controller
 {
     public function index()
     {
-        return view('supply-request.index');
+        $type = request()->route()->defaults['type'] ?? request('type', 'Add');
+
+        return view('supply-request.index', ['type' => $type]);
     }
 
     public function create()
     {
-        $type = request('type', 'Add');
+        $type = request()->route()->defaults['type'] ?? request('type', 'Add');
 
         return view('supply-request.create', ['id' => null, 'type' => $type]);
     }
 
     public function edit($id)
     {
-        return view('supply-request.create', ['id' => $id, 'type' => 'Add']);
+        $model = SupplyRequest::findOrFail($id);
+
+        return view('supply-request.create', ['id' => $id, 'type' => $model->type ?? 'Add']);
     }
 
     public function print($id, $mode = 'Invoice')

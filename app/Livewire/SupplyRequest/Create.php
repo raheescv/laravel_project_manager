@@ -380,7 +380,9 @@ class Create extends Component
             if ($response['is_create']) {
                 $this->dispatch('success', ['message' => $response['message']]);
 
-                return $this->redirectRoute('supply-request::edit', $response['data']->id);
+                $editRoute = $this->type === 'Return' ? 'supply-return::edit' : 'supply-request::edit';
+
+                return $this->redirectRoute($editRoute, $response['data']->id);
             }
 
             $this->table_id = $response['data']->id;

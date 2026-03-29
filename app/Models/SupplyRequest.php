@@ -22,6 +22,9 @@ class SupplyRequest extends Model implements AuditableContracts
         'order_no',
         'contact_person',
         'property_id',
+        'property_group_id',
+        'property_building_id',
+        'property_type_id',
         'type',
         'total',
         'other_charges',
@@ -143,6 +146,9 @@ public function paymentMode(): BelongsTo
             ->when($filters['type'] ?? null, fn ($query, $value) => $query->where('type', $value))
             ->when($filters['branch_id'] ?? null, fn ($query, $value) => $query->where('branch_id', $value))
             ->when($filters['property_id'] ?? null, fn ($query, $value) => $query->where('property_id', $value))
+            ->when($filters['property_group_id'] ?? null, fn ($query, $value) => $query->where('property_group_id', $value))
+            ->when($filters['property_building_id'] ?? null, fn ($query, $value) => $query->where('property_building_id', $value))
+            ->when($filters['property_type_id'] ?? null, fn ($query, $value) => $query->where('property_type_id', $value))
             ->when($filters['created_by'] ?? null, fn ($query, $value) => $query->where('created_by', $value))
             ->when($filters['approved_by'] ?? null, fn ($query, $value) => $query->where('approved_by', $value))
             ->when($filters['final_approved_by'] ?? null, fn ($query, $value) => $query->where('final_approved_by', $value))

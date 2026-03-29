@@ -952,7 +952,7 @@
                     @if (auth()->user()->can('supply request.view'))
                         <li class="nav-item has-sub">
                             <a href="#"
-                                class="mininav-toggle nav-link {{ request()->routeIs(['supply-request::*']) ? 'active' : '' }}"><i
+                                class="mininav-toggle nav-link {{ request()->routeIs(['supply-request::*', 'supply-return::*']) ? 'active' : '' }}"><i
                                     class="fa fa-truck fs-5 me-2"></i>
                                 <span class="nav-label mininav-content ms-1 collapse show" style="">
                                     Asset Supply
@@ -961,17 +961,14 @@
                             <ul class="mininav-content nav collapse">
                                 <li data-popper-arrow class="arrow"></li>
                                 <li class="nav-item">
-                                    @php
-                                        $supplyRequest = ['supply-requests', 'supply-requests/create', 'supply-requests/*'];
-                                    @endphp
                                     <a href="{{ route('supply-request::index') }}"
-                                        class="nav-link {{ request()->is($supplyRequest) ? 'active' : '' }}">
+                                        class="nav-link {{ request()->routeIs('supply-request::*') ? 'active' : '' }}">
                                         Supply List
                                     </a>
                                 </li>
                                 <li class="nav-item">
-                                    <a href="{{ route('supply-request::index', ['type' => 'Return']) }}"
-                                        class="nav-link {{ request()->is('supply-requests') && request('type') === 'Return' ? 'active' : '' }}">
+                                    <a href="{{ route('supply-return::index') }}"
+                                        class="nav-link {{ request()->routeIs('supply-return::*') ? 'active' : '' }}">
                                         Supply Return List
                                     </a>
                                 </li>

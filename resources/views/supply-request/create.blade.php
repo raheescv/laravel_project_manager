@@ -4,11 +4,11 @@
             <nav aria-label="breadcrumb">
                 <ol class="breadcrumb">
                     <li class="breadcrumb-item"><a href="{{ route('dashboard') }}">Home</a></li>
-                    <li class="breadcrumb-item"><a href="{{ route('supply-request::index') }}">Asset Supply</a></li>
-                    <li class="breadcrumb-item active" aria-current="page">Page</li>
+                    <li class="breadcrumb-item"><a href="{{ route(($type ?? 'Add') === 'Return' ? 'supply-return::index' : 'supply-request::index') }}">{{ ($type ?? 'Add') === 'Return' ? 'Supply Return' : 'Asset Supply' }}</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">{{ isset($id) ? 'Edit' : 'Create' }}</li>
                 </ol>
             </nav>
-            <h1 class="page-title mb-0 mt-2">Asset Supply</h1>
+            <h1 class="page-title mb-0 mt-2">{{ ($type ?? 'Add') === 'Return' ? 'Supply Return' : 'Asset Supply' }}</h1>
         </div>
     </div>
     <div class="content__boxed">
