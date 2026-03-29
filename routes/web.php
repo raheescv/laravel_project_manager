@@ -16,6 +16,7 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\PublicScanController;
 use App\Http\Controllers\PurchaseRequestController;
 use App\Http\Controllers\PurchaseVendorController;
+use App\Http\Controllers\SupplyRequestController;
 use App\Http\Controllers\UserAttendanceController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\VisitorAnalyticsController;
@@ -109,6 +110,14 @@ Route::middleware('auth')->group(function (): void {
     Route::name('purchase-vendor::')->prefix('purchase-vendors')->controller(PurchaseVendorController::class)->group(function (): void {
         Route::get('', 'index')->name('index');
         Route::get('{id}', 'show')->name('view');
+    });
+
+    // Supply Request
+    Route::name('supply-request::')->prefix('supply-requests')->controller(SupplyRequestController::class)->group(function (): void {
+        Route::get('', 'index')->name('index');
+        Route::get('create', 'create')->name('create');
+        Route::get('{id}/edit', 'edit')->name('edit');
+        Route::get('{id}/print/{mode?}', 'print')->name('print');
     });
 });
 

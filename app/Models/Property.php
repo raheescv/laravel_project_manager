@@ -63,7 +63,7 @@ class Property extends Model implements AuditableContracts
 
     public function getDropDownList($request)
     {
-        $self = self::with('building')->orderBy('number');
+        $self = self::with('building', 'group', 'type')->orderBy('number');
         $self = $self->when($request['query'] ?? '', function ($query, $value) {
             return $query->where(function ($q) use ($value): void {
                 $value = trim($value);
@@ -89,7 +89,15 @@ class Property extends Model implements AuditableContracts
         $self = $self->get()->map(function ($item) {
             return [
                 'id' => $item->id,
-                'name' => $item->number.($item->building ? ' - '.$item->building->name : ''),
+                'name' => $item->number,
+                'status' => $item->status?->value ?? $item->status,
+                'group' => $item->group?->name,
+                'building' => $item->building?->name,
+                'type' => $item->type?->name,
+                'floor' => $item->floor,
+                'rooms' => $item->rooms,
+                'size' => $item->size,
+                'rent' => $item->rent,
             ];
         })->toArray();
         $return['items'] = $self;
