@@ -41,7 +41,30 @@
                 <div class="row py-4">
                     {{-- Left: Upload Zone --}}
                     <div class="col-lg-5 mb-4 mb-lg-0">
-                        <div class="upload-zone text-center h-100 d-flex flex-column justify-content-center">
+                        {{-- Format Selector --}}
+                        <div class="mb-3">
+                            <label class="fw-semibold small text-uppercase text-muted mb-2 d-block">
+                                <i class="fa fa-file-text-o me-1"></i> Import Format
+                            </label>
+                            <div class="d-flex gap-2">
+                                <label class="format-card flex-fill text-center p-3 rounded-3 border cursor-pointer {{ $importFormat === 'normal' ? 'border-primary bg-primary bg-opacity-10' : '' }}"
+                                    style="cursor:pointer;">
+                                    <input type="radio" wire:model.live="importFormat" value="normal" class="d-none">
+                                    <i class="fa fa-table d-block mb-1 {{ $importFormat === 'normal' ? 'text-primary' : 'text-muted' }}" style="font-size:1.5rem;"></i>
+                                    <span class="fw-semibold small {{ $importFormat === 'normal' ? 'text-primary' : '' }}">Normal</span>
+                                    <div class="text-muted" style="font-size:10px;">Standard template</div>
+                                </label>
+                                <label class="format-card flex-fill text-center p-3 rounded-3 border cursor-pointer {{ $importFormat === 'quickbooks' ? 'border-success bg-success bg-opacity-10' : '' }}"
+                                    style="cursor:pointer;">
+                                    <input type="radio" wire:model.live="importFormat" value="quickbooks" class="d-none">
+                                    <i class="fa fa-book d-block mb-1 {{ $importFormat === 'quickbooks' ? 'text-success' : 'text-muted' }}" style="font-size:1.5rem;"></i>
+                                    <span class="fw-semibold small {{ $importFormat === 'quickbooks' ? 'text-success' : '' }}">QuickBooks</span>
+                                    <div class="text-muted" style="font-size:10px;">QB export sheet</div>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="upload-zone text-center d-flex flex-column justify-content-center" style="min-height:160px;">
                             <input type="file" wire:model="file" class="upload-input" accept=".xlsx,.xls,.csv">
                             <div wire:loading.remove wire:target="file">
                                 <div class="py-4 px-3">
@@ -176,63 +199,108 @@
 
             {{-- ══════════════ STEP 3: Preview ══════════════ --}}
             @if ($step == 3)
-                @php
-                    $mappedFields = array_filter($mappings);
-                    $colCount = count($mappedFields);
-                @endphp
-                <div class="excel-sheet-wrapper">
-                    {{-- Formula bar --}}
-                    <div class="excel-formula-bar d-flex align-items-center gap-2 px-2 py-1">
-                        <span class="excel-cell-ref px-2 py-1 small fw-bold">A1</span>
-                        <span class="text-muted small"><i class="fa fa-table me-1"></i> Preview &middot; First {{ count($previewData) }} rows of your file</span>
-                        <span class="ms-auto text-muted small">{{ $colCount }} columns mapped</span>
-                    </div>
-
-                    <div class="table-responsive excel-grid">
-                        <table class="table table-bordered mb-0 excel-table">
-                            {{-- Column letters row --}}
-                            <thead>
-                                <tr class="excel-col-header">
-                                    <th class="excel-row-num"></th>
-                                    @php $colLetter = 'A'; @endphp
-                                    @foreach ($mappedFields as $field => $header)
-                                        <th>{{ $colLetter++ }}</th>
-                                    @endforeach
-                                </tr>
-                                {{-- Field names row --}}
-                                <tr class="excel-header-row">
-                                    <th class="excel-row-num">1</th>
-                                    @foreach ($mappedFields as $field => $header)
-                                        <th>
-                                            <div class="fw-semibold">{{ $availableFields[$field] }}</div>
-                                            <div class="excel-field-hint">{{ $header }}</div>
-                                        </th>
-                                    @endforeach
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @foreach ($previewData as $rowIndex => $row)
-                                    <tr>
-                                        <td class="excel-row-num">{{ $rowIndex + 2 }}</td>
-                                        @foreach ($mappedFields as $field => $header)
-                                            <td class="excel-cell">{{ $row[array_search($header, $headers)] ?? '' }}</td>
+                @if ($importFormat === 'quickbooks')
+                    {{-- QuickBooks Preview --}}
+                    @php $qbHeaders = ['Num', 'Date', 'Name', 'Memo', 'Account', 'Split', 'Amount']; @endphp
+                    <div class="excel-sheet-wrapper">
+                        <div class="excel-formula-bar d-flex align-items-center gap-2 px-2 py-1">
+                            <span class="excel-cell-ref px-2 py-1 small fw-bold" style="background:#e8f5e9;border-color:#4caf50;">QB</span>
+                            <span class="text-muted small"><i class="fa fa-book me-1"></i> QuickBooks Preview &middot; {{ count($previewData) }} latest transactions</span>
+                            <span class="ms-auto badge bg-success bg-opacity-25 text-success small">All transaction rows</span>
+                        </div>
+                        <div class="table-responsive excel-grid">
+                            <table class="table table-bordered mb-0 excel-table">
+                                <thead>
+                                    <tr class="excel-col-header">
+                                        <th class="excel-row-num"></th>
+                                        @php $colLetter = 'A'; @endphp
+                                        @foreach ($qbHeaders as $h)
+                                            <th>{{ $colLetter++ }}</th>
                                         @endforeach
                                     </tr>
-                                @endforeach
-                            </tbody>
-                        </table>
+                                    <tr class="excel-header-row">
+                                        <th class="excel-row-num">1</th>
+                                        @foreach ($qbHeaders as $h)
+                                            <th><div class="fw-semibold">{{ $h }}</div></th>
+                                        @endforeach
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach ($previewData as $rowIndex => $row)
+                                        <tr>
+                                            <td class="excel-row-num">{{ $rowIndex + 2 }}</td>
+                                            <td class="excel-cell">{{ $row['num'] ?? '' }}</td>
+                                            <td class="excel-cell">{{ $row['date'] ?? '' }}</td>
+                                            <td class="excel-cell">{{ $row['name'] ?? '' }}</td>
+                                            <td class="excel-cell">{{ $row['memo'] ?? '' }}</td>
+                                            <td class="excel-cell">{{ $row['account'] ?? '' }}</td>
+                                            <td class="excel-cell">{{ $row['split'] ?? '' }}</td>
+                                            <td class="excel-cell {{ ($row['amount'] ?? 0) < 0 ? 'text-danger' : 'text-success' }}">
+                                                {{ number_format($row['amount'] ?? 0, 2) }}
+                                            </td>
+                                        </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="excel-sheet-tabs d-flex align-items-center gap-1 px-2 py-1">
+                            <span class="excel-tab active"><i class="fa fa-book me-1"></i> QuickBooks</span>
+                        </div>
                     </div>
-
-                    {{-- Sheet tabs --}}
-                    <div class="excel-sheet-tabs d-flex align-items-center gap-1 px-2 py-1">
-                        <span class="excel-tab active"><i class="fa fa-file-excel-o me-1"></i> Sheet1</span>
-                        <span class="excel-tab-add"><i class="fa fa-plus"></i></span>
+                @else
+                    {{-- Normal Preview --}}
+                    @php
+                        $mappedFields = array_filter($mappings);
+                        $colCount = count($mappedFields);
+                    @endphp
+                    <div class="excel-sheet-wrapper">
+                        <div class="excel-formula-bar d-flex align-items-center gap-2 px-2 py-1">
+                            <span class="excel-cell-ref px-2 py-1 small fw-bold">A1</span>
+                            <span class="text-muted small"><i class="fa fa-table me-1"></i> Preview &middot; First {{ count($previewData) }} rows of your file</span>
+                            <span class="ms-auto text-muted small">{{ $colCount }} columns mapped</span>
+                        </div>
+                        <div class="table-responsive excel-grid">
+                            <table class="table table-bordered mb-0 excel-table">
+                                <thead>
+                                    <tr class="excel-col-header">
+                                        <th class="excel-row-num"></th>
+                                        @php $colLetter = 'A'; @endphp
+                                        @foreach ($mappedFields as $field => $header)
+                                            <th>{{ $colLetter++ }}</th>
+                                        @endforeach
+                                    </tr>
+                                    <tr class="excel-header-row">
+                                        <th class="excel-row-num">1</th>
+                                        @foreach ($mappedFields as $field => $header)
+                                            <th>
+                                                <div class="fw-semibold">{{ $availableFields[$field] }}</div>
+                                                <div class="excel-field-hint">{{ $header }}</div>
+                                            </th>
+                                        @endforeach
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach ($previewData as $rowIndex => $row)
+                                        <tr>
+                                            <td class="excel-row-num">{{ $rowIndex + 2 }}</td>
+                                            @foreach ($mappedFields as $field => $header)
+                                                <td class="excel-cell">{{ $row[array_search($header, $headers)] ?? '' }}</td>
+                                            @endforeach
+                                        </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="excel-sheet-tabs d-flex align-items-center gap-1 px-2 py-1">
+                            <span class="excel-tab active"><i class="fa fa-file-excel-o me-1"></i> Sheet1</span>
+                            <span class="excel-tab-add"><i class="fa fa-plus"></i></span>
+                        </div>
                     </div>
-                </div>
+                @endif
 
                 <div class="d-flex justify-content-center gap-2 mt-3">
-                    <button class="btn btn-outline-secondary px-4" wire:click="goToStep(2)">
-                        <i class="fa fa-arrow-left me-1"></i> Back to Mapping
+                    <button class="btn btn-outline-secondary px-4" wire:click="goToStep({{ $importFormat === 'quickbooks' ? 1 : 2 }})">
+                        <i class="fa fa-arrow-left me-1"></i> {{ $importFormat === 'quickbooks' ? 'Back' : 'Back to Mapping' }}
                     </button>
                     <button class="btn btn-success px-4 shadow-sm" wire:click="save">
                         <i class="fa fa-check-circle me-1"></i> Start Import
