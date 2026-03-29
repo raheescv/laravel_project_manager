@@ -232,5 +232,6 @@ return [
         'approve',
         'final approve',
         'complete',
+        'print',
     ],
 ];

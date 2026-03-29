@@ -297,17 +297,19 @@
                                             Actions
                                         </button>
                                         <ul class="dropdown-menu dropdown-menu-end">
-                                            @can('supply request.edit')
-                                                <li>
-                                                    <a class="dropdown-item" href="{{ route('supply-request::edit', $item->id) }}">
-                                                        <i class="demo-pli-file-edit me-2"></i> Edit / View
-                                                    </a>
-                                                </li>
-                                            @endcan
                                             @can('supply request.print')
                                                 <li>
-                                                    <a class="dropdown-item" href="{{ route('supply-request::print', $item->id) }}" target="_blank">
-                                                        <i class="fa fa-print me-2"></i> Print
+                                                    <a class="dropdown-item"
+                                                        href="{{ route('supply-request::print', ['id' => $item->id, 'mode' => 'Invoice']) }}"
+                                                        target="_blank">
+                                                        <i class="fa fa-print me-2"></i> Invoice
+                                                    </a>
+                                                </li>
+                                                <li>
+                                                    <a class="dropdown-item"
+                                                        href="{{ route('supply-request::print', ['id' => $item->id, 'mode' => 'Work Order Form']) }}"
+                                                        target="_blank">
+                                                        <i class="fa fa-print me-2"></i> Work Order Form
                                                     </a>
                                                 </li>
                                             @endcan
